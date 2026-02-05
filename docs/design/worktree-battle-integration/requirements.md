@@ -6,6 +6,24 @@
 
 ---
 
+## 系統依賴
+
+**本系統基於 [Async Battle System](../async-battle-system/) 構建**
+
+Worktree-Battle 整合是異步戰鬥系統的**可選功能層**：
+- **底層架構**：Async Battle System 提供異步執行、實例池管理、SmartRouter 路由
+- **上層功能**：本系統為 Battle Async 路徑添加 Git Worktree 隔離環境
+- **獨立性**：戰鬥系統可以不使用 worktree 運行，此功能為可選增強
+
+**關鍵概念**：
+- 每個 Battle Async 戰鬥 **可選擇** 創建獨立 worktree
+- Worktree 提供代碼隔離，避免污染主分支
+- 戰鬥完成後自動合併和清理 worktree
+
+詳見：[Async Battle System 設計文檔](../async-battle-system/requirements.md)
+
+---
+
 ## 目錄
 
 1. [核心概念](#核心概念)
