@@ -613,6 +613,8 @@ interface BattleInstance {
   startTime: number;
   endTime?: number;
   process?: any; // Child process
+  worktreePath?: string; // Git worktree 路徑
+  branchName?: string;   // Git 分支名稱
   toolsUsed: number;
   goldSpent: number;
   actions: Array<{
@@ -693,13 +695,28 @@ class BattleInstancePool {
    */
   private async executeBattle(battle: BattleInstance): Promise<void> {
     try {
+      // 🔥 步驟 1: 創建獨立 worktree
+      const { worktreePath, branchName } = await this.createWorktree(battle.id);
+      battle.worktreePath = worktreePath;
+      battle.branchName = branchName;
+
+      console.log(`[Battle ${battle.id}] Worktree created: ${worktreePath}`);
+
+      // 廣播 worktree 創建事件
+      this.ws.broadcast('battle:worktree_created', {
+        battleId: battle.id,
+        worktreePath,
+        branchName
+      });
+
       // 更新狀態為運行中
       battle.status = 'running';
       this.ws.broadcast('battle:started', { battleId: battle.id });
 
-      // 啟動 Claude CLI 進程
+      // 🔥 步驟 2: 在 worktree 目錄中啟動 Claude CLI 進程
       const { spawn } = require('child_process');
       const claude = spawn('claude', ['code'], {
+        cwd: worktreePath,  // ← 關鍵：在獨立目錄執行
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
@@ -721,16 +738,28 @@ class BattleInstancePool {
       });
 
       // 完成
-      claude.on('close', (code: number) => {
+      claude.on('close', async (code: number) => {
         if (code === 0) {
+          // 🔥 步驟 3: 戰鬥成功，合併 worktree
+          await this.mergeWorktree(battle);
           this.completeBattle(battle);
         } else {
+          // 失敗不合併，保留 worktree 供檢查
           this.failBattle(battle, `Claude exited with code ${code}`);
         }
+
+        // 🔥 步驟 4: 清理 worktree（延遲清理）
+        setTimeout(async () => {
+          await this.cleanupWorktree(battle);
+        }, 5000);
       });
 
     } catch (error) {
       this.failBattle(battle, error.message);
+      // 清理失敗的 worktree
+      if (battle.worktreePath) {
+        await this.cleanupWorktree(battle);
+      }
     }
   }
 
@@ -958,6 +987,106 @@ class BattleInstancePool {
       maxHP: enemy.hp,
       level: analysis.complexity
     };
+  }
+
+  /**
+   * 創建 Git Worktree（每個戰鬥獨立目錄）
+   */
+  private async createWorktree(battleId: string): Promise<{
+    worktreePath: string;
+    branchName: string;
+  }> {
+    const { execSync } = require('child_process');
+    const path = require('path');
+
+    // 生成分支名和路徑
+    const branchName = `battle/${battleId}`;
+    const worktreePath = path.join(process.cwd(), 'worktrees', battleId);
+
+    try {
+      // 創建 worktree 和分支
+      // git worktree add worktrees/battle_123 -b battle/battle_123
+      execSync(`git worktree add "${worktreePath}" -b ${branchName}`, {
+        stdio: 'pipe'
+      });
+
+      console.log(`[Worktree] Created: ${worktreePath} (${branchName})`);
+
+      return { worktreePath, branchName };
+    } catch (error) {
+      console.error('[Worktree] Creation failed:', error.message);
+      throw new Error(`Failed to create worktree: ${error.message}`);
+    }
+  }
+
+  /**
+   * 合併 Worktree 到主分支
+   */
+  private async mergeWorktree(battle: BattleInstance): Promise<void> {
+    if (!battle.branchName) {
+      console.warn('[Worktree] No branch to merge');
+      return;
+    }
+
+    const { execSync } = require('child_process');
+
+    try {
+      // 切換到主分支
+      execSync('git checkout main', { stdio: 'pipe' });
+
+      // 合併戰鬥分支
+      execSync(`git merge ${battle.branchName} --no-ff -m "Merge battle ${battle.id}: ${battle.prompt}"`, {
+        stdio: 'pipe'
+      });
+
+      console.log(`[Worktree] Merged: ${battle.branchName} → main`);
+
+      // 廣播合併事件
+      this.ws.broadcast('battle:merged', {
+        battleId: battle.id,
+        branchName: battle.branchName
+      });
+    } catch (error) {
+      console.error('[Worktree] Merge failed:', error.message);
+      // 合併失敗不影響戰鬥完成狀態，但記錄錯誤
+      this.ws.broadcast('battle:merge_failed', {
+        battleId: battle.id,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * 清理 Worktree（刪除目錄和分支）
+   */
+  private async cleanupWorktree(battle: BattleInstance): Promise<void> {
+    if (!battle.worktreePath || !battle.branchName) {
+      return;
+    }
+
+    const { execSync } = require('child_process');
+
+    try {
+      // 刪除 worktree
+      execSync(`git worktree remove "${battle.worktreePath}" --force`, {
+        stdio: 'pipe'
+      });
+
+      // 刪除分支
+      execSync(`git branch -D ${battle.branchName}`, {
+        stdio: 'pipe'
+      });
+
+      console.log(`[Worktree] Cleaned: ${battle.worktreePath}`);
+
+      // 廣播清理事件
+      this.ws.broadcast('battle:worktree_cleaned', {
+        battleId: battle.id
+      });
+    } catch (error) {
+      console.error('[Worktree] Cleanup failed:', error.message);
+      // 清理失敗不是致命錯誤，只記錄
+    }
   }
 }
 ```

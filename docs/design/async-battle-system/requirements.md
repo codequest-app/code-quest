@@ -54,6 +54,12 @@
 - 超出限制時排隊等待
 - 防止資源耗盡
 
+### 5. 代碼隔離（Battle Async 專屬）
+- 每個並發戰鬥自動創建獨立 worktree
+- 避免代碼修改互相干擾
+- 戰鬥完成後自動合併和清理
+- 確保並發執行的安全性
+
 ## 三種處理路徑
 
 ### 路徑 1: 對話型 (Dialog Mode)
@@ -96,16 +102,25 @@ if (complexity < 3) return 'dialog';
 - 執行方式：主線程同步執行，顯示進度
 - 響應時間：幾秒到十幾秒
 - 使用基礎戰鬥 UI，但同步執行
+- **在主工作目錄執行**：不需要 worktree（因為同步，沒有並發衝突）
 
 **判斷條件**：
 ```javascript
 if (complexity >= 3 && complexity < 8) return 'main_sync';
 ```
 
+**為什麼不需要 Worktree？**
+
+Main Sync 任務：
+- 主線程阻塞，用戶必須等待完成
+- 同一時間只有一個任務執行
+- 沒有並發衝突問題
+- 在主目錄執行即可，無需隔離
+
 **示例**：
 ```
 用戶: "修復 login.ts 的類型錯誤"
-系統: [主線程執行]
+系統: [主線程執行於主工作目錄]
       ⚔️ 戰鬥開始！
       敵人：Bug怪物 (簡單)
       [執行工具...]
@@ -127,25 +142,54 @@ if (complexity >= 3 && complexity < 8) return 'main_sync';
 - 複雜度：8+ 分
 - 執行方式：獨立戰鬥實例，異步執行
 - 響應時間：可能幾分鐘到幾十分鐘
-- 完整戰鬥系統，支持並發
+- 完整戰鬥系統，支持並發（最多 3 個）
+- **自動創建 Git Worktree**：每個戰鬥在獨立工作目錄執行
 
 **判斷條件**：
 ```javascript
 if (complexity >= 8) return 'battle_async';
 ```
 
+**為什麼需要 Worktree？**
+
+當多個戰鬥並發執行時，如果都在同一個工作目錄修改代碼，會造成：
+```
+❌ 問題場景：無 Worktree
+戰鬥 #1: 正在修改 auth.ts (添加 OAuth)
+戰鬥 #2: 同時修改 auth.ts (修復 bug)
+戰鬥 #3: 也在修改 auth.ts (重構)
+→ 文件衝突！代碼互相覆蓋！
+```
+
+**解決方案：自動 Worktree 隔離**
+```
+✅ 每個戰鬥獨立目錄
+戰鬥 #1 → worktrees/battle_1/  (auth.ts 添加 OAuth)
+戰鬥 #2 → worktrees/battle_2/  (auth.ts 修復 bug)
+戰鬥 #3 → worktrees/battle_3/  (auth.ts 重構)
+→ 各自獨立，互不干擾！
+```
+
+**自動流程**：
+1. 創建戰鬥實例 → 自動創建 worktree 分支
+2. 在 worktree 目錄執行 Claude CLI
+3. 戰鬥完成 → 自動合併到主分支
+4. 清理 worktree 目錄
+
 **示例**：
 ```
 用戶: "重構整個認證系統，添加 OAuth 支持"
 系統: [創建戰鬥實例 #1]
+      🌲 創建 worktree: worktrees/battle_1
       🎮 戰鬥 #1 已開始！
       敵人：魔王級 Bug (複雜)
-      [後台執行...]
+      [後台執行於 worktrees/battle_1/...]
 
       [用戶可以繼續輸入]
 用戶: "當前有哪些戰鬥？"
 系統: 📋 進行中的戰鬥：
       • 戰鬥 #1: 重構認證系統 (進度 45%)
+        📂 worktrees/battle_1
 ```
 
 ---
