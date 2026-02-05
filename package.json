@@ -1,0 +1,25 @@
+{
+  "name": "code-quest",
+  "version": "0.1.0",
+  "description": "RPG 遊戲化的 Claude Code CLI - 將開發工作轉變為史詩般的冒險",
+  "keywords": [
+    "rpg",
+    "cli",
+    "claude",
+    "code",
+    "game",
+    "developer-tools",
+    "ai",
+    "battle-system"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/recca0120/code-quest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/recca0120/code-quest/issues"
+  },
+  "homepage": "https://github.com/recca0120/code-quest#readme"
+}

@@ -108,7 +108,7 @@ allowed-tools: Bash, Read, Write
 └── architecture-design/
     └── SKILL.md
 
-/Users/.../cc-office/                  # 專案配置
+/Users/.../code-quest/                 # 專案配置
 ├── rpg-config/
 │   ├── skill-metadata.json            # UI 遊戲化資料
 │   ├── agent-metadata.json            # Agent 遊戲化資料
