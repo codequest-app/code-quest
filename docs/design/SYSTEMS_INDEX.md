@@ -155,7 +155,7 @@
 
 ### 5. 召喚獸系統（Summon Beast System）
 **路徑**: [`summon-beast-system/`](./summon-beast-system/)
-**依賴**: 戰鬥系統、夥伴系統
+**依賴**: 戰鬥系統
 
 **系統概要**：
 提供關鍵時刻的強力支援。與夥伴不同，召喚獸是短暫、爆發型的戰術選擇。
@@ -179,7 +179,7 @@
 
 ### 6. 商店系統（Shop System）
 **路徑**: [`shop-system/`](./shop-system/)
-**依賴**: 地圖系統
+**依賴**: 地圖系統、場景系統
 
 **系統概要**：
 將 Skills、MCP、Subagent 管理 RPG 化為 7 個商店。用戶以探索式方式發現和解鎖功能。
@@ -207,7 +207,7 @@
 
 ### 7. 互動事件系統（Interactive Events）
 **路徑**: [`interactive-events/`](./interactive-events/)
-**依賴**: 戰鬥系統
+**依賴**: 戰鬥系統、場景系統
 
 **系統概要**：
 處理戰鬥中需要用戶互動的事件（Plan Mode、AskUserQuestion、錯誤、權限請求），用 RPG 元素包裝。
@@ -237,7 +237,7 @@
 
 ### 8. Worktree 手動管理系統
 **路徑**: [`worktree-manual-system/`](./worktree-manual-system/)
-**依賴**: 地圖系統（公會大廳）
+**依賴**: 地圖系統（公會大廳）、場景系統
 
 **系統概要**：
 將 Git Worktree 管理 RPG 化為「平行世界」系統。用戶可在公會大廳手動創建、切換、合併平行世界。
