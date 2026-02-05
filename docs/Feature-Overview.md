@@ -8,942 +8,510 @@
 
 ## 📋 目錄
 
-1. [系統架構](#系統架構)
-2. [核心功能](#核心功能)
-3. [遊戲化系統](#遊戲化系統)
-4. [戰鬥系統](#戰鬥系統)
-5. [夥伴系統](#夥伴系統)
-6. [召喚獸系統](#召喚獸系統)
-7. [進階功能](#進階功能)
-8. [開發路線圖](#開發路線圖)
+1. [核心概念](#核心概念)
+2. [功能規劃](#功能規劃)
+3. [使用場景](#使用場景)
+4. [開發路線圖](#開發路線圖)
 
 ---
 
-## 系統架構
+## 核心概念
 
-### 三層架構設計
+### 專案定位
+
+將 Claude Code CLI 包裝為 RPG 遊戲體驗，讓日常開發工作變成冒險旅程。
+
+**設計原則**:
+- ✅ 不修改 Claude Code 官方格式
+- ✅ 使用元數據（Metadata）記錄 RPG 元素
+- ✅ 保持 CLI 原有功能完整性
+- ✅ 遊戲化只是視覺和體驗層面的包裝
+
+### 系統架構
+
+三層架構設計：
 
 ```
-┌─────────────────────────────────────┐
-│   UI Layer (React + TypeScript)     │  ← 遊戲化介面
-│   - HP/MP/經驗值/等級視覺化          │
-│   - 戰鬥畫面                         │
-│   - 技能施放動畫                     │
-└──────────────┬──────────────────────┘
-               │ WebSocket
-┌──────────────▼──────────────────────┐
-│   Bridge Layer (Node.js)            │  ← 協調與遊戲邏輯
-│   - 追蹤 Skill/Subagent 使用         │
-│   - 遊戲引擎 (GameEngine)            │
-│   - 戰鬥管理器 (BattleManager)       │
-│   - 敵人生成器 (EnemyGenerator)      │
-└──────────────┬──────────────────────┘
-               │ child_process
-┌──────────────▼──────────────────────┐
-│   Claude Code CLI                   │  ← 標準 AI 功能
-│   - 官方格式 Skills                  │
-│   - 標準 Subagents                   │
-│   - MCP 工具整合                     │
-└─────────────────────────────────────┘
+UI Layer (React)          ← 遊戲化介面、視覺效果
+      ↕ WebSocket
+Bridge Layer (Node.js)    ← 遊戲邏輯、戰鬥系統、資源管理
+      ↕ child_process
+Claude Code CLI           ← 標準 AI 功能（不修改）
 ```
-
-### 技術棧
-
-**前端**:
-- React 18 + TypeScript
-- Vite (構建工具)
-- Tailwind CSS (Pixel Art 風格)
-- Framer Motion (動畫)
-- Zustand (狀態管理)
-- WebSocket Client
-
-**後端**:
-- Node.js 18+
-- Express (API 服務)
-- ws (WebSocket Server)
-- child_process (CLI 整合)
 
 ---
 
-## 核心功能
+## 功能規劃
 
-### 1. Claude Code CLI 整合
+### 1. 基礎系統
 
-**描述**: 將 Claude Code CLI 包裝為後端服務
+#### 1.1 玩家系統
+- **屬性**: 等級、HP、MP、經驗值、金幣
+- **成長**: 透過對話和任務完成獲得經驗值
+- **升級**: 等級提升時 HP/MP 上限增加
+- **統計**: 總對話數、總 Token 數、技能解鎖數
 
-**功能**:
-- ✅ 啟動 Claude Code CLI
-- ✅ 捕獲 stdout/stderr
-- ✅ 雙向通訊 (輸入/輸出)
-- ✅ Streaming 支援
-- ✅ 錯誤處理與重啟
-- ✅ Session 管理
+#### 1.2 資源管理
+- **HP (Health Points)**: 代表玩家活力，執行任務消耗，休息恢復
+- **MP (Magic Points)**: 施放技能和召喚的資源
+- **經驗值**: 完成任務獲得，累積升級
+- **金幣**: 未來用於解鎖高級功能（預留）
 
-**技術實作**:
-```javascript
-// bridge/index.js
-const claudeProcess = spawn('claude', ['code'], {
-  stdio: ['pipe', 'pipe', 'pipe']
-});
-```
+### 2. 技能系統
 
-### 2. WebSocket 實時通訊
+#### 2.1 技能類型
+- **內建技能**: Claude Code 官方 Skills（如 `/commit`, `/review-pr`）
+- **自定義技能**: 用戶自建的 Skills
+- **冷卻機制**: 技能使用後進入冷卻時間
+- **MP 消耗**: 每個技能有對應的 MP 消耗
 
-**描述**: Bridge 與 UI 之間的實時雙向通訊
+#### 2.2 技能元數據
+每個技能額外記錄：
+- 圖示（icon）
+- MP 消耗（mpCost）
+- 冷卻時間（cooldown）
+- 解鎖等級（unlockLevel）
+- 使用次數統計
 
-**功能**:
-- ✅ 訊息廣播 (AI 回應)
-- ✅ 事件推送 (技能施放、戰鬥開始)
-- ✅ 狀態同步 (HP/MP/經驗值)
-- ✅ 多客戶端支援
+### 3. 戰鬥系統
 
-**事件類型**:
-```javascript
-// UI → Bridge
-- user_message        // 用戶輸入
-- skill_cast          // 施放技能
-- agent_summon        // 召喚 Agent
+#### 3.1 敵人生成
+- **觸發**: 用戶輸入 Prompt 時自動生成敵人
+- **等級**: 基於 Prompt 複雜度分析（長度、關鍵字、多步驟）
+- **類型**: 7 種敵人類型對應不同任務類別
+  - 🐛 Bug怪物（簡單 Bug 修復）
+  - 🔧 功能幽靈（功能開發）
+  - 🏗️ 架構惡魔（重構/架構）
+  - 📝 文檔精靈（文檔撰寫）
+  - 🧪 測試守衛（測試撰寫）
+  - 🔍 審查巨人（代碼審查）
+  - 🐉 傳說巨龍（超大型任務）
 
-// Bridge → UI
-- ai_response         // AI 回應
-- player_state_update // 玩家狀態更新
-- battle_start        // 戰鬥開始
-- skill_cooldown      // 技能冷卻
-- level_up            // 升級通知
-```
+#### 3.2 戰鬥流程
+1. **敵人生成**: 分析 Prompt → 生成對應等級和類型的敵人
+2. **回合制戰鬥**: 玩家回合 → 敵人回合 → 循環
+3. **玩家行動**: 工具使用 = 技能施放 → 造成傷害
+4. **敵人行動**: 自動反擊或發動特殊能力
+5. **勝利獎勵**: 經驗值、金幣、可能解鎖新技能
 
-### 3. 官方格式 Skills
+#### 3.3 傷害計算
+- 基礎傷害基於工具類型
+- 玩家等級加成
+- 屬性相性系統（弱點/抗性）
+- 暴擊機制（低機率）
 
-**描述**: 符合 Claude Code 官方規範的技能系統
+### 4. 夥伴系統（Subagent 轉化）
 
-**位置**: `~/.claude/skills/`
+#### 4.1 夥伴來源
+- **Subagent 召喚**: 使用 Task 工具時轉化為戰鬥夥伴
+- **夥伴類型**: general-purpose, Bash, Explore, Plan 等
+- **持久化**: 夥伴資料獨立成長
 
-**核心技能** (5個):
+#### 4.2 夥伴屬性
+- 獨立的等級、HP、MP
+- 3-5 個專屬技能
+- AI 決策系統（自動選擇技能）
+- 成長系統（獨立經驗值累積）
 
-| Skill | 圖標 | MP | 冷卻 | 描述 |
-|-------|------|-----|------|------|
-| code-generator | ⚔️ | 15 | 60s | 快速生成程式碼 |
-| code-reviewer | 🔍 | 20 | 90s | 審查代碼品質 |
-| doc-writer | 📜 | 10 | 45s | 撰寫技術文檔 |
-| debug-helper | 🐛 | 25 | 120s | 協助除錯問題 |
-| test-generator | 🧪 | 18 | 75s | 生成單元測試 |
+#### 4.3 夥伴戰鬥
+- **插槽限制**: 最多同時 2 個夥伴
+- **AI 行動**: 每回合根據戰況自動行動
+- **MP 管理**: 夥伴 MP 在戰鬥中不回復，戰鬥後全滿
+- **升級**: 獨立成長，升級速度比玩家快
 
-**Skill 格式**:
-```yaml
----
-name: code-generator
-description: 根據需求快速生成高品質程式碼
-allowed-tools: Bash, Read, Write
----
+### 5. 召喚獸系統
 
-# 代碼生成器
-[Skill 實作內容...]
-```
+#### 5.1 召喚類型
+- **技能召喚**: 特定技能附帶召喚獸
+- **組合技召喚**: 多個技能組合觸發
+- **MCP 工具召喚**: 特定 MCP 工具觸發
+- **道具召喚**: 未來擴展（預留）
 
-### 4. 對話介面
+#### 5.2 召喚獸行為
+- **即時型**: 召喚後立即造成傷害/效果
+- **自動型**: 召喚後自動戰鬥數回合
+- **被動型**: 提供持續 Buff
+- **互動型**: 需要玩家配合觸發
 
-**描述**: RPG 風格的 AI 對話介面
+#### 5.3 插槽規則
+- **獨立插槽**: 最多 1 個召喚獸，不佔夥伴位
+- **臨時性**: 戰鬥結束後消失
+- **強大效果**: 傷害/增益遠超普通技能
 
-**功能**:
-- ✅ 訊息顯示 (打字機效果)
-- ✅ Markdown 渲染
-- ✅ 代碼語法高亮
-- ✅ 複製/收藏功能
-- ✅ 對話歷史
-- ✅ 多行輸入支援
+### 6. 互動事件系統
 
-**UI 元素**:
-- 頂部狀態列 (HP/MP/等級/金幣)
-- 對話視窗 (AI 回應區)
-- 輸入框 (Shift+Enter 換行)
-- 快捷技能列
+#### 6.1 互動事件類型
+- **Plan Mode**: 轉化為「戰術規劃」事件
+- **AskUserQuestion**: 轉化為「敵人發問攻擊」
+- **錯誤/警告**: 轉化為「技能反噬」
+- **權限請求**: 轉化為「力量借用」
 
----
+#### 6.2 工具執行 RPG 化
+所有 Claude Code 工具轉化為魔法：
 
-## 遊戲化系統
+**Bash 命令**（10+ 種魔法）:
+- `git commit` → 📦 版本封印術
+- `git push` → 🚀 遠程傳送術
+- `npm install` → 📚 依賴召喚術
+- `npm test` → 🧪 試煉之法
+- `npm build` → 🏗️ 構築魔法
 
-### 1. 玩家屬性系統
+**文件操作**:
+- Read → 📖 讀心術（發現弱點）
+- Write → ✍️ 創造術（造成傷害）
+- Edit → ✏️ 改寫術（造成傷害）
+- Grep → 👁️ 搜索之眼（提升閃避）
+- Glob → 🔍 定位術（提升閃避）
 
-**描述**: RPG 風格的角色屬性
+**特殊機制**:
+- **並行操作** → 多重施法（傷害加成）
+- **長時間運行** → 施法進度條（暫停敵人行動）
+- **流式輸出** → 持續效果（每步造成傷害）
+- **背景任務** → 自動施法（非阻塞）
 
-**屬性**:
-```typescript
-interface Player {
-  // 基本資訊
-  name: string;              // 冒險者
-  level: number;             // 等級 (1-50)
+### 7. 進階功能
 
-  // 資源
-  hp: number;                // 生命值 (當前)
-  maxHp: number;             // 生命值 (上限)
-  mp: number;                // 魔力值 (當前)
-  maxMp: number;             // 魔力值 (上限)
+#### 7.1 Combo 組合技系統
+- **觸發條件**: 短時間內連續使用特定技能組合
+- **效果加成**: 傷害 +50%、額外效果
+- **視覺表現**: 特殊動畫和音效
+- **記錄系統**: 追蹤已發現的組合技
 
-  // 經驗與金幣
-  exp: number;               // 當前經驗值
-  expToNextLevel: number;    // 升級所需經驗
-  gold: number;              // 金幣
+#### 7.2 成就系統
+- **成就類型**: 戰鬥、技能、成長、探索、特殊
+- **獎勵**: 稱號、經驗值、金幣、隱藏技能解鎖
+- **顯示**: 成就牆、進度追蹤
 
-  // 統計
-  totalDialogues: number;    // 總對話次數
-  totalTokens: number;       // 總 Token 使用
-  skillsUnlocked: string[];  // 已解鎖技能
-}
-```
+#### 7.3 Worktree 系統
+- **平行世界**: 每個 Worktree 視為平行世界
+- **獨立資源**: 每個世界有獨立的 MP 池
+- **切換成本**: 切換世界消耗 MP
+- **合併獎勵**: 合併世界獲得經驗值
 
-**公式**:
-```javascript
-// 升級所需經驗
-expToNextLevel = 100 * Math.pow(1.5, level - 1);
-
-// 等級提升獎勵
-onLevelUp() {
-  maxHp += 10;
-  maxMp += 10;
-  unlockNewSkill();  // 特定等級解鎖新技能
-}
-
-// MP 自動恢復
-mpRegen = {
-  outOfBattle: 1,    // 每秒 +1 MP
-  inBattle: 0.1      // 每秒 +0.1 MP
-};
-```
-
-### 2. Metadata 驅動設計
-
-**描述**: 將 RPG 元素儲存在 JSON 配置文件中
-
-**配置文件**:
-
-#### `rpg-config/skill-metadata.json`
-```json
-{
-  "code-generator": {
-    "displayName": "代碼生成術",
-    "icon": "⚔️",
-    "type": "attack",
-    "category": "basic",
-    "element": "creation",
-    "cost": { "mp": 15 },
-    "cooldown": 60,
-    "rewards": { "exp": 20, "gold": 10 },
-    "requirements": { "level": 1 },
-    "ui": {
-      "color": "#ff6b6b",
-      "animation": "slash"
-    }
-  }
-}
-```
-
-#### `rpg-config/agent-metadata.json`
-```json
-{
-  "code-guardian": {
-    "displayName": "代碼守護者",
-    "characterName": "CodeGuard",
-    "avatar": "🛡️",
-    "role": "tank",
-    "summonCost": { "mp": 30, "cooldown": 300 },
-    "baseStats": {
-      "hp": 150,
-      "mp": 100,
-      "attack": 60,
-      "defense": 90,
-      "speed": 50
-    }
-  }
-}
-```
-
-### 3. 技能冷卻系統
-
-**描述**: 技能使用後需要冷卻時間
-
-**實作**:
-```javascript
-// bridge/game-engine.js
-class GameEngine {
-  constructor() {
-    this.skillCooldowns = new Map();  // skillId → endTime
-  }
-
-  canUseSkill(skillId) {
-    const now = Date.now();
-    const cooldownEnd = this.skillCooldowns.get(skillId) || 0;
-
-    if (now < cooldownEnd) {
-      const remaining = Math.ceil((cooldownEnd - now) / 1000);
-      return {
-        allowed: false,
-        remaining: `${remaining}秒`
-      };
-    }
-
-    return { allowed: true };
-  }
-
-  startCooldown(skillId, duration) {
-    this.skillCooldowns.set(
-      skillId,
-      Date.now() + duration * 1000
-    );
-  }
-}
-```
-
-### 4. 經驗值與獎勵
-
-**描述**: 完成任務獲得經驗與金幣
-
-**獎勵來源**:
-- ✅ 使用 Skill (+經驗 +金幣)
-- ✅ 召喚 Agent (+經驗)
-- ✅ 完成對話 (+經驗)
-- ✅ 戰鬥勝利 (+經驗 +金幣，倍率加成)
-- ✅ 觸發組合技 (+額外獎勵)
+#### 7.4 持久化
+- **玩家資料**: 等級、屬性、統計數據
+- **夥伴資料**: 所有夥伴的狀態和成長
+- **技能數據**: 使用次數、冷卻狀態
+- **成就進度**: 解鎖狀態
+- **存檔位置**: `~/.rpg-cli/save-data.json`
 
 ---
 
-## 戰鬥系統
+## 使用場景
 
-### 1. 敵人生成系統
+### 場景 1: 修復 Bug
 
-**描述**: 根據 Prompt 複雜度自動生成敵人
-
-**敵人生成器**:
-```javascript
-class EnemyGenerator {
-  generateEnemy(prompt) {
-    const complexity = this.analyzeComplexity(prompt);
-    const category = this.categorizeTask(prompt);
-
-    return {
-      name: this.generateName(category, complexity),
-      level: complexity.level,        // 1-15
-      hp: complexity.level * 100 * enemyType.hpMultiplier,
-      weaknesses: enemyType.weaknesses,
-      resistances: enemyType.resistances
-    };
-  }
-}
+**玩家操作**:
+```
+用戶: "修復登入按鈕點擊無反應的問題"
 ```
 
-**複雜度分析**:
-- 長度因素 (prompt 長度)
-- 關鍵字複雜度 ('architecture', 'refactor', 'optimize')
-- 多步驟任務偵測
-- 技術棧數量
+**系統反應**:
+1. 分析 Prompt 複雜度 → 生成「🐛 Bug怪物 Lv.3」
+2. 顯示戰鬥畫面
+3. Claude 開始分析 → 使用 Read 工具（📖 讀心術）→ 發現弱點
+4. Claude 修改代碼 → 使用 Edit 工具（✏️ 改寫術）→ 造成傷害
+5. 擊敗敵人 → 獲得經驗值 +50、金幣 +10
 
-**敵人類型** (7種):
+**視覺呈現**:
+- 戰鬥畫面顯示敵人 HP 條下降
+- 技能施放動畫
+- 傷害數字彈出
+- 勝利特效
 
-| 類型 | 圖標 | HP倍率 | 弱點技能 | 特殊機制 |
-|------|------|--------|----------|----------|
-| code-task | 💻 | 1.0 | code-generator, code-reviewer | - |
-| bug-hunt | 🐛 | 1.5 | debug-helper, test-generator | counter_attack |
-| architecture | 🏰 | 2.0 | code-reviewer | multi_phase |
-| documentation | 📜 | 0.8 | doc-writer | - |
-| testing | 🧪 | 1.2 | test-generator | - |
-| optimization | ⚡ | 1.8 | code-reviewer, debug-helper | speed_boost |
-| general | ❓ | 1.0 | - | - |
+### 場景 2: 大型重構
 
-### 2. 戰鬥管理器
-
-**描述**: 回合制戰鬥流程控制
-
-**戰鬥流程**:
+**玩家操作**:
 ```
-用戶輸入 Prompt
-    ↓
-生成敵人 (根據複雜度)
-    ↓
-顯示敵人資訊 (名稱、等級、HP、弱點)
-    ↓
-[玩家回合]
-├─ 施放 Skill → 計算傷害 → 扣除敵人 HP
-├─ 召喚 Agent → 協同攻擊
-└─ 使用道具 (未來)
-    ↓
-[AI 處理中] (Claude Code 執行)
-    ↓
-[敵人回合] (可選)
-├─ 簡單敵人: 無反擊
-├─ 精英敵人: 反擊 (消耗玩家 MP)
-└─ Boss: 特殊攻擊
-    ↓
-檢查戰鬥結束
-├─ 敵人 HP = 0 → 勝利 → 獎勵
-└─ 繼續戰鬥
+用戶: "重構整個認證系統，改用 JWT 並確保向後兼容"
 ```
 
-### 3. 傷害計算系統
+**系統反應**:
+1. 複雜度分析 → 生成「🏗️ 架構惡魔 Lv.12」
+2. Claude 觸發 Plan Mode → 暫停戰鬥，顯示「🧙 戰術規劃」事件
+3. 用戶批准計劃 → 恢復戰鬥
+4. Claude 並行讀取多個文件 → 觸發「🔮 多重施法」（連擊加成）
+5. 長時間重構 → 顯示施法進度條
+6. 完成後獲得大量經驗值，可能升級
 
-**描述**: 基於技能、相性、弱點的傷害計算
+**特殊機制**:
+- Plan Mode 轉化為戰術規劃
+- 並行工具調用顯示為多重施法
+- 敵人等級高，戰鬥時間長
 
-**公式**:
-```javascript
-// 基礎傷害
-baseDamage = 100 + (skillMetadata.cost.mp * 3) + (player.level * 10);
+### 場景 3: 召喚夥伴協助
 
-// 相性倍率
-affinityMultiplier = affinity.getMultiplier(skill, enemy.type);
-// 例: code-reviewer vs bug-hunt = 1.5x
-
-// 弱點倍率
-weakMultiplier = enemy.weaknesses.includes(skill) ? 1.5 : 1.0;
-
-// 抗性倍率
-resistMultiplier = enemy.resistances.includes(skill) ? 0.5 : 1.0;
-
-// 最終傷害
-totalDamage = baseDamage * affinityMultiplier * weakMultiplier * resistMultiplier;
+**玩家操作**:
+```
+用戶: "幫我分析這個項目的性能瓶頸"
 ```
 
-### 4. 敵人 AI 系統
+**系統反應**:
+1. 生成「🔍 審查巨人 Lv.8」
+2. Claude 啟動 Explore Subagent → 顯示召喚動畫
+3. 「🌟 Explore 專家 Lv.5」加入戰鬥
+4. 夥伴自動行動：使用 Grep 搜索性能相關代碼
+5. 主角和夥伴輪流攻擊
+6. 戰鬥結束，夥伴獲得經驗值成長
 
-**描述**: 不同等級敵人的行為模式
+**夥伴行為**:
+- AI 自動選擇最適合的技能
+- 顯示夥伴的 HP/MP 狀態
+- 夥伴升級時顯示提示
 
-**AI 類型**:
+### 場景 4: 測試執行
 
-| AI 類型 | 目標優先順序 | 攻擊夥伴機率 | 特殊能力 |
-|---------|-------------|-------------|----------|
-| simple | ['player'] | 0% | 只攻擊玩家 |
-| elite | ['lowest_defense', 'player'] | 30% | 優先攻擊低防禦目標 |
-| boss | ['lowest_hp', 'highest_threat', 'player'] | 50% | 範圍攻擊 (AOE) |
-
----
-
-## 夥伴系統
-
-### 1. Subagent → 戰鬥夥伴
-
-**描述**: 將 Subagent 轉化為戰鬥夥伴，參與戰鬥
-
-**夥伴屬性**:
-```typescript
-interface BattleCompanion {
-  // 基本資訊
-  agentName: string;          // 'code-guardian'
-  characterName: string;       // 'CodeGuard'
-  title: string;              // '代碼守護者'
-  avatar: string;             // '🛡️'
-
-  // 戰鬥屬性
-  level: number;
-  hp: number;
-  maxHp: number;
-  mp: number;
-  maxMp: number;
-  attack: number;
-  defense: number;
-  speed: number;              // 決定行動順序
-  wisdom: number;
-
-  // 技能
-  skills: CompanionSkill[];
-  passiveAbilities: string[];
-
-  // 經驗
-  experience: number;
-  expToNextLevel: number;     // 100 * 1.3^(level-1)
-}
+**玩家操作**:
+```
+用戶: "執行所有測試"
+Claude: 使用 Bash 工具執行 "npm test"
 ```
 
-**夥伴角色範例**:
+**系統反應**:
+1. 識別為「🧪 試煉之法」（中等施法時間）
+2. 顯示施法進度條
+3. 流式輸出轉化為持續效果：
+   - ✅ Test 1 passed → 敵人 -10 HP
+   - ✅ Test 2 passed → 敵人 -10 HP
+   - ❌ Test 3 failed → 玩家 -5 HP（反噬傷害）
+   - ✅ Test 4 passed → 敵人 -10 HP
+4. 測試完成，累計傷害顯示
 
-| 夥伴 | 職業 | 特色 | 專屬技能 |
-|------|------|------|----------|
-| 🛡️ CodeGuard | Tank | 高防禦、護盾 | 安全掃描、守護之盾 |
-| ⚡ Speedy | Attacker | 高速度、連擊 | 快速重構、性能爆發 |
-| 📚 DocMaster | Support | 輔助、增益 | 知識共享、文檔治癒 |
+**視覺效果**:
+- 即時戰鬥日誌顯示每個測試結果
+- 通過的測試造成傷害動畫
+- 失敗的測試顯示反噬特效
 
-### 2. 夥伴 AI 系統
+### 場景 5: 組合技觸發
 
-**描述**: 夥伴自動行動的決策邏輯
-
-**決策流程**:
-```javascript
-class CompanionAI {
-  decideAction() {
-    // 優先級 1: 緊急支援
-    if (player.hp < player.maxHp * 0.3) {
-      return this.findBestSupportSkill();
-    }
-
-    // 優先級 2: 攻擊弱點
-    const effectiveSkills = this.findEffectiveSkills(enemy.type);
-    if (effectiveSkills.length > 0) {
-      return this.selectBestDamageSkill(effectiveSkills);
-    }
-
-    // 預設: 普通攻擊
-    return this.basicAttack();
-  }
-}
+**玩家操作**:
+```
+用戶: "創建新功能並寫測試"
 ```
 
-### 3. 夥伴成長系統
+**系統反應**:
+1. Claude 使用 Write 工具創建文件
+2. 緊接著使用 Write 工具創建測試文件
+3. 然後使用 Bash 執行測試
+4. 系統偵測到組合：Write → Write → Bash (test)
+5. 觸發組合技「📝 測試驅動開發」
+6. 傷害 +50%，獲得「完美主義者」Buff
 
-**描述**: 夥伴可以升級、獲得經驗
+**組合技效果**:
+- 特殊動畫和音效
+- 傷害大幅提升
+- 獲得臨時 Buff
+- 首次觸發解鎖成就
 
-**經驗來源**:
-- 戰鬥勝利: +50 EXP
-- 使用技能: +5 EXP
-- 造成傷害: damage / 10 EXP
-- 命中弱點: +20 EXP
+### 場景 6: 並行操作
+
+**玩家操作**:
+```
+Claude 並行調用 5 個工具：
+- Read file1.ts
+- Read file2.ts
+- Read file3.ts
+- Grep "function"
+- Glob "**/*.ts"
+```
+
+**系統反應**:
+1. 偵測到 5 個並行操作
+2. 觸發「🔮 多重施法」
+3. 顯示 5 個魔法同時施放的動畫
+4. 傷害加成 +25%
+5. 額外消耗 10 MP
+6. 完成後獲得「連擊勢頭」Buff（持續 2 回合）
+
+**視覺呈現**:
+- 5 個魔法陣同時出現
+- 多重攻擊特效
+- 連擊計數器
+
+### 場景 7: 背景任務
+
+**玩家操作**:
+```
+用戶: "建構專案"
+Claude: 使用 Bash 工具執行 "npm run build" (背景)
+```
+
+**系統反應**:
+1. 啟動「⚙️ 背景魔法：構築魔法」
+2. 消耗 12 MP
+3. 顯示「背景施法中...」指示器
+4. 戰鬥繼續進行
+5. 45 秒後，背景任務完成
+6. 自動觸發效果：對敵人造成 70 點傷害
+
+**優勢**:
+- 不阻塞戰鬥流程
+- 長時間任務可以在背景運行
+- 完成時獲得驚喜加成
+
+### 場景 8: 錯誤處理
+
+**玩家操作**:
+```
+Claude 嘗試寫入文件，但權限不足
+```
+
+**系統反應**:
+1. 工具執行失敗
+2. 觸發「⚠️ 技能反噬」事件
+3. 玩家受到反噬傷害 -15 HP
+4. 顯示錯誤訊息：「權限不足，無法寫入文件」
+5. 提供選項：
+   - 🔄 重試（消耗 5 MP）
+   - ❌ 取消
+
+**教育意義**:
+- 失敗有代價，鼓勵謹慎
+- 提供重試機制
+- 視覺化錯誤處理
+
+### 場景 9: 等級提升
+
+**玩家操作**:
+```
+完成多個任務，累積經驗值
+```
+
+**系統反應**:
+1. 經驗值達到升級門檻
+2. 顯示升級動畫
+3. 等級提升：Lv.5 → Lv.6
+4. 屬性提升：
+   - Max HP: 100 → 120
+   - Max MP: 100 → 115
+5. HP/MP 全滿回復
+6. 解鎖新技能提示
+7. 顯示升級統計
 
 **升級獎勵**:
-```javascript
-onLevelUp(companion) {
-  companion.maxHp += 20;
-  companion.maxMp += 15;
-  companion.attack += 5;
-  companion.defense += 5;
-  companion.speed += 2;
-  companion.wisdom += 5;
+- 屬性永久提升
+- 可能解鎖新技能
+- 成就進度更新
 
-  // 特殊等級解鎖
-  if (companion.level === 5) unlockUltimateSkill();
-  if (companion.level === 10) unlockPassiveAbility();
-}
+### 場景 10: Worktree 切換
+
+**玩家操作**:
+```
+用戶: "切換到 feature-branch worktree"
 ```
 
-### 4. MP 管理
+**系統反應**:
+1. 識別為 Worktree 切換
+2. 顯示「🌀 平行世界切換」
+3. 消耗 5 MP（全局 MP）
+4. 切換到新世界
+5. 顯示新世界的狀態
+6. 戰鬥暫停（Worktree 操作在戰鬥外進行）
 
-**描述**: 夥伴 MP 獨立於玩家
-
-**規則**:
-- ❌ 戰鬥中不自動恢復
-- ✅ 戰鬥結束完全恢復
-- ✅ 技能消耗夥伴自己的 MP
-- ✅ 初始 MP = maxMp
-
-### 5. 槽位限制
-
-**描述**: 最多同時召喚 2 個夥伴
-
-```javascript
-maxCompanions = 2;
-
-canSummonCompanion() {
-  if (activeCompanions.length >= 2) {
-    return { error: '夥伴槽位已滿（最多2個）' };
-  }
-  if (player.mp < summonCost) {
-    return { error: 'MP 不足' };
-  }
-  return { allowed: true };
-}
-```
-
----
-
-## 召喚獸系統
-
-### 1. 召喚獸 vs 夥伴
-
-**對比**:
-
-| 特性 | 戰鬥夥伴 | 召喚獸 |
-|-----|---------|--------|
-| 來源 | Subagent | Skill/道具/組合技/MCP |
-| 持續時間 | 戰鬥全程 | 1-3回合或單次 |
-| 成長性 | 有 | 無 |
-| 槽位 | 最多2個 | 最多1個（獨立） |
-| 用途 | 穩定支援 | 爆發/緊急 |
-
-### 2. 召喚獸分類
-
-#### 類型 1: 技能召喚獸
-
-**範例**: 代碼之龍 (Code Dragon)
-
-```json
-{
-  "summon-code-dragon": {
-    "displayName": "代碼之龍",
-    "icon": "🐉",
-    "type": "offensive",
-    "summonCost": { "mp": 80, "cooldown": 600 },
-    "behavior": {
-      "actionType": "immediate",
-      "duration": 1
-    },
-    "skills": [{
-      "name": "龍息",
-      "effect": {
-        "damage": "300 + player.level * 20",
-        "effectiveness": {
-          "code-task": 2.5,
-          "architecture": 2.0
-        }
-      }
-    }]
-  }
-}
-```
-
-#### 類型 2: 組合技召喚獸
-
-**範例**: 不死鳥 (Phoenix)
-
-**觸發**: 完成組合技時 50% 機率召喚
-
-```json
-{
-  "combo-summon-phoenix": {
-    "displayName": "不死鳥",
-    "icon": "🔥🦅",
-    "type": "support",
-    "behavior": {
-      "actionType": "automatic",
-      "duration": 2
-    },
-    "skills": [{
-      "name": "浴火重生",
-      "effect": {
-        "heal": { "player": 50, "companions": 30 },
-        "revival": { "chance": 1.0, "hpPercent": 50 }
-      }
-    }]
-  }
-}
-```
-
-#### 類型 3: MCP 工具召喚獸
-
-**範例**: 資料庫魔像 (Database Golem)
-
-**觸發**: 使用 MCP 資料庫工具時自動召喚
-
-#### 類型 4: 道具召喚獸
-
-**範例**: 幫助精靈 (Helper Fairy)
-
-**觸發**: 使用召喚道具
-
-### 3. 行為類型
-
-| 行為類型 | 說明 | 持續 | 範例 |
-|---------|------|------|------|
-| immediate | 召喚後立即施放技能並離去 | 1回合 | 代碼之龍 |
-| automatic | 召喚後每回合自動施放技能 | 2-3回合 | 不死鳥、治癒精靈 |
-| passive | 提供被動效果 | 3回合 | 資料庫魔像 |
-| interactive | 等待玩家指令 | 2回合 | 時間魔導師 |
-
-### 4. 槽位規則
-
-```javascript
-battleSlots: {
-  companions: {
-    max: 2,
-    independent: false
-  },
-  summons: {
-    max: 1,
-    independent: true  // 與夥伴槽位獨立
-  }
-}
-
-// 最大同時在場單位
-maxUnits = player(1) + companions(2) + summon(1) = 4
-```
-
----
-
-## 進階功能
-
-### 1. 組合技系統
-
-**描述**: 連續使用特定技能觸發組合技
-
-**組合範例**:
-
-| 組合技 | 技能組合 | 效果 |
-|--------|---------|------|
-| 完美代碼鏈 | code-generator → code-reviewer → test-generator | 傷害 +50%, 額外 EXP +100 |
-| 品質三重奏 | code-reviewer → debug-helper → test-generator | 無視抗性, Gold +50 |
-| 文檔大師 | doc-writer → doc-writer → code-reviewer | MP 消耗 -50% |
-
-**實作**:
-```javascript
-class ComboTracker {
-  trackSkillUse(skillId) {
-    this.recentSkills.push({
-      skill: skillId,
-      timestamp: Date.now()
-    });
-
-    // 檢查組合
-    const combo = this.detectCombo(this.recentSkills);
-    if (combo) {
-      this.triggerCombo(combo);
-    }
-  }
-}
-```
-
-### 2. 成就系統
-
-**描述**: 完成特定條件解鎖成就
-
-**成就分類**:
-- 🏆 戰鬥成就: 擊敗100個敵人、首次擊敗Boss
-- ⚔️ 技能成就: 使用特定技能50次、觸發組合技
-- 📈 成長成就: 達到等級10、20、30、50
-- 🎯 特殊成就: 無傷擊敗Boss、單回合造成1000+傷害
-
-**獎勵**:
-- 稱號解鎖
-- 特殊圖標
-- 金幣獎勵
-- 經驗值加成
-
-### 3. Worktree 平行世界系統
-
-**描述**: Git Worktree 的 RPG 化包裝
-
-**映射**:
-- Worktree → 平行世界/時間線
-- Branch → 任務線/劇情線
-- Checkout → 傳送/切換世界
-- Merge → 時空融合
-
-**世界類型**:
-
-| 世界 | 圖標 | MP 消耗 | 用途 |
-|------|------|---------|------|
-| 主世界 (main) | 🏰 | - | 穩定生產環境 |
-| 冒險世界 (feature/*) | ⚔️ | 10 | 開發新功能 |
-| 修復世界 (fix/*) | 🛡️ | 15 | Bug 修復 |
-| 實驗世界 (experiment/*) | 🔮 | 5 | 技術實驗 |
-| 緊急世界 (hotfix/*) | 🚨 | 20 | 緊急修復 |
-
-**資源管理**:
-- ✅ 使用全局 MP（非戰鬥 MP）
-- ❌ 戰鬥中禁用 Worktree 操作
-- ✅ 只能查看，不能操作
-
-**操作**:
-- 創建新世界: -10 MP
-- 切換世界: -5 MP
-- 合併世界: -20 MP
-- 刪除世界: 免費
-
-### 4. 持久化系統
-
-**描述**: 保存玩家進度
-
-**儲存內容**:
-```json
-{
-  "player": {
-    "name": "冒險者",
-    "level": 5,
-    "hp": 80,
-    "maxHp": 100,
-    "mp": 60,
-    "maxMp": 100,
-    "exp": 350,
-    "gold": 1250
-  },
-  "skills": {
-    "unlocked": ["code-generator", "code-reviewer"],
-    "cooldowns": {
-      "code-generator": 1675678900000
-    }
-  },
-  "companions": {
-    "code-guardian": {
-      "level": 3,
-      "experience": 150
-    }
-  },
-  "achievements": ["first_battle", "level_5"],
-  "stats": {
-    "totalDialogues": 128,
-    "totalBattles": 45,
-    "battlesWon": 42
-  }
-}
-```
-
-**儲存位置**:
-- LocalStorage (前端緩存)
-- SQLite (可選，後端持久化)
-- 雲端同步 (Phase 3 可選)
+**Worktree 特性**:
+- 每個世界獨立 MP 池
+- 只能在戰鬥外操作
+- 合併世界獲得獎勵
 
 ---
 
 ## 開發路線圖
 
-### Phase 1: 核心基礎 (Week 1-2)
+### Phase 1: 基礎架構（Week 1-2）
+**目標**: 建立三層架構和基礎通訊
 
-**目標**: 建立可運行的基礎系統
+- [ ] Bridge Layer 基礎（啟動 CLI、捕獲輸出）
+- [ ] WebSocket 通訊
+- [ ] UI 基礎框架（React + TypeScript）
+- [ ] 玩家基礎屬性系統
+- [ ] 簡單的 HP/MP 顯示
 
-✅ **完成標準**:
-- Bridge Layer 可啟動 Claude Code CLI
-- React UI 可顯示對話
-- WebSocket 實時通訊正常
-- 創建 3-5 個官方格式 Skills
-- 基本 HP/MP 顯示（固定值）
+### Phase 2: 技能與遊戲化（Week 3-4）
+**目標**: 實作技能系統和資源管理
 
-**不包含**: 動畫、遊戲邏輯、戰鬥系統
+- [ ] 技能偵測與追蹤
+- [ ] MP 消耗計算
+- [ ] 冷卻系統
+- [ ] 經驗值和升級
+- [ ] 技能元數據管理
+- [ ] 基礎 UI 元素（進度條、等級顯示）
 
----
+### Phase 2.5: 戰鬥系統基礎（Week 5-6）
+**目標**: 實作完整戰鬥流程
 
-### Phase 2: 遊戲化核心 (Week 3-4)
+- [ ] 敵人生成器（複雜度分析）
+- [ ] 戰鬥管理器（回合制）
+- [ ] 基礎傷害計算
+- [ ] 戰鬥 UI（敵人顯示、戰鬥日誌）
+- [ ] 勝利獎勵系統
+- [ ] 互動事件基礎處理（Plan Mode、錯誤）
+- [ ] 工具執行 RPG 化（P1 工具）
 
-**目標**: 添加 RPG 元素
+### Phase 3: 完善與擴展（Week 7-10）
+**目標**: 實作夥伴、召喚獸、進階功能
 
-✅ **完成標準**:
-- Metadata 系統 (skill-metadata.json, agent-metadata.json)
-- GameEngine 實作（MP 消耗、經驗值、冷卻）
-- UI 更新（技能按鈕、進度條動畫）
-- Agent 召喚基礎（偵測 Subagent 調用）
-- MP 自動恢復機制
+- [ ] 夥伴系統（Subagent 轉化）
+- [ ] 夥伴 AI 和獨立成長
+- [ ] 召喚獸系統（4 種類型）
+- [ ] 組合技系統
+- [ ] 成就系統
+- [ ] Worktree 整合
+- [ ] 互動事件完整 RPG 化
+- [ ] 工具執行進階功能（P2 工具、並行、流式）
 
-**不包含**: 戰鬥系統、夥伴系統
+### Phase 4: 優化與特效（Week 11+）
+**目標**: 提升體驗和視覺效果
 
----
-
-### Phase 2.5: 戰鬥系統擴展 (Week 5-6)
-
-**目標**: 完整戰鬥體驗
-
-✅ **完成標準**:
-- EnemyGenerator (根據 Prompt 生成敵人)
-- BattleManager (戰鬥流程管理)
-- DamageCalculator (傷害計算、相性系統)
-- 夥伴系統基礎 (Subagent → 戰鬥夥伴)
-- 召喚獸基礎 (技能召喚獸)
-- 戰鬥 UI (敵人顯示、戰鬥日誌、傷害數字)
-
-**不包含**: 組合技、成就系統
-
----
-
-### Phase 3: 進階功能 (Week 7-10)
-
-**目標**: 完善系統與整合
-
-✅ **完成標準**:
-- 組合技系統
-- 成就系統
-- Worktree 平行世界整合
-- 召喚獸完善（組合技召喚、MCP 召喚、道具召喚）
-- 持久化系統 (LocalStorage + 可選 SQLite)
-- 統計與排行榜
-- UI 完善與優化
+- [ ] 動畫和特效（Framer Motion）
+- [ ] 音效系統（可選）
+- [ ] 數據持久化
+- [ ] 性能優化
+- [ ] 工具執行 P3 功能（網絡、背景任務）
+- [ ] 自定義配置
+- [ ] 文檔和教學
 
 ---
 
-## 驗收標準總覽
+## 驗收標準
 
-### 基礎功能驗收
+### 基礎功能
+- ✅ Claude Code CLI 正常運作
+- ✅ 技能使用消耗 MP
+- ✅ 執行任務獲得經驗值
+- ✅ 等級提升時屬性增加
+- ✅ 所有工具調用有遊戲化反饋
 
-```bash
-# 1. 啟動系統
-npm run bridge    # Bridge Layer 啟動
-npm run dev       # React UI 啟動
+### 戰鬥系統
+- ✅ 輸入 Prompt 自動生成敵人
+- ✅ 工具使用造成傷害
+- ✅ 回合制戰鬥流程正確
+- ✅ 擊敗敵人獲得獎勵
+- ✅ 戰鬥畫面視覺化完整
 
-# 2. 對話測試
-輸入: "請幫我寫一個 React 組件"
-預期: AI 正常回應，對話顯示
+### 夥伴系統
+- ✅ Task 工具召喚夥伴
+- ✅ 夥伴 AI 自動行動
+- ✅ 夥伴獨立成長
+- ✅ 最多 2 個夥伴同時戰鬥
 
-# 3. 技能測試
-點擊: "代碼生成術" 按鈕
-預期:
-  - MP 扣除 15
-  - 技能進入冷卻 60 秒
-  - AI 執行 code-generator skill
-  - 完成後獲得 EXP +20, Gold +10
+### 召喚獸系統
+- ✅ 特定條件觸發召喚
+- ✅ 4 種行為類型正常運作
+- ✅ 召喚獸效果強大
+- ✅ 最多 1 個召喚獸
 
-# 4. 升級測試
-獲得足夠經驗值
-預期:
-  - 升級動畫播放
-  - MaxHP +10, MaxMP +10
-  - 等級顯示更新
-```
+### 互動事件
+- ✅ Plan Mode RPG 化
+- ✅ AskUserQuestion 轉化為發問攻擊
+- ✅ 錯誤處理顯示反噬
+- ✅ 所有主要工具有對應魔法
 
-### 戰鬥系統驗收
-
-```bash
-# 5. 戰鬥觸發
-輸入: "幫我重構這段複雜的代碼..."
-預期:
-  - 生成敵人（等級 8+）
-  - 顯示敵人 HP/弱點
-  - 進入戰鬥畫面
-
-# 6. 傷害計算
-使用弱點技能攻擊 Bug 怪物
-預期:
-  - 傷害 ×1.5 倍率
-  - 顯示 "弱點攻擊！"
-  - 敵人 HP 減少
-
-# 7. 戰鬥勝利
-敵人 HP = 0
-預期:
-  - 勝利動畫
-  - EXP/Gold 獎勵 (有倍率加成)
-  - 戰鬥日誌記錄
-```
-
-### 夥伴系統驗收
-
-```bash
-# 8. 召喚夥伴
-召喚 CodeGuard Agent
-預期:
-  - MP 扣除 30
-  - 夥伴加入戰鬥
-  - 顯示夥伴狀態列 (HP/MP)
-
-# 9. 夥伴自動行動
-戰鬥中輪到夥伴回合
-預期:
-  - 夥伴 AI 自動選擇技能
-  - 施放技能 (扣除夥伴 MP)
-  - 造成傷害或提供支援
-
-# 10. 夥伴升級
-夥伴獲得足夠經驗
-預期:
-  - 夥伴升級動畫
-  - 屬性提升
-  - 等級 5/10 解鎖新技能
-```
+### 進階功能
+- ✅ 組合技能觸發
+- ✅ 成就系統運作
+- ✅ Worktree 整合
+- ✅ 資料持久化
 
 ---
 
-## 關鍵設計原則
-
-### 1. 分層架構
-- UI 層只負責顯示
-- Bridge 層處理遊戲邏輯
-- Claude Code 保持官方標準
-
-### 2. Metadata 驅動
-- RPG 元素在 JSON 配置
-- 易於擴展和調整
-- 不侵入 Claude Code
-
-### 3. 漸進增強
-- Phase 1 可獨立運行
-- 每個 Phase 增加功能
-- 向後兼容
-
-### 4. 官方格式優先
-- Skills 嚴格遵守官方規範
-- Subagents 使用標準格式
-- 不修改 Claude Code 行為
-
----
-
-**版本**: v2.0
 **最後更新**: 2026-02-05
-**維護者**: RPG-CLI Team
