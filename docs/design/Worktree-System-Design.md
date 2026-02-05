@@ -69,6 +69,65 @@ Merge            →    時空融合
   └─ 緊急世界 (hotfix/*) - 緊急修復
 ```
 
+### 資源管理與戰鬥系統分離
+
+**重要**: Worktree 操作與戰鬥系統使用獨立的 MP 池：
+
+```javascript
+// Worktree MP 系統設計
+worktreeSystem: {
+  // 使用全局 MP（非戰鬥 MP）
+  mpPool: 'global',
+
+  // 只能在戰鬥外操作
+  availableWhen: 'outOfBattle',
+
+  // MP 消耗規則
+  costs: {
+    create: 10,      // 創建新世界: -10 全局 MP
+    switch: 5,       // 切換世界: -5 全局 MP
+    merge: 20,       // 合併世界: -20 全局 MP
+    delete: 0        // 刪除世界: 免費
+  },
+
+  // 戰鬥中限制
+  battleRestrictions: {
+    canCreate: false,
+    canSwitch: false,
+    canMerge: false,
+    canView: true    // 只能查看，不能操作
+  }
+}
+
+// 操作前檢查
+function canPerformWorktreeAction(action) {
+  // 戰鬥中禁用所有操作（除了查看）
+  if (gameState.inBattle) {
+    return {
+      allowed: false,
+      error: '⚔️ 戰鬥中無法操作平行世界！請先完成當前戰鬥。'
+    };
+  }
+
+  // 檢查全局 MP
+  const cost = worktreeSystem.costs[action];
+  if (player.mp < cost) {
+    return {
+      allowed: false,
+      error: `⚡ MP 不足！需要 ${cost} MP，當前 ${player.mp} MP。`
+    };
+  }
+
+  return { allowed: true };
+}
+```
+
+**設計理由**:
+- **避免衝突**: Worktree 操作是開發流程管理，與戰鬥的技能/召喚系統性質不同
+- **專注戰鬥**: 戰鬥中玩家應專注戰術決策，不被 Git 操作干擾
+- **資源分離**: 全局 MP 用於日常開發操作，戰鬥 MP 用於技能施放
+- **UX 優化**: 防止在緊張的戰鬥中誤觸 Worktree 功能
+
 ---
 
 ## 平行世界系統

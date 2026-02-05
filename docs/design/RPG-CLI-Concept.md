@@ -23,24 +23,50 @@
 
 ## 技術架構
 
-### 技術堆疊建議
+### 技術堆疊（最終確定）
 
+**前端技術棧**:
 ```
 前端層:
-├── React/Vue.js (UI框架)
-├── PixiJS/Phaser (遊戲引擎) 或純CSS RPG風格
+├── React 18 (UI框架)
+├── TypeScript (類型安全)
+├── Vite (構建工具，快速開發體驗)
+├── Tailwind CSS (樣式系統)
+│   └── 支援 Pixel Art 風格的自訂配置
+├── Framer Motion (動畫系統)
+│   ├── 組件過渡動畫
+│   ├── 戰鬥特效動畫
+│   └── 手勢互動
+├── Zustand (輕量狀態管理)
 ├── WebSocket (實時通訊)
-└── LocalStorage/IndexedDB (本地數據存儲)
+└── IndexedDB (本地數據存儲)
+```
 
+**後端技術棧**:
+```
 後端層:
 ├── Node.js + Express (API服務器)
 ├── child_process (調用CLI工具)
-└── WebSocket Server (實時推送)
+├── WebSocket Server (實時推送)
+└── SQLite (可選，本地持久化)
 
 CLI整合:
-├── claude-cli
-└── gemini-cli
+└── Claude Code CLI (官方CLI工具)
 ```
+
+**❌ 不使用的技術**:
+- ~~PixiJS~~ - Canvas 渲染引擎，對本專案過重
+- ~~Phaser~~ - 完整遊戲引擎，功能過多且不必要
+- ~~Vue.js~~ - 統一使用 React 生態系
+
+**✅ 選擇理由**:
+- **Framer Motion**: 專為 React 設計，API 簡潔，足以處理所有 UI 動畫需求
+- **Tailwind CSS**:
+  - 可透過 `@apply` 和自訂配置實現 Pixel Art 風格
+  - 性能優異，支援 JIT 編譯
+  - 開發效率高，不需額外學習遊戲引擎
+- **技術棧簡潔**: 避免過度工程化，降低學習成本和維護複雜度
+- **生態系完整**: React + TypeScript + Tailwind 已是業界標準組合
 
 ### 系統架構圖
 
