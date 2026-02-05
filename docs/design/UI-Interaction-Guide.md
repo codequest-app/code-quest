@@ -606,6 +606,100 @@ EXP ████████░░ 350/500
 
 ## UI元素互動細節
 
+### 數值顯示格式規範
+
+**重要**: 為確保 UI 一致性，所有 HP/MP/EXP 顯示必須遵循以下標準格式：
+
+#### 玩家狀態列（頂部狀態欄）
+
+```
+┌─────────────────────────────────┐
+│ Lv.5 冒險者                      │
+│ ❤️ HP: 80/100  ████████░░       │
+│ ⚡ MP: 60/100  ██████░░░░       │
+│ ⭐ EXP: 300/500 ███░░░░░░░      │
+└─────────────────────────────────┘
+```
+
+**格式規則**:
+- 數值格式: `當前值/最大值`，數字右對齊
+- 進度條: 10 格方塊，填充 `█` 表示已滿，`░` 表示空缺
+- 圖標在左，數值在中，進度條在右
+- 顏色: HP (紅色 #E74C3C), MP (藍色 #3498DB), EXP (金色 #F39C12)
+
+#### 夥伴狀態（戰鬥畫面）
+
+```
+┌──────────────────┐
+│ 🛡️ CodeGuard    │
+│ Lv.3             │
+│ HP: ███░ 75/100  │
+│ MP: ██░░ 50/100  │
+└──────────────────┘
+```
+
+**格式規則**:
+- 緊湊佈局，進度條在左，數值在右
+- 進度條: 4 格簡化版（戰鬥中節省空間）
+- 顏色與玩家相同
+
+#### 敵人狀態（戰鬥畫面）
+
+```
+┌─────────────────────────┐
+│ 🐛 強大的Bug怪物 Lv.8   │
+│ HP: ████████░░ 800/1000 │
+│ 弱點: 🔍 🧪             │
+└─────────────────────────┘
+```
+
+**格式規則**:
+- 名稱 + 等級在第一行
+- HP 條: 10 格方塊
+- 弱點圖標列表在下方
+- HP 條顏色: 橙紅色 #E67E22（區分敵我）
+
+#### 實作範例 (React)
+
+```tsx
+// HP/MP 進度條組件
+interface ProgressBarProps {
+  value: number;
+  max: number;
+  size?: 'compact' | 'normal';  // 4格或10格
+  color: 'hp' | 'mp' | 'exp' | 'enemy';
+  showNumbers?: boolean;
+}
+
+function ProgressBar({ value, max, size = 'normal', color, showNumbers = true }: ProgressBarProps) {
+  const blocks = size === 'compact' ? 4 : 10;
+  const filled = Math.floor((value / max) * blocks);
+  const empty = blocks - filled;
+
+  const colors = {
+    hp: '#E74C3C',
+    mp: '#3498DB',
+    exp: '#F39C12',
+    enemy: '#E67E22'
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-pixel">
+        {'█'.repeat(filled)}{'░'.repeat(empty)}
+      </span>
+      {showNumbers && (
+        <span className="text-xs font-mono" style={{ color: colors[color] }}>
+          {value}/{max}
+        </span>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
 ### 1. 角色屬性面板（點擊Lv.5 勇者）
 
 ```
