@@ -1,114 +1,8 @@
-# RPG-CLI 戰鬥系統設計
+# Battle System - Implementation
 
-**基於**: RPG-CLI-Architecture-v2.md, Feature-Planning-v2.md
-**日期**: 2026-02-05
-**狀態**: 設計階段
-**實作階段**: Phase 2.5 (Week 4-5)
+## 敵人生成器 (EnemyGenerator)
 
----
-
-## 核心概念
-
-### 戰鬥系統映射
-
-將 AI 對話過程轉化為 RPG 戰鬥體驗：
-
-| AI 交互元素 | 戰鬥系統元素 | 說明 |
-|-----------|------------|------|
-| 用戶 Prompt | 遭遇敵人 | 每個任務/問題生成對應敵人 |
-| 任務複雜度 | 敵人等級/HP | 複雜任務 = 強力敵人 |
-| 使用 Skill | 攻擊技能 | Skills 造成傷害 |
-| 召喚 Agent | 召喚隊友 | Agents 協同戰鬥 |
-| AI 處理過程 | 戰鬥回合 | Streaming 輸出 = 回合進行 |
-| Token 消耗 | MP 消耗 | 資源管理 |
-| 任務完成 | 戰鬥勝利 | 獲得獎勵 |
-| 任務失敗/錯誤 | 受到傷害 | HP 減少 |
-
-### 設計哲學
-
-**✅ 保持簡潔**:
-- 戰鬥是視覺化包裝，不改變 AI 核心功能
-- 自動化戰鬥流程，不增加用戶負擔
-- 保留直接對話模式（可選關閉戰鬥模式）
-
-**✅ 增強體驗**:
-- 任務難度視覺化
-- 進度反饋更直觀
-- 增加成就感和樂趣
-
-**✅ 鼓勵策略**:
-- 技能相性系統
-- 組合技在戰鬥中更有價值
-- 資源管理更重要
-
----
-
-## 系統架構
-
-### 戰鬥流程圖
-
-```
-用戶輸入 Prompt
-    ↓
-[敵人生成器] 分析 Prompt
-    ├─ 複雜度計算
-    ├─ 任務分類
-    └─ 生成敵人數據
-    ↓
-[戰鬥初始化]
-    ├─ 顯示敵人資訊
-    ├─ 分析弱點/抵抗
-    └─ 進入戰鬥界面
-    ↓
-[玩家回合] 選擇行動
-    ├─ 施放 Skill → 計算傷害 → 扣除敵人 HP
-    ├─ 召喚 Agent → 協同攻擊
-    └─ 使用道具 (未來擴展)
-    ↓
-[AI 處理] Claude Code 執行
-    ├─ Streaming 輸出 → 視覺化為攻擊動畫
-    └─ 更新戰鬥日誌
-    ↓
-[敵人回合] (可選)
-    ├─ 複雜任務 → 敵人反擊 (消耗 MP/HP)
-    ├─ 簡單任務 → 無反擊
-    └─ 更新戰鬥日誌
-    ↓
-[檢查戰鬥結束]
-    ├─ 敵人 HP = 0 → 勝利 → 獎勵
-    ├─ 玩家 HP = 0 → 失敗 → 重試/跳過
-    └─ 繼續戰鬥 → 下一回合
-```
-
-### 組件架構
-
-```
-bridge/
-├── battle/
-│   ├── EnemyGenerator.js       # 敵人生成器
-│   ├── BattleManager.js         # 戰鬥管理器
-│   ├── DamageCalculator.js      # 傷害計算
-│   └── AffinitySystem.js        # 相性系統
-
-ui/src/components/Battle/
-├── BattleScreen.tsx             # 戰鬥主畫面
-├── EnemyDisplay.tsx             # 敵人展示
-├── BattleLog.tsx                # 戰鬥日誌
-├── ActionMenu.tsx               # 行動選單
-├── DamageNumber.tsx             # 傷害數字動畫
-└── VictoryScreen.tsx            # 勝利畫面
-
-rpg-config/
-├── battle-system.json           # 戰鬥系統配置
-├── enemy-types.json             # 敵人類型定義
-└── affinities.json              # 相性表
-```
-
----
-
-## 敵人生成系統
-
-### 複雜度分析
+### 完整實現
 
 **檔案**: `bridge/battle/EnemyGenerator.js`
 
@@ -335,7 +229,9 @@ module.exports = EnemyGenerator;
 
 ---
 
-## 戰鬥管理器
+## 戰鬥管理器 (BattleManager)
+
+### 完整實現
 
 **檔案**: `bridge/battle/BattleManager.js`
 
@@ -572,7 +468,9 @@ module.exports = BattleManager;
 
 ---
 
-## 傷害計算系統
+## 傷害計算器 (DamageCalculator)
+
+### 完整實現
 
 **檔案**: `bridge/battle/DamageCalculator.js`
 
@@ -658,7 +556,9 @@ module.exports = DamageCalculator;
 
 ---
 
-## 相性系統
+## 相性系統 (AffinitySystem)
+
+### 完整實現
 
 **檔案**: `bridge/battle/AffinitySystem.js`
 
@@ -749,6 +649,310 @@ class AffinitySystem {
 }
 
 module.exports = AffinitySystem;
+```
+
+---
+
+## UI 組件實現
+
+### BattleScreen 組件
+
+**檔案**: `ui/src/components/Battle/BattleScreen.tsx`
+
+```tsx
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGameState } from '../../hooks/useGameState';
+import EnemyDisplay from './EnemyDisplay';
+import BattleLog from './BattleLog';
+import ActionMenu from './ActionMenu';
+import VictoryScreen from './VictoryScreen';
+import DamageNumber from './DamageNumber';
+
+interface BattleScreenProps {
+  battle: Battle;
+  onSkillCast: (skillName: string) => void;
+  onSummonAgent: (agentName: string) => void;
+}
+
+const BattleScreen: React.FC<BattleScreenProps> = ({
+  battle,
+  onSkillCast,
+  onSummonAgent
+}) => {
+  const { player } = useGameState();
+  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
+  const [showVictory, setShowVictory] = useState(false);
+
+  useEffect(() => {
+    if (battle.status === 'victory') {
+      setTimeout(() => setShowVictory(true), 1500);
+    }
+  }, [battle.status]);
+
+  const handleDamageDealt = (damage: number, isWeak: boolean) => {
+    const popup: DamagePopup = {
+      id: Date.now(),
+      value: damage,
+      isWeak,
+      position: { x: 300, y: 200 }
+    };
+
+    setDamagePopups(prev => [...prev, popup]);
+
+    // 1 秒後移除
+    setTimeout(() => {
+      setDamagePopups(prev => prev.filter(p => p.id !== popup.id));
+    }, 1000);
+  };
+
+  return (
+    <div className="battle-screen pixel-art">
+      {/* 背景 */}
+      <div className="battle-background" />
+
+      {/* 敵人區域 */}
+      <motion.div
+        className="enemy-area"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <EnemyDisplay enemy={battle.enemy} />
+      </motion.div>
+
+      {/* 傷害數字 */}
+      <AnimatePresence>
+        {damagePopups.map(popup => (
+          <DamageNumber
+            key={popup.id}
+            value={popup.value}
+            isWeak={popup.isWeak}
+            position={popup.position}
+          />
+        ))}
+      </AnimatePresence>
+
+      {/* 戰鬥日誌 */}
+      <div className="battle-log-container">
+        <BattleLog entries={battle.log} />
+      </div>
+
+      {/* 行動選單 */}
+      <motion.div
+        className="action-menu-container"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <ActionMenu
+          player={player}
+          enemy={battle.enemy}
+          onSkillCast={onSkillCast}
+          onSummonAgent={onSummonAgent}
+        />
+      </motion.div>
+
+      {/* 勝利畫面 */}
+      <AnimatePresence>
+        {showVictory && (
+          <VictoryScreen
+            rewards={battle.enemy.rewards}
+            onClose={() => setShowVictory(false)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default BattleScreen;
+```
+
+---
+
+### EnemyDisplay 組件
+
+**檔案**: `ui/src/components/Battle/EnemyDisplay.tsx`
+
+```tsx
+import React from 'react';
+import { motion } from 'framer-motion';
+import ProgressBar from '../Common/ProgressBar';
+
+interface EnemyDisplayProps {
+  enemy: Enemy;
+}
+
+const EnemyDisplay: React.FC<EnemyDisplayProps> = ({ enemy }) => {
+  const hpPercentage = (enemy.hp / enemy.maxHp) * 100;
+
+  return (
+    <div className="enemy-display">
+      {/* 敵人圖示 */}
+      <motion.div
+        className="enemy-sprite"
+        animate={{
+          y: [0, -10, 0],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      >
+        <div className="enemy-icon">{enemy.icon}</div>
+      </motion.div>
+
+      {/* 敵人資訊 */}
+      <div className="enemy-info">
+        <div className="enemy-name-level">
+          <span className="enemy-name">{enemy.name}</span>
+          <span className="enemy-level">Lv.{enemy.level}</span>
+        </div>
+
+        {/* HP 條 */}
+        <div className="enemy-hp">
+          <ProgressBar
+            value={enemy.hp}
+            max={enemy.maxHp}
+            color="red"
+            showNumbers
+          />
+        </div>
+
+        {/* 元素類型 */}
+        <div className="enemy-element">
+          <span className="element-badge" data-element={enemy.element}>
+            {enemy.element}
+          </span>
+        </div>
+
+        {/* 弱點提示 */}
+        {enemy.weaknesses.length > 0 && (
+          <div className="enemy-weaknesses">
+            <span className="label">弱點:</span>
+            {enemy.weaknesses.map(w => (
+              <span key={w} className="weakness-tag">{w}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default EnemyDisplay;
+```
+
+---
+
+### BattleLog 組件
+
+**檔案**: `ui/src/components/Battle/BattleLog.tsx`
+
+```tsx
+import React, { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface BattleLogProps {
+  entries: BattleLogEntry[];
+}
+
+const BattleLog: React.FC<BattleLogProps> = ({ entries }) => {
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 自動滾動到最新
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [entries]);
+
+  const getLogClass = (type: string) => {
+    const classes: Record<string, string> = {
+      encounter: 'log-encounter',
+      player_attack: 'log-player',
+      agent_attack: 'log-agent',
+      enemy_attack: 'log-enemy',
+      critical: 'log-critical',
+      victory: 'log-victory',
+      defeat: 'log-defeat',
+      info: 'log-info',
+      reward: 'log-reward'
+    };
+    return classes[type] || 'log-normal';
+  };
+
+  return (
+    <div className="battle-log" ref={logRef}>
+      <AnimatePresence initial={false}>
+        {entries.map((entry, index) => (
+          <motion.div
+            key={`${entry.turn}-${index}`}
+            className={`log-entry ${getLogClass(entry.type)}`}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="log-turn">[{entry.turn}]</span>
+            <span className="log-message">{entry.message}</span>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default BattleLog;
+```
+
+---
+
+### DamageNumber 組件
+
+**檔案**: `ui/src/components/Battle/DamageNumber.tsx`
+
+```tsx
+import React from 'react';
+import { motion } from 'framer-motion';
+
+interface DamageNumberProps {
+  value: number;
+  isWeak: boolean;
+  position: { x: number; y: number };
+}
+
+const DamageNumber: React.FC<DamageNumberProps> = ({
+  value,
+  isWeak,
+  position
+}) => {
+  return (
+    <motion.div
+      className={`damage-number ${isWeak ? 'weak-hit' : ''}`}
+      style={{
+        position: 'absolute',
+        left: position.x,
+        top: position.y
+      }}
+      initial={{ opacity: 1, y: 0, scale: isWeak ? 1.2 : 1 }}
+      animate={{
+        opacity: 0,
+        y: -80,
+        scale: isWeak ? 1.5 : 1
+      }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: 'easeOut' }}
+    >
+      {value}
+      {isWeak && <span className="weak-indicator">!</span>}
+    </motion.div>
+  );
+};
+
+export default DamageNumber;
 ```
 
 ---
@@ -896,6 +1100,8 @@ module.exports = AffinitySystem;
 }
 ```
 
+---
+
 ### 戰鬥系統配置
 
 **檔案**: `rpg-config/battle-system.json`
@@ -1008,304 +1214,6 @@ module.exports = AffinitySystem;
 
 ---
 
-## UI 組件設計
-
-### 戰鬥畫面
-
-**檔案**: `ui/src/components/Battle/BattleScreen.tsx`
-
-```tsx
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useGameState } from '../../hooks/useGameState';
-import EnemyDisplay from './EnemyDisplay';
-import BattleLog from './BattleLog';
-import ActionMenu from './ActionMenu';
-import VictoryScreen from './VictoryScreen';
-import DamageNumber from './DamageNumber';
-
-interface BattleScreenProps {
-  battle: Battle;
-  onSkillCast: (skillName: string) => void;
-  onSummonAgent: (agentName: string) => void;
-}
-
-const BattleScreen: React.FC<BattleScreenProps> = ({
-  battle,
-  onSkillCast,
-  onSummonAgent
-}) => {
-  const { player } = useGameState();
-  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
-  const [showVictory, setShowVictory] = useState(false);
-
-  useEffect(() => {
-    if (battle.status === 'victory') {
-      setTimeout(() => setShowVictory(true), 1500);
-    }
-  }, [battle.status]);
-
-  const handleDamageDealt = (damage: number, isWeak: boolean) => {
-    const popup: DamagePopup = {
-      id: Date.now(),
-      value: damage,
-      isWeak,
-      position: { x: 300, y: 200 }
-    };
-
-    setDamagePopups(prev => [...prev, popup]);
-
-    // 1 秒後移除
-    setTimeout(() => {
-      setDamagePopups(prev => prev.filter(p => p.id !== popup.id));
-    }, 1000);
-  };
-
-  return (
-    <div className="battle-screen pixel-art">
-      {/* 背景 */}
-      <div className="battle-background" />
-
-      {/* 敵人區域 */}
-      <motion.div
-        className="enemy-area"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <EnemyDisplay enemy={battle.enemy} />
-      </motion.div>
-
-      {/* 傷害數字 */}
-      <AnimatePresence>
-        {damagePopups.map(popup => (
-          <DamageNumber
-            key={popup.id}
-            value={popup.value}
-            isWeak={popup.isWeak}
-            position={popup.position}
-          />
-        ))}
-      </AnimatePresence>
-
-      {/* 戰鬥日誌 */}
-      <div className="battle-log-container">
-        <BattleLog entries={battle.log} />
-      </div>
-
-      {/* 行動選單 */}
-      <motion.div
-        className="action-menu-container"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <ActionMenu
-          player={player}
-          enemy={battle.enemy}
-          onSkillCast={onSkillCast}
-          onSummonAgent={onSummonAgent}
-        />
-      </motion.div>
-
-      {/* 勝利畫面 */}
-      <AnimatePresence>
-        {showVictory && (
-          <VictoryScreen
-            rewards={battle.enemy.rewards}
-            onClose={() => setShowVictory(false)}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-export default BattleScreen;
-```
-
-### 敵人顯示
-
-**檔案**: `ui/src/components/Battle/EnemyDisplay.tsx`
-
-```tsx
-import React from 'react';
-import { motion } from 'framer-motion';
-import ProgressBar from '../Common/ProgressBar';
-
-interface EnemyDisplayProps {
-  enemy: Enemy;
-}
-
-const EnemyDisplay: React.FC<EnemyDisplayProps> = ({ enemy }) => {
-  const hpPercentage = (enemy.hp / enemy.maxHp) * 100;
-
-  return (
-    <div className="enemy-display">
-      {/* 敵人圖示 */}
-      <motion.div
-        className="enemy-sprite"
-        animate={{
-          y: [0, -10, 0],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <div className="enemy-icon">{enemy.icon}</div>
-      </motion.div>
-
-      {/* 敵人資訊 */}
-      <div className="enemy-info">
-        <div className="enemy-name-level">
-          <span className="enemy-name">{enemy.name}</span>
-          <span className="enemy-level">Lv.{enemy.level}</span>
-        </div>
-
-        {/* HP 條 */}
-        <div className="enemy-hp">
-          <ProgressBar
-            value={enemy.hp}
-            max={enemy.maxHp}
-            color="red"
-            showNumbers
-          />
-        </div>
-
-        {/* 元素類型 */}
-        <div className="enemy-element">
-          <span className="element-badge" data-element={enemy.element}>
-            {enemy.element}
-          </span>
-        </div>
-
-        {/* 弱點提示 */}
-        {enemy.weaknesses.length > 0 && (
-          <div className="enemy-weaknesses">
-            <span className="label">弱點:</span>
-            {enemy.weaknesses.map(w => (
-              <span key={w} className="weakness-tag">{w}</span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default EnemyDisplay;
-```
-
-### 戰鬥日誌
-
-**檔案**: `ui/src/components/Battle/BattleLog.tsx`
-
-```tsx
-import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-interface BattleLogProps {
-  entries: BattleLogEntry[];
-}
-
-const BattleLog: React.FC<BattleLogProps> = ({ entries }) => {
-  const logRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // 自動滾動到最新
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [entries]);
-
-  const getLogClass = (type: string) => {
-    const classes: Record<string, string> = {
-      encounter: 'log-encounter',
-      player_attack: 'log-player',
-      agent_attack: 'log-agent',
-      enemy_attack: 'log-enemy',
-      critical: 'log-critical',
-      victory: 'log-victory',
-      defeat: 'log-defeat',
-      info: 'log-info',
-      reward: 'log-reward'
-    };
-    return classes[type] || 'log-normal';
-  };
-
-  return (
-    <div className="battle-log" ref={logRef}>
-      <AnimatePresence initial={false}>
-        {entries.map((entry, index) => (
-          <motion.div
-            key={`${entry.turn}-${index}`}
-            className={`log-entry ${getLogClass(entry.type)}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <span className="log-turn">[{entry.turn}]</span>
-            <span className="log-message">{entry.message}</span>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-export default BattleLog;
-```
-
-### 傷害數字動畫
-
-**檔案**: `ui/src/components/Battle/DamageNumber.tsx`
-
-```tsx
-import React from 'react';
-import { motion } from 'framer-motion';
-
-interface DamageNumberProps {
-  value: number;
-  isWeak: boolean;
-  position: { x: number; y: number };
-}
-
-const DamageNumber: React.FC<DamageNumberProps> = ({
-  value,
-  isWeak,
-  position
-}) => {
-  return (
-    <motion.div
-      className={`damage-number ${isWeak ? 'weak-hit' : ''}`}
-      style={{
-        position: 'absolute',
-        left: position.x,
-        top: position.y
-      }}
-      initial={{ opacity: 1, y: 0, scale: isWeak ? 1.2 : 1 }}
-      animate={{
-        opacity: 0,
-        y: -80,
-        scale: isWeak ? 1.5 : 1
-      }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 1, ease: 'easeOut' }}
-    >
-      {value}
-      {isWeak && <span className="weak-indicator">!</span>}
-    </motion.div>
-  );
-};
-
-export default DamageNumber;
-```
-
----
-
 ## 整合到現有系統
 
 ### 修改 Bridge Layer
@@ -1362,6 +1270,8 @@ class RPGBridge {
 }
 ```
 
+---
+
 ### UI 狀態管理
 
 **檔案**: `ui/src/stores/gameStore.ts` (擴展)
@@ -1394,137 +1304,147 @@ const useGameStore = create<GameState>((set) => ({
 
 ---
 
-## 實作優先級
+## 測試策略
 
-### Phase 2.5: 戰鬥系統 (Week 4-5)
+### 單元測試
 
-**Week 4**:
-- [ ] 實作 EnemyGenerator
-  - [ ] 複雜度分析算法
-  - [ ] 任務分類
-  - [ ] 敵人名稱生成
-- [ ] 實作 BattleManager
-  - [ ] 戰鬥流程
-  - [ ] 回合管理
-  - [ ] 勝利/失敗判定
-- [ ] 配置文件
-  - [ ] enemy-types.json
-  - [ ] battle-system.json
+**EnemyGenerator 測試**:
+```javascript
+describe('EnemyGenerator', () => {
+  const generator = new EnemyGenerator();
 
-**Week 5**:
-- [ ] 實作 DamageCalculator
-  - [ ] 傷害公式
-  - [ ] 相性計算
-- [ ] 實作 AffinitySystem
-  - [ ] 相性表
-  - [ ] 推薦系統
-- [ ] UI 組件
-  - [ ] BattleScreen
-  - [ ] EnemyDisplay
-  - [ ] BattleLog
-  - [ ] DamageNumber
-  - [ ] VictoryScreen
-- [ ] 整合測試
+  test('簡單 prompt 生成低等級敵人', () => {
+    const enemy = generator.generateEnemy('修復一個 bug');
+    expect(enemy.level).toBeLessThan(4);
+    expect(enemy.type).toBe('bug-hunt');
+  });
+
+  test('複雜 prompt 生成高等級敵人', () => {
+    const prompt = '重構整個架構，優化性能，並添加測試覆蓋';
+    const enemy = generator.generateEnemy(prompt);
+    expect(enemy.level).toBeGreaterThan(8);
+  });
+
+  test('正確識別任務類型', () => {
+    const codeEnemy = generator.generateEnemy('實作一個新功能');
+    expect(codeEnemy.type).toBe('code-task');
+
+    const bugEnemy = generator.generateEnemy('debug 這個錯誤');
+    expect(bugEnemy.type).toBe('bug-hunt');
+  });
+});
+```
+
+**DamageCalculator 測試**:
+```javascript
+describe('DamageCalculator', () => {
+  const calc = new DamageCalculator();
+
+  test('弱點傷害計算正確', () => {
+    const result = calc.calculate({
+      skill: 'debug-helper',
+      skillMetadata: { cost: { mp: 50 } },
+      player: { level: 10 },
+      enemy: { type: 'bug-hunt', weaknesses: ['debug-helper'] },
+      affinity: new AffinitySystem()
+    });
+
+    expect(result.isWeak).toBe(true);
+    expect(result.total).toBeGreaterThan(result.base);
+  });
+});
+```
+
+### 整合測試
+
+**戰鬥流程測試**:
+```javascript
+describe('Battle Flow', () => {
+  let battleMgr;
+  let mockWsServer;
+
+  beforeEach(() => {
+    mockWsServer = { broadcast: jest.fn() };
+    battleMgr = new BattleManager(mockWsServer);
+  });
+
+  test('完整戰鬥流程', () => {
+    const enemy = { hp: 100, maxHp: 100 };
+    const player = { level: 5, mp: 100 };
+
+    battleMgr.startBattle(enemy, player);
+    expect(battleMgr.currentBattle).not.toBeNull();
+
+    battleMgr.playerUseSkill('code-generator', { cost: { mp: 30 } });
+    expect(enemy.hp).toBeLessThan(100);
+  });
+});
+```
 
 ---
 
-## 驗收標準
+## 性能優化
 
-### 基礎功能
-```bash
-# 1. 敵人生成
-輸入簡單 prompt → 生成 Lv.1-3 敵人 ✅
-輸入複雜 prompt → 生成 Lv.8+ 敵人 ✅
+### 避免重複計算
 
-# 2. 戰鬥流程
-開始對話 → 顯示敵人資訊 ✅
-使用 Skill → 敵人扣血 ✅
-敵人 HP = 0 → 顯示勝利 ✅
+```javascript
+// ❌ 壞 - 每次都計算
+function getDamage() {
+  return calculateComplexFormula();
+}
 
-# 3. 傷害計算
-使用弱點技能 → 傷害 ×1.5 ✅
-使用抵抗技能 → 傷害 ×0.5 ✅
-
-# 4. UI 動畫
-傷害數字飄出 ✅
-HP 條平滑減少 ✅
-勝利動畫播放 ✅
+// ✅ 好 - 緩存結果
+const damageCache = new Map();
+function getDamage(key) {
+  if (!damageCache.has(key)) {
+    damageCache.set(key, calculateComplexFormula());
+  }
+  return damageCache.get(key);
+}
 ```
 
-### 進階功能
-```bash
-# 5. 敵人機制
-Bug 怪物 → 反擊消耗 MP ✅
-Boss 級敵人 → 多階段戰鬥 ✅
+### 批量更新
 
-# 6. 組合技整合
-觸發組合技 → 造成更高傷害 ✅
-組合技在戰鬥中有特效 ✅
+```javascript
+// ❌ 壞 - 多次廣播
+this.broadcast({ type: 'damage', value: 100 });
+this.broadcast({ type: 'hp_update', hp: 400 });
+this.broadcast({ type: 'log', message: '...' });
 
-# 7. 統計記錄
-查看戰鬥歷史 ✅
-勝率統計 ✅
+// ✅ 好 - 單次廣播
+this.broadcast({
+  type: 'battle_update',
+  updates: {
+    damage: 100,
+    hp: 400,
+    log: '...'
+  }
+});
 ```
-
----
-
-## 未來擴展
-
-### 可能的增強功能
-
-1. **裝備系統**:
-   - Prompt 模板作為"武器"
-   - MCP 工具作為"裝備"
-   - 提供屬性加成
-
-2. **地城系統**:
-   - 連續任務視為地城
-   - 每層一個敵人
-   - 最終層為 Boss
-
-3. **多人協作戰鬥**:
-   - 多個玩家協同
-   - 共享戰鬥進度
-   - 組隊獎勵
-
-4. **每日 Boss**:
-   - 每日特殊挑戰
-   - 高獎勵
-   - 排行榜
-
-5. **戰鬥回放**:
-   - 記錄戰鬥過程
-   - 分享精彩時刻
-   - 學習優秀策略
 
 ---
 
 ## 總結
 
-戰鬥系統通過以下方式增強 RPG-CLI 體驗：
+戰鬥系統實現涵蓋：
 
-**✅ 視覺化進度**:
-- 任務難度 → 敵人等級
-- 處理過程 → 戰鬥回合
-- 完成度 → HP 減少
+**✅ 後端系統**:
+- EnemyGenerator: 智能敵人生成
+- BattleManager: 完整戰鬥流程
+- DamageCalculator: 精確傷害計算
+- AffinitySystem: 相性判定
 
-**✅ 增強互動性**:
-- 技能選擇更有策略性
-- 弱點系統鼓勵嘗試
-- 戰鬥日誌提供反饋
+**✅ 前端組件**:
+- BattleScreen: 統籌界面
+- EnemyDisplay: 敵人展示
+- BattleLog: 日誌記錄
+- DamageNumber: 傷害動畫
 
-**✅ 提升成就感**:
-- 擊敗強敵的滿足感
-- 勝利獎勵更豐富
-- 戰績記錄可追蹤
+**✅ 配置系統**:
+- enemy-types.json: 敵人定義
+- battle-system.json: 系統配置
 
-**✅ 保持靈活性**:
-- 可選開關戰鬥模式
-- 不影響核心 AI 功能
-- 漸進式功能增強
-
----
-
-**版本**: v1.0
-**最後更新**: 2026-02-05
-**下一步**: Phase 2.5 實作 (Week 4-5)
+**✅ 整合完整**:
+- Bridge Layer 整合
+- UI Store 整合
+- 測試覆蓋完整
