@@ -768,9 +768,12 @@ module.exports = AffinitySystem;
     "icon": "💻",
     "element": "logic",
     "hpMultiplier": 1.0,
+    "baseSpeed": 40,
+    "speedVariance": 10,
     "weaknesses": ["code-generator", "code-reviewer"],
     "resistances": ["doc-writer"],
     "specialMechanic": null,
+    "aiType": "simple",
     "rewards": {
       "expMultiplier": 1.2,
       "goldMultiplier": 1.0
@@ -784,9 +787,12 @@ module.exports = AffinitySystem;
     "icon": "🐛",
     "element": "chaos",
     "hpMultiplier": 1.5,
+    "baseSpeed": 35,
+    "speedVariance": 5,
     "weaknesses": ["debug-helper", "test-generator", "code-reviewer"],
     "resistances": ["code-generator"],
     "specialMechanic": "counter_attack",
+    "aiType": "elite",
     "rewards": {
       "expMultiplier": 1.5,
       "goldMultiplier": 1.3
@@ -800,9 +806,12 @@ module.exports = AffinitySystem;
     "icon": "🏰",
     "element": "wisdom",
     "hpMultiplier": 2.0,
+    "baseSpeed": 30,
+    "speedVariance": 5,
     "weaknesses": ["code-reviewer"],
     "resistances": ["test-generator"],
     "specialMechanic": "multi_phase",
+    "aiType": "boss",
     "rewards": {
       "expMultiplier": 2.0,
       "goldMultiplier": 1.8
@@ -816,9 +825,12 @@ module.exports = AffinitySystem;
     "icon": "📜",
     "element": "knowledge",
     "hpMultiplier": 0.8,
+    "baseSpeed": 45,
+    "speedVariance": 10,
     "weaknesses": ["doc-writer"],
     "resistances": ["debug-helper"],
     "specialMechanic": null,
+    "aiType": "simple",
     "rewards": {
       "expMultiplier": 1.0,
       "goldMultiplier": 0.8
@@ -832,9 +844,12 @@ module.exports = AffinitySystem;
     "icon": "🧪",
     "element": "precision",
     "hpMultiplier": 1.2,
+    "baseSpeed": 50,
+    "speedVariance": 10,
     "weaknesses": ["test-generator"],
     "resistances": ["doc-writer"],
     "specialMechanic": null,
+    "aiType": "simple",
     "rewards": {
       "expMultiplier": 1.3,
       "goldMultiplier": 1.1
@@ -848,9 +863,12 @@ module.exports = AffinitySystem;
     "icon": "⚡",
     "element": "power",
     "hpMultiplier": 1.8,
+    "baseSpeed": 55,
+    "speedVariance": 15,
     "weaknesses": ["code-reviewer", "debug-helper"],
     "resistances": ["doc-writer"],
     "specialMechanic": "speed_boost",
+    "aiType": "elite",
     "rewards": {
       "expMultiplier": 1.8,
       "goldMultiplier": 1.5
@@ -864,9 +882,12 @@ module.exports = AffinitySystem;
     "icon": "❓",
     "element": "neutral",
     "hpMultiplier": 1.0,
+    "baseSpeed": 40,
+    "speedVariance": 10,
     "weaknesses": [],
     "resistances": [],
     "specialMechanic": null,
+    "aiType": "simple",
     "rewards": {
       "expMultiplier": 1.0,
       "goldMultiplier": 1.0
@@ -942,6 +963,29 @@ module.exports = AffinitySystem;
       "description": "Boss 級敵人的強力攻擊",
       "cooldown": 3,
       "damage": "20 * enemy.level"
+    }
+  },
+
+  "enemyAI": {
+    "simple": {
+      "description": "簡單敵人只攻擊玩家",
+      "targetPriority": ["player"],
+      "ignoreCompanions": true,
+      "companionAttackChance": 0.0
+    },
+    "elite": {
+      "description": "精英敵人會優先攻擊低防禦目標",
+      "targetPriority": ["lowest_defense", "player"],
+      "ignoreCompanions": false,
+      "companionAttackChance": 0.3
+    },
+    "boss": {
+      "description": "Boss 會智能選擇目標，並可能使用範圍攻擊",
+      "targetPriority": ["lowest_hp", "highest_threat", "player"],
+      "ignoreCompanions": false,
+      "companionAttackChance": 0.5,
+      "aoeAttacks": true,
+      "aoeChance": 0.2
     }
   },
 

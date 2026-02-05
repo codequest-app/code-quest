@@ -60,6 +60,7 @@ interface BattleCompanion {
 
   // 經驗與成長
   experience: number;              // 夥伴經驗值
+  expToNextLevel: number;          // 升級所需經驗（100 * 1.3^(level-1)）
   timesDeployed: number;           // 出戰次數
   battlesWon: number;              // 勝利次數
 }
@@ -189,7 +190,57 @@ interface BattleCompanion {
 }
 ```
 
-### 3. 夥伴 AI 系統
+### 3. 夥伴資源管理
+
+#### MP 系統
+
+夥伴的 MP 管理與玩家不同：
+
+```javascript
+// 夥伴 MP 規則
+companionMp: {
+  // 戰鬥中不自動恢復
+  regenInBattle: 0,
+
+  // 戰鬥結束完全恢復
+  resetOnBattleEnd: true,
+
+  // MP 消耗
+  consumption: {
+    skill: "依技能 mpCost 定義"
+  },
+
+  // 初始 MP
+  initialMp: "等於 maxMp"
+}
+
+// 範例：夥伴使用技能
+executeCompanionSkill(companion, skill) {
+  // 檢查 MP 是否足夠
+  if (companion.mp < skill.mpCost) {
+    return { error: 'MP 不足' };
+  }
+
+  // 扣除 MP
+  companion.mp -= skill.mpCost;
+
+  // 執行技能
+  // ...
+}
+
+// 戰鬥結束恢復
+onBattleEnd() {
+  companion.mp = companion.maxMp;  // 完全恢復
+  companion.hp = companion.maxHp;  // 完全恢復
+}
+```
+
+**設計理由**:
+- 簡化戰鬥系統，避免過多變數
+- 夥伴作為支援角色，在戰鬥外自動準備完成
+- 玩家只需關注技能選擇，不需管理夥伴 MP
+
+### 4. 夥伴 AI 系統
 
 夥伴在戰鬥中可以自動行動或由玩家控制：
 
@@ -595,14 +646,14 @@ class BattleManager {
         companion.battlesWon++;
 
         // 檢查升級
-        if (companion.experience >= 100) {
+        while (companion.experience >= companion.expToNextLevel) {
           this.levelUpCompanion(companion);
         }
       }
 
       // 恢復狀態
       companion.hp = companion.maxHp;
-      companion.mp = companion.maxMp;
+      companion.mp = companion.maxMp;  // MP 在戰鬥結束完全恢復（戰鬥中不自動恢復）
       companion.status = 'standby';
       companion.currentCooldowns.clear();
     }
@@ -613,7 +664,10 @@ class BattleManager {
    */
   levelUpCompanion(companion) {
     companion.level++;
-    companion.experience = 0;
+    companion.experience -= companion.expToNextLevel;
+
+    // 更新下一等級所需經驗（夥伴升級比玩家快）
+    companion.expToNextLevel = Math.floor(100 * Math.pow(1.3, companion.level - 1));
 
     // 提升屬性
     companion.maxHp += 20;
@@ -627,7 +681,8 @@ class BattleManager {
     this.broadcast({
       type: 'companion_level_up',
       companion: companion.agentName,
-      level: companion.level
+      level: companion.level,
+      newExpToNextLevel: companion.expToNextLevel
     });
   }
 }
@@ -819,7 +874,7 @@ const experienceGains = {
   skillUsed: 5,               // 使用技能
   damageDealt: (damage) => Math.floor(damage / 10),  // 造成傷害
   playerHealed: (amount) => Math.floor(amount / 5),  // 治療玩家
-  enemyWeaknessHit: 20       // 命中弱點
+  weaknessHit: 20            // 命中弱點
 };
 
 // 升級獎勵

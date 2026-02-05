@@ -487,13 +487,13 @@ class ComboDetector {
    - 符合官方格式的 SKILL.md
    - 對應的 metadata.json
 
-### Phase 2: 遊戲化增強 (Week 3-4)
+### Phase 2: 遊戲化核心 (Week 3-4)
 1. ✅ Skill 系統完善
    - 冷卻計時
    - MP 消耗
    - 經驗值獎勵
 
-2. ✅ Agent 召喚系統
+2. ✅ Agent 召喚基礎
    - Subagent 啟動偵測
    - 召喚動畫
    - 維持費用計算
@@ -503,11 +503,29 @@ class ComboDetector {
    - 等級提升
    - 解鎖新 Skills
 
-### Phase 3: 進階功能 (Week 5-8)
-1. ✅ 組合技系統
+### Phase 2.5: 戰鬥系統擴展 (Week 5-6)
+1. ✅ 敵人生成與戰鬥管理
+   - 敵人生成系統
+   - 戰鬥管理器
+   - 傷害計算與相性系統
+
+2. ✅ 夥伴系統
+   - 夥伴屬性與技能
+   - 夥伴 AI 系統
+   - 回合制整合
+
+3. ✅ 召喚獸基礎
+   - 召喚獸管理器
+   - 3-5 個基礎召喚獸
+   - 召喚動畫
+
+### Phase 3: 進階功能 (Week 7-10)
+1. ✅ 組合技系統完善
 2. ✅ 成就系統
-3. ✅ 持久記憶整合（利用 Subagent memory）
-4. ✅ Worktree "平行世界"
+3. ✅ 召喚獸完善（MCP 整合、組合技召喚）
+4. ✅ 持久記憶整合（利用 Subagent memory）
+5. ✅ Worktree "平行世界"
+6. ✅ 持久化儲存
 
 ---
 
