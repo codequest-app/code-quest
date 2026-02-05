@@ -55,24 +55,45 @@ rpg_meta:
 
 ## 技能目錄結構
 
+**重要**: Skills 應該放在 Claude 配置目錄，而非專案目錄
+
 ```
-skills/
+~/.claude/skills/                   # Claude 全局 skills 目錄
 ├── basic/
-│   ├── code-generator.md          # ⚔️ 代碼生成術
-│   ├── doc-writer.md              # 📜 文案撰寫術
-│   └── code-reviewer.md           # 🔍 代碼審查術
+│   ├── code-generator/
+│   │   └── SKILL.md               # ⚔️ 代碼生成術
+│   ├── doc-writer/
+│   │   └── SKILL.md               # 📜 文案撰寫術
+│   └── code-reviewer/
+│       └── SKILL.md               # 🔍 代碼審查術
 ├── advanced/
-│   ├── refactoring-master.md      # 🔧 重構大師
-│   ├── security-scanner.md        # 🛡️ 安全掃描術
-│   ├── performance-optimizer.md   # ⚡ 性能優化術
-│   └── architecture-design.md     # 🏛️ 架構設計術
+│   ├── refactoring-master/
+│   │   └── SKILL.md               # 🔧 重構大師
+│   ├── security-scanner/
+│   │   └── SKILL.md               # 🛡️ 安全掃描術
+│   ├── performance-optimizer/
+│   │   └── SKILL.md               # ⚡ 性能優化術
+│   └── architecture-design/
+│       └── SKILL.md               # 🏛️ 架構設計術
 ├── combo/
-│   ├── code-review-combo.md       # 🌟 代碼審查連擊
-│   └── full-stack-combo.md        # 💫 全棧連擊
-└── passive/
-    ├── auto-format.md             # 🔄 自動格式化
-    └── syntax-highlight.md        # ✨ 語法高亮
+│   ├── code-review-combo/
+│   │   └── SKILL.md               # 🌟 代碼審查連擊
+│   └── full-stack-combo/
+│       └── SKILL.md               # 💫 全棧連擊
+├── passive/
+│   ├── auto-format/
+│   │   └── SKILL.md               # 🔄 自動格式化
+│   └── syntax-highlight/
+│       └── SKILL.md               # ✨ 語法高亮
+└── meta/
+    └── SKILL.md                   # 🎓 Claude 機制專家 (已創建)
 ```
+
+**說明**:
+- 每個 skill 是一個目錄，包含 `SKILL.md` 主文件
+- 可選：包含 resources（模板、腳本等）
+- Skills 對所有專案全局可用
+- Claude Code 會自動掃描此目錄
 
 ---
 
@@ -545,10 +566,11 @@ rpg_meta:
 ### 1. 技能載入機制
 
 ```javascript
-// 掃描 skills/ 目錄，載入所有 .md 文件
+// 掃描 ~/.claude/skills/ 目錄，載入所有 SKILL.md 文件
 class SkillLoader {
   async loadSkills() {
-    const skillFiles = await glob('skills/**/*.md');
+    const skillsPath = path.join(os.homedir(), '.claude', 'skills');
+    const skillFiles = await glob(path.join(skillsPath, '**/SKILL.md'));
     const skills = [];
 
     for (const file of skillFiles) {
@@ -558,7 +580,8 @@ class SkillLoader {
       skills.push({
         ...data,
         instructions,
-        filePath: file
+        filePath: file,
+        skillName: path.basename(path.dirname(file))  // 從目錄名取得 skill 名稱
       });
     }
 
