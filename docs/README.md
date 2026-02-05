@@ -10,6 +10,8 @@
 ```
 docs/
 ├── README.md                    # 📖 本文件
+├── Feature-Overview.md          # 🌟 功能總覽（新增）
+├── System-Flow-Diagram.md       # 🌟 系統流程圖（新增）
 ├── DOCS-STATUS.md               # ✅ 文檔狀態檢查報告
 ├── CONFLICTS-RESOLUTION.md      # ⚠️ 衝突解決方案
 ├── reference/                   # 📘 參考文檔
@@ -24,6 +26,49 @@ docs/
     ├── Agent-Battle-Companion-Design.md
     └── Summon-Beast-System-Design.md
 ```
+
+---
+
+## 🌟 核心總覽文檔（必讀）
+
+### [功能總覽](Feature-Overview.md)
+
+**用途**: 整個 RPG-CLI 專案的完整功能概覽
+
+**內容**:
+- 系統架構（三層設計）
+- 核心功能（CLI 整合、WebSocket、Skills）
+- 遊戲化系統（屬性、Metadata、冷卻、獎勵）
+- 戰鬥系統（敵人生成、戰鬥管理、傷害計算、AI）
+- 夥伴系統（Subagent 轉換、AI、成長、MP 管理）
+- 召喚獸系統（4 種類型、4 種行為）
+- 進階功能（組合技、成就、Worktree、持久化）
+- 開發路線圖（4 個 Phase）
+- 完整驗收標準
+
+**閱讀時間**: 30-40 分鐘
+
+**閱讀順序**: ⭐⭐⭐⭐ 必讀（了解全貌）
+
+---
+
+### [系統流程圖](System-Flow-Diagram.md)
+
+**用途**: 詳細的系統運作流程圖
+
+**內容**:
+- 系統架構流程（三層架構詳細圖）
+- 用戶交互流程（啟動 → 主畫面 → 行動分支）
+- 技能施放流程（點擊 → 檢查 → 執行 → 獎勵）
+- 戰鬥系統流程（敵人生成 → 回合制戰鬥 → 勝利）
+- 夥伴系統流程（召喚 → AI 決策 → 技能執行 → 升級）
+- 召喚獸系統流程（觸發 → 行為執行 → 離去）
+- 資源管理流程（MP 恢復、經驗值、升級）
+- 數據流向圖（WebSocket 雙向通訊、持久化）
+
+**閱讀時間**: 60-90 分鐘（分段閱讀）
+
+**閱讀順序**: ⭐⭐⭐⭐ 必讀（實作參考）
 
 ---
 
@@ -291,18 +336,30 @@ Agent Tools      →    專屬技能
 ### 對於新加入者
 
 **第一次閱讀順序**:
-1. 📘 [RPG-CLI 概念文檔](design/RPG-CLI-Concept.md) - 了解是什麼
-2. 📘 [Claude Code 官方指南](reference/Claude-Code-Official-Guide.md) - 了解 Claude Code
-3. 📘 [RPG-CLI 架構設計](design/RPG-CLI-Architecture-v2.md) - 了解怎麼做
-4. 📘 [功能規劃](design/Feature-Planning-v2.md) - 了解實作細節
+1. 🌟 [功能總覽](Feature-Overview.md) - **快速了解全貌（必讀）**
+2. 📘 [RPG-CLI 概念文檔](design/RPG-CLI-Concept.md) - 了解原始概念
+3. 📘 [Claude Code 官方指南](reference/Claude-Code-Official-Guide.md) - 了解 Claude Code
+4. 📘 [RPG-CLI 架構設計](design/RPG-CLI-Architecture-v2.md) - 了解怎麼做
+
+**快速路徑（推薦）**:
+- 只讀 [功能總覽](Feature-Overview.md) 即可了解 80% 的內容
+- 需要細節時再查看對應的設計文檔
 
 ### 對於實作者
 
 **參考順序**:
-1. 📘 [功能規劃](design/Feature-Planning-v2.md) - 主要實作指南
-2. 📘 [Claude Code 官方指南](reference/Claude-Code-Official-Guide.md) - 格式參考
-3. 📘 [架構設計](design/RPG-CLI-Architecture-v2.md) - 架構參考
-4. 📘 [UI 互動設計](design/UI-Interaction-Guide.md) - UI 參考
+1. 🌟 [功能總覽](Feature-Overview.md) - 整體功能與路線圖
+2. 🌟 [系統流程圖](System-Flow-Diagram.md) - 詳細實作流程
+3. 📘 [功能規劃](design/Feature-Planning-v2.md) - 主要實作指南
+4. 📘 [Claude Code 官方指南](reference/Claude-Code-Official-Guide.md) - 格式參考
+
+**實作工作流**:
+```
+1. 查看 Feature-Overview.md → 了解要做什麼功能
+2. 查看 System-Flow-Diagram.md → 了解具體流程
+3. 查看 Feature-Planning-v2.md → 了解實作細節
+4. 開始編碼
+```
 
 ### 對於特定功能
 
