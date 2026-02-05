@@ -11,9 +11,11 @@
 ```
 Phase 1 (Week 1-2): Bridge + 基礎 UI + 標準 Skills
     ↓
-Phase 2 (Week 3-4): 遊戲化系統 + Agent 召喚
+Phase 2 (Week 3-4): 遊戲化核心 + Agent 召喚基礎
     ↓
-Phase 3 (Week 5-8): 進階功能 + 整合
+Phase 2.5 (Week 5-6): 戰鬥系統 + 夥伴系統 + 召喚獸基礎
+    ↓
+Phase 3 (Week 7-10): 進階功能 + 完善 + 整合
 ```
 
 ---
@@ -389,7 +391,9 @@ allowed-tools: Read, Grep, Bash
 - [ ] 發送 skill_cast 事件到 UI
 - [ ] Skill 完成時給予獎勵
 - [ ] 經驗值累積與等級計算
-- [ ] MP 自動恢復 (每秒 +1)
+- [ ] MP 自動恢復
+  - 戰鬥外: 每秒 +1 MP
+  - 戰鬥中: 每秒 +0.1 MP (每10秒 +1)
 
 // 🔄 Nice to Have
 - [ ] 儲存/載入玩家狀態
@@ -460,7 +464,11 @@ class GameEngine {
   levelUp() {
     this.player.level++;
     this.player.exp -= this.player.expToNextLevel;
-    this.player.expToNextLevel = Math.floor(this.player.expToNextLevel * 1.5);
+
+    // 升級公式: expToNextLevel = 100 * (1.5 ^ (level - 1))
+    this.player.expToNextLevel = Math.floor(
+      100 * Math.pow(1.5, this.player.level - 1)
+    );
 
     // 提升基礎屬性
     this.player.maxHp += 10;
@@ -472,7 +480,13 @@ class GameEngine {
   startMpRegen() {
     setInterval(() => {
       if (this.player.mp < this.player.maxMp) {
-        this.player.mp = Math.min(this.player.maxMp, this.player.mp + 1);
+        // 戰鬥外: 每秒 +1 MP
+        // 戰鬥中: 每秒 +0.1 MP
+        const regenRate = this.inBattle ? 0.1 : 1;
+        this.player.mp = Math.min(
+          this.player.maxMp,
+          this.player.mp + regenRate
+        );
         this.broadcastPlayerState();
       }
     }, 1000);

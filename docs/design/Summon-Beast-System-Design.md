@@ -15,7 +15,7 @@
 | 來源 | Subagent | 技能/道具/組合技/MCP工具 |
 | 持續時間 | 戰鬥全程 | 限時（1-3回合）或單次行動 |
 | 成長性 | 有經驗值、升級 | 無成長，固定能力 |
-| 槽位 | 占用夥伴槽（最多2個） | 不占槽位 |
+| 槽位 | 夥伴槽（最多2個） | 召喚獸槽（最多1個，獨立） |
 | MP消耗 | 召喚時消耗 | 每次召喚都消耗 |
 | 行動方式 | 參與回合順序 | 立即行動或特定觸發 |
 | 用途 | 持續戰鬥支援 | 爆發傷害、緊急支援 |
@@ -77,8 +77,8 @@ allowed-tools: Read, Bash, Write
 ```json
 {
   "summon-code-dragon": {
-    "name": "代碼之龍",
-    "nameEn": "Code Dragon",
+    "name": "Code Dragon",
+    "displayName": "代碼之龍",
     "icon": "🐉",
     "element": "arcane",
     "rarity": "legendary",
@@ -158,7 +158,8 @@ allowed-tools: Read, Bash, Write
 ```json
 {
   "combo-summon-phoenix": {
-    "name": "不死鳥",
+    "name": "Phoenix",
+    "displayName": "不死鳥",
     "icon": "🔥🦅",
     "element": "rebirth",
     "type": "support",
@@ -214,7 +215,8 @@ allowed-tools: Read, Bash, Write
 ```json
 {
   "mcp-database-golem": {
-    "name": "資料庫魔像",
+    "name": "Database Golem",
+    "displayName": "資料庫魔像",
     "icon": "🗄️",
     "element": "data",
     "rarity": "rare",
@@ -277,7 +279,8 @@ allowed-tools: Read, Bash, Write
 ```json
 {
   "item-summon-helper": {
-    "name": "幫助精靈",
+    "name": "Helper Fairy",
+    "displayName": "幫助精靈",
     "icon": "🧚",
     "element": "support",
     "rarity": "common",
@@ -1018,7 +1021,8 @@ export default SummonAnimation;
 ```json
 {
   "titan-of-refactoring": {
-    "name": "重構泰坦",
+    "name": "Refactoring Titan",
+    "displayName": "重構泰坦",
     "icon": "⚒️",
     "element": "structure",
     "rarity": "epic",
@@ -1059,7 +1063,8 @@ export default SummonAnimation;
 ```json
 {
   "healing-fairy": {
-    "name": "治癒精靈",
+    "name": "Healing Fairy",
+    "displayName": "治癒精靈",
     "icon": "🧚✨",
     "element": "life",
     "rarity": "uncommon",
@@ -1097,7 +1102,8 @@ export default SummonAnimation;
 ```json
 {
   "time-wizard": {
-    "name": "時間魔導師",
+    "name": "Time Wizard",
+    "displayName": "時間魔導師",
     "icon": "🕰️",
     "element": "temporal",
     "rarity": "legendary",
