@@ -1,6 +1,6 @@
 # 文檔狀態檢查報告
 
-**檢查日期**: 2026-02-05
+**檢查日期**: 2026-02-05 (更新)
 **檢查範圍**: 所有專案文檔
 
 ---
@@ -98,6 +98,90 @@ reward: { exp: 100, gold: 50, skill: 'parallel_thinking' }
 
 ---
 
+### 6. Battle-System-Design.md
+**狀態**: ✅ 正確
+
+**檢查結果**:
+- ✅ 基於新架構的戰鬥系統設計
+- ✅ 無涉及 Skills/Agents 的實作格式修改
+- ✅ 完整的技術實作細節
+- ✅ 與現有系統整合良好
+
+**內容**:
+- 核心概念（AI 對話 → 戰鬥映射）
+- 敵人生成系統（EnemyGenerator）
+- 戰鬥管理器（BattleManager）
+- 傷害計算系統（DamageCalculator）
+- 相性系統（AffinitySystem）
+- UI 組件設計（React + Framer Motion）
+- 配置文件（enemy-types.json, battle-system.json）
+- 整合到 Bridge Layer
+
+**實作階段**: Phase 2.5 (Week 4-5)
+
+**結論**: 這是完整的功能設計文檔，符合分層架構設計原則。技能和 Agent 保持官方格式，戰鬥邏輯在 Bridge 和 UI 層實現。可以直接使用，無需修改。
+
+---
+
+### 7. Agent-Battle-Companion-Design.md
+**狀態**: ✅ 正確
+
+**檢查結果**:
+- ✅ 深度整合 Subagent 為戰鬥夥伴
+- ✅ 無修改 Agent 官方格式
+- ✅ 完整的夥伴系統設計
+- ✅ 與戰鬥系統無縫整合
+
+**內容**:
+- 夥伴系統設計（Subagent → 戰鬥夥伴映射）
+- 夥伴屬性與狀態（HP/MP/技能/被動）
+- 夥伴專屬技能系統（3種類型：攻擊/支援/終極）
+- 夥伴 AI 系統（CompanionAI - 自動判斷行動）
+- 回合制戰鬥整合（行動順序、技能施放）
+- 夥伴成長系統（經驗值、升級、親密度）
+- 多夥伴系統（最多2個同時在場）
+- UI 組件（CompanionPanel, CompanionSkillAnimation）
+
+**夥伴角色範例**:
+- 🛡️ CodeGuard (Tank/守護者)
+- ⚡ Speedy (Attacker/優化師)
+
+**實作階段**: Phase 2.5 (Week 4-5)
+
+**結論**: 這是戰鬥系統的深度擴展，將 Subagent 從單純的「召喚造成傷害」提升為「有獨立行動、技能、成長的戰鬥夥伴」。符合分層架構，Agent 本身仍保持官方格式，夥伴邏輯在 metadata 和 Bridge Layer 實現。可以直接使用，無需修改。
+
+---
+
+### 8. Summon-Beast-System-Design.md
+**狀態**: ✅ 正確
+
+**檢查結果**:
+- ✅ 召喚獸系統作為夥伴系統的補充
+- ✅ 無修改 Skill/Agent 官方格式
+- ✅ 完整的召喚獸分類與行為設計
+- ✅ 與戰鬥系統和夥伴系統協同
+
+**內容**:
+- 核心概念（召喚獸 vs 戰鬥夥伴區別）
+- 召喚獸分類（技能召喚/組合技召喚/MCP工具召喚/道具召喚）
+- 4種行為類型（immediate/automatic/passive/interactive）
+- 召喚獸管理器（SummonManager - 完整實作）
+- UI 組件（SummonDisplay, SummonAnimation）
+- 召喚獸庫範例（攻擊/支援/特殊型）
+- 召喚獸與夥伴協同效果
+
+**召喚獸範例**:
+- 🐉 代碼之龍 (攻擊型/立即)
+- 🔥🦅 不死鳥 (支援型/自動)
+- 🧚 治癒精靈 (支援型/自動)
+- 🕰️ 時間魔導師 (特殊型/立即)
+
+**實作階段**: Phase 2.5-3 (Week 5-8)
+
+**結論**: 這是戰鬥系統的進一步擴展，提供臨時強力支援。召喚獸通過 Skill 觸發，metadata 驅動，符合分層架構。與夥伴系統形成互補：夥伴=穩定持續，召喚獸=爆發緊急。可以直接使用，無需修改。
+
+---
+
 ## ✅ 其他文檔
 
 ### 6. RPG-CLI-Concept.md
@@ -130,13 +214,18 @@ reward: { exp: 100, gold: 50, skill: 'parallel_thinking' }
 ### 當前有效文檔
 
 ```
-專案根目錄/
-├── Claude-Code-Official-Guide.md       ✅ 官方文檔總結
-├── RPG-CLI-Architecture-v2.md          ✅ 架構設計
-├── Feature-Planning-v2.md              ✅ 功能規劃
-├── UI-Interaction-Guide.md             ✅ UI/UX 設計
-├── Worktree-System-Design.md           ✅ Worktree 功能設計
-└── RPG-CLI-Concept.md                  ✅ 原始概念
+專案根目錄/docs/
+├── reference/
+│   └── Claude-Code-Official-Guide.md          ✅ 官方文檔總結
+└── design/
+    ├── RPG-CLI-Architecture-v2.md             ✅ 架構設計
+    ├── RPG-CLI-Concept.md                     ✅ 原始概念
+    ├── Feature-Planning-v2.md                 ✅ 功能規劃
+    ├── UI-Interaction-Guide.md                ✅ UI/UX 設計
+    ├── Worktree-System-Design.md              ✅ Worktree 功能設計
+    ├── Battle-System-Design.md                ✅ 戰鬥系統設計
+    ├── Agent-Battle-Companion-Design.md       ✅ 夥伴系統設計
+    └── Summon-Beast-System-Design.md          ✅ 召喚獸系統設計
 ```
 
 ### 外部文件
@@ -155,7 +244,7 @@ reward: { exp: 100, gold: 50, skill: 'parallel_thinking' }
 
 所有文檔都已正確或不需要修改：
 - ✅ 3 個核心設計文檔（已更新為正確版本）
-- ✅ 2 個功能設計文檔（UI、Worktree，無問題）
+- ✅ 5 個功能設計文檔（UI、Worktree、戰鬥系統、夥伴系統、召喚獸系統，無問題）
 - ✅ 1 個概念文檔（保留）
 
 ### 可選改進建議
