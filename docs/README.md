@@ -11,6 +11,7 @@
 docs/
 ├── README.md                    # 📖 本文件
 ├── DOCS-STATUS.md               # ✅ 文檔狀態檢查報告
+├── CONFLICTS-RESOLUTION.md      # ⚠️ 衝突解決方案
 ├── reference/                   # 📘 參考文檔
 │   └── Claude-Code-Official-Guide.md
 └── design/                      # 🎨 設計文檔
@@ -271,6 +272,17 @@ Agent Tools      →    專屬技能
 查看 [DOCS-STATUS.md](DOCS-STATUS.md) 了解所有文檔的檢查狀態。
 
 **總結**: ✅ 所有文檔狀態良好，無需修改，可以開始實作。
+
+## ⚠️ 衝突解決
+
+查看 [CONFLICTS-RESOLUTION.md](CONFLICTS-RESOLUTION.md) 了解已識別的衝突和解決方案。
+
+**摘要**:
+- **HIGH 衝突**: 2 個（Phase 時間規劃、Skills 規範）
+- **MEDIUM 衝突**: 5 個（MP系統、升級系統、戰鬥邏輯、槽位規則、Metadata格式）
+- **LOW 衝突**: 3 個（Worktree整合、UI格式、技術選型）
+
+所有衝突已有明確的解決方案，待更新各文檔。
 
 ---
 
