@@ -1,390 +1,630 @@
-# L3 多模型整合系統
+# 多模型整合系統 (Multi-Model Integration System)
 
-**版本**: v2.0
-**更新日期**: 2026-02-06
-
----
-
-## 一、系統概述
-
-多模型整合系統是 Code Quest 的 AI 模型管理核心，負責整合多個 AI 模型（Claude、Gemini 等），提供**智慧路由、成本優化、統一介面**三大能力。無論後端使用哪個模型，使用者和上層系統都透過統一的抽象層互動，無需關心模型差異。
-
-在系統架構中，多模型整合系統位於 **L3 進階層**，是 AI 能力的調度中心。它根據任務特性、使用者偏好、成本預算，將每個任務路由至最適合的模型。成本數據整合至商店系統的錢莊，提供透明的費用追蹤。
+**創建日期**: 2026-02-06
+**版本**: v1.0
+**來源**: `/docs/design/multi-model-integration/requirements.md`
 
 ---
 
-## 二、依賴關係
+## 目錄
 
-```
-依賴：
-  ├─ 戰鬥系統 (3)  — 戰鬥中的 AI 呼叫由本系統路由至對應模型
-  └─ 商店系統 (6)  — 錢莊顯示模型成本、用量統計、預算控制
-
-被依賴：無（終端系統）
-```
-
-| 方向 | 系統 | 關係說明 |
-|------|------|---------|
-| 依賴 | 戰鬥系統 (3) | 每場戰鬥的 AI 執行由本系統選擇模型並追蹤用量 |
-| 依賴 | 商店系統 (6) | 錢莊作為成本展示介面，顯示每日花費、趨勢、節省金額 |
+1. [系統概述](#系統概述)
+2. [依賴關係](#依賴關係)
+3. [核心規則](#核心規則)
+4. [內部地圖](#內部地圖)
+5. [系統整合](#系統整合)
+6. [設計決策](#設計決策)
 
 ---
 
-## 三、核心規則
+## 系統概述
 
-### 3.1 模型抽象層（Model Abstraction Layer）
+### 核心概念
 
-所有 AI 模型透過統一的 IModelAdapter 介面接入，上層系統無需感知模型差異：
+多模型整合系統實現多個 AI 模型（Claude, Gemini, GPT-4等）的統一管理和智能路由，提供成本優化和功能互補。
 
-```
-統一介面方法：
-  ├─ start()        — 初始化模型連線
-  ├─ stop()         — 關閉模型連線
-  ├─ ask()          — 發送單次提問
-  ├─ executeTask()  — 執行完整任務
-  ├─ stream()       — 串流式回應
-  ├─ cancel()       — 取消進行中的請求
-  ├─ getUsage()     — 取得用量統計
-  └─ estimateCost() — 預估任務成本
-```
+**為什麼需要多模型？**
 
-### 3.2 支援模型一覽
+單一模型的限制：
+- ❌ 成本固定（無法優化）
+- ❌ 功能限制（某些任務不擅長）
+- ❌ 依賴單一供應商（風險）
+- ❌ 無法根據任務選擇最優
 
-| 模型 | 輸入成本 | 輸出成本 | 延遲 | 最佳場景 | 狀態 |
-|------|---------|---------|------|---------|------|
-| Claude Sonnet 4.5 | $3 / 1M tokens | $15 / 1M tokens | ~2000ms | 複雜代碼、深度推理、架構設計 | 已整合 |
-| Gemini 2.0 Pro | $1.25 / 1M tokens | $5 / 1M tokens | ~1500ms | 多模態、長上下文（2M 視窗）、簡單-中等任務 | 已整合 |
-| GPT-4 | $10 / 1M tokens | $30 / 1M tokens | — | 預留選項 | 規劃中 |
+多模型的優勢：
+- ✅ 成本優化（簡單任務用便宜模型）
+- ✅ 功能互補（各取所長）
+- ✅ 供應商分散（降低風險）
+- ✅ 任務匹配（用最適合的模型）
 
-**成本比較**：
+### 設計原則
 
-```
-以相同 10K tokens 輸入 + 2K tokens 輸出計算：
+**1. 模型無關（Model-Agnostic）**：
+- 上層系統不關心底層用什麼模型
+- UI 展示統一體驗
+- 業務邏輯與模型解耦
 
-  Claude Sonnet 4.5：$0.03 + $0.03  = $0.06 / 次
-  Gemini 2.0 Pro：  $0.0125 + $0.01 = $0.0225 / 次（便宜 62.5%）
-  GPT-4：           $0.10 + $0.06   = $0.16 / 次（貴 166%）
-```
+**2. 統一接口（Unified Interface）**：
+- 所有模型通過相同接口調用
+- 標準化的輸入輸出格式
+- 一致的錯誤處理
 
-### 3.3 MultiModelRouter 選擇邏輯
+**3. 智能路由（Smart Routing）**：
+- 自動選擇最適合的模型
+- 基於任務特性的決策
+- 可配置的路由策略
 
-路由器依序檢查以下條件，命中即停止：
+**4. 用戶可控（User Control）**：
+- 用戶可以手動選擇模型
+- 靈活的偏好配置
+- 透明的決策過程
 
-```
-步驟 1 — 特殊需求檢查
-  ├─ 輸入包含圖片 / 影片？ → Gemini（多模態優勢）
-  └─ 上下文超過 200K tokens？ → Gemini（2M 上下文視窗）
+**5. 成本透明（Cost Transparency）**：
+- 清晰顯示每個任務的成本
+- 實時成本統計
+- 預算控制機制
 
-步驟 2 — 使用者偏好檢查
-  ├─ 成本優先模式？ → Gemini（價格最低）
-  └─ 質量優先模式？ → Claude（推理最強）
+---
 
-步驟 3 — 平衡模式智慧判定（預設）
-  ├─ 對話類型（Dialog Track）？ → Claude（對話品質佳）
-  ├─ 複雜度 < 8？ → Gemini（性價比高）
-  └─ 複雜度 ≥ 8？ → Claude（深度推理能力）
-```
+## 依賴關係
 
-### 3.4 使用者偏好模式
-
-系統提供 4 種偏好模式，使用者可隨時切換：
-
-| 模式 | 說明 | 路由策略 | 預估日成本 |
-|------|------|---------|-----------|
-| 平衡（推薦） | 預設模式，兼顧品質與成本 | 對話 + 複雜任務 → Claude；簡單任務 → Gemini | ~$0.50 / 日 |
-| 質量優先 | 所有任務使用最強模型 | 全部 → Claude | ~$0.80 / 日 |
-| 成本優先 | 盡可能使用便宜模型 | 優先 Gemini，僅特殊場景用 Claude | ~$0.25 / 日 |
-| 自訂 | 使用者手動配置 | 按任務類型自行指定模型 | 視設定而定 |
-
-**模式選擇建議**：
+### 上游依賴
 
 ```
-新手冒險者 → 平衡模式（預設，無需設定）
-預算充裕者 → 質量優先（最佳 AI 體驗）
-精打細算者 → 成本優先（節省 50% 開支）
-進階玩家   → 自訂模式（完全掌控）
+多模型整合系統依賴：
+├─ Bridge Layer（L1）- 管理不同模型的 CLI 進程
+├─ 成本追蹤系統（L1）- 記錄 token 使用和成本
+└─ 用戶配置系統（L2）- 存儲用戶偏好
 ```
 
-### 3.5 成本追蹤機制
-
-#### 每模型追蹤
+### 下游依賴
 
 ```
-追蹤維度：
-  ├─ 呼叫次數（calls count）
-  ├─ Token 用量（輸入 / 輸出分別統計）
-  └─ 實際成本（根據模型單價即時計算）
+影響的系統：
+├─ Async Battle System（L3）- 戰鬥實例可用不同模型
+├─ Scene System（L2）- 探索/戰鬥都支持多模型
+└─ UI System（L3）- 顯示模型選擇和成本統計
 ```
 
-#### 預算控制
-
-| 控制項 | 數值 / 規則 | 動作 |
-|--------|------------|------|
-| 每日預算 | 使用者自訂（預設 $1.00） | — |
-| 警告門檻 | 達到預算的 80% | 顯示警告通知 |
-| 超出預算 | 達到 100% | 三選一：停止呼叫 / 切換便宜模型 / 僅警告 |
-
-#### 錢莊整合（商店系統）
-
-成本數據在錢莊中的展示內容：
+### 系統架構位置
 
 ```
-錢莊顯示項目：
-  ├─ 今日花費明細（按模型分類）
-  │    Claude: 12 次呼叫, 45K tokens, $0.32
-  │    Gemini:  8 次呼叫, 28K tokens, $0.08
-  │    合計：$0.40
-  │
-  ├─ 7 日趨勢圖（每日花費折線）
-  │    Mon $0.35 ██████▓
-  │    Tue $0.42 ████████░
-  │    Wed $0.28 █████▓
-  │    ...
-  │
-  └─ 節省金額計算
-       若全用 Claude 花費：$0.72
-       實際花費：$0.40
-       節省：$0.32（44%）
-```
-
-### 3.6 與非同步戰鬥的整合
-
-SmartRouter 與 MultiModelRouter 串聯運作：
-
-```
-使用者輸入
-    │
-    ▼
-SmartRouter（複雜度分析）
-    │
-    ├─ 分數 0-2 → Dialog Track → MultiModelRouter → 選擇模型 → 回應
-    ├─ 分數 3-7 → Main Sync → MultiModelRouter → 選擇模型 → 執行
-    └─ 分數 8+  → Battle Async → MultiModelRouter → 選擇模型 → 建立 Worktree → 背景執行
-
-每場戰鬥獨立追蹤：
-    ├─ 使用哪個模型
-    ├─ Token 消耗量
-    └─ 實際成本
+L4: 展示層
+    └─ 模型選擇 UI + 成本統計
+L3: 業務層 ⭐
+    └─ 多模型整合系統（本系統）
+L2: 核心層
+    └─ MultiModelRouter（路由器）
+L1: 基礎層
+    └─ ModelAdapters（適配器）
+L0: 數據層
+    └─ 模型 CLI 進程
 ```
 
 ---
 
-## 四、系統內地圖
+## 核心規則
 
-### 4.1 多模型整合系統架構
+### 規則 1：模型註冊表
 
-```
-┌─────────────────────────────────────────────────────┐
-│              多模型整合系統                            │
-│                                                     │
-│  ┌───────────────────────────────────────────┐      │
-│  │          MultiModelRouter                  │      │
-│  │                                           │      │
-│  │   輸入 ──► 特殊需求? ──► 使用者偏好?       │      │
-│  │                  │            │            │      │
-│  │                  ▼            ▼            │      │
-│  │            平衡模式智慧判定                  │      │
-│  │                  │                        │      │
-│  │          ┌───────┴───────┐                │      │
-│  │          ▼               ▼                │      │
-│  │     ┌────────┐     ┌────────┐            │      │
-│  │     │ Claude │     │ Gemini │            │      │
-│  │     └────────┘     └────────┘            │      │
-│  └───────────────────────────────────────────┘      │
-│                                                     │
-│  ┌───────────────────────────────────────────┐      │
-│  │        Model Abstraction Layer             │      │
-│  │                                           │      │
-│  │  ┌──────────────┐  ┌──────────────┐      │      │
-│  │  │ ClaudeAdapter│  │GeminiAdapter │      │      │
-│  │  │              │  │              │      │      │
-│  │  │ start()      │  │ start()      │      │      │
-│  │  │ ask()        │  │ ask()        │      │      │
-│  │  │ stream()     │  │ stream()     │      │      │
-│  │  │ cancel()     │  │ cancel()     │      │      │
-│  │  │ getUsage()   │  │ getUsage()   │      │      │
-│  │  │ estimateCost │  │ estimateCost │      │      │
-│  │  └──────────────┘  └──────────────┘      │      │
-│  └───────────────────────────────────────────┘      │
-│                                                     │
-│  ┌───────────────────────────────────────────┐      │
-│  │           Cost Tracker                     │      │
-│  │                                           │      │
-│  │   每模型統計 ──► 預算檢查 ──► 錢莊同步     │      │
-│  └───────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────┘
+#### 1.1 Claude Sonnet 4.5
+
+```javascript
+claudeSonnet = {
+  modelId: 'claude-sonnet',
+  displayName: 'Claude Sonnet 4.5',
+  icon: '🤖',
+  provider: 'Anthropic',
+
+  capabilities: {
+    dialog: true,
+    codeGeneration: true,
+    multimodal: true,
+    longContext: true,
+    toolUse: true
+  },
+
+  pricing: {
+    inputTokens: 3,    // $3 per 1M tokens
+    outputTokens: 15   // $15 per 1M tokens
+  },
+
+  performance: {
+    avgLatency: 2000,  // 2 秒
+    maxConcurrent: 5
+  }
+}
 ```
 
-### 4.2 路由決策流程
+**適合場景**：
+- 複雜代碼生成
+- 需要精準對話
+- 深度推理任務
 
-```
-                    ┌─────────────┐
-                    │  任務請求     │
-                    └──────┬──────┘
-                           │
-                           ▼
-                  ┌────────────────┐
-                  │  包含圖片/影片？ │
-                  └───────┬────────┘
-                     是 /   \ 否
-                    /         \
-                   ▼           ▼
-            ┌─────────┐  ┌──────────────┐
-            │ Gemini  │  │ 超長上下文？   │
-            │（多模態）│  │ > 200K tokens │
-            └─────────┘  └──────┬───────┘
-                           是 /   \ 否
-                          /         \
-                         ▼           ▼
-                  ┌─────────┐  ┌──────────────┐
-                  │ Gemini  │  │ 使用者偏好？   │
-                  │（長文本）│  └──────┬───────┘
-                  └─────────┘         │
-                          ┌───────────┼───────────┐
-                          │           │           │
-                     成本優先     質量優先      平衡模式
-                          │           │           │
-                          ▼           ▼           ▼
-                   ┌─────────┐ ┌─────────┐ ┌───────────┐
-                   │ Gemini  │ │ Claude  │ │ 複雜度判定 │
-                   └─────────┘ └─────────┘ └─────┬─────┘
-                                                  │
-                                          ┌───────┴───────┐
-                                          │               │
-                                     複雜度 < 8      複雜度 ≥ 8
-                                          │           或 對話
-                                          ▼               ▼
-                                   ┌─────────┐     ┌─────────┐
-                                   │ Gemini  │     │ Claude  │
-                                   └─────────┘     └─────────┘
+#### 1.2 Gemini 2.0 Pro
+
+```javascript
+geminiPro = {
+  modelId: 'gemini-pro',
+  displayName: 'Gemini 2.0 Pro',
+  icon: '✨',
+  provider: 'Google',
+
+  capabilities: {
+    dialog: true,
+    codeGeneration: true,
+    multimodal: true,        // 圖片/視頻
+    longContext: true,        // 2M context
+    toolUse: true
+  },
+
+  pricing: {
+    inputTokens: 1.25,   // $1.25 per 1M (便宜 60%)
+    outputTokens: 5      // $5 per 1M
+  },
+
+  performance: {
+    avgLatency: 1500,    // 1.5 秒（稍快）
+    maxConcurrent: 10
+  }
+}
 ```
 
-### 4.3 成本追蹤資料流
+**適合場景**：
+- 多模態任務（圖片、視頻）
+- 超長上下文
+- 簡單到中等複雜度任務
+- 成本敏感場景
 
+---
+
+### 規則 2：路由策略
+
+#### 2.1 用戶偏好模式
+
+**Balanced Mode（平衡模式）** - 推薦：
+```javascript
+balanced = {
+  dialog: 'claude',              // 對話用 Claude
+  simpleTask: 'gemini',          // 簡單任務用 Gemini
+  complexTask: 'claude',         // 複雜任務用 Claude
+  multimodal: 'gemini',          // 多模態用 Gemini
+  estimatedCost: '$0.50/day'
+}
 ```
-┌───────────┐    ┌───────────┐    ┌───────────┐
-│  Claude   │    │  Gemini   │    │  GPT-4    │
-│  Adapter  │    │  Adapter  │    │ (未來)    │
-└─────┬─────┘    └─────┬─────┘    └─────┬─────┘
-      │                │                │
-      │   每次呼叫回報   │                │
-      │   tokens 用量   │                │
-      ▼                ▼                ▼
-┌─────────────────────────────────────────────┐
-│              Cost Tracker                    │
-│                                             │
-│  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ 即時統計      │  │  預算控制            │  │
-│  │              │  │                     │  │
-│  │ 呼叫次數     │  │  日預算: $1.00      │  │
-│  │ Token 用量   │  │  已用: $0.72        │  │
-│  │ 累計成本     │  │  ┌───────────────┐  │  │
-│  └──────┬──────┘  │  │ 80% → 警告    │  │  │
-│         │         │  │ 100% → 動作   │  │  │
-│         │         │  └───────────────┘  │  │
-│         │         └─────────────────────┘  │
-└─────────┼──────────────────────────────────┘
-          │
-          │ 同步至錢莊
-          ▼
-┌─────────────────────┐
-│   商店系統 — 錢莊    │
-│                     │
-│  今日明細            │
-│  7 日趨勢            │
-│  節省報告            │
-└─────────────────────┘
+
+**Quality Mode（質量優先）**：
+```javascript
+quality = {
+  dialog: 'claude',
+  simpleTask: 'claude',
+  complexTask: 'claude',
+  multimodal: 'claude',
+  estimatedCost: '$0.80/day'
+}
+```
+
+**Cost Mode（成本優先）**：
+```javascript
+cost = {
+  dialog: 'gemini',
+  simpleTask: 'gemini',
+  complexTask: 'gemini',
+  multimodal: 'gemini',
+  estimatedCost: '$0.25/day'
+}
+```
+
+#### 2.2 路由決策表
+
+| 場景 | 默認模型 | 原因 | 可替代 |
+|------|---------|------|--------|
+| 對話問答 | Claude | 精準度高 | Gemini (成本) |
+| 代碼生成 | Claude | 質量最佳 | - |
+| 簡單修復 | Gemini | 成本低 | Claude (質量) |
+| 複雜重構 | Claude | 推理深度 | - |
+| 多模態任務 | Gemini | 支持圖片/視頻 | - |
+| 長上下文 | Gemini | 2M context | - |
+| 成本優先 | Gemini | 價格便宜 60% | - |
+
+#### 2.3 選擇邏輯
+
+```javascript
+function selectModel(task) {
+  // 1. 檢查特殊要求
+  if (task.hasMedia) {
+    return 'gemini';  // 多模態
+  }
+
+  if (task.contextLength > 100000) {
+    return 'gemini';  // 長上下文
+  }
+
+  // 2. 根據用戶偏好
+  const preference = user.preferences.modelMode;
+
+  if (preference === 'cost') {
+    return 'gemini';
+  }
+
+  if (preference === 'quality') {
+    return 'claude';
+  }
+
+  // 3. Balanced 模式
+  if (task.type === 'dialog') {
+    return 'claude';
+  }
+
+  if (task.complexity < 8) {
+    return 'gemini';
+  }
+
+  return 'claude';
+}
 ```
 
 ---
 
-## 五、與其他系統的互動
+### 規則 3：成本管理
 
-### 5.1 多模型 ← 戰鬥系統 (3)
+#### 3.1 成本追蹤
 
-戰鬥系統中每次 AI 呼叫都經由多模型系統路由：
+```javascript
+costTracker = {
+  session: {
+    startTime: Date.now(),
+    models: {
+      claude: {
+        calls: 0,
+        totalTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalCost: 0
+      },
+      gemini: {
+        calls: 0,
+        totalTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalCost: 0
+      }
+    },
+    totalCost: 0
+  },
 
+  trackCall: (model, usage) => {
+    const modelStats = costTracker.session.models[model];
+
+    modelStats.calls++;
+    modelStats.inputTokens += usage.inputTokens;
+    modelStats.outputTokens += usage.outputTokens;
+    modelStats.totalTokens += usage.totalTokens;
+
+    // 計算成本
+    const pricing = modelRegistry[model].pricing;
+    const cost = (
+      (usage.inputTokens / 1000000) * pricing.inputTokens +
+      (usage.outputTokens / 1000000) * pricing.outputTokens
+    );
+
+    modelStats.totalCost += cost;
+    costTracker.session.totalCost += cost;
+
+    return cost;
+  }
+}
 ```
-戰鬥系統發起 AI 請求
-    │
-    ▼
-MultiModelRouter 選擇模型
-    │
-    ├─ 簡單遭遇戰（複雜度 3-7）→ 傾向 Gemini（性價比）
-    ├─ 複雜戰鬥（複雜度 8+）   → 傾向 Claude（推理品質）
-    └─ Boss 戰（副本）         → 強制 Claude（確保品質）
+
+#### 3.2 預算控制
+
+```javascript
+budgetConfig = {
+  dailyBudget: 5,          // $5/天
+  warningThreshold: 0.8,   // 80% 警告
+  exceedAction: 'switch'   // 'stop' | 'switch' | 'warn'
+}
+
+function checkBudget() {
+  const used = costTracker.getDailyCost();
+  const percentage = used / budgetConfig.dailyBudget;
+
+  if (percentage >= 1.0) {
+    if (budgetConfig.exceedAction === 'stop') {
+      return { allowed: false, message: '已超出每日預算' };
+    } else if (budgetConfig.exceedAction === 'switch') {
+      // 切換到便宜模型
+      return { allowed: true, forceModel: 'gemini' };
+    } else {
+      // 僅警告
+      showWarning('已超出每日預算，但繼續使用');
+      return { allowed: true };
+    }
+  } else if (percentage >= budgetConfig.warningThreshold) {
+    showWarning(`已使用 ${Math.round(percentage * 100)}% 預算`);
+  }
+
+  return { allowed: true };
+}
 ```
 
-- 模型選擇對戰鬥流程透明，戰鬥系統不需知道使用哪個模型
-- 每場戰鬥的模型選擇記錄在戰鬥日誌中，供使用者事後查看
+#### 3.3 成本估算
 
-### 5.2 多模型 → 商店系統 (6) — 錢莊
+```javascript
+function estimateCost(prompt, model) {
+  // 簡化估算：字符數 / 4
+  const tokens = Math.ceil(prompt.length / 4);
 
-成本數據整合至錢莊的展示：
+  // 假設輸出是輸入的 2 倍
+  const inputTokens = tokens;
+  const outputTokens = tokens * 2;
 
+  const pricing = modelRegistry[model].pricing;
+
+  const cost = (
+    (inputTokens / 1000000) * pricing.inputTokens +
+    (outputTokens / 1000000) * pricing.outputTokens
+  );
+
+  return {
+    inputTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    estimatedCost: cost
+  };
+}
 ```
-多模型系統提供：
-  ├─ 即時成本數據（每次 AI 呼叫後更新）
-  ├─ 模型使用分佈（Claude vs Gemini 比例）
-  ├─ 歷史用量記錄（支持 7 日回溯）
-  └─ 節省金額計算（對比單一模型方案）
-
-錢莊展示：
-  ├─ 今日 AI 花費儀表板
-  ├─ 模型用量對比圖
-  ├─ 費用趨勢折線圖
-  └─ 智慧路由節省報告
-```
-
-### 5.3 多模型 ← 非同步戰鬥系統 (9)
-
-非同步戰鬥系統在分流後呼叫本系統選擇模型：
-
-- SmartRouter 先決定執行路徑（Dialog / MainSync / BattleAsync）
-- MultiModelRouter 再決定使用哪個模型
-- 每場並行戰鬥可使用不同模型（根據各自任務特性）
-- 並行戰鬥的成本獨立追蹤，合併顯示在錢莊
 
 ---
 
-## 六、設計決策說明
+### 規則 4：模型抽象層
 
-### 6.1 為什麼需要統一的模型抽象層？
+```typescript
+interface IModelAdapter {
+  // 基本資訊
+  modelId: string;
+  displayName: string;
+  icon: string;
+  provider: string;
 
-**問題**：不同 AI 模型有不同的 API 格式、認證方式、回應結構。如果上層系統直接對接各模型，每新增一個模型就要修改所有呼叫方。
+  // 能力標記
+  capabilities: {
+    dialog: boolean;
+    codeGeneration: boolean;
+    multimodal: boolean;
+    longContext: boolean;
+    toolUse: boolean;
+  };
 
-**決策**：建立 IModelAdapter 統一介面，所有模型都實作相同的方法集。上層系統只與介面互動，不關心底層實作。
+  // 成本資訊
+  pricing: {
+    inputTokens: number;
+    outputTokens: number;
+  };
 
-**效果**：新增模型（如 GPT-4）只需實作一個 Adapter，無需修改任何上層系統。切換模型對使用者和上層系統完全透明。
+  // 核心方法
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  ask(prompt: string): Promise<string>;
+  executeTask(prompt: string): Promise<Result>;
+  stream(prompt: string, callback: (chunk: string) => void): Promise<void>;
+  cancel(): void;
 
-### 6.2 為什麼預設推薦平衡模式？
+  // 成本追蹤
+  getUsage(): Usage;
+  estimateCost(prompt: string): number;
+}
+```
 
-**問題**：新使用者不了解各模型差異，無法做出明智選擇。全用 Claude 太貴，全用 Gemini 品質不夠。
+---
 
-**決策**：平衡模式作為預設，自動為不同任務選擇最適合的模型。對話和複雜任務用 Claude 確保品質，簡單任務用 Gemini 節省成本。
+### 規則 5：錯誤處理
 
-**效果**：新使用者無需任何設定即可獲得良好的品質/成本平衡。預估每日 $0.50，比全用 Claude 節省 37.5%，同時關鍵任務品質不打折。
+#### 5.1 模型切換
 
-### 6.3 為什麼多模態任務自動路由到 Gemini？
+```javascript
+modelFailover = {
+  enabled: true,
+  fallbackOrder: ['claude', 'gemini'],
 
-**問題**：圖片和影片分析是特定模型的強項，使用者不應需要手動選擇。
+  onError: async (model, error) => {
+    logger.error(`Model ${model} failed:`, error);
 
-**決策**：路由器在第一步就檢查特殊需求，包含圖片/影片的任務自動路由到 Gemini（多模態能力強，且 2M 上下文視窗適合大量視覺資料）。
+    // 查找下一個可用模型
+    const nextModel = findNextAvailableModel(model);
 
-**效果**：使用者只需貼上圖片，系統自動選擇最適合的模型。無需了解各模型的能力差異。
+    if (nextModel) {
+      logger.info(`Switching to ${nextModel}`);
+      return { switched: true, model: nextModel };
+    } else {
+      return { switched: false, error: 'No fallback model available' };
+    }
+  }
+}
+```
 
-### 6.4 為什麼成本展示整合在錢莊而非獨立系統？
+#### 5.2 超時處理
 
-**問題**：成本管理如果作為獨立介面，使用者需要額外學習一個入口，且與遊戲世界觀斷裂。
+```javascript
+modelTimeout = {
+  claude: 30000,   // 30 秒
+  gemini: 20000    // 20 秒
+}
 
-**決策**：將成本展示整合至商店系統的錢莊（已有的遊戲場所），作為錢莊的核心功能之一。
+function executeWithTimeout(model, prompt) {
+  return Promise.race([
+    model.executeTask(prompt),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), modelTimeout[model.modelId])
+    )
+  ]);
+}
+```
 
-**效果**：符合 RPG 世界觀（錢莊管理金錢），使用者在熟悉的場所中就能看到 AI 花費。降低認知負擔，增加沉浸感。
+---
 
-### 6.5 為什麼預算控制提供三種超出動作？
+## 內部地圖
 
-**問題**：預算超出時的硬性停止可能打斷重要工作；僅警告又失去預算控制的意義。
+### 模型選擇 UI
 
-**決策**：提供三選一 — 停止呼叫（最嚴格）、切換便宜模型（折衷）、僅警告（最寬鬆）。使用者根據自己的需求選擇。
+```
+┌─────────────────────────────────────────────────────────┐
+│  ⚙️ 模型設置                                            │
+├─────────────────────────────────────────────────────────┤
+│  模式選擇：                                              │
+│                                                         │
+│  ◉ ⚖️ 平衡模式（推薦）                                  │
+│     對話和複雜任務用 Claude，簡單任務用 Gemini          │
+│     預估每日成本: ~$0.50                                │
+│                                                         │
+│  ○ 🎯 質量優先                                          │
+│     所有任務都用 Claude Sonnet                          │
+│     預估每日成本: ~$0.80                                │
+│                                                         │
+│  ○ 💰 成本優先                                          │
+│     盡可能使用 Gemini Pro                               │
+│     預估每日成本: ~$0.25                                │
+│                                                         │
+│  ○ 🎛️ 自定義配置                                       │
+│     手動配置每種任務類型使用的模型                      │
+│                                                         │
+├─────────────────────────────────────────────────────────┤
+│  成本統計（今日）：                                      │
+│                                                         │
+│  🤖 Claude Sonnet: $0.18 (8 次調用)                    │
+│  ✨ Gemini Pro:    $0.05 (12 次調用)                   │
+│  ────────────────────────────                           │
+│  總計: $0.23 / $5.00 (4.6%)                             │
+│                                                         │
+│  [查看詳細統計] [設置預算] [導出報告]                   │
+└─────────────────────────────────────────────────────────┘
+```
 
-**效果**：嚴格控制預算的使用者可選擇停止；重視工作流程的使用者可選擇自動降級；僅需提醒的使用者選擇警告。覆蓋所有使用場景。
+### 成本統計 UI
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  📊 成本統計                                            │
+├─────────────────────────────────────────────────────────┤
+│  時間範圍：[今日] [本週] [本月]                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  今日使用（2026-02-06）：                               │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ 🤖 Claude Sonnet 4.5                            │   │
+│  │ ━━━━━━━━━━━━━━━━━━ 72%                         │   │
+│  │                                                 │   │
+│  │ 調用次數：8 次                                   │   │
+│  │ 輸入 Token：15,234                              │   │
+│  │ 輸出 Token：28,456                              │   │
+│  │ 總成本：$0.18                                   │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ ✨ Gemini 2.0 Pro                               │   │
+│  │ ━━━━━ 28%                                       │   │
+│  │                                                 │   │
+│  │ 調用次數：12 次                                  │   │
+│  │ 輸入 Token：8,567                               │   │
+│  │ 輸出 Token：16,234                              │   │
+│  │ 總成本：$0.05                                   │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  總成本：$0.23                                          │
+│  預算：$5.00/天                                         │
+│  剩餘：$4.77 (95.4%)                                    │
+│                                                         │
+│  節省：使用多模型策略比全用 Claude 節省了 ~$0.12 (34%)  │
+│                                                         │
+│  [導出 CSV] [設置預警] [查看歷史]                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 系統整合
+
+### 與 Async Battle System 整合
+
+```javascript
+// 戰鬥實例可以使用不同的模型
+async function createBattle(config) {
+  // 路由到合適的模型
+  const model = multiModelRouter.selectModel(config);
+
+  const battle = {
+    id: generateId(),
+    model: model.modelId,
+    config: config,
+    process: await model.start()
+  };
+
+  // 追蹤成本
+  battle.cost = {
+    startCost: costTracker.session.totalCost,
+    model: model.modelId
+  };
+
+  return battle;
+}
+
+// 戰鬥完成時記錄成本
+battlePool.on('battle_complete', (battle) => {
+  battle.cost.endCost = costTracker.session.totalCost;
+  battle.cost.totalCost = battle.cost.endCost - battle.cost.startCost;
+
+  logger.info(`Battle #${battle.id} cost: $${battle.cost.totalCost.toFixed(4)} (${battle.cost.model})`);
+});
+```
+
+---
+
+## 設計決策
+
+### 決策 1：為什麼需要多模型？
+
+**理由**：
+1. 成本優化：簡單任務用便宜模型，節省 60%+
+2. 功能互補：Gemini 多模態強，Claude 代碼生成強
+3. 風險分散：不依賴單一供應商
+4. 靈活選擇：根據任務特性選擇最優
+
+### 決策 2：為什麼默認推薦平衡模式？
+
+**理由**：
+- 關鍵任務（對話、複雜）用最好的模型（Claude）
+- 簡單任務用便宜模型（Gemini）
+- 兼顧質量和成本
+- 適合大多數用戶
+
+### 決策 3：為什麼需要成本透明？
+
+**理由**：
+- 用戶有權知道花費
+- 幫助用戶做出明智選擇
+- 預算控制避免超支
+- 增加信任感
+
+### 決策 4：為什麼允許用戶手動選擇？
+
+**理由**：
+- 用戶可能有特殊需求
+- 尊重用戶選擇權
+- 某些場景需要特定模型
+- 高級用戶需要更多控制
+
+### 決策 5：為什麼需要模型抽象層？
+
+**理由**：
+- 上層系統不關心底層模型
+- 易於添加新模型
+- 統一接口降低複雜度
+- 業務邏輯與模型解耦
+
+---
+
+**文檔完成日期**: 2026-02-06
+**總字數**: ~4,500
+**章節**: 6
+**來源文件**: `/docs/design/multi-model-integration/requirements.md` (674 lines)
