@@ -1,8 +1,22 @@
 # Code Quest UI 設計總覽
 
-**版本**: v2.0
-**更新日期**: 2026-02-06
+**版本**: v2.1
+**更新日期**: 2026-02-07
 **狀態**: 設計完成
+
+---
+
+## 快速開始：使用 Skills
+
+現在可以透過 Claude Code Skills 快速了解 Code Quest 的核心概念：
+
+| Skill 指令 | 說明 | 何時使用 |
+|-----------|------|----------|
+| `/project-overview` | 專案總覽與核心概念 | 想快速了解「Code Quest 是什麼」 |
+| `/map-system` | 雙模式地圖系統 | 想了解如何探索世界、導航 |
+| `/battle-management` | 戰鬥管理與AI派遣 | 想了解如何管理多個 AI 任務 |
+
+💡 **提示**：這些 skills 是互動式的知識庫，可以直接呼叫或由 Claude 自動觸發。
 
 ---
 
@@ -483,6 +497,12 @@ Node.js + Express
 
 ### 新手
 
+**快速路徑（使用 Skills）**：
+1. 呼叫 `/project-overview` 快速理解專案
+2. 呼叫 `/map-system` 了解如何導航
+3. 根據需要呼叫 `/battle-management` 了解AI管理
+
+**深入路徑（閱讀文檔）**：
 1. 先閱讀本總覽文檔
 2. 閱讀 [02-WORLD-MAP.md](./02-WORLD-MAP.md) 了解世界結構
 3. 閱讀 [03-CORE-MECHANICS.md](./03-CORE-MECHANICS.md) 了解核心機制
@@ -490,12 +510,21 @@ Node.js + Express
 
 ### 開發者
 
+**快速參考**：
+- `/project-overview` → 了解架構設計
+- 文檔閱讀路徑：
+
 1. 閱讀 [01-SYSTEM-ARCHITECTURE.md](./01-SYSTEM-ARCHITECTURE.md) 了解架構
 2. 根據開發目標查看對應系統文檔
 3. 參考 [references/tool-mappings.md](./references/tool-mappings.md) 了解工具映射
 
 ### 設計師
 
+**快速參考**：
+- `/map-system` → 了解UI佈局
+- `/battle-management` → 了解互動設計
+
+**深入學習**：
 1. 閱讀本總覽的視覺風格章節
 2. 查看各系統的 UI 設計部分
 3. 參考 [04-GAME-FLOW.md](./04-GAME-FLOW.md) 了解用戶流程
