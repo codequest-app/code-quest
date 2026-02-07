@@ -565,26 +565,21 @@ AI 即時回答（Streaming）
 
 #### 靜止之間視覺效果
 
-**CSS 濾鏡**:
-```css
-.stasis-chamber {
-  filter: grayscale(100%) brightness(0.8);
-  background: linear-gradient(to bottom, #808080, #505050);
-}
+**視覺設計**:
+```
+整體效果:
+• 灰度濾鏡 (100%)
+• 降低亮度
+• 灰色漸層背景
 
-.stasis-chamber .clock {
-  animation: none; /* 停止時鐘動畫 */
-}
+時鐘效果:
+• 停止所有動畫
+• 靜止狀態
 
-.stasis-chamber .particles {
-  animation: stasisFloat 3s infinite;
-  opacity: 0.3;
-}
-
-@keyframes stasisFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
+粒子效果:
+• 緩慢漂浮動畫
+• 半透明顯示
+• 上下浮動循環
 ```
 
 ---
@@ -1208,26 +1203,25 @@ C          打開角色面板
 
 ### 螢幕閱讀器
 
-```html
-<div role="region" aria-label="CodeLand 世界地圖">
-  <div role="status" aria-live="polite">
-    當前位置: 城鎮區域，商業街
-  </div>
+```
+無障礙標籤結構:
 
-  <nav aria-label="場所列表">
-    <button aria-label="進入商業街，包含 7 個商店">
-      🏪 商業街
-    </button>
-    <button aria-label="進入酒館，與 AI 對話">
-      🍺 酒館
-    </button>
-    <!-- 其他場所 -->
-  </nav>
+地圖區域:
+• 定義地圖區域角色
+• 提供地圖標籤說明
 
-  <div role="alert" aria-live="assertive">
-    警告: 您即將進入危險的野外區域
-  </div>
-</div>
+狀態通知:
+• 當前位置播報
+• 禮貌提示模式
+
+導航控制:
+• 場所列表導航
+• 每個按鈕有詳細說明
+• 描述功能和內容
+
+警告提示:
+• 重要警告播報
+• 強制提示模式
 ```
 
 ---

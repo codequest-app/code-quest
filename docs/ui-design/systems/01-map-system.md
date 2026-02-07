@@ -188,22 +188,21 @@
 
 **遭遇戰觸發條件**：
 
-```javascript
-if (currentZone === 'wilderness' && promptType === 'task') {
-  const complexity = analyzeComplexity(prompt);
+```
+觸發判定:
+• 檢查當前區域是否為野外
+• 檢查 Prompt 類型是否為任務型
 
-  if (complexity >= 8) {
-    // 創建戰鬥
-    startBattle({
-      prompt,
-      complexity,
-      zone: currentSubZone  // forest/mountains/wasteland/volcano
-    });
-  } else {
-    // 簡單任務，在主 CLI 完成
-    handleSimpleTask(prompt);
-  }
-}
+複雜度判定:
+• 分析 Prompt 複雜度
+
+複雜度 ≥ 8:
+• 創建戰鬥實例
+• 傳入 Prompt、複雜度、區域資訊
+
+複雜度 < 8:
+• 在主 CLI 直接處理
+• 不觸發戰鬥
 ```
 
 **限制**：
@@ -332,13 +331,12 @@ if (currentZone === 'wilderness' && promptType === 'task') {
 
 **遭遇率設定**：
 
-```javascript
-encounterRates = {
-  forest:     0.3,  // 30% 機率遭遇戰
-  mountains:  0.5,  // 50%
-  wasteland:  0.7,  // 70%
-  volcano:    0.9   // 90%
-}
+```
+各區域遭遇率:
+• 森林: 30% 機率
+• 山脈: 50% 機率
+• 荒野: 70% 機率
+• 火山: 90% 機率
 ```
 
 ---

@@ -109,7 +109,7 @@ L0: 數據層
 
 #### 1.1 Claude Sonnet 4.5
 
-```javascript
+```
 claudeSonnet = {
   modelId: 'claude-sonnet',
   displayName: 'Claude Sonnet 4.5',
@@ -143,7 +143,7 @@ claudeSonnet = {
 
 #### 1.2 Gemini 2.0 Pro
 
-```javascript
+```
 geminiPro = {
   modelId: 'gemini-pro',
   displayName: 'Gemini 2.0 Pro',
@@ -183,7 +183,7 @@ geminiPro = {
 #### 2.1 用戶偏好模式
 
 **Balanced Mode（平衡模式）** - 推薦：
-```javascript
+```
 balanced = {
   dialog: 'claude',              // 對話用 Claude
   simpleTask: 'gemini',          // 簡單任務用 Gemini
@@ -194,7 +194,7 @@ balanced = {
 ```
 
 **Quality Mode（質量優先）**：
-```javascript
+```
 quality = {
   dialog: 'claude',
   simpleTask: 'claude',
@@ -205,7 +205,7 @@ quality = {
 ```
 
 **Cost Mode（成本優先）**：
-```javascript
+```
 cost = {
   dialog: 'gemini',
   simpleTask: 'gemini',
@@ -229,7 +229,7 @@ cost = {
 
 #### 2.3 選擇邏輯
 
-```javascript
+```
 function selectModel(task) {
   // 1. 檢查特殊要求
   if (task.hasMedia) {
@@ -270,7 +270,7 @@ function selectModel(task) {
 
 #### 3.1 成本追蹤
 
-```javascript
+```
 costTracker = {
   session: {
     startTime: Date.now(),
@@ -318,7 +318,7 @@ costTracker = {
 
 #### 3.2 預算控制
 
-```javascript
+```
 budgetConfig = {
   dailyBudget: 5,          // $5/天
   warningThreshold: 0.8,   // 80% 警告
@@ -350,7 +350,7 @@ function checkBudget() {
 
 #### 3.3 成本估算
 
-```javascript
+```
 function estimateCost(prompt, model) {
   // 簡化估算：字符數 / 4
   const tokens = Math.ceil(prompt.length / 4);
@@ -422,7 +422,7 @@ interface IModelAdapter {
 
 #### 5.1 模型切換
 
-```javascript
+```
 modelFailover = {
   enabled: true,
   fallbackOrder: ['claude', 'gemini'],
@@ -445,7 +445,7 @@ modelFailover = {
 
 #### 5.2 超時處理
 
-```javascript
+```
 modelTimeout = {
   claude: 30000,   // 30 秒
   gemini: 20000    // 20 秒
@@ -547,7 +547,7 @@ function executeWithTimeout(model, prompt) {
 
 ### 與 Async Battle System 整合
 
-```javascript
+```
 // 戰鬥實例可以使用不同的模型
 async function createBattle(config) {
   // 路由到合適的模型

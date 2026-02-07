@@ -16,50 +16,44 @@
 
 ### Read 工具 → 讀心術
 
-```javascript
-{
-  tool: 'Read',
-  spellName: '讀心術',
-  icon: '📖',
-  mpCost: 3,
-  category: '檔案魔法',
-  animation: 'book_open',
-  effect: '讀取文件內容，了解代碼意圖',
-  battleEffect: '獲得敵人資訊（+10% 命中率，2 回合）',
-  soundEffect: 'read.wav'
-}
+```
+工具: Read
+魔法名稱: 讀心術
+圖標: 📖
+MP消耗: 3
+分類: 檔案魔法
+動畫: 開書效果
+效果: 讀取文件內容，了解代碼意圖
+戰鬥效果: 獲得敵人資訊 (+10% 命中率，2 回合)
+音效: 讀取聲音
 ```
 
 ### Write 工具 → 創造術
 
-```javascript
-{
-  tool: 'Write',
-  spellName: '創造術',
-  icon: '✍️',
-  mpCost: 8,
-  category: '檔案魔法',
-  animation: 'writing_feather',
-  effect: '創建或覆蓋文件',
-  battleEffect: '創造新代碼（造成 80 傷害）',
-  soundEffect: 'write.wav'
-}
+```
+工具: 'Write',
+魔法名稱: '創造術',
+圖標: '✍️',
+MP消耗: 8,
+分類: '檔案魔法',
+動畫: 'writing_feather',
+效果: '創建或覆蓋文件',
+戰鬥效果: '創造新代碼（造成 80 傷害）',
+音效: 'write.wav'
 ```
 
 ### Edit 工具 → 改寫術
 
-```javascript
-{
-  tool: 'Edit',
-  spellName: '改寫術',
-  icon: '✏️',
-  mpCost: 6,
-  category: '檔案魔法',
-  animation: 'text_transform',
-  effect: '編輯文件內容，精確修改',
-  battleEffect: '修改敵人屬性（-15% 防禦，3 回合）',
-  soundEffect: 'edit.wav'
-}
+```
+工具: 'Edit',
+魔法名稱: '改寫術',
+圖標: '✏️',
+MP消耗: 6,
+分類: '檔案魔法',
+動畫: 'text_transform',
+效果: '編輯文件內容，精確修改',
+戰鬥效果: '修改敵人屬性（-15% 防禦，3 回合）',
+音效: 'edit.wav'
 ```
 
 ---
@@ -68,34 +62,30 @@
 
 ### Grep 工具 → 搜索之眼
 
-```javascript
-{
-  tool: 'Grep',
-  spellName: '搜索之眼',
-  icon: '👁️',
-  mpCost: 5,
-  category: '探索魔法',
-  animation: 'eye_scan',
-  effect: '在代碼中搜索字符串模式',
-  battleEffect: '找出敵人弱點（+20% 暴擊率，2 回合）',
-  soundEffect: 'search.wav'
-}
+```
+工具: 'Grep',
+魔法名稱: '搜索之眼',
+圖標: '👁️',
+MP消耗: 5,
+分類: '探索魔法',
+動畫: 'eye_scan',
+效果: '在代碼中搜索字符串模式',
+戰鬥效果: '找出敵人弱點（+20% 暴擊率，2 回合）',
+音效: 'search.wav'
 ```
 
 ### Glob 工具 → 定位術
 
-```javascript
-{
-  tool: 'Glob',
-  spellName: '定位術',
-  icon: '🔍',
-  mpCost: 4,
-  category: '探索魔法',
-  animation: 'radar_scan',
-  effect: '搜索文件名模式',
-  battleEffect: '定位敵人位置（無法閃避，1 次攻擊）',
-  soundEffect: 'locate.wav'
-}
+```
+工具: 'Glob',
+魔法名稱: '定位術',
+圖標: '🔍',
+MP消耗: 4,
+分類: '探索魔法',
+動畫: 'radar_scan',
+效果: '搜索文件名模式',
+戰鬥效果: '定位敵人位置（無法閃避，1 次攻擊）',
+音效: 'locate.wav'
 ```
 
 ---
@@ -104,87 +94,77 @@
 
 ### git commit → 版本封印術
 
-```javascript
-{
-  tool: 'git commit',
-  spellName: '版本封印術',
-  icon: '📦',
-  mpCost: 5,
-  category: 'Git 魔法',
-  animation: 'seal_magic',
+```
+工具: 'git commit',
+魔法名稱: '版本封印術',
+圖標: '📦',
+MP消耗: 5,
+分類: 'Git 魔法',
+動畫: 'seal_magic',
   castTime: 'fast',
-  effect: '保存當前代碼狀態',
-  battleEffect: '封存進度（創建檢查點）',
-  soundEffect: 'commit.wav'
-}
+效果: '保存當前代碼狀態',
+戰鬥效果: '封存進度（創建檢查點）',
+音效: 'commit.wav'
 ```
 
 ### git push → 遠程傳送術
 
-```javascript
-{
-  tool: 'git push',
-  spellName: '遠程傳送術',
-  icon: '🚀',
-  mpCost: 10,
-  category: 'Git 魔法',
-  animation: 'teleport',
+```
+工具: 'git push',
+魔法名稱: '遠程傳送術',
+圖標: '🚀',
+MP消耗: 10,
+分類: 'Git 魔法',
+動畫: 'teleport',
   castTime: 'medium',
-  effect: '同步到遠程倉庫',
-  battleEffect: '傳送代碼（分享勝利成果）',
-  soundEffect: 'push.wav'
-}
+效果: '同步到遠程倉庫',
+戰鬥效果: '傳送代碼（分享勝利成果）',
+音效: 'push.wav'
 ```
 
 ### git pull → 同步魔法
 
-```javascript
-{
-  tool: 'git pull',
-  spellName: '同步魔法',
-  icon: '🔄',
-  mpCost: 8,
-  category: 'Git 魔法',
-  animation: 'sync_circle',
+```
+工具: 'git pull',
+魔法名稱: '同步魔法',
+圖標: '🔄',
+MP消耗: 8,
+分類: 'Git 魔法',
+動畫: 'sync_circle',
   castTime: 'medium',
-  effect: '獲取最新版本',
-  battleEffect: '學習新招式（獲得隊友更新）',
-  soundEffect: 'pull.wav'
-}
+效果: '獲取最新版本',
+戰鬥效果: '學習新招式（獲得隊友更新）',
+音效: 'pull.wav'
 ```
 
 ### git merge → 融合術
 
-```javascript
-{
-  tool: 'git merge',
-  spellName: '融合術',
-  icon: '🔀',
-  mpCost: 12,
-  category: 'Git 魔法',
-  animation: 'merge_vortex',
+```
+工具: 'git merge',
+魔法名稱: '融合術',
+圖標: '🔀',
+MP消耗: 12,
+分類: 'Git 魔法',
+動畫: 'merge_vortex',
   castTime: 'medium',
-  effect: '合併分支代碼',
-  battleEffect: '融合力量（組合技能）',
-  soundEffect: 'merge.wav'
-}
+效果: '合併分支代碼',
+戰鬥效果: '融合力量（組合技能）',
+音效: 'merge.wav'
 ```
 
 ### git checkout → 時空跳躍
 
-```javascript
-{
-  tool: 'git checkout',
-  spellName: '時空跳躍',
-  icon: '⏰',
-  mpCost: 4,
-  category: 'Git 魔法',
-  animation: 'time_warp',
+```
+工具: 'git checkout',
+魔法名稱: '時空跳躍',
+圖標: '⏰',
+MP消耗: 4,
+分類: 'Git 魔法',
+動畫: 'time_warp',
   castTime: 'fast',
-  effect: '切換分支或版本',
-  battleEffect: '回到過去（恢復早期狀態）',
-  soundEffect: 'checkout.wav'
-}
+效果: '切換分支或版本',
+戰鬥效果: '回到過去（恢復早期狀態）',
+音效: 'checkout.wav'
 ```
 
 ---
@@ -193,70 +173,62 @@
 
 ### npm install → 依賴召喚術
 
-```javascript
-{
-  tool: 'npm install',
-  spellName: '依賴召喚術',
-  icon: '📚',
-  mpCost: 15,
-  category: 'npm 魔法',
-  animation: 'summoning_circle',
+```
+工具: 'npm install',
+魔法名稱: '依賴召喚術',
+圖標: '📚',
+MP消耗: 15,
+分類: 'npm 魔法',
+動畫: 'summoning_circle',
   castTime: 'slow',
-  effect: '安裝項目依賴套件',
-  battleEffect: '召喚支援（獲得外部力量）',
-  soundEffect: 'install.wav'
-}
+效果: '安裝項目依賴套件',
+戰鬥效果: '召喚支援（獲得外部力量）',
+音效: 'install.wav'
 ```
 
 ### npm test → 試煉之法
 
-```javascript
-{
-  tool: 'npm test',
-  spellName: '試煉之法',
-  icon: '🧪',
-  mpCost: 8,
-  category: 'npm 魔法',
-  animation: 'test_flask',
+```
+工具: 'npm test',
+魔法名稱: '試煉之法',
+圖標: '🧪',
+MP消耗: 8,
+分類: 'npm 魔法',
+動畫: 'test_flask',
   castTime: 'medium',
-  effect: '執行測試套件',
-  battleEffect: '驗證戰術（確保無漏洞）',
-  soundEffect: 'test.wav'
-}
+效果: '執行測試套件',
+戰鬥效果: '驗證戰術（確保無漏洞）',
+音效: 'test.wav'
 ```
 
 ### npm build → 構築魔法
 
-```javascript
-{
-  tool: 'npm build',
-  spellName: '構築魔法',
-  icon: '🏗️',
-  mpCost: 12,
-  category: 'npm 魔法',
-  animation: 'construction',
+```
+工具: 'npm build',
+魔法名稱: '構築魔法',
+圖標: '🏗️',
+MP消耗: 12,
+分類: 'npm 魔法',
+動畫: 'construction',
   castTime: 'slow',
-  effect: '構建生產版本',
-  battleEffect: '鍛造終極武器（最終版本）',
-  soundEffect: 'build.wav'
-}
+效果: '構建生產版本',
+戰鬥效果: '鍛造終極武器（最終版本）',
+音效: 'build.wav'
 ```
 
 ### npm run dev → 開發召喚
 
-```javascript
-{
-  tool: 'npm run dev',
-  spellName: '開發召喚',
-  icon: '🔥',
-  mpCost: 10,
-  category: 'npm 魔法',
-  animation: 'flame_up',
+```
+工具: 'npm run dev',
+魔法名稱: '開發召喚',
+圖標: '🔥',
+MP消耗: 10,
+分類: 'npm 魔法',
+動畫: 'flame_up',
   castTime: 'medium',
-  effect: '啟動開發服務器',
-  battleEffect: '激活訓練場（持續開發）',
-  soundEffect: 'dev.wav'
-}
+效果: '啟動開發服務器',
+戰鬥效果: '激活訓練場（持續開發）',
+音效: 'dev.wav'
 ```
 
 ---
@@ -265,71 +237,63 @@
 
 ### ls/pwd → 偵察術
 
-```javascript
-{
-  tool: 'ls / pwd',
-  spellName: '偵察術',
-  icon: '👁️',
-  mpCost: 2,
-  category: '系統魔法',
-  animation: 'eye_glow',
+```
+工具: 'ls / pwd',
+魔法名稱: '偵察術',
+圖標: '👁️',
+MP消耗: 2,
+分類: '系統魔法',
+動畫: 'eye_glow',
   castTime: 'instant',
-  effect: '查看文件和目錄結構',
-  battleEffect: '偵察地形（了解環境）',
-  soundEffect: 'scout.wav'
-}
+效果: '查看文件和目錄結構',
+戰鬥效果: '偵察地形（了解環境）',
+音效: 'scout.wav'
 ```
 
 ### mkdir → 創造空間術
 
-```javascript
-{
-  tool: 'mkdir',
-  spellName: '創造空間術',
-  icon: '📁',
-  mpCost: 3,
-  category: '系統魔法',
-  animation: 'folder_appear',
+```
+工具: 'mkdir',
+魔法名稱: '創造空間術',
+圖標: '📁',
+MP消耗: 3,
+分類: '系統魔法',
+動畫: 'folder_appear',
   castTime: 'fast',
-  effect: '創建新目錄',
-  battleEffect: '開闢新領域（擴展空間）',
-  soundEffect: 'mkdir.wav'
-}
+效果: '創建新目錄',
+戰鬥效果: '開闢新領域（擴展空間）',
+音效: 'mkdir.wav'
 ```
 
 ### rm/rm -rf → 抹除術
 
-```javascript
-{
-  tool: 'rm / rm -rf',
-  spellName: '抹除術',
-  icon: '🗑️',
-  mpCost: 5,
-  category: '系統魔法',
-  animation: 'disintegrate',
+```
+工具: 'rm / rm -rf',
+魔法名稱: '抹除術',
+圖標: '🗑️',
+MP消耗: 5,
+分類: '系統魔法',
+動畫: 'disintegrate',
   castTime: 'fast',
-  effect: '刪除文件或目錄',
-  battleEffect: '毀滅打擊（清除目標）',
-  soundEffect: 'delete.wav',
+效果: '刪除文件或目錄',
+戰鬥效果: '毀滅打擊（清除目標）',
+音效: 'delete.wav',
   warning: 'rm -rf 風險高，需要額外確認'
-}
 ```
 
 ### cp/mv → 轉移術
 
-```javascript
-{
-  tool: 'cp / mv',
-  spellName: '轉移術',
-  icon: '🚚',
-  mpCost: 4,
-  category: '系統魔法',
-  animation: 'telekinesis',
+```
+工具: 'cp / mv',
+魔法名稱: '轉移術',
+圖標: '🚚',
+MP消耗: 4,
+分類: '系統魔法',
+動畫: 'telekinesis',
   castTime: 'fast',
-  effect: '複製或移動文件',
-  battleEffect: '物品傳送（重新定位資源）',
-  soundEffect: 'move.wav'
-}
+效果: '複製或移動文件',
+戰鬥效果: '物品傳送（重新定位資源）',
+音效: 'move.wav'
 ```
 
 ---
@@ -338,54 +302,48 @@
 
 ### Task 工具 → 召喚夥伴
 
-```javascript
-{
-  tool: 'Task',
-  spellName: '召喚夥伴',
-  icon: '🌟',
-  mpCost: 20,
-  category: '召喚術',
-  animation: 'summon_portal',
+```
+工具: 'Task',
+魔法名稱: '召喚夥伴',
+圖標: '🌟',
+MP消耗: 20,
+分類: '召喚術',
+動畫: 'summon_portal',
   castTime: 'medium',
-  effect: '創建子 Agent（Subagent）',
-  battleEffect: '召喚 Battle Companion 協助戰鬥',
-  soundEffect: 'summon.wav',
+效果: '創建子 Agent（Subagent）',
+戰鬥效果: '召喚 Battle Companion 協助戰鬥',
+音效: 'summon.wav',
   note: '整合夥伴系統'
-}
 ```
 
 ### WebFetch → 資料抓取術
 
-```javascript
-{
-  tool: 'WebFetch',
-  spellName: '資料抓取術',
-  icon: '🌐',
-  mpCost: 10,
-  category: '遠程通訊術',
-  animation: 'web_spiral',
+```
+工具: 'WebFetch',
+魔法名稱: '資料抓取術',
+圖標: '🌐',
+MP消耗: 10,
+分類: '遠程通訊術',
+動畫: 'web_spiral',
   castTime: 'medium',
-  effect: '發送 HTTP 請求獲取資料',
-  battleEffect: '遠程獲取情報（外部資源）',
-  soundEffect: 'fetch.wav'
-}
+效果: '發送 HTTP 請求獲取資料',
+戰鬥效果: '遠程獲取情報（外部資源）',
+音效: 'fetch.wav'
 ```
 
 ### WebSearch → 知識搜尋術
 
-```javascript
-{
-  tool: 'WebSearch',
-  spellName: '知識搜尋術',
-  icon: '🔎',
-  mpCost: 12,
-  category: '遠程通訊術',
-  animation: 'search_wave',
+```
+工具: 'WebSearch',
+魔法名稱: '知識搜尋術',
+圖標: '🔎',
+MP消耗: 12,
+分類: '遠程通訊術',
+動畫: 'search_wave',
   castTime: 'medium',
-  effect: '搜索網絡知識',
-  battleEffect: '尋求古老智慧（查詢資料庫）',
-  soundEffect: 'search_web.wav'
-}
+效果: '搜索網絡知識',
+戰鬥效果: '尋求古老智慧（查詢資料庫）',
+音效: 'search_web.wav'
 ```
 
 ---
@@ -397,22 +355,21 @@
 ```javascript
 {
   type: 'combo_cast',
-  spellName: '多重施法',
-  icon: '🔮',
-  mpCost: (toolCount - 1) * 5,  // 額外消耗
-  category: '組合魔法',
-  animation: 'multi_magic_circle',
+魔法名稱: '多重施法',
+圖標: '🔮',
+MP消耗: (toolCount - 1) * 5,  // 額外消耗
+分類: '組合魔法',
+動畫: 'multi_magic_circle',
   castTime: 'varies',
-  effect: '同時施放多個魔法',
-  battleEffect: '連擊加成',
+效果: '同時施放多個魔法',
+戰鬥效果: '連擊加成',
   bonusMultiplier: {
     2: 1.2,   // +20% 傷害
     3: 1.5,   // +50% 傷害
     4: 2.0,   // +100% 傷害
     5: 3.0    // +200% 傷害
   },
-  soundEffect: 'multi_cast.wav'
-}
+音效: 'multi_cast.wav'
 ```
 
 ---
@@ -499,7 +456,6 @@ function onToolExecute(tool) {
 
   // 應用戰鬥效果
   applyBattleEffect(mapping.battleEffect);
-}
 ```
 
 ---

@@ -394,7 +394,7 @@ Lv.5 [玩家名稱]
 
 #### 7.1 響應時間目標
 
-```javascript
+```
 performanceTargets = {
   initialLoad: 3000,     // 初始加載 < 3 秒
   skillActivation: 100,  // 技能激活 < 100ms
@@ -521,7 +521,7 @@ Error: ENOENT: no such file or directory
 
 UI 互動系統是最頂層，與所有業務系統整合：
 
-```javascript
+```
 uiSystem.integrate({
   battle: battleSystem,
   scene: sceneSystem,

@@ -117,7 +117,7 @@ L0: 數據層
 
 #### 1.1 主世界（Main）
 
-```javascript
+```
 mainWorld = {
   id: 'main',
   icon: '🏰',
@@ -152,7 +152,7 @@ mainWorld = {
 
 #### 1.2 冒險世界（Feature）
 
-```javascript
+```
 featureWorld = {
   id: 'feature',
   icon: '⚔️',
@@ -190,7 +190,7 @@ featureWorld = {
 
 #### 1.3 修復世界（Fix）
 
-```javascript
+```
 fixWorld = {
   id: 'fix',
   icon: '🛡️',
@@ -229,7 +229,7 @@ fixWorld = {
 
 #### 1.4 實驗世界（Experiment）
 
-```javascript
+```
 experimentWorld = {
   id: 'experiment',
   icon: '🔮',
@@ -273,7 +273,7 @@ experimentWorld = {
 
 #### 1.5 緊急世界（Hotfix）
 
-```javascript
+```
 hotfixWorld = {
   id: 'hotfix',
   icon: '🚨',
@@ -320,7 +320,7 @@ hotfixWorld = {
 
 **設計決策**：Worktree 操作使用全局 MP，與戰鬥 MP 分離
 
-```javascript
+```
 worktreeSystem = {
   // 使用全局 MP（非戰鬥 MP）
   mpPool: 'global',
@@ -348,7 +348,7 @@ worktreeSystem = {
 
 #### 2.2 操作前檢查
 
-```javascript
+```
 function canPerformWorktreeAction(action) {
   // 1. 檢查是否在戰鬥中
   if (gameState.inBattle) {
@@ -384,7 +384,7 @@ function canPerformWorktreeAction(action) {
 
 #### 3.1 創建流程
 
-```javascript
+```
 async function createWorktree(config) {
   // 1. 驗證輸入
   const validation = validateWorktreeConfig(config);
@@ -447,7 +447,7 @@ async function createWorktree(config) {
 
 #### 3.2 切換流程
 
-```javascript
+```
 async function switchWorktree(targetId) {
   // 1. 檢查條件
   const check = canPerformWorktreeAction('switch');
@@ -507,7 +507,7 @@ async function switchWorktree(targetId) {
 
 #### 3.3 合併流程
 
-```javascript
+```
 async function mergeWorktree(sourceId, targetBranch = 'main') {
   // 1. 檢查條件
   const check = canPerformWorktreeAction('merge');
@@ -567,7 +567,7 @@ async function mergeWorktree(sourceId, targetBranch = 'main') {
 
 #### 3.4 刪除流程
 
-```javascript
+```
 async function deleteWorktree(worktreeId) {
   // 1. 獲取 worktree
   const worktree = worktreeRegistry.get(worktreeId);
@@ -623,7 +623,7 @@ async function deleteWorktree(worktreeId) {
 
 **概念**：將未提交的變更暫存到「寶箱」中
 
-```javascript
+```
 stashSystem = {
   icon: '📦',
   name: '暫存寶箱',
@@ -652,7 +652,7 @@ stashSystem = {
 
 #### 4.2 暫存操作
 
-```javascript
+```
 // 保存暫存
 async function saveStash(worktreeId, message) {
   const worktree = worktreeRegistry.get(worktreeId);
@@ -755,7 +755,7 @@ interface Worktree {
 
 #### 5.2 自動統計
 
-```javascript
+```
 // 自動更新統計
 function updateWorktreeStats(worktreeId) {
   const worktree = worktreeRegistry.get(worktreeId);
@@ -790,7 +790,7 @@ function updateWorktreeStats(worktreeId) {
 
 #### 6.1 自動清理建議
 
-```javascript
+```
 // 檢測可清理的 worktree
 function detectCleanableWorktrees() {
   const suggestions = [];
@@ -832,7 +832,7 @@ function detectCleanableWorktrees() {
 
 #### 6.2 衝突預警
 
-```javascript
+```
 // 檢測潛在衝突
 async function detectPotentialConflicts(worktreeId) {
   const worktree = worktreeRegistry.get(worktreeId);
@@ -872,7 +872,7 @@ async function detectPotentialConflicts(worktreeId) {
 
 ### 規則 7：成就與獎勵
 
-```javascript
+```
 worktreeAchievements = [
   {
     id: 'time_traveler',
@@ -1053,7 +1053,7 @@ worktreeAchievements = [
 
 ### 與場景系統整合
 
-```javascript
+```
 // 限制只能在探索模式操作
 sceneSystem.on('enter_battle', () => {
   worktreeSystem.setEnabled(false);
@@ -1080,7 +1080,7 @@ function canAccessWorktreeSystem() {
 
 ### 與 MP 系統整合
 
-```javascript
+```
 // 使用全局 MP
 function deductWorktreeMp(action) {
   const cost = worktreeSystem.costs[action];
@@ -1114,7 +1114,7 @@ mpSystem = {
 
 ### 與成就系統整合
 
-```javascript
+```
 // 觸發成就
 worktreeSystem.on('worktree_created', (worktree) => {
   // 第一次創建

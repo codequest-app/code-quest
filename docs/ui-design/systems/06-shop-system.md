@@ -94,7 +94,7 @@ L0: 數據層
 **功能**：購買預設技能
 
 **商品類別**：
-```javascript
+```
 categories = {
   基礎技能: {
     description: '適合新手的基礎技能',
@@ -120,7 +120,7 @@ categories = {
 ```
 
 **定價公式**：
-```javascript
+```
 skillPrice = basePrice * (1 + rarityMultiplier) * (1 + complexityMultiplier)
 
 rarityMultiplier = {
@@ -175,7 +175,7 @@ complexityMultiplier = mpCost / 10
 ```
 
 **鍛造成本公式**：
-```javascript
+```
 forgeCost = baseCost + (mpCost * 20) + (effectCount * 100) + rarityBonus
 
 baseCost = 500  // 基礎鍛造費
@@ -193,7 +193,7 @@ rarityBonus = {
 ```
 
 **鍛造限制**：
-```javascript
+```
 limits = {
   perDay: 3,              // 每天最多鍛造 3 次
   maxCustomSkills: 10,    // 最多擁有 10 個自定義技能
@@ -221,7 +221,7 @@ limits = {
 **功能**：購買 MCP 工具
 
 **工具分類**：
-```javascript
+```
 toolCategories = {
   文件操作: {
     tools: ['Read', 'Write', 'Edit', 'Glob'],
@@ -257,7 +257,7 @@ toolCategories = {
 - 部分工具可轉化為工具召喚獸
 
 **工具升級**：
-```javascript
+```
 toolUpgrade = {
   Level1: { speed: 1.0, successRate: 80, mpCost: 1.0 },
   Level2: { speed: 1.3, successRate: 90, mpCost: 0.9 },  // -10% MP
@@ -290,7 +290,7 @@ Git 工具集
 **功能**：招募和管理夥伴
 
 **服務項目**：
-```javascript
+```
 services = {
   招募夥伴: {
     cost: (companion) => companion.rarity * 1000,
@@ -316,7 +316,7 @@ services = {
 ```
 
 **夥伴定價**：
-```javascript
+```
 companionPrice = basePrice * rarityMultiplier * (1 + levelMultiplier)
 
 rarityMultiplier = {
@@ -350,7 +350,7 @@ levelMultiplier = initialLevel * 0.1
 **功能**：購買道具和裝備
 
 **道具分類**：
-```javascript
+```
 itemCategories = {
   消耗品: {
     items: ['HP 藥水', 'MP 藥水', '經驗卷軸'],
@@ -397,7 +397,7 @@ HP 藥水（中）
 ```
 
 **批量購買折扣**：
-```javascript
+```
 bulkDiscount = {
   5: 0.95,   // 5 個 -5%
   10: 0.90,  // 10 個 -10%
@@ -411,7 +411,7 @@ bulkDiscount = {
 **功能**：升級技能和屬性訓練
 
 **服務項目**：
-```javascript
+```
 trainingServices = {
   技能升級: {
     cost: (skill) => {
@@ -446,7 +446,7 @@ trainingServices = {
 ```
 
 **技能升級成本公式**：
-```javascript
+```
 upgradeCost = basePrice * Math.pow(1.5, currentLevel - 1)
 
 // 例如：代碼生成術（基礎價 200）
@@ -476,7 +476,7 @@ upgradeCost = basePrice * Math.pow(1.5, currentLevel - 1)
 **功能**：存款、貸款和投資
 
 **服務項目**：
-```javascript
+```
 bankServices = {
   存款: {
     interest: 0.05,  // 5% 日利率
@@ -515,7 +515,7 @@ bankServices = {
 ```
 
 **存款計算**：
-```javascript
+```
 // 活期存款
 dailyInterest = depositAmount * 0.05
 // 例如：存 10,000 金幣，每天獲得 500 金幣
@@ -549,7 +549,7 @@ totalReturn = depositAmount * (1 + rate)
 
 #### 2.1 基礎定價公式
 
-```javascript
+```
 finalPrice = basePrice * rarityMultiplier * demandMultiplier * discountMultiplier
 
 basePrice = {
@@ -570,7 +570,7 @@ rarityMultiplier = {
 #### 2.2 需求動態定價
 
 **熱門商品加價**：
-```javascript
+```
 demandMultiplier = 1 + (purchaseCount / 100) * 0.5
 // 每 100 次購買，價格 +50%
 // 上限：2.0x（價格最多翻倍）
@@ -582,7 +582,7 @@ demandMultiplier = 1 + (purchaseCount / 100) * 0.5
 ```
 
 **冷門商品降價**：
-```javascript
+```
 if (daysSinceLastPurchase > 7) {
   discountMultiplier = 0.8;  // -20%
 }
@@ -593,7 +593,7 @@ if (daysSinceLastPurchase > 30) {
 
 #### 2.3 玩家等級折扣
 
-```javascript
+```
 levelDiscount = {
   Lv5: 0.95,   // -5%
   Lv10: 0.90,  // -10%
@@ -612,7 +612,7 @@ if (playerLevel >= 20) {
 
 #### 2.4 會員折扣
 
-```javascript
+```
 membershipTiers = {
   Bronze: {
     cost: 1000,
@@ -644,7 +644,7 @@ membershipTiers = {
 
 #### 3.1 每日特價
 
-```javascript
+```
 dailySpecial = {
   count: 3,  // 每天 3 個特價商品
   discount: 0.7,  // -30%
@@ -667,7 +667,7 @@ dailySpecial = {
 
 #### 3.2 限時促銷
 
-```javascript
+```
 promotionTypes = {
   週末促銷: {
     discount: 0.85,  // -15%
@@ -691,7 +691,7 @@ promotionTypes = {
 
 #### 3.3 捆綁優惠
 
-```javascript
+```
 bundles = [
   {
     name: '新手禮包',
@@ -723,7 +723,7 @@ bundles = [
 
 #### 4.1 數量限制
 
-```javascript
+```
 purchaseLimits = {
   perTransaction: {
     skill: 5,     // 一次最多買 5 個技能
@@ -750,7 +750,7 @@ purchaseLimits = {
 
 #### 4.2 等級需求
 
-```javascript
+```
 levelRequirements = {
   基礎商品: 1,
   進階商品: 5,
@@ -768,7 +768,7 @@ levelRequirements = {
 
 #### 4.3 購買冷卻
 
-```javascript
+```
 cooldowns = {
   稀有商品: 86400,    // 24 小時
   史詩商品: 259200,   // 3 天
@@ -787,7 +787,7 @@ cooldowns = {
 
 #### 5.1 退款政策
 
-```javascript
+```
 refundPolicy = {
   技能: {
     allowed: true,
@@ -817,7 +817,7 @@ refundPolicy = {
 
 #### 5.2 商品回購
 
-```javascript
+```
 buybackSystem = {
   enabled: true,
   rate: 0.5,  // 按原價 50% 回購
@@ -851,7 +851,7 @@ buybackSystem = {
 
 #### 6.1 購物成就
 
-```javascript
+```
 shoppingAchievements = [
   {
     id: 'first_purchase',
@@ -882,7 +882,7 @@ shoppingAchievements = [
 
 #### 6.2 會員獎勵
 
-```javascript
+```
 membershipRewards = {
   每日登錄: {
     Bronze: 50,   // +50 金幣
@@ -911,7 +911,7 @@ membershipRewards = {
 
 #### 7.1 商店等級
 
-```javascript
+```
 shopLevels = {
   Lv1: {
     items: 20,          // 20 種商品
@@ -948,7 +948,7 @@ shopLevels = {
 
 #### 7.2 商店聲望
 
-```javascript
+```
 shopReputation = {
   levels: [
     { name: '陌生人', threshold: 0, benefit: '無' },
@@ -1125,7 +1125,7 @@ Mercenary Guild   Treasury    Training Ground
 ### 與經濟系統整合
 
 **金幣流動**：
-```javascript
+```
 // 收入來源
 goldSources = {
   戰鬥勝利: (enemy) => enemy.level * 50,
@@ -1164,7 +1164,7 @@ function processPurchase(item, price) {
 ### 與技能系統整合
 
 **技能購買與解鎖**：
-```javascript
+```
 // 購買技能
 function buySkill(skillId) {
   const skill = skillShop.getSkill(skillId);
@@ -1217,7 +1217,7 @@ function upgradeSkill(skillId) {
 ### 與夥伴系統整合
 
 **夥伴招募與訓練**：
-```javascript
+```
 // 招募夥伴
 function recruitCompanion(companionId) {
   const companion = mercenaryGuild.getCompanion(companionId);
@@ -1257,7 +1257,7 @@ function trainCompanion(companionId) {
 ### 與道具系統整合
 
 **道具購買與使用**：
-```javascript
+```
 // 購買道具
 function buyItem(itemId, quantity = 1) {
   const item = treasury.getItem(itemId);
@@ -1297,7 +1297,7 @@ function sellItem(itemId, quantity = 1) {
 ### 與成就系統整合
 
 **購物成就檢查**：
-```javascript
+```
 function checkShoppingAchievements() {
   const stats = player.stats;
 

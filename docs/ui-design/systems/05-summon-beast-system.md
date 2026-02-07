@@ -102,7 +102,7 @@ L0: 數據層
 **獲取方式**：技能升級到 Lv.3 時解鎖
 
 **召喚成本**：
-```javascript
+```
 summonCost = skillBaseCost * 2
 // 例如：代碼生成術（10 MP）→ 代碼精靈（20 MP）
 ```
@@ -126,7 +126,7 @@ summonCost = skillBaseCost * 2
 **獲取方式**：滿足特定技能組合條件時觸發
 
 **組合條件示例**：
-```javascript
+```
 // 測試守護者
 condition: {
   skills: ['單元測試術', '集成測試術'],
@@ -142,7 +142,7 @@ condition: {
 ```
 
 **召喚成本**：
-```javascript
+```
 comboCost = Math.floor((skill1Cost + skill2Cost + ...) * 1.5)
 // 例如：單元測試（8 MP）+ 集成測試（12 MP）= 30 MP
 ```
@@ -164,7 +164,7 @@ comboCost = Math.floor((skill1Cost + skill2Cost + ...) * 1.5)
 **獲取方式**：從知識圖書館購買 MCP 工具
 
 **召喚成本**：
-```javascript
+```
 toolSummonCost = toolBaseCost * 3
 // 例如：文件搜索工具（5 MP）→ 搜索蜘蛛（15 MP）
 ```
@@ -201,7 +201,7 @@ Git 章魚（Git Octopus）
 - **即時型（Immediate）**：召喚後立即執行效果
 
 **持續時間限制**：
-```javascript
+```
 duration = {
   Common: 2,      // 普通：2 回合
   Rare: 3,        // 稀有：3 回合
@@ -233,7 +233,7 @@ duration = {
 
 #### 2.1 稀有度系統
 
-```javascript
+```
 rarity = {
   Common: {
     color: '#9E9E9E',
@@ -340,7 +340,7 @@ interface Summon {
 - 移除 Debuff
 
 **示例效果**：
-```javascript
+```
 // 重構巨龍（Refactor Dragon）
 onSummon: () => {
   const damage = 300 + (player.level * 20);
@@ -371,7 +371,7 @@ onSummon: () => {
 - 狀態維護
 
 **示例效果**：
-```javascript
+```
 // 代碼精靈（Code Sprite）
 onTurnStart: () => {
   if (summon.isActive) {
@@ -401,7 +401,7 @@ onTurnStart: () => {
 - 經驗加成
 
 **示例效果**：
-```javascript
+```
 // 搜索蜘蛛（Search Spider）
 onSummon: () => {
   player.addBuff('搜索強化', {
@@ -434,7 +434,7 @@ onRemove: () => {
 - 組合技能
 
 **示例效果**：
-```javascript
+```
 // 調試精靈（Debug Fairy）
 interface: {
   commands: [
@@ -467,7 +467,7 @@ interface: {
 #### 4.1 與夥伴的協同
 
 **協同加成**：
-```javascript
+```
 // 協同條件判斷
 if (companion.type === 'Warrior' && summon.type === 'damage') {
   summon.damage *= 1.3;  // 戰士夥伴 + 傷害召喚獸 = +30% 傷害
@@ -534,7 +534,7 @@ const codeSynergy: SynergyCondition = {
 #### 5.1 召喚獸經驗
 
 **經驗獲取**：
-```javascript
+```
 summon.exp += {
   onSummon: 10,           // 每次召喚 +10 EXP
   onDefeat: 20,           // 擊敗敵人 +20 EXP
@@ -544,7 +544,7 @@ summon.exp += {
 ```
 
 **升級公式**：
-```javascript
+```
 expToNextLevel = 200 * Math.pow(1.4, level - 1)
 // Lv.1 → Lv.2: 200 EXP
 // Lv.2 → Lv.3: 280 EXP
@@ -554,7 +554,7 @@ expToNextLevel = 200 * Math.pow(1.4, level - 1)
 #### 5.2 升級獎勵
 
 **每次升級獲得**：
-```javascript
+```
 onLevelUp: {
   power: +10,            // 效果強度 +10
   mpCost: -2,            // MP 消耗 -2（最低降至原值的 70%）
@@ -597,7 +597,7 @@ Lv.15 → 解鎖終極能力
 #### 6.1 召喚限制
 
 **數量限制**：
-```javascript
+```
 maxActiveSummons = {
   default: 2,           // 默認最多 2 個
   withCompanion: 1,     // 有夥伴時只能 1 個
@@ -606,7 +606,7 @@ maxActiveSummons = {
 ```
 
 **類型限制**：
-```javascript
+```
 // 相同類型不能重複召喚
 if (activeSummons.find(s => s.id === newSummon.id)) {
   return { error: '此召喚獸已在場上！' };
@@ -672,7 +672,7 @@ interface SummonDex {
 ```
 
 **圖鑑獎勵**：
-```javascript
+```
 dexRewards = {
   10: { gold: 500, title: '見習召喚師' },
   25: { gold: 1500, title: '召喚師' },
@@ -688,7 +688,7 @@ dexRewards = {
 #### 7.1 成本計算公式
 
 **基礎成本**：
-```javascript
+```
 // 基於稀有度
 baseCost = {
   Common: 20,
@@ -713,7 +713,7 @@ finalCost = Math.floor(baseCost * behaviorMultiplier * powerMultiplier)
 ```
 
 **成本調整因素**：
-```javascript
+```
 // 等級折扣
 if (summon.level >= 10) {
   finalCost *= 0.85;  // Lv.10+ 降低 15%
@@ -919,7 +919,7 @@ if (dex.completionRate >= 0.5) {
 
 **戰鬥流程中的召喚**：
 
-```javascript
+```
 // 1. 戰鬥回合開始
 function onTurnStart() {
   // 觸發自動型召喚獸
@@ -973,7 +973,7 @@ function onBattleEnd() {
 
 **技能解鎖召喚獸**：
 
-```javascript
+```
 // 技能升級時檢查
 function onSkillLevelUp(skill) {
   if (skill.level === 3) {
@@ -1007,7 +1007,7 @@ function checkComboSummons() {
 
 **夥伴協同加成**：
 
-```javascript
+```
 // 計算召喚獸效果時考慮夥伴
 function calculateSummonEffect(summon, companion) {
   let effect = summon.baseEffect;
@@ -1048,7 +1048,7 @@ const synergyTable = {
 
 **召喚獸相關商品**：
 
-```javascript
+```
 // 技能商店
 skillShop.addCategory('召喚技能', [
   {
@@ -1100,7 +1100,7 @@ mcpLibrary.addCategory('工具召喚', [
 
 **召喚獸相關成就**：
 
-```javascript
+```
 achievements.register([
   {
     id: 'first_summon',
