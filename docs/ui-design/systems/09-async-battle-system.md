@@ -134,7 +134,7 @@ L0: 數據層
 - 快速咨詢
 
 **特點**：
-```javascript
+```
 dialogMode = {
   complexity: [0, 2],        // 複雜度 0-2 分
   execution: 'main_thread',  // 主線程直接響應
@@ -144,7 +144,7 @@ dialogMode = {
 ```
 
 **判斷條件**：
-```javascript
+```
 if (complexity < 3) {
   return 'dialog';
 }
@@ -179,7 +179,7 @@ SmartRouter 判斷（複雜度 < 3）
 - 配置更新
 
 **特點**：
-```javascript
+```
 mainSync = {
   complexity: [3, 7],         // 複雜度 3-7 分
   execution: 'main_thread',   // 主線程同步執行
@@ -191,7 +191,7 @@ mainSync = {
 ```
 
 **判斷條件**：
-```javascript
+```
 if (complexity >= 3 && complexity < 8) {
   return 'main_sync';
 }
@@ -228,7 +228,7 @@ Main Sync 任務：
 - 架構優化
 
 **特點**：
-```javascript
+```
 battleAsync = {
   complexity: [8, 15],              // 複雜度 8+ 分
   execution: 'separate_instance',   // 獨立戰鬥實例
@@ -241,7 +241,7 @@ battleAsync = {
 ```
 
 **判斷條件**：
-```javascript
+```
 if (complexity >= 8) {
   return 'battle_async';
 }
@@ -316,7 +316,7 @@ if (complexity >= 8) {
 SmartRouter 根據以下因素計算複雜度分數（0-15 分）：
 
 **1. 長度因素（0-3 分）**：
-```javascript
+```
 lengthScore = {
   '>200 chars': 3,
   '100-200 chars': 2,
@@ -336,7 +336,7 @@ lengthScore = {
 - 修復、更新、檢查、查看、顯示
 
 **3. 文件數量（0-3 分）**：
-```javascript
+```
 fileScore = {
   multiple_explicit: 3,  // 多個文件明確提及
   multiple_implicit: 2,  // 暗示多個文件
@@ -345,7 +345,7 @@ fileScore = {
 ```
 
 **4. 工具複雜度（0-3 分）**：
-```javascript
+```
 toolScore = {
   multiple_tools: 3,     // 需要多個工具
   complex_tools: 2,      // 需要複雜工具（如 Plan Mode）
@@ -354,7 +354,7 @@ toolScore = {
 ```
 
 **5. 依賴關係（0-2 分）**：
-```javascript
+```
 dependencyScore = {
   cross_system: 2,       // 涉及系統間依賴
   independent: 0         // 獨立任務
@@ -395,7 +395,7 @@ dependencyScore = {
 ```
 
 **示例代碼**：
-```javascript
+```
 class SmartRouter {
   route(prompt) {
     const complexity = this.analyzeComplexity(prompt);
@@ -440,7 +440,7 @@ class SmartRouter {
 
 **最大並發數：3**
 
-```javascript
+```
 class BattleInstancePool {
   constructor() {
     this.maxConcurrent = 3;   // 最多 3 個並發戰鬥
@@ -510,7 +510,7 @@ class BattleInstancePool {
 
 #### 3.3 戰鬥生命週期
 
-```javascript
+```
 battleLifecycle = {
   // 1. 創建
   create: async (config) => {
@@ -615,7 +615,7 @@ battleLifecycle = {
 
 #### 4.1 自動創建
 
-```javascript
+```
 async function createBattleWorktree(battleId) {
   // 1. 生成 worktree 路徑和分支名
   const path = `worktrees/battle_${battleId}`;
@@ -637,7 +637,7 @@ async function createBattleWorktree(battleId) {
 
 #### 4.2 自動合併
 
-```javascript
+```
 async function mergeWorktree(worktree) {
   // 1. 檢查是否有變更
   const hasChanges = await hasCommits(worktree.branch);
@@ -667,7 +667,7 @@ async function mergeWorktree(worktree) {
 
 #### 4.3 自動清理
 
-```javascript
+```
 async function cleanupWorktree(worktree) {
   // 1. 移除 worktree
   await execGit(`worktree remove ${worktree.path}`);
@@ -689,7 +689,7 @@ async function cleanupWorktree(worktree) {
 
 #### 5.1 路由錯誤
 
-```javascript
+```
 // SmartRouter 分析失敗
 if (!complexityScore) {
   // 默認 Main Sync
@@ -713,7 +713,7 @@ if (ambiguous) {
 
 #### 5.2 執行錯誤
 
-```javascript
+```
 // Dialog Track 失敗
 dialogTrack.on('error', (error) => {
   showError(error);
@@ -751,7 +751,7 @@ battleAsync.on('error', (battle, error) => {
 
 #### 5.3 並發錯誤
 
-```javascript
+```
 // 超過最大並發數
 if (activeInstances.length >= maxConcurrent) {
   // 自動排隊
@@ -776,7 +776,7 @@ if (queue.length >= maxQueueSize) {
 
 ### 規則 6：超時機制
 
-```javascript
+```
 timeoutSettings = {
   dialogTrack: 5000,      // 5 秒
   mainSync: 120000,       // 2 分鐘
@@ -951,7 +951,7 @@ function setupTimeout(battle) {
 
 ### 與場景系統整合
 
-```javascript
+```
 sceneSystem.on('user_input', async (input) => {
   // 路由決策
   const route = smartRouter.route(input);
@@ -981,7 +981,7 @@ sceneSystem.on('user_input', async (input) => {
 
 ### 與 Worktree 系統整合
 
-```javascript
+```
 // 區分手動 worktree 和戰鬥 worktree
 worktreeRegistry = {
   manual: [],      // 用戶手動創建的 worktree
@@ -1016,7 +1016,7 @@ battleWorktreeManager = {
 
 ### 與 UI 系統整合
 
-```javascript
+```
 // 三面板布局
 uiSystem.setupAsyncBattleLayout({
   mainPanel: {

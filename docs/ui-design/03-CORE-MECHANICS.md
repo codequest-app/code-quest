@@ -92,9 +92,9 @@ MP 條（青色）:
 
 #### 經驗值公式
 
-```javascript
-// 升級所需經驗值
-expToNextLevel = 100 * Math.pow(1.5, level - 1)
+```
+升級所需經驗值:
+基礎值 × (成長倍率 ^ (等級 - 1))
 
 範例:
 Lv.1 → Lv.2: 100 EXP
@@ -232,36 +232,35 @@ Lv.10 → Lv.11: 3,834 EXP
 
 #### 複雜度計算
 
-```javascript
-// 複雜度評分因素
-score = 0
+```
+複雜度評分因素:
 
-// 1. 長度因素 (0-3分)
-if (prompt.length > 200) score += 3
-else if (prompt.length > 100) score += 2
-else score += 1
+1. 長度因素 (0-3分):
+   • 超過 200 字: +3分
+   • 超過 100 字: +2分
+   • 其他: +1分
 
-// 2. 關鍵字複雜度
-重量級關鍵字 (+2分):
-• architecture, 架構
-• refactor, 重構
-• optimize, 優化
-• design pattern, 設計模式
+2. 關鍵字複雜度:
+   重量級關鍵字 (+2分):
+   • architecture, 架構
+   • refactor, 重構
+   • optimize, 優化
+   • design pattern, 設計模式
 
-中量級關鍵字 (+1分):
-• implement, 實作
-• create, 創建
-• review, 審查
-• test, 測試
+   中量級關鍵字 (+1分):
+   • implement, 實作
+   • create, 創建
+   • review, 審查
+   • test, 測試
 
-// 3. 多步驟任務 (+2分)
-包含 "and", "then", "after", "before", "以及", "然後"
+3. 多步驟任務 (+2分):
+   包含 "and", "then", "after", "before", "以及", "然後"
 
-// 4. 技術棧複雜度 (+1分/個)
-檢測: React, Vue, Node, Python, Java, TypeScript
+4. 技術棧複雜度 (+1分/個):
+   檢測: React, Vue, Node, Python, Java, TypeScript
 
-// 5. 最終等級
-level = min(15, max(1, floor(score / 2) + 1))
+5. 最終等級計算:
+   等級 = 最小值(15, 最大值(1, 向下取整(分數 / 2) + 1))
 ```
 
 #### 敵人等級與難度
@@ -323,8 +322,8 @@ level = min(15, max(1, floor(score / 2) + 1))
 
 #### 敵人 HP 計算
 
-```javascript
-maxHp = level * 100 * hpMultiplier
+```
+最大HP = 等級 × 基礎值 × HP倍率
 
 範例:
 Lv.5 code-task:   500 HP (5 × 100 × 1.0)
@@ -339,15 +338,15 @@ Lv.15 optimization: 2700 HP (15 × 100 × 1.8)
 
 #### 基礎傷害公式
 
-```javascript
-baseDamage = 100 + (skill.cost.mp * 3) + (player.level * 10)
+```
+基礎傷害 = 固定值 + (技能MP消耗 × 倍數) + (玩家等級 × 倍數)
 
 範例:
 • Lv.10 玩家使用 30 MP 技能:
-  baseDamage = 100 + (30 × 3) + (10 × 10) = 290
+  基礎傷害 = 100 + (30 × 3) + (10 × 10) = 290
 
 • Lv.15 玩家使用 50 MP 技能:
-  baseDamage = 100 + (50 × 3) + (15 × 10) = 400
+  基礎傷害 = 100 + (50 × 3) + (15 × 10) = 400
 ```
 
 #### 相性倍率系統
@@ -384,52 +383,46 @@ doc-writer:
 
 #### 弱點/抗性倍率
 
-```javascript
-// 弱點倍率
-if (skill.id in enemy.weaknesses) {
-  weakMultiplier = 1.5
-} else {
-  weakMultiplier = 1.0
-}
+```
+弱點倍率判定:
+• 技能命中弱點 → 1.5倍
+• 其他情況 → 1.0倍
 
-// 抗性倍率
-if (skill.id in enemy.resistances) {
-  resistMultiplier = 0.5
-} else {
-  resistMultiplier = 1.0
-}
+抗性倍率判定:
+• 敵人有抗性 → 0.5倍
+• 其他情況 → 1.0倍
 ```
 
 #### 最終傷害計算
 
-```javascript
-totalDamage = floor(
-  baseDamage *
-  affinityMultiplier *
-  weakMultiplier *
-  resistMultiplier
+```
+最終傷害 = 向下取整(
+  基礎傷害 ×
+  相性倍率 ×
+  弱點倍率 ×
+  抗性倍率
 )
 
 範例 1: 普通攻擊
-baseDamage = 290
-affinityMultiplier = 1.0 (無相性)
-weakMultiplier = 1.0 (無弱點)
-resistMultiplier = 1.0 (無抗性)
-→ totalDamage = 290
+基礎傷害 = 290
+相性倍率 = 1.0 (無相性)
+弱點倍率 = 1.0 (無弱點)
+抗性倍率 = 1.0 (無抗性)
+→ 最終傷害 = 290
 
 範例 2: 弱點攻擊
-baseDamage = 290
-affinityMultiplier = 1.5 (debug-helper vs bug-hunt)
-weakMultiplier = 1.5 (擊中弱點)
-resistMultiplier = 1.0
-→ totalDamage = floor(290 × 1.5 × 1.5) = 652
+基礎傷害 = 290
+相性倍率 = 1.5 (debug-helper vs bug-hunt)
+弱點倍率 = 1.5 (擊中弱點)
+抗性倍率 = 1.0
+→ 最終傷害 = 向下取整(290 × 1.5 × 1.5) = 652
 
 範例 3: 抗性攻擊
-baseDamage = 290
-affinityMultiplier = 0.8 (code-generator vs bug-hunt)
-weakMultiplier = 1.0
-resistMultiplier = 0.5 (敵人抗性)
-→ totalDamage = floor(290 × 0.8 × 0.5) = 116
+基礎傷害 = 290
+相性倍率 = 0.8 (code-generator vs bug-hunt)
+弱點倍率 = 1.0
+抗性倍率 = 0.5 (敵人抗性)
+→ 最終傷害 = 向下取整(290 × 0.8 × 0.5) = 116
 ```
 
 #### 傷害顯示標籤
@@ -530,46 +523,43 @@ finalGold = floor(baseGold × typeMultiplier × difficultyMultiplier × bonusMul
 
 ### 技能結構
 
-```typescript
-interface Skill {
-  id: string;              // 唯一 ID
-  name: string;            // 技能名稱
-  displayName: string;     // 顯示名稱（繁體中文）
-  icon: string;            // 圖標 emoji
-  category: string;        // 分類（offensive/defensive/utility）
+```
+技能屬性:
 
-  cost: {
-    mp: number;            // MP 消耗
-    cooldown: number;      // 冷卻時間（秒）
-  };
+基本資訊:
+• 唯一 ID
+• 技能名稱
+• 顯示名稱 (繁體中文)
+• 圖標 (emoji)
+• 分類 (攻擊/防禦/輔助)
 
-  level: number;           // 技能等級（1-5）
-  maxLevel: number;        // 最大等級
+消耗成本:
+• MP 消耗
+• 冷卻時間 (秒)
 
-  description: string;     // 說明
-  effect: {
-    damage?: number;       // 傷害值
-    heal?: number;         // 治療值
-    buff?: Buff;           // 增益效果
-    debuff?: Debuff;       // 減益效果
-  };
+等級資訊:
+• 當前等級 (1-5)
+• 最大等級
 
-  effectiveness: {         // 對不同敵人的效果
-    [enemyType: string]: number;
-  };
+效果描述:
+• 說明文字
+• 傷害值 (選擇性)
+• 治療值 (選擇性)
+• 增益效果 (選擇性)
+• 減益效果 (選擇性)
 
-  unlockRequirement: {     // 解鎖條件
-    level: number;         // 需要玩家等級
-    gold: number;          // 需要金幣
-    prerequisite?: string; // 前置技能
-  };
+敵人相性:
+• 對不同敵人類型的效果倍率
 
-  upgradeEffect: {         // 升級效果
-    mpReduction: number;   // MP 消耗減少
-    cooldownReduction: number;  // 冷卻減少
-    damageIncrease: number;     // 傷害提升
-  };
-}
+解鎖條件:
+• 需要玩家等級
+• 需要金幣
+• 前置技能 (選擇性)
+
+升級效果:
+• MP 消耗減少
+• 冷卻時間減少
+• 傷害提升
 ```
 
 ### 技能分類
@@ -647,37 +637,43 @@ interface Skill {
 
 ### 夥伴屬性
 
-```typescript
-interface BattleCompanion {
-  agentName: string;       // Agent ID
-  characterName: string;   // 角色名稱
-  title: string;           // 稱號
-  avatar: string;          // 頭像 emoji
+```
+夥伴戰鬥資料:
 
-  level: number;           // 等級
+身份資訊:
+• Agent ID
+• 角色名稱
+• 稱號
+• 頭像 (emoji)
 
-  hp: number;              // 當前 HP
-  maxHp: number;           // 最大 HP
-  mp: number;              // 當前 MP
-  maxMp: number;           // 最大 MP
+等級:
+• 當前等級
 
-  attack: number;          // 攻擊力
-  defense: number;         // 防禦力
-  speed: number;           // 速度
-  wisdom: number;          // 智慧
+資源狀態:
+• 當前 HP / 最大 HP
+• 當前 MP / 最大 MP
 
-  status: string;          // 狀態（standby/active/ko）
-  stamina: number;         // 體力
+屬性:
+• 攻擊力
+• 防禦力
+• 速度
+• 智慧
 
-  skills: Skill[];         // 專屬技能
-  passiveAbilities: Passive[];  // 被動技能
+狀態:
+• 當前狀態 (待命/活躍/昏倒)
+• 體力值
 
-  experience: number;      // 經驗值
-  expToNextLevel: number;  // 升級所需經驗
+技能:
+• 專屬技能列表
+• 被動技能列表
 
-  timesDeployed: number;   // 出戰次數
-  battlesWon: number;      // 勝利次數
-}
+成長:
+• 當前經驗值
+• 升級所需經驗
+
+統計:
+• 出戰次數
+• 勝利次數
 ```
 
 ### 夥伴召喚規則
@@ -703,41 +699,39 @@ interface BattleCompanion {
 ```
 AI 決策優先級:
 
-1. 玩家生命危險（HP < 30%）
-   → 優先使用支援技能（護盾、治療）
+1. 玩家生命危險 (HP < 30%):
+   → 優先使用支援技能 (護盾、治療)
 
-2. 敵人類型相性
-   → 選擇對敵人有效的技能（effectiveness ≥ 1.2）
+2. 敵人類型相性:
+   → 選擇對敵人有效的技能 (相性 ≥ 1.2)
 
-3. 預設攻擊
+3. 預設攻擊:
    → 使用可用的攻擊技能
    → 如無技能可用，執行普通攻擊
 
 技能選擇邏輯:
-for (skill of companion.skills) {
-  if (skill.isOnCooldown) continue;
-  if (companion.mp < skill.cost.mp) continue;
+遍歷夥伴所有技能:
+  檢查技能是否在冷卻中 → 跳過
+  檢查MP是否足夠 → 跳過
 
-  expectedDamage = calculateDamage(skill, enemy);
-  if (expectedDamage > bestDamage) {
-    bestSkill = skill;
-    bestDamage = expectedDamage;
-  }
-}
+  計算該技能的預期傷害
+  比較並記錄最高傷害的技能
+
+選擇最佳技能執行
 ```
 
 ### 夥伴成長系統
 
 ```
 經驗值獲取:
-• 戰鬥勝利: 50 EXP
-• 使用技能: 5 EXP
-• 造成傷害: damage / 10 EXP
-• 治療玩家: amount / 5 EXP
-• 命中弱點: 20 EXP
+• 戰鬥勝利: 固定值
+• 使用技能: 小量值
+• 造成傷害: 傷害值 / 除數
+• 治療玩家: 治療量 / 除數
+• 命中弱點: 額外值
 
 升級需求:
-expToNextLevel = 100 * Math.pow(1.3, level - 1)
+基礎值 × (成長率 ^ (等級 - 1))
 
 範例:
 Lv.1 → Lv.2: 100 EXP
@@ -746,12 +740,12 @@ Lv.3 → Lv.4: 169 EXP
 Lv.5 → Lv.6: 286 EXP
 
 升級獎勵:
-• maxHp: +20
-• maxMp: +15
-• attack: +5
-• defense: +5
-• speed: +2
-• wisdom: +5
+• 最大HP: +固定值
+• 最大MP: +固定值
+• 攻擊力: +固定值
+• 防禦力: +固定值
+• 速度: +固定值
+• 智慧: +固定值
 
 特殊等級解鎖:
 • Lv.5: 解鎖終極技能
@@ -918,15 +912,15 @@ Lv.5 → Lv.6: 286 EXP
 
 ### 組合技傷害計算
 
-```javascript
-comboDamage = floor(
-  (300 + (skillsUsed.length * 50) + (player.level * 20)) *
-  combo.rewards.expMultiplier
+```
+組合傷害 = 向下取整(
+  (基礎值 + (技能數量 × 倍數) + (玩家等級 × 倍數)) ×
+  經驗倍率
 )
 
 範例:
 2 技能組合，玩家 Lv.10，EXP倍率 1.2:
-comboDamage = floor((300 + 100 + 200) × 1.2) = 720
+組合傷害 = 向下取整((300 + 100 + 200) × 1.2) = 720
 ```
 
 ### 組合技視覺效果

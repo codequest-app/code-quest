@@ -384,23 +384,21 @@ Worktree 系統(8)→ 只能在探索模式操作
 多模型整合系統(10)→ 戰鬥中 AI 處理
 ```
 
-**戰鬥系統提供的核心接口**:
-```typescript
-interface BattleSystem {
-  // 戰鬥生命週期
-  startBattle(prompt: string): Battle;
-  endBattle(battleId: string): BattleResult;
+**戰鬥系統提供的核心功能**:
+```
+戰鬥生命週期管理:
+• 啟動戰鬥
+• 結束戰鬥
 
-  // 戰鬥行動
-  useSkill(skillId: string): void;
-  summonCompanion(companionId: string): void;
-  useSummon(summonId: string): void;
+戰鬥行動控制:
+• 使用技能
+• 召喚夥伴
+• 使用召喚獸
 
-  // 戰鬥狀態
-  getCurrentBattle(): Battle | null;
-  getBattleLog(): LogEntry[];
-  getEnemyInfo(): Enemy;
-}
+戰鬥狀態查詢:
+• 取得當前戰鬥
+• 取得戰鬥日誌
+• 取得敵人資訊
 ```
 
 ---
@@ -771,68 +769,62 @@ Worktree 系統(8)→ 自動創建隔離環境
 ### Pixel Art 視覺風格
 
 **所有系統統一**:
-```css
-/* 主字體 */
-font-family: 'Press Start 2P', 'VT323', monospace;
+```
+主字體:
+• Press Start 2P (像素風格)
+• VT323 (備選)
+• Monospace (後備)
 
-/* 主色調 */
---bg-primary: #1a1a2e;    /* 深藍黑 */
---bg-secondary: #16213e;  /* 藍灰 */
---accent: #0f3460;        /* 深藍 */
---highlight: #533483;     /* 紫色 */
+主色調:
+• 深藍黑 (主背景)
+• 藍灰 (次背景)
+• 深藍 (強調色)
+• 紫色 (高亮色)
 
-/* 邊框樣式 */
-border: 4px solid #fff;
-box-shadow: 0 0 0 2px #000;
-
-/* 像素化圖標 */
-image-rendering: pixelated;
+視覺元素:
+• 粗邊框設計
+• 雙層陰影效果
+• 像素化圖標渲染
 ```
 
 ### 動畫時序標準
 
 **所有系統統一**:
-```javascript
-// 快速反饋
-duration: 200ms  // 按鈕點擊、懸停
-easing: ease-out
+```
+快速反饋 (200ms):
+• 按鈕點擊、懸停
+• 緩動: 快速退出
 
-// 普通過渡
-duration: 300ms  // 淡入淡出、滑動
-easing: ease-in-out
+普通過渡 (300ms):
+• 淡入淡出、滑動
+• 緩動: 平滑進出
 
-// 場景切換
-duration: 800ms  // 地圖切換、場景轉換
-easing: cubic-bezier(0.4, 0.0, 0.2, 1)
+場景切換 (800ms):
+• 地圖切換、場景轉換
+• 緩動: 自定義貝塞爾曲線
 
-// 慶祝動畫
-duration: 2000ms // 勝利、升級
-easing: ease-out
+慶祝動畫 (2000ms):
+• 勝利、升級
+• 緩動: 快速退出
 ```
 
 ### 響應式斷點
 
 **所有系統統一**:
-```css
-/* 手機 */
-@media (max-width: 767px) {
-  /* 簡化界面 */
-  /* 垂直布局 */
-  /* 大按鈕（觸控友好）*/
-}
+```
+手機 (< 768px):
+• 簡化界面
+• 垂直布局
+• 大按鈕（觸控友好）
 
-/* 平板 */
-@media (min-width: 768px) and (max-width: 1199px) {
-  /* 適中界面 */
-  /* 雙欄布局 */
-}
+平板 (768px - 1199px):
+• 適中界面
+• 雙欄布局
 
-/* 桌面 */
-@media (min-width: 1200px) {
-  /* 完整界面 */
-  /* 多欄布局 */
-  /* 側邊欄 */
-}
+桌面 (≥ 1200px):
+• 完整界面
+• 多欄布局
+• 側邊欄
 ```
 
 ---
@@ -842,67 +834,53 @@ easing: ease-out
 ### 事件總線（Event Bus）
 
 **跨系統事件**:
-```typescript
-// 場景切換事件
-EventBus.emit('scene:change', {
-  from: 'exploration',
-  to: 'battle',
-  data: { enemy, complexity }
-});
+```
+場景切換事件:
+• 來源場景
+• 目標場景
+• 相關數據(敵人、複雜度)
 
-// 戰鬥開始事件
-EventBus.emit('battle:start', {
-  battleId: string,
-  enemy: Enemy,
-  location: Location
-});
+戰鬥開始事件:
+• 戰鬥ID
+• 敵人資訊
+• 地點資訊
 
-// 技能使用事件
-EventBus.emit('skill:use', {
-  skillId: string,
-  target: 'enemy' | 'self',
-  cost: { mp: number }
-});
+技能使用事件:
+• 技能ID
+• 目標(敵人/自己)
+• MP消耗
 
-// 資源變化事件
-EventBus.emit('resource:change', {
-  type: 'hp' | 'mp' | 'exp' | 'gold',
-  value: number,
-  change: number
-});
+資源變化事件:
+• 資源類型(HP/MP/EXP/Gold)
+• 當前值
+• 變化量
 ```
 
 ### 共享狀態（Global State）
 
 **核心狀態數據**:
-```typescript
-interface GlobalState {
-  // 場景狀態
-  currentScene: 'exploration' | 'battle';
-  currentZone: 'town' | 'wilderness' | 'dungeon';
-  currentLocation: string;
+```
+場景狀態:
+• 當前場景(探索/戰鬥)
+• 當前區域(城鎮/野外/副本)
+• 當前地點
 
-  // 戰鬥狀態
-  activeBattle: Battle | null;
-  backgroundBattles: Battle[];
+戰鬥狀態:
+• 活躍戰鬥
+• 背景戰鬥列表
 
-  // 玩家狀態
-  player: {
-    level: number;
-    hp: number;
-    maxHp: number;
-    mp: number;
-    maxMp: number;
-    exp: number;
-    gold: number;
-  };
+玩家狀態:
+• 等級
+• HP(當前/最大)
+• MP(當前/最大)
+• 經驗值
+• 金幣
 
-  // 系統狀態
-  worktrees: Worktree[];
-  companions: Companion[];
-  summons: Summon[];
-  skills: Skill[];
-}
+系統狀態:
+• Worktree列表
+• 夥伴列表
+• 召喚獸列表
+• 技能列表
 ```
 
 ---
@@ -912,54 +890,49 @@ interface GlobalState {
 ### 按需加載系統
 
 **優先級分組**:
-```javascript
-// 核心系統 - 立即加載
-import MapSystem from './map-system';
-import SceneSystem from './scene-system';
-import BattleSystem from './battle-system';
+```
+核心系統 - 立即加載:
+• 地圖系統
+• 場景系統
+• 戰鬥系統
 
-// 擴展系統 - 延遲加載
-const CompanionSystem = () => import('./companion-system');
-const SummonSystem = () => import('./summon-system');
+擴展系統 - 延遲加載:
+• 夥伴系統
+• 召喚獸系統
 
-// 高級系統 - 按需加載
-const AsyncBattleSystem = () => import('./async-battle-system');
-const MultiModelSystem = () => import('./multi-model-system');
+高級系統 - 按需加載:
+• 非同步戰鬥系統
+• 多模型整合系統
 ```
 
 ### 組件虛擬化
 
 **大列表優化**:
-```typescript
-// 技能列表（>50 個技能時）
-<VirtualList
-  items={skills}
-  itemHeight={80}
-  renderItem={(skill) => <SkillCard skill={skill} />}
-/>
+```
+技能列表(> 50個項目):
+• 使用虛擬列表渲染
+• 固定項目高度
+• 只渲染可見項目
 
-// 戰鬥日誌（>100 條記錄時）
-<VirtualScrollList
-  items={battleLogs}
-  bufferSize={10}
-  renderItem={(log) => <LogEntry log={log} />}
-/>
+戰鬥日誌(> 100條記錄):
+• 虛擬滾動列表
+• 緩衝區管理
+• 按需渲染項目
 ```
 
 ### 動畫優化
 
 **使用 GPU 加速**:
-```css
-/* ✅ 好 - 使用 transform */
-.enemy-hit {
-  transform: translateX(-5px);
-  will-change: transform;
-}
+```
+✅ 推薦做法:
+• 使用 transform 屬性
+• 預先宣告 will-change
+• 觸發 GPU 加速
 
-/* ❌ 壞 - 使用 left */
-.enemy-hit {
-  left: -5px;
-}
+❌ 避免做法:
+• 使用 left/top 屬性
+• 頻繁修改布局
+• 觸發重排
 ```
 
 ---

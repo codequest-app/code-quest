@@ -201,7 +201,7 @@ Claude 進入 Plan Mode
 - 音效：發問音效、選擇音效
 
 **選擇後果**：
-```javascript
+```
 onAnswer: (choice) => {
   // Claude 會根據答案調整後續行動
   // UI 不判斷對錯，但可給予提示
@@ -248,7 +248,7 @@ onAnswer: (choice) => {
 ```
 
 **反噬傷害計算**：
-```javascript
+```
 backlashDamage = errorSeverity * 5
 
 errorSeverity = {
@@ -308,7 +308,7 @@ consecutiveMultiplier = 1 + (consecutiveErrors * 0.5)
 - 音效：解鎖音效、神聖音效
 
 **風險等級指示**：
-```javascript
+```
 riskLevel = {
   low: '⚠️ 低',
   medium: '⚠️⚠️ 中',
@@ -374,7 +374,7 @@ getRiskLevel = (operation) => {
 #### 2.2 文件操作 → 檔案魔法
 
 **Read 工具 → 讀心術**：
-```javascript
+```
 tool: 'Read',
 spellName: '讀心術',
 icon: '📖',
@@ -385,7 +385,7 @@ battleEffect: '獲得敵人資訊（+10% 命中率）'
 ```
 
 **Write 工具 → 創造術**：
-```javascript
+```
 tool: 'Write',
 spellName: '創造術',
 icon: '✍️',
@@ -396,7 +396,7 @@ battleEffect: '創造新代碼（造成 80 傷害）'
 ```
 
 **Edit 工具 → 改寫術**：
-```javascript
+```
 tool: 'Edit',
 spellName: '改寫術',
 icon: '✏️',
@@ -417,7 +417,7 @@ battleEffect: '修改敵人屬性（-15% 防禦）'
 #### 2.3 搜索工具 → 探索魔法
 
 **Grep 工具 → 搜索之眼**：
-```javascript
+```
 tool: 'Grep',
 spellName: '搜索之眼',
 icon: '👁️',
@@ -428,7 +428,7 @@ battleEffect: '找出敵人弱點（+20% 暴擊率）'
 ```
 
 **Glob 工具 → 定位術**：
-```javascript
+```
 tool: 'Glob',
 spellName: '定位術',
 icon: '🔍',
@@ -460,7 +460,7 @@ battleEffect: '定位敵人位置（無法閃避）'
 ```
 
 **連擊加成**：
-```javascript
+```
 comboBonus = {
   2: 1.2,  // +20% 傷害
   3: 1.5,  // +50% 傷害
@@ -477,7 +477,7 @@ extraMpCost = (toolCount - 1) * 5
 #### 2.5 子 Agent → 召喚夥伴
 
 **Task 工具 → 召喚魔法**：
-```javascript
+```
 tool: 'Task',
 spellName: '召喚夥伴',
 icon: '🌟',
@@ -499,7 +499,7 @@ battleEffect: '召喚 Battle Companion 協助戰鬥'
 #### 3.1 決策規則
 
 **Plan Mode**：
-```javascript
+```
 if (canPredict && complexity >= 8) {
   // 戰前處理
   return showPlanModeBeforeBattle();
@@ -510,19 +510,19 @@ if (canPredict && complexity >= 8) {
 ```
 
 **AskUserQuestion**：
-```javascript
+```
 // 始終使用 RPG 化（敵人發問攻擊）
 return showEnemyQuestionAttack(question, options);
 ```
 
 **錯誤/警告**：
-```javascript
+```
 // 始終使用 RPG 化（技能反噬）
 return showSkillBacklash(error, severity);
 ```
 
 **權限請求**：
-```javascript
+```
 if (firstTime && beforeBattle) {
   // 戰前處理
   return showPermissionRequestBefore();
@@ -534,7 +534,7 @@ if (firstTime && beforeBattle) {
 
 #### 3.2 處理優先級
 
-```javascript
+```
 eventPriority = {
   critical: ['error', 'permission_dangerous'],  // 最高優先級
   high: ['ask_user_question', 'plan_mode'],     // 高優先級
@@ -558,7 +558,7 @@ onEvent(event) {
 
 #### 4.1 工具 MP 消耗表
 
-```javascript
+```
 toolMpCosts = {
   // 文件操作
   Read: 3,
@@ -597,7 +597,7 @@ toolMpCosts = {
 
 #### 4.2 MP 不足處理
 
-```javascript
+```
 function checkMp(tool, requiredMp) {
   if (player.mp < requiredMp) {
     return {
@@ -617,7 +617,7 @@ function checkMp(tool, requiredMp) {
 
 #### 4.3 批量操作折扣
 
-```javascript
+```
 // 連續使用相同工具有折扣
 toolUsageDiscount = {
   2: 0.95,  // -5%
@@ -637,7 +637,7 @@ toolUsageDiscount = {
 
 #### 5.1 失敗類型
 
-```javascript
+```
 failureTypes = {
   syntax_error: {
     name: '語法錯誤',
@@ -668,7 +668,7 @@ failureTypes = {
 
 #### 5.2 重試機制
 
-```javascript
+```
 retrySystem = {
   maxRetries: 3,
   retryCost: 'same',  // 消耗相同 MP
@@ -701,7 +701,7 @@ showRetryOptions = (error) => {
 
 #### 6.1 RPG 模式設置
 
-```javascript
+```
 settings = {
   rpgMode: {
     enabled: true,  // 啟用 RPG 化
@@ -724,7 +724,7 @@ settings = {
 
 #### 6.2 自定義工具映射
 
-```javascript
+```
 // 允許用戶自定義工具 → 魔法映射
 customToolMappings = {
   'my_custom_command': {
@@ -748,7 +748,7 @@ registerToolMapping(pattern, mapping) {
 
 #### 7.1 性能要求
 
-```javascript
+```
 performanceTargets = {
   eventResponse: 100,    // 事件響應 < 100ms
   animationFps: 60,      // 動畫 60 FPS
@@ -759,7 +759,7 @@ performanceTargets = {
 
 #### 7.2 優化策略
 
-```javascript
+```
 optimizations = {
   // 1. 動畫預加載
   preloadAnimations: ['magic_circle', 'particle_effects'],
@@ -967,7 +967,7 @@ optimizations = {
 
 **事件觸發時機**：
 
-```javascript
+```
 // 戰鬥回合中監聽 CLI 事件
 function onBattleTurn() {
   // 1. 監聽互動事件
@@ -1022,7 +1022,7 @@ function handleToolExecution(tool) {
 
 **事件監聽與轉發**：
 
-```javascript
+```
 // Bridge Layer 監聽 Claude CLI 輸出
 class BridgeLayer {
   constructor() {
@@ -1069,7 +1069,7 @@ class BridgeLayer {
 
 **工具映射為技能**：
 
-```javascript
+```
 // 工具 → 技能數據結構
 function mapToolToSkill(tool) {
   const mapping = toolMappings[tool.name];
@@ -1148,7 +1148,7 @@ function showTacticalPlanning(planData) {
 
 **互動事件相關成就**：
 
-```javascript
+```
 interactiveAchievements = [
   {
     id: 'first_plan_mode',

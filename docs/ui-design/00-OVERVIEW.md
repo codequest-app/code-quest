@@ -207,9 +207,9 @@ CodeLand 世界
 - 複雜度 13+：Boss 級敵人
 
 **傷害計算**：
-```javascript
-baseDamage = 100 + (skill.mp * 3) + (player.level * 10)
-totalDamage = baseDamage × affinity × weakness × resistance
+```
+基礎傷害 = 固定值 + (技能MP消耗 × 倍數) + (玩家等級 × 倍數)
+最終傷害 = 基礎傷害 × 相性倍率 × 弱點倍率 × 抗性倍率
 ```
 
 ### 成長系統
@@ -360,14 +360,13 @@ expToNextLevel = 100 * (1.5 ^ (level - 1))
 
 ### 音效配置
 
-```javascript
-audioSettings = {
-  masterVolume: 0.7,
-  bgmVolume: 0.5,
-  sfxVolume: 0.8,
-  enableBGM: true,
-  enableSFX: true
-}
+```
+音效設定:
+• 主音量控制
+• 背景音樂音量
+• 音效音量
+• 背景音樂開關
+• 音效開關
 ```
 
 ---

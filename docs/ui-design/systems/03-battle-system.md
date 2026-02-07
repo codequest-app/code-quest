@@ -106,8 +106,8 @@
 - 檢測技術關鍵字：React, Vue, Node, Python, Java, TypeScript
 
 **5. 等級計算**:
-```javascript
-level = min(15, max(1, floor(score / 2) + 1))
+```
+等級 = 最小值(15, 最大值(1, 向下取整(分數 / 2) + 1))
 ```
 
 ---
@@ -165,8 +165,8 @@ level = min(15, max(1, floor(score / 2) + 1))
 
 #### HP 計算公式
 
-```javascript
-maxHp = level * 100 * hpMultiplier
+```
+最大HP = 等級 × 基礎值 × HP倍率
 ```
 
 **HP 倍率**（根據敵人類型）:
@@ -221,8 +221,8 @@ maxHp = 10 * 100 * 2.0 = 2000 HP
 
 #### 基礎傷害公式
 
-```javascript
-baseDamage = 100 + (skill.cost.mp * 3) + (player.level * 10)
+```
+基礎傷害 = 固定值 + (技能MP消耗 × 倍數) + (玩家等級 × 倍數)
 ```
 
 **傷害修正**：
@@ -243,9 +243,9 @@ baseDamage = 100 + (skill.cost.mp * 3) + (player.level * 10)
 
 #### 最終傷害計算
 
-```javascript
-totalDamage = floor(
-  baseDamage * affinityMultiplier * weakMultiplier * resistMultiplier
+```
+最終傷害 = 向下取整(
+  基礎傷害 × 相性倍率 × 弱點倍率 × 抗性倍率
 )
 ```
 
@@ -254,21 +254,21 @@ totalDamage = floor(
 code-reviewer (MP 40) 攻擊 Bug怪物 Lv.5
 玩家等級：10
 
-baseDamage = 100 + (40 * 3) + (10 * 10) = 320
-affinityMultiplier = 1.5 (code-reviewer 對 bug-hunt)
-weakMultiplier = 1.5 (code-reviewer 在弱點列表中)
-resistMultiplier = 1.0 (無抗性)
+基礎傷害 = 100 + (40 × 3) + (10 × 10) = 320
+相性倍率 = 1.5 (code-reviewer 對 bug-hunt)
+弱點倍率 = 1.5 (code-reviewer 在弱點列表中)
+抗性倍率 = 1.0 (無抗性)
 
-totalDamage = floor(320 * 1.5 * 1.5 * 1.0) = 720
+最終傷害 = 向下取整(320 × 1.5 × 1.5 × 1.0) = 720
 ```
 
 ---
 
 #### Agent 傷害計算
 
-```javascript
-agentDamage = floor(
-  150 + agent.stats.attack + agent.stats.wisdom + (player.level * 5)
+```
+Agent傷害 = 向下取整(
+  基礎值 + Agent攻擊力 + Agent智慧 + (玩家等級 × 倍數)
 )
 ```
 
@@ -276,10 +276,10 @@ agentDamage = floor(
 
 #### 組合技傷害計算
 
-```javascript
-comboDamage = floor(
-  (300 + (skillsUsed.length * 50) + (player.level * 20))
-  * combo.rewards.expMultiplier
+```
+組合技傷害 = 向下取整(
+  (基礎值 + (技能數量 × 倍數) + (玩家等級 × 倍數)) ×
+  經驗倍率
 )
 ```
 
@@ -347,15 +347,15 @@ comboDamage = floor(
 
 #### 獎勵計算
 
-```javascript
-finalExp = floor(baseExp * typeMultiplier * difficultyMultiplier)
-finalGold = floor(baseGold * typeMultiplier * difficultyMultiplier)
+```
+最終經驗值 = 向下取整(基礎經驗 × 類型倍率 × 難度倍率)
+最終金幣 = 向下取整(基礎金幣 × 類型倍率 × 難度倍率)
 ```
 
 **基礎獎勵**:
-```javascript
-baseExp = level * 30
-baseGold = level * 15
+```
+基礎經驗 = 等級 × 30
+基礎金幣 = 等級 × 15
 ```
 
 ---

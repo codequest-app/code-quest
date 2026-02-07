@@ -122,20 +122,19 @@
 
 #### 技能屬性
 
-```javascript
-{
-  id: string,              // 技能ID
-  name: string,            // 技能名稱
-  icon: string,            // 圖標
-  type: string,            // 技能類型
-  mpCost: number,          // MP 消耗
-  cooldown: number,        // 冷卻回合數
-  description: string,     // 技能描述
-  effect: object,          // 技能效果
-  animation: string,       // 動畫名稱
-  effectiveness: object,   // 對不同敵人的效果倍率
-  requiredLevel: number    // 解鎖等級需求（可選）
-}
+```
+技能資料結構:
+• 技能ID (唯一識別碼)
+• 技能名稱
+• 圖標
+• 技能類型
+• MP 消耗
+• 冷卻回合數
+• 技能描述
+• 技能效果
+• 動畫名稱
+• 敵人相性效果倍率
+• 解鎖等級需求 (選擇性)
 ```
 
 ---
@@ -278,21 +277,20 @@ MP 消耗: 50
 
 #### 技能選擇邏輯
 
-```javascript
-selectSkill(battle) {
-  // 1. 過濾可用技能
-  availableSkills = skills.filter(skill => {
-    return !isOnCooldown(skill) && mp >= skill.mpCost;
-  });
+```
+技能選擇流程:
 
-  // 2. 計算預期收益
-  skillScores = availableSkills.map(skill => {
-    return calculateExpectedValue(skill, battle);
-  });
+1. 過濾可用技能:
+   • 檢查技能是否在冷卻中
+   • 檢查MP是否足夠
 
-  // 3. 按收益排序
-  return skillScores.sort((a, b) => b.score - a.score)[0];
-}
+2. 計算預期收益:
+   • 評估每個技能的預期效果
+   • 考慮敵人相性、當前戰況
+
+3. 選擇最佳技能:
+   • 按收益排序
+   • 選擇收益最高的技能
 ```
 
 ---
@@ -329,11 +327,11 @@ selectSkill(battle) {
 #### 升級機制
 
 **經驗值需求**:
-```javascript
-expToNextLevel = 100 * (1.3 ^ (level - 1))
+```
+升級所需經驗 = 基礎值 × (成長率 ^ (等級 - 1))
 ```
 
-夥伴升級比玩家快（玩家用 1.5，夥伴用 1.3）。
+夥伴升級比玩家快（玩家成長率 1.5，夥伴成長率 1.3）。
 
 **示例**：
 ```
@@ -411,7 +409,7 @@ Lv.4 → Lv.5: 220 EXP
 **行動順序計算**:
 基於所有單位的速度值排序：
 
-```javascript
+```
 行動順序 = [玩家, 夥伴1, 夥伴2, 敵人] (按速度排序)
 ```
 
