@@ -201,22 +201,8 @@ Claude 進入 Plan Mode
 - 音效：發問音效、選擇音效
 
 **選擇後果**：
-```
-onAnswer: (choice) => {
-  // Claude 會根據答案調整後續行動
-  // UI 不判斷對錯，但可給予提示
-
-  if (choice === 'best_option') {
-    battleLog.add('✅ 精準回答！發現敵人弱點！');
-    enemy.addDebuff('弱點暴露', { defense: -20 }, 2);
-    return { bonus: '+20% 傷害（2 回合）' };
-  } else {
-    battleLog.add('❌ 回答欠佳，敵人反擊！');
-    player.takeDamage(15);
-    return { penalty: '-15 HP' };
-  }
-}
-```
+- ✅ 精準回答：發現敵人弱點，+20% 傷害（2 回合）
+- ❌ 回答欠佳：敵人反擊，-15 HP
 
 #### 1.3 錯誤/警告 → 技能反噬
 
