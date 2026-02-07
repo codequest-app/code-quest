@@ -145,7 +145,7 @@ dialogMode = {
 
 **判斷條件**：
 ```
-if (complexity < 3) {
+if (complexity >= 0 && complexity <= 2) {
   return 'dialog';
 }
 ```
