@@ -435,28 +435,17 @@ MP消耗: (toolCount - 1) * 5,  // 額外消耗
 
 ---
 
-## 使用示例
+## 使用流程
 
-```javascript
-// 工具執行時
-function onToolExecute(tool) {
-  const mapping = toolMappings[tool.name];
+工具執行時的處理流程：
 
-  // 顯示魔法名稱
-  battleLog.add(`🧙 施放「${mapping.spellName}」(${tool.name})`);
-
-  // 播放動畫
-  playAnimation(mapping.animation);
-
-  // 播放音效
-  playSound(mapping.soundEffect);
-
-  // 扣除 MP
-  player.mp -= mapping.mpCost;
-
-  // 應用戰鬥效果
-  applyBattleEffect(mapping.battleEffect);
-```
+1. 獲取工具映射配置
+2. 顯示魔法名稱和圖標
+3. 播放施法動畫
+4. 播放音效
+5. 扣除對應 MP
+6. 應用戰鬥效果
+7. 記錄戰鬥日誌
 
 ---
 
