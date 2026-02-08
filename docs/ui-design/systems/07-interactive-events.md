@@ -1,8 +1,13 @@
 # 互動事件系統 (Interactive Events System)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**更新日期**: 2026-02-07
+**版本**: v1.1
 **來源**: `/docs/design/interactive-events/requirements.md`
+
+💡 **快速參考**:
+- 使用 `/project-overview` skill 了解工具→RPG 映射的整體概念
+- 使用 `/battle-management` skill 了解互動事件如何融入戰鬥流程
 
 ---
 

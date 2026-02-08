@@ -1,8 +1,11 @@
 # 異步戰鬥系統 (Async Battle System)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**更新日期**: 2026-02-07
+**版本**: v1.1
 **來源**: `/docs/design/async-battle-system/requirements.md`
+
+💡 **快速參考**: 使用 `/battle-management` skill 快速了解多 AI 並行戰鬥的派遣與監控方式
 
 ---
 

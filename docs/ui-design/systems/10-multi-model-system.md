@@ -1,8 +1,11 @@
 # 多模型整合系統 (Multi-Model Integration System)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**更新日期**: 2026-02-07
+**版本**: v1.1
 **來源**: `/docs/design/multi-model-integration/requirements.md`
+
+💡 **快速參考**: 使用 `/battle-management` skill 快速了解 AI 代理選擇（Haiku/Sonnet/Opus）和派遣流程
 
 ---
 

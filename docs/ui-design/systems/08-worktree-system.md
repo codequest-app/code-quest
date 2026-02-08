@@ -1,8 +1,13 @@
 # Worktree 手動系統 (Worktree Manual System)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**更新日期**: 2026-02-07
+**版本**: v1.1
 **來源**: `/docs/design/worktree-manual-system/requirements.md`
+
+💡 **快速參考**:
+- 使用 `/battle-management` skill 了解 Worktree 隔離如何支援多 AI 並行戰鬥
+- 使用 `/project-overview` skill 了解系統架構與多時間線設計
 
 ---
 
