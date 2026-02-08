@@ -1,6 +1,18 @@
 ---
 name: battle-management
-description: Explains Code Quest's battle management system - how to dispatch AI agents (Haiku/Sonnet/Opus), monitor multiple battles, and switch between them using DQ-style popup menu. Use when the user asks about managing parallel AI tasks, battle system, or dispatch mechanics.
+description: |
+  Explains battle management, AI dispatch system, and multi-battle handling with DQ-style menu.
+
+  AUTO-INVOKE when:
+  - User asks about "battle", "combat", "AI dispatch", "parallel battles", "multiple AI"
+  - Implementing battle system or AI agent management
+  - Designing combat flow or battle UI
+  - Planning async battle or multi-model features
+  - Working on Haiku/Sonnet/Opus integration
+  - Discussing battle monitoring or switching mechanisms
+  - Implementing worktree-based battle isolation
+
+  Keywords: battle, combat, fight, dispatch, AI agent, Haiku, Sonnet, Opus, parallel, multi-battle, DQ menu, battle management, async battle, worktree
 ---
 
 # 戰鬥管理系統 - 多 AI 並行戰鬥設計
