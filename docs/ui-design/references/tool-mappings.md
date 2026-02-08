@@ -1,8 +1,11 @@
 # 工具映射參考 (Tool Mappings Reference)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**更新日期**: 2026-02-07
+**版本**: v1.1
 **來源**: `/docs/design/interactive-events/requirements.md`
+
+💡 **快速參考**: 使用 `/project-overview` skill 快速了解工具→RPG 魔法映射的設計理念
 
 ---
 

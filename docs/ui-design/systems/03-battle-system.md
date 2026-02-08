@@ -1,5 +1,9 @@
 # 系統 03 - 戰鬥系統 (Battle System)
 
+**更新日期**: 2026-02-07
+
+💡 **快速參考**: 使用 `/battle-management` skill 快速了解戰鬥管理、AI派遣和監控模式
+
 本文件描述 Code Quest 的戰鬥系統設計，將 AI 對話過程轉化為 RPG 戰鬥體驗。
 
 ---

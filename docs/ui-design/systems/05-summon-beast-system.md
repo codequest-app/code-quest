@@ -1,7 +1,10 @@
 # 召喚獸系統 (Summon Beast System)
 
 **創建日期**: 2026-02-06
-**版本**: v1.0
+**版本**: v1.1
+**更新日期**: 2026-02-07
+
+💡 **快速參考**: 召喚獸為戰鬥支援，使用 `/project-overview` 了解整體機制
 **來源**: `/docs/design/summon-beast-system/requirements.md`
 
 ---

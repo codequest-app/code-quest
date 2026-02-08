@@ -1,5 +1,9 @@
 # 系統 04 - 夥伴系統 (Companion System)
 
+**更新日期**: 2026-02-07
+
+💡 **快速參考**: 夥伴系統基於戰鬥系統，使用 `/battle-management` 了解AI協作
+
 本文件描述 Code Quest 的夥伴系統設計，將 Subagent 提升為戰鬥夥伴。
 
 ---
