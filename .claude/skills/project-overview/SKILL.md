@@ -1,6 +1,17 @@
 ---
 name: project-overview
-description: Explains what Code Quest is - an RPG-gamified wrapper for Claude Code CLI. Use when the user asks "what is this project", "what does Code Quest do", or needs to understand the overall project goals and architecture.
+description: |
+  Explains Code Quest's core concept, architecture, and design philosophy.
+
+  AUTO-INVOKE when:
+  - User asks "what is this project", "project overview", "what does Code Quest do"
+  - Starting implementation planning or architecture design
+  - Reviewing or writing design documents
+  - Need to understand the three-layer architecture (UI/Bridge/CLI)
+  - Discussing AI→RPG element mapping
+  - Planning new systems or features (need overall context)
+
+  Keywords: project, overview, architecture, what is, explain project, Code Quest concept, three-layer, RPG wrapper, design philosophy
 ---
 
 # Code Quest - RPG 化的 Claude Code 體驗

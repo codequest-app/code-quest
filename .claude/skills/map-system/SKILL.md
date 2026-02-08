@@ -1,6 +1,17 @@
 ---
 name: map-system
-description: Explains Code Quest's dual-mode map system (2D overhead map + dialogue mode). Use when the user asks about navigation, exploration, how to move around the world, or which exploration mode to use.
+description: |
+  Explains the dual-mode map system (2D overhead + dialogue mode) and location structure.
+
+  AUTO-INVOKE when:
+  - User asks about "map", "navigation", "exploration", "locations", "how to move"
+  - Implementing map or scene systems
+  - Designing location-based features
+  - Planning town/wilderness/dungeon content
+  - Working on movement or travel mechanics
+  - Discussing player navigation UX
+
+  Keywords: map, navigation, exploration, location, move, travel, town, wilderness, dungeon, 2D map, dialogue mode, scene, places
 ---
 
 # 地圖系統 - 雙模式探索設計
