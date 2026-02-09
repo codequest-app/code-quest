@@ -51,9 +51,9 @@ async function main() {
 
     console.log('\n🚀 Code Quest Server Started');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`📍 HTTP API:   http://${status.host}:${status.port}`);
-    console.log(`🔌 WebSocket:  ws://${status.host}:${status.port}`);
-    console.log(`💚 Health:     http://${status.host}:${status.port}/api/health`);
+    console.log(`📍 HTTP API:   http://${host}:${status.port}`);
+    console.log(`🔌 WebSocket:  ws://${host}:${status.port}`);
+    console.log(`💚 Health:     http://${host}:${status.port}/api/health`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nPress Ctrl+C to stop\n');
   } catch (error) {
