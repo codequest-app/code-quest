@@ -8,84 +8,143 @@
 ## 🎯 POC 目標
 
 驗證 Code Quest 核心架構的可行性：
-1. ✅ Bridge Layer 可以成功啟動和管理 Claude Code CLI
-2. ✅ RPGUI 能夠呈現 Dragon Quest 風格的戰鬥 UI
-3. ✅ Claude CLI 輸出可以解析為 RPG 事件
-4. ✅ WebSocket 能夠即時推送事件到前端
-5. ✅ 前端可以顯示戰鬥動畫和狀態更新
+
+### Phase 0: 驗證階段 ✅ (已完成)
+1. ✅ node-pty 可以成功控制 Claude Code 和 Gemini CLI
+2. ✅ 正確的 CLI 參數：`--output-format stream-json --verbose`
+3. ✅ 可捕獲所有 RPG 所需資訊（Tool use、Token、Cost）
+4. ✅ 並行多進程驗證通過
+5. ✅ Worktree 隔離驗證通過
+
+### Phase 1: xterm.js 終端整合 🚧 (進行中)
+1. 🎯 使用 xterm.js 呈現原始終端介面
+2. 🎯 node-pty + Socket.io 實時串流輸出
+3. 🎯 Tab 介面支援多個 AI 實例（Claude/Gemini）
+4. 🎯 可同時開啟多個終端（Haiku/Sonnet/Opus）
+5. 🎯 基礎的實例管理（新增/關閉/切換）
+
+### Phase 2: RPG 包裝層 ⏳ (待開始)
+1. ⏳ RPGUI 能夠呈現 Dragon Quest 風格的戰鬥 UI
+2. ⏳ Claude CLI 輸出可以解析為 RPG 事件
+3. ⏳ 前端可以顯示戰鬥動畫和狀態更新
+4. ⏳ 從 Tab 介面改為 DQ 風格彈出選單
 
 ---
 
 ## 📁 專案結構
 
+### Phase 1 結構（xterm.js 終端整合）
+
 ```
 code-quest/
 ├── packages/
-│   ├── bridge/                    # Bridge Layer (Node.js)
+│   ├── server/                    # Backend (Node.js + Express + Socket.io)
 │   │   ├── src/
 │   │   │   ├── index.ts          # 主入口
-│   │   │   ├── cli-manager.ts    # CLI 進程管理
-│   │   │   ├── output-parser.ts  # 輸出解析器
-│   │   │   ├── rpg-mapper.ts     # RPG 事件映射
-│   │   │   └── websocket.ts      # WebSocket 伺服器
+│   │   │   ├── terminal/
+│   │   │   │   ├── manager.ts    # 終端實例管理器
+│   │   │   │   ├── session.ts    # 單一終端 Session
+│   │   │   │   └── types.ts      # 類型定義
+│   │   │   ├── socket/
+│   │   │   │   └── handlers.ts   # Socket.io 事件處理
+│   │   │   └── __tests__/        # 測試文件
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   └── ui/                        # Frontend (React + Vite)
+│   └── client/                    # Frontend (React + Vite)
 │       ├── src/
 │       │   ├── main.tsx          # React 入口
 │       │   ├── App.tsx           # 主應用
 │       │   ├── components/
-│       │   │   ├── RPG/          # RPGUI 組件封裝
-│       │   │   │   ├── Container.tsx
-│       │   │   │   ├── Button.tsx
-│       │   │   │   └── ProgressBar.tsx
-│       │   │   └── Battle/       # 戰鬥相關組件
-│       │   │       ├── BattleScreen.tsx
-│       │   │       ├── EnemyDisplay.tsx
-│       │   │       └── PlayerStatus.tsx
+│       │   │   ├── Terminal/     # 終端相關組件
+│       │   │   │   ├── Terminal.tsx       # xterm.js 包裝
+│       │   │   │   ├── TerminalTabs.tsx   # Tab 介面
+│       │   │   │   └── NewTerminalDialog.tsx  # 新增終端對話框
+│       │   │   └── __tests__/    # 組件測試
 │       │   ├── hooks/
-│       │   │   └── useWebSocket.ts
-│       │   └── styles/
-│       │       └── rpg.css       # RPGUI 樣式
-│       ├── public/
-│       │   └── assets/
+│       │   │   ├── useTerminal.ts    # Terminal hook
+│       │   │   ├── useSocket.ts      # Socket.io hook
+│       │   │   └── __tests__/        # Hook 測試
+│       │   ├── stores/
+│       │   │   └── terminalStore.ts  # 終端狀態管理
+│       │   └── types/
+│       │       └── terminal.ts       # 類型定義
 │       ├── package.json
 │       ├── tsconfig.json
-│       └── vite.config.ts
+│       ├── vite.config.ts
+│       └── vitest.config.ts      # Vitest 配置
 │
 ├── package.json                   # Root package.json (workspace)
 ├── pnpm-workspace.yaml           # pnpm workspace 配置
 └── turbo.json                     # Turborepo 配置
 ```
 
+### Phase 2 結構（RPG 包裝層）- 未來擴展
+
+```
+packages/
+├── server/
+│   └── src/
+│       ├── parsers/
+│       │   ├── output-parser.ts  # CLI 輸出解析
+│       │   └── rpg-mapper.ts     # RPG 事件映射
+│       └── __tests__/
+│
+└── client/
+    └── src/
+        ├── components/
+        │   ├── RPG/              # RPGUI 組件
+        │   └── Battle/           # 戰鬥畫面
+        └── styles/
+            └── rpg.css
+```
+
 ---
 
 ## 🔧 技術棧決策
 
-### Backend (Bridge Layer)
-- **Runtime**: Node.js 18+
+### Backend (Server)
+- **Runtime**: Node.js 20+
 - **Language**: TypeScript 5
-- **進程管理**: `node-pty` (偽終端)
-- **WebSocket**: `ws` 庫
-- **HTTP Server**: Express (可選，用於健康檢查)
+- **Framework**: Express 4
+- **進程管理**: `node-pty` ^1.0.0 (偽終端)
+- **WebSocket**: `socket.io` ^4.7.0 (雙向通訊)
+- **Testing**: Vitest + Supertest
 
-### Frontend (UI)
+### Frontend (Client)
 - **Framework**: React 18
 - **Build Tool**: Vite 5
 - **Language**: TypeScript 5
-- **UI Framework**: RPGUI + 自訂組件
+- **Terminal**: `xterm` ^5.3.0 + `xterm-addon-fit` + `xterm-addon-web-links`
+- **WebSocket**: `socket.io-client` ^4.7.0
+- **State Management**: Zustand ^4.5.0 (輕量)
+- **UI Library**: Tailwind CSS + Headless UI (Phase 1)
+- **Testing**: Vitest + React Testing Library
+
+### Phase 2 擴展 (未來)
 - **Animation**: Framer Motion
-- **State Management**: Zustand (輕量)
-- **WebSocket Client**: 原生 WebSocket API
+- **Pixel Art UI**: RPGUI.js
+- **Game Engine**: PixiJS (技能特效)
 
 ### Monorepo 工具
-- **Package Manager**: pnpm
-- **Build Orchestration**: Turborepo
+- **Package Manager**: pnpm 8+
+- **Build Orchestration**: Turborepo 1.x
 
 ---
 
-## 📝 實作步驟
+## 📝 Phase 1 實作步驟（xterm.js 終端整合）
+
+### TDD 開發流程
+
+**測試優先原則**：
+1. 寫測試 (Red) → 2. 最小實作 (Green) → 3. 重構 (Refactor)
+
+**測試覆蓋目標**：
+- 單元測試：核心邏輯 >80%
+- 整合測試：關鍵流程 100%
+- E2E 測試：主要使用場景
+
+---
 
 ### Step 1: Monorepo 初始化 ✅
 
@@ -120,15 +179,15 @@ packages:
 
 ---
 
-### Step 2: Bridge Layer 實作 ✅
+### Step 2: Server 端實作（TDD）
 
 #### 2.1 基礎設定
 
 ```bash
-cd packages/bridge
+cd packages/server
 pnpm init
-pnpm add node-pty ws express
-pnpm add -D typescript @types/node @types/ws @types/express tsx
+pnpm add express socket.io node-pty cors
+pnpm add -D typescript @types/node @types/express @types/cors tsx vitest supertest @types/supertest
 ```
 
 **tsconfig.json**:
@@ -142,9 +201,29 @@ pnpm add -D typescript @types/node @types/ws @types/express tsx
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "types": ["node", "vitest"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
+```
+
+**vitest.config.ts**:
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: ['**/*.test.ts', '**/types.ts']
+    }
+  }
+});
 ```
 
 **package.json scripts**:
@@ -153,85 +232,389 @@ pnpm add -D typescript @types/node @types/ws @types/express tsx
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
   }
 }
 ```
 
-#### 2.2 CLI Manager 實作
+#### 2.2 類型定義（測試先行）
 
-**src/cli-manager.ts**:
+**src/terminal/types.ts**:
+```typescript
+export type AIProvider = 'claude' | 'gemini';
+export type ClaudeModel = 'haiku' | 'sonnet' | 'opus';
+export type GeminiModel = 'auto-gemini-2.5';
+
+export interface TerminalConfig {
+  provider: AIProvider;
+  model: ClaudeModel | GeminiModel;
+  workingDirectory?: string;
+}
+
+export interface TerminalSession {
+  id: string;
+  config: TerminalConfig;
+  isRunning: boolean;
+  createdAt: number;
+}
+
+export interface TerminalOutput {
+  sessionId: string;
+  data: string;
+  timestamp: number;
+}
+```
+
+#### 2.3 終端 Session 實作（TDD）
+
+**測試先行 - src/terminal/__tests__/session.test.ts**:
+```typescript
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { TerminalSession } from '../session';
+import type { TerminalConfig } from '../types';
+
+describe('TerminalSession', () => {
+  let session: TerminalSession;
+  const config: TerminalConfig = {
+    provider: 'claude',
+    model: 'sonnet',
+    workingDirectory: process.cwd()
+  };
+
+  beforeEach(() => {
+    session = new TerminalSession(config);
+  });
+
+  afterEach(() => {
+    session.kill();
+  });
+
+  it('should create session with unique id', () => {
+    expect(session.id).toBeDefined();
+    expect(session.id).toMatch(/^[a-z0-9-]+$/);
+  });
+
+  it('should not be running initially', () => {
+    expect(session.isRunning).toBe(false);
+  });
+
+  it('should start with correct CLI command for Claude', async () => {
+    const onData = vi.fn();
+    session.on('data', onData);
+
+    await session.start('Say hello');
+
+    expect(session.isRunning).toBe(true);
+    // 等待輸出
+    await new Promise(resolve => setTimeout(resolve, 100));
+    expect(onData).toHaveBeenCalled();
+  });
+
+  it('should use correct parameters for Gemini', async () => {
+    const geminiSession = new TerminalSession({
+      provider: 'gemini',
+      model: 'auto-gemini-2.5'
+    });
+
+    const onData = vi.fn();
+    geminiSession.on('data', onData);
+
+    await geminiSession.start('Say hello');
+    expect(geminiSession.isRunning).toBe(true);
+
+    geminiSession.kill();
+  });
+
+  it('should emit exit event when process ends', (done) => {
+    session.on('exit', ({ code }) => {
+      expect(code).toBeDefined();
+      done();
+    });
+
+    session.start('Say hello').then(() => {
+      // 發送 Ctrl+C 結束
+      session.kill();
+    });
+  });
+
+  it('should handle write input', async () => {
+    await session.start('');
+
+    expect(() => {
+      session.write('test input\n');
+    }).not.toThrow();
+  });
+
+  it('should throw error if starting already running session', async () => {
+    await session.start('Say hello');
+
+    await expect(session.start('Another prompt')).rejects.toThrow(
+      'Session is already running'
+    );
+  });
+});
+```
+
+**實作 - src/terminal/session.ts**:
 ```typescript
 import * as pty from 'node-pty';
 import { EventEmitter } from 'events';
+import { randomUUID } from 'crypto';
+import type { TerminalConfig } from './types';
 
-export interface CLIManagerConfig {
-  cliPath?: string;
-  workingDirectory?: string;
-  model?: 'haiku' | 'sonnet' | 'opus';
-}
-
-export class CLIManager extends EventEmitter {
+export class TerminalSession extends EventEmitter {
+  public readonly id: string;
+  public isRunning: boolean = false;
   private pty: pty.IPty | null = null;
-  private isRunning = false;
+  private createdAt: number;
 
-  constructor(private config: CLIManagerConfig = {}) {
+  constructor(private config: TerminalConfig) {
     super();
+    this.id = randomUUID();
+    this.createdAt = Date.now();
   }
 
-  async start(prompt: string): Promise<void> {
+  async start(prompt?: string): Promise<void> {
     if (this.isRunning) {
-      throw new Error('CLI is already running');
+      throw new Error('Session is already running');
     }
 
-    const args = [
-      '--model', this.config.model || 'sonnet',
-      '--streaming',
-      '--format', 'json',
-      '-p', prompt
-    ];
+    const { command, args } = this.buildCommand(prompt);
 
-    this.pty = pty.spawn('claude', args, {
+    this.pty = pty.spawn(command, args, {
       name: 'xterm-256color',
       cols: 120,
-      rows: 40,
+      rows: 30,
       cwd: this.config.workingDirectory || process.cwd(),
-      env: process.env
+      env: {
+        ...process.env,
+        TERM: 'xterm-256color'
+      }
     });
 
     this.isRunning = true;
 
-    // 監聽輸出
-    this.pty.on('data', (data) => {
-      this.emit('output', data);
+    this.pty.onData((data) => {
+      this.emit('data', {
+        sessionId: this.id,
+        data,
+        timestamp: Date.now()
+      });
     });
 
-    // 監聽退出
-    this.pty.on('exit', (code, signal) => {
+    this.pty.onExit(({ exitCode, signal }) => {
       this.isRunning = false;
-      this.emit('exit', { code, signal });
+      this.emit('exit', { code: exitCode, signal });
     });
   }
 
-  write(input: string): void {
+  write(data: string): void {
     if (!this.pty || !this.isRunning) {
-      throw new Error('CLI is not running');
+      throw new Error('Session is not running');
     }
-    this.pty.write(input);
+    this.pty.write(data);
+  }
+
+  resize(cols: number, rows: number): void {
+    if (this.pty) {
+      this.pty.resize(cols, rows);
+    }
   }
 
   kill(): void {
     if (this.pty) {
       this.pty.kill();
       this.isRunning = false;
+      this.pty = null;
     }
+  }
+
+  private buildCommand(prompt?: string): { command: string; args: string[] } {
+    if (this.config.provider === 'claude') {
+      const args: string[] = ['--print'];
+
+      // 從驗證結果得知的正確參數
+      args.push('--output-format', 'stream-json');
+      args.push('--verbose');
+
+      if (this.config.model) {
+        args.push('--model', this.config.model);
+      }
+
+      if (prompt) {
+        args.push('-p', prompt);
+      }
+
+      return { command: 'claude', args };
+    } else {
+      // Gemini
+      const args: string[] = [];
+
+      if (prompt) {
+        args.push('-p', prompt);
+      }
+
+      args.push('--output-format', 'stream-json');
+
+      if (this.config.model) {
+        args.push('--model', this.config.model);
+      }
+
+      return { command: 'gemini', args };
+    }
+  }
+
+  getInfo() {
+    return {
+      id: this.id,
+      config: this.config,
+      isRunning: this.isRunning,
+      createdAt: this.createdAt
+    };
   }
 }
 ```
 
-#### 2.3 Output Parser 實作
+#### 2.4 終端管理器實作（TDD）
 
-**src/output-parser.ts**:
+**測試先行 - src/terminal/__tests__/manager.test.ts**:
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { TerminalManager } from '../manager';
+import type { TerminalConfig } from '../types';
+
+describe('TerminalManager', () => {
+  let manager: TerminalManager;
+
+  beforeEach(() => {
+    manager = new TerminalManager();
+  });
+
+  afterEach(() => {
+    manager.killAll();
+  });
+
+  it('should create new session', async () => {
+    const config: TerminalConfig = {
+      provider: 'claude',
+      model: 'sonnet'
+    };
+
+    const sessionId = await manager.createSession(config, 'Say hello');
+
+    expect(sessionId).toBeDefined();
+    expect(manager.getSession(sessionId)).toBeDefined();
+  });
+
+  it('should return all sessions', async () => {
+    const config1: TerminalConfig = { provider: 'claude', model: 'haiku' };
+    const config2: TerminalConfig = { provider: 'gemini', model: 'auto-gemini-2.5' };
+
+    await manager.createSession(config1);
+    await manager.createSession(config2);
+
+    const sessions = manager.getAllSessions();
+    expect(sessions).toHaveLength(2);
+  });
+
+  it('should kill specific session', async () => {
+    const config: TerminalConfig = { provider: 'claude', model: 'sonnet' };
+    const sessionId = await manager.createSession(config);
+
+    manager.killSession(sessionId);
+
+    const session = manager.getSession(sessionId);
+    expect(session?.isRunning).toBe(false);
+  });
+
+  it('should kill all sessions', async () => {
+    await manager.createSession({ provider: 'claude', model: 'haiku' });
+    await manager.createSession({ provider: 'claude', model: 'sonnet' });
+
+    manager.killAll();
+
+    const sessions = manager.getAllSessions();
+    sessions.forEach(session => {
+      expect(session.isRunning).toBe(false);
+    });
+  });
+});
+```
+
+**實作 - src/terminal/manager.ts**:
+```typescript
+import { TerminalSession } from './session';
+import type { TerminalConfig } from './types';
+
+export class TerminalManager {
+  private sessions: Map<string, TerminalSession> = new Map();
+
+  async createSession(config: TerminalConfig, prompt?: string): Promise<string> {
+    const session = new TerminalSession(config);
+
+    // 轉發事件到 Manager 層
+    session.on('data', (output) => {
+      this.emit('session:data', output);
+    });
+
+    session.on('exit', ({ code, signal }) => {
+      this.emit('session:exit', {
+        sessionId: session.id,
+        code,
+        signal
+      });
+    });
+
+    this.sessions.set(session.id, session);
+
+    if (prompt) {
+      await session.start(prompt);
+    }
+
+    return session.id;
+  }
+
+  getSession(sessionId: string): TerminalSession | undefined {
+    return this.sessions.get(sessionId);
+  }
+
+  getAllSessions(): TerminalSession[] {
+    return Array.from(this.sessions.values());
+  }
+
+  killSession(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.kill();
+    }
+  }
+
+  killAll(): void {
+    this.sessions.forEach(session => session.kill());
+  }
+
+  // EventEmitter 功能（簡化版）
+  private listeners: Map<string, Function[]> = new Map();
+
+  on(event: string, handler: Function): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)!.push(handler);
+  }
+
+  private emit(event: string, data: any): void {
+    const handlers = this.listeners.get(event) || [];
+    handlers.forEach(handler => handler(data));
+  }
+}
+```
+
+#### 2.5 Output Parser 實作（Phase 2 準備）
+
+**src/parsers/output-parser.ts** (暫時保留，Phase 2 使用):
 ```typescript
 export interface ClaudeEvent {
   type: string;
@@ -322,163 +705,150 @@ export class OutputParser {
 }
 ```
 
-#### 2.4 WebSocket Server 實作
+#### 2.6 Socket.io 事件處理
 
-**src/websocket.ts**:
+**src/socket/handlers.ts**:
 ```typescript
-import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server as SocketIOServer, Socket } from 'socket.io';
+import { TerminalManager } from '../terminal/manager';
+import type { TerminalConfig } from '../terminal/types';
 
-export class RPGWebSocketServer {
-  private wss: WebSocketServer;
-  private clients: Set<WebSocket> = new Set();
+export function setupSocketHandlers(io: SocketIOServer, manager: TerminalManager) {
+  // 轉發 Manager 事件到所有 Socket 客戶端
+  manager.on('session:data', (output) => {
+    io.emit('terminal:data', output);
+  });
 
-  constructor(server: Server) {
-    this.wss = new WebSocketServer({ server });
+  manager.on('session:exit', (event) => {
+    io.emit('terminal:exit', event);
+  });
 
-    this.wss.on('connection', (ws) => {
-      console.log('Client connected');
-      this.clients.add(ws);
+  // 處理客戶端連接
+  io.on('connection', (socket: Socket) => {
+    console.log('Client connected:', socket.id);
 
-      ws.on('message', (data) => {
-        this.handleMessage(ws, data.toString());
-      });
+    // 創建新終端
+    socket.on('terminal:create', async (data: { config: TerminalConfig; prompt?: string }) => {
+      try {
+        const sessionId = await manager.createSession(data.config, data.prompt);
+        const session = manager.getSession(sessionId);
 
-      ws.on('close', () => {
-        console.log('Client disconnected');
-        this.clients.delete(ws);
-      });
-
-      ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-        this.clients.delete(ws);
-      });
-    });
-  }
-
-  private handleMessage(ws: WebSocket, message: string) {
-    try {
-      const data = JSON.parse(message);
-
-      if (data.type === 'start-battle') {
-        this.emit('start-battle', data.prompt);
-      } else if (data.type === 'send-input') {
-        this.emit('send-input', data.input);
-      }
-    } catch (e) {
-      console.error('Failed to parse message:', e);
-    }
-  }
-
-  broadcast(event: any): void {
-    const message = JSON.stringify(event);
-    this.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+        socket.emit('terminal:created', {
+          sessionId,
+          info: session?.getInfo()
+        });
+      } catch (error) {
+        socket.emit('terminal:error', {
+          message: error instanceof Error ? error.message : 'Failed to create terminal'
+        });
       }
     });
-  }
 
-  emit(event: string, data: any): void {
-    // 這裡可以用 EventEmitter 模式，簡化版先用 broadcast
-    this.broadcast({ type: event, data });
-  }
+    // 寫入終端輸入
+    socket.on('terminal:input', (data: { sessionId: string; input: string }) => {
+      const session = manager.getSession(data.sessionId);
+      if (session) {
+        session.write(data.input);
+      }
+    });
+
+    // 調整終端大小
+    socket.on('terminal:resize', (data: { sessionId: string; cols: number; rows: number }) => {
+      const session = manager.getSession(data.sessionId);
+      if (session) {
+        session.resize(data.cols, data.rows);
+      }
+    });
+
+    // 關閉特定終端
+    socket.on('terminal:kill', (data: { sessionId: string }) => {
+      manager.killSession(data.sessionId);
+    });
+
+    // 獲取所有終端列表
+    socket.on('terminal:list', () => {
+      const sessions = manager.getAllSessions().map(s => s.getInfo());
+      socket.emit('terminal:list', sessions);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+  });
 }
 ```
 
-#### 2.5 主入口整合
+#### 2.7 主入口整合
 
 **src/index.ts**:
 ```typescript
 import express from 'express';
 import { createServer } from 'http';
-import { CLIManager } from './cli-manager';
-import { OutputParser } from './output-parser';
-import { RPGWebSocketServer } from './websocket';
+import { Server as SocketIOServer } from 'socket.io';
+import cors from 'cors';
+import { TerminalManager } from './terminal/manager';
+import { setupSocketHandlers } from './socket/handlers';
 
 const app = express();
 const server = createServer(app);
-const wss = new RPGWebSocketServer(server);
-const parser = new OutputParser();
 
-let currentCLI: CLIManager | null = null;
-
-// 健康檢查
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
-});
-
-// 處理 WebSocket 事件
-wss.on('start-battle', (prompt: string) => {
-  console.log('Starting battle with prompt:', prompt);
-
-  // 創建新的 CLI Manager
-  currentCLI = new CLIManager({
-    model: 'sonnet',
-    workingDirectory: process.cwd()
-  });
-
-  // 監聽輸出
-  currentCLI.on('output', (data: string) => {
-    // 解析每一行
-    const lines = data.split('\n').filter(line => line.trim());
-
-    lines.forEach(line => {
-      const rpgEvent = parser.parseRPGEvent(line);
-      if (rpgEvent) {
-        // 廣播 RPG 事件到前端
-        wss.broadcast({
-          type: 'rpg-event',
-          event: rpgEvent
-        });
-      }
-    });
-  });
-
-  // 監聽退出
-  currentCLI.on('exit', ({ code, signal }) => {
-    console.log('CLI exited:', code, signal);
-    wss.broadcast({
-      type: 'battle-complete',
-      data: { code, signal }
-    });
-    currentCLI = null;
-  });
-
-  // 啟動 CLI
-  currentCLI.start(prompt).catch(error => {
-    console.error('Failed to start CLI:', error);
-    wss.broadcast({
-      type: 'error',
-      error: error.message
-    });
-  });
-});
-
-wss.on('send-input', (input: string) => {
-  if (currentCLI) {
-    currentCLI.write(input + '\n');
+// Socket.io 設定
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
   }
 });
 
+// Express 中間件
+app.use(cors());
+app.use(express.json());
+
+// 健康檢查
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: Date.now(),
+    uptime: process.uptime()
+  });
+});
+
+// 初始化 Terminal Manager
+const manager = new TerminalManager();
+
+// 設定 Socket.io 事件處理
+setupSocketHandlers(io, manager);
+
+// 優雅關閉
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  manager.killAll();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+// 啟動伺服器
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Bridge server running on http://localhost:${PORT}`);
-  console.log(`WebSocket server ready`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📡 Socket.io ready`);
+  console.log(`🖥️  Terminal Manager initialized`);
 });
 ```
 
 ---
 
-### Step 3: Frontend 實作 ✅
+### Step 3: Client 端實作（TDD）
 
 #### 3.1 基礎設定
 
 ```bash
-cd packages/ui
+cd packages/client
 pnpm create vite . --template react-ts
-pnpm add rpgui framer-motion zustand
-pnpm add -D @types/node
+pnpm add xterm xterm-addon-fit xterm-addon-web-links socket.io-client zustand
+pnpm add -D @types/node vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
 ```
 
 **vite.config.ts**:
@@ -489,25 +859,256 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
-    proxy: {
-      '/ws': {
-        target: 'ws://localhost:3001',
-        ws: true
-      }
-    }
+    port: 5173
   }
 });
 ```
 
-#### 3.2 引入 RPGUI 樣式
+**vitest.config.ts**:
+```typescript
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts']
+  }
+});
+```
+
+**src/test/setup.ts**:
+```typescript
+import '@testing-library/jest-dom';
+```
+
+#### 3.2 類型定義
+
+**src/types/terminal.ts**:
+```typescript
+export type AIProvider = 'claude' | 'gemini';
+export type ClaudeModel = 'haiku' | 'sonnet' | 'opus';
+export type GeminiModel = 'auto-gemini-2.5';
+
+export interface TerminalConfig {
+  provider: AIProvider;
+  model: ClaudeModel | GeminiModel;
+  workingDirectory?: string;
+}
+
+export interface TerminalTab {
+  id: string;
+  title: string;
+  config: TerminalConfig;
+  isActive: boolean;
+  isRunning: boolean;
+  createdAt: number;
+}
+```
+
+#### 3.3 Zustand Store
+
+**src/stores/terminalStore.ts**:
+```typescript
+import { create } from 'zustand';
+import type { TerminalTab, TerminalConfig } from '../types/terminal';
+
+interface TerminalStore {
+  tabs: TerminalTab[];
+  activeTabId: string | null;
+
+  addTab: (config: TerminalConfig) => string;
+  removeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  updateTab: (id: string, updates: Partial<TerminalTab>) => void;
+  getActiveTab: () => TerminalTab | undefined;
+}
+
+export const useTerminalStore = create<TerminalStore>((set, get) => ({
+  tabs: [],
+  activeTabId: null,
+
+  addTab: (config) => {
+    const id = crypto.randomUUID();
+    const tab: TerminalTab = {
+      id,
+      title: `${config.provider} (${config.model})`,
+      config,
+      isActive: false,
+      isRunning: false,
+      createdAt: Date.now()
+    };
+
+    set((state) => ({
+      tabs: [...state.tabs, tab],
+      activeTabId: id
+    }));
+
+    return id;
+  },
+
+  removeTab: (id) => {
+    set((state) => {
+      const newTabs = state.tabs.filter((t) => t.id !== id);
+      const newActiveId = state.activeTabId === id
+        ? (newTabs[0]?.id || null)
+        : state.activeTabId;
+
+      return {
+        tabs: newTabs,
+        activeTabId: newActiveId
+      };
+    });
+  },
+
+  setActiveTab: (id) => {
+    set({ activeTabId: id });
+  },
+
+  updateTab: (id, updates) => {
+    set((state) => ({
+      tabs: state.tabs.map((t) =>
+        t.id === id ? { ...t, ...updates } : t
+      )
+    }));
+  },
+
+  getActiveTab: () => {
+    const { tabs, activeTabId } = get();
+    return tabs.find((t) => t.id === activeTabId);
+  }
+}));
+```
+
+#### 3.4 Socket.io Hook（TDD）
+
+**測試先行 - src/hooks/__tests__/useSocket.test.ts**:
+```typescript
+import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { useSocket } from '../useSocket';
+
+// Mock socket.io-client
+vi.mock('socket.io-client', () => ({
+  io: vi.fn(() => ({
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
+    disconnect: vi.fn()
+  }))
+}));
+
+describe('useSocket', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should connect to socket server', () => {
+    const { result } = renderHook(() => useSocket('http://localhost:3001'));
+
+    expect(result.current.isConnected).toBe(false);
+  });
+
+  it('should emit terminal:create event', () => {
+    const { result } = renderHook(() => useSocket('http://localhost:3001'));
+
+    const config = { provider: 'claude' as const, model: 'sonnet' as const };
+    result.current.createTerminal(config, 'Say hello');
+
+    // Socket emit 應該被調用
+    expect(result.current.socket?.emit).toHaveBeenCalled();
+  });
+});
+```
+
+**實作 - src/hooks/useSocket.ts**:
+```typescript
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+import type { TerminalConfig } from '../types/terminal';
+
+interface UseSocketReturn {
+  socket: Socket | null;
+  isConnected: boolean;
+  createTerminal: (config: TerminalConfig, prompt?: string) => void;
+  sendInput: (sessionId: string, input: string) => void;
+  resizeTerminal: (sessionId: string, cols: number, rows: number) => void;
+  killTerminal: (sessionId: string) => void;
+  requestTerminalList: () => void;
+}
+
+export function useSocket(url: string): UseSocketReturn {
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    const newSocket = io(url, {
+      transports: ['websocket'],
+      reconnection: true
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Socket connected');
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      setIsConnected(false);
+    });
+
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [url]);
+
+  const createTerminal = useCallback((config: TerminalConfig, prompt?: string) => {
+    socketRef.current?.emit('terminal:create', { config, prompt });
+  }, []);
+
+  const sendInput = useCallback((sessionId: string, input: string) => {
+    socketRef.current?.emit('terminal:input', { sessionId, input });
+  }, []);
+
+  const resizeTerminal = useCallback((sessionId: string, cols: number, rows: number) => {
+    socketRef.current?.emit('terminal:resize', { sessionId, cols, rows });
+  }, []);
+
+  const killTerminal = useCallback((sessionId: string) => {
+    socketRef.current?.emit('terminal:kill', { sessionId });
+  }, []);
+
+  const requestTerminalList = useCallback(() => {
+    socketRef.current?.emit('terminal:list');
+  }, []);
+
+  return {
+    socket,
+    isConnected,
+    createTerminal,
+    sendInput,
+    resizeTerminal,
+    killTerminal,
+    requestTerminalList
+  };
+}
+```
+
+#### 3.5 引入樣式
 
 **src/main.tsx**:
 ```tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './styles/rpg.css';
+import 'xterm/css/xterm.css';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -516,40 +1117,312 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 ```
 
-**src/styles/rpg.css**:
+**src/index.css**:
 ```css
-/* 引入 RPGUI */
-@import 'rpgui/dist/rpgui.css';
-
-/* 全域樣式 */
-body {
+* {
   margin: 0;
   padding: 0;
-  background: #000;
-  color: #fff;
-  font-family: 'Press Start 2P', monospace;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #1e1e1e;
+  color: #d4d4d4;
 }
 
 #root {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* DQ 主題色 */
-:root {
-  --color-gold: #f4d03f;
-  --color-dark-gold: #c39c43;
-  --color-hp: #4caf50;
-  --color-mp: #2196f3;
-  --color-exp: #ffc107;
 }
 ```
 
-#### 3.3 WebSocket Hook
+#### 3.6 Terminal 組件（TDD）
 
-**src/hooks/useWebSocket.ts**:
+**測試先行 - src/components/Terminal/__tests__/Terminal.test.tsx**:
+```typescript
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { Terminal } from '../Terminal';
+
+describe('Terminal', () => {
+  it('should render terminal container', () => {
+    const onData = vi.fn();
+    render(<Terminal sessionId="test-1" onData={onData} />);
+
+    const container = screen.getByTestId('terminal-container');
+    expect(container).toBeInTheDocument();
+  });
+
+  it('should initialize xterm instance', () => {
+    const onData = vi.fn();
+    const { container } = render(<Terminal sessionId="test-1" onData={onData} />);
+
+    // xterm 應該創建 canvas 元素
+    const canvas = container.querySelector('canvas');
+    expect(canvas).toBeInTheDocument();
+  });
+});
+```
+
+**實作 - src/components/Terminal/Terminal.tsx**:
+```tsx
+import { useEffect, useRef } from 'react';
+import { Terminal as XTerm } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+
+interface TerminalProps {
+  sessionId: string;
+  onData: (data: string) => void;
+  onResize?: (cols: number, rows: number) => void;
+}
+
+export function Terminal({ sessionId, onData, onResize }: TerminalProps) {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const xtermRef = useRef<XTerm | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+
+  useEffect(() => {
+    if (!terminalRef.current) return;
+
+    // 創建 xterm 實例
+    const xterm = new XTerm({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      theme: {
+        background: '#1e1e1e',
+        foreground: '#d4d4d4',
+        cursor: '#ffffff',
+        selection: '#264f78'
+      },
+      scrollback: 10000
+    });
+
+    // 添加插件
+    const fitAddon = new FitAddon();
+    const webLinksAddon = new WebLinksAddon();
+
+    xterm.loadAddon(fitAddon);
+    xterm.loadAddon(webLinksAddon);
+
+    // 掛載到 DOM
+    xterm.open(terminalRef.current);
+
+    // 自適應大小
+    fitAddon.fit();
+
+    // 監聽用戶輸入
+    xterm.onData((data) => {
+      onData(data);
+    });
+
+    // 監聽大小變化
+    xterm.onResize(({ cols, rows }) => {
+      onResize?.(cols, rows);
+    });
+
+    // 監聽窗口大小變化
+    const handleResize = () => {
+      fitAddon.fit();
+    };
+    window.addEventListener('resize', handleResize);
+
+    xtermRef.current = xterm;
+    fitAddonRef.current = fitAddon;
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      xterm.dispose();
+    };
+  }, [sessionId, onData, onResize]);
+
+  // 暴露 write 方法供父組件使用
+  useEffect(() => {
+    if (xtermRef.current) {
+      // 可以通過 ref 或 context 暴露
+      (window as any)[`terminal_${sessionId}`] = {
+        write: (data: string) => xtermRef.current?.write(data),
+        clear: () => xtermRef.current?.clear(),
+        fit: () => fitAddonRef.current?.fit()
+      };
+    }
+
+    return () => {
+      delete (window as any)[`terminal_${sessionId}`];
+    };
+  }, [sessionId]);
+
+  return (
+    <div
+      ref={terminalRef}
+      data-testid="terminal-container"
+      className="w-full h-full"
+    />
+  );
+}
+```
+
+#### 3.7 Terminal Tabs 組件
+
+**src/components/Terminal/TerminalTabs.tsx**:
+```tsx
+import { useTerminalStore } from '../../stores/terminalStore';
+
+interface TerminalTabsProps {
+  onNewTerminal: () => void;
+}
+
+export function TerminalTabs({ onNewTerminal }: TerminalTabsProps) {
+  const { tabs, activeTabId, setActiveTab, removeTab } = useTerminalStore();
+
+  return (
+    <div className="flex items-center bg-[#2d2d2d] border-b border-[#1e1e1e] overflow-x-auto">
+      {tabs.map((tab) => (
+        <div
+          key={tab.id}
+          className={`
+            flex items-center gap-2 px-4 py-2 cursor-pointer
+            border-r border-[#1e1e1e] min-w-[150px] max-w-[200px]
+            hover:bg-[#37373d] transition-colors
+            ${tab.id === activeTabId ? 'bg-[#1e1e1e]' : 'bg-[#2d2d2d]'}
+          `}
+          onClick={() => setActiveTab(tab.id)}
+        >
+          <span
+            className={`
+              w-2 h-2 rounded-full
+              ${tab.isRunning ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}
+            `}
+          />
+          <span className="flex-1 text-sm truncate">{tab.title}</span>
+          <button
+            className="text-gray-400 hover:text-white transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeTab(tab.id);
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <button
+        className="px-4 py-2 text-gray-400 hover:text-white hover:bg-[#37373d] transition-colors"
+        onClick={onNewTerminal}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+```
+
+#### 3.8 新增終端對話框
+
+**src/components/Terminal/NewTerminalDialog.tsx**:
+```tsx
+import { useState } from 'react';
+import type { AIProvider, ClaudeModel, GeminiModel, TerminalConfig } from '../../types/terminal';
+
+interface NewTerminalDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (config: TerminalConfig, prompt?: string) => void;
+}
+
+export function NewTerminalDialog({ isOpen, onClose, onCreate }: NewTerminalDialogProps) {
+  const [provider, setProvider] = useState<AIProvider>('claude');
+  const [model, setModel] = useState<ClaudeModel | GeminiModel>('sonnet');
+  const [prompt, setPrompt] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleCreate = () => {
+    onCreate({ provider, model }, prompt || undefined);
+    setPrompt('');
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-[#2d2d2d] rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">新增終端</h2>
+
+        <div className="space-y-4">
+          {/* AI Provider 選擇 */}
+          <div>
+            <label className="block text-sm mb-2">AI Provider</label>
+            <select
+              className="w-full bg-[#1e1e1e] border border-gray-600 rounded px-3 py-2"
+              value={provider}
+              onChange={(e) => {
+                const newProvider = e.target.value as AIProvider;
+                setProvider(newProvider);
+                setModel(newProvider === 'claude' ? 'sonnet' : 'auto-gemini-2.5');
+              }}
+            >
+              <option value="claude">Claude</option>
+              <option value="gemini">Gemini</option>
+            </select>
+          </div>
+
+          {/* Model 選擇 */}
+          <div>
+            <label className="block text-sm mb-2">Model</label>
+            <select
+              className="w-full bg-[#1e1e1e] border border-gray-600 rounded px-3 py-2"
+              value={model}
+              onChange={(e) => setModel(e.target.value as any)}
+            >
+              {provider === 'claude' ? (
+                <>
+                  <option value="haiku">Haiku (快速)</option>
+                  <option value="sonnet">Sonnet (平衡)</option>
+                  <option value="opus">Opus (強大)</option>
+                </>
+              ) : (
+                <option value="auto-gemini-2.5">Gemini 2.5</option>
+              )}
+            </select>
+          </div>
+
+          {/* 初始 Prompt */}
+          <div>
+            <label className="block text-sm mb-2">初始 Prompt（可選）</label>
+            <textarea
+              className="w-full bg-[#1e1e1e] border border-gray-600 rounded px-3 py-2 resize-none"
+              rows={3}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="例如：Say hello"
+            />
+          </div>
+        </div>
+
+        {/* 按鈕 */}
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+            onClick={onClose}
+          >
+            取消
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            onClick={handleCreate}
+          >
+            創建
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+#### 3.9 WebSocket Hook (已在 3.4 完成)
 ```typescript
 import { useEffect, useState, useCallback } from 'react';
 
@@ -785,75 +1658,160 @@ export function BattleScreen({ player, enemy, battleLog, onStartBattle }: Battle
 }
 ```
 
-#### 3.6 主應用組件
+#### 3.10 主應用組件
 
 **src/App.tsx**:
 ```tsx
 import { useState, useEffect } from 'react';
-import { BattleScreen } from './components/Battle/BattleScreen';
-import { useWebSocket } from './hooks/useWebSocket';
+import { useSocket } from './hooks/useSocket';
+import { useTerminalStore } from './stores/terminalStore';
+import { TerminalTabs } from './components/Terminal/TerminalTabs';
+import { Terminal } from './components/Terminal/Terminal';
+import { NewTerminalDialog } from './components/Terminal/NewTerminalDialog';
+import type { TerminalConfig } from './types/terminal';
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 function App() {
-  const { isConnected, events, startBattle } = useWebSocket('ws://localhost:3001');
+  const {
+    socket,
+    isConnected,
+    createTerminal,
+    sendInput,
+    resizeTerminal,
+    killTerminal,
+    requestTerminalList
+  } = useSocket(SERVER_URL);
 
-  const [player] = useState({
-    name: 'Code Warrior',
-    hp: 100,
-    maxHp: 100,
-    mp: 50,
-    maxMp: 50
-  });
+  const { tabs, activeTabId, addTab, updateTab, getActiveTab } = useTerminalStore();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const [enemy] = useState({
-    name: 'Bug Monster',
-    hp: 80,
-    maxHp: 80
-  });
-
-  const [battleLog, setBattleLog] = useState<string[]>([
-    '戰鬥準備中...',
-    '請點擊「開始戰鬥」按鈕'
-  ]);
-
-  // 處理 RPG 事件
+  // 監聽 Socket 事件
   useEffect(() => {
-    events.forEach(event => {
-      switch (event.type) {
-        case 'skill-cast':
-          setBattleLog(prev => [...prev, `✨ 施放 ${event.data.skill}`]);
-          break;
-        case 'mp-consumed':
-          setBattleLog(prev => [...prev, `💙 消耗 ${event.data.amount} MP`]);
-          break;
-        case 'dialogue':
-          if (event.data.text.trim()) {
-            setBattleLog(prev => [...prev, `💬 ${event.data.text.trim()}`]);
-          }
-          break;
+    if (!socket) return;
+
+    // 終端創建成功
+    socket.on('terminal:created', ({ sessionId, info }) => {
+      updateTab(activeTabId!, { isRunning: true });
+      console.log('Terminal created:', sessionId, info);
+    });
+
+    // 接收終端輸出
+    socket.on('terminal:data', ({ sessionId, data }) => {
+      // 寫入到對應的 xterm 實例
+      const terminalAPI = (window as any)[`terminal_${sessionId}`];
+      if (terminalAPI) {
+        terminalAPI.write(data);
       }
     });
-  }, [events]);
 
-  const handleStartBattle = () => {
-    setBattleLog(['⚔️ 戰鬥開始！']);
-    startBattle('寫一個 hello world 函數');
+    // 終端退出
+    socket.on('terminal:exit', ({ sessionId, code }) => {
+      const tab = tabs.find(t => t.id === sessionId);
+      if (tab) {
+        updateTab(sessionId, { isRunning: false });
+      }
+      console.log('Terminal exited:', sessionId, code);
+    });
+
+    // 錯誤處理
+    socket.on('terminal:error', ({ message }) => {
+      console.error('Terminal error:', message);
+      alert(`錯誤：${message}`);
+    });
+
+    return () => {
+      socket.off('terminal:created');
+      socket.off('terminal:data');
+      socket.off('terminal:exit');
+      socket.off('terminal:error');
+    };
+  }, [socket, tabs, activeTabId, updateTab]);
+
+  // 新增終端
+  const handleCreateTerminal = (config: TerminalConfig, prompt?: string) => {
+    const tabId = addTab(config);
+    createTerminal(config, prompt);
   };
 
+  // 處理終端輸入
+  const handleTerminalData = (data: string) => {
+    const activeTab = getActiveTab();
+    if (activeTab) {
+      sendInput(activeTab.id, data);
+    }
+  };
+
+  // 處理終端大小變化
+  const handleTerminalResize = (cols: number, rows: number) => {
+    const activeTab = getActiveTab();
+    if (activeTab) {
+      resizeTerminal(activeTab.id, cols, rows);
+    }
+  };
+
+  // 關閉終端
+  const handleCloseTerminal = (tabId: string) => {
+    killTerminal(tabId);
+  };
+
+  // 初始加載時請求終端列表
+  useEffect(() => {
+    if (isConnected) {
+      requestTerminalList();
+    }
+  }, [isConnected, requestTerminalList]);
+
   return (
-    <>
+    <div className="flex flex-col h-screen">
+      {/* 連接狀態指示器 */}
       {!isConnected && (
-        <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded">
-          未連接到伺服器
+        <div className="bg-red-600 text-white px-4 py-2 text-center text-sm">
+          未連接到伺服器 ({SERVER_URL})
         </div>
       )}
 
-      <BattleScreen
-        player={player}
-        enemy={enemy}
-        battleLog={battleLog}
-        onStartBattle={handleStartBattle}
+      {/* Tab 列 */}
+      <TerminalTabs onNewTerminal={() => setIsDialogOpen(true)} />
+
+      {/* 終端顯示區 */}
+      <div className="flex-1 bg-[#1e1e1e] overflow-hidden">
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            className={`w-full h-full ${tab.id === activeTabId ? 'block' : 'hidden'}`}
+          >
+            <Terminal
+              sessionId={tab.id}
+              onData={handleTerminalData}
+              onResize={handleTerminalResize}
+            />
+          </div>
+        ))}
+
+        {/* 無終端時的提示 */}
+        {tabs.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-gray-400">
+              <p className="text-lg mb-4">尚無終端</p>
+              <button
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-white"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                + 新增終端
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 新增終端對話框 */}
+      <NewTerminalDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onCreate={handleCreateTerminal}
       />
-    </>
+    </div>
   );
 }
 
@@ -862,72 +1820,132 @@ export default App;
 
 ---
 
-### Step 4: 整合測試 ✅
+### Step 4: 整合測試與 TDD 驗證
 
-#### 4.1 啟動流程
+#### 4.1 後端測試
 
 ```bash
-# Terminal 1: 啟動 Bridge
-cd packages/bridge
+cd packages/server
+pnpm test          # 執行所有測試
+pnpm test:coverage # 生成覆蓋率報告
+```
+
+**測試項目**：
+- [ ] TerminalSession 單元測試
+- [ ] TerminalManager 單元測試
+- [ ] Socket.io 事件處理整合測試
+- [ ] 健康檢查端點測試
+
+#### 4.2 前端測試
+
+```bash
+cd packages/client
+pnpm test          # 執行所有測試
+pnpm test:coverage # 生成覆蓋率報告
+```
+
+**測試項目**：
+- [ ] useSocket Hook 測試
+- [ ] useTerminalStore 測試
+- [ ] Terminal 組件測試
+- [ ] TerminalTabs 組件測試
+
+#### 4.3 E2E 測試（手動）
+
+```bash
+# Terminal 1: 啟動 Server
+cd packages/server
 pnpm dev
 
-# Terminal 2: 啟動 UI
-cd packages/ui
+# Terminal 2: 啟動 Client
+cd packages/client
 pnpm dev
 ```
 
-#### 4.2 測試檢查清單
-
-- [ ] Bridge 啟動成功（http://localhost:3001/health 回應 OK）
-- [ ] UI 啟動成功（http://localhost:3000 顯示畫面）
-- [ ] WebSocket 連接成功（瀏覽器 console 無錯誤）
-- [ ] 點擊「開始戰鬥」按鈕
-- [ ] Bridge 成功啟動 Claude CLI
-- [ ] 前端收到 RPG 事件並顯示在戰鬥日誌
-- [ ] 技能施放動畫正常顯示
-- [ ] HP/MP 條正常更新
-
----
-
-## 🎯 成功標準
-
-POC 視為成功需滿足：
-
-1. ✅ **技術可行性驗證**
-   - Claude CLI 可以被 node-pty 控制
-   - 輸出可以被解析為結構化事件
-   - WebSocket 即時通訊正常
-
-2. ✅ **視覺呈現驗證**
-   - RPGUI 成功呈現 DQ 風格
-   - 金色框架、復古字體正常顯示
-   - 動畫流暢（60fps）
-
-3. ✅ **整合驗證**
-   - Bridge ↔ Claude CLI 通訊正常
-   - Bridge ↔ Frontend 通訊正常
-   - 端到端流程完整
+**測試檢查清單**：
+- [ ] Server 啟動成功（http://localhost:3001/health 回應 OK）
+- [ ] Client 啟動成功（http://localhost:5173 顯示畫面）
+- [ ] Socket.io 連接成功（瀏覽器 console 顯示 "Socket connected"）
+- [ ] 點擊「+ 新增終端」按鈕
+- [ ] 選擇 Claude Sonnet，輸入 "Say hello"
+- [ ] 終端成功創建並顯示
+- [ ] Claude CLI 輸出正確顯示在 xterm
+- [ ] 可以在終端中輸入內容
+- [ ] 創建第二個終端（Gemini）
+- [ ] Tab 切換功能正常
+- [ ] 兩個終端輸出互不干擾
+- [ ] 關閉終端功能正常
+- [ ] 終端自動調整大小（resize 窗口測試）
 
 ---
 
-## 🔄 迭代計畫
+## 🎯 Phase 1 成功標準
 
-POC 完成後的改進方向：
+### 技術驗證 ✅
 
-### Phase 1: 功能增強
-- [ ] 多會話管理（Haiku/Sonnet/Opus 並行）
-- [ ] 戰鬥日誌持久化
-- [ ] 錯誤恢復機制
+1. **終端整合**
+   - ✅ xterm.js 成功顯示終端
+   - ✅ node-pty 成功控制 Claude Code CLI
+   - ✅ node-pty 成功控制 Gemini CLI
+   - ✅ 終端輸出實時顯示（無明顯延遲）
 
-### Phase 2: UI 優化
-- [ ] 技能動畫特效（PixiJS）
-- [ ] 傷害數字彈出
-- [ ] 勝利/失敗畫面
+2. **多實例管理**
+   - ✅ 可同時開啟多個終端（至少 3 個）
+   - ✅ Tab 切換功能正常
+   - ✅ 各終端輸出完全隔離
+   - ✅ 創建/關閉終端功能正常
 
-### Phase 3: 遊戲化增強
-- [ ] EXP/Level 系統
+3. **雙向通訊**
+   - ✅ Server ↔ Client Socket.io 通訊正常
+   - ✅ Server ↔ CLI 進程通訊正常
+   - ✅ 用戶輸入正確傳遞到 CLI
+   - ✅ CLI 輸出正確顯示到前端
+
+4. **TDD 覆蓋率**
+   - ✅ Server 端單元測試 >80%
+   - ✅ Client 端單元測試 >80%
+   - ✅ 關鍵流程整合測試 100%
+
+---
+
+## 🔄 後續 Phase 規劃
+
+### Phase 2: RPG 包裝層 ⏳
+
+基於 Phase 1 的終端基礎，加入 RPG 元素：
+
+#### 2.1 輸出解析
+- [ ] OutputParser：解析 `stream-json` 格式
+- [ ] RPGMapper：Tool use → 技能施放
+- [ ] Token usage → MP 消耗計算
+- [ ] Cost → Gold 消耗計算
+
+#### 2.2 RPG UI
+- [ ] RPGUI.js 整合
+- [ ] 戰鬥畫面（覆蓋在終端上方）
+- [ ] 技能施放動畫
+- [ ] HP/MP/EXP 進度條
+
+#### 2.3 切換機制
+- [ ] 將 Tab 列改為 DQ 風格彈出選單
+- [ ] 按 `Tab` 鍵彈出選單
+- [ ] 選單顯示所有活躍戰鬥
+- [ ] 單一焦點全螢幕顯示
+
+### Phase 3: 遊戲化增強 ⏳
+
+- [ ] 等級系統（EXP 累積升級）
+- [ ] 技能冷卻系統
 - [ ] 成就系統
-- [ ] 技能冷卻顯示
+- [ ] 戰鬥歷史記錄
+- [ ] Worktree 整合（平行世界）
+
+### Phase 4: 進階功能 ⏳
+
+- [ ] 多模型切換（Haiku/Sonnet/Opus 動態選擇）
+- [ ] 非同步戰鬥（背景派遣）
+- [ ] 地圖系統（城鎮/野外/副本）
+- [ ] 夥伴系統（Subagent 映射）
 
 ---
 
@@ -952,28 +1970,103 @@ POC 完成後的改進方向：
 
 ## 🚀 執行指令
 
-當準備開始實作時，執行以下指令：
+### 初始化專案（Monorepo）
 
 ```bash
-# 1. 切換新分支
-git checkout -b poc/bridge-rpg-ui
+# 1. 創建 workspace 配置
+cat > pnpm-workspace.yaml <<EOF
+packages:
+  - 'packages/*'
+EOF
 
-# 2. 開始實作
-# （按照上述步驟逐步實作）
+# 2. 創建 packages 目錄
+mkdir -p packages/server packages/client
 
-# 3. 完成後提交
+# 3. 初始化各 package
+cd packages/server && pnpm init && cd ../..
+cd packages/client && pnpm create vite . --template react-ts && cd ../..
+
+# 4. 安裝依賴（根據 Step 2 和 Step 3 的說明）
+```
+
+### TDD 開發流程
+
+```bash
+# 1. 寫測試（Red）
+pnpm test  # 應該失敗
+
+# 2. 最小實作（Green）
+# 編寫代碼讓測試通過
+
+# 3. 重構（Refactor）
+# 優化代碼品質
+
+# 4. 提交
 git add .
-git commit -m "feat(poc): complete Bridge + RPGUI proof of concept"
-git push origin poc/bridge-rpg-ui
+git commit -m "feat: implement feature X with tests"
+```
+
+### 測試與開發
+
+```bash
+# 後端開發
+cd packages/server
+pnpm test --watch    # 測試監視模式
+pnpm dev             # 開發模式
+
+# 前端開發
+cd packages/client
+pnpm test --watch    # 測試監視模式
+pnpm dev             # 開發模式
+
+# 同時運行（根目錄）
+pnpm --filter server dev & pnpm --filter client dev
+```
+
+### Git 工作流程
+
+```bash
+# 當前在 poc/node-pty-validation 分支
+
+# 1. 更新 POC 計畫（本步驟）
+git add docs/implementation/poc-plan.md
+git commit -m "docs(poc): update plan for Phase 1 xterm.js integration with TDD"
+
+# 2. 合併到 main
+git checkout main
+git merge poc/node-pty-validation
+
+# 3. 切新分支開始實作
+git checkout -b poc/xterm-integration
+
+# 4. 開始 TDD 開發...
 ```
 
 ---
 
-## 📝 備註
+## 📝 Phase 1 重點提醒
 
-- POC 目標是**驗證可行性**，不是完整產品
-- 可以使用硬編碼的測試數據
-- UI 可以簡化，不需要所有功能
-- 重點在於**核心流程打通**
+### TDD 優先
+- ✅ **測試先行**：先寫測試，再寫實作
+- ✅ **持續重構**：保持代碼品質
+- ✅ **覆蓋率目標**：>80%
 
-當 POC 成功後，將總結經驗並規劃下一階段的完整實作。
+### 簡化優先
+- ✅ **核心功能**：終端 + Tab + 多實例
+- ❌ **不要做**：RPG UI、動畫、複雜狀態管理
+- ❌ **不要做**：過度設計、提前優化
+
+### 驗證目標
+- ✅ xterm.js 可以顯示 Claude Code 和 Gemini 輸出
+- ✅ 可以同時開啟多個終端並切換
+- ✅ 雙向通訊（輸入/輸出）正常
+
+**Phase 1 完成後**：
+- 我們將有一個可用的終端管理器
+- 可以同時使用多個 Claude/Gemini 實例
+- 為 Phase 2 的 RPG 包裝打好基礎
+
+**Phase 2 再考慮**：
+- RPG UI 包裝
+- 輸出解析（stream-json）
+- 技能動畫、HP/MP 顯示
