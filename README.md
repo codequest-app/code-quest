@@ -94,10 +94,47 @@ code-quest/
 
 ## 🚀 開發階段
 
-### Phase 1: 基礎系統 ✅
-- 場景系統（探索模式、戰鬥模式）
-- 基礎戰鬥機制
-- 工具檢測和映射
+### Phase 1: Terminal 基礎系統 ✅ **COMPLETE**
+**Status**: 167 個測試全部通過 | 可直接執行
+
+已完成功能：
+- ✅ **多終端管理**: node-pty 偽終端會話管理
+- ✅ **Tab 介面**: VS Code 風格的多終端分頁系統
+- ✅ **實時通訊**: Socket.io 雙向 WebSocket 連線
+- ✅ **HTTP REST API**: 完整的 CRUD 終端操作
+- ✅ **快捷鍵**: Ctrl+T 新終端、Ctrl+W 關閉終端
+- ✅ **連線狀態**: 即時連線狀態指示器
+- ✅ **響應式終端**: 自動調整大小、URL 檢測
+- ✅ **完整測試**: 97 個後端測試 + 70 個前端測試
+
+技術棧：
+- **後端**: Node.js + Express + Socket.io + node-pty + TypeScript
+- **前端**: React 18 + xterm.js + Socket.io-client + Zustand + TypeScript
+- **測試**: Vitest + Testing Library + MSW v2 + Supertest
+- **建置**: pnpm workspaces + Vite + tsx
+
+**如何執行**:
+```bash
+# 安裝依賴
+pnpm install
+
+# 開發模式（同時啟動前後端）
+pnpm dev
+
+# 或分別啟動
+pnpm dev:server  # 後端 http://localhost:3000
+pnpm dev:client  # 前端 http://localhost:5173
+
+# 執行所有測試
+pnpm test
+
+# 查看測試覆蓋率
+pnpm test:coverage
+```
+
+開啟瀏覽器訪問 `http://localhost:5173`，你將看到完整的多終端介面！
+
+---
 
 ### Phase 2: 核心功能 🚧
 - 地圖系統
