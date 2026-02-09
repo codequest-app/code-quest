@@ -1,0 +1,40 @@
+{
+  "name": "testing-best-practices",
+  "displayName": "Testing Best Practices",
+  "description": "MSW + Vitest + Testing Library 測試最佳實踐指南",
+  "category": "testing",
+  "version": "1.0.0",
+  "author": "Code Quest Team",
+  "tags": ["testing", "msw", "vitest", "testing-library", "react", "mock"],
+  "userInvocable": true,
+  "autoInvoke": {
+    "enabled": true,
+    "conditions": [
+      "用戶詢問測試相關問題",
+      "用戶詢問 MSW 使用方式",
+      "用戶詢問 Testing Library 最佳實踐",
+      "用戶詢問如何寫測試",
+      "用戶詢問 Mock API",
+      "編寫測試代碼時",
+      "配置測試環境時"
+    ],
+    "keywords": [
+      "test",
+      "testing",
+      "msw",
+      "mock service worker",
+      "testing library",
+      "vitest",
+      "mock",
+      "api mock",
+      "unit test",
+      "integration test",
+      "render",
+      "screen",
+      "getBy",
+      "findBy",
+      "waitFor",
+      "user-event"
+    ]
+  }
+}
