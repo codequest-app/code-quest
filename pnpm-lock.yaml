@@ -139,6 +139,9 @@ importers:
       msw-fetch-mock:
         specifier: ^0.4.10
         version: 0.4.10(msw@2.12.9(@types/node@20.19.33)(typescript@5.9.3))
+      socket.io-client:
+        specifier: ^4.8.3
+        version: 4.8.3
       supertest:
         specifier: ^6.3.4
         version: 6.3.4
