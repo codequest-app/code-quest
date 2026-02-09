@@ -103,7 +103,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       <div className="tabs-header">
         <div className="tabs-list">
           {sessions.map((session, index) => (
-            <button
+            <div
               key={session.id}
               className={`tab ${session.isActive ? 'active' : ''}`}
               onClick={() => handleTabClick(session.id)}
@@ -119,7 +119,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
               >
                 ×
               </button>
-            </button>
+            </div>
           ))}
           <button className="new-tab-button" onClick={handleNewTerminal}>
             + New
