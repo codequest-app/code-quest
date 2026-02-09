@@ -1,0 +1,25 @@
+{
+  "name": "code-quest-validation",
+  "version": "0.1.0",
+  "description": "node-pty validation scripts for Code Quest",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:01": "tsx src/01-basic-pty.ts",
+    "test:02": "tsx src/02-output-format.ts",
+    "test:03": "tsx src/03-event-parsing.ts",
+    "test:04": "tsx src/04-interaction.ts",
+    "test:05": "tsx src/05-parallel.ts",
+    "test:06": "tsx src/06-worktree.ts",
+    "test:all": "tsx src/00-run-all.ts",
+    "clean": "rm -rf logs/*.log"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
