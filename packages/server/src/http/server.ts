@@ -254,4 +254,11 @@ export class HttpServerImpl implements HttpServer {
   getApp(): Express {
     return this.app;
   }
+
+  /**
+   * Get the HTTP server instance (for Socket.io integration)
+   */
+  getHttpServer(): HTTPServer | null {
+    return this.httpServer;
+  }
 }
