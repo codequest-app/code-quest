@@ -1,0 +1,123 @@
+import { Server as SocketIOServer } from 'socket.io';
+import { HttpServerImpl } from './http/server';
+import { SocketHandlerImpl } from './socket/handler';
+import { TerminalManagerImpl } from './terminal/manager';
+import type { Server, ServerConfig, ServerStatus } from './types';
+
+/**
+ * Main server implementation
+ * Integrates HTTP server, Socket.io, and terminal management
+ */
+export class ServerImpl implements Server {
+  private readonly config: ServerConfig;
+  private readonly terminalManager: TerminalManagerImpl;
+  private httpServer: HttpServerImpl | null = null;
+  private io: SocketIOServer | null = null;
+  private socketHandler: SocketHandlerImpl | null = null;
+  private readonly startTime: number;
+
+  constructor(config: ServerConfig) {
+    this.config = config;
+    this.terminalManager = new TerminalManagerImpl();
+    this.startTime = Date.now();
+  }
+
+  async start(): Promise<void> {
+    if (this.httpServer) {
+      throw new Error('Server is already running');
+    }
+
+    // 1. Create HTTP server
+    this.httpServer = new HttpServerImpl({
+      port: this.config.port,
+      terminalManager: this.terminalManager,
+      cors: this.config.cors,
+    });
+
+    await this.httpServer.start();
+
+    // 2. Create Socket.io server attached to HTTP server
+    const httpServerInstance = this.httpServer.getHttpServer();
+
+    if (!httpServerInstance) {
+      throw new Error('Failed to get HTTP server instance');
+    }
+
+    this.io = new SocketIOServer(httpServerInstance, {
+      cors: this.config.cors
+        ? {
+            origin: '*',
+            methods: ['GET', 'POST'],
+          }
+        : undefined,
+    });
+
+    // 3. Set up Socket.io handler
+    this.socketHandler = new SocketHandlerImpl(this.io, {
+      terminalManager: this.terminalManager,
+    });
+
+    console.log(`Server started on port ${this.getPort()}`);
+  }
+
+  async stop(): Promise<void> {
+    if (!this.httpServer) {
+      return;
+    }
+
+    console.log('Stopping server...');
+
+    // 1. Cleanup all terminal sessions first
+    this.terminalManager.cleanup();
+
+    // 2. Close Socket.io connections
+    if (this.io) {
+      await new Promise<void>((resolve) => {
+        this.io!.close(() => {
+          console.log('Socket.io server closed');
+          resolve();
+        });
+      });
+      this.io = null;
+    }
+
+    this.socketHandler = null;
+
+    // 3. Stop HTTP server
+    // Note: Socket.io.close() doesn't close the HTTP server
+    // We need to close it separately
+    if (this.httpServer) {
+      try {
+        await this.httpServer.stop();
+      } catch (error) {
+        // Ignore error if server is already closed
+        if ((error as any).code !== 'ERR_SERVER_NOT_RUNNING') {
+          throw error;
+        }
+      }
+      this.httpServer = null;
+    }
+
+    console.log('Server stopped');
+  }
+
+  getPort(): number {
+    if (!this.httpServer) {
+      return 0;
+    }
+    return this.httpServer.getPort();
+  }
+
+  isRunning(): boolean {
+    return this.httpServer !== null && this.httpServer.isRunning();
+  }
+
+  getStatus(): ServerStatus {
+    return {
+      running: this.isRunning(),
+      port: this.getPort(),
+      uptime: Date.now() - this.startTime,
+      activeSessions: this.terminalManager.listSessions().length,
+    };
+  }
+}
