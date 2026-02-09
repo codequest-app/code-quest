@@ -12,6 +12,7 @@
 import * as pty from 'node-pty';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '05-parallel.log');
 
@@ -31,7 +32,6 @@ function findClaudeCLI(): string {
     path.join(process.env.HOME || '', '.claude/local/claude')
   ];
 
-  const { execSync } = require('child_process');
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
