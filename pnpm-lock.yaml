@@ -14,6 +14,9 @@ importers:
       playwright:
         specifier: ^1.58.2
         version: 1.58.2
+      socket.io-client:
+        specifier: ^4.8.3
+        version: 4.8.3
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
