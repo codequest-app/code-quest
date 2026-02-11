@@ -12,6 +12,7 @@ export interface ClientToServerEvents {
   /** Create a new terminal session */
   'terminal:create': (options?: {
     shell?: string;
+    args?: string[];
     cwd?: string;
     cols?: number;
     rows?: number;

@@ -62,6 +62,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   'terminal:create': (options?: {
     shell?: string;
+    args?: string[];
     cwd?: string;
     cols?: number;
     rows?: number;
