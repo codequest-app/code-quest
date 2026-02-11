@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Terminal as XTerm } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { WebLinksAddon } from 'xterm-addon-web-links';
+import { Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { useSocket } from '../../hooks/useSocket';
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 
 interface TerminalProps {
   sessionId: string;
@@ -49,10 +49,13 @@ export function Terminal({
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const { on, emit } = useSocket(serverUrl);
+  const { socket, emit } = useSocket(serverUrl);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    // Prevent double initialization in React StrictMode
+    if (!containerRef.current || terminalRef.current) {
+      return;
+    }
 
     try {
       // Create terminal instance
@@ -75,9 +78,6 @@ export function Terminal({
       // Open terminal in container
       terminal.open(containerRef.current);
 
-      // Fit terminal to container
-      fitAddon.fit();
-
       // Handle user input
       terminal.onData((data) => {
         emit('terminal:write', sessionId, data);
@@ -88,42 +88,61 @@ export function Terminal({
         emit('terminal:resize', sessionId, cols, rows);
       });
 
-      // Handle window resize
-      const handleResize = () => {
+      // Use ResizeObserver to handle container size changes
+      const resizeObserver = new ResizeObserver(() => {
         if (fitAddonRef.current) {
-          fitAddonRef.current.fit();
+          try {
+            fitAddonRef.current.fit();
+          } catch (e) {
+            // Ignore fit errors during rapid resizes
+          }
         }
-      };
+      });
 
-      window.addEventListener('resize', handleResize);
+      resizeObserver.observe(containerRef.current);
+
+      // Initial fit after a small delay to ensure DOM is ready
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (fitAddonRef.current) {
+            try {
+              fitAddon.fit();
+            } catch (e) {
+              // Ignore fit errors during initialization
+            }
+          }
+        });
+      });
 
       // Cleanup
       return () => {
-        window.removeEventListener('resize', handleResize);
+        resizeObserver.disconnect();
         terminal.dispose();
+        terminalRef.current = null;
       };
     } catch (error) {
       console.error('Failed to create terminal:', error);
     }
   }, [sessionId, theme, emit]);
 
-  // Handle incoming data from server
+  // Handle incoming data from server - use socket directly
   useEffect(() => {
+    if (!socket) return;
+
     const handleData = (id: string, data: string) => {
       if (id === sessionId && terminalRef.current) {
         terminalRef.current.write(data);
       }
     };
 
-    on('terminal:data', handleData);
-  }, [sessionId, on]);
+    // Register listener directly on socket
+    socket.on('terminal:data', handleData);
 
-  // Handle session change
-  useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.clear();
-    }
-  }, [sessionId]);
+    // Cleanup: remove this specific listener
+    return () => {
+      socket.off('terminal:data', handleData);
+    };
+  }, [socket, sessionId]);
 
   return (
     <div

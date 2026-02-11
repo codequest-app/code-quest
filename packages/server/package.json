@@ -19,7 +19,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "node-pty": "^1.0.0",
+    "node-pty": "1.2.0-beta.10",
     "socket.io": "^4.7.4"
   },
   "devDependencies": {

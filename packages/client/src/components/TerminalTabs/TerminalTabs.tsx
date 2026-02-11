@@ -13,7 +13,7 @@ interface TerminalTabsProps {
  * Manages multiple terminal tabs with tab navigation
  */
 export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
-  const { on, emit } = useSocket(serverUrl);
+  const { socket, emit } = useSocket(serverUrl);
   const {
     getSessions,
     activeSessionId,
@@ -31,6 +31,8 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
 
   // Handle socket events
   useEffect(() => {
+    if (!socket) return;
+
     // Terminal created
     const handleCreated = (sessionId: string, pid: number) => {
       addSession(sessionId, pid);
@@ -54,12 +56,33 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       setSocketError(error.message);
     };
 
-    on('terminal:created', handleCreated);
-    on('terminal:exit', handleExit);
-    on('connect', handleConnect as any);
-    on('disconnect', handleDisconnect as any);
-    on('connect_error', handleConnectError as any);
-  }, [on, addSession, removeSession, setSocketConnected, setSocketError]);
+    const handleTerminalError = (message: string) => {
+      setSocketError(message);
+    };
+
+    // Register all listeners directly on socket
+    socket.on('terminal:created', handleCreated);
+    socket.on('terminal:exit', handleExit);
+    socket.on('terminal:error', handleTerminalError);
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
+
+    // Check initial connection state (socket may already be connected)
+    if (socket.connected) {
+      setSocketConnected(true);
+    }
+
+    // Cleanup: remove all listeners
+    return () => {
+      socket.off('terminal:created', handleCreated);
+      socket.off('terminal:exit', handleExit);
+      socket.off('terminal:error', handleTerminalError);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
+    };
+  }, [socket, addSession, removeSession, setSocketConnected, setSocketError]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -142,17 +165,23 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
 
       {/* Terminal content */}
       <div className="terminal-content">
-        {activeSession ? (
-          <Terminal
-            key={activeSession.id}
-            sessionId={activeSession.id}
-            serverUrl={serverUrl}
-          />
-        ) : (
+        {sessions.length === 0 && (
           <div className="empty-state">
             No terminals open. Click "+ New" to create one.
           </div>
         )}
+        {sessions.map((session) => (
+          <div
+            key={session.id}
+            className="terminal-wrapper"
+            style={{ display: session.id === activeSessionId ? 'block' : 'none', width: '100%', height: '100%' }}
+          >
+            <Terminal
+              sessionId={session.id}
+              serverUrl={serverUrl}
+            />
+          </div>
+        ))}
       </div>
 
       <style>{`
@@ -258,6 +287,8 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
         .terminal-content {
           flex: 1;
           overflow: hidden;
+          min-height: 400px;
+          position: relative;
         }
 
         .empty-state {
