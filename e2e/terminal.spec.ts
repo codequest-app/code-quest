@@ -20,7 +20,7 @@ test.describe('Terminal E2E', () => {
     await expect(page.getByText('Terminal 1')).toBeVisible({ timeout: 5000 });
 
     // Check visible terminal
-    const visibleTerminal = page.locator('.terminal-wrapper:not([style*="display: none"])');
+    const visibleTerminal = page.locator('.terminal-wrapper');
     await expect(visibleTerminal.locator('.xterm-screen')).toBeVisible({ timeout: 3000 });
 
     // Wait for shell output
@@ -47,7 +47,7 @@ test.describe('Terminal E2E', () => {
     await page.getByRole('button', { name: /new/i }).click();
     await expect(page.getByText('Terminal 1')).toBeVisible({ timeout: 5000 });
 
-    const visibleTerminal = page.locator('.terminal-wrapper:not([style*="display: none"])');
+    const visibleTerminal = page.locator('.terminal-wrapper');
     const xtermRows = visibleTerminal.locator('.xterm-rows');
 
     // Wait for shell prompt

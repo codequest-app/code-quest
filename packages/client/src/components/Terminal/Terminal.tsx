@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { SerializeAddon } from '@xterm/addon-serialize';
 import { useSocket } from '../../hooks/useSocket';
 import '@xterm/xterm/css/xterm.css';
 
@@ -10,6 +11,11 @@ interface TerminalProps {
   serverUrl: string;
   className?: string;
   theme?: Record<string, string>;
+  initialContent?: string;
+}
+
+export interface TerminalHandle {
+  serialize: () => string | undefined;
 }
 
 const defaultTheme = {
@@ -39,17 +45,33 @@ const defaultTheme = {
 /**
  * Terminal component using xterm.js
  * Renders a terminal emulator connected to a backend session via Socket.io
+ * Supports serialize/restore for tab switching
  */
-export function Terminal({
-  sessionId,
-  serverUrl,
-  className = '',
-  theme = defaultTheme,
-}: TerminalProps) {
+export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
+  {
+    sessionId,
+    serverUrl,
+    className = '',
+    theme = defaultTheme,
+    initialContent,
+  },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const serializeAddonRef = useRef<SerializeAddon | null>(null);
   const { socket, emit } = useSocket(serverUrl);
+
+  // Expose serialize method to parent
+  useImperativeHandle(ref, () => ({
+    serialize: () => {
+      if (terminalRef.current && serializeAddonRef.current) {
+        return serializeAddonRef.current.serialize();
+      }
+      return undefined;
+    },
+  }));
 
   useEffect(() => {
     // Prevent double initialization in React StrictMode
@@ -72,11 +94,20 @@ export function Terminal({
       const fitAddon = new FitAddon();
       fitAddonRef.current = fitAddon;
 
+      const serializeAddon = new SerializeAddon();
+      serializeAddonRef.current = serializeAddon;
+
       terminal.loadAddon(fitAddon);
       terminal.loadAddon(new WebLinksAddon());
+      terminal.loadAddon(serializeAddon);
 
       // Open terminal in container
       terminal.open(containerRef.current);
+
+      // Restore serialized content if available
+      if (initialContent) {
+        terminal.write(initialContent);
+      }
 
       // Handle user input
       terminal.onData((data) => {
@@ -119,11 +150,12 @@ export function Terminal({
         resizeObserver.disconnect();
         terminal.dispose();
         terminalRef.current = null;
+        serializeAddonRef.current = null;
       };
     } catch (error) {
       console.error('Failed to create terminal:', error);
     }
-  }, [sessionId, theme, emit]);
+  }, [sessionId, theme, emit, initialContent]);
 
   // Handle incoming data from server - use socket directly
   useEffect(() => {
@@ -152,4 +184,4 @@ export function Terminal({
       style={{ width: '100%', height: '100%' }}
     />
   );
-}
+});

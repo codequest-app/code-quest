@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Terminal } from '../Terminal';
+import { useEffect, useRef } from 'react';
+import { Terminal, TerminalHandle } from '../Terminal';
 import { useSocket } from '../../hooks/useSocket';
 import { useTerminalStore } from '../../stores/terminalStore';
 
@@ -10,7 +10,8 @@ interface TerminalTabsProps {
 
 /**
  * TerminalTabs component
- * Manages multiple terminal tabs with tab navigation
+ * Manages multiple terminal tabs with serialize/restore for tab switching
+ * Only one xterm instance exists at a time to save resources
  */
 export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const { socket, emit } = useSocket(serverUrl);
@@ -24,10 +25,15 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     setSocketConnected,
     setSocketError,
     getActiveSession,
+    setSerializedState,
+    appendPendingData,
   } = useTerminalStore();
 
   const sessions = getSessions();
   const activeSession = getActiveSession();
+  const terminalRef = useRef<TerminalHandle>(null);
+  const previousSessionIdRef = useRef<string | null>(null);
+  const initialContentRef = useRef<string | undefined>(undefined);
 
   // Handle socket events
   useEffect(() => {
@@ -84,6 +90,49 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     };
   }, [socket, addSession, removeSession, setSocketConnected, setSocketError]);
 
+  // Buffer data for inactive sessions
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleData = (sessionId: string, data: string) => {
+      // If data is for an inactive session, buffer it
+      if (sessionId !== activeSessionId) {
+        appendPendingData(sessionId, data);
+      }
+      // Active session data is handled by Terminal component directly
+    };
+
+    socket.on('terminal:data', handleData);
+    return () => {
+      socket.off('terminal:data', handleData);
+    };
+  }, [socket, activeSessionId, appendPendingData]);
+
+  // Serialize before switching away from a session, and prepare initial content for new active session
+  useEffect(() => {
+    const prevId = previousSessionIdRef.current;
+    if (prevId && prevId !== activeSessionId && terminalRef.current) {
+      const serialized = terminalRef.current.serialize();
+      if (serialized) {
+        setSerializedState(prevId, serialized);
+      }
+    }
+    // Prepare initial content for the new active session
+    if (activeSessionId) {
+      const store = useTerminalStore.getState();
+      const serialized = store.getSerializedState(activeSessionId);
+      const pending = store.consumePendingData(activeSessionId);
+      if (serialized || pending.length > 0) {
+        initialContentRef.current = (serialized || '') + pending.join('');
+      } else {
+        initialContentRef.current = undefined;
+      }
+    } else {
+      initialContentRef.current = undefined;
+    }
+    previousSessionIdRef.current = activeSessionId;
+  }, [activeSessionId, setSerializedState]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,6 +156,13 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   }, [activeSessionId]);
 
   const handleNewTerminal = () => {
+    // Serialize current terminal before creating new one
+    if (activeSessionId && terminalRef.current) {
+      const serialized = terminalRef.current.serialize();
+      if (serialized) {
+        setSerializedState(activeSessionId, serialized);
+      }
+    }
     emit('terminal:create', {});
   };
 
@@ -163,25 +219,27 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
         <div className="error-message">{socketState.error}</div>
       )}
 
-      {/* Terminal content */}
+      {/* Terminal content - only render active terminal */}
       <div className="terminal-content">
         {sessions.length === 0 && (
           <div className="empty-state">
             No terminals open. Click "+ New" to create one.
           </div>
         )}
-        {sessions.map((session) => (
+        {activeSession && (
           <div
-            key={session.id}
+            key={activeSession.id}
             className="terminal-wrapper"
-            style={{ display: session.id === activeSessionId ? 'block' : 'none', width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%' }}
           >
             <Terminal
-              sessionId={session.id}
+              ref={terminalRef}
+              sessionId={activeSession.id}
               serverUrl={serverUrl}
+              initialContent={initialContentRef.current}
             />
           </div>
-        ))}
+        )}
       </div>
 
       <style>{`
