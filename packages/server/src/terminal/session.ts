@@ -18,6 +18,7 @@ export class TerminalSessionImpl implements TerminalSession {
 
     // Determine shell to use
     const shell = options?.shell || (process.platform === 'win32' ? 'powershell.exe' : process.env.SHELL || '/bin/bash');
+    const cwd = options?.cwd || process.cwd();
 
     // Spawn PTY process
     try {
@@ -25,7 +26,7 @@ export class TerminalSessionImpl implements TerminalSession {
         name: 'xterm-color',
         cols: options?.cols || 80,
         rows: options?.rows || 24,
-        cwd: options?.cwd || process.cwd(),
+        cwd: cwd,
         env: { ...process.env, ...options?.env } as Record<string, string>,
       });
 

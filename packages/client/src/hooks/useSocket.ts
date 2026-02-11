@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
+import { socketManager } from '../services/socket';
 import type { ServerToClientEvents, ClientToServerEvents } from '../types';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -21,20 +22,16 @@ interface UseSocketReturn {
 
 /**
  * Custom hook for Socket.io connection management
+ * Uses singleton socket manager to prevent multiple connections
  */
 export function useSocket(serverUrl: string): UseSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<TypedSocket | null>(null);
-  const listenersRef = useRef<Map<string, Function>>(new Map());
 
   useEffect(() => {
-    // Create socket connection
-    const socket = io(serverUrl, {
-      transports: ['websocket'],
-      autoConnect: true,
-    }) as TypedSocket;
-
+    // Get singleton socket instance
+    const socket = socketManager.getSocket(serverUrl);
     socketRef.current = socket;
 
     // Connection event handlers
@@ -57,26 +54,21 @@ export function useSocket(serverUrl: string): UseSocketReturn {
     socket.on('disconnect', handleDisconnect);
     socket.on('connect_error', handleConnectError);
 
+    // Set initial connection state
+    setIsConnected(socket.connected);
+
     // Cleanup on unmount
     return () => {
-      // Remove all custom listeners
-      listenersRef.current.forEach((callback, event) => {
-        socket.off(event, callback as any);
-      });
-      listenersRef.current.clear();
-
-      // Remove connection handlers
+      // Only remove event handlers, don't disconnect
+      // (socket is shared across components)
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('connect_error', handleConnectError);
-
-      // Disconnect socket
-      socket.disconnect();
     };
   }, [serverUrl]);
 
   /**
-   * Register event listener
+   * Register event listener (deprecated - use socket.on directly)
    */
   const on = useCallback(
     <T extends keyof ServerToClientEvents>(
@@ -86,7 +78,6 @@ export function useSocket(serverUrl: string): UseSocketReturn {
       if (!socketRef.current) return;
 
       socketRef.current.on(event, callback as any);
-      listenersRef.current.set(event as string, callback);
     },
     []
   );

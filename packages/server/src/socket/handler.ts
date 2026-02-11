@@ -46,6 +46,7 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('terminal:created', session.id, session.pid);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        console.error('Error creating terminal:', message);
         socket.emit('terminal:error', `Failed to create terminal: ${message}`);
       }
     });
