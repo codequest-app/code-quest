@@ -27,6 +27,8 @@ export interface TerminalStore {
   sessions: Map<string, TerminalSession>;
   activeSessionId: string | null;
   socketState: SocketState;
+  serializedStates: Map<string, string>;
+  pendingData: Map<string, string[]>;
 
   // Actions
   addSession: (id: string, pid: number) => void;
@@ -37,6 +39,10 @@ export interface TerminalStore {
   getSession: (id: string) => TerminalSession | undefined;
   getActiveSession: () => TerminalSession | undefined;
   getSessions: () => TerminalSession[];
+  setSerializedState: (id: string, state: string) => void;
+  getSerializedState: (id: string) => string | undefined;
+  appendPendingData: (id: string, data: string) => void;
+  consumePendingData: (id: string) => string[];
 }
 
 /**

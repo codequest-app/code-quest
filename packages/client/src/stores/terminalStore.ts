@@ -12,6 +12,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     connected: false,
     error: null,
   },
+  serializedStates: new Map<string, string>(),
+  pendingData: new Map<string, string[]>(),
 
   addSession: (id: string, pid: number) => {
     set((state) => {
@@ -49,6 +51,12 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
 
       sessions.delete(id);
 
+      // Clean up serialized state and pending data
+      const serializedStates = new Map(state.serializedStates);
+      serializedStates.delete(id);
+      const pendingData = new Map(state.pendingData);
+      pendingData.delete(id);
+
       // If we removed the active session, activate another one
       let newActiveSessionId = state.activeSessionId;
 
@@ -71,6 +79,8 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
       return {
         sessions,
         activeSessionId: newActiveSessionId,
+        serializedStates,
+        pendingData,
       };
     });
   },
@@ -128,5 +138,36 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
     const sessions = Array.from(get().sessions.values());
     // Sort by creation time
     return sessions.sort((a, b) => a.createdAt - b.createdAt);
+  },
+
+  setSerializedState: (id: string, state: string) => {
+    set((prev) => {
+      const serializedStates = new Map(prev.serializedStates);
+      serializedStates.set(id, state);
+      return { serializedStates };
+    });
+  },
+
+  getSerializedState: (id: string) => {
+    return get().serializedStates.get(id);
+  },
+
+  appendPendingData: (id: string, data: string) => {
+    set((prev) => {
+      const pendingData = new Map(prev.pendingData);
+      const existing = pendingData.get(id) || [];
+      pendingData.set(id, [...existing, data]);
+      return { pendingData };
+    });
+  },
+
+  consumePendingData: (id: string) => {
+    const data = get().pendingData.get(id) || [];
+    set((prev) => {
+      const pendingData = new Map(prev.pendingData);
+      pendingData.delete(id);
+      return { pendingData };
+    });
+    return data;
   },
 }));
