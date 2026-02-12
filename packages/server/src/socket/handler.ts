@@ -135,6 +135,16 @@ export class SocketHandlerImpl implements SocketHandler {
       session.sendMessage(message);
     });
 
+    // Handle chat:respond (permission prompt response)
+    socket.on('chat:respond', (sessionId, response) => {
+      const session = this.config.chatManager.getSession(sessionId);
+      if (!session) {
+        socket.emit('chat:error', sessionId, 'Session not found');
+        return;
+      }
+      session.respond(response);
+    });
+
     // Handle chat:abort
     socket.on('chat:abort', (sessionId) => {
       const session = this.config.chatManager.getSession(sessionId);

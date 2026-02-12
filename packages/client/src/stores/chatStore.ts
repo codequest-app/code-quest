@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 import type { ChatMessage, ChatProvider, ChatStats, ChatStreamEvent } from '../types';
 
+interface PendingPermission {
+  toolName: string;
+  description: string;
+}
+
 interface ChatSessionState {
   provider: ChatProvider;
   messages: ChatMessage[];
   isProcessing: boolean;
+  pendingPermission?: PendingPermission;
 }
 
 interface ChatStore {
@@ -15,6 +21,7 @@ interface ChatStore {
   getChatSession: (sessionId: string) => ChatSessionState | undefined;
   addUserMessage: (sessionId: string, content: string) => void;
   handleChatEvent: (sessionId: string, event: ChatStreamEvent) => void;
+  clearPendingPermission: (sessionId: string) => void;
 }
 
 let messageCounter = 0;
@@ -80,6 +87,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       const messages = [...session.messages];
       let isProcessing = session.isProcessing;
+      let pendingPermission = session.pendingPermission;
 
       // Get or create the current assistant message
       const lastMsg = messages[messages.length - 1];
@@ -153,6 +161,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             messages[messages.length - 1] = msg;
           }
           isProcessing = false;
+          pendingPermission = undefined;
+          break;
+        }
+
+        case 'permission_request': {
+          pendingPermission = {
+            toolName: event.data.toolName,
+            description: event.data.description,
+          };
           break;
         }
 
@@ -164,8 +181,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         ...session,
         messages,
         isProcessing,
+        pendingPermission,
       });
 
+      return { chatSessions };
+    });
+  },
+
+  clearPendingPermission: (sessionId: string) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      chatSessions.set(sessionId, {
+        ...session,
+        pendingPermission: undefined,
+      });
       return { chatSessions };
     });
   },

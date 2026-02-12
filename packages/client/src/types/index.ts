@@ -60,7 +60,8 @@ export type ChatStreamEvent =
   | { type: 'tool_use'; data: { name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; output: string } }
   | { type: 'result'; data: { stats: ChatStats } }
-  | { type: 'error'; data: { message: string } };
+  | { type: 'error'; data: { message: string } }
+  | { type: 'permission_request'; data: { toolName: string; description: string } };
 
 export interface ChatStats {
   costUsd?: number;
@@ -145,6 +146,7 @@ export interface ClientToServerEvents {
   'terminal:list': () => void;
   'chat:create': (options: { provider: ChatProvider; cwd?: string }) => void;
   'chat:send': (sessionId: string, message: string) => void;
+  'chat:respond': (sessionId: string, response: string) => void;
   'chat:abort': (sessionId: string) => void;
   'chat:kill': (sessionId: string) => void;
   'orchestrator:create': (options: { provider: ChatProvider }) => void;

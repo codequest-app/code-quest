@@ -2,15 +2,17 @@ import { useRef, useEffect } from 'react';
 import { useChatStore } from '../../stores/chatStore';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
+import { PermissionPrompt } from './PermissionPrompt';
 
 interface ChatPanelProps {
   sessionId: string;
   serverUrl?: string;
   onSend?: (sessionId: string, message: string) => void;
   onAbort?: (sessionId: string) => void;
+  onPermissionRespond?: (sessionId: string, response: string) => void;
 }
 
-export function ChatPanel({ sessionId, onSend, onAbort }: ChatPanelProps) {
+export function ChatPanel({ sessionId, onSend, onAbort, onPermissionRespond }: ChatPanelProps) {
   const session = useChatStore((state) => state.getChatSession(sessionId));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +29,21 @@ export function ChatPanel({ sessionId, onSend, onAbort }: ChatPanelProps) {
     );
   }
 
+  const handlePermissionAllow = () => {
+    onPermissionRespond?.(sessionId, 'allow');
+    useChatStore.getState().clearPendingPermission(sessionId);
+  };
+
+  const handlePermissionDeny = () => {
+    onPermissionRespond?.(sessionId, 'deny');
+    useChatStore.getState().clearPendingPermission(sessionId);
+  };
+
+  const handlePermissionAlwaysAllow = () => {
+    onPermissionRespond?.(sessionId, 'always_allow');
+    useChatStore.getState().clearPendingPermission(sessionId);
+  };
+
   return (
     <div className="chat-panel" data-testid="chat-panel">
       <div className="chat-messages">
@@ -40,6 +57,16 @@ export function ChatPanel({ sessionId, onSend, onAbort }: ChatPanelProps) {
         ))}
         <div ref={messagesEndRef} />
       </div>
+
+      {session.pendingPermission && (
+        <PermissionPrompt
+          toolName={session.pendingPermission.toolName}
+          description={session.pendingPermission.description}
+          onAllow={handlePermissionAllow}
+          onDeny={handlePermissionDeny}
+          onAlwaysAllow={handlePermissionAlwaysAllow}
+        />
+      )}
 
       <ChatInput
         onSend={(message) => onSend?.(sessionId, message)}

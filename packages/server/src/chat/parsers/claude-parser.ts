@@ -58,6 +58,17 @@ export class ClaudeStreamParser implements StreamParser {
           },
         ];
 
+      case 'permission':
+        return [
+          {
+            type: 'permission_request',
+            data: {
+              toolName: (json.tool_name ?? json.tool ?? '') as string,
+              description: (json.description ?? json.message ?? '') as string,
+            },
+          },
+        ];
+
       default:
         return [];
     }

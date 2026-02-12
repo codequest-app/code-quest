@@ -9,6 +9,7 @@ interface UseChatSocketReturn {
   abortMessage: (sessionId: string) => void;
   createChat: (provider: 'claude' | 'gemini') => void;
   killChat: (sessionId: string) => void;
+  respondToPermission: (sessionId: string, response: string) => void;
 }
 
 export function useChatSocket(serverUrl: string): UseChatSocketReturn {
@@ -92,5 +93,13 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
     [emit]
   );
 
-  return { sendMessage, abortMessage, createChat, killChat };
+  const respondToPermission = useCallback(
+    (sessionId: string, response: string) => {
+      emit('chat:respond', sessionId, response);
+      useChatStore.getState().clearPendingPermission(sessionId);
+    },
+    [emit]
+  );
+
+  return { sendMessage, abortMessage, createChat, killChat, respondToPermission };
 }
