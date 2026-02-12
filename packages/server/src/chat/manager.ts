@@ -6,6 +6,11 @@ import type { ChatManager, ChatProvider, ChatSession } from './types';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const MOCK_CLI_PATH = path.resolve(
+  __dirname,
+  '../test/mock-cli.ts'
+);
+
 const MOCK_SCRIPT = path.resolve(
   __dirname,
   '../../../../e2e/fixtures/mock-claude-stream.sh'
@@ -13,6 +18,13 @@ const MOCK_SCRIPT = path.resolve(
 
 function getCommands(): Record<ChatProvider, { command: string; baseArgs: string[] }> {
   if (process.env.MOCK_CLI === 'true') {
+    return {
+      claude: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
+      gemini: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
+    };
+  }
+
+  if (process.env.MOCK_CLI === 'shell') {
     return {
       claude: { command: 'bash', baseArgs: [MOCK_SCRIPT] },
       gemini: { command: 'bash', baseArgs: [MOCK_SCRIPT] },
@@ -22,7 +34,7 @@ function getCommands(): Record<ChatProvider, { command: string; baseArgs: string
   return {
     claude: {
       command: 'claude',
-      baseArgs: ['-p', '--output-format', 'stream-json', '--verbose'],
+      baseArgs: ['--output-format', 'stream-json', '--verbose'],
     },
     gemini: {
       command: 'gemini',

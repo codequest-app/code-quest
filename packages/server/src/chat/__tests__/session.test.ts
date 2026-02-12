@@ -1,259 +1,243 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import path from 'path';
 import type { ChatStreamEvent, ChatStats } from '../types';
 import { ChatSessionImpl } from '../session';
-
-const MOCK_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/mock-claude.sh');
-const MOCK_ECHO_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/mock-claude-echo.sh');
-
-function waitForComplete(session: ChatSessionImpl): Promise<ChatStats> {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Timeout waiting for complete')), 5000);
-    session.onComplete((stats) => {
-      clearTimeout(timeout);
-      resolve(stats);
-    });
-    session.onError((err) => {
-      clearTimeout(timeout);
-      reject(new Error(err));
-    });
-  });
-}
-
-function waitForExit(session: ChatSessionImpl): Promise<void> {
-  return new Promise((resolve) => {
-    const timeout = setTimeout(() => resolve(), 5000);
-    session.onExit(() => {
-      clearTimeout(timeout);
-      resolve();
-    });
-  });
-}
+import { MockProcess, createMockProcessFactory } from '../../test/mock-process';
 
 describe('ChatSessionImpl', () => {
   let session: ChatSessionImpl;
+  let mockProcess: MockProcess;
+
+  beforeEach(() => {
+    mockProcess = new MockProcess();
+  });
 
   afterEach(() => {
     session?.kill();
   });
 
-  it('should spawn process and emit parsed events', async () => {
+  function createSession(provider: 'claude' | 'gemini' = 'claude') {
     session = new ChatSessionImpl({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_CLAUDE_SCRIPT],
-    });
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
-
-    session.sendMessage('test');
-
-    await waitForComplete(session);
-    expect(events.some((e) => e.type === 'init')).toBe(true);
-    expect(events.some((e) => e.type === 'text')).toBe(true);
-    expect(events.some((e) => e.type === 'result')).toBe(true);
-  });
-
-  it('should extract session id from init event', async () => {
-    session = new ChatSessionImpl({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_CLAUDE_SCRIPT],
-    });
-
-    session.sendMessage('test');
-    await waitForComplete(session);
-
-    expect(session.cliSessionId).toBe('mock-123');
-  });
-
-  it('should use --resume on second message', async () => {
-    session = new ChatSessionImpl({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_CLAUDE_SCRIPT],
-    });
-
-    // First message
-    session.sendMessage('first');
-    await waitForComplete(session);
-    await waitForExit(session);
-
-    // Second message should use --resume
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
-
-    session.sendMessage('second');
-    await waitForComplete(session);
-
-    // Should still work (mock doesn't validate --resume, but process should spawn)
-    expect(events.some((e) => e.type === 'init')).toBe(true);
-  });
-
-  it('should emit error on spawn failure', async () => {
-    session = new ChatSessionImpl({
-      provider: 'claude',
-      command: '/nonexistent/command',
+      provider,
+      command: 'mock',
       baseArgs: [],
+      processFactory: createMockProcessFactory(mockProcess),
     });
+    return session;
+  }
 
-    const errorPromise = new Promise<string>((resolve) => {
-      session.onError((err) => resolve(err));
-    });
+  function collectEvents(): ChatStreamEvent[] {
+    const events: ChatStreamEvent[] = [];
+    session.onEvent((e) => events.push(e));
+    return events;
+  }
 
-    session.sendMessage('test');
+  it('should send message via stdin on first sendMessage', () => {
+    createSession();
+    session.sendMessage('hello');
 
-    const error = await errorPromise;
-    expect(error).toBeTruthy();
+    expect(mockProcess.getStdinData()).toContain('hello\n');
   });
 
-  it('should abort running process', async () => {
+  it('should reuse persistent process on second message', () => {
+    let spawnCount = 0;
+    const factory = () => {
+      spawnCount++;
+      return mockProcess as any;
+    };
+
     session = new ChatSessionImpl({
       provider: 'claude',
-      command: 'bash',
-      baseArgs: ['-c', 'echo \'{"type":"system","subtype":"init","session_id":"abc"}\'; sleep 10'],
+      command: 'mock',
+      baseArgs: [],
+      processFactory: factory,
     });
 
-    const exitPromise = waitForExit(session);
+    session.sendMessage('first');
+    session.sendMessage('second');
+
+    expect(spawnCount).toBe(1);
+    expect(mockProcess.getStdinData()).toContain('first\n');
+    expect(mockProcess.getStdinData()).toContain('second\n');
+  });
+
+  it('should parse streaming events from stdout', () => {
+    createSession();
+    const events = collectEvents();
+
     session.sendMessage('test');
 
-    // Wait a bit for process to start
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    mockProcess.emitStdout('{"type":"system","subtype":"init","session_id":"abc"}');
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Hello!"}]}}');
 
+    expect(events).toHaveLength(2);
+    expect(events[0]).toEqual({ type: 'init', data: { sessionId: 'abc' } });
+    expect(events[1]).toEqual({ type: 'text', data: { content: 'Hello!' } });
+  });
+
+  it('should emit complete on result event', () => {
+    createSession();
+    let completedStats: ChatStats | null = null;
+    session.onComplete((stats) => {
+      completedStats = stats;
+    });
+
+    session.sendMessage('test');
+    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.01,"duration_ms":500,"input_tokens":10,"output_tokens":20}');
+
+    expect(completedStats).toEqual({
+      costUsd: 0.01,
+      durationMs: 500,
+      inputTokens: 10,
+      outputTokens: 20,
+    });
+  });
+
+  it('should transition state: idle -> processing -> idle on result', () => {
+    createSession();
+    expect(session.state).toBe('idle');
+
+    session.sendMessage('test');
+    expect(session.state).toBe('processing');
+
+    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}');
+    expect(session.state).toBe('idle');
+  });
+
+  it('should handle permission_request and transition to awaiting_input', () => {
+    createSession();
+    const events = collectEvents();
+
+    session.sendMessage('test');
+    mockProcess.emitStdout('{"type":"permission","tool_name":"Read","description":"Reading file: test.ts"}');
+
+    expect(session.state).toBe('awaiting_input');
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual({
+      type: 'permission_request',
+      data: { toolName: 'Read', description: 'Reading file: test.ts' },
+    });
+  });
+
+  it('should send respond data via stdin', () => {
+    createSession();
+
+    session.sendMessage('test');
+    mockProcess.emitStdout('{"type":"permission","tool_name":"Read","description":"Reading file"}');
+
+    session.respond('allow');
+
+    expect(mockProcess.getStdinData()).toContain('allow\n');
+    expect(session.state).toBe('processing');
+  });
+
+  it('should handle process crash and emit error + exit', () => {
+    createSession();
+    let errorMessage = '';
+    let exitCalled = false;
+    session.onError((msg) => { errorMessage = msg; });
+    session.onExit(() => { exitCalled = true; });
+
+    session.sendMessage('test');
+    mockProcess.emitError(new Error('Process crashed'));
+
+    expect(errorMessage).toBe('Process crashed');
+    expect(exitCalled).toBe(true);
+    expect(session.state).toBe('idle');
+  });
+
+  it('should emit stderr as error on non-zero exit without result', async () => {
+    createSession();
+    let errorMessage = '';
+    session.onError((msg) => { errorMessage = msg; });
+
+    session.sendMessage('test');
+    mockProcess.emitStderr('Something went wrong');
+    mockProcess.emitClose(1);
+
+    // Wait for nextTick to settle
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(errorMessage).toBe('Something went wrong');
+  });
+
+  it('should not emit stderr as error if result was received', () => {
+    createSession();
+    let errorMessage = '';
+    session.onError((msg) => { errorMessage = msg; });
+
+    session.sendMessage('test');
+    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}');
+    mockProcess.emitStderr('Informational warning');
+    mockProcess.emitClose(0);
+
+    expect(errorMessage).toBe('');
+  });
+
+  it('should abort process with SIGINT', () => {
+    createSession();
+    session.sendMessage('test');
     session.abort();
-    await exitPromise;
-    // If we get here, the process was successfully killed
-    expect(true).toBe(true);
+
+    expect(mockProcess.isKilled).toBe(true);
   });
 
-  it('should pass message as last argument to CLI', async () => {
-    session = new ChatSessionImpl({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_ECHO_SCRIPT],
-    });
+  it('should kill process with SIGTERM', () => {
+    createSession();
+    session.sendMessage('test');
+    session.kill();
 
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
-
-    session.sendMessage('Hello world');
-    await waitForComplete(session);
-
-    const textEvent = events.find((e) => e.type === 'text');
-    expect(textEvent).toBeDefined();
-    expect((textEvent!.data as { content: string }).content).toContain('Hello world');
+    expect(mockProcess.isKilled).toBe(true);
+    expect(session.state).toBe('idle');
   });
 
-  it('should pass message as last argument on resume too', async () => {
-    session = new ChatSessionImpl({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_ECHO_SCRIPT],
-    });
+  it('should support multi-turn conversation via stdin', () => {
+    createSession();
+    const events = collectEvents();
 
-    // First message to establish session
     session.sendMessage('first');
-    await waitForComplete(session);
-    await waitForExit(session);
-
-    expect(session.cliSessionId).toBeTruthy();
-
-    // Second message with --resume should still pass the message
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
-
-    session.sendMessage('second message');
-    await waitForComplete(session);
-
-    const textEvent = events.find((e) => e.type === 'text');
-    expect(textEvent).toBeDefined();
-    expect((textEvent!.data as { content: string }).content).toContain('second message');
-  });
-
-  it('should pass message via -p flag for gemini provider', async () => {
-    // Gemini uses: gemini -o stream-json -p "message"
-    session = new ChatSessionImpl({
-      provider: 'gemini',
-      command: 'bash',
-      baseArgs: ['-c', `
-        # Parse -p flag value
-        MSG=""
-        while [[ $# -gt 0 ]]; do
-          case "$1" in
-            -p|--prompt) MSG="$2"; shift 2 ;;
-            *) shift ;;
-          esac
-        done
-        echo '{"type":"init","session_id":"gemini-mock-1"}'
-        echo '{"type":"message","role":"assistant","content":"'"Prompt: \$MSG"'","delta":true}'
-        echo '{"type":"result","status":"success","stats":{"input_tokens":10,"output_tokens":5,"duration_ms":100}}'
-      `, '_'],
-    });
-
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
-
-    session.sendMessage('Hello from Gemini');
-    await waitForComplete(session);
-
-    const textEvent = events.find((e) => e.type === 'text');
-    expect(textEvent).toBeDefined();
-    expect((textEvent!.data as { content: string }).content).toContain('Hello from Gemini');
-  });
-
-  it('should use --resume and -p for gemini on second message', async () => {
-    session = new ChatSessionImpl({
-      provider: 'gemini',
-      command: 'bash',
-      baseArgs: ['-c', `
-        # Parse flags
-        MSG=""
-        RESUME=""
-        while [[ $# -gt 0 ]]; do
-          case "$1" in
-            -p|--prompt) MSG="$2"; shift 2 ;;
-            --resume|-r) RESUME="$2"; shift 2 ;;
-            *) shift ;;
-          esac
-        done
-        echo '{"type":"init","session_id":"gemini-mock-2"}'
-        echo '{"type":"message","role":"assistant","content":"'"msg=\$MSG resume=\$RESUME"'","delta":true}'
-        echo '{"type":"result","status":"success","stats":{"input_tokens":10,"output_tokens":5,"duration_ms":100}}'
-      `, '_'],
-    });
-
-    // First message
-    session.sendMessage('first');
-    await waitForComplete(session);
-    await waitForExit(session);
-
-    expect(session.cliSessionId).toBe('gemini-mock-2');
-
-    // Second message should use --resume AND -p
-    const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
+    mockProcess.emitStdout('{"type":"system","subtype":"init","session_id":"s1"}');
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 1"}]}}');
+    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":50,"input_tokens":5,"output_tokens":3}');
 
     session.sendMessage('second');
-    await waitForComplete(session);
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 2"}]}}');
+    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.002,"duration_ms":60,"input_tokens":8,"output_tokens":5}');
 
-    const textEvent = events.find((e) => e.type === 'text');
-    expect(textEvent).toBeDefined();
-    const content = (textEvent!.data as { content: string }).content;
-    expect(content).toContain('msg=second');
-    expect(content).toContain('resume=gemini-mock-2');
+    const textEvents = events.filter((e) => e.type === 'text');
+    expect(textEvents).toHaveLength(2);
+    expect(textEvents[0].data).toEqual({ content: 'Reply 1' });
+    expect(textEvents[1].data).toEqual({ content: 'Reply 2' });
+
+    const stdinData = mockProcess.getStdinData();
+    expect(stdinData).toContain('first\n');
+    expect(stdinData).toContain('second\n');
   });
 
-  it('should have a unique id', () => {
+  it('should emit error on spawn failure', () => {
+    const failFactory = () => {
+      throw new Error('spawn ENOENT');
+    };
+
     session = new ChatSessionImpl({
       provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_CLAUDE_SCRIPT],
+      command: '/nonexistent',
+      baseArgs: [],
+      processFactory: failFactory,
     });
 
+    let errorMessage = '';
+    session.onError((msg) => { errorMessage = msg; });
+
+    session.sendMessage('test');
+    expect(errorMessage).toBe('spawn ENOENT');
+  });
+
+  it('should have a unique id per session', () => {
+    createSession();
     const session2 = new ChatSessionImpl({
       provider: 'claude',
-      command: 'bash',
-      baseArgs: [MOCK_CLAUDE_SCRIPT],
+      command: 'mock',
+      baseArgs: [],
+      processFactory: createMockProcessFactory(new MockProcess()),
     });
 
     expect(session.id).toBeTruthy();
@@ -261,5 +245,27 @@ describe('ChatSessionImpl', () => {
     expect(session.id).not.toBe(session2.id);
 
     session2.kill();
+  });
+
+  it('should parse thinking events', () => {
+    createSession();
+    const events = collectEvents();
+
+    session.sendMessage('think');
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"Let me ponder..."}]}}');
+
+    expect(events[0]).toEqual({ type: 'thinking', data: { content: 'Let me ponder...' } });
+  });
+
+  it('should parse tool_use and tool_result events', () => {
+    createSession();
+    const events = collectEvents();
+
+    session.sendMessage('use tool');
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"path":"test.ts"}}]}}');
+    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"tool_result","name":"Read","output":"file content"}]}}');
+
+    expect(events[0]).toEqual({ type: 'tool_use', data: { name: 'Read', input: { path: 'test.ts' } } });
+    expect(events[1]).toEqual({ type: 'tool_result', data: { name: 'Read', output: 'file content' } });
   });
 });

@@ -8,7 +8,10 @@ import type {
   ChatStats,
   ChatProvider,
   StreamParser,
+  ProcessFactory,
 } from './types';
+
+export type SessionState = 'idle' | 'processing' | 'awaiting_input';
 
 export class ChatSessionImpl implements ChatSession {
   readonly id: string;
@@ -18,14 +21,20 @@ export class ChatSessionImpl implements ChatSession {
   private readonly baseArgs: string[];
   private readonly cwd: string;
   private readonly parser: StreamParser;
+  private readonly processFactory: ProcessFactory;
 
   private process: ChildProcess | null = null;
+  private _state: SessionState = 'idle';
   private eventHandlers: Array<(event: ChatStreamEvent) => void> = [];
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
   private errorHandlers: Array<(error: string) => void> = [];
   private exitHandlers: Array<() => void> = [];
   private stderrBuffer = '';
   private gotResult = false;
+
+  get state(): SessionState {
+    return this._state;
+  }
 
   get cliSessionId(): string | null {
     return this.parser.getCliSessionId();
@@ -38,29 +47,26 @@ export class ChatSessionImpl implements ChatSession {
     this.baseArgs = options.baseArgs;
     this.cwd = options.cwd ?? process.cwd();
     this.parser = createParser(options.provider);
+    this.processFactory = options.processFactory ?? spawn;
   }
 
   sendMessage(message: string): void {
-    const args = [...this.baseArgs];
-
-    // If we have a CLI session ID from a previous message, use --resume
-    const sessionId = this.parser.getCliSessionId();
-    if (sessionId) {
-      args.push('--resume', sessionId);
+    if (!this.process) {
+      this.spawnPersistentProcess();
     }
 
-    // Pass message in provider-specific format
-    if (message) {
-      if (this.provider === 'gemini') {
-        // Gemini: -p "message" (prompt is a flag value)
-        args.push('-p', message);
-      } else {
-        // Claude: message as positional last argument
-        args.push(message);
-      }
+    if (this.process && this.process.stdin?.writable) {
+      this._state = 'processing';
+      this.gotResult = false;
+      this.process.stdin.write(message + '\n');
     }
+  }
 
-    this.spawnProcess(args);
+  respond(data: string): void {
+    if (this.process && this.process.stdin?.writable) {
+      this._state = 'processing';
+      this.process.stdin.write(data + '\n');
+    }
   }
 
   abort(): void {
@@ -74,6 +80,7 @@ export class ChatSessionImpl implements ChatSession {
       this.process.kill('SIGTERM');
       this.process = null;
     }
+    this._state = 'idle';
   }
 
   onEvent(handler: (event: ChatStreamEvent) => void): void {
@@ -92,18 +99,15 @@ export class ChatSessionImpl implements ChatSession {
     this.exitHandlers.push(handler);
   }
 
-  private spawnProcess(args: string[]): void {
+  private spawnPersistentProcess(): void {
     this.stderrBuffer = '';
     this.gotResult = false;
 
     try {
-      this.process = spawn(this.command, args, {
+      this.process = this.processFactory(this.command, [...this.baseArgs], {
         cwd: this.cwd,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      // Close stdin immediately — CLI tools like Claude hang if stdin is an open pipe
-      // because they wait for EOF before processing the -p flag message.
-      this.process.stdin?.end();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.emitError(message);
@@ -116,29 +120,30 @@ export class ChatSessionImpl implements ChatSession {
         this.emitEvent(event);
         if (event.type === 'result') {
           this.gotResult = true;
+          this._state = 'idle';
           this.emitComplete((event.data as { stats: ChatStats }).stats);
+        } else if (event.type === 'permission_request') {
+          this._state = 'awaiting_input';
         }
       }
     });
 
-    // Buffer stderr instead of treating it as immediate error.
-    // CLI tools (gemini, claude) write informational messages to stderr
-    // that are not actual errors (e.g. "Loaded cached credentials.").
     this.process.stderr?.on('data', (chunk: Buffer) => {
       this.stderrBuffer += chunk.toString();
     });
 
     this.process.on('error', (error) => {
       this.emitError(error.message);
+      this._state = 'idle';
       this.emitExit();
     });
 
     this.process.on('close', (code) => {
-      // Only emit error if process exited with non-zero code AND we didn't get a result
       if (code !== 0 && !this.gotResult && this.stderrBuffer.trim()) {
         this.emitError(this.stderrBuffer.trim());
       }
       this.process = null;
+      this._state = 'idle';
       this.emitExit();
     });
   }

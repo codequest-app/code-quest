@@ -41,6 +41,9 @@ export interface ClientToServerEvents {
   /** Abort the current chat response */
   'chat:abort': (sessionId: string) => void;
 
+  /** Respond to a chat permission prompt */
+  'chat:respond': (sessionId: string, response: string) => void;
+
   /** Kill a chat session */
   'chat:kill': (sessionId: string) => void;
 

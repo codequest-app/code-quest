@@ -103,6 +103,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       this.emitError(message);
     });
 
+    // Persistent process: just write to stdin
     this.coordinatorSession.sendMessage(synthesisPrompt);
   }
 

@@ -2,6 +2,8 @@
  * Chat stream event types
  */
 
+import type { ChildProcess, SpawnOptions } from 'child_process';
+
 export type ChatStreamEvent =
   | { type: 'init'; data: { sessionId: string } }
   | { type: 'text'; data: { content: string } }
@@ -9,7 +11,8 @@ export type ChatStreamEvent =
   | { type: 'tool_use'; data: { name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; output: string } }
   | { type: 'result'; data: { stats: ChatStats } }
-  | { type: 'error'; data: { message: string } };
+  | { type: 'error'; data: { message: string } }
+  | { type: 'permission_request'; data: { toolName: string; description: string } };
 
 export interface ChatStats {
   costUsd?: number;
@@ -25,17 +28,25 @@ export interface StreamParser {
 
 export type ChatProvider = 'claude' | 'gemini';
 
+export type ProcessFactory = (
+  command: string,
+  args: string[],
+  options: SpawnOptions,
+) => ChildProcess;
+
 export interface ChatSessionOptions {
   provider: ChatProvider;
   command: string;
   baseArgs: string[];
   cwd?: string;
+  processFactory?: ProcessFactory;
 }
 
 export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
   sendMessage(message: string): void;
+  respond(data: string): void;
   abort(): void;
   kill(): void;
   onEvent(handler: (event: ChatStreamEvent) => void): void;
