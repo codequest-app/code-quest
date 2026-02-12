@@ -5,7 +5,9 @@
   "description": "RPG-style Claude Code experience",
   "scripts": {
     "dev": "pnpm --filter server dev & pnpm --filter client dev",
+    "dev:mock": "MOCK_CLI=true pnpm --filter server dev & pnpm --filter client dev",
     "dev:server": "pnpm --filter server dev",
+    "dev:server:mock": "MOCK_CLI=true pnpm --filter server dev",
     "dev:client": "pnpm --filter client dev",
     "build": "pnpm --filter server build && pnpm --filter client build",
     "test": "pnpm --recursive test",
@@ -13,6 +15,7 @@
     "test:client": "pnpm --filter client test",
     "test:coverage": "pnpm --recursive test:coverage",
     "test:e2e": "playwright test",
+    "test:e2e:mock": "MOCK_CLI=true playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "playwright:install": "playwright install chromium",

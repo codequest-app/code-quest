@@ -4,6 +4,8 @@
 
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { TerminalManager } from '../terminal/types';
+import type { ChatManager, ChatStreamEvent, ChatStats, ChatProvider } from '../chat/types';
+import type { SubTask, WorkerInfo, OrchestratorStatus } from '../orchestrator/types';
 
 /**
  * Socket events for client -> server
@@ -29,6 +31,33 @@ export interface ClientToServerEvents {
 
   /** List all terminal sessions */
   'terminal:list': () => void;
+
+  /** Create a new chat session */
+  'chat:create': (options: { provider: ChatProvider; cwd?: string }) => void;
+
+  /** Send a message to a chat session */
+  'chat:send': (sessionId: string, message: string) => void;
+
+  /** Abort the current chat response */
+  'chat:abort': (sessionId: string) => void;
+
+  /** Kill a chat session */
+  'chat:kill': (sessionId: string) => void;
+
+  /** Create an orchestrator session */
+  'orchestrator:create': (options: { provider: ChatProvider }) => void;
+
+  /** Dispatch sub-tasks to workers */
+  'orchestrator:dispatch': (orchId: string, tasks: SubTask[]) => void;
+
+  /** Synthesize worker results via coordinator */
+  'orchestrator:synthesize': (orchId: string) => void;
+
+  /** Abort orchestrator execution */
+  'orchestrator:abort': (orchId: string) => void;
+
+  /** Kill orchestrator session */
+  'orchestrator:kill': (orchId: string) => void;
 }
 
 /**
@@ -49,6 +78,42 @@ export interface ServerToClientEvents {
 
   /** Error occurred */
   'terminal:error': (message: string) => void;
+
+  /** Chat session created */
+  'chat:created': (sessionId: string, provider: string) => void;
+
+  /** Chat stream event */
+  'chat:event': (sessionId: string, event: ChatStreamEvent) => void;
+
+  /** Chat response complete */
+  'chat:complete': (sessionId: string, stats: ChatStats) => void;
+
+  /** Chat error */
+  'chat:error': (sessionId: string, message: string) => void;
+
+  /** Chat session exited */
+  'chat:exit': (sessionId: string) => void;
+
+  /** Orchestrator session created */
+  'orchestrator:created': (orchId: string, coordinatorId: string, provider: string) => void;
+
+  /** Orchestrator sub-tasks dispatched */
+  'orchestrator:dispatched': (orchId: string, workers: WorkerInfo[]) => void;
+
+  /** Worker stream event forwarded */
+  'orchestrator:worker-event': (orchId: string, workerId: string, event: ChatStreamEvent) => void;
+
+  /** Worker completed */
+  'orchestrator:worker-complete': (orchId: string, workerId: string, result: WorkerInfo) => void;
+
+  /** All workers completed */
+  'orchestrator:all-complete': (orchId: string, results: WorkerInfo[]) => void;
+
+  /** Orchestrator status changed */
+  'orchestrator:status': (orchId: string, status: OrchestratorStatus) => void;
+
+  /** Orchestrator error */
+  'orchestrator:error': (orchId: string, message: string) => void;
 }
 
 /**
@@ -57,7 +122,12 @@ export interface ServerToClientEvents {
 export interface SocketHandlerConfig {
   /** Terminal manager instance */
   terminalManager: TerminalManager;
+
+  /** Chat manager instance */
+  chatManager: ChatManager;
 }
+
+export type { SubTask, WorkerInfo, OrchestratorStatus } from '../orchestrator/types';
 
 /**
  * Socket handler interface

@@ -29,6 +29,11 @@ export function useSocket(serverUrl: string): UseSocketReturn {
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<TypedSocket | null>(null);
 
+  // Initialize socket synchronously so it's available on first render
+  if (!socketRef.current) {
+    socketRef.current = socketManager.getSocket(serverUrl);
+  }
+
   useEffect(() => {
     // Get singleton socket instance
     const socket = socketManager.getSocket(serverUrl);

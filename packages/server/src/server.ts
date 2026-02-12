@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { HttpServerImpl } from './http/server';
 import { SocketHandlerImpl } from './socket/handler';
 import { TerminalManagerImpl } from './terminal/manager';
+import { ChatManagerImpl } from './chat/manager';
 import type { Server, ServerConfig, ServerStatus } from './types';
 
 /**
@@ -11,6 +12,7 @@ import type { Server, ServerConfig, ServerStatus } from './types';
 export class ServerImpl implements Server {
   private readonly config: ServerConfig;
   private readonly terminalManager: TerminalManagerImpl;
+  private readonly chatManager: ChatManagerImpl;
   private httpServer: HttpServerImpl | null = null;
   private io: SocketIOServer | null = null;
   private socketHandler: SocketHandlerImpl | null = null;
@@ -19,6 +21,7 @@ export class ServerImpl implements Server {
   constructor(config: ServerConfig) {
     this.config = config;
     this.terminalManager = new TerminalManagerImpl();
+    this.chatManager = new ChatManagerImpl();
     this.startTime = Date.now();
   }
 
@@ -55,6 +58,7 @@ export class ServerImpl implements Server {
     // 3. Set up Socket.io handler
     this.socketHandler = new SocketHandlerImpl(this.io, {
       terminalManager: this.terminalManager,
+      chatManager: this.chatManager,
     });
 
     console.log(`Server started on port ${this.getPort()}`);
@@ -67,8 +71,9 @@ export class ServerImpl implements Server {
 
     console.log('Stopping server...');
 
-    // 1. Cleanup all terminal sessions first
+    // 1. Cleanup all sessions first
     this.terminalManager.cleanup();
+    this.chatManager.cleanup();
 
     // 2. Close Socket.io connections
     if (this.io) {

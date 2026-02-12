@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TerminalStore, TerminalSession } from '../types';
+import type { TerminalStore, TerminalSession, SessionType } from '../types';
 
 /**
  * Terminal store using Zustand
@@ -15,7 +15,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
   serializedStates: new Map<string, string>(),
   pendingData: new Map<string, string[]>(),
 
-  addSession: (id: string, pid: number) => {
+  addSession: (id: string, pid: number, type: SessionType = 'terminal') => {
     set((state) => {
       const sessions = new Map(state.sessions);
 
@@ -25,6 +25,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
       sessions.set(id, {
         id,
         pid,
+        type,
         isActive: shouldBeActive,
         createdAt: Date.now(),
       });

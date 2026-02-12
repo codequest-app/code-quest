@@ -9,7 +9,7 @@ test.describe('Terminal Tab Switch', () => {
 
   test('should preserve terminal content when switching tabs via serialize/restore', async ({ page }) => {
     // Create terminal 1
-    await page.getByRole('button', { name: /new/i }).click();
+    await page.getByRole('button', { name: /terminal/i }).click();
     await expect(page.getByText('Terminal 1')).toBeVisible({ timeout: 5000 });
 
     // Wait for shell output in terminal 1
@@ -17,7 +17,7 @@ test.describe('Terminal Tab Switch', () => {
     await expect(xtermRows).not.toBeEmpty({ timeout: 5000 });
 
     // Create terminal 2
-    await page.getByRole('button', { name: /new/i }).click();
+    await page.getByRole('button', { name: /terminal/i }).click();
     await expect(page.getByText('Terminal 2')).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
 

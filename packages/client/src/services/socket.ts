@@ -16,7 +16,7 @@ class SocketManager {
    */
   getSocket(serverUrl: string): TypedSocket {
     // If socket exists and URLs match, return existing socket
-    if (this.socket && this.serverUrl === serverUrl && this.socket.connected) {
+    if (this.socket && this.serverUrl === serverUrl) {
       return this.socket;
     }
 

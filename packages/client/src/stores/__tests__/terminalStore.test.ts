@@ -331,4 +331,135 @@ describe('useTerminalStore', () => {
       expect(sessions[0].createdAt).toBeLessThanOrEqual(sessions[1]?.createdAt || Infinity);
     });
   });
+
+  describe('serializedStates', () => {
+    it('should set and get serialized state', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.setSerializedState('s1', 'serialized-content');
+      });
+
+      expect(result.current.getSerializedState('s1')).toBe('serialized-content');
+    });
+
+    it('should return undefined for non-existent serialized state', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      expect(result.current.getSerializedState('non-existent')).toBeUndefined();
+    });
+
+    it('should clean up serialized state when session is removed', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.setSerializedState('s1', 'content');
+        result.current.removeSession('s1');
+      });
+
+      expect(result.current.getSerializedState('s1')).toBeUndefined();
+    });
+  });
+
+  describe('pendingData', () => {
+    it('should append and consume pending data', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.appendPendingData('s1', 'chunk1');
+        result.current.appendPendingData('s1', 'chunk2');
+      });
+
+      let consumed: string[] = [];
+      act(() => {
+        consumed = result.current.consumePendingData('s1');
+      });
+
+      expect(consumed).toEqual(['chunk1', 'chunk2']);
+    });
+
+    it('should clear pending data after consume', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.appendPendingData('s1', 'chunk1');
+      });
+
+      act(() => {
+        result.current.consumePendingData('s1');
+      });
+
+      let consumed: string[] = [];
+      act(() => {
+        consumed = result.current.consumePendingData('s1');
+      });
+
+      expect(consumed).toEqual([]);
+    });
+
+    it('should return empty array when no pending data', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      let consumed: string[] = [];
+      act(() => {
+        consumed = result.current.consumePendingData('non-existent');
+      });
+
+      expect(consumed).toEqual([]);
+    });
+
+    it('should clean up pending data when session is removed', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.appendPendingData('s1', 'chunk1');
+        result.current.removeSession('s1');
+      });
+
+      let consumed: string[] = [];
+      act(() => {
+        consumed = result.current.consumePendingData('s1');
+      });
+
+      expect(consumed).toEqual([]);
+    });
+  });
+
+  describe('tab switching round-trip', () => {
+    it('should preserve content across tab switch: serialize → switch → restore', () => {
+      const { result } = renderHook(() => useTerminalStore());
+
+      act(() => {
+        result.current.addSession('s1', 1);
+        result.current.addSession('s2', 2);
+      });
+
+      act(() => {
+        // Simulate: serialize s1 before switching
+        result.current.setSerializedState('s1', 'terminal-content-s1');
+        result.current.setActiveSession('s2');
+      });
+
+      act(() => {
+        // Simulate: background data arrives for s1
+        result.current.appendPendingData('s1', '\nnew-output');
+      });
+
+      // Switch back to s1: read serialized + pending
+      act(() => {
+        result.current.setActiveSession('s1');
+      });
+
+      const serialized = result.current.getSerializedState('s1');
+      const pending = result.current.pendingData.get('s1') || [];
+      const restored = (serialized || '') + pending.join('');
+
+      expect(restored).toBe('terminal-content-s1\nnew-output');
+    });
+  });
 });
