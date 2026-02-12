@@ -54,6 +54,9 @@ async function main() {
     console.log(`📍 HTTP API:   http://${host}:${status.port}`);
     console.log(`🔌 WebSocket:  ws://${host}:${status.port}`);
     console.log(`💚 Health:     http://${host}:${status.port}/api/health`);
+    if (process.env.MOCK_CLI === 'true') {
+      console.log(`🎭 Mock CLI:   ENABLED (using mock scripts)`);
+    }
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\nPress Ctrl+C to stop\n');
   } catch (error) {

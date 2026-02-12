@@ -14,7 +14,7 @@ test.describe('Terminal E2E', () => {
     await expect(page.getByText('Connected')).toBeVisible({ timeout: 10000 });
 
     // Click "New" button
-    await page.getByRole('button', { name: /new/i }).click();
+    await page.getByRole('button', { name: /terminal/i }).click();
 
     // Wait for terminal tab to appear
     await expect(page.getByText('Terminal 1')).toBeVisible({ timeout: 5000 });
@@ -44,7 +44,7 @@ test.describe('Terminal E2E', () => {
   test('should handle terminal input and output', async ({ page }) => {
     await expect(page.getByText('Connected')).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: /new/i }).click();
+    await page.getByRole('button', { name: /terminal/i }).click();
     await expect(page.getByText('Terminal 1')).toBeVisible({ timeout: 5000 });
 
     const visibleTerminal = page.locator('.terminal-wrapper');
