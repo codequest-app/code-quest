@@ -5,6 +5,22 @@ import type { ChatManager } from '../chat/types.ts';
 import type { OrchestratorSession, OrchestratorSessionFactory } from '../orchestrator/types.ts';
 import type { TerminalManager } from '../terminal/types.ts';
 import { TYPES } from '../types.symbols.ts';
+import {
+  chatAbortSchema,
+  chatAllowToolSchema,
+  chatCreateSchema,
+  chatKillSchema,
+  chatSendSchema,
+  orchestratorAbortSchema,
+  orchestratorCreateSchema,
+  orchestratorDispatchSchema,
+  orchestratorKillSchema,
+  orchestratorSynthesizeSchema,
+  terminalCreateSchema,
+  terminalKillSchema,
+  terminalResizeSchema,
+  terminalWriteSchema,
+} from './schemas.ts';
 import type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './types.ts';
 
 /**
@@ -37,8 +53,14 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:create
     socket.on('terminal:create', (options) => {
+      const parsed = terminalCreateSchema.safeParse(options);
+      if (!parsed.success) {
+        socket.emit('terminal:error', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
       try {
-        const session = this.terminalManager.createSession(options);
+        const session = this.terminalManager.createSession(parsed.data);
 
         // Set up data handler
         session.onData((data) => {
@@ -61,34 +83,52 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:write
     socket.on('terminal:write', (sessionId, data) => {
-      const session = this.terminalManager.getSession(sessionId);
-
-      if (!session) {
-        socket.emit('terminal:error', `Session not found: ${sessionId}`);
+      const parsed = terminalWriteSchema.safeParse({ sessionId, data });
+      if (!parsed.success) {
+        socket.emit('terminal:error', `Validation error: ${parsed.error.message}`);
         return;
       }
 
-      session.write(data);
+      const session = this.terminalManager.getSession(parsed.data.sessionId);
+
+      if (!session) {
+        socket.emit('terminal:error', `Session not found: ${parsed.data.sessionId}`);
+        return;
+      }
+
+      session.write(parsed.data.data);
     });
 
     // Handle terminal:resize
     socket.on('terminal:resize', (sessionId, cols, rows) => {
-      const session = this.terminalManager.getSession(sessionId);
-
-      if (!session) {
-        socket.emit('terminal:error', `Session not found: ${sessionId}`);
+      const parsed = terminalResizeSchema.safeParse({ sessionId, cols, rows });
+      if (!parsed.success) {
+        socket.emit('terminal:error', `Validation error: ${parsed.error.message}`);
         return;
       }
 
-      session.resize({ cols, rows });
+      const session = this.terminalManager.getSession(parsed.data.sessionId);
+
+      if (!session) {
+        socket.emit('terminal:error', `Session not found: ${parsed.data.sessionId}`);
+        return;
+      }
+
+      session.resize({ cols: parsed.data.cols, rows: parsed.data.rows });
     });
 
     // Handle terminal:kill
     socket.on('terminal:kill', (sessionId) => {
-      const session = this.terminalManager.getSession(sessionId);
+      const parsed = terminalKillSchema.safeParse({ sessionId });
+      if (!parsed.success) {
+        socket.emit('terminal:error', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const session = this.terminalManager.getSession(parsed.data.sessionId);
 
       if (!session) {
-        socket.emit('terminal:error', `Session not found: ${sessionId}`);
+        socket.emit('terminal:error', `Session not found: ${parsed.data.sessionId}`);
         return;
       }
 
@@ -103,8 +143,14 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:create
     socket.on('chat:create', (options) => {
+      const parsed = chatCreateSchema.safeParse(options);
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
       try {
-        const session = this.chatManager.createSession(options);
+        const session = this.chatManager.createSession(parsed.data);
 
         session.onEvent((event) => {
           socket.emit('chat:event', session.id, event);
@@ -126,35 +172,53 @@ export class SocketHandlerImpl implements SocketHandler {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error('Error creating chat session:', message);
-        socket.emit('terminal:error', `Failed to create chat: ${message}`);
+        socket.emit('chat:error', '', `Failed to create chat: ${message}`);
       }
     });
 
     // Handle chat:send
     socket.on('chat:send', (sessionId, message) => {
-      const session = this.chatManager.getSession(sessionId);
-      if (!session) {
-        socket.emit('chat:error', sessionId, 'Session not found');
+      const parsed = chatSendSchema.safeParse({ sessionId, message });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
         return;
       }
-      session.sendMessage(message);
+
+      const session = this.chatManager.getSession(parsed.data.sessionId);
+      if (!session) {
+        socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
+        return;
+      }
+      session.sendMessage(parsed.data.message);
     });
 
     // Handle chat:allow-tool (permission: allow a tool for next spawn)
     socket.on('chat:allow-tool', (sessionId, toolName) => {
-      const session = this.chatManager.getSession(sessionId);
-      if (!session) {
-        socket.emit('chat:error', sessionId, 'Session not found');
+      const parsed = chatAllowToolSchema.safeParse({ sessionId, toolName });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
         return;
       }
-      session.addAllowedTool(toolName);
+
+      const session = this.chatManager.getSession(parsed.data.sessionId);
+      if (!session) {
+        socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
+        return;
+      }
+      session.addAllowedTool(parsed.data.toolName);
     });
 
     // Handle chat:abort
     socket.on('chat:abort', (sessionId) => {
-      const session = this.chatManager.getSession(sessionId);
+      const parsed = chatAbortSchema.safeParse({ sessionId });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const session = this.chatManager.getSession(parsed.data.sessionId);
       if (!session) {
-        socket.emit('chat:error', sessionId, 'Session not found');
+        socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
       session.abort();
@@ -162,13 +226,25 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:kill
     socket.on('chat:kill', (sessionId) => {
-      this.chatManager.removeSession(sessionId);
+      const parsed = chatKillSchema.safeParse({ sessionId });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      this.chatManager.removeSession(parsed.data.sessionId);
     });
 
     // Handle orchestrator:create
     socket.on('orchestrator:create', (options) => {
+      const parsed = orchestratorCreateSchema.safeParse(options);
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
       try {
-        const orch = this.createOrchestrator({ provider: options.provider });
+        const orch = this.createOrchestrator({ provider: parsed.data.provider });
 
         this.orchestrators.set(orch.id, orch);
 
@@ -206,7 +282,7 @@ export class SocketHandlerImpl implements SocketHandler {
           socket.emit('orchestrator:error', orch.id, message);
         });
 
-        socket.emit('orchestrator:created', orch.id, orch.coordinatorId, options.provider);
+        socket.emit('orchestrator:created', orch.id, orch.coordinatorId, parsed.data.provider);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         socket.emit('orchestrator:error', '', `Failed to create orchestrator: ${message}`);
@@ -215,20 +291,32 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle orchestrator:dispatch
     socket.on('orchestrator:dispatch', (orchId, tasks) => {
-      const orch = this.orchestrators.get(orchId);
-      if (!orch) {
-        socket.emit('orchestrator:error', orchId, 'Orchestrator not found');
+      const parsed = orchestratorDispatchSchema.safeParse({ orchId, tasks });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
         return;
       }
-      orch.dispatch(tasks);
-      socket.emit('orchestrator:dispatched', orchId, orch.workers);
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
+      if (!orch) {
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
+        return;
+      }
+      orch.dispatch(parsed.data.tasks);
+      socket.emit('orchestrator:dispatched', parsed.data.orchId, orch.workers);
     });
 
     // Handle orchestrator:synthesize
     socket.on('orchestrator:synthesize', (orchId) => {
-      const orch = this.orchestrators.get(orchId);
+      const parsed = orchestratorSynthesizeSchema.safeParse({ orchId });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
       if (!orch) {
-        socket.emit('orchestrator:error', orchId, 'Orchestrator not found');
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
       orch.synthesize();
@@ -236,9 +324,15 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle orchestrator:abort
     socket.on('orchestrator:abort', (orchId) => {
-      const orch = this.orchestrators.get(orchId);
+      const parsed = orchestratorAbortSchema.safeParse({ orchId });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
       if (!orch) {
-        socket.emit('orchestrator:error', orchId, 'Orchestrator not found');
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
       orch.abort();
@@ -246,13 +340,19 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle orchestrator:kill
     socket.on('orchestrator:kill', (orchId) => {
-      const orch = this.orchestrators.get(orchId);
+      const parsed = orchestratorKillSchema.safeParse({ orchId });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
       if (!orch) {
-        socket.emit('orchestrator:error', orchId, 'Orchestrator not found');
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
       orch.kill();
-      this.orchestrators.delete(orchId);
+      this.orchestrators.delete(parsed.data.orchId);
     });
 
     // Handle disconnection

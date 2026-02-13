@@ -3,21 +3,25 @@
  */
 
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
+import type { z } from 'zod';
+import type { ChatStats, ChatStreamEvent } from '../chat/types.ts';
 import type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types.ts';
+import type {
+  chatCreateSchema,
+  orchestratorCreateSchema,
+  terminalCreateSchema,
+} from './schemas.ts';
+
+type TerminalCreateOptions = z.infer<typeof terminalCreateSchema>;
+type ChatCreateOptions = z.infer<typeof chatCreateSchema>;
+type OrchestratorCreateOptions = z.infer<typeof orchestratorCreateSchema>;
 
 /**
  * Socket events for client -> server
  */
 export interface ClientToServerEvents {
   /** Create a new terminal session */
-  'terminal:create': (options?: {
-    shell?: string;
-    args?: string[];
-    cwd?: string;
-    cols?: number;
-    rows?: number;
-  }) => void;
+  'terminal:create': (options?: TerminalCreateOptions) => void;
 
   /** Write data to terminal */
   'terminal:write': (sessionId: string, data: string) => void;
@@ -32,7 +36,7 @@ export interface ClientToServerEvents {
   'terminal:list': () => void;
 
   /** Create a new chat session */
-  'chat:create': (options: { provider: ChatProvider; cwd?: string }) => void;
+  'chat:create': (options: ChatCreateOptions) => void;
 
   /** Send a message to a chat session */
   'chat:send': (sessionId: string, message: string) => void;
@@ -47,7 +51,7 @@ export interface ClientToServerEvents {
   'chat:kill': (sessionId: string) => void;
 
   /** Create an orchestrator session */
-  'orchestrator:create': (options: { provider: ChatProvider }) => void;
+  'orchestrator:create': (options: OrchestratorCreateOptions) => void;
 
   /** Dispatch sub-tasks to workers */
   'orchestrator:dispatch': (orchId: string, tasks: SubTask[]) => void;

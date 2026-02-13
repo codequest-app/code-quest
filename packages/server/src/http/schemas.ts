@@ -1,18 +1,10 @@
 import { z } from 'zod';
+import { terminalOptionsSchema } from '../shared/schemas.ts';
 
 /**
  * Request schema for creating a terminal session
  */
-export const createTerminalRequestSchema = z
-  .object({
-    shell: z.string().optional(),
-    cwd: z.string().optional(),
-    cols: z.number().int().positive().optional(),
-    rows: z.number().int().positive().optional(),
-    args: z.array(z.string()).optional(),
-    env: z.record(z.string(), z.string()).optional(),
-  })
-  .strict();
+export const createTerminalRequestSchema = terminalOptionsSchema.strict();
 
 /**
  * Response schema for errors
