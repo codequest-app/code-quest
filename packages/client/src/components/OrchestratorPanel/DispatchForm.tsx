@@ -1,7 +1,21 @@
 import type { ChatProvider, OrchestratorStatus, SubTask } from '@code-quest/shared';
-import { subTaskSchema } from '@code-quest/shared';
-import { useRef, useState } from 'react';
-import { safeValidate } from '../../utils/validateAndEmit.ts';
+import { chatProviderSchema } from '@code-quest/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+const dispatchFormSchema = z.object({
+  tasks: z
+    .array(
+      z.object({
+        description: z.string().min(1, 'Description is required'),
+        provider: chatProviderSchema,
+      }),
+    )
+    .min(1),
+});
+
+type DispatchFormValues = z.infer<typeof dispatchFormSchema>;
 
 interface DispatchFormProps {
   status: OrchestratorStatus;
@@ -10,140 +24,99 @@ interface DispatchFormProps {
   onAbort: () => void;
 }
 
-interface TaskWithKey extends SubTask {
-  _key: number;
-}
-
 export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: DispatchFormProps) {
-  const nextKey = useRef(1);
-  const [tasks, setTasks] = useState<TaskWithKey[]>([
-    { description: '', provider: 'claude', _key: 0 },
-  ]);
-  const [errors, setErrors] = useState<Map<number, string>>(new Map());
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<DispatchFormValues>({
+    resolver: zodResolver(dispatchFormSchema),
+    defaultValues: {
+      tasks: [{ description: '', provider: 'claude' }],
+    },
+  });
 
-  const addTask = () => {
-    setTasks([...tasks, { description: '', provider: 'claude', _key: nextKey.current++ }]);
-  };
+  const { fields, append, remove } = useFieldArray({ control, name: 'tasks' });
 
-  const removeTask = (index: number) => {
-    const removed = tasks[index];
-    setTasks(tasks.filter((_, i) => i !== index));
-    setErrors((prev) => {
-      const next = new Map(prev);
-      next.delete(removed._key);
-      return next;
-    });
-  };
-
-  const updateTask = (index: number, field: keyof SubTask, value: string) => {
-    const updated = [...tasks];
-    if (field === 'provider') {
-      updated[index] = { ...updated[index], provider: value as ChatProvider };
-    } else {
-      updated[index] = { ...updated[index], [field]: value };
-    }
-    setTasks(updated);
-    // Clear error for this task on edit
-    setErrors((prev) => {
-      if (!prev.has(updated[index]._key)) return prev;
-      const next = new Map(prev);
-      next.delete(updated[index]._key);
-      return next;
-    });
-  };
-
-  const handleDispatch = () => {
-    const nonEmpty = tasks.filter((t) => t.description.trim());
-    if (nonEmpty.length === 0) return;
-
-    const newErrors = new Map<number, string>();
-    const validTasks: SubTask[] = [];
-
-    for (const task of nonEmpty) {
-      const result = safeValidate(subTaskSchema, {
-        description: task.description.trim(),
-        provider: task.provider,
-      });
-      if (result.success) {
-        validTasks.push(result.data);
-      } else {
-        const message = result.error.issues.map((i) => i.message).join(', ');
-        newErrors.set(task._key, message);
-      }
-    }
-
-    if (newErrors.size > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    onDispatch(validTasks);
-    setErrors(new Map());
-  };
-
+  const tasks = watch('tasks');
   const canDispatch = status === 'idle' && tasks.some((t) => t.description.trim());
   const canSynthesize = status === 'workers-complete';
   const canAbort =
     status === 'dispatching' || status === 'workers-running' || status === 'synthesizing';
 
+  const onSubmit = (data: DispatchFormValues) => {
+    const nonEmpty = data.tasks.filter((t) => t.description.trim());
+    if (nonEmpty.length === 0) return;
+    onDispatch(
+      nonEmpty.map((t) => ({
+        description: t.description.trim(),
+        provider: t.provider as ChatProvider,
+      })),
+    );
+  };
+
   return (
     <div className="dispatch-form" data-testid="dispatch-form">
       {status === 'idle' && (
-        <>
-          {tasks.map((task, index) => (
-            <div key={task._key}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {fields.map((field, index) => (
+            <div key={field.id}>
               <div className="task-row" data-testid="task-row">
                 <input
                   type="text"
                   placeholder="Task description..."
                   aria-label={`Task ${index + 1} description`}
-                  value={task.description}
-                  onChange={(e) => updateTask(index, 'description', e.target.value)}
-                  className={`task-input${errors.has(task._key) ? ' task-input-error' : ''}`}
+                  {...register(`tasks.${index}.description`)}
+                  className={`task-input${errors.tasks?.[index]?.description ? ' task-input-error' : ''}`}
                 />
                 <select
                   aria-label={`Task ${index + 1} provider`}
-                  value={task.provider}
-                  onChange={(e) => updateTask(index, 'provider', e.target.value)}
+                  {...register(`tasks.${index}.provider`)}
                   className="task-provider"
                 >
                   <option value="claude">Claude</option>
                   <option value="gemini">Gemini</option>
                 </select>
-                {tasks.length > 1 && (
+                {fields.length > 1 && (
                   <button
                     type="button"
                     aria-label={`Remove task ${index + 1}`}
                     className="remove-task-btn"
-                    onClick={() => removeTask(index)}
+                    onClick={() => remove(index)}
                   >
                     {'\u00D7'}
                   </button>
                 )}
               </div>
-              {errors.has(task._key) && (
+              {errors.tasks?.[index]?.description && (
                 <div className="task-error" data-testid="task-error">
-                  {errors.get(task._key)}
+                  {errors.tasks[index].description.message}
                 </div>
               )}
             </div>
           ))}
 
           <div className="dispatch-actions">
-            <button type="button" className="add-task-btn" onClick={addTask} aria-label="Add task">
+            <button
+              type="button"
+              className="add-task-btn"
+              onClick={() => append({ description: '', provider: 'claude' })}
+              aria-label="Add task"
+            >
               + Add Task
             </button>
             <button
-              type="button"
+              type="submit"
               className="dispatch-btn"
-              onClick={handleDispatch}
               disabled={!canDispatch}
               aria-label="Dispatch all"
             >
               Dispatch All
             </button>
           </div>
-        </>
+        </form>
       )}
 
       {canSynthesize && (

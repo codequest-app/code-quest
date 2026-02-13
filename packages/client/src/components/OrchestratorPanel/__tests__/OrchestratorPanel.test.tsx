@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatStore } from '../../../stores/chatStore';
 import { useOrchestratorStore } from '../../../stores/orchestratorStore';
@@ -47,7 +47,7 @@ describe('OrchestratorPanel', () => {
     expect(screen.getByText('Orchestrator not found')).toBeInTheDocument();
   });
 
-  it('should delegate dispatch to parent with orchestratorId', () => {
+  it('should delegate dispatch to parent with orchestratorId', async () => {
     useChatStore.getState().initChatSession('coord-1', 'claude');
     useOrchestratorStore.getState().initOrchestrator('orch-1', 'coord-1', 'claude');
 
@@ -58,9 +58,11 @@ describe('OrchestratorPanel', () => {
     });
     fireEvent.click(screen.getByLabelText('Dispatch all'));
 
-    expect(mockOnDispatch).toHaveBeenCalledWith('orch-1', [
-      { description: 'Write tests', provider: 'claude' },
-    ]);
+    await waitFor(() => {
+      expect(mockOnDispatch).toHaveBeenCalledWith('orch-1', [
+        { description: 'Write tests', provider: 'claude' },
+      ]);
+    });
   });
 
   it('should delegate synthesize to parent', () => {
