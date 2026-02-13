@@ -598,10 +598,97 @@ describe('SocketHandler', () => {
         });
       });
 
-      clientSocket.emit('orchestrator:dispatch', 'non-existent', []);
+      clientSocket.emit('orchestrator:dispatch', 'non-existent', [
+        { description: 'task1', provider: 'claude' },
+      ]);
 
       const errorMsg = await error;
       expect(errorMsg).toContain('not found');
+    });
+  });
+
+  describe('validation', () => {
+    it('should emit terminal:error for invalid terminal:create options', async () => {
+      const error = new Promise<string>((resolve) => {
+        clientSocket.on('terminal:error', (message) => {
+          resolve(message);
+        });
+      });
+
+      // @ts-expect-error intentionally invalid
+      clientSocket.emit('terminal:create', { cols: 'bad' });
+
+      const errorMsg = await error;
+      expect(errorMsg).toContain('Validation error');
+    });
+
+    it('should emit terminal:error for terminal:resize with negative cols', async () => {
+      const error = new Promise<string>((resolve) => {
+        clientSocket.on('terminal:error', (message) => {
+          resolve(message);
+        });
+      });
+
+      // @ts-expect-error intentionally invalid
+      clientSocket.emit('terminal:resize', 'some-id', -1, 40);
+
+      const errorMsg = await error;
+      expect(errorMsg).toContain('Validation error');
+    });
+
+    it('should emit chat:error for invalid chat:create provider', async () => {
+      const error = new Promise<{ id: string; msg: string }>((resolve) => {
+        clientSocket.on('chat:error', (id: string, msg: string) => {
+          resolve({ id, msg });
+        });
+      });
+
+      // @ts-expect-error intentionally invalid
+      clientSocket.emit('chat:create', { provider: 'openai' });
+
+      const result = await error;
+      expect(result.id).toBe('');
+      expect(result.msg).toContain('Validation error');
+    });
+
+    it('should emit chat:error for chat:send with empty message', async () => {
+      const error = new Promise<{ id: string; msg: string }>((resolve) => {
+        clientSocket.on('chat:error', (id: string, msg: string) => {
+          resolve({ id, msg });
+        });
+      });
+
+      clientSocket.emit('chat:send', 'some-id', '');
+
+      const result = await error;
+      expect(result.msg).toContain('Validation error');
+    });
+
+    it('should emit orchestrator:error for dispatch with empty tasks', async () => {
+      const error = new Promise<{ id: string; msg: string }>((resolve) => {
+        clientSocket.on('orchestrator:error', (id: string, msg: string) => {
+          resolve({ id, msg });
+        });
+      });
+
+      clientSocket.emit('orchestrator:dispatch', 'some-id', []);
+
+      const result = await error;
+      expect(result.msg).toContain('Validation error');
+    });
+
+    it('should emit orchestrator:error for create with invalid provider', async () => {
+      const error = new Promise<{ id: string; msg: string }>((resolve) => {
+        clientSocket.on('orchestrator:error', (id: string, msg: string) => {
+          resolve({ id, msg });
+        });
+      });
+
+      // @ts-expect-error intentionally invalid
+      clientSocket.emit('orchestrator:create', { provider: 'openai' });
+
+      const result = await error;
+      expect(result.msg).toContain('Validation error');
     });
   });
 
