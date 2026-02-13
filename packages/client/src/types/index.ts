@@ -20,7 +20,7 @@ export interface TerminalSession {
 /**
  * Socket connection state
  */
-export interface SocketState {
+interface SocketState {
   connected: boolean;
   error: string | null;
 }
@@ -50,7 +50,7 @@ export interface TerminalStore {
   consumePendingData: (id: string) => string[];
 }
 
-export type ChatMessageRole = 'user' | 'assistant';
+type ChatMessageRole = 'user' | 'assistant';
 
 export interface ChatMessage {
   id: string;
