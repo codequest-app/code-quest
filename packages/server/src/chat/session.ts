@@ -1,10 +1,9 @@
-import { type ChildProcess, spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { createParser } from './parsers/index.ts';
 import type {
   ChatProvider,
   ChatSession,
-  ChatSessionOptions,
+  ChatSessionDeps,
   ChatSessionState,
   ChatStats,
   ChatStreamEvent,
@@ -41,17 +40,15 @@ export class ChatSessionImpl implements ChatSession {
     return this.parser.getCliSessionId();
   }
 
-  constructor(options: ChatSessionOptions) {
+  constructor(options: ChatSessionDeps) {
     this.id = randomUUID();
     this.provider = options.provider;
     this.command = options.command;
     this.baseArgs = options.baseArgs;
     this.cwd = options.cwd ?? process.cwd();
     this.envOverride = options.env;
-    this.parser = options.parserFactory
-      ? options.parserFactory(options.provider)
-      : createParser(options.provider);
-    this.processFactory = options.processFactory ?? spawn;
+    this.parser = options.parserFactory(options.provider);
+    this.processFactory = options.processFactory;
   }
 
   sendMessage(message: string): void {
