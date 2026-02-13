@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import * as pty from 'node-pty';
 import type { TerminalDimensions, TerminalSession, TerminalSessionOptions } from './types.ts';
 
@@ -14,7 +14,7 @@ export class TerminalSessionImpl implements TerminalSession {
 
   constructor(options?: TerminalSessionOptions) {
     // Generate unique session ID
-    this._id = randomBytes(16).toString('hex');
+    this._id = randomUUID();
 
     // Determine shell to use
     const shell =
