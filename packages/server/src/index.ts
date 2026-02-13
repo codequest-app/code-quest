@@ -3,17 +3,17 @@
  * Terminal management server with HTTP API and WebSocket support
  */
 
-// Re-export HTTP types
+// Re-export HTTP schema types
 export type {
   CreateTerminalRequest,
   CreateTerminalResponse,
   ErrorResponse,
   HealthResponse,
-  HttpServer,
-  HttpServerConfig,
   TerminalInfoResponse,
   TerminalListResponse,
-} from './http/types.ts';
+} from './http/schemas.ts';
+// Re-export HTTP internal types
+export type { HttpServer, HttpServerConfig } from './http/types.ts';
 export { ServerImpl } from './server.ts';
 // Re-export Socket types
 export type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './socket/types.ts';
