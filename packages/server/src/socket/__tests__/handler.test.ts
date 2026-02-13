@@ -7,7 +7,12 @@ import type { ChatManager } from '../../chat/types.ts';
 import { TYPES } from '../../container.ts';
 import type { TerminalManager } from '../../terminal/types.ts';
 import { createTestContainer } from '../../test/create-test-container.ts';
-import type { SocketHandler } from '../types.ts';
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  SocketHandler,
+  WorkerInfo,
+} from '../types.ts';
 
 describe('SocketHandler', () => {
   let httpServer: HTTPServer;
@@ -15,7 +20,7 @@ describe('SocketHandler', () => {
   let handler: SocketHandler;
   let terminalManager: TerminalManager;
   let chatManager: ChatManager;
-  let clientSocket: ClientSocket;
+  let clientSocket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
   let serverSocket: Socket;
 
   beforeEach(async () => {
@@ -391,12 +396,12 @@ describe('SocketHandler', () => {
   describe('chat events', () => {
     it('should create chat session and emit chat:created', async () => {
       const created = new Promise<{ sessionId: string; provider: string }>((resolve) => {
-        clientSocket.on('chat:created' as any, (sessionId: string, provider: string) => {
+        clientSocket.on('chat:created', (sessionId: string, provider: string) => {
           resolve({ sessionId, provider });
         });
       });
 
-      clientSocket.emit('chat:create' as any, { provider: 'claude' });
+      clientSocket.emit('chat:create', { provider: 'claude' });
 
       const result = await created;
       expect(result.sessionId).toBeTruthy();
@@ -406,12 +411,12 @@ describe('SocketHandler', () => {
     it('should forward chat:event on chat:send', async () => {
       // Create a session first
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('chat:created' as any, (sessionId: string) => {
+        clientSocket.on('chat:created', (sessionId: string) => {
           resolve(sessionId);
         });
       });
 
-      clientSocket.emit('chat:create' as any, { provider: 'claude' });
+      clientSocket.emit('chat:create', { provider: 'claude' });
       const sessionId = await created;
       expect(sessionId).toBeTruthy();
 
@@ -422,12 +427,12 @@ describe('SocketHandler', () => {
 
     it('should handle chat:abort for non-existent session', async () => {
       const error = new Promise<{ id: string; msg: string }>((resolve) => {
-        clientSocket.on('chat:error' as any, (id: string, msg: string) => {
+        clientSocket.on('chat:error', (id: string, msg: string) => {
           resolve({ id, msg });
         });
       });
 
-      clientSocket.emit('chat:abort' as any, 'non-existent-id');
+      clientSocket.emit('chat:abort', 'non-existent-id');
 
       const result = await error;
       expect(result.msg).toContain('Session not found');
@@ -436,16 +441,16 @@ describe('SocketHandler', () => {
     it('should handle chat:kill', async () => {
       // Create session
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('chat:created' as any, (sessionId: string) => {
+        clientSocket.on('chat:created', (sessionId: string) => {
           resolve(sessionId);
         });
       });
 
-      clientSocket.emit('chat:create' as any, { provider: 'claude' });
+      clientSocket.emit('chat:create', { provider: 'claude' });
       const sessionId = await created;
 
       // Kill it
-      clientSocket.emit('chat:kill' as any, sessionId);
+      clientSocket.emit('chat:kill', sessionId);
 
       // Wait a bit for the kill to process
       await new Promise((r) => setTimeout(r, 100));
@@ -459,7 +464,7 @@ describe('SocketHandler', () => {
       const created = new Promise<{ orchId: string; coordinatorId: string; provider: string }>(
         (resolve) => {
           clientSocket.on(
-            'orchestrator:created' as any,
+            'orchestrator:created',
             (orchId: string, coordinatorId: string, provider: string) => {
               resolve({ orchId, coordinatorId, provider });
             },
@@ -467,7 +472,7 @@ describe('SocketHandler', () => {
         },
       );
 
-      clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
 
       const result = await created;
       expect(result.orchId).toBeTruthy();
@@ -478,21 +483,21 @@ describe('SocketHandler', () => {
     it('should dispatch sub-tasks and emit orchestrator:dispatched', async () => {
       // Create orchestrator first
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:created' as any, (orchId: string) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => {
           resolve(orchId);
         });
       });
 
-      clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
       const orchId = await created;
 
-      const dispatched = new Promise<{ orchId: string; workers: any[] }>((resolve) => {
-        clientSocket.on('orchestrator:dispatched' as any, (id: string, workers: any[]) => {
+      const dispatched = new Promise<{ orchId: string; workers: WorkerInfo[] }>((resolve) => {
+        clientSocket.on('orchestrator:dispatched', (id: string, workers: WorkerInfo[]) => {
           resolve({ orchId: id, workers });
         });
       });
 
-      clientSocket.emit('orchestrator:dispatch' as any, orchId, [
+      clientSocket.emit('orchestrator:dispatch', orchId, [
         { description: 'task1', provider: 'claude' },
         { description: 'task2', provider: 'gemini' },
       ]);
@@ -504,20 +509,20 @@ describe('SocketHandler', () => {
 
     it('should emit orchestrator:status on lifecycle changes', async () => {
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:created' as any, (orchId: string) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => {
           resolve(orchId);
         });
       });
 
-      clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
       const orchId = await created;
 
       const statuses: string[] = [];
-      clientSocket.on('orchestrator:status' as any, (_id: string, status: string) => {
+      clientSocket.on('orchestrator:status', (_id: string, status: string) => {
         statuses.push(status);
       });
 
-      clientSocket.emit('orchestrator:dispatch' as any, orchId, [
+      clientSocket.emit('orchestrator:dispatch', orchId, [
         { description: 'task1', provider: 'claude' },
       ]);
 
@@ -530,28 +535,28 @@ describe('SocketHandler', () => {
 
     it('should handle orchestrator:abort', async () => {
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:created' as any, (orchId: string) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => {
           resolve(orchId);
         });
       });
 
-      clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
       const orchId = await created;
 
       // Dispatch and immediately abort
-      clientSocket.emit('orchestrator:dispatch' as any, orchId, [
+      clientSocket.emit('orchestrator:dispatch', orchId, [
         { description: 'task1', provider: 'claude' },
       ]);
 
       await new Promise((r) => setTimeout(r, 50));
 
       const statusPromise = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:status' as any, (_id: string, status: string) => {
+        clientSocket.on('orchestrator:status', (_id: string, status: string) => {
           if (status === 'error') resolve(status);
         });
       });
 
-      clientSocket.emit('orchestrator:abort' as any, orchId);
+      clientSocket.emit('orchestrator:abort', orchId);
 
       const status = await statusPromise;
       expect(status).toBe('error');
@@ -559,26 +564,26 @@ describe('SocketHandler', () => {
 
     it('should handle orchestrator:kill', async () => {
       const created = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:created' as any, (orchId: string) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => {
           resolve(orchId);
         });
       });
 
-      clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
       const orchId = await created;
 
-      clientSocket.emit('orchestrator:kill' as any, orchId);
+      clientSocket.emit('orchestrator:kill', orchId);
 
       await new Promise((r) => setTimeout(r, 100));
 
       // Trying to dispatch on a killed orchestrator should error
       const error = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:error' as any, (_id: string, msg: string) => {
+        clientSocket.on('orchestrator:error', (_id: string, msg: string) => {
           resolve(msg);
         });
       });
 
-      clientSocket.emit('orchestrator:dispatch' as any, orchId, [
+      clientSocket.emit('orchestrator:dispatch', orchId, [
         { description: 'task1', provider: 'claude' },
       ]);
 
@@ -588,12 +593,12 @@ describe('SocketHandler', () => {
 
     it('should handle dispatch on non-existent orchestrator', async () => {
       const error = new Promise<string>((resolve) => {
-        clientSocket.on('orchestrator:error' as any, (_id: string, msg: string) => {
+        clientSocket.on('orchestrator:error', (_id: string, msg: string) => {
           resolve(msg);
         });
       });
 
-      clientSocket.emit('orchestrator:dispatch' as any, 'non-existent', []);
+      clientSocket.emit('orchestrator:dispatch', 'non-existent', []);
 
       const errorMsg = await error;
       expect(errorMsg).toContain('not found');

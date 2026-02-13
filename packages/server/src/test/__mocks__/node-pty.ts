@@ -1,4 +1,4 @@
-import type { IPty } from 'node-pty';
+import type { IPty, IPtyForkOptions } from 'node-pty';
 import { vi } from 'vitest';
 
 /**
@@ -63,7 +63,7 @@ class MockPty implements IPty {
   }
 }
 
-export const spawn = vi.fn((shell: string, _args?: string[], _options?: any) => {
+export const spawn = vi.fn((shell: string, _args?: string[], _options?: IPtyForkOptions) => {
   // Simulate failure for invalid shell
   if (shell.includes('nonexistent')) {
     throw new Error('posix_spawnp failed.');

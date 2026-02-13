@@ -19,14 +19,17 @@ describe('ClaudeStreamParser (fixture-driven)', () => {
     expect(events).toContainEqual(expect.objectContaining({ type: 'text' }));
     expect(events).toContainEqual(expect.objectContaining({ type: 'result' }));
 
-    const init = events.find((e) => e.type === 'init')!;
-    expect(init.data).toEqual({ sessionId: 'ce0ca308-1a2b-3c4d-5e6f-7890abcdef01' });
+    const init = events.find((e) => e.type === 'init');
+    expect(init).toBeDefined();
+    expect(init?.data).toEqual({ sessionId: 'ce0ca308-1a2b-3c4d-5e6f-7890abcdef01' });
 
-    const text = events.find((e) => e.type === 'text')!;
-    expect(text.data).toEqual({ content: 'Hello! How can I help you today?' });
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toBeDefined();
+    expect(text?.data).toEqual({ content: 'Hello! How can I help you today?' });
 
-    const result = events.find((e) => e.type === 'result')!;
-    const stats = (result.data as { stats: Record<string, unknown> }).stats;
+    const result = events.find((e) => e.type === 'result');
+    expect(result).toBeDefined();
+    const stats = (result?.data as { stats: Record<string, unknown> }).stats;
     expect(stats.costUsd).toBe(0.005);
     expect(stats.durationMs).toBe(3751);
     // Token counts from usage object in real format
@@ -49,8 +52,9 @@ describe('ClaudeStreamParser (fixture-driven)', () => {
     );
     expect(userEvents).toHaveLength(0);
 
-    const result = events.find((e) => e.type === 'result')!;
-    const stats = (result.data as { stats: Record<string, unknown> }).stats;
+    const result = events.find((e) => e.type === 'result');
+    expect(result).toBeDefined();
+    const stats = (result?.data as { stats: Record<string, unknown> }).stats;
     expect(stats.inputTokens).toBe(700);
     expect(stats.outputTokens).toBe(80);
   });

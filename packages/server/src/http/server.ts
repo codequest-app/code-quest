@@ -72,9 +72,9 @@ export class HttpServerImpl implements HttpServer {
             isAlive: session.isAlive,
           };
         })
-        .filter(Boolean);
+        .filter((s): s is { id: string; pid: number; isAlive: boolean } => s !== null);
 
-      const response: TerminalListResponse = { sessions: sessions as any };
+      const response: TerminalListResponse = { sessions };
       res.json(response);
     });
 
@@ -166,7 +166,7 @@ export class HttpServerImpl implements HttpServer {
 
   private setupErrorHandling(): void {
     // Handle JSON parsing errors
-    this.app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+    this.app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
       if (err instanceof SyntaxError && 'body' in err) {
         const error: ErrorResponse = {
           error: 'BadRequest',
@@ -186,11 +186,11 @@ export class HttpServerImpl implements HttpServer {
     });
 
     // Generic error handler
-    this.app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    this.app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Unhandled error:', err);
       const error: ErrorResponse = {
         error: 'InternalServerError',
-        message: err.message || 'Internal server error',
+        message: err instanceof Error ? err.message : 'Internal server error',
       };
       res.status(500).json(error);
     });
