@@ -46,9 +46,13 @@ export interface ChatSessionOptions {
   parserFactory?: ParserFactory;
 }
 
+export type ChatSessionState = 'idle' | 'processing';
+
 export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
+  readonly state: ChatSessionState;
+  readonly cliSessionId: string | null;
   sendMessage(message: string): void;
   addAllowedTool(tool: string): void;
   abort(): void;

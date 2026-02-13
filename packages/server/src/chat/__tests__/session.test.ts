@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TYPES } from '../../container.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
 import { createMockProcessFactory, MockProcess } from '../../test/mock-process.ts';
-import { ChatSessionImpl } from '../session.ts';
-import type { ChatStats, ChatStreamEvent } from '../types.ts';
+import type { ChatSession, ChatSessionFactory, ChatStats, ChatStreamEvent } from '../types.ts';
 
 describe('ChatSessionImpl', () => {
-  let session: ChatSessionImpl;
+  let session: ChatSession;
   let mockProcess: MockProcess;
+  let mockProcessFactory: ReturnType<typeof createMockProcessFactory>;
+  let chatSessionFactory: ChatSessionFactory;
 
   beforeEach(() => {
     mockProcess = new MockProcess();
+    mockProcessFactory = createMockProcessFactory(mockProcess);
+    const container = createTestContainer({ processFactory: mockProcessFactory });
+    chatSessionFactory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
   });
 
   afterEach(() => {
@@ -16,14 +22,7 @@ describe('ChatSessionImpl', () => {
   });
 
   function createSession(provider: 'claude' | 'gemini' = 'claude', baseArgs: string[] = []) {
-    const factory = createMockProcessFactory(mockProcess);
-    session = new ChatSessionImpl({
-      provider,
-      command: 'mock',
-      baseArgs,
-      processFactory: factory,
-    });
-    (session as any)._factory = factory;
+    session = chatSessionFactory({ provider, command: 'mock', baseArgs });
     return session;
   }
 
@@ -34,19 +33,22 @@ describe('ChatSessionImpl', () => {
   }
 
   it('should spawn process with message as last arg', () => {
-    const factory = createMockProcessFactory(mockProcess);
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
-      processFactory: factory,
     });
 
     session.sendMessage('hello');
 
-    expect(factory.records).toHaveLength(1);
-    expect(factory.records[0].command).toBe('claude');
-    expect(factory.records[0].args).toEqual(['-p', '--output-format', 'stream-json', 'hello']);
+    expect(mockProcessFactory.records).toHaveLength(1);
+    expect(mockProcessFactory.records[0].command).toBe('claude');
+    expect(mockProcessFactory.records[0].args).toEqual([
+      '-p',
+      '--output-format',
+      'stream-json',
+      'hello',
+    ]);
   });
 
   it('should spawn new process for each message', () => {
@@ -56,7 +58,7 @@ describe('ChatSessionImpl', () => {
       return new MockProcess();
     });
 
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
@@ -64,7 +66,6 @@ describe('ChatSessionImpl', () => {
     });
 
     session.sendMessage('first');
-    // Simulate first process completing
     factory.records[0].process.emitStdout('{"type":"system","subtype":"init","session_id":"s1"}');
     factory.records[0].process.emitStdout(
       '{"type":"result","total_cost_usd":0.001,"duration_ms":50}',
@@ -83,7 +84,7 @@ describe('ChatSessionImpl', () => {
       return p;
     });
 
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
@@ -91,7 +92,6 @@ describe('ChatSessionImpl', () => {
     });
 
     session.sendMessage('first');
-    // First process returns init with session_id
     processes[0].emitStdout('{"type":"system","subtype":"init","session_id":"sess-abc"}');
     processes[0].emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":50}');
 
@@ -164,7 +164,7 @@ describe('ChatSessionImpl', () => {
       return p;
     });
 
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
@@ -268,7 +268,7 @@ describe('ChatSessionImpl', () => {
       return p;
     });
 
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
@@ -309,7 +309,7 @@ describe('ChatSessionImpl', () => {
       throw new Error('spawn ENOENT');
     };
 
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: '/nonexistent',
       baseArgs: [],
@@ -327,11 +327,10 @@ describe('ChatSessionImpl', () => {
 
   it('should have a unique id per session', () => {
     createSession();
-    const session2 = new ChatSessionImpl({
+    const session2 = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
-      processFactory: createMockProcessFactory(new MockProcess()),
     });
 
     expect(session.id).toBeTruthy();
@@ -380,18 +379,16 @@ describe('ChatSessionImpl', () => {
     process.env.CLAUDECODE = '1';
 
     try {
-      const factory = createMockProcessFactory(mockProcess);
-      session = new ChatSessionImpl({
+      session = chatSessionFactory({
         provider: 'claude',
         command: 'mock',
         baseArgs: [],
-        processFactory: factory,
       });
 
       session.sendMessage('test');
 
-      expect(factory.records).toHaveLength(1);
-      const opts = factory.records[0].options;
+      expect(mockProcessFactory.records).toHaveLength(1);
+      const opts = mockProcessFactory.records[0].options;
       expect(opts.env).toBeDefined();
       expect((opts.env as Record<string, string | undefined>).CLAUDECODE).toBeUndefined();
     } finally {
@@ -404,35 +401,31 @@ describe('ChatSessionImpl', () => {
   });
 
   it('should pass cwd and stdio options when spawning', () => {
-    const factory = createMockProcessFactory(mockProcess);
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
       cwd: '/tmp/test',
-      processFactory: factory,
     });
 
     session.sendMessage('test');
 
-    const opts = factory.records[0].options;
+    const opts = mockProcessFactory.records[0].options;
     expect(opts.cwd).toBe('/tmp/test');
     expect(opts.stdio).toEqual(['pipe', 'pipe', 'pipe']);
   });
 
   it('should use injected env when provided', () => {
-    const factory = createMockProcessFactory(mockProcess);
-    session = new ChatSessionImpl({
+    session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
       env: { CUSTOM_VAR: 'test-value', PATH: '/usr/bin' },
-      processFactory: factory,
     });
 
     session.sendMessage('test');
 
-    const opts = factory.records[0].options;
+    const opts = mockProcessFactory.records[0].options;
     expect((opts.env as Record<string, string>).CUSTOM_VAR).toBe('test-value');
   });
 });

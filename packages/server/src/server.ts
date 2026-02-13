@@ -15,22 +15,16 @@ import type { Server, ServerConfig, ServerStatus } from './types.ts';
  */
 @injectable()
 export class ServerImpl implements Server {
-  private config: ServerConfig = { port: 0 };
   private httpServer: HttpServerImpl | null = null;
   private io: SocketIOServer | null = null;
-  private startTime: number = Date.now();
+  private readonly startTime: number = Date.now();
 
   constructor(
+    @inject(TYPES.ServerConfig) private readonly config: ServerConfig,
     @inject(TYPES.TerminalManager) private readonly terminalManager: TerminalManager,
     @inject(TYPES.ChatManager) private readonly chatManager: ChatManager,
     @inject(TYPES.SocketHandler) private readonly socketHandler: SocketHandler,
   ) {}
-
-  /** Set config before calling start(). Inversify creates the instance first. */
-  setConfig(config: ServerConfig): void {
-    this.config = config;
-    this.startTime = Date.now();
-  }
 
   async start(): Promise<void> {
     if (this.httpServer) {

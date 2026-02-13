@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Container, inject, injectable } from 'inversify';
@@ -11,15 +12,18 @@ import type {
   ChatSessionFactory,
   ChatSessionOptions,
   ParserFactory,
+  ProcessFactory,
 } from './chat/types.ts';
 import { OrchestratorSessionImpl } from './orchestrator/session.ts';
 import type { OrchestratorSessionFactory } from './orchestrator/types.ts';
+import { ServerImpl } from './server.ts';
 import { SocketHandlerImpl } from './socket/handler.ts';
 import type { SocketHandler } from './socket/types.ts';
 import { TerminalManagerImpl } from './terminal/manager.ts';
 import { TerminalSessionImpl } from './terminal/session.ts';
 import type { TerminalManager, TerminalSessionFactory } from './terminal/types.ts';
 import { TYPES } from './types.symbols.ts';
+import type { Server, ServerConfig } from './types.ts';
 
 export { TYPES } from './types.symbols.ts';
 
@@ -64,6 +68,8 @@ export function createContainer(): Container {
   const container = new Container();
 
   // ── Config ──
+  container.bind<ServerConfig>(TYPES.ServerConfig).toConstantValue({ port: 0 });
+
   container
     .bind<ChatCommandsConfig>(TYPES.ChatCommandsConfig)
     .toConstantValue(getChatCommandsConfig());
@@ -77,9 +83,13 @@ export function createContainer(): Container {
     .bind<ParserFactory>(TYPES.ParserFactory)
     .toConstantValue((provider) => createParser(provider));
 
+  container.bind<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(spawn);
+
   container.bind<ChatSessionFactory>(TYPES.ChatSessionFactory).toDynamicValue((context) => {
     const parserFactory = context.get<ParserFactory>(TYPES.ParserFactory);
-    return (options: ChatSessionOptions) => new ChatSessionImpl({ ...options, parserFactory });
+    const processFactory = context.get<ProcessFactory>(TYPES.ProcessFactory);
+    return (options: ChatSessionOptions) =>
+      new ChatSessionImpl({ processFactory, ...options, parserFactory });
   });
 
   container
@@ -95,6 +105,8 @@ export function createContainer(): Container {
   container.bind<ChatManager>(TYPES.ChatManager).to(ChatManagerImpl).inSingletonScope();
 
   container.bind<SocketHandler>(TYPES.SocketHandler).to(SocketHandlerImpl).inSingletonScope();
+
+  container.bind<Server>(TYPES.Server).to(ServerImpl).inSingletonScope();
 
   return container;
 }

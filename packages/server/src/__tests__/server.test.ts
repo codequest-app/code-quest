@@ -1,19 +1,19 @@
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ServerImpl } from '../server.ts';
+import { TYPES } from '../container.ts';
 import { createTestContainer } from '../test/create-test-container.ts';
+import type { Server } from '../types.ts';
 
-function createServer(port: number): ServerImpl {
-  const container = createTestContainer();
-  container.bind(ServerImpl).toSelf();
-  const server = container.get(ServerImpl);
-  server.setConfig({ port, cors: true });
-  return server;
+function createServer(port: number): Server {
+  const container = createTestContainer({
+    serverConfig: { port, cors: true },
+  });
+  return container.get<Server>(TYPES.Server);
 }
 
 describe('Server Integration', () => {
-  let server: ServerImpl;
+  let server: Server;
   let clientSocket: ClientSocket;
   const port = 0; // Use random port
 

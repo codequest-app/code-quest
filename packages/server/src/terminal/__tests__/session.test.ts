@@ -1,9 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TerminalSessionImpl } from '../session.ts';
-import type { TerminalSessionOptions } from '../types.ts';
+import { TYPES } from '../../container.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import type { TerminalSession, TerminalSessionFactory, TerminalSessionOptions } from '../types.ts';
 
 describe('TerminalSession', () => {
-  let session: TerminalSessionImpl;
+  let session: TerminalSession;
+  let createSession: TerminalSessionFactory;
+
+  beforeEach(() => {
+    const container = createTestContainer();
+    createSession = container.get<TerminalSessionFactory>(TYPES.TerminalSessionFactory);
+  });
 
   afterEach(() => {
     if (session?.isAlive) {
@@ -13,7 +20,7 @@ describe('TerminalSession', () => {
 
   describe('constructor', () => {
     it('should create a session with default options', () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
 
       expect(session.id).toBeTruthy();
       expect(session.pid).toBeGreaterThan(0);
@@ -28,7 +35,7 @@ describe('TerminalSession', () => {
         cwd: process.cwd(),
       };
 
-      session = new TerminalSessionImpl(options);
+      session = createSession(options);
 
       expect(session.id).toBeTruthy();
       expect(session.pid).toBeGreaterThan(0);
@@ -36,8 +43,8 @@ describe('TerminalSession', () => {
     });
 
     it('should generate unique IDs for different sessions', () => {
-      const session1 = new TerminalSessionImpl();
-      const session2 = new TerminalSessionImpl();
+      const session1 = createSession();
+      const session2 = createSession();
 
       expect(session1.id).not.toBe(session2.id);
 
@@ -48,7 +55,7 @@ describe('TerminalSession', () => {
 
   describe('write', () => {
     beforeEach(() => {
-      session = new TerminalSessionImpl();
+      session = createSession();
     });
 
     it('should write data to terminal', async () => {
@@ -87,7 +94,7 @@ describe('TerminalSession', () => {
 
   describe('resize', () => {
     beforeEach(() => {
-      session = new TerminalSessionImpl({ cols: 80, rows: 24 });
+      session = createSession({ cols: 80, rows: 24 });
     });
 
     it('should resize terminal dimensions', () => {
@@ -107,7 +114,7 @@ describe('TerminalSession', () => {
 
   describe('kill', () => {
     it('should kill the terminal session', () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       expect(session.isAlive).toBe(true);
 
       session.kill();
@@ -116,7 +123,7 @@ describe('TerminalSession', () => {
     });
 
     it('should trigger onExit callback', async () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       const exitCallback = vi.fn();
 
       session.onExit(exitCallback);
@@ -130,7 +137,7 @@ describe('TerminalSession', () => {
     });
 
     it('should not throw when killing already dead session', () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       session.kill();
 
       expect(() => {
@@ -141,7 +148,7 @@ describe('TerminalSession', () => {
 
   describe('onData', () => {
     beforeEach(() => {
-      session = new TerminalSessionImpl();
+      session = createSession();
     });
 
     it('should register data callback', async () => {
@@ -174,7 +181,7 @@ describe('TerminalSession', () => {
 
   describe('onExit', () => {
     it('should register exit callback', async () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       const exitCallback = vi.fn();
 
       session.onExit(exitCallback);
@@ -188,7 +195,7 @@ describe('TerminalSession', () => {
     });
 
     it('should support multiple exit callbacks', async () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       const callback1 = vi.fn();
       const callback2 = vi.fn();
 
@@ -211,12 +218,12 @@ describe('TerminalSession', () => {
       };
 
       expect(() => {
-        session = new TerminalSessionImpl(options);
+        session = createSession(options);
       }).toThrow();
     });
 
     it('should not write to killed session', () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       session.kill();
 
       expect(() => {
@@ -225,7 +232,7 @@ describe('TerminalSession', () => {
     });
 
     it('should not resize killed session', () => {
-      session = new TerminalSessionImpl();
+      session = createSession();
       session.kill();
 
       expect(() => {

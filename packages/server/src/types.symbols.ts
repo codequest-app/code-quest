@@ -12,7 +12,12 @@ export const TYPES = {
   ChatSessionFactory: Symbol.for('ChatSessionFactory'),
   OrchestratorSessionFactory: Symbol.for('OrchestratorSessionFactory'),
   ParserFactory: Symbol.for('ParserFactory'),
+  ProcessFactory: Symbol.for('ProcessFactory'),
 
   // Config
   ChatCommandsConfig: Symbol.for('ChatCommandsConfig'),
+  ServerConfig: Symbol.for('ServerConfig'),
+
+  // Server
+  Server: Symbol.for('Server'),
 } as const;
