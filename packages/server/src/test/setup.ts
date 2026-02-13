@@ -1,4 +1,5 @@
-import { beforeAll, afterEach, afterAll, vi } from 'vitest';
+import 'reflect-metadata';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 // Mock node-pty globally
 vi.mock('node-pty', async () => {

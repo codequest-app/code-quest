@@ -3,33 +3,30 @@
  * Terminal management server with HTTP API and WebSocket support
  */
 
-export { ServerImpl } from './server';
-export type { Server, ServerConfig, ServerStatus } from './types';
-
-// Re-export terminal types
-export type {
-  TerminalSession,
-  TerminalManager,
-  TerminalSessionOptions,
-  TerminalDimensions,
-} from './terminal/types';
-
 // Re-export HTTP types
 export type {
-  HttpServer,
-  HttpServerConfig,
-  HealthResponse,
-  TerminalListResponse,
   CreateTerminalRequest,
   CreateTerminalResponse,
-  TerminalInfoResponse,
   ErrorResponse,
+  HealthResponse,
+  HttpServer,
+  HttpServerConfig,
+  TerminalInfoResponse,
+  TerminalListResponse,
 } from './http/types';
-
+export { ServerImpl } from './server';
 // Re-export Socket types
 export type {
-  SocketHandler,
-  SocketHandlerConfig,
   ClientToServerEvents,
   ServerToClientEvents,
+  SocketHandler,
+  SocketHandlerConfig,
 } from './socket/types';
+// Re-export terminal types
+export type {
+  TerminalDimensions,
+  TerminalManager,
+  TerminalSession,
+  TerminalSessionOptions,
+} from './terminal/types';
+export type { Server, ServerConfig, ServerStatus } from './types';

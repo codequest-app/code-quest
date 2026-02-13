@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
  * E2E Test: Terminal creation and output display
@@ -29,14 +29,14 @@ test.describe('Terminal E2E', () => {
 
     const content = await xtermRows.textContent();
     expect(content).toBeTruthy();
-    expect(content!.length).toBeGreaterThan(0);
+    expect(content?.length).toBeGreaterThan(0);
 
     // Check for common shell indicators
     const hasShellOutput =
-      content!.includes('Welcome') ||
-      content!.includes('$') ||
-      content!.includes('~') ||
-      content!.includes('%');
+      content?.includes('Welcome') ||
+      content?.includes('$') ||
+      content?.includes('~') ||
+      content?.includes('%');
 
     expect(hasShellOutput).toBe(true);
   });
@@ -60,6 +60,6 @@ test.describe('Terminal E2E', () => {
 
     const content = await xtermRows.textContent();
     expect(content).toBeTruthy();
-    expect(content!.length).toBeGreaterThan(0);
+    expect(content?.length).toBeGreaterThan(0);
   });
 });

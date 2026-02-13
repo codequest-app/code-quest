@@ -15,16 +15,16 @@ export default defineConfig({
         '**/*.test.ts',
         '**/__tests__/',
         '**/types.ts',
-        'src/index.ts'
+        'src/index.ts',
       ],
       thresholds: {
         lines: 80,
         functions: 80,
         branches: 80,
-        statements: 80
-      }
+        statements: 80,
+      },
     },
     include: ['src/**/*.test.ts'],
-    exclude: ['node_modules', 'dist']
-  }
+    exclude: ['node_modules', 'dist'],
+  },
 });

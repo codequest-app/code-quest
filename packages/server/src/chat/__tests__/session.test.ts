@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type { ChatStreamEvent, ChatStats } from '../types';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createMockProcessFactory, MockProcess } from '../../test/mock-process';
 import { ChatSessionImpl } from '../session';
-import { MockProcess, createMockProcessFactory } from '../../test/mock-process';
+import type { ChatStats, ChatStreamEvent } from '../types';
 
 describe('ChatSessionImpl', () => {
   let session: ChatSessionImpl;
@@ -15,13 +15,15 @@ describe('ChatSessionImpl', () => {
     session?.kill();
   });
 
-  function createSession(provider: 'claude' | 'gemini' = 'claude') {
+  function createSession(provider: 'claude' | 'gemini' = 'claude', baseArgs: string[] = []) {
+    const factory = createMockProcessFactory(mockProcess);
     session = new ChatSessionImpl({
       provider,
       command: 'mock',
-      baseArgs: [],
-      processFactory: createMockProcessFactory(mockProcess),
+      baseArgs,
+      processFactory: factory,
     });
+    (session as any)._factory = factory;
     return session;
   }
 
@@ -31,33 +33,78 @@ describe('ChatSessionImpl', () => {
     return events;
   }
 
-  it('should send message via stdin on first sendMessage', () => {
-    createSession();
+  it('should spawn process with message as last arg', () => {
+    const factory = createMockProcessFactory(mockProcess);
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'claude',
+      baseArgs: ['-p', '--output-format', 'stream-json'],
+      processFactory: factory,
+    });
+
     session.sendMessage('hello');
 
-    expect(mockProcess.getStdinData()).toContain('hello\n');
+    expect(factory.records).toHaveLength(1);
+    expect(factory.records[0].command).toBe('claude');
+    expect(factory.records[0].args).toEqual(['-p', '--output-format', 'stream-json', 'hello']);
   });
 
-  it('should reuse persistent process on second message', () => {
-    let spawnCount = 0;
-    const factory = () => {
-      spawnCount++;
-      return mockProcess as any;
-    };
+  it('should spawn new process for each message', () => {
+    let count = 0;
+    const factory = createMockProcessFactory(() => {
+      count++;
+      return new MockProcess();
+    });
 
     session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
-      baseArgs: [],
+      baseArgs: ['-p'],
       processFactory: factory,
     });
 
     session.sendMessage('first');
+    // Simulate first process completing
+    factory.records[0].process.emitStdout('{"type":"system","subtype":"init","session_id":"s1"}');
+    factory.records[0].process.emitStdout(
+      '{"type":"result","total_cost_usd":0.001,"duration_ms":50}',
+    );
+
     session.sendMessage('second');
 
-    expect(spawnCount).toBe(1);
-    expect(mockProcess.getStdinData()).toContain('first\n');
-    expect(mockProcess.getStdinData()).toContain('second\n');
+    expect(count).toBe(2);
+  });
+
+  it('should use --resume with session id for subsequent messages', () => {
+    const processes: MockProcess[] = [];
+    const factory = createMockProcessFactory(() => {
+      const p = new MockProcess();
+      processes.push(p);
+      return p;
+    });
+
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'claude',
+      baseArgs: ['-p', '--output-format', 'stream-json'],
+      processFactory: factory,
+    });
+
+    session.sendMessage('first');
+    // First process returns init with session_id
+    processes[0].emitStdout('{"type":"system","subtype":"init","session_id":"sess-abc"}');
+    processes[0].emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":50}');
+
+    session.sendMessage('second');
+
+    expect(factory.records[1].args).toEqual([
+      '-p',
+      '--output-format',
+      'stream-json',
+      '--resume',
+      'sess-abc',
+      'second',
+    ]);
   });
 
   it('should parse streaming events from stdout', () => {
@@ -67,7 +114,9 @@ describe('ChatSessionImpl', () => {
     session.sendMessage('test');
 
     mockProcess.emitStdout('{"type":"system","subtype":"init","session_id":"abc"}');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Hello!"}]}}');
+    mockProcess.emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"Hello!"}]}}',
+    );
 
     expect(events).toHaveLength(2);
     expect(events[0]).toEqual({ type: 'init', data: { sessionId: 'abc' } });
@@ -82,7 +131,9 @@ describe('ChatSessionImpl', () => {
     });
 
     session.sendMessage('test');
-    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.01,"duration_ms":500,"input_tokens":10,"output_tokens":20}');
+    mockProcess.emitStdout(
+      '{"type":"result","total_cost_usd":0.01,"duration_ms":500,"input_tokens":10,"output_tokens":20}',
+    );
 
     expect(completedStats).toEqual({
       costUsd: 0.01,
@@ -99,43 +150,58 @@ describe('ChatSessionImpl', () => {
     session.sendMessage('test');
     expect(session.state).toBe('processing');
 
-    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}');
+    mockProcess.emitStdout(
+      '{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}',
+    );
     expect(session.state).toBe('idle');
   });
 
-  it('should handle permission_request and transition to awaiting_input', () => {
-    createSession();
-    const events = collectEvents();
-
-    session.sendMessage('test');
-    mockProcess.emitStdout('{"type":"permission","tool_name":"Read","description":"Reading file: test.ts"}');
-
-    expect(session.state).toBe('awaiting_input');
-    expect(events).toHaveLength(1);
-    expect(events[0]).toEqual({
-      type: 'permission_request',
-      data: { toolName: 'Read', description: 'Reading file: test.ts' },
+  it('should add allowed tools and include --allowedTools in next spawn', () => {
+    const processes: MockProcess[] = [];
+    const factory = createMockProcessFactory(() => {
+      const p = new MockProcess();
+      processes.push(p);
+      return p;
     });
-  });
 
-  it('should send respond data via stdin', () => {
-    createSession();
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'claude',
+      baseArgs: ['-p', '--output-format', 'stream-json'],
+      processFactory: factory,
+    });
 
-    session.sendMessage('test');
-    mockProcess.emitStdout('{"type":"permission","tool_name":"Read","description":"Reading file"}');
+    session.sendMessage('first');
+    processes[0].emitStdout('{"type":"system","subtype":"init","session_id":"sess-abc"}');
+    processes[0].emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":50}');
 
-    session.respond('allow');
+    session.addAllowedTool('Read');
+    session.addAllowedTool('Write');
 
-    expect(mockProcess.getStdinData()).toContain('allow\n');
-    expect(session.state).toBe('processing');
+    session.sendMessage('second');
+
+    expect(factory.records[1].args).toEqual([
+      '-p',
+      '--output-format',
+      'stream-json',
+      '--resume',
+      'sess-abc',
+      '--allowedTools',
+      'Read,Write',
+      'second',
+    ]);
   });
 
   it('should handle process crash and emit error + exit', () => {
     createSession();
     let errorMessage = '';
     let exitCalled = false;
-    session.onError((msg) => { errorMessage = msg; });
-    session.onExit(() => { exitCalled = true; });
+    session.onError((msg) => {
+      errorMessage = msg;
+    });
+    session.onExit(() => {
+      exitCalled = true;
+    });
 
     session.sendMessage('test');
     mockProcess.emitError(new Error('Process crashed'));
@@ -148,13 +214,14 @@ describe('ChatSessionImpl', () => {
   it('should emit stderr as error on non-zero exit without result', async () => {
     createSession();
     let errorMessage = '';
-    session.onError((msg) => { errorMessage = msg; });
+    session.onError((msg) => {
+      errorMessage = msg;
+    });
 
     session.sendMessage('test');
     mockProcess.emitStderr('Something went wrong');
     mockProcess.emitClose(1);
 
-    // Wait for nextTick to settle
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(errorMessage).toBe('Something went wrong');
   });
@@ -162,10 +229,14 @@ describe('ChatSessionImpl', () => {
   it('should not emit stderr as error if result was received', () => {
     createSession();
     let errorMessage = '';
-    session.onError((msg) => { errorMessage = msg; });
+    session.onError((msg) => {
+      errorMessage = msg;
+    });
 
     session.sendMessage('test');
-    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}');
+    mockProcess.emitStdout(
+      '{"type":"result","total_cost_usd":0.001,"duration_ms":100,"input_tokens":5,"output_tokens":3}',
+    );
     mockProcess.emitStderr('Informational warning');
     mockProcess.emitClose(0);
 
@@ -189,27 +260,48 @@ describe('ChatSessionImpl', () => {
     expect(session.state).toBe('idle');
   });
 
-  it('should support multi-turn conversation via stdin', () => {
-    createSession();
+  it('should support multi-turn conversation via --resume', () => {
+    const processes: MockProcess[] = [];
+    const factory = createMockProcessFactory(() => {
+      const p = new MockProcess();
+      processes.push(p);
+      return p;
+    });
+
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'mock',
+      baseArgs: ['-p'],
+      processFactory: factory,
+    });
+
     const events = collectEvents();
 
     session.sendMessage('first');
-    mockProcess.emitStdout('{"type":"system","subtype":"init","session_id":"s1"}');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 1"}]}}');
-    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.001,"duration_ms":50,"input_tokens":5,"output_tokens":3}');
+    processes[0].emitStdout('{"type":"system","subtype":"init","session_id":"s1"}');
+    processes[0].emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 1"}]}}',
+    );
+    processes[0].emitStdout(
+      '{"type":"result","total_cost_usd":0.001,"duration_ms":50,"input_tokens":5,"output_tokens":3}',
+    );
 
     session.sendMessage('second');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 2"}]}}');
-    mockProcess.emitStdout('{"type":"result","total_cost_usd":0.002,"duration_ms":60,"input_tokens":8,"output_tokens":5}');
+    processes[1].emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"Reply 2"}]}}',
+    );
+    processes[1].emitStdout(
+      '{"type":"result","total_cost_usd":0.002,"duration_ms":60,"input_tokens":8,"output_tokens":5}',
+    );
 
     const textEvents = events.filter((e) => e.type === 'text');
     expect(textEvents).toHaveLength(2);
     expect(textEvents[0].data).toEqual({ content: 'Reply 1' });
     expect(textEvents[1].data).toEqual({ content: 'Reply 2' });
 
-    const stdinData = mockProcess.getStdinData();
-    expect(stdinData).toContain('first\n');
-    expect(stdinData).toContain('second\n');
+    // Verify second spawn used --resume
+    expect(factory.records[1].args).toContain('--resume');
+    expect(factory.records[1].args).toContain('s1');
   });
 
   it('should emit error on spawn failure', () => {
@@ -225,7 +317,9 @@ describe('ChatSessionImpl', () => {
     });
 
     let errorMessage = '';
-    session.onError((msg) => { errorMessage = msg; });
+    session.onError((msg) => {
+      errorMessage = msg;
+    });
 
     session.sendMessage('test');
     expect(errorMessage).toBe('spawn ENOENT');
@@ -252,7 +346,9 @@ describe('ChatSessionImpl', () => {
     const events = collectEvents();
 
     session.sendMessage('think');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"Let me ponder..."}]}}');
+    mockProcess.emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"Let me ponder..."}]}}',
+    );
 
     expect(events[0]).toEqual({ type: 'thinking', data: { content: 'Let me ponder...' } });
   });
@@ -262,10 +358,81 @@ describe('ChatSessionImpl', () => {
     const events = collectEvents();
 
     session.sendMessage('use tool');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"path":"test.ts"}}]}}');
-    mockProcess.emitStdout('{"type":"assistant","message":{"content":[{"type":"tool_result","name":"Read","output":"file content"}]}}');
+    mockProcess.emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_01","name":"Read","input":{"path":"test.ts"}}]}}',
+    );
+    mockProcess.emitStdout(
+      '{"type":"assistant","message":{"content":[{"type":"tool_result","tool_use_id":"toolu_01","content":"file content"}]}}',
+    );
 
-    expect(events[0]).toEqual({ type: 'tool_use', data: { name: 'Read', input: { path: 'test.ts' } } });
-    expect(events[1]).toEqual({ type: 'tool_result', data: { name: 'Read', output: 'file content' } });
+    expect(events[0]).toEqual({
+      type: 'tool_use',
+      data: { id: 'toolu_01', name: 'Read', input: { path: 'test.ts' } },
+    });
+    expect(events[1]).toEqual({
+      type: 'tool_result',
+      data: { name: 'toolu_01', output: 'file content' },
+    });
+  });
+
+  it('should strip CLAUDECODE from env when spawning', () => {
+    const originalEnv = process.env.CLAUDECODE;
+    process.env.CLAUDECODE = '1';
+
+    try {
+      const factory = createMockProcessFactory(mockProcess);
+      session = new ChatSessionImpl({
+        provider: 'claude',
+        command: 'mock',
+        baseArgs: [],
+        processFactory: factory,
+      });
+
+      session.sendMessage('test');
+
+      expect(factory.records).toHaveLength(1);
+      const opts = factory.records[0].options;
+      expect(opts.env).toBeDefined();
+      expect((opts.env as Record<string, string | undefined>).CLAUDECODE).toBeUndefined();
+    } finally {
+      if (originalEnv !== undefined) {
+        process.env.CLAUDECODE = originalEnv;
+      } else {
+        delete process.env.CLAUDECODE;
+      }
+    }
+  });
+
+  it('should pass cwd and stdio options when spawning', () => {
+    const factory = createMockProcessFactory(mockProcess);
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'mock',
+      baseArgs: [],
+      cwd: '/tmp/test',
+      processFactory: factory,
+    });
+
+    session.sendMessage('test');
+
+    const opts = factory.records[0].options;
+    expect(opts.cwd).toBe('/tmp/test');
+    expect(opts.stdio).toEqual(['pipe', 'pipe', 'pipe']);
+  });
+
+  it('should use injected env when provided', () => {
+    const factory = createMockProcessFactory(mockProcess);
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'mock',
+      baseArgs: [],
+      env: { CUSTOM_VAR: 'test-value', PATH: '/usr/bin' },
+      processFactory: factory,
+    });
+
+    session.sendMessage('test');
+
+    const opts = factory.records[0].options;
+    expect((opts.env as Record<string, string>).CUSTOM_VAR).toBe('test-value');
   });
 });

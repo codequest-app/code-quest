@@ -1,17 +1,17 @@
-import { spawn, type ChildProcess } from 'child_process';
-import { randomUUID } from 'crypto';
+import { type ChildProcess, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { createParser } from './parsers';
 import type {
+  ChatProvider,
   ChatSession,
   ChatSessionOptions,
-  ChatStreamEvent,
   ChatStats,
-  ChatProvider,
-  StreamParser,
+  ChatStreamEvent,
   ProcessFactory,
+  StreamParser,
 } from './types';
 
-export type SessionState = 'idle' | 'processing' | 'awaiting_input';
+export type SessionState = 'idle' | 'processing';
 
 export class ChatSessionImpl implements ChatSession {
   readonly id: string;
@@ -20,10 +20,11 @@ export class ChatSessionImpl implements ChatSession {
   private readonly command: string;
   private readonly baseArgs: string[];
   private readonly cwd: string;
-  private readonly parser: StreamParser;
+  private readonly envOverride?: Record<string, string | undefined>;
   private readonly processFactory: ProcessFactory;
 
   private process: ChildProcess | null = null;
+  private parser: StreamParser;
   private _state: SessionState = 'idle';
   private eventHandlers: Array<(event: ChatStreamEvent) => void> = [];
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
@@ -31,6 +32,7 @@ export class ChatSessionImpl implements ChatSession {
   private exitHandlers: Array<() => void> = [];
   private stderrBuffer = '';
   private gotResult = false;
+  private allowedTools: Set<string> = new Set();
 
   get state(): SessionState {
     return this._state;
@@ -46,27 +48,28 @@ export class ChatSessionImpl implements ChatSession {
     this.command = options.command;
     this.baseArgs = options.baseArgs;
     this.cwd = options.cwd ?? process.cwd();
+    this.envOverride = options.env;
     this.parser = createParser(options.provider);
     this.processFactory = options.processFactory ?? spawn;
   }
 
   sendMessage(message: string): void {
-    if (!this.process) {
-      this.spawnPersistentProcess();
+    // Build args: baseArgs + resume (if continuing) + allowedTools + message
+    const args = [...this.baseArgs];
+    const sessionId = this.cliSessionId;
+    if (sessionId) {
+      args.push('--resume', sessionId);
     }
+    if (this.allowedTools.size > 0) {
+      args.push('--allowedTools', [...this.allowedTools].join(','));
+    }
+    args.push(message);
 
-    if (this.process && this.process.stdin?.writable) {
-      this._state = 'processing';
-      this.gotResult = false;
-      this.process.stdin.write(message + '\n');
-    }
+    this.spawnProcess(args);
   }
 
-  respond(data: string): void {
-    if (this.process && this.process.stdin?.writable) {
-      this._state = 'processing';
-      this.process.stdin.write(data + '\n');
-    }
+  addAllowedTool(tool: string): void {
+    this.allowedTools.add(tool);
   }
 
   abort(): void {
@@ -99,31 +102,46 @@ export class ChatSessionImpl implements ChatSession {
     this.exitHandlers.push(handler);
   }
 
-  private spawnPersistentProcess(): void {
+  private spawnProcess(args: string[]): void {
+    // Kill previous process if still running
+    if (this.process) {
+      this.process.kill('SIGTERM');
+      this.process = null;
+    }
+
     this.stderrBuffer = '';
     this.gotResult = false;
+    this._state = 'processing';
+
+    // Use injected env or inherit from process, stripping vars that prevent nested sessions
+    const env = { ...(this.envOverride ?? process.env) };
+    delete env.CLAUDECODE;
 
     try {
-      this.process = this.processFactory(this.command, [...this.baseArgs], {
+      this.process = this.processFactory(this.command, args, {
         cwd: this.cwd,
         stdio: ['pipe', 'pipe', 'pipe'],
+        env,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.emitError(message);
+      this._state = 'idle';
       return;
     }
 
+    // Close stdin so CLI processes the argument and doesn't wait for piped input.
+    this.process.stdin?.end();
+
     this.process.stdout?.on('data', (chunk: Buffer) => {
-      const events = this.parser.feed(chunk.toString());
+      const raw = chunk.toString();
+      const events = this.parser.feed(raw);
       for (const event of events) {
         this.emitEvent(event);
         if (event.type === 'result') {
           this.gotResult = true;
           this._state = 'idle';
           this.emitComplete((event.data as { stats: ChatStats }).stats);
-        } else if (event.type === 'permission_request') {
-          this._state = 'awaiting_input';
         }
       }
     });
@@ -135,6 +153,7 @@ export class ChatSessionImpl implements ChatSession {
     this.process.on('error', (error) => {
       this.emitError(error.message);
       this._state = 'idle';
+      this.process = null;
       this.emitExit();
     });
 

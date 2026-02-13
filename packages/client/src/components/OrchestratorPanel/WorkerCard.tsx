@@ -23,9 +23,10 @@ export function WorkerCard({ worker }: WorkerCardProps) {
   const color = STATUS_COLORS[worker.status];
   const providerLabel = worker.task.provider === 'claude' ? 'Claude' : 'Gemini';
 
-  const preview = worker.status === 'error'
-    ? worker.error || 'Unknown error'
-    : (worker.result || '').slice(0, 120);
+  const preview =
+    worker.status === 'error'
+      ? worker.error || 'Unknown error'
+      : (worker.result || '').slice(0, 120);
 
   return (
     <div className="worker-card" data-testid="worker-card" data-status={worker.status}>
@@ -44,7 +45,8 @@ export function WorkerCard({ worker }: WorkerCardProps) {
       {worker.stats && (
         <div className="worker-stats">
           {worker.stats.costUsd != null && `$${worker.stats.costUsd.toFixed(4)}`}
-          {worker.stats.durationMs != null && ` \u00B7 ${(worker.stats.durationMs / 1000).toFixed(1)}s`}
+          {worker.stats.durationMs != null &&
+            ` \u00B7 ${(worker.stats.durationMs / 1000).toFixed(1)}s`}
         </div>
       )}
 

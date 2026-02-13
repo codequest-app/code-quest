@@ -11,6 +11,7 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
   return (
     <div className="tool-use-block" data-testid="tool-use-block">
       <button
+        type="button"
         className="tool-use-header"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
@@ -18,11 +19,7 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
         <span className="tool-use-icon">{expanded ? '▼' : '▶'}</span>
         <span className="tool-use-name">{name}</span>
       </button>
-      {expanded && (
-        <pre className="tool-use-input">
-          {JSON.stringify(input, null, 2)}
-        </pre>
-      )}
+      {expanded && <pre className="tool-use-input">{JSON.stringify(input, null, 2)}</pre>}
 
       <style>{`
         .tool-use-block {

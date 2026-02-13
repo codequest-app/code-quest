@@ -1,16 +1,24 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import request from 'supertest';
-import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createContainer } from '../container';
 import { ServerImpl } from '../server';
-import type { Server } from '../types';
+
+function createServer(port: number): ServerImpl {
+  const container = createContainer();
+  container.bind(ServerImpl).toSelf();
+  const server = container.get(ServerImpl);
+  server.setConfig({ port, cors: true });
+  return server;
+}
 
 describe('Server Integration', () => {
-  let server: Server;
+  let server: ServerImpl;
   let clientSocket: ClientSocket;
   const port = 0; // Use random port
 
   beforeEach(async () => {
-    server = new ServerImpl({ port, cors: true });
+    server = createServer(port);
     await server.start();
   });
 
@@ -61,9 +69,7 @@ describe('Server Integration', () => {
 
   describe('HTTP endpoints', () => {
     it('should respond to health check', async () => {
-      const response = await request(`http://localhost:${server.getPort()}`).get(
-        '/api/health'
-      );
+      const response = await request(`http://localhost:${server.getPort()}`).get('/api/health');
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -86,13 +92,9 @@ describe('Server Integration', () => {
 
     it('should list terminals via HTTP', async () => {
       // Create a terminal first
-      await request(`http://localhost:${server.getPort()}`)
-        .post('/api/terminals')
-        .send({});
+      await request(`http://localhost:${server.getPort()}`).post('/api/terminals').send({});
 
-      const response = await request(`http://localhost:${server.getPort()}`).get(
-        '/api/terminals'
-      );
+      const response = await request(`http://localhost:${server.getPort()}`).get('/api/terminals');
 
       expect(response.status).toBe(200);
       expect(response.body.sessions).toHaveLength(1);
@@ -115,13 +117,11 @@ describe('Server Integration', () => {
     });
 
     it('should create terminal via WebSocket', async () => {
-      const created = new Promise<{ sessionId: string; pid: number }>(
-        (resolve) => {
-          clientSocket.on('terminal:created', (sessionId, pid) => {
-            resolve({ sessionId, pid });
-          });
-        }
-      );
+      const created = new Promise<{ sessionId: string; pid: number }>((resolve) => {
+        clientSocket.on('terminal:created', (sessionId, pid) => {
+          resolve({ sessionId, pid });
+        });
+      });
 
       clientSocket.emit('terminal:create', { cols: 100, rows: 30 });
 
@@ -169,7 +169,7 @@ describe('Server Integration', () => {
 
       // Verify terminal exists via HTTP GET
       const getResponse = await request(`http://localhost:${server.getPort()}`).get(
-        `/api/terminals/${terminalId}`
+        `/api/terminals/${terminalId}`,
       );
 
       expect(getResponse.status).toBe(200);
@@ -201,8 +201,9 @@ describe('Server Integration', () => {
       clientSocket.emit('terminal:write', terminalId, 'echo "test"\n');
 
       // Should be able to delete via HTTP
-      const deleteResponse = await request(`http://localhost:${server.getPort()}`)
-        .delete(`/api/terminals/${terminalId}`);
+      const deleteResponse = await request(`http://localhost:${server.getPort()}`).delete(
+        `/api/terminals/${terminalId}`,
+      );
 
       expect(deleteResponse.status).toBe(204);
     });
@@ -235,8 +236,9 @@ describe('Server Integration', () => {
       });
 
       // Delete via HTTP
-      const deleteResponse = await request(`http://localhost:${server.getPort()}`)
-        .delete(`/api/terminals/${terminalId}`);
+      const deleteResponse = await request(`http://localhost:${server.getPort()}`).delete(
+        `/api/terminals/${terminalId}`,
+      );
 
       expect(deleteResponse.status).toBe(204);
 
@@ -257,16 +259,16 @@ describe('Server Integration', () => {
 
       // Create terminals concurrently via HTTP and WebSocket
       const httpPromises = Array.from({ length: 3 }, () =>
-        request(`http://localhost:${server.getPort()}`)
-          .post('/api/terminals')
-          .send({})
+        request(`http://localhost:${server.getPort()}`).post('/api/terminals').send({}),
       );
 
-      const wsPromises = Array.from({ length: 3 }, () =>
-        new Promise<string>((resolve) => {
-          clientSocket.once('terminal:created', (id) => resolve(id));
-          clientSocket.emit('terminal:create');
-        })
+      const wsPromises = Array.from(
+        { length: 3 },
+        () =>
+          new Promise<string>((resolve) => {
+            clientSocket.once('terminal:created', (id) => resolve(id));
+            clientSocket.emit('terminal:create');
+          }),
       );
 
       const [httpResults, wsResults] = await Promise.all([
@@ -285,7 +287,7 @@ describe('Server Integration', () => {
 
       // Total 6 terminals should be created
       const listResponse = await request(`http://localhost:${server.getPort()}`).get(
-        '/api/terminals'
+        '/api/terminals',
       );
 
       expect(listResponse.body.sessions).toHaveLength(6);
@@ -295,12 +297,8 @@ describe('Server Integration', () => {
   describe('cleanup', () => {
     it('should cleanup all terminals on server stop', async () => {
       // Create some terminals
-      await request(`http://localhost:${server.getPort()}`)
-        .post('/api/terminals')
-        .send({});
-      await request(`http://localhost:${server.getPort()}`)
-        .post('/api/terminals')
-        .send({});
+      await request(`http://localhost:${server.getPort()}`).post('/api/terminals').send({});
+      await request(`http://localhost:${server.getPort()}`).post('/api/terminals').send({});
 
       const status = server.getStatus();
       expect(status.activeSessions).toBe(2);
@@ -350,7 +348,7 @@ describe('Server Integration', () => {
     it('should handle invalid terminal operations gracefully', async () => {
       // Try to get non-existent terminal
       const response = await request(`http://localhost:${server.getPort()}`).get(
-        '/api/terminals/invalid-id'
+        '/api/terminals/invalid-id',
       );
 
       expect(response.status).toBe(404);

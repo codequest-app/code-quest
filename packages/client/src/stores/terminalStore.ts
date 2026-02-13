@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TerminalStore, TerminalSession, SessionType } from '../types';
+import type { SessionType, TerminalSession, TerminalStore } from '../types';
 
 /**
  * Terminal store using Zustand

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 3: 事件解析能力
  *
@@ -10,10 +11,10 @@
  * - 能否捕獲對話內容？
  */
 
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '03-event-parsing.log');
 
@@ -24,22 +25,17 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 function findClaudeCLI(): string {
-  const possiblePaths = [
-    'claude',
-    path.join(process.env.HOME || '', '.claude/local/claude')
-  ];
+  const possiblePaths = ['claude', path.join(process.env.HOME || '', '.claude/local/claude')];
 
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
       return p;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   throw new Error('Claude CLI not found');
@@ -51,7 +47,7 @@ interface EventStats {
   thinking: number;
   dialogue: number;
   unknown: number;
-  toolDetails: Array<{ tool: string; params: any }>;
+  toolDetails: Array<{ tool: string; params: unknown }>;
 }
 
 async function test() {
@@ -73,8 +69,8 @@ async function test() {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        TERM: 'xterm-256color'
-      }
+        TERM: 'xterm-256color',
+      },
     });
 
     const stats: EventStats = {
@@ -83,7 +79,7 @@ async function test() {
       thinking: 0,
       dialogue: 0,
       unknown: 0,
-      toolDetails: []
+      toolDetails: [],
     };
 
     let lineBuffer = '';
@@ -94,7 +90,7 @@ async function test() {
       const lines = lineBuffer.split('\n');
       lineBuffer = lines.pop() || '';
 
-      lines.forEach(line => {
+      lines.forEach((line) => {
         if (!line.trim()) return;
 
         // 嘗試解析為 JSON
@@ -115,7 +111,7 @@ async function test() {
 
                 stats.toolDetails.push({
                   tool: event.name || event.tool_name,
-                  params
+                  params,
                 });
               }
               break;
@@ -235,10 +231,12 @@ async function test() {
   });
 }
 
-test().then(() => {
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

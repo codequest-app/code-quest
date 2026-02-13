@@ -4,6 +4,7 @@
  * Starts the terminal management server with HTTP API and WebSocket support
  */
 
+import { createContainer } from '../container.js';
 import { ServerImpl } from '../server.js';
 import type { ServerConfig } from '../types.js';
 
@@ -19,14 +20,14 @@ async function main() {
   const config: ServerConfig = {
     port,
     host,
-    cors: {
-      origin: process.env.CORS_ORIGIN || '*',
-      credentials: true,
-    },
+    cors: true,
   };
 
-  // Create and start server
-  const server = new ServerImpl(config);
+  // Create DI container and resolve server
+  const container = createContainer();
+  container.bind(ServerImpl).toSelf();
+  const server = container.get(ServerImpl);
+  server.setConfig(config);
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { io, type Socket } from 'socket.io-client';
 
 /**
@@ -65,9 +65,11 @@ test.describe('Claude CLI integration (real)', () => {
       shell: 'claude',
       args: [
         '--print',
-        '--output-format', 'stream-json',
+        '--output-format',
+        'stream-json',
         '--verbose',
-        '-p', 'Say hello in one sentence',
+        '-p',
+        'Say hello in one sentence',
       ],
     });
 

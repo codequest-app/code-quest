@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+import { injectable } from 'inversify';
 import { TerminalSessionImpl } from './session';
 import type { TerminalManager, TerminalSession, TerminalSessionOptions } from './types';
 
@@ -5,6 +7,7 @@ import type { TerminalManager, TerminalSession, TerminalSessionOptions } from '.
  * Terminal manager implementation
  * Manages multiple terminal sessions
  */
+@injectable()
 export class TerminalManagerImpl implements TerminalManager {
   private readonly sessions: Map<string, TerminalSession> = new Map();
 

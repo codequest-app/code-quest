@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 2: Claude CLI 輸出格式
  *
@@ -10,10 +11,10 @@
  * - 是否有明確的事件分隔符？
  */
 
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '02-output-format.log');
 
@@ -24,22 +25,17 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 function findClaudeCLI(): string {
-  const possiblePaths = [
-    'claude',
-    path.join(process.env.HOME || '', '.claude/local/claude')
-  ];
+  const possiblePaths = ['claude', path.join(process.env.HOME || '', '.claude/local/claude')];
 
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
       return p;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   throw new Error('Claude CLI not found');
@@ -67,8 +63,8 @@ async function testFormat(config: TestConfig): Promise<void> {
       env: {
         ...process.env,
         TERM: 'xterm-256color',
-        FORCE_COLOR: '1'
-      }
+        FORCE_COLOR: '1',
+      },
     });
 
     let fullOutput = '';
@@ -94,7 +90,7 @@ async function testFormat(config: TestConfig): Promise<void> {
       const lines = lineBuffer.split('\n');
       lineBuffer = lines.pop() || '';
 
-      lines.forEach(line => {
+      lines.forEach((line) => {
         if (!line.trim()) return;
 
         lineCount++;
@@ -125,7 +121,7 @@ async function testFormat(config: TestConfig): Promise<void> {
       log(`Exit code: ${exitCode}`);
       log(`總行數: ${lineCount}`);
       log(`JSON 行數: ${jsonLineCount}`);
-      log(`JSON 比例: ${lineCount > 0 ? (jsonLineCount / lineCount * 100).toFixed(1) : 0}%`);
+      log(`JSON 比例: ${lineCount > 0 ? ((jsonLineCount / lineCount) * 100).toFixed(1) : 0}%`);
 
       // 分析輸出格式
       if (jsonLineCount === lineCount && lineCount > 0) {
@@ -160,18 +156,18 @@ async function test() {
     {
       name: '預設格式',
       args: ['-p'],
-      prompt: 'Say "Hello World"'
+      prompt: 'Say "Hello World"',
     },
     {
       name: '--print 模式',
       args: ['--print', '-p'],
-      prompt: 'Say "Hello World"'
+      prompt: 'Say "Hello World"',
     },
     {
       name: '--streaming 模式',
       args: ['--streaming', '-p'],
-      prompt: 'Say "Hello World"'
-    }
+      prompt: 'Say "Hello World"',
+    },
   ];
 
   for (const config of testConfigs) {
@@ -186,11 +182,13 @@ async function test() {
   log(`詳細輸出已儲存至: ${LOG_FILE}`);
 }
 
-test().then(() => {
-  logStream.end();
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    logStream.end();
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

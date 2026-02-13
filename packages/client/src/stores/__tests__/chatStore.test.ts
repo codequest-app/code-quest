@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useChatStore } from '../chatStore';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { ChatStreamEvent } from '../../types';
+import { useChatStore } from '../chatStore';
 
 describe('chatStore', () => {
   beforeEach(() => {
@@ -15,9 +15,9 @@ describe('chatStore', () => {
 
     const session = store.getChatSession('session-1');
     expect(session).toBeDefined();
-    expect(session!.provider).toBe('claude');
-    expect(session!.messages).toEqual([]);
-    expect(session!.isProcessing).toBe(false);
+    expect(session?.provider).toBe('claude');
+    expect(session?.messages).toEqual([]);
+    expect(session?.isProcessing).toBe(false);
   });
 
   it('should add user message', () => {
@@ -26,10 +26,10 @@ describe('chatStore', () => {
     store.addUserMessage('session-1', 'Hello!');
 
     const session = useChatStore.getState().getChatSession('session-1');
-    expect(session!.messages).toHaveLength(1);
-    expect(session!.messages[0].role).toBe('user');
-    expect(session!.messages[0].content).toBe('Hello!');
-    expect(session!.isProcessing).toBe(true);
+    expect(session?.messages).toHaveLength(1);
+    expect(session?.messages[0].role).toBe('user');
+    expect(session?.messages[0].content).toBe('Hello!');
+    expect(session?.isProcessing).toBe(true);
   });
 
   it('should append stream delta to current assistant message', () => {
@@ -41,17 +41,17 @@ describe('chatStore', () => {
     useChatStore.getState().handleChatEvent('session-1', textEvent);
 
     const session = useChatStore.getState().getChatSession('session-1');
-    expect(session!.messages).toHaveLength(2);
-    expect(session!.messages[1].role).toBe('assistant');
-    expect(session!.messages[1].content).toBe('Hi');
-    expect(session!.messages[1].isStreaming).toBe(true);
+    expect(session?.messages).toHaveLength(2);
+    expect(session?.messages[1].role).toBe('assistant');
+    expect(session?.messages[1].content).toBe('Hi');
+    expect(session?.messages[1].isStreaming).toBe(true);
 
     // Append more text
     const textEvent2: ChatStreamEvent = { type: 'text', data: { content: ' there!' } };
     useChatStore.getState().handleChatEvent('session-1', textEvent2);
 
     const session2 = useChatStore.getState().getChatSession('session-1');
-    expect(session2!.messages[1].content).toBe('Hi there!');
+    expect(session2?.messages[1].content).toBe('Hi there!');
   });
 
   it('should handle thinking events', () => {
@@ -63,7 +63,7 @@ describe('chatStore', () => {
     useChatStore.getState().handleChatEvent('session-1', thinkingEvent);
 
     const session = useChatStore.getState().getChatSession('session-1');
-    expect(session!.messages[1].thinking).toBe('Hmm...');
+    expect(session?.messages[1].thinking).toBe('Hmm...');
   });
 
   it('should handle tool_use events', () => {
@@ -73,13 +73,13 @@ describe('chatStore', () => {
 
     const toolUseEvent: ChatStreamEvent = {
       type: 'tool_use',
-      data: { name: 'Read', input: { file_path: 'test.ts' } },
+      data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
     };
     useChatStore.getState().handleChatEvent('session-1', toolUseEvent);
 
     const session = useChatStore.getState().getChatSession('session-1');
-    expect(session!.messages[1].toolUse).toHaveLength(1);
-    expect(session!.messages[1].toolUse![0].name).toBe('Read');
+    expect(session?.messages[1].toolUse).toHaveLength(1);
+    expect(session?.messages[1].toolUse?.[0].name).toBe('Read');
   });
 
   it('should finalize assistant message on result', () => {
@@ -98,31 +98,140 @@ describe('chatStore', () => {
     });
 
     const session = useChatStore.getState().getChatSession('session-1');
-    expect(session!.messages[1].isStreaming).toBe(false);
-    expect(session!.messages[1].stats).toEqual({ costUsd: 0.001, durationMs: 500 });
-    expect(session!.isProcessing).toBe(false);
+    expect(session?.messages[1].isStreaming).toBe(false);
+    expect(session?.messages[1].stats).toEqual({ costUsd: 0.001, durationMs: 500 });
+    expect(session?.isProcessing).toBe(false);
   });
 
   it('should track processing state', () => {
     const store = useChatStore.getState();
     store.initChatSession('session-1', 'claude');
 
-    expect(useChatStore.getState().getChatSession('session-1')!.isProcessing).toBe(false);
+    expect(useChatStore.getState().getChatSession('session-1')?.isProcessing).toBe(false);
 
     store.addUserMessage('session-1', 'Hello');
-    expect(useChatStore.getState().getChatSession('session-1')!.isProcessing).toBe(true);
+    expect(useChatStore.getState().getChatSession('session-1')?.isProcessing).toBe(true);
 
     useChatStore.getState().handleChatEvent('session-1', {
       type: 'text',
       data: { content: 'Hi' },
     });
-    expect(useChatStore.getState().getChatSession('session-1')!.isProcessing).toBe(true);
+    expect(useChatStore.getState().getChatSession('session-1')?.isProcessing).toBe(true);
 
     useChatStore.getState().handleChatEvent('session-1', {
       type: 'result',
       data: { stats: {} },
     });
-    expect(useChatStore.getState().getChatSession('session-1')!.isProcessing).toBe(false);
+    expect(useChatStore.getState().getChatSession('session-1')?.isProcessing).toBe(false);
+  });
+
+  it('should init session with empty allowedTools', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+
+    const session = store.getChatSession('session-1');
+    expect(session?.allowedTools).toEqual([]);
+  });
+
+  it('should trigger pendingPermission on result when tool_use has no matching tool_result', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+    store.addUserMessage('session-1', 'Read a file');
+
+    // tool_use without a matching tool_result = denied
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'tool_use',
+      data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'text',
+      data: { content: 'I need permission to read that file.' },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'result',
+      data: { stats: {} },
+    });
+
+    const session = useChatStore.getState().getChatSession('session-1');
+    expect(session?.pendingPermission).toBeDefined();
+    expect(session?.pendingPermission?.toolName).toBe('Read');
+  });
+
+  it('should NOT trigger pendingPermission when tool_use has matching tool_result', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+    store.addUserMessage('session-1', 'Read a file');
+
+    // tool_use followed by tool_result = executed successfully
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'tool_use',
+      data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'tool_result',
+      data: { name: 'Read', output: 'file contents here' },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'result',
+      data: { stats: {} },
+    });
+
+    const session = useChatStore.getState().getChatSession('session-1');
+    expect(session?.pendingPermission).toBeUndefined();
+  });
+
+  it('should NOT trigger pendingPermission when denied tool is already in allowedTools', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+    store.allowTool('session-1', 'Read');
+    store.addUserMessage('session-1', 'Read a file');
+
+    // tool_use without tool_result, but tool already allowed
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'tool_use',
+      data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'result',
+      data: { stats: {} },
+    });
+
+    const session = useChatStore.getState().getChatSession('session-1');
+    expect(session?.pendingPermission).toBeUndefined();
+  });
+
+  it('should add tool to allowedTools and clear pendingPermission via allowTool', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+    store.addUserMessage('session-1', 'Read a file');
+
+    // Simulate denied tool flow
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'tool_use',
+      data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
+    });
+    useChatStore.getState().handleChatEvent('session-1', {
+      type: 'result',
+      data: { stats: {} },
+    });
+
+    // Allow the tool
+    useChatStore.getState().allowTool('session-1', 'Read');
+
+    const session = useChatStore.getState().getChatSession('session-1');
+    expect(session?.allowedTools).toContain('Read');
+    expect(session?.pendingPermission).toBeUndefined();
+  });
+
+  it('should not duplicate tools in allowedTools', () => {
+    const store = useChatStore.getState();
+    store.initChatSession('session-1', 'claude');
+
+    store.allowTool('session-1', 'Read');
+    store.allowTool('session-1', 'Read');
+
+    const session = useChatStore.getState().getChatSession('session-1');
+    expect(session?.allowedTools).toEqual(['Read']);
   });
 
   it('should remove chat session', () => {
@@ -131,5 +240,165 @@ describe('chatStore', () => {
 
     useChatStore.getState().removeChatSession('session-1');
     expect(useChatStore.getState().getChatSession('session-1')).toBeUndefined();
+  });
+
+  describe('AskUserQuestion', () => {
+    it('should set pendingQuestion (not pendingPermission) when AskUserQuestion tool_use has no result', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+      store.addUserMessage('session-1', 'Help me');
+
+      const questionsInput = {
+        questions: [
+          {
+            question: 'Which approach?',
+            header: 'Approach',
+            options: [
+              { label: 'Option A', description: 'First approach' },
+              { label: 'Option B', description: 'Second approach' },
+            ],
+            multiSelect: false,
+          },
+        ],
+      };
+
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: { id: 'toolu_ask_1', name: 'AskUserQuestion', input: questionsInput },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'text',
+        data: { content: 'I need your input.' },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingQuestion).toBeDefined();
+      expect(session?.pendingQuestion?.questions).toHaveLength(1);
+      expect(session?.pendingQuestion?.questions[0].question).toBe('Which approach?');
+      expect(session?.pendingPermission).toBeUndefined();
+    });
+
+    it('should still trigger pendingPermission for other denied tools alongside AskUserQuestion', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+      store.addUserMessage('session-1', 'Do something');
+
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: {
+          id: 'toolu_ask_1',
+          name: 'AskUserQuestion',
+          input: { questions: [{ question: 'Q?', options: [{ label: 'A' }] }] },
+        },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: { id: 'toolu_2', name: 'Bash', input: { command: 'rm -rf /' } },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingQuestion).toBeDefined();
+      expect(session?.pendingPermission).toBeDefined();
+      expect(session?.pendingPermission?.toolName).toBe('Bash');
+    });
+
+    it('should clear pendingQuestion via clearPendingQuestion', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+      store.addUserMessage('session-1', 'Help me');
+
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: {
+          id: 'toolu_ask_1',
+          name: 'AskUserQuestion',
+          input: { questions: [{ question: 'Q?', options: [{ label: 'A' }] }] },
+        },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+
+      // Verify it's set
+      expect(useChatStore.getState().getChatSession('session-1')?.pendingQuestion).toBeDefined();
+
+      // Clear it
+      useChatStore.getState().clearPendingQuestion('session-1');
+      expect(useChatStore.getState().getChatSession('session-1')?.pendingQuestion).toBeUndefined();
+    });
+
+    it('should set pendingQuestion even when CLI auto-deny produces tool_result for AskUserQuestion', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+      store.addUserMessage('session-1', 'Help me');
+
+      const questionsInput = {
+        questions: [
+          {
+            question: 'Which approach?',
+            header: 'Approach',
+            options: [
+              { label: 'Option A', description: 'First approach' },
+              { label: 'Option B', description: 'Second approach' },
+            ],
+          },
+        ],
+      };
+
+      // tool_use arrives
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: { id: 'toolu_ask_1', name: 'AskUserQuestion', input: questionsInput },
+      });
+      // CLI auto-deny produces a tool_result, clearing it from unresolvedToolUses
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_result',
+        data: { name: 'AskUserQuestion', output: 'User denied this request' },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'text',
+        data: { content: 'I see the question was denied.' },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      // Should still detect AskUserQuestion even though tool_result cleared unresolvedToolUses
+      expect(session?.pendingQuestion).toBeDefined();
+      expect(session?.pendingQuestion?.questions).toHaveLength(1);
+      expect(session?.pendingQuestion?.questions[0].question).toBe('Which approach?');
+      expect(session?.pendingPermission).toBeUndefined();
+    });
+
+    it('should not set pendingQuestion for other denied tools', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+      store.addUserMessage('session-1', 'Read a file');
+
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'tool_use',
+        data: { id: 'toolu_1', name: 'Read', input: { file_path: 'test.ts' } },
+      });
+      useChatStore.getState().handleChatEvent('session-1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingQuestion).toBeUndefined();
+      expect(session?.pendingPermission).toBeDefined();
+      expect(session?.pendingPermission?.toolName).toBe('Read');
+    });
   });
 });

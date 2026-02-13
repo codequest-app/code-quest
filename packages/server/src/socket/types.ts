@@ -2,10 +2,10 @@
  * Socket.io types and interfaces
  */
 
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Socket, Server as SocketIOServer } from 'socket.io';
+import type { ChatManager, ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types';
+import type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types';
 import type { TerminalManager } from '../terminal/types';
-import type { ChatManager, ChatStreamEvent, ChatStats, ChatProvider } from '../chat/types';
-import type { SubTask, WorkerInfo, OrchestratorStatus } from '../orchestrator/types';
 
 /**
  * Socket events for client -> server
@@ -41,8 +41,8 @@ export interface ClientToServerEvents {
   /** Abort the current chat response */
   'chat:abort': (sessionId: string) => void;
 
-  /** Respond to a chat permission prompt */
-  'chat:respond': (sessionId: string, response: string) => void;
+  /** Allow a tool for the chat session */
+  'chat:allow-tool': (sessionId: string, toolName: string) => void;
 
   /** Kill a chat session */
   'chat:kill': (sessionId: string) => void;
@@ -130,7 +130,7 @@ export interface SocketHandlerConfig {
   chatManager: ChatManager;
 }
 
-export type { SubTask, WorkerInfo, OrchestratorStatus } from '../orchestrator/types';
+export type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types';
 
 /**
  * Socket handler interface

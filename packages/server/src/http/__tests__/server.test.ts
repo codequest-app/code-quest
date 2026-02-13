@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import type { Express } from 'express';
 import request from 'supertest';
-import { HttpServerImpl } from '../server';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TerminalManagerImpl } from '../../terminal/manager';
 import type { TerminalManager } from '../../terminal/types';
-import type { Express } from 'express';
+import { HttpServerImpl } from '../server';
 
 describe('HttpServer', () => {
   let server: HttpServerImpl;
@@ -115,13 +115,11 @@ describe('HttpServer', () => {
     });
 
     it('should create terminal with custom options', async () => {
-      const response = await request(app)
-        .post('/api/terminals')
-        .send({
-          cols: 100,
-          rows: 30,
-          cwd: process.cwd(),
-        });
+      const response = await request(app).post('/api/terminals').send({
+        cols: 100,
+        rows: 30,
+        cwd: process.cwd(),
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -131,11 +129,9 @@ describe('HttpServer', () => {
     });
 
     it('should handle invalid shell gracefully', async () => {
-      const response = await request(app)
-        .post('/api/terminals')
-        .send({
-          shell: '/nonexistent/shell',
-        });
+      const response = await request(app).post('/api/terminals').send({
+        shell: '/nonexistent/shell',
+      });
 
       expect(response.status).toBe(500);
       expect(response.body).toMatchObject({
@@ -145,11 +141,9 @@ describe('HttpServer', () => {
     });
 
     it('should validate request body', async () => {
-      const response = await request(app)
-        .post('/api/terminals')
-        .send({
-          cols: 'invalid', // Should be number
-        });
+      const response = await request(app).post('/api/terminals').send({
+        cols: 'invalid', // Should be number
+      });
 
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
@@ -223,9 +217,7 @@ describe('HttpServer', () => {
 
   describe('CORS', () => {
     it('should have CORS headers', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Origin', 'http://localhost:3000');
+      const response = await request(app).get('/api/health').set('Origin', 'http://localhost:3000');
 
       expect(response.headers['access-control-allow-origin']).toBe('*');
     });
@@ -285,7 +277,7 @@ describe('HttpServer', () => {
 
     it('should handle concurrent terminal creation', async () => {
       const requests = Array.from({ length: 5 }, () =>
-        request(app).post('/api/terminals').send({})
+        request(app).post('/api/terminals').send({}),
       );
 
       const responses = await Promise.all(requests);

@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
 import type { IPty } from 'node-pty';
+import { vi } from 'vitest';
 
 /**
  * Mock IPty implementation for testing
@@ -29,7 +29,7 @@ class MockPty implements IPty {
     if (!this._killed) {
       // Simulate echo back
       setTimeout(() => {
-        this.dataHandlers.forEach(handler => handler(data));
+        for (const handler of this.dataHandlers) handler(data);
       }, 10);
     }
   }
@@ -39,11 +39,11 @@ class MockPty implements IPty {
     this.rows = rows;
   }
 
-  kill(signal?: string): void {
+  kill(_signal?: string): void {
     if (!this._killed) {
       this._killed = true;
       setTimeout(() => {
-        this.exitHandlers.forEach(handler => handler({ exitCode: 0 }));
+        for (const handler of this.exitHandlers) handler({ exitCode: 0 });
       }, 10);
     }
   }
@@ -54,16 +54,16 @@ class MockPty implements IPty {
 
   // Expose for testing
   _emitData(data: string): void {
-    this.dataHandlers.forEach(handler => handler(data));
+    for (const handler of this.dataHandlers) handler(data);
   }
 
   _emitExit(exitCode: number): void {
     this._killed = true;
-    this.exitHandlers.forEach(handler => handler({ exitCode }));
+    for (const handler of this.exitHandlers) handler({ exitCode });
   }
 }
 
-export const spawn = vi.fn((shell: string, args?: string[], options?: any) => {
+export const spawn = vi.fn((shell: string, _args?: string[], _options?: any) => {
   // Simulate failure for invalid shell
   if (shell.includes('nonexistent')) {
     throw new Error('posix_spawnp failed.');

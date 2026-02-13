@@ -1,27 +1,33 @@
+import 'reflect-metadata';
+import { inject, injectable } from 'inversify';
 import { Server as SocketIOServer } from 'socket.io';
+import type { ChatManager } from './chat/types';
+import { TYPES } from './container';
 import { HttpServerImpl } from './http/server';
 import { SocketHandlerImpl } from './socket/handler';
-import { TerminalManagerImpl } from './terminal/manager';
-import { ChatManagerImpl } from './chat/manager';
+import type { TerminalManager } from './terminal/types';
 import type { Server, ServerConfig, ServerStatus } from './types';
 
 /**
  * Main server implementation
- * Integrates HTTP server, Socket.io, and terminal management
+ * Integrates HTTP server, Socket.io, and terminal management.
+ * Uses inversify for dependency injection.
  */
+@injectable()
 export class ServerImpl implements Server {
-  private readonly config: ServerConfig;
-  private readonly terminalManager: TerminalManagerImpl;
-  private readonly chatManager: ChatManagerImpl;
+  private config: ServerConfig = { port: 0 };
   private httpServer: HttpServerImpl | null = null;
   private io: SocketIOServer | null = null;
-  private socketHandler: SocketHandlerImpl | null = null;
-  private readonly startTime: number;
+  private startTime: number = Date.now();
 
-  constructor(config: ServerConfig) {
+  constructor(
+    @inject(TYPES.TerminalManager) private readonly terminalManager: TerminalManager,
+    @inject(TYPES.ChatManager) private readonly chatManager: ChatManager,
+  ) {}
+
+  /** Set config before calling start(). Inversify creates the instance first. */
+  setConfig(config: ServerConfig): void {
     this.config = config;
-    this.terminalManager = new TerminalManagerImpl();
-    this.chatManager = new ChatManagerImpl();
     this.startTime = Date.now();
   }
 
@@ -78,7 +84,7 @@ export class ServerImpl implements Server {
     // 2. Close Socket.io connections
     if (this.io) {
       await new Promise<void>((resolve) => {
-        this.io!.close(() => {
+        this.io?.close(() => {
           console.log('Socket.io server closed');
           resolve();
         });
@@ -89,13 +95,10 @@ export class ServerImpl implements Server {
     this.socketHandler = null;
 
     // 3. Stop HTTP server
-    // Note: Socket.io.close() doesn't close the HTTP server
-    // We need to close it separately
     if (this.httpServer) {
       try {
         await this.httpServer.stop();
       } catch (error) {
-        // Ignore error if server is already closed
         if ((error as any).code !== 'ERR_SERVER_NOT_RUNNING') {
           throw error;
         }
@@ -114,7 +117,7 @@ export class ServerImpl implements Server {
   }
 
   isRunning(): boolean {
-    return this.httpServer !== null && this.httpServer.isRunning();
+    return this.httpServer?.isRunning();
   }
 
   getStatus(): ServerStatus {

@@ -57,11 +57,10 @@ export type ChatStreamEvent =
   | { type: 'init'; data: { sessionId: string } }
   | { type: 'text'; data: { content: string } }
   | { type: 'thinking'; data: { content: string } }
-  | { type: 'tool_use'; data: { name: string; input: unknown } }
+  | { type: 'tool_use'; data: { id: string; name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; output: string } }
   | { type: 'result'; data: { stats: ChatStats } }
-  | { type: 'error'; data: { message: string } }
-  | { type: 'permission_request'; data: { toolName: string; description: string } };
+  | { type: 'error'; data: { message: string } };
 
 export interface ChatStats {
   costUsd?: number;
@@ -100,7 +99,7 @@ export interface ChatMessage {
   role: ChatMessageRole;
   content: string;
   thinking?: string;
-  toolUse?: Array<{ name: string; input: unknown }>;
+  toolUse?: Array<{ id: string; name: string; input: unknown }>;
   toolResult?: Array<{ name: string; output: string }>;
   stats?: ChatStats;
   isStreaming?: boolean;
@@ -146,7 +145,7 @@ export interface ClientToServerEvents {
   'terminal:list': () => void;
   'chat:create': (options: { provider: ChatProvider; cwd?: string }) => void;
   'chat:send': (sessionId: string, message: string) => void;
-  'chat:respond': (sessionId: string, response: string) => void;
+  'chat:allow-tool': (sessionId: string, toolName: string) => void;
   'chat:abort': (sessionId: string) => void;
   'chat:kill': (sessionId: string) => void;
   'orchestrator:create': (options: { provider: ChatProvider }) => void;

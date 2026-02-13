@@ -1,6 +1,6 @@
+import { randomBytes } from 'node:crypto';
 import * as pty from 'node-pty';
-import { randomBytes } from 'crypto';
-import type { TerminalSession, TerminalSessionOptions, TerminalDimensions } from './types';
+import type { TerminalDimensions, TerminalSession, TerminalSessionOptions } from './types';
 
 /**
  * Terminal session implementation using node-pty
@@ -17,7 +17,9 @@ export class TerminalSessionImpl implements TerminalSession {
     this._id = randomBytes(16).toString('hex');
 
     // Determine shell to use
-    const shell = options?.shell || (process.platform === 'win32' ? 'powershell.exe' : process.env.SHELL || '/bin/bash');
+    const shell =
+      options?.shell ||
+      (process.platform === 'win32' ? 'powershell.exe' : process.env.SHELL || '/bin/bash');
     const cwd = options?.cwd || process.cwd();
 
     // Spawn PTY process
@@ -32,16 +34,18 @@ export class TerminalSessionImpl implements TerminalSession {
 
       // Set up data handler
       this._ptyProcess.onData((data) => {
-        this.dataCallbacks.forEach((callback) => callback(data));
+        for (const callback of this.dataCallbacks) callback(data);
       });
 
       // Set up exit handler
       this._ptyProcess.onExit(({ exitCode }) => {
         this._isAlive = false;
-        this.exitCallbacks.forEach((callback) => callback(exitCode));
+        for (const callback of this.exitCallbacks) callback(exitCode);
       });
     } catch (error) {
-      throw new Error(`Failed to spawn terminal: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to spawn terminal: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

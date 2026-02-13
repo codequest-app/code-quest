@@ -1,0 +1,18 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{ts,tsx,js,json}"
+      run: pnpm biome check --write {staged_files}
+      stage_fixed: true
+    typecheck-client:
+      glob: "packages/client/**/*.{ts,tsx}"
+      run: pnpm --filter client exec tsc --noEmit
+
+pre-push:
+  parallel: true
+  commands:
+    test-server:
+      run: pnpm --filter server exec vitest run
+    test-client:
+      run: pnpm --filter client exec vitest run

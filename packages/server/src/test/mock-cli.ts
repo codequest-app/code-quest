@@ -6,14 +6,14 @@
  * Behavior controlled by MOCK_SCENARIO env var (default: 'echo').
  * Reads lines from stdin and writes JSON events to stdout.
  */
-import { createInterface } from 'readline';
+import { createInterface } from 'node:readline';
 
 const scenario = process.env.MOCK_SCENARIO || 'echo';
 const sessionId = `mock-session-${Date.now()}`;
 let turnCount = 0;
 
 function write(obj: unknown): void {
-  process.stdout.write(JSON.stringify(obj) + '\n');
+  process.stdout.write(`${JSON.stringify(obj)}\n`);
 }
 
 function emitInit(): void {
@@ -54,7 +54,7 @@ const scenarios: Record<string, (msg: string) => void> = {
   stream: (msg) => {
     const words = msg.split(' ');
     for (const word of words) {
-      emitText(word + ' ');
+      emitText(`${word} `);
     }
     emitResult();
   },

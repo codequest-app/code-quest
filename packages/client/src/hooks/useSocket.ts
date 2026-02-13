@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { Socket } from 'socket.io-client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Socket } from 'socket.io-client';
 import { socketManager } from '../services/socket';
-import type { ServerToClientEvents, ClientToServerEvents } from '../types';
+import type { ClientToServerEvents, ServerToClientEvents } from '../types';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -9,10 +9,7 @@ interface UseSocketReturn {
   socket: TypedSocket | null;
   isConnected: boolean;
   error: string | null;
-  on: <T extends keyof ServerToClientEvents>(
-    event: T,
-    callback: ServerToClientEvents[T]
-  ) => void;
+  on: <T extends keyof ServerToClientEvents>(event: T, callback: ServerToClientEvents[T]) => void;
   emit: <T extends keyof ClientToServerEvents>(
     event: T,
     ...args: Parameters<ClientToServerEvents[T]>
@@ -76,15 +73,13 @@ export function useSocket(serverUrl: string): UseSocketReturn {
    * Register event listener (deprecated - use socket.on directly)
    */
   const on = useCallback(
-    <T extends keyof ServerToClientEvents>(
-      event: T,
-      callback: ServerToClientEvents[T]
-    ) => {
+    <T extends keyof ServerToClientEvents>(event: T, callback: ServerToClientEvents[T]) => {
       if (!socketRef.current) return;
 
-      socketRef.current.on(event, callback as any);
+      // @ts-expect-error -- Socket.io generic overload cannot unify callback signature
+      socketRef.current.on(event, callback);
     },
-    []
+    [],
   );
 
   /**
@@ -99,7 +94,7 @@ export function useSocket(serverUrl: string): UseSocketReturn {
 
       socketRef.current.emit(event, ...args);
     },
-    []
+    [],
   );
 
   /**

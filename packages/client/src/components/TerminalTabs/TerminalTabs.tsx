@@ -1,13 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { Terminal, TerminalHandle } from '../Terminal';
-import { ChatPanel } from '../ChatPanel';
-import { OrchestratorPanel } from '../OrchestratorPanel';
-import { useSocket } from '../../hooks/useSocket';
+import { useCallback, useEffect, useRef } from 'react';
 import { useChatSocket } from '../../hooks/useChatSocket';
 import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
+import { useSocket } from '../../hooks/useSocket';
 import { useTerminalStore } from '../../stores/terminalStore';
-import { useOrchestratorStore } from '../../stores/orchestratorStore';
 import type { SessionType } from '../../types';
+import { ChatPanel } from '../ChatPanel';
+import { OrchestratorPanel } from '../OrchestratorPanel';
+import { Terminal, type TerminalHandle } from '../Terminal';
 
 interface TerminalTabsProps {
   serverUrl: string;
@@ -161,6 +160,49 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     }
   }, [activeSessionId, activeSession?.type]);
 
+  const handleNewTerminal = useCallback(() => {
+    // Serialize current terminal before creating new one
+    if (activeSessionId && terminalRef.current) {
+      const activeSessionState = useTerminalStore.getState().getSession(activeSessionId);
+      if (activeSessionState?.type === 'terminal') {
+        const serialized = terminalRef.current.serialize();
+        if (serialized) {
+          setSerializedState(activeSessionId, serialized);
+        }
+      }
+    }
+    emit('terminal:create', {});
+  }, [activeSessionId, emit, setSerializedState]);
+
+  const handleNewClaude = () => {
+    createChat('claude');
+  };
+
+  const handleNewGemini = () => {
+    createChat('gemini');
+  };
+
+  const handleNewOrchestrator = () => {
+    createOrchestrator('claude');
+    // TODO: Make coordinator provider configurable via UI
+  };
+
+  const handleCloseSession = useCallback(
+    (sessionId: string) => {
+      const session = useTerminalStore.getState().getSession(sessionId);
+      if (session?.type === 'terminal') {
+        emit('terminal:kill', sessionId);
+      } else if (session?.type === 'orchestrator') {
+        killOrchestrator(sessionId);
+        removeSession(sessionId);
+      } else {
+        killChat(sessionId);
+        removeSession(sessionId);
+      }
+    },
+    [emit, killOrchestrator, removeSession, killChat],
+  );
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -181,47 +223,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeSessionId]);
-
-  const handleNewTerminal = () => {
-    // Serialize current terminal before creating new one
-    if (activeSessionId && terminalRef.current) {
-      const activeSessionState = useTerminalStore.getState().getSession(activeSessionId);
-      if (activeSessionState?.type === 'terminal') {
-        const serialized = terminalRef.current.serialize();
-        if (serialized) {
-          setSerializedState(activeSessionId, serialized);
-        }
-      }
-    }
-    emit('terminal:create', {});
-  };
-
-  const handleNewClaude = () => {
-    createChat('claude');
-  };
-
-  const handleNewGemini = () => {
-    createChat('gemini');
-  };
-
-  const handleNewOrchestrator = () => {
-    createOrchestrator('claude');
-    // TODO: Make coordinator provider configurable via UI
-  };
-
-  const handleCloseSession = (sessionId: string) => {
-    const session = useTerminalStore.getState().getSession(sessionId);
-    if (session?.type === 'terminal') {
-      emit('terminal:kill', sessionId);
-    } else if (session?.type === 'orchestrator') {
-      killOrchestrator(sessionId);
-      removeSession(sessionId);
-    } else {
-      killChat(sessionId);
-      removeSession(sessionId);
-    }
-  };
+  }, [activeSessionId, handleCloseSession, handleNewTerminal]);
 
   const handleTabClick = (sessionId: string) => {
     if (sessionId !== activeSessionId) {
@@ -244,20 +246,32 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     if (!tabLabels.current.has(session.id)) {
       switch (session.type) {
         case 'claude-chat':
-          tabLabels.current.set(session.id, getTabLabel(session.type, ++tabCounters.current.claude));
+          tabLabels.current.set(
+            session.id,
+            getTabLabel(session.type, ++tabCounters.current.claude),
+          );
           break;
         case 'gemini-chat':
-          tabLabels.current.set(session.id, getTabLabel(session.type, ++tabCounters.current.gemini));
+          tabLabels.current.set(
+            session.id,
+            getTabLabel(session.type, ++tabCounters.current.gemini),
+          );
           break;
         case 'orchestrator':
-          tabLabels.current.set(session.id, getTabLabel(session.type, ++tabCounters.current.orchestrator));
+          tabLabels.current.set(
+            session.id,
+            getTabLabel(session.type, ++tabCounters.current.orchestrator),
+          );
           break;
         default:
-          tabLabels.current.set(session.id, getTabLabel(session.type, ++tabCounters.current.terminal));
+          tabLabels.current.set(
+            session.id,
+            getTabLabel(session.type, ++tabCounters.current.terminal),
+          );
           break;
       }
     }
-    return tabLabels.current.get(session.id)!;
+    return tabLabels.current.get(session.id) ?? '';
   };
 
   return (
@@ -268,11 +282,20 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
           {sessions.map((session) => (
             <div
               key={session.id}
+              role="tab"
+              tabIndex={0}
               className={`tab ${session.isActive ? 'active' : ''}`}
               onClick={() => handleTabClick(session.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleTabClick(session.id);
+                }
+              }}
             >
               <span>{getLabel(session)}</span>
               <button
+                type="button"
                 className="close-button"
                 aria-label="close"
                 onClick={(e) => {
@@ -284,16 +307,31 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
               </button>
             </div>
           ))}
-          <button className="new-tab-button" onClick={handleNewTerminal}>
+          <button type="button" className="new-tab-button" onClick={handleNewTerminal}>
             + Terminal
           </button>
-          <button className="new-tab-button" aria-label="Claude" onClick={handleNewClaude}>
+          <button
+            type="button"
+            className="new-tab-button"
+            aria-label="Claude"
+            onClick={handleNewClaude}
+          >
             + Claude
           </button>
-          <button className="new-tab-button" aria-label="Gemini" onClick={handleNewGemini}>
+          <button
+            type="button"
+            className="new-tab-button"
+            aria-label="Gemini"
+            onClick={handleNewGemini}
+          >
             + Gemini
           </button>
-          <button className="new-tab-button" aria-label="Orchestrator" onClick={handleNewOrchestrator}>
+          <button
+            type="button"
+            className="new-tab-button"
+            aria-label="Orchestrator"
+            onClick={handleNewOrchestrator}
+          >
             + Orchestrator
           </button>
         </div>
@@ -308,15 +346,14 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       </div>
 
       {/* Error message */}
-      {socketState.error && (
-        <div className="error-message">{socketState.error}</div>
-      )}
+      {socketState.error && <div className="error-message">{socketState.error}</div>}
 
       {/* Content area - render Terminal or ChatPanel based on session type */}
       <div className="terminal-content">
         {sessions.length === 0 && (
           <div className="empty-state">
-            No sessions open. Click "+ Terminal", "+ Claude", "+ Gemini", or "+ Orchestrator" to start.
+            No sessions open. Click "+ Terminal", "+ Claude", "+ Gemini", or "+ Orchestrator" to
+            start.
           </div>
         )}
         {activeSession && activeSession.type === 'terminal' && (
@@ -333,19 +370,16 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             />
           </div>
         )}
-        {activeSession && (activeSession.type === 'claude-chat' || activeSession.type === 'gemini-chat') && (
-          <div
-            key={activeSession.id}
-            className="chat-wrapper"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <ChatPanel
-              sessionId={activeSession.id}
-              onSend={sendMessage}
-              onAbort={abortMessage}
-            />
-          </div>
-        )}
+        {activeSession &&
+          (activeSession.type === 'claude-chat' || activeSession.type === 'gemini-chat') && (
+            <div
+              key={activeSession.id}
+              className="chat-wrapper"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <ChatPanel sessionId={activeSession.id} onSend={sendMessage} onAbort={abortMessage} />
+            </div>
+          )}
         {activeSession && activeSession.type === 'orchestrator' && (
           <div
             key={activeSession.id}

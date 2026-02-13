@@ -1,8 +1,7 @@
-import { useEffect, useCallback } from 'react';
-import { useOrchestratorStore } from '../stores/orchestratorStore';
+import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
+import { useOrchestratorStore } from '../stores/orchestratorStore';
 import { useTerminalStore } from '../stores/terminalStore';
-import { useSocket } from './useSocket';
 import type {
   ChatProvider,
   ChatStreamEvent,
@@ -10,6 +9,7 @@ import type {
   SubTask,
   WorkerInfo,
 } from '../types';
+import { useSocket } from './useSocket';
 
 interface UseOrchestratorSocketReturn {
   createOrchestrator: (provider: ChatProvider) => void;
@@ -74,7 +74,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       setStatus(orchId, status);
     };
 
-    const handleError = (orchId: string, message: string) => {
+    const handleError = (orchId: string, _message: string) => {
       setStatus(orchId, 'error');
     };
 
@@ -95,34 +95,34 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       socket.off('orchestrator:status', handleStatus);
       socket.off('orchestrator:error', handleError);
     };
-  }, [socket, initOrchestrator, setWorkers, updateWorkerStatus, setStatus, setAllComplete, removeOrchestrator]);
+  }, [socket, initOrchestrator, setWorkers, updateWorkerStatus, setStatus, setAllComplete]);
 
   const createOrchestrator = useCallback(
     (provider: ChatProvider) => {
       emit('orchestrator:create', { provider });
     },
-    [emit]
+    [emit],
   );
 
   const dispatch = useCallback(
     (orchId: string, tasks: SubTask[]) => {
       emit('orchestrator:dispatch', orchId, tasks);
     },
-    [emit]
+    [emit],
   );
 
   const synthesize = useCallback(
     (orchId: string) => {
       emit('orchestrator:synthesize', orchId);
     },
-    [emit]
+    [emit],
   );
 
   const abortOrchestrator = useCallback(
     (orchId: string) => {
       emit('orchestrator:abort', orchId);
     },
-    [emit]
+    [emit],
   );
 
   const killOrchestrator = useCallback(
@@ -130,7 +130,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       emit('orchestrator:kill', orchId);
       removeOrchestrator(orchId);
     },
-    [emit, removeOrchestrator]
+    [emit, removeOrchestrator],
   );
 
   return { createOrchestrator, dispatch, synthesize, abortOrchestrator, killOrchestrator };

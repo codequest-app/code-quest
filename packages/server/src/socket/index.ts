@@ -5,8 +5,8 @@
 
 export { SocketHandlerImpl } from './handler';
 export type {
-  SocketHandler,
-  SocketHandlerConfig,
   ClientToServerEvents,
   ServerToClientEvents,
+  SocketHandler,
+  SocketHandlerConfig,
 } from './types';

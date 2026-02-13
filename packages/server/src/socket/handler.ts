@@ -1,12 +1,11 @@
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Socket, Server as SocketIOServer } from 'socket.io';
+import { OrchestratorSessionImpl } from '../orchestrator/session';
 import type {
-  SocketHandler,
-  SocketHandlerConfig,
   ClientToServerEvents,
   ServerToClientEvents,
+  SocketHandler,
+  SocketHandlerConfig,
 } from './types';
-import { OrchestratorSessionImpl } from '../orchestrator/session';
-import type { OrchestratorSession } from '../orchestrator/types';
 
 /**
  * Socket.io handler implementation
@@ -135,14 +134,14 @@ export class SocketHandlerImpl implements SocketHandler {
       session.sendMessage(message);
     });
 
-    // Handle chat:respond (permission prompt response)
-    socket.on('chat:respond', (sessionId, response) => {
+    // Handle chat:allow-tool (permission: allow a tool for next spawn)
+    socket.on('chat:allow-tool', (sessionId, toolName) => {
       const session = this.config.chatManager.getSession(sessionId);
       if (!session) {
         socket.emit('chat:error', sessionId, 'Session not found');
         return;
       }
-      session.respond(response);
+      session.addAllowedTool(toolName);
     });
 
     // Handle chat:abort

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TerminalSessionImpl } from '../session';
 import type { TerminalSessionOptions } from '../types';
 
@@ -153,9 +153,7 @@ describe('TerminalSession', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(dataCallback).toHaveBeenCalled();
-      expect(dataCallback.mock.calls.some((call) =>
-        call[0].includes('test')
-      )).toBe(true);
+      expect(dataCallback.mock.calls.some((call) => call[0].includes('test'))).toBe(true);
     });
 
     it('should support multiple data callbacks', async () => {

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 5: 並行多進程
  *
@@ -9,10 +10,10 @@
  * - 資源使用情況如何？
  */
 
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '05-parallel.log');
 
@@ -23,22 +24,17 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 function findClaudeCLI(): string {
-  const possiblePaths = [
-    'claude',
-    path.join(process.env.HOME || '', '.claude/local/claude')
-  ];
+  const possiblePaths = ['claude', path.join(process.env.HOME || '', '.claude/local/claude')];
 
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
       return p;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   throw new Error('Claude CLI not found');
@@ -63,7 +59,7 @@ async function test() {
   const tasks = [
     'Say "Process 1 reporting"',
     'Say "Process 2 reporting"',
-    'Say "Process 3 reporting"'
+    'Say "Process 3 reporting"',
   ];
 
   log(`準備啟動 ${processCount} 個並行進程...\n`);
@@ -86,9 +82,9 @@ async function test() {
 
     const processInfo: ProcessInfo = {
       id: i + 1,
-      pty: null as any,
+      pty: null as unknown as pty.IPty,
       output: '',
-      startTime: Date.now()
+      startTime: Date.now(),
     };
 
     const ptyProcess = pty.spawn(claudePath, ['-p', prompt], {
@@ -98,8 +94,8 @@ async function test() {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        TERM: 'xterm-256color'
-      }
+        TERM: 'xterm-256color',
+      },
     });
 
     processInfo.pty = ptyProcess;
@@ -124,7 +120,7 @@ async function test() {
     processes.push(processInfo);
 
     // 略微延遲避免同時啟動造成問題
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   log(`\n✅ 所有 ${processCount} 個進程已啟動\n`);
@@ -132,7 +128,7 @@ async function test() {
   // 等待所有進程完成
   return new Promise<void>((resolve) => {
     const checkInterval = setInterval(() => {
-      const allFinished = processes.every(p => p.endTime !== undefined);
+      const allFinished = processes.every((p) => p.endTime !== undefined);
 
       if (allFinished) {
         clearInterval(checkInterval);
@@ -145,18 +141,25 @@ async function test() {
         log(`總執行時間: ${(totalDuration / 1000).toFixed(2)}秒`);
 
         log(`\n各進程執行時間:`);
-        processes.forEach(p => {
-          const duration = (p.endTime! - p.startTime) / 1000;
+        for (const p of processes) {
+          const duration = ((p.endTime ?? p.startTime) - p.startTime) / 1000;
           log(`  Process ${p.id}: ${duration.toFixed(2)}秒 (exit ${p.exitCode})`);
-        });
+        }
 
-        const avgDuration = processes.reduce((sum, p) => sum + (p.endTime! - p.startTime), 0) / processes.length / 1000;
+        const avgDuration =
+          processes.reduce((sum, p) => sum + ((p.endTime ?? p.startTime) - p.startTime), 0) /
+          processes.length /
+          1000;
         log(`\n平均執行時間: ${avgDuration.toFixed(2)}秒`);
 
         // 記憶體使用
         log(`\n記憶體使用變化:`);
-        log(`  RSS: ${(startMemory.rss / 1024 / 1024).toFixed(2)} MB → ${(endMemory.rss / 1024 / 1024).toFixed(2)} MB`);
-        log(`  Heap: ${(startMemory.heapUsed / 1024 / 1024).toFixed(2)} MB → ${(endMemory.heapUsed / 1024 / 1024).toFixed(2)} MB`);
+        log(
+          `  RSS: ${(startMemory.rss / 1024 / 1024).toFixed(2)} MB → ${(endMemory.rss / 1024 / 1024).toFixed(2)} MB`,
+        );
+        log(
+          `  Heap: ${(startMemory.heapUsed / 1024 / 1024).toFixed(2)} MB → ${(endMemory.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+        );
 
         const rssDiff = (endMemory.rss - startMemory.rss) / 1024 / 1024;
         const heapDiff = (endMemory.heapUsed - startMemory.heapUsed) / 1024 / 1024;
@@ -167,7 +170,7 @@ async function test() {
 
         // 檢查輸出隔離
         log(`\n=== 輸出隔離檢查 ===`);
-        const outputs = processes.map(p => p.output);
+        const outputs = processes.map((p) => p.output);
 
         let hasConflict = false;
         for (let i = 0; i < outputs.length; i++) {
@@ -186,7 +189,7 @@ async function test() {
         // 評估
         log(`\n=== 評估 ===`);
 
-        const allSuccess = processes.every(p => p.exitCode === 0);
+        const allSuccess = processes.every((p) => p.exitCode === 0);
         if (allSuccess) {
           log(`✅ 所有進程成功執行`);
         } else {
@@ -197,7 +200,8 @@ async function test() {
           log(`✅ 進程之間獨立運行（輸出隔離）`);
         }
 
-        if (rssDiff < 500) { // 增長小於 500MB
+        if (rssDiff < 500) {
+          // 增長小於 500MB
           log(`✅ 記憶體使用合理`);
         } else {
           log(`⚠️ 記憶體使用較高`);
@@ -215,21 +219,23 @@ async function test() {
     setTimeout(() => {
       clearInterval(checkInterval);
       log('\n⚠️ 測試超時 (120秒)');
-      processes.forEach(p => {
+      for (const p of processes) {
         if (!p.endTime) {
           p.pty.kill();
         }
-      });
+      }
       logStream.end();
       resolve();
     }, 120000);
   });
 }
 
-test().then(() => {
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

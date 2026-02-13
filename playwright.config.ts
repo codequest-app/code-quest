@@ -27,9 +27,10 @@ export default defineConfig({
 
   webServer: [
     {
-      command: process.env.MOCK_CLI === 'true'
-        ? 'MOCK_CLI=true pnpm --filter server dev'
-        : 'pnpm --filter server dev',
+      command:
+        process.env.MOCK_CLI === 'true'
+          ? 'MOCK_CLI=true pnpm --filter server dev'
+          : 'pnpm --filter server dev',
       url: 'http://localhost:3000/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,

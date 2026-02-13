@@ -5,12 +5,12 @@
 
 export { HttpServerImpl } from './server';
 export type {
-  HttpServer,
-  HttpServerConfig,
-  HealthResponse,
-  TerminalListResponse,
   CreateTerminalRequest,
   CreateTerminalResponse,
-  TerminalInfoResponse,
   ErrorResponse,
+  HealthResponse,
+  HttpServer,
+  HttpServerConfig,
+  TerminalInfoResponse,
+  TerminalListResponse,
 } from './types';
