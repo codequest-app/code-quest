@@ -19,18 +19,21 @@ describe('GeminiStreamParser (fixture-driven)', () => {
     expect(events).toContainEqual(expect.objectContaining({ type: 'text' }));
     expect(events).toContainEqual(expect.objectContaining({ type: 'result' }));
 
-    const init = events.find((e) => e.type === 'init')!;
-    expect(init.data).toEqual({ sessionId: 'dff02b29-1234-5678-abcd-ef0123456789' });
+    const init = events.find((e) => e.type === 'init');
+    expect(init).toBeDefined();
+    expect(init?.data).toEqual({ sessionId: 'dff02b29-1234-5678-abcd-ef0123456789' });
 
-    const text = events.find((e) => e.type === 'text')!;
-    expect(text.data).toEqual({ content: 'Hello! How can I help you today?' });
+    const text = events.find((e) => e.type === 'text');
+    expect(text).toBeDefined();
+    expect(text?.data).toEqual({ content: 'Hello! How can I help you today?' });
 
     // User messages should be ignored
     const userTexts = events.filter((e) => e.type === 'text');
     expect(userTexts).toHaveLength(1); // Only assistant text, not user
 
-    const result = events.find((e) => e.type === 'result')!;
-    const stats = (result.data as { stats: Record<string, unknown> }).stats;
+    const result = events.find((e) => e.type === 'result');
+    expect(result).toBeDefined();
+    const stats = (result?.data as { stats: Record<string, unknown> }).stats;
     expect(stats.durationMs).toBe(5878);
     expect(stats.inputTokens).toBe(17031);
     expect(stats.outputTokens).toBe(34);
@@ -56,8 +59,9 @@ describe('GeminiStreamParser (fixture-driven)', () => {
     expect(toolResult).toBeDefined();
     expect(toolResult?.data).toHaveProperty('name', 'read_file-abc123-533c7505fb7fc');
 
-    const result = events.find((e) => e.type === 'result')!;
-    const stats = (result.data as { stats: Record<string, unknown> }).stats;
+    const result = events.find((e) => e.type === 'result');
+    expect(result).toBeDefined();
+    const stats = (result?.data as { stats: Record<string, unknown> }).stats;
     expect(stats.durationMs).toBe(4554);
   });
 });

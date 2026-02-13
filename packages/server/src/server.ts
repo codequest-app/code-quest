@@ -89,7 +89,9 @@ export class ServerImpl implements Server {
       try {
         await this.httpServer.stop();
       } catch (error) {
-        if ((error as any).code !== 'ERR_SERVER_NOT_RUNNING') {
+        const isNotRunning =
+          error instanceof Error && 'code' in error && error.code === 'ERR_SERVER_NOT_RUNNING';
+        if (!isNotRunning) {
           throw error;
         }
       }

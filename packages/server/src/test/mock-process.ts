@@ -1,4 +1,4 @@
-import type { SpawnOptions } from 'node:child_process';
+import type { ChildProcess, SpawnOptions } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 
@@ -93,7 +93,7 @@ export function createMockProcessFactory(mockProcessOrGetter: MockProcess | (() 
     const proc =
       typeof mockProcessOrGetter === 'function' ? mockProcessOrGetter() : mockProcessOrGetter;
     records.push({ command, args, options, process: proc });
-    return proc as any;
+    return proc as unknown as ChildProcess;
   };
 
   factory.records = records;

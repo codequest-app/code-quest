@@ -40,8 +40,9 @@ describe('ChatSessionImpl (integration)', () => {
     expect(events.some((e) => e.type === 'text')).toBe(true);
     expect(events.some((e) => e.type === 'result')).toBe(true);
 
-    const init = events.find((e) => e.type === 'init')!;
-    expect(init.data).toHaveProperty('sessionId');
+    const init = events.find((e) => e.type === 'init');
+    expect(init).toBeDefined();
+    expect(init?.data).toHaveProperty('sessionId');
 
     session.kill();
   });
@@ -90,8 +91,9 @@ describe('ChatSessionImpl (integration)', () => {
     });
 
     expect(events.some((e) => e.type === 'tool_use')).toBe(true);
-    const toolUse = events.find((e) => e.type === 'tool_use')!;
-    expect(toolUse.data).toHaveProperty('name', 'Read');
+    const toolUse = events.find((e) => e.type === 'tool_use');
+    expect(toolUse).toBeDefined();
+    expect(toolUse?.data).toHaveProperty('name', 'Read');
 
     session.kill();
   });
