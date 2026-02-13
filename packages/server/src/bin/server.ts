@@ -4,9 +4,9 @@
  * Starts the terminal management server with HTTP API and WebSocket support
  */
 
-import { createContainer } from '../container.js';
-import { ServerImpl } from '../server.js';
-import type { ServerConfig } from '../types.js';
+import { createContainer } from '../container.ts';
+import { ServerImpl } from '../server.ts';
+import type { ServerConfig } from '../types.ts';
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = 'localhost';

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { GeminiStreamParser } from '../parsers/gemini-parser';
+import { GeminiStreamParser } from '../parsers/gemini-parser.ts';
 
 describe('GeminiStreamParser (fixture-driven)', () => {
   function loadFixture(name: string): string {

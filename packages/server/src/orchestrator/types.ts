@@ -1,4 +1,4 @@
-import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types';
+import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
 
 export type OrchestratorStatus =
   | 'idle'

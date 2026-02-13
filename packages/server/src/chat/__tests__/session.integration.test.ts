@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ChatSessionImpl } from '../session';
-import type { ChatStreamEvent } from '../types';
+import { ChatSessionImpl } from '../session.ts';
+import type { ChatStreamEvent } from '../types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

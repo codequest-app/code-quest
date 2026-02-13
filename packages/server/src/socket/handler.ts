@@ -1,11 +1,11 @@
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import { OrchestratorSessionImpl } from '../orchestrator/session';
+import { OrchestratorSessionImpl } from '../orchestrator/session.ts';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
   SocketHandler,
   SocketHandlerConfig,
-} from './types';
+} from './types.ts';
 
 /**
  * Socket.io handler implementation

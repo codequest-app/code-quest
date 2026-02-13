@@ -10,7 +10,7 @@ import type {
   HttpServerConfig,
   TerminalInfoResponse,
   TerminalListResponse,
-} from './types';
+} from './types.ts';
 
 /**
  * HTTP server implementation using Express

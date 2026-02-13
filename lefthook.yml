@@ -5,6 +5,9 @@ pre-commit:
       glob: "*.{ts,tsx,js,json}"
       run: pnpm biome check --write {staged_files}
       stage_fixed: true
+    typecheck-server:
+      glob: "packages/server/**/*.ts"
+      run: pnpm --filter server exec tsc --noEmit
     typecheck-client:
       glob: "packages/client/**/*.{ts,tsx}"
       run: pnpm --filter client exec tsc --noEmit

@@ -2,11 +2,11 @@ import { Server as HTTPServer } from 'node:http';
 import { type Socket, Server as SocketIOServer } from 'socket.io';
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatManagerImpl } from '../../chat/manager';
-import type { ChatManager } from '../../chat/types';
-import { TerminalManagerImpl } from '../../terminal/manager';
-import type { TerminalManager } from '../../terminal/types';
-import { SocketHandlerImpl } from '../handler';
+import { ChatManagerImpl } from '../../chat/manager.ts';
+import type { ChatManager } from '../../chat/types.ts';
+import { TerminalManagerImpl } from '../../terminal/manager.ts';
+import type { TerminalManager } from '../../terminal/types.ts';
+import { SocketHandlerImpl } from '../handler.ts';
 
 describe('SocketHandler', () => {
   let httpServer: HTTPServer;

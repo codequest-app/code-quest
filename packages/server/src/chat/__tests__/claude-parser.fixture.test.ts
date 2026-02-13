@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ClaudeStreamParser } from '../parsers/claude-parser';
+import { ClaudeStreamParser } from '../parsers/claude-parser.ts';
 
 describe('ClaudeStreamParser (fixture-driven)', () => {
   function loadFixture(name: string): string {

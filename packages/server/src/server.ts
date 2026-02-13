@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { Server as SocketIOServer } from 'socket.io';
-import type { ChatManager } from './chat/types';
-import { TYPES } from './container';
-import { HttpServerImpl } from './http/server';
-import { SocketHandlerImpl } from './socket/handler';
-import type { TerminalManager } from './terminal/types';
-import type { Server, ServerConfig, ServerStatus } from './types';
+import type { ChatManager } from './chat/types.ts';
+import { TYPES } from './container.ts';
+import { HttpServerImpl } from './http/server.ts';
+import { SocketHandlerImpl } from './socket/handler.ts';
+import type { TerminalManager } from './terminal/types.ts';
+import type { Server, ServerConfig, ServerStatus } from './types.ts';
 
 /**
  * Main server implementation
@@ -18,6 +18,7 @@ export class ServerImpl implements Server {
   private config: ServerConfig = { port: 0 };
   private httpServer: HttpServerImpl | null = null;
   private io: SocketIOServer | null = null;
+  private socketHandler: SocketHandlerImpl | null = null;
   private startTime: number = Date.now();
 
   constructor(
@@ -117,7 +118,7 @@ export class ServerImpl implements Server {
   }
 
   isRunning(): boolean {
-    return this.httpServer?.isRunning();
+    return this.httpServer?.isRunning() ?? false;
   }
 
   getStatus(): ServerStatus {

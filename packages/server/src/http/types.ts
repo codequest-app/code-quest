@@ -2,7 +2,7 @@
  * HTTP API types and interfaces
  */
 
-import type { TerminalManager } from '../terminal/types';
+import type { TerminalManager } from '../terminal/types.ts';
 
 /**
  * HTTP server configuration

@@ -3,9 +3,9 @@
  */
 
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import type { ChatManager, ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types';
-import type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types';
-import type { TerminalManager } from '../terminal/types';
+import type { ChatManager, ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
+import type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types.ts';
+import type { TerminalManager } from '../terminal/types.ts';
 
 /**
  * Socket events for client -> server
@@ -130,7 +130,7 @@ export interface SocketHandlerConfig {
   chatManager: ChatManager;
 }
 
-export type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types';
+export type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types.ts';
 
 /**
  * Socket handler interface

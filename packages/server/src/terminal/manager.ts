@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { injectable } from 'inversify';
-import { TerminalSessionImpl } from './session';
-import type { TerminalManager, TerminalSession, TerminalSessionOptions } from './types';
+import { TerminalSessionImpl } from './session.ts';
+import type { TerminalManager, TerminalSession, TerminalSessionOptions } from './types.ts';
 
 /**
  * Terminal manager implementation

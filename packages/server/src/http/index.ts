@@ -3,7 +3,7 @@
  * Provides REST API endpoints for terminal management
  */
 
-export { HttpServerImpl } from './server';
+export { HttpServerImpl } from './server.ts';
 export type {
   CreateTerminalRequest,
   CreateTerminalResponse,
@@ -13,4 +13,4 @@ export type {
   HttpServerConfig,
   TerminalInfoResponse,
   TerminalListResponse,
-} from './types';
+} from './types.ts';

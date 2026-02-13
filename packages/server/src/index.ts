@@ -13,20 +13,20 @@ export type {
   HttpServerConfig,
   TerminalInfoResponse,
   TerminalListResponse,
-} from './http/types';
-export { ServerImpl } from './server';
+} from './http/types.ts';
+export { ServerImpl } from './server.ts';
 // Re-export Socket types
 export type {
   ClientToServerEvents,
   ServerToClientEvents,
   SocketHandler,
   SocketHandlerConfig,
-} from './socket/types';
+} from './socket/types.ts';
 // Re-export terminal types
 export type {
   TerminalDimensions,
   TerminalManager,
   TerminalSession,
   TerminalSessionOptions,
-} from './terminal/types';
-export type { Server, ServerConfig, ServerStatus } from './types';
+} from './terminal/types.ts';
+export type { Server, ServerConfig, ServerStatus } from './types.ts';

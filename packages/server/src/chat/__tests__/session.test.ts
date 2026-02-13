@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createMockProcessFactory, MockProcess } from '../../test/mock-process';
-import { ChatSessionImpl } from '../session';
-import type { ChatStats, ChatStreamEvent } from '../types';
+import { createMockProcessFactory, MockProcess } from '../../test/mock-process.ts';
+import { ChatSessionImpl } from '../session.ts';
+import type { ChatStats, ChatStreamEvent } from '../types.ts';
 
 describe('ChatSessionImpl', () => {
   let session: ChatSessionImpl;
