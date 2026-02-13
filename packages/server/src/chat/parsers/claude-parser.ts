@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, StreamParser } from '../types';
+import type { ChatStreamEvent, StreamParser } from '../types.ts';
 
 export class ClaudeStreamParser implements StreamParser {
   private buffer = '';

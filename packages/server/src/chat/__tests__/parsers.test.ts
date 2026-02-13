@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createParser } from '../parsers';
-import { ClaudeStreamParser } from '../parsers/claude-parser';
-import { GeminiStreamParser } from '../parsers/gemini-parser';
+import { ClaudeStreamParser } from '../parsers/claude-parser.ts';
+import { GeminiStreamParser } from '../parsers/gemini-parser.ts';
+import { createParser } from '../parsers/index.ts';
 
 describe('ClaudeStreamParser', () => {
   it('should parse init event and extract session_id', () => {

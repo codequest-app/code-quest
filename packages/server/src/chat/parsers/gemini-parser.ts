@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, StreamParser } from '../types';
+import type { ChatStreamEvent, StreamParser } from '../types.ts';
 
 /**
  * Parser for Gemini CLI stream-json output (gemini -o stream-json)

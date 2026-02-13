@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TerminalSessionImpl } from '../session';
-import type { TerminalSessionOptions } from '../types';
+import { TerminalSessionImpl } from '../session.ts';
+import type { TerminalSessionOptions } from '../types.ts';
 
 describe('TerminalSession', () => {
   let session: TerminalSessionImpl;

@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 // Mock node-pty globally
 vi.mock('node-pty', async () => {
-  const mockModule = await import('./__mocks__/node-pty');
+  const mockModule = await import('./__mocks__/node-pty.ts');
   return mockModule;
 });
 

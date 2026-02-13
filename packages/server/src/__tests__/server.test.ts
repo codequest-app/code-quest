@@ -1,8 +1,8 @@
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createContainer } from '../container';
-import { ServerImpl } from '../server';
+import { createContainer } from '../container.ts';
+import { ServerImpl } from '../server.ts';
 
 function createServer(port: number): ServerImpl {
   const container = createContainer();

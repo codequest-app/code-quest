@@ -1,6 +1,6 @@
-import type { ChatProvider, StreamParser } from '../types';
-import { ClaudeStreamParser } from './claude-parser';
-import { GeminiStreamParser } from './gemini-parser';
+import type { ChatProvider, StreamParser } from '../types.ts';
+import { ClaudeStreamParser } from './claude-parser.ts';
+import { GeminiStreamParser } from './gemini-parser.ts';
 
 export function createParser(provider: ChatProvider): StreamParser {
   switch (provider) {
@@ -11,5 +11,5 @@ export function createParser(provider: ChatProvider): StreamParser {
   }
 }
 
-export { ClaudeStreamParser } from './claude-parser';
-export { GeminiStreamParser } from './gemini-parser';
+export { ClaudeStreamParser } from './claude-parser.ts';
+export { GeminiStreamParser } from './gemini-parser.ts';

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TerminalManagerImpl } from '../manager';
-import type { TerminalSessionOptions } from '../types';
+import { TerminalManagerImpl } from '../manager.ts';
+import type { TerminalSessionOptions } from '../types.ts';
 
 describe('TerminalManager', () => {
   let manager: TerminalManagerImpl;

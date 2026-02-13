@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import * as pty from 'node-pty';
-import type { TerminalDimensions, TerminalSession, TerminalSessionOptions } from './types';
+import type { TerminalDimensions, TerminalSession, TerminalSessionOptions } from './types.ts';
 
 /**
  * Terminal session implementation using node-pty

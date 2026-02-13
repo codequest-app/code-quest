@@ -37,7 +37,7 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
   };
 
   const handleDispatch = () => {
-    const validTasks = tasks.filter((t) => t.description.trim());
+    const validTasks = tasks.filter((t) => t.description.trim()).map(({ _key, ...task }) => task);
     if (validTasks.length === 0) return;
     onDispatch(validTasks);
   };

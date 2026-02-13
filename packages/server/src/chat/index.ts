@@ -1,6 +1,6 @@
-export { ChatManagerImpl } from './manager';
-export { ClaudeStreamParser, createParser, GeminiStreamParser } from './parsers';
-export { ChatSessionImpl } from './session';
+export { ChatManagerImpl } from './manager.ts';
+export { ClaudeStreamParser, createParser, GeminiStreamParser } from './parsers/index.ts';
+export { ChatSessionImpl } from './session.ts';
 export type {
   ChatManager,
   ChatProvider,
@@ -9,4 +9,4 @@ export type {
   ChatStats,
   ChatStreamEvent,
   StreamParser,
-} from './types';
+} from './types.ts';

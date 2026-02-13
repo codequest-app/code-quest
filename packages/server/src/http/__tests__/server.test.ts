@@ -1,9 +1,9 @@
 import type { Express } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TerminalManagerImpl } from '../../terminal/manager';
-import type { TerminalManager } from '../../terminal/types';
-import { HttpServerImpl } from '../server';
+import { TerminalManagerImpl } from '../../terminal/manager.ts';
+import type { TerminalManager } from '../../terminal/types.ts';
+import { HttpServerImpl } from '../server.ts';
 
 describe('HttpServer', () => {
   let server: HttpServerImpl;

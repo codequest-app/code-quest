@@ -3,11 +3,11 @@
  * Provides terminal session management using node-pty
  */
 
-export { TerminalManagerImpl } from './manager';
-export { TerminalSessionImpl } from './session';
+export { TerminalManagerImpl } from './manager.ts';
+export { TerminalSessionImpl } from './session.ts';
 export type {
   TerminalDimensions,
   TerminalManager,
   TerminalSession,
   TerminalSessionOptions,
-} from './types';
+} from './types.ts';

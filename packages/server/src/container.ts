@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Container, inject, injectable } from 'inversify';
-import { ChatManagerImpl } from './chat/manager';
-import type { ChatManager } from './chat/types';
-import { TerminalManagerImpl } from './terminal/manager';
-import type { TerminalManager } from './terminal/types';
+import { ChatManagerImpl } from './chat/manager.ts';
+import type { ChatManager } from './chat/types.ts';
+import { TerminalManagerImpl } from './terminal/manager.ts';
+import type { TerminalManager } from './terminal/types.ts';
 
 /**
  * Inversify binding identifiers (symbols for interface-based injection)

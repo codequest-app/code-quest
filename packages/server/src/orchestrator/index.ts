@@ -1,7 +1,7 @@
-export { OrchestratorSessionImpl } from './session';
+export { OrchestratorSessionImpl } from './session.ts';
 export type {
   OrchestratorSession,
   OrchestratorStatus,
   SubTask,
   WorkerInfo,
-} from './types';
+} from './types.ts';

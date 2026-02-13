@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ChatManagerImpl } from '../../chat/manager';
-import { ChatSessionImpl } from '../../chat/session';
-import type { ChatStreamEvent } from '../../chat/types';
-import { OrchestratorSessionImpl } from '../session';
-import type { OrchestratorStatus, WorkerInfo } from '../types';
+import { ChatManagerImpl } from '../../chat/manager.ts';
+import { ChatSessionImpl } from '../../chat/session.ts';
+import type { ChatStreamEvent } from '../../chat/types.ts';
+import { OrchestratorSessionImpl } from '../session.ts';
+import type { OrchestratorStatus, WorkerInfo } from '../types.ts';
 
 const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/fake-claude.sh');
 

@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { createParser } from './parsers';
+import { createParser } from './parsers/index.ts';
 import type {
   ChatProvider,
   ChatSession,
@@ -9,7 +9,7 @@ import type {
   ChatStreamEvent,
   ProcessFactory,
   StreamParser,
-} from './types';
+} from './types.ts';
 
 export type SessionState = 'idle' | 'processing';
 

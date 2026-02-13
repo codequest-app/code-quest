@@ -2,8 +2,8 @@ import 'reflect-metadata';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { injectable } from 'inversify';
-import { ChatSessionImpl } from './session';
-import type { ChatManager, ChatProvider, ChatSession } from './types';
+import { ChatSessionImpl } from './session.ts';
+import type { ChatManager, ChatProvider, ChatSession } from './types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
