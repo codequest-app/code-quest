@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "description": "Code Quest server - Terminal and Socket.io management",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsx watch src/bin/server.ts",
     "build": "tsc",

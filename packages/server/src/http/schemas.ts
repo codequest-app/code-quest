@@ -50,7 +50,6 @@ export const terminalListResponseSchema = z.object({
 /**
  * Inferred types from schemas
  */
-export type CreateTerminalRequest = z.infer<typeof createTerminalRequestSchema>;
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type CreateTerminalResponse = z.infer<typeof createTerminalResponseSchema>;
