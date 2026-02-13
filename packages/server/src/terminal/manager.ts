@@ -1,7 +1,12 @@
 import 'reflect-metadata';
-import { injectable } from 'inversify';
-import { TerminalSessionImpl } from './session.ts';
-import type { TerminalManager, TerminalSession, TerminalSessionOptions } from './types.ts';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../types.symbols.ts';
+import type {
+  TerminalManager,
+  TerminalSession,
+  TerminalSessionFactory,
+  TerminalSessionOptions,
+} from './types.ts';
 
 /**
  * Terminal manager implementation
@@ -11,8 +16,13 @@ import type { TerminalManager, TerminalSession, TerminalSessionOptions } from '.
 export class TerminalManagerImpl implements TerminalManager {
   private readonly sessions: Map<string, TerminalSession> = new Map();
 
+  constructor(
+    @inject(TYPES.TerminalSessionFactory)
+    private readonly createSession_: TerminalSessionFactory,
+  ) {}
+
   createSession(options?: TerminalSessionOptions): TerminalSession {
-    const session = new TerminalSessionImpl(options);
+    const session = this.createSession_(options);
     this.sessions.set(session.id, session);
 
     // Auto-cleanup when session exits

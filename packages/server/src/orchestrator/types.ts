@@ -1,5 +1,9 @@
 import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
 
+export type OrchestratorSessionFactory = (options: {
+  provider: ChatProvider;
+}) => OrchestratorSession;
+
 export type OrchestratorStatus =
   | 'idle'
   | 'dispatching'

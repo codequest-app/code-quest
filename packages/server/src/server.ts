@@ -2,10 +2,10 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { Server as SocketIOServer } from 'socket.io';
 import type { ChatManager } from './chat/types.ts';
-import { TYPES } from './container.ts';
 import { HttpServerImpl } from './http/server.ts';
-import { SocketHandlerImpl } from './socket/handler.ts';
+import type { SocketHandler } from './socket/types.ts';
 import type { TerminalManager } from './terminal/types.ts';
+import { TYPES } from './types.symbols.ts';
 import type { Server, ServerConfig, ServerStatus } from './types.ts';
 
 /**
@@ -18,12 +18,12 @@ export class ServerImpl implements Server {
   private config: ServerConfig = { port: 0 };
   private httpServer: HttpServerImpl | null = null;
   private io: SocketIOServer | null = null;
-  private socketHandler: SocketHandlerImpl | null = null;
   private startTime: number = Date.now();
 
   constructor(
     @inject(TYPES.TerminalManager) private readonly terminalManager: TerminalManager,
     @inject(TYPES.ChatManager) private readonly chatManager: ChatManager,
+    @inject(TYPES.SocketHandler) private readonly socketHandler: SocketHandler,
   ) {}
 
   /** Set config before calling start(). Inversify creates the instance first. */
@@ -62,11 +62,8 @@ export class ServerImpl implements Server {
         : undefined,
     });
 
-    // 3. Set up Socket.io handler
-    this.socketHandler = new SocketHandlerImpl(this.io, {
-      terminalManager: this.terminalManager,
-      chatManager: this.chatManager,
-    });
+    // 3. Attach Socket.io handler (injected via DI)
+    this.socketHandler.attach(this.io);
 
     console.log(`Server started on port ${this.getPort()}`);
   }
@@ -92,8 +89,6 @@ export class ServerImpl implements Server {
       });
       this.io = null;
     }
-
-    this.socketHandler = null;
 
     // 3. Stop HTTP server
     if (this.httpServer) {

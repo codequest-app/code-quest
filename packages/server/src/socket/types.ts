@@ -137,6 +137,12 @@ export type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/ty
  */
 export interface SocketHandler {
   /**
+   * Attach to a Socket.io server and start handling connections
+   * @param io Socket.io server instance
+   */
+  attach(io: SocketIOServer): void;
+
+  /**
    * Handle new socket connection
    * @param socket Connected socket
    */

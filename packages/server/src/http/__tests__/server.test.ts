@@ -1,8 +1,9 @@
 import type { Express } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TerminalManagerImpl } from '../../terminal/manager.ts';
+import { TYPES } from '../../container.ts';
 import type { TerminalManager } from '../../terminal/types.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
 import { HttpServerImpl } from '../server.ts';
 
 describe('HttpServer', () => {
@@ -11,7 +12,8 @@ describe('HttpServer', () => {
   let app: Express;
 
   beforeEach(async () => {
-    terminalManager = new TerminalManagerImpl();
+    const container = createTestContainer();
+    terminalManager = container.get<TerminalManager>(TYPES.TerminalManager);
     server = new HttpServerImpl({
       port: 0, // Use random port
       terminalManager,

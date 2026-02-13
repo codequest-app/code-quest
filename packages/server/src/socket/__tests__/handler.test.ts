@@ -1,36 +1,38 @@
 import { Server as HTTPServer } from 'node:http';
-import { type Socket, Server as SocketIOServer } from 'socket.io';
+import type { Socket } from 'socket.io';
+import { Server as SocketIOServer } from 'socket.io';
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatManagerImpl } from '../../chat/manager.ts';
 import type { ChatManager } from '../../chat/types.ts';
-import { TerminalManagerImpl } from '../../terminal/manager.ts';
+import { TYPES } from '../../container.ts';
 import type { TerminalManager } from '../../terminal/types.ts';
-import { SocketHandlerImpl } from '../handler.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import type { SocketHandler } from '../types.ts';
 
 describe('SocketHandler', () => {
   let httpServer: HTTPServer;
   let io: SocketIOServer;
-  let _handler: SocketHandlerImpl;
+  let handler: SocketHandler;
   let terminalManager: TerminalManager;
   let chatManager: ChatManager;
   let clientSocket: ClientSocket;
   let serverSocket: Socket;
 
   beforeEach(async () => {
-    // Create HTTP server
+    // Create DI container
+    const container = createTestContainer();
+    terminalManager = container.get<TerminalManager>(TYPES.TerminalManager);
+    chatManager = container.get<ChatManager>(TYPES.ChatManager);
+    handler = container.get<SocketHandler>(TYPES.SocketHandler);
+
+    // Create HTTP server and Socket.io server
     httpServer = new HTTPServer();
-
-    // Create terminal manager
-    terminalManager = new TerminalManagerImpl();
-    chatManager = new ChatManagerImpl();
-
-    // Create Socket.io server and handler
     io = new SocketIOServer(httpServer, {
       cors: { origin: '*' },
     });
 
-    _handler = new SocketHandlerImpl(io, { terminalManager, chatManager });
+    // Attach handler to io
+    handler.attach(io);
 
     // Start server on random port
     await new Promise<void>((resolve) => {
@@ -520,7 +522,7 @@ describe('SocketHandler', () => {
       ]);
 
       // Wait for dispatch status events
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 500));
 
       expect(statuses).toContain('dispatching');
       expect(statuses).toContain('workers-running');

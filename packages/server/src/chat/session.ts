@@ -49,7 +49,9 @@ export class ChatSessionImpl implements ChatSession {
     this.baseArgs = options.baseArgs;
     this.cwd = options.cwd ?? process.cwd();
     this.envOverride = options.env;
-    this.parser = createParser(options.provider);
+    this.parser = options.parserFactory
+      ? options.parserFactory(options.provider)
+      : createParser(options.provider);
     this.processFactory = options.processFactory ?? spawn;
   }
 

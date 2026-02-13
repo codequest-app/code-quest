@@ -34,6 +34,8 @@ export type ProcessFactory = (
   options: SpawnOptions,
 ) => ChildProcess;
 
+export type ParserFactory = (provider: ChatProvider) => StreamParser;
+
 export interface ChatSessionOptions {
   provider: ChatProvider;
   command: string;
@@ -41,6 +43,7 @@ export interface ChatSessionOptions {
   cwd?: string;
   env?: Record<string, string | undefined>;
   processFactory?: ProcessFactory;
+  parserFactory?: ParserFactory;
 }
 
 export interface ChatSession {
@@ -55,6 +58,10 @@ export interface ChatSession {
   onError(handler: (error: string) => void): void;
   onExit(handler: () => void): void;
 }
+
+export type ChatSessionFactory = (options: ChatSessionOptions) => ChatSession;
+
+export type ChatCommandsConfig = Record<ChatProvider, { command: string; baseArgs: string[] }>;
 
 export interface ChatManager {
   createSession(options: { provider: ChatProvider; cwd?: string }): ChatSession;

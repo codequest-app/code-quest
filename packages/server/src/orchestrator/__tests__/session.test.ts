@@ -1,37 +1,17 @@
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ChatManagerImpl } from '../../chat/manager.ts';
-import { ChatSessionImpl } from '../../chat/session.ts';
-import type { ChatStreamEvent } from '../../chat/types.ts';
-import { OrchestratorSessionImpl } from '../session.ts';
-import type { OrchestratorStatus, WorkerInfo } from '../types.ts';
+import type { ChatCommandsConfig, ChatManager, ChatStreamEvent } from '../../chat/types.ts';
+import { TYPES } from '../../container.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import type { OrchestratorSessionImpl } from '../session.ts';
+import type { OrchestratorSessionFactory, OrchestratorStatus, WorkerInfo } from '../types.ts';
 
 const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/fake-claude.sh');
 
-/**
- * Test ChatManager that uses mock scripts instead of real CLI
- */
-class MockChatManager extends ChatManagerImpl {
-  private mockScript: string;
-
-  constructor(mockScript = FAKE_CLAUDE_SCRIPT) {
-    super();
-    this.mockScript = mockScript;
-  }
-
-  createSession(options: { provider: 'claude' | 'gemini'; cwd?: string }) {
-    const session = new ChatSessionImpl({
-      provider: options.provider,
-      command: 'bash',
-      baseArgs: [this.mockScript],
-      cwd: options.cwd,
-      env: { ...process.env, FIXTURE: 'echo' },
-    });
-    // Register in parent's session map
-    (this as any).sessions.set(session.id, session);
-    return session;
-  }
-}
+const mockChatCommandsConfig: ChatCommandsConfig = {
+  claude: { command: 'bash', baseArgs: [FAKE_CLAUDE_SCRIPT] },
+  gemini: { command: 'bash', baseArgs: [FAKE_CLAUDE_SCRIPT] },
+};
 
 function waitForStatus(
   orch: OrchestratorSessionImpl,
@@ -57,20 +37,36 @@ function waitForStatus(
 }
 
 describe('OrchestratorSession', () => {
-  let chatManager: MockChatManager;
+  let chatManager: ChatManager;
+  let createOrchestrator: OrchestratorSessionFactory;
   let orch: OrchestratorSessionImpl;
+  let savedFixture: string | undefined;
 
   beforeEach(() => {
-    chatManager = new MockChatManager();
+    savedFixture = process.env.FIXTURE;
+    process.env.FIXTURE = 'echo';
+
+    const container = createTestContainer({
+      chatCommandsConfig: mockChatCommandsConfig,
+    });
+    chatManager = container.get<ChatManager>(TYPES.ChatManager);
+    createOrchestrator = container.get<OrchestratorSessionFactory>(
+      TYPES.OrchestratorSessionFactory,
+    );
   });
 
   afterEach(() => {
     orch?.kill();
     chatManager.cleanup();
+    if (savedFixture === undefined) {
+      delete process.env.FIXTURE;
+    } else {
+      process.env.FIXTURE = savedFixture;
+    }
   });
 
   it('should create with a coordinator chat session', () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     expect(orch.id).toBeTruthy();
     expect(orch.coordinatorId).toBeTruthy();
@@ -79,7 +75,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should dispatch sub-tasks and create worker sessions', () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([
       { description: 'Write tests', provider: 'claude' },
@@ -94,7 +90,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should track worker completion', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([{ description: 'task1', provider: 'claude' }]);
 
@@ -106,7 +102,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should collect worker text output', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([{ description: 'Hello from worker', provider: 'claude' }]);
 
@@ -117,7 +113,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should emit events for each lifecycle phase', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     const statuses: OrchestratorStatus[] = [];
     orch.onStatusChange((s) => statuses.push(s));
@@ -132,7 +128,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should emit worker events during execution', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     const workerEvents: Array<{ workerId: string; event: ChatStreamEvent }> = [];
     orch.onWorkerEvent((workerId, event) => {
@@ -148,7 +144,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should emit onWorkerComplete when a worker finishes', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     const completed: WorkerInfo[] = [];
     orch.onWorkerComplete((_id, result) => completed.push(result));
@@ -162,7 +158,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should handle multiple workers completing', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([
       { description: 'task1', provider: 'claude' },
@@ -177,7 +173,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should support mixed providers (claude + gemini)', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([
       { description: 'Claude task', provider: 'claude' },
@@ -192,7 +188,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should aggregate cost/token stats across all sessions', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([
       { description: 'task1', provider: 'claude' },
@@ -208,7 +204,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should send aggregated results to coordinator for synthesis', async () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([{ description: 'task1', provider: 'claude' }]);
 
@@ -222,7 +218,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should not dispatch when not idle', () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     const errors: string[] = [];
     orch.onError((msg) => errors.push(msg));
@@ -235,7 +231,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should not synthesize when workers are not complete', () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     const errors: string[] = [];
     orch.onError((msg) => errors.push(msg));
@@ -247,7 +243,7 @@ describe('OrchestratorSession', () => {
   });
 
   it('should abort all workers on abort()', () => {
-    orch = new OrchestratorSessionImpl({ chatManager, provider: 'claude' });
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([{ description: 'task1', provider: 'claude' }]);
 
@@ -257,27 +253,32 @@ describe('OrchestratorSession', () => {
   });
 
   it('should handle worker errors gracefully', async () => {
-    // Use a script that writes to stderr and exits with error
-    const failManager = new MockChatManager();
-    // Override to create failing sessions
-    failManager.createSession = function (options: {
-      provider: 'claude' | 'gemini';
-      cwd?: string;
-    }) {
-      const session = new ChatSessionImpl({
-        provider: options.provider,
-        command: 'bash',
-        baseArgs: [
-          '-c',
-          'echo \'{"type":"system","subtype":"init","session_id":"fail-1"}\'; echo "error occurred" >&2; exit 1',
-        ],
-        cwd: options.cwd,
-      });
-      (this as any).sessions.set(session.id, session);
-      return session;
-    };
+    // Use a separate container with failing commands
+    const failContainer = createTestContainer({
+      chatCommandsConfig: {
+        claude: {
+          command: 'bash',
+          baseArgs: [
+            '-c',
+            'echo \'{"type":"system","subtype":"init","session_id":"fail-1"}\'; echo "error occurred" >&2; exit 1',
+          ],
+        },
+        gemini: {
+          command: 'bash',
+          baseArgs: [
+            '-c',
+            'echo \'{"type":"system","subtype":"init","session_id":"fail-1"}\'; echo "error occurred" >&2; exit 1',
+          ],
+        },
+      },
+    });
 
-    orch = new OrchestratorSessionImpl({ chatManager: failManager, provider: 'claude' });
+    const failChatManager = failContainer.get<ChatManager>(TYPES.ChatManager);
+    const failCreateOrchestrator = failContainer.get<OrchestratorSessionFactory>(
+      TYPES.OrchestratorSessionFactory,
+    );
+
+    orch = failCreateOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
     orch.dispatch([{ description: 'failing task', provider: 'claude' }]);
 
@@ -287,6 +288,6 @@ describe('OrchestratorSession', () => {
     expect(workers[0].status).toBe('error');
     expect(workers[0].error).toBeTruthy();
 
-    failManager.cleanup();
+    failChatManager.cleanup();
   });
 });

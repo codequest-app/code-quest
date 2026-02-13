@@ -1,26 +1,32 @@
+import 'reflect-metadata';
+import { inject, injectable } from 'inversify';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import { OrchestratorSessionImpl } from '../orchestrator/session.ts';
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  SocketHandler,
-  SocketHandlerConfig,
-} from './types.ts';
+import type { ChatManager } from '../chat/types.ts';
+import type { OrchestratorSession, OrchestratorSessionFactory } from '../orchestrator/types.ts';
+import type { TerminalManager } from '../terminal/types.ts';
+import { TYPES } from '../types.symbols.ts';
+import type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './types.ts';
 
 /**
  * Socket.io handler implementation
  * Handles WebSocket connections and terminal events
  */
+@injectable()
 export class SocketHandlerImpl implements SocketHandler {
-  private readonly io: SocketIOServer<ClientToServerEvents, ServerToClientEvents>;
-  private readonly config: SocketHandlerConfig;
-  private readonly orchestrators = new Map<string, OrchestratorSessionImpl>();
+  private io: SocketIOServer<ClientToServerEvents, ServerToClientEvents> | null = null;
+  private readonly orchestrators = new Map<string, OrchestratorSession>();
 
-  constructor(io: SocketIOServer, config: SocketHandlerConfig) {
-    this.io = io;
-    this.config = config;
+  constructor(
+    @inject(TYPES.TerminalManager)
+    private readonly terminalManager: TerminalManager,
+    @inject(TYPES.ChatManager)
+    private readonly chatManager: ChatManager,
+    @inject(TYPES.OrchestratorSessionFactory)
+    private readonly createOrchestrator: OrchestratorSessionFactory,
+  ) {}
 
-    // Set up connection handler
+  attach(io: SocketIOServer): void {
+    this.io = io as SocketIOServer<ClientToServerEvents, ServerToClientEvents>;
     this.io.on('connection', (socket) => {
       this.handleConnection(socket);
     });
@@ -32,7 +38,7 @@ export class SocketHandlerImpl implements SocketHandler {
     // Handle terminal:create
     socket.on('terminal:create', (options) => {
       try {
-        const session = this.config.terminalManager.createSession(options);
+        const session = this.terminalManager.createSession(options);
 
         // Set up data handler
         session.onData((data) => {
@@ -55,7 +61,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:write
     socket.on('terminal:write', (sessionId, data) => {
-      const session = this.config.terminalManager.getSession(sessionId);
+      const session = this.terminalManager.getSession(sessionId);
 
       if (!session) {
         socket.emit('terminal:error', `Session not found: ${sessionId}`);
@@ -67,7 +73,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:resize
     socket.on('terminal:resize', (sessionId, cols, rows) => {
-      const session = this.config.terminalManager.getSession(sessionId);
+      const session = this.terminalManager.getSession(sessionId);
 
       if (!session) {
         socket.emit('terminal:error', `Session not found: ${sessionId}`);
@@ -79,7 +85,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:kill
     socket.on('terminal:kill', (sessionId) => {
-      const session = this.config.terminalManager.getSession(sessionId);
+      const session = this.terminalManager.getSession(sessionId);
 
       if (!session) {
         socket.emit('terminal:error', `Session not found: ${sessionId}`);
@@ -91,14 +97,14 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle terminal:list
     socket.on('terminal:list', () => {
-      const sessionIds = this.config.terminalManager.listSessions();
+      const sessionIds = this.terminalManager.listSessions();
       socket.emit('terminal:list', sessionIds);
     });
 
     // Handle chat:create
     socket.on('chat:create', (options) => {
       try {
-        const session = this.config.chatManager.createSession(options);
+        const session = this.chatManager.createSession(options);
 
         session.onEvent((event) => {
           socket.emit('chat:event', session.id, event);
@@ -126,7 +132,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:send
     socket.on('chat:send', (sessionId, message) => {
-      const session = this.config.chatManager.getSession(sessionId);
+      const session = this.chatManager.getSession(sessionId);
       if (!session) {
         socket.emit('chat:error', sessionId, 'Session not found');
         return;
@@ -136,7 +142,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:allow-tool (permission: allow a tool for next spawn)
     socket.on('chat:allow-tool', (sessionId, toolName) => {
-      const session = this.config.chatManager.getSession(sessionId);
+      const session = this.chatManager.getSession(sessionId);
       if (!session) {
         socket.emit('chat:error', sessionId, 'Session not found');
         return;
@@ -146,7 +152,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:abort
     socket.on('chat:abort', (sessionId) => {
-      const session = this.config.chatManager.getSession(sessionId);
+      const session = this.chatManager.getSession(sessionId);
       if (!session) {
         socket.emit('chat:error', sessionId, 'Session not found');
         return;
@@ -156,21 +162,18 @@ export class SocketHandlerImpl implements SocketHandler {
 
     // Handle chat:kill
     socket.on('chat:kill', (sessionId) => {
-      this.config.chatManager.removeSession(sessionId);
+      this.chatManager.removeSession(sessionId);
     });
 
     // Handle orchestrator:create
     socket.on('orchestrator:create', (options) => {
       try {
-        const orch = new OrchestratorSessionImpl({
-          chatManager: this.config.chatManager,
-          provider: options.provider,
-        });
+        const orch = this.createOrchestrator({ provider: options.provider });
 
         this.orchestrators.set(orch.id, orch);
 
         // Wire up coordinator chat events through existing chat:event channel
-        const coordSession = this.config.chatManager.getSession(orch.coordinatorId);
+        const coordSession = this.chatManager.getSession(orch.coordinatorId);
         if (coordSession) {
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
@@ -264,6 +267,9 @@ export class SocketHandlerImpl implements SocketHandler {
   }
 
   getIO(): SocketIOServer {
+    if (!this.io) {
+      throw new Error('SocketHandler not attached to a server');
+    }
     return this.io;
   }
 }
