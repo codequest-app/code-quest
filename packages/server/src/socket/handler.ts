@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import {
   chatAbortSchema,
   chatAllowToolSchema,
@@ -21,7 +22,7 @@ import type { ChatManager } from '../chat/types.ts';
 import type { OrchestratorSession, OrchestratorSessionFactory } from '../orchestrator/types.ts';
 import type { TerminalManager } from '../terminal/types.ts';
 import { TYPES } from '../types.symbols.ts';
-import type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './types.ts';
+import type { SocketHandler } from './types.ts';
 
 /**
  * Socket.io handler implementation

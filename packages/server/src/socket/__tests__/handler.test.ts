@@ -1,4 +1,5 @@
 import { Server as HTTPServer } from 'node:http';
+import type { ClientToServerEvents, ServerToClientEvents, WorkerInfo } from '@code-quest/shared';
 import type { Socket } from 'socket.io';
 import { Server as SocketIOServer } from 'socket.io';
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
@@ -7,12 +8,7 @@ import type { ChatManager } from '../../chat/types.ts';
 import { TYPES } from '../../container.ts';
 import type { TerminalManager } from '../../terminal/types.ts';
 import { createTestContainer } from '../../test/create-test-container.ts';
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  SocketHandler,
-  WorkerInfo,
-} from '../types.ts';
+import type { SocketHandler } from '../types.ts';
 
 describe('SocketHandler', () => {
   let httpServer: HTTPServer;

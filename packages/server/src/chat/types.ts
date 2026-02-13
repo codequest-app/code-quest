@@ -4,8 +4,6 @@
 
 import type { ChildProcess, SpawnOptions } from 'node:child_process';
 
-export type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
-
 import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 
 export interface StreamParser {

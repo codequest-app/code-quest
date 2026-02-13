@@ -1,5 +1,5 @@
+import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import { io, type Socket } from 'socket.io-client';
-import type { ClientToServerEvents, ServerToClientEvents } from '../types';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 

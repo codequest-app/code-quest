@@ -1,7 +1,7 @@
+import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { socketManager } from '../services/socket';
-import type { ClientToServerEvents, ServerToClientEvents } from '../types';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 

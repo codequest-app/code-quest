@@ -1,4 +1,4 @@
-import type { ChatStats } from '../../types';
+import type { ChatStats } from '@code-quest/shared';
 
 interface StatsBarProps {
   stats: ChatStats;

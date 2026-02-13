@@ -1,5 +1,6 @@
+import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import { create } from 'zustand';
-import type { ChatMessage, ChatProvider, ChatStats, ChatStreamEvent } from '../types';
+import type { ChatMessage } from '../types';
 
 interface PendingPermission {
   toolName: string;

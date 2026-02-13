@@ -1,6 +1,6 @@
+import type { WorkerInfo } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { WorkerInfo } from '../../../types';
 import { WorkerPanel } from '../WorkerPanel';
 
 function makeWorker(id: string, description: string): WorkerInfo {

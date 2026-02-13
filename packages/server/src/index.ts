@@ -16,7 +16,7 @@ export type {
 export type { HttpServer, HttpServerConfig } from './http/types.ts';
 export { ServerImpl } from './server.ts';
 // Re-export Socket types
-export type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './socket/types.ts';
+export type { SocketHandler } from './socket/types.ts';
 // Re-export terminal types
 export type {
   TerminalDimensions,

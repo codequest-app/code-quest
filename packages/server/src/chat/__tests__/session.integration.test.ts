@@ -1,9 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { ChatStreamEvent } from '@code-quest/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TYPES } from '../../container.ts';
 import { createTestContainer } from '../../test/create-test-container.ts';
-import type { ChatSession, ChatSessionFactory, ChatStreamEvent } from '../types.ts';
+import type { ChatSession, ChatSessionFactory } from '../types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

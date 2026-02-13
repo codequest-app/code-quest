@@ -1,4 +1,5 @@
-import type { ChatProvider, StreamParser } from '../types.ts';
+import type { ChatProvider } from '@code-quest/shared';
+import type { StreamParser } from '../types.ts';
 import { ClaudeStreamParser } from './claude-parser.ts';
 import { GeminiStreamParser } from './gemini-parser.ts';
 

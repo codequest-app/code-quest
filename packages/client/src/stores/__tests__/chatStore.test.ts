@@ -1,5 +1,5 @@
+import type { ChatStreamEvent } from '@code-quest/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ChatStreamEvent } from '../../types';
 import { useChatStore } from '../chatStore';
 
 describe('chatStore', () => {

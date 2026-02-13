@@ -1,7 +1,8 @@
+import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import { useTerminalStore } from '../stores/terminalStore';
-import type { ChatStats, ChatStreamEvent, SessionType } from '../types';
+import type { SessionType } from '../types';
 import { useSocket } from './useSocket';
 
 interface UseChatSocketReturn {
