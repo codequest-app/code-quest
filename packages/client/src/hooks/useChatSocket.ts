@@ -1,8 +1,16 @@
 import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
+import {
+  chatAbortSchema,
+  chatAllowToolSchema,
+  chatCreateSchema,
+  chatKillSchema,
+  chatSendSchema,
+} from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import { useTerminalStore } from '../stores/terminalStore';
 import type { SessionType } from '../types';
+import { safeValidate } from '../utils/validateAndEmit.ts';
 import { useSocket } from './useSocket';
 
 interface UseChatSocketReturn {
@@ -66,6 +74,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
   const sendMessage = useCallback(
     (sessionId: string, message: string) => {
+      const result = safeValidate(chatSendSchema, { sessionId, message });
+      if (!result.success) {
+        console.warn('[chat:send] validation failed', result.error);
+        return;
+      }
       useChatStore.getState().addUserMessage(sessionId, message);
       emit('chat:send', sessionId, message);
     },
@@ -74,6 +87,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
   const abortMessage = useCallback(
     (sessionId: string) => {
+      const result = safeValidate(chatAbortSchema, { sessionId });
+      if (!result.success) {
+        console.warn('[chat:abort] validation failed', result.error);
+        return;
+      }
       emit('chat:abort', sessionId);
     },
     [emit],
@@ -81,6 +99,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
   const createChat = useCallback(
     (provider: 'claude' | 'gemini') => {
+      const result = safeValidate(chatCreateSchema, { provider });
+      if (!result.success) {
+        console.warn('[chat:create] validation failed', result.error);
+        return;
+      }
       emit('chat:create', { provider });
     },
     [emit],
@@ -88,6 +111,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
   const killChat = useCallback(
     (sessionId: string) => {
+      const result = safeValidate(chatKillSchema, { sessionId });
+      if (!result.success) {
+        console.warn('[chat:kill] validation failed', result.error);
+        return;
+      }
       emit('chat:kill', sessionId);
       useChatStore.getState().removeChatSession(sessionId);
     },
@@ -96,6 +124,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
   const allowTool = useCallback(
     (sessionId: string, toolName: string) => {
+      const result = safeValidate(chatAllowToolSchema, { sessionId, toolName });
+      if (!result.success) {
+        console.warn('[chat:allow-tool] validation failed', result.error);
+        return;
+      }
       emit('chat:allow-tool', sessionId, toolName);
       useChatStore.getState().allowTool(sessionId, toolName);
     },
