@@ -142,15 +142,50 @@ describe('HttpServer', () => {
       });
     });
 
-    it('should validate request body', async () => {
+    it('should reject cols as string', async () => {
       const response = await request(app).post('/api/terminals').send({
-        cols: 'invalid', // Should be number
+        cols: 'invalid',
       });
 
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({
         error: 'BadRequest',
         message: expect.any(String),
+      });
+    });
+
+    it('should reject negative rows', async () => {
+      const response = await request(app).post('/api/terminals').send({
+        rows: -1,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({
+        error: 'BadRequest',
+      });
+    });
+
+    it('should reject args with non-string elements', async () => {
+      const response = await request(app)
+        .post('/api/terminals')
+        .send({
+          args: [123],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({
+        error: 'BadRequest',
+      });
+    });
+
+    it('should reject unknown fields', async () => {
+      const response = await request(app).post('/api/terminals').send({
+        unknown: 'field',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({
+        error: 'BadRequest',
       });
     });
   });

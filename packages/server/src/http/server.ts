@@ -1,16 +1,15 @@
 import { createServer, type Server as HTTPServer } from 'node:http';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
-import type {
-  CreateTerminalRequest,
-  CreateTerminalResponse,
-  ErrorResponse,
-  HealthResponse,
-  HttpServer,
-  HttpServerConfig,
-  TerminalInfoResponse,
-  TerminalListResponse,
-} from './types.ts';
+import {
+  type CreateTerminalResponse,
+  createTerminalRequestSchema,
+  type ErrorResponse,
+  type HealthResponse,
+  type TerminalInfoResponse,
+  type TerminalListResponse,
+} from './schemas.ts';
+import type { HttpServer, HttpServerConfig } from './types.ts';
 
 /**
  * HTTP server implementation using Express
@@ -81,33 +80,24 @@ export class HttpServerImpl implements HttpServer {
     // Create new terminal
     this.app.post('/api/terminals', (req: Request, res: Response) => {
       try {
-        const body = req.body as CreateTerminalRequest;
+        const result = createTerminalRequestSchema.safeParse(req.body);
 
-        // Validate request body
-        if (body.cols !== undefined && typeof body.cols !== 'number') {
+        if (!result.success) {
           const error: ErrorResponse = {
             error: 'BadRequest',
-            message: 'cols must be a number',
-          };
-          return res.status(400).json(error);
-        }
-
-        if (body.rows !== undefined && typeof body.rows !== 'number') {
-          const error: ErrorResponse = {
-            error: 'BadRequest',
-            message: 'rows must be a number',
+            message: result.error.issues.map((i) => i.message).join('; '),
           };
           return res.status(400).json(error);
         }
 
         // Create terminal session
         const session = this.config.terminalManager.createSession({
-          shell: body.shell,
-          cwd: body.cwd,
-          cols: body.cols,
-          rows: body.rows,
-          args: body.args,
-          env: body.env,
+          shell: result.data.shell,
+          cwd: result.data.cwd,
+          cols: result.data.cols,
+          rows: result.data.rows,
+          args: result.data.args,
+          env: result.data.env,
         });
 
         const response: CreateTerminalResponse = {
