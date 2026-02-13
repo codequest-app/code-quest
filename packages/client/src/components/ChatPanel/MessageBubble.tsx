@@ -1,11 +1,11 @@
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
+import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../../types';
-import { ToolUseBlock } from './ToolUseBlock';
-import { ThinkingBlock } from './ThinkingBlock';
 import { StatsBar } from './StatsBar';
+import { ThinkingBlock } from './ThinkingBlock';
+import { ToolUseBlock } from './ToolUseBlock';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -25,12 +25,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
       {message.thinking && <ThinkingBlock content={message.thinking} />}
 
-      {message.toolUse?.map((tool, i) => (
-        <ToolUseBlock key={i} name={tool.name} input={tool.input} />
+      {message.toolUse?.map((tool) => (
+        <ToolUseBlock key={tool.id} name={tool.name} input={tool.input} />
       ))}
 
       {message.toolResult?.map((result, i) => (
-        <div key={i} className="tool-result" data-testid="tool-result">
+        <div
+          key={`tool-result-${result.name}-${i}`}
+          className="tool-result"
+          data-testid="tool-result"
+        >
           <span className="tool-result-label">{result.name}:</span>
           <pre>{result.output}</pre>
         </div>
@@ -48,11 +52,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                   {children}
                 </code>
               ) : (
-                <SyntaxHighlighter
-                  style={vscDarkPlus}
-                  language={match[1]}
-                  PreTag="div"
-                >
+                <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div">
                   {String(children).replace(/\n$/, '')}
                 </SyntaxHighlighter>
               );

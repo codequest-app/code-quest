@@ -1,4 +1,4 @@
-import { test, expect, type ConsoleMessage } from '@playwright/test';
+import { type ConsoleMessage, expect, test } from '@playwright/test';
 
 /**
  * E2E: Complete send → receive flow for Claude & Gemini
@@ -42,7 +42,9 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
 
     // 3. User message should appear immediately
     await expect(page.locator('[data-testid="message-user"]')).toBeVisible({ timeout: 3000 });
-    await expect(page.locator('[data-testid="message-user"]')).toContainText('Hello Claude, this is an E2E test');
+    await expect(page.locator('[data-testid="message-user"]')).toContainText(
+      'Hello Claude, this is an E2E test',
+    );
 
     // 4. Should show "Stop" button (processing state)
     await expect(page.getByRole('button', { name: /stop/i })).toBeVisible({ timeout: 3000 });
@@ -53,7 +55,7 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
     // 6. Assistant response should contain echoed message (mock script echoes back)
     await expect(page.locator('[data-testid="message-assistant"]')).toContainText(
       'Hello Claude, this is an E2E test',
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // 7. Stats bar should appear (indicates completion)
@@ -64,7 +66,7 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
 
     // 9. No console errors
     const relevantErrors = consoleErrors.filter(
-      (e) => !e.includes('404') && !e.includes('favicon')
+      (e) => !e.includes('404') && !e.includes('favicon'),
     );
     expect(relevantErrors).toEqual([]);
   });
@@ -90,7 +92,7 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
     await expect(page.locator('[data-testid="message-assistant"]')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('[data-testid="message-assistant"]')).toContainText(
       'Hello Gemini, this is an E2E test',
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // 6. Stats bar (completion)
@@ -101,7 +103,7 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
 
     // 8. No console errors
     const relevantErrors = consoleErrors.filter(
-      (e) => !e.includes('404') && !e.includes('favicon')
+      (e) => !e.includes('404') && !e.includes('favicon'),
     );
     expect(relevantErrors).toEqual([]);
   });
@@ -127,7 +129,9 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
     await expect(page.locator('[data-testid="message-user"]')).toHaveCount(2, { timeout: 15000 });
 
     // Should have 2 assistant messages
-    await expect(page.locator('[data-testid="message-assistant"]')).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator('[data-testid="message-assistant"]')).toHaveCount(2, {
+      timeout: 15000,
+    });
 
     // Second assistant message should contain echoed text
     const secondAssistant = page.locator('[data-testid="message-assistant"]').nth(1);

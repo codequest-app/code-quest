@@ -20,12 +20,11 @@ export function PermissionPrompt({
         <div className="permission-tool">
           Claude wants to use: <strong>{toolName}</strong>
         </div>
-        {description && (
-          <div className="permission-description">{description}</div>
-        )}
+        {description && <div className="permission-description">{description}</div>}
       </div>
       <div className="permission-actions">
         <button
+          type="button"
           onClick={onAllow}
           className="permission-btn permission-btn-allow"
           aria-label="Allow"
@@ -33,6 +32,7 @@ export function PermissionPrompt({
           Allow
         </button>
         <button
+          type="button"
           onClick={onDeny}
           className="permission-btn permission-btn-deny"
           aria-label="Deny"
@@ -40,6 +40,7 @@ export function PermissionPrompt({
           Deny
         </button>
         <button
+          type="button"
           onClick={onAlwaysAllow}
           className="permission-btn permission-btn-always"
           aria-label="Always Allow"

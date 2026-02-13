@@ -1,0 +1,6 @@
+{"type":"init","timestamp":"2026-02-11T19:00:06.801Z","session_id":"dff02b29-tool-use-test","model":"auto-gemini-2.5"}
+{"type":"message","timestamp":"2026-02-11T19:00:06.802Z","role":"user","content":"Read the package.json file"}
+{"type":"tool_use","timestamp":"2026-02-11T19:00:08.000Z","tool_name":"read_file","tool_id":"read_file-abc123-533c7505fb7fc","parameters":{"file_path":"package.json"}}
+{"type":"tool_result","timestamp":"2026-02-11T19:00:09.000Z","tool_id":"read_file-abc123-533c7505fb7fc","status":"success","output":"{\"name\":\"code-quest\",\"version\":\"0.1.0\"}"}
+{"type":"message","timestamp":"2026-02-11T19:00:12.664Z","role":"assistant","content":"The package.json shows this is the code-quest project at version 0.1.0.","delta":true}
+{"type":"result","timestamp":"2026-02-11T19:00:14.000Z","status":"success","stats":{"total_tokens":17673,"input_tokens":17382,"output_tokens":68,"cached":12481,"input":4901,"duration_ms":4554,"tool_calls":1}}

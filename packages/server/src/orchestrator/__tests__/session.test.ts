@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import path from 'path';
-import { OrchestratorSessionImpl } from '../session';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ChatManagerImpl } from '../../chat/manager';
 import { ChatSessionImpl } from '../../chat/session';
 import type { ChatStreamEvent } from '../../chat/types';
+import { OrchestratorSessionImpl } from '../session';
 import type { OrchestratorStatus, WorkerInfo } from '../types';
 
-const MOCK_ECHO_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/mock-claude-echo.sh');
+const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/fake-claude.sh');
 
 /**
  * Test ChatManager that uses mock scripts instead of real CLI
@@ -14,7 +14,7 @@ const MOCK_ECHO_SCRIPT = path.resolve(__dirname, '../../../../..', 'e2e/fixtures
 class MockChatManager extends ChatManagerImpl {
   private mockScript: string;
 
-  constructor(mockScript = MOCK_ECHO_SCRIPT) {
+  constructor(mockScript = FAKE_CLAUDE_SCRIPT) {
     super();
     this.mockScript = mockScript;
   }
@@ -25,6 +25,7 @@ class MockChatManager extends ChatManagerImpl {
       command: 'bash',
       baseArgs: [this.mockScript],
       cwd: options.cwd,
+      env: { ...process.env, FIXTURE: 'echo' },
     });
     // Register in parent's session map
     (this as any).sessions.set(session.id, session);
@@ -35,7 +36,7 @@ class MockChatManager extends ChatManagerImpl {
 function waitForStatus(
   orch: OrchestratorSessionImpl,
   target: OrchestratorStatus,
-  timeoutMs = 10000
+  timeoutMs = 10000,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     if (orch.status === target) {
@@ -44,7 +45,7 @@ function waitForStatus(
     }
     const timeout = setTimeout(
       () => reject(new Error(`Timeout waiting for status "${target}", current: "${orch.status}"`)),
-      timeoutMs
+      timeoutMs,
     );
     orch.onStatusChange((status) => {
       if (status === target) {
@@ -256,11 +257,13 @@ describe('OrchestratorSession', () => {
   });
 
   it('should handle worker errors gracefully', async () => {
-    const failScript = path.resolve(__dirname, '../../../../..', 'e2e/fixtures/mock-claude-echo.sh');
     // Use a script that writes to stderr and exits with error
     const failManager = new MockChatManager();
     // Override to create failing sessions
-    failManager.createSession = function (options: { provider: 'claude' | 'gemini'; cwd?: string }) {
+    failManager.createSession = function (options: {
+      provider: 'claude' | 'gemini';
+      cwd?: string;
+    }) {
       const session = new ChatSessionImpl({
         provider: options.provider,
         command: 'bash',

@@ -1,15 +1,15 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
-import { useSocket } from './useSocket';
 import { useTerminalStore } from '../stores/terminalStore';
-import type { ChatStreamEvent, ChatStats } from '../types';
+import type { ChatStats, ChatStreamEvent, SessionType } from '../types';
+import { useSocket } from './useSocket';
 
 interface UseChatSocketReturn {
   sendMessage: (sessionId: string, message: string) => void;
   abortMessage: (sessionId: string) => void;
   createChat: (provider: 'claude' | 'gemini') => void;
   killChat: (sessionId: string) => void;
-  respondToPermission: (sessionId: string, response: string) => void;
+  allowTool: (sessionId: string, toolName: string) => void;
 }
 
 export function useChatSocket(serverUrl: string): UseChatSocketReturn {
@@ -53,8 +53,8 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
     if (!socket) return;
 
     const handleChatCreated = (sessionId: string, provider: string) => {
-      const type = provider === 'gemini' ? 'gemini-chat' : 'claude-chat';
-      useTerminalStore.getState().addSession(sessionId, 0, type as any);
+      const type: SessionType = provider === 'gemini' ? 'gemini-chat' : 'claude-chat';
+      useTerminalStore.getState().addSession(sessionId, 0, type);
     };
 
     socket.on('chat:created', handleChatCreated);
@@ -68,21 +68,21 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       useChatStore.getState().addUserMessage(sessionId, message);
       emit('chat:send', sessionId, message);
     },
-    [emit]
+    [emit],
   );
 
   const abortMessage = useCallback(
     (sessionId: string) => {
       emit('chat:abort', sessionId);
     },
-    [emit]
+    [emit],
   );
 
   const createChat = useCallback(
     (provider: 'claude' | 'gemini') => {
       emit('chat:create', { provider });
     },
-    [emit]
+    [emit],
   );
 
   const killChat = useCallback(
@@ -90,16 +90,16 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       emit('chat:kill', sessionId);
       useChatStore.getState().removeChatSession(sessionId);
     },
-    [emit]
+    [emit],
   );
 
-  const respondToPermission = useCallback(
-    (sessionId: string, response: string) => {
-      emit('chat:respond', sessionId, response);
-      useChatStore.getState().clearPendingPermission(sessionId);
+  const allowTool = useCallback(
+    (sessionId: string, toolName: string) => {
+      emit('chat:allow-tool', sessionId, toolName);
+      useChatStore.getState().allowTool(sessionId, toolName);
     },
-    [emit]
+    [emit],
   );
 
-  return { sendMessage, abortMessage, createChat, killChat, respondToPermission };
+  return { sendMessage, abortMessage, createChat, killChat, allowTool };
 }

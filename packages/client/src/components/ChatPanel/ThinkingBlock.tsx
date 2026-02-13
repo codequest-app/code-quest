@@ -10,6 +10,7 @@ export function ThinkingBlock({ content }: ThinkingBlockProps) {
   return (
     <div className="thinking-block" data-testid="thinking-block">
       <button
+        type="button"
         className="thinking-header"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
@@ -17,9 +18,7 @@ export function ThinkingBlock({ content }: ThinkingBlockProps) {
         <span className="thinking-icon">{expanded ? '▼' : '▶'}</span>
         <span className="thinking-label">Thinking...</span>
       </button>
-      {expanded && (
-        <div className="thinking-content">{content}</div>
-      )}
+      {expanded && <div className="thinking-content">{content}</div>}
 
       <style>{`
         .thinking-block {

@@ -1,22 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Server as HTTPServer } from 'http';
-import { Server as SocketIOServer, Socket } from 'socket.io';
-import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
-import { SocketHandlerImpl } from '../handler';
-import { TerminalManagerImpl } from '../../terminal/manager';
+import { Server as HTTPServer } from 'node:http';
+import { type Socket, Server as SocketIOServer } from 'socket.io';
+import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatManagerImpl } from '../../chat/manager';
-import type { TerminalManager } from '../../terminal/types';
 import type { ChatManager } from '../../chat/types';
+import { TerminalManagerImpl } from '../../terminal/manager';
+import type { TerminalManager } from '../../terminal/types';
+import { SocketHandlerImpl } from '../handler';
 
 describe('SocketHandler', () => {
   let httpServer: HTTPServer;
   let io: SocketIOServer;
-  let handler: SocketHandlerImpl;
+  let _handler: SocketHandlerImpl;
   let terminalManager: TerminalManager;
   let chatManager: ChatManager;
   let clientSocket: ClientSocket;
   let serverSocket: Socket;
-  const port = 3001;
 
   beforeEach(async () => {
     // Create HTTP server
@@ -31,15 +30,17 @@ describe('SocketHandler', () => {
       cors: { origin: '*' },
     });
 
-    handler = new SocketHandlerImpl(io, { terminalManager, chatManager });
+    _handler = new SocketHandlerImpl(io, { terminalManager, chatManager });
 
-    // Start server
+    // Start server on random port
     await new Promise<void>((resolve) => {
-      httpServer.listen(port, resolve);
+      httpServer.listen(0, resolve);
     });
 
+    const addr = httpServer.address() as { port: number };
+
     // Create client
-    clientSocket = ioClient(`http://localhost:${port}`, {
+    clientSocket = ioClient(`http://localhost:${addr.port}`, {
       transports: ['websocket'],
     });
 
@@ -86,7 +87,8 @@ describe('SocketHandler', () => {
     });
 
     it('should handle multiple client connections', async () => {
-      const client2 = ioClient(`http://localhost:${port}`, {
+      const addr = httpServer.address() as { port: number };
+      const client2 = ioClient(`http://localhost:${addr.port}`, {
         transports: ['websocket'],
       });
 
@@ -102,13 +104,11 @@ describe('SocketHandler', () => {
 
   describe('terminal:create', () => {
     it('should create a new terminal session', async () => {
-      const created = new Promise<{ sessionId: string; pid: number }>(
-        (resolve) => {
-          clientSocket.on('terminal:created', (sessionId, pid) => {
-            resolve({ sessionId, pid });
-          });
-        }
-      );
+      const created = new Promise<{ sessionId: string; pid: number }>((resolve) => {
+        clientSocket.on('terminal:created', (sessionId, pid) => {
+          resolve({ sessionId, pid });
+        });
+      });
 
       clientSocket.emit('terminal:create');
 
@@ -119,13 +119,11 @@ describe('SocketHandler', () => {
     });
 
     it('should create terminal with custom options', async () => {
-      const created = new Promise<{ sessionId: string; pid: number }>(
-        (resolve) => {
-          clientSocket.on('terminal:created', (sessionId, pid) => {
-            resolve({ sessionId, pid });
-          });
-        }
-      );
+      const created = new Promise<{ sessionId: string; pid: number }>((resolve) => {
+        clientSocket.on('terminal:created', (sessionId, pid) => {
+          resolve({ sessionId, pid });
+        });
+      });
 
       clientSocket.emit('terminal:create', {
         cols: 100,
@@ -253,13 +251,11 @@ describe('SocketHandler', () => {
     });
 
     it('should kill terminal session', async () => {
-      const exited = new Promise<{ sessionId: string; exitCode: number }>(
-        (resolve) => {
-          clientSocket.on('terminal:exit', (id, exitCode) => {
-            resolve({ sessionId: id, exitCode });
-          });
-        }
-      );
+      const exited = new Promise<{ sessionId: string; exitCode: number }>((resolve) => {
+        clientSocket.on('terminal:exit', (id, exitCode) => {
+          resolve({ sessionId: id, exitCode });
+        });
+      });
 
       clientSocket.emit('terminal:kill', sessionId);
 
@@ -374,13 +370,11 @@ describe('SocketHandler', () => {
       const sessionId = await created;
 
       // Listen for exit
-      const exited = new Promise<{ sessionId: string; exitCode: number }>(
-        (resolve) => {
-          clientSocket.on('terminal:exit', (id, exitCode) => {
-            resolve({ sessionId: id, exitCode });
-          });
-        }
-      );
+      const exited = new Promise<{ sessionId: string; exitCode: number }>((resolve) => {
+        clientSocket.on('terminal:exit', (id, exitCode) => {
+          resolve({ sessionId: id, exitCode });
+        });
+      });
 
       // Kill terminal
       clientSocket.emit('terminal:kill', sessionId);
@@ -466,9 +460,9 @@ describe('SocketHandler', () => {
             'orchestrator:created' as any,
             (orchId: string, coordinatorId: string, provider: string) => {
               resolve({ orchId, coordinatorId, provider });
-            }
+            },
           );
-        }
+        },
       );
 
       clientSocket.emit('orchestrator:create' as any, { provider: 'claude' });

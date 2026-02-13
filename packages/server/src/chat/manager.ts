@@ -1,20 +1,18 @@
-import { fileURLToPath } from 'url';
-import path from 'path';
+import 'reflect-metadata';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { injectable } from 'inversify';
 import { ChatSessionImpl } from './session';
 import type { ChatManager, ChatProvider, ChatSession } from './types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MOCK_CLI_PATH = path.resolve(
-  __dirname,
-  '../test/mock-cli.ts'
-);
+const MOCK_CLI_PATH = path.resolve(__dirname, '../test/mock-cli.ts');
 
-const MOCK_SCRIPT = path.resolve(
-  __dirname,
-  '../../../../e2e/fixtures/mock-claude-stream.sh'
-);
+const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-claude.sh');
+
+const FAKE_GEMINI_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-gemini.sh');
 
 function getCommands(): Record<ChatProvider, { command: string; baseArgs: string[] }> {
   if (process.env.MOCK_CLI === 'true') {
@@ -26,15 +24,15 @@ function getCommands(): Record<ChatProvider, { command: string; baseArgs: string
 
   if (process.env.MOCK_CLI === 'shell') {
     return {
-      claude: { command: 'bash', baseArgs: [MOCK_SCRIPT] },
-      gemini: { command: 'bash', baseArgs: [MOCK_SCRIPT] },
+      claude: { command: 'bash', baseArgs: [FAKE_CLAUDE_SCRIPT] },
+      gemini: { command: 'bash', baseArgs: [FAKE_GEMINI_SCRIPT] },
     };
   }
 
   return {
     claude: {
       command: 'claude',
-      baseArgs: ['--output-format', 'stream-json', '--verbose'],
+      baseArgs: ['-p', '--output-format', 'stream-json', '--verbose'],
     },
     gemini: {
       command: 'gemini',
@@ -43,6 +41,7 @@ function getCommands(): Record<ChatProvider, { command: string; baseArgs: string
   };
 }
 
+@injectable()
 export class ChatManagerImpl implements ChatManager {
   private sessions = new Map<string, ChatSession>();
 

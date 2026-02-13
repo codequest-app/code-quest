@@ -43,20 +43,14 @@ export class ClaudeStreamParser implements StreamParser {
       case 'assistant':
         return this.parseAssistantMessage(json);
 
+      case 'user':
+        // User events contain auto-executed tool results from CLI.
+        // We silently ignore them — the tool_result is already tracked
+        // via the assistant's tool_use event.
+        return [];
+
       case 'result':
-        return [
-          {
-            type: 'result',
-            data: {
-              stats: {
-                costUsd: json.total_cost_usd as number | undefined,
-                durationMs: json.duration_ms as number | undefined,
-                inputTokens: json.input_tokens as number | undefined,
-                outputTokens: json.output_tokens as number | undefined,
-              },
-            },
-          },
-        ];
+        return this.parseResult(json);
 
       case 'permission':
         return [
@@ -93,7 +87,7 @@ export class ClaudeStreamParser implements StreamParser {
         case 'tool_use':
           events.push({
             type: 'tool_use',
-            data: { name: block.name as string, input: block.input },
+            data: { id: block.id as string, name: block.name as string, input: block.input },
           });
           break;
         case 'tool_result':
@@ -109,5 +103,23 @@ export class ClaudeStreamParser implements StreamParser {
     }
 
     return events;
+  }
+
+  private parseResult(json: Record<string, unknown>): ChatStreamEvent[] {
+    // Real Claude CLI puts token counts inside `usage` object, not at top level
+    const usage = json.usage as Record<string, unknown> | undefined;
+    return [
+      {
+        type: 'result',
+        data: {
+          stats: {
+            costUsd: json.total_cost_usd as number | undefined,
+            durationMs: json.duration_ms as number | undefined,
+            inputTokens: (usage?.input_tokens ?? json.input_tokens) as number | undefined,
+            outputTokens: (usage?.output_tokens ?? json.output_tokens) as number | undefined,
+          },
+        },
+      },
+    ];
   }
 }

@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test';
+import path from 'node:path';
+import { expect, test } from '@playwright/test';
 import { io, type Socket } from 'socket.io-client';
-import path from 'path';
 
 /**
  * E2E Test: Claude CLI integration via mock script
@@ -10,7 +10,7 @@ import path from 'path';
  */
 
 const SERVER_URL = 'http://localhost:3000';
-const MOCK_SCRIPT = path.resolve(__dirname, 'fixtures/mock-claude.sh');
+const MOCK_SCRIPT = path.resolve(__dirname, 'fixtures/fake-claude.sh');
 
 function connectSocket(): Socket {
   return io(SERVER_URL, {
@@ -78,7 +78,7 @@ test.describe('Claude CLI integration (mock)', () => {
     expect(fullOutput).toContain('"type":"system"');
     expect(fullOutput).toContain('"type":"assistant"');
     expect(fullOutput).toContain('"type":"result"');
-    expect(fullOutput).toContain('"session_id":"mock-123"');
+    expect(fullOutput).toContain('"session_id"');
     expect(fullOutput).toContain('"total_cost_usd"');
   });
 

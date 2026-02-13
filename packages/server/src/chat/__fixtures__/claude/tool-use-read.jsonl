@@ -1,0 +1,6 @@
+{"type":"system","subtype":"init","session_id":"ce0ca308-tool-use-test","cwd":"/Users/test/project","tools":["Read","Write","Edit","Bash"],"model":"claude-opus-4-6"}
+{"type":"assistant","message":{"model":"claude-opus-4-6","id":"msg_01TOOL1","content":[{"type":"text","text":"Let me read that file for you."}],"usage":{"input_tokens":200,"output_tokens":10},"stop_reason":"tool_use"}}
+{"type":"assistant","message":{"model":"claude-opus-4-6","id":"msg_01TOOL2","content":[{"type":"tool_use","id":"toolu_01S4W5K8R2N3X7Y9Z","name":"Read","input":{"file_path":"package.json"}}],"usage":{"input_tokens":200,"output_tokens":50},"stop_reason":"tool_use"}}
+{"type":"user","message":{"content":[{"tool_use_id":"toolu_01S4W5K8R2N3X7Y9Z","type":"tool_result","content":"{\"name\":\"code-quest\",\"version\":\"0.1.0\"}"}]}}
+{"type":"assistant","message":{"model":"claude-opus-4-6","id":"msg_01TOOL3","content":[{"type":"text","text":"The package.json shows this is the code-quest project at version 0.1.0."}],"usage":{"input_tokens":300,"output_tokens":20},"stop_reason":"end_turn"}}
+{"type":"result","subtype":"success","is_error":false,"duration_ms":5200,"total_cost_usd":0.018,"num_turns":2,"usage":{"input_tokens":700,"output_tokens":80},"modelUsage":{"claude-opus-4-6":{"input_tokens":700,"output_tokens":80}}}

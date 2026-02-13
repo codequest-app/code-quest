@@ -1,8 +1,8 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
 import { SerializeAddon } from '@xterm/addon-serialize';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Terminal as XTerm } from '@xterm/xterm';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useSocket } from '../../hooks/useSocket';
 import '@xterm/xterm/css/xterm.css';
 
@@ -48,13 +48,7 @@ const defaultTheme = {
  * Supports serialize/restore for tab switching
  */
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
-  {
-    sessionId,
-    serverUrl,
-    className = '',
-    theme = defaultTheme,
-    initialContent,
-  },
+  { sessionId, serverUrl, className = '', theme = defaultTheme, initialContent },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -124,7 +118,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         if (fitAddonRef.current) {
           try {
             fitAddonRef.current.fit();
-          } catch (e) {
+          } catch (_e) {
             // Ignore fit errors during rapid resizes
           }
         }
@@ -138,7 +132,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           if (fitAddonRef.current) {
             try {
               fitAddon.fit();
-            } catch (e) {
+            } catch (_e) {
               // Ignore fit errors during initialization
             }
           }

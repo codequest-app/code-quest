@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 6: Worktree 整合
  *
@@ -8,10 +9,10 @@
  * - .claude 配置是共享還是獨立？
  */
 
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '06-worktree.log');
 
@@ -22,22 +23,17 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 function findClaudeCLI(): string {
-  const possiblePaths = [
-    'claude',
-    path.join(process.env.HOME || '', '.claude/local/claude')
-  ];
+  const possiblePaths = ['claude', path.join(process.env.HOME || '', '.claude/local/claude')];
 
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
       return p;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   throw new Error('Claude CLI not found');
@@ -52,10 +48,13 @@ async function setupTestWorktrees(): Promise<string[]> {
   // 清理舊的測試 worktree
   try {
     log('清理舊的測試 worktree...');
-    execSync('git worktree list --porcelain | grep "^worktree.*test-wt-" | awk \'{print $2}\' | xargs -r git worktree remove --force', {
-      cwd: mainDir,
-      stdio: 'ignore'
-    });
+    execSync(
+      'git worktree list --porcelain | grep "^worktree.*test-wt-" | awk \'{print $2}\' | xargs -r git worktree remove --force',
+      {
+        cwd: mainDir,
+        stdio: 'ignore',
+      },
+    );
   } catch {
     // 忽略錯誤
   }
@@ -82,7 +81,7 @@ async function setupTestWorktrees(): Promise<string[]> {
       // 創建 worktree
       execSync(`git worktree add "${worktreePath}" -b ${branchName}`, {
         cwd: mainDir,
-        stdio: 'pipe'
+        stdio: 'pipe',
       });
 
       worktrees.push(worktreePath);
@@ -91,8 +90,8 @@ async function setupTestWorktrees(): Promise<string[]> {
 
     log(`✅ 所有測試 Worktree 已創建\n`);
     return worktrees;
-  } catch (error: any) {
-    log(`❌ 創建 Worktree 失敗: ${error.message}`);
+  } catch (error: unknown) {
+    log(`❌ 創建 Worktree 失敗: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }
@@ -112,8 +111,8 @@ async function testInWorktree(worktreePath: string, index: number): Promise<stri
       cwd: worktreePath, // 關鍵：在 worktree 目錄中執行
       env: {
         ...process.env,
-        TERM: 'xterm-256color'
-      }
+        TERM: 'xterm-256color',
+      },
     });
 
     let output = '';
@@ -147,11 +146,11 @@ async function cleanupWorktrees(worktrees: string[]): Promise<void> {
       log(`移除: ${worktreePath}`);
       execSync(`git worktree remove "${worktreePath}" --force`, {
         cwd: mainDir,
-        stdio: 'pipe'
+        stdio: 'pipe',
       });
       log(`  ✅ 已移除`);
-    } catch (error: any) {
-      log(`  ⚠️ 移除失敗: ${error.message}`);
+    } catch (error: unknown) {
+      log(`  ⚠️ 移除失敗: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -179,7 +178,7 @@ async function test() {
     log('\n=== Worktree 隔離分析 ===\n');
 
     // 檢查是否顯示不同的 branch
-    const branches = outputs.map((output, i) => {
+    const branches = outputs.map((output, _i) => {
       const branchMatch = output.match(/test-wt-\d+-\d+/);
       return branchMatch ? branchMatch[0] : null;
     });
@@ -202,7 +201,7 @@ async function test() {
     // 評估
     log('\n=== 評估 ===');
 
-    if (allDifferent && branches.every(b => b !== null)) {
+    if (allDifferent && branches.every((b) => b !== null)) {
       log(`✅ Worktree 隔離正常（顯示不同的 branch）`);
     } else {
       log(`❌ Worktree 隔離異常`);
@@ -210,9 +209,8 @@ async function test() {
 
     log(`\n=== 測試 6 完成 ===`);
     log(`詳細輸出已儲存至: ${LOG_FILE}`);
-
-  } catch (error: any) {
-    log(`\n❌ 測試失敗: ${error.message}`);
+  } catch (error: unknown) {
+    log(`\n❌ 測試失敗: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   } finally {
     // 清理
@@ -222,11 +220,13 @@ async function test() {
   }
 }
 
-test().then(() => {
-  logStream.end();
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    logStream.end();
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

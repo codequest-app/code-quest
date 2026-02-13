@@ -1,9 +1,9 @@
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
+import type { SubTask } from '../../types';
 import { ChatPanel } from '../ChatPanel';
+import { StatsBar } from '../ChatPanel/StatsBar';
 import { DispatchForm } from './DispatchForm';
 import { WorkerPanel } from './WorkerPanel';
-import { StatsBar } from '../ChatPanel/StatsBar';
-import type { SubTask } from '../../types';
 
 interface OrchestratorPanelProps {
   orchestratorId: string;

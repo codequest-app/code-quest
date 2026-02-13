@@ -3,13 +3,13 @@ import type { ChatStreamEvent, StreamParser } from '../types';
 /**
  * Parser for Gemini CLI stream-json output (gemini -o stream-json)
  *
- * Gemini format differs from Claude:
- * - init:    {"type":"init","session_id":"...","model":"..."}
- * - user:    {"type":"message","role":"user","content":"..."}
- * - text:    {"type":"message","role":"assistant","content":"...","delta":true}
- * - action:  {"type":"action","tool_name":"...","tool_input":{...}}
- * - result:  {"type":"action_result","tool_name":"...","output":"..."}
- * - done:    {"type":"result","status":"success","stats":{"input_tokens":...,"output_tokens":...,"duration_ms":...}}
+ * Real Gemini CLI format:
+ * - init:        {"type":"init","session_id":"...","model":"...","timestamp":"..."}
+ * - user msg:    {"type":"message","role":"user","content":"...","timestamp":"..."}
+ * - assistant:   {"type":"message","role":"assistant","content":"...","delta":true,"timestamp":"..."}
+ * - tool_use:    {"type":"tool_use","tool_name":"...","tool_id":"...","parameters":{...},"timestamp":"..."}
+ * - tool_result: {"type":"tool_result","tool_id":"...","status":"...","output":"...","timestamp":"..."}
+ * - result:      {"type":"result","status":"success","stats":{...},"timestamp":"..."}
  */
 export class GeminiStreamParser implements StreamParser {
   private buffer = '';
@@ -53,24 +53,25 @@ export class GeminiStreamParser implements StreamParser {
       case 'message':
         return this.parseMessage(json);
 
-      case 'action':
+      case 'tool_use':
         return [
           {
             type: 'tool_use',
             data: {
+              id: json.tool_id as string,
               name: json.tool_name as string,
-              input: json.tool_input as unknown,
+              input: json.parameters as unknown,
             },
           },
         ];
 
-      case 'action_result':
+      case 'tool_result':
         return [
           {
             type: 'tool_result',
             data: {
-              name: json.tool_name as string,
-              output: json.output as string,
+              name: json.tool_id as string,
+              output: (json.output ?? '') as string,
             },
           },
         ];
@@ -100,10 +101,9 @@ export class GeminiStreamParser implements StreamParser {
         type: 'result',
         data: {
           stats: {
-            costUsd: (json.total_cost_usd ?? stats?.total_cost_usd) as number | undefined,
-            durationMs: (json.duration_ms ?? stats?.duration_ms) as number | undefined,
-            inputTokens: (json.input_tokens ?? stats?.input_tokens) as number | undefined,
-            outputTokens: (json.output_tokens ?? stats?.output_tokens) as number | undefined,
+            durationMs: stats?.duration_ms as number | undefined,
+            inputTokens: stats?.input_tokens as number | undefined,
+            outputTokens: stats?.output_tokens as number | undefined,
           },
         },
       },

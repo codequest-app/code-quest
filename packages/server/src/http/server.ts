@@ -1,15 +1,15 @@
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+import { createServer, type Server as HTTPServer } from 'node:http';
 import cors from 'cors';
-import { createServer, type Server as HTTPServer } from 'http';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import type {
-  HttpServer,
-  HttpServerConfig,
-  HealthResponse,
-  TerminalListResponse,
   CreateTerminalRequest,
   CreateTerminalResponse,
-  TerminalInfoResponse,
   ErrorResponse,
+  HealthResponse,
+  HttpServer,
+  HttpServerConfig,
+  TerminalInfoResponse,
+  TerminalListResponse,
 } from './types';
 
 /**
@@ -42,7 +42,7 @@ export class HttpServerImpl implements HttpServer {
     this.app.use(express.json());
 
     // Request logging
-    this.app.use((req: Request, res: Response, next: NextFunction) => {
+    this.app.use((req: Request, _res: Response, next: NextFunction) => {
       console.log(`${req.method} ${req.path}`);
       next();
     });
@@ -50,7 +50,7 @@ export class HttpServerImpl implements HttpServer {
 
   private setupRoutes(): void {
     // Health check
-    this.app.get('/api/health', (req: Request, res: Response) => {
+    this.app.get('/api/health', (_req: Request, res: Response) => {
       const response: HealthResponse = {
         status: 'ok',
         uptime: Date.now() - this.startTime,
@@ -60,7 +60,7 @@ export class HttpServerImpl implements HttpServer {
     });
 
     // List all terminals
-    this.app.get('/api/terminals', (req: Request, res: Response) => {
+    this.app.get('/api/terminals', (_req: Request, res: Response) => {
       const sessionIds = this.config.terminalManager.listSessions();
       const sessions = sessionIds
         .map((id) => {
@@ -166,7 +166,7 @@ export class HttpServerImpl implements HttpServer {
 
   private setupErrorHandling(): void {
     // Handle JSON parsing errors
-    this.app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
       if (err instanceof SyntaxError && 'body' in err) {
         const error: ErrorResponse = {
           error: 'BadRequest',
@@ -186,7 +186,7 @@ export class HttpServerImpl implements HttpServer {
     });
 
     // Generic error handler
-    this.app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('Unhandled error:', err);
       const error: ErrorResponse = {
         error: 'InternalServerError',
@@ -206,7 +206,7 @@ export class HttpServerImpl implements HttpServer {
         this.httpServer = createServer(this.app);
 
         this.httpServer.listen(this.config.port, () => {
-          const address = this.httpServer!.address();
+          const address = this.httpServer?.address();
           if (typeof address === 'object' && address) {
             this.actualPort = address.port;
           }
@@ -227,7 +227,7 @@ export class HttpServerImpl implements HttpServer {
     }
 
     return new Promise((resolve, reject) => {
-      this.httpServer!.close((err) => {
+      this.httpServer?.close((err) => {
         if (err) {
           reject(err);
         } else {

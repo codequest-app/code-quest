@@ -56,9 +56,7 @@ export const useOrchestratorStore = create<OrchestratorStore>((set, get) => ({
       const orch = orchestrators.get(orchId);
       if (!orch) return state;
 
-      const workers = orch.workers.map((w) =>
-        w.id === workerId ? { ...w, ...update } : w
-      );
+      const workers = orch.workers.map((w) => (w.id === workerId ? { ...w, ...update } : w));
       orchestrators.set(orchId, { ...orch, workers });
       return { orchestrators };
     });

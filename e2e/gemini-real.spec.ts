@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
  * E2E Test: Real Gemini CLI integration
@@ -26,7 +26,9 @@ test.describe('Gemini Real CLI', () => {
 
     // 3. User message should appear
     await expect(page.locator('[data-testid="message-user"]')).toBeVisible({ timeout: 3000 });
-    await expect(page.locator('[data-testid="message-user"]')).toContainText('Say exactly: hello world');
+    await expect(page.locator('[data-testid="message-user"]')).toContainText(
+      'Say exactly: hello world',
+    );
 
     // 4. Should show processing state
     await expect(page.getByRole('button', { name: /stop/i })).toBeVisible({ timeout: 5000 });
@@ -37,7 +39,7 @@ test.describe('Gemini Real CLI', () => {
     // 6. Response should contain text
     const assistantMsg = page.locator('[data-testid="message-assistant"]');
     const text = await assistantMsg.textContent();
-    expect(text!.length).toBeGreaterThan(0);
+    expect(text?.length).toBeGreaterThan(0);
     console.log('Gemini response:', text);
 
     // 7. Stats bar should appear

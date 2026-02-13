@@ -8,6 +8,8 @@
 export interface ServerConfig {
   /** HTTP server port */
   port: number;
+  /** HTTP server host */
+  host?: string;
   /** Enable CORS */
   cors?: boolean;
 }

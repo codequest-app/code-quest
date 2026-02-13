@@ -1,5 +1,6 @@
-import { EventEmitter } from 'events';
-import { PassThrough } from 'stream';
+import type { SpawnOptions } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 
 /**
  * MockProcess for unit testing ChatSessionImpl without spawning real processes.
@@ -34,7 +35,7 @@ export class MockProcess extends EventEmitter {
 
   /** Emit data on stdout (simulates CLI output) */
   emitStdout(data: string): void {
-    this.stdout.push(data + '\n');
+    this.stdout.push(`${data}\n`);
   }
 
   /** Emit data on stderr */
@@ -71,9 +72,30 @@ export class MockProcess extends EventEmitter {
 }
 
 /**
- * Creates a processFactory that returns the given MockProcess.
- * Use with ChatSessionOptions.processFactory for DI in tests.
+ * Tracks spawned processes and the args they were called with.
+ * For spawn-per-message model where each sendMessage creates a new process.
  */
-export function createMockProcessFactory(mockProcess: MockProcess) {
-  return () => mockProcess as any;
+export interface SpawnRecord {
+  command: string;
+  args: string[];
+  options: SpawnOptions;
+  process: MockProcess;
+}
+
+/**
+ * Creates a processFactory that returns MockProcess instances.
+ * Tracks all spawn calls for assertion.
+ */
+export function createMockProcessFactory(mockProcessOrGetter: MockProcess | (() => MockProcess)) {
+  const records: SpawnRecord[] = [];
+
+  const factory = (command: string, args: string[], options: SpawnOptions) => {
+    const proc =
+      typeof mockProcessOrGetter === 'function' ? mockProcessOrGetter() : mockProcessOrGetter;
+    records.push({ command, args, options, process: proc });
+    return proc as any;
+  };
+
+  factory.records = records;
+  return factory;
 }

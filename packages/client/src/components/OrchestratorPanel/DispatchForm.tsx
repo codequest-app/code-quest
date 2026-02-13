@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { ChatProvider, SubTask, OrchestratorStatus } from '../../types';
+import { useRef, useState } from 'react';
+import type { ChatProvider, OrchestratorStatus, SubTask } from '../../types';
 
 interface DispatchFormProps {
   status: OrchestratorStatus;
@@ -8,13 +8,18 @@ interface DispatchFormProps {
   onAbort: () => void;
 }
 
+interface TaskWithKey extends SubTask {
+  _key: number;
+}
+
 export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: DispatchFormProps) {
-  const [tasks, setTasks] = useState<SubTask[]>([
-    { description: '', provider: 'claude' },
+  const nextKey = useRef(1);
+  const [tasks, setTasks] = useState<TaskWithKey[]>([
+    { description: '', provider: 'claude', _key: 0 },
   ]);
 
   const addTask = () => {
-    setTasks([...tasks, { description: '', provider: 'claude' }]);
+    setTasks([...tasks, { description: '', provider: 'claude', _key: nextKey.current++ }]);
   };
 
   const removeTask = (index: number) => {
@@ -39,14 +44,15 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
 
   const canDispatch = status === 'idle' && tasks.some((t) => t.description.trim());
   const canSynthesize = status === 'workers-complete';
-  const canAbort = status === 'dispatching' || status === 'workers-running' || status === 'synthesizing';
+  const canAbort =
+    status === 'dispatching' || status === 'workers-running' || status === 'synthesizing';
 
   return (
     <div className="dispatch-form" data-testid="dispatch-form">
       {status === 'idle' && (
         <>
           {tasks.map((task, index) => (
-            <div key={index} className="task-row" data-testid="task-row">
+            <div key={task._key} className="task-row" data-testid="task-row">
               <input
                 type="text"
                 placeholder="Task description..."
@@ -66,6 +72,7 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
               </select>
               {tasks.length > 1 && (
                 <button
+                  type="button"
                   aria-label={`Remove task ${index + 1}`}
                   className="remove-task-btn"
                   onClick={() => removeTask(index)}
@@ -77,10 +84,11 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
           ))}
 
           <div className="dispatch-actions">
-            <button className="add-task-btn" onClick={addTask} aria-label="Add task">
+            <button type="button" className="add-task-btn" onClick={addTask} aria-label="Add task">
               + Add Task
             </button>
             <button
+              type="button"
               className="dispatch-btn"
               onClick={handleDispatch}
               disabled={!canDispatch}
@@ -94,7 +102,12 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
 
       {canSynthesize && (
         <div className="dispatch-actions">
-          <button className="synthesize-btn" onClick={onSynthesize} aria-label="Synthesize">
+          <button
+            type="button"
+            className="synthesize-btn"
+            onClick={onSynthesize}
+            aria-label="Synthesize"
+          >
             Synthesize Results
           </button>
         </div>
@@ -102,7 +115,7 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
 
       {canAbort && (
         <div className="dispatch-actions">
-          <button className="abort-btn" onClick={onAbort} aria-label="Abort">
+          <button type="button" className="abort-btn" onClick={onAbort} aria-label="Abort">
             Abort
           </button>
         </div>

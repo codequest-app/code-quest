@@ -3,8 +3,8 @@
  * 執行所有驗證測試
  */
 
-import { spawn } from 'child_process';
-import * as path from 'path';
+import { spawn } from 'node:child_process';
+import * as path from 'node:path';
 
 interface TestResult {
   name: string;
@@ -19,10 +19,10 @@ const tests = [
   { name: '03-event-parsing', file: '03-event-parsing.ts', description: '事件解析能力' },
   { name: '04-interaction', file: '04-interaction.ts', description: '互動模式處理' },
   { name: '05-parallel', file: '05-parallel.ts', description: '並行多進程' },
-  { name: '06-worktree', file: '06-worktree.ts', description: 'Worktree 整合' }
+  { name: '06-worktree', file: '06-worktree.ts', description: 'Worktree 整合' },
 ];
 
-async function runTest(test: typeof tests[0]): Promise<TestResult> {
+async function runTest(test: (typeof tests)[0]): Promise<TestResult> {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`🧪 執行測試: ${test.description}`);
   console.log(`   文件: ${test.file}`);
@@ -33,7 +33,7 @@ async function runTest(test: typeof tests[0]): Promise<TestResult> {
   return new Promise((resolve) => {
     const proc = spawn('tsx', [path.join(__dirname, test.file)], {
       stdio: 'inherit',
-      env: process.env
+      env: process.env,
     });
 
     proc.on('exit', (code) => {
@@ -44,7 +44,7 @@ async function runTest(test: typeof tests[0]): Promise<TestResult> {
         name: test.name,
         exitCode: code || 0,
         duration,
-        success
+        success,
       });
     });
 
@@ -55,14 +55,14 @@ async function runTest(test: typeof tests[0]): Promise<TestResult> {
         name: test.name,
         exitCode: 1,
         duration,
-        success: false
+        success: false,
       });
     });
   });
 }
 
 async function main() {
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
   console.log('🚀 Code Quest - node-pty 驗證測試套件');
   console.log('='.repeat(60));
 
@@ -79,12 +79,12 @@ async function main() {
   }
 
   // 總結
-  console.log('\n\n' + '='.repeat(60));
+  console.log(`\n\n${'='.repeat(60)}`);
   console.log('📊 測試總結');
   console.log('='.repeat(60));
 
-  const passedCount = results.filter(r => r.success).length;
-  const failedCount = results.filter(r => !r.success).length;
+  const passedCount = results.filter((r) => r.success).length;
+  const failedCount = results.filter((r) => !r.success).length;
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
 
   console.log(`\n總測試數: ${results.length}`);
@@ -99,7 +99,7 @@ async function main() {
     console.log(`  ${status} ${tests[index].description} (${duration}秒)`);
   });
 
-  console.log('\n' + '='.repeat(60));
+  console.log(`\n${'='.repeat(60)}`);
 
   if (failedCount === 0) {
     console.log('🎉 所有測試通過！');

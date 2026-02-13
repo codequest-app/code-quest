@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 4: 互動模式處理
  *
@@ -9,10 +10,10 @@
  * - Plan Mode 如何表現？
  */
 
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '04-interaction.log');
 
@@ -23,22 +24,17 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 function findClaudeCLI(): string {
-  const possiblePaths = [
-    'claude',
-    path.join(process.env.HOME || '', '.claude/local/claude')
-  ];
+  const possiblePaths = ['claude', path.join(process.env.HOME || '', '.claude/local/claude')];
 
   for (const p of possiblePaths) {
     try {
       execSync(`which ${p}`, { stdio: 'ignore' });
       return p;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   throw new Error('Claude CLI not found');
@@ -64,8 +60,8 @@ async function test() {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        TERM: 'xterm-256color'
-      }
+        TERM: 'xterm-256color',
+      },
     });
 
     let fullOutput = '';
@@ -85,10 +81,10 @@ async function test() {
         /proceed\?/i,
         /are you sure\?/i,
         /confirm/i,
-        /permission/i
+        /permission/i,
       ];
 
-      const hasPrompt = interactionPatterns.some(pattern => pattern.test(data));
+      const hasPrompt = interactionPatterns.some((pattern) => pattern.test(data));
 
       if (hasPrompt && !hasInteraction) {
         hasInteraction = true;
@@ -116,7 +112,7 @@ async function test() {
       const lines = lineBuffer.split('\n');
       if (lines.length > 1) {
         lineBuffer = lines.pop() || '';
-        lines.forEach(line => {
+        lines.forEach((line) => {
           if (line.trim()) {
             log(`  ${line.substring(0, 150)}`);
           }
@@ -175,10 +171,12 @@ async function test() {
   });
 }
 
-test().then(() => {
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

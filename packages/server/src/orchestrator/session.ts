@@ -1,11 +1,6 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import type { ChatManager, ChatSession, ChatStats, ChatStreamEvent } from '../chat/types';
-import type {
-  OrchestratorSession,
-  OrchestratorStatus,
-  SubTask,
-  WorkerInfo,
-} from './types';
+import type { OrchestratorSession, OrchestratorStatus, SubTask, WorkerInfo } from './types';
 
 interface OrchestratorSessionOptions {
   chatManager: ChatManager;
@@ -93,7 +88,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     const synthesisPrompt = parts.join('\n');
 
     // Listen for coordinator completion
-    this.coordinatorSession.onComplete((stats) => {
+    this.coordinatorSession.onComplete((_stats) => {
       this.setStatus('complete');
       this.emitComplete(this.getAggregatedStats());
     });
@@ -109,7 +104,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
 
   abort(): void {
     // Abort all running workers
-    for (const [id, session] of this.workerSessions) {
+    for (const [_id, session] of this.workerSessions) {
       session.abort();
     }
     // Abort coordinator
@@ -118,7 +113,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   }
 
   kill(): void {
-    for (const [id, session] of this.workerSessions) {
+    for (const [_id, session] of this.workerSessions) {
       session.kill();
     }
     this.coordinatorSession.kill();
@@ -209,9 +204,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   }
 
   private checkAllWorkersComplete(): void {
-    const allDone = this._workers.every(
-      (w) => w.status === 'complete' || w.status === 'error'
-    );
+    const allDone = this._workers.every((w) => w.status === 'complete' || w.status === 'error');
     if (allDone && this._status === 'workers-running') {
       this.setStatus('workers-complete');
     }

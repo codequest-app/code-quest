@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
  * E2E Test: Gemini chat via mock CLI
@@ -89,7 +89,9 @@ test.describe('Gemini Chat E2E', () => {
     await expect(page.locator('[data-testid="message-user"]')).toHaveCount(2, { timeout: 15000 });
 
     // Should have 2 assistant messages
-    await expect(page.locator('[data-testid="message-assistant"]')).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator('[data-testid="message-assistant"]')).toHaveCount(2, {
+      timeout: 15000,
+    });
   });
 
   test('should create multiple Gemini tabs', async ({ page }) => {

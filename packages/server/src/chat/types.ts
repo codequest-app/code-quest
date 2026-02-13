@@ -2,13 +2,13 @@
  * Chat stream event types
  */
 
-import type { ChildProcess, SpawnOptions } from 'child_process';
+import type { ChildProcess, SpawnOptions } from 'node:child_process';
 
 export type ChatStreamEvent =
   | { type: 'init'; data: { sessionId: string } }
   | { type: 'text'; data: { content: string } }
   | { type: 'thinking'; data: { content: string } }
-  | { type: 'tool_use'; data: { name: string; input: unknown } }
+  | { type: 'tool_use'; data: { id: string; name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; output: string } }
   | { type: 'result'; data: { stats: ChatStats } }
   | { type: 'error'; data: { message: string } }
@@ -39,6 +39,7 @@ export interface ChatSessionOptions {
   command: string;
   baseArgs: string[];
   cwd?: string;
+  env?: Record<string, string | undefined>;
   processFactory?: ProcessFactory;
 }
 
@@ -46,7 +47,7 @@ export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
   sendMessage(message: string): void;
-  respond(data: string): void;
+  addAllowedTool(tool: string): void;
   abort(): void;
   kill(): void;
   onEvent(handler: (event: ChatStreamEvent) => void): void;

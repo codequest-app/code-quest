@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 測試 1: node-pty 基礎能力
  *
@@ -10,9 +11,9 @@
  * - TTY 環境變數是否正確傳遞？
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as pty from 'node-pty';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const LOG_FILE = path.join(process.cwd(), 'logs', '01-basic-pty.log');
 
@@ -24,7 +25,7 @@ function log(message: string) {
   const timestamp = new Date().toISOString();
   const line = `[${timestamp}] ${message}`;
   console.log(line);
-  logStream.write(line + '\n');
+  logStream.write(`${line}\n`);
 }
 
 async function test() {
@@ -37,14 +38,14 @@ async function test() {
     'claude',
     path.join(process.env.HOME || '', '.claude/local/claude'),
     '/usr/local/bin/claude',
-    '/usr/bin/claude'
+    '/usr/bin/claude',
   ];
 
   let claudePath: string | null = null;
 
   for (const p of possiblePaths) {
     try {
-      const { execSync } = await import('child_process');
+      const { execSync } = await import('node:child_process');
       execSync(`which ${p}`, { stdio: 'ignore' });
       claudePath = p;
       log(`✅ 找到 Claude CLI: ${p}`);
@@ -73,8 +74,8 @@ async function test() {
         ...process.env,
         TERM: 'xterm-256color',
         FORCE_COLOR: '1',
-        COLORTERM: 'truecolor'
-      }
+        COLORTERM: 'truecolor',
+      },
     });
 
     let output = '';
@@ -134,10 +135,12 @@ async function test() {
 }
 
 // 執行測試
-test().then(() => {
-  process.exit(0);
-}).catch((error) => {
-  log(`\n❌ 測試失敗: ${error.message}`);
-  logStream.end();
-  process.exit(1);
-});
+test()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    log(`\n❌ 測試失敗: ${error.message}`);
+    logStream.end();
+    process.exit(1);
+  });

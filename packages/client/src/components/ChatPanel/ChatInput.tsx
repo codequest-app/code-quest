@@ -1,4 +1,4 @@
-import { useState, useRef, type KeyboardEvent } from 'react';
+import { type KeyboardEvent, useRef, useState } from 'react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -38,11 +38,12 @@ export function ChatInput({ onSend, onAbort, isProcessing, disabled }: ChatInput
         aria-label="Message input"
       />
       {isProcessing ? (
-        <button onClick={onAbort} className="abort-button" aria-label="Stop">
+        <button type="button" onClick={onAbort} className="abort-button" aria-label="Stop">
           Stop
         </button>
       ) : (
         <button
+          type="button"
           onClick={handleSend}
           disabled={!value.trim() || disabled}
           className="send-button"
