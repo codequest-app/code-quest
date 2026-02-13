@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import {
   chatAbortSchema,
   chatAllowToolSchema,
@@ -15,7 +14,8 @@ import {
   terminalKillSchema,
   terminalResizeSchema,
   terminalWriteSchema,
-} from '../schemas.ts';
+} from '@code-quest/shared';
+import { describe, expect, it } from 'vitest';
 
 describe('socket schemas', () => {
   describe('terminalCreateSchema', () => {

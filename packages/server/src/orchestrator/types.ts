@@ -1,31 +1,17 @@
-import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
+export type { OrchestratorStatus, SubTask, WorkerInfo } from '@code-quest/shared';
+
+import type {
+  ChatProvider,
+  ChatStats,
+  ChatStreamEvent,
+  OrchestratorStatus,
+  SubTask,
+  WorkerInfo,
+} from '@code-quest/shared';
 
 export type OrchestratorSessionFactory = (options: {
   provider: ChatProvider;
 }) => OrchestratorSession;
-
-export type OrchestratorStatus =
-  | 'idle'
-  | 'dispatching'
-  | 'workers-running'
-  | 'workers-complete'
-  | 'synthesizing'
-  | 'complete'
-  | 'error';
-
-export interface SubTask {
-  description: string;
-  provider: ChatProvider;
-}
-
-export interface WorkerInfo {
-  id: string;
-  task: SubTask;
-  status: 'pending' | 'running' | 'complete' | 'error';
-  result?: string;
-  stats?: ChatStats;
-  error?: string;
-}
 
 export interface OrchestratorSession {
   readonly id: string;

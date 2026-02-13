@@ -4,29 +4,14 @@
 
 import type { ChildProcess, SpawnOptions } from 'node:child_process';
 
-export type ChatStreamEvent =
-  | { type: 'init'; data: { sessionId: string } }
-  | { type: 'text'; data: { content: string } }
-  | { type: 'thinking'; data: { content: string } }
-  | { type: 'tool_use'; data: { id: string; name: string; input: unknown } }
-  | { type: 'tool_result'; data: { name: string; output: string } }
-  | { type: 'result'; data: { stats: ChatStats } }
-  | { type: 'error'; data: { message: string } }
-  | { type: 'permission_request'; data: { toolName: string; description: string } };
+export type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 
-export interface ChatStats {
-  costUsd?: number;
-  durationMs?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-}
+import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 
 export interface StreamParser {
   feed(chunk: string): ChatStreamEvent[];
   getCliSessionId(): string | null;
 }
-
-export type ChatProvider = 'claude' | 'gemini';
 
 export type ProcessFactory = (
   command: string,
