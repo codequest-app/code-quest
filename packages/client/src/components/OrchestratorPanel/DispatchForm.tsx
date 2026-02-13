@@ -1,5 +1,5 @@
+import type { ChatProvider, OrchestratorStatus, SubTask } from '@code-quest/shared';
 import { useRef, useState } from 'react';
-import type { ChatProvider, OrchestratorStatus, SubTask } from '../../types';
 
 interface DispatchFormProps {
   status: OrchestratorStatus;

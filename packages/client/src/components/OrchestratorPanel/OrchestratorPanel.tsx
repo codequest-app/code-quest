@@ -1,5 +1,5 @@
+import type { SubTask } from '@code-quest/shared';
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
-import type { SubTask } from '../../types';
 import { ChatPanel } from '../ChatPanel';
 import { StatsBar } from '../ChatPanel/StatsBar';
 import { DispatchForm } from './DispatchForm';

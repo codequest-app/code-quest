@@ -1,14 +1,14 @@
-import { useCallback, useEffect } from 'react';
-import { useChatStore } from '../stores/chatStore';
-import { useOrchestratorStore } from '../stores/orchestratorStore';
-import { useTerminalStore } from '../stores/terminalStore';
 import type {
   ChatProvider,
   ChatStreamEvent,
   OrchestratorStatus,
   SubTask,
   WorkerInfo,
-} from '../types';
+} from '@code-quest/shared';
+import { useCallback, useEffect } from 'react';
+import { useChatStore } from '../stores/chatStore';
+import { useOrchestratorStore } from '../stores/orchestratorStore';
+import { useTerminalStore } from '../stores/terminalStore';
 import { useSocket } from './useSocket';
 
 interface UseOrchestratorSocketReturn {

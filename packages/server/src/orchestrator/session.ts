@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import type { ChatManager, ChatSession, ChatStats, ChatStreamEvent } from '../chat/types.ts';
-import type { OrchestratorSession, OrchestratorStatus, SubTask, WorkerInfo } from './types.ts';
+import type {
+  ChatStats,
+  ChatStreamEvent,
+  OrchestratorStatus,
+  SubTask,
+  WorkerInfo,
+} from '@code-quest/shared';
+import type { ChatManager, ChatSession } from '../chat/types.ts';
+import type { OrchestratorSession } from './types.ts';
 
 interface OrchestratorSessionOptions {
   chatManager: ChatManager;

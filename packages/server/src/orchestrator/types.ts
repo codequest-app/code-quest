@@ -1,5 +1,3 @@
-export type { OrchestratorStatus, SubTask, WorkerInfo } from '@code-quest/shared';
-
 import type {
   ChatProvider,
   ChatStats,

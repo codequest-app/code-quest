@@ -1,15 +1,10 @@
+import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import type { Container } from 'inversify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TYPES } from '../../container.ts';
 import { createTestContainer } from '../../test/create-test-container.ts';
 import { createMockProcessFactory, MockProcess } from '../../test/mock-process.ts';
-import type {
-  ChatSession,
-  ChatSessionFactory,
-  ChatStats,
-  ChatStreamEvent,
-  ProcessFactory,
-} from '../types.ts';
+import type { ChatSession, ChatSessionFactory, ProcessFactory } from '../types.ts';
 
 describe('ChatSessionImpl', () => {
   let container: Container;

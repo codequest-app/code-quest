@@ -1,5 +1,5 @@
+import type { ChatProvider, ChatStats, OrchestratorStatus, WorkerInfo } from '@code-quest/shared';
 import { create } from 'zustand';
-import type { ChatProvider, ChatStats, OrchestratorStatus, WorkerInfo } from '../types';
 
 export interface OrchestratorState {
   orchestratorId: string;

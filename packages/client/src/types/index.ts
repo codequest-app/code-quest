@@ -2,17 +2,6 @@
  * Client-side types
  */
 
-export type {
-  ChatProvider,
-  ChatStats,
-  ChatStreamEvent,
-  ClientToServerEvents,
-  OrchestratorStatus,
-  ServerToClientEvents,
-  SubTask,
-  WorkerInfo,
-} from '@code-quest/shared';
-
 import type { ChatStats } from '@code-quest/shared';
 
 export type SessionType = 'terminal' | 'claude-chat' | 'gemini-chat' | 'orchestrator';

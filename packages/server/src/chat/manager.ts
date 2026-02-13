@@ -1,13 +1,8 @@
 import 'reflect-metadata';
+import type { ChatProvider } from '@code-quest/shared';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../types.symbols.ts';
-import type {
-  ChatCommandsConfig,
-  ChatManager,
-  ChatProvider,
-  ChatSession,
-  ChatSessionFactory,
-} from './types.ts';
+import type { ChatCommandsConfig, ChatManager, ChatSession, ChatSessionFactory } from './types.ts';
 
 @injectable()
 export class ChatManagerImpl implements ChatManager {

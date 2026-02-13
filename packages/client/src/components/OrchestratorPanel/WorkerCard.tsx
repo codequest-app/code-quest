@@ -1,4 +1,4 @@
-import type { WorkerInfo } from '../../types';
+import type { WorkerInfo } from '@code-quest/shared';
 
 interface WorkerCardProps {
   worker: WorkerInfo;

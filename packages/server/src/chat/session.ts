@@ -1,12 +1,10 @@
 import type { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import type {
-  ChatProvider,
   ChatSession,
   ChatSessionDeps,
   ChatSessionState,
-  ChatStats,
-  ChatStreamEvent,
   ProcessFactory,
   StreamParser,
 } from './types.ts';

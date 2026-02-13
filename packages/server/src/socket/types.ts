@@ -4,8 +4,6 @@
 
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 
-export type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
-
 /**
  * Socket handler interface
  */
