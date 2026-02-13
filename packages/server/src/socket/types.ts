@@ -3,9 +3,8 @@
  */
 
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import type { ChatManager, ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
+import type { ChatProvider, ChatStats, ChatStreamEvent } from '../chat/types.ts';
 import type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types.ts';
-import type { TerminalManager } from '../terminal/types.ts';
 
 /**
  * Socket events for client -> server
@@ -119,17 +118,6 @@ export interface ServerToClientEvents {
   'orchestrator:error': (orchId: string, message: string) => void;
 }
 
-/**
- * Socket handler configuration
- */
-export interface SocketHandlerConfig {
-  /** Terminal manager instance */
-  terminalManager: TerminalManager;
-
-  /** Chat manager instance */
-  chatManager: ChatManager;
-}
-
 export type { OrchestratorStatus, SubTask, WorkerInfo } from '../orchestrator/types.ts';
 
 /**
@@ -153,9 +141,4 @@ export interface SocketHandler {
    * @param socket Disconnected socket
    */
   handleDisconnection(socket: Socket): void;
-
-  /**
-   * Get the Socket.io server instance
-   */
-  getIO(): SocketIOServer;
 }

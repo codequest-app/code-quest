@@ -265,11 +265,4 @@ export class SocketHandlerImpl implements SocketHandler {
     console.log(`Client disconnected: ${socket.id}`);
     // Sessions survive disconnects - they must be explicitly killed
   }
-
-  getIO(): SocketIOServer {
-    if (!this.io) {
-      throw new Error('SocketHandler not attached to a server');
-    }
-    return this.io;
-  }
 }

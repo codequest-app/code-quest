@@ -10,6 +10,3 @@ export function createParser(provider: ChatProvider): StreamParser {
       return new GeminiStreamParser();
   }
 }
-
-export { ClaudeStreamParser } from './claude-parser.ts';
-export { GeminiStreamParser } from './gemini-parser.ts';

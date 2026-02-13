@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Container, inject, injectable } from 'inversify';
+import { Container } from 'inversify';
 import { ChatManagerImpl } from './chat/manager.ts';
 import { createParser } from './chat/parsers/index.ts';
 import { ChatSessionImpl } from './chat/session.ts';
@@ -113,5 +113,3 @@ export function createContainer(): Container {
 
   return container;
 }
-
-export { Container, injectable, inject };

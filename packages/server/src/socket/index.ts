@@ -4,9 +4,4 @@
  */
 
 export { SocketHandlerImpl } from './handler.ts';
-export type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  SocketHandler,
-  SocketHandlerConfig,
-} from './types.ts';
+export type { ClientToServerEvents, ServerToClientEvents, SocketHandler } from './types.ts';
