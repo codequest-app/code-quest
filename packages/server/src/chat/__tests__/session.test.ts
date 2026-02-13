@@ -1,10 +1,18 @@
+import type { Container } from 'inversify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TYPES } from '../../container.ts';
 import { createTestContainer } from '../../test/create-test-container.ts';
 import { createMockProcessFactory, MockProcess } from '../../test/mock-process.ts';
-import type { ChatSession, ChatSessionFactory, ChatStats, ChatStreamEvent } from '../types.ts';
+import type {
+  ChatSession,
+  ChatSessionFactory,
+  ChatStats,
+  ChatStreamEvent,
+  ProcessFactory,
+} from '../types.ts';
 
 describe('ChatSessionImpl', () => {
+  let container: Container;
   let session: ChatSession;
   let mockProcess: MockProcess;
   let mockProcessFactory: ReturnType<typeof createMockProcessFactory>;
@@ -13,7 +21,7 @@ describe('ChatSessionImpl', () => {
   beforeEach(() => {
     mockProcess = new MockProcess();
     mockProcessFactory = createMockProcessFactory(mockProcess);
-    const container = createTestContainer({ processFactory: mockProcessFactory });
+    container = createTestContainer({ processFactory: mockProcessFactory });
     chatSessionFactory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
   });
 
@@ -57,12 +65,12 @@ describe('ChatSessionImpl', () => {
       count++;
       return new MockProcess();
     });
+    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
 
     session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
-      processFactory: factory,
     });
 
     session.sendMessage('first');
@@ -83,12 +91,12 @@ describe('ChatSessionImpl', () => {
       processes.push(p);
       return p;
     });
+    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
 
     session = chatSessionFactory({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
-      processFactory: factory,
     });
 
     session.sendMessage('first');
@@ -163,12 +171,12 @@ describe('ChatSessionImpl', () => {
       processes.push(p);
       return p;
     });
+    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
 
     session = chatSessionFactory({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
-      processFactory: factory,
     });
 
     session.sendMessage('first');
@@ -267,12 +275,12 @@ describe('ChatSessionImpl', () => {
       processes.push(p);
       return p;
     });
+    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
 
     session = chatSessionFactory({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
-      processFactory: factory,
     });
 
     const events = collectEvents();
@@ -308,12 +316,12 @@ describe('ChatSessionImpl', () => {
     const failFactory = () => {
       throw new Error('spawn ENOENT');
     };
+    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(failFactory);
 
     session = chatSessionFactory({
       provider: 'claude',
       command: '/nonexistent',
       baseArgs: [],
-      processFactory: failFactory,
     });
 
     let errorMessage = '';

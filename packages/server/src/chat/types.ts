@@ -42,8 +42,11 @@ export interface ChatSessionOptions {
   baseArgs: string[];
   cwd?: string;
   env?: Record<string, string | undefined>;
-  processFactory?: ProcessFactory;
-  parserFactory?: ParserFactory;
+}
+
+export interface ChatSessionDeps extends ChatSessionOptions {
+  processFactory: ProcessFactory;
+  parserFactory: ParserFactory;
 }
 
 export type ChatSessionState = 'idle' | 'processing';

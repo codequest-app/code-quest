@@ -86,17 +86,20 @@ export function createContainer(): Container {
   container.bind<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(spawn);
 
   container.bind<ChatSessionFactory>(TYPES.ChatSessionFactory).toDynamicValue((context) => {
-    const parserFactory = context.get<ParserFactory>(TYPES.ParserFactory);
-    const processFactory = context.get<ProcessFactory>(TYPES.ProcessFactory);
-    return (options: ChatSessionOptions) =>
-      new ChatSessionImpl({ processFactory, ...options, parserFactory });
+    return (options: ChatSessionOptions) => {
+      const parserFactory = context.get<ParserFactory>(TYPES.ParserFactory);
+      const processFactory = context.get<ProcessFactory>(TYPES.ProcessFactory);
+      return new ChatSessionImpl({ ...options, processFactory, parserFactory });
+    };
   });
 
   container
     .bind<OrchestratorSessionFactory>(TYPES.OrchestratorSessionFactory)
     .toDynamicValue((context) => {
-      const chatManager = context.get<ChatManager>(TYPES.ChatManager);
-      return (opts) => new OrchestratorSessionImpl({ chatManager, provider: opts.provider });
+      return (opts) => {
+        const chatManager = context.get<ChatManager>(TYPES.ChatManager);
+        return new OrchestratorSessionImpl({ chatManager, provider: opts.provider });
+      };
     });
 
   // ── Singletons ──
