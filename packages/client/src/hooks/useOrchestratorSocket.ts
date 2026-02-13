@@ -5,10 +5,18 @@ import type {
   SubTask,
   WorkerInfo,
 } from '@code-quest/shared';
+import {
+  orchestratorAbortSchema,
+  orchestratorCreateSchema,
+  orchestratorDispatchSchema,
+  orchestratorKillSchema,
+  orchestratorSynthesizeSchema,
+} from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import { useOrchestratorStore } from '../stores/orchestratorStore';
 import { useTerminalStore } from '../stores/terminalStore';
+import { safeValidate } from '../utils/validateAndEmit.ts';
 import { useSocket } from './useSocket';
 
 interface UseOrchestratorSocketReturn {
@@ -99,6 +107,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
   const createOrchestrator = useCallback(
     (provider: ChatProvider) => {
+      const result = safeValidate(orchestratorCreateSchema, { provider });
+      if (!result.success) {
+        console.warn('[orchestrator:create] validation failed', result.error);
+        return;
+      }
       emit('orchestrator:create', { provider });
     },
     [emit],
@@ -106,6 +119,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
   const dispatch = useCallback(
     (orchId: string, tasks: SubTask[]) => {
+      const result = safeValidate(orchestratorDispatchSchema, { orchId, tasks });
+      if (!result.success) {
+        console.warn('[orchestrator:dispatch] validation failed', result.error);
+        return;
+      }
       emit('orchestrator:dispatch', orchId, tasks);
     },
     [emit],
@@ -113,6 +131,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
   const synthesize = useCallback(
     (orchId: string) => {
+      const result = safeValidate(orchestratorSynthesizeSchema, { orchId });
+      if (!result.success) {
+        console.warn('[orchestrator:synthesize] validation failed', result.error);
+        return;
+      }
       emit('orchestrator:synthesize', orchId);
     },
     [emit],
@@ -120,6 +143,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
   const abortOrchestrator = useCallback(
     (orchId: string) => {
+      const result = safeValidate(orchestratorAbortSchema, { orchId });
+      if (!result.success) {
+        console.warn('[orchestrator:abort] validation failed', result.error);
+        return;
+      }
       emit('orchestrator:abort', orchId);
     },
     [emit],
@@ -127,6 +155,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
   const killOrchestrator = useCallback(
     (orchId: string) => {
+      const result = safeValidate(orchestratorKillSchema, { orchId });
+      if (!result.success) {
+        console.warn('[orchestrator:kill] validation failed', result.error);
+        return;
+      }
       emit('orchestrator:kill', orchId);
       removeOrchestrator(orchId);
     },

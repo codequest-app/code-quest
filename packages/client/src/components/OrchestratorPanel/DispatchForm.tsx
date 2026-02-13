@@ -1,5 +1,7 @@
 import type { ChatProvider, OrchestratorStatus, SubTask } from '@code-quest/shared';
+import { subTaskSchema } from '@code-quest/shared';
 import { useRef, useState } from 'react';
+import { safeValidate } from '../../utils/validateAndEmit.ts';
 
 interface DispatchFormProps {
   status: OrchestratorStatus;
@@ -17,13 +19,20 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
   const [tasks, setTasks] = useState<TaskWithKey[]>([
     { description: '', provider: 'claude', _key: 0 },
   ]);
+  const [errors, setErrors] = useState<Map<number, string>>(new Map());
 
   const addTask = () => {
     setTasks([...tasks, { description: '', provider: 'claude', _key: nextKey.current++ }]);
   };
 
   const removeTask = (index: number) => {
+    const removed = tasks[index];
     setTasks(tasks.filter((_, i) => i !== index));
+    setErrors((prev) => {
+      const next = new Map(prev);
+      next.delete(removed._key);
+      return next;
+    });
   };
 
   const updateTask = (index: number, field: keyof SubTask, value: string) => {
@@ -34,12 +43,42 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
       updated[index] = { ...updated[index], [field]: value };
     }
     setTasks(updated);
+    // Clear error for this task on edit
+    setErrors((prev) => {
+      if (!prev.has(updated[index]._key)) return prev;
+      const next = new Map(prev);
+      next.delete(updated[index]._key);
+      return next;
+    });
   };
 
   const handleDispatch = () => {
-    const validTasks = tasks.filter((t) => t.description.trim()).map(({ _key, ...task }) => task);
-    if (validTasks.length === 0) return;
+    const nonEmpty = tasks.filter((t) => t.description.trim());
+    if (nonEmpty.length === 0) return;
+
+    const newErrors = new Map<number, string>();
+    const validTasks: SubTask[] = [];
+
+    for (const task of nonEmpty) {
+      const result = safeValidate(subTaskSchema, {
+        description: task.description.trim(),
+        provider: task.provider,
+      });
+      if (result.success) {
+        validTasks.push(result.data);
+      } else {
+        const message = result.error.issues.map((i) => i.message).join(', ');
+        newErrors.set(task._key, message);
+      }
+    }
+
+    if (newErrors.size > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     onDispatch(validTasks);
+    setErrors(new Map());
   };
 
   const canDispatch = status === 'idle' && tasks.some((t) => t.description.trim());
@@ -52,33 +91,40 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
       {status === 'idle' && (
         <>
           {tasks.map((task, index) => (
-            <div key={task._key} className="task-row" data-testid="task-row">
-              <input
-                type="text"
-                placeholder="Task description..."
-                aria-label={`Task ${index + 1} description`}
-                value={task.description}
-                onChange={(e) => updateTask(index, 'description', e.target.value)}
-                className="task-input"
-              />
-              <select
-                aria-label={`Task ${index + 1} provider`}
-                value={task.provider}
-                onChange={(e) => updateTask(index, 'provider', e.target.value)}
-                className="task-provider"
-              >
-                <option value="claude">Claude</option>
-                <option value="gemini">Gemini</option>
-              </select>
-              {tasks.length > 1 && (
-                <button
-                  type="button"
-                  aria-label={`Remove task ${index + 1}`}
-                  className="remove-task-btn"
-                  onClick={() => removeTask(index)}
+            <div key={task._key}>
+              <div className="task-row" data-testid="task-row">
+                <input
+                  type="text"
+                  placeholder="Task description..."
+                  aria-label={`Task ${index + 1} description`}
+                  value={task.description}
+                  onChange={(e) => updateTask(index, 'description', e.target.value)}
+                  className={`task-input${errors.has(task._key) ? ' task-input-error' : ''}`}
+                />
+                <select
+                  aria-label={`Task ${index + 1} provider`}
+                  value={task.provider}
+                  onChange={(e) => updateTask(index, 'provider', e.target.value)}
+                  className="task-provider"
                 >
-                  \u00D7
-                </button>
+                  <option value="claude">Claude</option>
+                  <option value="gemini">Gemini</option>
+                </select>
+                {tasks.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label={`Remove task ${index + 1}`}
+                    className="remove-task-btn"
+                    onClick={() => removeTask(index)}
+                  >
+                    {'\u00D7'}
+                  </button>
+                )}
+              </div>
+              {errors.has(task._key) && (
+                <div className="task-error" data-testid="task-error">
+                  {errors.get(task._key)}
+                </div>
               )}
             </div>
           ))}
@@ -143,6 +189,15 @@ export function DispatchForm({ status, onDispatch, onSynthesize, onAbort }: Disp
         .task-input:focus {
           outline: none;
           border-color: #3794ff;
+        }
+        .task-input-error {
+          border-color: #ff4444;
+        }
+        .task-error {
+          color: #ff4444;
+          font-size: 11px;
+          margin: -4px 0 8px 0;
+          padding-left: 2px;
         }
         .task-provider {
           padding: 6px 8px;

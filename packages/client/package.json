@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@code-quest/shared": "workspace:*",
+    "zod": "^4.3.6",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-serialize": "^0.14.0",
     "@xterm/addon-web-links": "^0.12.0",
