@@ -1,8 +1,9 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
-import { ChatSessionImpl } from '../session.ts';
-import type { ChatStreamEvent } from '../types.ts';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { TYPES } from '../../container.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import type { ChatSession, ChatSessionFactory, ChatStreamEvent } from '../types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,8 +13,15 @@ const FAKE_CLAUDE_PATH = path.resolve(__dirname, '../../../../../e2e/fixtures/fa
 const FAKE_GEMINI_PATH = path.resolve(__dirname, '../../../../../e2e/fixtures/fake-gemini.sh');
 
 describe('ChatSessionImpl (integration)', () => {
+  let chatSessionFactory: ChatSessionFactory;
+
+  beforeEach(() => {
+    const container = createTestContainer();
+    chatSessionFactory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
+  });
+
   it('should spawn fake-claude and parse real fixture output', async () => {
-    const session = new ChatSessionImpl({
+    const session: ChatSession = chatSessionFactory({
       provider: 'claude',
       command: 'bash',
       baseArgs: [FAKE_CLAUDE_PATH],
@@ -39,7 +47,7 @@ describe('ChatSessionImpl (integration)', () => {
   });
 
   it('should spawn fake-gemini and parse real fixture output', async () => {
-    const session = new ChatSessionImpl({
+    const session: ChatSession = chatSessionFactory({
       provider: 'gemini',
       command: 'bash',
       baseArgs: [FAKE_GEMINI_PATH],
@@ -66,7 +74,7 @@ describe('ChatSessionImpl (integration)', () => {
       '../../../../../e2e/fixtures/fixtures/claude-tool-use.jsonl',
     );
 
-    const session = new ChatSessionImpl({
+    const session: ChatSession = chatSessionFactory({
       provider: 'claude',
       command: 'bash',
       baseArgs: [FAKE_CLAUDE_PATH],

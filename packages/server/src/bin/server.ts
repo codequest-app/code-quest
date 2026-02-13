@@ -4,9 +4,8 @@
  * Starts the terminal management server with HTTP API and WebSocket support
  */
 
-import { createContainer } from '../container.ts';
-import { ServerImpl } from '../server.ts';
-import type { ServerConfig } from '../types.ts';
+import { createContainer, TYPES } from '../container.ts';
+import type { Server, ServerConfig } from '../types.ts';
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = 'localhost';
@@ -25,9 +24,8 @@ async function main() {
 
   // Create DI container and resolve server
   const container = createContainer();
-  container.bind(ServerImpl).toSelf();
-  const server = container.get(ServerImpl);
-  server.setConfig(config);
+  container.rebindSync<ServerConfig>(TYPES.ServerConfig).toConstantValue(config);
+  const server = container.get<Server>(TYPES.Server);
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {

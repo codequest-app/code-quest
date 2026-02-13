@@ -5,13 +5,12 @@ import type {
   ChatProvider,
   ChatSession,
   ChatSessionOptions,
+  ChatSessionState,
   ChatStats,
   ChatStreamEvent,
   ProcessFactory,
   StreamParser,
 } from './types.ts';
-
-export type SessionState = 'idle' | 'processing';
 
 export class ChatSessionImpl implements ChatSession {
   readonly id: string;
@@ -25,7 +24,7 @@ export class ChatSessionImpl implements ChatSession {
 
   private process: ChildProcess | null = null;
   private parser: StreamParser;
-  private _state: SessionState = 'idle';
+  private _state: ChatSessionState = 'idle';
   private eventHandlers: Array<(event: ChatStreamEvent) => void> = [];
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
   private errorHandlers: Array<(error: string) => void> = [];
@@ -34,7 +33,7 @@ export class ChatSessionImpl implements ChatSession {
   private gotResult = false;
   private allowedTools: Set<string> = new Set();
 
-  get state(): SessionState {
+  get state(): ChatSessionState {
     return this._state;
   }
 
