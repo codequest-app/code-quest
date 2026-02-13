@@ -1,5 +1,5 @@
+import { terminalOptionsSchema } from '@code-quest/shared';
 import { z } from 'zod';
-import { terminalOptionsSchema } from '../shared/schemas.ts';
 
 /**
  * Request schema for creating a terminal session
