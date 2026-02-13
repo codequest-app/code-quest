@@ -1,11 +1,11 @@
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createContainer } from '../container.ts';
 import { ServerImpl } from '../server.ts';
+import { createTestContainer } from '../test/create-test-container.ts';
 
 function createServer(port: number): ServerImpl {
-  const container = createContainer();
+  const container = createTestContainer();
   container.bind(ServerImpl).toSelf();
   const server = container.get(ServerImpl);
   server.setConfig({ port, cors: true });

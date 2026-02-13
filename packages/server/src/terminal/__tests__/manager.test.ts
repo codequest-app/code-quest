@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TerminalManagerImpl } from '../manager.ts';
-import type { TerminalSessionOptions } from '../types.ts';
+import { TYPES } from '../../container.ts';
+import { createTestContainer } from '../../test/create-test-container.ts';
+import type { TerminalManager, TerminalSessionOptions } from '../types.ts';
 
 describe('TerminalManager', () => {
-  let manager: TerminalManagerImpl;
+  let manager: TerminalManager;
 
   beforeEach(() => {
-    manager = new TerminalManagerImpl();
+    const container = createTestContainer();
+    manager = container.get<TerminalManager>(TYPES.TerminalManager);
   });
 
   afterEach(() => {

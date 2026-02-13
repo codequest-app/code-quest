@@ -60,6 +60,8 @@ export interface TerminalSession {
   onExit(callback: (exitCode: number) => void): void;
 }
 
+export type TerminalSessionFactory = (options?: TerminalSessionOptions) => TerminalSession;
+
 export interface TerminalManager {
   /**
    * Create a new terminal session

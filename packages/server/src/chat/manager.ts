@@ -1,54 +1,28 @@
 import 'reflect-metadata';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { injectable } from 'inversify';
-import { ChatSessionImpl } from './session.ts';
-import type { ChatManager, ChatProvider, ChatSession } from './types.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const MOCK_CLI_PATH = path.resolve(__dirname, '../test/mock-cli.ts');
-
-const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-claude.sh');
-
-const FAKE_GEMINI_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-gemini.sh');
-
-function getCommands(): Record<ChatProvider, { command: string; baseArgs: string[] }> {
-  if (process.env.MOCK_CLI === 'true') {
-    return {
-      claude: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
-      gemini: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
-    };
-  }
-
-  if (process.env.MOCK_CLI === 'shell') {
-    return {
-      claude: { command: 'bash', baseArgs: [FAKE_CLAUDE_SCRIPT] },
-      gemini: { command: 'bash', baseArgs: [FAKE_GEMINI_SCRIPT] },
-    };
-  }
-
-  return {
-    claude: {
-      command: 'claude',
-      baseArgs: ['-p', '--output-format', 'stream-json', '--verbose'],
-    },
-    gemini: {
-      command: 'gemini',
-      baseArgs: ['-o', 'stream-json'],
-    },
-  };
-}
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../types.symbols.ts';
+import type {
+  ChatCommandsConfig,
+  ChatManager,
+  ChatProvider,
+  ChatSession,
+  ChatSessionFactory,
+} from './types.ts';
 
 @injectable()
 export class ChatManagerImpl implements ChatManager {
   private sessions = new Map<string, ChatSession>();
 
+  constructor(
+    @inject(TYPES.ChatSessionFactory)
+    private readonly createSession_: ChatSessionFactory,
+    @inject(TYPES.ChatCommandsConfig)
+    private readonly commands: ChatCommandsConfig,
+  ) {}
+
   createSession(options: { provider: ChatProvider; cwd?: string }): ChatSession {
-    const commands = getCommands();
-    const defaults = commands[options.provider];
-    const session = new ChatSessionImpl({
+    const defaults = this.commands[options.provider];
+    const session = this.createSession_({
       provider: options.provider,
       command: defaults.command,
       baseArgs: [...defaults.baseArgs],
