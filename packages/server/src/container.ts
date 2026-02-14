@@ -14,6 +14,8 @@ import type {
   ParserFactory,
   ProcessFactory,
 } from './chat/types.ts';
+import { GitServiceImpl } from './git/service.ts';
+import type { GitService } from './git/types.ts';
 import { OrchestratorSessionImpl } from './orchestrator/session.ts';
 import type { OrchestratorSessionFactory } from './orchestrator/types.ts';
 import { ServerImpl } from './server.ts';
@@ -98,7 +100,8 @@ export function createContainer(): Container {
     .toDynamicValue((context) => {
       return (opts) => {
         const chatManager = context.get<ChatManager>(TYPES.ChatManager);
-        return new OrchestratorSessionImpl({ chatManager, provider: opts.provider });
+        const gitService = context.get<GitService>(TYPES.GitService);
+        return new OrchestratorSessionImpl({ chatManager, gitService, provider: opts.provider });
       };
     });
 
@@ -106,6 +109,8 @@ export function createContainer(): Container {
   container.bind<TerminalManager>(TYPES.TerminalManager).to(TerminalManagerImpl).inSingletonScope();
 
   container.bind<ChatManager>(TYPES.ChatManager).to(ChatManagerImpl).inSingletonScope();
+
+  container.bind<GitService>(TYPES.GitService).to(GitServiceImpl).inSingletonScope();
 
   container.bind<SocketHandler>(TYPES.SocketHandler).to(SocketHandlerImpl).inSingletonScope();
 

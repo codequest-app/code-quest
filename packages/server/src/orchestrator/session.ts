@@ -7,10 +7,13 @@ import type {
   WorkerInfo,
 } from '@code-quest/shared';
 import type { ChatManager, ChatSession } from '../chat/types.ts';
+import type { GitService } from '../git/types.ts';
 import type { OrchestratorSession } from './types.ts';
+import { calculateWaves, type Wave } from './wave-calculator.ts';
 
 interface OrchestratorSessionOptions {
   chatManager: ChatManager;
+  gitService: GitService;
   provider: 'claude' | 'gemini';
 }
 
@@ -21,14 +24,20 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private _status: OrchestratorStatus = 'idle';
   private _workers: WorkerInfo[] = [];
   private readonly chatManager: ChatManager;
+  private readonly gitService: GitService;
   private readonly coordinatorSession: ChatSession;
   private workerSessions: Map<string, ChatSession> = new Map();
+
+  private waves: Wave[] = [];
+  private currentWave = 0;
+  private workerWaveMap: Map<string, number> = new Map();
 
   private statusChangeHandlers: Array<(status: OrchestratorStatus) => void> = [];
   private workerEventHandlers: Array<(workerId: string, event: ChatStreamEvent) => void> = [];
   private workerCompleteHandlers: Array<(workerId: string, result: WorkerInfo) => void> = [];
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
   private errorHandlers: Array<(message: string) => void> = [];
+  private mergeErrorHandlers: Array<(workerId: string, error: string) => void> = [];
 
   get status(): OrchestratorStatus {
     return this._status;
@@ -41,6 +50,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   constructor(options: OrchestratorSessionOptions) {
     this.id = randomUUID();
     this.chatManager = options.chatManager;
+    this.gitService = options.gitService;
     this.coordinatorSession = this.chatManager.createSession({ provider: options.provider });
     this.coordinatorId = this.coordinatorSession.id;
   }
@@ -52,26 +62,23 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     }
 
     this.setStatus('dispatching');
+    this.waves = calculateWaves(tasks);
     this._workers = [];
 
-    for (const task of tasks) {
-      const workerSession = this.chatManager.createSession({ provider: task.provider });
-      const workerInfo: WorkerInfo = {
-        id: workerSession.id,
-        task,
+    // Create all WorkerInfo up front (pending, no session yet)
+    for (let i = 0; i < tasks.length; i++) {
+      const waveIndex = this.waves.findIndex((w) => w.indices.includes(i));
+      this._workers.push({
+        id: `pending-${i}`,
+        task: tasks[i],
         status: 'pending',
         result: '',
-      };
-      this._workers.push(workerInfo);
-      this.workerSessions.set(workerSession.id, workerSession);
+        wave: waveIndex,
+      });
     }
 
     this.setStatus('workers-running');
-
-    // Start all workers
-    for (const worker of this._workers) {
-      this.startWorker(worker);
-    }
+    this.startWave(0);
   }
 
   synthesize(): void {
@@ -94,7 +101,6 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
 
     const synthesisPrompt = parts.join('\n');
 
-    // Listen for coordinator completion
     this.coordinatorSession.onComplete((_stats) => {
       this.setStatus('complete');
       this.emitComplete(this.getAggregatedStats());
@@ -105,16 +111,13 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       this.emitError(message);
     });
 
-    // Persistent process: just write to stdin
     this.coordinatorSession.sendMessage(synthesisPrompt);
   }
 
   abort(): void {
-    // Abort all running workers
     for (const [_id, session] of this.workerSessions) {
       session.abort();
     }
-    // Abort coordinator
     this.coordinatorSession.abort();
     this.setStatus('error');
   }
@@ -127,6 +130,12 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.chatManager.removeSession(this.coordinatorId);
     for (const worker of this._workers) {
       this.chatManager.removeSession(worker.id);
+    }
+
+    // Cleanup all worktrees
+    if (this.gitService.isWorktreeSupported()) {
+      const ids = this._workers.map((_, i) => `${this.id}-${i}`);
+      this.gitService.cleanupAll(ids).catch(() => {});
     }
   }
 
@@ -174,6 +183,35 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.errorHandlers.push(handler);
   }
 
+  onMergeError(handler: (workerId: string, error: string) => void): void {
+    this.mergeErrorHandlers.push(handler);
+  }
+
+  private async startWave(waveIndex: number): Promise<void> {
+    this.currentWave = waveIndex;
+    const wave = this.waves[waveIndex];
+
+    for (const taskIndex of wave.indices) {
+      const worker = this._workers[taskIndex];
+      let cwd: string | undefined;
+
+      if (this.gitService.isWorktreeSupported()) {
+        try {
+          const worktreeId = `${this.id}-${taskIndex}`;
+          cwd = await this.gitService.createWorktree(worktreeId);
+        } catch {
+          // Fallback to shared cwd if worktree creation fails
+        }
+      }
+
+      const session = this.chatManager.createSession({ provider: worker.task.provider, cwd });
+      worker.id = session.id;
+      this.workerSessions.set(session.id, session);
+      this.workerWaveMap.set(session.id, waveIndex);
+      this.startWorker(worker);
+    }
+  }
+
   private startWorker(worker: WorkerInfo): void {
     const session = this.workerSessions.get(worker.id);
     if (!session) return;
@@ -210,9 +248,37 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     session.sendMessage(worker.task.description);
   }
 
-  private checkAllWorkersComplete(): void {
-    const allDone = this._workers.every((w) => w.status === 'complete' || w.status === 'error');
-    if (allDone && this._status === 'workers-running') {
+  private async checkAllWorkersComplete(): Promise<void> {
+    const currentWaveIndices = this.waves[this.currentWave].indices;
+    const waveWorkers = currentWaveIndices.map((i) => this._workers[i]);
+    const allDone = waveWorkers.every((w) => w.status === 'complete' || w.status === 'error');
+
+    if (!allDone || this._status !== 'workers-running') return;
+
+    // Merge worktrees if supported
+    if (this.gitService.isWorktreeSupported()) {
+      this.setStatus('merging');
+      for (const idx of currentWaveIndices) {
+        const worker = this._workers[idx];
+        if (worker.status !== 'complete') continue;
+        const worktreeId = `${this.id}-${idx}`;
+        const result = await this.gitService.mergeWorktreeBranch(worktreeId);
+        if (!result.success) {
+          worker.status = 'error';
+          worker.error = `Merge conflict: ${result.error}`;
+          this.emitMergeError(worker.id, result.error ?? 'merge failed');
+        }
+      }
+      // Cleanup worktrees for this wave
+      const ids = currentWaveIndices.map((i) => `${this.id}-${i}`);
+      await this.gitService.cleanupAll(ids);
+    }
+
+    // Check if there's another wave
+    if (this.currentWave + 1 < this.waves.length) {
+      this.setStatus('workers-running');
+      this.startWave(this.currentWave + 1);
+    } else {
       this.setStatus('workers-complete');
     }
   }
@@ -233,6 +299,12 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private emitError(message: string): void {
     for (const handler of this.errorHandlers) {
       handler(message);
+    }
+  }
+
+  private emitMergeError(workerId: string, error: string): void {
+    for (const handler of this.mergeErrorHandlers) {
+      handler(workerId, error);
     }
   }
 }
