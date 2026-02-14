@@ -9,6 +9,7 @@ import type {
   ChatStreamEvent,
   OrchestratorStatus,
   SubTask,
+  SystemCapabilities,
   WorkerInfo,
 } from './types.ts';
 
@@ -57,5 +58,7 @@ export interface ServerToClientEvents {
   'orchestrator:worker-complete': (orchId: string, workerId: string, result: WorkerInfo) => void;
   'orchestrator:all-complete': (orchId: string, results: WorkerInfo[]) => void;
   'orchestrator:status': (orchId: string, status: OrchestratorStatus) => void;
+  'orchestrator:merge-error': (orchId: string, workerId: string, error: string) => void;
   'orchestrator:error': (orchId: string, message: string) => void;
+  'system:capabilities': (capabilities: SystemCapabilities) => void;
 }

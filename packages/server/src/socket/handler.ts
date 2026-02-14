@@ -19,6 +19,7 @@ import {
 import { inject, injectable } from 'inversify';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import type { ChatManager } from '../chat/types.ts';
+import type { GitService } from '../git/types.ts';
 import type { OrchestratorSession, OrchestratorSessionFactory } from '../orchestrator/types.ts';
 import type { TerminalManager } from '../terminal/types.ts';
 import { TYPES } from '../types.symbols.ts';
@@ -40,6 +41,8 @@ export class SocketHandlerImpl implements SocketHandler {
     private readonly chatManager: ChatManager,
     @inject(TYPES.OrchestratorSessionFactory)
     private readonly createOrchestrator: OrchestratorSessionFactory,
+    @inject(TYPES.GitService)
+    private readonly gitService: GitService,
   ) {}
 
   attach(io: SocketIOServer): void {
@@ -51,6 +54,11 @@ export class SocketHandlerImpl implements SocketHandler {
 
   handleConnection(socket: Socket): void {
     console.log(`Client connected: ${socket.id}`);
+
+    // Send system capabilities
+    socket.emit('system:capabilities', {
+      worktree: this.gitService.isWorktreeSupported(),
+    });
 
     // Handle terminal:create
     socket.on('terminal:create', (options) => {
@@ -277,6 +285,10 @@ export class SocketHandlerImpl implements SocketHandler {
 
         orch.onWorkerComplete((workerId, result) => {
           socket.emit('orchestrator:worker-complete', orch.id, workerId, result);
+        });
+
+        orch.onMergeError((workerId, error) => {
+          socket.emit('orchestrator:merge-error', orch.id, workerId, error);
         });
 
         orch.onError((message) => {

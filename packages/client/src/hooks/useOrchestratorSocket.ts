@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import { useOrchestratorStore } from '../stores/orchestratorStore';
+import { useSystemStore } from '../stores/systemStore';
 import { useTerminalStore } from '../stores/terminalStore';
 import { safeValidate } from '../utils/validateAndEmit.ts';
 import { useSocket } from './useSocket';
@@ -86,6 +87,23 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       setStatus(orchId, 'error');
     };
 
+    const handleMergeError = (orchId: string, workerId: string, error: string) => {
+      updateWorkerStatus(orchId, workerId, {
+        status: 'error',
+        error: `Merge conflict: ${error}`,
+      });
+    };
+
+    const handleCapabilities = (caps: { worktree: boolean }) => {
+      useSystemStore.getState().setCapabilities(caps);
+      if (!caps.worktree && !useSystemStore.getState().worktreeToastShown) {
+        console.warn(
+          '[system] Git worktree not available — workers will share the same working directory.',
+        );
+        useSystemStore.getState().markWorktreeToastShown();
+      }
+    };
+
     socket.on('orchestrator:created', handleCreated);
     socket.on('orchestrator:dispatched', handleDispatched);
     socket.on('orchestrator:worker-event', handleWorkerEvent);
@@ -93,6 +111,8 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     socket.on('orchestrator:all-complete', handleAllComplete);
     socket.on('orchestrator:status', handleStatus);
     socket.on('orchestrator:error', handleError);
+    socket.on('orchestrator:merge-error', handleMergeError);
+    socket.on('system:capabilities', handleCapabilities);
 
     return () => {
       socket.off('orchestrator:created', handleCreated);
@@ -102,6 +122,8 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       socket.off('orchestrator:all-complete', handleAllComplete);
       socket.off('orchestrator:status', handleStatus);
       socket.off('orchestrator:error', handleError);
+      socket.off('orchestrator:merge-error', handleMergeError);
+      socket.off('system:capabilities', handleCapabilities);
     };
   }, [socket, initOrchestrator, setWorkers, updateWorkerStatus, setStatus, setAllComplete]);
 

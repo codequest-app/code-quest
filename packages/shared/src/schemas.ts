@@ -46,6 +46,7 @@ export const chatKillSchema = z.object({ sessionId: sessionIdSchema });
 export const subTaskSchema = z.object({
   description: z.string().min(1),
   provider: chatProviderSchema,
+  dependsOn: z.array(z.number().int().nonnegative()).optional(),
 });
 export const orchestratorCreateSchema = z.object({
   provider: chatProviderSchema,

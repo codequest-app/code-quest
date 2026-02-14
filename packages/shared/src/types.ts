@@ -21,6 +21,7 @@ export type OrchestratorStatus =
   | 'idle'
   | 'dispatching'
   | 'workers-running'
+  | 'merging'
   | 'workers-complete'
   | 'synthesizing'
   | 'complete'
@@ -29,6 +30,7 @@ export type OrchestratorStatus =
 export interface SubTask {
   description: string;
   provider: ChatProvider;
+  dependsOn?: number[];
 }
 
 export interface WorkerInfo {
@@ -38,4 +40,9 @@ export interface WorkerInfo {
   result?: string;
   stats?: ChatStats;
   error?: string;
+  wave?: number;
+}
+
+export interface SystemCapabilities {
+  worktree: boolean;
 }

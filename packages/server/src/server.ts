@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { Server as SocketIOServer } from 'socket.io';
 import type { ChatManager } from './chat/types.ts';
+import type { GitService } from './git/types.ts';
 import { HttpServerImpl } from './http/server.ts';
 import type { SocketHandler } from './socket/types.ts';
 import type { TerminalManager } from './terminal/types.ts';
@@ -24,12 +25,16 @@ export class ServerImpl implements Server {
     @inject(TYPES.TerminalManager) private readonly terminalManager: TerminalManager,
     @inject(TYPES.ChatManager) private readonly chatManager: ChatManager,
     @inject(TYPES.SocketHandler) private readonly socketHandler: SocketHandler,
+    @inject(TYPES.GitService) private readonly gitService: GitService,
   ) {}
 
   async start(): Promise<void> {
     if (this.httpServer) {
       throw new Error('Server is already running');
     }
+
+    // 0. Initialize GitService (detect worktree support)
+    await this.gitService.init();
 
     // 1. Create HTTP server
     this.httpServer = new HttpServerImpl({
