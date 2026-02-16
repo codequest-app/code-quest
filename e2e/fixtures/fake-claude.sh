@@ -27,14 +27,45 @@ if [ "$FIXTURE" = "echo" ]; then
   exit 0
 fi
 
-# Fixture replay mode
+# Fixture replay mode (interactive)
+# Reads first line (init) immediately, then waits for stdin before replaying the rest.
 if [ ! -f "$FIXTURE" ]; then
   echo "Fixture not found: $FIXTURE" >&2
   exit 1
 fi
 
+# Read all fixture lines into an array
+LINES=()
 while IFS= read -r line; do
   [ -z "$line" ] && continue
-  echo "$line"
-  sleep 0.05
+  LINES+=("$line")
 done < "$FIXTURE"
+
+if [ ${#LINES[@]} -eq 0 ]; then
+  echo "Empty fixture: $FIXTURE" >&2
+  exit 1
+fi
+
+# Emit init line immediately
+echo "${LINES[0]}"
+
+# Wait for each stdin message, then replay the next chunk of fixture lines
+# (skip init line, replay remaining on first message, then stay alive for multi-turn)
+REPLAYED=false
+while IFS= read -r MESSAGE; do
+  [ -z "$MESSAGE" ] && continue
+
+  if [ "$REPLAYED" = false ]; then
+    REPLAYED=true
+    for (( i=1; i<${#LINES[@]}; i++ )); do
+      echo "${LINES[$i]}"
+      sleep 0.05
+    done
+  else
+    # Subsequent messages: echo back (multi-turn fallback)
+    ESCAPED_MSG=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+    echo "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Echo: ${ESCAPED_MSG}\"}]}}"
+    sleep 0.05
+    echo '{"type":"result","subtype":"success","total_cost_usd":0.001,"duration_ms":200,"usage":{"input_tokens":10,"output_tokens":5}}'
+  fi
+done

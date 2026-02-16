@@ -301,6 +301,36 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           height: 100%;
           border-radius: 4px;
         }
+
+        /* Combo counter bounce */
+        @keyframes combo-bounce {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+
+        .combo-bounce {
+          animation: combo-bounce 0.3s ease-out;
+        }
+
+        /* Victory gold shimmer */
+        @keyframes gold-shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+
+        .log-victory {
+          background: linear-gradient(90deg, #ffd54f, #fff176, #ffd54f);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gold-shimmer 2s linear infinite;
+        }
+
+        /* Damage number color by amount */
+        .damage-number.damage-low { color: #ffffff; }
+        .damage-number.damage-mid { color: #ffd54f; }
+        .damage-number.damage-high { color: #ef5350; }
       `}</style>
     </div>
   );

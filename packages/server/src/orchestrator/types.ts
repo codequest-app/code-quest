@@ -32,4 +32,5 @@ export interface OrchestratorSession {
   onComplete(handler: (stats: ChatStats) => void): void;
   onError(handler: (message: string) => void): void;
   onMergeError(handler: (workerId: string, error: string) => void): void;
+  onWorkerWorktree(handler: (workerId: string, worktreePath: string, branch: string) => void): void;
 }

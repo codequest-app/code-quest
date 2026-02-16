@@ -375,7 +375,7 @@ describe('useBattleEngine', () => {
     expect(battle?.activeTrap?.toolName).toBe('Bash');
   });
 
-  it('sets modelId from session provider on battle start', () => {
+  it('sets modelId from SmartRouter analysis on battle start', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
     renderHook(() => useBattleEngine());
 
@@ -384,7 +384,25 @@ describe('useBattleEngine', () => {
     });
 
     const battle = useBattleStore.getState().getBattle('s1');
-    expect(battle?.modelId).toBe('sonnet');
+    // "fix the bug" is a simple prompt → haiku
+    expect(battle?.modelId).toBe('haiku');
+  });
+
+  it('sets modelId to opus for complex prompts', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore
+        .getState()
+        .addUserMessage(
+          's1',
+          'refactor the entire architecture and migrate the database, then redesign the authentication system step by step',
+        );
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.modelId).toBe('opus');
   });
 
   it('records cost in bankStore on victory with costUsd', () => {

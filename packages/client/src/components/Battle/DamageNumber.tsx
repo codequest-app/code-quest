@@ -19,8 +19,13 @@ export function DamageNumber({ value, isCritical = false, onComplete }: DamageNu
 
   if (!visible) return null;
 
+  const colorClass = value >= 60 ? 'damage-high' : value >= 30 ? 'damage-mid' : 'damage-low';
+
   return (
-    <div className={`damage-number ${isCritical ? 'critical' : ''}`} data-testid="damage-number">
+    <div
+      className={`damage-number ${isCritical ? 'critical' : colorClass}`}
+      data-testid="damage-number"
+    >
       {isCritical && <span className="critical-label">CRITICAL! </span>}-{value}
       <style>{`
         .damage-number {

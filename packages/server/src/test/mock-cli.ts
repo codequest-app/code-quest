@@ -5,7 +5,17 @@
  *
  * Behavior controlled by MOCK_SCENARIO env var (default: 'echo').
  * Reads lines from stdin and writes JSON events to stdout.
+ *
+ * Scenarios:
+ *   echo        — echo back stdin lines (default)
+ *   stream      — word-by-word streaming
+ *   permission  — emit permission request
+ *   error       — emit error event
+ *   multi-turn  — numbered turns
+ *   fixture     — replay a JSONL fixture file (set MOCK_FIXTURE=path/to/file.jsonl)
+ *                 First line (init) emits immediately; remaining lines replay on first stdin message.
  */
+import { readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
 const scenario = process.env.MOCK_SCENARIO || 'echo';
@@ -80,33 +90,75 @@ const scenarios: Record<string, (msg: string) => void> = {
 
 let waitingForPermissionResponse = false;
 
-// Emit init on startup
-emitInit();
-
-const rl = createInterface({ input: process.stdin });
-
-rl.on('line', (line) => {
-  const trimmed = line.trim();
-  if (!trimmed) return;
-
-  if (waitingForPermissionResponse) {
-    waitingForPermissionResponse = false;
-    emitText(`Permission response: ${trimmed}`);
-    emitResult();
-    return;
+// ── Fixture replay mode ──
+if (scenario === 'fixture') {
+  const fixturePath = process.env.MOCK_FIXTURE;
+  if (!fixturePath) {
+    process.stderr.write('MOCK_FIXTURE env var is required for fixture scenario\n');
+    process.exit(1);
   }
 
-  const handler = scenarios[scenario];
-  if (handler) {
-    handler(trimmed);
-    if (scenario === 'permission') {
-      waitingForPermissionResponse = true;
+  const lines = readFileSync(fixturePath, 'utf-8')
+    .split('\n')
+    .filter((l) => l.trim());
+
+  if (lines.length === 0) {
+    process.stderr.write(`Empty fixture: ${fixturePath}\n`);
+    process.exit(1);
+  }
+
+  // Emit first line (init) immediately
+  process.stdout.write(`${lines[0]}\n`);
+
+  let replayed = false;
+  const rl = createInterface({ input: process.stdin });
+
+  rl.on('line', (line) => {
+    if (!line.trim()) return;
+
+    if (!replayed) {
+      replayed = true;
+      // Replay remaining fixture lines
+      for (let i = 1; i < lines.length; i++) {
+        process.stdout.write(`${lines[i]}\n`);
+      }
+    } else {
+      // Multi-turn fallback: echo
+      emitText(`Echo: ${line.trim()}`);
+      emitResult();
     }
-  } else {
-    scenarios.echo(trimmed);
-  }
-});
+  });
 
-rl.on('close', () => {
-  process.exit(0);
-});
+  rl.on('close', () => process.exit(0));
+} else {
+  // ── Standard scenario mode ──
+  emitInit();
+
+  const rl = createInterface({ input: process.stdin });
+
+  rl.on('line', (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    if (waitingForPermissionResponse) {
+      waitingForPermissionResponse = false;
+      emitText(`Permission response: ${trimmed}`);
+      emitResult();
+      return;
+    }
+
+    const handler = scenarios[scenario];
+    if (handler) {
+      handler(trimmed);
+      if (scenario === 'permission') {
+        waitingForPermissionResponse = true;
+      }
+    } else {
+      scenarios.echo(trimmed);
+    }
+  });
+
+  rl.on('close', () => {
+    process.exit(0);
+  });
+}
