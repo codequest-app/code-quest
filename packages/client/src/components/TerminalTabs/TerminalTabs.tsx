@@ -4,6 +4,7 @@ import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
 import { useSocket } from '../../hooks/useSocket';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
+import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
 import { OrchestratorPage } from '../OrchestratorPanel';
 import { Terminal, type TerminalHandle } from '../Terminal';
@@ -380,6 +381,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
               style={{ width: '100%', height: '100%' }}
             >
               <ChatPanel sessionId={activeSession.id} onSend={sendMessage} onAbort={abortMessage} />
+              <BattleOverlay sessionId={activeSession.id} />
             </div>
           )}
         {activeSession && activeSession.type === 'orchestrator' && (
