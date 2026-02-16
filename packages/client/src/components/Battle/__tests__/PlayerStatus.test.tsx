@@ -16,6 +16,7 @@ const battle: BattleState = {
   log: [],
   goldEarned: 0,
   expEarned: 0,
+  isPaused: false,
 };
 
 describe('PlayerStatus', () => {

@@ -93,4 +93,71 @@ describe('BattleOverlay', () => {
 
     vi.useRealTimers();
   });
+
+  it('shows StasisOverlay when battle is paused for plan_mode', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', { isPaused: true, pauseReason: 'plan_mode' });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getByTestId('stasis-overlay')).toBeInTheDocument();
+  });
+
+  it('shows RPGQuestionModal when paused with question', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      isPaused: true,
+      pauseReason: 'question',
+      activeDialogue: { question: 'Which?', options: ['A', 'B'] },
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getByTestId('rpg-question-modal')).toBeInTheDocument();
+    expect(screen.getByText('Which?')).toBeInTheDocument();
+  });
+
+  it('shows RPGPermissionModal when paused with permission', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      isPaused: true,
+      pauseReason: 'permission',
+      activeTrap: { toolName: 'Bash', description: 'run command', riskLevel: 'high' },
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getByTestId('rpg-permission-modal')).toBeInTheDocument();
+    expect(screen.getByText('罠を発見！')).toBeInTheDocument();
+  });
+
+  it('does not show modals when battle is not paused', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.queryByTestId('stasis-overlay')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rpg-question-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rpg-permission-modal')).not.toBeInTheDocument();
+  });
 });

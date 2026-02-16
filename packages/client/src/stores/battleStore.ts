@@ -1,10 +1,13 @@
 import type {
+  ActiveDialogue,
+  ActiveTrap,
   BattleEvent,
   BattleLogEntry,
   BattlePhase,
   BattleState,
   DamageResult,
   Enemy,
+  PauseReason,
   SkillInfo,
 } from '@code-quest/shared';
 import { create } from 'zustand';
@@ -24,10 +27,13 @@ interface PlayerState {
   totalGold: number;
 }
 
+const MAX_CONCURRENT_BATTLES = 3;
+
 interface BattleStore {
   battles: Map<string, BattleState>;
   prompts: Map<string, string>;
   player: PlayerState;
+  activeBattleId: string | undefined;
 
   startBattle: (sessionId: string, enemy: Enemy) => void;
   updateEnemy: (sessionId: string, updates: Partial<Enemy>) => void;
@@ -38,6 +44,8 @@ interface BattleStore {
   setPrompt: (sessionId: string, prompt: string) => void;
   getPrompt: (sessionId: string) => string | undefined;
   processBattleEvent: (sessionId: string, event: BattleEvent) => void;
+  switchBattle: (sessionId: string) => void;
+  getActiveBattles: () => Array<{ sessionId: string; battle: BattleState }>;
 }
 
 const PLAYER_STORAGE_KEY = 'code-quest-player';
@@ -73,9 +81,16 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   battles: new Map(),
   prompts: new Map(),
   player: loadPlayerState(),
+  activeBattleId: undefined,
 
   startBattle: (sessionId: string, enemy: Enemy) => {
     set((state) => {
+      // Enforce max concurrent battles
+      const activeBattles = [...state.battles.entries()].filter(([, b]) => b.phase === 'active');
+      if (activeBattles.length >= MAX_CONCURRENT_BATTLES) {
+        return state;
+      }
+
       const battles = new Map(state.battles);
       battles.set(sessionId, {
         enemy,
@@ -90,8 +105,9 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         log: [],
         goldEarned: 0,
         expEarned: 0,
+        isPaused: false,
       });
-      return { battles };
+      return { battles, activeBattleId: sessionId };
     });
   },
 
@@ -242,6 +258,45 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           updated.log = log;
           break;
         }
+
+        case 'stasis_enter': {
+          const reason = event.data.reason as PauseReason;
+          updated.isPaused = true;
+          updated.pauseReason = reason;
+          log.push(makeLogEntry('時空凍結！', 'info'));
+          updated.log = log;
+          break;
+        }
+
+        case 'stasis_exit': {
+          updated.isPaused = false;
+          updated.pauseReason = undefined;
+          updated.activeDialogue = undefined;
+          updated.activeTrap = undefined;
+          log.push(makeLogEntry('時空解凍！', 'info'));
+          updated.log = log;
+          break;
+        }
+
+        case 'npc_dialogue': {
+          const dialogue = event.data.dialogue as ActiveDialogue;
+          updated.isPaused = true;
+          updated.pauseReason = 'question';
+          updated.activeDialogue = dialogue;
+          log.push(makeLogEntry('敵の質問攻撃！', 'info'));
+          updated.log = log;
+          break;
+        }
+
+        case 'trap_detected': {
+          const trap = event.data.trap as ActiveTrap;
+          updated.isPaused = true;
+          updated.pauseReason = 'permission';
+          updated.activeTrap = trap;
+          log.push(makeLogEntry('罠を発見！', 'info'));
+          updated.log = log;
+          break;
+        }
       }
 
       battles.set(sessionId, updated);
@@ -265,5 +320,23 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
 
       return { battles, player };
     });
+  },
+
+  switchBattle: (sessionId: string) => {
+    const battle = get().battles.get(sessionId);
+    if (battle) {
+      set({ activeBattleId: sessionId });
+    }
+  },
+
+  getActiveBattles: () => {
+    const battles = get().battles;
+    const result: Array<{ sessionId: string; battle: BattleState }> = [];
+    for (const [sessionId, battle] of battles) {
+      if (battle.phase === 'active') {
+        result.push({ sessionId, battle });
+      }
+    }
+    return result;
   },
 }));

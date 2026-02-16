@@ -147,7 +147,197 @@ describe('useBattleEngine', () => {
     expect(useBattleStore.getState().getBattle('s2')?.enemy.type).toBe('code-task');
   });
 
-  it('triggers enemy counter on denied tool permission', () => {
+  it('detects thinking state and triggers stasis_enter', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'thinking',
+        data: { content: 'x'.repeat(200) },
+      });
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.isPaused).toBe(true);
+    expect(battle?.pauseReason).toBe('plan_mode');
+  });
+
+  it('detects pending question and triggers npc_dialogue', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    // Simulate AskUserQuestion tool_use which sets pendingQuestion
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: {
+          id: 'q1',
+          name: 'AskUserQuestion',
+          input: {
+            questions: [
+              {
+                question: 'Which?',
+                header: 'Q',
+                options: [{ label: 'A' }, { label: 'B' }],
+                multiSelect: false,
+              },
+            ],
+          },
+        },
+      });
+    });
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    // The pending question should be detected
+    expect(battle?.isPaused).toBe(true);
+    expect(battle?.pauseReason).toBe('question');
+  });
+
+  it('resumes battle when question is answered', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: {
+          id: 'q1',
+          name: 'AskUserQuestion',
+          input: {
+            questions: [
+              {
+                question: 'Which?',
+                header: 'Q',
+                options: [{ label: 'A' }, { label: 'B' }],
+                multiSelect: false,
+              },
+            ],
+          },
+        },
+      });
+    });
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+    });
+
+    // Now clear the pending question (simulating user answered)
+    act(() => {
+      useChatStore.getState().clearPendingQuestion('s1');
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.isPaused).toBe(false);
+  });
+
+  it('detects pending permission and triggers trap_detected', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    // Simulate tool_use followed by result (unresolved tool_use → pendingPermission)
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: { id: 't1', name: 'Bash', input: { command: 'ls' } },
+      });
+    });
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.isPaused).toBe(true);
+    expect(battle?.pauseReason).toBe('permission');
+    expect(battle?.activeTrap?.toolName).toBe('Bash');
+  });
+
+  it('resumes battle when permission is resolved', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: { id: 't1', name: 'Bash', input: { command: 'ls' } },
+      });
+    });
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+    });
+
+    act(() => {
+      useChatStore.getState().clearPendingPermission('s1');
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.isPaused).toBe(false);
+  });
+
+  it('resets thinking tracking on tool_use', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'thinking',
+        data: { content: 'x'.repeat(200) },
+      });
+    });
+
+    expect(useBattleStore.getState().getBattle('s1')?.isPaused).toBe(true);
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: { id: 't1', name: 'Read', input: {} },
+      });
+    });
+
+    // stasis_exit from tool_use + skill cast
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.isPaused).toBe(false);
+  });
+
+  it('pauses battle as trap when denied tool permission', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
     renderHook(() => useBattleEngine());
 
@@ -163,9 +353,7 @@ describe('useBattleEngine', () => {
       });
     });
 
-    const hpBefore = useBattleStore.getState().getBattle('s1')?.playerHp;
-
-    // Result with unresolved tool_use → pendingPermission
+    // Result with unresolved tool_use → pendingPermission → trap_detected
     act(() => {
       useChatStore.getState().handleChatEvent('s1', {
         type: 'result',
@@ -174,8 +362,8 @@ describe('useBattleEngine', () => {
     });
 
     const battle = useBattleStore.getState().getBattle('s1');
-    // Should have enemy counter (playerHp reduced) since Bash was denied
-    expect(battle?.playerHp).toBeLessThan(hpBefore ?? 100);
-    expect(battle?.log.some((l) => l.type === 'error')).toBe(true);
+    expect(battle?.isPaused).toBe(true);
+    expect(battle?.pauseReason).toBe('permission');
+    expect(battle?.activeTrap?.toolName).toBe('Bash');
   });
 });

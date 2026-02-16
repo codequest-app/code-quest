@@ -6,7 +6,10 @@ import { DamageNumber } from './DamageNumber';
 import { EnemyDisplay } from './EnemyDisplay';
 import { MessageBox } from './MessageBox';
 import { PlayerStatus } from './PlayerStatus';
+import { RPGPermissionModal } from './RPGPermissionModal';
+import { RPGQuestionModal } from './RPGQuestionModal';
 import { SkillCastEffect } from './SkillCastEffect';
+import { StasisOverlay } from './StasisOverlay';
 
 interface ActiveEffect {
   id: number;
@@ -134,6 +137,28 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
       <BattleLog entries={battle.log} />
       <PlayerStatus battle={battle} />
       <MessageBox message={message} />
+
+      {battle.isPaused && battle.pauseReason === 'plan_mode' && (
+        <StasisOverlay visible reason="plan_mode" />
+      )}
+
+      {battle.isPaused && battle.pauseReason === 'question' && battle.activeDialogue && (
+        <RPGQuestionModal
+          question={battle.activeDialogue.question}
+          options={battle.activeDialogue.options}
+          onSelect={() => {}}
+        />
+      )}
+
+      {battle.isPaused && battle.pauseReason === 'permission' && battle.activeTrap && (
+        <RPGPermissionModal
+          toolName={battle.activeTrap.toolName}
+          description={battle.activeTrap.description}
+          riskLevel={battle.activeTrap.riskLevel}
+          onAllow={() => {}}
+          onDeny={() => {}}
+        />
+      )}
 
       <style>{`
         .battle-overlay {
