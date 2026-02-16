@@ -9,7 +9,9 @@ describe('ClaudeStreamParser (fixture-driven)', () => {
 
   function parseFixture(name: string) {
     const parser = new ClaudeStreamParser();
-    return parser.feed(loadFixture(name));
+    return loadFixture(name)
+      .split('\n')
+      .flatMap((line) => parser.parseLine(line));
   }
 
   it('should parse simple-text fixture', () => {
@@ -76,7 +78,9 @@ describe('ClaudeStreamParser (fixture-driven)', () => {
 
   it('should extract cliSessionId from fixture', () => {
     const parser = new ClaudeStreamParser();
-    parser.feed(loadFixture('simple-text.jsonl'));
+    loadFixture('simple-text.jsonl')
+      .split('\n')
+      .flatMap((line) => parser.parseLine(line));
     expect(parser.getCliSessionId()).toBe('ce0ca308-1a2b-3c4d-5e6f-7890abcdef01');
   });
 });

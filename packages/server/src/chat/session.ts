@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { createInterface } from 'node:readline';
 import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import type {
   ChatSession,
@@ -50,18 +51,12 @@ export class ChatSessionImpl implements ChatSession {
   }
 
   sendMessage(message: string): void {
-    // Build args: baseArgs + resume (if continuing) + allowedTools + message
-    const args = [...this.baseArgs];
-    const sessionId = this.cliSessionId;
-    if (sessionId) {
-      args.push('--resume', sessionId);
-    }
-    if (this.allowedTools.size > 0) {
-      args.push('--allowedTools', [...this.allowedTools].join(','));
-    }
-    args.push(message);
+    this.ensureProcess();
+    if (!this.process) return; // spawn failed
 
-    this.spawnProcess(args);
+    this.gotResult = false;
+    this._state = 'processing';
+    this.process.stdin?.write(this.formatStdinMessage(message));
   }
 
   addAllowedTool(tool: string): void {
@@ -98,16 +93,19 @@ export class ChatSessionImpl implements ChatSession {
     this.exitHandlers.push(handler);
   }
 
-  private spawnProcess(args: string[]): void {
-    // Kill previous process if still running
-    if (this.process) {
-      this.process.kill('SIGTERM');
-      this.process = null;
+  private ensureProcess(): void {
+    if (this.process) return;
+
+    const args = [...this.baseArgs];
+    const cliSessionId = this.parser.getCliSessionId();
+    if (cliSessionId) {
+      args.push('--resume', cliSessionId);
+    }
+    if (this.allowedTools.size > 0) {
+      args.push('--allowedTools', [...this.allowedTools].join(','));
     }
 
     this.stderrBuffer = '';
-    this.gotResult = false;
-    this._state = 'processing';
 
     // Use injected env or inherit from process, stripping vars that prevent nested sessions
     const env = { ...(this.envOverride ?? process.env) };
@@ -126,21 +124,20 @@ export class ChatSessionImpl implements ChatSession {
       return;
     }
 
-    // Close stdin so CLI processes the argument and doesn't wait for piped input.
-    this.process.stdin?.end();
-
-    this.process.stdout?.on('data', (chunk: Buffer) => {
-      const raw = chunk.toString();
-      const events = this.parser.feed(raw);
-      for (const event of events) {
-        this.emitEvent(event);
-        if (event.type === 'result') {
-          this.gotResult = true;
-          this._state = 'idle';
-          this.emitComplete((event.data as { stats: ChatStats }).stats);
+    if (this.process.stdout) {
+      const rl = createInterface({ input: this.process.stdout });
+      rl.on('line', (line: string) => {
+        const events = this.parser.parseLine(line);
+        for (const event of events) {
+          this.emitEvent(event);
+          if (event.type === 'result') {
+            this.gotResult = true;
+            this._state = 'idle';
+            this.emitComplete((event.data as { stats: ChatStats }).stats);
+          }
         }
-      }
-    });
+      });
+    }
 
     this.process.stderr?.on('data', (chunk: Buffer) => {
       this.stderrBuffer += chunk.toString();
@@ -161,6 +158,16 @@ export class ChatSessionImpl implements ChatSession {
       this._state = 'idle';
       this.emitExit();
     });
+  }
+
+  private formatStdinMessage(message: string): string {
+    return `${JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'text', text: message }],
+      },
+    })}\n`;
   }
 
   private emitEvent(event: ChatStreamEvent): void {

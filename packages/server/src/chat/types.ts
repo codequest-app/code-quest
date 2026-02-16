@@ -7,7 +7,7 @@ import type { ChildProcess, SpawnOptions } from 'node:child_process';
 import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
 
 export interface StreamParser {
-  feed(chunk: string): ChatStreamEvent[];
+  parseLine(line: string): ChatStreamEvent[];
   getCliSessionId(): string | null;
 }
 
