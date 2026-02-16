@@ -1,28 +1,29 @@
 #!/bin/bash
-# Fake Claude CLI — reads fixture JSONL and outputs line-by-line with delays.
+# Fake Claude CLI — persistent process that reads messages from stdin.
 #
 # Modes:
-#   FIXTURE=path/to/file.jsonl  — replay a fixture file (default: claude-simple-text.jsonl)
-#   FIXTURE=echo                — echo back the last CLI argument in the response text
+#   FIXTURE=echo                — echo back stdin lines in the response text (default)
+#   FIXTURE=path/to/file.jsonl  — replay a fixture file
 #
 # Usage:
-#   bash fake-claude.sh "message"
-#   FIXTURE=echo bash fake-claude.sh "hello world"
-#   FIXTURE=/path/to/fixture.jsonl bash fake-claude.sh "message"
+#   echo "hello" | bash fake-claude.sh -p
+#   FIXTURE=echo bash fake-claude.sh -p
+#   FIXTURE=/path/to/fixture.jsonl bash fake-claude.sh -p
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE="${FIXTURE:-$SCRIPT_DIR/fixtures/claude-simple-text.jsonl}"
-MESSAGE="${@: -1}"
 
-# Echo mode: generate a minimal stream-json response echoing the message
+# Echo mode: persistent process reading messages from stdin
 if [ "$FIXTURE" = "echo" ]; then
   echo '{"type":"system","subtype":"init","session_id":"mock-echo-'$$'"}'
-  sleep 0.05
-  # Escape double quotes in message for JSON safety
-  ESCAPED_MSG=$(echo "$MESSAGE" | sed 's/"/\\"/g')
-  echo "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Echo: ${ESCAPED_MSG}\"}]}}"
-  sleep 0.05
-  echo '{"type":"result","subtype":"success","total_cost_usd":0.001,"duration_ms":200,"usage":{"input_tokens":10,"output_tokens":5}}'
+  while IFS= read -r MESSAGE; do
+    [ -z "$MESSAGE" ] && continue
+    sleep 0.05
+    ESCAPED_MSG=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+    echo "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Echo: ${ESCAPED_MSG}\"}]}}"
+    sleep 0.05
+    echo '{"type":"result","subtype":"success","total_cost_usd":0.001,"duration_ms":200,"usage":{"input_tokens":10,"output_tokens":5}}'
+  done
   exit 0
 fi
 
