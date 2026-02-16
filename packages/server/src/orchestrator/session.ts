@@ -87,8 +87,19 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.startWave(0);
   }
 
+  skipWorker(workerId: string): void {
+    const worker = this._workers.find((w) => w.id === workerId);
+    if (!worker || worker.status !== 'error') {
+      this.emitError(`Cannot skip worker "${workerId}": not found or not in error state`);
+      return;
+    }
+
+    worker.status = 'skipped';
+    this.checkPausedResolved();
+  }
+
   synthesize(): void {
-    if (this._status !== 'workers-complete') {
+    if (this._status !== 'workers-complete' && this._status !== 'workers-paused') {
       this.emitError('Cannot synthesize: workers are not complete');
       return;
     }
@@ -100,7 +111,13 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this._workers.forEach((worker, index) => {
       const providerLabel = worker.task.provider === 'claude' ? 'Claude' : 'Gemini';
       parts.push(`## Worker ${index + 1}: ${worker.task.description} (${providerLabel})`);
-      parts.push(worker.result || '(no output)');
+      if (worker.status === 'skipped') {
+        parts.push(`⚠️ 此任務被跳過。失敗原因：${worker.error ?? 'unknown'}`);
+      } else if (worker.status === 'error') {
+        parts.push(`❌ 此任務失敗。錯誤訊息：${worker.error ?? 'unknown'}`);
+      } else {
+        parts.push(worker.result || '(no output)');
+      }
       parts.push('');
     });
     parts.push('請根據以上結果進行彙整。');
@@ -199,8 +216,8 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       this.workerSessions.set(session.id, session);
       this.workerWaveMap.set(session.id, worker.wave ?? 0);
 
-      // If status was workers-complete, go back to workers-running
-      if (this._status === 'workers-complete') {
+      // If status was workers-complete or workers-paused, go back to workers-running
+      if (this._status === 'workers-complete' || this._status === 'workers-paused') {
         this.setStatus('workers-running');
       }
 
@@ -325,7 +342,9 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private async checkAllWorkersComplete(): Promise<void> {
     const currentWaveIndices = this.waves[this.currentWave].indices;
     const waveWorkers = currentWaveIndices.map((i) => this._workers[i]);
-    const allDone = waveWorkers.every((w) => w.status === 'complete' || w.status === 'error');
+    const allDone = waveWorkers.every(
+      (w) => w.status === 'complete' || w.status === 'error' || w.status === 'skipped',
+    );
 
     if (!allDone || this._status !== 'workers-running') return;
 
@@ -348,7 +367,32 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       await this.gitService.cleanupAll(ids);
     }
 
-    // Check if there's another wave
+    // Check if any workers have errors — pause for user decision
+    const hasErrors = waveWorkers.some((w) => w.status === 'error');
+    if (hasErrors) {
+      this.setStatus('workers-paused');
+      return;
+    }
+
+    await this.advanceAfterWave();
+  }
+
+  private checkPausedResolved(): void {
+    if (this._status !== 'workers-paused') return;
+
+    const currentWaveIndices = this.waves[this.currentWave].indices;
+    const waveWorkers = currentWaveIndices.map((i) => this._workers[i]);
+    const hasErrors = waveWorkers.some((w) => w.status === 'error');
+
+    if (!hasErrors) {
+      this.advanceAfterWave().catch((err) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.emitError(`Failed to advance after wave: ${message}`);
+      });
+    }
+  }
+
+  private async advanceAfterWave(): Promise<void> {
     if (this.currentWave + 1 < this.waves.length) {
       this.setStatus('workers-running');
       this.startWave(this.currentWave + 1);

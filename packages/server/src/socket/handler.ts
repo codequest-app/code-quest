@@ -11,6 +11,7 @@ import {
   orchestratorDispatchSchema,
   orchestratorKillSchema,
   orchestratorRetryWorkerSchema,
+  orchestratorSkipWorkerSchema,
   orchestratorSynthesizeSchema,
   terminalCreateSchema,
   terminalKillSchema,
@@ -383,6 +384,22 @@ export class SocketHandlerImpl implements SocketHandler {
         return;
       }
       orch.retryWorker(parsed.data.workerId);
+    });
+
+    // Handle orchestrator:skip-worker
+    socket.on('orchestrator:skip-worker', (orchId, workerId) => {
+      const parsed = orchestratorSkipWorkerSchema.safeParse({ orchId, workerId });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
+      if (!orch) {
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
+        return;
+      }
+      orch.skipWorker(parsed.data.workerId);
     });
 
     // Handle disconnection

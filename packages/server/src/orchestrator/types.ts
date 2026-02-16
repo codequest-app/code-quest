@@ -22,6 +22,7 @@ export interface OrchestratorSession {
   abort(): void;
   kill(): void;
   retryWorker(workerId: string): void;
+  skipWorker(workerId: string): void;
   getWorkerResults(): WorkerInfo[];
   getAggregatedStats(): ChatStats;
 

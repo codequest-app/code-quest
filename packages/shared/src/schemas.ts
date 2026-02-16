@@ -64,6 +64,10 @@ export const orchestratorRetryWorkerSchema = z.object({
   orchId: sessionIdSchema,
   workerId: z.string().min(1),
 });
+export const orchestratorSkipWorkerSchema = z.object({
+  orchId: sessionIdSchema,
+  workerId: z.string().min(1),
+});
 
 // Shared domain schemas
 export const chatStatsSchema = z.object({
@@ -98,6 +102,7 @@ export const orchestratorStatusSchema = z.enum([
   'dispatching',
   'workers-running',
   'merging',
+  'workers-paused',
   'workers-complete',
   'synthesizing',
   'complete',
@@ -107,7 +112,7 @@ export const orchestratorStatusSchema = z.enum([
 export const workerInfoSchema = z.object({
   id: z.string(),
   task: subTaskSchema,
-  status: z.enum(['pending', 'running', 'complete', 'error']),
+  status: z.enum(['pending', 'running', 'complete', 'error', 'skipped']),
   result: z.string().optional(),
   stats: chatStatsSchema.optional(),
   error: z.string().optional(),

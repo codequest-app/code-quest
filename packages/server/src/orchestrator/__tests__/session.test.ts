@@ -283,12 +283,125 @@ describe('OrchestratorSession', () => {
 
     orch.dispatch([{ description: 'failing task', provider: 'claude' }]);
 
-    await waitForStatus(orch, 'workers-complete');
+    await waitForStatus(orch, 'workers-paused');
 
+    expect(orch.status).toBe('workers-paused');
     const workers = orch.workers;
     expect(workers[0].status).toBe('error');
     expect(workers[0].error).toBeTruthy();
 
     failChatManager.cleanup();
+  });
+
+  describe('workers-paused + skipWorker', () => {
+    const failCommandsConfig: ChatCommandsConfig = {
+      claude: {
+        command: 'bash',
+        baseArgs: [
+          '-c',
+          'echo \'{"type":"system","subtype":"init","session_id":"fail-1"}\'; echo "error occurred" >&2; exit 1',
+        ],
+      },
+      gemini: {
+        command: 'bash',
+        baseArgs: [
+          '-c',
+          'echo \'{"type":"system","subtype":"init","session_id":"fail-1"}\'; echo "error occurred" >&2; exit 1',
+        ],
+      },
+    };
+
+    it('should pause when wave has mixed success and failure', async () => {
+      // Use success for claude, failure for gemini
+      const mixedContainer = createTestContainer({
+        chatCommandsConfig: {
+          claude: mockChatCommandsConfig.claude,
+          gemini: failCommandsConfig.gemini,
+        },
+      });
+      const mixedChatManager = mixedContainer.get<ChatManager>(TYPES.ChatManager);
+      const mixedCreate = mixedContainer.get<OrchestratorSessionFactory>(
+        TYPES.OrchestratorSessionFactory,
+      );
+
+      orch = mixedCreate({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+      orch.dispatch([
+        { description: 'success task', provider: 'claude' },
+        { description: 'failing task', provider: 'gemini' },
+      ]);
+
+      await waitForStatus(orch, 'workers-paused');
+
+      expect(orch.status).toBe('workers-paused');
+      const workers = orch.workers;
+      expect(workers.find((w) => w.task.description === 'success task')?.status).toBe('complete');
+      expect(workers.find((w) => w.task.description === 'failing task')?.status).toBe('error');
+
+      mixedChatManager.cleanup();
+    });
+
+    it('should skip an error worker and resolve pause', async () => {
+      const failContainer = createTestContainer({
+        chatCommandsConfig: failCommandsConfig,
+      });
+      const failChatManager = failContainer.get<ChatManager>(TYPES.ChatManager);
+      const failCreate = failContainer.get<OrchestratorSessionFactory>(
+        TYPES.OrchestratorSessionFactory,
+      );
+
+      orch = failCreate({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+      orch.dispatch([{ description: 'failing task', provider: 'claude' }]);
+
+      await waitForStatus(orch, 'workers-paused');
+
+      const workerId = orch.workers[0].id;
+      orch.skipWorker(workerId);
+
+      await waitForStatus(orch, 'workers-complete');
+      expect(orch.workers[0].status).toBe('skipped');
+
+      failChatManager.cleanup();
+    });
+
+    it('should emit error when skipping non-error worker', () => {
+      orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+      const errors: string[] = [];
+      orch.onError((msg) => errors.push(msg));
+
+      orch.skipWorker('nonexistent');
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('Cannot skip worker');
+    });
+
+    it('should allow synthesize from workers-paused state', async () => {
+      // Coordinator uses claude (success), workers use gemini (fail)
+      const mixedContainer = createTestContainer({
+        chatCommandsConfig: {
+          claude: mockChatCommandsConfig.claude,
+          gemini: failCommandsConfig.gemini,
+        },
+      });
+      const mixedChatManager = mixedContainer.get<ChatManager>(TYPES.ChatManager);
+      const mixedCreate = mixedContainer.get<OrchestratorSessionFactory>(
+        TYPES.OrchestratorSessionFactory,
+      );
+
+      orch = mixedCreate({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+      orch.dispatch([{ description: 'failing task', provider: 'gemini' }]);
+
+      await waitForStatus(orch, 'workers-paused');
+
+      orch.synthesize();
+      expect(orch.status).toBe('synthesizing');
+
+      await waitForStatus(orch, 'complete');
+
+      mixedChatManager.cleanup();
+    });
   });
 });
