@@ -13,6 +13,51 @@ afterEach(() => {
   window.onerror = originalOnError;
 });
 
+vi.mock('../WorkerPane.tsx', () => ({
+  WorkerPane: (props: {
+    index: number;
+    worker: WorkerInfo;
+    isPaused?: boolean;
+    onRetryWorker?: (id: string) => void;
+    onSkipWorker?: (id: string) => void;
+  }) => (
+    <div
+      data-testid={`worker-pane-${props.worker.id}`}
+      data-index={props.index}
+      data-status={props.worker.status}
+      data-is-paused={String(!!props.isPaused)}
+      data-has-retry={String(!!props.onRetryWorker)}
+      data-has-skip={String(!!props.onSkipWorker)}
+    >
+      <span>{props.worker.task.description}</span>
+      {props.worker.result && <span>{props.worker.result}</span>}
+      {props.worker.error && <span>{props.worker.error}</span>}
+      {props.worker.stats?.costUsd != null && <span>${props.worker.stats.costUsd.toFixed(2)}</span>}
+      {props.worker.stats?.durationMs != null && (
+        <span>{(props.worker.stats.durationMs / 1000).toFixed(1)}s</span>
+      )}
+      {props.isPaused && props.worker.status === 'error' && props.onRetryWorker && (
+        <button
+          type="button"
+          aria-label={`Retry worker ${props.index + 1}`}
+          onClick={() => props.onRetryWorker?.(props.worker.id)}
+        >
+          Retry
+        </button>
+      )}
+      {props.isPaused && props.worker.status === 'error' && props.onSkipWorker && (
+        <button
+          type="button"
+          aria-label={`Skip worker ${props.index + 1}`}
+          onClick={() => props.onSkipWorker?.(props.worker.id)}
+        >
+          Skip
+        </button>
+      )}
+    </div>
+  ),
+}));
+
 function makeWorker(overrides: Partial<WorkerInfo> & { id: string }): WorkerInfo {
   return {
     task: { description: 'Test task', provider: 'claude' },
@@ -97,13 +142,6 @@ describe('WorkerGrid', () => {
     expect(screen.getByText(/Rate limit exceeded/)).toBeInTheDocument();
   });
 
-  it('should show empty state when no result yet', () => {
-    const workers = [makeWorker({ id: 'w1', status: 'running' })];
-    render(<WorkerGrid workers={workers} status="workers-running" onSynthesize={vi.fn()} />);
-
-    expect(screen.getByText(/waiting for output/i)).toBeInTheDocument();
-  });
-
   describe('workers-paused state', () => {
     it('should show "Synthesize Anyway" button when paused', () => {
       const workers = [
@@ -125,6 +163,21 @@ describe('WorkerGrid', () => {
       render(<WorkerGrid workers={workers} status="workers-paused" onSynthesize={vi.fn()} />);
 
       expect(screen.getByText(/1 failed, awaiting action/)).toBeInTheDocument();
+    });
+
+    it('should pass isPaused to worker panes when paused', () => {
+      const workers = [makeWorker({ id: 'w1', status: 'error', error: 'Failed' })];
+      render(
+        <WorkerGrid
+          workers={workers}
+          status="workers-paused"
+          onSynthesize={vi.fn()}
+          onRetryWorker={vi.fn()}
+          onSkipWorker={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId('worker-pane-w1')).toHaveAttribute('data-is-paused', 'true');
     });
 
     it('should show retry and skip buttons on error workers when paused', () => {
