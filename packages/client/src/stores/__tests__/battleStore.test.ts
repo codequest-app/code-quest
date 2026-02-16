@@ -18,6 +18,7 @@ describe('battleStore', () => {
       battles: new Map(),
       prompts: new Map(),
       player: { level: 1, totalExp: 0, totalGold: 0 },
+      activeBattleId: undefined,
     });
   });
 
@@ -163,6 +164,187 @@ describe('battleStore', () => {
       const battle = useBattleStore.getState().getBattle('s1');
       expect(battle?.playerHp).toBe(85);
       expect(battle?.log.some((l) => l.type === 'error')).toBe(true);
+    });
+  });
+
+  describe('pause mechanics', () => {
+    beforeEach(() => {
+      useBattleStore.getState().startBattle('s1', makeEnemy());
+    });
+
+    it('processes stasis_enter event', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_enter',
+        data: { reason: 'plan_mode' },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(true);
+      expect(battle?.pauseReason).toBe('plan_mode');
+      expect(battle?.log.some((l) => l.message.includes('時空凍結'))).toBe(true);
+    });
+
+    it('processes stasis_exit event', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_enter',
+        data: { reason: 'plan_mode' },
+      });
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_exit',
+        data: { reason: 'plan_mode' },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(false);
+      expect(battle?.pauseReason).toBeUndefined();
+      expect(battle?.log.some((l) => l.message.includes('時空解凍'))).toBe(true);
+    });
+
+    it('processes npc_dialogue event', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'npc_dialogue',
+        data: { dialogue: { question: 'Which approach?', options: ['A', 'B'] } },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(true);
+      expect(battle?.pauseReason).toBe('question');
+      expect(battle?.activeDialogue?.question).toBe('Which approach?');
+      expect(battle?.log.some((l) => l.message.includes('質問攻撃'))).toBe(true);
+    });
+
+    it('processes trap_detected event', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'trap_detected',
+        data: { trap: { toolName: 'Bash', description: 'run command', riskLevel: 'high' } },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(true);
+      expect(battle?.pauseReason).toBe('permission');
+      expect(battle?.activeTrap?.toolName).toBe('Bash');
+      expect(battle?.activeTrap?.riskLevel).toBe('high');
+      expect(battle?.log.some((l) => l.message.includes('罠を発見'))).toBe(true);
+    });
+
+    it('clears activeDialogue on stasis_exit', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'npc_dialogue',
+        data: { dialogue: { question: 'Q?', options: ['Y'] } },
+      });
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_exit',
+        data: { reason: 'question' },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(false);
+      expect(battle?.activeDialogue).toBeUndefined();
+    });
+
+    it('clears activeTrap on stasis_exit', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'trap_detected',
+        data: { trap: { toolName: 'Bash', description: 'run', riskLevel: 'high' } },
+      });
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_exit',
+        data: { reason: 'permission' },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(false);
+      expect(battle?.activeTrap).toBeUndefined();
+    });
+
+    it('starts battle with isPaused false', () => {
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(false);
+      expect(battle?.pauseReason).toBeUndefined();
+    });
+
+    it('preserves pause state across multiple events', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'stasis_enter',
+        data: { reason: 'plan_mode' },
+      });
+      // Skill cast while paused should not unpause (that's handled by event-mapper)
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'skill_cast',
+        data: { skill: { name: 'Read', japaneseName: '讀心術', category: 'read', mpCost: 3 } },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.isPaused).toBe(true);
+    });
+
+    it('handles npc_dialogue with empty options', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'npc_dialogue',
+        data: { dialogue: { question: 'Free text?', options: [] } },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.activeDialogue?.options).toEqual([]);
+    });
+
+    it('handles trap with low risk level', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'trap_detected',
+        data: { trap: { toolName: 'Read', description: 'read file', riskLevel: 'low' } },
+      });
+      const battle = useBattleStore.getState().getBattle('s1');
+      expect(battle?.activeTrap?.riskLevel).toBe('low');
+    });
+  });
+
+  describe('concurrent battles', () => {
+    it('allows up to 3 concurrent active battles', () => {
+      const store = useBattleStore.getState();
+      store.startBattle('s1', makeEnemy());
+      store.startBattle('s2', makeEnemy({ name: 'Golem' }));
+      useBattleStore.getState().startBattle('s3', makeEnemy({ name: 'Dragon' }));
+
+      expect(useBattleStore.getState().getBattle('s1')).toBeDefined();
+      expect(useBattleStore.getState().getBattle('s2')).toBeDefined();
+      expect(useBattleStore.getState().getBattle('s3')).toBeDefined();
+    });
+
+    it('rejects 4th concurrent active battle', () => {
+      const store = useBattleStore.getState();
+      store.startBattle('s1', makeEnemy());
+      useBattleStore.getState().startBattle('s2', makeEnemy());
+      useBattleStore.getState().startBattle('s3', makeEnemy());
+      useBattleStore.getState().startBattle('s4', makeEnemy());
+
+      expect(useBattleStore.getState().getBattle('s4')).toBeUndefined();
+    });
+
+    it('allows new battle after one completes', () => {
+      const store = useBattleStore.getState();
+      store.startBattle('s1', makeEnemy());
+      useBattleStore.getState().startBattle('s2', makeEnemy());
+      useBattleStore.getState().startBattle('s3', makeEnemy());
+      useBattleStore.getState().endBattle('s1', 'victory');
+      useBattleStore.getState().startBattle('s4', makeEnemy());
+
+      expect(useBattleStore.getState().getBattle('s4')).toBeDefined();
+    });
+
+    it('sets activeBattleId on battle start', () => {
+      useBattleStore.getState().startBattle('s1', makeEnemy());
+      expect(useBattleStore.getState().activeBattleId).toBe('s1');
+    });
+
+    it('switches active battle', () => {
+      useBattleStore.getState().startBattle('s1', makeEnemy());
+      useBattleStore.getState().startBattle('s2', makeEnemy());
+      expect(useBattleStore.getState().activeBattleId).toBe('s2');
+
+      useBattleStore.getState().switchBattle('s1');
+      expect(useBattleStore.getState().activeBattleId).toBe('s1');
+    });
+
+    it('getActiveBattles returns only active battles', () => {
+      useBattleStore.getState().startBattle('s1', makeEnemy());
+      useBattleStore.getState().startBattle('s2', makeEnemy());
+      useBattleStore.getState().endBattle('s1', 'victory');
+
+      const active = useBattleStore.getState().getActiveBattles();
+      expect(active).toHaveLength(1);
+      expect(active[0].sessionId).toBe('s2');
     });
   });
 

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatStreamEvent } from '../../types.ts';
+import type { ChatContext } from '../event-mapper.ts';
 import { mapChatEvent } from '../event-mapper.ts';
-import type { BattleState, Enemy } from '../types.ts';
+import type { ActiveTrap, BattleState, Enemy } from '../types.ts';
 
 function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
   const enemy: Enemy = {
@@ -24,6 +25,7 @@ function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
     log: [],
     goldEarned: 0,
     expEarned: 0,
+    isPaused: false,
     ...overrides,
   };
 }
@@ -105,5 +107,156 @@ describe('mapChatEvent', () => {
     };
     const events = mapChatEvent(event, makeBattleState(), 'fix the login bug');
     expect(events.some((e) => e.type === 'battle_start')).toBe(true);
+  });
+
+  describe('stasis events (thinking / plan mode)', () => {
+    it('maps long thinking to stasis_enter', () => {
+      const event: ChatStreamEvent = {
+        type: 'thinking',
+        data: { content: 'x'.repeat(200) },
+      };
+      const events = mapChatEvent(event, makeBattleState());
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('stasis_enter');
+      expect(events[0].data.reason).toBe('plan_mode');
+    });
+
+    it('ignores short thinking content', () => {
+      const event: ChatStreamEvent = {
+        type: 'thinking',
+        data: { content: 'brief thought' },
+      };
+      const events = mapChatEvent(event, makeBattleState());
+      expect(events).toHaveLength(0);
+    });
+
+    it('emits stasis_exit on tool_use when paused for plan_mode', () => {
+      const event: ChatStreamEvent = {
+        type: 'tool_use',
+        data: { id: '1', name: 'Read', input: {} },
+      };
+      const state = makeBattleState({ isPaused: true, pauseReason: 'plan_mode' });
+      const events = mapChatEvent(event, state);
+      expect(events[0].type).toBe('stasis_exit');
+      expect(events[0].data.reason).toBe('plan_mode');
+    });
+
+    it('does not emit stasis_exit on tool_use when not paused', () => {
+      const event: ChatStreamEvent = {
+        type: 'tool_use',
+        data: { id: '1', name: 'Read', input: {} },
+      };
+      const events = mapChatEvent(event, makeBattleState());
+      expect(events.every((e) => e.type !== 'stasis_exit')).toBe(true);
+    });
+
+    it('includes thinkingLength in stasis_enter data', () => {
+      const event: ChatStreamEvent = {
+        type: 'thinking',
+        data: { content: 'x'.repeat(500) },
+      };
+      const events = mapChatEvent(event, makeBattleState());
+      expect(events[0].data.thinkingLength).toBe(500);
+    });
+  });
+
+  describe('npc_dialogue events (pending question)', () => {
+    it('maps result with pendingQuestion context to npc_dialogue', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingQuestion: { question: 'Which approach?', options: ['A', 'B'] },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('npc_dialogue');
+      expect(events[0].data.dialogue).toEqual({
+        question: 'Which approach?',
+        options: ['A', 'B'],
+      });
+    });
+
+    it('does not emit victory when pendingQuestion is present', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingQuestion: { question: 'Q?', options: ['Y', 'N'] },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      expect(events.every((e) => e.type !== 'victory')).toBe(true);
+    });
+  });
+
+  describe('trap_detected events (pending permission)', () => {
+    it('maps result with pendingPermission to trap_detected', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingPermission: { toolName: 'Bash', description: 'run command' },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('trap_detected');
+      const trap = events[0].data.trap as ActiveTrap;
+      expect(trap.toolName).toBe('Bash');
+      expect(trap.riskLevel).toBe('high');
+    });
+
+    it('classifies Read tool as low risk', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingPermission: { toolName: 'Read', description: 'read file' },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      const trap = events[0].data.trap as ActiveTrap;
+      expect(trap.riskLevel).toBe('low');
+    });
+
+    it('classifies Edit tool as medium risk', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingPermission: { toolName: 'Edit', description: 'edit file' },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      const trap = events[0].data.trap as ActiveTrap;
+      expect(trap.riskLevel).toBe('medium');
+    });
+
+    it('does not emit victory when pendingPermission is present', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingPermission: { toolName: 'Bash', description: 'run' },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      expect(events.every((e) => e.type !== 'victory')).toBe(true);
+    });
+
+    it('prefers pendingQuestion over pendingPermission when both present', () => {
+      const event: ChatStreamEvent = {
+        type: 'result',
+        data: { stats: {} },
+      };
+      const context: ChatContext = {
+        pendingQuestion: { question: 'Q?', options: ['Y'] },
+        pendingPermission: { toolName: 'Bash', description: 'run' },
+      };
+      const events = mapChatEvent(event, makeBattleState(), context);
+      expect(events[0].type).toBe('npc_dialogue');
+    });
   });
 });

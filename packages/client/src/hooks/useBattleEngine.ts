@@ -1,4 +1,4 @@
-import type { ChatStreamEvent } from '@code-quest/shared';
+import type { ChatContext, ChatStreamEvent } from '@code-quest/shared';
 import { generateEnemy, mapChatEvent } from '@code-quest/shared';
 import { useEffect, useRef } from 'react';
 import { useBattleStore } from '../stores/battleStore';
@@ -8,6 +8,9 @@ interface SessionTracking {
   lastMessageCount: number;
   lastToolUseCount: number;
   hadError: boolean;
+  wasThinking: boolean;
+  hadPendingQuestion: boolean;
+  hadPendingPermission: boolean;
 }
 
 /**
@@ -27,6 +30,9 @@ export function useBattleEngine(): void {
           lastMessageCount: 0,
           lastToolUseCount: 0,
           hadError: false,
+          wasThinking: false,
+          hadPendingQuestion: false,
+          hadPendingPermission: false,
         };
 
         const battleStore = useBattleStore.getState();
@@ -47,6 +53,9 @@ export function useBattleEngine(): void {
           });
           tracking.lastToolUseCount = 0;
           tracking.hadError = false;
+          tracking.wasThinking = false;
+          tracking.hadPendingQuestion = false;
+          tracking.hadPendingPermission = false;
         }
 
         const battle = useBattleStore.getState().getBattle(sessionId);
@@ -55,11 +64,101 @@ export function useBattleEngine(): void {
           continue;
         }
 
-        // Detect new tool_use events in the latest assistant message
+        // Detect thinking state → stasis
         const lastMsg = session.messages[session.messages.length - 1];
+        if (lastMsg?.role === 'assistant' && lastMsg.thinking) {
+          if (!tracking.wasThinking) {
+            tracking.wasThinking = true;
+            const thinkingEvent: ChatStreamEvent = {
+              type: 'thinking',
+              data: { content: lastMsg.thinking },
+            };
+            const currentBattle = useBattleStore.getState().getBattle(sessionId);
+            if (currentBattle && currentBattle.phase === 'active') {
+              const battleEvents = mapChatEvent(thinkingEvent, currentBattle);
+              for (const be of battleEvents) {
+                useBattleStore.getState().processBattleEvent(sessionId, be);
+              }
+            }
+          }
+        }
+
+        // Detect pending question → npc_dialogue
+        if (session.pendingQuestion && !tracking.hadPendingQuestion) {
+          tracking.hadPendingQuestion = true;
+          const firstQ = session.pendingQuestion.questions[0];
+          if (firstQ) {
+            const context: ChatContext = {
+              pendingQuestion: {
+                question: firstQ.question,
+                options: firstQ.options.map((o) => o.label),
+              },
+            };
+            const resultEvent: ChatStreamEvent = { type: 'result', data: { stats: {} } };
+            const currentBattle = useBattleStore.getState().getBattle(sessionId);
+            if (currentBattle && currentBattle.phase === 'active') {
+              const battleEvents = mapChatEvent(resultEvent, currentBattle, context);
+              for (const be of battleEvents) {
+                useBattleStore.getState().processBattleEvent(sessionId, be);
+              }
+            }
+          }
+        }
+
+        // Detect question resolved → stasis_exit
+        if (!session.pendingQuestion && tracking.hadPendingQuestion) {
+          tracking.hadPendingQuestion = false;
+          const currentBattle = useBattleStore.getState().getBattle(sessionId);
+          if (currentBattle && currentBattle.isPaused && currentBattle.pauseReason === 'question') {
+            useBattleStore.getState().processBattleEvent(sessionId, {
+              type: 'stasis_exit',
+              data: { reason: 'question' },
+            });
+          }
+        }
+
+        // Detect pending permission → trap_detected
+        if (session.pendingPermission && !tracking.hadPendingPermission) {
+          tracking.hadPendingPermission = true;
+          const context: ChatContext = {
+            pendingPermission: {
+              toolName: session.pendingPermission.toolName,
+              description: session.pendingPermission.description,
+            },
+          };
+          const resultEvent: ChatStreamEvent = { type: 'result', data: { stats: {} } };
+          const currentBattle = useBattleStore.getState().getBattle(sessionId);
+          if (currentBattle && currentBattle.phase === 'active') {
+            const battleEvents = mapChatEvent(resultEvent, currentBattle, context);
+            for (const be of battleEvents) {
+              useBattleStore.getState().processBattleEvent(sessionId, be);
+            }
+          }
+        }
+
+        // Detect permission resolved → stasis_exit
+        if (!session.pendingPermission && tracking.hadPendingPermission) {
+          tracking.hadPendingPermission = false;
+          const currentBattle = useBattleStore.getState().getBattle(sessionId);
+          if (
+            currentBattle &&
+            currentBattle.isPaused &&
+            currentBattle.pauseReason === 'permission'
+          ) {
+            useBattleStore.getState().processBattleEvent(sessionId, {
+              type: 'stasis_exit',
+              data: { reason: 'permission' },
+            });
+          }
+        }
+
+        // Detect new tool_use events in the latest assistant message
         if (lastMsg?.role === 'assistant' && lastMsg.toolUse) {
           const currentToolCount = lastMsg.toolUse.length;
           if (currentToolCount > tracking.lastToolUseCount) {
+            // Reset thinking tracking when tool use starts
+            tracking.wasThinking = false;
+
             for (let i = tracking.lastToolUseCount; i < currentToolCount; i++) {
               const tool = lastMsg.toolUse[i];
               const event: ChatStreamEvent = {
@@ -81,7 +180,7 @@ export function useBattleEngine(): void {
         // Detect processing complete → victory or error counter
         if (!session.isProcessing && prevSession?.isProcessing) {
           const currentBattle = useBattleStore.getState().getBattle(sessionId);
-          if (currentBattle && currentBattle.phase === 'active') {
+          if (currentBattle && currentBattle.phase === 'active' && !currentBattle.isPaused) {
             // Check for pending permission (denied tool = error scenario)
             if (session.pendingPermission) {
               const errorEvent: ChatStreamEvent = {

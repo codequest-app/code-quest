@@ -45,6 +45,21 @@ export interface BattleLogEntry {
 
 export type BattlePhase = 'idle' | 'active' | 'victory' | 'defeat';
 
+export type PauseReason = 'plan_mode' | 'question' | 'permission' | 'error';
+
+export type TrapRiskLevel = 'low' | 'medium' | 'high';
+
+export interface ActiveDialogue {
+  question: string;
+  options: string[];
+}
+
+export interface ActiveTrap {
+  toolName: string;
+  description: string;
+  riskLevel: TrapRiskLevel;
+}
+
 export interface BattleState {
   enemy: Enemy;
   phase: BattlePhase;
@@ -58,6 +73,10 @@ export interface BattleState {
   log: BattleLogEntry[];
   goldEarned: number;
   expEarned: number;
+  isPaused: boolean;
+  pauseReason?: PauseReason;
+  activeDialogue?: ActiveDialogue;
+  activeTrap?: ActiveTrap;
 }
 
 export type BattleEventType =
@@ -69,7 +88,11 @@ export type BattleEventType =
   | 'victory'
   | 'gold_earned'
   | 'exp_earned'
-  | 'combo';
+  | 'combo'
+  | 'stasis_enter'
+  | 'stasis_exit'
+  | 'npc_dialogue'
+  | 'trap_detected';
 
 export interface BattleEvent {
   type: BattleEventType;

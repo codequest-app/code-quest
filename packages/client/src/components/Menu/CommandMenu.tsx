@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
+export type BattleMonitorMode = 'background' | 'observe' | 'realtime';
+
 export interface CommandMenuItem {
   id: string;
   label: string;
   icon?: string;
   hasBattle?: boolean;
+  battleHpPercent?: number;
+  battleProgress?: string;
+  isWorktree?: boolean;
+  monitorMode?: BattleMonitorMode;
+  needsAttention?: boolean;
 }
 
 interface CommandMenuProps {
@@ -69,9 +76,24 @@ export function CommandMenu({ items, activeId, onSelect, onClose }: CommandMenuP
           >
             <span className="menu-cursor">{index === selectedIndex ? '▶' : ' '}</span>
             <span className="menu-label">{item.label}</span>
+            {item.isWorktree && <span className="worktree-badge">🟣</span>}
             {item.hasBattle && (
               <span className="battle-indicator" data-testid="battle-indicator">
-                ⚔
+                ⚔{item.battleHpPercent !== undefined && ` ${item.battleHpPercent}%`}
+              </span>
+            )}
+            {item.monitorMode && (
+              <span className="monitor-badge" data-testid={`monitor-${item.id}`}>
+                {item.monitorMode === 'background'
+                  ? '🔇'
+                  : item.monitorMode === 'observe'
+                    ? '👁️'
+                    : '📺'}
+              </span>
+            )}
+            {item.needsAttention && (
+              <span className="attention-badge" data-testid={`attention-${item.id}`}>
+                ❗
               </span>
             )}
           </li>

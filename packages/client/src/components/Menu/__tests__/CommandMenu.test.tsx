@@ -49,4 +49,46 @@ describe('CommandMenu', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('shows battle HP percentage', () => {
+    const itemsWithHp: CommandMenuItem[] = [
+      { id: 's1', label: 'Battle 1', hasBattle: true, battleHpPercent: 75 },
+    ];
+    render(<CommandMenu items={itemsWithHp} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('battle-indicator')).toHaveTextContent('75%');
+  });
+
+  it('shows worktree indicator', () => {
+    const itemsWithWt: CommandMenuItem[] = [{ id: 's1', label: 'Worktree', isWorktree: true }];
+    render(<CommandMenu items={itemsWithWt} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('menu-item-s1')).toHaveTextContent('🟣');
+  });
+
+  it('shows monitor mode badge', () => {
+    const itemsWithMonitor: CommandMenuItem[] = [
+      { id: 's1', label: 'Session', monitorMode: 'observe' },
+    ];
+    render(<CommandMenu items={itemsWithMonitor} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('monitor-s1')).toHaveTextContent('👁️');
+  });
+
+  it('shows attention badge for battles needing attention', () => {
+    const itemsWithAttention: CommandMenuItem[] = [
+      { id: 's1', label: 'Session', needsAttention: true },
+    ];
+    render(<CommandMenu items={itemsWithAttention} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('attention-s1')).toHaveTextContent('❗');
+  });
+
+  it('shows background monitor mode', () => {
+    const itemsBg: CommandMenuItem[] = [{ id: 's1', label: 'Session', monitorMode: 'background' }];
+    render(<CommandMenu items={itemsBg} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('monitor-s1')).toHaveTextContent('🔇');
+  });
+
+  it('shows realtime monitor mode', () => {
+    const itemsRt: CommandMenuItem[] = [{ id: 's1', label: 'Session', monitorMode: 'realtime' }];
+    render(<CommandMenu items={itemsRt} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByTestId('monitor-s1')).toHaveTextContent('📺');
+  });
 });
