@@ -5,7 +5,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
 import { ChatPanel } from '../ChatPanel';
-import { OrchestratorPanel } from '../OrchestratorPanel';
+import { OrchestratorPage } from '../OrchestratorPanel';
 import { Terminal, type TerminalHandle } from '../Terminal';
 
 interface TerminalTabsProps {
@@ -40,6 +40,8 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     synthesize: synthesizeOrchestrator,
     abortOrchestrator,
     killOrchestrator,
+    retryWorker: retryOrchestratorWorker,
+    skipWorker: skipOrchestratorWorker,
   } = useOrchestratorSocket(serverUrl);
   const {
     getSessions,
@@ -386,13 +388,15 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             className="chat-wrapper"
             style={{ width: '100%', height: '100%' }}
           >
-            <OrchestratorPanel
+            <OrchestratorPage
               orchestratorId={activeSession.id}
               onSendCoordinator={sendMessage}
               onAbortCoordinator={abortMessage}
               onDispatch={dispatchOrchestrator}
               onSynthesize={synthesizeOrchestrator}
               onAbort={abortOrchestrator}
+              onRetryWorker={retryOrchestratorWorker}
+              onSkipWorker={skipOrchestratorWorker}
             />
           </div>
         )}

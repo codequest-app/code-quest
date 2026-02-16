@@ -54,6 +54,9 @@
 .phase-header__status--complete {
   color: #4ec9b0;
 }
+.phase-header__status--workers-paused {
+  color: #ce9178;
+}
 .phase-header__status--error {
   color: #f44747;
 }
@@ -262,6 +265,11 @@
   background: #2d2d30;
 }
 
+.btn--small {
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
 .btn--synthesize {
   background: #4d4017;
   color: #dcdcaa;
@@ -325,6 +333,10 @@
 .worker-grid__stats {
   font-size: 12px;
   color: #808080;
+}
+
+.worker-grid__paused-hint {
+  color: #ce9178;
 }
 
 /* ─── Worker Pane ─── */
@@ -395,6 +407,15 @@
   font-size: 11px;
   color: #808080;
   flex-shrink: 0;
+}
+
+.worker-pane__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.worker-pane__status-icon--skipped {
+  color: #ce9178;
 }
 
 /* ─── Stream Output ─── */
@@ -527,6 +548,9 @@
 }
 .worker-summary-card--pending {
   border-left-color: #808080;
+}
+.worker-summary-card--skipped {
+  border-left-color: #ce9178;
 }
 
 .worker-summary-card__header {

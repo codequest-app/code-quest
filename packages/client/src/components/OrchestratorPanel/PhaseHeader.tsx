@@ -27,10 +27,12 @@ const showAbort = new Set<OrchestratorStatus>([
 
 export function PhaseHeader({ status, workers, onAbort }: PhaseHeaderProps) {
   const config = statusConfig[status];
-  const completedCount = workers.filter((w) => w.status === 'complete').length;
+  const doneCount = workers.filter((w) => w.status === 'complete' || w.status === 'skipped').length;
+  const errorCount = workers.filter((w) => w.status === 'error').length;
   const totalCount = workers.length;
-  const showProgress = status === 'workers-running' || status === 'workers-complete';
-  const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const showProgress =
+    status === 'workers-running' || status === 'workers-complete' || status === 'workers-paused';
+  const progressPercent = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
 
   return (
     <div className={`phase-header`} data-testid="phase-header">
@@ -39,7 +41,10 @@ export function PhaseHeader({ status, workers, onAbort }: PhaseHeaderProps) {
         <span>{config.label}</span>
         {showProgress && (
           <span className="phase-header__progress">
-            <span>{`${completedCount}/${totalCount}`}</span>
+            <span>
+              {`${doneCount}/${totalCount}`}
+              {errorCount > 0 && ` (${errorCount} failed)`}
+            </span>
             <div
               className="phase-header__progress-bar"
               role="progressbar"

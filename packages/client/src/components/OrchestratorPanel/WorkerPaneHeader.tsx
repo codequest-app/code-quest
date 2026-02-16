@@ -3,6 +3,9 @@ import type { WorkerInfo } from '@code-quest/shared';
 interface WorkerPaneHeaderProps {
   index: number;
   worker: WorkerInfo;
+  isPaused?: boolean;
+  onRetry?: () => void;
+  onSkip?: () => void;
 }
 
 const statusIcons: Record<WorkerInfo['status'], string> = {
@@ -25,10 +28,17 @@ function formatStats(worker: WorkerInfo): string | null {
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
-export function WorkerPaneHeader({ index, worker }: WorkerPaneHeaderProps) {
+export function WorkerPaneHeader({
+  index,
+  worker,
+  isPaused,
+  onRetry,
+  onSkip,
+}: WorkerPaneHeaderProps) {
   const icon = statusIcons[worker.status];
   const stats = formatStats(worker);
   const providerLabel = worker.task.provider === 'claude' ? 'Claude' : 'Gemini';
+  const showActions = isPaused && worker.status === 'error';
 
   return (
     <div className="worker-pane__header">
@@ -40,7 +50,33 @@ export function WorkerPaneHeader({ index, worker }: WorkerPaneHeaderProps) {
         <span className="worker-pane__provider">{providerLabel}</span>
         <span className="worker-pane__task">{worker.task.description}</span>
       </div>
-      <div className="worker-pane__header-right">{stats && <span>{stats}</span>}</div>
+      <div className="worker-pane__header-right">
+        {stats && <span>{stats}</span>}
+        {showActions && (
+          <div className="worker-pane__actions">
+            {onRetry && (
+              <button
+                type="button"
+                className="btn btn--small btn--primary"
+                onClick={onRetry}
+                aria-label={`Retry worker ${index + 1}`}
+              >
+                Retry
+              </button>
+            )}
+            {onSkip && (
+              <button
+                type="button"
+                className="btn btn--small btn--ghost"
+                onClick={onSkip}
+                aria-label={`Skip worker ${index + 1}`}
+              >
+                Skip
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
