@@ -1,4 +1,4 @@
-import type { DamageResult, SkillInfo } from '@code-quest/shared';
+import type { DamageResult, ModelTier, SkillInfo } from '@code-quest/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useBattleStore } from '../../stores/battleStore';
 import { BattleLog } from './BattleLog';
@@ -10,6 +10,13 @@ import { RPGPermissionModal } from './RPGPermissionModal';
 import { RPGQuestionModal } from './RPGQuestionModal';
 import { SkillCastEffect } from './SkillCastEffect';
 import { StasisOverlay } from './StasisOverlay';
+import { WorktreeIndicator } from './WorktreeIndicator';
+
+const MODEL_ICONS: Record<ModelTier, string> = {
+  haiku: '🌸',
+  sonnet: '🎵',
+  opus: '👑',
+};
 
 interface ActiveEffect {
   id: number;
@@ -114,6 +121,16 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
       className={`battle-overlay ${fading ? 'battle-overlay-fading' : ''}`}
       data-testid="battle-overlay"
     >
+      {battle.modelId && (
+        <div className="model-indicator" data-testid="model-indicator">
+          {MODEL_ICONS[battle.modelId]} {battle.modelId.toUpperCase()}
+        </div>
+      )}
+
+      {battle.worktreePath && (
+        <WorktreeIndicator path={battle.worktreePath} branch={battle.worktreeBranch ?? ''} />
+      )}
+
       <EnemyDisplay enemy={battle.enemy} />
 
       {/* Floating effects */}
@@ -181,6 +198,14 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
 
         .battle-overlay-fading {
           opacity: 0;
+        }
+
+        .model-indicator {
+          text-align: right;
+          font-size: 12px;
+          color: #ce93d8;
+          padding: 0 4px;
+          font-family: 'Courier New', monospace;
         }
 
         .enemy-display {

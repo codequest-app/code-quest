@@ -146,6 +146,52 @@ describe('BattleOverlay', () => {
     expect(screen.getByText('罠を発見！')).toBeInTheDocument();
   });
 
+  it('shows model indicator when modelId is set', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', { modelId: 'opus' });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getByTestId('model-indicator')).toHaveTextContent('👑');
+    expect(screen.getByTestId('model-indicator')).toHaveTextContent('OPUS');
+  });
+
+  it('shows WorktreeIndicator when worktreePath is set', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      worktreePath: '/tmp/wt-1',
+      worktreeBranch: 'feat/task-1',
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getByTestId('worktree-indicator')).toBeInTheDocument();
+    expect(screen.getByText(/feat\/task-1/)).toBeInTheDocument();
+  });
+
+  it('does not show model indicator when modelId is absent', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.queryByTestId('model-indicator')).not.toBeInTheDocument();
+  });
+
   it('does not show modals when battle is not paused', () => {
     useBattleStore.getState().startBattle('s1', {
       name: 'Test',

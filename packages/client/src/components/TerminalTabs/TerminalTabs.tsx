@@ -6,6 +6,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { useBattleStore } from '../../stores/battleStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
+import { BankPanel } from '../Bank/BankPanel';
 import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
 import type { CommandMenuItem } from '../Menu';
@@ -66,6 +67,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const activeSession = getActiveSession();
   const terminalRef = useRef<TerminalHandle>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bankOpen, setBankOpen] = useState(false);
 
   // Counters for tab labels
   const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0 });
@@ -231,6 +233,12 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
         }
       }
 
+      // Ctrl+B: Toggle bank panel
+      if (e.ctrlKey && e.key === 'b') {
+        e.preventDefault();
+        setBankOpen((prev) => !prev);
+      }
+
       // Tab key: toggle command menu (only when not in terminal/input)
       if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         const target = e.target as HTMLElement;
@@ -298,11 +306,18 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
 
   // Build command menu items
   const battles = useBattleStore((s) => s.battles);
-  const menuItems: CommandMenuItem[] = sessions.map((session) => ({
-    id: session.id,
-    label: getLabel(session),
-    hasBattle: battles.has(session.id) && battles.get(session.id)?.phase === 'active',
-  }));
+  const menuItems: CommandMenuItem[] = sessions.map((session) => {
+    const battle = battles.get(session.id);
+    const isActive = battle?.phase === 'active';
+    return {
+      id: session.id,
+      label: getLabel(session),
+      hasBattle: isActive,
+      battleHpPercent:
+        isActive && battle ? Math.round((battle.enemy.hp / battle.enemy.maxHp) * 100) : undefined,
+      needsAttention: battle?.isPaused,
+    };
+  });
 
   return (
     <div className={`terminal-tabs ${className}`} data-testid="terminal-tabs">
@@ -369,12 +384,22 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
           </button>
         </div>
 
-        {/* Connection status */}
-        <div
-          className={`connection-status ${socketState.connected ? 'connected' : 'disconnected'}`}
-          data-testid="connection-status"
-        >
-          {socketState.connected ? 'Connected' : 'Disconnected'}
+        {/* Bank toggle + Connection status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            className="new-tab-button"
+            data-testid="bank-toggle"
+            onClick={() => setBankOpen((prev) => !prev)}
+          >
+            💰 Bank
+          </button>
+          <div
+            className={`connection-status ${socketState.connected ? 'connected' : 'disconnected'}`}
+            data-testid="connection-status"
+          >
+            {socketState.connected ? 'Connected' : 'Disconnected'}
+          </div>
         </div>
       </div>
 
@@ -386,6 +411,23 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
           onSelect={(id) => handleTabClick(id)}
           onClose={() => setMenuOpen(false)}
         />
+      )}
+
+      {/* Bank panel overlay */}
+      {bankOpen && (
+        <div
+          className="bank-overlay"
+          style={{
+            position: 'absolute',
+            top: '40px',
+            right: '8px',
+            zIndex: 30,
+            minWidth: '320px',
+          }}
+          data-testid="bank-overlay"
+        >
+          <BankPanel />
+        </div>
       )}
 
       {/* Error message */}

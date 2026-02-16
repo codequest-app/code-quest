@@ -1,16 +1,24 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useBankStore } from '../../stores/bankStore';
 import { useBattleStore } from '../../stores/battleStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useBattleEngine } from '../useBattleEngine';
 
 describe('useBattleEngine', () => {
   beforeEach(() => {
+    localStorage.clear();
     useChatStore.setState({ chatSessions: new Map() });
     useBattleStore.setState({
       battles: new Map(),
       prompts: new Map(),
       player: { level: 1, totalExp: 0, totalGold: 0 },
+      activeBattleId: undefined,
+    });
+    useBankStore.setState({
+      sessionCosts: new Map(),
+      totalCost: 0,
+      budget: undefined,
     });
   });
 
@@ -365,5 +373,97 @@ describe('useBattleEngine', () => {
     expect(battle?.isPaused).toBe(true);
     expect(battle?.pauseReason).toBe('permission');
     expect(battle?.activeTrap?.toolName).toBe('Bash');
+  });
+
+  it('sets modelId from session provider on battle start', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix the bug');
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    expect(battle?.modelId).toBe('sonnet');
+  });
+
+  it('records cost in bankStore on victory with costUsd', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix bug');
+    });
+
+    // Simulate a text event followed by result with costUsd in stats
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'text',
+        data: { content: 'Done!' },
+      });
+    });
+
+    // Manually inject stats on the assistant message
+    const session = useChatStore.getState().chatSessions.get('s1');
+    if (session) {
+      const msgs = [...session.messages];
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg?.role === 'assistant') {
+        msgs[msgs.length - 1] = { ...lastMsg, stats: { costUsd: 0.05 } };
+        const chatSessions = new Map(useChatStore.getState().chatSessions);
+        chatSessions.set('s1', { ...session, messages: msgs });
+        useChatStore.setState({ chatSessions });
+      }
+    }
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: { costUsd: 0.05 } },
+      });
+    });
+
+    expect(useBankStore.getState().totalCost).toBeGreaterThan(0);
+  });
+
+  it('records cost from token counts when costUsd is absent', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix bug');
+    });
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'text',
+        data: { content: 'Done!' },
+      });
+    });
+
+    // Inject stats with tokens but no costUsd
+    const session = useChatStore.getState().chatSessions.get('s1');
+    if (session) {
+      const msgs = [...session.messages];
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg?.role === 'assistant') {
+        msgs[msgs.length - 1] = {
+          ...lastMsg,
+          stats: { inputTokens: 1000, outputTokens: 500 },
+        };
+        const chatSessions = new Map(useChatStore.getState().chatSessions);
+        chatSessions.set('s1', { ...session, messages: msgs });
+        useChatStore.setState({ chatSessions });
+      }
+    }
+
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: { inputTokens: 1000, outputTokens: 500 } },
+      });
+    });
+
+    expect(useBankStore.getState().totalCost).toBeGreaterThan(0);
   });
 });

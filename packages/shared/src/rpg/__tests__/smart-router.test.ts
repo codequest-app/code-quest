@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeComplexity } from '../enemy-generator.ts';
-import type { ComplexityAnalysis, ModelRecommendation } from '../smart-router.ts';
+import type { ComplexityAnalysis } from '../smart-router.ts';
 import { recommendModel, shouldUseWorktree } from '../smart-router.ts';
 
 describe('SmartRouter', () => {
