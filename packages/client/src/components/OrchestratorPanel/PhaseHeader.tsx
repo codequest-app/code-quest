@@ -11,6 +11,7 @@ const statusConfig: Record<OrchestratorStatus, { icon: string; label: string }> 
   dispatching: { icon: '\u27F3', label: 'Dispatching...' },
   'workers-running': { icon: '\u27F3', label: 'Workers Running' },
   merging: { icon: '\u27F3', label: 'Merging Branches...' },
+  'workers-paused': { icon: '\u23F8', label: 'Paused — Workers Failed' },
   'workers-complete': { icon: '\u2713', label: 'All Workers Complete' },
   synthesizing: { icon: '\u2726', label: 'Synthesizing Results...' },
   complete: { icon: '\u2726', label: 'Complete' },

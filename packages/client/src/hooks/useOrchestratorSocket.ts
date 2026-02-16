@@ -10,6 +10,7 @@ import {
   orchestratorCreateSchema,
   orchestratorDispatchSchema,
   orchestratorKillSchema,
+  orchestratorSkipWorkerSchema,
   orchestratorSynthesizeSchema,
 } from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
@@ -26,6 +27,7 @@ interface UseOrchestratorSocketReturn {
   synthesize: (orchId: string) => void;
   abortOrchestrator: (orchId: string) => void;
   killOrchestrator: (orchId: string) => void;
+  skipWorker: (orchId: string, workerId: string) => void;
 }
 
 export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketReturn {
@@ -188,5 +190,24 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     [emit, removeOrchestrator],
   );
 
-  return { createOrchestrator, dispatch, synthesize, abortOrchestrator, killOrchestrator };
+  const skipWorker = useCallback(
+    (orchId: string, workerId: string) => {
+      const result = safeValidate(orchestratorSkipWorkerSchema, { orchId, workerId });
+      if (!result.success) {
+        console.warn('[orchestrator:skip-worker] validation failed', result.error);
+        return;
+      }
+      emit('orchestrator:skip-worker', orchId, workerId);
+    },
+    [emit],
+  );
+
+  return {
+    createOrchestrator,
+    dispatch,
+    synthesize,
+    abortOrchestrator,
+    killOrchestrator,
+    skipWorker,
+  };
 }

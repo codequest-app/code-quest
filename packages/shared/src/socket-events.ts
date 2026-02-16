@@ -37,6 +37,7 @@ export interface ClientToServerEvents {
   'orchestrator:abort': (orchId: string) => void;
   'orchestrator:kill': (orchId: string) => void;
   'orchestrator:retry-worker': (orchId: string, workerId: string) => void;
+  'orchestrator:skip-worker': (orchId: string, workerId: string) => void;
 }
 
 /**
