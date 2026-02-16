@@ -1,4 +1,5 @@
 import type { WorkerInfo } from '@code-quest/shared';
+import { BattleOverlay } from '../Battle/BattleOverlay.tsx';
 import { StreamOutput } from './StreamOutput.tsx';
 import { WorkerPaneHeader } from './WorkerPaneHeader.tsx';
 
@@ -26,7 +27,10 @@ export function WorkerPane({
         onRetry={onRetryWorker ? () => onRetryWorker(worker.id) : undefined}
         onSkip={onSkipWorker ? () => onSkipWorker(worker.id) : undefined}
       />
-      <StreamOutput text={worker.result} error={worker.error} />
+      <div style={{ position: 'relative', flex: 1 }}>
+        <StreamOutput text={worker.result} error={worker.error} />
+        <BattleOverlay sessionId={worker.id} />
+      </div>
     </div>
   );
 }

@@ -56,6 +56,11 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
     const handleDispatched = (orchId: string, workers: WorkerInfo[]) => {
       setWorkers(orchId, workers);
+      const chat = useChatStore.getState();
+      for (const worker of workers) {
+        chat.initChatSession(worker.id, worker.task.provider);
+        chat.addUserMessage(worker.id, worker.task.description);
+      }
     };
 
     const handleWorkerEvent = (orchId: string, workerId: string, event: ChatStreamEvent) => {
@@ -68,6 +73,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
           result: currentResult + event.data.content,
         });
       }
+      useChatStore.getState().handleChatEvent(workerId, event);
     };
 
     const handleWorkerComplete = (orchId: string, workerId: string, result: WorkerInfo) => {
@@ -187,6 +193,13 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
         return;
       }
       emit('orchestrator:kill', orchId);
+      const orch = useOrchestratorStore.getState().getOrchestrator(orchId);
+      if (orch) {
+        const chat = useChatStore.getState();
+        for (const worker of orch.workers) {
+          chat.removeChatSession(worker.id);
+        }
+      }
       removeOrchestrator(orchId);
     },
     [emit, removeOrchestrator],
