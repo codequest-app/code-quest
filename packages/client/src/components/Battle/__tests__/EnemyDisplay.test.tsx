@@ -18,9 +18,10 @@ describe('EnemyDisplay', () => {
     expect(screen.getByTestId('enemy-level')).toHaveTextContent('Lv.3');
   });
 
-  it('shows HP bar with correct width', () => {
+  it('renders ProgressBar for HP', () => {
     render(<EnemyDisplay enemy={enemy} />);
-    const fill = screen.getByTestId('enemy-hp-fill');
+    const fill = screen.getByTestId('progress-fill-hp');
+    // 200/300 ≈ 66.67%
     expect(fill.style.width).toContain('66');
   });
 

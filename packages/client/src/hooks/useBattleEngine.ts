@@ -4,101 +4,126 @@ import { useEffect, useRef } from 'react';
 import { useBattleStore } from '../stores/battleStore';
 import { useChatStore } from '../stores/chatStore';
 
+interface SessionTracking {
+  lastMessageCount: number;
+  lastToolUseCount: number;
+  hadError: boolean;
+}
+
 /**
- * Subscribes to chatStore events for a session and drives the battleStore via RPG event mapper.
- * Call once per active chat session.
+ * Subscribes to chatStore events for ALL chat sessions and drives battleStore via RPG event mapper.
+ * Call once at the app level — tracks every session automatically.
  */
-export function useBattleEngine(sessionId: string | null): void {
-  const lastMessageCountRef = useRef(0);
-  const lastToolUseCountRef = useRef(0);
+export function useBattleEngine(): void {
+  const trackingRef = useRef(new Map<string, SessionTracking>());
 
   useEffect(() => {
-    if (!sessionId) return;
-
-    // Subscribe to chatStore changes
     const unsubscribe = useChatStore.subscribe((state, prevState) => {
-      const session = state.chatSessions.get(sessionId);
-      const prevSession = prevState.chatSessions.get(sessionId);
-      if (!session || session === prevSession) return;
+      for (const [sessionId, session] of state.chatSessions) {
+        const prevSession = prevState.chatSessions.get(sessionId);
+        if (session === prevSession) continue;
 
-      const battleStore = useBattleStore.getState();
-      const battle = battleStore.getBattle(sessionId);
+        const tracking = trackingRef.current.get(sessionId) ?? {
+          lastMessageCount: 0,
+          lastToolUseCount: 0,
+          hadError: false,
+        };
 
-      // Detect new user message → start battle
-      const userMessages = session.messages.filter((m) => m.role === 'user');
-      if (userMessages.length > lastMessageCountRef.current) {
-        lastMessageCountRef.current = userMessages.length;
-        const latestUserMsg = userMessages[userMessages.length - 1];
-        const prompt = latestUserMsg.content;
-        battleStore.setPrompt(sessionId, prompt);
+        const battleStore = useBattleStore.getState();
 
-        const enemy = generateEnemy(prompt);
-        battleStore.startBattle(sessionId, enemy);
-        battleStore.processBattleEvent(sessionId, {
-          type: 'battle_start',
-          data: { enemy, prompt },
-        });
-        lastToolUseCountRef.current = 0;
-      }
+        // Detect new user message → start battle
+        const userMessages = session.messages.filter((m) => m.role === 'user');
+        if (userMessages.length > tracking.lastMessageCount) {
+          tracking.lastMessageCount = userMessages.length;
+          const latestUserMsg = userMessages[userMessages.length - 1];
+          const prompt = latestUserMsg.content;
+          battleStore.setPrompt(sessionId, prompt);
 
-      if (!battle && !battleStore.getBattle(sessionId)) return;
+          const enemy = generateEnemy(prompt);
+          battleStore.startBattle(sessionId, enemy);
+          battleStore.processBattleEvent(sessionId, {
+            type: 'battle_start',
+            data: { enemy, prompt },
+          });
+          tracking.lastToolUseCount = 0;
+          tracking.hadError = false;
+        }
 
-      // Detect new tool_use events in the latest assistant message
-      const lastMsg = session.messages[session.messages.length - 1];
-      if (lastMsg?.role === 'assistant' && lastMsg.toolUse) {
-        const currentToolCount = lastMsg.toolUse.length;
-        if (currentToolCount > lastToolUseCountRef.current) {
-          // Process each new tool_use
-          for (let i = lastToolUseCountRef.current; i < currentToolCount; i++) {
-            const tool = lastMsg.toolUse[i];
-            const event: ChatStreamEvent = {
-              type: 'tool_use',
-              data: { id: tool.id, name: tool.name, input: tool.input },
-            };
-            const currentBattle = useBattleStore.getState().getBattle(sessionId);
-            if (currentBattle && currentBattle.phase === 'active') {
-              const battleEvents = mapChatEvent(event, currentBattle);
+        const battle = useBattleStore.getState().getBattle(sessionId);
+        if (!battle || battle.phase !== 'active') {
+          trackingRef.current.set(sessionId, tracking);
+          continue;
+        }
+
+        // Detect new tool_use events in the latest assistant message
+        const lastMsg = session.messages[session.messages.length - 1];
+        if (lastMsg?.role === 'assistant' && lastMsg.toolUse) {
+          const currentToolCount = lastMsg.toolUse.length;
+          if (currentToolCount > tracking.lastToolUseCount) {
+            for (let i = tracking.lastToolUseCount; i < currentToolCount; i++) {
+              const tool = lastMsg.toolUse[i];
+              const event: ChatStreamEvent = {
+                type: 'tool_use',
+                data: { id: tool.id, name: tool.name, input: tool.input },
+              };
+              const currentBattle = useBattleStore.getState().getBattle(sessionId);
+              if (currentBattle && currentBattle.phase === 'active') {
+                const battleEvents = mapChatEvent(event, currentBattle);
+                for (const be of battleEvents) {
+                  useBattleStore.getState().processBattleEvent(sessionId, be);
+                }
+              }
+            }
+            tracking.lastToolUseCount = currentToolCount;
+          }
+        }
+
+        // Detect processing complete → victory or error counter
+        if (!session.isProcessing && prevSession?.isProcessing) {
+          const currentBattle = useBattleStore.getState().getBattle(sessionId);
+          if (currentBattle && currentBattle.phase === 'active') {
+            // Check for pending permission (denied tool = error scenario)
+            if (session.pendingPermission) {
+              const errorEvent: ChatStreamEvent = {
+                type: 'error',
+                data: { message: `${session.pendingPermission.toolName} was denied` },
+              };
+              const battleEvents = mapChatEvent(errorEvent, currentBattle);
+              for (const be of battleEvents) {
+                useBattleStore.getState().processBattleEvent(sessionId, be);
+              }
+            } else {
+              // Normal completion → victory
+              const resultEvent: ChatStreamEvent = {
+                type: 'result',
+                data: { stats: {} },
+              };
+              if (lastMsg?.role === 'assistant' && lastMsg.stats) {
+                resultEvent.data.stats = lastMsg.stats;
+              }
+              const battleEvents = mapChatEvent(resultEvent, currentBattle);
               for (const be of battleEvents) {
                 useBattleStore.getState().processBattleEvent(sessionId, be);
               }
             }
+            tracking.lastToolUseCount = 0;
           }
-          lastToolUseCountRef.current = currentToolCount;
         }
+
+        trackingRef.current.set(sessionId, tracking);
       }
 
-      // Detect result → victory
-      if (!session.isProcessing && prevSession?.isProcessing) {
-        const currentBattle = useBattleStore.getState().getBattle(sessionId);
-        if (currentBattle && currentBattle.phase === 'active') {
-          const resultEvent: ChatStreamEvent = {
-            type: 'result',
-            data: { stats: {} },
-          };
-          // Find actual stats from last assistant message
-          if (lastMsg?.role === 'assistant' && lastMsg.stats) {
-            resultEvent.data.stats = lastMsg.stats;
-          }
-          const battleEvents = mapChatEvent(resultEvent, currentBattle);
-          for (const be of battleEvents) {
-            useBattleStore.getState().processBattleEvent(sessionId, be);
-          }
-          lastToolUseCountRef.current = 0;
+      // Clean up tracking for removed sessions
+      for (const sessionId of trackingRef.current.keys()) {
+        if (!state.chatSessions.has(sessionId)) {
+          trackingRef.current.delete(sessionId);
         }
-      }
-
-      // Detect error events
-      const prevMsgCount = prevSession?.messages.length ?? 0;
-      if (session.messages.length > prevMsgCount) {
-        // Check if the chatStore just processed an error (isProcessing went false without result)
-        // Errors are handled via the processing → not processing transition above
       }
     });
 
     return () => {
       unsubscribe();
-      lastMessageCountRef.current = 0;
-      lastToolUseCountRef.current = 0;
+      trackingRef.current.clear();
     };
-  }, [sessionId]);
+  }, []);
 }

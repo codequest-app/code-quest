@@ -40,10 +40,39 @@ interface BattleStore {
   processBattleEvent: (sessionId: string, event: BattleEvent) => void;
 }
 
+const PLAYER_STORAGE_KEY = 'code-quest-player';
+
+function loadPlayerState(): PlayerState {
+  try {
+    const raw = localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed.level === 'number' &&
+        typeof parsed.totalExp === 'number' &&
+        typeof parsed.totalGold === 'number'
+      ) {
+        return parsed as PlayerState;
+      }
+    }
+  } catch {
+    // ignore corrupt data
+  }
+  return { level: 1, totalExp: 0, totalGold: 0 };
+}
+
+function savePlayerState(player: PlayerState): void {
+  try {
+    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(player));
+  } catch {
+    // ignore quota errors
+  }
+}
+
 export const useBattleStore = create<BattleStore>((set, get) => ({
   battles: new Map(),
   prompts: new Map(),
-  player: { level: 1, totalExp: 0, totalGold: 0 },
+  player: loadPlayerState(),
 
   startBattle: (sessionId: string, enemy: Enemy) => {
     set((state) => {
@@ -228,6 +257,10 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       if (event.type === 'gold_earned') {
         const gold = event.data.amount as number;
         player = { ...player, totalGold: player.totalGold + gold };
+      }
+
+      if (player !== state.player) {
+        savePlayerState(player);
       }
 
       return { battles, player };

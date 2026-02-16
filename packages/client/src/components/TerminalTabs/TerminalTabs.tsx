@@ -71,10 +71,8 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0 });
   const tabLabels = useRef(new Map<string, string>());
 
-  // Wire RPG battle engine to active chat session
-  const isChatSession =
-    activeSession?.type === 'claude-chat' || activeSession?.type === 'gemini-chat';
-  useBattleEngine(isChatSession ? activeSessionId : null);
+  // Wire RPG battle engine to all chat sessions
+  useBattleEngine();
 
   // Handle socket events
   useEffect(() => {

@@ -25,4 +25,10 @@ describe('PlayerStatus', () => {
     expect(screen.getByTestId('player-mp')).toHaveTextContent('30/50');
     expect(screen.getByTestId('player-exp')).toHaveTextContent('150');
   });
+
+  it('uses ProgressBar for HP and MP', () => {
+    render(<PlayerStatus battle={battle} />);
+    expect(screen.getByTestId('progress-bar-hp')).toBeDefined();
+    expect(screen.getByTestId('progress-bar-mp')).toBeDefined();
+  });
 });

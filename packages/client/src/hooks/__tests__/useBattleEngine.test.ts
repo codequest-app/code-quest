@@ -16,7 +16,7 @@ describe('useBattleEngine', () => {
 
   it('starts battle when user sends a message', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
-    renderHook(() => useBattleEngine('s1'));
+    renderHook(() => useBattleEngine());
 
     act(() => {
       useChatStore.getState().addUserMessage('s1', 'fix the login bug');
@@ -31,7 +31,7 @@ describe('useBattleEngine', () => {
 
   it('processes tool_use events as skill casts + damage', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
-    renderHook(() => useBattleEngine('s1'));
+    renderHook(() => useBattleEngine());
 
     act(() => {
       useChatStore.getState().addUserMessage('s1', 'fix the login bug');
@@ -54,13 +54,12 @@ describe('useBattleEngine', () => {
 
   it('triggers victory when processing completes', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
-    renderHook(() => useBattleEngine('s1'));
+    renderHook(() => useBattleEngine());
 
     act(() => {
       useChatStore.getState().addUserMessage('s1', 'fix the login bug');
     });
 
-    // Simulate assistant text then result
     act(() => {
       useChatStore.getState().handleChatEvent('s1', {
         type: 'text',
@@ -80,14 +79,9 @@ describe('useBattleEngine', () => {
     expect(battle?.expEarned).toBeGreaterThan(0);
   });
 
-  it('does nothing when sessionId is null', () => {
-    renderHook(() => useBattleEngine(null));
-    expect(useBattleStore.getState().battles.size).toBe(0);
-  });
-
   it('increments combo count on consecutive tool uses', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
-    renderHook(() => useBattleEngine('s1'));
+    renderHook(() => useBattleEngine());
 
     act(() => {
       useChatStore.getState().addUserMessage('s1', 'fix bug');
@@ -112,7 +106,7 @@ describe('useBattleEngine', () => {
 
   it('persists player exp across battles', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
-    renderHook(() => useBattleEngine('s1'));
+    renderHook(() => useBattleEngine());
 
     act(() => {
       useChatStore.getState().addUserMessage('s1', 'fix bug');
@@ -133,5 +127,55 @@ describe('useBattleEngine', () => {
     const player = useBattleStore.getState().player;
     expect(player.totalExp).toBeGreaterThan(0);
     expect(player.totalGold).toBeGreaterThan(0);
+  });
+
+  it('tracks multiple sessions simultaneously', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    useChatStore.getState().initChatSession('s2', 'gemini');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix bug');
+    });
+    act(() => {
+      useChatStore.getState().addUserMessage('s2', 'add feature');
+    });
+
+    expect(useBattleStore.getState().getBattle('s1')).toBeDefined();
+    expect(useBattleStore.getState().getBattle('s2')).toBeDefined();
+    expect(useBattleStore.getState().getBattle('s1')?.enemy.type).toBe('bug-hunt');
+    expect(useBattleStore.getState().getBattle('s2')?.enemy.type).toBe('code-task');
+  });
+
+  it('triggers enemy counter on denied tool permission', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    renderHook(() => useBattleEngine());
+
+    act(() => {
+      useChatStore.getState().addUserMessage('s1', 'fix bug');
+    });
+
+    // Simulate tool_use followed by result with pendingPermission (denied)
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'tool_use',
+        data: { id: 't1', name: 'Bash', input: { command: 'rm -rf /' } },
+      });
+    });
+
+    const hpBefore = useBattleStore.getState().getBattle('s1')?.playerHp;
+
+    // Result with unresolved tool_use → pendingPermission
+    act(() => {
+      useChatStore.getState().handleChatEvent('s1', {
+        type: 'result',
+        data: { stats: {} },
+      });
+    });
+
+    const battle = useBattleStore.getState().getBattle('s1');
+    // Should have enemy counter (playerHp reduced) since Bash was denied
+    expect(battle?.playerHp).toBeLessThan(hpBefore ?? 100);
+    expect(battle?.log.some((l) => l.type === 'error')).toBe(true);
   });
 });

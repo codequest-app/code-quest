@@ -1,5 +1,5 @@
 import type { DamageResult, SkillInfo } from '@code-quest/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useBattleStore } from '../../stores/battleStore';
 import { BattleLog } from './BattleLog';
 import { DamageNumber } from './DamageNumber';
@@ -24,10 +24,26 @@ interface BattleOverlayProps {
 export function BattleOverlay({ sessionId }: BattleOverlayProps) {
   const battle = useBattleStore((s) => s.battles.get(sessionId));
   const [effects, setEffects] = useState<ActiveEffect[]>([]);
+  const [fading, setFading] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   const removeEffect = useCallback((id: number) => {
     setEffects((prev) => prev.filter((e) => e.id !== id));
   }, []);
+
+  // Auto-fade after victory
+  useEffect(() => {
+    if (battle?.phase === 'victory') {
+      const fadeTimer = setTimeout(() => setFading(true), 3000);
+      const hideTimer = setTimeout(() => setHidden(true), 4000);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+    setFading(false);
+    setHidden(false);
+  }, [battle?.phase]);
 
   // Check for new effects based on last log entry
   const lastLog = battle?.log[battle.log.length - 1];
@@ -37,13 +53,11 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
     lastEffectLogRef[1](lastLog.id);
 
     if (lastLog.type === 'damage') {
-      // Parse damage from log message
       const match = lastLog.message.match(/(\d+) のダメージ/);
       if (match) {
         const totalDamage = Number.parseInt(match[1], 10);
         const isCritical = lastLog.message.includes('会心');
         const id = ++effectCounter;
-        // Use queueMicrotask to avoid setState during render
         queueMicrotask(() => {
           setEffects((prev) => [
             ...prev,
@@ -85,7 +99,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
     }
   }
 
-  if (!battle) return null;
+  if (!battle || hidden) return null;
 
   const message =
     battle.phase === 'victory'
@@ -93,7 +107,10 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
       : (lastLog?.message ?? '戦闘開始！');
 
   return (
-    <div className="battle-overlay" data-testid="battle-overlay">
+    <div
+      className={`battle-overlay ${fading ? 'battle-overlay-fading' : ''}`}
+      data-testid="battle-overlay"
+    >
       <EnemyDisplay enemy={battle.enemy} />
 
       {/* Floating effects */}
@@ -134,6 +151,11 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           gap: 12px;
           z-index: 10;
           pointer-events: none;
+          transition: opacity 1s ease-out;
+        }
+
+        .battle-overlay-fading {
+          opacity: 0;
         }
 
         .enemy-display {
@@ -152,22 +174,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           font-size: 18px;
         }
 
-        .enemy-name {
-          font-weight: bold;
-        }
-
-        .enemy-hp-bar {
-          height: 8px;
-          background: #333;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .enemy-hp-fill {
-          height: 100%;
-          background: #e53935;
-          transition: width 0.3s ease-out;
-        }
+        .enemy-name { font-weight: bold; }
 
         .enemy-hp-text {
           font-size: 12px;
@@ -186,11 +193,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           max-height: 200px;
         }
 
-        .battle-log-entry {
-          padding: 2px 0;
-          font-size: 14px;
-        }
-
+        .battle-log-entry { padding: 2px 0; font-size: 14px; }
         .log-skill { color: #64b5f6; }
         .log-damage { color: #ef5350; }
         .log-heal { color: #66bb6a; }
@@ -214,27 +217,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           flex: 1;
         }
 
-        .stat-label {
-          font-weight: bold;
-          font-size: 14px;
-          min-width: 30px;
-        }
-
-        .stat-bar {
-          flex: 1;
-          height: 8px;
-          background: #333;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .stat-fill {
-          height: 100%;
-          transition: width 0.3s ease-out;
-        }
-
-        .hp-fill { background: #66bb6a; }
-        .mp-fill { background: #42a5f5; }
+        .stat-label { font-weight: bold; font-size: 14px; min-width: 30px; }
 
         .stat-value {
           font-size: 12px;
@@ -254,11 +237,10 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           align-items: center;
         }
 
-        .message-box-content {
-          white-space: pre-wrap;
-        }
+        .message-box-content { white-space: pre-wrap; }
 
         .progress-bar {
+          flex: 1;
           height: 8px;
           background: #333;
           border-radius: 4px;
