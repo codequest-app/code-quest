@@ -60,6 +60,10 @@ export const orchestratorSynthesizeSchema = z.object({
 });
 export const orchestratorAbortSchema = z.object({ orchId: sessionIdSchema });
 export const orchestratorKillSchema = z.object({ orchId: sessionIdSchema });
+export const orchestratorRetryWorkerSchema = z.object({
+  orchId: sessionIdSchema,
+  workerId: z.string().min(1),
+});
 
 // Shared domain schemas
 export const chatStatsSchema = z.object({

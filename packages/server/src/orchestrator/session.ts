@@ -31,6 +31,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private waves: Wave[] = [];
   private currentWave = 0;
   private workerWaveMap: Map<string, number> = new Map();
+  private autoCommitted = false;
 
   private statusChangeHandlers: Array<(status: OrchestratorStatus) => void> = [];
   private workerEventHandlers: Array<(workerId: string, event: ChatStreamEvent) => void> = [];
@@ -55,7 +56,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.coordinatorId = this.coordinatorSession.id;
   }
 
-  dispatch(tasks: SubTask[]): void {
+  async dispatch(tasks: SubTask[]): Promise<void> {
     if (this._status !== 'idle') {
       this.emitError('Cannot dispatch: orchestrator is not idle');
       return;
@@ -75,6 +76,11 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
         result: '',
         wave: waveIndex,
       });
+    }
+
+    // Auto-commit so worktrees include untracked/uncommitted files
+    if (this.gitService.isWorktreeSupported()) {
+      this.autoCommitted = await this.gitService.autoCommitAll();
     }
 
     this.setStatus('workers-running');
@@ -136,7 +142,75 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     if (this.gitService.isWorktreeSupported()) {
       const ids = this._workers.map((_, i) => `${this.id}-${i}`);
       this.gitService.cleanupAll(ids).catch(() => {});
+
+      if (this.autoCommitted) {
+        this.gitService.resetLastCommit().catch(() => {});
+        this.autoCommitted = false;
+      }
     }
+  }
+
+  retryWorker(workerId: string): void {
+    const worker = this._workers.find((w) => w.id === workerId);
+    if (!worker || worker.status !== 'error') {
+      this.emitError(`Cannot retry worker "${workerId}": not found or not in error state`);
+      return;
+    }
+
+    // Kill old session if it exists
+    const oldSession = this.workerSessions.get(workerId);
+    if (oldSession) {
+      oldSession.kill();
+      this.chatManager.removeSession(workerId);
+      this.workerSessions.delete(workerId);
+    }
+
+    // Reset worker state
+    worker.status = 'pending';
+    worker.error = undefined;
+    worker.result = '';
+    worker.stats = undefined;
+
+    // Find the task index for worktree ID
+    const taskIndex = this._workers.indexOf(worker);
+
+    // Create worktree if needed
+    const setupAndStart = async () => {
+      let cwd: string | undefined;
+
+      if (this.gitService.isWorktreeSupported()) {
+        // Ensure auto-commit exists for worktree
+        if (!this.autoCommitted) {
+          this.autoCommitted = await this.gitService.autoCommitAll();
+        }
+
+        try {
+          const worktreeId = `${this.id}-${taskIndex}`;
+          // Remove old worktree first
+          await this.gitService.removeWorktree(worktreeId);
+          cwd = await this.gitService.createWorktree(worktreeId);
+        } catch {
+          // Fallback to shared cwd
+        }
+      }
+
+      const session = this.chatManager.createSession({ provider: worker.task.provider, cwd });
+      worker.id = session.id;
+      this.workerSessions.set(session.id, session);
+      this.workerWaveMap.set(session.id, worker.wave ?? 0);
+
+      // If status was workers-complete, go back to workers-running
+      if (this._status === 'workers-complete') {
+        this.setStatus('workers-running');
+      }
+
+      this.startWorker(worker);
+    };
+
+    setupAndStart().catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      this.emitError(`Failed to retry worker: ${message}`);
+    });
   }
 
   getWorkerResults(): WorkerInfo[] {
@@ -279,6 +353,11 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       this.setStatus('workers-running');
       this.startWave(this.currentWave + 1);
     } else {
+      // Reset auto-commit after all waves complete
+      if (this.autoCommitted) {
+        await this.gitService.resetLastCommit();
+        this.autoCommitted = false;
+      }
       this.setStatus('workers-complete');
     }
   }

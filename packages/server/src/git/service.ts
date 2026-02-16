@@ -101,4 +101,28 @@ export class GitServiceImpl implements GitService {
       await this.removeWorktree(id);
     }
   }
+
+  async autoCommitAll(): Promise<boolean> {
+    if (!this.projectRoot) {
+      throw new Error('GitService not initialized or git not available');
+    }
+
+    await execFile('git', ['add', '-A'], { cwd: this.projectRoot });
+
+    try {
+      await execFile('git', ['commit', '-m', 'wip: orchestrator auto-commit', '--no-verify'], {
+        cwd: this.projectRoot,
+      });
+      return true;
+    } catch {
+      // Nothing to commit
+      return false;
+    }
+  }
+
+  async resetLastCommit(): Promise<void> {
+    if (!this.projectRoot) return;
+
+    await execFile('git', ['reset', 'HEAD~1'], { cwd: this.projectRoot });
+  }
 }
