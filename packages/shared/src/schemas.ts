@@ -60,3 +60,56 @@ export const orchestratorSynthesizeSchema = z.object({
 });
 export const orchestratorAbortSchema = z.object({ orchId: sessionIdSchema });
 export const orchestratorKillSchema = z.object({ orchId: sessionIdSchema });
+
+// Shared domain schemas
+export const chatStatsSchema = z.object({
+  costUsd: z.number().optional(),
+  durationMs: z.number().optional(),
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+});
+
+export const chatStreamEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('init'), data: z.object({ sessionId: z.string() }) }),
+  z.object({ type: z.literal('text'), data: z.object({ content: z.string() }) }),
+  z.object({ type: z.literal('thinking'), data: z.object({ content: z.string() }) }),
+  z.object({
+    type: z.literal('tool_use'),
+    data: z.object({ id: z.string(), name: z.string(), input: z.unknown() }),
+  }),
+  z.object({
+    type: z.literal('tool_result'),
+    data: z.object({ name: z.string(), output: z.string() }),
+  }),
+  z.object({ type: z.literal('result'), data: z.object({ stats: chatStatsSchema }) }),
+  z.object({ type: z.literal('error'), data: z.object({ message: z.string() }) }),
+  z.object({
+    type: z.literal('permission_request'),
+    data: z.object({ toolName: z.string(), description: z.string() }),
+  }),
+]);
+
+export const orchestratorStatusSchema = z.enum([
+  'idle',
+  'dispatching',
+  'workers-running',
+  'merging',
+  'workers-complete',
+  'synthesizing',
+  'complete',
+  'error',
+]);
+
+export const workerInfoSchema = z.object({
+  id: z.string(),
+  task: subTaskSchema,
+  status: z.enum(['pending', 'running', 'complete', 'error']),
+  result: z.string().optional(),
+  stats: chatStatsSchema.optional(),
+  error: z.string().optional(),
+  wave: z.number().optional(),
+});
+
+export const systemCapabilitiesSchema = z.object({
+  worktree: z.boolean(),
+});
