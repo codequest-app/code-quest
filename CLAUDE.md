@@ -2,9 +2,10 @@
 
 ## Project Overview
 
-Code Quest — RPG-style Claude Code experience. pnpm monorepo with two packages:
+Code Quest — RPG-style Claude Code experience. pnpm monorepo with three packages:
 
-- **`packages/server`**: Node.js backend (Express + Socket.io + node-pty), manages terminal sessions, AI chat sessions (Claude/Gemini CLI wrappers), and orchestrator
+- **`packages/cli-adapter`**: Framework-free CLI adapter — stream parsers (Claude/Gemini), chat session logic, and types
+- **`packages/server`**: Node.js backend (Express + Socket.io + node-pty), manages terminal sessions, chat manager (Inversify DI), and orchestrator
 - **`packages/client`**: React frontend (Vite + xterm.js + Zustand)
 
 ## Tech Stack
@@ -27,9 +28,11 @@ pnpm test:e2e              # playwright (requires real CLI)
 pnpm test:e2e:mock         # playwright with MOCK_CLI=true
 
 # Per-package
-pnpm --filter server exec tsc --noEmit   # type check server
-pnpm --filter server exec vitest run     # run server tests once
-pnpm --filter client exec tsc --noEmit   # type check client
+pnpm --filter cli-adapter exec tsc --noEmit  # type check cli-adapter
+pnpm --filter cli-adapter exec vitest run    # run cli-adapter tests once
+pnpm --filter server exec tsc --noEmit       # type check server
+pnpm --filter server exec vitest run         # run server tests once
+pnpm --filter client exec tsc --noEmit       # type check client
 ```
 
 ## Code Style
@@ -60,11 +63,24 @@ container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(newFa
 // No need to re-resolve — lazy resolution picks up the new binding automatically
 ```
 
+## Project Structure (cli-adapter)
+
+```
+packages/cli-adapter/src/
+├── parsers/          # Stream-JSON parsers (Claude, Gemini)
+├── session.ts        # ChatSessionImpl (framework-free)
+├── types.ts          # Pure logic types (StreamParser, ProcessFactory, ChatSession, …)
+├── index.ts          # Public API re-exports
+├── test/             # MockProcess + createMockProcessFactory
+├── __fixtures__/     # JSONL fixtures (claude/, gemini/)
+└── __tests__/        # Parser + session tests
+```
+
 ## Project Structure (server)
 
 ```
 packages/server/src/
-├── chat/           # Chat session, parsers (Claude/Gemini stream-json)
+├── chat/           # ChatManager (Inversify), types re-exported from cli-adapter
 ├── terminal/       # Terminal session (node-pty)
 ├── orchestrator/   # Multi-agent orchestration
 ├── socket/         # Socket.io handler
@@ -72,5 +88,5 @@ packages/server/src/
 ├── container.ts    # DI container setup
 ├── types.symbols.ts # Inversify binding tokens
 ├── server.ts       # Server entry (wires HTTP + Socket.io)
-└── test/           # Test helpers (createTestContainer, MockProcess)
+└── test/           # Test helpers (createTestContainer)
 ```
