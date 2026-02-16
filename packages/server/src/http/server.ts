@@ -8,6 +8,7 @@ import {
   type HealthResponse,
   type TerminalInfoResponse,
   type TerminalListResponse,
+  terminalIdParamSchema,
 } from './schemas.ts';
 import type { HttpServer, HttpServerConfig } from './types.ts';
 
@@ -117,7 +118,15 @@ export class HttpServerImpl implements HttpServer {
 
     // Get terminal info
     this.app.get('/api/terminals/:id', (req: Request, res: Response) => {
-      const { id } = req.params;
+      const parsed = terminalIdParamSchema.safeParse(req.params);
+      if (!parsed.success) {
+        const error: ErrorResponse = {
+          error: 'BadRequest',
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        };
+        return res.status(400).json(error);
+      }
+      const { id } = parsed.data;
       const session = this.config.terminalManager.getSession(id);
 
       if (!session) {
@@ -139,7 +148,15 @@ export class HttpServerImpl implements HttpServer {
 
     // Delete terminal
     this.app.delete('/api/terminals/:id', (req: Request, res: Response) => {
-      const { id } = req.params;
+      const parsed = terminalIdParamSchema.safeParse(req.params);
+      if (!parsed.success) {
+        const error: ErrorResponse = {
+          error: 'BadRequest',
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        };
+        return res.status(400).json(error);
+      }
+      const { id } = parsed.data;
       const removed = this.config.terminalManager.removeSession(id);
 
       if (!removed) {

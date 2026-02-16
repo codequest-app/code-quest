@@ -136,6 +136,19 @@ describe('ClaudeStreamParser', () => {
     expect(events[0].type).toBe('error');
   });
 
+  it('should emit error for result with string cost instead of number', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine('{"type":"result","total_cost_usd":"0.01","duration_ms":1000}');
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('error');
+  });
+
+  it('should silently ignore unknown event types', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine('{"type":"unknown_future_event","data":"something"}');
+    expect(events).toEqual([]);
+  });
+
   it('should parse multiple content blocks from one assistant message', () => {
     const parser = new ClaudeStreamParser();
     const events = parser.parseLine(
@@ -227,6 +240,21 @@ describe('GeminiStreamParser', () => {
     );
     expect(e1).toEqual([{ type: 'text', data: { content: 'Hello ' } }]);
     expect(e2).toEqual([{ type: 'text', data: { content: 'world!' } }]);
+  });
+
+  it('should emit error for tool_use with missing tool_id', () => {
+    const parser = new GeminiStreamParser();
+    const events = parser.parseLine(
+      '{"type":"tool_use","tool_name":"shell","parameters":{"command":"ls"}}',
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('error');
+  });
+
+  it('should silently ignore unknown event types', () => {
+    const parser = new GeminiStreamParser();
+    const events = parser.parseLine('{"type":"unknown_future_event","data":"something"}');
+    expect(events).toEqual([]);
   });
 });
 

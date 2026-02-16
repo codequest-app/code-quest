@@ -4,16 +4,19 @@
  * Starts the terminal management server with HTTP API and WebSocket support
  */
 
+import { z } from 'zod';
 import { createContainer, TYPES } from '../container.ts';
 import type { Server, ServerConfig } from '../types.ts';
 
-const DEFAULT_PORT = 3000;
-const DEFAULT_HOST = 'localhost';
+const envSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(3000),
+  HOST: z.string().min(1).default('localhost'),
+});
 
 async function main() {
-  // Parse command line arguments
-  const port = parseInt(process.env.PORT || String(DEFAULT_PORT), 10);
-  const host = process.env.HOST || DEFAULT_HOST;
+  const env = envSchema.parse({ PORT: process.env.PORT, HOST: process.env.HOST });
+  const port = env.PORT;
+  const host = env.HOST;
 
   // Server configuration
   const config: ServerConfig = {
