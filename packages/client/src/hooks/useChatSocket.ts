@@ -44,16 +44,28 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       handleChatEvent(sessionId, { type: 'error', data: { message } });
     };
 
+    const handleWorktree = (sessionId: string, worktreePath: string, branch: string) => {
+      useChatStore.getState().setWorktreeInfo(sessionId, worktreePath, branch);
+    };
+
+    const handleWorktreeCleared = (sessionId: string) => {
+      useChatStore.getState().clearWorktreeInfo(sessionId);
+    };
+
     socket.on('chat:created', handleCreated);
     socket.on('chat:event', handleEvent);
     socket.on('chat:complete', handleComplete);
     socket.on('chat:error', handleError);
+    socket.on('session:worktree', handleWorktree);
+    socket.on('session:worktree-cleared', handleWorktreeCleared);
 
     return () => {
       socket.off('chat:created', handleCreated);
       socket.off('chat:event', handleEvent);
       socket.off('chat:complete', handleComplete);
       socket.off('chat:error', handleError);
+      socket.off('session:worktree', handleWorktree);
+      socket.off('session:worktree-cleared', handleWorktreeCleared);
     };
   }, [socket, initChatSession, handleChatEvent]);
 

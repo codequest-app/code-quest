@@ -39,6 +39,9 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
   private errorHandlers: Array<(message: string) => void> = [];
   private mergeErrorHandlers: Array<(workerId: string, error: string) => void> = [];
+  private workerWorktreeHandlers: Array<
+    (workerId: string, worktreePath: string, branch: string) => void
+  > = [];
 
   get status(): OrchestratorStatus {
     return this._status;
@@ -278,6 +281,12 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.mergeErrorHandlers.push(handler);
   }
 
+  onWorkerWorktree(
+    handler: (workerId: string, worktreePath: string, branch: string) => void,
+  ): void {
+    this.workerWorktreeHandlers.push(handler);
+  }
+
   private async startWave(waveIndex: number): Promise<void> {
     this.currentWave = waveIndex;
     const wave = this.waves[waveIndex];
@@ -299,6 +308,15 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       worker.id = session.id;
       this.workerSessions.set(session.id, session);
       this.workerWaveMap.set(session.id, waveIndex);
+
+      if (cwd) {
+        const worktreeId = `${this.id}-${taskIndex}`;
+        const branch = `worktree/${worktreeId}`;
+        for (const handler of this.workerWorktreeHandlers) {
+          handler(session.id, cwd, branch);
+        }
+      }
+
       this.startWorker(worker);
     }
   }

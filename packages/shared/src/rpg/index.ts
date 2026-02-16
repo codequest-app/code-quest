@@ -17,5 +17,9 @@ export type {
   ModelRecommendation,
   ModelTier,
 } from './smart-router.ts';
-export { recommendModel, shouldUseWorktree } from './smart-router.ts';
+export {
+  analyzeComplexity as analyzeRouterComplexity,
+  recommendModel,
+  shouldUseWorktree,
+} from './smart-router.ts';
 export * from './types.ts';

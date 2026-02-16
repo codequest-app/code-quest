@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ComplexityAnalysis } from '../smart-router.ts';
-import { recommendModel, shouldUseWorktree } from '../smart-router.ts';
+import { analyzeComplexity, recommendModel, shouldUseWorktree } from '../smart-router.ts';
 
 describe('SmartRouter', () => {
   describe('recommendModel', () => {
@@ -89,6 +89,47 @@ describe('SmartRouter', () => {
         multiStepScore: 2,
       };
       expect(shouldUseWorktree(analysis)).toBe(false);
+    });
+  });
+
+  describe('analyzeComplexity', () => {
+    it('returns zero scores for short simple prompt', () => {
+      const result = analyzeComplexity('hi');
+      expect(result.lengthScore).toBe(0);
+      expect(result.keywordScore).toBe(0);
+      expect(result.multiStepScore).toBe(0);
+      expect(result.total).toBe(0);
+    });
+
+    it('scores length based on character thresholds', () => {
+      const result = analyzeComplexity('x'.repeat(200));
+      expect(result.lengthScore).toBe(3);
+    });
+
+    it('scores high-complexity keywords with +2', () => {
+      const result = analyzeComplexity('refactor the architecture');
+      expect(result.keywordScore).toBeGreaterThanOrEqual(2);
+    });
+
+    it('scores medium-complexity keywords with +1', () => {
+      const result = analyzeComplexity('fix the bug');
+      expect(result.keywordScore).toBe(1);
+    });
+
+    it('detects multi-step indicators', () => {
+      const result = analyzeComplexity('first add tests and then refactor');
+      expect(result.multiStepScore).toBeGreaterThanOrEqual(3);
+    });
+
+    it('caps each score at 5', () => {
+      const result = analyzeComplexity(
+        'refactor architect migrate redesign fix add update ' +
+          'first second step then also and ' +
+          'x'.repeat(800),
+      );
+      expect(result.lengthScore).toBeLessThanOrEqual(5);
+      expect(result.keywordScore).toBeLessThanOrEqual(5);
+      expect(result.multiStepScore).toBeLessThanOrEqual(5);
     });
   });
 });

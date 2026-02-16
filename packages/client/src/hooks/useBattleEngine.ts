@@ -1,14 +1,15 @@
-import type { ChatContext, ChatStreamEvent, ModelTier } from '@code-quest/shared';
-import { calculateCost, generateEnemy, mapChatEvent } from '@code-quest/shared';
+import type { ChatContext, ChatStreamEvent } from '@code-quest/shared';
+import {
+  analyzeRouterComplexity,
+  calculateCost,
+  generateEnemy,
+  mapChatEvent,
+  recommendModel,
+} from '@code-quest/shared';
 import { useEffect, useRef } from 'react';
 import { useBankStore } from '../stores/bankStore';
 import { useBattleStore } from '../stores/battleStore';
 import { useChatStore } from '../stores/chatStore';
-
-function providerToModel(provider: string): ModelTier {
-  if (provider === 'gemini') return 'sonnet';
-  return 'sonnet'; // default Claude model
-}
 
 interface SessionTracking {
   lastMessageCount: number;
@@ -52,9 +53,10 @@ export function useBattleEngine(): void {
           battleStore.setPrompt(sessionId, prompt);
 
           const enemy = generateEnemy(prompt);
-          const modelId = providerToModel(session.provider);
+          const analysis = analyzeRouterComplexity(prompt);
+          const rec = recommendModel(analysis);
           battleStore.startBattle(sessionId, enemy);
-          battleStore.updateBattle(sessionId, { modelId });
+          battleStore.updateBattle(sessionId, { modelId: rec.model });
           battleStore.processBattleEvent(sessionId, {
             type: 'battle_start',
             data: { enemy, prompt },
@@ -70,6 +72,14 @@ export function useBattleEngine(): void {
         if (!battle || battle.phase !== 'active') {
           trackingRef.current.set(sessionId, tracking);
           continue;
+        }
+
+        // Propagate worktree info to battle
+        if (session.worktreePath && battle.worktreePath !== session.worktreePath) {
+          useBattleStore.getState().updateBattle(sessionId, {
+            worktreePath: session.worktreePath,
+            worktreeBranch: session.worktreeBranch,
+          });
         }
 
         // Detect thinking state → stasis

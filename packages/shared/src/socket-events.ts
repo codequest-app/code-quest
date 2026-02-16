@@ -63,4 +63,6 @@ export interface ServerToClientEvents {
   'orchestrator:merge-error': (orchId: string, workerId: string, error: string) => void;
   'orchestrator:error': (orchId: string, message: string) => void;
   'system:capabilities': (capabilities: SystemCapabilities) => void;
+  'session:worktree': (sessionId: string, worktreePath: string, branch: string) => void;
+  'session:worktree-cleared': (sessionId: string) => void;
 }

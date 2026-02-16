@@ -34,6 +34,8 @@ interface ChatSessionState {
   unresolvedToolUses: string[];
   /** Captured AskUserQuestion input during streaming, consumed at result time */
   _capturedAskQuestion?: AskUserQuestionData[];
+  worktreePath?: string;
+  worktreeBranch?: string;
 }
 
 interface ChatStore {
@@ -47,6 +49,8 @@ interface ChatStore {
   allowTool: (sessionId: string, toolName: string) => void;
   clearPendingPermission: (sessionId: string) => void;
   clearPendingQuestion: (sessionId: string) => void;
+  setWorktreeInfo: (sessionId: string, worktreePath: string, worktreeBranch: string) => void;
+  clearWorktreeInfo: (sessionId: string) => void;
 }
 
 let messageCounter = 0;
@@ -297,6 +301,36 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       chatSessions.set(sessionId, {
         ...session,
         pendingQuestion: undefined,
+      });
+      return { chatSessions };
+    });
+  },
+
+  setWorktreeInfo: (sessionId: string, worktreePath: string, worktreeBranch: string) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      chatSessions.set(sessionId, {
+        ...session,
+        worktreePath,
+        worktreeBranch,
+      });
+      return { chatSessions };
+    });
+  },
+
+  clearWorktreeInfo: (sessionId: string) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      chatSessions.set(sessionId, {
+        ...session,
+        worktreePath: undefined,
+        worktreeBranch: undefined,
       });
       return { chatSessions };
     });
