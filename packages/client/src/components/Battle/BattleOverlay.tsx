@@ -1,8 +1,21 @@
+import type { DamageResult, SkillInfo } from '@code-quest/shared';
+import { useCallback, useState } from 'react';
 import { useBattleStore } from '../../stores/battleStore';
 import { BattleLog } from './BattleLog';
+import { DamageNumber } from './DamageNumber';
 import { EnemyDisplay } from './EnemyDisplay';
 import { MessageBox } from './MessageBox';
 import { PlayerStatus } from './PlayerStatus';
+import { SkillCastEffect } from './SkillCastEffect';
+
+interface ActiveEffect {
+  id: number;
+  type: 'damage' | 'skill';
+  damage?: DamageResult;
+  skill?: SkillInfo;
+}
+
+let effectCounter = 0;
 
 interface BattleOverlayProps {
   sessionId: string;
@@ -10,10 +23,70 @@ interface BattleOverlayProps {
 
 export function BattleOverlay({ sessionId }: BattleOverlayProps) {
   const battle = useBattleStore((s) => s.battles.get(sessionId));
+  const [effects, setEffects] = useState<ActiveEffect[]>([]);
+
+  const removeEffect = useCallback((id: number) => {
+    setEffects((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
+  // Check for new effects based on last log entry
+  const lastLog = battle?.log[battle.log.length - 1];
+  const lastEffectLogRef = useState<string | null>(null);
+
+  if (lastLog && lastLog.id !== lastEffectLogRef[0]) {
+    lastEffectLogRef[1](lastLog.id);
+
+    if (lastLog.type === 'damage') {
+      // Parse damage from log message
+      const match = lastLog.message.match(/(\d+) のダメージ/);
+      if (match) {
+        const totalDamage = Number.parseInt(match[1], 10);
+        const isCritical = lastLog.message.includes('会心');
+        const id = ++effectCounter;
+        // Use queueMicrotask to avoid setState during render
+        queueMicrotask(() => {
+          setEffects((prev) => [
+            ...prev,
+            {
+              id,
+              type: 'damage',
+              damage: {
+                baseDamage: totalDamage,
+                affinityMultiplier: 1,
+                totalDamage,
+                isCritical,
+              },
+            },
+          ]);
+        });
+      }
+    }
+
+    if (lastLog.type === 'skill') {
+      const skillMatch = lastLog.message.match(/^(.+?)（(.+?)）/);
+      if (skillMatch) {
+        const id = ++effectCounter;
+        queueMicrotask(() => {
+          setEffects((prev) => [
+            ...prev,
+            {
+              id,
+              type: 'skill',
+              skill: {
+                name: skillMatch[2],
+                japaneseName: skillMatch[1],
+                category: 'execute',
+                mpCost: 0,
+              },
+            },
+          ]);
+        });
+      }
+    }
+  }
 
   if (!battle) return null;
 
-  const lastLog = battle.log[battle.log.length - 1];
   const message =
     battle.phase === 'victory'
       ? `勝利！ ${battle.goldEarned}G と ${battle.expEarned}EXP を獲得！`
@@ -22,6 +95,25 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
   return (
     <div className="battle-overlay" data-testid="battle-overlay">
       <EnemyDisplay enemy={battle.enemy} />
+
+      {/* Floating effects */}
+      {effects.map((effect) =>
+        effect.type === 'damage' && effect.damage ? (
+          <DamageNumber
+            key={effect.id}
+            value={effect.damage.totalDamage}
+            isCritical={effect.damage.isCritical}
+            onComplete={() => removeEffect(effect.id)}
+          />
+        ) : effect.type === 'skill' && effect.skill ? (
+          <SkillCastEffect
+            key={effect.id}
+            skill={effect.skill}
+            onComplete={() => removeEffect(effect.id)}
+          />
+        ) : null,
+      )}
+
       <BattleLog entries={battle.log} />
       <PlayerStatus battle={battle} />
       <MessageBox message={message} />
@@ -164,6 +256,18 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
 
         .message-box-content {
           white-space: pre-wrap;
+        }
+
+        .progress-bar {
+          height: 8px;
+          background: #333;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .progress-bar-fill {
+          height: 100%;
+          border-radius: 4px;
         }
       `}</style>
     </div>

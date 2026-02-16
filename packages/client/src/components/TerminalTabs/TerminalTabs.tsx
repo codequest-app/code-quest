@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useBattleEngine } from '../../hooks/useBattleEngine';
 import { useChatSocket } from '../../hooks/useChatSocket';
 import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
 import { useSocket } from '../../hooks/useSocket';
+import { useBattleStore } from '../../stores/battleStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
 import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
+import type { CommandMenuItem } from '../Menu';
+import { CommandMenu } from '../Menu';
 import { OrchestratorPage } from '../OrchestratorPanel';
 import { Terminal, type TerminalHandle } from '../Terminal';
 
@@ -61,10 +65,16 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const sessions = getSessions();
   const activeSession = getActiveSession();
   const terminalRef = useRef<TerminalHandle>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Counters for tab labels
   const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0 });
   const tabLabels = useRef(new Map<string, string>());
+
+  // Wire RPG battle engine to active chat session
+  const isChatSession =
+    activeSession?.type === 'claude-chat' || activeSession?.type === 'gemini-chat';
+  useBattleEngine(isChatSession ? activeSessionId : null);
 
   // Handle socket events
   useEffect(() => {
@@ -222,6 +232,17 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
           handleCloseSession(activeSessionId);
         }
       }
+
+      // Tab key: toggle command menu (only when not in terminal/input)
+      if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const target = e.target as HTMLElement;
+        const isInput =
+          target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+        if (!isInput) {
+          e.preventDefault();
+          setMenuOpen((prev) => !prev);
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -277,6 +298,14 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     return tabLabels.current.get(session.id) ?? '';
   };
 
+  // Build command menu items
+  const battles = useBattleStore((s) => s.battles);
+  const menuItems: CommandMenuItem[] = sessions.map((session) => ({
+    id: session.id,
+    label: getLabel(session),
+    hasBattle: battles.has(session.id) && battles.get(session.id)?.phase === 'active',
+  }));
+
   return (
     <div className={`terminal-tabs ${className}`} data-testid="terminal-tabs">
       {/* Header with tabs */}
@@ -296,7 +325,10 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
                 }
               }}
             >
-              <span>{getLabel(session)}</span>
+              <span>
+                {battles.has(session.id) && battles.get(session.id)?.phase === 'active' && '⚔ '}
+                {getLabel(session)}
+              </span>
               <button
                 type="button"
                 className="close-button"
@@ -347,6 +379,16 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
           {socketState.connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
+
+      {/* Command Menu overlay */}
+      {menuOpen && (
+        <CommandMenu
+          items={menuItems}
+          activeId={activeSessionId ?? undefined}
+          onSelect={(id) => handleTabClick(id)}
+          onClose={() => setMenuOpen(false)}
+        />
+      )}
 
       {/* Error message */}
       {socketState.error && <div className="error-message">{socketState.error}</div>}
@@ -522,6 +564,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
 
         .chat-wrapper {
           overflow: hidden;
+          position: relative;
         }
       `}</style>
     </div>
