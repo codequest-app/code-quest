@@ -9,6 +9,7 @@ export type {
   CreateTerminalResponse,
   ErrorResponse,
   HealthResponse,
+  TerminalIdParam,
   TerminalInfoResponse,
   TerminalListResponse,
 } from '@code-quest/shared';
@@ -19,6 +20,7 @@ export {
   createTerminalResponseSchema,
   errorResponseSchema,
   healthResponseSchema,
+  terminalIdParamSchema,
   terminalInfoResponseSchema,
   terminalListResponseSchema,
 } from '@code-quest/shared';

@@ -49,3 +49,11 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type CreateTerminalResponse = z.infer<typeof createTerminalResponseSchema>;
 export type TerminalInfoResponse = z.infer<typeof terminalInfoResponseSchema>;
 export type TerminalListResponse = z.infer<typeof terminalListResponseSchema>;
+
+/**
+ * Param schema for terminal ID route params
+ */
+export const terminalIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+export type TerminalIdParam = z.infer<typeof terminalIdParamSchema>;
