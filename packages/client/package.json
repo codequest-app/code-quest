@@ -28,6 +28,7 @@
     "react-error-boundary": "^6.1.0",
     "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^4.6.2",
     "react-syntax-highlighter": "^16.1.0",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.7.4",

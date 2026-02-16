@@ -1,13 +1,28 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, beforeAll } from 'vitest';
 
 // Cleanup after each test
 afterEach(() => {
   cleanup();
 });
 
-// Setup MSW (will be configured after research)
+// Suppress react-resizable-panels uncaught errors in jsdom (updateCursorStyle)
+beforeAll(() => {
+  window.addEventListener('error', (e) => {
+    if (e.message?.includes('push')) {
+      e.preventDefault();
+    }
+  });
+});
+
+// Mock ResizeObserver (needed by react-resizable-panels)
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
