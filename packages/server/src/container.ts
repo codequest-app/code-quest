@@ -2,17 +2,15 @@ import 'reflect-metadata';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { ParserFactory, ProcessFactory } from '@code-quest/cli-adapter';
+import { ChatSessionImpl, createParser } from '@code-quest/cli-adapter';
 import { Container } from 'inversify';
 import { ChatManagerImpl } from './chat/manager.ts';
-import { createParser } from './chat/parsers/index.ts';
-import { ChatSessionImpl } from './chat/session.ts';
 import type {
   ChatCommandsConfig,
   ChatManager,
   ChatSessionFactory,
   ChatSessionOptions,
-  ParserFactory,
-  ProcessFactory,
 } from './chat/types.ts';
 import { GitServiceImpl } from './git/service.ts';
 import type { GitService } from './git/types.ts';
@@ -33,9 +31,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function getChatCommandsConfig(): ChatCommandsConfig {
-  const MOCK_CLI_PATH = path.resolve(__dirname, '../test/mock-cli.ts');
-  const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-claude.sh');
-  const FAKE_GEMINI_SCRIPT = path.resolve(__dirname, '../../../../e2e/fixtures/fake-gemini.sh');
+  const MOCK_CLI_PATH = path.resolve(__dirname, './test/mock-cli.ts');
+  const FAKE_CLAUDE_SCRIPT = path.resolve(__dirname, '../../../e2e/fixtures/fake-claude.sh');
+  const FAKE_GEMINI_SCRIPT = path.resolve(__dirname, '../../../e2e/fixtures/fake-gemini.sh');
 
   if (process.env.MOCK_CLI === 'true') {
     return {
@@ -54,7 +52,14 @@ function getChatCommandsConfig(): ChatCommandsConfig {
   return {
     claude: {
       command: 'claude',
-      baseArgs: ['-p', '--output-format', 'stream-json', '--verbose'],
+      baseArgs: [
+        '-p',
+        '--output-format',
+        'stream-json',
+        '--input-format',
+        'stream-json',
+        '--verbose',
+      ],
     },
     gemini: {
       command: 'gemini',

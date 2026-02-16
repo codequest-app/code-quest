@@ -1,33 +1,38 @@
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ChatStreamEvent } from '@code-quest/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { TYPES } from '../../container.ts';
-import { createTestContainer } from '../../test/create-test-container.ts';
-import type { ChatSession, ChatSessionFactory } from '../types.ts';
+import { describe, expect, it } from 'vitest';
+import { createParser } from '../parsers/index.ts';
+import { ChatSessionImpl } from '../session.ts';
+import type { ChatSession } from '../types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const FAKE_CLAUDE_PATH = path.resolve(__dirname, '../../../../../e2e/fixtures/fake-claude.sh');
+const FAKE_CLAUDE_PATH = path.resolve(__dirname, '../../../../e2e/fixtures/fake-claude.sh');
 
-const FAKE_GEMINI_PATH = path.resolve(__dirname, '../../../../../e2e/fixtures/fake-gemini.sh');
+const FAKE_GEMINI_PATH = path.resolve(__dirname, '../../../../e2e/fixtures/fake-gemini.sh');
 
 describe('ChatSessionImpl (integration)', () => {
-  let chatSessionFactory: ChatSessionFactory;
-
-  beforeEach(() => {
-    const container = createTestContainer();
-    chatSessionFactory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
-  });
+  function createSession(
+    provider: 'claude' | 'gemini',
+    command: string,
+    baseArgs: string[],
+    env?: Record<string, string | undefined>,
+  ): ChatSession {
+    return new ChatSessionImpl({
+      provider,
+      command,
+      baseArgs,
+      processFactory: spawn,
+      parserFactory: createParser,
+      env,
+    });
+  }
 
   it('should spawn fake-claude and parse real fixture output', async () => {
-    const session: ChatSession = chatSessionFactory({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [FAKE_CLAUDE_PATH],
-      // No processFactory — uses real spawn
-    });
+    const session = createSession('claude', 'bash', [FAKE_CLAUDE_PATH]);
 
     const events: ChatStreamEvent[] = [];
     session.onEvent((e) => events.push(e));
@@ -49,11 +54,7 @@ describe('ChatSessionImpl (integration)', () => {
   });
 
   it('should spawn fake-gemini and parse real fixture output', async () => {
-    const session: ChatSession = chatSessionFactory({
-      provider: 'gemini',
-      command: 'bash',
-      baseArgs: [FAKE_GEMINI_PATH],
-    });
+    const session = createSession('gemini', 'bash', [FAKE_GEMINI_PATH]);
 
     const events: ChatStreamEvent[] = [];
     session.onEvent((e) => events.push(e));
@@ -73,14 +74,12 @@ describe('ChatSessionImpl (integration)', () => {
   it('should use FIXTURE env to select different fixtures', async () => {
     const toolUseFixture = path.resolve(
       __dirname,
-      '../../../../../e2e/fixtures/fixtures/claude-tool-use.jsonl',
+      '../../../../e2e/fixtures/fixtures/claude-tool-use.jsonl',
     );
 
-    const session: ChatSession = chatSessionFactory({
-      provider: 'claude',
-      command: 'bash',
-      baseArgs: [FAKE_CLAUDE_PATH],
-      env: { ...process.env, FIXTURE: toolUseFixture },
+    const session = createSession('claude', 'bash', [FAKE_CLAUDE_PATH], {
+      ...process.env,
+      FIXTURE: toolUseFixture,
     });
 
     const events: ChatStreamEvent[] = [];
