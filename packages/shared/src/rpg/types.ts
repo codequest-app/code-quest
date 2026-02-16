@@ -77,6 +77,9 @@ export interface BattleState {
   pauseReason?: PauseReason;
   activeDialogue?: ActiveDialogue;
   activeTrap?: ActiveTrap;
+  modelId?: 'haiku' | 'sonnet' | 'opus';
+  worktreePath?: string;
+  worktreeBranch?: string;
 }
 
 export type BattleEventType =
