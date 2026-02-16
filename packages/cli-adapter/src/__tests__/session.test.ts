@@ -1,25 +1,22 @@
 import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
-import type { Container } from 'inversify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TYPES } from '../../container.ts';
-import { createTestContainer } from '../../test/create-test-container.ts';
-import { createMockProcessFactory, MockProcess } from '../../test/mock-process.ts';
-import type { ChatSession, ChatSessionFactory, ProcessFactory } from '../types.ts';
+import { createParser } from '../parsers/index.ts';
+import { ChatSessionImpl } from '../session.ts';
+import { createMockProcessFactory, MockProcess } from '../test/mock-process.ts';
+import type { ChatSession, ProcessFactory } from '../types.ts';
 
 const tick = () => new Promise<void>((resolve) => process.nextTick(resolve));
 
 describe('ChatSessionImpl', () => {
-  let container: Container;
   let session: ChatSession;
   let mockProcess: MockProcess;
   let mockProcessFactory: ReturnType<typeof createMockProcessFactory>;
-  let chatSessionFactory: ChatSessionFactory;
+  let processFactory: ProcessFactory;
 
   beforeEach(() => {
     mockProcess = new MockProcess();
     mockProcessFactory = createMockProcessFactory(mockProcess);
-    container = createTestContainer({ processFactory: mockProcessFactory });
-    chatSessionFactory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
+    processFactory = mockProcessFactory;
   });
 
   afterEach(() => {
@@ -27,7 +24,13 @@ describe('ChatSessionImpl', () => {
   });
 
   function createSession(provider: 'claude' | 'gemini' = 'claude', baseArgs: string[] = []) {
-    session = chatSessionFactory({ provider, command: 'mock', baseArgs });
+    session = new ChatSessionImpl({
+      provider,
+      command: 'mock',
+      baseArgs,
+      processFactory,
+      parserFactory: createParser,
+    });
     return session;
   }
 
@@ -38,10 +41,12 @@ describe('ChatSessionImpl', () => {
   }
 
   it('should spawn process and write message to stdin as stream-json', () => {
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.sendMessage('hello');
@@ -63,12 +68,14 @@ describe('ChatSessionImpl', () => {
       count++;
       return new MockProcess();
     });
-    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
+    processFactory = factory;
 
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.sendMessage('first');
@@ -139,10 +146,12 @@ describe('ChatSessionImpl', () => {
   });
 
   it('should include --allowedTools in spawn args when added before first message', () => {
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'claude',
       baseArgs: ['-p', '--output-format', 'stream-json'],
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.addAllowedTool('Read');
@@ -281,12 +290,14 @@ describe('ChatSessionImpl', () => {
       count++;
       return new MockProcess();
     });
-    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
+    processFactory = factory;
 
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.sendMessage('first');
@@ -304,12 +315,14 @@ describe('ChatSessionImpl', () => {
       processes.push(proc);
       return proc;
     });
-    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(factory);
+    processFactory = factory;
 
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: ['-p'],
+      processFactory,
+      parserFactory: createParser,
     });
 
     // 1st message — init with session_id, then result, then crash
@@ -331,12 +344,14 @@ describe('ChatSessionImpl', () => {
     const failFactory = () => {
       throw new Error('spawn ENOENT');
     };
-    container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(failFactory);
+    processFactory = failFactory as unknown as ProcessFactory;
 
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: '/nonexistent',
       baseArgs: [],
+      processFactory,
+      parserFactory: createParser,
     });
 
     let errorMessage = '';
@@ -350,10 +365,12 @@ describe('ChatSessionImpl', () => {
 
   it('should have a unique id per session', () => {
     createSession();
-    const session2 = chatSessionFactory({
+    const session2 = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
+      processFactory,
+      parserFactory: createParser,
     });
 
     expect(session.id).toBeTruthy();
@@ -404,10 +421,12 @@ describe('ChatSessionImpl', () => {
     process.env.CLAUDECODE = '1';
 
     try {
-      session = chatSessionFactory({
+      session = new ChatSessionImpl({
         provider: 'claude',
         command: 'mock',
         baseArgs: [],
+        processFactory,
+        parserFactory: createParser,
       });
 
       session.sendMessage('test');
@@ -426,11 +445,13 @@ describe('ChatSessionImpl', () => {
   });
 
   it('should pass cwd and stdio options when spawning', () => {
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
       cwd: '/tmp/test',
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.sendMessage('test');
@@ -441,11 +462,13 @@ describe('ChatSessionImpl', () => {
   });
 
   it('should use injected env when provided', () => {
-    session = chatSessionFactory({
+    session = new ChatSessionImpl({
       provider: 'claude',
       command: 'mock',
       baseArgs: [],
       env: { CUSTOM_VAR: 'test-value', PATH: '/usr/bin' },
+      processFactory,
+      parserFactory: createParser,
     });
 
     session.sendMessage('test');
