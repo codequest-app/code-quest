@@ -13,29 +13,18 @@ import type { StreamParser } from '../types.ts';
  * - result:      {"type":"result","status":"success","stats":{...},"timestamp":"..."}
  */
 export class GeminiStreamParser implements StreamParser {
-  private buffer = '';
   private cliSessionId: string | null = null;
 
-  feed(chunk: string): ChatStreamEvent[] {
-    this.buffer += chunk;
-    const events: ChatStreamEvent[] = [];
-    const lines = this.buffer.split('\n');
+  parseLine(line: string): ChatStreamEvent[] {
+    const trimmed = line.trim();
+    if (!trimmed) return [];
 
-    this.buffer = lines.pop() ?? '';
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      try {
-        const json = JSON.parse(trimmed);
-        events.push(...this.parseJson(json));
-      } catch {
-        events.push({ type: 'error', data: { message: `Failed to parse JSON: ${trimmed}` } });
-      }
+    try {
+      const json = JSON.parse(trimmed);
+      return this.parseJson(json);
+    } catch {
+      return [{ type: 'error', data: { message: `Failed to parse JSON: ${trimmed}` } }];
     }
-
-    return events;
   }
 
   getCliSessionId(): string | null {

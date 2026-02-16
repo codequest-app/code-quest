@@ -9,7 +9,10 @@ describe('GeminiStreamParser (fixture-driven)', () => {
 
   function parseFixture(name: string) {
     const parser = new GeminiStreamParser();
-    return { events: parser.feed(loadFixture(name)), parser };
+    const events = loadFixture(name)
+      .split('\n')
+      .flatMap((line) => parser.parseLine(line));
+    return { events, parser };
   }
 
   it('should parse simple-text fixture', () => {
