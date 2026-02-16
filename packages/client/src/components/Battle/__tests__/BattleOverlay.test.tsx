@@ -1,11 +1,15 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../../../stores/battleStore';
 import { BattleOverlay } from '../BattleOverlay';
 
 describe('BattleOverlay', () => {
   beforeEach(() => {
-    useBattleStore.setState({ battles: new Map() });
+    useBattleStore.setState({
+      battles: new Map(),
+      prompts: new Map(),
+      player: { level: 1, totalExp: 0, totalGold: 0 },
+    });
   });
 
   it('renders nothing when no battle exists', () => {
@@ -46,5 +50,47 @@ describe('BattleOverlay', () => {
 
     render(<BattleOverlay sessionId="s1" />);
     expect(screen.getByTestId('message-box')).toHaveTextContent('勝利');
+  });
+
+  it('renders ProgressBar in enemy display and player status', () => {
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 50,
+      maxHp: 100,
+    });
+
+    render(<BattleOverlay sessionId="s1" />);
+    expect(screen.getAllByTestId('progress-bar-hp').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('progress-bar-mp')).toBeDefined();
+  });
+
+  it('fades out after victory with delay', () => {
+    vi.useFakeTimers();
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 0,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', { phase: 'victory' });
+
+    render(<BattleOverlay sessionId="s1" />);
+    const overlay = screen.getByTestId('battle-overlay');
+    expect(overlay.className).not.toContain('battle-overlay-fading');
+
+    act(() => {
+      vi.advanceTimersByTime(3100);
+    });
+    expect(overlay.className).toContain('battle-overlay-fading');
+
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(screen.queryByTestId('battle-overlay')).toBeNull();
+
+    vi.useRealTimers();
   });
 });

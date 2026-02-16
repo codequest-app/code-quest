@@ -1,29 +1,23 @@
 import type { BattleState } from '@code-quest/shared';
+import { ProgressBar } from './ProgressBar';
 
 interface PlayerStatusProps {
   battle: BattleState;
 }
 
 export function PlayerStatus({ battle }: PlayerStatusProps) {
-  const hpPercent = Math.max(0, (battle.playerHp / battle.playerMaxHp) * 100);
-  const mpPercent = Math.max(0, (battle.playerMp / battle.playerMaxMp) * 100);
-
   return (
     <div className="player-status" data-testid="player-status">
       <div className="player-stat">
         <span className="stat-label">HP</span>
-        <div className="stat-bar hp-bar">
-          <div className="stat-fill hp-fill" style={{ width: `${hpPercent}%` }} />
-        </div>
+        <ProgressBar value={battle.playerHp} max={battle.playerMaxHp} type="hp" />
         <span className="stat-value" data-testid="player-hp">
           {battle.playerHp}/{battle.playerMaxHp}
         </span>
       </div>
       <div className="player-stat">
         <span className="stat-label">MP</span>
-        <div className="stat-bar mp-bar">
-          <div className="stat-fill mp-fill" style={{ width: `${mpPercent}%` }} />
-        </div>
+        <ProgressBar value={battle.playerMp} max={battle.playerMaxMp} type="mp" />
         <span className="stat-value" data-testid="player-mp">
           {battle.playerMp}/{battle.playerMaxMp}
         </span>
