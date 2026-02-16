@@ -10,6 +10,7 @@ import {
   orchestratorCreateSchema,
   orchestratorDispatchSchema,
   orchestratorKillSchema,
+  orchestratorRetryWorkerSchema,
   orchestratorSynthesizeSchema,
   terminalCreateSchema,
   terminalKillSchema,
@@ -303,7 +304,7 @@ export class SocketHandlerImpl implements SocketHandler {
     });
 
     // Handle orchestrator:dispatch
-    socket.on('orchestrator:dispatch', (orchId, tasks) => {
+    socket.on('orchestrator:dispatch', async (orchId, tasks) => {
       const parsed = orchestratorDispatchSchema.safeParse({ orchId, tasks });
       if (!parsed.success) {
         socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
@@ -315,7 +316,7 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
-      orch.dispatch(parsed.data.tasks);
+      await orch.dispatch(parsed.data.tasks);
       socket.emit('orchestrator:dispatched', parsed.data.orchId, orch.workers);
     });
 
@@ -366,6 +367,22 @@ export class SocketHandlerImpl implements SocketHandler {
       }
       orch.kill();
       this.orchestrators.delete(parsed.data.orchId);
+    });
+
+    // Handle orchestrator:retry-worker
+    socket.on('orchestrator:retry-worker', (orchId, workerId) => {
+      const parsed = orchestratorRetryWorkerSchema.safeParse({ orchId, workerId });
+      if (!parsed.success) {
+        socket.emit('orchestrator:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const orch = this.orchestrators.get(parsed.data.orchId);
+      if (!orch) {
+        socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
+        return;
+      }
+      orch.retryWorker(parsed.data.workerId);
     });
 
     // Handle disconnection

@@ -17,10 +17,11 @@ export interface OrchestratorSession {
   readonly status: OrchestratorStatus;
   readonly workers: WorkerInfo[];
 
-  dispatch(tasks: SubTask[]): void;
+  dispatch(tasks: SubTask[]): Promise<void>;
   synthesize(): void;
   abort(): void;
   kill(): void;
+  retryWorker(workerId: string): void;
   getWorkerResults(): WorkerInfo[];
   getAggregatedStats(): ChatStats;
 

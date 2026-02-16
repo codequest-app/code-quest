@@ -14,4 +14,8 @@ export interface GitService {
   removeWorktree(id: string): Promise<void>;
   mergeWorktreeBranch(id: string): Promise<MergeResult>;
   cleanupAll(ids: string[]): Promise<void>;
+  /** git add -A && git commit --no-verify; returns true if a commit was created */
+  autoCommitAll(): Promise<boolean>;
+  /** git reset HEAD~1 (mixed) — undo the auto-commit */
+  resetLastCommit(): Promise<void>;
 }
