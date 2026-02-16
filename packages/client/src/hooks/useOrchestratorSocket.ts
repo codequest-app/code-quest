@@ -10,6 +10,7 @@ import {
   orchestratorCreateSchema,
   orchestratorDispatchSchema,
   orchestratorKillSchema,
+  orchestratorRetryWorkerSchema,
   orchestratorSkipWorkerSchema,
   orchestratorSynthesizeSchema,
 } from '@code-quest/shared';
@@ -27,6 +28,7 @@ interface UseOrchestratorSocketReturn {
   synthesize: (orchId: string) => void;
   abortOrchestrator: (orchId: string) => void;
   killOrchestrator: (orchId: string) => void;
+  retryWorker: (orchId: string, workerId: string) => void;
   skipWorker: (orchId: string, workerId: string) => void;
 }
 
@@ -190,6 +192,18 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     [emit, removeOrchestrator],
   );
 
+  const retryWorker = useCallback(
+    (orchId: string, workerId: string) => {
+      const result = safeValidate(orchestratorRetryWorkerSchema, { orchId, workerId });
+      if (!result.success) {
+        console.warn('[orchestrator:retry-worker] validation failed', result.error);
+        return;
+      }
+      emit('orchestrator:retry-worker', orchId, workerId);
+    },
+    [emit],
+  );
+
   const skipWorker = useCallback(
     (orchId: string, workerId: string) => {
       const result = safeValidate(orchestratorSkipWorkerSchema, { orchId, workerId });
@@ -208,6 +222,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     synthesize,
     abortOrchestrator,
     killOrchestrator,
+    retryWorker,
     skipWorker,
   };
 }
