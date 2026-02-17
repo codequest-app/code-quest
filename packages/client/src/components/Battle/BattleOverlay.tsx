@@ -109,7 +109,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
     }
   }
 
-  if (!battle || hidden) return null;
+  if (!battle) return null;
 
   const message =
     battle.phase === 'victory'
@@ -118,7 +118,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
 
   return (
     <div
-      className={`battle-overlay ${fading ? 'battle-overlay-fading' : ''}`}
+      className={`battle-overlay ${fading ? 'battle-overlay-fading' : ''} ${hidden ? 'battle-overlay-hidden' : ''}`}
       data-testid="battle-overlay"
     >
       {battle.modelId && (
@@ -196,8 +196,18 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           transition: opacity 1s ease-out;
         }
 
+        .battle-overlay .rpg-permission-modal,
+        .battle-overlay .rpg-question-modal,
+        .battle-overlay .stasis-overlay {
+          pointer-events: auto;
+        }
+
         .battle-overlay-fading {
           opacity: 0;
+        }
+
+        .battle-overlay-hidden {
+          display: none;
         }
 
         .model-indicator {

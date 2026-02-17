@@ -48,6 +48,7 @@ const knownGeminiTypes = new Set(['init', 'message', 'tool_use', 'tool_result', 
  */
 export class GeminiStreamParser implements StreamParser {
   private cliSessionId: string | null = null;
+  private toolIdToName: Map<string, string> = new Map();
 
   parseLine(line: string): ChatStreamEvent[] {
     const trimmed = line.trim();
@@ -96,6 +97,7 @@ export class GeminiStreamParser implements StreamParser {
         return this.parseMessage(event);
 
       case 'tool_use':
+        this.toolIdToName.set(event.tool_id, event.tool_name);
         return [
           {
             type: 'tool_use',
@@ -112,7 +114,7 @@ export class GeminiStreamParser implements StreamParser {
           {
             type: 'tool_result',
             data: {
-              name: event.tool_id,
+              name: this.toolIdToName.get(event.tool_id) ?? event.tool_id,
               output: event.output ?? '',
             },
           },

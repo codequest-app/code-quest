@@ -83,9 +83,10 @@ function emitToolResult(id: string, name: string, output: string): void {
   if (isGemini) {
     write({ type: 'tool_result', tool_id: id, output });
   } else {
+    // Use 'name' (not 'tool_use_id') so chatStore can match unresolvedToolUses by tool name
     write({
       type: 'assistant',
-      message: { content: [{ type: 'tool_result', tool_use_id: id, name, content: output }] },
+      message: { content: [{ type: 'tool_result', name, content: output }] },
     });
   }
 }

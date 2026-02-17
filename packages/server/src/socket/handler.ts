@@ -301,6 +301,10 @@ export class SocketHandlerImpl implements SocketHandler {
           socket.emit('session:worktree', workerId, worktreePath, branch);
         });
 
+        orch.onWorkersUpdated((workers) => {
+          socket.emit('orchestrator:workers-updated', orch.id, workers);
+        });
+
         socket.emit('orchestrator:created', orch.id, orch.coordinatorId, parsed.data.provider);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
