@@ -68,12 +68,73 @@ function emitResult(): void {
   }
 }
 
+function emitToolUse(id: string, name: string, input: unknown): void {
+  if (isGemini) {
+    write({ type: 'tool_use', tool_id: id, tool_name: name, parameters: input });
+  } else {
+    write({
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', id, name, input }] },
+    });
+  }
+}
+
+function emitToolResult(id: string, name: string, output: string): void {
+  if (isGemini) {
+    write({ type: 'tool_result', tool_id: id, output });
+  } else {
+    write({
+      type: 'assistant',
+      message: { content: [{ type: 'tool_result', tool_use_id: id, name, content: output }] },
+    });
+  }
+}
+
 function emitPermission(toolName: string, description: string): void {
   write({
     type: 'permission',
     tool_name: toolName,
     description,
   });
+}
+
+/** Simulated tool sequence for battle progression */
+const MOCK_TOOLS = [
+  {
+    name: 'Read',
+    input: { file_path: 'src/auth/tokenValidator.ts' },
+    output: 'export function validateToken(token: string) { ... }',
+  },
+  {
+    name: 'Edit',
+    input: { file_path: 'src/auth/tokenValidator.ts', old_string: '...', new_string: '...' },
+    output: 'File edited successfully',
+  },
+  {
+    name: 'Write',
+    input: { file_path: 'src/auth/types.ts', content: '...' },
+    output: 'File written successfully',
+  },
+  { name: 'Bash', input: { command: 'npm test' }, output: 'All tests passed' },
+];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function emitWithToolUse(text: string): Promise<void> {
+  emitText(`Working on: ${text}`);
+  for (let i = 0; i < MOCK_TOOLS.length; i++) {
+    await sleep(300);
+    const tool = MOCK_TOOLS[i];
+    const toolId = `toolu_mock_${Date.now()}_${i}`;
+    emitToolUse(toolId, tool.name, tool.input);
+    await sleep(200);
+    emitToolResult(toolId, tool.name, tool.output);
+  }
+  await sleep(200);
+  emitText(`Completed: ${text}`);
+  emitResult();
 }
 
 /** Extract user text from stdin JSON, or return raw string as-is */
@@ -108,8 +169,8 @@ const MOCK_TASK_PLAN = `Based on your requirements, here's the task breakdown:
 
 This splits the work into 3 focused tasks. Task 1 runs first, then tasks 2 and 3 run in parallel.`;
 
-const scenarios: Record<string, (msg: string) => void> = {
-  echo: (raw) => {
+const scenarios: Record<string, (msg: string) => void | Promise<void>> = {
+  echo: async (raw) => {
     const text = extractUserText(raw);
     // Detect orchestrator "Plan Tasks" prompt
     if (text.includes('break down the work into sub-tasks')) {
@@ -117,8 +178,7 @@ const scenarios: Record<string, (msg: string) => void> = {
       emitResult();
       return;
     }
-    emitText(`Echo: ${text}`);
-    emitResult();
+    await emitWithToolUse(text);
   },
 
   stream: (msg) => {
@@ -149,6 +209,7 @@ const scenarios: Record<string, (msg: string) => void> = {
 };
 
 let waitingForPermissionResponse = false;
+let pendingWork: Promise<void> = Promise.resolve();
 
 // ── Fixture replay mode ──
 if (scenario === 'fixture') {
@@ -209,16 +270,22 @@ if (scenario === 'fixture') {
 
     const handler = scenarios[scenario];
     if (handler) {
-      handler(trimmed);
+      const result = handler(trimmed);
+      if (result instanceof Promise) {
+        pendingWork = pendingWork.then(() => result);
+      }
       if (scenario === 'permission') {
         waitingForPermissionResponse = true;
       }
     } else {
-      scenarios.echo(trimmed);
+      const result = scenarios.echo(trimmed);
+      if (result instanceof Promise) {
+        pendingWork = pendingWork.then(() => result);
+      }
     }
   });
 
   rl.on('close', () => {
-    process.exit(0);
+    pendingWork.then(() => process.exit(0));
   });
 }
