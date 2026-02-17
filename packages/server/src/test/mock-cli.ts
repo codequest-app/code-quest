@@ -4,6 +4,7 @@
  * Replaces shell-based mocks with a persistent, interactive Node.js process.
  *
  * Behavior controlled by MOCK_SCENARIO env var (default: 'echo').
+ * Provider format controlled by --provider arg (default: 'claude').
  * Reads lines from stdin and writes JSON events to stdout.
  *
  * Scenarios:
@@ -22,29 +23,49 @@ const scenario = process.env.MOCK_SCENARIO || 'echo';
 const sessionId = `mock-session-${Date.now()}`;
 let turnCount = 0;
 
+// Parse --provider flag from argv
+const providerIndex = process.argv.indexOf('--provider');
+const provider = providerIndex !== -1 ? process.argv[providerIndex + 1] : 'claude';
+const isGemini = provider === 'gemini';
+
 function write(obj: unknown): void {
   process.stdout.write(`${JSON.stringify(obj)}\n`);
 }
 
 function emitInit(): void {
-  write({ type: 'system', subtype: 'init', session_id: sessionId });
+  if (isGemini) {
+    write({ type: 'init', session_id: sessionId, model: 'mock-gemini' });
+  } else {
+    write({ type: 'system', subtype: 'init', session_id: sessionId });
+  }
 }
 
 function emitText(content: string): void {
-  write({
-    type: 'assistant',
-    message: { content: [{ type: 'text', text: content }] },
-  });
+  if (isGemini) {
+    write({ type: 'message', role: 'assistant', content });
+  } else {
+    write({
+      type: 'assistant',
+      message: { content: [{ type: 'text', text: content }] },
+    });
+  }
 }
 
 function emitResult(): void {
-  write({
-    type: 'result',
-    total_cost_usd: 0.001,
-    duration_ms: 100,
-    input_tokens: 10,
-    output_tokens: 5,
-  });
+  if (isGemini) {
+    write({
+      type: 'result',
+      stats: { duration_ms: 100, input_tokens: 10, output_tokens: 5 },
+    });
+  } else {
+    write({
+      type: 'result',
+      total_cost_usd: 0.001,
+      duration_ms: 100,
+      input_tokens: 10,
+      output_tokens: 5,
+    });
+  }
 }
 
 function emitPermission(toolName: string, description: string): void {

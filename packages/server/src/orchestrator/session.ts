@@ -83,7 +83,11 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
 
     // Auto-commit so worktrees include untracked/uncommitted files
     if (this.gitService.isWorktreeSupported()) {
-      this.autoCommitted = await this.gitService.autoCommitAll();
+      try {
+        this.autoCommitted = await this.gitService.autoCommitAll();
+      } catch {
+        // Fallback: proceed without worktree support if auto-commit fails
+      }
     }
 
     this.setStatus('workers-running');
@@ -201,7 +205,11 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       if (this.gitService.isWorktreeSupported()) {
         // Ensure auto-commit exists for worktree
         if (!this.autoCommitted) {
-          this.autoCommitted = await this.gitService.autoCommitAll();
+          try {
+            this.autoCommitted = await this.gitService.autoCommitAll();
+          } catch {
+            // Proceed without worktree if auto-commit fails
+          }
         }
 
         try {

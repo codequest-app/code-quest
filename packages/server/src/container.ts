@@ -37,8 +37,8 @@ function getChatCommandsConfig(): ChatCommandsConfig {
 
   if (process.env.MOCK_CLI === 'true') {
     return {
-      claude: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
-      gemini: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH] },
+      claude: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH, '--provider', 'claude'] },
+      gemini: { command: 'npx', baseArgs: ['tsx', MOCK_CLI_PATH, '--provider', 'gemini'] },
     };
   }
 
