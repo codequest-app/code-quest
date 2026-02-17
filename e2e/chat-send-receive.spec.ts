@@ -58,13 +58,16 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
       { timeout: 15000 },
     );
 
-    // 7. Stats bar should appear (indicates completion)
+    // 7. Battle overlay should have appeared during processing
+    await expect(page.locator('[data-testid="battle-overlay"]')).toBeVisible({ timeout: 10000 });
+
+    // 8. Stats bar should appear (indicates completion)
     await expect(page.locator('[data-testid="stats-bar"]')).toBeVisible({ timeout: 15000 });
 
-    // 8. "Send" button should return (no longer processing)
+    // 9. "Send" button should return (no longer processing)
     await expect(page.getByRole('button', { name: /send/i })).toBeVisible({ timeout: 5000 });
 
-    // 9. No console errors
+    // 10. No console errors
     const relevantErrors = consoleErrors.filter(
       (e) => !e.includes('404') && !e.includes('favicon'),
     );
@@ -95,13 +98,16 @@ test.describe('Chat Send & Receive (mock CLI)', () => {
       { timeout: 15000 },
     );
 
-    // 6. Stats bar (completion)
+    // 6. Battle overlay should have appeared during processing
+    await expect(page.locator('[data-testid="battle-overlay"]')).toBeVisible({ timeout: 10000 });
+
+    // 7. Stats bar (completion)
     await expect(page.locator('[data-testid="stats-bar"]')).toBeVisible({ timeout: 15000 });
 
-    // 7. Send button restored
+    // 8. Send button restored
     await expect(page.getByRole('button', { name: /send/i })).toBeVisible({ timeout: 5000 });
 
-    // 8. No console errors
+    // 9. No console errors
     const relevantErrors = consoleErrors.filter(
       (e) => !e.includes('404') && !e.includes('favicon'),
     );
