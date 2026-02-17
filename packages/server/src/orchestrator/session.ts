@@ -91,7 +91,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     }
 
     this.setStatus('workers-running');
-    this.startWave(0);
+    await this.startWave(0);
   }
 
   skipWorker(workerId: string): void {
