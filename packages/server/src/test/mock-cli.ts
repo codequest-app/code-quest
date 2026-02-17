@@ -76,9 +76,48 @@ function emitPermission(toolName: string, description: string): void {
   });
 }
 
+/** Extract user text from stdin JSON, or return raw string as-is */
+function extractUserText(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw);
+    const content = parsed?.message?.content;
+    if (Array.isArray(content)) {
+      return content
+        .filter((c: { type: string }) => c.type === 'text')
+        .map((c: { text: string }) => c.text)
+        .join('');
+    }
+  } catch {
+    // Not JSON — return as-is
+  }
+  return raw;
+}
+
+/** Mock task plan response for orchestrator "Plan Tasks" flow */
+const MOCK_TASK_PLAN = `Based on your requirements, here's the task breakdown:
+
+\`\`\`json
+{
+  "tasks": [
+    { "description": "Refactor authentication module: extract token validation into a shared utility at src/auth/tokenValidator.ts", "provider": "claude" },
+    { "description": "Add unit tests for the new token validator with edge cases (expired, malformed, missing claims)", "provider": "claude", "dependsOn": [0] },
+    { "description": "Update API documentation in docs/auth.md to reflect the new token validation flow", "provider": "gemini", "dependsOn": [0] }
+  ]
+}
+\`\`\`
+
+This splits the work into 3 focused tasks. Task 1 runs first, then tasks 2 and 3 run in parallel.`;
+
 const scenarios: Record<string, (msg: string) => void> = {
-  echo: (msg) => {
-    emitText(`Echo: ${msg}`);
+  echo: (raw) => {
+    const text = extractUserText(raw);
+    // Detect orchestrator "Plan Tasks" prompt
+    if (text.includes('break down the work into sub-tasks')) {
+      emitText(MOCK_TASK_PLAN);
+      emitResult();
+      return;
+    }
+    emitText(`Echo: ${text}`);
     emitResult();
   },
 
@@ -145,7 +184,7 @@ if (scenario === 'fixture') {
       }
     } else {
       // Multi-turn fallback: echo
-      emitText(`Echo: ${line.trim()}`);
+      emitText(`Echo: ${extractUserText(line.trim())}`);
       emitResult();
     }
   });
