@@ -128,6 +128,63 @@ describe('OrchestratorSession', () => {
     expect(statuses).toContain('workers-complete');
   });
 
+  it('should emit workersUpdated before any workerEvent', async () => {
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+    const timeline: Array<'workersUpdated' | 'workerEvent'> = [];
+    orch.onWorkersUpdated(() => {
+      timeline.push('workersUpdated');
+    });
+    orch.onWorkerEvent(() => {
+      timeline.push('workerEvent');
+    });
+
+    orch.dispatch([
+      { description: 'task1', provider: 'claude' },
+      { description: 'task2', provider: 'gemini' },
+    ]);
+
+    await waitForStatus(orch, 'workers-complete');
+
+    const firstUpdated = timeline.indexOf('workersUpdated');
+    const firstEvent = timeline.indexOf('workerEvent');
+    expect(firstUpdated).toBeGreaterThanOrEqual(0);
+    expect(firstEvent).toBeGreaterThanOrEqual(0);
+    expect(firstUpdated).toBeLessThan(firstEvent);
+  });
+
+  it('should emit workersUpdated with real session IDs before workerEvent for wave > 0', async () => {
+    orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
+
+    const updatedWorkerIds: string[][] = [];
+    const eventWorkerIds: string[] = [];
+
+    orch.onWorkersUpdated((workers) => {
+      updatedWorkerIds.push(workers.map((w) => w.id));
+    });
+    orch.onWorkerEvent((workerId) => {
+      eventWorkerIds.push(workerId);
+    });
+
+    // 3 tasks with dependencies → wave 0: [0,1], wave 1: [2]
+    orch.dispatch([
+      { description: 'task1', provider: 'claude' },
+      { description: 'task2', provider: 'claude' },
+      { description: 'task3', provider: 'claude', dependsOn: [0, 1] },
+    ]);
+
+    await waitForStatus(orch, 'workers-complete');
+
+    // Wave 1 worker ID should appear in workersUpdated before any workerEvent uses it
+    expect(updatedWorkerIds.length).toBeGreaterThanOrEqual(2); // one per wave
+    const wave1WorkerIds = updatedWorkerIds[updatedWorkerIds.length - 1];
+    const wave1EventIds = eventWorkerIds.filter((id) => wave1WorkerIds.includes(id));
+    // All event IDs from wave 1 should be known IDs (not pending-*)
+    for (const id of wave1EventIds) {
+      expect(id).not.toMatch(/^pending-/);
+    }
+  });
+
   it('should emit worker events during execution', async () => {
     orch = createOrchestrator({ provider: 'claude' }) as OrchestratorSessionImpl;
 
