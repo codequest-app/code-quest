@@ -329,13 +329,17 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
           handler(session.id, cwd, branch);
         }
       }
-
-      this.startWorker(worker);
     }
 
-    // Notify client of updated worker IDs (important for wave > 0)
+    // Notify client of updated worker IDs BEFORE starting workers
+    // so events arrive with IDs the client already knows
     for (const handler of this.workersUpdatedHandlers) {
       handler([...this._workers]);
+    }
+
+    for (const taskIndex of wave.indices) {
+      const worker = this._workers[taskIndex];
+      this.startWorker(worker);
     }
   }
 
