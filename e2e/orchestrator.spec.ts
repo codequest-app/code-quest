@@ -59,6 +59,10 @@ test.describe('Orchestrator E2E', () => {
     await page.getByRole('button', { name: /plan tasks/i }).click();
     await expect(page.getByTestId('task-planner')).toBeVisible({ timeout: 45000 });
 
+    // Remove pre-filled tasks 3 and 2, keep only task 1
+    await page.getByLabel('Remove task 3').click();
+    await page.getByLabel('Remove task 2').click();
+
     // Fill task description and dispatch
     const taskInput = page.getByLabel('Task 1 description');
     await taskInput.fill('Hello from orchestrator E2E');
@@ -77,35 +81,32 @@ test.describe('Orchestrator E2E', () => {
     );
   });
 
-  test('dispatch two workers and both receive responses', async ({ page }) => {
+  test('dispatch pre-filled tasks and all workers receive responses', async ({ page }) => {
     test.slow();
     await page.getByRole('button', { name: /orchestrator/i }).click();
     await expect(page.getByTestId('orchestrator-page')).toBeVisible({ timeout: 5000 });
 
-    // Navigate to TaskPlanner
+    // Navigate to TaskPlanner — mock returns 3 pre-filled tasks
     await page.getByRole('button', { name: /plan tasks/i }).click();
     await expect(page.getByTestId('task-planner')).toBeVisible({ timeout: 45000 });
 
-    // Fill first task
-    await page.getByLabel('Task 1 description').fill('First worker task');
+    // Verify pre-filled tasks are present
+    await expect(page.getByLabel('Task 1 description')).toHaveValue(/Refactor authentication/);
+    await expect(page.getByLabel('Task 2 description')).toHaveValue(/unit tests/);
+    await expect(page.getByLabel('Task 3 description')).toHaveValue(/API documentation/);
 
-    // Add and fill second task
-    await page.getByLabel('Add task').click();
-    await page.getByLabel('Task 2 description').fill('Second worker task');
+    // Dispatch all pre-filled tasks
+    await page.getByRole('button', { name: /dispatch 3 tasks/i }).click();
 
-    // Dispatch both
-    await page.getByRole('button', { name: /dispatch/i }).click();
-
-    // Both worker panes should appear
+    // All worker panes should appear (wave 1: task 1, wave 2: tasks 2+3)
     await expect(page.getByTestId('worker-grid')).toBeVisible({ timeout: 30000 });
-    await expect(page.locator('[data-testid^="worker-pane-"]')).toHaveCount(2, { timeout: 15000 });
-
-    // Both workers should have battle overlays (proves they started processing)
-    const panes = page.locator('[data-testid^="worker-pane-"]');
-    await expect(panes.first().locator('[data-testid="battle-overlay"]')).toBeVisible({
-      timeout: 30000,
+    await expect(page.locator('[data-testid^="worker-pane-"]').first()).toBeVisible({
+      timeout: 15000,
     });
-    await expect(panes.nth(1).locator('[data-testid="battle-overlay"]')).toBeVisible({
+
+    // First worker should have battle overlay
+    const firstPane = page.locator('[data-testid^="worker-pane-"]').first();
+    await expect(firstPane.locator('[data-testid="battle-overlay"]')).toBeVisible({
       timeout: 30000,
     });
   });
@@ -119,7 +120,9 @@ test.describe('Orchestrator E2E', () => {
     await page.getByRole('button', { name: /plan tasks/i }).click();
     await expect(page.getByTestId('task-planner')).toBeVisible({ timeout: 45000 });
 
-    // Fill task and dispatch
+    // Remove extra tasks, keep one
+    await page.getByLabel('Remove task 3').click();
+    await page.getByLabel('Remove task 2').click();
     await page.getByLabel('Task 1 description').fill('Fix the auth bug');
     await page.getByRole('button', { name: /dispatch/i }).click();
 
