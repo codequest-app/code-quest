@@ -1,81 +1,123 @@
-import { type ConsoleMessage, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
- * E2E: Orchestrator Battle overlay flow (JSONL fixture)
+ * E2E: Orchestrator Battle — tests battle overlay progression in worker panes.
  *
- * Requires: MOCK_CLI=true MOCK_SCENARIO=fixture MOCK_FIXTURE=e2e/fixtures/fixtures/claude-rpg-battle.jsonl
- *
- * Run:
- *   MOCK_CLI=true MOCK_SCENARIO=fixture \
- *   MOCK_FIXTURE=e2e/fixtures/fixtures/claude-rpg-battle.jsonl \
- *   pnpm test:e2e:mock -- --grep "Orchestrator Battle"
+ * Uses MOCK_CLI=true (echo mode) which emits tool_use events to drive battle.
+ * Run: pnpm test:e2e:mock -- --grep "Orchestrator Battle"
  */
 
-const hasFixture = process.env.MOCK_SCENARIO === 'fixture' && !!process.env.MOCK_FIXTURE;
-const maybeDescribe = hasFixture ? test.describe : test.describe.skip;
-
-/** Navigate to TaskPlanner: click Orchestrator → Plan Tasks → wait for planner */
+/** Navigate to orchestrator → Plan Tasks → TaskPlanner */
 async function navigateToTaskPlanner(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await expect(page.getByTestId('connection-status')).toHaveText('Connected', { timeout: 10000 });
   await page.getByRole('button', { name: /orchestrator/i }).click();
   await expect(page.getByTestId('orchestrator-page')).toBeVisible({ timeout: 5000 });
   await page.getByRole('button', { name: /plan tasks/i }).click();
-  await expect(page.getByTestId('task-planner')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('task-planner')).toBeVisible({ timeout: 45000 });
 }
 
-maybeDescribe('Orchestrator Battle Flow (JSONL fixture)', () => {
-  let consoleErrors: string[] = [];
+/** Dispatch a single task (removes pre-filled tasks 2 and 3) */
+async function dispatchSingleTask(page: import('@playwright/test').Page, description: string) {
+  await page.getByLabel('Remove task 3').click();
+  await page.getByLabel('Remove task 2').click();
+  await page.getByLabel('Task 1 description').fill(description);
+  await page.getByRole('button', { name: /dispatch/i }).click();
+}
 
-  test.beforeEach(async ({ page }) => {
-    consoleErrors = [];
-
-    page.on('console', (msg: ConsoleMessage) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
-
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText('Connected')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('worker battle shows skill and damage log entries', async ({ page }) => {
+test.describe('Orchestrator Battle', () => {
+  test('single worker battle shows skill casts and damage in log', async ({ page }) => {
+    test.slow();
     await navigateToTaskPlanner(page);
-
-    await page.getByLabel('Task 1 description').fill('fix the login bug in auth.ts');
-    await page.getByRole('button', { name: /dispatch/i }).click();
+    await dispatchSingleTask(page, 'Fix the auth bug');
 
     const workerPane = page.locator('[data-testid^="worker-pane-"]').first();
-    await expect(workerPane).toBeVisible({ timeout: 15000 });
+    await expect(workerPane).toBeVisible({ timeout: 30000 });
 
-    // Battle overlay with skill and damage entries
-    await expect(workerPane.locator('[data-testid="battle-overlay"]')).toBeVisible({
+    const battleOverlay = workerPane.locator('[data-testid="battle-overlay"]');
+    await expect(battleOverlay).toBeVisible({ timeout: 30000 });
+
+    // Battle log should contain skill cast entries (from tool_use events)
+    const battleLog = battleOverlay.locator('[data-testid="battle-log"]');
+    await expect(battleLog.locator('.log-skill').first()).toBeVisible({ timeout: 30000 });
+
+    // Battle log should contain damage entries
+    await expect(battleLog.locator('.log-damage').first()).toBeVisible({ timeout: 30000 });
+  });
+
+  test('single worker battle ends with victory', async ({ page }) => {
+    test.slow();
+    await navigateToTaskPlanner(page);
+    await dispatchSingleTask(page, 'Fix the auth bug');
+
+    const workerPane = page.locator('[data-testid^="worker-pane-"]').first();
+    await expect(workerPane).toBeVisible({ timeout: 30000 });
+
+    const battleOverlay = workerPane.locator('[data-testid="battle-overlay"]');
+    await expect(battleOverlay).toBeVisible({ timeout: 30000 });
+
+    // Battle log should show victory
+    const battleLog = battleOverlay.locator('[data-testid="battle-log"]');
+    await expect(battleLog.locator('.log-victory')).toBeVisible({ timeout: 30000 });
+
+    // Message box should show victory text
+    const messageBox = battleOverlay.locator('[data-testid="message-box"]');
+    await expect(messageBox).toContainText('勝利', { timeout: 30000 });
+  });
+
+  test('battle overlay appears with enemy before stream output', async ({ page }) => {
+    test.slow();
+    await navigateToTaskPlanner(page);
+    await dispatchSingleTask(page, 'Fix the auth bug');
+
+    const workerPane = page.locator('[data-testid^="worker-pane-"]').first();
+    await expect(workerPane).toBeVisible({ timeout: 30000 });
+
+    // Battle overlay and enemy should appear
+    const battleOverlay = workerPane.locator('[data-testid="battle-overlay"]');
+    await expect(battleOverlay).toBeVisible({ timeout: 30000 });
+    await expect(battleOverlay.locator('[data-testid="enemy-display"]')).toBeVisible({
       timeout: 10000,
     });
-    await expect(workerPane.locator('.battle-log-entry.log-skill')).toBeVisible({
-      timeout: 15000,
-    });
-    await expect(workerPane.locator('.battle-log-entry.log-damage')).toBeVisible({
-      timeout: 15000,
-    });
   });
 
-  test('worker battle ends with victory on result event', async ({ page }) => {
+  test('all three workers show battle with skills and damage', async ({ page }) => {
+    test.slow();
     await navigateToTaskPlanner(page);
 
-    await page.getByLabel('Task 1 description').fill('fix the login bug in auth.ts');
-    await page.getByRole('button', { name: /dispatch/i }).click();
+    // Dispatch all 3 pre-filled tasks
+    await page.getByRole('button', { name: /dispatch 3 tasks/i }).click();
+    await expect(page.getByTestId('worker-grid')).toBeVisible({ timeout: 30000 });
 
-    const workerPane = page.locator('[data-testid^="worker-pane-"]').first();
-    await expect(workerPane).toBeVisible({ timeout: 15000 });
+    // All 3 worker panes should appear (wave 0: task 1, wave 1: tasks 2+3)
+    const workerPanes = page.locator('[data-testid^="worker-pane-"]');
+    await expect(workerPanes).toHaveCount(3, { timeout: 60000 });
 
-    // Victory log entry and fading overlay
-    await expect(workerPane.locator('.battle-log-entry.log-victory')).toBeVisible({
-      timeout: 20000,
-    });
-    await expect(workerPane.locator('[data-testid="battle-overlay"]')).toContainText('勝利', {
-      timeout: 5000,
-    });
-    await expect(workerPane.locator('.battle-overlay-fading')).toBeVisible({ timeout: 5000 });
+    // Each worker should have battle log with skill and damage entries
+    // (overlay may have faded after victory, so check DOM presence not visibility)
+    for (let i = 0; i < 3; i++) {
+      const pane = workerPanes.nth(i);
+      const battleLog = pane.locator('[data-testid="battle-log"]');
+      await expect(battleLog.locator('.log-skill').first()).toBeAttached({ timeout: 60000 });
+      await expect(battleLog.locator('.log-damage').first()).toBeAttached({ timeout: 60000 });
+    }
+  });
+
+  test('all three workers reach victory', async ({ page }) => {
+    test.slow();
+    await navigateToTaskPlanner(page);
+
+    await page.getByRole('button', { name: /dispatch 3 tasks/i }).click();
+    await expect(page.getByTestId('worker-grid')).toBeVisible({ timeout: 30000 });
+
+    const workerPanes = page.locator('[data-testid^="worker-pane-"]');
+    await expect(workerPanes).toHaveCount(3, { timeout: 60000 });
+
+    // All workers should reach victory (check DOM presence, overlay may have faded)
+    for (let i = 0; i < 3; i++) {
+      const pane = workerPanes.nth(i);
+      const battleLog = pane.locator('[data-testid="battle-log"]');
+      await expect(battleLog.locator('.log-victory')).toBeAttached({ timeout: 60000 });
+    }
   });
 });

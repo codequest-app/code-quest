@@ -33,4 +33,5 @@ export interface OrchestratorSession {
   onError(handler: (message: string) => void): void;
   onMergeError(handler: (workerId: string, error: string) => void): void;
   onWorkerWorktree(handler: (workerId: string, worktreePath: string, branch: string) => void): void;
+  onWorkersUpdated(handler: (workers: WorkerInfo[]) => void): void;
 }

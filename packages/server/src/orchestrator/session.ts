@@ -42,6 +42,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private workerWorktreeHandlers: Array<
     (workerId: string, worktreePath: string, branch: string) => void
   > = [];
+  private workersUpdatedHandlers: Array<(workers: WorkerInfo[]) => void> = [];
 
   get status(): OrchestratorStatus {
     return this._status;
@@ -295,6 +296,10 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.workerWorktreeHandlers.push(handler);
   }
 
+  onWorkersUpdated(handler: (workers: WorkerInfo[]) => void): void {
+    this.workersUpdatedHandlers.push(handler);
+  }
+
   private async startWave(waveIndex: number): Promise<void> {
     this.currentWave = waveIndex;
     const wave = this.waves[waveIndex];
@@ -326,6 +331,11 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       }
 
       this.startWorker(worker);
+    }
+
+    // Notify client of updated worker IDs (important for wave > 0)
+    for (const handler of this.workersUpdatedHandlers) {
+      handler([...this._workers]);
     }
   }
 

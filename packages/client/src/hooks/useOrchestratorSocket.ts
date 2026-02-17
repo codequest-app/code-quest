@@ -64,6 +64,17 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     };
 
     const handleWorkerEvent = (orchId: string, workerId: string, event: ChatStreamEvent) => {
+      const chat = useChatStore.getState();
+      // Lazily init chat session for workers started in later waves
+      if (!chat.getChatSession(workerId)) {
+        const orch = useOrchestratorStore.getState().getOrchestrator(orchId);
+        const worker = orch?.workers.find((w) => w.id === workerId);
+        const provider = worker?.task.provider ?? 'claude';
+        chat.initChatSession(workerId, provider);
+        if (worker) {
+          chat.addUserMessage(workerId, worker.task.description);
+        }
+      }
       if (event.type === 'text') {
         const orch = useOrchestratorStore.getState().getOrchestrator(orchId);
         const worker = orch?.workers.find((w) => w.id === workerId);
@@ -104,6 +115,10 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       });
     };
 
+    const handleWorkersUpdated = (orchId: string, workers: WorkerInfo[]) => {
+      setWorkers(orchId, workers);
+    };
+
     const handleCapabilities = (caps: { worktree: boolean }) => {
       useSystemStore.getState().setCapabilities(caps);
       if (!caps.worktree && !useSystemStore.getState().worktreeToastShown) {
@@ -122,6 +137,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     socket.on('orchestrator:status', handleStatus);
     socket.on('orchestrator:error', handleError);
     socket.on('orchestrator:merge-error', handleMergeError);
+    socket.on('orchestrator:workers-updated', handleWorkersUpdated);
     socket.on('system:capabilities', handleCapabilities);
 
     return () => {
@@ -133,6 +149,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       socket.off('orchestrator:status', handleStatus);
       socket.off('orchestrator:error', handleError);
       socket.off('orchestrator:merge-error', handleMergeError);
+      socket.off('orchestrator:workers-updated', handleWorkersUpdated);
       socket.off('system:capabilities', handleCapabilities);
     };
   }, [socket, initOrchestrator, setWorkers, updateWorkerStatus, setStatus, setAllComplete]);

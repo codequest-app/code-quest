@@ -61,6 +61,7 @@ export interface ServerToClientEvents {
   'orchestrator:all-complete': (orchId: string, results: WorkerInfo[]) => void;
   'orchestrator:status': (orchId: string, status: OrchestratorStatus) => void;
   'orchestrator:merge-error': (orchId: string, workerId: string, error: string) => void;
+  'orchestrator:workers-updated': (orchId: string, workers: WorkerInfo[]) => void;
   'orchestrator:error': (orchId: string, message: string) => void;
   'system:capabilities': (capabilities: SystemCapabilities) => void;
   'session:worktree': (sessionId: string, worktreePath: string, branch: string) => void;
