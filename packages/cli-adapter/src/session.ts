@@ -7,6 +7,7 @@ import type {
   ChatSessionDeps,
   ChatSessionMode,
   ChatSessionState,
+  ControlRequest,
   ControlResponse,
   ProcessFactory,
   StreamParser,
@@ -31,6 +32,11 @@ export class ChatSessionImpl implements ChatSession {
   private errorHandlers: Array<(error: string) => void> = [];
   private exitHandlers: Array<() => void> = [];
   private controlResponseHandlers: Array<(response: ControlResponse) => void> = [];
+  private controlRequestHandlers: Array<(request: ControlRequest) => void> = [];
+  private pendingControlRequests = new Map<
+    string,
+    { resolve: (response: ControlResponse) => void; reject: (error: Error) => void }
+  >();
   private stderrBuffer = '';
   private gotResult = false;
   private allowedTools: Set<string> = new Set();
@@ -111,12 +117,68 @@ export class ChatSessionImpl implements ChatSession {
     this.sendControlRequest('set_model', { model });
   }
 
-  private sendControlRequest(subtype: string, params?: Record<string, unknown>): void {
+  setPermissionMode(mode: string): void {
+    this.sendControlRequest('set_permission_mode', { permission_mode: mode });
+  }
+
+  setMaxThinkingTokens(tokens: number): void {
+    this.sendControlRequest('set_max_thinking_tokens', { max_thinking_tokens: tokens });
+  }
+
+  interrupt(): void {
+    this.sendControlRequest('interrupt');
+  }
+
+  sendControlRequestAsync(
+    subtype: string,
+    params: Record<string, unknown> = {},
+    timeoutMs = 10000,
+  ): Promise<ControlResponse> {
+    const requestId = this.sendControlRequest(subtype, params);
+    return new Promise<ControlResponse>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingControlRequests.delete(requestId);
+        reject(
+          new Error(`Control request "${subtype}" (${requestId}) timed out after ${timeoutMs}ms`),
+        );
+      }, timeoutMs);
+
+      this.pendingControlRequests.set(requestId, {
+        resolve: (response) => {
+          clearTimeout(timer);
+          resolve(response);
+        },
+        reject: (error) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+      });
+    });
+  }
+
+  respondToControlRequest(requestId: string, response: Record<string, unknown>): void {
     this.ensureProcess();
     if (!this.process) return;
 
+    const message = JSON.stringify({
+      type: 'control_response',
+      request_id: requestId,
+      response,
+    });
+    this.process.stdin?.write(`${message}\n`);
+  }
+
+  onControlRequest(handler: (request: ControlRequest) => void): void {
+    this.controlRequestHandlers.push(handler);
+  }
+
+  private sendControlRequest(subtype: string, params?: Record<string, unknown>): string {
+    this.ensureProcess();
+
     this.controlRequestCounter++;
     const requestId = `${subtype}-${String(this.controlRequestCounter).padStart(3, '0')}`;
+
+    if (!this.process) return requestId;
 
     const request: Record<string, unknown> = { subtype, ...params };
     const message = JSON.stringify({
@@ -126,6 +188,7 @@ export class ChatSessionImpl implements ChatSession {
     });
 
     this.process.stdin?.write(`${message}\n`);
+    return requestId;
   }
 
   private ensureProcess(): void {
@@ -171,7 +234,12 @@ export class ChatSessionImpl implements ChatSession {
             this.emitComplete((event.data as { stats: ChatStats }).stats);
           }
           if (event.type === 'control_response') {
-            this.emitControlResponse(event.data as ControlResponse);
+            const response = event.data as ControlResponse;
+            this.emitControlResponse(response);
+            this.resolvePendingRequest(response);
+          }
+          if (event.type === 'control_request') {
+            this.emitControlRequest(event.data as ControlRequest);
           }
         }
       });
@@ -235,6 +303,20 @@ export class ChatSessionImpl implements ChatSession {
   private emitControlResponse(response: ControlResponse): void {
     for (const handler of this.controlResponseHandlers) {
       handler(response);
+    }
+  }
+
+  private emitControlRequest(request: ControlRequest): void {
+    for (const handler of this.controlRequestHandlers) {
+      handler(request);
+    }
+  }
+
+  private resolvePendingRequest(response: ControlResponse): void {
+    const pending = this.pendingControlRequests.get(response.requestId);
+    if (pending) {
+      this.pendingControlRequests.delete(response.requestId);
+      pending.resolve(response);
     }
   }
 }

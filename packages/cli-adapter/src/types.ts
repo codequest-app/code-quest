@@ -56,6 +56,15 @@ export interface ControlResponse {
   error?: string;
 }
 
+export interface ControlRequest {
+  requestId: string;
+  subtype: string;
+  toolName?: string;
+  input?: unknown;
+  callbackId?: string;
+  toolUseId?: string;
+}
+
 export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
@@ -74,5 +83,15 @@ export interface ChatSession {
   // Control protocol methods (interactive mode only)
   initialize(): void;
   setModel(model: string): void;
+  setPermissionMode(mode: string): void;
+  setMaxThinkingTokens(tokens: number): void;
+  interrupt(): void;
+  sendControlRequestAsync(
+    subtype: string,
+    params?: Record<string, unknown>,
+    timeoutMs?: number,
+  ): Promise<ControlResponse>;
+  respondToControlRequest(requestId: string, response: Record<string, unknown>): void;
   onControlResponse(handler: (response: ControlResponse) => void): void;
+  onControlRequest(handler: (request: ControlRequest) => void): void;
 }

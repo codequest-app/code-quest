@@ -557,5 +557,103 @@ describe('ChatSessionImpl', () => {
       expect(parsed[0].request_id).toBe('initialize-001');
       expect(parsed[1].request_id).toBe('set_model-002');
     });
+
+    it('should send set_permission_mode control_request', () => {
+      createSession();
+      session.setPermissionMode('plan');
+
+      const parsed = JSON.parse(mockProcess.getLastStdinLine());
+      expect(parsed.type).toBe('control_request');
+      expect(parsed.request.subtype).toBe('set_permission_mode');
+      expect(parsed.request.permission_mode).toBe('plan');
+    });
+
+    it('should send set_max_thinking_tokens control_request', () => {
+      createSession();
+      session.setMaxThinkingTokens(8192);
+
+      const parsed = JSON.parse(mockProcess.getLastStdinLine());
+      expect(parsed.type).toBe('control_request');
+      expect(parsed.request.subtype).toBe('set_max_thinking_tokens');
+      expect(parsed.request.max_thinking_tokens).toBe(8192);
+    });
+
+    it('should send interrupt control_request', () => {
+      createSession();
+      session.sendMessage('test');
+      session.interrupt();
+
+      const lines = mockProcess.getStdinData().trim().split('\n');
+      const parsed = JSON.parse(lines[lines.length - 1]);
+      expect(parsed.type).toBe('control_request');
+      expect(parsed.request.subtype).toBe('interrupt');
+    });
+
+    it('should resolve sendControlRequestAsync with matching control_response', async () => {
+      createSession();
+      session.sendMessage('test'); // ensure process is spawned
+
+      const promise = session.sendControlRequestAsync('initialize');
+      mockProcess.emitStdout(
+        '{"type":"control_response","response":{"subtype":"success","request_id":"initialize-001","response":{"models":[]}}}',
+      );
+      await tick();
+
+      const response = await promise;
+      expect(response.requestId).toBe('initialize-001');
+      expect(response.success).toBe(true);
+    });
+
+    it('should reject sendControlRequestAsync on error response', async () => {
+      createSession();
+      session.sendMessage('test');
+
+      const promise = session.sendControlRequestAsync('bad_request');
+      mockProcess.emitStdout(
+        '{"type":"control_response","response":{"subtype":"error","request_id":"bad_request-001","error":"Unknown subtype"}}',
+      );
+      await tick();
+
+      const response = await promise;
+      expect(response.success).toBe(false);
+      expect(response.error).toBe('Unknown subtype');
+    });
+
+    it('should reject sendControlRequestAsync on timeout', async () => {
+      createSession();
+      session.sendMessage('test');
+
+      const promise = session.sendControlRequestAsync('initialize', {}, 50);
+
+      await expect(promise).rejects.toThrow('timed out');
+    });
+
+    it('should emit control_request events via onControlRequest handler', async () => {
+      createSession();
+      const requests: Array<{ requestId: string; subtype: string }> = [];
+      session.onControlRequest((r) => requests.push(r));
+
+      session.sendMessage('test');
+      mockProcess.emitStdout(
+        '{"type":"control_request","request_id":"req-001","request":{"subtype":"can_use_tool","tool_name":"Write","input":{"file_path":"/tmp/test.txt"},"tool_use_id":"toolu_01"}}',
+      );
+      await tick();
+
+      expect(requests).toHaveLength(1);
+      expect(requests[0].requestId).toBe('req-001');
+      expect(requests[0].subtype).toBe('can_use_tool');
+    });
+
+    it('should send control_response back to CLI via respondToControlRequest', async () => {
+      createSession();
+      session.sendMessage('test');
+
+      session.respondToControlRequest('req-001', { allow: true });
+
+      const parsed = JSON.parse(mockProcess.getLastStdinLine());
+      expect(parsed.type).toBe('control_response');
+      expect(parsed.request_id).toBe('req-001');
+      expect(parsed.response.allow).toBe(true);
+    });
   });
 });
