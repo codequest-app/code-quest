@@ -1,6 +1,7 @@
 import type { ChatStreamEvent, WorkerInfo } from '@code-quest/shared';
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
+import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { useChatStore } from '../../stores/chatStore';
 import { useOrchestratorStore } from '../../stores/orchestratorStore';
 import { useOrchestratorSocket } from '../useOrchestratorSocket';
@@ -30,10 +31,13 @@ function makeWorker(id: string, description: string): WorkerInfo {
   };
 }
 
+let toastErrorSpy: MockInstance;
+
 describe('useOrchestratorSocket – chatStore wiring', () => {
   beforeEach(() => {
     listeners.clear();
     mockSocket.on.mockClear();
+    toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation((() => '') as never);
     useChatStore.setState({ chatSessions: new Map() });
     useOrchestratorStore.getState().initOrchestrator('orch-1', 'coord-1', 'claude');
   });
@@ -74,6 +78,21 @@ describe('useOrchestratorSocket – chatStore wiring', () => {
     const session = useChatStore.getState().getChatSession('w1');
     const assistantMsg = session?.messages.find((m) => m.role === 'assistant');
     expect(assistantMsg?.content).toBe('hello');
+  });
+
+  it('should store error message and toast on orchestrator:error', () => {
+    setup();
+
+    act(() => {
+      listeners.get('orchestrator:error')?.('orch-1', 'Worker crashed unexpectedly');
+    });
+
+    const orch = useOrchestratorStore.getState().getOrchestrator('orch-1');
+    expect(orch?.status).toBe('error');
+    expect(orch?.errorMessage).toBe('Worker crashed unexpectedly');
+    expect(toastErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Worker crashed unexpectedly'),
+    );
   });
 
   it('cleans up chatStore sessions on kill', () => {

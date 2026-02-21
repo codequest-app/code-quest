@@ -15,6 +15,7 @@ import {
   orchestratorSynthesizeSchema,
 } from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useChatStore } from '../stores/chatStore';
 import { useOrchestratorStore } from '../stores/orchestratorStore';
 import { useSystemStore } from '../stores/systemStore';
@@ -39,6 +40,7 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
     setWorkers,
     updateWorkerStatus,
     setStatus,
+    setError,
     setAllComplete,
     removeOrchestrator,
   } = useOrchestratorStore();
@@ -104,8 +106,9 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       setStatus(orchId, status);
     };
 
-    const handleError = (orchId: string, _message: string) => {
-      setStatus(orchId, 'error');
+    const handleError = (orchId: string, message: string) => {
+      setError(orchId, message);
+      toast.error(`Orchestrator error: ${message}`);
     };
 
     const handleMergeError = (orchId: string, workerId: string, error: string) => {
@@ -152,7 +155,15 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
       socket.off('orchestrator:workers-updated', handleWorkersUpdated);
       socket.off('system:capabilities', handleCapabilities);
     };
-  }, [socket, initOrchestrator, setWorkers, updateWorkerStatus, setStatus, setAllComplete]);
+  }, [
+    socket,
+    initOrchestrator,
+    setWorkers,
+    updateWorkerStatus,
+    setStatus,
+    setError,
+    setAllComplete,
+  ]);
 
   const createOrchestrator = useCallback(
     (provider: ChatProvider) => {

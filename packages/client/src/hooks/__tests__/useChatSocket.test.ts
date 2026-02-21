@@ -2,7 +2,6 @@ import { act, renderHook } from '@testing-library/react';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { useChatStore } from '../../stores/chatStore';
-import { useSystemStore } from '../../stores/systemStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import { useChatSocket } from '../useChatSocket';
 
@@ -134,14 +133,11 @@ describe('useChatSocket', () => {
     expect(toastSuccessSpy).toHaveBeenCalledWith(expect.stringContaining('exited'));
   });
 
-  it('should store system:capabilities in systemStore', () => {
+  it('should not register system:capabilities listener (handled by useOrchestratorSocket)', () => {
     renderHook(() => useChatSocket('http://localhost:3000'));
 
-    act(() => {
-      fireSocketEvent('system:capabilities', { worktree: true });
-    });
-
-    expect(useSystemStore.getState().capabilities).toEqual({ worktree: true });
+    const hasCapabilitiesListener = listeners.some((l) => l.event === 'system:capabilities');
+    expect(hasCapabilitiesListener).toBe(false);
   });
 
   it('should write sent control to controlEventLog', () => {

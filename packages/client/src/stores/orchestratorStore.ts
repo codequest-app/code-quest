@@ -8,6 +8,7 @@ export interface OrchestratorState {
   status: OrchestratorStatus;
   workers: WorkerInfo[];
   aggregatedStats?: ChatStats;
+  errorMessage?: string;
 }
 
 interface OrchestratorStore {
@@ -17,6 +18,7 @@ interface OrchestratorStore {
   setWorkers: (orchId: string, workers: WorkerInfo[]) => void;
   updateWorkerStatus: (orchId: string, workerId: string, update: Partial<WorkerInfo>) => void;
   setStatus: (orchId: string, status: OrchestratorStatus) => void;
+  setError: (orchId: string, message: string) => void;
   setAllComplete: (orchId: string, results: WorkerInfo[]) => void;
   setAggregatedStats: (orchId: string, stats: ChatStats) => void;
   removeOrchestrator: (orchId: string) => void;
@@ -68,6 +70,16 @@ export const useOrchestratorStore = create<OrchestratorStore>((set, get) => ({
       const orch = orchestrators.get(orchId);
       if (!orch) return state;
       orchestrators.set(orchId, { ...orch, status });
+      return { orchestrators };
+    });
+  },
+
+  setError: (orchId: string, message: string) => {
+    set((state) => {
+      const orchestrators = new Map(state.orchestrators);
+      const orch = orchestrators.get(orchId);
+      if (!orch) return state;
+      orchestrators.set(orchId, { ...orch, status: 'error', errorMessage: message });
       return { orchestrators };
     });
   },
