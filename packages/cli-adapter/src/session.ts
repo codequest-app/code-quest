@@ -5,7 +5,9 @@ import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/share
 import type {
   ChatSession,
   ChatSessionDeps,
+  ChatSessionMode,
   ChatSessionState,
+  ControlResponse,
   ProcessFactory,
   StreamParser,
 } from './types.ts';
@@ -13,6 +15,7 @@ import type {
 export class ChatSessionImpl implements ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
+  readonly mode: ChatSessionMode;
 
   private readonly command: string;
   private readonly baseArgs: string[];
@@ -27,9 +30,11 @@ export class ChatSessionImpl implements ChatSession {
   private completeHandlers: Array<(stats: ChatStats) => void> = [];
   private errorHandlers: Array<(error: string) => void> = [];
   private exitHandlers: Array<() => void> = [];
+  private controlResponseHandlers: Array<(response: ControlResponse) => void> = [];
   private stderrBuffer = '';
   private gotResult = false;
   private allowedTools: Set<string> = new Set();
+  private controlRequestCounter = 0;
 
   get state(): ChatSessionState {
     return this._state;
@@ -42,6 +47,7 @@ export class ChatSessionImpl implements ChatSession {
   constructor(options: ChatSessionDeps) {
     this.id = randomUUID();
     this.provider = options.provider;
+    this.mode = options.mode ?? 'print';
     this.command = options.command;
     this.baseArgs = options.baseArgs;
     this.cwd = options.cwd ?? process.cwd();
@@ -93,6 +99,35 @@ export class ChatSessionImpl implements ChatSession {
     this.exitHandlers.push(handler);
   }
 
+  onControlResponse(handler: (response: ControlResponse) => void): void {
+    this.controlResponseHandlers.push(handler);
+  }
+
+  initialize(): void {
+    this.sendControlRequest('initialize');
+  }
+
+  setModel(model: string): void {
+    this.sendControlRequest('set_model', { model });
+  }
+
+  private sendControlRequest(subtype: string, params?: Record<string, unknown>): void {
+    this.ensureProcess();
+    if (!this.process) return;
+
+    this.controlRequestCounter++;
+    const requestId = `${subtype}-${String(this.controlRequestCounter).padStart(3, '0')}`;
+
+    const request: Record<string, unknown> = { subtype, ...params };
+    const message = JSON.stringify({
+      type: 'control_request',
+      request_id: requestId,
+      request,
+    });
+
+    this.process.stdin?.write(`${message}\n`);
+  }
+
   private ensureProcess(): void {
     if (this.process) return;
 
@@ -134,6 +169,9 @@ export class ChatSessionImpl implements ChatSession {
             this.gotResult = true;
             this._state = 'idle';
             this.emitComplete((event.data as { stats: ChatStats }).stats);
+          }
+          if (event.type === 'control_response') {
+            this.emitControlResponse(event.data as ControlResponse);
           }
         }
       });
@@ -191,6 +229,12 @@ export class ChatSessionImpl implements ChatSession {
   private emitExit(): void {
     for (const handler of this.exitHandlers) {
       handler();
+    }
+  }
+
+  private emitControlResponse(response: ControlResponse): void {
+    for (const handler of this.controlResponseHandlers) {
+      handler(response);
     }
   }
 }

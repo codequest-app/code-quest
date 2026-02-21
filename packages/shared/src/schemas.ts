@@ -95,6 +95,56 @@ export const chatStreamEventSchema = z.discriminatedUnion('type', [
     type: z.literal('permission_request'),
     data: z.object({ toolName: z.string(), description: z.string() }),
   }),
+  z.object({
+    type: z.literal('control_response'),
+    data: z.object({
+      requestId: z.string(),
+      success: z.boolean(),
+      response: z
+        .object({
+          models: z
+            .array(
+              z.object({
+                value: z.string(),
+                displayName: z.string(),
+                description: z.string(),
+                supportsEffort: z.boolean().optional(),
+              }),
+            )
+            .optional(),
+          account: z
+            .object({
+              email: z.string(),
+              subscriptionType: z.string(),
+            })
+            .optional(),
+          commands: z
+            .array(
+              z.object({
+                name: z.string(),
+                description: z.string(),
+              }),
+            )
+            .optional(),
+          outputStyle: z.string().optional(),
+          availableOutputStyles: z.array(z.string()).optional(),
+          pid: z.number().optional(),
+        })
+        .optional(),
+      error: z.string().optional(),
+    }),
+  }),
+  z.object({
+    type: z.literal('control_request'),
+    data: z.object({
+      requestId: z.string(),
+      subtype: z.string(),
+      toolName: z.string().optional(),
+      input: z.unknown().optional(),
+      callbackId: z.string().optional(),
+      toolUseId: z.string().optional(),
+    }),
+  }),
 ]);
 
 export const orchestratorStatusSchema = z.enum([

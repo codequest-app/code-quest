@@ -38,7 +38,7 @@ describe('ChatSessionImpl (integration)', () => {
     session.onEvent((e) => events.push(e));
 
     await new Promise<void>((resolve) => {
-      session.onExit(() => resolve());
+      session.onComplete(() => resolve());
       session.sendMessage('hello');
     });
 
@@ -86,7 +86,7 @@ describe('ChatSessionImpl (integration)', () => {
     session.onEvent((e) => events.push(e));
 
     await new Promise<void>((resolve) => {
-      session.onExit(() => resolve());
+      session.onComplete(() => resolve());
       session.sendMessage('read package.json');
     });
 

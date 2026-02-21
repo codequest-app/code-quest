@@ -5,8 +5,10 @@ export { ChatSessionImpl } from './session.ts';
 export type {
   ChatSession,
   ChatSessionDeps,
+  ChatSessionMode,
   ChatSessionOptions,
   ChatSessionState,
+  ControlResponse,
   ParserFactory,
   ProcessFactory,
   StreamParser,

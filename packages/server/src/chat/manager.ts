@@ -22,6 +22,7 @@ export class ChatManagerImpl implements ChatManager {
       command: defaults.command,
       baseArgs: [...defaults.baseArgs],
       cwd: options.cwd,
+      mode: defaults.mode,
     });
 
     this.sessions.set(session.id, session);
