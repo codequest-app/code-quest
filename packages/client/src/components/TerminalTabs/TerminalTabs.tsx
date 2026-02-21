@@ -41,8 +41,15 @@ function getTabLabel(type: SessionType, index: number): string {
  */
 export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const { socket, emit } = useSocket(serverUrl);
-  const { createChat, killChat, sendMessage, abortMessage, sendControl, respondToControl } =
-    useChatSocket(serverUrl);
+  const {
+    createChat,
+    killChat,
+    sendMessage,
+    abortMessage,
+    allowTool,
+    sendControl,
+    respondToControl,
+  } = useChatSocket(serverUrl);
   const {
     createOrchestrator,
     dispatch: dispatchOrchestrator,
@@ -98,6 +105,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     // Connection events
     const handleConnect = () => {
       setSocketConnected(true);
+      emit('terminal:list');
     };
 
     const handleDisconnect = () => {
@@ -112,10 +120,20 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       setSocketError(message);
     };
 
+    // Restore existing sessions on reconnect
+    const handleTerminalList = (sessionIds: string[]) => {
+      for (const id of sessionIds) {
+        if (!useTerminalStore.getState().getSession(id)) {
+          addSession(id, 0);
+        }
+      }
+    };
+
     // Register all listeners directly on socket
     socket.on('terminal:created', handleCreated);
     socket.on('terminal:exit', handleExit);
     socket.on('terminal:error', handleTerminalError);
+    socket.on('terminal:list', handleTerminalList);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('connect_error', handleConnectError);
@@ -123,6 +141,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     // Check initial connection state (socket may already be connected)
     if (socket.connected) {
       setSocketConnected(true);
+      emit('terminal:list');
     }
 
     // Cleanup: remove all listeners
@@ -130,11 +149,12 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       socket.off('terminal:created', handleCreated);
       socket.off('terminal:exit', handleExit);
       socket.off('terminal:error', handleTerminalError);
+      socket.off('terminal:list', handleTerminalList);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('connect_error', handleConnectError);
     };
-  }, [socket, addSession, removeSession, setSocketConnected, setSocketError]);
+  }, [socket, emit, addSession, removeSession, setSocketConnected, setSocketError]);
 
   // Buffer data for inactive sessions
   useEffect(() => {
@@ -501,6 +521,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
                 sessionId={activeSession.id}
                 onSend={sendMessage}
                 onAbort={abortMessage}
+                onAllowTool={allowTool}
                 onModelChange={(sid, model) => sendControl(sid, 'set_model', { model })}
                 onStyleChange={(sid, style) =>
                   sendControl(sid, 'set_output_style', { output_style: style })

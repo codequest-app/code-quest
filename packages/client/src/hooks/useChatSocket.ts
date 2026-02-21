@@ -3,7 +3,6 @@ import type {
   ChatStreamEvent,
   ControlRequest,
   ControlResponse,
-  SystemCapabilities,
 } from '@code-quest/shared';
 import {
   chatAbortSchema,
@@ -17,7 +16,6 @@ import {
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useChatStore } from '../stores/chatStore';
-import { useSystemStore } from '../stores/systemStore';
 import { useTerminalStore } from '../stores/terminalStore';
 import type { SessionType } from '../types';
 import { safeValidate } from '../utils/validateAndEmit.ts';
@@ -85,10 +83,6 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       handleControlRequest(sessionId, request);
     };
 
-    const handleCapabilities = (caps: SystemCapabilities) => {
-      useSystemStore.getState().setCapabilities(caps);
-    };
-
     const handleChatExit = (sessionId: string) => {
       useChatStore.getState().removeChatSession(sessionId);
       useTerminalStore.getState().removeSession(sessionId);
@@ -104,7 +98,6 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
     socket.on('session:worktree-cleared', handleWorktreeCleared);
     socket.on('chat:control-response', handleControlRes);
     socket.on('chat:control-request', handleControlReq);
-    socket.on('system:capabilities', handleCapabilities);
 
     return () => {
       socket.off('chat:created', handleCreated);
@@ -116,7 +109,6 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       socket.off('session:worktree-cleared', handleWorktreeCleared);
       socket.off('chat:control-response', handleControlRes);
       socket.off('chat:control-request', handleControlReq);
-      socket.off('system:capabilities', handleCapabilities);
     };
   }, [socket, emit, initChatSession, handleChatEvent, handleControlResponse, handleControlRequest]);
 
