@@ -149,6 +149,82 @@ describe('ClaudeStreamParser', () => {
     expect(events).toEqual([]);
   });
 
+  it('should silently ignore rate_limit_event', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine(
+      '{"type":"rate_limit_event","rate_limit_info":{"status":"allowed_warning","resetsAt":1771578000,"rateLimitType":"seven_day","utilization":0.86}}',
+    );
+    expect(events).toEqual([]);
+  });
+
+  it('should silently ignore keep_alive', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine('{"type":"keep_alive"}');
+    expect(events).toEqual([]);
+  });
+
+  it('should silently ignore streamlined_text', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine('{"type":"streamlined_text","text":"summary"}');
+    expect(events).toEqual([]);
+  });
+
+  it('should silently ignore streamlined_tool_use_summary', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine(
+      '{"type":"streamlined_tool_use_summary","tool_name":"Read","summary":"read file"}',
+    );
+    expect(events).toEqual([]);
+  });
+
+  it('should silently ignore error type events', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine('{"type":"error","error":"something went wrong"}');
+    expect(events).toEqual([]);
+  });
+
+  it('should parse control_response with initialize data', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine(
+      '{"type":"control_response","response":{"subtype":"success","request_id":"init-001","response":{"models":[{"value":"sonnet","displayName":"Sonnet","description":"Sonnet 4.6"}],"account":{"email":"a@b.com","subscriptionType":"Max"}}}}',
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('control_response');
+    const data = events[0].data as {
+      requestId: string;
+      success: boolean;
+      response?: { models?: unknown[]; account?: { email: string } };
+    };
+    expect(data.requestId).toBe('init-001');
+    expect(data.success).toBe(true);
+    expect(data.response?.models).toHaveLength(1);
+    expect(data.response?.account?.email).toBe('a@b.com');
+  });
+
+  it('should parse control_response without response payload', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine(
+      '{"type":"control_response","response":{"subtype":"success","request_id":"model-001"}}',
+    );
+    expect(events).toHaveLength(1);
+    const data = events[0].data as { requestId: string; success: boolean; response?: unknown };
+    expect(data.requestId).toBe('model-001');
+    expect(data.success).toBe(true);
+    expect(data.response).toBeUndefined();
+  });
+
+  it('should parse control_response with error', () => {
+    const parser = new ClaudeStreamParser();
+    const events = parser.parseLine(
+      '{"type":"control_response","response":{"subtype":"error","request_id":"fail-001","error":"model not found"}}',
+    );
+    expect(events).toHaveLength(1);
+    const data = events[0].data as { requestId: string; success: boolean; error?: string };
+    expect(data.requestId).toBe('fail-001');
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('model not found');
+  });
+
   it('should parse multiple content blocks from one assistant message', () => {
     const parser = new ClaudeStreamParser();
     const events = parser.parseLine(

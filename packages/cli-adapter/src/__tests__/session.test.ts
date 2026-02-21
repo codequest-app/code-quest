@@ -476,4 +476,86 @@ describe('ChatSessionImpl', () => {
     const opts = mockProcessFactory.records[0].options;
     expect((opts.env as Record<string, string>).CUSTOM_VAR).toBe('test-value');
   });
+
+  it('should default mode to print', () => {
+    createSession();
+    expect(session.mode).toBe('print');
+  });
+
+  it('should accept interactive mode', () => {
+    session = new ChatSessionImpl({
+      provider: 'claude',
+      command: 'mock',
+      baseArgs: [],
+      mode: 'interactive',
+      processFactory,
+      parserFactory: createParser,
+    });
+    expect(session.mode).toBe('interactive');
+  });
+
+  describe('control protocol', () => {
+    it('should send initialize control_request via stdin', () => {
+      createSession();
+      session.initialize();
+
+      const stdinData = mockProcess.getLastStdinLine();
+      const parsed = JSON.parse(stdinData);
+      expect(parsed.type).toBe('control_request');
+      expect(parsed.request.subtype).toBe('initialize');
+      expect(parsed.request_id).toMatch(/^initialize-\d+$/);
+    });
+
+    it('should send set_model control_request via stdin', () => {
+      createSession();
+      session.setModel('sonnet');
+
+      const stdinData = mockProcess.getLastStdinLine();
+      const parsed = JSON.parse(stdinData);
+      expect(parsed.type).toBe('control_request');
+      expect(parsed.request.subtype).toBe('set_model');
+      expect(parsed.request.model).toBe('sonnet');
+    });
+
+    it('should emit control_response via onControlResponse handler', async () => {
+      createSession();
+      const responses: Array<{ requestId: string; success: boolean }> = [];
+      session.onControlResponse((r) => responses.push(r));
+
+      session.initialize();
+      mockProcess.emitStdout(
+        '{"type":"control_response","response":{"subtype":"success","request_id":"initialize-001","response":{"models":[{"value":"sonnet","displayName":"Sonnet","description":"Sonnet 4.6"}]}}}',
+      );
+      await tick();
+
+      expect(responses).toHaveLength(1);
+      expect(responses[0].requestId).toBe('initialize-001');
+      expect(responses[0].success).toBe(true);
+    });
+
+    it('should also emit control_response as a regular event', async () => {
+      createSession();
+      const events = collectEvents();
+
+      session.initialize();
+      mockProcess.emitStdout(
+        '{"type":"control_response","response":{"subtype":"success","request_id":"initialize-001"}}',
+      );
+      await tick();
+
+      expect(events.some((e) => e.type === 'control_response')).toBe(true);
+    });
+
+    it('should increment request_id for multiple control requests', () => {
+      createSession();
+      session.initialize();
+      session.setModel('sonnet');
+
+      const allStdin = mockProcess.getStdinData();
+      const lines = allStdin.trim().split('\n');
+      const parsed = lines.map((l) => JSON.parse(l));
+      expect(parsed[0].request_id).toBe('initialize-001');
+      expect(parsed[1].request_id).toBe('set_model-002');
+    });
+  });
 });

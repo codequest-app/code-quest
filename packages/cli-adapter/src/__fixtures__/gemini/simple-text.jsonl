@@ -1,4 +1,4 @@
-{"type":"init","timestamp":"2026-02-11T19:00:06.801Z","session_id":"dff02b29-1234-5678-abcd-ef0123456789","model":"auto-gemini-2.5"}
-{"type":"message","timestamp":"2026-02-11T19:00:06.802Z","role":"user","content":"Say hello"}
-{"type":"message","timestamp":"2026-02-11T19:00:12.664Z","role":"assistant","content":"Hello! How can I help you today?","delta":true}
-{"type":"result","timestamp":"2026-02-11T19:00:12.679Z","status":"success","stats":{"total_tokens":17158,"input_tokens":17031,"output_tokens":34,"cached":0,"input":17031,"duration_ms":5878,"tool_calls":0}}
+{"type":"init","timestamp":"2026-02-20T13:22:30.227Z","session_id":"cf29ef41-3237-4ab8-9b52-fea40ccf117e","model":"auto-gemini-2.5"}
+{"type":"message","timestamp":"2026-02-20T13:22:30.228Z","role":"user","content":"say hi"}
+{"type":"message","timestamp":"2026-02-20T13:22:34.041Z","role":"assistant","content":"hi","delta":true}
+{"type":"result","timestamp":"2026-02-20T13:22:34.050Z","status":"success","stats":{"total_tokens":12307,"input_tokens":12098,"output_tokens":64,"cached":0,"input":12098,"duration_ms":3823,"tool_calls":0}}

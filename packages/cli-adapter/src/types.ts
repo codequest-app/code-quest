@@ -19,12 +19,15 @@ export type ProcessFactory = (
 
 export type ParserFactory = (provider: ChatProvider) => StreamParser;
 
+export type ChatSessionMode = 'print' | 'interactive';
+
 export interface ChatSessionOptions {
   provider: ChatProvider;
   command: string;
   baseArgs: string[];
   cwd?: string;
   env?: Record<string, string | undefined>;
+  mode?: ChatSessionMode;
 }
 
 export interface ChatSessionDeps extends ChatSessionOptions {
@@ -34,11 +37,31 @@ export interface ChatSessionDeps extends ChatSessionOptions {
 
 export type ChatSessionState = 'idle' | 'processing';
 
+export interface ControlResponse {
+  requestId: string;
+  success: boolean;
+  response?: {
+    models?: Array<{
+      value: string;
+      displayName: string;
+      description: string;
+      supportsEffort?: boolean;
+    }>;
+    account?: { email: string; subscriptionType: string };
+    commands?: Array<{ name: string; description: string }>;
+    outputStyle?: string;
+    availableOutputStyles?: string[];
+    pid?: number;
+  };
+  error?: string;
+}
+
 export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
   readonly state: ChatSessionState;
   readonly cliSessionId: string | null;
+  readonly mode: ChatSessionMode;
   sendMessage(message: string): void;
   addAllowedTool(tool: string): void;
   abort(): void;
@@ -47,4 +70,9 @@ export interface ChatSession {
   onComplete(handler: (stats: ChatStats) => void): void;
   onError(handler: (error: string) => void): void;
   onExit(handler: () => void): void;
+
+  // Control protocol methods (interactive mode only)
+  initialize(): void;
+  setModel(model: string): void;
+  onControlResponse(handler: (response: ControlResponse) => void): void;
 }
