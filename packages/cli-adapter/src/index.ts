@@ -8,6 +8,7 @@ export type {
   ChatSessionMode,
   ChatSessionOptions,
   ChatSessionState,
+  ControlRequest,
   ControlResponse,
   ParserFactory,
   ProcessFactory,
