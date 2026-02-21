@@ -39,7 +39,8 @@ function getTabLabel(type: SessionType, index: number): string {
  */
 export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const { socket, emit } = useSocket(serverUrl);
-  const { createChat, killChat, sendMessage, abortMessage } = useChatSocket(serverUrl);
+  const { createChat, killChat, sendMessage, abortMessage, sendControl, respondToControl } =
+    useChatSocket(serverUrl);
   const {
     createOrchestrator,
     dispatch: dispatchOrchestrator,
@@ -462,7 +463,29 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
               className="chat-wrapper"
               style={{ width: '100%', height: '100%' }}
             >
-              <ChatPanel sessionId={activeSession.id} onSend={sendMessage} onAbort={abortMessage} />
+              <ChatPanel
+                sessionId={activeSession.id}
+                onSend={sendMessage}
+                onAbort={abortMessage}
+                onModelChange={(sid, model) => sendControl(sid, 'set_model', { model })}
+                onStyleChange={(sid, style) =>
+                  sendControl(sid, 'set_output_style', { output_style: style })
+                }
+                onModeChange={(sid, mode) =>
+                  sendControl(sid, 'set_permission_mode', { permission_mode: mode })
+                }
+                onInterrupt={(sid) => sendControl(sid, 'interrupt')}
+                onTokensChange={(sid, tokens) =>
+                  sendControl(sid, 'set_thinking_tokens', { max_thinking_tokens: tokens })
+                }
+                onMcpToggle={(sid, name) => sendControl(sid, 'mcp_toggle', { server_name: name })}
+                onMcpReconnect={(sid, name) =>
+                  sendControl(sid, 'mcp_reconnect', { server_name: name })
+                }
+                onRespondControl={(sid, requestId, response) =>
+                  respondToControl(sid, requestId, response)
+                }
+              />
               <BattleOverlay sessionId={activeSession.id} />
             </div>
           )}

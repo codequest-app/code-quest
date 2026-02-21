@@ -1,4 +1,10 @@
-import type { ChatProvider, ChatStats, ChatStreamEvent } from '@code-quest/shared';
+import type {
+  ChatProvider,
+  ChatStats,
+  ChatStreamEvent,
+  ControlRequest,
+  ControlResponse,
+} from '@code-quest/shared';
 import { create } from 'zustand';
 import type { ChatMessage } from '../types';
 
@@ -36,6 +42,31 @@ interface ChatSessionState {
   _capturedAskQuestion?: AskUserQuestionData[];
   worktreePath?: string;
   worktreeBranch?: string;
+  controlInfo?: {
+    models?: Array<{
+      value: string;
+      displayName: string;
+      description: string;
+      supportsEffort?: boolean;
+    }>;
+    account?: { email: string; subscriptionType: string };
+    commands?: Array<{ name: string; description: string }>;
+    currentModel?: string;
+    outputStyle?: string;
+    availableOutputStyles?: string[];
+    pid?: number;
+    permissionMode?: string;
+    maxThinkingTokens?: number;
+    mcpServers?: Array<{ name: string; status: string; error?: string; scope?: string }>;
+  };
+  pendingControlRequest?: {
+    requestId: string;
+    subtype: string;
+    toolName?: string;
+    input?: unknown;
+    callbackId?: string;
+    toolUseId?: string;
+  };
 }
 
 interface ChatStore {
@@ -51,6 +82,9 @@ interface ChatStore {
   clearPendingQuestion: (sessionId: string) => void;
   setWorktreeInfo: (sessionId: string, worktreePath: string, worktreeBranch: string) => void;
   clearWorktreeInfo: (sessionId: string) => void;
+  handleControlResponse: (sessionId: string, response: ControlResponse) => void;
+  handleControlRequest: (sessionId: string, request: ControlRequest) => void;
+  clearPendingControlRequest: (sessionId: string) => void;
 }
 
 let messageCounter = 0;
@@ -331,6 +365,67 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         ...session,
         worktreePath: undefined,
         worktreeBranch: undefined,
+      });
+      return { chatSessions };
+    });
+  },
+
+  handleControlResponse: (sessionId: string, response: ControlResponse) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      if (response.success && response.response) {
+        const controlInfo = { ...session.controlInfo, ...response.response };
+        chatSessions.set(sessionId, { ...session, controlInfo });
+      } else if (!response.success) {
+        // Emit as error message so UI can display
+        const messages = [
+          ...session.messages,
+          {
+            id: createMessageId(),
+            role: 'system' as const,
+            content: `Control error: ${response.error ?? 'Unknown error'}`,
+          },
+        ];
+        chatSessions.set(sessionId, { ...session, messages });
+      }
+
+      return { chatSessions };
+    });
+  },
+
+  handleControlRequest: (sessionId: string, request: ControlRequest) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      chatSessions.set(sessionId, {
+        ...session,
+        pendingControlRequest: {
+          requestId: request.requestId,
+          subtype: request.subtype,
+          toolName: request.toolName,
+          input: request.input,
+          callbackId: request.callbackId,
+          toolUseId: request.toolUseId,
+        },
+      });
+      return { chatSessions };
+    });
+  },
+
+  clearPendingControlRequest: (sessionId: string) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      chatSessions.set(sessionId, {
+        ...session,
+        pendingControlRequest: undefined,
       });
       return { chatSessions };
     });

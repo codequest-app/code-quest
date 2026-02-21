@@ -1,7 +1,14 @@
-import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
+import type {
+  ChatStats,
+  ChatStreamEvent,
+  ControlRequest,
+  ControlResponse,
+} from '@code-quest/shared';
 import {
   chatAbortSchema,
   chatAllowToolSchema,
+  chatControlRespondSchema,
+  chatControlSchema,
   chatCreateSchema,
   chatKillSchema,
   chatSendSchema,
@@ -19,17 +26,27 @@ interface UseChatSocketReturn {
   createChat: (provider: 'claude' | 'gemini') => void;
   killChat: (sessionId: string) => void;
   allowTool: (sessionId: string, toolName: string) => void;
+  sendControl: (sessionId: string, subtype: string, params?: Record<string, unknown>) => void;
+  respondToControl: (
+    sessionId: string,
+    requestId: string,
+    response: Record<string, unknown>,
+  ) => void;
 }
 
 export function useChatSocket(serverUrl: string): UseChatSocketReturn {
   const { socket, emit } = useSocket(serverUrl);
-  const { initChatSession, handleChatEvent } = useChatStore();
+  const { initChatSession, handleChatEvent, handleControlResponse, handleControlRequest } =
+    useChatStore();
 
   useEffect(() => {
     if (!socket) return;
 
     const handleCreated = (sessionId: string, provider: string) => {
       initChatSession(sessionId, provider as 'claude' | 'gemini');
+      // Auto-initialize control protocol
+      emit('chat:control', sessionId, 'initialize', undefined);
+      emit('chat:control', sessionId, 'mcp_status', undefined);
     };
 
     const handleEvent = (sessionId: string, event: ChatStreamEvent) => {
@@ -52,12 +69,22 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       useChatStore.getState().clearWorktreeInfo(sessionId);
     };
 
+    const handleControlRes = (sessionId: string, response: ControlResponse) => {
+      handleControlResponse(sessionId, response);
+    };
+
+    const handleControlReq = (sessionId: string, request: ControlRequest) => {
+      handleControlRequest(sessionId, request);
+    };
+
     socket.on('chat:created', handleCreated);
     socket.on('chat:event', handleEvent);
     socket.on('chat:complete', handleComplete);
     socket.on('chat:error', handleError);
     socket.on('session:worktree', handleWorktree);
     socket.on('session:worktree-cleared', handleWorktreeCleared);
+    socket.on('chat:control-response', handleControlRes);
+    socket.on('chat:control-request', handleControlReq);
 
     return () => {
       socket.off('chat:created', handleCreated);
@@ -66,8 +93,10 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
       socket.off('chat:error', handleError);
       socket.off('session:worktree', handleWorktree);
       socket.off('session:worktree-cleared', handleWorktreeCleared);
+      socket.off('chat:control-response', handleControlRes);
+      socket.off('chat:control-request', handleControlReq);
     };
-  }, [socket, initChatSession, handleChatEvent]);
+  }, [socket, emit, initChatSession, handleChatEvent, handleControlResponse, handleControlRequest]);
 
   // Listen for chat:created to add session to terminal store
   useEffect(() => {
@@ -147,5 +176,38 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
     [emit],
   );
 
-  return { sendMessage, abortMessage, createChat, killChat, allowTool };
+  const sendControl = useCallback(
+    (sessionId: string, subtype: string, params?: Record<string, unknown>) => {
+      const result = safeValidate(chatControlSchema, { sessionId, subtype, params });
+      if (!result.success) {
+        console.warn('[chat:control] validation failed', result.error);
+        return;
+      }
+      emit('chat:control', sessionId, subtype, params);
+    },
+    [emit],
+  );
+
+  const respondToControl = useCallback(
+    (sessionId: string, requestId: string, response: Record<string, unknown>) => {
+      const result = safeValidate(chatControlRespondSchema, { sessionId, requestId, response });
+      if (!result.success) {
+        console.warn('[chat:control-respond] validation failed', result.error);
+        return;
+      }
+      emit('chat:control-respond', sessionId, requestId, response);
+      useChatStore.getState().clearPendingControlRequest(sessionId);
+    },
+    [emit],
+  );
+
+  return {
+    sendMessage,
+    abortMessage,
+    createChat,
+    killChat,
+    allowTool,
+    sendControl,
+    respondToControl,
+  };
 }
