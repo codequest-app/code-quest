@@ -1,4 +1,4 @@
-import type { ChatStreamEvent } from '@code-quest/shared';
+import type { ChatStreamEvent, ControlRequest, ControlResponse } from '@code-quest/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useChatStore } from '../chatStore';
 
@@ -381,7 +381,7 @@ describe('chatStore', () => {
       expect(session?.pendingPermission).toBeUndefined();
     });
 
-    it('should not set pendingQuestion for other denied tools', () => {
+    it('should not set pendingQuestion for other denied tools (not AskUserQuestion)', () => {
       const store = useChatStore.getState();
       store.initChatSession('session-1', 'claude');
       store.addUserMessage('session-1', 'Read a file');
@@ -399,6 +399,163 @@ describe('chatStore', () => {
       expect(session?.pendingQuestion).toBeUndefined();
       expect(session?.pendingPermission).toBeDefined();
       expect(session?.pendingPermission?.toolName).toBe('Read');
+    });
+  });
+
+  describe('Control Protocol', () => {
+    it('should merge controlInfo on successful control response', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      const response: ControlResponse = {
+        requestId: 'initialize-001',
+        success: true,
+        response: {
+          models: [{ value: 'opus', displayName: 'Opus', description: 'Best model' }],
+          pid: 12345,
+        },
+      };
+
+      useChatStore.getState().handleControlResponse('session-1', response);
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlInfo?.models).toHaveLength(1);
+      expect(session?.controlInfo?.models?.[0].value).toBe('opus');
+      expect(session?.controlInfo?.pid).toBe(12345);
+    });
+
+    it('should merge multiple control responses into controlInfo', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: true,
+        response: { pid: 100 },
+      });
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r2',
+        success: true,
+        response: { outputStyle: 'concise', availableOutputStyles: ['concise', 'verbose'] },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlInfo?.pid).toBe(100);
+      expect(session?.controlInfo?.outputStyle).toBe('concise');
+    });
+
+    it('should add error message on failed control response', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: false,
+        error: 'Model not found',
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      const lastMsg = session?.messages[session.messages.length - 1];
+      expect(lastMsg?.role).toBe('system');
+      expect(lastMsg?.content).toContain('Model not found');
+    });
+
+    it('should set pendingControlRequest on control request', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      const request: ControlRequest = {
+        requestId: 'req-001',
+        subtype: 'can_use_tool',
+        toolName: 'Bash',
+        input: { command: 'ls' },
+      };
+
+      useChatStore.getState().handleControlRequest('session-1', request);
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingControlRequest).toBeDefined();
+      expect(session?.pendingControlRequest?.requestId).toBe('req-001');
+      expect(session?.pendingControlRequest?.subtype).toBe('can_use_tool');
+      expect(session?.pendingControlRequest?.toolName).toBe('Bash');
+    });
+
+    it('should clear pendingControlRequest', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-001',
+        subtype: 'can_use_tool',
+      });
+
+      expect(
+        useChatStore.getState().getChatSession('session-1')?.pendingControlRequest,
+      ).toBeDefined();
+
+      useChatStore.getState().clearPendingControlRequest('session-1');
+
+      expect(
+        useChatStore.getState().getChatSession('session-1')?.pendingControlRequest,
+      ).toBeUndefined();
+    });
+
+    it('should merge permissionMode into controlInfo', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: true,
+        response: { permissionMode: 'acceptEdits' },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlInfo?.permissionMode).toBe('acceptEdits');
+    });
+
+    it('should merge maxThinkingTokens into controlInfo', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: true,
+        response: { maxThinkingTokens: 4096 },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlInfo?.maxThinkingTokens).toBe(4096);
+    });
+
+    it('should merge mcpServers into controlInfo', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: true,
+        response: {
+          mcpServers: [
+            { name: 'mcp-git', status: 'connected' },
+            { name: 'mcp-fs', status: 'failed', error: 'timeout' },
+          ],
+        },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlInfo?.mcpServers).toHaveLength(2);
+      expect(session?.controlInfo?.mcpServers?.[1].error).toBe('timeout');
+    });
+
+    it('should ignore control response for non-existent session', () => {
+      useChatStore.getState().handleControlResponse('nonexistent', {
+        requestId: 'r1',
+        success: true,
+        response: { pid: 1 },
+      });
+      // Should not throw
+      expect(useChatStore.getState().getChatSession('nonexistent')).toBeUndefined();
     });
   });
 });
