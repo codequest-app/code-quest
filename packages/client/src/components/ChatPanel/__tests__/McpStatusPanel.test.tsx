@@ -65,4 +65,16 @@ describe('McpStatusPanel', () => {
     fireEvent.click(screen.getByTestId('mcp-reconnect-mcp-fs'));
     expect(onReconnect).toHaveBeenCalledWith('mcp-fs');
   });
+
+  it('should render Refresh button in header', () => {
+    render(<McpStatusPanel mcpServers={servers} onRefresh={vi.fn()} />);
+    expect(screen.getByTestId('mcp-refresh-button')).toBeInTheDocument();
+  });
+
+  it('should call onRefresh when Refresh button is clicked', () => {
+    const onRefresh = vi.fn();
+    render(<McpStatusPanel mcpServers={servers} onRefresh={onRefresh} />);
+    fireEvent.click(screen.getByTestId('mcp-refresh-button'));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
 });

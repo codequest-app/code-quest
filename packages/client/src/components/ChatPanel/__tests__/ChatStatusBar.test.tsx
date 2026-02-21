@@ -140,6 +140,33 @@ describe('ChatStatusBar', () => {
     expect(onInterrupt).toHaveBeenCalled();
   });
 
+  it('should show worktree branch badge when worktreeInfo is present', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    useChatStore.getState().handleControlResponse('s1', {
+      requestId: 'r1',
+      success: true,
+      response: { pid: 1 },
+    });
+    useChatStore.getState().setWorktreeInfo('s1', '/tmp/worktree', 'feature/my-branch');
+
+    render(<ChatStatusBar sessionId="s1" />);
+
+    expect(screen.getByTestId('worktree-badge')).toHaveTextContent('feature/my-branch');
+  });
+
+  it('should not show worktree badge when no worktreeInfo', () => {
+    useChatStore.getState().initChatSession('s1', 'claude');
+    useChatStore.getState().handleControlResponse('s1', {
+      requestId: 'r1',
+      success: true,
+      response: { pid: 1 },
+    });
+
+    render(<ChatStatusBar sessionId="s1" />);
+
+    expect(screen.queryByTestId('worktree-badge')).not.toBeInTheDocument();
+  });
+
   it('should render ThinkingTokensInput when maxThinkingTokens is present', () => {
     useChatStore.getState().initChatSession('s1', 'claude');
     useChatStore.getState().handleControlResponse('s1', {

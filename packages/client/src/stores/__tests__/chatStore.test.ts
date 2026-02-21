@@ -548,6 +548,58 @@ describe('chatStore', () => {
       expect(session?.controlInfo?.mcpServers?.[1].error).toBe('timeout');
     });
 
+    it('should write to controlEventLog on handleControlResponse', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlResponse('session-1', {
+        requestId: 'r1',
+        success: true,
+        response: { pid: 123 },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlEventLog).toHaveLength(1);
+      expect(session?.controlEventLog?.[0].direction).toBe('received');
+      expect(session?.controlEventLog?.[0].type).toBe('r1');
+      expect(session?.controlEventLog?.[0].payload).toEqual({
+        success: true,
+        response: { pid: 123 },
+      });
+    });
+
+    it('should write to controlEventLog on handleControlRequest', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-001',
+        subtype: 'can_use_tool',
+        toolName: 'Bash',
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlEventLog).toHaveLength(1);
+      expect(session?.controlEventLog?.[0].direction).toBe('received');
+      expect(session?.controlEventLog?.[0].type).toBe('can_use_tool');
+    });
+
+    it('should append to controlEventLog via addControlEventLog', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().addControlEventLog('session-1', {
+        direction: 'sent',
+        type: 'set_model',
+        payload: { model: 'opus' },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.controlEventLog).toHaveLength(1);
+      expect(session?.controlEventLog?.[0].direction).toBe('sent');
+      expect(session?.controlEventLog?.[0].type).toBe('set_model');
+    });
+
     it('should ignore control response for non-existent session', () => {
       useChatStore.getState().handleControlResponse('nonexistent', {
         requestId: 'r1',

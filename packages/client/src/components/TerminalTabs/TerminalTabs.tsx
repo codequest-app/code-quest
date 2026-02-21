@@ -9,10 +9,12 @@ import type { SessionType } from '../../types';
 import { BankPanel } from '../Bank/BankPanel';
 import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
+import { KeyboardShortcutsPanel } from '../ChatPanel/KeyboardShortcutsPanel';
 import type { CommandMenuItem } from '../Menu';
 import { CommandMenu } from '../Menu';
 import { OrchestratorPage } from '../OrchestratorPanel';
 import { Terminal, type TerminalHandle } from '../Terminal';
+import { ProviderSelectDialog } from './ProviderSelectDialog';
 
 interface TerminalTabsProps {
   serverUrl: string;
@@ -69,6 +71,8 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const terminalRef = useRef<TerminalHandle>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bankOpen, setBankOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [providerDialogOpen, setProviderDialogOpen] = useState(false);
 
   // Counters for tab labels
   const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0 });
@@ -197,8 +201,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   };
 
   const handleNewOrchestrator = () => {
-    createOrchestrator('claude');
-    // TODO: Make coordinator provider configurable via UI
+    setProviderDialogOpen(true);
   };
 
   const handleCloseSession = useCallback(
@@ -238,6 +241,23 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
       if (e.ctrlKey && e.key === 'b') {
         e.preventDefault();
         setBankOpen((prev) => !prev);
+      }
+
+      // ? key: toggle keyboard shortcuts (only when not in input)
+      if (e.key === '?' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const target = e.target as HTMLElement;
+        const isInput =
+          target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+        if (!isInput) {
+          e.preventDefault();
+          setShortcutsOpen((prev) => !prev);
+        }
+      }
+
+      // Ctrl+/: toggle keyboard shortcuts
+      if (e.ctrlKey && e.key === '/') {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
       }
 
       // Tab key: toggle command menu (only when not in terminal/input)
@@ -414,6 +434,20 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
         />
       )}
 
+      {/* Provider select dialog for orchestrator */}
+      {providerDialogOpen && (
+        <ProviderSelectDialog
+          onSelect={(provider) => {
+            setProviderDialogOpen(false);
+            createOrchestrator(provider);
+          }}
+          onClose={() => setProviderDialogOpen(false)}
+        />
+      )}
+
+      {/* Keyboard shortcuts overlay */}
+      {shortcutsOpen && <KeyboardShortcutsPanel onClose={() => setShortcutsOpen(false)} />}
+
       {/* Bank panel overlay */}
       {bankOpen && (
         <div
@@ -482,6 +516,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
                 onMcpReconnect={(sid, name) =>
                   sendControl(sid, 'mcp_reconnect', { server_name: name })
                 }
+                onMcpRefresh={(sid) => sendControl(sid, 'mcp_status')}
                 onRespondControl={(sid, requestId, response) =>
                   respondToControl(sid, requestId, response)
                 }

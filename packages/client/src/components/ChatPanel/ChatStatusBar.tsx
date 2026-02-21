@@ -48,6 +48,11 @@ export function ChatStatusBar({
             PID: {controlInfo.pid}
           </span>
         )}
+        {session?.worktreeBranch && (
+          <span className="status-item worktree-badge" data-testid="worktree-badge">
+            {session.worktreeBranch}
+          </span>
+        )}
         {isProcessing && (
           <button
             type="button"
@@ -119,6 +124,12 @@ export function ChatStatusBar({
         }
         .interrupt-btn:hover {
           background: #cc3333;
+        }
+        .worktree-badge {
+          background: rgba(255, 255, 255, 0.2);
+          padding: 1px 6px;
+          border-radius: 3px;
+          font-size: 11px;
         }
       `}</style>
     </div>

@@ -29,6 +29,7 @@ export interface ControlResponse {
     }>;
     account?: { email: string; subscriptionType: string };
     commands?: Array<{ name: string; description: string }>;
+    currentModel?: string;
     outputStyle?: string;
     availableOutputStyles?: string[];
     pid?: number;

@@ -59,6 +59,13 @@ interface ChatSessionState {
     maxThinkingTokens?: number;
     mcpServers?: Array<{ name: string; status: string; error?: string; scope?: string }>;
   };
+  controlEventLog?: Array<{
+    id: string;
+    timestamp: number;
+    direction: 'sent' | 'received';
+    type: string;
+    payload: unknown;
+  }>;
   pendingControlRequest?: {
     requestId: string;
     subtype: string;
@@ -85,6 +92,10 @@ interface ChatStore {
   handleControlResponse: (sessionId: string, response: ControlResponse) => void;
   handleControlRequest: (sessionId: string, request: ControlRequest) => void;
   clearPendingControlRequest: (sessionId: string) => void;
+  addControlEventLog: (
+    sessionId: string,
+    entry: { direction: 'sent' | 'received'; type: string; payload: unknown },
+  ) => void;
 }
 
 let messageCounter = 0;
@@ -376,11 +387,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       const session = chatSessions.get(sessionId);
       if (!session) return state;
 
+      const logEntry = {
+        id: createMessageId(),
+        timestamp: Date.now(),
+        direction: 'received' as const,
+        type: response.requestId,
+        payload: { success: response.success, response: response.response, error: response.error },
+      };
+      const controlEventLog = [...(session.controlEventLog ?? []), logEntry];
+
       if (response.success && response.response) {
         const controlInfo = { ...session.controlInfo, ...response.response };
-        chatSessions.set(sessionId, { ...session, controlInfo });
+        chatSessions.set(sessionId, { ...session, controlInfo, controlEventLog });
       } else if (!response.success) {
-        // Emit as error message so UI can display
         const messages = [
           ...session.messages,
           {
@@ -389,7 +408,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             content: `Control error: ${response.error ?? 'Unknown error'}`,
           },
         ];
-        chatSessions.set(sessionId, { ...session, messages });
+        chatSessions.set(sessionId, { ...session, messages, controlEventLog });
+      } else {
+        chatSessions.set(sessionId, { ...session, controlEventLog });
       }
 
       return { chatSessions };
@@ -402,8 +423,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       const session = chatSessions.get(sessionId);
       if (!session) return state;
 
+      const logEntry = {
+        id: createMessageId(),
+        timestamp: Date.now(),
+        direction: 'received' as const,
+        type: request.subtype,
+        payload: request,
+      };
+      const controlEventLog = [...(session.controlEventLog ?? []), logEntry];
+
       chatSessions.set(sessionId, {
         ...session,
+        controlEventLog,
         pendingControlRequest: {
           requestId: request.requestId,
           subtype: request.subtype,
@@ -427,6 +458,26 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         ...session,
         pendingControlRequest: undefined,
       });
+      return { chatSessions };
+    });
+  },
+
+  addControlEventLog: (
+    sessionId: string,
+    entry: { direction: 'sent' | 'received'; type: string; payload: unknown },
+  ) => {
+    set((state) => {
+      const chatSessions = new Map(state.chatSessions);
+      const session = chatSessions.get(sessionId);
+      if (!session) return state;
+
+      const logEntry = {
+        id: createMessageId(),
+        timestamp: Date.now(),
+        ...entry,
+      };
+      const controlEventLog = [...(session.controlEventLog ?? []), logEntry];
+      chatSessions.set(sessionId, { ...session, controlEventLog });
       return { chatSessions };
     });
   },

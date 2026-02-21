@@ -3,6 +3,7 @@ import type {
   ChatStreamEvent,
   ControlRequest,
   ControlResponse,
+  SystemCapabilities,
 } from '@code-quest/shared';
 import {
   chatAbortSchema,
@@ -14,7 +15,9 @@ import {
   chatSendSchema,
 } from '@code-quest/shared';
 import { useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useChatStore } from '../stores/chatStore';
+import { useSystemStore } from '../stores/systemStore';
 import { useTerminalStore } from '../stores/terminalStore';
 import type { SessionType } from '../types';
 import { safeValidate } from '../utils/validateAndEmit.ts';
@@ -71,30 +74,49 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
 
     const handleControlRes = (sessionId: string, response: ControlResponse) => {
       handleControlResponse(sessionId, response);
+      if (response.success) {
+        toast.success(`Control: ${response.requestId.split('-')[0]} succeeded`);
+      } else {
+        toast.error(`Control error: ${response.error ?? 'Unknown'}`);
+      }
     };
 
     const handleControlReq = (sessionId: string, request: ControlRequest) => {
       handleControlRequest(sessionId, request);
     };
 
+    const handleCapabilities = (caps: SystemCapabilities) => {
+      useSystemStore.getState().setCapabilities(caps);
+    };
+
+    const handleChatExit = (sessionId: string) => {
+      useChatStore.getState().removeChatSession(sessionId);
+      useTerminalStore.getState().removeSession(sessionId);
+      toast.success(`Session ${sessionId.slice(0, 8)} exited`);
+    };
+
     socket.on('chat:created', handleCreated);
     socket.on('chat:event', handleEvent);
     socket.on('chat:complete', handleComplete);
     socket.on('chat:error', handleError);
+    socket.on('chat:exit', handleChatExit);
     socket.on('session:worktree', handleWorktree);
     socket.on('session:worktree-cleared', handleWorktreeCleared);
     socket.on('chat:control-response', handleControlRes);
     socket.on('chat:control-request', handleControlReq);
+    socket.on('system:capabilities', handleCapabilities);
 
     return () => {
       socket.off('chat:created', handleCreated);
       socket.off('chat:event', handleEvent);
       socket.off('chat:complete', handleComplete);
       socket.off('chat:error', handleError);
+      socket.off('chat:exit', handleChatExit);
       socket.off('session:worktree', handleWorktree);
       socket.off('session:worktree-cleared', handleWorktreeCleared);
       socket.off('chat:control-response', handleControlRes);
       socket.off('chat:control-request', handleControlReq);
+      socket.off('system:capabilities', handleCapabilities);
     };
   }, [socket, emit, initChatSession, handleChatEvent, handleControlResponse, handleControlRequest]);
 
@@ -184,6 +206,11 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
         return;
       }
       emit('chat:control', sessionId, subtype, params);
+      useChatStore.getState().addControlEventLog(sessionId, {
+        direction: 'sent',
+        type: subtype,
+        payload: params,
+      });
     },
     [emit],
   );
