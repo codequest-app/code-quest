@@ -11,9 +11,15 @@ interface McpStatusPanelProps {
   mcpServers?: McpServer[];
   onToggle?: (serverName: string) => void;
   onReconnect?: (serverName: string) => void;
+  onRefresh?: () => void;
 }
 
-export function McpStatusPanel({ mcpServers, onToggle, onReconnect }: McpStatusPanelProps) {
+export function McpStatusPanel({
+  mcpServers,
+  onToggle,
+  onReconnect,
+  onRefresh,
+}: McpStatusPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (!mcpServers || mcpServers.length === 0) {
@@ -22,14 +28,28 @@ export function McpStatusPanel({ mcpServers, onToggle, onReconnect }: McpStatusP
 
   return (
     <div className="mcp-status-panel" data-testid="mcp-status-panel">
-      <button
-        type="button"
-        className="mcp-header-toggle"
-        data-testid="mcp-header-toggle"
-        onClick={() => setExpanded((prev) => !prev)}
-      >
-        MCP Servers ({mcpServers.length})
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <button
+          type="button"
+          className="mcp-header-toggle"
+          data-testid="mcp-header-toggle"
+          onClick={() => setExpanded((prev) => !prev)}
+          style={{ flex: 1 }}
+        >
+          MCP Servers ({mcpServers.length})
+        </button>
+        {onRefresh && (
+          <button
+            type="button"
+            className="mcp-btn"
+            data-testid="mcp-refresh-button"
+            onClick={onRefresh}
+            style={{ margin: '0 8px' }}
+          >
+            Refresh
+          </button>
+        )}
+      </div>
       {expanded && (
         <div className="mcp-server-list" data-testid="mcp-server-list">
           {mcpServers.map((server) => (

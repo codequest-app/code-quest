@@ -116,4 +116,25 @@ describe('ChatInput', () => {
     // Can't type when disabled, but test the guard in handleSend
     expect(screen.getByLabelText('Message input')).toBeDisabled();
   });
+
+  it('should call onSlashTyped when / is typed on empty input', () => {
+    const onSlashTyped = vi.fn();
+    renderInput({ onSlashTyped });
+
+    const input = screen.getByLabelText('Message input');
+    fireEvent.change(input, { target: { value: '/' } });
+
+    expect(onSlashTyped).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call onSlashTyped when / is typed on non-empty input', () => {
+    const onSlashTyped = vi.fn();
+    renderInput({ onSlashTyped });
+
+    const input = screen.getByLabelText('Message input');
+    fireEvent.change(input, { target: { value: 'hello' } });
+    fireEvent.change(input, { target: { value: 'hello/' } });
+
+    expect(onSlashTyped).not.toHaveBeenCalled();
+  });
 });

@@ -20,7 +20,7 @@
 
 #### 測試偏好
 - 測試順序：Feature Test > Integration Test > Unit Test
-- Test Double：Fake > Spy > Stub > Mock
+- Test Double：No Double > Spy > Proxy Mock > Partial Mock > Fake > Mock > Stub
 
 ---
 

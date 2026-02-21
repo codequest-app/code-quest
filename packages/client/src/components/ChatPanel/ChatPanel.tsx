@@ -3,11 +3,13 @@ import { useChatStore } from '../../stores/chatStore';
 import { ChatInput } from './ChatInput';
 import { ChatStatusBar } from './ChatStatusBar';
 import { CommandPalette } from './CommandPalette';
+import { ControlEventLog } from './ControlEventLog';
 import { ControlRequestPrompt } from './ControlRequestPrompt';
 import { McpStatusPanel } from './McpStatusPanel';
 import { MessageBubble } from './MessageBubble';
 import { PermissionPrompt } from './PermissionPrompt';
 import { QuestionPrompt } from './QuestionPrompt';
+import { SessionInfoPanel } from './SessionInfoPanel';
 
 interface ChatPanelProps {
   sessionId: string;
@@ -22,6 +24,7 @@ interface ChatPanelProps {
   onTokensChange?: (sessionId: string, tokens: number) => void;
   onMcpToggle?: (sessionId: string, serverName: string) => void;
   onMcpReconnect?: (sessionId: string, serverName: string) => void;
+  onMcpRefresh?: (sessionId: string) => void;
   onRespondControl?: (
     sessionId: string,
     requestId: string,
@@ -41,6 +44,7 @@ export function ChatPanel({
   onTokensChange,
   onMcpToggle,
   onMcpReconnect,
+  onMcpRefresh,
   onRespondControl,
 }: ChatPanelProps) {
   const session = useChatStore((state) => state.getChatSession(sessionId));
@@ -103,11 +107,14 @@ export function ChatPanel({
         onInterrupt={() => onInterrupt?.(sessionId)}
         onTokensChange={(tokens) => onTokensChange?.(sessionId, tokens)}
       />
+      <SessionInfoPanel sessionId={sessionId} />
       <McpStatusPanel
         mcpServers={session.controlInfo?.mcpServers}
         onToggle={(name) => onMcpToggle?.(sessionId, name)}
         onReconnect={(name) => onMcpReconnect?.(sessionId, name)}
+        onRefresh={() => onMcpRefresh?.(sessionId)}
       />
+      <ControlEventLog sessionId={sessionId} />
       <div className="chat-messages">
         {session.messages.length === 0 && (
           <div className="chat-empty">Start a conversation by typing a message below.</div>
@@ -168,6 +175,7 @@ export function ChatPanel({
               onSend={(message) => onSend?.(sessionId, message)}
               onAbort={() => onAbort?.(sessionId)}
               isProcessing={session.isProcessing}
+              onSlashTyped={() => setCommandPaletteOpen(true)}
             />
           </div>
         </div>

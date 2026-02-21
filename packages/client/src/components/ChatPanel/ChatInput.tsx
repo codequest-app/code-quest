@@ -5,9 +5,16 @@ interface ChatInputProps {
   onAbort: () => void;
   isProcessing: boolean;
   disabled?: boolean;
+  onSlashTyped?: () => void;
 }
 
-export function ChatInput({ onSend, onAbort, isProcessing, disabled }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  onAbort,
+  isProcessing,
+  disabled,
+  onSlashTyped,
+}: ChatInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -30,7 +37,13 @@ export function ChatInput({ onSend, onAbort, isProcessing, disabled }: ChatInput
       <textarea
         ref={textareaRef}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          const newValue = e.target.value;
+          if (newValue === '/' && value === '' && onSlashTyped) {
+            onSlashTyped();
+          }
+          setValue(newValue);
+        }}
         onKeyDown={handleKeyDown}
         placeholder="Type a message..."
         disabled={disabled || isProcessing}
