@@ -374,10 +374,11 @@ export class SocketHandlerImpl implements SocketHandler {
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
             if (event.type === 'control_request') {
-              const data = event.data as { requestId: string; toolName?: string; input?: unknown };
+              const data = event.data as { requestId: string; toolName?: string; input?: unknown; toolUseId?: string };
               this.pendingControlRequests.set(data.requestId, {
                 toolName: data.toolName,
                 input: data.input,
+                toolUseId: data.toolUseId,
               });
               socket.emit('chat:control-request', coordSession.id, event.data);
             }
@@ -434,6 +435,11 @@ export class SocketHandlerImpl implements SocketHandler {
         });
 
         orch.onWorkerControlRequest((workerId, request) => {
+          this.pendingControlRequests.set(request.requestId, {
+            toolName: request.toolName,
+            input: request.input,
+            toolUseId: request.toolUseId,
+          });
           socket.emit('chat:control-request', workerId, request);
         });
 
