@@ -315,9 +315,112 @@
   height: 100%;
 }
 
-.worker-grid__panels {
+.worker-grid__body {
+  display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+.worker-grid__sidebar {
+  width: 200px;
+  overflow-y: auto;
+  background: #252526;
+  border-right: 1px solid #3e3e42;
+  flex-shrink: 0;
+}
+
+.worker-grid__main {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Worker Sidebar Item ─── */
+
+.worker-sidebar-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: none;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #3e3e42;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.worker-sidebar-item:hover {
+  background: #2d2d30;
+}
+
+.worker-sidebar-item--selected {
+  background: #2d2d30;
+  border-left-color: #569cd6;
+}
+
+.worker-sidebar-item--selected.worker-sidebar-item--complete {
+  border-left-color: #4ec9b0;
+}
+
+.worker-sidebar-item--selected.worker-sidebar-item--error {
+  border-left-color: #f44747;
+}
+
+.worker-sidebar-item--selected.worker-sidebar-item--running {
+  border-left-color: #569cd6;
+}
+
+.worker-sidebar-item--selected.worker-sidebar-item--pending {
+  border-left-color: #808080;
+}
+
+.worker-sidebar-item--selected.worker-sidebar-item--skipped {
+  border-left-color: #ce9178;
+}
+
+.worker-sidebar-item__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.worker-sidebar-item__icon {
+  flex-shrink: 0;
+}
+
+.worker-sidebar-item__label {
+  font-weight: 600;
+  color: #d4d4d4;
+}
+
+.worker-sidebar-item__provider {
+  color: #808080;
+  font-size: 11px;
+}
+
+.worker-sidebar-item__enemy {
+  font-size: 11px;
+  color: #808080;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.worker-sidebar-item__hp-bar {
+  height: 3px;
+  background: #3e3e42;
+  border-radius: 1px;
+  margin-top: 4px;
+}
+
+.worker-sidebar-item__hp-fill {
+  height: 100%;
+  background: #4ec9b0;
+  border-radius: 1px;
+  transition: width 0.3s;
 }
 
 .worker-grid__footer {
