@@ -18,6 +18,9 @@ export const TYPES = {
   ChatCommandsConfig: Symbol.for('ChatCommandsConfig'),
   ServerConfig: Symbol.for('ServerConfig'),
 
+  // Logging
+  ChatLogger: Symbol.for('ChatLogger'),
+
   // Git
   GitService: Symbol.for('GitService'),
 
