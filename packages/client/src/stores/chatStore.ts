@@ -420,8 +420,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   handleControlRequest: (sessionId: string, request: ControlRequest) => {
     set((state) => {
       const chatSessions = new Map(state.chatSessions);
-      const session = chatSessions.get(sessionId);
-      if (!session) return state;
+      let session = chatSessions.get(sessionId);
+      if (!session) {
+        // Auto-create session for orchestrator workers or other late-arriving sessions
+        session = {
+          provider: 'claude',
+          messages: [],
+          isProcessing: true,
+          allowedTools: [],
+          unresolvedToolUses: [],
+        };
+        chatSessions.set(sessionId, session);
+      }
 
       const logEntry = {
         id: createMessageId(),

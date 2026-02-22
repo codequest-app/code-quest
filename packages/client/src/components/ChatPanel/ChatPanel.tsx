@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { socketManager } from '../../services/socket';
 import { useChatStore } from '../../stores/chatStore';
 import { ChatInput } from './ChatInput';
 import { ChatStatusBar } from './ChatStatusBar';
@@ -50,6 +51,18 @@ export function ChatPanel({
   const session = useChatStore((state) => state.getChatSession(sessionId));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  const handleRespondControl = useCallback(
+    (sid: string, requestId: string, response: Record<string, unknown>) => {
+      if (onRespondControl) {
+        onRespondControl(sid, requestId, response);
+      } else {
+        socketManager.getCurrentSocket()?.emit('chat:control-respond', sid, requestId, response);
+        useChatStore.getState().clearPendingControlRequest(sid);
+      }
+    },
+    [onRespondControl],
+  );
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -146,7 +159,7 @@ export function ChatPanel({
       {session.pendingControlRequest && (
         <ControlRequestPrompt
           request={session.pendingControlRequest}
-          onRespond={(requestId, response) => onRespondControl?.(sessionId, requestId, response)}
+          onRespond={(requestId, response) => handleRespondControl(sessionId, requestId, response)}
           onDismiss={() => useChatStore.getState().clearPendingControlRequest(sessionId)}
         />
       )}

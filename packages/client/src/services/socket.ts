@@ -40,6 +40,13 @@ class SocketManager {
   }
 
   /**
+   * Get existing socket instance (if connected)
+   */
+  getCurrentSocket(): TypedSocket | null {
+    return this.socket;
+  }
+
+  /**
    * Disconnect socket
    */
   disconnect(): void {

@@ -193,14 +193,6 @@ export class SocketHandlerImpl implements SocketHandler {
           socket.emit('chat:exit', session.id);
         });
 
-        session.onControlResponse((response) => {
-          socket.emit('chat:control-response', session.id, response);
-        });
-
-        session.onControlRequest((request) => {
-          socket.emit('chat:control-request', session.id, request);
-        });
-
         socket.emit('chat:created', session.id, session.provider);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -488,7 +480,7 @@ export class SocketHandlerImpl implements SocketHandler {
   private attachLogger(
     sessionId: string,
     session: ReturnType<ChatManager['getSession']>,
-    _socket: Socket,
+    socket: Socket,
   ): void {
     if (!session || this.loggedSessions.has(sessionId)) return;
     this.loggedSessions.add(sessionId);
@@ -509,6 +501,14 @@ export class SocketHandlerImpl implements SocketHandler {
       this.chatLogger.log(sessionId, { dir: 'out', type: 'exit', data: {} });
       this.chatLogger.close(sessionId);
       this.loggedSessions.delete(sessionId);
+    });
+
+    session.onControlRequest((request) => {
+      socket.emit('chat:control-request', sessionId, request);
+    });
+
+    session.onControlResponse((response) => {
+      socket.emit('chat:control-response', sessionId, response);
     });
   }
 }
