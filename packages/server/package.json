@@ -12,6 +12,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "biome check src",
+    "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
+    "db:generate:mysql": "drizzle-kit generate --config=drizzle-mysql.config.ts",
+    "db:generate": "pnpm db:generate:sqlite && pnpm db:generate:mysql",
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
@@ -36,6 +39,7 @@
     "@vitest/coverage-v8": "^1.2.1",
     "@vitest/ui": "^1.2.1",
     "better-sqlite3": "^12.6.2",
+    "drizzle-kit": "^0.31.9",
     "msw": "^2.1.2",
     "msw-fetch-mock": "^0.4.10",
     "socket.io-client": "^4.8.3",
