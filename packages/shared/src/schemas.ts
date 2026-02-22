@@ -78,6 +78,15 @@ export const chatStatsSchema = z.object({
 });
 
 export const chatStreamEventSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('spawn'),
+    data: z.object({
+      command: z.string(),
+      args: z.array(z.string()),
+      cwd: z.string(),
+      mode: z.string(),
+    }),
+  }),
   z.object({ type: z.literal('init'), data: z.object({ sessionId: z.string() }) }),
   z.object({ type: z.literal('text'), data: z.object({ content: z.string() }) }),
   z.object({ type: z.literal('thinking'), data: z.object({ content: z.string() }) }),
@@ -146,6 +155,18 @@ export const chatStreamEventSchema = z.discriminatedUnion('type', [
     }),
   }),
 ]);
+
+// Control protocol
+export const chatControlSchema = z.object({
+  sessionId: z.string().min(1),
+  subtype: z.string().min(1),
+  params: z.record(z.string(), z.unknown()).optional(),
+});
+export const chatControlRespondSchema = z.object({
+  sessionId: z.string().min(1),
+  requestId: z.string().min(1),
+  response: z.record(z.string(), z.unknown()),
+});
 
 export const orchestratorStatusSchema = z.enum([
   'idle',
