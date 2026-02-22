@@ -32,6 +32,8 @@ export function createSqliteRepository(
           args: row.args,
           cwd: row.cwd,
           mode: row.mode,
+          role: row.role,
+          parentId: row.parentId,
           createdAt: row.createdAt,
         })
         .run();

@@ -12,6 +12,8 @@ export class DrizzleChatLogger implements ChatLogger {
       args: JSON.stringify(metadata.args),
       cwd: metadata.cwd ?? null,
       mode: metadata.mode,
+      role: metadata.role ?? 'chat',
+      parentId: metadata.parentId ?? null,
       createdAt: new Date().toISOString(),
     });
   }

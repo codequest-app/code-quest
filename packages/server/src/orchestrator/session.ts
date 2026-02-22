@@ -66,12 +66,24 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.coordinatorSession = this.chatManager.createSession({ provider: options.provider });
     this.coordinatorId = this.coordinatorSession.id;
 
+    // Insert orchestrator row (container — no actual CLI process)
+    this.chatLogger.createSession(this.id, {
+      provider: options.provider,
+      command: '',
+      args: [],
+      mode: 'orchestrator',
+      role: 'orchestrator',
+    });
+
+    // Insert coordinator row linked to orchestrator
     this.chatLogger.createSession(this.coordinatorSession.id, {
       provider: this.coordinatorSession.provider,
       command: this.coordinatorSession.command,
       args: this.coordinatorSession.baseArgs,
       cwd: this.coordinatorSession.cwd,
       mode: this.coordinatorSession.mode,
+      role: 'coordinator',
+      parentId: this.id,
     });
   }
 
@@ -249,6 +261,8 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
         args: session.baseArgs,
         cwd: session.cwd,
         mode: session.mode,
+        role: 'worker',
+        parentId: this.id,
       });
 
       // If status was workers-complete or workers-paused, go back to workers-running
@@ -355,6 +369,8 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
         args: session.baseArgs,
         cwd: session.cwd,
         mode: session.mode,
+        role: 'worker',
+        parentId: this.id,
       });
 
       if (cwd) {
