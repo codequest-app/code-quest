@@ -639,4 +639,56 @@ describe('chatStore', () => {
       expect(useChatStore.getState().getChatSession('nonexistent')).toBeUndefined();
     });
   });
+
+  describe('handleChatEvent with control_request', () => {
+    it('should add control_request event to pendingControlRequests', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      const event: ChatStreamEvent = {
+        type: 'control_request',
+        data: {
+          requestId: 'req-001',
+          subtype: 'can_use_tool',
+          toolName: 'Bash',
+          input: { command: 'ls' },
+        },
+      };
+      store.handleChatEvent('session-1', event);
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingControlRequests).toHaveLength(1);
+      expect(session?.pendingControlRequests[0].requestId).toBe('req-001');
+      expect(session?.pendingControlRequests[0].toolName).toBe('Bash');
+    });
+
+    it('should queue multiple control_request events via handleChatEvent', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      store.handleChatEvent('session-1', {
+        type: 'control_request',
+        data: {
+          requestId: 'req-001',
+          subtype: 'can_use_tool',
+          toolName: 'WebSearch',
+          input: { query: 'test' },
+        },
+      });
+      store.handleChatEvent('session-1', {
+        type: 'control_request',
+        data: {
+          requestId: 'req-002',
+          subtype: 'can_use_tool',
+          toolName: 'Bash',
+          input: { command: 'ls' },
+        },
+      });
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingControlRequests).toHaveLength(2);
+      expect(session?.pendingControlRequests[0].requestId).toBe('req-001');
+      expect(session?.pendingControlRequests[1].requestId).toBe('req-002');
+    });
+  });
 });

@@ -305,6 +305,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       return { chatSessions };
     });
+
+    if (event.type === 'control_request') {
+      get().handleControlRequest(sessionId, event.data as ControlRequest);
+    }
   },
 
   allowTool: (sessionId: string, toolName: string) => {
