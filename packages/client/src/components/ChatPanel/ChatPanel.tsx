@@ -58,7 +58,6 @@ export function ChatPanel({
         onRespondControl(sid, requestId, response);
       } else {
         socketManager.getCurrentSocket()?.emit('chat:control-respond', sid, requestId, response);
-        useChatStore.getState().clearPendingControlRequest(sid);
       }
     },
     [onRespondControl],
@@ -174,8 +173,8 @@ export function ChatPanel({
                 onRespondAll={(response) => {
                   for (const req of reqs) {
                     handleRespondControl(sessionId, req.requestId, response);
+                    useChatStore.getState().clearPendingControlRequest(sessionId, req.requestId);
                   }
-                  useChatStore.getState().clearPendingControlRequest(sessionId);
                 }}
                 onDismiss={() => {
                   for (const req of reqs) {
