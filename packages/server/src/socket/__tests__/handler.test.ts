@@ -424,6 +424,42 @@ describe('SocketHandler', () => {
       expect(chatManager.getSession(sessionId)).toBeDefined();
     });
 
+    it('should emit chat:control-request when session fires control_request event', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => {
+          resolve(sessionId);
+        });
+      });
+
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      const controlReqPromise = new Promise<{ sid: string; request: unknown }>((resolve) => {
+        clientSocket.on('chat:control-request', (sid: string, request: unknown) => {
+          resolve({ sid, request });
+        });
+      });
+
+      // Trigger a control_request event through the session's event handlers
+      const session = chatManager.getSession(sessionId);
+      const controlEvent = {
+        type: 'control_request' as const,
+        data: {
+          requestId: 'req-test-001',
+          subtype: 'can_use_tool',
+          toolName: 'Bash',
+          input: { command: 'ls' },
+          toolUseId: 'toolu_01',
+        },
+      };
+      // biome-ignore lint/suspicious/noExplicitAny: test-only access to private emitEvent
+      (session as any).emitEvent(controlEvent);
+
+      const result = await controlReqPromise;
+      expect(result.sid).toBe(sessionId);
+      expect(result.request).toEqual(controlEvent.data);
+    });
+
     it('should handle chat:abort for non-existent session', async () => {
       const error = new Promise<{ id: string; msg: string }>((resolve) => {
         clientSocket.on('chat:error', (id: string, msg: string) => {

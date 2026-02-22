@@ -187,6 +187,9 @@ export class SocketHandlerImpl implements SocketHandler {
 
         session.onEvent((event) => {
           socket.emit('chat:event', session.id, event);
+          if (event.type === 'control_request') {
+            socket.emit('chat:control-request', session.id, event.data);
+          }
         });
 
         session.onComplete((stats) => {
@@ -349,6 +352,9 @@ export class SocketHandlerImpl implements SocketHandler {
           this.attachLogger(coordSession.id, coordSession, socket);
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
+            if (event.type === 'control_request') {
+              socket.emit('chat:control-request', coordSession.id, event.data);
+            }
           });
           coordSession.onComplete((stats) => {
             socket.emit('chat:complete', coordSession.id, stats);
