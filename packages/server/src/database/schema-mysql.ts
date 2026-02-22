@@ -2,13 +2,13 @@ import { index, int, mysqlTable, text, varchar } from 'drizzle-orm/mysql-core';
 
 export const sessions = mysqlTable('sessions', {
   id: varchar('id', { length: 36 }).primaryKey(),
+  parentId: varchar('parent_id', { length: 36 }),
+  role: varchar('role', { length: 20 }).notNull().default('chat'),
   provider: varchar('provider', { length: 20 }).notNull(),
   command: varchar('command', { length: 255 }).notNull(),
   args: text('args').notNull(),
   cwd: text('cwd'),
   mode: varchar('mode', { length: 20 }).notNull().default('print'),
-  role: varchar('role', { length: 20 }).notNull().default('chat'),
-  parentId: varchar('parent_id', { length: 36 }),
   createdAt: varchar('created_at', { length: 30 }).notNull(),
 });
 
