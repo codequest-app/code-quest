@@ -236,6 +236,11 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.chatLogger.log(parsed.data.sessionId, {
+        dir: 'in',
+        type: 'allow_tool',
+        data: { toolName: parsed.data.toolName },
+      });
       session.addAllowedTool(parsed.data.toolName);
     });
 
@@ -252,6 +257,7 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.chatLogger.log(parsed.data.sessionId, { dir: 'in', type: 'abort', data: {} });
       session.abort();
     });
 
@@ -263,6 +269,8 @@ export class SocketHandlerImpl implements SocketHandler {
         return;
       }
 
+      this.chatLogger.log(parsed.data.sessionId, { dir: 'in', type: 'kill', data: {} });
+      this.chatLogger.close(parsed.data.sessionId);
       this.chatManager.removeSession(parsed.data.sessionId);
     });
 
@@ -279,6 +287,11 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.chatLogger.log(parsed.data.sessionId, {
+        dir: 'in',
+        type: 'control_request_sent',
+        data: { subtype: parsed.data.subtype, params: parsed.data.params },
+      });
       session.sendControlRequestAsync(parsed.data.subtype, parsed.data.params);
     });
 
@@ -316,9 +329,16 @@ export class SocketHandlerImpl implements SocketHandler {
 
         this.orchestrators.set(orch.id, orch);
 
+        this.chatLogger.log(orch.id, {
+          dir: 'out',
+          type: 'orchestrator_created',
+          data: { coordinatorId: orch.coordinatorId, provider: parsed.data.provider },
+        });
+
         // Wire up coordinator chat events through existing chat:event channel
         const coordSession = this.chatManager.getSession(orch.coordinatorId);
         if (coordSession) {
+          this.attachLogger(coordSession.id, coordSession, socket);
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
           });
@@ -332,6 +352,7 @@ export class SocketHandlerImpl implements SocketHandler {
 
         // Wire up orchestrator-specific events
         orch.onStatusChange((status) => {
+          this.chatLogger.log(orch.id, { dir: 'out', type: 'status_change', data: { status } });
           socket.emit('orchestrator:status', orch.id, status);
           if (status === 'workers-complete') {
             socket.emit('orchestrator:all-complete', orch.id, orch.getWorkerResults());
@@ -339,14 +360,23 @@ export class SocketHandlerImpl implements SocketHandler {
         });
 
         orch.onWorkerEvent((workerId, event) => {
+          this.chatLogger.log(workerId, { dir: 'out', type: event.type, data: event });
           socket.emit('orchestrator:worker-event', orch.id, workerId, event);
         });
 
         orch.onWorkerComplete((workerId, result) => {
+          const type = result.error ? 'error' : 'complete';
+          this.chatLogger.log(workerId, { dir: 'out', type, data: result });
+          this.chatLogger.close(workerId);
           socket.emit('orchestrator:worker-complete', orch.id, workerId, result);
         });
 
         orch.onMergeError((workerId, error) => {
+          this.chatLogger.log(orch.id, {
+            dir: 'out',
+            type: 'merge_error',
+            data: { workerId, error },
+          });
           socket.emit('orchestrator:merge-error', orch.id, workerId, error);
         });
 
@@ -359,6 +389,7 @@ export class SocketHandlerImpl implements SocketHandler {
         });
 
         orch.onWorkersUpdated((workers) => {
+          this.chatLogger.log(orch.id, { dir: 'out', type: 'workers_updated', data: { workers } });
           socket.emit('orchestrator:workers-updated', orch.id, workers);
         });
 
@@ -419,6 +450,7 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
+      this.chatLogger.log(parsed.data.orchId, { dir: 'in', type: 'abort', data: {} });
       orch.abort();
     });
 
@@ -435,6 +467,8 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('orchestrator:error', parsed.data.orchId, 'Orchestrator not found');
         return;
       }
+      this.chatLogger.log(parsed.data.orchId, { dir: 'in', type: 'kill', data: {} });
+      this.chatLogger.close(parsed.data.orchId);
       orch.kill();
       this.orchestrators.delete(parsed.data.orchId);
     });

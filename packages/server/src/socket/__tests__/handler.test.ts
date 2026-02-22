@@ -479,6 +479,131 @@ describe('SocketHandler', () => {
     });
   });
 
+  describe('chat logging gaps', () => {
+    it('should log abort when chat:abort is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
+      });
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      clientSocket.emit('chat:abort', sessionId);
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
+        dir: 'in',
+        type: 'abort',
+        data: {},
+      });
+    });
+
+    it('should log kill and close when chat:kill is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
+      });
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      clientSocket.emit('chat:kill', sessionId);
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
+        dir: 'in',
+        type: 'kill',
+        data: {},
+      });
+      expect(mockChatLogger.close).toHaveBeenCalledWith(sessionId);
+    });
+
+    it('should log allow_tool when chat:allow-tool is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
+      });
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      clientSocket.emit('chat:allow-tool', sessionId, 'Bash');
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
+        dir: 'in',
+        type: 'allow_tool',
+        data: { toolName: 'Bash' },
+      });
+    });
+
+    it('should log control_request_sent when chat:control is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
+      });
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      clientSocket.emit('chat:control', sessionId, 'set_model', { model: 'opus' });
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
+        dir: 'in',
+        type: 'control_request_sent',
+        data: { subtype: 'set_model', params: { model: 'opus' } },
+      });
+    });
+  });
+
+  describe('orchestrator logging', () => {
+    it('should log orchestrator_created on orchestrator:create', async () => {
+      const created = new Promise<{ orchId: string; coordinatorId: string }>((resolve) => {
+        clientSocket.on('orchestrator:created', (orchId: string, coordinatorId: string) => {
+          resolve({ orchId, coordinatorId });
+        });
+      });
+
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
+      const result = await created;
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(result.orchId, {
+        dir: 'out',
+        type: 'orchestrator_created',
+        data: { coordinatorId: result.coordinatorId, provider: 'claude' },
+      });
+    });
+
+    it('should log abort when orchestrator:abort is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => resolve(orchId));
+      });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
+      const orchId = await created;
+
+      clientSocket.emit('orchestrator:abort', orchId);
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(orchId, {
+        dir: 'in',
+        type: 'abort',
+        data: {},
+      });
+    });
+
+    it('should log kill and close when orchestrator:kill is received', async () => {
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('orchestrator:created', (orchId: string) => resolve(orchId));
+      });
+      clientSocket.emit('orchestrator:create', { provider: 'claude' });
+      const orchId = await created;
+
+      clientSocket.emit('orchestrator:kill', orchId);
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(orchId, {
+        dir: 'in',
+        type: 'kill',
+        data: {},
+      });
+      expect(mockChatLogger.close).toHaveBeenCalledWith(orchId);
+    });
+  });
+
   describe('orchestrator events', () => {
     it('should create orchestrator and emit orchestrator:created', async () => {
       const created = new Promise<{ orchId: string; coordinatorId: string; provider: string }>(
