@@ -68,6 +68,9 @@ export interface ControlRequest {
 export interface ChatSession {
   readonly id: string;
   readonly provider: ChatProvider;
+  readonly command: string;
+  readonly baseArgs: string[];
+  readonly cwd: string;
   readonly state: ChatSessionState;
   readonly cliSessionId: string | null;
   readonly mode: ChatSessionMode;

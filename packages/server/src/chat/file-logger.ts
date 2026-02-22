@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { injectable } from 'inversify';
-import type { ChatLogEntry, ChatLogger } from './logger.ts';
+import type { ChatLogEntry, ChatLogger, SessionMetadata } from './logger.ts';
 
 @injectable()
 export class FileChatLogger implements ChatLogger {
@@ -10,6 +10,10 @@ export class FileChatLogger implements ChatLogger {
   constructor() {
     this.logsDir = path.resolve(process.cwd(), 'logs');
     fs.mkdirSync(this.logsDir, { recursive: true });
+  }
+
+  createSession(_sessionId: string, _metadata: SessionMetadata): void {
+    // No-op: JSONL logger doesn't need session metadata
   }
 
   log(sessionId: string, entry: ChatLogEntry): void {
