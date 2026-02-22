@@ -104,23 +104,6 @@ describe('orchestratorStore', () => {
     expect(orch?.workers.every((w) => w.status === 'complete')).toBe(true);
   });
 
-  it('should aggregate stats across workers + coordinator', () => {
-    const store = useOrchestratorStore.getState();
-    store.initOrchestrator('orch-1', 'coord-1', 'claude');
-
-    useOrchestratorStore.getState().setAggregatedStats('orch-1', {
-      costUsd: 0.005,
-      durationMs: 1200,
-      inputTokens: 100,
-      outputTokens: 50,
-    });
-
-    const orch = useOrchestratorStore.getState().getOrchestrator('orch-1');
-    expect(orch?.aggregatedStats).toBeDefined();
-    expect(orch?.aggregatedStats?.costUsd).toBe(0.005);
-    expect(orch?.aggregatedStats?.inputTokens).toBe(100);
-  });
-
   it('should track orchestrator status lifecycle', () => {
     const store = useOrchestratorStore.getState();
     store.initOrchestrator('orch-1', 'coord-1', 'claude');

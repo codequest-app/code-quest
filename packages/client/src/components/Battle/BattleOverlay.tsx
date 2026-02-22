@@ -29,9 +29,17 @@ let effectCounter = 0;
 
 interface BattleOverlayProps {
   sessionId: string;
+  onQuestionAnswer?: (sessionId: string, answer: string) => void;
+  onAllowTool?: (sessionId: string, toolName: string) => void;
+  onDenyTool?: (sessionId: string) => void;
 }
 
-export function BattleOverlay({ sessionId }: BattleOverlayProps) {
+export function BattleOverlay({
+  sessionId,
+  onQuestionAnswer,
+  onAllowTool,
+  onDenyTool,
+}: BattleOverlayProps) {
   const battle = useBattleStore((s) => s.battles.get(sessionId));
   const [effects, setEffects] = useState<ActiveEffect[]>([]);
   const [fading, setFading] = useState(false);
@@ -109,7 +117,7 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
     }
   }
 
-  if (!battle) return null;
+  if (!battle || hidden) return null;
 
   const message =
     battle.phase === 'victory'
@@ -163,7 +171,12 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
         <RPGQuestionModal
           question={battle.activeDialogue.question}
           options={battle.activeDialogue.options}
-          onSelect={() => {}}
+          onSelect={(index) => {
+            const option = battle.activeDialogue?.options[index];
+            if (option) {
+              onQuestionAnswer?.(sessionId, option);
+            }
+          }}
         />
       )}
 
@@ -172,8 +185,12 @@ export function BattleOverlay({ sessionId }: BattleOverlayProps) {
           toolName={battle.activeTrap.toolName}
           description={battle.activeTrap.description}
           riskLevel={battle.activeTrap.riskLevel}
-          onAllow={() => {}}
-          onDeny={() => {}}
+          onAllow={() => {
+            if (battle.activeTrap) {
+              onAllowTool?.(sessionId, battle.activeTrap.toolName);
+            }
+          }}
+          onDeny={() => onDenyTool?.(sessionId)}
         />
       )}
 

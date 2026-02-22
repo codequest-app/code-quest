@@ -4,6 +4,7 @@ import { useChatSocket } from '../../hooks/useChatSocket';
 import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
 import { useSocket } from '../../hooks/useSocket';
 import { useBattleStore } from '../../stores/battleStore';
+import { useChatStore } from '../../stores/chatStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
 import { BankPanel } from '../Bank/BankPanel';
@@ -542,7 +543,19 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
                   respondToControl(sid, requestId, response)
                 }
               />
-              <BattleOverlay sessionId={activeSession.id} />
+              <BattleOverlay
+                sessionId={activeSession.id}
+                onQuestionAnswer={(sid, answer) => {
+                  useChatStore.getState().clearPendingQuestion(sid);
+                  sendMessage(sid, answer);
+                }}
+                onAllowTool={(sid, toolName) => {
+                  allowTool(sid, toolName);
+                }}
+                onDenyTool={(sid) => {
+                  useChatStore.getState().clearPendingPermission(sid);
+                }}
+              />
             </div>
           )}
         {activeSession && activeSession.type === 'orchestrator' && (
