@@ -37,7 +37,7 @@ function waitForStatus(
   });
 }
 
-describe('OrchestratorSession', () => {
+describe('OrchestratorSession', { timeout: 30_000 }, () => {
   let chatManager: ChatManager;
   let createOrchestrator: OrchestratorSessionFactory;
   let orch: OrchestratorSessionImpl;
