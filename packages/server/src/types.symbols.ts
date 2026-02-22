@@ -20,6 +20,7 @@ export const TYPES = {
 
   // Logging
   ChatLogger: Symbol.for('ChatLogger'),
+  ChatLoggerItem: Symbol.for('ChatLoggerItem'),
 
   // Git
   GitService: Symbol.for('GitService'),

@@ -7,11 +7,22 @@ export function createMysqlRepository(url: string): ChatLogRepository {
   const pool = mysql.createPool(url);
   const db = drizzle(pool, { schema, mode: 'default' });
 
-  const ready = initDatabase(url, pool);
+  let queue: Promise<void> = initDatabase(url, pool);
+
+  function enqueue(fn: () => Promise<unknown>): void {
+    queue = queue
+      .then(fn, () => fn())
+      .then(
+        () => undefined,
+        (err) => {
+          console.error('[MysqlChatLogRepository]', err);
+        },
+      );
+  }
 
   return {
     insertSession(row: SessionRow): void {
-      ready.then(() =>
+      enqueue(() =>
         db.insert(schema.sessions).values({
           id: row.id,
           provider: row.provider,
@@ -24,7 +35,7 @@ export function createMysqlRepository(url: string): ChatLogRepository {
       );
     },
     insertEvent(row: EventRow): void {
-      ready.then(() =>
+      enqueue(() =>
         db.insert(schema.events).values({
           sessionId: row.sessionId,
           dir: row.dir,
