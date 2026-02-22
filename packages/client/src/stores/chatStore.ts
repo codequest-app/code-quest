@@ -456,10 +456,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         callbackId: request.callbackId,
         toolUseId: request.toolUseId,
       };
+      const existing = (session.pendingControlRequests ?? []).some(
+        (r) => r.requestId === request.requestId,
+      );
       chatSessions.set(sessionId, {
         ...session,
         controlEventLog,
-        pendingControlRequests: [...(session.pendingControlRequests ?? []), newRequest],
+        pendingControlRequests: existing
+          ? session.pendingControlRequests
+          : [...(session.pendingControlRequests ?? []), newRequest],
       });
       return { chatSessions };
     });
