@@ -1,16 +1,18 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type AppDatabase, createDatabase } from '../connection.ts';
 import { DrizzleChatLogger } from '../drizzle-logger.ts';
-import { events, sessions } from '../schema.ts';
+import { events, sessions } from '../schema-sqlite.ts';
+import type { SqliteDatabase } from '../sqlite-repository.ts';
+import { createSqliteRepository } from '../sqlite-repository.ts';
 
 describe('DrizzleChatLogger', () => {
-  let db: AppDatabase;
+  let db: SqliteDatabase;
   let logger: DrizzleChatLogger;
 
   beforeEach(() => {
-    db = createDatabase(':memory:');
-    logger = new DrizzleChatLogger(db);
+    const repo = createSqliteRepository(':memory:');
+    db = repo.db;
+    logger = new DrizzleChatLogger(repo);
   });
 
   afterEach(() => {

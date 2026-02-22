@@ -26,6 +26,7 @@ export const TYPES = {
 
   // Database
   Database: Symbol.for('Database'),
+  ChatLogRepository: Symbol.for('ChatLogRepository'),
 
   // Server
   Server: Symbol.for('Server'),

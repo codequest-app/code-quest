@@ -15,8 +15,10 @@ import type {
   ChatSessionFactory,
   ChatSessionOptions,
 } from './chat/types.ts';
-import { createDatabase } from './database/connection.ts';
 import { DrizzleChatLogger } from './database/drizzle-logger.ts';
+import { createMysqlRepository } from './database/mysql-repository.ts';
+import type { ChatLogRepository } from './database/repository.ts';
+import { createSqliteRepository } from './database/sqlite-repository.ts';
 import { GitServiceImpl } from './git/service.ts';
 import type { GitService } from './git/types.ts';
 import { OrchestratorSessionImpl } from './orchestrator/session.ts';
@@ -129,10 +131,22 @@ export function createContainer(): Container {
   container.bind<ChatManager>(TYPES.ChatManager).to(ChatManagerImpl).inSingletonScope();
 
   container
-    .bind<ChatLogger>(TYPES.ChatLogger)
+    .bind<ChatLogRepository>(TYPES.ChatLogRepository)
     .toDynamicValue(() => {
+      const databaseUrl = process.env.DATABASE_URL;
+      if (databaseUrl) {
+        return createMysqlRepository(databaseUrl);
+      }
+      return createSqliteRepository('logs/chat.db');
+    })
+    .inSingletonScope();
+
+  container
+    .bind<ChatLogger>(TYPES.ChatLogger)
+    .toDynamicValue((context) => {
       const fileLogger = new FileChatLogger();
-      const drizzleLogger = new DrizzleChatLogger(createDatabase('logs/chat.db'));
+      const repository = context.get<ChatLogRepository>(TYPES.ChatLogRepository);
+      const drizzleLogger = new DrizzleChatLogger(repository);
       return new CompositeChatLogger([fileLogger, drizzleLogger]);
     })
     .inSingletonScope();
