@@ -2,13 +2,13 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
+  parentId: text('parent_id'),
+  role: text('role').notNull().default('chat'),
   provider: text('provider').notNull(),
   command: text('command').notNull(),
   args: text('args').notNull(),
   cwd: text('cwd'),
   mode: text('mode').notNull().default('print'),
-  role: text('role').notNull().default('chat'),
-  parentId: text('parent_id'),
   createdAt: text('created_at').notNull(),
 });
 
