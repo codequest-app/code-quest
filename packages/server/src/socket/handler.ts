@@ -365,6 +365,10 @@ export class SocketHandlerImpl implements SocketHandler {
           socket.emit('orchestrator:workers-updated', orch.id, workers);
         });
 
+        orch.onWorkerControlRequest((workerId, request) => {
+          socket.emit('chat:control-request', workerId, request);
+        });
+
         socket.emit('orchestrator:created', orch.id, orch.coordinatorId, parsed.data.provider);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

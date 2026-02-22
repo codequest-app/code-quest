@@ -2,6 +2,7 @@ import type {
   ChatProvider,
   ChatStats,
   ChatStreamEvent,
+  ControlRequest,
   OrchestratorStatus,
   SubTask,
   WorkerInfo,
@@ -34,4 +35,5 @@ export interface OrchestratorSession {
   onMergeError(handler: (workerId: string, error: string) => void): void;
   onWorkerWorktree(handler: (workerId: string, worktreePath: string, branch: string) => void): void;
   onWorkersUpdated(handler: (workers: WorkerInfo[]) => void): void;
+  onWorkerControlRequest(handler: (workerId: string, request: ControlRequest) => void): void;
 }

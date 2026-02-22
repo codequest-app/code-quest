@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   ChatStats,
   ChatStreamEvent,
+  ControlRequest,
   OrchestratorStatus,
   SubTask,
   WorkerInfo,
@@ -43,6 +44,8 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     (workerId: string, worktreePath: string, branch: string) => void
   > = [];
   private workersUpdatedHandlers: Array<(workers: WorkerInfo[]) => void> = [];
+  private workerControlRequestHandlers: Array<(workerId: string, request: ControlRequest) => void> =
+    [];
 
   get status(): OrchestratorStatus {
     return this._status;
@@ -300,6 +303,10 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.workersUpdatedHandlers.push(handler);
   }
 
+  onWorkerControlRequest(handler: (workerId: string, request: ControlRequest) => void): void {
+    this.workerControlRequestHandlers.push(handler);
+  }
+
   private async startWave(waveIndex: number): Promise<void> {
     this.currentWave = waveIndex;
     const wave = this.waves[waveIndex];
@@ -374,6 +381,12 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
         handler(worker.id, { ...worker });
       }
       this.checkAllWorkersComplete();
+    });
+
+    session.onControlRequest((request) => {
+      for (const handler of this.workerControlRequestHandlers) {
+        handler(worker.id, request);
+      }
     });
 
     session.sendMessage(worker.task.description);
