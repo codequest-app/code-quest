@@ -2,6 +2,8 @@ import type { Container } from 'inversify';
 import type { ChatLogger } from '../chat/logger.ts';
 import type { ChatCommandsConfig, ProcessFactory } from '../chat/types.ts';
 import { createContainer, TYPES } from '../container.ts';
+import type { ChatLogRepository } from '../database/repository.ts';
+import { createSqliteRepository } from '../database/sqlite-repository.ts';
 import type { GitService } from '../git/types.ts';
 import type { ServerConfig } from '../types.ts';
 
@@ -15,6 +17,11 @@ export interface TestContainerOverrides {
 
 export function createTestContainer(overrides?: TestContainerOverrides): Container {
   const container = createContainer();
+
+  // Default: override MySQL with SQLite in-memory for tests
+  container
+    .rebindSync<ChatLogRepository>(TYPES.ChatLogRepository)
+    .toConstantValue(createSqliteRepository());
 
   if (overrides?.serverConfig) {
     container.rebindSync<ServerConfig>(TYPES.ServerConfig).toConstantValue(overrides.serverConfig);
