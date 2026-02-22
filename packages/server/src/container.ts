@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import type { ParserFactory, ProcessFactory } from '@code-quest/cli-adapter';
 import { ChatSessionImpl, createParser } from '@code-quest/cli-adapter';
 import { Container } from 'inversify';
+import { FileChatLogger } from './chat/file-logger.ts';
+import type { ChatLogger } from './chat/logger.ts';
 import { ChatManagerImpl } from './chat/manager.ts';
 import type {
   ChatCommandsConfig,
@@ -112,6 +114,8 @@ export function createContainer(): Container {
   container.bind<TerminalManager>(TYPES.TerminalManager).to(TerminalManagerImpl).inSingletonScope();
 
   container.bind<ChatManager>(TYPES.ChatManager).to(ChatManagerImpl).inSingletonScope();
+
+  container.bind<ChatLogger>(TYPES.ChatLogger).to(FileChatLogger).inSingletonScope();
 
   container.bind<GitService>(TYPES.GitService).to(GitServiceImpl).inSingletonScope();
 

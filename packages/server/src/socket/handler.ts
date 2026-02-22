@@ -3,6 +3,8 @@ import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/sha
 import {
   chatAbortSchema,
   chatAllowToolSchema,
+  chatControlRespondSchema,
+  chatControlSchema,
   chatCreateSchema,
   chatKillSchema,
   chatSendSchema,
@@ -20,6 +22,7 @@ import {
 } from '@code-quest/shared';
 import { inject, injectable } from 'inversify';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
+import type { ChatLogger } from '../chat/logger.ts';
 import type { ChatManager } from '../chat/types.ts';
 import type { GitService } from '../git/types.ts';
 import type { OrchestratorSession, OrchestratorSessionFactory } from '../orchestrator/types.ts';
@@ -45,6 +48,8 @@ export class SocketHandlerImpl implements SocketHandler {
     private readonly createOrchestrator: OrchestratorSessionFactory,
     @inject(TYPES.GitService)
     private readonly gitService: GitService,
+    @inject(TYPES.ChatLogger)
+    private readonly chatLogger: ChatLogger,
   ) {}
 
   attach(io: SocketIOServer): void {
@@ -163,20 +168,39 @@ export class SocketHandlerImpl implements SocketHandler {
       try {
         const session = this.chatManager.createSession(parsed.data);
 
+        this.chatLogger.log(session.id, {
+          dir: 'out',
+          type: 'session_created',
+          data: { provider: session.provider },
+        });
+
         session.onEvent((event) => {
+          this.chatLogger.log(session.id, { dir: 'out', type: event.type, data: event });
           socket.emit('chat:event', session.id, event);
         });
 
         session.onComplete((stats) => {
+          this.chatLogger.log(session.id, { dir: 'out', type: 'complete', data: stats });
           socket.emit('chat:complete', session.id, stats);
         });
 
         session.onError((message) => {
+          this.chatLogger.log(session.id, { dir: 'out', type: 'error', data: { message } });
           socket.emit('chat:error', session.id, message);
         });
 
         session.onExit(() => {
+          this.chatLogger.log(session.id, { dir: 'out', type: 'exit', data: {} });
+          this.chatLogger.close(session.id);
           socket.emit('chat:exit', session.id);
+        });
+
+        session.onControlResponse((response) => {
+          socket.emit('chat:control-response', session.id, response);
+        });
+
+        session.onControlRequest((request) => {
+          socket.emit('chat:control-request', session.id, request);
         });
 
         socket.emit('chat:created', session.id, session.provider);
@@ -200,6 +224,11 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.chatLogger.log(parsed.data.sessionId, {
+        dir: 'in',
+        type: 'user_message',
+        data: { message: parsed.data.message },
+      });
       session.sendMessage(parsed.data.message);
     });
 
@@ -244,6 +273,38 @@ export class SocketHandlerImpl implements SocketHandler {
       }
 
       this.chatManager.removeSession(parsed.data.sessionId);
+    });
+
+    // Handle chat:control (Extension→CLI control request)
+    socket.on('chat:control', (sessionId, subtype, params) => {
+      const parsed = chatControlSchema.safeParse({ sessionId, subtype, params });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const session = this.chatManager.getSession(parsed.data.sessionId);
+      if (!session) {
+        socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
+        return;
+      }
+      session.sendControlRequestAsync(parsed.data.subtype, parsed.data.params);
+    });
+
+    // Handle chat:control-respond (respond to CLI→Extension control request)
+    socket.on('chat:control-respond', (sessionId, requestId, response) => {
+      const parsed = chatControlRespondSchema.safeParse({ sessionId, requestId, response });
+      if (!parsed.success) {
+        socket.emit('chat:error', '', `Validation error: ${parsed.error.message}`);
+        return;
+      }
+
+      const session = this.chatManager.getSession(parsed.data.sessionId);
+      if (!session) {
+        socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
+        return;
+      }
+      session.respondToControlRequest(parsed.data.requestId, parsed.data.response);
     });
 
     // Handle orchestrator:create
