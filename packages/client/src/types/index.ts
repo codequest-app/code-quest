@@ -4,7 +4,7 @@
 
 import type { ChatStats } from '@code-quest/shared';
 
-export type SessionType = 'terminal' | 'claude-chat' | 'gemini-chat' | 'orchestrator';
+export type SessionType = 'terminal' | 'claude-chat' | 'gemini-chat' | 'orchestrator' | 'map';
 
 /**
  * Terminal session state

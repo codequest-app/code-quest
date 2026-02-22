@@ -7,6 +7,8 @@ export {
 } from './enemy-generator.ts';
 export type { ChatContext } from './event-mapper.ts';
 export { mapChatEvent } from './event-mapper.ts';
+export { BUILT_IN_THEMES, TOWN_LOCATIONS } from './locations.ts';
+export * from './map-types.ts';
 export type { ModelDefinition, TokenUsage } from './model-config.ts';
 export { calculateCost, getModelDefinition, MODEL_DEFINITIONS } from './model-config.ts';
 export * from './schemas.ts';
@@ -22,4 +24,5 @@ export {
   recommendModel,
   shouldUseWorktree,
 } from './smart-router.ts';
+export * from './theme-types.ts';
 export * from './types.ts';
