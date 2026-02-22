@@ -1,4 +1,4 @@
-import type { LocationDef, MapTheme } from './map-types.ts';
+import type { LocationDef, MapTheme, WildernessSubZone } from './map-types.ts';
 
 export const TOWN_LOCATIONS: LocationDef[] = [
   {
@@ -84,6 +84,84 @@ export const TOWN_LOCATIONS: LocationDef[] = [
     description: 'Browse and install MCP tools and extensions.',
     restrictInBattle: true,
     shortcutKey: 'L',
+  },
+];
+
+export const WILDERNESS_SUB_ZONES: WildernessSubZone[] = [
+  {
+    id: 'forest',
+    name: 'Forest',
+    icon: '🌳',
+    encounterRate: 0.3,
+    complexityRange: { min: 5, max: 8 },
+  },
+  {
+    id: 'mountains',
+    name: 'Mountains',
+    icon: '⛰️',
+    encounterRate: 0.5,
+    complexityRange: { min: 8, max: 12 },
+  },
+  {
+    id: 'wasteland',
+    name: 'Wasteland',
+    icon: '🏜️',
+    encounterRate: 0.7,
+    complexityRange: { min: 12, max: 15 },
+  },
+  {
+    id: 'volcano',
+    name: 'Volcano',
+    icon: '🌋',
+    encounterRate: 0.9,
+    complexityRange: { min: 15, max: 20 },
+  },
+];
+
+export const WILDERNESS_LOCATIONS: LocationDef[] = [
+  {
+    id: 'forest',
+    name: 'Forest',
+    icon: '🌳',
+    zone: 'wilderness',
+    position: { x: 2, y: 2 },
+    enterable: true,
+    requiresLevel: 1,
+    description: 'Beginner area. Simple tasks and low encounter rate.',
+    restrictInBattle: false,
+  },
+  {
+    id: 'mountains',
+    name: 'Mountains',
+    icon: '⛰️',
+    zone: 'wilderness',
+    position: { x: 7, y: 2 },
+    enterable: true,
+    requiresLevel: 3,
+    description: 'Intermediate area with moderate encounters.',
+    restrictInBattle: false,
+  },
+  {
+    id: 'wasteland',
+    name: 'Wasteland',
+    icon: '🏜️',
+    zone: 'wilderness',
+    position: { x: 2, y: 5 },
+    enterable: true,
+    requiresLevel: 5,
+    description: 'Advanced area. High-complexity tasks and frequent battles.',
+    restrictInBattle: false,
+  },
+  {
+    id: 'volcano',
+    name: 'Volcano',
+    icon: '🌋',
+    zone: 'wilderness',
+    position: { x: 7, y: 5 },
+    enterable: true,
+    requiresLevel: 8,
+    description: 'Expert area. Extreme complexity and near-certain encounters.',
+    restrictInBattle: false,
   },
 ];
 

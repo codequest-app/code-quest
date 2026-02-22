@@ -18,6 +18,16 @@ export interface LocationDef {
   shortcutKey?: string;
 }
 
+export type WildernessSubZoneId = 'forest' | 'mountains' | 'wasteland' | 'volcano';
+
+export interface WildernessSubZone {
+  id: WildernessSubZoneId;
+  name: string;
+  icon: string;
+  encounterRate: number;
+  complexityRange: { min: number; max: number };
+}
+
 export interface MapTheme {
   name: string;
   cssClass: string;
