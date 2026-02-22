@@ -45,11 +45,6 @@ export function ControlRequestPrompt({
     first.toolName ?? (getInputField(first.input, 'tool_name') as string | undefined);
   const headerText = isHookCallback ? 'Hook Callback' : 'Control Request';
 
-  const allowResponse = isHookCallback ? { decision: 'approve' } : { behavior: 'allow' };
-  const denyResponse = isHookCallback
-    ? { decision: 'deny' }
-    : { behavior: 'deny', message: 'User denied this action' };
-
   const decisionReason = getInputField(first.input, 'decision_reason') as string | undefined;
   const permissionSuggestions = getInputField(first.input, 'permission_suggestions') as
     | PermissionSuggestion[]
@@ -57,16 +52,28 @@ export function ControlRequestPrompt({
   const hookEventName = getInputField(first.input, 'hook_event_name') as string | undefined;
 
   const handleAllowAll = () => {
-    onRespondAll(allowResponse);
+    if (isHookCallback) {
+      onRespondAll({ continue: true });
+    } else {
+      onRespondAll({ behavior: 'allow', updatedInput: first.input });
+    }
   };
 
   const handleDenyAll = () => {
-    onRespondAll(denyResponse);
+    if (isHookCallback) {
+      onRespondAll({ continue: false });
+    } else {
+      onRespondAll({ behavior: 'deny', message: 'User denied this action', interrupt: false });
+    }
     onDismiss();
   };
 
   const handleSuggestion = (suggestion: PermissionSuggestion) => {
-    onRespondAll({ behavior: 'allow', ...suggestion });
+    onRespondAll({
+      behavior: 'allow',
+      updatedInput: first.input,
+      updatedPermissions: [suggestion],
+    });
   };
 
   return (

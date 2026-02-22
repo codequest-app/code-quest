@@ -493,7 +493,7 @@ describe('SocketHandler', () => {
       expect(chatManager.getSession(sessionId)).toBeUndefined();
     });
 
-    it('should log control_response when chat:control-respond is received', async () => {
+    it('should log control_response with original request context when chat:control-respond is received', async () => {
       // Create a session first
       const created = new Promise<string>((resolve) => {
         clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
@@ -501,16 +501,37 @@ describe('SocketHandler', () => {
       clientSocket.emit('chat:create', { provider: 'claude' });
       const sessionId = await created;
 
-      // Emit control-respond
+      // Simulate a control_request from the session so handler caches it
+      const session = chatManager.getSession(sessionId);
+      // biome-ignore lint/suspicious/noExplicitAny: test-only access to private emitEvent
+      (session as any).emitEvent({
+        type: 'control_request',
+        data: {
+          requestId: 'req-001',
+          subtype: 'can_use_tool',
+          toolName: 'Bash',
+          input: { command: 'rm -rf /' },
+          toolUseId: 'toolu_01',
+        },
+      });
+
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Respond to the control request
       clientSocket.emit('chat:control-respond', sessionId, 'req-001', { behavior: 'allow' });
 
-      // Wait for processing
       await new Promise((r) => setTimeout(r, 100));
 
       expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
         dir: 'in',
         type: 'control_response',
-        data: { requestId: 'req-001', response: { behavior: 'allow' } },
+        data: {
+          requestId: 'req-001',
+          response: { behavior: 'allow' },
+          toolName: 'Bash',
+          input: { command: 'rm -rf /' },
+          toolUseId: 'toolu_01',
+        },
       });
     });
   });

@@ -7,6 +7,7 @@ describe('ControlRequestPrompt', () => {
     requestId: 'req-001',
     subtype: 'can_use_tool',
     toolName: 'Bash',
+    toolUseId: 'tu-001',
     input: { command: 'ls -la' },
   };
 
@@ -39,15 +40,18 @@ describe('ControlRequestPrompt', () => {
     expect(screen.queryByTestId('control-request-tool')).not.toBeInTheDocument();
   });
 
-  it('should call onRespondAll with allowed: true when Allow is clicked', () => {
+  it('should call onRespondAll with updatedInput when Allow is clicked', () => {
     const onRespondAll = vi.fn();
     render(<ControlRequestPrompt {...defaultProps} onRespondAll={onRespondAll} />);
 
     fireEvent.click(screen.getByTestId('control-btn-allow'));
-    expect(onRespondAll).toHaveBeenCalledWith({ behavior: 'allow' });
+    expect(onRespondAll).toHaveBeenCalledWith({
+      behavior: 'allow',
+      updatedInput: { command: 'ls -la' },
+    });
   });
 
-  it('should call onRespondAll with behavior: deny and onDismiss when Deny is clicked', () => {
+  it('should call onRespondAll with behavior: deny, message and interrupt when Deny is clicked', () => {
     const onRespondAll = vi.fn();
     const onDismiss = vi.fn();
     render(
@@ -58,6 +62,7 @@ describe('ControlRequestPrompt', () => {
     expect(onRespondAll).toHaveBeenCalledWith({
       behavior: 'deny',
       message: 'User denied this action',
+      interrupt: false,
     });
     expect(onDismiss).toHaveBeenCalled();
   });
@@ -99,7 +104,7 @@ describe('ControlRequestPrompt', () => {
       expect(details).toHaveTextContent('baz');
     });
 
-    it('should call onRespondAll for all requests on Allow', () => {
+    it('should call onRespondAll with updatedInput from first request on Allow', () => {
       const onRespondAll = vi.fn();
       render(
         <ControlRequestPrompt
@@ -110,7 +115,10 @@ describe('ControlRequestPrompt', () => {
       );
 
       fireEvent.click(screen.getByTestId('control-btn-allow'));
-      expect(onRespondAll).toHaveBeenCalledWith({ behavior: 'allow' });
+      expect(onRespondAll).toHaveBeenCalledWith({
+        behavior: 'allow',
+        updatedInput: { query: 'foo' },
+      });
     });
   });
 
@@ -144,7 +152,7 @@ describe('ControlRequestPrompt', () => {
       expect(screen.getByTestId('suggestion-1')).toHaveTextContent('Allow /tmp');
     });
 
-    it('should call onRespondAll with suggestion data when suggestion is clicked', () => {
+    it('should call onRespondAll with updatedPermissions array when suggestion is clicked', () => {
       const onRespondAll = vi.fn();
       render(
         <ControlRequestPrompt
@@ -157,9 +165,15 @@ describe('ControlRequestPrompt', () => {
       fireEvent.click(screen.getByTestId('suggestion-0'));
       expect(onRespondAll).toHaveBeenCalledWith({
         behavior: 'allow',
-        type: 'setMode',
-        mode: 'acceptEdits',
-        destination: 'session',
+        updatedInput: {
+          command: 'rm -rf /tmp/stuff',
+          decision_reason: 'Path is outside allowed working directories',
+          permission_suggestions: [
+            { type: 'setMode', mode: 'acceptEdits', destination: 'session' },
+            { type: 'addDirectories', directories: ['/tmp'], destination: 'session' },
+          ],
+        },
+        updatedPermissions: [{ type: 'setMode', mode: 'acceptEdits', destination: 'session' }],
       });
     });
   });
@@ -192,7 +206,7 @@ describe('ControlRequestPrompt', () => {
       expect(screen.getByTestId('control-request-tool')).toHaveTextContent('Bash');
     });
 
-    it('should call onRespondAll with decision: approve on Allow', () => {
+    it('should call onRespondAll with continue: true on Allow', () => {
       const onRespondAll = vi.fn();
       render(
         <ControlRequestPrompt
@@ -203,10 +217,10 @@ describe('ControlRequestPrompt', () => {
       );
 
       fireEvent.click(screen.getByTestId('control-btn-allow'));
-      expect(onRespondAll).toHaveBeenCalledWith({ decision: 'approve' });
+      expect(onRespondAll).toHaveBeenCalledWith({ continue: true });
     });
 
-    it('should call onRespondAll with decision: deny on Deny', () => {
+    it('should call onRespondAll with continue: false on Deny', () => {
       const onRespondAll = vi.fn();
       const onDismiss = vi.fn();
       render(
@@ -219,7 +233,7 @@ describe('ControlRequestPrompt', () => {
       );
 
       fireEvent.click(screen.getByTestId('control-btn-deny'));
-      expect(onRespondAll).toHaveBeenCalledWith({ decision: 'deny' });
+      expect(onRespondAll).toHaveBeenCalledWith({ continue: false });
       expect(onDismiss).toHaveBeenCalled();
     });
   });

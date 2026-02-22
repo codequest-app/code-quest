@@ -39,6 +39,10 @@ export class SocketHandlerImpl implements SocketHandler {
   private io: SocketIOServer<ClientToServerEvents, ServerToClientEvents> | null = null;
   private readonly orchestrators = new Map<string, OrchestratorSession>();
   private readonly loggedSessions = new Set<string>();
+  private readonly pendingControlRequests = new Map<
+    string,
+    { toolName?: string; input?: unknown; toolUseId?: string }
+  >();
 
   constructor(
     @inject(TYPES.TerminalManager)
@@ -188,6 +192,17 @@ export class SocketHandlerImpl implements SocketHandler {
         session.onEvent((event) => {
           socket.emit('chat:event', session.id, event);
           if (event.type === 'control_request') {
+            const data = event.data as {
+              requestId: string;
+              toolName?: string;
+              input?: unknown;
+              toolUseId?: string;
+            };
+            this.pendingControlRequests.set(data.requestId, {
+              toolName: data.toolName,
+              input: data.input,
+              toolUseId: data.toolUseId,
+            });
             socket.emit('chat:control-request', session.id, event.data);
           }
         });
@@ -319,10 +334,16 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      const originalRequest = this.pendingControlRequests.get(parsed.data.requestId);
+      this.pendingControlRequests.delete(parsed.data.requestId);
       this.chatLogger.log(parsed.data.sessionId, {
         dir: 'in',
         type: 'control_response',
-        data: { requestId: parsed.data.requestId, response: parsed.data.response },
+        data: {
+          requestId: parsed.data.requestId,
+          response: parsed.data.response,
+          ...originalRequest,
+        },
       });
       session.respondToControlRequest(parsed.data.requestId, parsed.data.response);
     });
@@ -353,6 +374,11 @@ export class SocketHandlerImpl implements SocketHandler {
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
             if (event.type === 'control_request') {
+              const data = event.data as { requestId: string; toolName?: string; input?: unknown };
+              this.pendingControlRequests.set(data.requestId, {
+                toolName: data.toolName,
+                input: data.input,
+              });
               socket.emit('chat:control-request', coordSession.id, event.data);
             }
           });
