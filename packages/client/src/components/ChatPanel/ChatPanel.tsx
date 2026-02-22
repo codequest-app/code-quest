@@ -156,12 +156,36 @@ export function ChatPanel({
         />
       )}
 
-      {session.pendingControlRequest && (
-        <ControlRequestPrompt
-          request={session.pendingControlRequest}
-          onRespond={(requestId, response) => handleRespondControl(sessionId, requestId, response)}
-          onDismiss={() => useChatStore.getState().clearPendingControlRequest(sessionId)}
-        />
+      {session.pendingControlRequests.length > 0 && (
+        <div className="control-requests-container">
+          {(() => {
+            // Group requests by toolName
+            const groups = new Map<string, typeof session.pendingControlRequests>();
+            for (const req of session.pendingControlRequests) {
+              const key = req.toolName ?? req.subtype;
+              const group = groups.get(key) ?? [];
+              group.push(req);
+              groups.set(key, group);
+            }
+            return Array.from(groups.entries()).map(([key, reqs]) => (
+              <ControlRequestPrompt
+                key={key}
+                requests={reqs}
+                onRespondAll={(response) => {
+                  for (const req of reqs) {
+                    handleRespondControl(sessionId, req.requestId, response);
+                  }
+                  useChatStore.getState().clearPendingControlRequest(sessionId);
+                }}
+                onDismiss={() => {
+                  for (const req of reqs) {
+                    useChatStore.getState().clearPendingControlRequest(sessionId, req.requestId);
+                  }
+                }}
+              />
+            ));
+          })()}
+        </div>
       )}
 
       <div className="chat-input-wrapper" style={{ position: 'relative' }}>
@@ -230,6 +254,11 @@ export function ChatPanel({
         }
         .command-palette-trigger:hover {
           background: #3e3e42;
+        }
+        .control-requests-container {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
         }
       `}</style>
     </div>
