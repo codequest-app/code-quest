@@ -162,8 +162,11 @@ export class ChatSessionImpl implements ChatSession {
 
     const message = JSON.stringify({
       type: 'control_response',
-      request_id: requestId,
-      response,
+      response: {
+        subtype: 'success',
+        request_id: requestId,
+        response,
+      },
     });
     this.process.stdin?.write(`${message}\n`);
   }

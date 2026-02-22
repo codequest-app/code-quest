@@ -5,14 +5,18 @@ interface PermissionSuggestion {
   destination?: string;
 }
 
+interface ControlRequestItem {
+  requestId: string;
+  subtype: string;
+  toolName?: string;
+  input?: unknown;
+  callbackId?: string;
+  toolUseId?: string;
+}
+
 interface ControlRequestPromptProps {
-  request: {
-    requestId: string;
-    subtype: string;
-    toolName?: string;
-    input?: unknown;
-  };
-  onRespond: (requestId: string, response: Record<string, unknown>) => void;
+  requests: ControlRequestItem[];
+  onRespondAll: (response: Record<string, unknown>) => void;
   onDismiss: () => void;
 }
 
@@ -23,39 +27,46 @@ function getInputField(input: unknown, field: string): unknown {
   return undefined;
 }
 
-export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlRequestPromptProps) {
-  const inputSummary = request.input ? JSON.stringify(request.input).slice(0, 120) : '';
-  const isHookCallback = request.subtype === 'hook_callback';
+function formatInput(input: unknown): string {
+  if (!input) return '';
+  return JSON.stringify(input).slice(0, 200);
+}
 
-  const decisionReason = getInputField(request.input, 'decision_reason') as string | undefined;
-  const permissionSuggestions = getInputField(request.input, 'permission_suggestions') as
-    | PermissionSuggestion[]
-    | undefined;
-  const hookEventName = getInputField(request.input, 'hook_event_name') as string | undefined;
+export function ControlRequestPrompt({
+  requests,
+  onRespondAll,
+  onDismiss,
+}: ControlRequestPromptProps) {
+  if (requests.length === 0) return null;
+
+  const first = requests[0];
+  const isHookCallback = first.subtype === 'hook_callback';
   const toolName =
-    request.toolName ?? (getInputField(request.input, 'tool_name') as string | undefined);
-
+    first.toolName ?? (getInputField(first.input, 'tool_name') as string | undefined);
   const headerText = isHookCallback ? 'Hook Callback' : 'Control Request';
 
-  const handleAllow = () => {
-    if (isHookCallback) {
-      onRespond(request.requestId, { decision: 'approve' });
-    } else {
-      onRespond(request.requestId, { allowed: true });
-    }
+  const allowResponse = isHookCallback ? { decision: 'approve' } : { behavior: 'allow' };
+  const denyResponse = isHookCallback
+    ? { decision: 'deny' }
+    : { behavior: 'deny', message: 'User denied this action' };
+
+  const decisionReason = getInputField(first.input, 'decision_reason') as string | undefined;
+  const permissionSuggestions = getInputField(first.input, 'permission_suggestions') as
+    | PermissionSuggestion[]
+    | undefined;
+  const hookEventName = getInputField(first.input, 'hook_event_name') as string | undefined;
+
+  const handleAllowAll = () => {
+    onRespondAll(allowResponse);
   };
 
-  const handleDeny = () => {
-    if (isHookCallback) {
-      onRespond(request.requestId, { decision: 'deny' });
-    } else {
-      onRespond(request.requestId, { allowed: false });
-    }
+  const handleDenyAll = () => {
+    onRespondAll(denyResponse);
     onDismiss();
   };
 
   const handleSuggestion = (suggestion: PermissionSuggestion) => {
-    onRespond(request.requestId, { allowed: true, ...suggestion });
+    onRespondAll({ behavior: 'allow', ...suggestion });
   };
 
   return (
@@ -65,7 +76,7 @@ export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlR
       </div>
       <div className="control-request-body">
         <div className="control-request-subtype" data-testid="control-request-subtype">
-          Type: <strong>{request.subtype}</strong>
+          Type: <strong>{first.subtype}</strong>
         </div>
         {toolName && (
           <div className="control-request-tool" data-testid="control-request-tool">
@@ -82,11 +93,14 @@ export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlR
             {decisionReason}
           </div>
         )}
-        {inputSummary && !decisionReason && (
-          <div className="control-request-input" data-testid="control-request-input">
-            {inputSummary}
-          </div>
-        )}
+        <div className="control-request-details" data-testid="control-request-details">
+          {requests.map((req, idx) => (
+            <div key={req.requestId} className="control-request-detail-item">
+              <span className="control-request-detail-index">{idx + 1}.</span>
+              <span className="control-request-detail-input">{formatInput(req.input)}</span>
+            </div>
+          ))}
+        </div>
       </div>
       {permissionSuggestions && permissionSuggestions.length > 0 && (
         <div className="control-request-suggestions" data-testid="control-request-suggestions">
@@ -116,7 +130,8 @@ export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlR
           type="button"
           className="control-btn control-btn-allow"
           aria-label="Allow"
-          onClick={handleAllow}
+          data-testid="control-btn-allow"
+          onClick={handleAllowAll}
         >
           Allow
         </button>
@@ -124,7 +139,8 @@ export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlR
           type="button"
           className="control-btn control-btn-deny"
           aria-label="Deny"
-          onClick={handleDeny}
+          data-testid="control-btn-deny"
+          onClick={handleDenyAll}
         >
           Deny
         </button>
@@ -157,6 +173,23 @@ export function ControlRequestPrompt({ request, onRespond, onDismiss }: ControlR
           color: #9e9e9e;
           margin-bottom: 8px;
           word-break: break-all;
+        }
+        .control-request-details {
+          margin: 8px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .control-request-detail-item {
+          display: flex;
+          gap: 6px;
+          font-size: 12px;
+          color: #9e9e9e;
+          word-break: break-all;
+        }
+        .control-request-detail-index {
+          color: #d4d4d4;
+          flex-shrink: 0;
         }
         .control-request-suggestions {
           display: flex;

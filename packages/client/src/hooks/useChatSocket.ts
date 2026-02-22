@@ -215,7 +215,7 @@ export function useChatSocket(serverUrl: string): UseChatSocketReturn {
         return;
       }
       emit('chat:control-respond', sessionId, requestId, response);
-      useChatStore.getState().clearPendingControlRequest(sessionId);
+      useChatStore.getState().clearPendingControlRequest(sessionId, requestId);
     },
     [emit],
   );

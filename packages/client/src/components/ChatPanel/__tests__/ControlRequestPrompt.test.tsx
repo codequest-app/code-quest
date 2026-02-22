@@ -10,47 +10,108 @@ describe('ControlRequestPrompt', () => {
     input: { command: 'ls -la' },
   };
 
+  const defaultProps = {
+    requests: [baseRequest],
+
+    onRespondAll: vi.fn(),
+    onDismiss: vi.fn(),
+  };
+
   it('should render subtype and toolName', () => {
-    render(<ControlRequestPrompt request={baseRequest} onRespond={vi.fn()} onDismiss={vi.fn()} />);
+    render(<ControlRequestPrompt {...defaultProps} />);
 
     expect(screen.getByTestId('control-request-prompt')).toBeInTheDocument();
     expect(screen.getByTestId('control-request-subtype')).toHaveTextContent('can_use_tool');
     expect(screen.getByTestId('control-request-tool')).toHaveTextContent('Bash');
   });
 
-  it('should render input summary', () => {
-    render(<ControlRequestPrompt request={baseRequest} onRespond={vi.fn()} onDismiss={vi.fn()} />);
+  it('should render each request input in details', () => {
+    render(<ControlRequestPrompt {...defaultProps} />);
 
-    expect(screen.getByTestId('control-request-input')).toHaveTextContent('ls -la');
+    const details = screen.getByTestId('control-request-details');
+    expect(details).toHaveTextContent('ls -la');
   });
 
   it('should not render toolName when absent', () => {
     const request = { requestId: 'req-002', subtype: 'some_action' };
-    render(<ControlRequestPrompt request={request} onRespond={vi.fn()} onDismiss={vi.fn()} />);
+    render(<ControlRequestPrompt {...defaultProps} requests={[request]} />);
 
     expect(screen.queryByTestId('control-request-tool')).not.toBeInTheDocument();
   });
 
-  it('should call onRespond with allowed: true when Allow is clicked', () => {
-    const onRespond = vi.fn();
-    render(
-      <ControlRequestPrompt request={baseRequest} onRespond={onRespond} onDismiss={vi.fn()} />,
-    );
+  it('should call onRespondAll with allowed: true when Allow is clicked', () => {
+    const onRespondAll = vi.fn();
+    render(<ControlRequestPrompt {...defaultProps} onRespondAll={onRespondAll} />);
 
-    fireEvent.click(screen.getByLabelText('Allow'));
-    expect(onRespond).toHaveBeenCalledWith('req-001', { allowed: true });
+    fireEvent.click(screen.getByTestId('control-btn-allow'));
+    expect(onRespondAll).toHaveBeenCalledWith({ behavior: 'allow' });
   });
 
-  it('should call onRespond with allowed: false and onDismiss when Deny is clicked', () => {
-    const onRespond = vi.fn();
+  it('should call onRespondAll with behavior: deny and onDismiss when Deny is clicked', () => {
+    const onRespondAll = vi.fn();
     const onDismiss = vi.fn();
     render(
-      <ControlRequestPrompt request={baseRequest} onRespond={onRespond} onDismiss={onDismiss} />,
+      <ControlRequestPrompt {...defaultProps} onRespondAll={onRespondAll} onDismiss={onDismiss} />,
     );
 
-    fireEvent.click(screen.getByLabelText('Deny'));
-    expect(onRespond).toHaveBeenCalledWith('req-001', { allowed: false });
+    fireEvent.click(screen.getByTestId('control-btn-deny'));
+    expect(onRespondAll).toHaveBeenCalledWith({
+      behavior: 'deny',
+      message: 'User denied this action',
+    });
     expect(onDismiss).toHaveBeenCalled();
+  });
+
+  describe('multiple requests (same tool)', () => {
+    const multiRequests = [
+      {
+        requestId: 'req-001',
+        subtype: 'can_use_tool',
+        toolName: 'WebSearch',
+        input: { query: 'foo' },
+      },
+      {
+        requestId: 'req-002',
+        subtype: 'can_use_tool',
+        toolName: 'WebSearch',
+        input: { query: 'bar' },
+      },
+      {
+        requestId: 'req-003',
+        subtype: 'can_use_tool',
+        toolName: 'WebSearch',
+        input: { query: 'baz' },
+      },
+    ];
+
+    it('should show tool name without count', () => {
+      render(<ControlRequestPrompt {...defaultProps} requests={multiRequests} />);
+
+      expect(screen.getByTestId('control-request-tool')).toHaveTextContent('WebSearch');
+    });
+
+    it('should show all request details', () => {
+      render(<ControlRequestPrompt {...defaultProps} requests={multiRequests} />);
+
+      const details = screen.getByTestId('control-request-details');
+      expect(details).toHaveTextContent('foo');
+      expect(details).toHaveTextContent('bar');
+      expect(details).toHaveTextContent('baz');
+    });
+
+    it('should call onRespondAll for all requests on Allow', () => {
+      const onRespondAll = vi.fn();
+      render(
+        <ControlRequestPrompt
+          {...defaultProps}
+          requests={multiRequests}
+          onRespondAll={onRespondAll}
+        />,
+      );
+
+      fireEvent.click(screen.getByTestId('control-btn-allow'));
+      expect(onRespondAll).toHaveBeenCalledWith({ behavior: 'allow' });
+    });
   });
 
   describe('permission_suggestions', () => {
@@ -69,13 +130,7 @@ describe('ControlRequestPrompt', () => {
     };
 
     it('should display decision_reason', () => {
-      render(
-        <ControlRequestPrompt
-          request={requestWithSuggestions}
-          onRespond={vi.fn()}
-          onDismiss={vi.fn()}
-        />,
-      );
+      render(<ControlRequestPrompt {...defaultProps} requests={[requestWithSuggestions]} />);
 
       expect(screen.getByTestId('control-request-reason')).toHaveTextContent(
         'Path is outside allowed working directories',
@@ -83,31 +138,25 @@ describe('ControlRequestPrompt', () => {
     });
 
     it('should render permission_suggestions as buttons', () => {
-      render(
-        <ControlRequestPrompt
-          request={requestWithSuggestions}
-          onRespond={vi.fn()}
-          onDismiss={vi.fn()}
-        />,
-      );
+      render(<ControlRequestPrompt {...defaultProps} requests={[requestWithSuggestions]} />);
 
       expect(screen.getByTestId('suggestion-0')).toHaveTextContent('Switch to acceptEdits');
       expect(screen.getByTestId('suggestion-1')).toHaveTextContent('Allow /tmp');
     });
 
-    it('should call onRespond with suggestion data when suggestion is clicked', () => {
-      const onRespond = vi.fn();
+    it('should call onRespondAll with suggestion data when suggestion is clicked', () => {
+      const onRespondAll = vi.fn();
       render(
         <ControlRequestPrompt
-          request={requestWithSuggestions}
-          onRespond={onRespond}
-          onDismiss={vi.fn()}
+          {...defaultProps}
+          requests={[requestWithSuggestions]}
+          onRespondAll={onRespondAll}
         />,
       );
 
       fireEvent.click(screen.getByTestId('suggestion-0'));
-      expect(onRespond).toHaveBeenCalledWith('req-003', {
-        allowed: true,
+      expect(onRespondAll).toHaveBeenCalledWith({
+        behavior: 'allow',
         type: 'setMode',
         mode: 'acceptEdits',
         destination: 'session',
@@ -126,48 +175,51 @@ describe('ControlRequestPrompt', () => {
     };
 
     it('should display Hook Callback header', () => {
-      render(
-        <ControlRequestPrompt request={hookRequest} onRespond={vi.fn()} onDismiss={vi.fn()} />,
-      );
+      render(<ControlRequestPrompt {...defaultProps} requests={[hookRequest]} />);
 
       expect(screen.getByTestId('control-request-header')).toHaveTextContent('Hook Callback');
     });
 
     it('should display hook_event_name', () => {
-      render(
-        <ControlRequestPrompt request={hookRequest} onRespond={vi.fn()} onDismiss={vi.fn()} />,
-      );
+      render(<ControlRequestPrompt {...defaultProps} requests={[hookRequest]} />);
 
       expect(screen.getByTestId('control-request-hook-event')).toHaveTextContent('pre-commit');
     });
 
     it('should display tool_name from input', () => {
-      render(
-        <ControlRequestPrompt request={hookRequest} onRespond={vi.fn()} onDismiss={vi.fn()} />,
-      );
+      render(<ControlRequestPrompt {...defaultProps} requests={[hookRequest]} />);
 
       expect(screen.getByTestId('control-request-tool')).toHaveTextContent('Bash');
     });
 
-    it('should call onRespond with decision: approve on Allow', () => {
-      const onRespond = vi.fn();
+    it('should call onRespondAll with decision: approve on Allow', () => {
+      const onRespondAll = vi.fn();
       render(
-        <ControlRequestPrompt request={hookRequest} onRespond={onRespond} onDismiss={vi.fn()} />,
+        <ControlRequestPrompt
+          {...defaultProps}
+          requests={[hookRequest]}
+          onRespondAll={onRespondAll}
+        />,
       );
 
-      fireEvent.click(screen.getByLabelText('Allow'));
-      expect(onRespond).toHaveBeenCalledWith('req-004', { decision: 'approve' });
+      fireEvent.click(screen.getByTestId('control-btn-allow'));
+      expect(onRespondAll).toHaveBeenCalledWith({ decision: 'approve' });
     });
 
-    it('should call onRespond with decision: deny on Deny', () => {
-      const onRespond = vi.fn();
+    it('should call onRespondAll with decision: deny on Deny', () => {
+      const onRespondAll = vi.fn();
       const onDismiss = vi.fn();
       render(
-        <ControlRequestPrompt request={hookRequest} onRespond={onRespond} onDismiss={onDismiss} />,
+        <ControlRequestPrompt
+          {...defaultProps}
+          requests={[hookRequest]}
+          onRespondAll={onRespondAll}
+          onDismiss={onDismiss}
+        />,
       );
 
-      fireEvent.click(screen.getByLabelText('Deny'));
-      expect(onRespond).toHaveBeenCalledWith('req-004', { decision: 'deny' });
+      fireEvent.click(screen.getByTestId('control-btn-deny'));
+      expect(onRespondAll).toHaveBeenCalledWith({ decision: 'deny' });
       expect(onDismiss).toHaveBeenCalled();
     });
   });

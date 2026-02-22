@@ -50,7 +50,7 @@ export interface TerminalStore {
   consumePendingData: (id: string) => string[];
 }
 
-type ChatMessageRole = 'user' | 'assistant';
+type ChatMessageRole = 'user' | 'assistant' | 'system';
 
 export interface ChatMessage {
   id: string;

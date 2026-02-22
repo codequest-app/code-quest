@@ -650,12 +650,15 @@ describe('ChatSessionImpl', () => {
       createSession();
       session.sendMessage('test');
 
-      session.respondToControlRequest('req-001', { allow: true });
+      session.respondToControlRequest('req-001', { behavior: 'allow' });
 
       const parsed = JSON.parse(mockProcess.getLastStdinLine());
       expect(parsed.type).toBe('control_response');
-      expect(parsed.request_id).toBe('req-001');
-      expect(parsed.response.allow).toBe(true);
+      expect(parsed.response).toEqual({
+        subtype: 'success',
+        request_id: 'req-001',
+        response: { behavior: 'allow' },
+      });
     });
   });
 });

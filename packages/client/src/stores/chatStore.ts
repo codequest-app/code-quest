@@ -66,14 +66,14 @@ interface ChatSessionState {
     type: string;
     payload: unknown;
   }>;
-  pendingControlRequest?: {
+  pendingControlRequests: Array<{
     requestId: string;
     subtype: string;
     toolName?: string;
     input?: unknown;
     callbackId?: string;
     toolUseId?: string;
-  };
+  }>;
 }
 
 interface ChatStore {
@@ -91,7 +91,7 @@ interface ChatStore {
   clearWorktreeInfo: (sessionId: string) => void;
   handleControlResponse: (sessionId: string, response: ControlResponse) => void;
   handleControlRequest: (sessionId: string, request: ControlRequest) => void;
-  clearPendingControlRequest: (sessionId: string) => void;
+  clearPendingControlRequest: (sessionId: string, requestId?: string) => void;
   addControlEventLog: (
     sessionId: string,
     entry: { direction: 'sent' | 'received'; type: string; payload: unknown },
@@ -116,6 +116,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         isProcessing: false,
         allowedTools: [],
         unresolvedToolUses: [],
+        pendingControlRequests: [],
       });
       return { chatSessions };
     });
@@ -429,6 +430,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           isProcessing: true,
           allowedTools: [],
           unresolvedToolUses: [],
+          pendingControlRequests: [],
         };
         chatSessions.set(sessionId, session);
       }
@@ -442,31 +444,36 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       };
       const controlEventLog = [...(session.controlEventLog ?? []), logEntry];
 
+      const newRequest = {
+        requestId: request.requestId,
+        subtype: request.subtype,
+        toolName: request.toolName,
+        input: request.input,
+        callbackId: request.callbackId,
+        toolUseId: request.toolUseId,
+      };
       chatSessions.set(sessionId, {
         ...session,
         controlEventLog,
-        pendingControlRequest: {
-          requestId: request.requestId,
-          subtype: request.subtype,
-          toolName: request.toolName,
-          input: request.input,
-          callbackId: request.callbackId,
-          toolUseId: request.toolUseId,
-        },
+        pendingControlRequests: [...(session.pendingControlRequests ?? []), newRequest],
       });
       return { chatSessions };
     });
   },
 
-  clearPendingControlRequest: (sessionId: string) => {
+  clearPendingControlRequest: (sessionId: string, requestId?: string) => {
     set((state) => {
       const chatSessions = new Map(state.chatSessions);
       const session = chatSessions.get(sessionId);
       if (!session) return state;
 
+      const pendingControlRequests = requestId
+        ? (session.pendingControlRequests ?? []).filter((r) => r.requestId !== requestId)
+        : [];
+
       chatSessions.set(sessionId, {
         ...session,
-        pendingControlRequest: undefined,
+        pendingControlRequests,
       });
       return { chatSessions };
     });

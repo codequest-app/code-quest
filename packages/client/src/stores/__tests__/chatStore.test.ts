@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, ControlRequest, ControlResponse } from '@code-quest/shared';
+import type { ChatStreamEvent, ControlResponse } from '@code-quest/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useChatStore } from '../chatStore';
 
@@ -460,27 +460,33 @@ describe('chatStore', () => {
       expect(lastMsg?.content).toContain('Model not found');
     });
 
-    it('should set pendingControlRequest on control request', () => {
+    it('should queue multiple pendingControlRequests', () => {
       const store = useChatStore.getState();
       store.initChatSession('session-1', 'claude');
 
-      const request: ControlRequest = {
+      useChatStore.getState().handleControlRequest('session-1', {
         requestId: 'req-001',
+        subtype: 'can_use_tool',
+        toolName: 'WebSearch',
+        input: { query: 'test' },
+      });
+
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-002',
         subtype: 'can_use_tool',
         toolName: 'Bash',
         input: { command: 'ls' },
-      };
-
-      useChatStore.getState().handleControlRequest('session-1', request);
+      });
 
       const session = useChatStore.getState().getChatSession('session-1');
-      expect(session?.pendingControlRequest).toBeDefined();
-      expect(session?.pendingControlRequest?.requestId).toBe('req-001');
-      expect(session?.pendingControlRequest?.subtype).toBe('can_use_tool');
-      expect(session?.pendingControlRequest?.toolName).toBe('Bash');
+      expect(session?.pendingControlRequests).toHaveLength(2);
+      expect(session?.pendingControlRequests[0].requestId).toBe('req-001');
+      expect(session?.pendingControlRequests[0].toolName).toBe('WebSearch');
+      expect(session?.pendingControlRequests[1].requestId).toBe('req-002');
+      expect(session?.pendingControlRequests[1].toolName).toBe('Bash');
     });
 
-    it('should clear pendingControlRequest', () => {
+    it('should remove a single request by requestId via clearPendingControlRequest', () => {
       const store = useChatStore.getState();
       store.initChatSession('session-1', 'claude');
 
@@ -488,16 +494,39 @@ describe('chatStore', () => {
         requestId: 'req-001',
         subtype: 'can_use_tool',
       });
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-002',
+        subtype: 'can_use_tool',
+      });
 
       expect(
-        useChatStore.getState().getChatSession('session-1')?.pendingControlRequest,
-      ).toBeDefined();
+        useChatStore.getState().getChatSession('session-1')?.pendingControlRequests,
+      ).toHaveLength(2);
+
+      useChatStore.getState().clearPendingControlRequest('session-1', 'req-001');
+
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingControlRequests).toHaveLength(1);
+      expect(session?.pendingControlRequests[0].requestId).toBe('req-002');
+    });
+
+    it('should clear all pendingControlRequests when no requestId given', () => {
+      const store = useChatStore.getState();
+      store.initChatSession('session-1', 'claude');
+
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-001',
+        subtype: 'can_use_tool',
+      });
+      useChatStore.getState().handleControlRequest('session-1', {
+        requestId: 'req-002',
+        subtype: 'can_use_tool',
+      });
 
       useChatStore.getState().clearPendingControlRequest('session-1');
 
-      expect(
-        useChatStore.getState().getChatSession('session-1')?.pendingControlRequest,
-      ).toBeUndefined();
+      const session = useChatStore.getState().getChatSession('session-1');
+      expect(session?.pendingControlRequests).toHaveLength(0);
     });
 
     it('should merge permissionMode into controlInfo', () => {

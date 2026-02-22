@@ -7,6 +7,8 @@ import type {
 import type {
   ChatStats,
   ChatStreamEvent,
+  ControlRequest,
+  ControlResponse,
   OrchestratorStatus,
   SubTask,
   SystemCapabilities,
@@ -31,6 +33,12 @@ export interface ClientToServerEvents {
   'chat:allow-tool': (sessionId: string, toolName: string) => void;
   'chat:abort': (sessionId: string) => void;
   'chat:kill': (sessionId: string) => void;
+  'chat:control': (sessionId: string, subtype: string, params?: Record<string, unknown>) => void;
+  'chat:control-respond': (
+    sessionId: string,
+    requestId: string,
+    response: Record<string, unknown>,
+  ) => void;
   'orchestrator:create': (options: OrchestratorCreateOptions) => void;
   'orchestrator:dispatch': (orchId: string, tasks: SubTask[]) => void;
   'orchestrator:synthesize': (orchId: string) => void;
@@ -54,6 +62,8 @@ export interface ServerToClientEvents {
   'chat:complete': (sessionId: string, stats: ChatStats) => void;
   'chat:error': (sessionId: string, message: string) => void;
   'chat:exit': (sessionId: string) => void;
+  'chat:control-response': (sessionId: string, response: ControlResponse) => void;
+  'chat:control-request': (sessionId: string, request: ControlRequest) => void;
   'orchestrator:created': (orchId: string, coordinatorId: string, provider: string) => void;
   'orchestrator:dispatched': (orchId: string, workers: WorkerInfo[]) => void;
   'orchestrator:worker-event': (orchId: string, workerId: string, event: ChatStreamEvent) => void;
