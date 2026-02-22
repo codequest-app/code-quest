@@ -1,7 +1,13 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { ChatLogRepository, EventRow, SessionRow } from './repository.ts';
 import * as schema from './schema-sqlite.ts';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export type SqliteDatabase = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -13,28 +19,7 @@ export function createSqliteRepository(
 
   const db = drizzle(sqlite, { schema });
 
-  sqlite.exec(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id TEXT PRIMARY KEY,
-      provider TEXT NOT NULL,
-      command TEXT NOT NULL,
-      args TEXT NOT NULL,
-      cwd TEXT,
-      mode TEXT NOT NULL DEFAULT 'print',
-      created_at TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_id TEXT NOT NULL REFERENCES sessions(id),
-      dir TEXT NOT NULL,
-      type TEXT NOT NULL,
-      data TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_events_session_created ON events(session_id, created_at);
-  `);
+  migrate(db, { migrationsFolder: path.resolve(__dirname, '../../drizzle/sqlite') });
 
   return {
     db,

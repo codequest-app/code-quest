@@ -1,13 +1,19 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/mysql2';
+import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
 import type { ChatLogRepository, EventRow, SessionRow } from './repository.ts';
 import * as schema from './schema-mysql.ts';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function createMysqlRepository(url: string): ChatLogRepository {
   const pool = mysql.createPool(url);
   const db = drizzle(pool, { schema, mode: 'default' });
 
-  let queue: Promise<void> = initDatabase(url, pool);
+  let queue: Promise<void> = initDatabase(url, db as Parameters<typeof migrate>[0]);
 
   function enqueue(fn: () => Promise<unknown>): void {
     queue = queue
@@ -48,7 +54,7 @@ export function createMysqlRepository(url: string): ChatLogRepository {
   };
 }
 
-async function initDatabase(url: string, pool: mysql.Pool): Promise<void> {
+async function initDatabase(url: string, db: Parameters<typeof migrate>[0]): Promise<void> {
   const parsed = new URL(url);
   const dbName = parsed.pathname.replace('/', '');
 
@@ -58,28 +64,5 @@ async function initDatabase(url: string, pool: mysql.Pool): Promise<void> {
   await initConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
   await initConnection.end();
 
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS sessions (
-      id VARCHAR(36) PRIMARY KEY,
-      provider VARCHAR(20) NOT NULL,
-      command VARCHAR(255) NOT NULL,
-      args TEXT NOT NULL,
-      cwd TEXT,
-      mode VARCHAR(20) NOT NULL DEFAULT 'print',
-      created_at VARCHAR(30) NOT NULL
-    )
-  `);
-
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS events (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      session_id VARCHAR(36) NOT NULL,
-      dir VARCHAR(10) NOT NULL,
-      type VARCHAR(100) NOT NULL,
-      data TEXT NOT NULL,
-      created_at VARCHAR(30) NOT NULL,
-      INDEX idx_events_session_created (session_id, created_at),
-      FOREIGN KEY (session_id) REFERENCES sessions(id)
-    )
-  `);
+  await migrate(db, { migrationsFolder: path.resolve(__dirname, '../../drizzle/mysql') });
 }
