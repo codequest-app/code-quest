@@ -38,6 +38,7 @@ import type { SocketHandler } from './types.ts';
 export class SocketHandlerImpl implements SocketHandler {
   private io: SocketIOServer<ClientToServerEvents, ServerToClientEvents> | null = null;
   private readonly orchestrators = new Map<string, OrchestratorSession>();
+  private readonly loggedSessions = new Set<string>();
 
   constructor(
     @inject(TYPES.TerminalManager)
@@ -174,24 +175,21 @@ export class SocketHandlerImpl implements SocketHandler {
           data: { provider: session.provider },
         });
 
+        this.attachLogger(session.id, session, socket);
+
         session.onEvent((event) => {
-          this.chatLogger.log(session.id, { dir: 'out', type: event.type, data: event });
           socket.emit('chat:event', session.id, event);
         });
 
         session.onComplete((stats) => {
-          this.chatLogger.log(session.id, { dir: 'out', type: 'complete', data: stats });
           socket.emit('chat:complete', session.id, stats);
         });
 
         session.onError((message) => {
-          this.chatLogger.log(session.id, { dir: 'out', type: 'error', data: { message } });
           socket.emit('chat:error', session.id, message);
         });
 
         session.onExit(() => {
-          this.chatLogger.log(session.id, { dir: 'out', type: 'exit', data: {} });
-          this.chatLogger.close(session.id);
           socket.emit('chat:exit', session.id);
         });
 
@@ -224,6 +222,7 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.attachLogger(parsed.data.sessionId, session, socket);
       this.chatLogger.log(parsed.data.sessionId, {
         dir: 'in',
         type: 'user_message',
@@ -480,5 +479,32 @@ export class SocketHandlerImpl implements SocketHandler {
   handleDisconnection(socket: Socket): void {
     console.log(`Client disconnected: ${socket.id}`);
     // Sessions survive disconnects - they must be explicitly killed
+  }
+
+  private attachLogger(
+    sessionId: string,
+    session: ReturnType<ChatManager['getSession']>,
+    _socket: Socket,
+  ): void {
+    if (!session || this.loggedSessions.has(sessionId)) return;
+    this.loggedSessions.add(sessionId);
+
+    session.onEvent((event) => {
+      this.chatLogger.log(sessionId, { dir: 'out', type: event.type, data: event });
+    });
+
+    session.onComplete((stats) => {
+      this.chatLogger.log(sessionId, { dir: 'out', type: 'complete', data: stats });
+    });
+
+    session.onError((message) => {
+      this.chatLogger.log(sessionId, { dir: 'out', type: 'error', data: { message } });
+    });
+
+    session.onExit(() => {
+      this.chatLogger.log(sessionId, { dir: 'out', type: 'exit', data: {} });
+      this.chatLogger.close(sessionId);
+      this.loggedSessions.delete(sessionId);
+    });
   }
 }
