@@ -120,6 +120,14 @@ export function useOrchestratorSocket(serverUrl: string): UseOrchestratorSocketR
 
     const handleWorkersUpdated = (orchId: string, workers: WorkerInfo[]) => {
       setWorkers(orchId, workers);
+      // Init chatStore sessions for workers with real IDs (replacing pending-X)
+      const chat = useChatStore.getState();
+      for (const worker of workers) {
+        if (!worker.id.startsWith('pending-') && !chat.getChatSession(worker.id)) {
+          chat.initChatSession(worker.id, worker.task.provider);
+          chat.addUserMessage(worker.id, worker.task.description);
+        }
+      }
     };
 
     const handleCapabilities = (caps: { worktree: boolean }) => {
