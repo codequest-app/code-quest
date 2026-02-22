@@ -1,19 +1,13 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/mysql2';
-import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
 import type { ChatLogRepository, EventRow, SessionRow } from './repository.ts';
 import * as schema from './schema-mysql.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function createMysqlRepository(url: string): ChatLogRepository {
   const pool = mysql.createPool(url);
   const db = drizzle(pool, { schema, mode: 'default' });
 
-  let queue: Promise<void> = initDatabase(url, db as Parameters<typeof migrate>[0]);
+  let queue: Promise<void> = Promise.resolve();
 
   function enqueue(fn: () => Promise<unknown>): void {
     queue = queue
@@ -52,17 +46,4 @@ export function createMysqlRepository(url: string): ChatLogRepository {
       );
     },
   };
-}
-
-async function initDatabase(url: string, db: Parameters<typeof migrate>[0]): Promise<void> {
-  const parsed = new URL(url);
-  const dbName = parsed.pathname.replace('/', '');
-
-  const initUrl = new URL(url);
-  initUrl.pathname = '/';
-  const initConnection = await mysql.createConnection(initUrl.toString());
-  await initConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-  await initConnection.end();
-
-  await migrate(db, { migrationsFolder: path.resolve(__dirname, '../../drizzle/mysql') });
 }

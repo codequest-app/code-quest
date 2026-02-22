@@ -15,6 +15,9 @@
     "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
     "db:generate:mysql": "drizzle-kit generate --config=drizzle-mysql.config.ts",
     "db:generate": "pnpm db:generate:sqlite && pnpm db:generate:mysql",
+    "db:migrate:mysql": "tsx --env-file=.env src/scripts/migrate-mysql.ts",
+    "db:studio:sqlite": "drizzle-kit studio --config=drizzle-sqlite.config.ts",
+    "db:studio:mysql": "drizzle-kit studio --config=drizzle-mysql.config.ts",
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "@code-quest/shared": "workspace:*",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
     "express": "^4.18.2",
     "inversify": "^7.11.0",
     "mysql2": "^3.17.4",
