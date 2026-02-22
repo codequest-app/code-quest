@@ -1,4 +1,6 @@
 export { calculateDamage, getAffinityMultiplier } from './damage-calculator.ts';
+export type { EncounterResult } from './encounter-system.ts';
+export { shouldTriggerEncounter } from './encounter-system.ts';
 export {
   analyzeComplexity,
   calculateHP,
@@ -7,7 +9,12 @@ export {
 } from './enemy-generator.ts';
 export type { ChatContext } from './event-mapper.ts';
 export { mapChatEvent } from './event-mapper.ts';
-export { BUILT_IN_THEMES, TOWN_LOCATIONS } from './locations.ts';
+export {
+  BUILT_IN_THEMES,
+  TOWN_LOCATIONS,
+  WILDERNESS_LOCATIONS,
+  WILDERNESS_SUB_ZONES,
+} from './locations.ts';
 export * from './map-types.ts';
 export type { ModelDefinition, TokenUsage } from './model-config.ts';
 export { calculateCost, getModelDefinition, MODEL_DEFINITIONS } from './model-config.ts';
