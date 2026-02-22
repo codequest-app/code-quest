@@ -209,6 +209,11 @@ export class ChatSessionImpl implements ChatSession {
     const env = { ...(this.envOverride ?? process.env) };
     delete env.CLAUDECODE;
 
+    this.emitEvent({
+      type: 'spawn',
+      data: { command: this.command, args, cwd: this.cwd, mode: this.mode },
+    });
+
     try {
       this.process = this.processFactory(this.command, args, {
         cwd: this.cwd,

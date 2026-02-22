@@ -36,7 +36,9 @@ describe('ChatSessionImpl', () => {
 
   function collectEvents(): ChatStreamEvent[] {
     const events: ChatStreamEvent[] = [];
-    session.onEvent((e) => events.push(e));
+    session.onEvent((e) => {
+      if (e.type !== 'spawn') events.push(e);
+    });
     return events;
   }
 
