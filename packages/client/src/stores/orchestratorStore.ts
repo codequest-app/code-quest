@@ -8,6 +8,7 @@ export interface OrchestratorState {
   status: OrchestratorStatus;
   workers: WorkerInfo[];
   errorMessage?: string;
+  selectedWorkerId?: string;
 }
 
 interface OrchestratorStore {
@@ -18,6 +19,7 @@ interface OrchestratorStore {
   updateWorkerStatus: (orchId: string, workerId: string, update: Partial<WorkerInfo>) => void;
   setStatus: (orchId: string, status: OrchestratorStatus) => void;
   setError: (orchId: string, message: string) => void;
+  selectWorker: (orchId: string, workerId: string) => void;
   setAllComplete: (orchId: string, results: WorkerInfo[]) => void;
   removeOrchestrator: (orchId: string) => void;
   getOrchestrator: (orchId: string) => OrchestratorState | undefined;
@@ -45,7 +47,12 @@ export const useOrchestratorStore = create<OrchestratorStore>((set, get) => ({
       const orchestrators = new Map(state.orchestrators);
       const orch = orchestrators.get(orchId);
       if (!orch) return state;
-      orchestrators.set(orchId, { ...orch, workers: [...workers] });
+      const selectedStillValid =
+        orch.selectedWorkerId && workers.some((w) => w.id === orch.selectedWorkerId);
+      const selectedWorkerId = selectedStillValid
+        ? orch.selectedWorkerId
+        : (workers[0]?.id ?? undefined);
+      orchestrators.set(orchId, { ...orch, workers: [...workers], selectedWorkerId });
       return { orchestrators };
     });
   },
@@ -78,6 +85,16 @@ export const useOrchestratorStore = create<OrchestratorStore>((set, get) => ({
       const orch = orchestrators.get(orchId);
       if (!orch) return state;
       orchestrators.set(orchId, { ...orch, status: 'error', errorMessage: message });
+      return { orchestrators };
+    });
+  },
+
+  selectWorker: (orchId: string, workerId: string) => {
+    set((state) => {
+      const orchestrators = new Map(state.orchestrators);
+      const orch = orchestrators.get(orchId);
+      if (!orch) return state;
+      orchestrators.set(orchId, { ...orch, selectedWorkerId: workerId });
       return { orchestrators };
     });
   },
