@@ -51,15 +51,19 @@ function getChatCommandsConfig(): ChatCommandsConfig {
     };
   }
 
-  const interactiveMode = process.env.CHAT_MODE === 'interactive';
-
   return {
     claude: {
       command: 'claude',
-      baseArgs: interactiveMode
-        ? ['--output-format', 'stream-json', '--input-format', 'stream-json', '--verbose']
-        : ['-p', '--output-format', 'stream-json', '--input-format', 'stream-json', '--verbose'],
-      mode: interactiveMode ? 'interactive' : 'print',
+      baseArgs: [
+        '--output-format',
+        'stream-json',
+        '--input-format',
+        'stream-json',
+        '--verbose',
+        '--permission-prompt-tool',
+        'stdio',
+      ],
+      mode: 'interactive' as const,
     },
     gemini: {
       command: 'gemini',
