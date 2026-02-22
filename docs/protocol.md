@@ -106,9 +106,115 @@ Extension 會透過 `getClaudeBinary()`（第 68256 行）取得：
 
 ```
 <node|bun> [executableArgs] <claude-code-executable> [所有參數]
-// 或者如果是原生二進位檔：
+// 或者如果是原生二進位檔（副檔名非 .js/.mjs/.tsx/.ts/.jsx）：
 <claude-code-executable> [所有參數]
 ```
+
+### 0.6 VSCode Extension 實際完整啟動指令
+
+根據 `spawnClaude()`（第 68179–68254 行）傳入的具體值，以及 `initialize()`（第 27076–27180 行）的參數組裝邏輯，Extension 啟動 CLI 的完整指令如下：
+
+#### 判斷邏輯（第 27178–27180 行）
+
+```javascript
+let F6 = Wr(j);  // 判斷是否為原生二進位檔（非 .js/.mjs/.tsx/.ts/.jsx）
+let q6 = F6 ? j : N;              // 原生：直接執行 j；JS：用 node/bun（N）
+let Z6 = F6 ? [...K, ...m] : [...K, j, ...m];  // 原生：[executableArgs, ...args]；JS：[executableArgs, cli.js, ...args]
+```
+
+#### 原生二進位檔模式（darwin-arm64 環境）
+
+```bash
+/path/to/extension/resources/native-binary/claude \
+  # ── 必帶參數（第 27110-27115 行）──
+  --output-format stream-json \
+  --verbose \
+  --input-format stream-json \
+  # ── 條件參數（依 spawnClaude 傳入值）──
+  --max-thinking-tokens <j>                    # j = getMaxThinkingTokensForModel(model)，有值時帶
+  --model <V|"default">                        # V = 使用者選的模型，null 時傳 "default"
+  --permission-prompt-tool stdio               # 因為 canUseTool callback 存在（第 47036 行）
+  --setting-sources user,project,local         # 固定值（第 68226 行）
+  --permission-mode <K>                        # K = permissionMode，如 "default"
+  --include-partial-messages                   # 非 Remote 環境時帶（第 68207 行）
+  --mcp-config '{"mcpServers":{...}}'          # B = MCP 伺服器設定，有值時帶
+  # ── extraArgs（第 68227-68232 行，透過 Rr() 合併後展開）──
+  --debug \
+  --debug-to-stderr \
+  --enable-auth-status \
+  --no-chrome \
+  # ── 其他條件參數（視情況追加）──
+  --resume <sessionId>                         # 恢復會話時帶（z 參數）
+  --allow-dangerously-skip-permissions         # x = getAllowDangerouslySkipPermissions() 為 true 時帶
+  --add-dir <path>                             # 每個額外工作目錄（J = workspaceFolders 去掉第一個）
+```
+
+#### JS fallback 模式（無原生二進位檔時）
+
+```bash
+node \
+  <executableArgs> \
+  /path/to/extension/resources/claude-code/cli.js \
+  --output-format stream-json \
+  --verbose \
+  --input-format stream-json \
+  ... # 同上的條件參數
+```
+
+#### 完整參數值來源對照
+
+| 參數 | 值來源 | spawnClaude 中的變數 |
+|------|--------|---------------------|
+| `--model` | 使用者選擇的模型，`null` 時為 `"default"` | `V`（第 68191 行） |
+| `--max-thinking-tokens` | `getMaxThinkingTokensForModel(model)` | `j`（第 68206 行） |
+| `--permission-prompt-tool` | 固定 `"stdio"`（因 canUseTool callback 存在） | 隱含（第 27129–27134 行） |
+| `--permission-mode` | 使用者設定的權限模式 | `K`（第 68188 行） |
+| `--setting-sources` | 固定 `["user", "project", "local"]` | 第 68226 行 |
+| `--include-partial-messages` | `!vscode.env.remoteName`（非 Remote 時 true） | 第 68207 行 |
+| `--mcp-config` | MCP 伺服器設定 JSON | `B`（第 68233 行） |
+| `--resume` | 恢復的 session ID | `z`（第 68186 行） |
+| `--allow-dangerously-skip-permissions` | `settings.getAllowDangerouslySkipPermissions()` | `x`（第 68190 行） |
+| `--add-dir` | workspace folders（去掉第一個） | `J`（第 68182–68183 行） |
+| `--debug` | extraArgs 固定帶 | 第 68228 行 |
+| `--debug-to-stderr` | extraArgs 固定帶 | 第 68229 行 |
+| `--enable-auth-status` | extraArgs 固定帶 | 第 68230 行 |
+| `--no-chrome` | extraArgs 固定帶 | 第 68231 行 |
+| `cwd` | 第一個 workspaceFolder 或 this.cwd | `N`（第 68185 行） |
+
+#### extraArgs 合併邏輯（`Rr()` 函式，第 27015–27026 行）
+
+```javascript
+function Rr(v, z) {          // v = extraArgs, z = sandbox
+  let U = { ...v };
+  if (z) {                   // 如果有 sandbox 設定
+    let V = { sandbox: z };
+    if (U.settings)
+      try { V = { ...JSON.parse(U.settings), sandbox: z }; } catch {}
+    U.settings = JSON.stringify(V);
+  }
+  return U;
+}
+```
+
+展開後（第 27171–27174 行）：
+- `null` 值 → 旗標參數：`--debug`、`--debug-to-stderr`、`--enable-auth-status`、`--no-chrome`
+- 字串值 → 鍵值參數：`--key value`
+
+#### 環境變數設定（第 27175–27177 行）
+
+```javascript
+if (!B.CLAUDE_CODE_ENTRYPOINT) B.CLAUDE_CODE_ENTRYPOINT = "sdk-ts";
+delete B.NODE_OPTIONS;
+if (B.DEBUG_CLAUDE_AGENT_SDK) B.DEBUG = "1";
+else delete B.DEBUG;
+```
+
+| 環境變數 | 設定值 |
+|---------|--------|
+| `CLAUDE_CODE_ENTRYPOINT` | `"sdk-ts"` |
+| `NODE_OPTIONS` | 刪除 |
+| `DEBUG` | 有 `DEBUG_CLAUDE_AGENT_SDK` 時設 `"1"`，否則刪除 |
+| `CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING` | `"true"`（第 38824 行，因 enableFileCheckpointing = true） |
 
 ---
 
@@ -815,6 +921,19 @@ Extension 讀取並透過 postMessage 回傳給 WebView 顯示
 
 **觸發條件**：CLI 想使用某個工具（如 Edit、Write、Bash 等）時，主動詢問 Extension 是否允許。
 
+> **⚠️ 重要：`can_use_tool` 僅在 VSCode Extension 模式下觸發**
+>
+> 此機制**只有**在 `spawnClaude()` 時傳入 `canUseTool` callback 才會啟用（第 27129–27134 行）。
+> 傳入 callback 時，SDK 會自動帶上 `--permission-prompt-tool stdio` 參數，告訴 CLI「把權限問題透過 stdout 發給外部處理」。
+>
+> **純 CLI stream-json 模式**（不帶 `--permission-prompt-tool stdio`）下，CLI **自己內部處理權限**（使用 TUI 提示或 `--dangerously-skip-permissions` 等機制），**不會**發出 `can_use_tool` 訊息到 stdout。
+>
+> 程式碼佐證（第 27604–27605 行）：
+> ```javascript
+> if (!this.canUseTool) throw Error("canUseTool callback is not provided.");
+> ```
+> 如果沒有提供 callback，收到 `can_use_tool` 會直接 throw error。
+
 **前提**：`spawnClaude()` 時傳入 `canUseTool` callback（第 47036 行），並帶 `--permission-prompt-tool stdio` 參數，CLI 才會透過 stdio 詢問權限。
 
 **完整觸發鏈**：
@@ -902,13 +1021,142 @@ async requestToolPermission(v, z, U, V, N) {
 }
 ```
 
+#### `canUseTool` 回傳格式（Permission Response）
+
+`canUseTool` callback 的回傳值即為 `control_response.response.response` 的內容。`behavior` 有 `"allow"` 和 `"deny"` 兩種值（由 `tb()` 統計函式第 19820 行佐證）。
+
+回傳結構由 WebView 端的 `mi` 類別（`webview/index.js`）定義：
+
+```javascript
+class mi {
+  channelId; toolName; inputs; suggestions;
+
+  accept(updatedInput = {}, updatedPermissions = []) {
+    this.resolved.emit({
+      behavior: "allow",
+      updatedInput,
+      updatedPermissions     // 權限規則陣列，可用來批量授權
+    });
+  }
+
+  reject(message, interrupt) {
+    this.resolved.emit({
+      behavior: "deny",
+      message,
+      interrupt              // true = 中斷整個對話，不只拒絕這一次
+    });
+  }
+}
+```
+
+##### 允許（allow）
+
+```json
+{
+  "behavior": "allow",
+  "updatedInput": { ... },           // 可選，修改後的工具輸入
+  "updatedPermissions": [ ... ]      // 可選，更新的權限規則陣列
+}
+```
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| `behavior` | `"allow"` | 允許此次工具呼叫 |
+| `updatedInput` | `object` | 可選。修改後的工具輸入，覆蓋原始 input |
+| `updatedPermissions` | `array` | 可選。權限規則陣列，用於批量授權（例如「永遠允許此工具」或「允許此工具存取特定路徑」），由 WebView UI 的使用者選擇產生 |
+
+##### 拒絕（deny）
+
+```json
+{
+  "behavior": "deny",
+  "message": "拒絕原因",              // 可選
+  "interrupt": true                   // 可選
+}
+```
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| `behavior` | `"deny"` | 拒絕此次工具呼叫 |
+| `message` | `string` | 可選。拒絕原因，會傳回給 CLI |
+| `interrupt` | `boolean` | 可選。`true` = 中斷整個對話（不只拒絕這一次工具呼叫），`false`/省略 = 僅拒絕此次 |
+
+##### 完整 control_response 包裝（寫回 CLI stdin）
+
+由 `processControlRequest()`（第 27606–27616 行）自動附加 `toolUseID`：
+
+```json
+{
+  "type": "control_response",
+  "response": {
+    "subtype": "success",
+    "request_id": "對應的 request_id",
+    "response": {
+      "behavior": "allow",
+      "updatedInput": { ... },
+      "updatedPermissions": [ ... ],
+      "toolUseID": "xxx"
+    }
+  }
+}
+```
+
+##### 各情境的回傳值
+
+| 情境 | 回傳值 | 位置 |
+|------|--------|------|
+| Chrome MCP 工具 | `{ behavior: "allow", updatedInput: 原始輸入 }` | 第 47102 行（extension.js），自動允許 |
+| Config 載入模式 | `{ behavior: "deny", message: "Config loading only" }` | 第 47217 行（extension.js），固定拒絕 |
+| 一般工具（使用者允許） | `{ behavior: "allow", updatedInput?, updatedPermissions? }` | WebView `mi.accept()`，使用者可同時設定權限規則 |
+| 一般工具（使用者拒絕） | `{ behavior: "deny", message?, interrupt? }` | WebView `mi.reject()`，使用者可選擇中斷整個對話 |
+| Abort 取消 | `{ behavior: "deny", message: "Aborted", interrupt: false }` | WebView `handleToolPermissionRequest()`，signal abort 時自動拒絕 |
+
+##### 使用者允許的多種方式（updatedPermissions 規則格式）
+
+當使用者在 WebView UI 中允許工具時，可透過 `updatedPermissions` 陣列附帶不同粒度的授權規則。
+
+###### 1. `updatedPermissions` 陣列中的三種規則類型
+
+| type | 說明 | 結構 |
+|------|------|------|
+| `addRules` | 添加工具允許規則 | `{ type: "addRules", rules: [{ ruleContent: "tool_name:*", toolName: "tool_name" }] }` |
+| `addDirectories` | 允許存取特定目錄 | `{ type: "addDirectories", directories: ["/path/to/dir"] }` |
+| `setMode` | 設定權限模式 | `{ type: "setMode", mode: "acceptEdits" \| "default", destination: "session" }` |
+
+###### 2. destination（權限保存位置）
+
+| destination | 說明 | 儲存位置 |
+|-------------|------|---------|
+| `session` | 僅此次會話 | 不儲存 |
+| `localSettings` | 此專案（僅自己） | `.claude/settings.local.json`（gitignored） |
+| `userSettings` | 所有專案 | `~/.claude/settings.json` |
+| `projectSettings` | 此專案（團隊共享） | `.claude/settings.json` |
+
+###### 3. UI 按鈕對應的 accept/reject 行為
+
+| 按鈕 | 一般模式 | acceptEdits 模式 |
+|------|---------|-----------------|
+| **按鈕 1**（Primary） | `"Yes"` → `accept(inputs)` | `"Yes, and auto-accept"` → `accept(inputs, [{ type: "setMode", mode: "acceptEdits", destination: "session" }])` |
+| **按鈕 2** | `"Yes, and don't ask again"` / `"Yes, allow [tool] for [destination]"` → `accept(inputs, updatedPermissions)` 帶規則 | `"Yes, and manually approve edits"` → `accept(inputs)` 不帶規則 |
+| **按鈕 3**（Reject） | `"No"` → `reject(message, interrupt)` | `"No"` → `reject(message, interrupt)` |
+
+###### 4. reject 的預設訊息常數
+
+| 變數 | 訊息 |
+|------|------|
+| 一般拒絕 | `"The user doesn't want to proceed with this tool use. The tool use was rejected..."` |
+| 保持計畫模式 | `"User chose to stay in plan mode and continue planning"` |
+| 帶原因拒絕 | `"The user doesn't want to proceed... The user provided the following reason: "` + 原因 |
+
 ---
 
 ### 7.4 請求取消流程（`control_cancel_request` 觸發機制）
 
 **方向**：Claude CLI → stdout → Extension（被動接收）
 
-**觸發條件**：CLI 先前發送了一個 `control_request`（如 `can_use_tool`），但在 Extension 回應之前，CLI 決定取消該請求（例如使用者中斷操作、超時等）。
+**觸發條件**：CLI 先前發送了一個 `control_request`（如 `can_use_tool`、`hook_callback`），但在 Extension 回應之前，CLI 決定取消該請求（例如使用者中斷操作、超時等）。
+
+> **備註**：`control_cancel_request` 可取消任何進行中的 `control_request`。在純 CLI stream-json 模式下，因為不會發出 `can_use_tool`，此機制主要用於取消 `hook_callback` 或 `mcp_message` 等請求。
 
 **完整觸發鏈**：
 
@@ -963,6 +1211,20 @@ U.addEventListener("abort", x, { once: !0 });
 **方向**：Claude CLI → stdout → Extension（被動接收）
 
 **觸發條件**：CLI 在執行工具前後（PreToolUse / PostToolUse），回調 Extension 預先註冊的 hook 函式。
+
+> **✅ Hooks 獨立於 `can_use_tool`，在純 CLI stream-json 模式下也能使用**
+>
+> Hooks 和 canUseTool 是完全獨立的機制。`hasBidirectionalNeeds()`（第 27455–27460 行）用 `||` 判斷：
+> ```javascript
+> hasBidirectionalNeeds() {
+>   return (
+>     this.sdkMcpTransports.size > 0 ||
+>     (this.hooks !== void 0 && Object.keys(this.hooks).length > 0) ||  // hooks 獨立
+>     this.canUseTool !== void 0  // canUseTool 獨立
+>   );
+> }
+> ```
+> 只要在 `initialize` control_request 中帶上 hooks 設定，CLI 就會在工具執行前後發出 `hook_callback`，不需要提供 `canUseTool` callback。
 
 #### Hook 註冊階段
 
@@ -1070,6 +1332,82 @@ handleHookCallbacks(v, z, U, V) {
 | `hook_0` | PreToolUse | Edit, Write, MultiEdit | `captureBaseline(input)` | 在修改檔案前記錄原始狀態，用於後續差異比較 |
 | `hook_1` | PreToolUse | Edit, Write, Read | `saveFileIfNeeded(input)` | 若 VSCode 中該檔案有未儲存變更，先自動儲存 |
 | `hook_2` | PostToolUse | Edit, Write, MultiEdit | `findDiagnosticsProblems(input)` | 修改後檢查 VSCode 診斷問題（linting、型別錯誤等） |
+
+#### `hook_callback` 的 input 格式（CLI → Extension）
+
+CLI 發送 `hook_callback` 時，`input` 欄位包含以下結構（由 hook 函式內部的欄位存取推導，第 53293–53367 行）：
+
+```json
+{
+  "hook_event_name": "PreToolUse",       // 或 "PostToolUse"
+  "tool_name": "Edit",                   // 觸發的工具名稱（Edit、Write、MultiEdit、Read）
+  "tool_input": {                        // 工具的原始輸入
+    "file_path": "/src/app.js",
+    "old_string": "...",
+    "new_string": "..."
+  }
+}
+```
+
+#### `hook_callback` 的回傳格式（Extension → CLI）
+
+Hook 函式的回傳值會作為 `control_response.response.response` 寫回 CLI stdin。
+
+##### 基本格式：繼續執行
+
+所有 hook 函式正常情況下都回傳 `{ continue: true }`，表示工具可以繼續執行：
+
+```json
+{
+  "continue": true
+}
+```
+
+##### 帶額外資訊格式（PostToolUse 診斷結果）
+
+`findDiagnosticsProblems()`（第 53331–53339 行）偵測到新的診斷問題時，會附帶 `hookSpecificOutput`：
+
+```json
+{
+  "continue": true,
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "<ide_diagnostics>...診斷摘要...</ide_diagnostics>"
+  }
+}
+```
+
+`additionalContext` 中的診斷摘要由 `formatDiagnosticsSummary()` 產生，包含 VSCode 偵測到的 linting 錯誤、型別錯誤等。
+
+##### 完整 control_response 包裝
+
+```json
+{
+  "type": "control_response",
+  "response": {
+    "subtype": "success",
+    "request_id": "對應的 request_id",
+    "response": {
+      "continue": true,
+      "hookSpecificOutput": {             // 可選
+        "hookEventName": "PostToolUse",
+        "additionalContext": "<ide_diagnostics>...</ide_diagnostics>"
+      }
+    }
+  }
+}
+```
+
+##### 各 Hook 函式回傳值對照
+
+| Hook 函式 | 回傳值 | 說明 |
+|-----------|--------|------|
+| `captureBaseline()` | `{ continue: true }` | 僅記錄基線，不影響工具執行 |
+| `saveFileIfNeeded()` | `{ continue: true }` | 儲存完畢後繼續，即使儲存失敗也繼續 |
+| `findDiagnosticsProblems()` 無問題時 | `{ continue: true }` | 無新增診斷問題 |
+| `findDiagnosticsProblems()` 有問題時 | `{ continue: true, hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "<ide_diagnostics>...</ide_diagnostics>" } }` | 將診斷資訊回傳給 CLI，CLI 可將其注入後續 context |
+
+> **備註**：目前所有 hook 都回傳 `continue: true`，不會阻止工具執行。`continue: false` 的行為在此 Extension 中未被使用，但 CLI 端可能支援用 `continue: false` 來中止工具執行。
 
 ---
 
