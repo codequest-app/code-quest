@@ -42,6 +42,77 @@ describe('DrizzleChatLogger', () => {
       expect(row.createdAt).toBeTruthy();
     });
 
+    it('should default role to chat when not provided', () => {
+      logger.createSession('s-role-default', {
+        provider: 'claude',
+        command: 'claude',
+        args: [],
+        mode: 'print',
+      });
+
+      const rows = db.select().from(sessions).where(eq(sessions.id, 's-role-default')).all();
+      expect(rows[0].role).toBe('chat');
+      expect(rows[0].parentId).toBeNull();
+    });
+
+    it('should persist role=orchestrator', () => {
+      logger.createSession('s-orch', {
+        provider: 'claude',
+        command: '',
+        args: [],
+        mode: 'orchestrator',
+        role: 'orchestrator',
+      });
+
+      const rows = db.select().from(sessions).where(eq(sessions.id, 's-orch')).all();
+      expect(rows[0].role).toBe('orchestrator');
+      expect(rows[0].parentId).toBeNull();
+    });
+
+    it('should persist role=coordinator with parentId', () => {
+      logger.createSession('s-orch2', {
+        provider: 'claude',
+        command: '',
+        args: [],
+        mode: 'orchestrator',
+        role: 'orchestrator',
+      });
+      logger.createSession('s-coord', {
+        provider: 'claude',
+        command: 'claude',
+        args: [],
+        mode: 'print',
+        role: 'coordinator',
+        parentId: 's-orch2',
+      });
+
+      const rows = db.select().from(sessions).where(eq(sessions.id, 's-coord')).all();
+      expect(rows[0].role).toBe('coordinator');
+      expect(rows[0].parentId).toBe('s-orch2');
+    });
+
+    it('should persist role=worker with parentId', () => {
+      logger.createSession('s-orch3', {
+        provider: 'claude',
+        command: '',
+        args: [],
+        mode: 'orchestrator',
+        role: 'orchestrator',
+      });
+      logger.createSession('s-worker', {
+        provider: 'gemini',
+        command: 'gemini',
+        args: [],
+        mode: 'print',
+        role: 'worker',
+        parentId: 's-orch3',
+      });
+
+      const rows = db.select().from(sessions).where(eq(sessions.id, 's-worker')).all();
+      expect(rows[0].role).toBe('worker');
+      expect(rows[0].parentId).toBe('s-orch3');
+    });
+
     it('should allow null cwd', () => {
       logger.createSession('s2', {
         provider: 'gemini',

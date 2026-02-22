@@ -30,6 +30,8 @@ export function createMysqlRepository(url: string): ChatLogRepository {
           args: row.args,
           cwd: row.cwd,
           mode: row.mode,
+          role: row.role,
+          parentId: row.parentId,
           createdAt: row.createdAt,
         }),
       );

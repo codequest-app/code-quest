@@ -7,6 +7,8 @@ export const sessions = sqliteTable('sessions', {
   args: text('args').notNull(),
   cwd: text('cwd'),
   mode: text('mode').notNull().default('print'),
+  role: text('role').notNull().default('chat'),
+  parentId: text('parent_id'),
   createdAt: text('created_at').notNull(),
 });
 

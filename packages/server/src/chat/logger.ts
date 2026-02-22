@@ -4,12 +4,16 @@ export interface ChatLogEntry {
   data: unknown;
 }
 
+import type { SessionRole } from '../database/repository.ts';
+
 export interface SessionMetadata {
   provider: string;
   command: string;
   args: string[];
   cwd?: string;
   mode: string;
+  role?: SessionRole;
+  parentId?: string;
 }
 
 export interface ChatLogger {

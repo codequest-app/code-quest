@@ -1,3 +1,5 @@
+export type SessionRole = 'chat' | 'orchestrator' | 'coordinator' | 'worker';
+
 export interface SessionRow {
   id: string;
   provider: string;
@@ -5,6 +7,8 @@ export interface SessionRow {
   args: string;
   cwd: string | null;
   mode: string;
+  role: SessionRole;
+  parentId: string | null;
   createdAt: string;
 }
 

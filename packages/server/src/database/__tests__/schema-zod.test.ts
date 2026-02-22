@@ -33,6 +33,32 @@ describe('schema-zod', () => {
       const result = insertSessionSchema.safeParse({ id: 's1' });
       expect(result.success).toBe(false);
     });
+
+    it('should validate session with role and parentId', () => {
+      const result = insertSessionSchema.safeParse({
+        id: 's1',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'print',
+        role: 'worker',
+        parentId: 'orch-1',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept session without role (optional with SQL default)', () => {
+      const result = insertSessionSchema.safeParse({
+        id: 's1',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'print',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('insertEventSchema', () => {
