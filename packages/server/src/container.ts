@@ -141,13 +141,18 @@ export function createContainer(): Container {
     })
     .inSingletonScope();
 
+  container.bind<ChatLogger>(TYPES.ChatLoggerItem).to(FileChatLogger);
+
+  container.bind<ChatLogger>(TYPES.ChatLoggerItem).toDynamicValue((context) => {
+    const repository = context.get<ChatLogRepository>(TYPES.ChatLogRepository);
+    return new DrizzleChatLogger(repository);
+  });
+
   container
     .bind<ChatLogger>(TYPES.ChatLogger)
     .toDynamicValue((context) => {
-      const fileLogger = new FileChatLogger();
-      const repository = context.get<ChatLogRepository>(TYPES.ChatLogRepository);
-      const drizzleLogger = new DrizzleChatLogger(repository);
-      return new CompositeChatLogger([fileLogger, drizzleLogger]);
+      const loggers = context.getAll<ChatLogger>(TYPES.ChatLoggerItem);
+      return new CompositeChatLogger(loggers);
     })
     .inSingletonScope();
 

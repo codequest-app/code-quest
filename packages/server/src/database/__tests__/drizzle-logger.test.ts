@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DrizzleChatLogger } from '../drizzle-logger.ts';
+import type { ChatLogRepository } from '../repository.ts';
 import { events, sessions } from '../schema-sqlite.ts';
 import type { SqliteDatabase } from '../sqlite-repository.ts';
 import { createSqliteRepository } from '../sqlite-repository.ts';
@@ -138,6 +139,31 @@ describe('DrizzleChatLogger', () => {
   describe('close', () => {
     it('should not throw', () => {
       expect(() => logger.close('s1')).not.toThrow();
+    });
+  });
+
+  describe('async repository ordering', () => {
+    it('should call insertSession before insertEvent even with async repository', () => {
+      const calls: string[] = [];
+      const asyncRepo: ChatLogRepository = {
+        insertSession: vi.fn(() => {
+          calls.push('insertSession');
+        }),
+        insertEvent: vi.fn(() => {
+          calls.push('insertEvent');
+        }),
+      };
+
+      const asyncLogger = new DrizzleChatLogger(asyncRepo);
+      asyncLogger.createSession('s1', {
+        provider: 'claude',
+        command: 'claude',
+        args: [],
+        mode: 'print',
+      });
+      asyncLogger.log('s1', { dir: 'out', type: 'text', data: { content: 'hello' } });
+
+      expect(calls).toEqual(['insertSession', 'insertEvent']);
     });
   });
 });
