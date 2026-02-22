@@ -11,6 +11,7 @@ import { BankPanel } from '../Bank/BankPanel';
 import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
 import { KeyboardShortcutsPanel } from '../ChatPanel/KeyboardShortcutsPanel';
+import { MapView } from '../Map/MapView';
 import type { CommandMenuItem } from '../Menu';
 import { CommandMenu } from '../Menu';
 import { OrchestratorPage } from '../OrchestratorPanel';
@@ -30,6 +31,8 @@ function getTabLabel(type: SessionType, index: number): string {
       return `Gemini ${index}`;
     case 'orchestrator':
       return `Orchestrator ${index}`;
+    case 'map':
+      return `Map ${index}`;
     default:
       return `Terminal ${index}`;
   }
@@ -83,7 +86,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
   const [providerDialogOpen, setProviderDialogOpen] = useState(false);
 
   // Counters for tab labels
-  const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0 });
+  const tabCounters = useRef({ terminal: 0, claude: 0, gemini: 0, orchestrator: 0, map: 0 });
   const tabLabels = useRef(new Map<string, string>());
 
   // Wire RPG battle engine to all chat sessions
@@ -225,10 +228,17 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     setProviderDialogOpen(true);
   };
 
+  const handleNewMap = () => {
+    const id = `map-${Date.now()}`;
+    addSession(id, 0, 'map');
+  };
+
   const handleCloseSession = useCallback(
     (sessionId: string) => {
       const session = useTerminalStore.getState().getSession(sessionId);
-      if (session?.type === 'terminal') {
+      if (session?.type === 'map') {
+        removeSession(sessionId);
+      } else if (session?.type === 'terminal') {
         emit('terminal:kill', sessionId);
       } else if (session?.type === 'orchestrator') {
         killOrchestrator(sessionId);
@@ -335,6 +345,9 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             getTabLabel(session.type, ++tabCounters.current.orchestrator),
           );
           break;
+        case 'map':
+          tabLabels.current.set(session.id, getTabLabel(session.type, ++tabCounters.current.map));
+          break;
         default:
           tabLabels.current.set(
             session.id,
@@ -423,6 +436,9 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             onClick={handleNewOrchestrator}
           >
             + Orchestrator
+          </button>
+          <button type="button" className="new-tab-button" aria-label="Map" onClick={handleNewMap}>
+            + Map
           </button>
         </div>
 
@@ -574,6 +590,15 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
               onRetryWorker={retryOrchestratorWorker}
               onSkipWorker={skipOrchestratorWorker}
             />
+          </div>
+        )}
+        {activeSession && activeSession.type === 'map' && (
+          <div
+            key={activeSession.id}
+            className="chat-wrapper"
+            style={{ width: '100%', height: '100%' }}
+          >
+            <MapView />
           </div>
         )}
       </div>
