@@ -1,7 +1,13 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../../../stores/battleStore';
 import { BattleOverlay } from '../BattleOverlay';
+
+const defaultHandlers = {
+  onQuestionAnswer: vi.fn(),
+  onAllowTool: vi.fn(),
+  onDenyTool: vi.fn(),
+};
 
 describe('BattleOverlay', () => {
   beforeEach(() => {
@@ -13,7 +19,7 @@ describe('BattleOverlay', () => {
   });
 
   it('renders nothing when no battle exists', () => {
-    const { container } = render(<BattleOverlay sessionId="s1" />);
+    const { container } = render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(container.innerHTML).toBe('');
   });
 
@@ -26,7 +32,7 @@ describe('BattleOverlay', () => {
       maxHp: 200,
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('battle-overlay')).toBeDefined();
     expect(screen.getByTestId('enemy-name')).toHaveTextContent('Code Golem');
     expect(screen.getByTestId('player-status')).toBeDefined();
@@ -48,7 +54,7 @@ describe('BattleOverlay', () => {
       expEarned: 30,
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('message-box')).toHaveTextContent('勝利');
   });
 
@@ -61,7 +67,7 @@ describe('BattleOverlay', () => {
       maxHp: 100,
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getAllByTestId('progress-bar-hp').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('progress-bar-mp')).toBeDefined();
   });
@@ -77,7 +83,7 @@ describe('BattleOverlay', () => {
     });
     useBattleStore.getState().updateBattle('s1', { phase: 'victory' });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     const overlay = screen.getByTestId('battle-overlay');
     expect(overlay.className).not.toContain('battle-overlay-fading');
 
@@ -104,7 +110,7 @@ describe('BattleOverlay', () => {
     });
     useBattleStore.getState().updateBattle('s1', { isPaused: true, pauseReason: 'plan_mode' });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('stasis-overlay')).toBeInTheDocument();
   });
 
@@ -122,7 +128,7 @@ describe('BattleOverlay', () => {
       activeDialogue: { question: 'Which?', options: ['A', 'B'] },
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('rpg-question-modal')).toBeInTheDocument();
     expect(screen.getByText('Which?')).toBeInTheDocument();
   });
@@ -141,7 +147,7 @@ describe('BattleOverlay', () => {
       activeTrap: { toolName: 'Bash', description: 'run command', riskLevel: 'high' },
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('rpg-permission-modal')).toBeInTheDocument();
     expect(screen.getByText('罠を発見！')).toBeInTheDocument();
   });
@@ -156,7 +162,7 @@ describe('BattleOverlay', () => {
     });
     useBattleStore.getState().updateBattle('s1', { modelId: 'opus' });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('model-indicator')).toHaveTextContent('👑');
     expect(screen.getByTestId('model-indicator')).toHaveTextContent('OPUS');
   });
@@ -174,7 +180,7 @@ describe('BattleOverlay', () => {
       worktreeBranch: 'feat/task-1',
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.getByTestId('worktree-indicator')).toBeInTheDocument();
     expect(screen.getByText(/feat\/task-1/)).toBeInTheDocument();
   });
@@ -188,8 +194,74 @@ describe('BattleOverlay', () => {
       maxHp: 100,
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.queryByTestId('model-indicator')).not.toBeInTheDocument();
+  });
+
+  it('should call onQuestionAnswer with selected option when question option is selected', () => {
+    const onQuestionAnswer = vi.fn();
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      isPaused: true,
+      pauseReason: 'question',
+      activeDialogue: { question: 'Which?', options: ['Option A', 'Option B'] },
+    });
+
+    render(
+      <BattleOverlay sessionId="s1" {...defaultHandlers} onQuestionAnswer={onQuestionAnswer} />,
+    );
+
+    // Press Enter to select the first option (default selected index is 0)
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(onQuestionAnswer).toHaveBeenCalledWith('s1', 'Option A');
+  });
+
+  it('should call onAllowTool when permission is allowed', () => {
+    const onAllowTool = vi.fn();
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      isPaused: true,
+      pauseReason: 'permission',
+      activeTrap: { toolName: 'Bash', description: 'run command', riskLevel: 'high' },
+    });
+
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} onAllowTool={onAllowTool} />);
+
+    fireEvent.click(screen.getByTestId('allow-button'));
+    expect(onAllowTool).toHaveBeenCalledWith('s1', 'Bash');
+  });
+
+  it('should call onDenyTool when permission is denied', () => {
+    const onDenyTool = vi.fn();
+    useBattleStore.getState().startBattle('s1', {
+      name: 'Test',
+      type: 'general',
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+    });
+    useBattleStore.getState().updateBattle('s1', {
+      isPaused: true,
+      pauseReason: 'permission',
+      activeTrap: { toolName: 'Bash', description: 'run command', riskLevel: 'high' },
+    });
+
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} onDenyTool={onDenyTool} />);
+
+    fireEvent.click(screen.getByTestId('deny-button'));
+    expect(onDenyTool).toHaveBeenCalledWith('s1');
   });
 
   it('does not show modals when battle is not paused', () => {
@@ -201,7 +273,7 @@ describe('BattleOverlay', () => {
       maxHp: 100,
     });
 
-    render(<BattleOverlay sessionId="s1" />);
+    render(<BattleOverlay sessionId="s1" {...defaultHandlers} />);
     expect(screen.queryByTestId('stasis-overlay')).not.toBeInTheDocument();
     expect(screen.queryByTestId('rpg-question-modal')).not.toBeInTheDocument();
     expect(screen.queryByTestId('rpg-permission-modal')).not.toBeInTheDocument();
