@@ -295,6 +295,11 @@ export class SocketHandlerImpl implements SocketHandler {
         socket.emit('chat:error', parsed.data.sessionId, 'Session not found');
         return;
       }
+      this.chatLogger.log(parsed.data.sessionId, {
+        dir: 'in',
+        type: 'control_response',
+        data: { requestId: parsed.data.requestId, response: parsed.data.response },
+      });
       session.respondToControlRequest(parsed.data.requestId, parsed.data.response);
     });
 

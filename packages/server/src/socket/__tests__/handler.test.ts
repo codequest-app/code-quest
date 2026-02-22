@@ -4,6 +4,7 @@ import type { Socket } from 'socket.io';
 import { Server as SocketIOServer } from 'socket.io';
 import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ChatLogger } from '../../chat/logger.ts';
 import type { ChatManager } from '../../chat/types.ts';
 import { TYPES } from '../../container.ts';
 import type { TerminalManager } from '../../terminal/types.ts';
@@ -18,10 +19,12 @@ describe('SocketHandler', () => {
   let chatManager: ChatManager;
   let clientSocket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
   let serverSocket: Socket;
+  let mockChatLogger: ChatLogger;
 
   beforeEach(async () => {
+    mockChatLogger = { log: vi.fn(), close: vi.fn() };
     // Create DI container
-    const container = createTestContainer();
+    const container = createTestContainer({ chatLogger: mockChatLogger });
     terminalManager = container.get<TerminalManager>(TYPES.TerminalManager);
     chatManager = container.get<ChatManager>(TYPES.ChatManager);
     handler = container.get<SocketHandler>(TYPES.SocketHandler);
@@ -452,6 +455,27 @@ describe('SocketHandler', () => {
       await new Promise((r) => setTimeout(r, 100));
 
       expect(chatManager.getSession(sessionId)).toBeUndefined();
+    });
+
+    it('should log control_response when chat:control-respond is received', async () => {
+      // Create a session first
+      const created = new Promise<string>((resolve) => {
+        clientSocket.on('chat:created', (sessionId: string) => resolve(sessionId));
+      });
+      clientSocket.emit('chat:create', { provider: 'claude' });
+      const sessionId = await created;
+
+      // Emit control-respond
+      clientSocket.emit('chat:control-respond', sessionId, 'req-001', { behavior: 'allow' });
+
+      // Wait for processing
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(mockChatLogger.log).toHaveBeenCalledWith(sessionId, {
+        dir: 'in',
+        type: 'control_response',
+        data: { requestId: 'req-001', response: { behavior: 'allow' } },
+      });
     });
   });
 
