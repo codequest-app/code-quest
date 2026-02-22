@@ -22,7 +22,7 @@ describe('SocketHandler', () => {
   let mockChatLogger: ChatLogger;
 
   beforeEach(async () => {
-    mockChatLogger = { log: vi.fn(), close: vi.fn() };
+    mockChatLogger = { createSession: vi.fn(), log: vi.fn(), close: vi.fn() };
     // Create DI container
     const container = createTestContainer({ chatLogger: mockChatLogger });
     terminalManager = container.get<TerminalManager>(TYPES.TerminalManager);

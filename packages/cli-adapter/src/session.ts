@@ -18,9 +18,9 @@ export class ChatSessionImpl implements ChatSession {
   readonly provider: ChatProvider;
   readonly mode: ChatSessionMode;
 
-  private readonly command: string;
-  private readonly baseArgs: string[];
-  private readonly cwd: string;
+  readonly command: string;
+  readonly baseArgs: string[];
+  readonly cwd: string;
   private readonly envOverride?: Record<string, string | undefined>;
   private readonly processFactory: ProcessFactory;
 

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { ParserFactory, ProcessFactory } from '@code-quest/cli-adapter';
 import { ChatSessionImpl, createParser } from '@code-quest/cli-adapter';
 import { Container } from 'inversify';
+import { CompositeChatLogger } from './chat/composite-logger.ts';
 import { FileChatLogger } from './chat/file-logger.ts';
 import type { ChatLogger } from './chat/logger.ts';
 import { ChatManagerImpl } from './chat/manager.ts';
@@ -14,6 +15,8 @@ import type {
   ChatSessionFactory,
   ChatSessionOptions,
 } from './chat/types.ts';
+import { createDatabase } from './database/connection.ts';
+import { DrizzleChatLogger } from './database/drizzle-logger.ts';
 import { GitServiceImpl } from './git/service.ts';
 import type { GitService } from './git/types.ts';
 import { OrchestratorSessionImpl } from './orchestrator/session.ts';
@@ -110,7 +113,13 @@ export function createContainer(): Container {
       return (opts) => {
         const chatManager = context.get<ChatManager>(TYPES.ChatManager);
         const gitService = context.get<GitService>(TYPES.GitService);
-        return new OrchestratorSessionImpl({ chatManager, gitService, provider: opts.provider });
+        const chatLogger = context.get<ChatLogger>(TYPES.ChatLogger);
+        return new OrchestratorSessionImpl({
+          chatManager,
+          gitService,
+          chatLogger,
+          provider: opts.provider,
+        });
       };
     });
 
@@ -119,7 +128,14 @@ export function createContainer(): Container {
 
   container.bind<ChatManager>(TYPES.ChatManager).to(ChatManagerImpl).inSingletonScope();
 
-  container.bind<ChatLogger>(TYPES.ChatLogger).to(FileChatLogger).inSingletonScope();
+  container
+    .bind<ChatLogger>(TYPES.ChatLogger)
+    .toDynamicValue(() => {
+      const fileLogger = new FileChatLogger();
+      const drizzleLogger = new DrizzleChatLogger(createDatabase('logs/chat.db'));
+      return new CompositeChatLogger([fileLogger, drizzleLogger]);
+    })
+    .inSingletonScope();
 
   container.bind<GitService>(TYPES.GitService).to(GitServiceImpl).inSingletonScope();
 

@@ -7,6 +7,7 @@ import type {
   SubTask,
   WorkerInfo,
 } from '@code-quest/shared';
+import type { ChatLogger } from '../chat/logger.ts';
 import type { ChatManager, ChatSession } from '../chat/types.ts';
 import type { GitService } from '../git/types.ts';
 import type { OrchestratorSession } from './types.ts';
@@ -15,6 +16,7 @@ import { calculateWaves, type Wave } from './wave-calculator.ts';
 interface OrchestratorSessionOptions {
   chatManager: ChatManager;
   gitService: GitService;
+  chatLogger: ChatLogger;
   provider: 'claude' | 'gemini';
 }
 
@@ -26,6 +28,7 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
   private _workers: WorkerInfo[] = [];
   private readonly chatManager: ChatManager;
   private readonly gitService: GitService;
+  private readonly chatLogger: ChatLogger;
   private readonly coordinatorSession: ChatSession;
   private workerSessions: Map<string, ChatSession> = new Map();
 
@@ -59,8 +62,17 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
     this.id = randomUUID();
     this.chatManager = options.chatManager;
     this.gitService = options.gitService;
+    this.chatLogger = options.chatLogger;
     this.coordinatorSession = this.chatManager.createSession({ provider: options.provider });
     this.coordinatorId = this.coordinatorSession.id;
+
+    this.chatLogger.createSession(this.coordinatorSession.id, {
+      provider: this.coordinatorSession.provider,
+      command: this.coordinatorSession.command,
+      args: this.coordinatorSession.baseArgs,
+      cwd: this.coordinatorSession.cwd,
+      mode: this.coordinatorSession.mode,
+    });
   }
 
   async dispatch(tasks: SubTask[]): Promise<void> {
@@ -231,6 +243,14 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       this.workerSessions.set(session.id, session);
       this.workerWaveMap.set(session.id, worker.wave ?? 0);
 
+      this.chatLogger.createSession(session.id, {
+        provider: session.provider,
+        command: session.command,
+        args: session.baseArgs,
+        cwd: session.cwd,
+        mode: session.mode,
+      });
+
       // If status was workers-complete or workers-paused, go back to workers-running
       if (this._status === 'workers-complete' || this._status === 'workers-paused') {
         this.setStatus('workers-running');
@@ -328,6 +348,14 @@ export class OrchestratorSessionImpl implements OrchestratorSession {
       worker.id = session.id;
       this.workerSessions.set(session.id, session);
       this.workerWaveMap.set(session.id, waveIndex);
+
+      this.chatLogger.createSession(session.id, {
+        provider: session.provider,
+        command: session.command,
+        args: session.baseArgs,
+        cwd: session.cwd,
+        mode: session.mode,
+      });
 
       if (cwd) {
         const worktreeId = `${this.id}-${taskIndex}`;

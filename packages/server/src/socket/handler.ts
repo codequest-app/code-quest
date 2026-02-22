@@ -169,6 +169,14 @@ export class SocketHandlerImpl implements SocketHandler {
       try {
         const session = this.chatManager.createSession(parsed.data);
 
+        this.chatLogger.createSession(session.id, {
+          provider: session.provider,
+          command: session.command,
+          args: session.baseArgs,
+          cwd: session.cwd,
+          mode: session.mode,
+        });
+
         this.chatLogger.log(session.id, {
           dir: 'out',
           type: 'session_created',

@@ -24,6 +24,9 @@ export const TYPES = {
   // Git
   GitService: Symbol.for('GitService'),
 
+  // Database
+  Database: Symbol.for('Database'),
+
   // Server
   Server: Symbol.for('Server'),
 } as const;
