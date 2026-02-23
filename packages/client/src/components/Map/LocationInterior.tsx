@@ -479,6 +479,7 @@ function LocationContent({
   onPractice?: () => void;
   onSendMessage?: (message: string) => Promise<string>;
 }) {
+  const battleActive = !!useMapStore((s) => s.activeBattleSessionId);
   switch (id) {
     case 'tavern':
       return <TavernContent onSendMessage={onSendMessage} />;
@@ -510,7 +511,6 @@ function LocationContent({
     case 'arch_maze':
     case 'legacy_tomb': {
       const boss = DUNGEON_BOSSES.find((b) => b.dungeonId === id);
-      const battleActive = !!useMapStore.getState().activeBattleSessionId;
       return (
         <div className="interior-content" data-testid="interior-dungeon">
           <h3>{boss ? `${boss.bossIcon} ${boss.bossName}` : 'Boss Chamber'}</h3>

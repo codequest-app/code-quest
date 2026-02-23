@@ -454,11 +454,10 @@
   z-index: 1;
 }
 
-/* Player move bounce */
+/* Player character — grid-column/grid-row are not animatable CSS properties,
+   so movement is instant. A subtle pulse is applied via the component key. */
 .map-player {
-  transition:
-    grid-column 0.15s ease,
-    grid-row 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 /* Building click pulse */

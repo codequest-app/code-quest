@@ -92,6 +92,12 @@ describe('mapStore', () => {
     expect(useMapStore.getState().currentZone).toBe('wilderness');
   });
 
+  it('changeZone resets playerPosition to center (4,4)', () => {
+    useMapStore.setState({ playerPosition: { x: 8, y: 6 } });
+    useMapStore.getState().changeZone('wilderness');
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 4, y: 4 });
+  });
+
   it('exitLocation clears currentLocationId', () => {
     useMapStore.getState().enterLocation('tavern');
     useMapStore.getState().exitLocation();
@@ -207,6 +213,17 @@ describe('mapStore', () => {
     useMapStore.setState({ currentZone: 'dungeon', inDungeon: true });
     useMapStore.getState().changeZone('town');
     expect(useMapStore.getState().currentZone).toBe('dungeon');
+  });
+
+  it('exitLocation in non-dungeon does not touch inDungeon', () => {
+    useMapStore.setState({
+      currentZone: 'town',
+      currentLocationId: 'tavern',
+      inDungeon: false,
+    });
+    useMapStore.getState().exitLocation();
+    expect(useMapStore.getState().currentLocationId).toBeNull();
+    expect(useMapStore.getState().inDungeon).toBe(false);
   });
 
   it('exitLocation in dungeon clears inDungeon', () => {

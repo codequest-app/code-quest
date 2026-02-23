@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useBattleStore } from '../battleStore';
 import { useMapStore } from '../mapStore';
+import { useMcpStore } from '../mcpStore';
 import { loadGame, saveGame } from '../saveStore';
 import { useShopStore } from '../shopStore';
 
@@ -17,6 +18,15 @@ describe('saveStore', () => {
       player: { level: 1, totalExp: 0, totalGold: 0 },
     });
     useShopStore.setState({ inventory: [] });
+    useMcpStore.setState({
+      tools: [
+        { id: 'web-search', name: 'Web Search', description: 'Search the web', installed: false },
+        { id: 'file-system', name: 'File System', description: 'Access files', installed: true },
+        { id: 'github', name: 'GitHub', description: 'GitHub repos', installed: false },
+        { id: 'database', name: 'Database', description: 'Query databases', installed: false },
+        { id: 'docker', name: 'Docker', description: 'Docker containers', installed: false },
+      ],
+    });
   });
 
   it('saveGame persists all stores into one localStorage key', () => {
@@ -79,7 +89,7 @@ describe('saveStore', () => {
     localStorage.setItem(
       'code-quest-save',
       JSON.stringify({
-        map: { playerPosition: { x: 8, y: 8 }, currentZone: 'town' },
+        map: { playerPosition: { x: 8, y: 7 }, currentZone: 'town' },
         player: { level: 2, totalExp: 100, totalGold: 50 },
         shop: { inventory: ['skill-debug'] },
       }),
@@ -87,7 +97,7 @@ describe('saveStore', () => {
     // Re-import to trigger module-level loadGame
     // Since we can't easily re-import, just verify loadGame works when called
     loadGame();
-    expect(useMapStore.getState().playerPosition).toEqual({ x: 8, y: 8 });
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 8, y: 7 });
     expect(useBattleStore.getState().player.level).toBe(2);
     expect(useShopStore.getState().inventory).toContain('skill-debug');
   });
@@ -102,15 +112,91 @@ describe('saveStore', () => {
     localStorage.setItem(
       'code-quest-save',
       JSON.stringify({
-        map: { playerPosition: { x: 9, y: 9 }, currentZone: 'wilderness' },
+        map: { playerPosition: { x: 9, y: 7 }, currentZone: 'wilderness' },
         player: { level: 1, totalExp: 0, totalGold: 0 },
         shop: { inventory: [] },
       }),
     );
     loadGame();
     // Unified save wins
-    expect(useMapStore.getState().playerPosition).toEqual({ x: 9, y: 9 });
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 9, y: 7 });
     expect(useMapStore.getState().currentZone).toBe('wilderness');
+  });
+
+  it('saveGame includes MCP installed tool IDs', () => {
+    useMcpStore.setState({
+      tools: [
+        { id: 'web-search', name: 'Web Search', description: '', installed: true },
+        { id: 'file-system', name: 'File System', description: '', installed: false },
+      ],
+    });
+    saveGame();
+    const data = JSON.parse(localStorage.getItem('code-quest-save') as string);
+    expect(data.mcp.installedToolIds).toEqual(['web-search']);
+  });
+
+  it('loadGame restores MCP tool installation state', () => {
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 4, y: 4 }, currentZone: 'town' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+        mcp: { installedToolIds: ['web-search', 'github'] },
+      }),
+    );
+    loadGame();
+    const tools = useMcpStore.getState().tools;
+    expect(tools.find((t) => t.id === 'web-search')?.installed).toBe(true);
+    expect(tools.find((t) => t.id === 'github')?.installed).toBe(true);
+    expect(tools.find((t) => t.id === 'file-system')?.installed).toBe(false);
+  });
+
+  it('saveGame includes plan text from localStorage', () => {
+    localStorage.setItem('code-quest-plan-text', 'My TDD plan');
+    saveGame();
+    const data = JSON.parse(localStorage.getItem('code-quest-save') as string);
+    expect(data.planText).toBe('My TDD plan');
+  });
+
+  it('loadGame restores plan text to localStorage', () => {
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 4, y: 4 }, currentZone: 'town' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+        planText: 'Restored plan',
+      }),
+    );
+    loadGame();
+    expect(localStorage.getItem('code-quest-plan-text')).toBe('Restored plan');
+  });
+
+  it('loadGame ignores invalid currentZone', () => {
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 4, y: 4 }, currentZone: 'underwater' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+      }),
+    );
+    loadGame();
+    expect(useMapStore.getState().currentZone).toBe('town'); // unchanged default
+  });
+
+  it('loadGame clamps out-of-bounds playerPosition', () => {
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 99, y: -5 }, currentZone: 'town' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+      }),
+    );
+    loadGame();
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 9, y: 0 });
   });
 
   it('loadGame restores completedDungeons as Set', () => {
