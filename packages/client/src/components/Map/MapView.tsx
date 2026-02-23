@@ -8,6 +8,7 @@ import { LocationInterior } from './LocationInterior';
 import { MapControls } from './MapControls';
 import { MapStatusBar } from './MapStatusBar';
 import { Minimap } from './Minimap';
+import { NpcEncounter } from './NpcEncounter';
 import { PlayerCharacter } from './PlayerCharacter';
 import './map.css';
 
@@ -40,11 +41,13 @@ export function MapView() {
     currentLocationId,
     playerPosition,
     pendingEncounter,
+    pendingNpc,
     movePlayer,
     enterLocation,
     exitLocation,
     changeZone,
     dismissEncounter,
+    dismissNpc,
   } = useMapStore();
   const theme = useThemeStore((s) => s.getTheme());
   const subZone = useMapStore((s) => s.getCurrentSubZone());
@@ -136,6 +139,7 @@ export function MapView() {
           </div>
         </div>
       )}
+      {pendingNpc && <NpcEncounter npc={pendingNpc} onDismiss={dismissNpc} />}
       {pendingEncounter && (
         <div className="encounter-overlay" data-testid="encounter-overlay">
           <h3>Encounter!</h3>
@@ -145,7 +149,10 @@ export function MapView() {
               type="button"
               className="interior-action-btn"
               data-testid="encounter-fight-btn"
-              onClick={dismissEncounter}
+              onClick={() => {
+                dismissEncounter();
+                useMapStore.getState().forceBattle('wilderness encounter');
+              }}
             >
               Fight
             </button>
@@ -166,6 +173,9 @@ export function MapView() {
           onExit={exitLocation}
           onEngageBoss={(locationId) => {
             useMapStore.getState().triggerBattle(`dungeon boss: ${locationId}`);
+          }}
+          onPractice={() => {
+            useMapStore.getState().forceBattle('training practice');
           }}
         />
       ) : (

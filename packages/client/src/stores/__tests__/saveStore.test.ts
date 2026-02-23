@@ -75,6 +75,27 @@ describe('saveStore', () => {
     expect(data.map.completedDungeons).toEqual(['bug_cave', 'arch_maze']);
   });
 
+  it('loadGame prefers unified save over per-store keys', () => {
+    // Old per-store key
+    localStorage.setItem(
+      'code-quest-map',
+      JSON.stringify({ playerPosition: { x: 1, y: 1 }, currentZone: 'town' }),
+    );
+    // Unified save with different data
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 9, y: 9 }, currentZone: 'wilderness' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+      }),
+    );
+    loadGame();
+    // Unified save wins
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 9, y: 9 });
+    expect(useMapStore.getState().currentZone).toBe('wilderness');
+  });
+
   it('loadGame restores completedDungeons as Set', () => {
     localStorage.setItem(
       'code-quest-save',

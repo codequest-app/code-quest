@@ -16,6 +16,12 @@ import {
 import { create } from 'zustand';
 import { useBattleStore } from './battleStore';
 
+export interface MapNpcData {
+  name: string;
+  icon: string;
+  dialogue: string;
+}
+
 const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
   town: TOWN_LOCATIONS,
   wilderness: WILDERNESS_LOCATIONS,
@@ -36,7 +42,9 @@ interface MapStore {
   planModeActive: boolean;
   completedDungeons: Set<string>;
   activeBattleSessionId: string | null;
+  pendingNpc: MapNpcData | null;
   setPlanMode: (active: boolean) => void;
+  dismissNpc: () => void;
   onBattleEnd: (locationId: string, victory: boolean) => void;
   movePlayer: (dx: number, dy: number) => void;
   enterLocation: (locationId: string) => void;
@@ -44,6 +52,7 @@ interface MapStore {
   changeZone: (zone: Zone) => void;
   checkEncounter: (prompt: string) => EncounterResult;
   triggerBattle: (prompt: string) => string | null;
+  forceBattle: (prompt: string) => string;
   restoreFromStorage: () => void;
   getCurrentSubZone: () => WildernessSubZoneId | null;
   dismissEncounter: () => void;
@@ -93,9 +102,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
   planModeActive: false,
   completedDungeons: new Set<string>(),
   activeBattleSessionId: null,
+  pendingNpc: null,
 
   setPlanMode: (active: boolean) => {
     set({ planModeActive: active });
+  },
+
+  dismissNpc: () => {
+    set({ pendingNpc: null });
   },
 
   onBattleEnd: (locationId: string, victory: boolean) => {
@@ -170,6 +184,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
     const result = get().checkEncounter(prompt);
     if (!result.trigger) return null;
 
+    const enemy = generateEnemy(prompt);
+    const sessionId = `battle-${Date.now()}`;
+    set({ activeBattleSessionId: sessionId });
+    useBattleStore.getState().startBattle(sessionId, enemy);
+    return sessionId;
+  },
+
+  forceBattle: (prompt: string): string => {
     const enemy = generateEnemy(prompt);
     const sessionId = `battle-${Date.now()}`;
     set({ activeBattleSessionId: sessionId });

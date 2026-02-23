@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useBattleStore } from '../../../stores/battleStore';
 import { useMapStore } from '../../../stores/mapStore';
 import { useThemeStore } from '../../../stores/themeStore';
 import { MapView } from '../MapView';
@@ -185,5 +186,61 @@ describe('MapView', () => {
     useMapStore.setState({ currentLocationId: 'tavern' });
     render(<MapView />);
     expect(screen.getByTestId('map-view').className).toContain('map-view--interior');
+  });
+
+  // Task 55: NpcEncounter wired into MapView
+  it('shows NpcEncounter when pendingNpc is set', () => {
+    useMapStore.setState({
+      currentZone: 'wilderness',
+      pendingNpc: { name: 'Sage', icon: '🧙', dialogue: 'Hello traveler' },
+    });
+    render(<MapView />);
+    expect(screen.getByTestId('npc-encounter')).toBeInTheDocument();
+    expect(screen.getByTestId('npc-encounter')).toHaveTextContent('Sage');
+  });
+
+  it('dismissing NpcEncounter clears pendingNpc', () => {
+    useMapStore.setState({
+      currentZone: 'wilderness',
+      pendingNpc: { name: 'Sage', icon: '🧙', dialogue: 'Hello traveler' },
+    });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('npc-dismiss-btn'));
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    expect(screen.queryByTestId('npc-encounter')).toBeNull();
+  });
+
+  // Task 58: onPractice wired for training ground
+  it('training ground practice button triggers a battle', () => {
+    useMapStore.setState({
+      currentZone: 'town',
+      currentLocationId: 'training_ground',
+    });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('training-practice-btn'));
+    // Should have started a battle
+    expect(useBattleStore.getState().battles.size).toBeGreaterThan(0);
+  });
+
+  // Task 57: onSendMessage is passed to LocationInterior (tavern renders chat)
+  it('tavern interior receives working chat when entered', () => {
+    useMapStore.setState({ currentLocationId: 'tavern' });
+    render(<MapView />);
+    expect(screen.getByTestId('interior-tavern')).toBeInTheDocument();
+    expect(screen.getByTestId('tavern-input')).toBeInTheDocument();
+    // Send a message — should get a local reply (no socket in test)
+    const input = screen.getByTestId('tavern-input');
+    fireEvent.change(input, { target: { value: 'Hello' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+    expect(screen.getByTestId('tavern-messages')).toHaveTextContent('Hello');
+  });
+
+  // Task 59: Fight button triggers battle
+  it('encounter Fight button triggers a battle instead of just dismissing', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('encounter-fight-btn'));
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    expect(useBattleStore.getState().battles.size).toBeGreaterThan(0);
   });
 });

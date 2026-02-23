@@ -1,11 +1,11 @@
 .map-view--classic {
-  --map-bg: #F5F5DC;
-  --map-ground: #8FBC8F;
-  --map-building: #D2B48C;
-  --map-building-hover: #C4A882;
-  --map-text: #2C3E50;
-  --map-accent: #4A90E2;
-  --map-status-bar: #3C3C3C;
+  --map-bg: #f5f5dc;
+  --map-ground: #8fbc8f;
+  --map-building: #d2b48c;
+  --map-building-hover: #c4a882;
+  --map-text: #2c3e50;
+  --map-accent: #4a90e2;
+  --map-status-bar: #3c3c3c;
 }
 
 .map-view--dark {
@@ -340,8 +340,14 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .map-controls {
@@ -394,16 +400,28 @@
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid #555;
   border-radius: 4px;
-  pointer-events: none;
 }
 
 .minimap-dot {
   position: absolute;
   width: 6px;
   height: 6px;
-  background: var(--map-accent, #4A90E2);
+  background: var(--map-accent, #4a90e2);
+  border: none;
+  padding: 0;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+}
+
+.minimap-dot--location {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.minimap-dot--location:hover {
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 4px var(--map-accent, #4a90e2);
 }
 
 .minimap-player {
@@ -415,7 +433,9 @@
 
 /* Player move bounce */
 .map-player {
-  transition: grid-column 0.15s ease, grid-row 0.15s ease;
+  transition:
+    grid-column 0.15s ease,
+    grid-row 0.15s ease;
 }
 
 /* Building click pulse */
@@ -424,9 +444,15 @@
 }
 
 @keyframes building-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.92); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Encounter overlay slide-in */
@@ -435,8 +461,14 @@
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Zone confirm dialog fade */
@@ -446,9 +478,16 @@
 
 /* Battle damage shake */
 @keyframes damage-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 
 .damage-shake {

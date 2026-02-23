@@ -1,8 +1,10 @@
 import type { LocationDef } from '@code-quest/shared';
 import { DUNGEON_BOSSES } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
+import { useBattleStore } from '../../stores/battleStore';
 import { useMapStore } from '../../stores/mapStore';
 import { useMcpStore } from '../../stores/mcpStore';
+import { saveGame } from '../../stores/saveStore';
 import { useShopStore } from '../../stores/shopStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useWorktreeStore } from '../../stores/worktreeStore';
@@ -144,6 +146,7 @@ function TavernContent({
 function StasisContent() {
   const planActive = useMapStore((s) => s.planModeActive);
   const setPlanMode = useMapStore((s) => s.setPlanMode);
+  const [planText, setPlanText] = useState('');
 
   if (planActive) {
     return (
@@ -151,7 +154,13 @@ function StasisContent() {
         <div data-testid="stasis-plan-active">
           <h3>Plan Mode Active</h3>
           <p>Time is frozen. Think deeply and plan your approach.</p>
-          <textarea className="stasis-textarea" placeholder="Write your plan here..." rows={6} />
+          <textarea
+            className="stasis-textarea"
+            placeholder="Write your plan here..."
+            rows={6}
+            value={planText}
+            onChange={(e) => setPlanText(e.target.value)}
+          />
           <button
             type="button"
             className="interior-action-btn"
@@ -260,6 +269,7 @@ function ShoppingContent() {
 function PlayerHomeContent() {
   const [rested, setRested] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [saved, setSaved] = useState(false);
   const currentTheme = useThemeStore((s) => s.currentTheme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const themes = useThemeStore((s) => s.themes);
@@ -273,6 +283,17 @@ function PlayerHomeContent() {
           Rest (Restore HP/MP)
         </button>
       )}
+      <button
+        type="button"
+        className="interior-action-btn"
+        data-testid="home-save-btn"
+        onClick={() => {
+          saveGame();
+          setSaved(true);
+        }}
+      >
+        {saved ? 'Saved!' : 'Save Game'}
+      </button>
       {showSettings ? (
         <div data-testid="home-settings-panel">
           <h4>Settings</h4>
@@ -316,6 +337,8 @@ function GuildHallContent() {
   const worktrees = useWorktreeStore((s) => s.worktrees);
   const addWorktree = useWorktreeStore((s) => s.addWorktree);
   const removeWorktree = useWorktreeStore((s) => s.removeWorktree);
+  const loading = useWorktreeStore((s) => s.loading);
+  const error = useWorktreeStore((s) => s.error);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newBranch, setNewBranch] = useState('');
@@ -334,6 +357,8 @@ function GuildHallContent() {
   return (
     <div className="interior-content" data-testid="interior-guild">
       <h3>Worktree Management Center</h3>
+      {loading && <p>Loading...</p>}
+      {error && <p className="guild-error">{error}</p>}
       <div className="guild-worktree-list" data-testid="guild-worktree-list">
         {worktrees.map((w) => (
           <div key={w.name} className="guild-worktree-item" data-testid={`worktree-${w.name}`}>
@@ -395,10 +420,12 @@ function GuildHallContent() {
 function LibraryContent() {
   const tools = useMcpStore((s) => s.tools);
   const toggleInstall = useMcpStore((s) => s.toggleInstall);
+  const loading = useMcpStore((s) => s.loading);
 
   return (
     <div className="interior-content" data-testid="interior-library">
       <h3>MCP Tools Library</h3>
+      {loading && <p>Loading tools...</p>}
       <div data-testid="mcp-tool-list" className="mcp-tool-list">
         {tools.map((tool) => (
           <div key={tool.id} className="mcp-tool-item">
@@ -487,6 +514,16 @@ function LocationContent({
   }
 }
 
+function useExitBlocked(): boolean {
+  const inDungeon = useMapStore((s) => s.inDungeon);
+  const battleSessionId = useMapStore((s) => s.activeBattleSessionId);
+  const battles = useBattleStore((s) => s.battles);
+
+  if (!inDungeon || !battleSessionId) return false;
+  const battle = battles.get(battleSessionId);
+  return battle?.phase === 'active';
+}
+
 export function LocationInterior({
   location,
   onExit,
@@ -494,7 +531,11 @@ export function LocationInterior({
   onPractice,
   onSendMessage,
 }: LocationInteriorProps) {
+  const exitBlocked = useExitBlocked();
+
   useEffect(() => {
+    if (exitBlocked) return;
+
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         onExit();
@@ -502,7 +543,7 @@ export function LocationInterior({
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onExit]);
+  }, [onExit, exitBlocked]);
 
   return (
     <div className="location-interior" data-testid="location-interior">
@@ -521,9 +562,10 @@ export function LocationInterior({
         type="button"
         className="location-interior__exit"
         data-testid="location-exit-btn"
-        onClick={onExit}
+        disabled={exitBlocked}
+        onClick={exitBlocked ? undefined : onExit}
       >
-        ← Exit
+        {exitBlocked ? '⚔️ Battle in progress...' : '← Exit'}
       </button>
     </div>
   );

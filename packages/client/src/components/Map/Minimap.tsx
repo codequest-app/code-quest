@@ -17,17 +17,28 @@ export function Minimap() {
   const playerPosition = useMapStore((s) => s.playerPosition);
   const locations = useMemo(() => ZONE_LOCATIONS[currentZone], [currentZone]);
 
+  const movePlayer = useMapStore((s) => s.movePlayer);
+
+  function handleLocClick(loc: LocationDef) {
+    const dx = loc.position.x - playerPosition.x;
+    const dy = loc.position.y - playerPosition.y;
+    movePlayer(dx, dy);
+  }
+
   return (
     <div className="minimap" data-testid="minimap">
       {locations.map((loc) => (
-        <div
+        <button
           key={loc.id}
-          className="minimap-dot"
+          type="button"
+          className="minimap-dot minimap-dot--location"
+          data-testid={`minimap-loc-${loc.id}`}
           style={{
             left: `${(loc.position.x / GRID_W) * 100}%`,
             top: `${(loc.position.y / GRID_H) * 100}%`,
           }}
           title={loc.name}
+          onClick={() => handleLocClick(loc)}
         />
       ))}
       <div
