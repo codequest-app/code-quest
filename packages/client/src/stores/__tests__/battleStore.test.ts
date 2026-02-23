@@ -151,7 +151,7 @@ describe('battleStore', () => {
     it('levels up player when exp threshold reached', () => {
       useBattleStore.getState().processBattleEvent('s1', {
         type: 'exp_earned',
-        data: { amount: 200 },
+        data: { amount: 300 },
       });
       expect(useBattleStore.getState().player.level).toBe(3);
     });

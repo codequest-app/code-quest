@@ -1,4 +1,5 @@
 import type { LocationDef } from '@code-quest/shared';
+import { DUNGEON_BOSSES } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../../stores/mapStore';
 import { useMcpStore } from '../../stores/mcpStore';
@@ -460,11 +461,16 @@ function LocationContent({
       return <LibraryContent />;
     case 'bug_cave':
     case 'arch_maze':
-    case 'legacy_tomb':
+    case 'legacy_tomb': {
+      const boss = DUNGEON_BOSSES.find((b) => b.dungeonId === id);
       return (
         <div className="interior-content" data-testid="interior-dungeon">
-          <h3>Boss Chamber</h3>
-          <p>A powerful enemy awaits. Prepare yourself.</p>
+          <h3>{boss ? `${boss.bossIcon} ${boss.bossName}` : 'Boss Chamber'}</h3>
+          {boss && (
+            <p>
+              Lv.{boss.recommendedLevel} — HP {boss.bossHp} — {boss.description}
+            </p>
+          )}
           <button
             type="button"
             className="interior-action-btn"
@@ -475,6 +481,7 @@ function LocationContent({
           </button>
         </div>
       );
+    }
     default:
       return null;
   }

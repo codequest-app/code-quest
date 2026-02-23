@@ -412,3 +412,50 @@
   height: 8px;
   z-index: 1;
 }
+
+/* Player move bounce */
+.map-player {
+  transition: grid-column 0.15s ease, grid-row 0.15s ease;
+}
+
+/* Building click pulse */
+.map-building:active {
+  animation: building-pulse 0.2s ease;
+}
+
+@keyframes building-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+/* Encounter overlay slide-in */
+.encounter-overlay {
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Zone confirm dialog fade */
+.zone-confirm-dialog {
+  animation: fade-in 0.2s ease-in;
+}
+
+/* Battle damage shake */
+@keyframes damage-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.damage-shake {
+  animation: damage-shake 0.3s ease;
+}
+
+/* Completed dungeon glow */
+.map-building--completed {
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}

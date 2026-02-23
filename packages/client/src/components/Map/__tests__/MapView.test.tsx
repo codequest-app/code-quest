@@ -167,6 +167,20 @@ describe('MapView', () => {
     expect(grid?.className).not.toMatch(/map-view__grid--/);
   });
 
+  it('renders minimap component', () => {
+    render(<MapView />);
+    expect(screen.getByTestId('minimap')).toBeInTheDocument();
+    expect(screen.getByTestId('minimap-player')).toBeInTheDocument();
+  });
+
+  it('minimap shows location dots for current zone', () => {
+    useMapStore.setState({ currentZone: 'wilderness' });
+    render(<MapView />);
+    const minimap = screen.getByTestId('minimap');
+    const dots = minimap.querySelectorAll('.minimap-dot:not(.minimap-player)');
+    expect(dots.length).toBe(4); // forest, mountains, wasteland, volcano
+  });
+
   it('shows interior class when inside a location', () => {
     useMapStore.setState({ currentLocationId: 'tavern' });
     render(<MapView />);
