@@ -327,8 +327,32 @@ describe('LocationInterior', () => {
       />,
     );
     expect(screen.getByTestId('interior-dungeon')).toBeInTheDocument();
-    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('Boss');
+    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('NullPointer');
+    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('Lv.3');
     expect(screen.getByTestId('dungeon-engage-btn')).toBeInTheDocument();
+  });
+
+  it('each dungeon shows unique boss info', () => {
+    const { unmount } = render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'arch_maze',
+          name: 'Architecture Maze',
+          icon: '🏗️',
+          zone: 'dungeon',
+        })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('Spaghetti');
+    unmount();
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'legacy_tomb', name: 'Legacy Tomb', icon: '🏚️', zone: 'dungeon' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('Ancient Monolith');
   });
 
   it('dungeon engage button calls onEngageBoss with location id', () => {

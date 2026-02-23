@@ -330,4 +330,42 @@ describe('mapStore', () => {
     useMapStore.getState().onBattleEnd('bug_cave', false);
     expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(false);
   });
+
+  it('battleStore.endBattle(victory) auto-calls onBattleEnd', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+      activeBattleSessionId: 'battle-1',
+    });
+    useBattleStore.getState().startBattle('battle-1', {
+      name: 'Bug',
+      type: 'bug-hunt' as const,
+      level: 1,
+      maxHp: 10,
+      hp: 10,
+    });
+    useBattleStore.getState().endBattle('battle-1', 'victory');
+    expect(useMapStore.getState().inDungeon).toBe(false);
+    expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(true);
+  });
+
+  it('battleStore.endBattle(defeat) auto-calls onBattleEnd', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+      activeBattleSessionId: 'battle-2',
+    });
+    useBattleStore.getState().startBattle('battle-2', {
+      name: 'Bug',
+      type: 'bug-hunt' as const,
+      level: 1,
+      maxHp: 10,
+      hp: 10,
+    });
+    useBattleStore.getState().endBattle('battle-2', 'defeat');
+    expect(useMapStore.getState().inDungeon).toBe(false);
+    expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(false);
+  });
 });

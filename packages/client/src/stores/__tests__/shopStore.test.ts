@@ -4,6 +4,7 @@ import { useShopStore } from '../shopStore';
 
 describe('shopStore', () => {
   beforeEach(() => {
+    localStorage.clear();
     useShopStore.setState({
       inventory: [],
     });
@@ -42,5 +43,25 @@ describe('shopStore', () => {
     useShopStore.getState().buyItem(items[0].id);
     const result = useShopStore.getState().buyItem(items[0].id);
     expect(result).toBe(false);
+  });
+
+  it('persists inventory to localStorage on buy', () => {
+    useShopStore.getState().buyItem('skill-autocomplete');
+    const saved = JSON.parse(localStorage.getItem('code-quest-shop') ?? '[]');
+    expect(saved).toContain('skill-autocomplete');
+  });
+
+  it('every shop has at least 2 items', () => {
+    const shopIds = ['skills', 'forge', 'mcp-library', 'subagent', 'treasury', 'training', 'bank'];
+    for (const shopId of shopIds) {
+      const items = useShopStore.getState().getShopItems(shopId);
+      expect(items.length, `shop "${shopId}" should have >= 2 items`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('restores inventory from localStorage', () => {
+    localStorage.setItem('code-quest-shop', JSON.stringify(['skill-debug']));
+    useShopStore.getState().restoreFromStorage();
+    expect(useShopStore.getState().inventory).toContain('skill-debug');
   });
 });

@@ -9,7 +9,10 @@ export interface McpTool {
 
 interface McpStore {
   tools: McpTool[];
+  loading: boolean;
   toggleInstall: (toolId: string) => void;
+  setTools: (tools: McpTool[]) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 const DEFAULT_TOOLS: McpTool[] = [
@@ -37,10 +40,19 @@ const DEFAULT_TOOLS: McpTool[] = [
 
 export const useMcpStore = create<McpStore>((set) => ({
   tools: DEFAULT_TOOLS,
+  loading: false,
 
   toggleInstall: (toolId: string) => {
     set((state) => ({
       tools: state.tools.map((t) => (t.id === toolId ? { ...t, installed: !t.installed } : t)),
     }));
+  },
+
+  setTools: (tools: McpTool[]) => {
+    set({ tools });
+  },
+
+  setLoading: (loading: boolean) => {
+    set({ loading });
   },
 }));

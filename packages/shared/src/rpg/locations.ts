@@ -201,6 +201,42 @@ export const DUNGEON_LOCATIONS: LocationDef[] = [
   },
 ];
 
+export interface DungeonBossInfo {
+  dungeonId: string;
+  bossName: string;
+  bossIcon: string;
+  recommendedLevel: number;
+  bossHp: number;
+  description: string;
+}
+
+export const DUNGEON_BOSSES: DungeonBossInfo[] = [
+  {
+    dungeonId: 'bug_cave',
+    bossName: 'NullPointer the Destroyer',
+    bossIcon: '🪲',
+    recommendedLevel: 3,
+    bossHp: 50,
+    description: 'A massive bug that crashes everything it touches.',
+  },
+  {
+    dungeonId: 'arch_maze',
+    bossName: 'Spaghetti Architect',
+    bossIcon: '🏗️',
+    recommendedLevel: 5,
+    bossHp: 120,
+    description: 'A tangled mess of circular dependencies and god objects.',
+  },
+  {
+    dungeonId: 'legacy_tomb',
+    bossName: 'Ancient Monolith',
+    bossIcon: '🏚️',
+    recommendedLevel: 8,
+    bossHp: 250,
+    description: 'A 10,000-line file with no tests and no documentation.',
+  },
+];
+
 export const BUILT_IN_THEMES: MapTheme[] = [
   {
     name: 'classic',

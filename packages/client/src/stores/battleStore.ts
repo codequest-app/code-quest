@@ -10,6 +10,7 @@ import type {
   PauseReason,
   SkillInfo,
 } from '@code-quest/shared';
+import { levelFromExp } from '@code-quest/shared';
 import { create } from 'zustand';
 
 let logCounter = 0;
@@ -306,7 +307,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       if (event.type === 'exp_earned') {
         const exp = event.data.amount as number;
         const newTotalExp = state.player.totalExp + exp;
-        const newLevel = Math.max(1, Math.floor(newTotalExp / 100) + 1);
+        const newLevel = levelFromExp(newTotalExp);
         player = { ...state.player, totalExp: newTotalExp, level: newLevel };
       }
       if (event.type === 'gold_earned') {

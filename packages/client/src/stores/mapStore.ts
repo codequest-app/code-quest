@@ -35,6 +35,7 @@ interface MapStore {
   inDungeon: boolean;
   planModeActive: boolean;
   completedDungeons: Set<string>;
+  activeBattleSessionId: string | null;
   setPlanMode: (active: boolean) => void;
   onBattleEnd: (locationId: string, victory: boolean) => void;
   movePlayer: (dx: number, dy: number) => void;
@@ -91,6 +92,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   inDungeon: false,
   planModeActive: false,
   completedDungeons: new Set<string>(),
+  activeBattleSessionId: null,
 
   setPlanMode: (active: boolean) => {
     set({ planModeActive: active });
@@ -100,6 +102,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     const updates: Partial<MapStore> = {
       inDungeon: false,
       currentLocationId: null,
+      activeBattleSessionId: null,
     };
     if (victory) {
       const completed = new Set(get().completedDungeons);
@@ -169,6 +172,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
 
     const enemy = generateEnemy(prompt);
     const sessionId = `battle-${Date.now()}`;
+    set({ activeBattleSessionId: sessionId });
     useBattleStore.getState().startBattle(sessionId, enemy);
     return sessionId;
   },
@@ -201,3 +205,21 @@ export const useMapStore = create<MapStore>((set, get) => ({
 
 // Auto-restore persisted state on load
 useMapStore.getState().restoreFromStorage();
+
+// Subscribe to battleStore — auto-call onBattleEnd when a tracked battle ends
+useBattleStore.subscribe((state, prev) => {
+  const sessionId = useMapStore.getState().activeBattleSessionId;
+  if (!sessionId) return;
+
+  const battle = state.battles.get(sessionId);
+  const prevBattle = prev.battles.get(sessionId);
+  if (!battle || !prevBattle) return;
+  if (battle.phase === prevBattle.phase) return;
+
+  if (battle.phase === 'victory' || battle.phase === 'defeat') {
+    const locationId = useMapStore.getState().currentLocationId;
+    if (locationId) {
+      useMapStore.getState().onBattleEnd(locationId, battle.phase === 'victory');
+    }
+  }
+});

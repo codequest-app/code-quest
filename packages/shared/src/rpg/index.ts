@@ -9,8 +9,11 @@ export {
 } from './enemy-generator.ts';
 export type { ChatContext } from './event-mapper.ts';
 export { mapChatEvent } from './event-mapper.ts';
+export { expForLevel, levelFromExp } from './level-system.ts';
+export type { DungeonBossInfo } from './locations.ts';
 export {
   BUILT_IN_THEMES,
+  DUNGEON_BOSSES,
   DUNGEON_LOCATIONS,
   TOWN_LOCATIONS,
   WILDERNESS_LOCATIONS,
