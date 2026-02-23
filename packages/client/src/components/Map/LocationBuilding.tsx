@@ -22,6 +22,7 @@ export function LocationBuilding({ location, onEnter }: LocationBuildingProps) {
         gridColumn: String(location.position.x + 1),
         gridRow: String(location.position.y + 1),
       }}
+      disabled={locked}
       onClick={() => onEnter(location.id)}
     >
       <span className="map-building__icon">

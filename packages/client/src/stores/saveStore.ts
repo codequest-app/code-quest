@@ -80,6 +80,7 @@ export function loadGame(): void {
       mapUpdates.pendingEncounter = false;
       mapUpdates.inDungeon = false;
       mapUpdates.currentLocationId = null;
+      mapUpdates.activeBattleSessionId = null;
       useMapStore.setState(mapUpdates);
     }
 

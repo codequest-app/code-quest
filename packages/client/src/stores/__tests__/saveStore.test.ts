@@ -173,6 +173,20 @@ describe('saveStore', () => {
     expect(localStorage.getItem('code-quest-plan-text')).toBe('Restored plan');
   });
 
+  it('loadGame resets activeBattleSessionId', () => {
+    useMapStore.setState({ activeBattleSessionId: 'stale-battle' });
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 4, y: 4 }, currentZone: 'town' },
+        player: { level: 1, totalExp: 0, totalGold: 0 },
+        shop: { inventory: [] },
+      }),
+    );
+    loadGame();
+    expect(useMapStore.getState().activeBattleSessionId).toBeNull();
+  });
+
   it('loadGame resets inDungeon and currentLocationId', () => {
     useMapStore.setState({ inDungeon: true, currentLocationId: 'bug_cave' });
     localStorage.setItem(

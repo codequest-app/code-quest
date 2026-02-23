@@ -11,7 +11,6 @@ interface ThemeStore {
   setTheme: (name: string) => void;
   registerTheme: (theme: MapTheme) => void;
   getTheme: () => MapTheme;
-  restoreFromStorage: () => string;
 }
 
 function buildInitialThemes(): Map<string, MapTheme> {
@@ -52,16 +51,17 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     const { currentTheme, themes } = get();
     return themes.get(currentTheme) ?? (themes.get(DEFAULT_THEME) as MapTheme);
   },
-
-  restoreFromStorage: () => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved && get().themes.has(saved)) {
-      set({ currentTheme: saved });
-      return saved;
-    }
-    return DEFAULT_THEME;
-  },
 }));
 
 // Auto-restore persisted theme on load
-useThemeStore.getState().restoreFromStorage();
+function restoreThemeFromStorage(): void {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved && useThemeStore.getState().themes.has(saved)) {
+      useThemeStore.setState({ currentTheme: saved });
+    }
+  } catch {
+    // ignore
+  }
+}
+restoreThemeFromStorage();
