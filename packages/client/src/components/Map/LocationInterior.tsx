@@ -1,5 +1,5 @@
 import type { LocationDef } from '@code-quest/shared';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface LocationInteriorProps {
   location: LocationDef;
@@ -15,6 +15,24 @@ const SHOPS = [
   { id: 'training', icon: '🎯', name: 'Training Ground' },
   { id: 'bank', icon: '💰', name: 'Bank' },
 ];
+
+function PlayerHomeContent() {
+  const [rested, setRested] = useState(false);
+  return (
+    <div className="interior-content" data-testid="interior-home">
+      {rested ? (
+        <p>You are fully rested. HP and MP restored!</p>
+      ) : (
+        <button type="button" className="interior-action-btn" onClick={() => setRested(true)}>
+          Rest (Restore HP/MP)
+        </button>
+      )}
+      <button type="button" className="interior-action-btn">
+        Settings
+      </button>
+    </div>
+  );
+}
 
 function LocationContent({ id }: { id: string }) {
   switch (id) {
@@ -59,16 +77,7 @@ function LocationContent({ id }: { id: string }) {
         </div>
       );
     case 'player_home':
-      return (
-        <div className="interior-content" data-testid="interior-home">
-          <button type="button" className="interior-action-btn">
-            Rest (Restore HP/MP)
-          </button>
-          <button type="button" className="interior-action-btn">
-            Settings
-          </button>
-        </div>
-      );
+      return <PlayerHomeContent />;
     case 'training_ground':
       return (
         <div className="interior-content" data-testid="interior-training">
