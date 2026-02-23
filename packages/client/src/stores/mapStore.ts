@@ -135,7 +135,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
 
       let pending = false;
       let npc: MapNpcData | null = null;
-      if (state.currentZone === 'wilderness' && !state.planModeActive) {
+      const moved = x !== state.playerPosition.x || y !== state.playerPosition.y;
+      if (moved && state.currentZone === 'wilderness' && !state.planModeActive) {
         const subZone = findSubZone(position);
         const subZoneDef = WILDERNESS_SUB_ZONES.find((z) => z.id === subZone);
         const rate = subZoneDef?.encounterRate ?? 0.3;
@@ -152,8 +153,10 @@ export const useMapStore = create<MapStore>((set, get) => ({
   },
 
   enterLocation: (locationId: string) => {
-    const zone = get().currentZone;
-    const loc = ZONE_LOCATIONS[zone].find((l: LocationDef) => l.id === locationId);
+    const state = get();
+    if (state.inDungeon) return;
+
+    const loc = ZONE_LOCATIONS[state.currentZone].find((l: LocationDef) => l.id === locationId);
     if (!loc || !loc.enterable) return;
 
     const playerLevel = useBattleStore.getState().player.level;
