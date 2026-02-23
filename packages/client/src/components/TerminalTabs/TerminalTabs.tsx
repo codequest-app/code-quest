@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useBattleEngine } from '../../hooks/useBattleEngine';
 import { useChatSocket } from '../../hooks/useChatSocket';
 import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
 import { useSocket } from '../../hooks/useSocket';
+import { createTavernChatHandler } from '../../hooks/useTavernChat';
 import { useBattleStore } from '../../stores/battleStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useTerminalStore } from '../../stores/terminalStore';
@@ -63,6 +64,10 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     retryWorker: retryOrchestratorWorker,
     skipWorker: skipOrchestratorWorker,
   } = useOrchestratorSocket(serverUrl);
+  const tavernChatHandler = useMemo(
+    () => createTavernChatHandler(emit as Parameters<typeof createTavernChatHandler>[0]),
+    [emit],
+  );
   const {
     getSessions,
     activeSessionId,
@@ -598,7 +603,7 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             className="chat-wrapper"
             style={{ width: '100%', height: '100%' }}
           >
-            <MapView />
+            <MapView onSendMessage={tavernChatHandler ?? undefined} />
           </div>
         )}
       </div>

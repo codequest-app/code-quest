@@ -62,3 +62,6 @@ export function loadGame(): void {
     // ignore corrupt data
   }
 }
+
+// Auto-load on module init
+loadGame();
