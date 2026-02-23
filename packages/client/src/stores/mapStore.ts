@@ -166,14 +166,20 @@ export const useMapStore = create<MapStore>((set, get) => ({
   },
 
   exitLocation: () => {
-    set({ currentLocationId: null, inDungeon: false });
+    const { inDungeon } = get();
+    set({ currentLocationId: null, ...(inDungeon ? { inDungeon: false } : {}) });
   },
 
   changeZone: (zone: Zone) => {
     if (hasActiveBattle()) return;
     if (get().inDungeon) return;
     if (get().planModeActive) return;
-    set({ currentZone: zone, pendingNpc: null, pendingEncounter: false });
+    set({
+      currentZone: zone,
+      playerPosition: { x: 4, y: 4 },
+      pendingNpc: null,
+      pendingEncounter: false,
+    });
   },
 
   triggerBattle: (prompt: string): string | null => {

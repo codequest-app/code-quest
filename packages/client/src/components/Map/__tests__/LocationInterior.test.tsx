@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../../../stores/battleStore';
 import { useMapStore } from '../../../stores/mapStore';
@@ -401,6 +401,28 @@ describe('LocationInterior', () => {
       />,
     );
     expect(screen.getByTestId('dungeon-engage-btn')).toBeDisabled();
+  });
+
+  it('dungeon engage button re-enables when battle ends (reactive)', () => {
+    useMapStore.setState({ activeBattleSessionId: 'battle-1' });
+    render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'bug_cave',
+          name: 'Bug Cave',
+          icon: '🪲',
+          zone: 'dungeon',
+          description: 'A dark cave.',
+        })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('dungeon-engage-btn')).toBeDisabled();
+    // Battle ends — activeBattleSessionId cleared
+    act(() => {
+      useMapStore.setState({ activeBattleSessionId: null });
+    });
+    expect(screen.getByTestId('dungeon-engage-btn')).not.toBeDisabled();
   });
 
   it('player home rest button shows rested message on click', () => {

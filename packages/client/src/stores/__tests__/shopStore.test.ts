@@ -46,10 +46,9 @@ describe('shopStore', () => {
     expect(result).toBe(false);
   });
 
-  it('persists inventory to localStorage on buy', () => {
+  it('buyItem does not persist directly (saveStore handles persistence)', () => {
     useShopStore.getState().buyItem('skill-autocomplete');
-    const saved = JSON.parse(localStorage.getItem('code-quest-shop') ?? '[]');
-    expect(saved).toContain('skill-autocomplete');
+    expect(localStorage.getItem('code-quest-shop')).toBeNull();
   });
 
   it('every shop has at least 2 items', () => {
@@ -60,10 +59,9 @@ describe('shopStore', () => {
     }
   });
 
-  it('buyItem persists player gold to localStorage', () => {
+  it('buyItem does not persist player gold directly (saveStore handles it)', () => {
     useShopStore.getState().buyItem('skill-autocomplete');
-    const saved = JSON.parse(localStorage.getItem('code-quest-player') ?? '{}');
-    expect(saved.totalGold).toBe(100 - 30); // skill-autocomplete costs 30
+    expect(localStorage.getItem('code-quest-player')).toBeNull();
   });
 
   it('buying MCP shop item toggles mcpStore installed', () => {
@@ -78,18 +76,17 @@ describe('shopStore', () => {
 
   it('warns when MCP tool ID does not match any tool in mcpStore', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // file-reader maps to mcpToolId "file-reader" which may not exist
     useBattleStore.setState({ player: { level: 1, totalExp: 0, totalGold: 200 } });
     // Remove all tools to ensure mismatch
     useMcpStore.setState({ tools: [] });
-    useShopStore.getState().buyItem('mcp-file-reader');
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('file-reader'));
+    useShopStore.getState().buyItem('mcp-web-search');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('web-search'));
     warnSpy.mockRestore();
   });
 
-  it('restores inventory from localStorage', () => {
-    localStorage.setItem('code-quest-shop', JSON.stringify(['skill-debug']));
-    useShopStore.getState().restoreFromStorage();
+  it('inventory is restored via saveStore loadGame (not shopStore directly)', () => {
+    // shopStore no longer has restoreFromStorage — saveStore.loadGame handles it
+    useShopStore.setState({ inventory: ['skill-debug'] });
     expect(useShopStore.getState().inventory).toContain('skill-debug');
   });
 });

@@ -10,21 +10,10 @@ export interface ShopItem {
   shopId: string;
 }
 
-const SHOP_STORAGE_KEY = 'code-quest-shop';
-
-function saveInventory(inventory: string[]): void {
-  try {
-    localStorage.setItem(SHOP_STORAGE_KEY, JSON.stringify(inventory));
-  } catch {
-    // ignore
-  }
-}
-
 interface ShopStore {
   inventory: string[];
   getShopItems: (shopId: string) => ShopItem[];
   buyItem: (itemId: string) => boolean;
-  restoreFromStorage: () => void;
 }
 
 const ALL_ITEMS: ShopItem[] = [
@@ -74,9 +63,9 @@ const ALL_ITEMS: ShopItem[] = [
     shopId: 'mcp-library',
   },
   {
-    id: 'mcp-file-reader',
-    name: 'File Reader Tool',
-    description: 'Read external files during battle',
+    id: 'mcp-file-system',
+    name: 'File System Tool',
+    description: 'Access and manage local files during battle',
     price: 40,
     shopId: 'mcp-library',
   },
@@ -159,16 +148,10 @@ export const useShopStore = create<ShopStore>((set, get) => ({
     const player = useBattleStore.getState().player;
     if (player.totalGold < item.price) return false;
 
-    const updatedPlayer = { ...player, totalGold: player.totalGold - item.price };
-    useBattleStore.setState({ player: updatedPlayer });
-    try {
-      localStorage.setItem('code-quest-player', JSON.stringify(updatedPlayer));
-    } catch {
-      // ignore
-    }
-    const newInventory = [...inventory, itemId];
-    saveInventory(newInventory);
-    set({ inventory: newInventory });
+    useBattleStore.setState({
+      player: { ...player, totalGold: player.totalGold - item.price },
+    });
+    set({ inventory: [...inventory, itemId] });
 
     // Sync MCP purchases with mcpStore
     if (item.shopId === 'mcp-library') {
@@ -186,20 +169,4 @@ export const useShopStore = create<ShopStore>((set, get) => ({
 
     return true;
   },
-
-  restoreFromStorage: () => {
-    try {
-      const raw = localStorage.getItem(SHOP_STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (Array.isArray(data)) {
-          set({ inventory: data });
-        }
-      }
-    } catch {
-      // ignore
-    }
-  },
 }));
-
-useShopStore.getState().restoreFromStorage();

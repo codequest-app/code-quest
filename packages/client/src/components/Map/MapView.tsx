@@ -110,6 +110,7 @@ export function MapView({ onSendMessage, onFetchTools, isConnected }: MapViewPro
         (loc) => loc.shortcutKey?.toLowerCase() === e.key.toLowerCase(),
       );
       if (shortcut) {
+        e.preventDefault();
         enterLocation(shortcut.id);
       }
     }
