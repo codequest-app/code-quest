@@ -182,6 +182,12 @@ describe('MapView', () => {
     expect(dots.length).toBe(4); // forest, mountains, wasteland, volcano
   });
 
+  it('hides minimap when inside a location', () => {
+    useMapStore.setState({ currentLocationId: 'tavern' });
+    render(<MapView />);
+    expect(screen.queryByTestId('minimap')).toBeNull();
+  });
+
   it('shows interior class when inside a location', () => {
     useMapStore.setState({ currentLocationId: 'tavern' });
     render(<MapView />);

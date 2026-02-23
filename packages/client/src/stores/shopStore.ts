@@ -173,9 +173,14 @@ export const useShopStore = create<ShopStore>((set, get) => ({
     // Sync MCP purchases with mcpStore
     if (item.shopId === 'mcp-library') {
       const mcpToolId = itemId.replace(/^mcp-/, '');
-      const tool = useMcpStore.getState().tools.find((t) => t.id === mcpToolId);
-      if (tool && !tool.installed) {
-        useMcpStore.getState().toggleInstall(mcpToolId);
+      const mcpState = useMcpStore.getState();
+      const tool = mcpState.tools.find((t) => t.id === mcpToolId);
+      if (tool) {
+        if (!tool.installed) {
+          mcpState.toggleInstall(mcpToolId);
+        }
+      } else {
+        console.warn(`[shopStore] MCP tool "${mcpToolId}" not found in mcpStore`);
       }
     }
 

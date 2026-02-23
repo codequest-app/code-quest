@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../battleStore';
 import { useMcpStore } from '../mcpStore';
 import { useShopStore } from '../shopStore';
@@ -74,6 +74,17 @@ describe('shopStore', () => {
     useShopStore.getState().buyItem('mcp-web-search');
     const updated = useMcpStore.getState().tools.find((t) => t.id === 'web-search');
     expect(updated?.installed).toBe(true);
+  });
+
+  it('warns when MCP tool ID does not match any tool in mcpStore', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // file-reader maps to mcpToolId "file-reader" which may not exist
+    useBattleStore.setState({ player: { level: 1, totalExp: 0, totalGold: 200 } });
+    // Remove all tools to ensure mismatch
+    useMcpStore.setState({ tools: [] });
+    useShopStore.getState().buyItem('mcp-file-reader');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('file-reader'));
+    warnSpy.mockRestore();
   });
 
   it('restores inventory from localStorage', () => {
