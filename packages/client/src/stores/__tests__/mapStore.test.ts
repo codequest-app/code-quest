@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../battleStore';
 import { useMapStore } from '../mapStore';
 
@@ -196,9 +196,9 @@ describe('mapStore', () => {
 
   it('movePlayer in wilderness may set pendingEncounter when roll succeeds', () => {
     useMapStore.getState().changeZone('wilderness');
-    // Force encounter by mocking Math.random to return 0 (always < encounterRate)
+    // Return 0.15 — above NPC threshold (0.1) but below encounter rate (0.3)
     const originalRandom = Math.random;
-    Math.random = () => 0;
+    Math.random = () => 0.15;
     try {
       useMapStore.getState().movePlayer(1, 0);
       expect(useMapStore.getState().pendingEncounter).toBe(true);
@@ -367,5 +367,34 @@ describe('mapStore', () => {
     useBattleStore.getState().endBattle('battle-2', 'defeat');
     expect(useMapStore.getState().inDungeon).toBe(false);
     expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(false);
+  });
+
+  // Task 66: pendingNpc triggered on wilderness move
+  it('movePlayer in wilderness can set pendingNpc when Math.random is low', () => {
+    useMapStore.setState({
+      currentZone: 'wilderness',
+      playerPosition: { x: 2, y: 2 },
+      planModeActive: false,
+      pendingNpc: null,
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0.05); // below NPC threshold
+    useMapStore.getState().movePlayer(1, 0);
+    expect(useMapStore.getState().pendingNpc).not.toBeNull();
+    expect(useMapStore.getState().pendingNpc?.name).toBeTruthy();
+    vi.restoreAllMocks();
+  });
+
+  it('movePlayer in town never sets pendingNpc', () => {
+    useMapStore.setState({ currentZone: 'town', pendingNpc: null });
+    vi.spyOn(Math, 'random').mockReturnValue(0.01);
+    useMapStore.getState().movePlayer(1, 0);
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    vi.restoreAllMocks();
+  });
+
+  it('dismissNpc clears pendingNpc', () => {
+    useMapStore.setState({ pendingNpc: { name: 'Test', icon: '🧙', dialogue: 'Hi' } });
+    useMapStore.getState().dismissNpc();
+    expect(useMapStore.getState().pendingNpc).toBeNull();
   });
 });

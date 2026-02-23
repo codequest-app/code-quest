@@ -22,6 +22,24 @@ export interface MapNpcData {
   dialogue: string;
 }
 
+const WANDERING_NPCS: MapNpcData[] = [
+  { name: 'Wandering Sage', icon: '🧙', dialogue: 'Beware of the volcano region, young coder.' },
+  {
+    name: 'Lost Traveler',
+    icon: '🧳',
+    dialogue: 'I once found a rare skill scroll in the mountains.',
+  },
+  {
+    name: 'Forest Spirit',
+    icon: '🌿',
+    dialogue: 'The forest holds secrets for those who read carefully.',
+  },
+  { name: 'Old Knight', icon: '🛡️', dialogue: 'Always write tests before you charge into battle.' },
+  { name: 'Merchant Cat', icon: '🐱', dialogue: 'Meow... I mean, check the shops for deals!' },
+];
+
+const NPC_ENCOUNTER_RATE = 0.1;
+
 const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
   town: TOWN_LOCATIONS,
   wilderness: WILDERNESS_LOCATIONS,
@@ -134,16 +152,20 @@ export const useMapStore = create<MapStore>((set, get) => ({
       saveMapState(position, state.currentZone);
 
       let pending = false;
+      let npc: MapNpcData | null = null;
       if (state.currentZone === 'wilderness' && !state.planModeActive) {
         const subZone = findSubZone(position);
         const subZoneDef = WILDERNESS_SUB_ZONES.find((z) => z.id === subZone);
         const rate = subZoneDef?.encounterRate ?? 0.3;
-        if (Math.random() < rate) {
+        const roll = Math.random();
+        if (roll < NPC_ENCOUNTER_RATE) {
+          npc = WANDERING_NPCS[Math.floor(Math.random() * WANDERING_NPCS.length)];
+        } else if (roll < rate) {
           pending = true;
         }
       }
 
-      return { playerPosition: position, pendingEncounter: pending };
+      return { playerPosition: position, pendingEncounter: pending, pendingNpc: npc };
     });
   },
 

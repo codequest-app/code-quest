@@ -498,3 +498,41 @@
 .map-building--completed {
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
 }
+
+/* NPC Encounter */
+.npc-encounter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--map-building, #D2B48C);
+  border: 2px solid var(--map-accent, #4A90E2);
+  border-radius: 8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  min-width: 220px;
+  animation: slide-in 0.3s ease-out;
+}
+
+.npc-encounter__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--map-text, #2C3E50);
+}
+
+.npc-encounter__icon {
+  font-size: 1.5rem;
+}
+
+.npc-encounter__dialogue {
+  font-style: italic;
+  text-align: center;
+  color: var(--map-text, #2C3E50);
+  margin: 0;
+}

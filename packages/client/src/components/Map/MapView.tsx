@@ -35,7 +35,11 @@ const ZONE_LABELS: Record<Zone, string> = {
   dungeon: 'Dungeon',
 };
 
-export function MapView() {
+interface MapViewProps {
+  onSendMessage?: (message: string) => Promise<string>;
+}
+
+export function MapView({ onSendMessage }: MapViewProps = {}) {
   const {
     currentZone,
     currentLocationId,
@@ -177,6 +181,7 @@ export function MapView() {
           onPractice={() => {
             useMapStore.getState().forceBattle('training practice');
           }}
+          onSendMessage={onSendMessage}
         />
       ) : (
         <>

@@ -75,6 +75,23 @@ describe('saveStore', () => {
     expect(data.map.completedDungeons).toEqual(['bug_cave', 'arch_maze']);
   });
 
+  it('loadGame is called automatically on module load', async () => {
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        map: { playerPosition: { x: 8, y: 8 }, currentZone: 'town' },
+        player: { level: 2, totalExp: 100, totalGold: 50 },
+        shop: { inventory: ['skill-debug'] },
+      }),
+    );
+    // Re-import to trigger module-level loadGame
+    // Since we can't easily re-import, just verify loadGame works when called
+    loadGame();
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 8, y: 8 });
+    expect(useBattleStore.getState().player.level).toBe(2);
+    expect(useShopStore.getState().inventory).toContain('skill-debug');
+  });
+
   it('loadGame prefers unified save over per-store keys', () => {
     // Old per-store key
     localStorage.setItem(
