@@ -43,10 +43,7 @@ interface BattleStore {
   getBattle: (sessionId: string) => BattleState | undefined;
   updateBattle: (sessionId: string, updates: Partial<BattleState>) => void;
   setPrompt: (sessionId: string, prompt: string) => void;
-  getPrompt: (sessionId: string) => string | undefined;
   processBattleEvent: (sessionId: string, event: BattleEvent) => void;
-  switchBattle: (sessionId: string) => void;
-  getActiveBattles: () => Array<{ sessionId: string; battle: BattleState }>;
 }
 
 const PLAYER_STORAGE_KEY = 'code-quest-player';
@@ -172,10 +169,6 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       prompts.set(sessionId, prompt);
       return { prompts };
     });
-  },
-
-  getPrompt: (sessionId: string) => {
-    return get().prompts.get(sessionId);
   },
 
   processBattleEvent: (sessionId: string, event: BattleEvent) => {
@@ -321,23 +314,5 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
 
       return { battles, player };
     });
-  },
-
-  switchBattle: (sessionId: string) => {
-    const battle = get().battles.get(sessionId);
-    if (battle) {
-      set({ activeBattleId: sessionId });
-    }
-  },
-
-  getActiveBattles: () => {
-    const battles = get().battles;
-    const result: Array<{ sessionId: string; battle: BattleState }> = [];
-    for (const [sessionId, battle] of battles) {
-      if (battle.phase === 'active') {
-        result.push({ sessionId, battle });
-      }
-    }
-    return result;
   },
 }));

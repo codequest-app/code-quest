@@ -38,9 +38,10 @@ const ZONE_LABELS: Record<Zone, string> = {
 interface MapViewProps {
   onSendMessage?: (message: string) => Promise<string>;
   onFetchTools?: () => void;
+  isConnected?: boolean;
 }
 
-export function MapView({ onSendMessage, onFetchTools }: MapViewProps = {}) {
+export function MapView({ onSendMessage, onFetchTools, isConnected }: MapViewProps = {}) {
   const {
     currentZone,
     currentLocationId,
@@ -60,8 +61,10 @@ export function MapView({ onSendMessage, onFetchTools }: MapViewProps = {}) {
   const [pendingZone, setPendingZone] = useState<Zone | null>(null);
 
   useEffect(() => {
-    onFetchTools?.();
-  }, [onFetchTools]);
+    if (isConnected) {
+      onFetchTools?.();
+    }
+  }, [onFetchTools, isConnected]);
 
   const handleChangeZone = useCallback(
     (zone: Zone) => {

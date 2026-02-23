@@ -244,9 +244,22 @@ describe('MapView', () => {
     expect(useBattleStore.getState().battles.size).toBeGreaterThan(0);
   });
 
-  it('calls onFetchTools on mount', () => {
+  it('calls onFetchTools when connected', () => {
     const fetchTools = vi.fn();
-    render(<MapView onFetchTools={fetchTools} />);
+    render(<MapView onFetchTools={fetchTools} isConnected={true} />);
     expect(fetchTools).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onFetchTools when not connected', () => {
+    const fetchTools = vi.fn();
+    render(<MapView onFetchTools={fetchTools} isConnected={false} />);
+    expect(fetchTools).not.toHaveBeenCalled();
+  });
+
+  it('fight button sets activeBattleSessionId in mapStore', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('encounter-fight-btn'));
+    expect(useMapStore.getState().activeBattleSessionId).toBeTruthy();
   });
 });

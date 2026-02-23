@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useBattleStore } from '../battleStore';
+import { useMcpStore } from '../mcpStore';
 import { useShopStore } from '../shopStore';
 
 describe('shopStore', () => {
@@ -57,6 +58,22 @@ describe('shopStore', () => {
       const items = useShopStore.getState().getShopItems(shopId);
       expect(items.length, `shop "${shopId}" should have >= 2 items`).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('buyItem persists player gold to localStorage', () => {
+    useShopStore.getState().buyItem('skill-autocomplete');
+    const saved = JSON.parse(localStorage.getItem('code-quest-player') ?? '{}');
+    expect(saved.totalGold).toBe(100 - 30); // skill-autocomplete costs 30
+  });
+
+  it('buying MCP shop item toggles mcpStore installed', () => {
+    // web-search starts as not installed in mcpStore
+    const tool = useMcpStore.getState().tools.find((t) => t.id === 'web-search');
+    expect(tool?.installed).toBe(false);
+
+    useShopStore.getState().buyItem('mcp-web-search');
+    const updated = useMcpStore.getState().tools.find((t) => t.id === 'web-search');
+    expect(updated?.installed).toBe(true);
   });
 
   it('restores inventory from localStorage', () => {

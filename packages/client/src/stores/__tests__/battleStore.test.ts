@@ -69,9 +69,9 @@ describe('battleStore', () => {
     expect(useBattleStore.getState().getBattle('nope')).toBeUndefined();
   });
 
-  it('stores and retrieves prompts', () => {
+  it('stores prompts via setPrompt', () => {
     useBattleStore.getState().setPrompt('s1', 'fix the bug');
-    expect(useBattleStore.getState().getPrompt('s1')).toBe('fix the bug');
+    expect(useBattleStore.getState().prompts.get('s1')).toBe('fix the bug');
   });
 
   describe('processBattleEvent', () => {
@@ -326,25 +326,6 @@ describe('battleStore', () => {
     it('sets activeBattleId on battle start', () => {
       useBattleStore.getState().startBattle('s1', makeEnemy());
       expect(useBattleStore.getState().activeBattleId).toBe('s1');
-    });
-
-    it('switches active battle', () => {
-      useBattleStore.getState().startBattle('s1', makeEnemy());
-      useBattleStore.getState().startBattle('s2', makeEnemy());
-      expect(useBattleStore.getState().activeBattleId).toBe('s2');
-
-      useBattleStore.getState().switchBattle('s1');
-      expect(useBattleStore.getState().activeBattleId).toBe('s1');
-    });
-
-    it('getActiveBattles returns only active battles', () => {
-      useBattleStore.getState().startBattle('s1', makeEnemy());
-      useBattleStore.getState().startBattle('s2', makeEnemy());
-      useBattleStore.getState().endBattle('s1', 'victory');
-
-      const active = useBattleStore.getState().getActiveBattles();
-      expect(active).toHaveLength(1);
-      expect(active[0].sessionId).toBe('s2');
     });
   });
 

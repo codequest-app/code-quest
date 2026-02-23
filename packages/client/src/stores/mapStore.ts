@@ -232,9 +232,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
   },
 }));
 
-// Auto-restore persisted state on load
-useMapStore.getState().restoreFromStorage();
-
 // Subscribe to battleStore — auto-call onBattleEnd when a tracked battle ends
 useBattleStore.subscribe((state, prev) => {
   const sessionId = useMapStore.getState().activeBattleSessionId;
