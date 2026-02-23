@@ -9,6 +9,7 @@ describe('mapStore', () => {
       currentZone: 'town',
       currentLocationId: null,
       playerPosition: { x: 4, y: 4 },
+      completedDungeons: new Set<string>(),
     });
     useBattleStore.setState({
       battles: new Map(),
@@ -266,5 +267,67 @@ describe('mapStore', () => {
     expect(useMapStore.getState().planModeActive).toBe(true);
     useMapStore.getState().setPlanMode(false);
     expect(useMapStore.getState().planModeActive).toBe(false);
+  });
+
+  it('auto-restores position and zone from localStorage on init', () => {
+    localStorage.setItem(
+      'code-quest-map',
+      JSON.stringify({ playerPosition: { x: 7, y: 3 }, currentZone: 'wilderness' }),
+    );
+    useMapStore.getState().restoreFromStorage();
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 7, y: 3 });
+    expect(useMapStore.getState().currentZone).toBe('wilderness');
+  });
+
+  it('movePlayer persists to localStorage', () => {
+    useMapStore.getState().movePlayer(1, 0);
+    const saved = JSON.parse(localStorage.getItem('code-quest-map') ?? '{}');
+    expect(saved.playerPosition).toEqual({ x: 5, y: 4 });
+  });
+
+  it('plan mode skips encounter rolls on movePlayer', () => {
+    useMapStore.setState({ currentZone: 'wilderness', planModeActive: true });
+    // Move many times — should never trigger encounter
+    for (let i = 0; i < 20; i++) {
+      useMapStore.getState().movePlayer(i % 2 === 0 ? 1 : -1, 0);
+    }
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+  });
+
+  it('plan mode blocks changeZone', () => {
+    useMapStore.setState({ planModeActive: true });
+    useMapStore.getState().changeZone('wilderness');
+    expect(useMapStore.getState().currentZone).toBe('town');
+  });
+
+  it('onBattleEnd clears inDungeon and exits location', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    useMapStore.getState().onBattleEnd('bug_cave', true);
+    expect(useMapStore.getState().inDungeon).toBe(false);
+    expect(useMapStore.getState().currentLocationId).toBeNull();
+  });
+
+  it('onBattleEnd victory adds dungeon to completedDungeons', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    useMapStore.getState().onBattleEnd('bug_cave', true);
+    expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(true);
+  });
+
+  it('onBattleEnd defeat does not add to completedDungeons', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    useMapStore.getState().onBattleEnd('bug_cave', false);
+    expect(useMapStore.getState().completedDungeons.has('bug_cave')).toBe(false);
   });
 });

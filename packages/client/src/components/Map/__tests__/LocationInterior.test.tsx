@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useBattleStore } from '../../../stores/battleStore';
 import { useMapStore } from '../../../stores/mapStore';
+import { useShopStore } from '../../../stores/shopStore';
+import { useThemeStore } from '../../../stores/themeStore';
 import { useWorktreeStore } from '../../../stores/worktreeStore';
 import { LocationInterior } from '../LocationInterior';
 
@@ -217,7 +220,7 @@ describe('LocationInterior', () => {
     expect(el).toHaveTextContent('Settings');
   });
 
-  it('renders training ground placeholder', () => {
+  it('renders training ground with practice button', () => {
     render(
       <LocationInterior
         location={makeLoc({ id: 'training_ground', name: 'Training Ground', icon: '⚔️' })}
@@ -225,9 +228,23 @@ describe('LocationInterior', () => {
       />,
     );
     expect(screen.getByTestId('interior-training')).toBeInTheDocument();
+    expect(screen.getByTestId('training-practice-btn')).toBeInTheDocument();
   });
 
-  it('renders library placeholder', () => {
+  it('training ground practice button calls onPractice', () => {
+    const onPractice = vi.fn();
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'training_ground', name: 'Training Ground', icon: '⚔️' })}
+        onExit={vi.fn()}
+        onPractice={onPractice}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('training-practice-btn'));
+    expect(onPractice).toHaveBeenCalledOnce();
+  });
+
+  it('renders library with MCP tool list', () => {
     render(
       <LocationInterior
         location={makeLoc({ id: 'library', name: 'Library', icon: '📚' })}
@@ -236,6 +253,20 @@ describe('LocationInterior', () => {
     );
     expect(screen.getByTestId('interior-library')).toBeInTheDocument();
     expect(screen.getByTestId('interior-library')).toHaveTextContent('MCP');
+    expect(screen.getByTestId('mcp-tool-list')).toBeInTheDocument();
+  });
+
+  it('library tool install button toggles', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'library', name: 'Library', icon: '📚' })}
+        onExit={vi.fn()}
+      />,
+    );
+    const btn = screen.getByTestId('mcp-toggle-web-search');
+    expect(btn).toHaveTextContent('Install');
+    fireEvent.click(btn);
+    expect(btn).toHaveTextContent('Uninstall');
   });
 
   it('clicking a sub-shop shows shop detail view', () => {
@@ -329,5 +360,88 @@ describe('LocationInterior', () => {
     const restBtn = screen.getByText(/Rest/);
     fireEvent.click(restBtn);
     expect(screen.getByTestId('interior-home')).toHaveTextContent('fully rested');
+  });
+
+  it('player home settings button opens settings panel', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'player_home', name: 'Player Home', icon: '🏠' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('home-settings-btn'));
+    expect(screen.getByTestId('home-settings-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('home-theme-select')).toBeInTheDocument();
+  });
+
+  it('player home settings theme select changes theme', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'player_home', name: 'Player Home', icon: '🏠' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('home-settings-btn'));
+    fireEvent.change(screen.getByTestId('home-theme-select'), { target: { value: 'dark' } });
+    expect(useThemeStore.getState().currentTheme).toBe('dark');
+  });
+
+  it('tavern shows loading when onSendMessage is provided', async () => {
+    let resolveMsg: (v: string) => void = () => {};
+    const onSendMessage = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveMsg = resolve;
+        }),
+    );
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'tavern' })}
+        onExit={vi.fn()}
+        onSendMessage={onSendMessage}
+      />,
+    );
+    const input = screen.getByTestId('tavern-input');
+    fireEvent.change(input, { target: { value: 'Hello' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+    expect(screen.getByTestId('tavern-loading')).toBeInTheDocument();
+    expect(onSendMessage).toHaveBeenCalledWith('Hello');
+    // Resolve the promise
+    await vi.waitFor(() => {
+      resolveMsg('AI reply');
+    });
+    await vi.waitFor(() => {
+      expect(screen.queryByTestId('tavern-loading')).toBeNull();
+      expect(screen.getByTestId('tavern-messages')).toHaveTextContent('AI reply');
+    });
+  });
+
+  it('skills shop shows items with buy buttons', () => {
+    useBattleStore.setState({ player: { level: 1, totalExp: 0, totalGold: 100 } });
+    useShopStore.setState({ inventory: [] });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'shopping_district', name: 'Shopping District', icon: '🏪' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('shop-skills'));
+    expect(screen.getByTestId('shop-items')).toBeInTheDocument();
+    expect(screen.getByTestId('buy-skill-autocomplete')).toBeInTheDocument();
+  });
+
+  it('buying an item deducts gold and shows result', () => {
+    useBattleStore.setState({ player: { level: 1, totalExp: 0, totalGold: 100 } });
+    useShopStore.setState({ inventory: [] });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'shopping_district', name: 'Shopping District', icon: '🏪' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('shop-skills'));
+    fireEvent.click(screen.getByTestId('buy-skill-autocomplete'));
+    expect(screen.getByTestId('shop-buy-result')).toHaveTextContent('Purchased');
+    expect(useBattleStore.getState().player.totalGold).toBe(70);
   });
 });
