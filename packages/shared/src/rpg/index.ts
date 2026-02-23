@@ -11,6 +11,7 @@ export type { ChatContext } from './event-mapper.ts';
 export { mapChatEvent } from './event-mapper.ts';
 export {
   BUILT_IN_THEMES,
+  DUNGEON_LOCATIONS,
   TOWN_LOCATIONS,
   WILDERNESS_LOCATIONS,
   WILDERNESS_SUB_ZONES,

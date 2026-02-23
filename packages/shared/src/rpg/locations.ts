@@ -165,6 +165,42 @@ export const WILDERNESS_LOCATIONS: LocationDef[] = [
   },
 ];
 
+export const DUNGEON_LOCATIONS: LocationDef[] = [
+  {
+    id: 'bug_cave',
+    name: 'Bug Cave',
+    icon: '🪲',
+    zone: 'dungeon',
+    position: { x: 2, y: 3 },
+    enterable: true,
+    requiresLevel: 3,
+    description: 'A dark cave crawling with bugs. Debug challenges await.',
+    restrictInBattle: false,
+  },
+  {
+    id: 'arch_maze',
+    name: 'Architecture Maze',
+    icon: '🏗️',
+    zone: 'dungeon',
+    position: { x: 7, y: 3 },
+    enterable: true,
+    requiresLevel: 5,
+    description: 'A labyrinth of architectural decisions. Refactoring boss inside.',
+    restrictInBattle: false,
+  },
+  {
+    id: 'legacy_tomb',
+    name: 'Legacy Tomb',
+    icon: '🏚️',
+    zone: 'dungeon',
+    position: { x: 4, y: 1 },
+    enterable: true,
+    requiresLevel: 8,
+    description: 'Ancient legacy code lies here. Only the bravest dare enter.',
+    restrictInBattle: false,
+  },
+];
+
 export const BUILT_IN_THEMES: MapTheme[] = [
   {
     name: 'classic',

@@ -86,10 +86,84 @@ describe('MapView', () => {
     expect(screen.queryByTestId('building-tavern')).toBeNull();
   });
 
-  it('switches from town to wilderness via zone button', () => {
+  it('switches from town to wilderness via zone button after confirmation', () => {
     render(<MapView />);
     fireEvent.click(screen.getByTestId('zone-btn-wilderness'));
+    fireEvent.click(screen.getByTestId('zone-confirm-btn'));
     expect(useMapStore.getState().currentZone).toBe('wilderness');
     expect(screen.getByTestId('building-forest')).toBeInTheDocument();
+  });
+
+  it('renders dungeon locations when zone is dungeon', () => {
+    useMapStore.setState({ currentZone: 'dungeon', playerPosition: { x: 2, y: 3 } });
+    render(<MapView />);
+    expect(screen.getByTestId('building-bug_cave')).toBeInTheDocument();
+    expect(screen.getByTestId('building-arch_maze')).toBeInTheDocument();
+    expect(screen.getByTestId('building-legacy_tomb')).toBeInTheDocument();
+  });
+
+  it('shows zone confirmation dialog when switching zones', () => {
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('zone-btn-wilderness'));
+    expect(screen.getByTestId('zone-confirm-dialog')).toBeInTheDocument();
+    expect(screen.getByTestId('zone-confirm-dialog')).toHaveTextContent('Wilderness');
+  });
+
+  it('confirms zone change on confirm button', () => {
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('zone-btn-wilderness'));
+    fireEvent.click(screen.getByTestId('zone-confirm-btn'));
+    expect(useMapStore.getState().currentZone).toBe('wilderness');
+    expect(screen.queryByTestId('zone-confirm-dialog')).toBeNull();
+  });
+
+  it('cancels zone change on cancel button', () => {
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('zone-btn-wilderness'));
+    fireEvent.click(screen.getByTestId('zone-cancel-btn'));
+    expect(useMapStore.getState().currentZone).toBe('town');
+    expect(screen.queryByTestId('zone-confirm-dialog')).toBeNull();
+  });
+
+  it('shows encounter overlay when pendingEncounter is true', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
+    render(<MapView />);
+    expect(screen.getByTestId('encounter-overlay')).toBeInTheDocument();
+    expect(screen.getByTestId('encounter-overlay')).toHaveTextContent('Encounter');
+  });
+
+  it('encounter overlay Fight button dismisses and does not crash', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('encounter-fight-btn'));
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+  });
+
+  it('encounter overlay Flee button dismisses encounter', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('encounter-flee-btn'));
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    expect(screen.queryByTestId('encounter-overlay')).toBeNull();
+  });
+
+  it('no encounter overlay when pendingEncounter is false', () => {
+    useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: false });
+    render(<MapView />);
+    expect(screen.queryByTestId('encounter-overlay')).toBeNull();
+  });
+
+  it('wilderness map grid has sub-zone CSS modifier class', () => {
+    useMapStore.setState({ currentZone: 'wilderness', playerPosition: { x: 2, y: 2 } });
+    render(<MapView />);
+    const grid = screen.getByTestId('map-view').querySelector('.map-view__grid');
+    expect(grid?.className).toMatch(/map-view__grid--/);
+  });
+
+  it('town map grid has no sub-zone modifier', () => {
+    useMapStore.setState({ currentZone: 'town' });
+    render(<MapView />);
+    const grid = screen.getByTestId('map-view').querySelector('.map-view__grid');
+    expect(grid?.className).not.toMatch(/map-view__grid--/);
   });
 });

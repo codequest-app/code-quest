@@ -1,6 +1,6 @@
 import type { LocationDef, Zone } from '@code-quest/shared';
-import { TOWN_LOCATIONS, WILDERNESS_LOCATIONS } from '@code-quest/shared';
-import { useEffect, useMemo } from 'react';
+import { DUNGEON_LOCATIONS, TOWN_LOCATIONS, WILDERNESS_LOCATIONS } from '@code-quest/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMapStore } from '../../stores/mapStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { LocationBuilding } from './LocationBuilding';
@@ -24,7 +24,13 @@ const KEY_MAP: Record<string, [number, number]> = {
 const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
   town: TOWN_LOCATIONS,
   wilderness: WILDERNESS_LOCATIONS,
-  dungeon: [],
+  dungeon: DUNGEON_LOCATIONS,
+};
+
+const ZONE_LABELS: Record<Zone, string> = {
+  town: 'Town',
+  wilderness: 'Wilderness',
+  dungeon: 'Dungeon',
 };
 
 export function MapView() {
@@ -32,13 +38,36 @@ export function MapView() {
     currentZone,
     currentLocationId,
     playerPosition,
+    pendingEncounter,
     movePlayer,
     enterLocation,
     exitLocation,
     changeZone,
+    dismissEncounter,
   } = useMapStore();
   const theme = useThemeStore((s) => s.getTheme());
+  const subZone = useMapStore((s) => s.getCurrentSubZone());
   const locations = useMemo(() => ZONE_LOCATIONS[currentZone], [currentZone]);
+  const [pendingZone, setPendingZone] = useState<Zone | null>(null);
+
+  const handleChangeZone = useCallback(
+    (zone: Zone) => {
+      if (zone === currentZone) return;
+      setPendingZone(zone);
+    },
+    [currentZone],
+  );
+
+  const confirmZoneChange = useCallback(() => {
+    if (pendingZone) {
+      changeZone(pendingZone);
+      setPendingZone(null);
+    }
+  }, [pendingZone, changeZone]);
+
+  const cancelZoneChange = useCallback(() => {
+    setPendingZone(null);
+  }, []);
 
   useEffect(() => {
     if (currentLocationId) return;
@@ -79,12 +108,65 @@ export function MapView() {
 
   return (
     <div className={`map-view map-view--${theme.cssClass}`} data-testid="map-view">
-      <MapStatusBar zone={currentZone} onChangeZone={changeZone} />
+      <MapStatusBar zone={currentZone} onChangeZone={handleChangeZone} />
+      {pendingZone && (
+        <div className="zone-confirm-dialog" data-testid="zone-confirm-dialog">
+          <p>Travel to {ZONE_LABELS[pendingZone]}?</p>
+          <div className="zone-confirm-actions">
+            <button
+              type="button"
+              className="interior-action-btn"
+              data-testid="zone-confirm-btn"
+              onClick={confirmZoneChange}
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              className="location-interior__exit"
+              data-testid="zone-cancel-btn"
+              onClick={cancelZoneChange}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {pendingEncounter && (
+        <div className="encounter-overlay" data-testid="encounter-overlay">
+          <h3>Encounter!</h3>
+          <p>A wild enemy appears!</p>
+          <div className="zone-confirm-actions">
+            <button
+              type="button"
+              className="interior-action-btn"
+              data-testid="encounter-fight-btn"
+              onClick={dismissEncounter}
+            >
+              Fight
+            </button>
+            <button
+              type="button"
+              className="location-interior__exit"
+              data-testid="encounter-flee-btn"
+              onClick={dismissEncounter}
+            >
+              Flee
+            </button>
+          </div>
+        </div>
+      )}
       {activeLocation ? (
-        <LocationInterior location={activeLocation} onExit={exitLocation} />
+        <LocationInterior
+          location={activeLocation}
+          onExit={exitLocation}
+          onEngageBoss={(locationId) => {
+            useMapStore.getState().triggerBattle(`dungeon boss: ${locationId}`);
+          }}
+        />
       ) : (
         <>
-          <div className="map-view__grid">
+          <div className={`map-view__grid${subZone ? ` map-view__grid--${subZone}` : ''}`}>
             {locations.map((loc) => (
               <LocationBuilding key={loc.id} location={loc} onEnter={enterLocation} />
             ))}

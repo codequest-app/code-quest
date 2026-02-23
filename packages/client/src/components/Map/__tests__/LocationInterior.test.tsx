@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useMapStore } from '../../../stores/mapStore';
+import { useWorktreeStore } from '../../../stores/worktreeStore';
 import { LocationInterior } from '../LocationInterior';
 
 function makeLoc(overrides: Partial<Parameters<typeof LocationInterior>[0]['location']> = {}) {
@@ -19,6 +21,13 @@ function makeLoc(overrides: Partial<Parameters<typeof LocationInterior>[0]['loca
 }
 
 describe('LocationInterior', () => {
+  beforeEach(() => {
+    useWorktreeStore.setState({
+      worktrees: [{ name: 'main', branch: 'main', status: 'stable' as const }],
+    });
+    useMapStore.setState({ planModeActive: false });
+  });
+
   it('renders location name and icon', () => {
     render(<LocationInterior location={makeLoc()} onExit={vi.fn()} />);
     expect(screen.getByTestId('location-interior')).toHaveTextContent('Tavern');
@@ -44,11 +53,29 @@ describe('LocationInterior', () => {
     expect(onExit).toHaveBeenCalledOnce();
   });
 
-  // Location-specific content tests
-  it('renders tavern chat placeholder', () => {
+  // Tavern chat UI
+  it('renders tavern with chat input and message area', () => {
     render(<LocationInterior location={makeLoc({ id: 'tavern' })} onExit={vi.fn()} />);
     expect(screen.getByTestId('interior-tavern')).toBeInTheDocument();
-    expect(screen.getByTestId('interior-tavern')).toHaveTextContent('AI bartender');
+    expect(screen.getByTestId('tavern-input')).toBeInTheDocument();
+    expect(screen.getByTestId('tavern-messages')).toBeInTheDocument();
+  });
+
+  it('tavern shows welcome message from bartender', () => {
+    render(<LocationInterior location={makeLoc({ id: 'tavern' })} onExit={vi.fn()} />);
+    expect(screen.getByTestId('tavern-messages')).toHaveTextContent('AI bartender');
+  });
+
+  it('tavern input submits message and shows it with auto-reply', () => {
+    render(<LocationInterior location={makeLoc({ id: 'tavern' })} onExit={vi.fn()} />);
+    const input = screen.getByTestId('tavern-input');
+    fireEvent.change(input, { target: { value: 'Hello bartender' } });
+    fireEvent.submit(input.closest('form') as HTMLFormElement);
+    expect(screen.getByTestId('tavern-messages')).toHaveTextContent('Hello bartender');
+    // Auto-reply from bartender
+    expect(
+      screen.getByTestId('tavern-messages').querySelectorAll('.tavern-msg--bartender').length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('renders shopping district with 7 sub-shops', () => {
@@ -65,7 +92,7 @@ describe('LocationInterior', () => {
     expect(shops.length).toBe(7);
   });
 
-  it('renders stasis chamber with plan mode placeholder', () => {
+  it('renders stasis chamber with plan mode button', () => {
     render(
       <LocationInterior
         location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
@@ -73,10 +100,49 @@ describe('LocationInterior', () => {
       />,
     );
     expect(screen.getByTestId('interior-stasis')).toBeInTheDocument();
-    expect(screen.getByTestId('interior-stasis')).toHaveTextContent('Plan Mode');
+    expect(screen.getByTestId('stasis-plan-btn')).toBeInTheDocument();
   });
 
-  it('renders guild hall with worktree placeholder', () => {
+  it('stasis chamber shows plan mode UI when activated', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    expect(screen.getByTestId('stasis-plan-active')).toBeInTheDocument();
+    expect(screen.getByTestId('stasis-plan-active')).toHaveTextContent('Plan Mode Active');
+  });
+
+  it('stasis chamber can exit plan mode', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    fireEvent.click(screen.getByTestId('stasis-exit-plan-btn'));
+    expect(screen.queryByTestId('stasis-plan-active')).toBeNull();
+    expect(screen.getByTestId('stasis-plan-btn')).toBeInTheDocument();
+  });
+
+  it('stasis chamber wires plan mode to mapStore', () => {
+    expect(useMapStore.getState().planModeActive).toBe(false);
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    expect(useMapStore.getState().planModeActive).toBe(true);
+    fireEvent.click(screen.getByTestId('stasis-exit-plan-btn'));
+    expect(useMapStore.getState().planModeActive).toBe(false);
+  });
+
+  it('renders guild hall with worktree list and create button', () => {
     render(
       <LocationInterior
         location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
@@ -85,6 +151,57 @@ describe('LocationInterior', () => {
     );
     expect(screen.getByTestId('interior-guild')).toBeInTheDocument();
     expect(screen.getByTestId('interior-guild')).toHaveTextContent('Worktree');
+    expect(screen.getByTestId('guild-worktree-list')).toBeInTheDocument();
+    expect(screen.getByTestId('guild-create-btn')).toBeInTheDocument();
+  });
+
+  it('guild hall shows worktrees from store', () => {
+    useWorktreeStore.setState({
+      worktrees: [
+        { name: 'main', branch: 'main', status: 'stable' as const },
+        { name: 'feat', branch: 'feature/x', status: 'active' as const },
+      ],
+    });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('worktree-main')).toBeInTheDocument();
+    expect(screen.getByTestId('worktree-feat')).toBeInTheDocument();
+  });
+
+  it('guild hall can create new worktree', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('guild-create-btn'));
+    fireEvent.change(screen.getByTestId('guild-name-input'), { target: { value: 'new-wt' } });
+    fireEvent.change(screen.getByTestId('guild-branch-input'), { target: { value: 'feat/new' } });
+    fireEvent.click(screen.getByTestId('guild-submit-btn'));
+    expect(useWorktreeStore.getState().worktrees.length).toBe(2);
+    expect(useWorktreeStore.getState().worktrees[1].name).toBe('new-wt');
+  });
+
+  it('guild hall can remove non-main worktree', () => {
+    useWorktreeStore.setState({
+      worktrees: [
+        { name: 'main', branch: 'main', status: 'stable' as const },
+        { name: 'temp', branch: 'temp', status: 'idle' as const },
+      ],
+    });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('worktree-remove-temp'));
+    expect(useWorktreeStore.getState().worktrees.length).toBe(1);
   });
 
   it('renders player home with rest and settings', () => {
@@ -119,6 +236,87 @@ describe('LocationInterior', () => {
     );
     expect(screen.getByTestId('interior-library')).toBeInTheDocument();
     expect(screen.getByTestId('interior-library')).toHaveTextContent('MCP');
+  });
+
+  it('clicking a sub-shop shows shop detail view', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'shopping_district', name: 'Shopping District', icon: '🏪' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('shop-skills'));
+    expect(screen.getByTestId('shop-detail')).toBeInTheDocument();
+    expect(screen.getByTestId('shop-detail')).toHaveTextContent('Skills Shop');
+  });
+
+  it('shop detail has back button to return to shop list', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'shopping_district', name: 'Shopping District', icon: '🏪' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('shop-skills'));
+    fireEvent.click(screen.getByTestId('shop-back-btn'));
+    expect(screen.queryByTestId('shop-detail')).toBeNull();
+    expect(screen.getByTestId('interior-shopping')).toBeInTheDocument();
+  });
+
+  it('each sub-shop shows unique placeholder content', () => {
+    const shopIds = ['skills', 'forge', 'mcp-library', 'subagent', 'treasury', 'training', 'bank'];
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'shopping_district', name: 'Shopping District', icon: '🏪' })}
+        onExit={vi.fn()}
+      />,
+    );
+    for (const shopId of shopIds) {
+      fireEvent.click(screen.getByTestId(`shop-${shopId}`));
+      const detail = screen.getByTestId('shop-detail');
+      expect(detail).toBeInTheDocument();
+      // Each shop should have descriptive content
+      expect(detail.textContent?.length).toBeGreaterThan(50);
+      expect(detail.textContent).not.toContain('Coming soon');
+      fireEvent.click(screen.getByTestId('shop-back-btn'));
+    }
+  });
+
+  it('renders dungeon interior with boss info and engage button', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'bug_cave',
+          name: 'Bug Cave',
+          icon: '🪲',
+          zone: 'dungeon',
+          description: 'A dark cave crawling with bugs.',
+        })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-dungeon')).toBeInTheDocument();
+    expect(screen.getByTestId('interior-dungeon')).toHaveTextContent('Boss');
+    expect(screen.getByTestId('dungeon-engage-btn')).toBeInTheDocument();
+  });
+
+  it('dungeon engage button calls onEngageBoss with location id', () => {
+    const onEngageBoss = vi.fn();
+    render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'bug_cave',
+          name: 'Bug Cave',
+          icon: '🪲',
+          zone: 'dungeon',
+          description: 'A dark cave crawling with bugs.',
+        })}
+        onExit={vi.fn()}
+        onEngageBoss={onEngageBoss}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('dungeon-engage-btn'));
+    expect(onEngageBoss).toHaveBeenCalledWith('bug_cave');
   });
 
   it('player home rest button shows rested message on click', () => {
