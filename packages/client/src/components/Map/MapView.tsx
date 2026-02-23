@@ -186,7 +186,7 @@ export function MapView({ onSendMessage, onFetchTools, isConnected }: MapViewPro
           location={activeLocation}
           onExit={exitLocation}
           onEngageBoss={(locationId) => {
-            useMapStore.getState().triggerBattle(`dungeon boss: ${locationId}`);
+            useMapStore.getState().forceBattle(`dungeon boss: ${locationId}`);
           }}
           onPractice={() => {
             useMapStore.getState().forceBattle('training practice');

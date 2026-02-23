@@ -117,8 +117,8 @@ function TavernContent({
   return (
     <div className="interior-content" data-testid="interior-tavern">
       <div className="tavern-messages" data-testid="tavern-messages">
-        {messages.map((msg) => (
-          <p key={`${msg.sender}-${msg.text}`} className={`tavern-msg tavern-msg--${msg.sender}`}>
+        {messages.map((msg, i) => (
+          <p key={`${i}-${msg.sender}`} className={`tavern-msg tavern-msg--${msg.sender}`}>
             <strong>{msg.sender === 'bartender' ? '🧙‍♂️' : '🧑'}</strong> {msg.text}
           </p>
         ))}

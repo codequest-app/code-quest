@@ -25,7 +25,6 @@ export { calculateCost, getModelDefinition, MODEL_DEFINITIONS } from './model-co
 export * from './schemas.ts';
 export { calculateMPCost, getSkillForTool } from './skill-mapper.ts';
 export type {
-  ComplexityAnalysis,
   CostTier,
   ModelRecommendation,
   ModelTier,
