@@ -1,8 +1,5 @@
 import type { ComplexityScore } from './types.ts';
 
-/** @deprecated Use ComplexityScore from types.ts instead */
-export type ComplexityAnalysis = ComplexityScore;
-
 export type ModelTier = 'haiku' | 'sonnet' | 'opus';
 export type CostTier = 'low' | 'medium' | 'high';
 
@@ -47,7 +44,7 @@ export function analyzeComplexity(prompt: string): ComplexityScore {
   return { total, lengthScore, keywordScore, multiStepScore };
 }
 
-export function recommendModel(analysis: ComplexityAnalysis): ModelRecommendation {
+export function recommendModel(analysis: ComplexityScore): ModelRecommendation {
   if (analysis.total <= 4) {
     return { model: 'haiku', costTier: 'low', reason: 'Simple task — fast and cheap' };
   }
@@ -57,6 +54,6 @@ export function recommendModel(analysis: ComplexityAnalysis): ModelRecommendatio
   return { model: 'opus', costTier: 'high', reason: 'Complex task — maximum capability' };
 }
 
-export function shouldUseWorktree(analysis: ComplexityAnalysis): boolean {
+export function shouldUseWorktree(analysis: ComplexityScore): boolean {
   return analysis.total >= WORKTREE_THRESHOLD;
 }

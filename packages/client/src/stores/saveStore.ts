@@ -56,8 +56,17 @@ export function loadGame(): void {
 
     const data = JSON.parse(raw);
 
+    // Always reset transient UI state on load
+    const mapUpdates: Record<string, unknown> = {
+      planModeActive: false,
+      pendingNpc: null,
+      pendingEncounter: false,
+      inDungeon: false,
+      currentLocationId: null,
+      activeBattleSessionId: null,
+    };
+
     if (data.map) {
-      const mapUpdates: Record<string, unknown> = {};
       if (
         data.map.playerPosition &&
         typeof data.map.playerPosition.x === 'number' &&
@@ -74,15 +83,9 @@ export function loadGame(): void {
       if (Array.isArray(data.map.completedDungeons)) {
         mapUpdates.completedDungeons = new Set(data.map.completedDungeons);
       }
-      // Reset transient UI state on load
-      mapUpdates.planModeActive = false;
-      mapUpdates.pendingNpc = null;
-      mapUpdates.pendingEncounter = false;
-      mapUpdates.inDungeon = false;
-      mapUpdates.currentLocationId = null;
-      mapUpdates.activeBattleSessionId = null;
-      useMapStore.setState(mapUpdates);
     }
+
+    useMapStore.setState(mapUpdates);
 
     if (data.player) {
       useBattleStore.setState({ player: data.player });

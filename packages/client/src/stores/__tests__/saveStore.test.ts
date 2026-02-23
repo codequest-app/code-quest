@@ -202,6 +202,21 @@ describe('saveStore', () => {
     expect(useMapStore.getState().currentLocationId).toBeNull();
   });
 
+  it('loadGame resets transient state even without map data', () => {
+    useMapStore.setState({ activeBattleSessionId: 'stale', inDungeon: true, planModeActive: true });
+    localStorage.setItem(
+      'code-quest-save',
+      JSON.stringify({
+        player: { level: 2, totalExp: 100, totalGold: 50 },
+        shop: { inventory: [] },
+      }),
+    );
+    loadGame();
+    expect(useMapStore.getState().activeBattleSessionId).toBeNull();
+    expect(useMapStore.getState().inDungeon).toBe(false);
+    expect(useMapStore.getState().planModeActive).toBe(false);
+  });
+
   it('loadGame ignores invalid currentZone', () => {
     localStorage.setItem(
       'code-quest-save',

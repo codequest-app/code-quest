@@ -12,6 +12,7 @@ describe('MapView', () => {
       currentZone: 'town',
       currentLocationId: null,
       playerPosition: { x: 4, y: 4 },
+      inDungeon: false,
     });
     useThemeStore.setState({ currentTheme: 'classic' });
   });
@@ -214,6 +215,25 @@ describe('MapView', () => {
     fireEvent.click(screen.getByTestId('npc-dismiss-btn'));
     expect(useMapStore.getState().pendingNpc).toBeNull();
     expect(screen.queryByTestId('npc-encounter')).toBeNull();
+  });
+
+  it('dungeon boss engage button starts a battle via forceBattle', () => {
+    useBattleStore.setState({ player: { level: 10, totalExp: 0, totalGold: 0 } });
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('dungeon-engage-btn'));
+    expect(useBattleStore.getState().battles.size).toBeGreaterThan(0);
+  });
+
+  it('pressing shortcut key h enters tavern', () => {
+    useMapStore.setState({ currentZone: 'town', playerPosition: { x: 4, y: 4 } });
+    render(<MapView />);
+    fireEvent.keyDown(window, { key: 'h' });
+    expect(useMapStore.getState().currentLocationId).toBe('tavern');
   });
 
   // Task 58: onPractice wired for training ground
