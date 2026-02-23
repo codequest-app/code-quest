@@ -253,6 +253,9 @@
 }
 
 .guild-worktree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
   background: var(--map-building);
   border: 1px solid var(--map-accent);
@@ -476,24 +479,6 @@
   animation: fade-in 0.2s ease-in;
 }
 
-/* Battle damage shake */
-@keyframes damage-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-
-.damage-shake {
-  animation: damage-shake 0.3s ease;
-}
-
 /* Completed dungeon glow */
 .map-building--completed {
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
@@ -535,4 +520,89 @@
   text-align: center;
   color: var(--map-text, #2C3E50);
   margin: 0;
+}
+
+/* Status bar extras */
+.map-status-bar__sub-zone {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.map-status-bar__theme-select {
+  padding: 2px 6px;
+  background: var(--map-building, #3c3c3c);
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #ccc;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* Tavern player messages */
+.tavern-msg--player {
+  color: var(--map-text, #2C3E50);
+}
+
+/* Guild Hall */
+.guild-error {
+  color: #e55;
+  font-size: 0.85rem;
+}
+
+.guild-remove-btn {
+  margin-left: auto;
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid #c33;
+  border-radius: 3px;
+  color: #c33;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.guild-remove-btn:hover {
+  background: rgba(200, 50, 50, 0.15);
+}
+
+/* MCP Library */
+.mcp-tool-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-tool-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--map-building, #D2B48C);
+  border: 1px solid var(--map-accent, #4A90E2);
+  border-radius: 4px;
+}
+
+.mcp-tool-desc {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Shop items */
+.shop-items {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--map-building, #D2B48C);
+  border: 1px solid var(--map-accent, #4A90E2);
+  border-radius: 4px;
+  font-size: 0.85rem;
 }

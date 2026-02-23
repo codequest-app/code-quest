@@ -37,9 +37,10 @@ const ZONE_LABELS: Record<Zone, string> = {
 
 interface MapViewProps {
   onSendMessage?: (message: string) => Promise<string>;
+  onFetchTools?: () => void;
 }
 
-export function MapView({ onSendMessage }: MapViewProps = {}) {
+export function MapView({ onSendMessage, onFetchTools }: MapViewProps = {}) {
   const {
     currentZone,
     currentLocationId,
@@ -57,6 +58,10 @@ export function MapView({ onSendMessage }: MapViewProps = {}) {
   const subZone = useMapStore((s) => s.getCurrentSubZone());
   const locations = useMemo(() => ZONE_LOCATIONS[currentZone], [currentZone]);
   const [pendingZone, setPendingZone] = useState<Zone | null>(null);
+
+  useEffect(() => {
+    onFetchTools?.();
+  }, [onFetchTools]);
 
   const handleChangeZone = useCallback(
     (zone: Zone) => {

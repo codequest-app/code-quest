@@ -62,3 +62,6 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     return DEFAULT_THEME;
   },
 }));
+
+// Auto-restore persisted theme on load
+useThemeStore.getState().restoreFromStorage();

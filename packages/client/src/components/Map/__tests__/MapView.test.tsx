@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../../../stores/battleStore';
 import { useMapStore } from '../../../stores/mapStore';
 import { useThemeStore } from '../../../stores/themeStore';
@@ -242,5 +242,11 @@ describe('MapView', () => {
     fireEvent.click(screen.getByTestId('encounter-fight-btn'));
     expect(useMapStore.getState().pendingEncounter).toBe(false);
     expect(useBattleStore.getState().battles.size).toBeGreaterThan(0);
+  });
+
+  it('calls onFetchTools on mount', () => {
+    const fetchTools = vi.fn();
+    render(<MapView onFetchTools={fetchTools} />);
+    expect(fetchTools).toHaveBeenCalledTimes(1);
   });
 });

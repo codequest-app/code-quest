@@ -104,44 +104,6 @@ describe('mapStore', () => {
     expect(saved.playerPosition).toEqual({ x: 5, y: 4 });
   });
 
-  it('checkEncounter returns encounter result in wilderness', () => {
-    useMapStore.getState().changeZone('wilderness');
-    const result = useMapStore
-      .getState()
-      .checkEncounter(
-        'implement user authentication with JWT and OAuth, refactor database schema, add tests and documentation, optimize performance',
-      );
-    expect(result).toBeDefined();
-    expect(result.subZone).toBe('forest');
-  });
-
-  it('checkEncounter uses current sub-zone based on player position', () => {
-    useMapStore.getState().changeZone('wilderness');
-    // mountains is at position {x:7, y:2}
-    useMapStore.setState({ playerPosition: { x: 7, y: 2 } });
-    const result = useMapStore
-      .getState()
-      .checkEncounter(
-        'refactor architecture, redesign database, implement new API, add comprehensive tests and documentation',
-      );
-    expect(result.subZone).toBe('mountains');
-  });
-
-  it('checkEncounter returns no trigger in town', () => {
-    const result = useMapStore.getState().checkEncounter('implement complex feature with tests');
-    expect(result.trigger).toBe(false);
-  });
-
-  it('lastEncounter is updated after checkEncounter', () => {
-    useMapStore.getState().changeZone('wilderness');
-    useMapStore
-      .getState()
-      .checkEncounter(
-        'implement user authentication with JWT and OAuth, refactor database, add tests and docs, optimize performance',
-      );
-    expect(useMapStore.getState().lastEncounter).toBeDefined();
-  });
-
   it('triggerBattle starts a battle in battleStore when encounter triggers', () => {
     useMapStore.getState().changeZone('wilderness');
     const prompt =

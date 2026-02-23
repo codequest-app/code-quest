@@ -277,10 +277,15 @@ function PlayerHomeContent() {
   return (
     <div className="interior-content" data-testid="interior-home">
       {rested ? (
-        <p>You are fully rested. HP and MP restored!</p>
+        <p data-testid="home-rested-msg">You feel refreshed and ready for adventure!</p>
       ) : (
-        <button type="button" className="interior-action-btn" onClick={() => setRested(true)}>
-          Rest (Restore HP/MP)
+        <button
+          type="button"
+          className="interior-action-btn"
+          data-testid="home-rest-btn"
+          onClick={() => setRested(true)}
+        >
+          Rest
         </button>
       )}
       <button
@@ -509,6 +514,34 @@ function LocationContent({
         </div>
       );
     }
+    case 'forest':
+      return (
+        <div className="interior-content" data-testid="interior-wilderness">
+          <p>Dense trees surround you. The air is thick with the scent of pine and mystery.</p>
+          <p>Explore carefully — enemies lurk in the shadows.</p>
+        </div>
+      );
+    case 'mountains':
+      return (
+        <div className="interior-content" data-testid="interior-wilderness">
+          <p>Rocky peaks rise above. The wind howls through narrow passes.</p>
+          <p>Stronger foes dwell at higher altitudes.</p>
+        </div>
+      );
+    case 'wasteland':
+      return (
+        <div className="interior-content" data-testid="interior-wilderness">
+          <p>Barren ground stretches endlessly. Deprecated code fragments litter the path.</p>
+          <p>Tread carefully — technical debt is everywhere.</p>
+        </div>
+      );
+    case 'volcano':
+      return (
+        <div className="interior-content" data-testid="interior-wilderness">
+          <p>Lava flows beneath cracked earth. The heat is intense.</p>
+          <p>Only the bravest coders venture here.</p>
+        </div>
+      );
     default:
       return null;
   }
