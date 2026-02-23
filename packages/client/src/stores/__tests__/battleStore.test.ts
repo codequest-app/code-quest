@@ -68,6 +68,14 @@ describe('battleStore', () => {
     expect(useBattleStore.getState().getBattle('nope')).toBeUndefined();
   });
 
+  it('endBattle cleans up prompt entry', () => {
+    useBattleStore.getState().startBattle('s1', makeEnemy());
+    useBattleStore.getState().setPrompt('s1', 'fix bug');
+    expect(useBattleStore.getState().prompts.get('s1')).toBe('fix bug');
+    useBattleStore.getState().endBattle('s1', 'victory');
+    expect(useBattleStore.getState().prompts.get('s1')).toBeUndefined();
+  });
+
   it('stores prompts via setPrompt', () => {
     useBattleStore.getState().setPrompt('s1', 'fix the bug');
     expect(useBattleStore.getState().prompts.get('s1')).toBe('fix the bug');

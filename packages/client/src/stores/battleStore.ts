@@ -140,7 +140,9 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       if (!battle) return state;
 
       battles.set(sessionId, { ...battle, phase });
-      return { battles };
+      const prompts = new Map(state.prompts);
+      prompts.delete(sessionId);
+      return { battles, prompts };
     });
   },
 

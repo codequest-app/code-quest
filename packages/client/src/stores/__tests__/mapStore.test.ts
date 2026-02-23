@@ -98,10 +98,9 @@ describe('mapStore', () => {
     expect(useMapStore.getState().currentLocationId).toBeNull();
   });
 
-  it('persists position to localStorage', () => {
+  it('movePlayer does not auto-persist (saveStore handles persistence)', () => {
     useMapStore.getState().movePlayer(1, 0);
-    const saved = JSON.parse(localStorage.getItem('code-quest-map') ?? '{}');
-    expect(saved.playerPosition).toEqual({ x: 5, y: 4 });
+    expect(localStorage.getItem('code-quest-map')).toBeNull();
   });
 
   it('triggerBattle starts a battle in battleStore when encounter triggers', () => {
@@ -239,10 +238,9 @@ describe('mapStore', () => {
     expect(useMapStore.getState().pendingNpc).toBeNull();
   });
 
-  it('movePlayer persists to localStorage', () => {
+  it('movePlayer updates position in store without auto-persist', () => {
     useMapStore.getState().movePlayer(1, 0);
-    const saved = JSON.parse(localStorage.getItem('code-quest-map') ?? '{}');
-    expect(saved.playerPosition).toEqual({ x: 5, y: 4 });
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 5, y: 4 });
   });
 
   it('plan mode skips encounter rolls on movePlayer', () => {
@@ -254,10 +252,11 @@ describe('mapStore', () => {
     expect(useMapStore.getState().pendingEncounter).toBe(false);
   });
 
-  it('plan mode blocks changeZone', () => {
+  it('plan mode blocks changeZone (planModeActive stays true)', () => {
     useMapStore.setState({ planModeActive: true });
     useMapStore.getState().changeZone('wilderness');
     expect(useMapStore.getState().currentZone).toBe('town');
+    expect(useMapStore.getState().planModeActive).toBe(true);
   });
 
   it('onBattleEnd for non-dungeon battle keeps currentLocationId', () => {

@@ -161,6 +161,15 @@
   background: var(--map-building-hover);
 }
 
+.location-interior__exit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.location-interior__exit:disabled:hover {
+  background: var(--map-building);
+}
+
 .interior-content {
   display: flex;
   flex-direction: column;
@@ -206,6 +215,15 @@
 
 .interior-action-btn:hover {
   opacity: 0.9;
+}
+
+.interior-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.interior-action-btn:disabled:hover {
+  opacity: 0.5;
 }
 
 .tavern-messages {

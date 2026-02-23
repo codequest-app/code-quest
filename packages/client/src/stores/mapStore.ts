@@ -40,7 +40,6 @@ const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
   dungeon: DUNGEON_LOCATIONS,
 };
 
-const MAP_STORAGE_KEY = 'code-quest-map';
 export const GRID_WIDTH = 10;
 export const GRID_HEIGHT = 8;
 const GRID_MAX_X = GRID_WIDTH - 1;
@@ -71,17 +70,6 @@ interface MapStore {
 
 function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));
-}
-
-function saveMapState(position: MapPosition, zone: Zone): void {
-  try {
-    localStorage.setItem(
-      MAP_STORAGE_KEY,
-      JSON.stringify({ playerPosition: position, currentZone: zone }),
-    );
-  } catch {
-    // ignore
-  }
 }
 
 function findSubZone(position: MapPosition): WildernessSubZoneId {
@@ -144,7 +132,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
       const x = clamp(state.playerPosition.x + dx, 0, GRID_MAX_X);
       const y = clamp(state.playerPosition.y + dy, 0, GRID_MAX_Y);
       const position = { x, y };
-      saveMapState(position, state.currentZone);
 
       let pending = false;
       let npc: MapNpcData | null = null;
@@ -221,7 +208,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   },
 }));
 
-// Subscribe to battleStore — auto-call onBattleEnd when a tracked battle ends
+// Subscribe to battleStore — auto-call onBattleEnd when a tracked battle ends.
+// Intentionally never unsubscribed: Zustand stores are singletons with app lifetime.
 useBattleStore.subscribe((state, prev) => {
   const sessionId = useMapStore.getState().activeBattleSessionId;
   if (!sessionId) return;

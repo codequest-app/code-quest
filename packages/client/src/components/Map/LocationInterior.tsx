@@ -143,10 +143,18 @@ function TavernContent({
   );
 }
 
+const PLAN_TEXT_KEY = 'code-quest-plan-text';
+
 function StasisContent() {
   const planActive = useMapStore((s) => s.planModeActive);
   const setPlanMode = useMapStore((s) => s.setPlanMode);
-  const [planText, setPlanText] = useState('');
+  const [planText, setPlanText] = useState(() => {
+    try {
+      return localStorage.getItem(PLAN_TEXT_KEY) ?? '';
+    } catch {
+      return '';
+    }
+  });
 
   if (planActive) {
     return (
@@ -159,7 +167,14 @@ function StasisContent() {
             placeholder="Write your plan here..."
             rows={6}
             value={planText}
-            onChange={(e) => setPlanText(e.target.value)}
+            onChange={(e) => {
+              setPlanText(e.target.value);
+              try {
+                localStorage.setItem(PLAN_TEXT_KEY, e.target.value);
+              } catch {
+                // ignore
+              }
+            }}
           />
           <button
             type="button"
@@ -495,6 +510,7 @@ function LocationContent({
     case 'arch_maze':
     case 'legacy_tomb': {
       const boss = DUNGEON_BOSSES.find((b) => b.dungeonId === id);
+      const battleActive = !!useMapStore.getState().activeBattleSessionId;
       return (
         <div className="interior-content" data-testid="interior-dungeon">
           <h3>{boss ? `${boss.bossIcon} ${boss.bossName}` : 'Boss Chamber'}</h3>
@@ -507,9 +523,10 @@ function LocationContent({
             type="button"
             className="interior-action-btn"
             data-testid="dungeon-engage-btn"
+            disabled={battleActive}
             onClick={() => onEngageBoss?.(id)}
           >
-            Engage Boss
+            {battleActive ? '⚔️ Battle Active' : 'Engage Boss'}
           </button>
         </div>
       );

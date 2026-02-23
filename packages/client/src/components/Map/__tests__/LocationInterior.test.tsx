@@ -386,6 +386,23 @@ describe('LocationInterior', () => {
     expect(onEngageBoss).toHaveBeenCalledWith('bug_cave');
   });
 
+  it('dungeon engage button is disabled when battle is active', () => {
+    useMapStore.setState({ activeBattleSessionId: 'battle-1' });
+    render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'bug_cave',
+          name: 'Bug Cave',
+          icon: '🪲',
+          zone: 'dungeon',
+          description: 'A dark cave.',
+        })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('dungeon-engage-btn')).toBeDisabled();
+  });
+
   it('player home rest button shows rested message on click', () => {
     render(
       <LocationInterior
@@ -533,6 +550,32 @@ describe('LocationInterior', () => {
     expect(raw).toBeTruthy();
     const data = JSON.parse(raw as string);
     expect(data.player.level).toBe(3);
+  });
+
+  it('stasis plan text persists to localStorage', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    const textarea = screen.getByPlaceholderText('Write your plan here...');
+    fireEvent.change(textarea, { target: { value: 'My TDD plan' } });
+    expect(localStorage.getItem('code-quest-plan-text')).toBe('My TDD plan');
+  });
+
+  it('stasis plan text restores from localStorage', () => {
+    localStorage.setItem('code-quest-plan-text', 'Restored plan');
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    const textarea = screen.getByPlaceholderText('Write your plan here...');
+    expect(textarea).toHaveValue('Restored plan');
   });
 
   // Task 62: Stasis textarea controlled
