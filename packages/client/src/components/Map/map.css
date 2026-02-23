@@ -300,6 +300,7 @@
   border-radius: 4px;
   margin: 8px;
   text-align: center;
+  animation: fade-in 0.2s ease-in;
 }
 
 .zone-confirm-actions {
@@ -475,11 +476,6 @@
   }
 }
 
-/* Zone confirm dialog fade */
-.zone-confirm-dialog {
-  animation: fade-in 0.2s ease-in;
-}
-
 /* Completed dungeon glow */
 .map-building--completed {
   box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
@@ -492,8 +488,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  background: var(--map-building, #D2B48C);
-  border: 2px solid var(--map-accent, #4A90E2);
+  background: var(--map-building, #d2b48c);
+  border: 2px solid var(--map-accent, #4a90e2);
   border-radius: 8px;
   position: absolute;
   top: 50%;
@@ -509,7 +505,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 1.1rem;
-  color: var(--map-text, #2C3E50);
+  color: var(--map-text, #2c3e50);
 }
 
 .npc-encounter__icon {
@@ -519,7 +515,7 @@
 .npc-encounter__dialogue {
   font-style: italic;
   text-align: center;
-  color: var(--map-text, #2C3E50);
+  color: var(--map-text, #2c3e50);
   margin: 0;
 }
 
@@ -541,7 +537,7 @@
 
 /* Tavern player messages */
 .tavern-msg--player {
-  color: var(--map-text, #2C3E50);
+  color: var(--map-text, #2c3e50);
 }
 
 /* Guild Hall */
@@ -578,8 +574,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px;
-  background: var(--map-building, #D2B48C);
-  border: 1px solid var(--map-accent, #4A90E2);
+  background: var(--map-building, #d2b48c);
+  border: 1px solid var(--map-accent, #4a90e2);
   border-radius: 4px;
 }
 
@@ -602,8 +598,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  background: var(--map-building, #D2B48C);
-  border: 1px solid var(--map-accent, #4A90E2);
+  background: var(--map-building, #d2b48c);
+  border: 1px solid var(--map-accent, #4a90e2);
   border-radius: 4px;
   font-size: 0.85rem;
 }

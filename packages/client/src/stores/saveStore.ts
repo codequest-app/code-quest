@@ -46,6 +46,10 @@ export function loadGame(): void {
       if (Array.isArray(data.map.completedDungeons)) {
         mapUpdates.completedDungeons = new Set(data.map.completedDungeons);
       }
+      // Reset transient UI state on load
+      mapUpdates.planModeActive = false;
+      mapUpdates.pendingNpc = null;
+      mapUpdates.pendingEncounter = false;
       useMapStore.setState(mapUpdates);
     }
 

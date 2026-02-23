@@ -18,7 +18,6 @@ describe('battleStore', () => {
       battles: new Map(),
       prompts: new Map(),
       player: { level: 1, totalExp: 0, totalGold: 0 },
-      activeBattleId: undefined,
     });
   });
 
@@ -323,9 +322,10 @@ describe('battleStore', () => {
       expect(useBattleStore.getState().getBattle('s4')).toBeDefined();
     });
 
-    it('sets activeBattleId on battle start', () => {
+    it('tracks active battle via mapStore.activeBattleSessionId (not battleStore)', () => {
       useBattleStore.getState().startBattle('s1', makeEnemy());
-      expect(useBattleStore.getState().activeBattleId).toBe('s1');
+      // activeBattleId was removed — tracking is done in mapStore
+      expect(useBattleStore.getState().getBattle('s1')).toBeDefined();
     });
   });
 

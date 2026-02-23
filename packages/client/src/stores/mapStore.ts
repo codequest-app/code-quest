@@ -41,8 +41,10 @@ const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
 };
 
 const MAP_STORAGE_KEY = 'code-quest-map';
-const GRID_MAX_X = 9;
-const GRID_MAX_Y = 7;
+export const GRID_WIDTH = 10;
+export const GRID_HEIGHT = 8;
+const GRID_MAX_X = GRID_WIDTH - 1;
+const GRID_MAX_Y = GRID_HEIGHT - 1;
 
 interface MapStore {
   currentZone: Zone;
@@ -63,7 +65,6 @@ interface MapStore {
   changeZone: (zone: Zone) => void;
   triggerBattle: (prompt: string) => string | null;
   forceBattle: (prompt: string) => string;
-  restoreFromStorage: () => void;
   getCurrentSubZone: () => WildernessSubZoneId | null;
   dismissEncounter: () => void;
 }
@@ -122,15 +123,18 @@ export const useMapStore = create<MapStore>((set, get) => ({
   },
 
   onBattleEnd: (locationId: string, victory: boolean) => {
+    const wasDungeon = get().inDungeon;
     const updates: Partial<MapStore> = {
-      inDungeon: false,
-      currentLocationId: null,
       activeBattleSessionId: null,
     };
-    if (victory) {
-      const completed = new Set(get().completedDungeons);
-      completed.add(locationId);
-      updates.completedDungeons = completed;
+    if (wasDungeon) {
+      updates.inDungeon = false;
+      updates.currentLocationId = null;
+      if (victory) {
+        const completed = new Set(get().completedDungeons);
+        completed.add(locationId);
+        updates.completedDungeons = completed;
+      }
     }
     set(updates);
   },
@@ -182,7 +186,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     if (hasActiveBattle()) return;
     if (get().inDungeon) return;
     if (get().planModeActive) return;
-    set({ currentZone: zone });
+    set({ currentZone: zone, pendingNpc: null, pendingEncounter: false });
   },
 
   triggerBattle: (prompt: string): string | null => {
@@ -204,21 +208,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
     set({ activeBattleSessionId: sessionId });
     useBattleStore.getState().startBattle(sessionId, enemy);
     return sessionId;
-  },
-
-  restoreFromStorage: () => {
-    try {
-      const raw = localStorage.getItem(MAP_STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw);
-        const updates: Partial<MapStore> = {};
-        if (data.playerPosition) updates.playerPosition = data.playerPosition;
-        if (data.currentZone) updates.currentZone = data.currentZone;
-        set(updates);
-      }
-    } catch {
-      // ignore
-    }
   },
 
   dismissEncounter: () => {
@@ -246,6 +235,9 @@ useBattleStore.subscribe((state, prev) => {
     const locationId = useMapStore.getState().currentLocationId;
     if (locationId) {
       useMapStore.getState().onBattleEnd(locationId, battle.phase === 'victory');
+    } else {
+      // Wilderness/training battle — just clear the session ID
+      useMapStore.setState({ activeBattleSessionId: null });
     }
   }
 });

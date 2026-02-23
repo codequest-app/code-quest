@@ -13,7 +13,6 @@ describe('useBattleEngine', () => {
       battles: new Map(),
       prompts: new Map(),
       player: { level: 1, totalExp: 0, totalGold: 0 },
-      activeBattleId: undefined,
     });
     useBankStore.setState({
       sessionCosts: new Map(),

@@ -34,8 +34,6 @@ interface BattleStore {
   battles: Map<string, BattleState>;
   prompts: Map<string, string>;
   player: PlayerState;
-  activeBattleId: string | undefined;
-
   startBattle: (sessionId: string, enemy: Enemy) => void;
   updateEnemy: (sessionId: string, updates: Partial<Enemy>) => void;
   addLogEntry: (sessionId: string, entry: BattleLogEntry) => void;
@@ -79,8 +77,6 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   battles: new Map(),
   prompts: new Map(),
   player: loadPlayerState(),
-  activeBattleId: undefined,
-
   startBattle: (sessionId: string, enemy: Enemy) => {
     set((state) => {
       // Enforce max concurrent battles
@@ -105,7 +101,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         expEarned: 0,
         isPaused: false,
       });
-      return { battles, activeBattleId: sessionId };
+      return { battles };
     });
   },
 
