@@ -166,4 +166,10 @@ describe('MapView', () => {
     const grid = screen.getByTestId('map-view').querySelector('.map-view__grid');
     expect(grid?.className).not.toMatch(/map-view__grid--/);
   });
+
+  it('shows interior class when inside a location', () => {
+    useMapStore.setState({ currentLocationId: 'tavern' });
+    render(<MapView />);
+    expect(screen.getByTestId('map-view').className).toContain('map-view--interior');
+  });
 });

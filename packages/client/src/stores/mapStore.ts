@@ -34,7 +34,9 @@ interface MapStore {
   pendingEncounter: boolean;
   inDungeon: boolean;
   planModeActive: boolean;
+  completedDungeons: Set<string>;
   setPlanMode: (active: boolean) => void;
+  onBattleEnd: (locationId: string, victory: boolean) => void;
   movePlayer: (dx: number, dy: number) => void;
   enterLocation: (locationId: string) => void;
   exitLocation: () => void;
@@ -88,9 +90,23 @@ export const useMapStore = create<MapStore>((set, get) => ({
   pendingEncounter: false,
   inDungeon: false,
   planModeActive: false,
+  completedDungeons: new Set<string>(),
 
   setPlanMode: (active: boolean) => {
     set({ planModeActive: active });
+  },
+
+  onBattleEnd: (locationId: string, victory: boolean) => {
+    const updates: Partial<MapStore> = {
+      inDungeon: false,
+      currentLocationId: null,
+    };
+    if (victory) {
+      const completed = new Set(get().completedDungeons);
+      completed.add(locationId);
+      updates.completedDungeons = completed;
+    }
+    set(updates);
   },
 
   movePlayer: (dx: number, dy: number) => {
@@ -101,7 +117,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
       saveMapState(position, state.currentZone);
 
       let pending = false;
-      if (state.currentZone === 'wilderness') {
+      if (state.currentZone === 'wilderness' && !state.planModeActive) {
         const subZone = findSubZone(position);
         const subZoneDef = WILDERNESS_SUB_ZONES.find((z) => z.id === subZone);
         const rate = subZoneDef?.encounterRate ?? 0.3;
@@ -135,6 +151,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   changeZone: (zone: Zone) => {
     if (hasActiveBattle()) return;
     if (get().inDungeon) return;
+    if (get().planModeActive) return;
     set({ currentZone: zone });
   },
 
@@ -181,3 +198,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
     return findSubZone(playerPosition);
   },
 }));
+
+// Auto-restore persisted state on load
+useMapStore.getState().restoreFromStorage();

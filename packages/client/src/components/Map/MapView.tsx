@@ -7,6 +7,7 @@ import { LocationBuilding } from './LocationBuilding';
 import { LocationInterior } from './LocationInterior';
 import { MapControls } from './MapControls';
 import { MapStatusBar } from './MapStatusBar';
+import { Minimap } from './Minimap';
 import { PlayerCharacter } from './PlayerCharacter';
 import './map.css';
 
@@ -107,7 +108,10 @@ export function MapView() {
     : undefined;
 
   return (
-    <div className={`map-view map-view--${theme.cssClass}`} data-testid="map-view">
+    <div
+      className={`map-view map-view--${theme.cssClass}${activeLocation ? ' map-view--interior' : ''}`}
+      data-testid="map-view"
+    >
       <MapStatusBar zone={currentZone} onChangeZone={handleChangeZone} />
       {pendingZone && (
         <div className="zone-confirm-dialog" data-testid="zone-confirm-dialog">
@@ -172,6 +176,7 @@ export function MapView() {
             ))}
             <PlayerCharacter position={playerPosition} />
           </div>
+          <Minimap />
           <MapControls />
         </>
       )}

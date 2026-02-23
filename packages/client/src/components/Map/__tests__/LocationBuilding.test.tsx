@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useBattleStore } from '../../../stores/battleStore';
 import { LocationBuilding } from '../LocationBuilding';
 
 const location = {
@@ -15,6 +16,12 @@ const location = {
 };
 
 describe('LocationBuilding', () => {
+  beforeEach(() => {
+    useBattleStore.setState({
+      player: { level: 1, totalExp: 0, totalGold: 0 },
+    });
+  });
+
   it('displays icon and name', () => {
     render(<LocationBuilding location={location} onEnter={vi.fn()} />);
     expect(screen.getByTestId('building-guild_hall')).toHaveTextContent('🏛️');
@@ -33,5 +40,22 @@ describe('LocationBuilding', () => {
     const el = screen.getByTestId('building-guild_hall');
     expect(el.style.gridColumn).toBe('5');
     expect(el.style.gridRow).toBe('2');
+  });
+
+  it('shows lock icon when requiresLevel > playerLevel', () => {
+    const locked = { ...location, id: 'dungeon', requiresLevel: 5 };
+    render(<LocationBuilding location={locked} onEnter={vi.fn()} />);
+    const el = screen.getByTestId('building-dungeon');
+    expect(el).toHaveTextContent('🔒');
+    expect(el.className).toContain('map-building--locked');
+  });
+
+  it('does not show lock when player level is sufficient', () => {
+    useBattleStore.setState({ player: { level: 5, totalExp: 0, totalGold: 0 } });
+    const locked = { ...location, id: 'dungeon', requiresLevel: 5 };
+    render(<LocationBuilding location={locked} onEnter={vi.fn()} />);
+    const el = screen.getByTestId('building-dungeon');
+    expect(el).not.toHaveTextContent('🔒');
+    expect(el.className).not.toContain('map-building--locked');
   });
 });
