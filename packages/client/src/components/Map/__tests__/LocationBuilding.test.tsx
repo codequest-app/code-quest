@@ -51,6 +51,12 @@ describe('LocationBuilding', () => {
     expect(el.className).toContain('map-building--locked');
   });
 
+  it('locked building button is disabled', () => {
+    const locked = { ...location, id: 'dungeon', requiresLevel: 5 };
+    render(<LocationBuilding location={locked} onEnter={vi.fn()} />);
+    expect(screen.getByTestId('building-dungeon')).toBeDisabled();
+  });
+
   it('does not show lock when player level is sufficient', () => {
     useBattleStore.setState({ player: { level: 5, totalExp: 0, totalGold: 0 } });
     const locked = { ...location, id: 'dungeon', requiresLevel: 5 };

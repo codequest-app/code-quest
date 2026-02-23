@@ -135,6 +135,23 @@ describe('battleStore', () => {
       expect(battle?.phase).toBe('victory');
     });
 
+    it('processBattleEvent victory cleans up prompt', () => {
+      useBattleStore.getState().setPrompt('s1', 'fix bug');
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'victory',
+        data: { stats: {} },
+      });
+      expect(useBattleStore.getState().prompts.get('s1')).toBeUndefined();
+    });
+
+    it('processBattleEvent does not persist player to localStorage directly', () => {
+      useBattleStore.getState().processBattleEvent('s1', {
+        type: 'gold_earned',
+        data: { amount: 50 },
+      });
+      expect(localStorage.getItem('code-quest-player')).toBeNull();
+    });
+
     it('processes exp_earned and updates player state', () => {
       useBattleStore.getState().processBattleEvent('s1', {
         type: 'exp_earned',
@@ -337,54 +354,30 @@ describe('battleStore', () => {
     });
   });
 
-  describe('localStorage persistence', () => {
-    it('saves player state to localStorage on exp_earned', () => {
+  describe('persistence (saveStore handles it)', () => {
+    it('does not write to code-quest-player on exp_earned', () => {
       useBattleStore.getState().startBattle('s1', makeEnemy());
       useBattleStore.getState().processBattleEvent('s1', {
         type: 'exp_earned',
         data: { amount: 50 },
       });
-
-      const saved = JSON.parse(localStorage.getItem('code-quest-player') ?? '{}');
-      expect(saved.totalExp).toBe(50);
-      expect(saved.level).toBe(1);
+      expect(localStorage.getItem('code-quest-player')).toBeNull();
     });
 
-    it('saves player state to localStorage on gold_earned', () => {
+    it('does not write to code-quest-player on gold_earned', () => {
       useBattleStore.getState().startBattle('s1', makeEnemy());
       useBattleStore.getState().processBattleEvent('s1', {
         type: 'gold_earned',
         data: { amount: 100 },
       });
-
-      const saved = JSON.parse(localStorage.getItem('code-quest-player') ?? '{}');
-      expect(saved.totalGold).toBe(100);
+      expect(localStorage.getItem('code-quest-player')).toBeNull();
     });
 
-    it('loads player state from localStorage on store creation', () => {
-      localStorage.setItem(
-        'code-quest-player',
-        JSON.stringify({ level: 5, totalExp: 400, totalGold: 999 }),
-      );
-
-      // Force re-create store by destroying and re-importing
-      // Since zustand stores are singletons, we simulate by setState with loaded data
-      const raw = localStorage.getItem('code-quest-player');
-      const parsed = JSON.parse(raw ?? '{}');
-      useBattleStore.setState({ player: parsed });
-
+    it('player state is restored via saveStore (not battleStore directly)', () => {
+      useBattleStore.setState({ player: { level: 5, totalExp: 400, totalGold: 999 } });
       expect(useBattleStore.getState().player.level).toBe(5);
       expect(useBattleStore.getState().player.totalExp).toBe(400);
       expect(useBattleStore.getState().player.totalGold).toBe(999);
-    });
-
-    it('handles corrupt localStorage gracefully', () => {
-      localStorage.setItem('code-quest-player', 'not-json');
-      // loadPlayerState should return defaults
-      // We can't re-init the store easily, but verify the function works
-      // by checking that state is valid after setState
-      useBattleStore.setState({ player: { level: 1, totalExp: 0, totalGold: 0 } });
-      expect(useBattleStore.getState().player.level).toBe(1);
     });
   });
 });

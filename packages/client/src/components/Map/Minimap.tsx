@@ -14,12 +14,8 @@ export function Minimap() {
   const playerPosition = useMapStore((s) => s.playerPosition);
   const locations = useMemo(() => ZONE_LOCATIONS[currentZone], [currentZone]);
 
-  const movePlayer = useMapStore((s) => s.movePlayer);
-
   function handleLocClick(loc: LocationDef) {
-    const dx = loc.position.x - playerPosition.x;
-    const dy = loc.position.y - playerPosition.y;
-    movePlayer(dx, dy);
+    useMapStore.setState({ playerPosition: { x: loc.position.x, y: loc.position.y } });
   }
 
   return (

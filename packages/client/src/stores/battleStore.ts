@@ -44,39 +44,12 @@ interface BattleStore {
   processBattleEvent: (sessionId: string, event: BattleEvent) => void;
 }
 
-const PLAYER_STORAGE_KEY = 'code-quest-player';
-
-function loadPlayerState(): PlayerState {
-  try {
-    const raw = localStorage.getItem(PLAYER_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (
-        typeof parsed.level === 'number' &&
-        typeof parsed.totalExp === 'number' &&
-        typeof parsed.totalGold === 'number'
-      ) {
-        return parsed as PlayerState;
-      }
-    }
-  } catch {
-    // ignore corrupt data
-  }
-  return { level: 1, totalExp: 0, totalGold: 0 };
-}
-
-function savePlayerState(player: PlayerState): void {
-  try {
-    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(player));
-  } catch {
-    // ignore quota errors
-  }
-}
+const DEFAULT_PLAYER: PlayerState = { level: 1, totalExp: 0, totalGold: 0 };
 
 export const useBattleStore = create<BattleStore>((set, get) => ({
   battles: new Map(),
   prompts: new Map(),
-  player: loadPlayerState(),
+  player: DEFAULT_PLAYER,
   startBattle: (sessionId: string, enemy: Enemy) => {
     set((state) => {
       // Enforce max concurrent battles
@@ -231,6 +204,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
           updated.phase = 'victory';
           log.push(makeLogEntry(`${battle.enemy.name} を倒した！`, 'victory'));
           updated.log = log;
+          // Prompt cleanup handled below
           break;
         }
 
@@ -293,7 +267,13 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
 
       battles.set(sessionId, updated);
 
-      // Update persistent player state on victory
+      // Clean up prompt on battle end
+      const prompts = new Map(state.prompts);
+      if (event.type === 'victory' || updated.phase === 'defeat') {
+        prompts.delete(sessionId);
+      }
+
+      // Update player state on exp/gold events (saveStore handles persistence)
       let player = state.player;
       if (event.type === 'exp_earned') {
         const exp = event.data.amount as number;
@@ -306,11 +286,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         player = { ...player, totalGold: player.totalGold + gold };
       }
 
-      if (player !== state.player) {
-        savePlayerState(player);
-      }
-
-      return { battles, player };
+      return { battles, prompts, player };
     });
   },
 }));

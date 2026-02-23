@@ -1,9 +1,7 @@
-export interface ComplexityAnalysis {
-  total: number;
-  lengthScore: number;
-  keywordScore: number;
-  multiStepScore: number;
-}
+import type { ComplexityScore } from './types.ts';
+
+/** @deprecated Use ComplexityScore from types.ts instead */
+export type ComplexityAnalysis = ComplexityScore;
 
 export type ModelTier = 'haiku' | 'sonnet' | 'opus';
 export type CostTier = 'low' | 'medium' | 'high';
@@ -20,7 +18,7 @@ const HIGH_COMPLEXITY_KEYWORDS = ['refactor', 'architect', 'migrate', 'redesign'
 const MEDIUM_COMPLEXITY_KEYWORDS = ['fix', 'add', 'update'];
 const MULTI_STEP_INDICATORS = ['and', 'then', 'also', 'step', 'first', 'second'];
 
-export function analyzeComplexity(prompt: string): ComplexityAnalysis {
+export function analyzeComplexity(prompt: string): ComplexityScore {
   const len = prompt.length;
   let lengthScore = 0;
   if (len >= 800) lengthScore = 5;

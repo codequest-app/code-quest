@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMapStore } from '../../../stores/mapStore';
 import { Minimap } from '../Minimap';
 
@@ -44,5 +44,17 @@ describe('Minimap', () => {
     const pos = useMapStore.getState().playerPosition;
     // Player should have moved (not at default 4,4 anymore)
     expect(pos.x !== 4 || pos.y !== 4).toBe(true);
+  });
+
+  it('minimap click teleports without triggering encounter roll', () => {
+    useMapStore.setState({ currentZone: 'wilderness', playerPosition: { x: 0, y: 0 } });
+    vi.spyOn(Math, 'random').mockReturnValue(0.05); // would trigger NPC if movePlayer were called
+    render(<Minimap />);
+    const dots = screen.getByTestId('minimap').querySelectorAll('[data-testid^="minimap-loc-"]');
+    fireEvent.click(dots[0]);
+    // Teleport should not trigger encounter or NPC
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    vi.restoreAllMocks();
   });
 });
