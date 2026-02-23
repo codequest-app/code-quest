@@ -411,4 +411,51 @@ describe('mapStore', () => {
     useMapStore.getState().dismissNpc();
     expect(useMapStore.getState().pendingNpc).toBeNull();
   });
+
+  it('pendingEncounter and pendingNpc are mutually exclusive per move', () => {
+    useMapStore.getState().changeZone('wilderness');
+    // NPC roll (< 0.1): pendingNpc set, pendingEncounter false
+    vi.spyOn(Math, 'random').mockReturnValue(0.05);
+    useMapStore.getState().movePlayer(1, 0);
+    expect(useMapStore.getState().pendingNpc).not.toBeNull();
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    // Encounter roll (>= 0.1 and < rate): pendingEncounter true, pendingNpc null
+    vi.spyOn(Math, 'random').mockReturnValue(0.15);
+    useMapStore.getState().movePlayer(1, 0);
+    expect(useMapStore.getState().pendingEncounter).toBe(true);
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    vi.restoreAllMocks();
+  });
+
+  it('enterLocation is blocked when already inDungeon', () => {
+    useBattleStore.setState({
+      player: { level: 10, totalExp: 0, totalGold: 0 },
+    });
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    useMapStore.getState().enterLocation('arch_maze');
+    expect(useMapStore.getState().currentLocationId).toBe('bug_cave');
+  });
+
+  it('movePlayer(0,0) in wilderness does not trigger encounter', () => {
+    useMapStore.getState().changeZone('wilderness');
+    vi.spyOn(Math, 'random').mockReturnValue(0.05);
+    useMapStore.getState().movePlayer(0, 0);
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    vi.restoreAllMocks();
+  });
+
+  it('movePlayer at grid boundary with no actual movement skips encounter', () => {
+    useMapStore.getState().changeZone('wilderness');
+    useMapStore.setState({ playerPosition: { x: 9, y: 7 } });
+    vi.spyOn(Math, 'random').mockReturnValue(0.05);
+    useMapStore.getState().movePlayer(1, 1); // clamped to same position
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+    expect(useMapStore.getState().pendingNpc).toBeNull();
+    vi.restoreAllMocks();
+  });
 });

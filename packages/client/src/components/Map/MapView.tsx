@@ -101,6 +101,7 @@ export function MapView({ onSendMessage, onFetchTools, isConnected }: MapViewPro
           (loc) => loc.position.x === playerPosition.x && loc.position.y === playerPosition.y,
         );
         if (nearby) {
+          e.preventDefault();
           enterLocation(nearby.id);
         }
         return;

@@ -262,6 +262,28 @@ describe('MapView', () => {
     expect(fetchTools).not.toHaveBeenCalled();
   });
 
+  it('pressing e enters building when player is on it', () => {
+    // tavern is at position {x:1, y:3}
+    useMapStore.setState({ playerPosition: { x: 1, y: 3 } });
+    render(<MapView />);
+    fireEvent.keyDown(window, { key: 'e' });
+    expect(useMapStore.getState().currentLocationId).toBe('tavern');
+  });
+
+  it('pressing Enter enters building when player is on it', () => {
+    useMapStore.setState({ playerPosition: { x: 1, y: 3 } });
+    render(<MapView />);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(useMapStore.getState().currentLocationId).toBe('tavern');
+  });
+
+  it('pressing e does nothing when player is not on a building', () => {
+    useMapStore.setState({ playerPosition: { x: 4, y: 4 } });
+    render(<MapView />);
+    fireEvent.keyDown(window, { key: 'e' });
+    expect(useMapStore.getState().currentLocationId).toBeNull();
+  });
+
   it('fight button sets activeBattleSessionId in mapStore', () => {
     useMapStore.setState({ currentZone: 'wilderness', pendingEncounter: true });
     render(<MapView />);

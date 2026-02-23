@@ -78,6 +78,8 @@ export function loadGame(): void {
       mapUpdates.planModeActive = false;
       mapUpdates.pendingNpc = null;
       mapUpdates.pendingEncounter = false;
+      mapUpdates.inDungeon = false;
+      mapUpdates.currentLocationId = null;
       useMapStore.setState(mapUpdates);
     }
 
