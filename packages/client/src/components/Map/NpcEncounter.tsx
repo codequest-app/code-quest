@@ -1,11 +1,7 @@
-interface NpcData {
-  name: string;
-  icon: string;
-  dialogue: string;
-}
+import type { MapNpcData } from '../../stores/mapStore';
 
 interface NpcEncounterProps {
-  npc: NpcData;
+  npc: MapNpcData;
   onDismiss: () => void;
 }
 

@@ -1,16 +1,13 @@
 import type { LocationDef, Zone } from '@code-quest/shared';
 import { DUNGEON_LOCATIONS, TOWN_LOCATIONS, WILDERNESS_LOCATIONS } from '@code-quest/shared';
 import { useMemo } from 'react';
-import { useMapStore } from '../../stores/mapStore';
+import { GRID_HEIGHT, GRID_WIDTH, useMapStore } from '../../stores/mapStore';
 
 const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
   town: TOWN_LOCATIONS,
   wilderness: WILDERNESS_LOCATIONS,
   dungeon: DUNGEON_LOCATIONS,
 };
-
-const GRID_W = 10;
-const GRID_H = 8;
 
 export function Minimap() {
   const currentZone = useMapStore((s) => s.currentZone);
@@ -34,8 +31,8 @@ export function Minimap() {
           className="minimap-dot minimap-dot--location"
           data-testid={`minimap-loc-${loc.id}`}
           style={{
-            left: `${(loc.position.x / GRID_W) * 100}%`,
-            top: `${(loc.position.y / GRID_H) * 100}%`,
+            left: `${(loc.position.x / GRID_WIDTH) * 100}%`,
+            top: `${(loc.position.y / GRID_HEIGHT) * 100}%`,
           }}
           title={loc.name}
           onClick={() => handleLocClick(loc)}
@@ -45,8 +42,8 @@ export function Minimap() {
         className="minimap-dot minimap-player"
         data-testid="minimap-player"
         style={{
-          left: `${(playerPosition.x / GRID_W) * 100}%`,
-          top: `${(playerPosition.y / GRID_H) * 100}%`,
+          left: `${(playerPosition.x / GRID_WIDTH) * 100}%`,
+          top: `${(playerPosition.y / GRID_HEIGHT) * 100}%`,
         }}
       />
     </div>
