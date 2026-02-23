@@ -1,10 +1,4 @@
-import type {
-  EncounterResult,
-  LocationDef,
-  MapPosition,
-  WildernessSubZoneId,
-  Zone,
-} from '@code-quest/shared';
+import type { LocationDef, MapPosition, WildernessSubZoneId, Zone } from '@code-quest/shared';
 import {
   DUNGEON_LOCATIONS,
   generateEnemy,
@@ -54,7 +48,6 @@ interface MapStore {
   currentZone: Zone;
   currentLocationId: string | null;
   playerPosition: MapPosition;
-  lastEncounter: EncounterResult | null;
   pendingEncounter: boolean;
   inDungeon: boolean;
   planModeActive: boolean;
@@ -68,7 +61,6 @@ interface MapStore {
   enterLocation: (locationId: string) => void;
   exitLocation: () => void;
   changeZone: (zone: Zone) => void;
-  checkEncounter: (prompt: string) => EncounterResult;
   triggerBattle: (prompt: string) => string | null;
   forceBattle: (prompt: string) => string;
   restoreFromStorage: () => void;
@@ -114,7 +106,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
   currentZone: 'town',
   currentLocationId: null,
   playerPosition: { x: 4, y: 4 },
-  lastEncounter: null,
   pendingEncounter: false,
   inDungeon: false,
   planModeActive: false,
@@ -194,16 +185,10 @@ export const useMapStore = create<MapStore>((set, get) => ({
     set({ currentZone: zone });
   },
 
-  checkEncounter: (prompt: string): EncounterResult => {
+  triggerBattle: (prompt: string): string | null => {
     const { currentZone, playerPosition } = get();
     const subZone = findSubZone(playerPosition);
     const result = shouldTriggerEncounter(prompt, currentZone, subZone);
-    set({ lastEncounter: result });
-    return result;
-  },
-
-  triggerBattle: (prompt: string): string | null => {
-    const result = get().checkEncounter(prompt);
     if (!result.trigger) return null;
 
     const enemy = generateEnemy(prompt);

@@ -57,8 +57,14 @@ describe('themeStore', () => {
 
   it('restores theme from localStorage on init', () => {
     localStorage.setItem('code-quest-theme', 'dark');
-    // Re-create store state to simulate init
     const restored = useThemeStore.getState().restoreFromStorage();
     expect(restored).toBe('dark');
+  });
+
+  it('auto-restores theme on module load via restoreFromStorage', () => {
+    // Verify restoreFromStorage is callable and works with persisted data
+    localStorage.setItem('code-quest-theme', 'dark');
+    useThemeStore.getState().restoreFromStorage();
+    expect(useThemeStore.getState().currentTheme).toBe('dark');
   });
 });

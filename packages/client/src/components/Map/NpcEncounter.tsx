@@ -1,4 +1,4 @@
-export interface NpcData {
+interface NpcData {
   name: string;
   icon: string;
   dialogue: string;
@@ -8,22 +8,6 @@ interface NpcEncounterProps {
   npc: NpcData;
   onDismiss: () => void;
 }
-
-export const WANDERING_NPCS: NpcData[] = [
-  { name: 'Wandering Sage', icon: '🧙', dialogue: 'Beware of the volcano region, young coder.' },
-  {
-    name: 'Lost Traveler',
-    icon: '🧳',
-    dialogue: 'I once found a rare skill scroll in the mountains.',
-  },
-  {
-    name: 'Forest Spirit',
-    icon: '🌿',
-    dialogue: 'The forest holds secrets for those who read carefully.',
-  },
-  { name: 'Old Knight', icon: '🛡️', dialogue: 'Always write tests before you charge into battle.' },
-  { name: 'Merchant Cat', icon: '🐱', dialogue: 'Meow... I mean, check the shops for deals!' },
-];
 
 export function NpcEncounter({ npc, onDismiss }: NpcEncounterProps) {
   return (

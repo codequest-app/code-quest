@@ -221,6 +221,17 @@ describe('LocationInterior', () => {
     expect(el).toHaveTextContent('Settings');
   });
 
+  it('rest button shows refreshed message after click', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'player_home', name: 'Player Home', icon: '🏠' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('home-rest-btn'));
+    expect(screen.getByTestId('home-rested-msg')).toHaveTextContent('refreshed');
+  });
+
   it('renders training ground with practice button', () => {
     render(
       <LocationInterior
@@ -382,9 +393,8 @@ describe('LocationInterior', () => {
         onExit={vi.fn()}
       />,
     );
-    const restBtn = screen.getByText(/Rest/);
-    fireEvent.click(restBtn);
-    expect(screen.getByTestId('interior-home')).toHaveTextContent('fully rested');
+    fireEvent.click(screen.getByTestId('home-rest-btn'));
+    expect(screen.getByTestId('home-rested-msg')).toHaveTextContent('refreshed');
   });
 
   it('player home settings button opens settings panel', () => {
@@ -580,5 +590,25 @@ describe('LocationInterior', () => {
     expect(exitBtn).toBeDisabled();
     fireEvent.click(exitBtn);
     expect(onExit).not.toHaveBeenCalled();
+  });
+
+  it('renders wilderness forest interior content', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'forest', name: 'Forest', icon: '🌲', zone: 'wilderness' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-wilderness')).toHaveTextContent('Dense trees');
+  });
+
+  it('renders wilderness volcano interior content', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'volcano', name: 'Volcano', icon: '🌋', zone: 'wilderness' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-wilderness')).toHaveTextContent('Lava flows');
   });
 });

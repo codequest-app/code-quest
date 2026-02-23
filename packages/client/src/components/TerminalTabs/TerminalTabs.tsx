@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useBattleEngine } from '../../hooks/useBattleEngine';
 import { useChatSocket } from '../../hooks/useChatSocket';
+import { createMcpApi } from '../../hooks/useMcpApi';
 import { useOrchestratorSocket } from '../../hooks/useOrchestratorSocket';
 import { useSocket } from '../../hooks/useSocket';
 import { createTavernChatHandler } from '../../hooks/useTavernChat';
@@ -68,6 +69,10 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
     () => createTavernChatHandler(emit as Parameters<typeof createTavernChatHandler>[0]),
     [emit],
   );
+  const mcpApi = useMemo(() => createMcpApi(emit as Parameters<typeof createMcpApi>[0]), [emit]);
+  const handleFetchTools = useCallback(() => {
+    mcpApi?.fetchTools();
+  }, [mcpApi]);
   const {
     getSessions,
     activeSessionId,
@@ -603,7 +608,10 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             className="chat-wrapper"
             style={{ width: '100%', height: '100%' }}
           >
-            <MapView onSendMessage={tavernChatHandler ?? undefined} />
+            <MapView
+              onSendMessage={tavernChatHandler ?? undefined}
+              onFetchTools={handleFetchTools}
+            />
           </div>
         )}
       </div>
