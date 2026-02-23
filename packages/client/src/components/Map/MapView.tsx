@@ -1,5 +1,6 @@
-import { TOWN_LOCATIONS } from '@code-quest/shared';
-import { useEffect } from 'react';
+import type { LocationDef, Zone } from '@code-quest/shared';
+import { TOWN_LOCATIONS, WILDERNESS_LOCATIONS } from '@code-quest/shared';
+import { useEffect, useMemo } from 'react';
 import { useMapStore } from '../../stores/mapStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { LocationBuilding } from './LocationBuilding';
@@ -20,6 +21,12 @@ const KEY_MAP: Record<string, [number, number]> = {
   ArrowRight: [1, 0],
 };
 
+const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
+  town: TOWN_LOCATIONS,
+  wilderness: WILDERNESS_LOCATIONS,
+  dungeon: [],
+};
+
 export function MapView() {
   const {
     currentZone,
@@ -28,8 +35,10 @@ export function MapView() {
     movePlayer,
     enterLocation,
     exitLocation,
+    changeZone,
   } = useMapStore();
   const theme = useThemeStore((s) => s.getTheme());
+  const locations = useMemo(() => ZONE_LOCATIONS[currentZone], [currentZone]);
 
   useEffect(() => {
     if (currentLocationId) return;
@@ -43,7 +52,7 @@ export function MapView() {
       }
 
       if (e.key === 'e' || e.key === 'Enter') {
-        const nearby = TOWN_LOCATIONS.find(
+        const nearby = locations.find(
           (loc) => loc.position.x === playerPosition.x && loc.position.y === playerPosition.y,
         );
         if (nearby) {
@@ -52,7 +61,7 @@ export function MapView() {
         return;
       }
 
-      const shortcut = TOWN_LOCATIONS.find(
+      const shortcut = locations.find(
         (loc) => loc.shortcutKey?.toLowerCase() === e.key.toLowerCase(),
       );
       if (shortcut) {
@@ -62,21 +71,21 @@ export function MapView() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentLocationId, movePlayer, enterLocation, playerPosition]);
+  }, [currentLocationId, movePlayer, enterLocation, playerPosition, locations]);
 
   const activeLocation = currentLocationId
-    ? TOWN_LOCATIONS.find((loc) => loc.id === currentLocationId)
+    ? locations.find((loc) => loc.id === currentLocationId)
     : undefined;
 
   return (
     <div className={`map-view map-view--${theme.cssClass}`} data-testid="map-view">
-      <MapStatusBar zone={currentZone} />
+      <MapStatusBar zone={currentZone} onChangeZone={changeZone} />
       {activeLocation ? (
         <LocationInterior location={activeLocation} onExit={exitLocation} />
       ) : (
         <>
           <div className="map-view__grid">
-            {TOWN_LOCATIONS.map((loc) => (
+            {locations.map((loc) => (
               <LocationBuilding key={loc.id} location={loc} onEnter={enterLocation} />
             ))}
             <PlayerCharacter position={playerPosition} />

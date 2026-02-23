@@ -75,4 +75,21 @@ describe('MapView', () => {
     expect(useMapStore.getState().currentLocationId).toBeNull();
     expect(screen.getByTestId('player-character')).toBeDefined();
   });
+
+  it('renders wilderness locations when zone is wilderness', () => {
+    useMapStore.setState({ currentZone: 'wilderness', playerPosition: { x: 2, y: 2 } });
+    render(<MapView />);
+    expect(screen.getByTestId('building-forest')).toBeInTheDocument();
+    expect(screen.getByTestId('building-mountains')).toBeInTheDocument();
+    expect(screen.getByTestId('building-wasteland')).toBeInTheDocument();
+    expect(screen.getByTestId('building-volcano')).toBeInTheDocument();
+    expect(screen.queryByTestId('building-tavern')).toBeNull();
+  });
+
+  it('switches from town to wilderness via zone button', () => {
+    render(<MapView />);
+    fireEvent.click(screen.getByTestId('zone-btn-wilderness'));
+    expect(useMapStore.getState().currentZone).toBe('wilderness');
+    expect(screen.getByTestId('building-forest')).toBeInTheDocument();
+  });
 });

@@ -1,7 +1,24 @@
-import type { MapPosition, Zone } from '@code-quest/shared';
-import { TOWN_LOCATIONS } from '@code-quest/shared';
+import type {
+  EncounterResult,
+  LocationDef,
+  MapPosition,
+  WildernessSubZoneId,
+  Zone,
+} from '@code-quest/shared';
+import {
+  shouldTriggerEncounter,
+  TOWN_LOCATIONS,
+  WILDERNESS_LOCATIONS,
+  WILDERNESS_SUB_ZONES,
+} from '@code-quest/shared';
 import { create } from 'zustand';
 import { useBattleStore } from './battleStore';
+
+const ZONE_LOCATIONS: Record<Zone, LocationDef[]> = {
+  town: TOWN_LOCATIONS,
+  wilderness: WILDERNESS_LOCATIONS,
+  dungeon: [],
+};
 
 const MAP_STORAGE_KEY = 'code-quest-map';
 const GRID_MAX_X = 9;
@@ -11,10 +28,12 @@ interface MapStore {
   currentZone: Zone;
   currentLocationId: string | null;
   playerPosition: MapPosition;
+  lastEncounter: EncounterResult | null;
   movePlayer: (dx: number, dy: number) => void;
   enterLocation: (locationId: string) => void;
   exitLocation: () => void;
   changeZone: (zone: Zone) => void;
+  checkEncounter: (prompt: string) => EncounterResult;
 }
 
 function clamp(val: number, min: number, max: number): number {
@@ -32,6 +51,17 @@ function saveMapState(position: MapPosition, zone: Zone): void {
   }
 }
 
+function findSubZone(position: MapPosition): WildernessSubZoneId {
+  const loc = WILDERNESS_LOCATIONS.find(
+    (l) => l.position.x === position.x && l.position.y === position.y,
+  );
+  if (loc) {
+    const sub = WILDERNESS_SUB_ZONES.find((z) => z.id === loc.id);
+    if (sub) return sub.id;
+  }
+  return 'forest';
+}
+
 function hasActiveBattle(): boolean {
   const battles = useBattleStore.getState().battles;
   for (const battle of battles.values()) {
@@ -44,6 +74,7 @@ export const useMapStore = create<MapStore>((set) => ({
   currentZone: 'town',
   currentLocationId: null,
   playerPosition: { x: 4, y: 4 },
+  lastEncounter: null,
 
   movePlayer: (dx: number, dy: number) => {
     set((state) => {
@@ -56,7 +87,8 @@ export const useMapStore = create<MapStore>((set) => ({
   },
 
   enterLocation: (locationId: string) => {
-    const loc = TOWN_LOCATIONS.find((l) => l.id === locationId);
+    const zone = useMapStore.getState().currentZone;
+    const loc = ZONE_LOCATIONS[zone].find((l) => l.id === locationId);
     if (!loc || !loc.enterable) return;
 
     const playerLevel = useBattleStore.getState().player.level;
@@ -74,5 +106,13 @@ export const useMapStore = create<MapStore>((set) => ({
   changeZone: (zone: Zone) => {
     if (hasActiveBattle()) return;
     set({ currentZone: zone });
+  },
+
+  checkEncounter: (prompt: string) => {
+    const { currentZone, playerPosition } = useMapStore.getState();
+    const subZone = findSubZone(playerPosition);
+    const result = shouldTriggerEncounter(prompt, currentZone, subZone);
+    set({ lastEncounter: result });
+    return result;
   },
 }));

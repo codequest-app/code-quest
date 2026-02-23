@@ -120,4 +120,16 @@ describe('LocationInterior', () => {
     expect(screen.getByTestId('interior-library')).toBeInTheDocument();
     expect(screen.getByTestId('interior-library')).toHaveTextContent('MCP');
   });
+
+  it('player home rest button shows rested message on click', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'player_home', name: 'Player Home', icon: '🏠' })}
+        onExit={vi.fn()}
+      />,
+    );
+    const restBtn = screen.getByText(/Rest/);
+    fireEvent.click(restBtn);
+    expect(screen.getByTestId('interior-home')).toHaveTextContent('fully rested');
+  });
 });

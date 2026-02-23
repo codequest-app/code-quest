@@ -85,6 +85,28 @@
   font-size: 0.85rem;
 }
 
+.map-status-bar__zones {
+  display: flex;
+  gap: 4px;
+}
+
+.map-status-bar__zone-btn {
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #aaa;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.map-status-bar__zone-btn--active {
+  background: var(--map-accent);
+  border-color: var(--map-accent);
+  color: #fff;
+}
+
 .location-interior {
   flex: 1;
   display: flex;
