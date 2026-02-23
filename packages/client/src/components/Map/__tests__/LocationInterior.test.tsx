@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBattleStore } from '../../../stores/battleStore';
 import { useMapStore } from '../../../stores/mapStore';
+import { useMcpStore } from '../../../stores/mcpStore';
 import { useShopStore } from '../../../stores/shopStore';
 import { useThemeStore } from '../../../stores/themeStore';
 import { useWorktreeStore } from '../../../stores/worktreeStore';
@@ -467,5 +468,117 @@ describe('LocationInterior', () => {
     fireEvent.click(screen.getByTestId('buy-skill-autocomplete'));
     expect(screen.getByTestId('shop-buy-result')).toHaveTextContent('Purchased');
     expect(useBattleStore.getState().player.totalGold).toBe(70);
+  });
+
+  // Task 60: Guild Hall shows loading state from worktreeStore
+  it('guild hall shows loading indicator when worktreeStore.loading is true', () => {
+    useWorktreeStore.setState({ loading: true });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-guild')).toHaveTextContent('Loading');
+  });
+
+  // Task 60: Guild Hall shows error state
+  it('guild hall shows error message when worktreeStore.error is set', () => {
+    useWorktreeStore.setState({ error: 'Network failed' });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'guild_hall', name: 'Guild Hall', icon: '🏛️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-guild')).toHaveTextContent('Network failed');
+  });
+
+  // Task 61: Library shows loading state from mcpStore
+  it('library shows loading indicator when mcpStore.loading is true', () => {
+    useMcpStore.setState({ loading: true });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'library', name: 'Library', icon: '📚' })}
+        onExit={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('interior-library')).toHaveTextContent('Loading');
+    useMcpStore.setState({ loading: false });
+  });
+
+  // Task 56: Save/Load in Player Home
+  it('player home has a save button that persists game state', () => {
+    localStorage.clear();
+    useMapStore.setState({ playerPosition: { x: 7, y: 2 }, currentZone: 'town' });
+    useBattleStore.setState({ player: { level: 3, totalExp: 300, totalGold: 150 } });
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'player_home', name: 'Player Home', icon: '🏠' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('home-save-btn'));
+    const raw = localStorage.getItem('code-quest-save');
+    expect(raw).toBeTruthy();
+    const data = JSON.parse(raw as string);
+    expect(data.player.level).toBe(3);
+  });
+
+  // Task 62: Stasis textarea controlled
+  it('stasis textarea is controlled and preserves input', () => {
+    render(
+      <LocationInterior
+        location={makeLoc({ id: 'stasis_chamber', name: 'Stasis Chamber', icon: '⏸️' })}
+        onExit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('stasis-plan-btn'));
+    const textarea = screen.getByPlaceholderText('Write your plan here...');
+    fireEvent.change(textarea, { target: { value: 'My plan' } });
+    expect(textarea).toHaveValue('My plan');
+  });
+
+  // Task 63: Dungeon exit restriction
+  it('dungeon interior disables exit when battle is active', () => {
+    useMapStore.setState({ inDungeon: true, activeBattleSessionId: 'battle-1' });
+    useBattleStore.setState({
+      battles: new Map([
+        [
+          'battle-1',
+          {
+            enemy: { name: 'Bug', type: 'bug-hunt', level: 1, hp: 10, maxHp: 10 },
+            phase: 'active',
+            playerLevel: 1,
+            playerHp: 100,
+            playerMaxHp: 100,
+            playerMp: 50,
+            playerMaxMp: 50,
+            playerExp: 0,
+            comboCount: 0,
+            log: [],
+            goldEarned: 0,
+            expEarned: 0,
+            isPaused: false,
+          },
+        ],
+      ]),
+    });
+    const onExit = vi.fn();
+    render(
+      <LocationInterior
+        location={makeLoc({
+          id: 'bug_cave',
+          name: 'Bug Cave',
+          icon: '🪲',
+          zone: 'dungeon',
+        })}
+        onExit={onExit}
+      />,
+    );
+    const exitBtn = screen.getByTestId('location-exit-btn');
+    expect(exitBtn).toBeDisabled();
+    fireEvent.click(exitBtn);
+    expect(onExit).not.toHaveBeenCalled();
   });
 });
