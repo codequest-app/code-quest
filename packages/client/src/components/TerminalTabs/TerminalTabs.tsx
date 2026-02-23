@@ -7,13 +7,14 @@ import { useSocket } from '../../hooks/useSocket';
 import { createTavernChatHandler } from '../../hooks/useTavernChat';
 import { useBattleStore } from '../../stores/battleStore';
 import { useChatStore } from '../../stores/chatStore';
+import { useMapStore } from '../../stores/mapStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import type { SessionType } from '../../types';
 import { BankPanel } from '../Bank/BankPanel';
 import { BattleOverlay } from '../Battle';
 import { ChatPanel } from '../ChatPanel';
 import { KeyboardShortcutsPanel } from '../ChatPanel/KeyboardShortcutsPanel';
-import { MapView } from '../Map/MapView';
+import { MapView } from '../Map';
 import type { CommandMenuItem } from '../Menu';
 import { CommandMenu } from '../Menu';
 import { OrchestratorPage } from '../OrchestratorPanel';
@@ -38,6 +39,12 @@ function getTabLabel(type: SessionType, index: number): string {
     default:
       return `Terminal ${index}`;
   }
+}
+
+function MapBattleOverlay() {
+  const battleSessionId = useMapStore((s) => s.activeBattleSessionId);
+  if (!battleSessionId) return null;
+  return <BattleOverlay sessionId={battleSessionId} />;
 }
 
 /**
@@ -611,7 +618,9 @@ export function TerminalTabs({ serverUrl, className = '' }: TerminalTabsProps) {
             <MapView
               onSendMessage={tavernChatHandler ?? undefined}
               onFetchTools={handleFetchTools}
+              isConnected={socketState.connected}
             />
+            <MapBattleOverlay />
           </div>
         )}
       </div>

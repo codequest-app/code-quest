@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useBattleStore } from './battleStore';
+import { useMcpStore } from './mcpStore';
 
 export interface ShopItem {
   id: string;
@@ -158,12 +159,26 @@ export const useShopStore = create<ShopStore>((set, get) => ({
     const player = useBattleStore.getState().player;
     if (player.totalGold < item.price) return false;
 
-    useBattleStore.setState({
-      player: { ...player, totalGold: player.totalGold - item.price },
-    });
+    const updatedPlayer = { ...player, totalGold: player.totalGold - item.price };
+    useBattleStore.setState({ player: updatedPlayer });
+    try {
+      localStorage.setItem('code-quest-player', JSON.stringify(updatedPlayer));
+    } catch {
+      // ignore
+    }
     const newInventory = [...inventory, itemId];
     saveInventory(newInventory);
     set({ inventory: newInventory });
+
+    // Sync MCP purchases with mcpStore
+    if (item.shopId === 'mcp-library') {
+      const mcpToolId = itemId.replace(/^mcp-/, '');
+      const tool = useMcpStore.getState().tools.find((t) => t.id === mcpToolId);
+      if (tool && !tool.installed) {
+        useMcpStore.getState().toggleInstall(mcpToolId);
+      }
+    }
+
     return true;
   },
 
