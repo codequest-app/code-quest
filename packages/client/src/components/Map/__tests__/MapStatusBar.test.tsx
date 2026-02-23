@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useMapStore } from '../../../stores/mapStore';
 import { MapStatusBar } from '../MapStatusBar';
 
 describe('MapStatusBar', () => {
+  beforeEach(() => {
+    useMapStore.setState({
+      currentZone: 'town',
+      playerPosition: { x: 4, y: 4 },
+    });
+  });
+
   it('displays zone name', () => {
     render(<MapStatusBar zone="town" onChangeZone={vi.fn()} />);
     expect(screen.getByTestId('map-status-bar')).toHaveTextContent('Town');
@@ -38,5 +46,16 @@ describe('MapStatusBar', () => {
     render(<MapStatusBar zone="town" onChangeZone={onChangeZone} />);
     fireEvent.click(screen.getByTestId('zone-btn-town'));
     expect(onChangeZone).not.toHaveBeenCalled();
+  });
+
+  it('shows sub-zone name when in wilderness', () => {
+    useMapStore.setState({ currentZone: 'wilderness', playerPosition: { x: 7, y: 2 } });
+    render(<MapStatusBar zone="wilderness" onChangeZone={vi.fn()} />);
+    expect(screen.getByTestId('map-status-bar')).toHaveTextContent('Mountains');
+  });
+
+  it('does not show sub-zone in town', () => {
+    render(<MapStatusBar zone="town" onChangeZone={vi.fn()} />);
+    expect(screen.queryByTestId('sub-zone-label')).toBeNull();
   });
 });

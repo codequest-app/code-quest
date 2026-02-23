@@ -140,4 +140,131 @@ describe('mapStore', () => {
       );
     expect(useMapStore.getState().lastEncounter).toBeDefined();
   });
+
+  it('triggerBattle starts a battle in battleStore when encounter triggers', () => {
+    useMapStore.getState().changeZone('wilderness');
+    const prompt =
+      'implement user authentication with JWT and OAuth, refactor database schema, add comprehensive tests and documentation, optimize performance and caching';
+    const sessionId = useMapStore.getState().triggerBattle(prompt);
+    if (sessionId) {
+      const battle = useBattleStore.getState().getBattle(sessionId);
+      expect(battle).toBeDefined();
+      expect(battle?.phase).toBe('active');
+      expect(battle?.enemy.name.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('triggerBattle returns null when encounter does not trigger', () => {
+    // town zone - no encounter
+    const sessionId = useMapStore.getState().triggerBattle('fix typo');
+    expect(sessionId).toBeNull();
+  });
+
+  it('triggerBattle returns null for low complexity in wilderness', () => {
+    useMapStore.getState().changeZone('wilderness');
+    const sessionId = useMapStore.getState().triggerBattle('fix typo');
+    expect(sessionId).toBeNull();
+  });
+
+  it('restoreFromStorage restores saved position and zone', () => {
+    localStorage.setItem(
+      'code-quest-map',
+      JSON.stringify({ playerPosition: { x: 7, y: 2 }, currentZone: 'wilderness' }),
+    );
+    useMapStore.getState().restoreFromStorage();
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 7, y: 2 });
+    expect(useMapStore.getState().currentZone).toBe('wilderness');
+  });
+
+  it('restoreFromStorage keeps defaults when no saved data', () => {
+    useMapStore.getState().restoreFromStorage();
+    expect(useMapStore.getState().playerPosition).toEqual({ x: 4, y: 4 });
+    expect(useMapStore.getState().currentZone).toBe('town');
+  });
+
+  it('getCurrentSubZone returns sub-zone name based on position', () => {
+    useMapStore.getState().changeZone('wilderness');
+    // mountains at {x:7, y:2}
+    useMapStore.setState({ playerPosition: { x: 7, y: 2 } });
+    expect(useMapStore.getState().getCurrentSubZone()).toBe('mountains');
+  });
+
+  it('getCurrentSubZone returns null in town', () => {
+    expect(useMapStore.getState().getCurrentSubZone()).toBeNull();
+  });
+
+  it('movePlayer in wilderness may set pendingEncounter when roll succeeds', () => {
+    useMapStore.getState().changeZone('wilderness');
+    // Force encounter by mocking Math.random to return 0 (always < encounterRate)
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      useMapStore.getState().movePlayer(1, 0);
+      expect(useMapStore.getState().pendingEncounter).toBe(true);
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  it('movePlayer in wilderness does not set pendingEncounter when roll fails', () => {
+    useMapStore.getState().changeZone('wilderness');
+    const originalRandom = Math.random;
+    Math.random = () => 0.99;
+    try {
+      useMapStore.getState().movePlayer(1, 0);
+      expect(useMapStore.getState().pendingEncounter).toBe(false);
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  it('movePlayer in town never sets pendingEncounter', () => {
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      useMapStore.getState().movePlayer(1, 0);
+      expect(useMapStore.getState().pendingEncounter).toBe(false);
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  it('dismissEncounter resets pendingEncounter', () => {
+    useMapStore.setState({ pendingEncounter: true });
+    useMapStore.getState().dismissEncounter();
+    expect(useMapStore.getState().pendingEncounter).toBe(false);
+  });
+
+  it('entering a dungeon location sets inDungeon true', () => {
+    useBattleStore.setState({
+      player: { level: 10, totalExp: 0, totalGold: 0 },
+    });
+    useMapStore.getState().changeZone('dungeon');
+    useMapStore.getState().enterLocation('bug_cave');
+    expect(useMapStore.getState().inDungeon).toBe(true);
+  });
+
+  it('changeZone is blocked while inDungeon', () => {
+    useMapStore.setState({ currentZone: 'dungeon', inDungeon: true });
+    useMapStore.getState().changeZone('town');
+    expect(useMapStore.getState().currentZone).toBe('dungeon');
+  });
+
+  it('exitLocation in dungeon clears inDungeon', () => {
+    useMapStore.setState({
+      currentZone: 'dungeon',
+      currentLocationId: 'bug_cave',
+      inDungeon: true,
+    });
+    useMapStore.getState().exitLocation();
+    expect(useMapStore.getState().inDungeon).toBe(false);
+  });
+
+  it('setPlanMode toggles planModeActive', () => {
+    expect(useMapStore.getState().planModeActive).toBe(false);
+    useMapStore.getState().setPlanMode(true);
+    expect(useMapStore.getState().planModeActive).toBe(true);
+    useMapStore.getState().setPlanMode(false);
+    expect(useMapStore.getState().planModeActive).toBe(false);
+  });
 });

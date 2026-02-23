@@ -202,6 +202,134 @@
   opacity: 0.9;
 }
 
+.tavern-messages {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.tavern-msg {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.tavern-msg--bartender {
+  color: var(--map-accent);
+}
+
+.tavern-form {
+  width: 100%;
+}
+
+.stasis-textarea {
+  width: 100%;
+  padding: 8px;
+  background: var(--map-building);
+  border: 1px solid var(--map-accent);
+  border-radius: 4px;
+  color: var(--map-text);
+  font-family: monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.guild-worktree-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guild-worktree-item {
+  padding: 6px 10px;
+  background: var(--map-building);
+  border: 1px solid var(--map-accent);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.tavern-input {
+  width: 100%;
+  padding: 8px;
+  background: var(--map-building);
+  border: 1px solid var(--map-accent);
+  border-radius: 4px;
+  color: var(--map-text);
+  font-family: monospace;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.encounter-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(200, 50, 50, 0.15);
+  border: 2px solid #c33;
+  border-radius: 4px;
+  margin: 8px;
+  text-align: center;
+}
+
+.zone-confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--map-building);
+  border: 2px solid var(--map-accent);
+  border-radius: 4px;
+  margin: 8px;
+  text-align: center;
+}
+
+.zone-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.map-view__grid--forest {
+  background: #2d5a27;
+}
+
+.map-view__grid--mountains {
+  background: #6b7b8d;
+}
+
+.map-view__grid--wasteland {
+  background: #8b7355;
+}
+
+.map-view__grid--volcano {
+  background: #5a2020;
+}
+
+.map-view--dark .map-view__grid--forest {
+  background: #1a3a15;
+}
+
+.map-view--dark .map-view__grid--mountains {
+  background: #3a4550;
+}
+
+.map-view--dark .map-view__grid--wasteland {
+  background: #4a3a25;
+}
+
+.map-view--dark .map-view__grid--volcano {
+  background: #3a1010;
+}
+
 .map-controls {
   display: flex;
   gap: 16px;
