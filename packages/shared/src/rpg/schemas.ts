@@ -40,5 +40,5 @@ export const battleLogEntrySchema = z.object({
   id: z.string().min(1),
   timestamp: z.number(),
   message: z.string(),
-  type: z.enum(['info', 'skill', 'damage', 'heal', 'victory', 'error']),
+  type: z.enum(['info', 'skill', 'damage', 'victory', 'error']),
 });

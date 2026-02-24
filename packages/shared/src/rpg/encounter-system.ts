@@ -1,4 +1,4 @@
-import { analyzeComplexity } from './enemy-generator.ts';
+import { analyzeEnemyComplexity } from './enemy-generator.ts';
 import { WILDERNESS_SUB_ZONES } from './locations.ts';
 import type { WildernessSubZoneId, Zone } from './map-types.ts';
 
@@ -19,7 +19,7 @@ export function shouldTriggerEncounter(
 ): EncounterResult {
   const subZoneDef = WILDERNESS_SUB_ZONES.find((z) => z.id === subZone);
   const encounterRate = subZoneDef?.encounterRate ?? 0.3;
-  const { total: complexity } = analyzeComplexity(prompt);
+  const { total: complexity } = analyzeEnemyComplexity(prompt);
 
   if (zone !== 'wilderness') {
     return { trigger: false, complexity, subZone, encounterRate, reason: 'not_wilderness' };

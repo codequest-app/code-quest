@@ -2,7 +2,7 @@ export { calculateDamage, getAffinityMultiplier } from './damage-calculator.ts';
 export type { EncounterResult } from './encounter-system.ts';
 export { shouldTriggerEncounter } from './encounter-system.ts';
 export {
-  analyzeComplexity,
+  analyzeEnemyComplexity,
   calculateHP,
   classifyTaskType,
   generateEnemy,
