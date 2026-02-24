@@ -13,6 +13,12 @@ describe('shopStore', () => {
       player: { level: 1, totalExp: 0, totalGold: 100 },
       battles: new Map(),
     });
+    useMcpStore.setState({
+      tools: [
+        { id: 'web-search', name: 'Web Search', description: 'Search the web', installed: false },
+        { id: 'file-system', name: 'File System', description: 'Access files', installed: false },
+      ],
+    });
   });
 
   it('lists items for a given shop', () => {
@@ -82,6 +88,16 @@ describe('shopStore', () => {
     useShopStore.getState().buyItem('mcp-web-search');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('web-search'));
     warnSpy.mockRestore();
+  });
+
+  it('buying MCP item when tool is already installed does not toggle it off', () => {
+    // Pre-install web-search
+    useMcpStore.getState().toggleInstall('web-search');
+    expect(useMcpStore.getState().tools.find((t) => t.id === 'web-search')?.installed).toBe(true);
+
+    useShopStore.getState().buyItem('mcp-web-search');
+    // Should remain installed (not toggled off)
+    expect(useMcpStore.getState().tools.find((t) => t.id === 'web-search')?.installed).toBe(true);
   });
 
   it('inventory is restored via saveStore loadGame (not shopStore directly)', () => {

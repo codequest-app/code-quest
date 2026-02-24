@@ -49,7 +49,7 @@ const ENEMY_NAMES: Record<EnemyType, string[]> = {
   general: ['Wild Slime', 'Mystery Shade', 'Quest Beast'],
 };
 
-export function analyzeComplexity(prompt: string): ComplexityScore {
+export function analyzeEnemyComplexity(prompt: string): ComplexityScore {
   const lower = prompt.toLowerCase();
   const words = lower.split(/\s+/);
 
@@ -98,7 +98,7 @@ function simpleHash(str: string): number {
 
 export function generateEnemy(prompt: string): Enemy {
   const type = classifyTaskType(prompt);
-  const complexity = analyzeComplexity(prompt);
+  const complexity = analyzeEnemyComplexity(prompt);
   const level = Math.max(1, Math.min(10, Math.ceil(complexity.total / 1.5)));
   const hp = calculateHP(level, type);
 

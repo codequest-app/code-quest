@@ -40,7 +40,7 @@ export interface BattleLogEntry {
   id: string;
   timestamp: number;
   message: string;
-  type: 'info' | 'skill' | 'damage' | 'heal' | 'victory' | 'error';
+  type: 'info' | 'skill' | 'damage' | 'victory' | 'error';
 }
 
 export type BattlePhase = 'idle' | 'active' | 'victory' | 'defeat';

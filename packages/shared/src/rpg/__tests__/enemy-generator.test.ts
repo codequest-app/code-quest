@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
-  analyzeComplexity,
+  analyzeEnemyComplexity,
   calculateHP,
   classifyTaskType,
   generateEnemy,
 } from '../enemy-generator.ts';
 
-describe('analyzeComplexity', () => {
+describe('analyzeEnemyComplexity', () => {
   it('returns low score for short simple prompts', () => {
-    const score = analyzeComplexity('fix typo');
+    const score = analyzeEnemyComplexity('fix typo');
     expect(score.total).toBeLessThanOrEqual(3);
     expect(score.lengthScore).toBe(0);
   });
@@ -16,18 +16,18 @@ describe('analyzeComplexity', () => {
   it('returns higher score for longer prompts', () => {
     const long =
       'refactor the authentication module to use JWT tokens and add refresh token support with proper expiry handling';
-    const score = analyzeComplexity(long);
+    const score = analyzeEnemyComplexity(long);
     expect(score.lengthScore).toBeGreaterThan(0);
     expect(score.total).toBeGreaterThan(3);
   });
 
   it('detects keywords for higher keyword score', () => {
-    const score = analyzeComplexity('refactor architecture and optimize performance');
+    const score = analyzeEnemyComplexity('refactor architecture and optimize performance');
     expect(score.keywordScore).toBeGreaterThan(0);
   });
 
   it('detects multi-step instructions', () => {
-    const score = analyzeComplexity('first add tests, then refactor, finally deploy');
+    const score = analyzeEnemyComplexity('first add tests, then refactor, finally deploy');
     expect(score.multiStepScore).toBeGreaterThan(0);
   });
 
@@ -36,7 +36,7 @@ describe('analyzeComplexity', () => {
       'refactor architecture optimize performance debug fix test deploy migrate integrate first then finally also additionally implement redesign overhaul '.repeat(
         10,
       );
-    const score = analyzeComplexity(mega);
+    const score = analyzeEnemyComplexity(mega);
     expect(score.total).toBeLessThanOrEqual(15);
   });
 });
