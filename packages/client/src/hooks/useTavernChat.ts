@@ -1,4 +1,4 @@
-type EmitFn = (event: string, message: string, callback: (reply: string) => void) => void;
+type EmitFn = (event: 'tavern:message', message: string, callback: (reply: string) => void) => void;
 
 const DEFAULT_TIMEOUT = 10000;
 

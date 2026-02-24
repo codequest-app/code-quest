@@ -168,6 +168,9 @@ export const chatControlRespondSchema = z.object({
   response: z.record(z.string(), z.unknown()),
 });
 
+// Tavern
+export const tavernMessageSchema = z.string().min(1).max(500);
+
 export const orchestratorStatusSchema = z.enum([
   'idle',
   'dispatching',

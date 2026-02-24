@@ -46,6 +46,7 @@ export interface ClientToServerEvents {
   'orchestrator:kill': (orchId: string) => void;
   'orchestrator:retry-worker': (orchId: string, workerId: string) => void;
   'orchestrator:skip-worker': (orchId: string, workerId: string) => void;
+  'tavern:message': (message: string, callback: (reply: string) => void) => void;
 }
 
 /**
