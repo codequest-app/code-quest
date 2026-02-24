@@ -894,6 +894,45 @@ describe('SocketHandler', () => {
     });
   });
 
+  describe('tavern:message', () => {
+    it('should return error message for empty message', async () => {
+      const reply = await new Promise<string>((resolve) => {
+        // @ts-expect-error intentionally invalid
+        clientSocket.emit('tavern:message', '', (r: string) => {
+          resolve(r);
+        });
+      });
+
+      expect(reply).toContain("doesn't understand");
+    });
+
+    it('should collect text events and return reply via callback', async () => {
+      // Spy on createSession to simulate text events + complete
+      const originalCreateSession = chatManager.createSession.bind(chatManager);
+      vi.spyOn(chatManager, 'createSession').mockImplementation((opts) => {
+        const session = originalCreateSession(opts);
+        session.sendMessage = (_msg: string) => {
+          // Simulate text event + complete instead of spawning real process
+          // biome-ignore lint/suspicious/noExplicitAny: test-only access to private emitEvent
+          (session as any).emitEvent({ type: 'text', data: { content: 'Ahh, ' } });
+          // biome-ignore lint/suspicious/noExplicitAny: test-only access to private emitEvent
+          (session as any).emitEvent({ type: 'text', data: { content: 'welcome traveler!' } });
+          // biome-ignore lint/suspicious/noExplicitAny: test-only access to private emitComplete
+          (session as any).emitComplete({ costUsd: 0, durationMs: 0 });
+        };
+        return session;
+      });
+
+      const reply = await new Promise<string>((resolve) => {
+        clientSocket.emit('tavern:message', 'Hello bartender!', (r: string) => {
+          resolve(r);
+        });
+      });
+
+      expect(reply).toBe('Ahh, welcome traveler!');
+    });
+  });
+
   describe('cleanup on disconnect', () => {
     it('should cleanup client sessions on disconnect', async () => {
       // Create session

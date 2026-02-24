@@ -15,6 +15,7 @@ import {
   orchestratorRetryWorkerSchema,
   orchestratorSkipWorkerSchema,
   orchestratorSynthesizeSchema,
+  tavernMessageSchema,
   terminalCreateSchema,
   terminalKillSchema,
   terminalResizeSchema,
@@ -374,7 +375,12 @@ export class SocketHandlerImpl implements SocketHandler {
           coordSession.onEvent((event) => {
             socket.emit('chat:event', coordSession.id, event);
             if (event.type === 'control_request') {
-              const data = event.data as { requestId: string; toolName?: string; input?: unknown; toolUseId?: string };
+              const data = event.data as {
+                requestId: string;
+                toolName?: string;
+                input?: unknown;
+                toolUseId?: string;
+              };
               this.pendingControlRequests.set(data.requestId, {
                 toolName: data.toolName,
                 input: data.input,
@@ -549,6 +555,41 @@ export class SocketHandlerImpl implements SocketHandler {
         return;
       }
       orch.skipWorker(parsed.data.workerId);
+    });
+
+    // Handle tavern:message
+    socket.on('tavern:message', (message, callback) => {
+      const parsed = tavernMessageSchema.safeParse(message);
+      if (!parsed.success) {
+        callback("The bartender doesn't understand your gibberish...");
+        return;
+      }
+
+      try {
+        const session = this.chatManager.createSession({ provider: 'claude', cwd: process.cwd() });
+
+        let reply = '';
+        session.onEvent((event) => {
+          if (event.type === 'text') {
+            reply += (event.data as { content: string }).content;
+          }
+        });
+
+        session.onComplete(() => {
+          callback(reply || 'The bartender stares blankly...');
+          this.chatManager.removeSession(session.id);
+        });
+
+        session.onError(() => {
+          callback('The bartender mumbles something unintelligible...');
+          this.chatManager.removeSession(session.id);
+        });
+
+        const bartenderPrompt = `You are an RPG tavern bartender in "Code Quest". Stay in character. Be helpful but brief (1-3 sentences). Give coding tips wrapped in fantasy flavor. User says: ${parsed.data}`;
+        session.sendMessage(bartenderPrompt);
+      } catch {
+        callback('The bartender mumbles something unintelligible...');
+      }
     });
 
     // Handle disconnection
