@@ -568,6 +568,14 @@ export class SocketHandlerImpl implements SocketHandler {
       try {
         const session = this.chatManager.createSession({ provider: 'claude', cwd: process.cwd() });
 
+        let replied = false;
+        const replyOnce = (text: string) => {
+          if (replied) return;
+          replied = true;
+          callback(text);
+          this.chatManager.removeSession(session.id);
+        };
+
         let reply = '';
         session.onEvent((event) => {
           if (event.type === 'text') {
@@ -576,13 +584,11 @@ export class SocketHandlerImpl implements SocketHandler {
         });
 
         session.onComplete(() => {
-          callback(reply || 'The bartender stares blankly...');
-          this.chatManager.removeSession(session.id);
+          replyOnce(reply || 'The bartender stares blankly...');
         });
 
         session.onError(() => {
-          callback('The bartender mumbles something unintelligible...');
-          this.chatManager.removeSession(session.id);
+          replyOnce('The bartender mumbles something unintelligible...');
         });
 
         const bartenderPrompt = `You are an RPG tavern bartender in "Code Quest". Stay in character. Be helpful but brief (1-3 sentences). Give coding tips wrapped in fantasy flavor. User says: ${parsed.data}`;
