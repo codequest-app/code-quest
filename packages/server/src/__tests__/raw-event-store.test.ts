@@ -1,32 +1,7 @@
 import type { RawEntry } from '@code-quest/summoner';
-import { sql } from 'drizzle-orm';
-import { createDatabase } from '../db/client.ts';
-import { sessions } from '../db/schema.ts';
-import { SqliteRawStore } from '../services/raw-event-store.ts';
-
-function createTestDb() {
-  const db = createDatabase(':memory:');
-  db.run(sql`CREATE TABLE IF NOT EXISTS sessions (
-    id TEXT PRIMARY KEY NOT NULL,
-    provider TEXT NOT NULL,
-    command TEXT NOT NULL,
-    args TEXT NOT NULL,
-    cwd TEXT,
-    mode TEXT NOT NULL DEFAULT 'print',
-    role TEXT NOT NULL DEFAULT 'chat',
-    parent_id TEXT,
-    created_at TEXT NOT NULL
-  )`);
-  db.run(sql`CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    session_id TEXT NOT NULL REFERENCES sessions(id),
-    dir TEXT NOT NULL,
-    type TEXT NOT NULL,
-    data TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  )`);
-  return db;
-}
+import { events, sessions } from '../db/schema-sqlite.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
+import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
 
 function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
   db.insert(sessions)
@@ -40,13 +15,13 @@ function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
     .run();
 }
 
-describe('SqliteRawStore', () => {
+describe('DrizzleRawStore', () => {
   let db: ReturnType<typeof createDatabase>;
-  let store: SqliteRawStore;
+  let store: DrizzleRawStore;
 
   beforeEach(() => {
-    db = createTestDb();
-    store = new SqliteRawStore(db);
+    db = createDatabase(':memory:');
+    store = new DrizzleRawStore(db, events);
   });
 
   it('appends and retrieves raw events', async () => {
@@ -111,5 +86,35 @@ describe('SqliteRawStore', () => {
 
     const results = await store.getBySession('sess-3');
     expect(results).toHaveLength(3);
+  });
+
+  it('returns events ordered by createdAt', async () => {
+    seedSession(db, 'sess-4');
+
+    const now = Date.now();
+    await store.append({
+      timestamp: now + 200,
+      sessionId: 'sess-4',
+      turnId: 2,
+      direction: 'out',
+      raw: 'c',
+    });
+    await store.append({
+      timestamp: now,
+      sessionId: 'sess-4',
+      turnId: 0,
+      direction: 'out',
+      raw: 'a',
+    });
+    await store.append({
+      timestamp: now + 100,
+      sessionId: 'sess-4',
+      turnId: 1,
+      direction: 'out',
+      raw: 'b',
+    });
+
+    const results = await store.getBySession('sess-4');
+    expect(results.map((r) => r.raw)).toEqual(['a', 'b', 'c']);
   });
 });

@@ -1,8 +1,8 @@
 import type { ChatSession, ProcessFactory } from '@code-quest/summoner';
 import { InteractiveSession } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
-import type { DrizzleDatabase } from '../db/client.ts';
-import { sessions } from '../db/schema.ts';
+import { sessions } from '../db/schema-sqlite.ts';
+import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import { TYPES } from '../types.ts';
 
 export interface SessionManager {

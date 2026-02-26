@@ -8,7 +8,8 @@ import type { ProcessFactory } from '@code-quest/summoner';
 import cors from 'cors';
 import express from 'express';
 import { Server } from 'socket.io';
-import { createContainer } from '../container.ts';
+import { createContainer, type StoreConfig } from '../container.ts';
+import { createMysqlDatabase } from '../db/mysql-client.ts';
 import type { ChatHandler } from '../socket/chat-handler.ts';
 import { TYPES } from '../types.ts';
 
@@ -16,29 +17,50 @@ const PORT = Number(process.env.PORT ?? 3001);
 
 const processFactory: ProcessFactory = (command, args, options) => spawn(command, args, options);
 
-const container = createContainer({
-  processFactory,
-  dbPath: process.env.DB_PATH ?? './data/code-quest.db',
-});
+async function main() {
+  const sqlitePath = process.env.DB_SQLITE_PATH ?? './data/code-quest.db';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+  const storeConfig: StoreConfig = { sqlite: true };
 
-const app = express();
-app.use(cors());
-app.use(express.static(resolve(__dirname, '../../public')));
+  if (process.env.DATABASE_URL) {
+    const database = await createMysqlDatabase(process.env.DATABASE_URL);
+    storeConfig.mysql = { database };
+  }
 
-const httpServer = createServer(app);
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-  cors: { origin: '*' },
-});
+  if (process.env.RAW_EVENT_DIR) {
+    storeConfig.file = { dir: process.env.RAW_EVENT_DIR };
+  }
 
-const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
-chatHandler.register(io);
+  const container = createContainer({
+    processFactory,
+    dbPath: sqlitePath,
+    storeConfig,
+  });
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+  const __dirname = dirname(fileURLToPath(import.meta.url));
 
-httpServer.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  const app = express();
+  app.use(cors());
+  app.use(express.static(resolve(__dirname, '../../public')));
+
+  const httpServer = createServer(app);
+  const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+    cors: { origin: '*' },
+  });
+
+  const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
+  chatHandler.register(io);
+
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+  httpServer.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
+}
+
+main().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
