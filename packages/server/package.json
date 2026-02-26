@@ -21,7 +21,7 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
-    "@code-quest/cli-adapter": "workspace:*",
+    "@code-quest/summoner": "workspace:*",
     "@code-quest/shared": "workspace:*",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.45.1",

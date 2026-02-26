@@ -1,9 +1,9 @@
 {
-  "name": "@code-quest/cli-adapter",
+  "name": "@code-quest/summoner",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "CLI adapter — stream parsers and chat session logic (framework-free)",
+  "description": "Summoner — AI provider session abstraction with stream parsing and EventEmitter API",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -12,7 +12,6 @@
     "lint": "biome check src"
   },
   "dependencies": {
-    "@code-quest/shared": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {
