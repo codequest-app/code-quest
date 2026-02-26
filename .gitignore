@@ -80,3 +80,5 @@ yarn.lock
 *.pid.lock
 .eslintcache
 .stylelintcache
+.spectra/
+openspec/.vector-search.db

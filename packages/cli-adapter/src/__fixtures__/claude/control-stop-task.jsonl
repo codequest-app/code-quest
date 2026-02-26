@@ -1,1 +1,0 @@
-{"type":"control_response","response":{"subtype":"error","request_id":"st-001","error":"No task found with ID: fake-task-id"}}

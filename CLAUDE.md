@@ -1,92 +1,21 @@
-# CLAUDE.md
+<!-- OPENSPEC:START -->
 
-## Project Overview
+# OpenSpec Instructions
 
-Code Quest — RPG-style Claude Code experience. pnpm monorepo with three packages:
+These instructions are for AI assistants working in this project.
 
-- **`packages/cli-adapter`**: Framework-free CLI adapter — stream parsers (Claude/Gemini), chat session logic, and types
-- **`packages/server`**: Node.js backend (Express + Socket.io + node-pty), manages terminal sessions, chat manager (Inversify DI), and orchestrator
-- **`packages/client`**: React frontend (Vite + xterm.js + Zustand)
+Always use `/opsx:*` skills when the request:
 
-## Tech Stack
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
 
-- **Runtime**: Node.js ≥ 20, pnpm ≥ 8
-- **Language**: TypeScript (strict mode, `verbatimModuleSyntax`, `.ts` import extensions with `rewriteRelativeImportExtensions`)
-- **Server DI**: Inversify 7 — all dependencies resolved through container, no hard `new` for domain services
-- **Linter/Formatter**: Biome (single quotes, semicolons, 2-space indent, 100 line width)
-- **Git Hooks**: lefthook — pre-commit runs biome + tsc; pre-push runs vitest
-- **Test**: Vitest
+Quick reference:
 
-## Commands
+- `/opsx:new` - Start a new change
+- `/opsx:continue` - Continue working on a change
+- `/opsx:apply` - Implement tasks
 
-```bash
-pnpm lint                  # biome check entire project
-pnpm lint:fix              # biome check --write
-pnpm test:server           # vitest (server)
-pnpm test:client           # vitest (client)
-pnpm test:e2e              # playwright (requires real CLI)
-pnpm test:e2e:mock         # playwright with MOCK_CLI=true
+Keep this managed block so 'openspec update' can refresh the instructions.
 
-# Per-package
-pnpm --filter cli-adapter exec tsc --noEmit  # type check cli-adapter
-pnpm --filter cli-adapter exec vitest run    # run cli-adapter tests once
-pnpm --filter server exec tsc --noEmit       # type check server
-pnpm --filter server exec vitest run         # run server tests once
-pnpm --filter client exec tsc --noEmit       # type check client
-```
-
-## Code Style
-
-- Biome enforces all formatting and lint rules — do NOT use ESLint or Prettier
-- `noExplicitAny: error`, `noNonNullAssertion: error`
-- Use `import type { ... }` for type-only imports (`verbatimModuleSyntax`)
-- Use `.ts` extensions in relative imports (e.g., `./types.ts`, not `./types`)
-
-## Server DI Conventions
-
-All factory dependencies go through the Inversify container (`src/container.ts`). Key patterns:
-
-- **Singletons**: `container.bind(TYPES.X).to(XImpl).inSingletonScope()`
-- **Factories**: `toDynamicValue` returning a factory function; resolve deps **lazily inside** the returned function (not in the outer callback) so `rebindSync` takes effect immediately
-- **No per-instance override**: `ChatSessionOptions` has no factory fields; factories are injected by the container into `ChatSessionDeps`
-- **Binding tokens**: defined in `src/types.symbols.ts` as `Symbol.for(...)` constants
-
-### Test DI Pattern
-
-```typescript
-// Setup: create container with overrides via createTestContainer
-const container = createTestContainer({ processFactory: mockFactory });
-const factory = container.get<ChatSessionFactory>(TYPES.ChatSessionFactory);
-
-// Swap dependencies mid-test: rebindSync on the shared container
-container.rebindSync<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(newFactory);
-// No need to re-resolve — lazy resolution picks up the new binding automatically
-```
-
-## Project Structure (cli-adapter)
-
-```
-packages/cli-adapter/src/
-├── parsers/          # Stream-JSON parsers (Claude, Gemini)
-├── session.ts        # ChatSessionImpl (framework-free)
-├── types.ts          # Pure logic types (StreamParser, ProcessFactory, ChatSession, …)
-├── index.ts          # Public API re-exports
-├── test/             # MockProcess + createMockProcessFactory
-├── __fixtures__/     # JSONL fixtures (claude/, gemini/)
-└── __tests__/        # Parser + session tests
-```
-
-## Project Structure (server)
-
-```
-packages/server/src/
-├── chat/           # ChatManager (Inversify), types re-exported from cli-adapter
-├── terminal/       # Terminal session (node-pty)
-├── orchestrator/   # Multi-agent orchestration
-├── socket/         # Socket.io handler
-├── http/           # Express HTTP server
-├── container.ts    # DI container setup
-├── types.symbols.ts # Inversify binding tokens
-├── server.ts       # Server entry (wires HTTP + Socket.io)
-└── test/           # Test helpers (createTestContainer)
-```
+<!-- OPENSPEC:END -->

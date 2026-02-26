@@ -1,1 +1,0 @@
-{"type":"control_response","response":{"subtype":"error","request_id":"bad-001","error":"Unsupported control request subtype: nonexistent_subtype"}}
