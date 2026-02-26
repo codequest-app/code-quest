@@ -1,0 +1,23 @@
+{
+  "name": "@code-quest/cli-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CLI adapter — stream parsers and chat session logic (framework-free)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@code-quest/shared": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "code-quest",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RPG-style Claude Code experience",
+  "scripts": {
+    "dev": "pnpm --filter server dev & pnpm --filter client dev",
+    "dev:mock": "MOCK_CLI=true pnpm --filter server dev & pnpm --filter client dev",
+    "dev:server": "pnpm --filter server dev",
+    "dev:server:mock": "MOCK_CLI=true pnpm --filter server dev",
+    "dev:client": "pnpm --filter client dev",
+    "build": "pnpm --filter server build && pnpm --filter client build",
+    "test": "pnpm --recursive test",
+    "test:server": "pnpm --filter server test",
+    "test:client": "pnpm --filter client test",
+    "test:coverage": "pnpm --recursive test:coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:mock": "MOCK_CLI=true playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "playwright:install": "playwright install chromium",
+    "lint": "pnpm biome check .",
+    "lint:fix": "pnpm biome check --write .",
+    "clean": "pnpm --recursive clean",
+    "prepare": "lefthook install"
+  },
+  "keywords": [
+    "claude",
+    "rpg",
+    "terminal",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15",
+    "@playwright/test": "^1.58.2",
+    "lefthook": "^2.1.1",
+    "playwright": "^1.58.2",
+    "socket.io-client": "^4.8.3",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
