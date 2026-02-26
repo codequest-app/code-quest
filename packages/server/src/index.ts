@@ -1,4 +1,4 @@
-export type { ContainerOptions } from './container.ts';
+export type { ContainerOptions, StoreConfig } from './container.ts';
 export { createContainer } from './container.ts';
 export type { RawEventStore } from './services/raw-event-store.ts';
 export type { SessionManager } from './services/session-manager.ts';
