@@ -6,12 +6,9 @@ import { fileURLToPath } from 'node:url';
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type { ProcessFactory } from '@code-quest/summoner';
 import cors from 'cors';
-import { desc, eq } from 'drizzle-orm';
 import express from 'express';
 import { Server } from 'socket.io';
 import { createContainer } from '../container.ts';
-import type { DrizzleDatabase } from '../db/client.ts';
-import { events, sessions } from '../db/schema.ts';
 import type { ChatHandler } from '../socket/chat-handler.ts';
 import { TYPES } from '../types.ts';
 
@@ -38,24 +35,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
 chatHandler.register(io);
 
-const db = container.get<DrizzleDatabase>(TYPES.Database);
-
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
-});
-
-app.get('/api/sessions', async (_req, res) => {
-  const rows = await db.select().from(sessions).orderBy(desc(sessions.createdAt));
-  res.json(rows);
-});
-
-app.get('/api/sessions/:id/events', async (req, res) => {
-  const rows = await db
-    .select()
-    .from(events)
-    .where(eq(events.sessionId, req.params.id))
-    .orderBy(events.createdAt);
-  res.json(rows.map((r) => ({ ...r, data: JSON.parse(r.data) })));
 });
 
 httpServer.listen(PORT, () => {
