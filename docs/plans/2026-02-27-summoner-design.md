@@ -1,11 +1,11 @@
-# CLI Adapter MVP Design
+# Summoner MVP Design
 
 > Date: 2026-02-27
 > Status: Approved
 
 ## Overview
 
-cli-adapter 是 Code Quest 的最底層模組，負責與 Claude Code CLI 的 JSON streaming protocol 互動。零框架依賴，唯一 runtime dependency 是 Zod。
+summoner 是 Code Quest 的 AI provider 會話抽象層，負責與 Claude Code CLI 的 JSON streaming protocol 互動。零框架依賴，唯一 runtime dependency 是 Zod。未來可擴充支援 SDK、HTTP 等不同召喚方式。
 
 ## Scope
 
@@ -17,7 +17,7 @@ cli-adapter 是 Code Quest 的最底層模組，負責與 Claude Code CLI 的 JS
 ## 檔案結構
 
 ```
-packages/cli-adapter/src/
+packages/summoner/src/
 ├── schemas.ts          # Zod schemas + inferred types
 ├── types.ts            # 介面定義
 ├── claude-parser.ts    # parseLine(): line → ChatStreamEvent[]
@@ -80,8 +80,18 @@ interface ChatStats {
   outputTokens?: number;
 }
 
+interface RawEntry {
+  timestamp: number;
+  sessionId: string;
+  turnId: number;
+  direction: 'in' | 'out' | 'err';
+  raw: string;
+  parsed?: ChatStreamEvent[];
+}
+
 interface SessionEvents {
   event: (event: ChatStreamEvent) => void;
+  raw: (entry: RawEntry) => void;
   error: (message: string) => void;
   exit: () => void;
 }
@@ -198,7 +208,7 @@ class MockProcess extends EventEmitter {
 |------|---------|
 | handler 只有 push 沒有 remove | EventEmitter on/off/once |
 | tool_result name 是 ID 不是工具名 | Parser 維護 toolUseId→name map |
-| ControlResponse 型別重複定義 | 統一在 cli-adapter 內 |
+| ControlResponse 型別重複定義 | 統一在 summoner 內 |
 | gotResult boolean flag 易壞 | state machine: idle/processing |
 | pendingRequests array scan O(n) | Map O(1) |
 | timeout timer 未清理 | resolve/reject 時 clearTimeout |

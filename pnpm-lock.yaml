@@ -27,25 +27,6 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/cli-adapter:
-    dependencies:
-      '@code-quest/shared':
-        specifier: workspace:*
-        version: link:../shared
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.5
-        version: 20.19.33
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-      vitest:
-        specifier: ^1.2.1
-        version: 1.6.1(@types/node@20.19.33)(@vitest/ui@1.6.1)(jsdom@24.1.3)
-
   packages/client:
     dependencies:
       '@code-quest/shared':
@@ -154,12 +135,12 @@ importers:
 
   packages/server:
     dependencies:
-      '@code-quest/cli-adapter':
-        specifier: workspace:*
-        version: link:../cli-adapter
       '@code-quest/shared':
         specifier: workspace:*
         version: link:../shared
+      '@code-quest/summoner':
+        specifier: workspace:*
+        version: link:../summoner
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -251,6 +232,22 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.33)(@vitest/ui@1.6.1)(jsdom@24.1.3)
+
+  packages/summoner:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.5
+        version: 20.19.33
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.1
         version: 1.6.1(@types/node@20.19.33)(@vitest/ui@1.6.1)(jsdom@24.1.3)
 
 packages:

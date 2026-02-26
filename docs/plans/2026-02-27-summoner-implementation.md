@@ -1,26 +1,26 @@
-# CLI Adapter Implementation Plan
+# Summoner Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build the cli-adapter package — Claude Code CLI JSON streaming parser + interactive session manager with EventEmitter API.
+**Goal:** Build the summoner package — Claude Code CLI JSON streaming parser + interactive session manager with EventEmitter API.
 
 **Architecture:** Parser (pure function, stateless except toolId→name map) + Session (EventEmitter, manages child_process lifecycle and control protocol). Two-layer interface: ChatSession (base) + ControllableSession (interactive mode).
 
 **Tech Stack:** TypeScript, Zod (runtime validation), Vitest (testing), Node.js child_process + readline
 
-**Design doc:** `docs/plans/2026-02-27-cli-adapter-design.md`
+**Design doc:** `docs/plans/2026-02-27-summoner-design.md`
 
 ---
 
 ## Task 0: Setup — remove shared dependency, restore fixtures
 
 **Files:**
-- Modify: `packages/cli-adapter/package.json`
-- Create: `packages/cli-adapter/src/__fixtures__/claude/*.jsonl` (17 files from POC)
+- Modify: `packages/summoner/package.json`
+- Create: `packages/summoner/src/__fixtures__/claude/*.jsonl` (17 files from POC)
 
 **Step 1: Remove `@code-quest/shared` from dependencies**
 
-cli-adapter must be zero-dependency except Zod. Edit `packages/cli-adapter/package.json`:
+summoner must be zero-dependency except Zod. Edit `packages/summoner/package.json`:
 
 ```json
 {
@@ -35,7 +35,7 @@ Remove `"@code-quest/shared": "workspace:*"` line.
 **Step 2: Restore JSONL fixtures from POC**
 
 ```bash
-git checkout poc/archive -- packages/cli-adapter/src/__fixtures__/claude/
+git checkout poc/archive -- packages/summoner/src/__fixtures__/claude/
 ```
 
 **Step 3: Run pnpm install to update lockfile**
@@ -47,7 +47,7 @@ pnpm install
 **Step 4: Verify tsc still passes**
 
 ```bash
-pnpm --filter cli-adapter exec tsc --noEmit
+pnpm --filter summoner exec tsc --noEmit
 ```
 
 Expected: PASS (index.ts is just `export {};`)
@@ -55,8 +55,8 @@ Expected: PASS (index.ts is just `export {};`)
 **Step 5: Commit**
 
 ```bash
-git add packages/cli-adapter/
-git commit -m "chore(cli-adapter): remove shared dep, restore JSONL fixtures from POC"
+git add packages/summoner/
+git commit -m "chore(summoner): remove shared dep, restore JSONL fixtures from POC"
 ```
 
 ---
@@ -64,8 +64,8 @@ git commit -m "chore(cli-adapter): remove shared dep, restore JSONL fixtures fro
 ## Task 1: Zod schemas — CLI JSON structures
 
 **Files:**
-- Create: `packages/cli-adapter/src/schemas.ts`
-- Test: `packages/cli-adapter/src/__tests__/schemas.test.ts`
+- Create: `packages/summoner/src/schemas.ts`
+- Test: `packages/summoner/src/__tests__/schemas.test.ts`
 
 **Step 1: Write the failing test**
 
@@ -148,7 +148,7 @@ describe('claudeRawEventSchema', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/schemas.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/schemas.test.ts
 ```
 
 Expected: FAIL — `claudeRawEventSchema` not found
@@ -269,7 +269,7 @@ export type ChatStats = z.infer<typeof chatStatsSchema>;
 **Step 4: Run test to verify it passes**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/schemas.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/schemas.test.ts
 ```
 
 Expected: PASS — all 7 tests green
@@ -277,8 +277,8 @@ Expected: PASS — all 7 tests green
 **Step 5: Commit**
 
 ```bash
-git add packages/cli-adapter/src/schemas.ts packages/cli-adapter/src/__tests__/schemas.test.ts
-git commit -m "feat(cli-adapter): add Zod schemas for Claude CLI JSON protocol"
+git add packages/summoner/src/schemas.ts packages/summoner/src/__tests__/schemas.test.ts
+git commit -m "feat(summoner): add Zod schemas for Claude CLI JSON protocol"
 ```
 
 ---
@@ -286,7 +286,7 @@ git commit -m "feat(cli-adapter): add Zod schemas for Claude CLI JSON protocol"
 ## Task 2: Type definitions — interfaces and event types
 
 **Files:**
-- Create: `packages/cli-adapter/src/types.ts`
+- Create: `packages/summoner/src/types.ts`
 
 **Step 1: Write types.ts**
 
@@ -389,7 +389,7 @@ export type ChatSessionState = 'idle' | 'processing';
 **Step 2: Run tsc to verify types compile**
 
 ```bash
-pnpm --filter cli-adapter exec tsc --noEmit
+pnpm --filter summoner exec tsc --noEmit
 ```
 
 Expected: PASS
@@ -397,8 +397,8 @@ Expected: PASS
 **Step 3: Commit**
 
 ```bash
-git add packages/cli-adapter/src/types.ts
-git commit -m "feat(cli-adapter): add type definitions with two-layer session interfaces"
+git add packages/summoner/src/types.ts
+git commit -m "feat(summoner): add type definitions with two-layer session interfaces"
 ```
 
 ---
@@ -406,8 +406,8 @@ git commit -m "feat(cli-adapter): add type definitions with two-layer session in
 ## Task 3: ClaudeParser — line → ChatStreamEvent[]
 
 **Files:**
-- Create: `packages/cli-adapter/src/claude-parser.ts`
-- Test: `packages/cli-adapter/src/__tests__/claude-parser.test.ts`
+- Create: `packages/summoner/src/claude-parser.ts`
+- Test: `packages/summoner/src/__tests__/claude-parser.test.ts`
 
 **Step 1: Write the failing test**
 
@@ -522,7 +522,7 @@ describe('ClaudeParser', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/claude-parser.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/claude-parser.test.ts
 ```
 
 Expected: FAIL — `ClaudeParser` not found
@@ -704,7 +704,7 @@ export class ClaudeParser {
 **Step 4: Run test to verify it passes**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/claude-parser.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/claude-parser.test.ts
 ```
 
 Expected: PASS — all tests green
@@ -712,8 +712,8 @@ Expected: PASS — all tests green
 **Step 5: Commit**
 
 ```bash
-git add packages/cli-adapter/src/claude-parser.ts packages/cli-adapter/src/__tests__/claude-parser.test.ts
-git commit -m "feat(cli-adapter): implement ClaudeParser with fixture-driven tests"
+git add packages/summoner/src/claude-parser.ts packages/summoner/src/__tests__/claude-parser.test.ts
+git commit -m "feat(summoner): implement ClaudeParser with fixture-driven tests"
 ```
 
 ---
@@ -721,7 +721,7 @@ git commit -m "feat(cli-adapter): implement ClaudeParser with fixture-driven tes
 ## Task 4: MockProcess test helper
 
 **Files:**
-- Create: `packages/cli-adapter/src/__tests__/mock-process.ts`
+- Create: `packages/summoner/src/__tests__/mock-process.ts`
 
 **Step 1: Write MockProcess**
 
@@ -787,7 +787,7 @@ export function createMockProcessFactory(): {
 **Step 2: Run tsc to verify it compiles**
 
 ```bash
-pnpm --filter cli-adapter exec tsc --noEmit
+pnpm --filter summoner exec tsc --noEmit
 ```
 
 Expected: PASS
@@ -795,8 +795,8 @@ Expected: PASS
 **Step 3: Commit**
 
 ```bash
-git add packages/cli-adapter/src/__tests__/mock-process.ts
-git commit -m "test(cli-adapter): add MockProcess helper for session tests"
+git add packages/summoner/src/__tests__/mock-process.ts
+git commit -m "test(summoner): add MockProcess helper for session tests"
 ```
 
 ---
@@ -804,8 +804,8 @@ git commit -m "test(cli-adapter): add MockProcess helper for session tests"
 ## Task 5: InteractiveSession — EventEmitter + process lifecycle
 
 **Files:**
-- Create: `packages/cli-adapter/src/session.ts`
-- Test: `packages/cli-adapter/src/__tests__/session.test.ts`
+- Create: `packages/summoner/src/session.ts`
+- Test: `packages/summoner/src/__tests__/session.test.ts`
 
 **Step 1: Write the failing test**
 
@@ -1100,7 +1100,7 @@ describe('InteractiveSession', () => {
 **Step 2: Run test to verify it fails**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/session.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/session.test.ts
 ```
 
 Expected: FAIL — `InteractiveSession` not found
@@ -1402,7 +1402,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
 **Step 4: Run test to verify it passes**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run src/__tests__/session.test.ts
+pnpm --filter summoner exec vitest run src/__tests__/session.test.ts
 ```
 
 Expected: PASS — all tests green
@@ -1410,7 +1410,7 @@ Expected: PASS — all tests green
 **Step 5: Run all tests together**
 
 ```bash
-pnpm --filter cli-adapter exec vitest run
+pnpm --filter summoner exec vitest run
 ```
 
 Expected: All tests pass (schemas + parser + session)
@@ -1418,8 +1418,8 @@ Expected: All tests pass (schemas + parser + session)
 **Step 6: Commit**
 
 ```bash
-git add packages/cli-adapter/src/session.ts packages/cli-adapter/src/__tests__/session.test.ts
-git commit -m "feat(cli-adapter): implement InteractiveSession with EventEmitter + control protocol"
+git add packages/summoner/src/session.ts packages/summoner/src/__tests__/session.test.ts
+git commit -m "feat(summoner): implement InteractiveSession with EventEmitter + control protocol"
 ```
 
 ---
@@ -1427,7 +1427,7 @@ git commit -m "feat(cli-adapter): implement InteractiveSession with EventEmitter
 ## Task 6: Public API — index.ts + final validation
 
 **Files:**
-- Modify: `packages/cli-adapter/src/index.ts`
+- Modify: `packages/summoner/src/index.ts`
 
 **Step 1: Update index.ts**
 
@@ -1454,9 +1454,9 @@ export type { ChatStats } from './schemas.ts';
 **Step 2: Run full validation**
 
 ```bash
-pnpm --filter cli-adapter exec tsc --noEmit
-pnpm --filter cli-adapter exec vitest run
-pnpm --filter cli-adapter exec biome check src
+pnpm --filter summoner exec tsc --noEmit
+pnpm --filter summoner exec vitest run
+pnpm --filter summoner exec biome check src
 ```
 
 Expected: All three pass
@@ -1464,8 +1464,8 @@ Expected: All three pass
 **Step 3: Commit**
 
 ```bash
-git add packages/cli-adapter/src/index.ts
-git commit -m "feat(cli-adapter): finalize public API exports"
+git add packages/summoner/src/index.ts
+git commit -m "feat(summoner): finalize public API exports"
 ```
 
 ---
