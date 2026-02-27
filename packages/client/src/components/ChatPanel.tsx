@@ -4,6 +4,7 @@ import type { TypedSocket } from '../socket/client';
 import { useChatStore } from '../stores/chat-store';
 import { ChatInput } from './ChatInput';
 import { ControlRequestBanner } from './ControlRequestBanner';
+import { HeaderBar } from './HeaderBar';
 import { MessageList } from './MessageList';
 import { StatsBar } from './StatsBar';
 
@@ -15,6 +16,7 @@ export function ChatPanel({ socket }: ChatPanelProps) {
   const { createSession, sendMessage, respondToControl } = useChat(socket);
   const messages = useChatStore((s) => s.messages);
   const status = useChatStore((s) => s.status);
+  const sessionId = useChatStore((s) => s.sessionId);
   const pendingControl = useChatStore((s) => s.pendingControl);
   const stats = useChatStore((s) => s.stats);
 
@@ -24,6 +26,7 @@ export function ChatPanel({ socket }: ChatPanelProps) {
 
   return (
     <div className="flex flex-col h-full max-w-[900px] mx-auto w-full">
+      <HeaderBar status={status} sessionId={sessionId} />
       <MessageList messages={messages} />
       <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
       <StatsBar stats={stats} />
