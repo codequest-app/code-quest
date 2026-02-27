@@ -38,13 +38,17 @@ describe('DefaultSessionManager', () => {
   let manager: DefaultSessionManager;
   let mock: ReturnType<typeof createMockProcessFactory>;
 
-  const mockDb = {
-    insert: () => ({ values: () => Promise.resolve() }),
-  } as unknown as import('../db/client.ts').DrizzleDatabase;
+  const mockSessionStore = {
+    records: [] as import('../services/session-store.ts').SessionRecord[],
+    async persist(record: import('../services/session-store.ts').SessionRecord) {
+      this.records.push(record);
+    },
+  };
 
   beforeEach(() => {
     mock = createMockProcessFactory();
-    manager = new DefaultSessionManager(mock.factory, mockDb);
+    mockSessionStore.records = [];
+    manager = new DefaultSessionManager(mock.factory, mockSessionStore);
   });
 
   it('creates a session with a unique id', () => {
@@ -94,5 +98,28 @@ describe('DefaultSessionManager', () => {
   it('creates a session with resume id', () => {
     const session = manager.create('resume-123');
     expect(session).toBeDefined();
+  });
+
+  it('persists session on create with all fields', () => {
+    const session = manager.create();
+    expect(mockSessionStore.records).toHaveLength(1);
+
+    const record = mockSessionStore.records[0];
+    expect(record.id).toBe(session.id);
+    expect(record.provider).toBe('claude');
+    expect(record.command).toBe('claude');
+    expect(record.args).toBe(
+      JSON.stringify([
+        '--output-format',
+        'stream-json',
+        '--input-format',
+        'stream-json',
+        '--verbose',
+      ]),
+    );
+    expect(record.mode).toBe('interactive');
+    expect(record.role).toBe('chat');
+    expect(record.cwd).toBeDefined();
+    expect(record.createdAt).toBeDefined();
   });
 });

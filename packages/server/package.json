@@ -15,7 +15,9 @@
     "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
     "db:generate:mysql": "drizzle-kit generate --config=drizzle-mysql.config.ts",
     "db:generate": "pnpm db:generate:sqlite && pnpm db:generate:mysql",
+    "db:migrate:sqlite": "tsx --env-file=.env src/scripts/migrate-sqlite.ts",
     "db:migrate:mysql": "tsx --env-file=.env src/scripts/migrate-mysql.ts",
+    "db:migrate": "pnpm db:migrate:sqlite && pnpm db:migrate:mysql",
     "db:studio:sqlite": "drizzle-kit studio --config=drizzle-sqlite.config.ts",
     "db:studio:mysql": "drizzle-kit studio --config=drizzle-mysql.config.ts",
     "clean": "rm -rf dist node_modules"

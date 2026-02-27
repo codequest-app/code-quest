@@ -1,7 +1,13 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { events, sessions } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
   db.insert(sessions)
@@ -21,6 +27,7 @@ describe('DrizzleRawStore', () => {
 
   beforeEach(() => {
     db = createDatabase(':memory:');
+    migrate(db, { migrationsFolder });
     store = new DrizzleRawStore(db, events);
   });
 
