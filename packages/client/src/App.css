@@ -1,12 +1,38 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-border: #3c3c3c;
+
+  --color-text: #cccccc;
+  --color-text-muted: #858585;
+  --color-text-bright: #e0e0e0;
+
+  --color-accent: #007acc;
+  --color-success: #4ec9b0;
+  --color-warning: #cca700;
+  --color-danger: #f44747;
+
+  --color-user: #569cd6;
+  --color-assistant: #9cdcfe;
+
+  --color-code: #2a2a2a;
+  --color-code-block: #111111;
+  --color-user-bg: #2a2d3e;
+  --color-tool-bg: #1a2332;
+  --color-warning-bg: #332b00;
+  --color-danger-bg: #2d1b1b;
+}
+
 /* Markdown prose inside chat messages */
 [data-type="text"] p {
   margin: 4px 0;
 }
 
 [data-type="text"] code {
-  background: #2a2a2a;
+  background: var(--color-code);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 13px;
