@@ -78,6 +78,12 @@ describe('ChatPanel', () => {
     expect(screen.getByText(/\$0\.05/)).toBeInTheDocument();
   });
 
+  it('renders HeaderBar with connection status', () => {
+    const socket = makeFakeSocket();
+    render(<ChatPanel socket={socket} />);
+    expect(screen.getByText(/connected|disconnected/i)).toBeInTheDocument();
+  });
+
   it('disables input when processing', () => {
     const socket = makeFakeSocket();
     render(<ChatPanel socket={socket} />);
