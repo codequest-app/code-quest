@@ -38,7 +38,7 @@ function TextContent({ content }: { content: string }) {
 
 function ThinkingContent({ content }: { content: string }) {
   return (
-    <details className="text-gray-500 italic">
+    <details className="text-text-muted italic">
       <summary className="cursor-pointer select-none">Thinking</summary>
       <p>{content}</p>
     </details>
@@ -48,10 +48,10 @@ function ThinkingContent({ content }: { content: string }) {
 function ToolUseContent({ content, meta }: { content: string; meta?: Record<string, unknown> }) {
   const input = meta?.input;
   return (
-    <div className="bg-[#1a2332] border-l-[3px] border-l-[#4a9eff] px-3 py-2 rounded-r">
+    <div className="bg-tool-bg border-l-[3px] border-l-accent px-3 py-2 rounded-r">
       <strong>🔧 {content}</strong>
       {input != null && (
-        <pre className="bg-[#111] p-2 rounded mt-1 overflow-x-auto text-[13px] font-mono">
+        <pre className="bg-code-block p-2 rounded mt-1 overflow-x-auto text-[13px] font-mono">
           {JSON.stringify(input, null, 2)}
         </pre>
       )}
@@ -62,14 +62,16 @@ function ToolUseContent({ content, meta }: { content: string; meta?: Record<stri
 function ToolResultContent({ content }: { content: string }) {
   return (
     <div className="border-l-[3px] border-l-gray-600 pl-3">
-      <pre className="bg-[#111] p-2 rounded overflow-x-auto text-[13px] font-mono">{content}</pre>
+      <pre className="bg-code-block p-2 rounded overflow-x-auto text-[13px] font-mono">
+        {content}
+      </pre>
     </div>
   );
 }
 
 function ControlRequestContent({ content }: { content: string }) {
   return (
-    <div className="bg-[#332b00] border-l-[3px] border-l-[#ffaa00] px-3 py-2 rounded-r">
+    <div className="bg-warning-bg border-l-[3px] border-l-warning px-3 py-2 rounded-r">
       <strong>⚠️ Tool Approval: {content}</strong>
     </div>
   );
@@ -77,7 +79,7 @@ function ControlRequestContent({ content }: { content: string }) {
 
 function ErrorContent({ content }: { content: string }) {
   return (
-    <div className="text-red-400 bg-[#2d1b1b] rounded px-3 py-2" data-type="error">
+    <div className="text-danger bg-danger-bg rounded px-3 py-2" data-type="error">
       {content}
     </div>
   );
@@ -85,7 +87,7 @@ function ErrorContent({ content }: { content: string }) {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const roleStyles: Record<string, string> = {
-    user: 'bg-[#2a2d3e] rounded-lg px-3 py-2',
+    user: 'bg-user-bg rounded-lg px-3 py-2',
     assistant: 'py-1',
     system: '',
   };
