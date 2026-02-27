@@ -198,6 +198,39 @@ describe('ChatHandler', () => {
     expect(abortSpy).toHaveBeenCalled();
   });
 
+  it('responds to control request', async () => {
+    const { sessionId } = await new Promise<{ sessionId: string }>((resolve) => {
+      clientSocket.on('chat:created', resolve);
+      clientSocket.emit('chat:create', {}, () => {});
+    });
+
+    const session = sessionManager.get(sessionId)!;
+    const respondSpy = vi.spyOn(session, 'respondToControlRequest');
+
+    clientSocket.emit('chat:control_response', {
+      sessionId,
+      requestId: 'req-1',
+      response: { allowed: true },
+    });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(respondSpy).toHaveBeenCalledWith('req-1', { allowed: true });
+  });
+
+  it('emits error for control_response with unknown session', async () => {
+    const errorPromise = new Promise<{ message: string }>((resolve) => {
+      clientSocket.on('chat:error', resolve);
+    });
+
+    clientSocket.emit('chat:control_response', {
+      sessionId: 'unknown',
+      requestId: 'req-1',
+      response: { allowed: true },
+    });
+    const result = await errorPromise;
+    expect(result.message).toBe('Session not found');
+  });
+
   it('kills a session', async () => {
     const { sessionId } = await new Promise<{ sessionId: string }>((resolve) => {
       clientSocket.on('chat:created', resolve);

@@ -1,5 +1,6 @@
 import type {
   ChatAbortPayload,
+  ChatControlResponsePayload,
   ChatCreatePayload,
   ChatKillPayload,
   ChatSendPayload,
@@ -45,6 +46,7 @@ export interface ClientToServerEvents {
   'chat:send': (payload: ChatSendPayload) => void;
   'chat:abort': (payload: ChatAbortPayload) => void;
   'chat:kill': (payload: ChatKillPayload) => void;
+  'chat:control_response': (payload: ChatControlResponsePayload) => void;
 }
 
 export interface ServerToClientEvents {

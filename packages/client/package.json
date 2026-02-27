@@ -12,7 +12,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "biome check src",
-    "clean": "rm -rf dist node_modules"
+    "clean": "rm -rf dist node_modules",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@code-quest/shared": "workspace:*",
@@ -50,6 +52,9 @@
     "msw": "^2.1.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
-    "vitest": "^1.2.1"
+    "vitest": "^1.2.1",
+    "storybook": "^10.2.13",
+    "@storybook/react-vite": "^10.2.13",
+    "@storybook/addon-a11y": "^10.2.13"
   }
 }
