@@ -1,8 +1,17 @@
 import type { SpawnOptions } from 'node:child_process';
 import { EventEmitter } from 'node:events';
+import { dirname, resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
+import { fileURLToPath } from 'node:url';
 import type { ProcessFactory } from '@code-quest/summoner';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { sessions } from '../db/schema-sqlite.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
+import { DrizzleSessionStore } from '../services/drizzle-session-store.ts';
 import { DefaultSessionManager } from '../services/session-manager.ts';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 class MockProcess extends EventEmitter {
   readonly stdin = new PassThrough();
@@ -37,18 +46,15 @@ function createMockProcessFactory() {
 describe('DefaultSessionManager', () => {
   let manager: DefaultSessionManager;
   let mock: ReturnType<typeof createMockProcessFactory>;
-
-  const mockSessionStore = {
-    records: [] as import('../services/session-store.ts').SessionRecord[],
-    async persist(record: import('../services/session-store.ts').SessionRecord) {
-      this.records.push(record);
-    },
-  };
+  let db: ReturnType<typeof createDatabase>;
+  let sessionStore: DrizzleSessionStore;
 
   beforeEach(() => {
     mock = createMockProcessFactory();
-    mockSessionStore.records = [];
-    manager = new DefaultSessionManager(mock.factory, mockSessionStore);
+    db = createDatabase(':memory:');
+    migrate(db, { migrationsFolder });
+    sessionStore = new DrizzleSessionStore(db, sessions);
+    manager = new DefaultSessionManager(mock.factory, sessionStore);
   });
 
   it('creates a session with a unique id', () => {
@@ -100,11 +106,16 @@ describe('DefaultSessionManager', () => {
     expect(session).toBeDefined();
   });
 
-  it('persists session on create with all fields', () => {
+  it('persists session on create with all fields', async () => {
     const session = manager.create();
-    expect(mockSessionStore.records).toHaveLength(1);
 
-    const record = mockSessionStore.records[0];
+    // Wait for async persist to complete
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const rows = db.select().from(sessions).all();
+    expect(rows).toHaveLength(1);
+
+    const record = rows[0];
     expect(record.id).toBe(session.id);
     expect(record.provider).toBe('claude');
     expect(record.command).toBe('claude');
