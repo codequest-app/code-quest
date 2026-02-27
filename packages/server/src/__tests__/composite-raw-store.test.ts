@@ -1,25 +1,52 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { events, sessions } from '../db/schema-sqlite.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawStore } from '../services/composite-raw-store.ts';
+import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
+import { FileRawStore } from '../services/file-raw-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 
-function createMockStore(): RawEventStore & { appendCalls: RawEntry[] } {
-  const appendCalls: RawEntry[] = [];
-  return {
-    appendCalls,
-    async append(entry: RawEntry) {
-      appendCalls.push(entry);
-    },
-    async getBySession(_sessionId: string) {
-      return [];
-    },
-  };
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
+
+function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
+  db.insert(sessions)
+    .values({
+      id,
+      provider: 'claude',
+      command: 'claude',
+      args: '[]',
+      createdAt: new Date().toISOString(),
+    })
+    .run();
 }
 
 describe('CompositeRawStore', () => {
+  let db: ReturnType<typeof createDatabase>;
+  let drizzleStore: DrizzleRawStore;
+  let fileStore: FileRawStore;
+  let tmpDir: string;
+
+  beforeEach(() => {
+    db = createDatabase(':memory:');
+    migrate(db, { migrationsFolder });
+    drizzleStore = new DrizzleRawStore(db, events);
+    tmpDir = mkdtempSync(join(tmpdir(), 'composite-raw-'));
+    fileStore = new FileRawStore(tmpDir);
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
   it('appends to all stores', async () => {
-    const store1 = createMockStore();
-    const store2 = createMockStore();
-    const composite = new CompositeRawStore([store1, store2]);
+    seedSession(db, 'sess-1');
+    const composite = new CompositeRawStore([drizzleStore, fileStore]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -31,30 +58,28 @@ describe('CompositeRawStore', () => {
 
     await composite.append(entry);
 
-    expect(store1.appendCalls).toHaveLength(1);
-    expect(store2.appendCalls).toHaveLength(1);
+    const drizzleResults = await drizzleStore.getBySession('sess-1');
+    const fileResults = await fileStore.getBySession('sess-1');
+    expect(drizzleResults).toHaveLength(1);
+    expect(fileResults).toHaveLength(1);
   });
 
   it('reads from the first store', async () => {
-    const expected: RawEntry[] = [
-      { timestamp: 1, sessionId: 's', turnId: 0, direction: 'out', raw: 'a' },
-    ];
-    const store1: RawEventStore = {
-      async append() {},
-      async getBySession() {
-        return expected;
-      },
-    };
-    const store2: RawEventStore = {
-      async append() {},
-      async getBySession() {
-        return [];
-      },
+    seedSession(db, 'sess-1');
+    const composite = new CompositeRawStore([drizzleStore, fileStore]);
+
+    const entry: RawEntry = {
+      timestamp: Date.now(),
+      sessionId: 'sess-1',
+      turnId: 0,
+      direction: 'out',
+      raw: 'data',
     };
 
-    const composite = new CompositeRawStore([store1, store2]);
-    const results = await composite.getBySession('s');
-    expect(results).toBe(expected);
+    await composite.append(entry);
+    const results = await composite.getBySession('sess-1');
+    expect(results).toHaveLength(1);
+    expect(results[0].raw).toBe('data');
   });
 
   it('throws when constructed with empty stores array', () => {
@@ -100,8 +125,7 @@ describe('CompositeRawStore', () => {
         return [];
       },
     };
-    const goodStore = createMockStore();
-    const composite = new CompositeRawStore([failStore, goodStore]);
+    const composite = new CompositeRawStore([failStore, fileStore]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -112,6 +136,7 @@ describe('CompositeRawStore', () => {
     };
 
     await composite.append(entry);
-    expect(goodStore.appendCalls).toHaveLength(1);
+    const results = await fileStore.getBySession('sess-1');
+    expect(results).toHaveLength(1);
   });
 });
