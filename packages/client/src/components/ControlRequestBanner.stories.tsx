@@ -8,7 +8,7 @@ const meta = {
   args: { onRespond: fn() },
   decorators: [
     (Story) => (
-      <div style={{ width: 500, background: '#1e1e1e', color: '#e0e0e0', padding: 16 }}>
+      <div className="w-[500px] bg-bg text-text p-4">
         <Story />
       </div>
     ),

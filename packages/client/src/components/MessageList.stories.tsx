@@ -42,15 +42,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div
-        style={{
-          width: 600,
-          height: 400,
-          background: '#1e1e1e',
-          color: '#e0e0e0',
-          overflow: 'auto',
-        }}
-      >
+      <div className="w-[600px] h-[400px] bg-bg text-text overflow-auto">
         <Story />
       </div>
     ),
