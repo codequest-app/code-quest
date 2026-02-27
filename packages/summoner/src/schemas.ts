@@ -82,61 +82,6 @@ export const cliControlRequestSchema = z.looseObject({
   }),
 });
 
-// --- Schema registry keyed by type ---
-
-const schemasByType: Record<string, z.ZodType[]> = {
-  system: [cliSystemInitSchema, cliSystemHookStartedSchema, cliSystemHookResponseSchema],
-  assistant: [cliAssistantSchema],
-  user: [cliUserSchema],
-  result: [cliResultSchema],
-  control_response: [cliControlResponseSchema],
-  control_request: [cliControlRequestSchema],
-};
-
-// Ignored types — still valid, just not processed
-const ignoredTypes = new Set([
-  'rate_limit_event',
-  'keep_alive',
-  'streamlined_text',
-  'streamlined_tool_use_summary',
-]);
-
-/**
- * Validate any raw CLI event (including ignored types).
- */
-export const claudeRawEventSchema = {
-  safeParse(
-    data: unknown,
-  ): { success: true; data: unknown } | { success: false; error: { message: string } } {
-    if (typeof data !== 'object' || data === null || !('type' in data)) {
-      return { success: false, error: { message: 'Not an object with type field' } };
-    }
-
-    const obj = data as Record<string, unknown>;
-    const type = obj.type as string;
-
-    if (ignoredTypes.has(type)) {
-      return { success: true, data: obj };
-    }
-
-    const schemas = schemasByType[type];
-    if (!schemas) {
-      return { success: false, error: { message: `Unknown type: ${type}` } };
-    }
-
-    const errors: string[] = [];
-    for (const schema of schemas) {
-      const result = schema.safeParse(data);
-      if (result.success) {
-        return { success: true, data: result.data };
-      }
-      errors.push(result.error.message);
-    }
-
-    return { success: false, error: { message: errors.join('; ') } };
-  },
-};
-
 // Inferred types
 export type CliSystemInit = z.infer<typeof cliSystemInitSchema>;
 export type CliAssistant = z.infer<typeof cliAssistantSchema>;
