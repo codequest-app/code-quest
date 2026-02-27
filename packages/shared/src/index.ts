@@ -11,6 +11,7 @@ export {
   chatSendSchema,
 } from './schemas/chat.ts';
 export type {
+  ChatStats,
   ChatStreamEvent,
   ClientToServerEvents,
   ServerToClientEvents,

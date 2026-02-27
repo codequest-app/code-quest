@@ -1,38 +1,7 @@
 import type { ChildProcess, SpawnOptions } from 'node:child_process';
+import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
 
-// --- Chat stream events (normalized from any AI provider) ---
-
-export type ChatStreamEvent =
-  | { type: 'init'; sessionId: string; model?: string; tools?: string[] }
-  | { type: 'text'; content: string }
-  | { type: 'thinking'; content: string }
-  | { type: 'tool_use'; id: string; name: string; input: unknown }
-  | { type: 'tool_result'; id: string; name: string; output: string }
-  | { type: 'result'; stats: ChatStats }
-  | { type: 'error'; message: string }
-  | {
-      type: 'control_response';
-      requestId: string;
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }
-  | {
-      type: 'control_request';
-      requestId: string;
-      subtype: string;
-      toolName?: string;
-      input?: unknown;
-      callbackId?: string;
-      toolUseId?: string;
-    };
-
-export interface ChatStats {
-  costUsd?: number;
-  durationMs?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-}
+export type { ChatStats, ChatStreamEvent };
 
 // --- Raw entry for recording ---
 

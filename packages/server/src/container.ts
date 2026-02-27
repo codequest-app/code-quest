@@ -57,27 +57,20 @@ function buildStores(
   db: DrizzleDatabase,
   config?: StoreConfig,
 ): { eventStores: RawEventStore[]; sessionStores: SessionStore[] } {
-  if (!config) {
-    return {
-      eventStores: [new DrizzleRawStore(db, sqliteSchema.rawEntries)],
-      sessionStores: [new DrizzleSessionStore(db, sqliteSchema.sessions)],
-    };
-  }
-
   const eventStores: RawEventStore[] = [];
   const sessionStores: SessionStore[] = [];
 
-  if (config.sqlite) {
+  if (config?.sqlite) {
     eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
   }
 
-  if (config.mysql) {
+  if (config?.mysql) {
     eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
   }
 
-  if (config.file) {
+  if (config?.file) {
     eventStores.push(new FileRawStore(config.file.dir));
   }
 

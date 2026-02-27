@@ -12,6 +12,7 @@
     "lint": "biome check src"
   },
   "dependencies": {
+    "@code-quest/shared": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {
