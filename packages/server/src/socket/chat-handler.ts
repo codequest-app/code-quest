@@ -1,6 +1,7 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import {
   chatAbortSchema,
+  chatControlResponseSchema,
   chatCreateSchema,
   chatKillSchema,
   chatSendSchema,
@@ -93,6 +94,27 @@ export class ChatHandler {
         this.sessionManager.kill(sessionId);
       } catch {
         // ignore
+      }
+    });
+
+    socket.on('chat:control_response', (payload) => {
+      try {
+        const { sessionId, requestId, response } = chatControlResponseSchema.parse(payload);
+        const session = this.sessionManager.get(sessionId);
+        if (!session) {
+          socket.emit('chat:error', { sessionId, message: 'Session not found' });
+          return;
+        }
+        if ('respondToControlRequest' in session) {
+          (session as import('@code-quest/summoner').ControllableSession).respondToControlRequest(
+            requestId,
+            response,
+          );
+        }
+      } catch (err) {
+        socket.emit('chat:error', {
+          message: err instanceof Error ? err.message : 'Failed to respond to control request',
+        });
       }
     });
 

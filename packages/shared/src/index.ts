@@ -1,11 +1,13 @@
 export type {
   ChatAbortPayload,
+  ChatControlResponsePayload,
   ChatCreatePayload,
   ChatKillPayload,
   ChatSendPayload,
 } from './schemas/chat.ts';
 export {
   chatAbortSchema,
+  chatControlResponseSchema,
   chatCreateSchema,
   chatKillSchema,
   chatSendSchema,
