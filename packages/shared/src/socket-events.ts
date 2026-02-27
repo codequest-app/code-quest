@@ -5,10 +5,37 @@ import type {
   ChatSendPayload,
 } from './schemas/chat.ts';
 
-export interface ChatStreamEvent {
-  type: string;
-  [key: string]: unknown;
+export interface ChatStats {
+  costUsd?: number;
+  durationMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
+
+export type ChatStreamEvent =
+  | { type: 'init'; sessionId: string; model?: string; tools?: string[] }
+  | { type: 'text'; content: string }
+  | { type: 'thinking'; content: string }
+  | { type: 'tool_use'; id: string; name: string; input: unknown }
+  | { type: 'tool_result'; id: string; name: string; output: string }
+  | { type: 'result'; stats: ChatStats }
+  | { type: 'error'; message: string }
+  | {
+      type: 'control_response';
+      requestId: string;
+      success: boolean;
+      response?: Record<string, unknown>;
+      error?: string;
+    }
+  | {
+      type: 'control_request';
+      requestId: string;
+      subtype: string;
+      toolName?: string;
+      input?: unknown;
+      callbackId?: string;
+      toolUseId?: string;
+    };
 
 export interface ClientToServerEvents {
   'chat:create': (
