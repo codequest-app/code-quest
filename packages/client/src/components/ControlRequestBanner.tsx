@@ -11,15 +11,23 @@ export function ControlRequestBanner({ pending, onRespond }: ControlRequestBanne
   const label = pending.toolName ?? pending.subtype;
 
   return (
-    <div className="control-request-banner">
+    <div className="flex items-center justify-between bg-[#332b00] border border-[#ffaa00] rounded-md px-4 py-2.5 mx-4 mb-2">
       <span>
         ⚠️ Approve tool: <strong>{label}</strong>
       </span>
-      <div className="control-request-banner__actions">
-        <button type="button" onClick={() => onRespond({ allowed: true })}>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onRespond({ allowed: true })}
+          className="px-3 py-1 bg-[#2ea043] text-white border-none rounded cursor-pointer text-[13px]"
+        >
           Approve
         </button>
-        <button type="button" onClick={() => onRespond({ allowed: false })}>
+        <button
+          type="button"
+          onClick={() => onRespond({ allowed: false })}
+          className="px-3 py-1 bg-[#da3633] text-white border-none rounded cursor-pointer text-[13px]"
+        >
           Deny
         </button>
       </div>

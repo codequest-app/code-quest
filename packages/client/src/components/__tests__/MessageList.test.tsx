@@ -17,13 +17,13 @@ describe('MessageList', () => {
   });
 
   it('renders empty state when no messages', () => {
-    const { container } = render(<MessageList messages={[]} />);
-    expect(container.querySelector('.message-list')).toBeInTheDocument();
+    render(<MessageList messages={[]} />);
+    expect(screen.getByTestId('message-list')).toBeInTheDocument();
   });
 
   it('auto-scrolls to bottom', () => {
-    const { container } = render(<MessageList messages={messages} />);
-    const list = container.querySelector('.message-list')!;
+    render(<MessageList messages={messages} />);
+    const list = screen.getByTestId('message-list');
     // scrollTop is 0 in jsdom but scrollIntoView should have been called
     // 3 messages + 1 scroll anchor div
     expect(list.children.length).toBe(4);

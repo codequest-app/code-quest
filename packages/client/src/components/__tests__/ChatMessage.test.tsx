@@ -73,7 +73,7 @@ describe('ChatMessage', () => {
     );
     const el = screen.getByText('Something broke');
     expect(el).toBeInTheDocument();
-    expect(el.closest('.chat-message--error')).toBeInTheDocument();
+    expect(el.closest('[data-type="error"]')).toBeInTheDocument();
   });
 
   it('renders control_request message', () => {
@@ -94,6 +94,6 @@ describe('ChatMessage', () => {
   it('renders user messages with user role styling', () => {
     render(<ChatMessage message={{ ...base, role: 'user', type: 'text', content: 'Hi there' }} />);
     const el = screen.getByText('Hi there');
-    expect(el.closest('.chat-message--user')).toBeInTheDocument();
+    expect(el.closest('[data-role="user"]')).toBeInTheDocument();
   });
 });

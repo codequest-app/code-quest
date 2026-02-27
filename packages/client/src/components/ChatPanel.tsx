@@ -23,7 +23,7 @@ export function ChatPanel({ socket }: ChatPanelProps) {
   }, [createSession]);
 
   return (
-    <div className="chat-panel">
+    <div className="flex flex-col h-full max-w-[900px] mx-auto w-full">
       <MessageList messages={messages} />
       <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
       <StatsBar stats={stats} />
