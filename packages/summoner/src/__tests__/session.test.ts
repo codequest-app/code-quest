@@ -58,7 +58,7 @@ describe('InteractiveSession', () => {
       });
     });
 
-    it('should increment turnId on each sendMessage', async () => {
+    it('should assign different promptId on each sendMessage', async () => {
       const mock = createMockProcessFactory();
       const session = new InteractiveSession({ processFactory: mock.factory });
 
@@ -80,8 +80,9 @@ describe('InteractiveSession', () => {
       session.sendMessage('second');
 
       const inEntries = rawEntries.filter((e) => e.direction === 'in');
-      expect(inEntries[0].turnId).toBe(1);
-      expect(inEntries[1].turnId).toBe(2);
+      expect(inEntries[0].promptId).toBeTruthy();
+      expect(inEntries[1].promptId).toBeTruthy();
+      expect(inEntries[0].promptId).not.toBe(inEntries[1].promptId);
     });
   });
 
@@ -134,7 +135,7 @@ describe('InteractiveSession', () => {
       const outEntries = rawEntries.filter((e) => e.direction === 'out');
       expect(outEntries.length).toBeGreaterThan(0);
       expect(outEntries[0].raw).toContain('assistant');
-      expect(outEntries[0].turnId).toBe(1);
+      expect(outEntries[0].promptId).toBeTruthy();
     });
 
     it('should transition back to idle on result event', async () => {

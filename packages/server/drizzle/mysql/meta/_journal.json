@@ -15,6 +15,13 @@
       "when": 1771790587566,
       "tag": "0001_public_the_santerians",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772209682927,
+      "tag": "0002_mature_nightshade",
+      "breakpoints": true
     }
   ]
 }

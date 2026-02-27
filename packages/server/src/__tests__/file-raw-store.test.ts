@@ -21,10 +21,9 @@ describe('FileRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      turnId: 1,
+      promptId: 'prompt-1',
       direction: 'out',
       raw: '{"type":"text","content":"hello"}',
-      parsed: [{ type: 'text', content: 'hello' }],
     };
 
     await store.append(entry);
@@ -34,8 +33,7 @@ describe('FileRawStore', () => {
     expect(results[0].sessionId).toBe('sess-1');
     expect(results[0].direction).toBe('out');
     expect(results[0].raw).toBe(entry.raw);
-    expect(results[0].parsed).toEqual(entry.parsed);
-    expect(results[0].turnId).toBe(1);
+    expect(results[0].promptId).toBe('prompt-1');
   });
 
   it('returns empty array for unknown session', async () => {
@@ -48,7 +46,7 @@ describe('FileRawStore', () => {
       await store.append({
         timestamp: Date.now() + i,
         sessionId: 'sess-2',
-        turnId: i,
+        promptId: `prompt-${i}`,
         direction: 'out',
         raw: `line ${i}`,
       });
@@ -63,7 +61,7 @@ describe('FileRawStore', () => {
       store.append({
         timestamp: Date.now(),
         sessionId: '../etc/passwd',
-        turnId: 0,
+        promptId: 'prompt-0',
         direction: 'out',
         raw: 'malicious',
       }),
@@ -75,7 +73,7 @@ describe('FileRawStore', () => {
       store.append({
         timestamp: Date.now(),
         sessionId: 'foo/bar',
-        turnId: 0,
+        promptId: 'prompt-0',
         direction: 'out',
         raw: 'malicious',
       }),
@@ -93,7 +91,7 @@ describe('FileRawStore', () => {
     await nestedStore.append({
       timestamp: Date.now(),
       sessionId: 'sess-3',
-      turnId: 0,
+      promptId: 'prompt-0',
       direction: 'in',
       raw: 'test',
     });

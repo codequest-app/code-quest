@@ -39,10 +39,9 @@ export interface ChatStats {
 export interface RawEntry {
   timestamp: number;
   sessionId: string;
-  turnId: number;
+  promptId: string;
   direction: 'in' | 'out' | 'err';
   raw: string;
-  parsed?: ChatStreamEvent[];
 }
 
 // --- Session interfaces ---

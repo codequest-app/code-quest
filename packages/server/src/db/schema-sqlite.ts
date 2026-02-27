@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
@@ -12,17 +12,17 @@ export const sessions = sqliteTable('sessions', {
   createdAt: text('created_at').notNull(),
 });
 
-export const events = sqliteTable(
-  'events',
+export const rawEntries = sqliteTable(
+  'raw_entries',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: text('id').primaryKey(),
     sessionId: text('session_id')
       .notNull()
       .references(() => sessions.id),
+    promptId: text('prompt_id').notNull(),
     dir: text('dir').notNull(),
-    type: text('type').notNull(),
-    data: text('data').notNull(),
+    raw: text('raw').notNull(),
     createdAt: text('created_at').notNull(),
   },
-  (table) => [index('idx_events_session_created').on(table.sessionId, table.createdAt)],
+  (table) => [index('idx_raw_entries_session_created').on(table.sessionId, table.createdAt)],
 );

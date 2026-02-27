@@ -59,7 +59,7 @@ function buildStores(
 ): { eventStores: RawEventStore[]; sessionStores: SessionStore[] } {
   if (!config) {
     return {
-      eventStores: [new DrizzleRawStore(db, sqliteSchema.events)],
+      eventStores: [new DrizzleRawStore(db, sqliteSchema.rawEntries)],
       sessionStores: [new DrizzleSessionStore(db, sqliteSchema.sessions)],
     };
   }
@@ -68,12 +68,12 @@ function buildStores(
   const sessionStores: SessionStore[] = [];
 
   if (config.sqlite) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.events));
+    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
   }
 
   if (config.mysql) {
-    eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.events));
+    eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
   }
 
@@ -82,7 +82,7 @@ function buildStores(
   }
 
   if (eventStores.length === 0) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.events));
+    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
   }
   if (sessionStores.length === 0) {
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));

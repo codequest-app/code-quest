@@ -19,30 +19,28 @@ interface DrizzleDb {
   };
 }
 
-interface EventsTable {
+interface RawEntriesTable {
+  id: Column;
   sessionId: Column;
+  promptId: Column;
   dir: Column;
-  type: Column;
-  data: Column;
+  raw: Column;
   createdAt: Column;
 }
 
 export class DrizzleRawStore implements RawEventStore {
   constructor(
     private db: DrizzleDb,
-    private events: EventsTable,
+    private table: RawEntriesTable,
   ) {}
 
   async append(entry: RawEntry): Promise<void> {
-    await this.db.insert(this.events).values({
+    await this.db.insert(this.table).values({
+      id: crypto.randomUUID(),
       sessionId: entry.sessionId,
+      promptId: entry.promptId,
       dir: entry.direction,
-      type: entry.parsed?.[0]?.type ?? 'raw',
-      data: JSON.stringify({
-        raw: entry.raw,
-        parsed: entry.parsed ?? null,
-        turnId: entry.turnId,
-      }),
+      raw: entry.raw,
       createdAt: new Date(entry.timestamp).toISOString(),
     });
   }
@@ -50,20 +48,16 @@ export class DrizzleRawStore implements RawEventStore {
   async getBySession(sessionId: string): Promise<RawEntry[]> {
     const rows = await this.db
       .select()
-      .from(this.events)
-      .where(eq(this.events.sessionId, sessionId))
-      .orderBy(asc(this.events.createdAt));
+      .from(this.table)
+      .where(eq(this.table.sessionId, sessionId))
+      .orderBy(asc(this.table.createdAt));
 
-    return (rows as Record<string, unknown>[]).map((row) => {
-      const data = JSON.parse(row.data as string);
-      return {
-        timestamp: new Date(row.createdAt as string).getTime(),
-        sessionId: row.sessionId as string,
-        turnId: data.turnId ?? 0,
-        direction: row.dir as 'in' | 'out' | 'err',
-        raw: data.raw,
-        parsed: data.parsed ?? undefined,
-      };
-    });
+    return (rows as Record<string, unknown>[]).map((row) => ({
+      timestamp: new Date(row.createdAt as string).getTime(),
+      sessionId: row.sessionId as string,
+      promptId: row.promptId as string,
+      direction: row.dir as 'in' | 'out' | 'err',
+      raw: row.raw as string,
+    }));
   }
 }
