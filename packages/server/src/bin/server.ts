@@ -1,8 +1,6 @@
 import 'reflect-metadata';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type { ProcessFactory } from '@code-quest/summoner';
 import cors from 'cors';
@@ -36,12 +34,9 @@ const container = createContainer({
   storeConfig,
 });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 app.use(helmet());
 app.use(cors());
-app.use(express.static(resolve(__dirname, '../../public')));
 
 const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
