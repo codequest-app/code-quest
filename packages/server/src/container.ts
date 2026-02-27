@@ -23,18 +23,16 @@ export interface StoreConfig {
 }
 
 export interface ContainerOptions {
-  processFactory?: ProcessFactory;
+  processFactory: ProcessFactory;
   database?: DrizzleDatabase;
   dbPath?: string;
   storeConfig?: StoreConfig;
 }
 
-export function createContainer(options: ContainerOptions = {}): Container {
+export function createContainer(options: ContainerOptions): Container {
   const container = new Container();
 
-  if (options.processFactory) {
-    container.bind<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(options.processFactory);
-  }
+  container.bind<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(options.processFactory);
 
   const db = options.database ?? createDatabase(options.dbPath);
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
