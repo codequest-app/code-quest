@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { events, sessions } from '../db/schema-sqlite.ts';
+import { rawEntries, sessions } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawStore } from '../services/composite-raw-store.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
@@ -35,7 +35,7 @@ describe('CompositeRawStore', () => {
   beforeEach(() => {
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
-    drizzleStore = new DrizzleRawStore(db, events);
+    drizzleStore = new DrizzleRawStore(db, rawEntries);
     tmpDir = mkdtempSync(join(tmpdir(), 'composite-raw-'));
     fileStore = new FileRawStore(tmpDir);
   });
@@ -51,7 +51,7 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      turnId: 1,
+      promptId: 'prompt-1',
       direction: 'out',
       raw: 'hello',
     };
@@ -71,7 +71,7 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      turnId: 0,
+      promptId: 'prompt-0',
       direction: 'out',
       raw: 'data',
     };
@@ -108,7 +108,7 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      turnId: 0,
+      promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
     };
@@ -130,7 +130,7 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      turnId: 0,
+      promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
     };

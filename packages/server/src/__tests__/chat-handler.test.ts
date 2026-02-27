@@ -10,7 +10,7 @@ import type { ProcessFactory } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { Server } from 'socket.io';
 import { type Socket as ClientSocket, io as ioc } from 'socket.io-client';
-import { events, sessions } from '../db/schema-sqlite.ts';
+import { rawEntries, sessions } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
 import { DrizzleSessionStore } from '../services/drizzle-session-store.ts';
@@ -66,7 +66,7 @@ describe('ChatHandler', () => {
 
     const sessionStore = new DrizzleSessionStore(db, sessions);
     sessionManager = new DefaultSessionManager(mock.factory, sessionStore);
-    rawEventStore = new DrizzleRawStore(db, events);
+    rawEventStore = new DrizzleRawStore(db, rawEntries);
 
     httpServer = createServer();
     io = new Server(httpServer);
@@ -147,7 +147,7 @@ describe('ChatHandler', () => {
     session.emit('raw', {
       timestamp: Date.now(),
       sessionId,
-      turnId: 1,
+      promptId: 'prompt-1',
       direction: 'out' as const,
       raw: 'test',
     });

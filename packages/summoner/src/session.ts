@@ -28,7 +28,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
   readonly id: string;
   private _state: 'idle' | 'processing' = 'idle';
   private _cliSessionId: string | null = null;
-  private turnCounter = 0;
+  private currentPromptId: string | null = null;
   private requestCounter = 0;
 
   private process: ReturnType<ProcessFactory> | null = null;
@@ -67,7 +67,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
 
   sendMessage(message: string): void {
     this.ensureProcess();
-    this.turnCounter++;
+    this.currentPromptId = randomUUID();
     this._state = 'processing';
 
     const payload = {
@@ -185,7 +185,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
 
   private handleLine(line: string): void {
     const events = this.parser.parseLine(line);
-    this.emitRaw(line, 'out', events.length > 0 ? events : undefined);
+    this.emitRaw(line, 'out');
 
     for (const event of events) {
       // Track session ID
@@ -207,14 +207,13 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
     }
   }
 
-  private emitRaw(raw: string, direction: 'in' | 'out' | 'err', parsed?: ChatStreamEvent[]): void {
+  private emitRaw(raw: string, direction: 'in' | 'out' | 'err'): void {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: this.id,
-      turnId: this.turnCounter,
+      promptId: this.currentPromptId ?? '',
       direction,
       raw,
-      parsed,
     };
 
     this.emit('raw', entry);

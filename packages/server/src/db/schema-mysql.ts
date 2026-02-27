@@ -1,4 +1,4 @@
-import { index, int, mysqlTable, text, varchar } from 'drizzle-orm/mysql-core';
+import { index, mysqlTable, text, varchar } from 'drizzle-orm/mysql-core';
 
 export const sessions = mysqlTable('sessions', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -12,17 +12,17 @@ export const sessions = mysqlTable('sessions', {
   createdAt: varchar('created_at', { length: 30 }).notNull(),
 });
 
-export const events = mysqlTable(
-  'events',
+export const rawEntries = mysqlTable(
+  'raw_entries',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: varchar('id', { length: 36 }).primaryKey(),
     sessionId: varchar('session_id', { length: 36 })
       .notNull()
       .references(() => sessions.id),
+    promptId: varchar('prompt_id', { length: 36 }).notNull(),
     dir: varchar('dir', { length: 10 }).notNull(),
-    type: varchar('type', { length: 100 }).notNull(),
-    data: text('data').notNull(),
+    raw: text('raw').notNull(),
     createdAt: varchar('created_at', { length: 30 }).notNull(),
   },
-  (table) => [index('idx_events_session_created').on(table.sessionId, table.createdAt)],
+  (table) => [index('idx_raw_entries_session_created').on(table.sessionId, table.createdAt)],
 );
