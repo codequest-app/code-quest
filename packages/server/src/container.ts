@@ -6,10 +6,13 @@ import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { CompositeRawStore } from './services/composite-raw-store.ts';
+import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
+import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { FileRawStore } from './services/file-raw-store.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import { DefaultSessionManager, type SessionManager } from './services/session-manager.ts';
+import type { SessionStore } from './services/session-store.ts';
 import { ChatHandler } from './socket/chat-handler.ts';
 import { TYPES } from './types.ts';
 
@@ -36,40 +39,56 @@ export function createContainer(options: ContainerOptions = {}): Container {
   const db = options.database ?? createDatabase(options.dbPath);
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
-  container.bind<SessionManager>(TYPES.SessionManager).to(DefaultSessionManager).inSingletonScope();
+  const { eventStores, sessionStores } = buildStores(db, options.storeConfig);
 
-  const stores: RawEventStore[] = buildStores(db, options.storeConfig);
   const rawEventStore: RawEventStore =
-    stores.length === 1 ? stores[0] : new CompositeRawStore(stores);
+    eventStores.length === 1 ? eventStores[0] : new CompositeRawStore(eventStores);
   container.bind<RawEventStore>(TYPES.RawEventStore).toConstantValue(rawEventStore);
 
+  const sessionStore: SessionStore =
+    sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
+  container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
+
+  container.bind<SessionManager>(TYPES.SessionManager).to(DefaultSessionManager).inSingletonScope();
   container.bind<ChatHandler>(TYPES.ChatHandler).to(ChatHandler).inSingletonScope();
 
   return container;
 }
 
-function buildStores(db: DrizzleDatabase, config?: StoreConfig): RawEventStore[] {
+function buildStores(
+  db: DrizzleDatabase,
+  config?: StoreConfig,
+): { eventStores: RawEventStore[]; sessionStores: SessionStore[] } {
   if (!config) {
-    return [new DrizzleRawStore(db, sqliteSchema.events)];
+    return {
+      eventStores: [new DrizzleRawStore(db, sqliteSchema.events)],
+      sessionStores: [new DrizzleSessionStore(db, sqliteSchema.sessions)],
+    };
   }
 
-  const stores: RawEventStore[] = [];
+  const eventStores: RawEventStore[] = [];
+  const sessionStores: SessionStore[] = [];
 
   if (config.sqlite) {
-    stores.push(new DrizzleRawStore(db, sqliteSchema.events));
+    eventStores.push(new DrizzleRawStore(db, sqliteSchema.events));
+    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
   }
 
   if (config.mysql) {
-    stores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.events));
+    eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.events));
+    sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
   }
 
   if (config.file) {
-    stores.push(new FileRawStore(config.file.dir));
+    eventStores.push(new FileRawStore(config.file.dir));
   }
 
-  if (stores.length === 0) {
-    stores.push(new DrizzleRawStore(db, sqliteSchema.events));
+  if (eventStores.length === 0) {
+    eventStores.push(new DrizzleRawStore(db, sqliteSchema.events));
+  }
+  if (sessionStores.length === 0) {
+    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
   }
 
-  return stores;
+  return { eventStores, sessionStores };
 }

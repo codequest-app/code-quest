@@ -1,9 +1,8 @@
 import type { ChatSession, ProcessFactory } from '@code-quest/summoner';
 import { InteractiveSession } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
-import { sessions } from '../db/schema-sqlite.ts';
-import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import { TYPES } from '../types.ts';
+import type { SessionStore } from './session-store.ts';
 
 export interface SessionManager {
   create(resumeSessionId?: string): ChatSession;
@@ -18,24 +17,32 @@ export class DefaultSessionManager implements SessionManager {
 
   constructor(
     @inject(TYPES.ProcessFactory) private processFactory: ProcessFactory,
-    @inject(TYPES.Database) private db: DrizzleDatabase,
+    @inject(TYPES.SessionStore) private sessionStore: SessionStore,
   ) {}
 
   create(resumeSessionId?: string): ChatSession {
+    const command = 'claude';
+    const args = ['--output-format', 'stream-json', '--input-format', 'stream-json', '--verbose'];
+
     const session = new InteractiveSession({
       processFactory: this.processFactory,
+      command,
+      args,
       resumeSessionId,
     });
 
     this.activeSessions.set(session.id, session);
 
-    this.db
-      .insert(sessions)
-      .values({
+    this.sessionStore
+      .persist({
         id: session.id,
         provider: 'claude',
-        command: 'claude',
-        args: '[]',
+        command,
+        args: JSON.stringify(args),
+        cwd: process.cwd(),
+        mode: 'interactive',
+        role: 'chat',
+        parentId: resumeSessionId,
         createdAt: new Date().toISOString(),
       })
       .catch((err) => {
