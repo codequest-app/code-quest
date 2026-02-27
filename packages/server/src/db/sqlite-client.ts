@@ -12,5 +12,6 @@ export function createDatabase(path = ':memory:'): ReturnType<typeof drizzle> {
   }
   const sqlite = new Database(path);
   sqlite.pragma('journal_mode = WAL');
+  sqlite.pragma('foreign_keys = ON');
   return drizzle(sqlite, { schema });
 }
