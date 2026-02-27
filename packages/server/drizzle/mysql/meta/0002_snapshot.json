@@ -1,21 +1,28 @@
 {
-  "id": "dff895e9-bdee-4367-89e9-e792d5498d0c",
-  "prevId": "91ed9b90-adde-4f51-9cc9-f5990bba7ea4",
   "version": "5",
   "dialect": "mysql",
+  "id": "9ef1d403-9066-4681-b3a4-0a0ee8927c1b",
+  "prevId": "91ed9b90-adde-4f51-9cc9-f5990bba7ea4",
   "tables": {
-    "events": {
-      "name": "events",
+    "raw_entries": {
+      "name": "raw_entries",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "session_id": {
           "name": "session_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prompt_id": {
+          "name": "prompt_id",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -28,15 +35,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "type": {
-          "name": "type",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "data": {
-          "name": "data",
+        "raw": {
+          "name": "raw",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -51,26 +51,26 @@
         }
       },
       "indexes": {
-        "idx_events_session_created": {
-          "name": "idx_events_session_created",
+        "idx_raw_entries_session_created": {
+          "name": "idx_raw_entries_session_created",
           "columns": ["session_id", "created_at"],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "events_session_id_sessions_id_fk": {
-          "name": "events_session_id_sessions_id_fk",
-          "tableFrom": "events",
-          "columnsFrom": ["session_id"],
+        "raw_entries_session_id_sessions_id_fk": {
+          "name": "raw_entries_session_id_sessions_id_fk",
+          "tableFrom": "raw_entries",
           "tableTo": "sessions",
+          "columnsFrom": ["session_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "events_id": {
-          "name": "events_id",
+        "raw_entries_id": {
+          "name": "raw_entries_id",
           "columns": ["id"]
         }
       },
@@ -160,9 +160,11 @@
   },
   "views": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
+    "tables": {
+      "\"events\"": "\"raw_entries\""
+    },
+    "columns": {}
   },
   "internal": {
     "tables": {},
