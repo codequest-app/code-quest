@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type { ProcessFactory } from '@code-quest/summoner';
 import cors from 'cors';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
+import helmet from 'helmet';
 import { Server } from 'socket.io';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
@@ -38,6 +39,7 @@ const container = createContainer({
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.static(resolve(__dirname, '../../public')));
 
@@ -50,9 +52,25 @@ const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
 chatHandler.register(io);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err instanceof Error && 'status' in err ? (err as { status: number }).status : 500;
+  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  res.status(status).json({ error: message });
 });
 
 httpServer.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+const shutdown = () => {
+  console.log('Shutting down gracefully...');
+  io.close();
+  httpServer.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10_000).unref();
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
