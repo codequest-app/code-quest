@@ -368,6 +368,46 @@ describe('useChat', () => {
     expect(useChatStore.getState().statusText).toBe('Thinking…');
   });
 
+  it('does not duplicate content when assistant replay follows text_delta stream', () => {
+    // Simulates real CLI streaming: text_delta → text_delta → assistant(full) → message_end → result
+    // The assistant message is a replay of the already-streamed content and should not duplicate it.
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    // Stream deltas
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: 'hello' },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: ' world' },
+      });
+    });
+    // CLI sends full assistant replay
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text', content: 'hello world' },
+      });
+    });
+    // Then message_end
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'message_end' },
+      });
+    });
+
+    const messages = useChatStore.getState().messages;
+    expect(messages).toHaveLength(1);
+    expect(messages[0].content).toBe('hello world');
+  });
+
   it('clears statusText on result event', () => {
     const socket = makeFakeSocket();
     renderHook(() => useChat(socket));

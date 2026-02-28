@@ -234,6 +234,35 @@ describe('ClaudeParser', () => {
     });
   });
 
+  describe('stream-text.jsonl', () => {
+    it('should emit init, text_delta, text, message_end, and result events', () => {
+      const parser = new ClaudeParser();
+      const lines = loadFixtureLines('stream-text.jsonl');
+      const events: ChatStreamEvent[] = [];
+
+      for (const line of lines) {
+        events.push(...parser.parseLine(line));
+      }
+
+      expect(events[0]).toMatchObject({ type: 'init', sessionId: expect.any(String) });
+
+      const textDeltas = events.filter((e) => e.type === 'text_delta');
+      expect(textDeltas).toHaveLength(2);
+      expect(textDeltas[0]).toMatchObject({ type: 'text_delta', content: 'hello' });
+      expect(textDeltas[1]).toMatchObject({ type: 'text_delta', content: ' world' });
+
+      const textEvents = events.filter((e) => e.type === 'text');
+      expect(textEvents).toHaveLength(1);
+      expect(textEvents[0]).toMatchObject({ type: 'text', content: 'hello world' });
+
+      const messageEnd = events.filter((e) => e.type === 'message_end');
+      expect(messageEnd).toHaveLength(1);
+
+      const resultEvents = events.filter((e) => e.type === 'result');
+      expect(resultEvents).toHaveLength(1);
+    });
+  });
+
   describe('multiple content blocks', () => {
     it('should emit multiple events for assistant with mixed content', () => {
       const parser = new ClaudeParser();
