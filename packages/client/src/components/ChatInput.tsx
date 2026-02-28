@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useCallback, useRef, useState } from 'react';
+import { type KeyboardEvent, useRef, useState } from 'react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -14,22 +14,19 @@ export function ChatInput({ onSend, onStop, isProcessing }: ChatInputProps) {
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const submit = useCallback(() => {
+  const submit = () => {
     const trimmed = value.trim();
     if (!trimmed) return;
     onSend(trimmed);
     setValue('');
-  }, [value, onSend]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        submit();
-      }
-    },
-    [submit],
-  );
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
+  };
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: wrapper delegates focus to textarea
@@ -62,8 +59,7 @@ export function ChatInput({ onSend, onStop, isProcessing }: ChatInputProps) {
           <button
             type="button"
             onClick={submit}
-            disabled={isProcessing}
-            className={`${btnBase} bg-accent hover:glow-accent-lg disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none`}
+            className={`${btnBase} bg-accent hover:glow-accent-lg`}
           >
             Send
           </button>
