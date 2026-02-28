@@ -7,6 +7,8 @@ beforeEach(() => {
     status: 'disconnected',
     messages: [],
     pendingControl: null,
+    model: null,
+    tools: [],
     stats: null,
   });
 });
@@ -97,6 +99,23 @@ describe('useChatStore', () => {
       });
       useChatStore.getState().setPendingControl(null);
       expect(useChatStore.getState().pendingControl).toBeNull();
+    });
+  });
+
+  describe('model and tools', () => {
+    it('stores model from setModel', () => {
+      useChatStore.getState().setModel('claude-sonnet-4-20250514');
+      expect(useChatStore.getState().model).toBe('claude-sonnet-4-20250514');
+    });
+
+    it('stores tools from setTools', () => {
+      useChatStore.getState().setTools(['Read', 'Write']);
+      expect(useChatStore.getState().tools).toEqual(['Read', 'Write']);
+    });
+
+    it('defaults model to null and tools to empty array', () => {
+      expect(useChatStore.getState().model).toBeNull();
+      expect(useChatStore.getState().tools).toEqual([]);
     });
   });
 

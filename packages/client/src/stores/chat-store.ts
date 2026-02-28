@@ -15,6 +15,8 @@ interface ChatState {
   status: SessionStatus;
   messages: Message[];
   pendingControl: PendingControl | null;
+  model: string | null;
+  tools: string[];
   stats: ChatStats | null;
 
   setSessionId: (id: string | null) => void;
@@ -23,6 +25,8 @@ interface ChatState {
   appendToLastMessage: (content: string) => void;
   clearMessages: () => void;
   setPendingControl: (ctrl: PendingControl | null) => void;
+  setModel: (model: string | null) => void;
+  setTools: (tools: string[]) => void;
   setStats: (stats: ChatStats | null) => void;
 }
 
@@ -33,6 +37,8 @@ export const useChatStore = create<ChatState>()(
       status: 'disconnected',
       messages: [],
       pendingControl: null,
+      model: null,
+      tools: [],
       stats: null,
 
       setSessionId: (id) => set({ sessionId: id }),
@@ -51,6 +57,8 @@ export const useChatStore = create<ChatState>()(
         }),
       clearMessages: () => set({ messages: [] }),
       setPendingControl: (ctrl) => set({ pendingControl: ctrl }),
+      setModel: (model) => set({ model }),
+      setTools: (tools) => set({ tools }),
       setStats: (stats) => set({ stats }),
     }),
     { name: 'ChatStore' },
