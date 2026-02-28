@@ -77,7 +77,8 @@ export class ClaudeParser {
         },
       ];
     } else if (subtype === 'status') {
-      return [{ type: 'status', message: (obj.status as string) ?? '' }];
+      const status = obj.status;
+      return [{ type: 'status', message: typeof status === 'string' ? status : '' }];
     }
 
     return [];

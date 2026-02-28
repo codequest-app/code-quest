@@ -23,15 +23,8 @@ export function useChat(socket: TypedSocket) {
     const onEvent = ({ event }: { sessionId: string; event: ChatStreamEvent }) => {
       switch (event.type) {
         case 'text':
-          if (streamingText.current) {
-            store().appendToLastMessage(event.content);
-          } else {
-            streamingText.current = true;
-            store().addMessage(msg({ role: 'assistant', type: 'text', content: event.content }));
-          }
-          break;
-
         case 'text_delta':
+          streamingThinking.current = false;
           if (streamingText.current) {
             store().appendToLastMessage(event.content);
           } else {
@@ -168,6 +161,7 @@ export function useChat(socket: TypedSocket) {
       addMessage(msg({ role: 'user', type: 'text', content: message }));
       setStatus('processing');
       streamingText.current = false;
+      streamingThinking.current = false;
       socket.emit('chat:send', { sessionId, message });
     },
     [socket],
