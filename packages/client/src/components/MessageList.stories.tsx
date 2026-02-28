@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { Message } from '../types/ui';
 import { MessageList } from './MessageList';
 
-const sampleMessages: Message[] = [
+const conversation: Message[] = [
   { id: '1', role: 'user', type: 'text', content: 'How do I list files?', timestamp: 1 },
   {
     id: '2',
@@ -32,17 +32,26 @@ const sampleMessages: Message[] = [
     id: '5',
     role: 'assistant',
     type: 'text',
-    content: 'Here are the files in your directory:\n\n- `main.ts`\n- `README.md`',
+    content: 'Here are the files:\n\n- `main.ts`\n- `README.md`',
     timestamp: 5,
+  },
+  { id: '6', role: 'user', type: 'text', content: 'Thanks! Can you read main.ts?', timestamp: 6 },
+  {
+    id: '7',
+    role: 'assistant',
+    type: 'text',
+    content: 'Sure, let me read it for you.',
+    timestamp: 7,
   },
 ];
 
 const meta = {
   component: MessageList,
   tags: ['autodocs'],
+  parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => (
-      <div className="w-[600px] h-[400px] bg-bg text-text overflow-auto">
+      <div className="h-[500px] bg-bg text-text">
         <Story />
       </div>
     ),
@@ -57,14 +66,14 @@ export const Empty: Story = {
 };
 
 export const Conversation: Story = {
-  args: { messages: sampleMessages },
+  args: { messages: conversation },
 };
 
 export const WithError: Story = {
   args: {
     messages: [
-      ...sampleMessages,
-      { id: '6', role: 'system', type: 'error', content: 'Connection lost', timestamp: 6 },
+      ...conversation,
+      { id: '8', role: 'system', type: 'error', content: 'Connection lost', timestamp: 8 },
     ],
   },
 };
