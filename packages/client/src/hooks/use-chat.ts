@@ -12,6 +12,7 @@ const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message => ({
 
 export function useChat(socket: TypedSocket) {
   const streamingText = useRef(false);
+  const streamingThinking = useRef(false);
 
   useEffect(() => {
     const store = () => useChatStore.getState();
@@ -30,13 +31,50 @@ export function useChat(socket: TypedSocket) {
           }
           break;
 
+        case 'text_delta':
+          if (streamingText.current) {
+            store().appendToLastMessage(event.content);
+          } else {
+            streamingText.current = true;
+            store().addMessage(msg({ role: 'assistant', type: 'text', content: event.content }));
+          }
+          break;
+
+        case 'thinking_delta':
+          if (streamingThinking.current) {
+            store().appendToLastMessage(event.content);
+          } else {
+            streamingThinking.current = true;
+            streamingText.current = false;
+            store().addMessage(
+              msg({ role: 'assistant', type: 'thinking', content: event.content }),
+            );
+          }
+          break;
+
+        case 'message_end':
+          streamingText.current = false;
+          streamingThinking.current = false;
+          break;
+
+        case 'init':
+          store().setModel(event.model ?? null);
+          store().setTools(event.tools ?? []);
+          break;
+
+        case 'status':
+          store().setStatusText(event.message);
+          break;
+
         case 'thinking':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().addMessage(msg({ role: 'assistant', type: 'thinking', content: event.content }));
           break;
 
         case 'tool_use':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().addMessage(
             msg({
               role: 'assistant',
@@ -49,6 +87,7 @@ export function useChat(socket: TypedSocket) {
 
         case 'tool_result':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().addMessage(
             msg({
               role: 'assistant',
@@ -61,18 +100,22 @@ export function useChat(socket: TypedSocket) {
 
         case 'result':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().setStats(event.stats);
+          store().setStatusText(null);
           store().setStatus('idle');
           break;
 
         case 'error':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().addMessage(msg({ role: 'system', type: 'error', content: event.message }));
           store().setStatus('idle');
           break;
 
         case 'control_request':
           streamingText.current = false;
+          streamingThinking.current = false;
           store().setPendingControl({
             requestId: event.requestId,
             subtype: event.subtype,
