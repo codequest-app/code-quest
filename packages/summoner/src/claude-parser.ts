@@ -53,6 +53,8 @@ export class ClaudeParser {
         return this.parseControlResponse(obj);
       case 'control_request':
         return this.parseControlRequest(obj);
+      case 'stream_event':
+        return this.parseStreamEvent(obj);
       default:
         return [];
     }
@@ -185,6 +187,26 @@ export class ClaudeParser {
         error: resp.error,
       },
     ];
+  }
+
+  private parseStreamEvent(obj: Record<string, unknown>): ChatStreamEvent[] {
+    const event = obj.event as Record<string, unknown> | undefined;
+    if (!event || typeof event !== 'object') return [];
+
+    if (event.type === 'content_block_delta') {
+      const delta = event.delta as Record<string, unknown> | undefined;
+      if (!delta) return [];
+      if (delta.type === 'text_delta' && typeof delta.text === 'string') {
+        return [{ type: 'text_delta', content: delta.text }];
+      }
+      if (delta.type === 'thinking' && typeof delta.thinking === 'string') {
+        return [{ type: 'thinking_delta', content: delta.thinking }];
+      }
+    } else if (event.type === 'message_stop') {
+      return [{ type: 'message_end' }];
+    }
+
+    return [];
   }
 
   private parseControlRequest(obj: Record<string, unknown>): ChatStreamEvent[] {
