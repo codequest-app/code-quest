@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useCallback, useState } from 'react';
+import { type KeyboardEvent, useCallback, useRef, useState } from 'react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -7,6 +7,8 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [value, setValue] = useState('');
+  const [focused, setFocused] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = useCallback(() => {
     const trimmed = value.trim();
@@ -26,24 +28,37 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   );
 
   return (
-    <div className="flex gap-2 px-4 py-3 border-t border-border">
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper delegates focus to textarea
+    <div
+      className={`rounded-xl bg-bg border transition-all ${
+        focused ? 'border-accent glow-accent-ring' : 'border-border'
+      }`}
+      onClick={() => textareaRef.current?.focus()}
+      onKeyDown={() => {}}
+      role="presentation"
+    >
       <textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         disabled={disabled}
         placeholder="Type a message..."
-        rows={2}
-        className="flex-1 bg-code text-text border border-border rounded-md px-3 py-2 text-sm font-[inherit] resize-none focus:outline-none focus:border-accent disabled:opacity-50"
+        rows={3}
+        className="w-full bg-transparent text-text px-4 pt-3 pb-1 text-sm resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted"
       />
-      <button
-        type="button"
-        onClick={submit}
-        disabled={disabled}
-        className="bg-accent text-white border-none rounded-md px-4 py-2 text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Send
-      </button>
+      <div className="flex justify-end px-3 pb-3">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={disabled}
+          className="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium cursor-pointer transition-all hover:glow-accent-lg hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 }
