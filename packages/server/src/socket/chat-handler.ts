@@ -105,12 +105,7 @@ export class ChatHandler {
           socket.emit('chat:error', { sessionId, message: 'Session not found' });
           return;
         }
-        if ('respondToControlRequest' in session) {
-          (session as import('@code-quest/summoner').ControllableSession).respondToControlRequest(
-            requestId,
-            response,
-          );
-        }
+        session.respondToControlRequest(requestId, response);
       } catch (err) {
         socket.emit('chat:error', {
           message: err instanceof Error ? err.message : 'Failed to respond to control request',

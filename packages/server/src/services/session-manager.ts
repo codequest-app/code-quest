@@ -1,26 +1,26 @@
-import type { ChatSession, ProcessFactory } from '@code-quest/summoner';
+import type { ControllableSession, ProcessFactory } from '@code-quest/summoner';
 import { InteractiveSession } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../types.ts';
 import type { SessionStore } from './session-store.ts';
 
 export interface SessionManager {
-  create(resumeSessionId?: string): ChatSession;
-  get(sessionId: string): ChatSession | undefined;
+  create(resumeSessionId?: string): ControllableSession;
+  get(sessionId: string): ControllableSession | undefined;
   kill(sessionId: string): void;
-  getAll(): ChatSession[];
+  getAll(): ControllableSession[];
 }
 
 @injectable()
 export class DefaultSessionManager implements SessionManager {
-  private activeSessions = new Map<string, ChatSession>();
+  private activeSessions = new Map<string, ControllableSession>();
 
   constructor(
     @inject(TYPES.ProcessFactory) private processFactory: ProcessFactory,
     @inject(TYPES.SessionStore) private sessionStore: SessionStore,
   ) {}
 
-  create(resumeSessionId?: string): ChatSession {
+  create(resumeSessionId?: string): ControllableSession {
     const command = 'claude';
     const args = ['--output-format', 'stream-json', '--input-format', 'stream-json', '--verbose'];
 
@@ -56,7 +56,7 @@ export class DefaultSessionManager implements SessionManager {
     return session;
   }
 
-  get(sessionId: string): ChatSession | undefined {
+  get(sessionId: string): ControllableSession | undefined {
     return this.activeSessions.get(sessionId);
   }
 
@@ -68,7 +68,7 @@ export class DefaultSessionManager implements SessionManager {
     }
   }
 
-  getAll(): ChatSession[] {
+  getAll(): ControllableSession[] {
     return Array.from(this.activeSessions.values());
   }
 }
