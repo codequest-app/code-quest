@@ -8,7 +8,7 @@ const meta = {
   args: { onRespond: fn() },
   decorators: [
     (Story) => (
-      <div className="w-[500px] bg-bg text-text p-4">
+      <div className="max-w-3xl bg-surface text-text p-6">
         <Story />
       </div>
     ),
