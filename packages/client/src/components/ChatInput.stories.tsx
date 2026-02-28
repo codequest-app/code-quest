@@ -53,7 +53,7 @@ export const SubmitViaEnter: Story = {
 };
 
 export const Processing: Story = {
-  args: { onSend: fn(), onStop: fn(), disabled: true, isProcessing: true },
+  args: { onSend: fn(), onStop: fn(), isProcessing: true },
 };
 
 export const ShiftEnterNewline: Story = {

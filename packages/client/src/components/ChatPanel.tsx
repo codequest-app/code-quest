@@ -40,12 +40,7 @@ export function ChatPanel({ socket }: ChatPanelProps) {
       <div className="shrink-0 border-t border-border">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-3">
           <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
-          <ChatInput
-            onSend={sendMessage}
-            disabled={status === 'processing'}
-            onStop={abort}
-            isProcessing={status === 'processing'}
-          />
+          <ChatInput onSend={sendMessage} onStop={abort} isProcessing={status === 'processing'} />
           <StatsBar stats={stats} />
         </div>
       </div>

@@ -38,6 +38,18 @@ describe('HeaderBar', () => {
     expect(screen.queryByText('Thinking…')).not.toBeInTheDocument();
   });
 
+  it('groups model and tools with separator', () => {
+    render(
+      <HeaderBar
+        status="idle"
+        sessionId="s1"
+        model="claude-sonnet-4-20250514"
+        tools={['Read', 'Write', 'Bash']}
+      />,
+    );
+    expect(screen.getByText('claude-sonnet-4-20250514 · 3 tools')).toBeInTheDocument();
+  });
+
   it('does not display model or tools when not provided', () => {
     render(<HeaderBar status="idle" sessionId="s1" />);
     expect(screen.queryByText(/tools/i)).not.toBeInTheDocument();
