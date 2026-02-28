@@ -99,4 +99,19 @@ describe('ChatPanel', () => {
     act(() => useChatStore.setState({ status: 'processing' }));
     expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
   });
+
+  it('passes model and statusText to HeaderBar', () => {
+    const socket = makeFakeSocket();
+    useChatStore.setState({ model: 'claude-sonnet-4-20250514', statusText: 'Thinking…' });
+    render(<ChatPanel socket={socket} />);
+    expect(screen.getByText('claude-sonnet-4-20250514')).toBeInTheDocument();
+    expect(screen.getByText('Thinking…')).toBeInTheDocument();
+  });
+
+  it('passes tools to HeaderBar', () => {
+    const socket = makeFakeSocket();
+    useChatStore.setState({ tools: ['Read', 'Write', 'Bash'] });
+    render(<ChatPanel socket={socket} />);
+    expect(screen.getByText(/3 tools/i)).toBeInTheDocument();
+  });
 });
