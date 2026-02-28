@@ -33,6 +33,10 @@ export const WithModel: Story = {
   args: { status: 'idle', sessionId: 'session-abc-123', model: 'claude-sonnet-4-20250514' },
 };
 
+export const WithStatusText: Story = {
+  args: { status: 'processing', sessionId: 'session-abc-123', statusText: 'Thinking…' },
+};
+
 export const WithTools: Story = {
   args: {
     status: 'idle',

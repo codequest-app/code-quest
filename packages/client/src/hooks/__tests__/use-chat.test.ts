@@ -408,6 +408,46 @@ describe('useChat', () => {
     expect(messages[0].content).toBe('hello world');
   });
 
+  it('resets delta state when tool_use interrupts streaming — text after tool_result is not ignored', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    // Stream text deltas
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: 'Before tool' },
+      });
+    });
+    // Tool use interrupts
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'tool_use', id: 't1', name: 'Read', input: {} },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'tool_result', id: 't1', name: 'Read', output: 'file content' },
+      });
+    });
+    // New text after tool — should NOT be ignored as "replay"
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text', content: 'After tool' },
+      });
+    });
+
+    const messages = useChatStore.getState().messages;
+    const textMessages = messages.filter((m) => m.type === 'text');
+    expect(textMessages).toHaveLength(2);
+    expect(textMessages[0].content).toBe('Before tool');
+    expect(textMessages[1].content).toBe('After tool');
+  });
+
   it('clears statusText on result event', () => {
     const socket = makeFakeSocket();
     renderHook(() => useChat(socket));

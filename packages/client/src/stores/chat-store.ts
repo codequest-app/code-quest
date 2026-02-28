@@ -18,6 +18,7 @@ interface ChatState {
   model: string | null;
   tools: string[];
   stats: ChatStats | null;
+  statusText: string | null;
 
   setSessionId: (id: string | null) => void;
   setStatus: (status: SessionStatus) => void;
@@ -28,6 +29,7 @@ interface ChatState {
   setModel: (model: string | null) => void;
   setTools: (tools: string[]) => void;
   setStats: (stats: ChatStats | null) => void;
+  setStatusText: (text: string | null) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -40,6 +42,7 @@ export const useChatStore = create<ChatState>()(
       model: null,
       tools: [],
       stats: null,
+      statusText: null,
 
       setSessionId: (id) => set({ sessionId: id }),
       setStatus: (status) => set({ status }),
@@ -60,6 +63,7 @@ export const useChatStore = create<ChatState>()(
       setModel: (model) => set({ model }),
       setTools: (tools) => set({ tools }),
       setStats: (stats) => set({ stats }),
+      setStatusText: (text) => set({ statusText: text }),
     }),
     { name: 'ChatStore' },
   ),

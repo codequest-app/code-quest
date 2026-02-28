@@ -28,6 +28,16 @@ describe('HeaderBar', () => {
     expect(screen.getByText(/3 tools/i)).toBeInTheDocument();
   });
 
+  it('displays status text when provided', () => {
+    render(<HeaderBar status="processing" sessionId="s1" statusText="Thinking…" />);
+    expect(screen.getByText('Thinking…')).toBeInTheDocument();
+  });
+
+  it('does not display status text when null', () => {
+    render(<HeaderBar status="idle" sessionId="s1" statusText={null} />);
+    expect(screen.queryByText('Thinking…')).not.toBeInTheDocument();
+  });
+
   it('does not display model or tools when not provided', () => {
     render(<HeaderBar status="idle" sessionId="s1" />);
     expect(screen.queryByText(/tools/i)).not.toBeInTheDocument();
