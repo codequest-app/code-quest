@@ -1,4 +1,5 @@
 import type { ChatStreamEvent } from '@code-quest/shared';
+import type { MutableRefObject } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { TypedSocket } from '../socket/client';
 import { useChatStore } from '../stores/chat-store';
@@ -10,17 +11,15 @@ const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message => ({
   ...fields,
 });
 
+function resetRefs(...refs: MutableRefObject<boolean>[]) {
+  for (const ref of refs) ref.current = false;
+}
+
 export function useChat(socket: TypedSocket) {
   const streamingText = useRef(false);
   const streamingThinking = useRef(false);
   /** true when current text was accumulated via text_delta (not batch text) */
   const streamedViaDelta = useRef(false);
-
-  const resetStreaming = useCallback(() => {
-    streamingText.current = false;
-    streamingThinking.current = false;
-    streamedViaDelta.current = false;
-  }, []);
 
   useEffect(() => {
     const store = () => useChatStore.getState();
@@ -41,9 +40,7 @@ export function useChat(socket: TypedSocket) {
       switch (event.type) {
         case 'text':
           streamingThinking.current = false;
-          if (streamedViaDelta.current) {
-            // Already accumulated via text_delta — ignore assistant replay
-          } else {
+          if (!streamedViaDelta.current) {
             appendOrCreateText(event.content);
           }
           break;
@@ -68,7 +65,7 @@ export function useChat(socket: TypedSocket) {
           break;
 
         case 'message_end':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           break;
 
         case 'init':
@@ -81,12 +78,12 @@ export function useChat(socket: TypedSocket) {
           break;
 
         case 'thinking':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().addMessage(msg({ role: 'assistant', type: 'thinking', content: event.content }));
           break;
 
         case 'tool_use':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().addMessage(
             msg({
               role: 'assistant',
@@ -98,7 +95,7 @@ export function useChat(socket: TypedSocket) {
           break;
 
         case 'tool_result':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().addMessage(
             msg({
               role: 'assistant',
@@ -110,20 +107,20 @@ export function useChat(socket: TypedSocket) {
           break;
 
         case 'result':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().setStats(event.stats);
           store().setStatusText(null);
           store().setStatus('idle');
           break;
 
         case 'error':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().addMessage(msg({ role: 'system', type: 'error', content: event.message }));
           store().setStatus('idle');
           break;
 
         case 'control_request':
-          resetStreaming();
+          resetRefs(streamingText, streamingThinking, streamedViaDelta);
           store().setPendingControl({
             requestId: event.requestId,
             subtype: event.subtype,
@@ -158,7 +155,7 @@ export function useChat(socket: TypedSocket) {
       socket.off('chat:event', onEvent);
       socket.off('chat:error', onError);
     };
-  }, [socket, resetStreaming]);
+  }, [socket]);
 
   const createSession = useCallback(() => {
     socket.emit('chat:create', {}, ({ sessionId }) => {
@@ -175,10 +172,10 @@ export function useChat(socket: TypedSocket) {
 
       addMessage(msg({ role: 'user', type: 'text', content: message }));
       setStatus('processing');
-      resetStreaming();
+      resetRefs(streamingText, streamingThinking, streamedViaDelta);
       socket.emit('chat:send', { sessionId, message });
     },
-    [socket, resetStreaming],
+    [socket],
   );
 
   const abort = useCallback(() => {

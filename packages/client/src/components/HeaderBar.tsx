@@ -21,10 +21,13 @@ export function HeaderBar({ status, sessionId, model, tools, statusText }: Heade
     <header className="flex items-center gap-3 px-6 h-11 bg-surface border-b border-border text-xs shrink-0">
       <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
       <span className="text-text-muted font-medium">{label}</span>
-      {model && <span className="text-text-muted/60 font-mono text-[11px]">{model}</span>}
       {statusText && <span className="text-accent text-[11px] italic">{statusText}</span>}
-      {tools && tools.length > 0 && (
-        <span className="text-text-muted/60 text-[11px]">{tools.length} tools</span>
+      {(model || (tools && tools.length > 0)) && (
+        <span className="text-text-muted/60 font-mono text-[11px]">
+          {[model, tools && tools.length > 0 && `${tools.length} tools`]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
       )}
       {sessionId && (
         <>
