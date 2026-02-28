@@ -19,6 +19,9 @@ export function ChatPanel({ socket }: ChatPanelProps) {
   const sessionId = useChatStore((s) => s.sessionId);
   const pendingControl = useChatStore((s) => s.pendingControl);
   const stats = useChatStore((s) => s.stats);
+  const model = useChatStore((s) => s.model);
+  const tools = useChatStore((s) => s.tools);
+  const statusText = useChatStore((s) => s.statusText);
 
   useEffect(() => {
     createSession();
@@ -26,7 +29,13 @@ export function ChatPanel({ socket }: ChatPanelProps) {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      <HeaderBar status={status} sessionId={sessionId} />
+      <HeaderBar
+        status={status}
+        sessionId={sessionId}
+        model={model}
+        tools={tools}
+        statusText={statusText}
+      />
       <MessageList messages={messages} />
       <div className="shrink-0 border-t border-border">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-3">
