@@ -11,9 +11,10 @@ const base: Omit<Message, 'type' | 'content' | 'meta'> = {
 const meta = {
   component: ChatMessage,
   tags: ['autodocs'],
+  args: { showAvatar: true },
   decorators: [
     (Story) => (
-      <div className="w-[600px] bg-bg text-text p-4 font-sans">
+      <div className="max-w-3xl bg-bg text-text p-6 font-sans">
         <Story />
       </div>
     ),
@@ -23,7 +24,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Text: Story = {
+export const UserText: Story = {
+  args: {
+    message: { ...base, role: 'user', type: 'text', content: 'Can you help me fix this bug?' },
+  },
+};
+
+export const AssistantText: Story = {
   args: {
     message: { ...base, type: 'text', content: 'Hello **world**! Here is `inline code`.' },
   },
@@ -67,7 +74,7 @@ export const ToolResult: Story = {
       ...base,
       type: 'tool_result',
       content:
-        'total 12\ndrwxr-xr-x 3 user user 4096 Jan  1 00:00 .\ndrwxr-xr-x 5 root root 4096 Jan  1 00:00 ..',
+        'total 12\ndrwxr-xr-x 3 user user 4096 Jan 1 00:00 .\ndrwxr-xr-x 5 root root 4096 Jan 1 00:00 ..',
       meta: { toolId: 't1', name: 'bash' },
     },
   },
@@ -95,8 +102,9 @@ export const ControlRequest: Story = {
   },
 };
 
-export const UserMessage: Story = {
+export const WithoutAvatar: Story = {
   args: {
-    message: { ...base, role: 'user', type: 'text', content: 'Can you help me fix this bug?' },
+    showAvatar: false,
+    message: { ...base, type: 'text', content: 'This is a consecutive message without avatar.' },
   },
 };
