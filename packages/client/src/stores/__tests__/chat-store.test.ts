@@ -10,6 +10,7 @@ beforeEach(() => {
     model: null,
     tools: [],
     stats: null,
+    statusText: null,
   });
 });
 
@@ -129,6 +130,23 @@ describe('useChatStore', () => {
       };
       useChatStore.getState().setStats(stats);
       expect(useChatStore.getState().stats).toEqual(stats);
+    });
+  });
+
+  describe('statusText', () => {
+    it('sets statusText', () => {
+      useChatStore.getState().setStatusText('Thinking…');
+      expect(useChatStore.getState().statusText).toBe('Thinking…');
+    });
+
+    it('clears statusText', () => {
+      useChatStore.getState().setStatusText('Thinking…');
+      useChatStore.getState().setStatusText(null);
+      expect(useChatStore.getState().statusText).toBeNull();
+    });
+
+    it('defaults to null', () => {
+      expect(useChatStore.getState().statusText).toBeNull();
     });
   });
 });

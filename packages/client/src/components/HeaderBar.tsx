@@ -5,6 +5,7 @@ interface HeaderBarProps {
   sessionId: string | null;
   model?: string | null;
   tools?: string[];
+  statusText?: string | null;
 }
 
 const statusConfig: Record<SessionStatus, { label: string; dotClass: string }> = {
@@ -13,7 +14,7 @@ const statusConfig: Record<SessionStatus, { label: string; dotClass: string }> =
   processing: { label: 'Processing', dotClass: 'bg-accent glow-accent animate-pulse' },
 };
 
-export function HeaderBar({ status, sessionId, model, tools }: HeaderBarProps) {
+export function HeaderBar({ status, sessionId, model, tools, statusText }: HeaderBarProps) {
   const { label, dotClass } = statusConfig[status];
 
   return (
@@ -21,6 +22,7 @@ export function HeaderBar({ status, sessionId, model, tools }: HeaderBarProps) {
       <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
       <span className="text-text-muted font-medium">{label}</span>
       {model && <span className="text-text-muted/60 font-mono text-[11px]">{model}</span>}
+      {statusText && <span className="text-accent text-[11px] italic">{statusText}</span>}
       {tools && tools.length > 0 && (
         <span className="text-text-muted/60 text-[11px]">{tools.length} tools</span>
       )}
