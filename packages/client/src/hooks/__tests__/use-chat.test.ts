@@ -33,11 +33,9 @@ describe('useChat', () => {
     expect(useChatStore.getState().status).toBe('disconnected');
   });
 
-  it('createSession emits chat:create and sets sessionId', () => {
+  it('auto-creates session on mount', () => {
     const socket = makeFakeSocket();
-    const { result } = renderHook(() => useChat(socket));
-
-    act(() => result.current.createSession());
+    renderHook(() => useChat(socket));
 
     expect(socket.emit).toHaveBeenCalledWith('chat:create', {}, expect.any(Function));
     expect(useChatStore.getState().sessionId).toBe('session-1');
@@ -48,7 +46,6 @@ describe('useChat', () => {
     const socket = makeFakeSocket();
     const { result } = renderHook(() => useChat(socket));
 
-    act(() => result.current.createSession());
     act(() => result.current.sendMessage('hello'));
 
     expect(useChatStore.getState().messages[0]).toMatchObject({

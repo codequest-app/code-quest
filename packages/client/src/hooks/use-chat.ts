@@ -1,6 +1,6 @@
 import type { ChatStreamEvent } from '@code-quest/shared';
 import type { MutableRefObject } from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { TypedSocket } from '../socket/client';
 import { useChatStore } from '../stores/chat-store';
 import type { Message } from '../types/ui';
@@ -159,6 +159,11 @@ export function useChat(socket: TypedSocket) {
     socket.on('chat:error', onError);
     socket.connect();
 
+    socket.emit('chat:create', {}, ({ sessionId }) => {
+      store().setSessionId(sessionId);
+      store().setStatus('idle');
+    });
+
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
@@ -167,48 +172,34 @@ export function useChat(socket: TypedSocket) {
     };
   }, [socket]);
 
-  const createSession = useCallback(() => {
-    socket.emit('chat:create', {}, ({ sessionId }) => {
-      const store = useChatStore.getState();
-      store.setSessionId(sessionId);
-      store.setStatus('idle');
-    });
-  }, [socket]);
+  const sendMessage = (message: string) => {
+    const { sessionId, addMessage, setStatus } = useChatStore.getState();
+    if (!sessionId) return;
 
-  const sendMessage = useCallback(
-    (message: string) => {
-      const { sessionId, addMessage, setStatus } = useChatStore.getState();
-      if (!sessionId) return;
+    addMessage(msg({ role: 'user', type: 'text', content: message }));
+    setStatus('processing');
+    resetRefs(streamingText, streamingThinking, streamedViaDelta);
+    socket.emit('chat:send', { sessionId, message });
+  };
 
-      addMessage(msg({ role: 'user', type: 'text', content: message }));
-      setStatus('processing');
-      resetRefs(streamingText, streamingThinking, streamedViaDelta);
-      socket.emit('chat:send', { sessionId, message });
-    },
-    [socket],
-  );
-
-  const abort = useCallback(() => {
+  const abort = () => {
     const { sessionId } = useChatStore.getState();
     if (sessionId) {
       socket.emit('chat:abort', { sessionId });
     }
-  }, [socket]);
+  };
 
-  const respondToControl = useCallback(
-    (response: Record<string, unknown>) => {
-      const { sessionId, pendingControl, setPendingControl } = useChatStore.getState();
-      if (!sessionId || !pendingControl) return;
+  const respondToControl = (response: Record<string, unknown>) => {
+    const { sessionId, pendingControl, setPendingControl } = useChatStore.getState();
+    if (!sessionId || !pendingControl) return;
 
-      socket.emit('chat:control_response', {
-        sessionId,
-        requestId: pendingControl.requestId,
-        response,
-      });
-      setPendingControl(null);
-    },
-    [socket],
-  );
+    socket.emit('chat:control_response', {
+      sessionId,
+      requestId: pendingControl.requestId,
+      response,
+    });
+    setPendingControl(null);
+  };
 
-  return { createSession, sendMessage, abort, respondToControl };
+  return { sendMessage, abort, respondToControl };
 }

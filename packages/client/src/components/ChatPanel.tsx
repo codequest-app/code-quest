@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useChat } from '../hooks/use-chat';
 import type { TypedSocket } from '../socket/client';
 import { useChatStore } from '../stores/chat-store';
@@ -13,7 +12,7 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ socket }: ChatPanelProps) {
-  const { createSession, sendMessage, respondToControl, abort } = useChat(socket);
+  const { sendMessage, respondToControl, abort } = useChat(socket);
   const messages = useChatStore((s) => s.messages);
   const status = useChatStore((s) => s.status);
   const sessionId = useChatStore((s) => s.sessionId);
@@ -22,10 +21,6 @@ export function ChatPanel({ socket }: ChatPanelProps) {
   const model = useChatStore((s) => s.model);
   const tools = useChatStore((s) => s.tools);
   const statusText = useChatStore((s) => s.statusText);
-
-  useEffect(() => {
-    createSession();
-  }, [createSession]);
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">

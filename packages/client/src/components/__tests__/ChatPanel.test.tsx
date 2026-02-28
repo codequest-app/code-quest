@@ -22,7 +22,7 @@ describe('ChatPanel', () => {
     expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
   });
 
-  it('calls createSession on mount', () => {
+  it('auto-creates session on mount', () => {
     const socket = makeFakeSocket();
     render(<ChatPanel socket={socket} />);
     expect(socket.emit).toHaveBeenCalledWith('chat:create', {}, expect.any(Function));
