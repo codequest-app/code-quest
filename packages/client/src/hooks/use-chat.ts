@@ -13,6 +13,8 @@ const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message => ({
 export function useChat(socket: TypedSocket) {
   const streamingText = useRef(false);
   const streamingThinking = useRef(false);
+  /** true when current text was accumulated via text_delta (not batch text) */
+  const streamedViaDelta = useRef(false);
 
   useEffect(() => {
     const store = () => useChatStore.getState();
@@ -23,8 +25,20 @@ export function useChat(socket: TypedSocket) {
     const onEvent = ({ event }: { sessionId: string; event: ChatStreamEvent }) => {
       switch (event.type) {
         case 'text':
+          streamingThinking.current = false;
+          if (streamedViaDelta.current) {
+            // Already accumulated via text_delta — ignore assistant replay
+          } else if (streamingText.current) {
+            store().appendToLastMessage(event.content);
+          } else {
+            streamingText.current = true;
+            store().addMessage(msg({ role: 'assistant', type: 'text', content: event.content }));
+          }
+          break;
+
         case 'text_delta':
           streamingThinking.current = false;
+          streamedViaDelta.current = true;
           if (streamingText.current) {
             store().appendToLastMessage(event.content);
           } else {
@@ -39,6 +53,7 @@ export function useChat(socket: TypedSocket) {
           } else {
             streamingThinking.current = true;
             streamingText.current = false;
+            streamedViaDelta.current = false;
             store().addMessage(
               msg({ role: 'assistant', type: 'thinking', content: event.content }),
             );
@@ -48,6 +63,7 @@ export function useChat(socket: TypedSocket) {
         case 'message_end':
           streamingText.current = false;
           streamingThinking.current = false;
+          streamedViaDelta.current = false;
           break;
 
         case 'init':
@@ -94,6 +110,7 @@ export function useChat(socket: TypedSocket) {
         case 'result':
           streamingText.current = false;
           streamingThinking.current = false;
+          streamedViaDelta.current = false;
           store().setStats(event.stats);
           store().setStatusText(null);
           store().setStatus('idle');
@@ -102,6 +119,7 @@ export function useChat(socket: TypedSocket) {
         case 'error':
           streamingText.current = false;
           streamingThinking.current = false;
+          streamedViaDelta.current = false;
           store().addMessage(msg({ role: 'system', type: 'error', content: event.message }));
           store().setStatus('idle');
           break;
@@ -109,6 +127,7 @@ export function useChat(socket: TypedSocket) {
         case 'control_request':
           streamingText.current = false;
           streamingThinking.current = false;
+          streamedViaDelta.current = false;
           store().setPendingControl({
             requestId: event.requestId,
             subtype: event.subtype,
@@ -162,6 +181,7 @@ export function useChat(socket: TypedSocket) {
       setStatus('processing');
       streamingText.current = false;
       streamingThinking.current = false;
+      streamedViaDelta.current = false;
       socket.emit('chat:send', { sessionId, message });
     },
     [socket],
