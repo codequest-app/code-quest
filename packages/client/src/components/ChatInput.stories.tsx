@@ -9,10 +9,13 @@ const meta = {
     onSend: fn(),
     disabled: false,
   },
+  parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => (
-      <div className="w-[480px] bg-bg p-4">
-        <Story />
+      <div className="bg-surface text-text p-6">
+        <div className="max-w-3xl">
+          <Story />
+        </div>
       </div>
     ),
   ],
