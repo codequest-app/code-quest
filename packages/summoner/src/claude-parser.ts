@@ -4,6 +4,7 @@ import {
   cliControlResponseSchema,
   cliResultSchema,
   cliSystemInitSchema,
+  cliSystemStatusSchema,
 } from './schemas.ts';
 import type { ChatStats, ChatStreamEvent } from './types.ts';
 
@@ -77,8 +78,9 @@ export class ClaudeParser {
         },
       ];
     } else if (subtype === 'status') {
-      const status = obj.status;
-      return [{ type: 'status', message: typeof status === 'string' ? status : '' }];
+      const statusResult = cliSystemStatusSchema.safeParse(obj);
+      if (!statusResult.success) return [];
+      return [{ type: 'status', message: statusResult.data.status }];
     }
 
     return [];

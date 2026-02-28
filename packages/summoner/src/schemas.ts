@@ -13,6 +13,12 @@ export const cliSystemInitSchema = z.looseObject({
   claude_code_version: z.string().optional(),
 });
 
+export const cliSystemStatusSchema = z.looseObject({
+  type: z.literal('system'),
+  subtype: z.literal('status'),
+  status: z.string(),
+});
+
 // --- Assistant event ---
 
 export const cliAssistantSchema = z.looseObject({

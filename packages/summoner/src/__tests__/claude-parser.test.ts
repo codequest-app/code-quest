@@ -160,6 +160,12 @@ describe('ClaudeParser', () => {
 
       expect(events).toEqual([{ type: 'status', message: 'Thinking…' }]);
     });
+
+    it('returns empty for system/status with missing status field', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(JSON.stringify({ type: 'system', subtype: 'status' }));
+      expect(events).toEqual([]);
+    });
   });
 
   describe('edge cases', () => {
