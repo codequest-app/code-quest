@@ -7,7 +7,6 @@ const meta = {
   tags: ['autodocs'],
   args: {
     onSend: fn(),
-    disabled: false,
   },
   parameters: { layout: 'fullscreen' },
   decorators: [
@@ -25,10 +24,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-
-export const Disabled: Story = {
-  args: { disabled: true },
-};
 
 export const SubmitViaButton: Story = {
   play: async ({ args, canvas, step }) => {
