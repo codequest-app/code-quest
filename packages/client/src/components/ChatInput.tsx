@@ -3,9 +3,11 @@ import { type KeyboardEvent, useCallback, useRef, useState } from 'react';
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled: boolean;
+  onStop?: () => void;
+  isProcessing?: boolean;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, onStop, isProcessing }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -50,14 +52,24 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         className="w-full bg-transparent text-text px-4 pt-3 pb-1 text-sm resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted"
       />
       <div className="flex justify-end px-3 pb-3">
-        <button
-          type="button"
-          onClick={submit}
-          disabled={disabled}
-          className="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium shrink-0 cursor-pointer transition-all hover:glow-accent-lg hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
-        >
-          Send
-        </button>
+        {isProcessing ? (
+          <button
+            type="button"
+            onClick={onStop}
+            className="px-4 py-1.5 bg-danger text-white rounded-lg text-sm font-medium shrink-0 cursor-pointer transition-all hover:-translate-y-px active:translate-y-0"
+          >
+            Stop
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={submit}
+            disabled={disabled}
+            className="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium shrink-0 cursor-pointer transition-all hover:glow-accent-lg hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          >
+            Send
+          </button>
+        )}
       </div>
     </div>
   );

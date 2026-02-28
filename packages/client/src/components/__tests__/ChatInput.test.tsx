@@ -60,4 +60,21 @@ describe('ChatInput', () => {
     expect(screen.getByRole('textbox')).toBeDisabled();
     expect(screen.getByRole('button', { name: /send/i })).toBeDisabled();
   });
+
+  it('shows Stop button when processing', () => {
+    render(<ChatInput onSend={vi.fn()} onStop={vi.fn()} disabled={true} isProcessing={true} />);
+    expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
+  });
+
+  it('calls onStop when Stop button clicked', async () => {
+    const onStop = vi.fn();
+    render(<ChatInput onSend={vi.fn()} onStop={onStop} disabled={true} isProcessing={true} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: /stop/i }));
+    expect(onStop).toHaveBeenCalledOnce();
+  });
+
+  it('does not show Stop button when idle', () => {
+    render(<ChatInput onSend={vi.fn()} onStop={vi.fn()} disabled={false} isProcessing={false} />);
+    expect(screen.queryByRole('button', { name: /stop/i })).not.toBeInTheDocument();
+  });
 });
