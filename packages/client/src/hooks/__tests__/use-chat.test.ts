@@ -253,6 +253,137 @@ describe('useChat', () => {
     expect(socket.emit).toHaveBeenCalledWith('chat:abort', { sessionId: 's1' });
   });
 
+  it('handles text_delta — accumulates into streaming message', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: 'Hello' },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: ' world' },
+      });
+    });
+
+    const messages = useChatStore.getState().messages;
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ type: 'text', content: 'Hello world' });
+  });
+
+  it('handles thinking_delta — accumulates into streaming thinking message', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'thinking_delta', content: 'Let me' },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'thinking_delta', content: ' think...' },
+      });
+    });
+
+    const messages = useChatStore.getState().messages;
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ type: 'thinking', content: 'Let me think...' });
+  });
+
+  it('message_end finalizes streaming — next delta starts new message', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: 'Hi' },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'message_end' },
+      });
+    });
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'text_delta', content: 'New' },
+      });
+    });
+
+    const messages = useChatStore.getState().messages;
+    expect(messages).toHaveLength(2);
+    expect(messages[0].content).toBe('Hi');
+    expect(messages[1].content).toBe('New');
+  });
+
+  it('handles init event — sets model and tools', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: {
+          type: 'init',
+          sessionId: 'sess-1',
+          model: 'claude-sonnet-4-20250514',
+          tools: ['Read', 'Write'],
+        },
+      });
+    });
+
+    expect(useChatStore.getState().model).toBe('claude-sonnet-4-20250514');
+    expect(useChatStore.getState().tools).toEqual(['Read', 'Write']);
+  });
+
+  it('handles status event — sets statusText', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => useChatStore.getState().setSessionId('s1'));
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'status', message: 'Thinking…' },
+      });
+    });
+
+    expect(useChatStore.getState().statusText).toBe('Thinking…');
+  });
+
+  it('clears statusText on result event', () => {
+    const socket = makeFakeSocket();
+    renderHook(() => useChat(socket));
+    act(() => {
+      useChatStore.getState().setSessionId('s1');
+      useChatStore.getState().setStatusText('Thinking…');
+      useChatStore.getState().setStatus('processing');
+    });
+
+    act(() => {
+      socket._emitter.emit('chat:event', {
+        sessionId: 's1',
+        event: { type: 'result', stats: { inputTokens: 0, outputTokens: 0 } },
+      });
+    });
+
+    expect(useChatStore.getState().statusText).toBeNull();
+  });
+
   it('cleans up listeners on unmount', () => {
     const socket = makeFakeSocket();
     const { unmount } = renderHook(() => useChat(socket));
