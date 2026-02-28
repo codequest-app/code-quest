@@ -7,7 +7,7 @@ export function App() {
   const socket = useMemo(() => createSocket(), []);
 
   return (
-    <div className="flex flex-col h-screen bg-bg text-text font-sans">
+    <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">
       <ChatPanel socket={socket} />
     </div>
   );

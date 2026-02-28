@@ -54,7 +54,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           type="button"
           onClick={submit}
           disabled={disabled}
-          className="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium cursor-pointer transition-all hover:glow-accent-lg hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          className="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium shrink-0 cursor-pointer transition-all hover:glow-accent-lg hover:-translate-y-px active:translate-y-0 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
         >
           Send
         </button>
