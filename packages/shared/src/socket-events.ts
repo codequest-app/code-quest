@@ -20,6 +20,7 @@ export type ChatStreamEvent =
   | { type: 'tool_use'; id: string; name: string; input: unknown }
   | { type: 'tool_result'; id: string; name: string; output: string }
   | { type: 'result'; stats: ChatStats }
+  | { type: 'status'; message: string }
   | { type: 'error'; message: string }
   | {
       type: 'control_response';

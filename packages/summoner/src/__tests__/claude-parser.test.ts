@@ -147,6 +147,21 @@ describe('ClaudeParser', () => {
     });
   });
 
+  describe('system/status', () => {
+    it('emits status event from system/status message', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'system',
+          subtype: 'status',
+          status: 'Thinking…',
+        }),
+      );
+
+      expect(events).toEqual([{ type: 'status', message: 'Thinking…' }]);
+    });
+  });
+
   describe('edge cases', () => {
     it('should return empty array for malformed JSON', () => {
       const parser = new ClaudeParser();
