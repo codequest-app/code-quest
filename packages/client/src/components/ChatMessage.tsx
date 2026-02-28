@@ -6,6 +6,39 @@ import type { Message } from '../types/ui';
 
 interface ChatMessageProps {
   message: Message;
+  showAvatar?: boolean;
+}
+
+const roleConfig = {
+  user: { label: 'You', icon: '👤', bgClass: 'bg-user/20', textClass: 'text-user' },
+  assistant: {
+    label: 'Assistant',
+    icon: '✦',
+    bgClass: 'bg-assistant/20',
+    textClass: 'text-assistant',
+  },
+  system: { label: 'System', icon: '⚙', bgClass: 'bg-text-muted/20', textClass: 'text-text-muted' },
+};
+
+function CollapsibleBlock({
+  icon,
+  label,
+  children,
+}: {
+  icon: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group">
+      <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors py-1">
+        <span>{icon}</span>
+        <span>{label}</span>
+        <span className="text-xs opacity-50 group-open:rotate-90 transition-transform">▶</span>
+      </summary>
+      <div className="mt-2 pl-6">{children}</div>
+    </details>
+  );
 }
 
 function TextContent({ content }: { content: string }) {
@@ -38,59 +71,56 @@ function TextContent({ content }: { content: string }) {
 
 function ThinkingContent({ content }: { content: string }) {
   return (
-    <details className="text-text-muted italic">
-      <summary className="cursor-pointer select-none">Thinking</summary>
-      <p>{content}</p>
-    </details>
+    <CollapsibleBlock icon="💭" label="Thought">
+      <p className="text-sm text-text-muted italic">{content}</p>
+    </CollapsibleBlock>
   );
 }
 
 function ToolUseContent({ content, meta }: { content: string; meta?: Record<string, unknown> }) {
   const input = meta?.input;
   return (
-    <div className="bg-tool-bg border-l-[3px] border-l-accent px-3 py-2 rounded-r">
-      <strong>🔧 {content}</strong>
+    <CollapsibleBlock icon="⚙" label={content}>
       {input != null && (
-        <pre className="bg-code-block p-2 rounded mt-1 overflow-x-auto text-[13px] font-mono">
+        <pre className="bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] font-mono border border-border">
           {JSON.stringify(input, null, 2)}
         </pre>
       )}
-    </div>
+    </CollapsibleBlock>
   );
 }
 
 function ToolResultContent({ content }: { content: string }) {
   return (
-    <div className="border-l-[3px] border-l-gray-600 pl-3">
-      <pre className="bg-code-block p-2 rounded overflow-x-auto text-[13px] font-mono">
+    <CollapsibleBlock icon="✓" label="Result">
+      <pre className="bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] font-mono border border-border">
         {content}
       </pre>
-    </div>
+    </CollapsibleBlock>
   );
 }
 
 function ControlRequestContent({ content }: { content: string }) {
   return (
-    <div className="bg-warning-bg border-l-[3px] border-l-warning px-3 py-2 rounded-r">
-      <strong>⚠️ Tool Approval: {content}</strong>
+    <div className="bg-warning-bg border-l-2 border-l-warning px-4 py-2.5 rounded-r-lg">
+      <strong className="text-warning text-sm">⚠ Tool Approval: {content}</strong>
     </div>
   );
 }
 
 function ErrorContent({ content }: { content: string }) {
   return (
-    <div className="text-danger bg-danger-bg rounded px-3 py-2" data-type="error">
+    <div
+      className="text-danger bg-danger-bg rounded-lg px-4 py-3 border border-danger/20"
+      data-type="error"
+    >
       {content}
     </div>
   );
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
-  const roleStyles: Record<string, string> = {
-    user: 'bg-user-bg rounded-lg px-3 py-2',
-    assistant: 'py-1',
-    system: '',
-  };
+export function ChatMessage({ message, showAvatar = true }: ChatMessageProps) {
+  const config = roleConfig[message.role] ?? roleConfig.system;
 
   let body: React.ReactNode;
   switch (message.type) {
@@ -116,13 +146,34 @@ export function ChatMessage({ message }: ChatMessageProps) {
       body = <p>{message.content}</p>;
   }
 
+  const avatarColWidth = 'w-7';
+
   return (
-    <div
-      className={`mb-3 leading-relaxed ${roleStyles[message.role] ?? ''}`}
-      data-role={message.role}
-      data-type={message.type}
-    >
-      {body}
+    <div className="leading-relaxed text-sm" data-role={message.role} data-type={message.type}>
+      {showAvatar ? (
+        <div className="flex gap-3">
+          <div className={`${avatarColWidth} shrink-0 pt-0.5`}>
+            <div
+              className={`w-7 h-7 rounded-md ${config.bgClass} flex items-center justify-center text-sm`}
+            >
+              {config.icon}
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={`text-sm font-semibold ${config.textClass}`}>{config.label}</span>
+            <div className="mt-1" data-type={message.type === 'text' ? 'text' : undefined}>
+              {body}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <div className={`${avatarColWidth} shrink-0`} />
+          <div className="flex-1 min-w-0" data-type={message.type === 'text' ? 'text' : undefined}>
+            {body}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
