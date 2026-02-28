@@ -2,7 +2,6 @@ import { type KeyboardEvent, useCallback, useRef, useState } from 'react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
-  disabled?: boolean;
   onStop?: () => void;
   isProcessing?: boolean;
 }
@@ -10,12 +9,10 @@ interface ChatInputProps {
 const btnBase =
   'px-4 py-1.5 text-white rounded-lg text-sm font-medium shrink-0 cursor-pointer transition-all hover:-translate-y-px active:translate-y-0';
 
-export function ChatInput({ onSend, disabled, onStop, isProcessing }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, isProcessing }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const isDisabled = disabled || isProcessing;
 
   const submit = useCallback(() => {
     const trimmed = value.trim();
@@ -51,7 +48,7 @@ export function ChatInput({ onSend, disabled, onStop, isProcessing }: ChatInputP
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        disabled={isDisabled}
+        disabled={isProcessing}
         placeholder="Type a message..."
         rows={3}
         className="w-full bg-transparent text-text px-4 pt-3 pb-1 text-sm resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted"
@@ -65,7 +62,7 @@ export function ChatInput({ onSend, disabled, onStop, isProcessing }: ChatInputP
           <button
             type="button"
             onClick={submit}
-            disabled={isDisabled}
+            disabled={isProcessing}
             className={`${btnBase} bg-accent hover:glow-accent-lg disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none`}
           >
             Send

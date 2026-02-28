@@ -54,11 +54,11 @@ describe('ChatInput', () => {
     expect(onSend).not.toHaveBeenCalled();
   });
 
-  it('disables textarea and shows Send when not processing', () => {
-    render(<ChatInput onSend={vi.fn()} disabled />);
+  it('textarea and send button are enabled by default', () => {
+    render(<ChatInput onSend={vi.fn()} />);
 
-    expect(screen.getByRole('textbox')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /send/i })).toBeDisabled();
+    expect(screen.getByRole('textbox')).toBeEnabled();
+    expect(screen.getByRole('button', { name: /send/i })).toBeEnabled();
   });
 
   it('shows Stop button and disables textarea when processing', () => {
