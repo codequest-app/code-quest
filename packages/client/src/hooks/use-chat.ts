@@ -36,20 +36,21 @@ export function useChat(socket: TypedSocket) {
       }
     };
 
-    const onEvent = ({ event }: { sessionId: string; event: ChatStreamEvent }) => {
+    /** Handle token-level streaming accumulation (text/thinking deltas). */
+    const handleStreaming = (event: ChatStreamEvent): boolean => {
       switch (event.type) {
         case 'text':
           streamingThinking.current = false;
           if (!streamedViaDelta.current) {
             appendOrCreateText(event.content);
           }
-          break;
+          return true;
 
         case 'text_delta':
           streamingThinking.current = false;
           streamedViaDelta.current = true;
           appendOrCreateText(event.content);
-          break;
+          return true;
 
         case 'thinking_delta':
           if (streamingThinking.current) {
@@ -62,12 +63,21 @@ export function useChat(socket: TypedSocket) {
               msg({ role: 'assistant', type: 'thinking', content: event.content }),
             );
           }
-          break;
+          return true;
 
         case 'message_end':
           resetRefs(streamingText, streamingThinking, streamedViaDelta);
-          break;
+          return true;
 
+        default:
+          return false;
+      }
+    };
+
+    const onEvent = ({ event }: { sessionId: string; event: ChatStreamEvent }) => {
+      if (handleStreaming(event)) return;
+
+      switch (event.type) {
         case 'init':
           store().setModel(event.model ?? null);
           store().setTools(event.tools ?? []);
