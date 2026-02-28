@@ -1,7 +1,5 @@
 import type { ChildProcess, SpawnOptions } from 'node:child_process';
-import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
-
-export type { ChatStats, ChatStreamEvent };
+import type { ChatStreamEvent } from '@code-quest/shared';
 
 // --- Raw entry for recording ---
 

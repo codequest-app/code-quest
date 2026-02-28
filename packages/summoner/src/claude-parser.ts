@@ -1,3 +1,4 @@
+import type { ChatStats, ChatStreamEvent } from '@code-quest/shared';
 import {
   cliAssistantSchema,
   cliControlRequestSchema,
@@ -6,7 +7,6 @@ import {
   cliSystemInitSchema,
   cliSystemStatusSchema,
 } from './schemas.ts';
-import type { ChatStats, ChatStreamEvent } from './types.ts';
 
 const IGNORED_TYPES = new Set([
   'rate_limit_event',
