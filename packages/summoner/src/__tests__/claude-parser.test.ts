@@ -180,6 +180,60 @@ describe('ClaudeParser', () => {
     });
   });
 
+  describe('stream_event', () => {
+    it('emits text_delta from content_block_delta with text_delta', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: {
+            type: 'content_block_delta',
+            index: 0,
+            delta: { type: 'text_delta', text: 'Hello' },
+          },
+        }),
+      );
+      expect(events).toEqual([{ type: 'text_delta', content: 'Hello' }]);
+    });
+
+    it('emits thinking_delta from content_block_delta with thinking', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: {
+            type: 'content_block_delta',
+            index: 0,
+            delta: { type: 'thinking', thinking: 'Let me think...' },
+          },
+        }),
+      );
+      expect(events).toEqual([{ type: 'thinking_delta', content: 'Let me think...' }]);
+    });
+
+    it('emits message_end from message_stop', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: { type: 'message_stop' },
+        }),
+      );
+      expect(events).toEqual([{ type: 'message_end' }]);
+    });
+
+    it('ignores unknown stream_event types', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: { type: 'message_start' },
+        }),
+      );
+      expect(events).toEqual([]);
+    });
+  });
+
   describe('multiple content blocks', () => {
     it('should emit multiple events for assistant with mixed content', () => {
       const parser = new ClaudeParser();

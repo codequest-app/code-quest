@@ -29,6 +29,9 @@ export type ChatStreamEvent =
       response?: Record<string, unknown>;
       error?: string;
     }
+  | { type: 'text_delta'; content: string }
+  | { type: 'thinking_delta'; content: string }
+  | { type: 'message_end' }
   | {
       type: 'control_request';
       requestId: string;
