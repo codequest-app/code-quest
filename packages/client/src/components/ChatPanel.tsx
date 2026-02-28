@@ -28,8 +28,8 @@ export function ChatPanel({ socket }: ChatPanelProps) {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <HeaderBar status={status} sessionId={sessionId} />
       <MessageList messages={messages} />
-      <div className="shrink-0 bg-surface border-t border-border">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex flex-col gap-3">
+      <div className="shrink-0 border-t border-border">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-3">
           <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
           <ChatInput onSend={sendMessage} disabled={status === 'processing'} />
           <StatsBar stats={stats} />

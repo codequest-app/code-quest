@@ -23,7 +23,7 @@ export function MessageList({ messages }: MessageListProps) {
           <span className="text-sm text-text-muted">How can I help you today?</span>
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto px-6 py-4">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           {messages.map((msg, i) => {
             const prevRole = i > 0 ? messages[i - 1].role : null;
             const showAvatar = msg.role !== prevRole;
