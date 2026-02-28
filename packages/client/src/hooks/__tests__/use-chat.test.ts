@@ -10,6 +10,9 @@ beforeEach(() => {
     messages: [],
     pendingControl: null,
     stats: null,
+    model: null,
+    tools: [],
+    statusText: null,
   });
 });
 
