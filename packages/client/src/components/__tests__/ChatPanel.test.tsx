@@ -92,4 +92,11 @@ describe('ChatPanel', () => {
     act(() => useChatStore.setState({ status: 'processing' }));
     expect(screen.getByRole('textbox')).toBeDisabled();
   });
+
+  it('shows Stop button when processing', () => {
+    const socket = makeFakeSocket();
+    render(<ChatPanel socket={socket} />);
+    act(() => useChatStore.setState({ status: 'processing' }));
+    expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
+  });
 });
