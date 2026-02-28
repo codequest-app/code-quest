@@ -11,7 +11,7 @@ export function ControlRequestBanner({ pending, onRespond }: ControlRequestBanne
   const label = pending.toolName ?? pending.subtype;
 
   return (
-    <div className="flex items-center justify-between bg-warning-bg border border-warning/30 rounded-md px-4 py-2.5 ">
+    <div className="flex items-center justify-between bg-warning-bg border border-warning/30 rounded-md px-4 py-2.5">
       <span className="text-sm">
         <span className="text-warning">⚠</span> Approve tool:{' '}
         <strong className="text-text-bright">{label}</strong>
