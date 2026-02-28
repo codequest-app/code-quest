@@ -25,12 +25,16 @@ export function ChatPanel({ socket }: ChatPanelProps) {
   }, [createSession]);
 
   return (
-    <div className="flex flex-col h-full max-w-[900px] mx-auto w-full">
+    <div className="flex flex-col h-full w-full overflow-hidden">
       <HeaderBar status={status} sessionId={sessionId} />
       <MessageList messages={messages} />
-      <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
-      <StatsBar stats={stats} />
-      <ChatInput onSend={sendMessage} disabled={status === 'processing'} />
+      <div className="shrink-0 bg-surface border-t border-border">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex flex-col gap-3">
+          <ControlRequestBanner pending={pendingControl} onRespond={respondToControl} />
+          <ChatInput onSend={sendMessage} disabled={status === 'processing'} />
+          <StatsBar stats={stats} />
+        </div>
+      </div>
     </div>
   );
 }
