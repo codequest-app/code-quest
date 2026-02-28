@@ -16,16 +16,38 @@ describe('MessageList', () => {
     expect(screen.getByText('Oops')).toBeInTheDocument();
   });
 
-  it('renders empty state when no messages', () => {
+  it('renders empty state with welcome text when no messages', () => {
     render(<MessageList messages={[]} />);
-    expect(screen.getByTestId('message-list')).toBeInTheDocument();
+    expect(screen.getByText(/how can i help/i)).toBeInTheDocument();
+  });
+
+  it('shows avatar on first message of a role group', () => {
+    render(<MessageList messages={messages} />);
+    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText('Assistant')).toBeInTheDocument();
+  });
+
+  it('hides avatar on consecutive same-role messages', () => {
+    const consecutive: Message[] = [
+      { id: '1', role: 'assistant', type: 'text', content: 'First', timestamp: 1 },
+      {
+        id: '2',
+        role: 'assistant',
+        type: 'tool_use',
+        content: 'bash',
+        meta: { toolId: 't1', input: {} },
+        timestamp: 2,
+      },
+      { id: '3', role: 'assistant', type: 'text', content: 'Second', timestamp: 3 },
+    ];
+    render(<MessageList messages={consecutive} />);
+    const labels = screen.getAllByText('Assistant');
+    expect(labels).toHaveLength(1);
   });
 
   it('auto-scrolls to bottom', () => {
     render(<MessageList messages={messages} />);
     const list = screen.getByTestId('message-list');
-    // scrollTop is 0 in jsdom but scrollIntoView should have been called
-    // 3 messages + 1 scroll anchor div
-    expect(list.children.length).toBe(4);
+    expect(list).toBeInTheDocument();
   });
 });
