@@ -74,6 +74,8 @@ export class ClaudeParser {
           tools: result.data.tools,
         },
       ];
+    } else if (subtype === 'status') {
+      return [{ type: 'status', message: (obj.status as string) ?? '' }];
     }
 
     return [];
