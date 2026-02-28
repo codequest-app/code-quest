@@ -28,3 +28,16 @@ export const Disconnected: Story = {
 export const Processing: Story = {
   args: { status: 'processing', sessionId: 'session-abc-123' },
 };
+
+export const WithModel: Story = {
+  args: { status: 'idle', sessionId: 'session-abc-123', model: 'claude-sonnet-4-20250514' },
+};
+
+export const WithTools: Story = {
+  args: {
+    status: 'idle',
+    sessionId: 'session-abc-123',
+    model: 'claude-sonnet-4-20250514',
+    tools: ['Read', 'Write', 'Bash', 'Glob', 'Grep'],
+  },
+};
