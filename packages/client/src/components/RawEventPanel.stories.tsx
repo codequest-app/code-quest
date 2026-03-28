@@ -53,3 +53,25 @@ export const ManyEvents: Story = {
     }),
   },
 };
+
+export const Streaming: Story = {
+  args: {
+    onSubscribe: (cb: (evt: unknown) => void) => {
+      const events = [
+        { type: 'message:assistant', content: 'Hello from Claude' },
+        { type: 'stream:chunk', delta: { type: 'text_delta', text: 'streaming...' } },
+        { type: 'control:permission', toolName: 'Bash', input: { command: 'ls' } },
+        { type: 'message:result', stats: { durationMs: 500 } },
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < events.length) {
+          cb(events[i++]);
+        } else {
+          clearInterval(interval);
+        }
+      }, 800);
+      return () => clearInterval(interval);
+    },
+  },
+};
