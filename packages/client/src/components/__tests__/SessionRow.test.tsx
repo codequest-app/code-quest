@@ -7,76 +7,71 @@ const baseSession: SessionSummary = {
   id: 's1',
   provider: 'claude',
   command: 'claude',
-  args: '',
+  args: '--verbose',
   mode: 'interactive',
   role: 'user',
+  cwd: '/Users/test/project',
   createdAt: '2026-01-01T00:00:00Z',
-  title: 'Test Session',
 };
 
 const noop = vi.fn();
+const defaultProps = {
+  isExpanded: false,
+  isCurrent: false,
+  isRemote: false,
+  onExpand: noop,
+  onSelect: noop,
+  onDeleted: noop,
+};
 
-describe('SessionRow subtitle', () => {
-  it('renders firstUserMessage as subtitle truncated to 60 chars', () => {
-    const longMsg = 'A'.repeat(80);
-    render(
-      <SessionRow
-        session={{ ...baseSession, firstUserMessage: longMsg }}
-        isExpanded={false}
-        isCurrent={false}
-        isRemote={false}
-        onExpand={noop}
-        onSelect={noop}
-        onDeleted={noop}
-      />,
-    );
-    const subtitle = screen.getByTestId('session-subtitle');
-    expect(subtitle).toBeInTheDocument();
-    expect(subtitle.textContent!.length).toBeLessThanOrEqual(63); // 60 + "..."
+describe('SessionRow', () => {
+  it('shows session ID prefix when no title', () => {
+    render(<SessionRow session={baseSession} {...defaultProps} />);
+    expect(screen.getByText('s1')).toBeInTheDocument();
   });
 
-  it('renders lastAssistantMessage as preview', () => {
+  it('shows title when available', () => {
+    render(<SessionRow session={{ ...baseSession, title: 'Fix login bug' }} {...defaultProps} />);
+    expect(screen.getByText('Fix login bug')).toBeInTheDocument();
+  });
+
+  it('shows time', () => {
+    render(<SessionRow session={baseSession} {...defaultProps} />);
+    expect(screen.getByText(/2026/)).toBeInTheDocument();
+  });
+
+  it('shows lastAssistantMessage as preview', () => {
     render(
       <SessionRow
-        session={{ ...baseSession, lastAssistantMessage: 'Fixed the bug in main.ts' }}
-        isExpanded={false}
-        isCurrent={false}
-        isRemote={false}
-        onExpand={noop}
-        onSelect={noop}
-        onDeleted={noop}
+        session={{ ...baseSession, lastAssistantMessage: 'All tests pass now' }}
+        {...defaultProps}
       />,
     );
-    expect(screen.getByTestId('session-preview')).toHaveTextContent('Fixed the bug in main.ts');
+    expect(screen.getByTestId('session-preview')).toHaveTextContent('All tests pass now');
   });
 
   it('truncates lastAssistantMessage at 80 chars', () => {
-    const longMsg = 'B'.repeat(100);
     render(
       <SessionRow
-        session={{ ...baseSession, lastAssistantMessage: longMsg }}
-        isExpanded={false}
-        isCurrent={false}
-        isRemote={false}
-        onExpand={noop}
-        onSelect={noop}
-        onDeleted={noop}
+        session={{ ...baseSession, lastAssistantMessage: 'B'.repeat(100) }}
+        {...defaultProps}
       />,
     );
     const preview = screen.getByTestId('session-preview');
-    expect(preview.textContent!.length).toBeLessThanOrEqual(83); // 80 + "..."
+    expect(preview.textContent!.length).toBeLessThanOrEqual(83);
   });
 
-  it('does not render subtitle when firstUserMessage is undefined', () => {
+  it('does not show cwd and args in list view', () => {
+    render(<SessionRow session={baseSession} {...defaultProps} />);
+    expect(screen.queryByText(/\/Users\/test\/project/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/--verbose/)).not.toBeInTheDocument();
+  });
+
+  it('does not show firstUserMessage in list view', () => {
     render(
       <SessionRow
-        session={baseSession}
-        isExpanded={false}
-        isCurrent={false}
-        isRemote={false}
-        onExpand={noop}
-        onSelect={noop}
-        onDeleted={noop}
+        session={{ ...baseSession, firstUserMessage: 'fix the bug' }}
+        {...defaultProps}
       />,
     );
     expect(screen.queryByTestId('session-subtitle')).not.toBeInTheDocument();
