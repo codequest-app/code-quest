@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { JsonViewer } from './JsonViewer';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
@@ -9,17 +9,28 @@ function getEventType(evt: unknown): string | undefined {
 }
 
 interface RawEventPanelProps {
-  onFetch: () => Promise<{ events: unknown[] }>;
+  onFetch?: () => Promise<{ events: unknown[] }>;
+  onSubscribe?: (cb: (evt: unknown) => void) => () => void;
   onClose: () => void;
 }
 
-export function RawEventPanel({ onFetch, onClose }: RawEventPanelProps) {
+export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelProps) {
   const [events, setEvents] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState('');
   const [searchText, setSearchText] = useState('');
 
+  // Streaming: subscribe to real-time events
+  useEffect(() => {
+    if (!onSubscribe) return;
+    const unsubscribe = onSubscribe((evt) => {
+      setEvents((prev) => [...prev, evt]);
+    });
+    return unsubscribe;
+  }, [onSubscribe]);
+
   const handleRefresh = useCallback(async () => {
+    if (!onFetch) return;
     setLoading(true);
     try {
       const result = await onFetch();
@@ -50,9 +61,16 @@ export function RawEventPanel({ onFetch, onClose }: RawEventPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-sm font-medium text-text">Raw Events</span>
         <div className="flex gap-2">
-          <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
-            ↻
-          </button>
+          {onFetch && (
+            <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
+              ↻
+            </button>
+          )}
+          {events.length > 0 && (
+            <button type="button" title="Clear" onClick={() => setEvents([])} className={ICON_BTN}>
+              ⌀
+            </button>
+          )}
           <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
             ✕
           </button>
@@ -85,7 +103,7 @@ export function RawEventPanel({ onFetch, onClose }: RawEventPanelProps) {
         {loading && <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>}
         {!loading && events.length === 0 && (
           <div className="px-4 py-8 text-center text-text-muted text-sm">
-            No events. Click ↻ to fetch.
+            {onSubscribe ? 'Waiting for events…' : 'No events. Click ↻ to fetch.'}
           </div>
         )}
         {filteredEvents.map((evt, i) => {

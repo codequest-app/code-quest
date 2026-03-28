@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useChannelCompose, useChannelControl, useChannelMessages } from '../contexts/channel';
+import { useSocket } from '../contexts/SocketContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -23,7 +24,8 @@ export function ChatPanel({
   joinSession: (id: string) => void;
   toggleHistory: () => void;
 }) {
-  const { channelId, fetchRawEvents } = useChannelMessages();
+  const { channelId } = useChannelMessages();
+  const { socket } = useSocket();
   const { focusTextarea } = useChannelCompose();
   const {
     pendingDiffReview,
@@ -42,6 +44,19 @@ export function ChatPanel({
 
   const [isSessionsMode] = useState(
     () => new URLSearchParams(window.location.search).get('mode') === 'sessions',
+  );
+
+  const subscribeRawEvents = useCallback(
+    (cb: (evt: unknown) => void) => {
+      const handler = (eventName: string, ...args: unknown[]) => {
+        const payload = args[0] as Record<string, unknown> | undefined;
+        if (payload?.channelId && payload.channelId !== channelId) return;
+        cb({ type: eventName, ...((payload as object) ?? {}) });
+      };
+      socket.onAny(handler);
+      return () => socket.offAny(handler);
+    },
+    [socket, channelId],
   );
 
   useHotkeys('/', () => focusTextarea(), NO_FORM);
@@ -114,7 +129,10 @@ export function ChatPanel({
       </div>
       {activeSidePanel === 'raw' && (
         <div className={SIDE_PANEL}>
-          <RawEventPanel onFetch={fetchRawEvents} onClose={() => setActiveSidePanel(null)} />
+          <RawEventPanel
+            onSubscribe={subscribeRawEvents}
+            onClose={() => setActiveSidePanel(null)}
+          />
         </div>
       )}
       {pendingElicitation && (

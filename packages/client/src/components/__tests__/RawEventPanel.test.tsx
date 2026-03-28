@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { RawEventPanel } from '../RawEventPanel';
@@ -20,6 +20,28 @@ async function renderAndFetch(events: unknown[] = mockEvents) {
   await user.click(screen.getByTitle('Refresh'));
   return user;
 }
+
+describe('RawEventPanel (streaming)', () => {
+  it('renders event pushed via onEvent without clicking refresh', async () => {
+    const listeners: Array<(evt: unknown) => void> = [];
+    const onSubscribe = (cb: (evt: unknown) => void) => {
+      listeners.push(cb);
+      return () => {
+        const idx = listeners.indexOf(cb);
+        if (idx >= 0) listeners.splice(idx, 1);
+      };
+    };
+
+    render(<RawEventPanel onSubscribe={onSubscribe} onClose={vi.fn()} />);
+
+    // Push event from outside
+    await act(async () => {
+      for (const cb of listeners) cb({ type: 'assistant', content: 'streamed' });
+    });
+
+    expect(await screen.findByText(/Event #1 — assistant/)).toBeInTheDocument();
+  });
+});
 
 describe('RawEventPanel', () => {
   it('shows event type in summary when available', async () => {
