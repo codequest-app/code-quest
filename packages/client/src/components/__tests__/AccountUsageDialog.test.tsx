@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, screen } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
@@ -141,12 +141,10 @@ describe('AccountUsageDialog', () => {
     if (usageItem) {
       await user.click(usageItem);
 
-      const closeBtns = screen.queryAllByRole('button', { name: /close/i });
-      const closeBtn = closeBtns[0];
-      if (closeBtn) {
-        await user.click(closeBtn);
-        expect(screen.queryByRole('dialog', { name: /account & usage/i })).not.toBeInTheDocument();
-      }
+      const dialog = screen.getByRole('dialog', { name: /account & usage/i });
+      const closeBtn = within(dialog).getByLabelText('close');
+      await user.click(closeBtn);
+      expect(screen.queryByRole('dialog', { name: /account & usage/i })).not.toBeInTheDocument();
     }
   });
 
