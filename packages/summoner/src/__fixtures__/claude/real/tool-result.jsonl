@@ -1,0 +1,1 @@
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"User denied this action","is_error":true,"tool_use_id":"toolu_01LJ1sbVGgcxBDmZmLXDqEbp"}]},"parent_tool_use_id":null,"session_id":"915f09ef-5fdb-4b58-86fa-c68f8a0326f2","uuid":"083386e4-010f-49a7-a4f1-ca23df11ffc9","tool_use_result":"Error: User denied this action"}

@@ -1,0 +1,1465 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-text.jsonl:1 1`] = `
+{
+  "message": {
+    "content": [
+      {
+        "text": "Now let me check what the frontend currently implements.",
+        "type": "text",
+      },
+    ],
+    "context_management": null,
+    "id": "msg_01WffRbiNHDAX9dNhEVuZgKn",
+    "model": "claude-opus-4-6",
+    "role": "assistant",
+    "stop_reason": null,
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 4190,
+        "ephemeral_5m_input_tokens": 0,
+      },
+      "cache_creation_input_tokens": 4190,
+      "cache_read_input_tokens": 43921,
+      "inference_geo": "not_available",
+      "input_tokens": 1,
+      "output_tokens": 2,
+      "service_tier": "standard",
+    },
+  },
+  "parent_tool_use_id": null,
+  "session_id": "aa8c7b4f-1344-47a2-99f6-745dee809143",
+  "type": "assistant",
+  "uuid": "236f8a78-ca4c-414a-8c49-55dbad64e689",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-tool.jsonl:1 1`] = `
+{
+  "message": {
+    "content": [
+      {
+        "caller": {
+          "type": "direct",
+        },
+        "id": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
+        "input": {
+          "file_path": "/Users/user/WebstormProjects/cc-office/docs/protocol.md",
+        },
+        "name": "Read",
+        "type": "tool_use",
+      },
+    ],
+    "context_management": null,
+    "id": "msg_011RgyipzDA8BeU6zC3GVmfF",
+    "model": "claude-opus-4-6",
+    "role": "assistant",
+    "stop_reason": null,
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 7108,
+        "ephemeral_5m_input_tokens": 0,
+      },
+      "cache_creation_input_tokens": 7108,
+      "cache_read_input_tokens": 19026,
+      "inference_geo": "not_available",
+      "input_tokens": 3,
+      "output_tokens": 9,
+      "service_tier": "standard",
+    },
+  },
+  "parent_tool_use_id": null,
+  "session_id": "915f09ef-5fdb-4b58-86fa-c68f8a0326f2",
+  "type": "assistant",
+  "uuid": "e906628f-cf87-4d76-95e8-3c2edcae7f68",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses auth-status.jsonl:1 1`] = `
+{
+  "isAuthenticating": false,
+  "output": [],
+  "session_id": "c3fc7cc5-8809-4ebd-936c-87866053b1e3",
+  "type": "auth_status",
+  "uuid": "8c0c841a-12e0-404f-bb64-005e2f6189ad",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses cli-error.jsonl:1 1`] = `
+{
+  "error": {
+    "message": "Rate limit exceeded",
+    "type": "api_error",
+  },
+  "session_id": "test-session-id",
+  "type": "error",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-cancel-request.jsonl:1 1`] = `
+{
+  "request_id": "b0e4bdb3-d749-4e17-b7d6-7e08a8c5e2f8",
+  "type": "control_cancel_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-get-settings.jsonl:1 1`] = `
+{
+  "request": {
+    "subtype": "get_settings",
+  },
+  "request_id": "n07a50d6soh",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-initialize.jsonl:1 1`] = `
+{
+  "request": {
+    "appendSystemPrompt": "\\n# VSCode Extension Context\\n\\nYou are running inside a VSCode native extension environment.",
+    "hooks": {
+      "PostToolUse": [
+        {
+          "hookCallbackIds": [
+            "hook_2",
+          ],
+          "matcher": "Edit|Write|MultiEdit",
+        },
+      ],
+      "PreToolUse": [
+        {
+          "hookCallbackIds": [
+            "hook_0",
+          ],
+          "matcher": "Edit|Write|MultiEdit",
+        },
+        {
+          "hookCallbackIds": [
+            "hook_1",
+          ],
+          "matcher": "Edit|Write|Read",
+        },
+      ],
+    },
+    "subtype": "initialize",
+  },
+  "request_id": "82k6rnj6fil",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-initialize.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "82k6rnj6fil",
+    "response": {
+      "account": {
+        "email": "test@example.com",
+        "subscriptionType": "Claude Max",
+      },
+      "agents": [
+        {
+          "description": "General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks.",
+          "name": "general-purpose",
+        },
+        {
+          "description": "Use this agent to configure the user's Claude Code status line setting.",
+          "model": "sonnet",
+          "name": "statusline-setup",
+        },
+        {
+          "description": "Fast agent specialized for exploring codebases.",
+          "model": "haiku",
+          "name": "Explore",
+        },
+        {
+          "description": "Software architect agent for designing implementation plans.",
+          "name": "Plan",
+        },
+        {
+          "description": "Use this agent when the user asks questions about Claude Code.",
+          "model": "haiku",
+          "name": "claude-code-guide",
+        },
+      ],
+      "available_output_styles": [
+        "default",
+        "Explanatory",
+        "Learning",
+      ],
+      "commands": [
+        {
+          "argumentHint": "",
+          "description": "Use when the user wants to customize keyboard shortcuts (bundled)",
+          "name": "keybindings-help",
+        },
+        {
+          "argumentHint": "[issue description]",
+          "description": "Enable debug logging for this session (bundled)",
+          "name": "debug",
+        },
+        {
+          "argumentHint": "",
+          "description": "Review changed code for reuse, quality, and efficiency (bundled)",
+          "name": "simplify",
+        },
+        {
+          "argumentHint": "<optional custom summarization instructions>",
+          "description": "Clear conversation history but keep a summary in context",
+          "name": "compact",
+        },
+        {
+          "argumentHint": "",
+          "description": "Initialize a new CLAUDE.md file with codebase documentation",
+          "name": "init",
+        },
+        {
+          "argumentHint": "",
+          "description": "Review a pull request",
+          "name": "review",
+        },
+      ],
+      "models": [
+        {
+          "description": "Opus 4.6 · Most capable for complex work",
+          "displayName": "Default (recommended)",
+          "supportedEffortLevels": [
+            "low",
+            "medium",
+            "high",
+            "max",
+          ],
+          "supportsAdaptiveThinking": true,
+          "supportsEffort": true,
+          "supportsFastMode": true,
+          "value": "default",
+        },
+        {
+          "description": "Sonnet 4.6 · Best for everyday tasks",
+          "displayName": "Sonnet",
+          "supportedEffortLevels": [
+            "low",
+            "medium",
+            "high",
+            "max",
+          ],
+          "supportsAdaptiveThinking": true,
+          "supportsEffort": true,
+          "value": "sonnet",
+        },
+        {
+          "description": "Haiku 4.5 · Fastest for quick answers",
+          "displayName": "Haiku",
+          "value": "haiku",
+        },
+        {
+          "description": "claude-opus-4-6",
+          "displayName": "Opus 4.6",
+          "supportedEffortLevels": [
+            "low",
+            "medium",
+            "high",
+            "max",
+          ],
+          "supportsAdaptiveThinking": true,
+          "supportsEffort": true,
+          "supportsFastMode": true,
+          "value": "claude-opus-4-6",
+        },
+      ],
+      "output_style": "default",
+      "pid": 71411,
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request.jsonl:1 1`] = `
+{
+  "request": {
+    "decision_reason": "Path is outside allowed working directories",
+    "input": {
+      "file_path": "/Users/user/WebstormProjects/cc-office/docs/protocol.md",
+    },
+    "permission_suggestions": [
+      {
+        "behavior": "allow",
+        "destination": "session",
+        "rules": [
+          {
+            "ruleContent": "//Users/user/WebstormProjects/cc-office/docs/**",
+            "toolName": "Read",
+          },
+        ],
+        "type": "addRules",
+      },
+    ],
+    "subtype": "can_use_tool",
+    "tool_name": "Read",
+    "tool_use_id": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
+  },
+  "request_id": "e822c298-69cf-4a3f-99c8-e3a04561c73b",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-ask-user-question.jsonl:1 1`] = `
+{
+  "request": {
+    "input": {
+      "questions": [
+        {
+          "header": "功能範圍",
+          "multiSelect": true,
+          "options": [
+            {
+              "description": "Header 加 model selector 和 thinking level dropdown，透過現有 socket control request 通知 server",
+              "label": "Model + Thinking Level 切換",
+            },
+            {
+              "description": "列出歷史 sessions、resume、fork conversation",
+              "label": "Session 列表與管理",
+            },
+            {
+              "description": "巢狀顯示子代理訊息、工具輸入逐步串流",
+              "label": "Subagent 訊息樹 + input_json_delta",
+            },
+            {
+              "description": "投入最小、用戶感知最明顯，且 server 端 control request 已有基礎",
+              "label": "先做 Model + Thinking Level（推薦）",
+            },
+          ],
+          "question": "這次想先實作哪些功能？",
+        },
+      ],
+    },
+    "subtype": "can_use_tool",
+    "tool_name": "AskUserQuestion",
+    "tool_use_id": "toolu_018yv54REq4mvQyZ1VDLgKqf",
+  },
+  "request_id": "72839285-cf52-4b15-b530-657011515404",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-bash.jsonl:1 1`] = `
+{
+  "request": {
+    "agent_id": "a69185b60bed65ea3",
+    "input": {
+      "command": "find /Users/user/WebstormProjects/cc-office/packages/client/src -type f -name '*.ts' -o -name '*.tsx' -o -name '*.vue' | head -80",
+      "description": "List frontend source files",
+    },
+    "permission_suggestions": [
+      {
+        "behavior": "allow",
+        "destination": "session",
+        "rules": [
+          {
+            "ruleContent": "//Users/user/WebstormProjects/cc-office/packages/client/src/**",
+            "toolName": "Read",
+          },
+        ],
+        "type": "addRules",
+      },
+    ],
+    "subtype": "can_use_tool",
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01DgSPJXKzqG5v3vyNY8kNPT",
+  },
+  "request_id": "fa82ecf3-0835-4e31-916d-74081102c43d",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-can-use-tool.jsonl:1 1`] = `
+{
+  "request": {
+    "agent_id": "main",
+    "blocked_path": null,
+    "decision_reason": "Shell commands require approval",
+    "input": {
+      "command": "echo hello",
+      "description": "Run echo command",
+    },
+    "permission_suggestions": [
+      {
+        "behavior": "allow",
+        "destination": "session",
+        "rules": [
+          {
+            "ruleContent": "echo*",
+            "toolName": "Bash",
+          },
+        ],
+        "type": "addRules",
+      },
+    ],
+    "subtype": "can_use_tool",
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_013gpDgYisGsRH9uRQuKzER8",
+  },
+  "request_id": "b9141324-dd73-4cbd-8f30-05aec06ac4ba",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-exit-plan-mode.jsonl:1 1`] = `
+{
+  "request": {
+    "input": {
+      "plan": "# Plan: HeaderBar 核心控制項 — 模型切換 / Thinking Level / Permission Mode
+
+## Context
+
+根據 \`docs/protocol.md\` 分析，CLI 協議支援 \`set_model\`、\`set_max_thinking_tokens\`、\`set_permission_mode\` 三個 control_request，但目前 UI 完全沒有暴露這些設定。本次新增 HeaderBar 上的三個下拉選單，讓使用者能在對話中動態調整。",
+    },
+    "subtype": "can_use_tool",
+    "tool_name": "ExitPlanMode",
+    "tool_use_id": "toolu_01MKt3qFndBrRHPbqEzhg523",
+  },
+  "request_id": "8ef8300c-83f5-499f-b0fc-760af8aafb7b",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-hook-callback.jsonl:1 1`] = `
+{
+  "request": {
+    "callback_id": "hook_2",
+    "input": {
+      "agent_id": "main",
+      "agent_type": "direct",
+      "cwd": "/tmp",
+      "hook_event_name": "PostToolUse",
+      "permission_mode": "acceptEdits",
+      "session_id": "test-session-id",
+      "tool_input": {
+        "content": "hello",
+        "file_path": "/tmp/test.txt",
+      },
+      "tool_name": "Write",
+      "transcript_path": "/tmp/test.jsonl",
+    },
+    "subtype": "hook_callback",
+    "tool_use_id": "toolu_01ABC123",
+  },
+  "request_id": "00758599-809b-483a-a0fa-90c06207d2c7",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-response.jsonl:1 1`] = `
+{
+  "response": {
+    "request_id": "e822c298-69cf-4a3f-99c8-e3a04561c73b",
+    "response": {
+      "behavior": "deny",
+      "interrupt": false,
+      "message": "User denied this action",
+      "toolUseID": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-response-error.jsonl:1 1`] = `
+{
+  "response": {
+    "error": "Permission denied",
+    "request_id": "e822c298-69cf-4a3f-99c8-e3a04561c73b",
+    "response": {
+      "behavior": "deny",
+      "interrupt": false,
+      "message": "User denied this action",
+      "toolUseID": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
+    },
+    "subtype": "error",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-set-effort.jsonl:1 1`] = `
+{
+  "request": {
+    "settings": {
+      "effortLevel": "low",
+    },
+    "subtype": "apply_flag_settings",
+  },
+  "request_id": "eegs242126k",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-set-effort.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "eegs242126k",
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses hook-response.jsonl:1 1`] = `
+{
+  "exit_code": 0,
+  "hook_event": "SessionStart",
+  "hook_id": "95d4c32a-b2c3-4674-bd8d-e653e976eaa0",
+  "hook_name": "SessionStart:startup",
+  "outcome": "success",
+  "output": "{
+  "additional_context": "<EXTREMELY_IMPORTANT>\\nYou have superpowers.\\n\\n**Below is the full content of your 'superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\\n\\n---\\nname: using-superpowers\\ndescription: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions\\n---\\n\\n<EXTREMELY-IMPORTANT>\\nIf you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.\\n\\nIF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.\\n\\nThis is not negotiable. This is not optional. You cannot rationalize your way out of this.\\n</EXTREMELY-IMPORTANT>\\n\\n## How to Access Skills\\n\\n**In Claude Code:** Use the \`Skill\` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.\\n\\n**In other environments:** Check your platform's documentation for how skills are loaded.\\n\\n# Using Skills\\n\\n## The Rule\\n\\n**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.\\n\\n\`\`\`dot\\ndigraph skill_flow {\\n    \\"User message received\\" [shape=doublecircle];\\n    \\"About to EnterPlanMode?\\" [shape=doublecircle];\\n    \\"Already brainstormed?\\" [shape=diamond];\\n    \\"Invoke brainstorming skill\\" [shape=box];\\n    \\"Might any skill apply?\\" [shape=diamond];\\n    \\"Invoke Skill tool\\" [shape=box];\\n    \\"Announce: 'Using [skill] to [purpose]'\\" [shape=box];\\n    \\"Has checklist?\\" [shape=diamond];\\n    \\"Create TodoWrite todo per item\\" [shape=box];\\n    \\"Follow skill exactly\\" [shape=box];\\n    \\"Respond (including clarifications)\\" [shape=doublecircle];\\n\\n    \\"About to EnterPlanMode?\\" -> \\"Already brainstormed?\\";\\n    \\"Already brainstormed?\\" -> \\"Invoke brainstorming skill\\" [label=\\"no\\"];\\n    \\"Already brainstormed?\\" -> \\"Might any skill apply?\\" [label=\\"yes\\"];\\n    \\"Invoke brainstorming skill\\" -> \\"Might any skill apply?\\";\\n\\n    \\"User message received\\" -> \\"Might any skill apply?\\";\\n    \\"Might any skill apply?\\" -> \\"Invoke Skill tool\\" [label=\\"yes, even 1%\\"];\\n    \\"Might any skill apply?\\" -> \\"Respond (including clarifications)\\" [label=\\"definitely not\\"];\\n    \\"Invoke Skill tool\\" -> \\"Announce: 'Using [skill] to [purpose]'\\";\\n    \\"Announce: 'Using [skill] to [purpose]'\\" -> \\"Has checklist?\\";\\n    \\"Has checklist?\\" -> \\"Create TodoWrite todo per item\\" [label=\\"yes\\"];\\n    \\"Has checklist?\\" -> \\"Follow skill exactly\\" [label=\\"no\\"];\\n    \\"Create TodoWrite todo per item\\" -> \\"Follow skill exactly\\";\\n}\\n\`\`\`\\n\\n## Red Flags\\n\\nThese thoughts mean STOP—you're rationalizing:\\n\\n| Thought | Reality |\\n|---------|---------|\\n| \\"This is just a simple question\\" | Questions are tasks. Check for skills. |\\n| \\"I need more context first\\" | Skill check comes BEFORE clarifying questions. |\\n| \\"Let me explore the codebase first\\" | Skills tell you HOW to explore. Check first. |\\n| \\"I can check git/files quickly\\" | Files lack conversation context. Check for skills. |\\n| \\"Let me gather information first\\" | Skills tell you HOW to gather information. |\\n| \\"This doesn't need a formal skill\\" | If a skill exists, use it. |\\n| \\"I remember this skill\\" | Skills evolve. Read current version. |\\n| \\"This doesn't count as a task\\" | Action = task. Check for skills. |\\n| \\"The skill is overkill\\" | Simple things become complex. Use it. |\\n| \\"I'll just do this one thing first\\" | Check BEFORE doing anything. |\\n| \\"This feels productive\\" | Undisciplined action wastes time. Skills prevent this. |\\n| \\"I know what that means\\" | Knowing the concept ≠ using the skill. Invoke it. |\\n\\n## Skill Priority\\n\\nWhen multiple skills could apply, use this order:\\n\\n1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task\\n2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution\\n\\n\\"Let's build X\\" → brainstorming first, then implementation skills.\\n\\"Fix this bug\\" → debugging first, then domain-specific skills.\\n\\n## Skill Types\\n\\n**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.\\n\\n**Flexible** (patterns): Adapt principles to context.\\n\\nThe skill itself tells you which.\\n\\n## User Instructions\\n\\nInstructions say WHAT, not HOW. \\"Add X\\" or \\"Fix Y\\" doesn't mean skip workflows.\\n\\n\\n</EXTREMELY_IMPORTANT>",
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "<EXTREMELY_IMPORTANT>\\nYou have superpowers.\\n\\n**Below is the full content of your 'superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\\n\\n---\\nname: using-superpowers\\ndescription: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions\\n---\\n\\n<EXTREMELY-IMPORTANT>\\nIf you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.\\n\\nIF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.\\n\\nThis is not negotiable. This is not optional. You cannot rationalize your way out of this.\\n</EXTREMELY-IMPORTANT>\\n\\n## How to Access Skills\\n\\n**In Claude Code:** Use the \`Skill\` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.\\n\\n**In other environments:** Check your platform's documentation for how skills are loaded.\\n\\n# Using Skills\\n\\n## The Rule\\n\\n**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.\\n\\n\`\`\`dot\\ndigraph skill_flow {\\n    \\"User message received\\" [shape=doublecircle];\\n    \\"About to EnterPlanMode?\\" [shape=doublecircle];\\n    \\"Already brainstormed?\\" [shape=diamond];\\n    \\"Invoke brainstorming skill\\" [shape=box];\\n    \\"Might any skill apply?\\" [shape=diamond];\\n    \\"Invoke Skill tool\\" [shape=box];\\n    \\"Announce: 'Using [skill] to [purpose]'\\" [shape=box];\\n    \\"Has checklist?\\" [shape=diamond];\\n    \\"Create TodoWrite todo per item\\" [shape=box];\\n    \\"Follow skill exactly\\" [shape=box];\\n    \\"Respond (including clarifications)\\" [shape=doublecircle];\\n\\n    \\"About to EnterPlanMode?\\" -> \\"Already brainstormed?\\";\\n    \\"Already brainstormed?\\" -> \\"Invoke brainstorming skill\\" [label=\\"no\\"];\\n    \\"Already brainstormed?\\" -> \\"Might any skill apply?\\" [label=\\"yes\\"];\\n    \\"Invoke brainstorming skill\\" -> \\"Might any skill apply?\\";\\n\\n    \\"User message received\\" -> \\"Might any skill apply?\\";\\n    \\"Might any skill apply?\\" -> \\"Invoke Skill tool\\" [label=\\"yes, even 1%\\"];\\n    \\"Might any skill apply?\\" -> \\"Respond (including clarifications)\\" [label=\\"definitely not\\"];\\n    \\"Invoke Skill tool\\" -> \\"Announce: 'Using [skill] to [purpose]'\\";\\n    \\"Announce: 'Using [skill] to [purpose]'\\" -> \\"Has checklist?\\";\\n    \\"Has checklist?\\" -> \\"Create TodoWrite todo per item\\" [label=\\"yes\\"];\\n    \\"Has checklist?\\" -> \\"Follow skill exactly\\" [label=\\"no\\"];\\n    \\"Create TodoWrite todo per item\\" -> \\"Follow skill exactly\\";\\n}\\n\`\`\`\\n\\n## Red Flags\\n\\nThese thoughts mean STOP—you're rationalizing:\\n\\n| Thought | Reality |\\n|---------|---------|\\n| \\"This is just a simple question\\" | Questions are tasks. Check for skills. |\\n| \\"I need more context first\\" | Skill check comes BEFORE clarifying questions. |\\n| \\"Let me explore the codebase first\\" | Skills tell you HOW to explore. Check first. |\\n| \\"I can check git/files quickly\\" | Files lack conversation context. Check for skills. |\\n| \\"Let me gather information first\\" | Skills tell you HOW to gather information. |\\n| \\"This doesn't need a formal skill\\" | If a skill exists, use it. |\\n| \\"I remember this skill\\" | Skills evolve. Read current version. |\\n| \\"This doesn't count as a task\\" | Action = task. Check for skills. |\\n| \\"The skill is overkill\\" | Simple things become complex. Use it. |\\n| \\"I'll just do this one thing first\\" | Check BEFORE doing anything. |\\n| \\"This feels productive\\" | Undisciplined action wastes time. Skills prevent this. |\\n| \\"I know what that means\\" | Knowing the concept ≠ using the skill. Invoke it. |\\n\\n## Skill Priority\\n\\nWhen multiple skills could apply, use this order:\\n\\n1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task\\n2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution\\n\\n\\"Let's build X\\" → brainstorming first, then implementation skills.\\n\\"Fix this bug\\" → debugging first, then domain-specific skills.\\n\\n## Skill Types\\n\\n**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.\\n\\n**Flexible** (patterns): Adapt principles to context.\\n\\nThe skill itself tells you which.\\n\\n## User Instructions\\n\\nInstructions say WHAT, not HOW. \\"Add X\\" or \\"Fix Y\\" doesn't mean skip workflows.\\n\\n\\n</EXTREMELY_IMPORTANT>"
+  }
+}
+",
+  "session_id": "aa8c7b4f-1344-47a2-99f6-745dee809143",
+  "stderr": "",
+  "stdout": "{
+  "additional_context": "<EXTREMELY_IMPORTANT>\\nYou have superpowers.\\n\\n**Below is the full content of your 'superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\\n\\n---\\nname: using-superpowers\\ndescription: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions\\n---\\n\\n<EXTREMELY-IMPORTANT>\\nIf you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.\\n\\nIF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.\\n\\nThis is not negotiable. This is not optional. You cannot rationalize your way out of this.\\n</EXTREMELY-IMPORTANT>\\n\\n## How to Access Skills\\n\\n**In Claude Code:** Use the \`Skill\` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.\\n\\n**In other environments:** Check your platform's documentation for how skills are loaded.\\n\\n# Using Skills\\n\\n## The Rule\\n\\n**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.\\n\\n\`\`\`dot\\ndigraph skill_flow {\\n    \\"User message received\\" [shape=doublecircle];\\n    \\"About to EnterPlanMode?\\" [shape=doublecircle];\\n    \\"Already brainstormed?\\" [shape=diamond];\\n    \\"Invoke brainstorming skill\\" [shape=box];\\n    \\"Might any skill apply?\\" [shape=diamond];\\n    \\"Invoke Skill tool\\" [shape=box];\\n    \\"Announce: 'Using [skill] to [purpose]'\\" [shape=box];\\n    \\"Has checklist?\\" [shape=diamond];\\n    \\"Create TodoWrite todo per item\\" [shape=box];\\n    \\"Follow skill exactly\\" [shape=box];\\n    \\"Respond (including clarifications)\\" [shape=doublecircle];\\n\\n    \\"About to EnterPlanMode?\\" -> \\"Already brainstormed?\\";\\n    \\"Already brainstormed?\\" -> \\"Invoke brainstorming skill\\" [label=\\"no\\"];\\n    \\"Already brainstormed?\\" -> \\"Might any skill apply?\\" [label=\\"yes\\"];\\n    \\"Invoke brainstorming skill\\" -> \\"Might any skill apply?\\";\\n\\n    \\"User message received\\" -> \\"Might any skill apply?\\";\\n    \\"Might any skill apply?\\" -> \\"Invoke Skill tool\\" [label=\\"yes, even 1%\\"];\\n    \\"Might any skill apply?\\" -> \\"Respond (including clarifications)\\" [label=\\"definitely not\\"];\\n    \\"Invoke Skill tool\\" -> \\"Announce: 'Using [skill] to [purpose]'\\";\\n    \\"Announce: 'Using [skill] to [purpose]'\\" -> \\"Has checklist?\\";\\n    \\"Has checklist?\\" -> \\"Create TodoWrite todo per item\\" [label=\\"yes\\"];\\n    \\"Has checklist?\\" -> \\"Follow skill exactly\\" [label=\\"no\\"];\\n    \\"Create TodoWrite todo per item\\" -> \\"Follow skill exactly\\";\\n}\\n\`\`\`\\n\\n## Red Flags\\n\\nThese thoughts mean STOP—you're rationalizing:\\n\\n| Thought | Reality |\\n|---------|---------|\\n| \\"This is just a simple question\\" | Questions are tasks. Check for skills. |\\n| \\"I need more context first\\" | Skill check comes BEFORE clarifying questions. |\\n| \\"Let me explore the codebase first\\" | Skills tell you HOW to explore. Check first. |\\n| \\"I can check git/files quickly\\" | Files lack conversation context. Check for skills. |\\n| \\"Let me gather information first\\" | Skills tell you HOW to gather information. |\\n| \\"This doesn't need a formal skill\\" | If a skill exists, use it. |\\n| \\"I remember this skill\\" | Skills evolve. Read current version. |\\n| \\"This doesn't count as a task\\" | Action = task. Check for skills. |\\n| \\"The skill is overkill\\" | Simple things become complex. Use it. |\\n| \\"I'll just do this one thing first\\" | Check BEFORE doing anything. |\\n| \\"This feels productive\\" | Undisciplined action wastes time. Skills prevent this. |\\n| \\"I know what that means\\" | Knowing the concept ≠ using the skill. Invoke it. |\\n\\n## Skill Priority\\n\\nWhen multiple skills could apply, use this order:\\n\\n1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task\\n2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution\\n\\n\\"Let's build X\\" → brainstorming first, then implementation skills.\\n\\"Fix this bug\\" → debugging first, then domain-specific skills.\\n\\n## Skill Types\\n\\n**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.\\n\\n**Flexible** (patterns): Adapt principles to context.\\n\\nThe skill itself tells you which.\\n\\n## User Instructions\\n\\nInstructions say WHAT, not HOW. \\"Add X\\" or \\"Fix Y\\" doesn't mean skip workflows.\\n\\n\\n</EXTREMELY_IMPORTANT>",
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "<EXTREMELY_IMPORTANT>\\nYou have superpowers.\\n\\n**Below is the full content of your 'superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\\n\\n---\\nname: using-superpowers\\ndescription: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions\\n---\\n\\n<EXTREMELY-IMPORTANT>\\nIf you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.\\n\\nIF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.\\n\\nThis is not negotiable. This is not optional. You cannot rationalize your way out of this.\\n</EXTREMELY-IMPORTANT>\\n\\n## How to Access Skills\\n\\n**In Claude Code:** Use the \`Skill\` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.\\n\\n**In other environments:** Check your platform's documentation for how skills are loaded.\\n\\n# Using Skills\\n\\n## The Rule\\n\\n**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.\\n\\n\`\`\`dot\\ndigraph skill_flow {\\n    \\"User message received\\" [shape=doublecircle];\\n    \\"About to EnterPlanMode?\\" [shape=doublecircle];\\n    \\"Already brainstormed?\\" [shape=diamond];\\n    \\"Invoke brainstorming skill\\" [shape=box];\\n    \\"Might any skill apply?\\" [shape=diamond];\\n    \\"Invoke Skill tool\\" [shape=box];\\n    \\"Announce: 'Using [skill] to [purpose]'\\" [shape=box];\\n    \\"Has checklist?\\" [shape=diamond];\\n    \\"Create TodoWrite todo per item\\" [shape=box];\\n    \\"Follow skill exactly\\" [shape=box];\\n    \\"Respond (including clarifications)\\" [shape=doublecircle];\\n\\n    \\"About to EnterPlanMode?\\" -> \\"Already brainstormed?\\";\\n    \\"Already brainstormed?\\" -> \\"Invoke brainstorming skill\\" [label=\\"no\\"];\\n    \\"Already brainstormed?\\" -> \\"Might any skill apply?\\" [label=\\"yes\\"];\\n    \\"Invoke brainstorming skill\\" -> \\"Might any skill apply?\\";\\n\\n    \\"User message received\\" -> \\"Might any skill apply?\\";\\n    \\"Might any skill apply?\\" -> \\"Invoke Skill tool\\" [label=\\"yes, even 1%\\"];\\n    \\"Might any skill apply?\\" -> \\"Respond (including clarifications)\\" [label=\\"definitely not\\"];\\n    \\"Invoke Skill tool\\" -> \\"Announce: 'Using [skill] to [purpose]'\\";\\n    \\"Announce: 'Using [skill] to [purpose]'\\" -> \\"Has checklist?\\";\\n    \\"Has checklist?\\" -> \\"Create TodoWrite todo per item\\" [label=\\"yes\\"];\\n    \\"Has checklist?\\" -> \\"Follow skill exactly\\" [label=\\"no\\"];\\n    \\"Create TodoWrite todo per item\\" -> \\"Follow skill exactly\\";\\n}\\n\`\`\`\\n\\n## Red Flags\\n\\nThese thoughts mean STOP—you're rationalizing:\\n\\n| Thought | Reality |\\n|---------|---------|\\n| \\"This is just a simple question\\" | Questions are tasks. Check for skills. |\\n| \\"I need more context first\\" | Skill check comes BEFORE clarifying questions. |\\n| \\"Let me explore the codebase first\\" | Skills tell you HOW to explore. Check first. |\\n| \\"I can check git/files quickly\\" | Files lack conversation context. Check for skills. |\\n| \\"Let me gather information first\\" | Skills tell you HOW to gather information. |\\n| \\"This doesn't need a formal skill\\" | If a skill exists, use it. |\\n| \\"I remember this skill\\" | Skills evolve. Read current version. |\\n| \\"This doesn't count as a task\\" | Action = task. Check for skills. |\\n| \\"The skill is overkill\\" | Simple things become complex. Use it. |\\n| \\"I'll just do this one thing first\\" | Check BEFORE doing anything. |\\n| \\"This feels productive\\" | Undisciplined action wastes time. Skills prevent this. |\\n| \\"I know what that means\\" | Knowing the concept ≠ using the skill. Invoke it. |\\n\\n## Skill Priority\\n\\nWhen multiple skills could apply, use this order:\\n\\n1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task\\n2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution\\n\\n\\"Let's build X\\" → brainstorming first, then implementation skills.\\n\\"Fix this bug\\" → debugging first, then domain-specific skills.\\n\\n## Skill Types\\n\\n**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.\\n\\n**Flexible** (patterns): Adapt principles to context.\\n\\nThe skill itself tells you which.\\n\\n## User Instructions\\n\\nInstructions say WHAT, not HOW. \\"Add X\\" or \\"Fix Y\\" doesn't mean skip workflows.\\n\\n\\n</EXTREMELY_IMPORTANT>"
+  }
+}
+",
+  "subtype": "hook_response",
+  "type": "system",
+  "uuid": "070dc644-7442-47ba-abe0-fe6767c88adf",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses hook-started.jsonl:1 1`] = `
+{
+  "hook_event": "SessionStart",
+  "hook_id": "95d4c32a-b2c3-4674-bd8d-e653e976eaa0",
+  "hook_name": "SessionStart:startup",
+  "session_id": "aa8c7b4f-1344-47a2-99f6-745dee809143",
+  "subtype": "hook_started",
+  "type": "system",
+  "uuid": "5034054d-fa5d-4f38-bf66-e6a9145d9ca7",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses init.jsonl:1 1`] = `
+{
+  "agents": [
+    "general-purpose",
+    "statusline-setup",
+    "Explore",
+    "Plan",
+    "superpowers:code-reviewer",
+    "doc-organizer",
+  ],
+  "apiKeySource": "none",
+  "claude_code_version": "2.1.63",
+  "cwd": "/Users/user/WebstormProjects/cc-office/packages/server",
+  "fast_mode_state": "off",
+  "mcp_servers": [
+    {
+      "name": "pencil",
+      "status": "disabled",
+    },
+    {
+      "name": "pixel-mcp",
+      "status": "disabled",
+    },
+    {
+      "name": "claude.ai Google Calendar",
+      "status": "needs-auth",
+    },
+    {
+      "name": "claude.ai Gmail",
+      "status": "needs-auth",
+    },
+  ],
+  "model": "claude-opus-4-6",
+  "output_style": "default",
+  "permissionMode": "default",
+  "plugins": [
+    {
+      "name": "ralph-loop",
+      "path": "/Users/user/.claude/plugins/cache/claude-plugins-official/ralph-loop/55b58ec6e564",
+    },
+    {
+      "name": "superpowers",
+      "path": "/Users/user/.claude/plugins/cache/superpowers-marketplace/superpowers/4.3.1",
+    },
+    {
+      "name": "frontend-design",
+      "path": "/Users/user/.claude/plugins/cache/claude-plugins-official/frontend-design/55b58ec6e564",
+    },
+  ],
+  "session_id": "9379c5c0-7060-40bb-9682-6098328db7ad",
+  "skills": [
+    "keybindings-help",
+    "debug",
+    "simplify",
+    "batch",
+    "code-review",
+    "claude-mechanisms-expert",
+    "claude-code-helper",
+    "frontend-data-layer",
+    "openspec-continue",
+    "storybook-component",
+    "frontend-testing",
+    "openspec-bulk-archive",
+    "env-config",
+    "zod-validation",
+    "fake-claude",
+    "openspec-ask",
+    "openspec-explore",
+    "tailwind-v4",
+    "vitest-testing",
+    "cli-providers",
+    "express-server",
+    "battle-management",
+    "openspec-feedback",
+    "project-overview",
+    "drizzle-orm",
+    "openspec-new",
+    "openspec-apply",
+    "openspec-onboard",
+    "openspec-verify",
+    "socket-io",
+    "openspec-sync",
+    "map-system",
+    "inversify-di",
+    "zustand-state",
+    "openspec-archive",
+    "openspec-ff",
+    "superpowers:execute-plan",
+    "superpowers:write-plan",
+    "superpowers:brainstorm",
+    "superpowers:using-git-worktrees",
+    "superpowers:executing-plans",
+    "superpowers:brainstorming",
+    "superpowers:systematic-debugging",
+    "superpowers:test-driven-development",
+    "superpowers:verification-before-completion",
+    "superpowers:writing-skills",
+    "superpowers:subagent-driven-development",
+    "superpowers:finishing-a-development-branch",
+    "superpowers:dispatching-parallel-agents",
+    "superpowers:using-superpowers",
+    "superpowers:receiving-code-review",
+    "superpowers:writing-plans",
+    "superpowers:requesting-code-review",
+    "frontend-design:frontend-design",
+  ],
+  "slash_commands": [
+    "keybindings-help",
+    "debug",
+    "simplify",
+    "batch",
+    "code-review",
+    "claude-mechanisms-expert",
+    "claude-code-helper",
+    "memory-system",
+    "fixture-driven-tdd",
+    "collect-cli-fixtures",
+    "frontend-data-layer",
+    "openspec-continue",
+    "storybook-component",
+    "frontend-testing",
+    "openspec-bulk-archive",
+    "env-config",
+    "zod-validation",
+    "fake-claude",
+    "xterm-integration",
+    "openspec-ask",
+    "openspec-explore",
+    "tailwind-v4",
+    "dev-workflow",
+    "vitest-testing",
+    "react-hooks",
+    "pty-architecture",
+    "tdd-guidelines",
+    "cli-providers",
+    "openspec-analyze",
+    "express-server",
+    "battle-management",
+    "openspec-feedback",
+    "project-overview",
+    "openspec-clarify",
+    "drizzle-orm",
+    "openspec-new",
+    "openspec-apply",
+    "adaptive-memory",
+    "engineering-quality",
+    "project-memory",
+    "openspec-onboard",
+    "node-pty-usage",
+    "openspec-verify",
+    "socket-io",
+    "openspec-sync",
+    "map-system",
+    "inversify-di",
+    "parser-development",
+    "zustand-state",
+    "openspec-archive",
+    "openspec-ff",
+    "tdd-bug-fixing",
+    "opsx:explore",
+    "opsx:new",
+    "opsx:archive",
+    "opsx:bulk-archive",
+    "opsx:continue",
+    "opsx:apply",
+    "opsx:verify",
+    "opsx:onboard",
+    "opsx:sync",
+    "opsx:ff",
+    "opsx:ask",
+    "ralph-loop:help",
+    "ralph-loop:cancel-ralph",
+    "ralph-loop:ralph-loop",
+    "superpowers:execute-plan",
+    "superpowers:write-plan",
+    "superpowers:brainstorm",
+    "superpowers:using-git-worktrees",
+    "superpowers:executing-plans",
+    "superpowers:brainstorming",
+    "superpowers:systematic-debugging",
+    "superpowers:test-driven-development",
+    "superpowers:verification-before-completion",
+    "superpowers:writing-skills",
+    "superpowers:subagent-driven-development",
+    "superpowers:finishing-a-development-branch",
+    "superpowers:dispatching-parallel-agents",
+    "superpowers:using-superpowers",
+    "superpowers:receiving-code-review",
+    "superpowers:writing-plans",
+    "superpowers:requesting-code-review",
+    "frontend-design:frontend-design",
+    "compact",
+    "context",
+    "cost",
+    "init",
+    "pr-comments",
+    "release-notes",
+    "review",
+    "security-review",
+    "extra-usage",
+    "insights",
+  ],
+  "subtype": "init",
+  "tools": [
+    "Agent",
+    "TaskOutput",
+    "Bash",
+    "Glob",
+    "Grep",
+    "ExitPlanMode",
+    "Read",
+    "Edit",
+    "Write",
+    "NotebookEdit",
+    "WebFetch",
+    "TodoWrite",
+    "WebSearch",
+    "TaskStop",
+    "AskUserQuestion",
+    "Skill",
+    "EnterPlanMode",
+    "EnterWorktree",
+    "ToolSearch",
+  ],
+  "type": "system",
+  "uuid": "5ad51e72-89b8-48e4-9d9b-ae7d5f28c817",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses rate-limit-event.jsonl:1 1`] = `
+{
+  "rate_limit_info": {
+    "isUsingOverage": false,
+    "overageDisabledReason": "org_level_disabled",
+    "overageStatus": "rejected",
+    "rateLimitType": "five_hour",
+    "resetsAt": 1772319600,
+    "status": "allowed",
+  },
+  "session_id": "915f09ef-5fdb-4b58-86fa-c68f8a0326f2",
+  "type": "rate_limit_event",
+  "uuid": "6185bccf-2776-4dea-80bb-0e3245e8d60a",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses result-error.jsonl:1 1`] = `
+{
+  "duration_api_ms": 6513,
+  "duration_ms": 31008,
+  "fast_mode_state": "off",
+  "is_error": false,
+  "modelUsage": {
+    "claude-opus-4-6": {
+      "cacheCreationInputTokens": 7243,
+      "cacheReadInputTokens": 45160,
+      "contextWindow": 200000,
+      "costUSD": 0.07,
+      "inputTokens": 4,
+      "maxOutputTokens": 32000,
+      "outputTokens": 198,
+      "webSearchRequests": 0,
+    },
+  },
+  "num_turns": 4,
+  "permission_denials": [],
+  "session_id": "915f09ef-5fdb-4b58-86fa-c68f8a0326f2",
+  "stop_reason": null,
+  "subtype": "error_during_execution",
+  "total_cost_usd": 0.07,
+  "type": "result",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 7243,
+      "ephemeral_5m_input_tokens": 0,
+    },
+    "cache_creation_input_tokens": 7243,
+    "cache_read_input_tokens": 45160,
+    "inference_geo": "",
+    "input_tokens": 4,
+    "iterations": [],
+    "output_tokens": 198,
+    "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0,
+    },
+    "service_tier": "standard",
+    "speed": "standard",
+  },
+  "uuid": "c105d7ba-2d4d-4082-8a33-240f344fa397",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses result-success.jsonl:1 1`] = `
+{
+  "duration_api_ms": 131150,
+  "duration_ms": 141873,
+  "fast_mode_state": "off",
+  "is_error": false,
+  "modelUsage": {
+    "claude-opus-4-6": {
+      "cacheCreationInputTokens": 31993,
+      "cacheReadInputTokens": 307983,
+      "contextWindow": 200000,
+      "costUSD": 0.41,
+      "inputTokens": 12,
+      "maxOutputTokens": 32000,
+      "outputTokens": 2290,
+      "webSearchRequests": 0,
+    },
+  },
+  "num_turns": 12,
+  "permission_denials": [],
+  "result": "",
+  "session_id": "50e79363-c470-4ef9-9cb1-ca3f7b3d6dc8",
+  "stop_reason": null,
+  "subtype": "success",
+  "total_cost_usd": 0.54,
+  "type": "result",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 31993,
+      "ephemeral_5m_input_tokens": 0,
+    },
+    "cache_creation_input_tokens": 31993,
+    "cache_read_input_tokens": 307983,
+    "inference_geo": "",
+    "input_tokens": 12,
+    "iterations": [],
+    "output_tokens": 2290,
+    "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0,
+    },
+    "service_tier": "standard",
+    "speed": "standard",
+  },
+  "uuid": "3cd16be9-854b-4786-ae02-5deebabadd29",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses status.jsonl:1 1`] = `
+{
+  "permissionMode": "plan",
+  "session_id": "6f710b1e-edc4-43ed-ba8f-dbcd04fa6941",
+  "status": null,
+  "subtype": "status",
+  "type": "system",
+  "uuid": "39da7be2-833c-4870-8e05-a0406e81f933",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-content-block-start.jsonl:1 1`] = `
+{
+  "event": {
+    "content_block": {
+      "signature": "",
+      "thinking": "",
+      "type": "thinking",
+    },
+    "index": 0,
+    "type": "content_block_start",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "8a390da7-9e2e-48f9-92ed-2db1fbc39977",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-content-block-stop.jsonl:1 1`] = `
+{
+  "event": {
+    "index": 0,
+    "type": "content_block_stop",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "a3960fbb-bd9a-41aa-8304-5c6b21b5da98",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-input-json-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "partial_json": "",
+      "type": "input_json_delta",
+    },
+    "index": 1,
+    "type": "content_block_delta",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "1b632084-ed43-4b5e-a20b-18f25e6387f3",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-message-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "context_management": {
+      "applied_edits": [],
+    },
+    "delta": {
+      "stop_reason": "tool_use",
+      "stop_sequence": null,
+    },
+    "type": "message_delta",
+    "usage": {
+      "cache_creation_input_tokens": 25965,
+      "cache_read_input_tokens": 0,
+      "input_tokens": 3,
+      "output_tokens": 280,
+    },
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "23ae6f03-74c6-42ad-b090-a84330e752a1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-message-start.jsonl:1 1`] = `
+{
+  "event": {
+    "message": {
+      "content": [],
+      "id": "msg_01DchRVjyiuQJsD8k7ocA7sh",
+      "model": "claude-opus-4-6",
+      "role": "assistant",
+      "stop_reason": null,
+      "stop_sequence": null,
+      "type": "message",
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 25965,
+          "ephemeral_5m_input_tokens": 0,
+        },
+        "cache_creation_input_tokens": 25965,
+        "cache_read_input_tokens": 0,
+        "inference_geo": "not_available",
+        "input_tokens": 3,
+        "output_tokens": 9,
+        "service_tier": "standard",
+      },
+    },
+    "type": "message_start",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "60c23c82-0899-49aa-97f3-2673963f3d6d",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-message-stop.jsonl:1 1`] = `
+{
+  "event": {
+    "type": "message_stop",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "5c76839a-036d-43e2-8146-d91c2532bb74",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-signature-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "signature": "EsgCCkYICxgCKkD4+42sCCCJuL76nWyYFTIMXV0IDOcEqA4rrRFFA/KUz3ApqP4Gzry1x4nYT1qCiOXfjFH3vCBnpPyl4DmwSErjEgyLxfhrvlwN/qjd5ZIaDGS0LxbQ6W6VrLR3TSIwwwY2N4aOJIEDV7j7KtKHUpwxuHpGU7ZqD8XHM01ZHUo3dC2F9hvWpIAITHci4UCkKq8BCDmafDKUvPQhTE0L1xFFopjbFUl8mQfBQqTrNBK5U34ZV9PSCrH93nDIGJBnSQuICCwoqyIAZJL9VKwSEegTGvWmP+hp7fffYwUNQhmRy/MGKTVeLINBnFgeIB3/h4exVfoy+lAM/zo1EouQKR2cogjpGACL5D3/QltyIrTKmiq4jW2Qzjwa4Au+10CSKnDIm9mXFIpnbsONnXXcRkpSLEmVfIZ787eElf8VIgwYFxgB",
+      "type": "signature_delta",
+    },
+    "index": 0,
+    "type": "content_block_delta",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "9f7312a4-001c-4ae5-9d9b-37ad7d1fe5e8",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-text-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "text": "根",
+      "type": "text_delta",
+    },
+    "index": 1,
+    "type": "content_block_delta",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "9c4237e4-8b4e-447f-b1d7-4525b205a742",
+  "type": "stream_event",
+  "uuid": "d8f22596-6145-42d8-97f1-9c83cd908d3d",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses stream-thinking-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "thinking": "The",
+      "type": "thinking_delta",
+    },
+    "index": 0,
+    "type": "content_block_delta",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "2886e653-48fb-4e3f-86c2-098070792590",
+  "type": "stream_event",
+  "uuid": "55300e7f-aa10-4598-98b2-202ad563bc79",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses task-notification.jsonl:1 1`] = `
+{
+  "output_file": "",
+  "session_id": "test-session-id",
+  "status": "completed",
+  "subtype": "task_notification",
+  "summary": "Read all protocol docs and extract protocol list",
+  "task_id": "a6b3446e967260f60",
+  "tool_use_id": "toolu_01RgfPM8fAEPgezK6JinZ2pH",
+  "type": "system",
+  "usage": {
+    "duration_ms": 117816,
+    "tool_uses": 37,
+    "total_tokens": 106775,
+  },
+  "uuid": "ba2a9a96-440e-4e52-8193-ca438e33859f",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses task-progress.jsonl:1 1`] = `
+{
+  "description": "Finding files matching pattern...",
+  "last_tool_name": "Glob",
+  "session_id": "test-session-id",
+  "subtype": "task_progress",
+  "task_id": "a6b3446e967260f60",
+  "tool_use_id": "toolu_01RgfPM8fAEPgezK6JinZ2pH",
+  "type": "system",
+  "usage": {
+    "duration_ms": 2366,
+    "tool_uses": 1,
+    "total_tokens": 12483,
+  },
+  "uuid": "30cd1a72-f316-443c-98e7-de46d25bcce6",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses task-started.jsonl:1 1`] = `
+{
+  "description": "Analyze protocol.md features",
+  "session_id": "aa8c7b4f-1344-47a2-99f6-745dee809143",
+  "subtype": "task_started",
+  "task_id": "a69185b60bed65ea3",
+  "task_type": "local_agent",
+  "tool_use_id": "toolu_015ALBW9dcKTcBPhgNNqS2VE",
+  "type": "system",
+  "uuid": "d4608ad5-3628-4f77-8ddd-e3138baf27b5",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses thinking.jsonl:1 1`] = `
+{
+  "message": {
+    "content": [
+      {
+        "signature": "Ev8BCkYICxgCKkA9UC2Cv/Q5Vqmq70jfQML22HJAo3axw6XwDuJnPTwGmekl/Dn4C7ojUf/V4rRAEs/aAOwq/C0XZEpP6U0Dv1GEEgwcj20chcA2c1eMiYEaDMMEaFPYmGsiB76THSIwH7sP5rTv6X3WkVGsCLKTKdoB3n+Dwc09YqLOb80kElSnywTQiEUCrww20yUcrZqKKmfRI8rHOi9fiYibpA2CMcSQjnJhMpnBMyJMfoLB5YMgxTYjmZRd9W5G2H09w3lB8htARs0EoATNApuwEi/KBVa43l7ovigqJcHzEWve/wqwbZxl3Ly/FlphhG3+o8cJOu4F+JojsybUGAE=",
+        "thinking": "The user wants me to analyze docs/protocol.md and suggest what features could be added.",
+        "type": "thinking",
+      },
+    ],
+    "context_management": null,
+    "id": "msg_011RgyipzDA8BeU6zC3GVmfF",
+    "model": "claude-opus-4-6",
+    "role": "assistant",
+    "stop_reason": null,
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 7108,
+        "ephemeral_5m_input_tokens": 0,
+      },
+      "cache_creation_input_tokens": 7108,
+      "cache_read_input_tokens": 19026,
+      "inference_geo": "not_available",
+      "input_tokens": 3,
+      "output_tokens": 9,
+      "service_tier": "standard",
+    },
+  },
+  "parent_tool_use_id": null,
+  "session_id": "915f09ef-5fdb-4b58-86fa-c68f8a0326f2",
+  "type": "assistant",
+  "uuid": "48ae5b27-a71c-45fa-a6fd-d14be4462036",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses tool-result.jsonl:1 1`] = `
+{
+  "message": {
+    "content": [
+      {
+        "content": "User denied this action",
+        "is_error": true,
+        "tool_use_id": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
+        "type": "tool_result",
+      },
+    ],
+    "role": "user",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "915f09ef-5fdb-4b58-86fa-c68f8a0326f2",
+  "tool_use_result": "Error: User denied this action",
+  "type": "user",
+  "uuid": "083386e4-010f-49a7-a4f1-ca23df11ffc9",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses tool-use.jsonl:1 1`] = `
+{
+  "id": "toolu_01ABC123",
+  "input": {
+    "file_path": "/path/to/file.py",
+  },
+  "name": "Read",
+  "session_id": "test-session-id",
+  "type": "tool_use",
+  "uuid": "uuid-tool-use-001",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses auth-status.jsonl:1 1`] = `
+{
+  "account": {
+    "email": "user@example.com",
+    "plan": "pro",
+  },
+  "isAuthenticating": false,
+  "output": [
+    "Logged in as user@example.com",
+  ],
+  "session_id": "fake-session-id",
+  "type": "auth_status",
+  "uuid": "fake-auth-status-uuid",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses auth-url.jsonl:1 1`] = `
+{
+  "method": "oauth",
+  "session_id": "fake-session-auth",
+  "type": "auth_url",
+  "url": "https://auth.example.com/oauth",
+  "uuid": "fake-auth-url-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses bridge-state.jsonl:1 1`] = `
+{
+  "state": "ready",
+  "subtype": "bridge_state",
+  "type": "system",
+  "uuid": "synthetic-bridge-state",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses citations-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "citation": {
+        "cited_text": "example text",
+        "end_block_index": 1,
+        "start_block_index": 0,
+        "title": "Example",
+        "type": "web_search_result_location",
+        "url": "https://example.com",
+      },
+      "type": "citations_delta",
+    },
+    "index": 0,
+    "type": "content_block_delta",
+  },
+  "type": "stream_event",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses compact-boundary.jsonl:1 1`] = `
+{
+  "compact_metadata": {
+    "pre_tokens": 95000,
+    "trigger": "auto",
+  },
+  "session_id": "test-session-id",
+  "subtype": "compact_boundary",
+  "type": "system",
+  "uuid": "fake-uuid-compact-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-elicitation.jsonl:1 1`] = `
+{
+  "request": {
+    "input": {
+      "message": "Please provide the server URL",
+      "requested_schema": {
+        "properties": {
+          "url": {
+            "format": "uri",
+            "type": "string",
+          },
+        },
+        "required": [
+          "url",
+        ],
+        "type": "object",
+      },
+    },
+    "subtype": "elicitation",
+    "tool_name": "mcp__tool",
+    "tool_use_id": "toolu_fake_elicitation_1",
+  },
+  "request_id": "elicitation-req-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-open-diff.jsonl:1 1`] = `
+{
+  "request": {
+    "input": {
+      "edits": [
+        {
+          "newStr": "bar",
+          "oldStr": "foo",
+        },
+      ],
+      "newFilePath": "/tmp/new.ts",
+      "originalFilePath": "/tmp/original.ts",
+      "supportMultiEdits": false,
+    },
+    "subtype": "open_diff",
+    "tool_name": "Write",
+    "tool_use_id": "toolu_fake_open_diff_1",
+  },
+  "request_id": "open-diff-req-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-open-in-editor.jsonl:1 1`] = `
+{
+  "request": {
+    "sessionId": "fake-session-id",
+    "subtype": "open_in_editor",
+  },
+  "request_id": "open-in-editor-req-1",
+  "session_id": "fake-session-id",
+  "type": "control_request",
+  "uuid": "fake-open-in-editor-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-show-notification.jsonl:1 1`] = `
+{
+  "request": {
+    "input": {
+      "buttons": [],
+      "message": "Task completed",
+      "onlyIfNotVisible": false,
+      "severity": "info",
+    },
+    "subtype": "show_notification",
+  },
+  "request_id": "fake-cr-show-notif",
+  "session_id": "fake-session-id",
+  "type": "control_request",
+  "uuid": "fake-show-notif-uuid",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses experiment-gates.jsonl:1 1`] = `
+{
+  "gates": {
+    "new_feature": "enabled",
+    "review_upsell": true,
+  },
+  "type": "experiment_gates",
+  "uuid": "fixture-experiment-gates-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses new-session-notification.jsonl:1 1`] = `
+{
+  "session_id": "new-fake-session-id",
+  "type": "new_session_notification",
+  "uuid": "fake-new-session-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses notification.jsonl:1 1`] = `
+{
+  "message": "Task completed",
+  "session_id": "fake-session-id",
+  "timestamp": 1700000000000,
+  "type": "notification",
+  "uuid": "fake-notification-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses result-resume-not-found.jsonl:1 1`] = `
+{
+  "duration_api_ms": 0,
+  "duration_ms": 0,
+  "errors": [
+    "No conversation found with session ID: d1a785d0-abbb-4640-9dfb-31d28249e60d",
+  ],
+  "is_error": true,
+  "modelUsage": {},
+  "num_turns": 0,
+  "permission_denials": [],
+  "session_id": "39bed81d-e48c-407f-bc2a-362224c49331",
+  "stop_reason": null,
+  "subtype": "error_during_execution",
+  "total_cost_usd": 0,
+  "type": "result",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0,
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "",
+    "input_tokens": 0,
+    "iterations": [],
+    "output_tokens": 0,
+    "server_tool_use": {
+      "web_fetch_requests": 0,
+      "web_search_requests": 0,
+    },
+    "service_tier": "standard",
+    "speed": "standard",
+  },
+  "uuid": "b75adca7-2490-4fee-a571-5ffeb25833a3",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses speech-to-text-message.jsonl:1 1`] = `
+{
+  "channelId": "fake-channel-id",
+  "done": false,
+  "session_id": "fake-session-id",
+  "text": "Hello world",
+  "type": "speech_to_text_message",
+  "uuid": "fake-stt-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses stream-thinking-delta-legacy.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "thinking": "hmm...",
+      "type": "thinking",
+    },
+    "index": 0,
+    "type": "content_block_delta",
+  },
+  "type": "stream_event",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses streamlined-text.jsonl:1 1`] = `
+{
+  "session_id": "test-session-id",
+  "text": "hello fast",
+  "type": "streamlined_text",
+  "uuid": "fake-uuid-streamlined-text-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses streamlined-tool-use-summary.jsonl:1 1`] = `
+{
+  "session_id": "test-session-id",
+  "tool_summary": "Read 2 files, wrote 1 file",
+  "type": "streamlined_tool_use_summary",
+  "uuid": "fake-uuid-streamlined-summary-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses unknown-event.jsonl:1 1`] = `
+{
+  "foo": "bar",
+  "session_id": "fake-session-unknown",
+  "type": "some_future_type",
+  "uuid": "fake-unknown-event-1",
+}
+`;

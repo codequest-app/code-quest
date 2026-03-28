@@ -1,0 +1,33 @@
+/**
+ * Shared column name definitions for sessions and raw_entries tables.
+ * Both SQLite and MySQL schemas must use exactly these column names.
+ * The consistency test in schema-consistency.test.ts verifies this at test time.
+ */
+
+export const SESSION_COLUMNS = [
+  'id',
+  'provider',
+  'command',
+  'args',
+  'cwd',
+  'mode',
+  'role',
+  'parentId',
+  'sessionId',
+  'title',
+  'status',
+  'createdAt',
+] as const;
+
+export const RAW_ENTRY_COLUMNS = [
+  'id',
+  'sessionId',
+  'promptId',
+  'dir',
+  'raw',
+  'seq',
+  'createdAt',
+] as const;
+
+export type SessionColumnName = (typeof SESSION_COLUMNS)[number];
+export type RawEntryColumnName = (typeof RAW_ENTRY_COLUMNS)[number];

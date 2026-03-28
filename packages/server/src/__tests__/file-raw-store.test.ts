@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { RawEntry } from '@code-quest/summoner';
+import { segments as s } from '@code-quest/summoner/test';
 import { FileRawStore } from '../services/file-raw-store.ts';
 
 describe('FileRawStore', () => {
@@ -23,7 +24,8 @@ describe('FileRawStore', () => {
       sessionId: 'sess-1',
       promptId: 'prompt-1',
       direction: 'out',
-      raw: '{"type":"text","content":"hello"}',
+      raw: s.assistant('hello'),
+      seq: 0,
     };
 
     await store.append(entry);
@@ -49,6 +51,7 @@ describe('FileRawStore', () => {
         promptId: `prompt-${i}`,
         direction: 'out',
         raw: `line ${i}`,
+        seq: i,
       });
     }
 
@@ -64,6 +67,7 @@ describe('FileRawStore', () => {
         promptId: 'prompt-0',
         direction: 'out',
         raw: 'malicious',
+        seq: 0,
       }),
     ).rejects.toThrow();
   });
@@ -76,6 +80,7 @@ describe('FileRawStore', () => {
         promptId: 'prompt-0',
         direction: 'out',
         raw: 'malicious',
+        seq: 0,
       }),
     ).rejects.toThrow();
   });
@@ -94,6 +99,7 @@ describe('FileRawStore', () => {
       promptId: 'prompt-0',
       direction: 'in',
       raw: 'test',
+      seq: 0,
     });
 
     const results = await nestedStore.getBySession('sess-3');

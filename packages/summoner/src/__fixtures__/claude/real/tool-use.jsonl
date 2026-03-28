@@ -1,0 +1,1 @@
+{"type":"tool_use","id":"toolu_01ABC123","name":"Read","input":{"file_path":"/path/to/file.py"},"session_id":"test-session-id","uuid":"uuid-tool-use-001"}

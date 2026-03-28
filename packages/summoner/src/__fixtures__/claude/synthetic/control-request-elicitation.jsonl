@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"elicitation-req-1","request":{"subtype":"elicitation","tool_name":"mcp__tool","input":{"message":"Please provide the server URL","requested_schema":{"type":"object","properties":{"url":{"type":"string","format":"uri"}},"required":["url"]}},"tool_use_id":"toolu_fake_elicitation_1"}}

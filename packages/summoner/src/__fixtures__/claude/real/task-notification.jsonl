@@ -1,0 +1,1 @@
+{"type":"system","subtype":"task_notification","task_id":"a6b3446e967260f60","tool_use_id":"toolu_01RgfPM8fAEPgezK6JinZ2pH","status":"completed","output_file":"","summary":"Read all protocol docs and extract protocol list","usage":{"total_tokens":106775,"tool_uses":37,"duration_ms":117816},"uuid":"ba2a9a96-440e-4e52-8193-ca438e33859f","session_id":"test-session-id"}

@@ -1,0 +1,1 @@
+{"type":"system","subtype":"task_progress","task_id":"a6b3446e967260f60","tool_use_id":"toolu_01RgfPM8fAEPgezK6JinZ2pH","description":"Finding files matching pattern...","usage":{"total_tokens":12483,"tool_uses":1,"duration_ms":2366},"last_tool_name":"Glob","uuid":"30cd1a72-f316-443c-98e7-de46d25bcce6","session_id":"test-session-id"}
