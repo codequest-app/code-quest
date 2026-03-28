@@ -113,6 +113,16 @@ export function SessionRow({
                 : s.firstUserMessage}
             </div>
           )}
+          {s.lastAssistantMessage && (
+            <div
+              data-testid="session-preview"
+              className="text-[10px] text-text-muted/50 truncate mt-0.5 italic"
+            >
+              {s.lastAssistantMessage.length > 80
+                ? `${s.lastAssistantMessage.slice(0, 80)}...`
+                : s.lastAssistantMessage}
+            </div>
+          )}
           {s.cwd && (
             <div className="text-[10px] font-mono text-text-muted/60 truncate mt-0.5">{s.cwd}</div>
           )}

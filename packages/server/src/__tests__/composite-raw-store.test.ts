@@ -82,6 +82,9 @@ describe('CompositeRawStore', () => {
       async getBySession() {
         return [];
       },
+      async getPreview() {
+        return {};
+      },
     };
     const failStore2: RawEventStore = {
       async append() {
@@ -89,6 +92,9 @@ describe('CompositeRawStore', () => {
       },
       async getBySession() {
         return [];
+      },
+      async getPreview() {
+        return {};
       },
     };
     const composite = new CompositeRawStore([failStore1, failStore2]);
@@ -112,6 +118,9 @@ describe('CompositeRawStore', () => {
       },
       async getBySession() {
         return [];
+      },
+      async getPreview() {
+        return {};
       },
     };
     const composite = new CompositeRawStore([failStore, fileStore]);

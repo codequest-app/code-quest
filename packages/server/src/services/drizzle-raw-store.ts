@@ -1,8 +1,8 @@
 import type { RawEntry } from '@code-quest/summoner';
 import type { Column } from 'drizzle-orm';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
-import type { RawEventStore } from './raw-event-store.ts';
+import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
 /**
  * Drizzle does not expose a shared base type across SQLite / MySQL dialects.
@@ -24,7 +24,11 @@ interface DrizzleDb {
   insert(table: unknown): { values(v: unknown): Promise<unknown> };
   select(): {
     from(table: unknown): {
-      where(cond: unknown): { orderBy(...cols: unknown[]): Promise<unknown[]> };
+      where(cond: unknown): {
+        orderBy(...cols: unknown[]): {
+          limit(n: number): Promise<unknown[]>;
+        } & Promise<unknown[]>;
+      };
     };
   };
 }
@@ -37,6 +41,21 @@ interface RawEntriesTable {
   raw: Column;
   seq: Column;
   createdAt: Column;
+}
+
+function extractText(rows: RawEntryRow[], type: 'user' | 'assistant'): string | undefined {
+  for (const row of rows) {
+    try {
+      const parsed = JSON.parse(row.raw);
+      if (parsed.type !== type) continue;
+      const content = parsed.message?.content;
+      if (Array.isArray(content)) {
+        const textBlock = content.find((b: { type: string }) => b.type === 'text');
+        if (textBlock?.text) return textBlock.text;
+      }
+    } catch {}
+  }
+  return undefined;
 }
 
 export class DrizzleRawStore implements RawEventStore {
@@ -55,6 +74,27 @@ export class DrizzleRawStore implements RawEventStore {
       seq: entry.seq,
       createdAt: new Date(entry.timestamp).toISOString(),
     });
+  }
+
+  async getPreview(sessionId: string): Promise<SessionPreview> {
+    const firstUserRows = (await this.db
+      .select()
+      .from(this.table)
+      .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
+      .orderBy(asc(this.table.seq))
+      .limit(10)) as RawEntryRow[];
+
+    const lastAssistantRows = (await this.db
+      .select()
+      .from(this.table)
+      .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'out')))
+      .orderBy(desc(this.table.seq))
+      .limit(10)) as RawEntryRow[];
+
+    return {
+      firstUser: extractText(firstUserRows, 'user'),
+      lastAssistant: extractText(lastAssistantRows, 'assistant'),
+    };
   }
 
   async getBySession(sessionId: string): Promise<RawEntry[]> {

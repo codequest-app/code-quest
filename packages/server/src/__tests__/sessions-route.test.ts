@@ -19,6 +19,7 @@ function createMockEventStore(events: unknown[] = []): RawEventStore {
   return {
     append: vi.fn(),
     getBySession: vi.fn().mockResolvedValue(events),
+    getPreview: vi.fn().mockResolvedValue({}),
   };
 }
 
@@ -126,5 +127,27 @@ describe('GET /api/sessions/:id/events', () => {
     const res = await request(app).get('/api/sessions/s1/events');
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('broken');
+  });
+});
+
+describe('GET /api/sessions with preview', () => {
+  it('returns sessions enriched with preview text', async () => {
+    const store = createMockStore([
+      { id: 's1', title: 'Session 1' } as never,
+      { id: 's2', title: 'Session 2' } as never,
+    ]);
+    const eventStore = createMockEventStore();
+    (eventStore.getPreview as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ firstUser: 'fix bug', lastAssistant: 'Done' })
+      .mockResolvedValueOnce({ firstUser: 'add feature', lastAssistant: undefined });
+
+    const app = express();
+    app.use(createSessionsRouter(store, eventStore));
+
+    const res = await request(app).get('/api/sessions');
+    expect(res.body.sessions[0].firstUserMessage).toBe('fix bug');
+    expect(res.body.sessions[0].lastAssistantMessage).toBe('Done');
+    expect(res.body.sessions[1].firstUserMessage).toBe('add feature');
+    expect(res.body.sessions[1].lastAssistantMessage).toBeUndefined();
   });
 });

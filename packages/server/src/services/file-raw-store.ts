@@ -1,7 +1,7 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { RawEntry } from '@code-quest/summoner';
-import type { RawEventStore } from './raw-event-store.ts';
+import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
 const SAFE_SESSION_ID = /^[a-zA-Z0-9_-]+$/;
 
@@ -34,6 +34,27 @@ export class FileRawStore implements RawEventStore {
     }
   }
 
+  async getPreview(sessionId: string): Promise<SessionPreview> {
+    const entries = await this.getBySession(sessionId);
+    let firstUser: string | undefined;
+    let lastAssistant: string | undefined;
+
+    for (const entry of entries) {
+      if (!firstUser && entry.direction === 'in') {
+        firstUser = extractTextFromRaw(entry.raw, 'user');
+      }
+    }
+
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (!lastAssistant && entries[i].direction === 'out') {
+        lastAssistant = extractTextFromRaw(entries[i].raw, 'assistant');
+        if (lastAssistant) break;
+      }
+    }
+
+    return { firstUser, lastAssistant };
+  }
+
   private ensureDir(): Promise<void> {
     if (!this.dirReady) {
       this.dirReady = mkdir(this.dir, { recursive: true }).then(() => {});
@@ -46,4 +67,19 @@ function validateSessionId(sessionId: string): void {
   if (!SAFE_SESSION_ID.test(sessionId)) {
     throw new Error(`Invalid sessionId: ${sessionId}`);
   }
+}
+
+function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): string | undefined {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.type !== type) return undefined;
+    const content = parsed.message?.content;
+    if (Array.isArray(content)) {
+      const textBlock = content.find((b: { type: string }) => b.type === 'text');
+      return textBlock?.text;
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return undefined;
 }

@@ -61,6 +61,82 @@ describe('DrizzleRawStore', () => {
     expect(results).toHaveLength(3);
   });
 
+  describe('getPreview', () => {
+    it('returns first user and last assistant text', async () => {
+      const now = Date.now();
+      await store.append({
+        timestamp: now,
+        sessionId: 'sess-p',
+        promptId: 'p1',
+        direction: 'in',
+        raw: JSON.stringify({
+          type: 'user',
+          message: { content: [{ type: 'text', text: 'fix the bug' }] },
+        }),
+        seq: 0,
+      });
+      await store.append({
+        timestamp: now + 1,
+        sessionId: 'sess-p',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Looking at the code'),
+        seq: 1,
+      });
+      await store.append({
+        timestamp: now + 2,
+        sessionId: 'sess-p',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Fixed the bug'),
+        seq: 2,
+      });
+
+      const preview = await store.getPreview('sess-p');
+      expect(preview.firstUser).toBe('fix the bug');
+      expect(preview.lastAssistant).toBe('Fixed the bug');
+    });
+
+    it('returns empty for unknown session', async () => {
+      const preview = await store.getPreview('nonexistent');
+      expect(preview.firstUser).toBeUndefined();
+      expect(preview.lastAssistant).toBeUndefined();
+    });
+
+    it('returns only firstUser when no assistant messages', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 'sess-u',
+        promptId: 'p1',
+        direction: 'in',
+        raw: JSON.stringify({
+          type: 'user',
+          message: { content: [{ type: 'text', text: 'hello' }] },
+        }),
+        seq: 0,
+      });
+
+      const preview = await store.getPreview('sess-u');
+      expect(preview.firstUser).toBe('hello');
+      expect(preview.lastAssistant).toBeUndefined();
+    });
+
+    it('returns only lastAssistant when no user messages', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 'sess-a',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('hi there'),
+        seq: 0,
+      });
+
+      const preview = await store.getPreview('sess-a');
+      expect(preview.firstUser).toBeUndefined();
+      expect(preview.lastAssistant).toBe('hi there');
+    });
+  });
+
   it('returns entries ordered by createdAt', async () => {
     const now = Date.now();
     await store.append({

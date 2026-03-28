@@ -1,5 +1,5 @@
 import type { RawEntry } from '@code-quest/summoner';
-import type { RawEventStore } from './raw-event-store.ts';
+import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
 export class CompositeRawStore implements RawEventStore {
   constructor(private stores: RawEventStore[]) {
@@ -21,5 +21,9 @@ export class CompositeRawStore implements RawEventStore {
 
   async getBySession(sessionId: string): Promise<RawEntry[]> {
     return this.stores[0].getBySession(sessionId);
+  }
+
+  async getPreview(sessionId: string): Promise<SessionPreview> {
+    return this.stores[0].getPreview(sessionId);
   }
 }

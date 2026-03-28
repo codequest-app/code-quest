@@ -35,6 +35,38 @@ describe('SessionRow subtitle', () => {
     expect(subtitle.textContent!.length).toBeLessThanOrEqual(63); // 60 + "..."
   });
 
+  it('renders lastAssistantMessage as preview', () => {
+    render(
+      <SessionRow
+        session={{ ...baseSession, lastAssistantMessage: 'Fixed the bug in main.ts' }}
+        isExpanded={false}
+        isCurrent={false}
+        isRemote={false}
+        onExpand={noop}
+        onSelect={noop}
+        onDeleted={noop}
+      />,
+    );
+    expect(screen.getByTestId('session-preview')).toHaveTextContent('Fixed the bug in main.ts');
+  });
+
+  it('truncates lastAssistantMessage at 80 chars', () => {
+    const longMsg = 'B'.repeat(100);
+    render(
+      <SessionRow
+        session={{ ...baseSession, lastAssistantMessage: longMsg }}
+        isExpanded={false}
+        isCurrent={false}
+        isRemote={false}
+        onExpand={noop}
+        onSelect={noop}
+        onDeleted={noop}
+      />,
+    );
+    const preview = screen.getByTestId('session-preview');
+    expect(preview.textContent!.length).toBeLessThanOrEqual(83); // 80 + "..."
+  });
+
   it('does not render subtitle when firstUserMessage is undefined', () => {
     render(
       <SessionRow

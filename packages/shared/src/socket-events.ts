@@ -99,6 +99,7 @@ export interface SessionSummary {
   createdAt: string;
   isActive?: boolean;
   firstUserMessage?: string;
+  lastAssistantMessage?: string;
 }
 
 export interface UsageQuotaTier {
