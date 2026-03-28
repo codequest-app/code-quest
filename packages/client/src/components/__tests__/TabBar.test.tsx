@@ -31,30 +31,32 @@ describe('TabBar', () => {
     expect(onSelect).toHaveBeenCalledWith('sess-2');
   });
 
-  it('shows confirm before closing tab', async () => {
+  it('shows confirm dialog before closing tab', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
     await user.click(screen.getByLabelText('Close Chat 1'));
 
-    // Not closed yet — confirm shown
+    // Dialog shown with message
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByText('Confirm')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/close this session/i)).toBeInTheDocument();
 
     // Confirm closes
-    await user.click(screen.getByText('Confirm'));
+    await user.click(screen.getByRole('button', { name: /close/i }));
     expect(onClose).toHaveBeenCalledWith('sess-1');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('cancel does not close tab', async () => {
+  it('cancel dialog does not close tab', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
     await user.click(screen.getByLabelText('Close Chat 1'));
-    await user.click(screen.getByText('Cancel'));
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.queryByText('Confirm')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('returns null when no tabs', () => {

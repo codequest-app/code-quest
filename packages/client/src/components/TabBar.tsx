@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export interface TabInfo {
   sessionId: string;
@@ -69,43 +70,17 @@ export function TabBar({
             />
           )}
           <span className="truncate max-w-[120px]">{tab.title || tab.sessionId.slice(0, 8)}</span>
-          {confirmingId === tab.sessionId ? (
-            <span
-              className="ml-1 inline-flex items-center gap-1 text-[10px]"
-              onClick={(e) => e.stopPropagation()}
-              role="none"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  onCloseTab(tab.sessionId);
-                  setConfirmingId(null);
-                }}
-                className="text-danger hover:text-danger/80 font-medium"
-              >
-                Confirm
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingId(null)}
-                className="text-text-muted hover:text-text"
-              >
-                Cancel
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="ml-1 text-text-muted hover:text-text text-[10px]"
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmingId(tab.sessionId);
-              }}
-              aria-label={`Close ${tab.title || tab.sessionId}`}
-            >
-              ✕
-            </button>
-          )}
+          <button
+            type="button"
+            className="ml-1 text-text-muted hover:text-text text-[10px]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmingId(tab.sessionId);
+            }}
+            aria-label={`Close ${tab.title || tab.sessionId}`}
+          >
+            ✕
+          </button>
         </div>
       ))}
       {onNewTab && (
@@ -128,6 +103,38 @@ export function TabBar({
           ☰
         </button>
       )}
+      <Dialog
+        open={confirmingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingId(null);
+        }}
+      >
+        <DialogContent title="Close Session">
+          <p className="text-sm text-text-muted mb-4">
+            Are you sure you want to close this session? The CLI process will be terminated.
+          </p>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded"
+              >
+                Cancel
+              </button>
+            </DialogClose>
+            <button
+              type="button"
+              className="px-3 py-1.5 text-sm bg-danger text-white rounded hover:bg-danger/80"
+              onClick={() => {
+                if (confirmingId) onCloseTab(confirmingId);
+                setConfirmingId(null);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

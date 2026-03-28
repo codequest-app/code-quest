@@ -88,7 +88,7 @@ export function WorkspaceLayout() {
           </div>
         ))}
         {showHistory && (
-          <div className={SIDE_PANEL}>
+          <div className={tabIds.length > 0 ? SIDE_PANEL : 'flex-1'}>
             <SessionHistory
               sessions={history.sessions}
               totalCount={history.total}

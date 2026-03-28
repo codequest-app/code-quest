@@ -115,7 +115,7 @@ describe('WorkspaceLayout', () => {
     );
 
     await userEvent.click(screen.getByLabelText('Close sess-b'));
-    await userEvent.click(screen.getByText('Confirm'));
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
 
     expect(emitSpy).toHaveBeenCalledWith('session:close', { channelId: 'sess-b' });
     expect(screen.queryByLabelText('Close sess-b')).not.toBeInTheDocument();
