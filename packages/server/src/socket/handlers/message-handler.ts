@@ -1,0 +1,231 @@
+import {
+  chatCancelAsyncMessageSchema,
+  chatGenerateSessionTitleSchema,
+  chatHookCallbackRespondSchema,
+  chatInterruptSchema,
+  chatRewindCodeSchema,
+  chatSendSchema,
+  chatStopTaskSchema,
+} from '@code-quest/shared';
+import type { HandlerContext, TypedSocket } from '../handler-context.ts';
+import { errMsg } from '../handler-context.ts';
+
+export function register(socket: TypedSocket, ctx: HandlerContext): void {
+  // chat:send — alias for send_message
+  const sendHandler = (payload: unknown) => {
+    try {
+      const { channelId, message: textMessage } = chatSendSchema.parse(payload);
+      interruptedChannels.delete(channelId);
+      const runner = ctx.requireRunner(socket, channelId);
+      if (!runner) return;
+      const channel = ctx.channelManager.get(channelId);
+      runner.sendMessage(textMessage);
+      ctx.broadcastSessionState(channelId, 'busy');
+
+      // Broadcast user message to other windows joined to this channel
+      channel?.emitToOthers(socket, 'message:user', {
+        channelId,
+        content: [{ type: 'text', text: textMessage }],
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
+  };
+  socket.on('chat:send', sendHandler as never);
+
+  const interruptedChannels = new Set<string>();
+  socket.on('chat:cancel', (payload) => {
+    try {
+      const { channelId } = chatInterruptSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (!channel) return;
+      if (interruptedChannels.has(channelId)) {
+        // Second cancel → force abort
+        channel.runner.abort();
+      } else {
+        // First cancel → graceful interrupt
+        interruptedChannels.add(channelId);
+        channel.sendControlRequest('interrupt').catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  /** Unified response handler — replaces `tool_permission_response`. */
+  const responseHandler = async (payload: unknown) => {
+    try {
+      const { requestId, response } = payload as {
+        requestId: string;
+        response: {
+          behavior: 'allow' | 'deny';
+          updatedInput?: unknown;
+          updatedPermissions?: unknown[];
+          message?: string;
+        };
+      };
+
+      // Single lookup for both notification and control requests
+      const match = ctx.channelManager.findByRequestId(requestId);
+      if (!match) {
+        console.warn('[control_response] No channel found for requestId:', requestId);
+        return;
+      }
+      const [channelId, channel] = match;
+      if (!channel) return;
+
+      // Notification response — resolve and exit early
+      const notifResolve = channel.notificationRequests.get(requestId);
+      if (notifResolve) {
+        channel.notificationRequests.delete(requestId);
+        notifResolve(response as never);
+        return;
+      }
+
+      const meta = channel.getControlRequestMeta(requestId);
+      const { behavior, updatedInput, updatedPermissions, message } = response;
+
+      // Common cleanup + respond + broadcast
+      const respondAndBroadcast = (cliResponse: Record<string, unknown>) => {
+        channel.removeControlRequest(requestId);
+        channel.runner.respondToControlRequest(requestId, cliResponse);
+        ctx.emitToSession(channelId, 'cancel_request', { channelId, targetRequestId: requestId });
+      };
+
+      // mcp_message — relay JSON-RPC response, clear timeout
+      if (meta?.subtype === 'mcp_message') {
+        const t = channel.mcpTimeouts.get(requestId);
+        if (t) clearTimeout(t);
+        channel.mcpTimeouts.delete(requestId);
+        respondAndBroadcast(response as never);
+        return;
+      }
+
+      // elicitation — convert to accept/decline format
+      if (meta?.subtype === 'elicitation') {
+        const elicitationResponse =
+          behavior === 'allow'
+            ? { action: 'accept' as const, result: (updatedInput as Record<string, unknown>) ?? {} }
+            : { action: 'decline' as const };
+        respondAndBroadcast(elicitationResponse as never);
+        return;
+      }
+
+      // Tool permission — build response object
+      const responseObj: Record<string, unknown> = { behavior };
+      if (updatedInput !== undefined) responseObj.updatedInput = updatedInput;
+      if (message !== undefined) responseObj.message = message;
+      if (updatedPermissions !== undefined) responseObj.updatedPermissions = updatedPermissions;
+      if (meta?.toolUseId) responseObj.toolUseID = meta.toolUseId;
+
+      // ExitPlanMode — serialize plan comments as userFeedback
+      if (meta?.toolName === 'ExitPlanMode' && behavior === 'allow') {
+        const comments = channel.planComments;
+        if (comments.length > 0) {
+          responseObj.userFeedback = comments
+            .map((c) => `[Re: "${c.selectedText}"] ${c.comment}`)
+            .join('\n');
+          channel.planComments = [];
+        }
+      }
+
+      respondAndBroadcast(responseObj as never);
+    } catch (err) {
+      console.error('Failed to respond to control request:', err);
+    }
+  };
+  socket.on('chat:respond', responseHandler as never);
+
+  socket.on('chat:stop_task', (payload) => {
+    try {
+      const { channelId, taskId } = chatStopTaskSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (channel) {
+        channel.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {
+          // ignore
+        });
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  socket.on('cancel_async_message', (payload) => {
+    try {
+      const { channelId, messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (channel) {
+        channel
+          .sendControlRequest('cancel_async_message', { message_uuid: messageUuid })
+          .catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  socket.on('rewind_code', async (payload, callback) => {
+    try {
+      const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (!channel) {
+        callback({ error: 'Session not found' } as never);
+        return;
+      }
+      const result = await channel.sendControlRequest('rewind_files', {
+        user_message_id: userMessageId ?? '',
+        dry_run: dryRun ?? false,
+      });
+      callback(result);
+    } catch (err) {
+      callback({ error: errMsg(err, 'Failed to rewind code') } as never);
+    }
+  });
+
+  socket.on('cancel_request', (payload) => {
+    const { targetRequestId } = payload;
+    const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
+    if (cancelMatch) {
+      const [channelId, channel] = cancelMatch;
+      channel.removeControlRequest(targetRequestId);
+      channel.runner.respondToControlRequest(targetRequestId, {
+        behavior: 'deny',
+        message: 'User cancelled',
+        interrupt: false,
+      });
+      // Broadcast to all sockets so other windows dismiss the pending banner
+      ctx.emitToSession(channelId, 'cancel_request', {
+        channelId,
+        targetRequestId,
+      });
+    }
+  });
+
+  socket.on('generate_session_title', async (payload, callback) => {
+    try {
+      const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (channel) {
+        const result = await channel.sendControlRequest('generate_session_title', {
+          description,
+          persist,
+        });
+        callback?.({ success: true, result });
+      }
+    } catch (err) {
+      callback?.({ success: false, error: String(err) });
+    }
+  });
+
+  socket.on('hook_callback_respond', (payload) => {
+    try {
+      const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (channel) {
+        channel.runner.respondToControlRequest(requestId, response);
+      }
+    } catch {
+      // ignore
+    }
+  });
+}

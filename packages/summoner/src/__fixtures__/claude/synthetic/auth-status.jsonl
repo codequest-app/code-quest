@@ -1,0 +1,1 @@
+{"type":"auth_status","isAuthenticating":false,"output":["Logged in as user@example.com"],"account":{"email":"user@example.com","plan":"pro"},"session_id":"fake-session-id","uuid":"fake-auth-status-uuid"}

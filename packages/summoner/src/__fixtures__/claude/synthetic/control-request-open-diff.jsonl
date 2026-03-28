@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"open-diff-req-1","request":{"subtype":"open_diff","tool_name":"Write","input":{"originalFilePath":"/tmp/original.ts","newFilePath":"/tmp/new.ts","edits":[{"oldStr":"foo","newStr":"bar"}],"supportMultiEdits":false},"tool_use_id":"toolu_fake_open_diff_1"}}

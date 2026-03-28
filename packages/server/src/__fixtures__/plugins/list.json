@@ -1,0 +1,29 @@
+[
+  {
+    "id": "frontend-design@claude-plugins-official",
+    "version": "b36fd4b75301",
+    "scope": "user",
+    "enabled": true,
+    "installPath": "/Users/recca0120/.claude/plugins/cache/claude-plugins-official/frontend-design/b36fd4b75301",
+    "installedAt": "2026-02-26T17:11:17.723Z",
+    "lastUpdated": "2026-03-12T01:09:22.294Z"
+  },
+  {
+    "id": "ralph-loop@claude-plugins-official",
+    "version": "b36fd4b75301",
+    "scope": "user",
+    "enabled": true,
+    "installPath": "/Users/recca0120/.claude/plugins/cache/claude-plugins-official/ralph-loop/b36fd4b75301",
+    "installedAt": "2026-01-15T22:08:11.029Z",
+    "lastUpdated": "2026-03-12T01:09:22.296Z"
+  },
+  {
+    "id": "superpowers@superpowers-marketplace",
+    "version": "4.3.1",
+    "scope": "user",
+    "enabled": false,
+    "installPath": "/Users/recca0120/.claude/plugins/cache/superpowers-marketplace/superpowers/4.3.1",
+    "installedAt": "2026-02-24T17:20:51.173Z",
+    "lastUpdated": "2026-02-24T17:20:51.173Z"
+  }
+]

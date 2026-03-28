@@ -1,0 +1,136 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { sessions } from '../db/schema-sqlite.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
+import { DrizzleSessionStore } from '../services/drizzle-session-store.ts';
+import type { SessionRecord } from '../services/session-store.ts';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
+
+function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionRecord {
+  return {
+    id,
+    provider: 'claude',
+    command: 'claude',
+    args: '[]',
+    mode: 'print',
+    role: 'chat',
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+describe('DrizzleSessionStore', () => {
+  let db: ReturnType<typeof createDatabase>;
+  let store: DrizzleSessionStore;
+
+  beforeEach(() => {
+    db = createDatabase(':memory:');
+    migrate(db, { migrationsFolder });
+    store = new DrizzleSessionStore(db, sessions);
+  });
+
+  describe('list', () => {
+    it('returns sessions and total count', async () => {
+      await store.persist(makeRecord('s1'));
+      await store.persist(makeRecord('s2'));
+
+      const result = await store.list({ limit: 10, offset: 0 });
+
+      expect(result.total).toBe(2);
+      expect(result.sessions).toHaveLength(2);
+    });
+
+    it('returns empty when no sessions', async () => {
+      const result = await store.list();
+
+      expect(result.total).toBe(0);
+      expect(result.sessions).toEqual([]);
+    });
+
+    it('respects limit and offset', async () => {
+      for (let i = 0; i < 5; i++) {
+        await store.persist(makeRecord(`s${i}`, { createdAt: `2026-01-0${i + 1}T00:00:00Z` }));
+      }
+
+      const result = await store.list({ limit: 2, offset: 1 });
+
+      expect(result.total).toBe(5);
+      expect(result.sessions).toHaveLength(2);
+    });
+
+    it('orders by createdAt descending', async () => {
+      await store.persist(makeRecord('old', { createdAt: '2026-01-01T00:00:00Z' }));
+      await store.persist(makeRecord('new', { createdAt: '2026-01-02T00:00:00Z' }));
+
+      const result = await store.list();
+
+      expect(result.sessions[0].id).toBe('new');
+      expect(result.sessions[1].id).toBe('old');
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('marks session as dead', async () => {
+      await store.persist(makeRecord('s1'));
+
+      await store.updateStatus('s1', 'dead');
+
+      const session = await store.getById('s1');
+      expect(session!.status).toBe('dead');
+    });
+
+    it('returns false when session not found', async () => {
+      const result = await store.updateStatus('nonexistent', 'dead');
+      expect(result).toBe(false);
+    });
+
+    it('returns true when updated', async () => {
+      await store.persist(makeRecord('s1'));
+      const result = await store.updateStatus('s1', 'dead');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('list', () => {
+    it('excludes dead sessions by default', async () => {
+      await store.persist(makeRecord('active-sess'));
+      await store.persist(makeRecord('dead-sess'));
+      await store.updateStatus('dead-sess', 'dead');
+
+      const result = await store.list();
+
+      expect(result.sessions.map((s) => s.id)).not.toContain('dead-sess');
+      expect(result.sessions.map((s) => s.id)).toContain('active-sess');
+    });
+
+    it('total count excludes dead sessions', async () => {
+      await store.persist(makeRecord('s1'));
+      await store.persist(makeRecord('s2'));
+      await store.updateStatus('s2', 'dead');
+
+      const result = await store.list();
+
+      expect(result.total).toBe(1);
+    });
+  });
+
+  describe('getById', () => {
+    it('returns session when found', async () => {
+      await store.persist(makeRecord('s1'));
+
+      const session = await store.getById('s1');
+
+      expect(session).not.toBeNull();
+      expect(session!.id).toBe('s1');
+    });
+
+    it('returns null when not found', async () => {
+      const session = await store.getById('nonexistent');
+
+      expect(session).toBeNull();
+    });
+  });
+});

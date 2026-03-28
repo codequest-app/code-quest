@@ -1,6 +1,7 @@
 import type { RawEntry } from '@code-quest/summoner';
 import type { Column } from 'drizzle-orm';
 import { asc, eq } from 'drizzle-orm';
+import { v7 as uuidv7 } from 'uuid';
 import type { RawEventStore } from './raw-event-store.ts';
 
 /**
@@ -10,6 +11,15 @@ import type { RawEventStore } from './raw-event-store.ts';
  *
  * @see https://deepwiki.com/drizzle-team/drizzle-orm/2.2-query-building
  */
+interface RawEntryRow {
+  sessionId: string;
+  promptId: string;
+  dir: string;
+  raw: string;
+  seq: number;
+  createdAt: string;
+}
+
 interface DrizzleDb {
   insert(table: unknown): { values(v: unknown): Promise<unknown> };
   select(): {
@@ -25,6 +35,7 @@ interface RawEntriesTable {
   promptId: Column;
   dir: Column;
   raw: Column;
+  seq: Column;
   createdAt: Column;
 }
 
@@ -36,11 +47,12 @@ export class DrizzleRawStore implements RawEventStore {
 
   async append(entry: RawEntry): Promise<void> {
     await this.db.insert(this.table).values({
-      id: crypto.randomUUID(),
+      id: uuidv7(),
       sessionId: entry.sessionId,
       promptId: entry.promptId,
       dir: entry.direction,
       raw: entry.raw,
+      seq: entry.seq,
       createdAt: new Date(entry.timestamp).toISOString(),
     });
   }
@@ -50,14 +62,15 @@ export class DrizzleRawStore implements RawEventStore {
       .select()
       .from(this.table)
       .where(eq(this.table.sessionId, sessionId))
-      .orderBy(asc(this.table.createdAt));
+      .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
-    return (rows as Record<string, unknown>[]).map((row) => ({
-      timestamp: new Date(row.createdAt as string).getTime(),
-      sessionId: row.sessionId as string,
-      promptId: row.promptId as string,
+    return (rows as RawEntryRow[]).map((row) => ({
+      timestamp: new Date(row.createdAt).getTime(),
+      sessionId: row.sessionId,
+      promptId: row.promptId,
       direction: row.dir as 'in' | 'out' | 'err',
-      raw: row.raw as string,
+      raw: row.raw,
+      seq: row.seq,
     }));
   }
 }

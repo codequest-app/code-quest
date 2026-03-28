@@ -1,21 +1,28 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "8ea85441-be66-4584-889c-98f24795ba85",
+  "id": "6aeb96bc-4517-4c18-af53-c9260c3b36c4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "events": {
-      "name": "events",
+    "raw_entries": {
+      "name": "raw_entries",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "session_id": {
           "name": "session_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prompt_id": {
+          "name": "prompt_id",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -28,19 +35,20 @@
           "notNull": true,
           "autoincrement": false
         },
-        "type": {
-          "name": "type",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "data": {
-          "name": "data",
+        "raw": {
+          "name": "raw",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "seq": {
+          "name": "seq",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -51,16 +59,16 @@
         }
       },
       "indexes": {
-        "idx_events_session_created": {
-          "name": "idx_events_session_created",
-          "columns": ["session_id", "created_at"],
+        "idx_raw_entries_session_created": {
+          "name": "idx_raw_entries_session_created",
+          "columns": ["session_id", "created_at", "seq"],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "events_session_id_sessions_id_fk": {
-          "name": "events_session_id_sessions_id_fk",
-          "tableFrom": "events",
+        "raw_entries_session_id_sessions_id_fk": {
+          "name": "raw_entries_session_id_sessions_id_fk",
+          "tableFrom": "raw_entries",
           "tableTo": "sessions",
           "columnsFrom": ["session_id"],
           "columnsTo": ["id"],
@@ -69,8 +77,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "events_id": {
-          "name": "events_id",
+        "raw_entries_id": {
+          "name": "raw_entries_id",
           "columns": ["id"]
         }
       },
@@ -122,6 +130,21 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'print'"
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'chat'"
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",

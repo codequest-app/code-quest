@@ -1,0 +1,20 @@
+[
+  {
+    "name": "claude-code-plugins",
+    "source": "github",
+    "repo": "anthropics/claude-code",
+    "installLocation": "/Users/recca0120/.claude/plugins/marketplaces/claude-code-plugins"
+  },
+  {
+    "name": "claude-plugins-official",
+    "source": "github",
+    "repo": "anthropics/claude-plugins-official",
+    "installLocation": "/Users/recca0120/.claude/plugins/marketplaces/claude-plugins-official"
+  },
+  {
+    "name": "superpowers-marketplace",
+    "source": "github",
+    "repo": "obra/superpowers-marketplace",
+    "installLocation": "/Users/recca0120/.claude/plugins/marketplaces/superpowers-marketplace"
+  }
+]

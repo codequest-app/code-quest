@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEntries, sessions } from '../db/schema-sqlite.ts';
+import { rawEntries } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawStore } from '../services/composite-raw-store.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
@@ -13,18 +13,6 @@ import type { RawEventStore } from '../services/raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
-
-function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
-  db.insert(sessions)
-    .values({
-      id,
-      provider: 'claude',
-      command: 'claude',
-      args: '[]',
-      createdAt: new Date().toISOString(),
-    })
-    .run();
-}
 
 describe('CompositeRawStore', () => {
   let db: ReturnType<typeof createDatabase>;
@@ -45,7 +33,6 @@ describe('CompositeRawStore', () => {
   });
 
   it('appends to all stores', async () => {
-    seedSession(db, 'sess-1');
     const composite = new CompositeRawStore([drizzleStore, fileStore]);
 
     const entry: RawEntry = {
@@ -54,6 +41,7 @@ describe('CompositeRawStore', () => {
       promptId: 'prompt-1',
       direction: 'out',
       raw: 'hello',
+      seq: 0,
     };
 
     await composite.append(entry);
@@ -65,7 +53,6 @@ describe('CompositeRawStore', () => {
   });
 
   it('reads from the first store', async () => {
-    seedSession(db, 'sess-1');
     const composite = new CompositeRawStore([drizzleStore, fileStore]);
 
     const entry: RawEntry = {
@@ -74,6 +61,7 @@ describe('CompositeRawStore', () => {
       promptId: 'prompt-0',
       direction: 'out',
       raw: 'data',
+      seq: 0,
     };
 
     await composite.append(entry);
@@ -111,6 +99,7 @@ describe('CompositeRawStore', () => {
       promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
+      seq: 0,
     };
 
     await expect(composite.append(entry)).rejects.toThrow();
@@ -133,6 +122,7 @@ describe('CompositeRawStore', () => {
       promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
+      seq: 0,
     };
 
     await composite.append(entry);

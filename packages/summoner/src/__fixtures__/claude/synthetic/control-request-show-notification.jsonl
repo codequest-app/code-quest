@@ -1,0 +1,1 @@
+{"type":"control_request","request_id":"fake-cr-show-notif","request":{"subtype":"show_notification","input":{"message":"Task completed","severity":"info","buttons":[],"onlyIfNotVisible":false}},"session_id":"fake-session-id","uuid":"fake-show-notif-uuid"}

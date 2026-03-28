@@ -1,5 +1,7 @@
+import { dirname, join } from 'node:path';
 import 'reflect-metadata';
-import type { ProcessFactory } from '@code-quest/summoner';
+import type { ProcessProvider } from '@code-quest/summoner';
+import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
 import { Container } from 'inversify';
 import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
@@ -11,10 +13,12 @@ import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { FileRawStore } from './services/file-raw-store.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
-import { DefaultSessionManager, type SessionManager } from './services/session-manager.ts';
 import type { SessionStore } from './services/session-store.ts';
+import { FileSettingsStore, type SettingsStore } from './services/settings-store.ts';
+import { UsageTracker } from './services/usage-tracker.ts';
+import { ChannelManager } from './socket/channel-manager.ts';
 import { ChatHandler } from './socket/chat-handler.ts';
-import { TYPES } from './types.ts';
+import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
   sqlite?: boolean;
@@ -23,7 +27,7 @@ export interface StoreConfig {
 }
 
 export interface ContainerOptions {
-  processFactory: ProcessFactory;
+  processProvider?: ProcessProvider;
   database?: DrizzleDatabase;
   dbPath?: string;
   storeConfig?: StoreConfig;
@@ -32,7 +36,18 @@ export interface ContainerOptions {
 export function createContainer(options: ContainerOptions): Container {
   const container = new Container();
 
-  container.bind<ProcessFactory>(TYPES.ProcessFactory).toConstantValue(options.processFactory);
+  const adapter = new ClaudeAdapter();
+  const runnerFactory: RunnerFactory = {
+    create: (opts) =>
+      new ProcessRunner({
+        adapter,
+        processProvider: options.processProvider,
+        args: opts,
+      }),
+    command: adapter.command,
+    args: adapter.buildArgs(),
+  };
+  container.bind<RunnerFactory>(TYPES.RunnerFactory).toConstantValue(runnerFactory);
 
   const db = options.database ?? createDatabase(options.dbPath);
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
@@ -47,8 +62,16 @@ export function createContainer(options: ContainerOptions): Container {
     sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  container.bind<SessionManager>(TYPES.SessionManager).to(DefaultSessionManager).inSingletonScope();
+  const channelManager = new ChannelManager(runnerFactory, rawEventStore, sessionStore, adapter);
+  container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
+
+  container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<ChatHandler>(TYPES.ChatHandler).to(ChatHandler).inSingletonScope();
+
+  const settingsPath = join(dirname(options.dbPath ?? 'data/cc-office.db'), 'settings.json');
+  container
+    .bind<SettingsStore>(TYPES.SettingsStore)
+    .toConstantValue(new FileSettingsStore(settingsPath));
 
   return container;
 }
