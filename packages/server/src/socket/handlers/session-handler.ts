@@ -349,7 +349,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         offset: parsed.offset,
       });
       const previews = await Promise.all(
-        result.sessions.map((s) => ctx.rawEventStore.getPreview(s.id)),
+        result.sessions.map((s) => ctx.rawEventStore.getPreview(s.sessionId ?? s.id)),
       );
       const sessions = result.sessions.map((s, i) => {
         const ch = ctx.channelManager.get(s.id);
