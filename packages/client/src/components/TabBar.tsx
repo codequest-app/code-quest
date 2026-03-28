@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export interface TabInfo {
   sessionId: string;
   title?: string;
@@ -27,6 +29,8 @@ export function TabBar({
   onNewTab,
   onOpenHistory,
 }: TabBarProps) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
   if (tabs.length === 0 && !onNewTab) return null;
 
   return (
@@ -65,17 +69,43 @@ export function TabBar({
             />
           )}
           <span className="truncate max-w-[120px]">{tab.title || tab.sessionId.slice(0, 8)}</span>
-          <button
-            type="button"
-            className="ml-1 text-text-muted hover:text-text text-[10px]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCloseTab(tab.sessionId);
-            }}
-            aria-label={`Close ${tab.title || tab.sessionId}`}
-          >
-            ✕
-          </button>
+          {confirmingId === tab.sessionId ? (
+            <span
+              className="ml-1 inline-flex items-center gap-1 text-[10px]"
+              onClick={(e) => e.stopPropagation()}
+              role="none"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onCloseTab(tab.sessionId);
+                  setConfirmingId(null);
+                }}
+                className="text-danger hover:text-danger/80 font-medium"
+              >
+                Confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingId(null)}
+                className="text-text-muted hover:text-text"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="ml-1 text-text-muted hover:text-text text-[10px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmingId(tab.sessionId);
+              }}
+              aria-label={`Close ${tab.title || tab.sessionId}`}
+            >
+              ✕
+            </button>
+          )}
         </div>
       ))}
       {onNewTab && (

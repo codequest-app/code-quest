@@ -31,12 +31,30 @@ describe('TabBar', () => {
     expect(onSelect).toHaveBeenCalledWith('sess-2');
   });
 
-  it('calls onCloseTab when clicking close button', async () => {
+  it('shows confirm before closing tab', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
     await user.click(screen.getByLabelText('Close Chat 1'));
+
+    // Not closed yet — confirm shown
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText('Confirm')).toBeInTheDocument();
+
+    // Confirm closes
+    await user.click(screen.getByText('Confirm'));
     expect(onClose).toHaveBeenCalledWith('sess-1');
+  });
+
+  it('cancel does not close tab', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
+    await user.click(screen.getByLabelText('Close Chat 1'));
+    await user.click(screen.getByText('Cancel'));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.queryByText('Confirm')).not.toBeInTheDocument();
   });
 
   it('returns null when no tabs', () => {

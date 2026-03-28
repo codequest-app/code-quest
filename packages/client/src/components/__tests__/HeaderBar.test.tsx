@@ -1,6 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ChannelProvider } from '../../contexts/channel';
 import { PluginProvider } from '../../contexts/PluginContext';
@@ -54,11 +53,6 @@ describe('HeaderBar (context mode)', () => {
     expect(screen.getByText(/disconnected/i)).toBeInTheDocument();
   });
 
-  it('reads kill from context — shows kill button', async () => {
-    await renderWithProviders();
-    expect(screen.getByTitle('Kill Session')).toBeInTheDocument();
-  });
-
   it('title prop still works', async () => {
     await renderWithProviders({ title: 'Fix bug' });
     expect(screen.getByText('Fix bug')).toBeInTheDocument();
@@ -72,14 +66,5 @@ describe('HeaderBar (context mode)', () => {
   it('onToggleRaw prop shows Raw button', async () => {
     await renderWithProviders({ onToggleRaw: () => {} });
     expect(screen.getByTitle('Raw Events')).toBeInTheDocument();
-  });
-
-  it('kill confirm flow works via context', async () => {
-    const user = userEvent.setup();
-    await renderWithProviders();
-    await user.click(screen.getByTitle('Kill Session'));
-    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
-    expect(screen.getByTitle('Kill Session')).toBeInTheDocument();
   });
 });

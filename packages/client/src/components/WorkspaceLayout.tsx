@@ -1,7 +1,8 @@
 import type { SessionSummary } from '@code-quest/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
+import { useSocket } from '../contexts/SocketContext';
 import { useTab } from '../contexts/TabContext';
 import { ChatPanel } from './ChatPanel';
 import { SessionHistory } from './SessionHistory';
@@ -20,7 +21,16 @@ export function WorkspaceLayout() {
     setTabTitle,
     setTabStatus,
   } = useTab();
+  const { socket } = useSocket();
   const { listSessions } = useSession();
+
+  const handleCloseTab = useCallback(
+    (id: string) => {
+      socket.emit('session:close', { channelId: id });
+      removeTab(id);
+    },
+    [socket, removeTab],
+  );
   const tabIds = Object.keys(tabs);
 
   // ── History sidebar (local UI state) ──
@@ -57,7 +67,7 @@ export function WorkspaceLayout() {
         tabs={openTabs}
         activeTabId={activeTabId}
         onSelectTab={setActiveTab}
-        onCloseTab={removeTab}
+        onCloseTab={handleCloseTab}
         onNewTab={() => createNewTab()}
         onOpenHistory={toggleHistory}
       />
