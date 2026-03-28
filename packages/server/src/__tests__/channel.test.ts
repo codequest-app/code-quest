@@ -106,15 +106,15 @@ describe('Channel', () => {
     it('returns session:init payload from metaCache + sessionState', () => {
       const channel = new Channel(fakeRunner(), 'sess-1');
       channel.sessionId = 'cli-sess-1';
-      channel.metaCache = {
+      channel.updateMetaCache({
         model: 'claude-sonnet-4-6',
         tools: ['Read', 'Write'],
         permissionMode: 'default',
         fastModeState: 'off',
         mcpServers: [{ name: 'github', status: 'connected' }],
         slashCommands: ['commit', 'review'],
-      };
-      channel.sessionState = { cwd: '/home/user', effort: 'high' };
+      });
+      channel.updateSessionState({ cwd: '/home/user', effort: 'high' });
 
       const payload = channel.buildSessionInitPayload();
 
@@ -134,7 +134,7 @@ describe('Channel', () => {
     it('omits undefined metaCache fields', () => {
       const channel = new Channel(fakeRunner(), 'sess-1');
       channel.sessionId = 'cli-sess-2';
-      channel.metaCache = { model: 'haiku' };
+      channel.updateMetaCache({ model: 'haiku' });
 
       const payload = channel.buildSessionInitPayload();
 
@@ -203,6 +203,38 @@ describe('Channel', () => {
       expect(channel.state).toBe('closed');
       expect(channel.sockets.size).toBe(0);
       expect(channel.hasControlRequest('req-1')).toBe(false);
+    });
+  });
+
+  describe('updateSessionState', () => {
+    it('merges partial state', () => {
+      const channel = new Channel(fakeRunner(), 'sess-1');
+      channel.updateSessionState({ model: 'claude-sonnet-4-6' });
+      channel.updateSessionState({ cwd: '/home' });
+      expect(channel.sessionState).toEqual({ model: 'claude-sonnet-4-6', cwd: '/home' });
+    });
+
+    it('replaces existing keys', () => {
+      const channel = new Channel(fakeRunner(), 'sess-1');
+      channel.updateSessionState({ model: 'old' });
+      channel.updateSessionState({ model: 'new' });
+      expect(channel.sessionState).toEqual({ model: 'new' });
+    });
+
+    it('resets state when called with empty object after resetSessionState', () => {
+      const channel = new Channel(fakeRunner(), 'sess-1');
+      channel.updateSessionState({ model: 'x' });
+      channel.resetSessionState();
+      expect(channel.sessionState).toEqual({});
+    });
+  });
+
+  describe('updateMetaCache', () => {
+    it('merges partial cache', () => {
+      const channel = new Channel(fakeRunner(), 'sess-1');
+      channel.updateMetaCache({ model: 'claude-sonnet-4-6' });
+      channel.updateMetaCache({ tools: ['Read'] });
+      expect(channel.metaCache).toEqual({ model: 'claude-sonnet-4-6', tools: ['Read'] });
     });
   });
 });

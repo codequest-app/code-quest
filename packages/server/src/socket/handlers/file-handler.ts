@@ -135,7 +135,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         hooks,
         onBeforeSpawn: (c) => ctx.addSocketToChannel(c, socket),
       });
-      ch.sessionState = { ...ch.sessionState, cwd: baseCwd };
+      ch.updateSessionState({ cwd: baseCwd });
 
       ctx.io?.emit('session:states', {
         sessions: [{ channelId: newChannelId, state: 'idle' }],

@@ -1,3 +1,12 @@
+/** Parse env var as boolean. Accepts 'true'/'1' as true, 'false'/'0' as false. */
+export function envBool(key: string, defaultValue = false, raw?: string): boolean {
+  const v = raw ?? process.env[key];
+  if (v === undefined) return defaultValue;
+  if (v === 'true' || v === '1') return true;
+  if (v === 'false' || v === '0') return false;
+  return false;
+}
+
 const VALID_RAW_STORE_DRIVERS = ['sqlite', 'mysql', 'file'] as const;
 export type RawStoreDriver = (typeof VALID_RAW_STORE_DRIVERS)[number];
 
@@ -17,5 +26,5 @@ export const config = {
     fileDir: process.env.RAW_STORE_FILE_DIR ?? './data/events',
   },
   systemPrompt: process.env.SYSTEM_PROMPT ?? '',
-  allowDangerouslySkipPermissions: process.env.ALLOW_DANGEROUSLY_SKIP_PERMISSIONS !== 'false',
+  allowDangerouslySkipPermissions: envBool('ALLOW_DANGEROUSLY_SKIP_PERMISSIONS', true),
 } as const;

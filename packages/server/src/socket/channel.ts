@@ -51,12 +51,32 @@ export class Channel {
   readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
   readonly pendingRequests = new Map<string, PendingRequest>();
   readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
-  messageSeq = 0;
-  sessionState: Record<string, unknown> = {};
-  metaCache: ChannelMetaCache = {};
+  private _messageSeq = 0;
+  private _sessionState: Record<string, unknown> = {};
+  private _metaCache: ChannelMetaCache = {};
   planComments: PlanCommentData[] = [];
   terminalLines: string[] = [];
   sessionId: string | null = null;
+
+  get sessionState(): Record<string, unknown> {
+    return this._sessionState;
+  }
+
+  get metaCache(): ChannelMetaCache {
+    return this._metaCache;
+  }
+
+  updateSessionState(partial: Record<string, unknown>): void {
+    this._sessionState = { ...this._sessionState, ...partial };
+  }
+
+  resetSessionState(): void {
+    this._sessionState = {};
+  }
+
+  updateMetaCache(partial: Partial<ChannelMetaCache>): void {
+    this._metaCache = { ...this._metaCache, ...partial };
+  }
   lastError: string | undefined;
   exited = false;
   private _state: ChannelState = 'launching';
@@ -176,7 +196,7 @@ export class Channel {
   }
 
   nextSeq(): number {
-    return ++this.messageSeq;
+    return ++this._messageSeq;
   }
 
   sendNotification(payload: NotificationPayload): Promise<NotificationResponse> {
@@ -241,9 +261,8 @@ export class Channel {
       // Update internal state based on event name
       if (se.name === 'session:init') {
         this.sessionId = se.payload.sessionId as string;
-        this.sessionState = (se.payload.config ?? {}) as Record<string, unknown>;
-        this.metaCache = {
-          ...this.metaCache,
+        this._sessionState = (se.payload.config ?? {}) as Record<string, unknown>;
+        this.updateMetaCache({
           ...(se.payload.model ? { model: se.payload.model as string } : {}),
           ...(se.payload.permissionMode
             ? { permissionMode: se.payload.permissionMode as string }
@@ -258,13 +277,10 @@ export class Channel {
           ...(se.payload.slashCommands
             ? { slashCommands: se.payload.slashCommands as string[] }
             : {}),
-        };
+        });
       } else if (se.name === 'session:status') {
         if (se.payload.permissionMode !== undefined) {
-          this.sessionState = {
-            ...this.sessionState,
-            permissionMode: se.payload.permissionMode,
-          };
+          this.updateSessionState({ permissionMode: se.payload.permissionMode });
         }
       }
 
@@ -351,7 +367,7 @@ export class Channel {
     this.notificationRequests.clear();
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
-    this.sessionState = {};
+    this.resetSessionState();
     this.planComments = [];
     this.sockets.clear();
     if (this._state !== 'closed') {

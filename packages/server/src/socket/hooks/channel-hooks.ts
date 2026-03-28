@@ -101,14 +101,14 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
             }
             case 'set_model': {
               const model = ((action.input as Record<string, unknown>)?.model as string) ?? '';
-              ch.sessionState = { ...ch.sessionState, model };
+              ch.updateSessionState({ model });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
               break;
             }
             case 'set_permission_mode': {
               const mode = ((action.input as Record<string, unknown>)?.mode as string) ?? '';
-              ch.sessionState = { ...ch.sessionState, permissionMode: mode };
+              ch.updateSessionState({ permissionMode: mode });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
               break;
@@ -168,7 +168,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
       }
       ch.pendingRequests.clear();
       ctx.broadcastSessionState(channelId, 'exited');
-      ch.sessionState = {};
+      ch.resetSessionState();
       ctx.emitToSession(channelId, 'session:closed', {
         channelId,
         ...(ch.lastError ? { error: ch.lastError } : {}),

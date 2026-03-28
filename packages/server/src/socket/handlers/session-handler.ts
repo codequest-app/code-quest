@@ -82,7 +82,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           .catch(() => {});
       }
       if (parsed.cwd) {
-        channel.sessionState = { ...channel.sessionState, cwd: parsed.cwd };
+        channel.updateSessionState({ cwd: parsed.cwd });
       }
 
       // Extract data from initialize response
@@ -113,12 +113,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
 
       // Merge launch options into metaCache (wireRunner already set model/tools/etc from CLI init)
-      channel.metaCache = {
-        ...channel.metaCache,
+      channel.updateMetaCache({
         ...(parsed.model && { model: parsed.model }),
         ...(parsed.permissionMode && { permissionMode: parsed.permissionMode }),
         ...(slashCommands && { slashCommands }),
-      };
+      });
 
       // Emit session:init with final metaCache to socket
       socket.emit('session:init', channel.buildSessionInitPayload() as never);
