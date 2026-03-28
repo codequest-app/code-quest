@@ -102,6 +102,7 @@ export interface ChannelMessagesValue {
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<{ events: unknown[] }>;
+  subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   searchFiles: (pattern: string) => Promise<{ files: FileSearchResult[] }>;
   getTerminalContents: () => Promise<{ content: string | null }>;
   openClaudeTerminal: () => Promise<{ success: boolean; error?: string }>;
@@ -881,6 +882,15 @@ export function ChannelMessagesProvider({
         setChannelState((prev) => ({ ...prev, planComments: [...prev.planComments, comment] })),
       clearPlanComments: () => setChannelState((prev) => ({ ...prev, planComments: [] })),
       fetchRawEvents: () => rpc(socket, 'session:raw_events', { channelId }),
+      subscribeRawEvents: (cb: (evt: unknown) => void) => {
+        const handler = (eventName: string, ...args: unknown[]) => {
+          const payload = args[0] as Record<string, unknown> | undefined;
+          if (payload?.channelId && payload.channelId !== channelId) return;
+          cb({ type: eventName, ...((payload as object) ?? {}) });
+        };
+        socket.onAny(handler);
+        return () => socket.offAny(handler);
+      },
       searchFiles: (pattern: string) => rpc(socket, 'list_files_request', { channelId, pattern }),
       getTerminalContents: () => rpc(socket, 'terminal:get_contents', { channelId }),
       openClaudeTerminal: () => rpc(socket, 'terminal:open_claude', { channelId }),
