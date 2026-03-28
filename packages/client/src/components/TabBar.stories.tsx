@@ -1,0 +1,60 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn } from 'storybook/test';
+import { TabBar } from './TabBar';
+
+const meta = {
+  component: TabBar,
+  tags: ['autodocs'],
+  args: { onSelectTab: fn(), onCloseTab: fn(), onNewTab: fn() },
+  decorators: [
+    (Story) => (
+      <div className="bg-surface text-text">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof TabBar>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Empty: Story = {
+  args: { tabs: [], activeTabId: null },
+};
+
+export const SingleTab: Story = {
+  args: {
+    tabs: [{ sessionId: 'abc12345', title: 'Session 1', status: 'default' }],
+    activeTabId: 'abc12345',
+  },
+};
+
+export const MultipleTabs: Story = {
+  args: {
+    tabs: [
+      { sessionId: 'abc12345', title: 'Fix Auth', status: 'done' },
+      { sessionId: 'def67890', title: 'Add Tests', status: 'pending' },
+      { sessionId: 'ghi11111', status: 'default' },
+    ],
+    activeTabId: 'abc12345',
+  },
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.click(canvas.getByText('Add Tests'));
+    await expect(args.onSelectTab).toHaveBeenCalledWith('def67890');
+  },
+};
+
+export const CloseTab: Story = {
+  args: {
+    tabs: [
+      { sessionId: 'abc12345', title: 'Fix Auth', status: 'done' },
+      { sessionId: 'def67890', title: 'Add Tests', status: 'pending' },
+    ],
+    activeTabId: 'abc12345',
+  },
+  play: async ({ args, canvas, userEvent }) => {
+    const closeBtns = canvas.getAllByRole('button', { name: /close/i });
+    await userEvent.click(closeBtns[0]);
+    await expect(args.onCloseTab).toHaveBeenCalledWith('abc12345');
+  },
+};

@@ -6,8 +6,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
-    port: 5175,
+    port: 5173,
     open: false,
+    proxy: {
+      '/socket.io': {
+        target: `http://localhost:${process.env.PORT ?? 3000}`,
+        ws: true,
+      },
+    },
   },
   build: {
     outDir: 'dist',

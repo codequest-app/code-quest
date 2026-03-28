@@ -1,0 +1,82 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
+import { MentionDropdown } from './MentionDropdown';
+
+const meta = {
+  component: MentionDropdown,
+  tags: ['autodocs'],
+  args: { onSelectMention: fn() },
+  decorators: [
+    (Story) => (
+      <div className="relative bg-bg text-text" style={{ minHeight: 350, paddingTop: 320 }}>
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof MentionDropdown>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const StaticSuggestions: Story = {
+  args: {
+    mentionQuery: 'src',
+    filteredSuggestions: ['src/index.ts', 'src/App.tsx', 'src/utils/helpers.ts'],
+    fileResults: [],
+    searchStatus: 'idle',
+    selectedIndex: -1,
+    hasFileSearch: false,
+  },
+};
+
+export const FileSearchResults: Story = {
+  args: {
+    mentionQuery: 'main',
+    filteredSuggestions: [],
+    fileResults: [
+      { path: 'src/main.ts', name: 'main.ts', type: 'file' },
+      { path: 'src/main.test.ts', name: 'main.test.ts', type: 'file' },
+      { path: 'packages/server/src/main.ts', name: 'main.ts', type: 'file' },
+    ],
+    searchStatus: 'done',
+    selectedIndex: 1,
+    hasFileSearch: true,
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    mentionQuery: 'test',
+    filteredSuggestions: [],
+    fileResults: [],
+    searchStatus: 'loading',
+    selectedIndex: -1,
+    hasFileSearch: true,
+  },
+};
+
+export const NoResults: Story = {
+  args: {
+    mentionQuery: 'nonexistent',
+    filteredSuggestions: [],
+    fileResults: [],
+    searchStatus: 'done',
+    selectedIndex: -1,
+    hasFileSearch: true,
+  },
+};
+
+export const DirectoryResults: Story = {
+  args: {
+    mentionQuery: 'src',
+    filteredSuggestions: [],
+    fileResults: [
+      { path: 'src/', name: 'src', type: 'directory' },
+      { path: 'src/components/', name: 'components', type: 'directory' },
+      { path: 'src/utils/', name: 'utils', type: 'directory' },
+    ],
+    searchStatus: 'done',
+    selectedIndex: 0,
+    hasFileSearch: true,
+  },
+};
