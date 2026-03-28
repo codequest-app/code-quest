@@ -1,0 +1,106 @@
+import { useCallback, useRef, useState } from 'react';
+
+type SpeechRecognitionResult = {
+  isFinal: boolean;
+  0: { transcript: string };
+};
+type SpeechRecognitionResultList = {
+  length: number;
+  [i: number]: SpeechRecognitionResult;
+};
+type SpeechRecognitionInstance = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { resultIndex: number; results: SpeechRecognitionResultList }) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+function getSpeechRecognitionClass(): (new () => SpeechRecognitionInstance) | null {
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition || w.webkitSpeechRecognition || null) as
+    | (new () => SpeechRecognitionInstance)
+    | null;
+}
+
+export function useSpeechToText() {
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [finalTranscript, setFinalTranscript] = useState('');
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const SpeechRecognitionClass = getSpeechRecognitionClass();
+  const isSupported = SpeechRecognitionClass !== null;
+
+  const resetTranscript = useCallback(() => {
+    setInterimTranscript('');
+    setFinalTranscript('');
+  }, []);
+
+  const start = useCallback(() => {
+    const SpeechRecognition = SpeechRecognitionClass;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = navigator.language;
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          final += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      setInterimTranscript(interim);
+      if (final) {
+        setFinalTranscript(final);
+        setInterimTranscript('');
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+      setInterimTranscript('');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setInterimTranscript('');
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [SpeechRecognitionClass]);
+
+  const stop = useCallback(() => {
+    recognitionRef.current?.stop();
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      stop();
+    } else {
+      start();
+    }
+  }, [isListening, start, stop]);
+
+  return {
+    isListening,
+    interimTranscript,
+    finalTranscript,
+    resetTranscript,
+    toggleListening,
+    start,
+    stop,
+    isSupported,
+  };
+}

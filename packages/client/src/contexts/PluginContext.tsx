@@ -1,0 +1,117 @@
+import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
+import { createContext, type ReactNode, useContext, useMemo, useRef, useState } from 'react';
+import { rpc } from '../socket/rpc';
+import { useSocket } from './SocketContext';
+
+interface PluginState {
+  installed: PluginInfo[];
+  available: AvailablePlugin[];
+  marketplaces: MarketplaceInfo[];
+  needsRestart: boolean;
+  installing: string | null;
+}
+
+export interface PluginContextValue extends PluginState {
+  refreshPlugins: () => Promise<void>;
+  refreshMarketplaces: () => Promise<void>;
+  install: (pluginId: string, scope: 'user' | 'project' | 'local') => Promise<void>;
+  uninstall: (pluginId: string) => Promise<void>;
+  toggle: (pluginId: string, enabled: boolean) => Promise<void>;
+  addMarketplace: (source: string) => Promise<void>;
+  removeMarketplace: (marketplaceId: string) => Promise<void>;
+}
+
+const PluginContext = createContext<PluginContextValue | null>(null);
+
+export function usePlugins(): PluginContextValue {
+  const ctx = useContext(PluginContext);
+  if (!ctx) throw new Error('usePlugins must be used within a PluginProvider');
+  return ctx;
+}
+
+export function PluginProvider({ children }: { children: ReactNode }) {
+  const { socket } = useSocket();
+  const [state, setState] = useState<PluginState>({
+    installed: [],
+    available: [],
+    marketplaces: [],
+    needsRestart: false,
+    installing: null,
+  });
+
+  const socketRef = useRef(socket);
+  socketRef.current = socket;
+
+  const refreshPlugins = async () => {
+    const s = socketRef.current;
+    const installedResult = await rpc(s, 'list_plugins', {});
+    setState((prev) => ({ ...prev, installed: installedResult.installed }));
+    rpc(s, 'list_plugins', { includeAvailable: true })
+      .then((result) => {
+        setState((prev) => ({
+          ...prev,
+          installed: result.installed.length > 0 ? result.installed : prev.installed,
+          available: result.available,
+        }));
+      })
+      .catch(() => {});
+  };
+
+  const refreshMarketplaces = async () => {
+    const result = await rpc(socketRef.current, 'list_marketplaces');
+    setState((prev) => ({ ...prev, marketplaces: result.marketplaces }));
+  };
+
+  const install = async (pluginId: string, scope: 'user' | 'project' | 'local') => {
+    setState((prev) => ({ ...prev, installing: pluginId }));
+    try {
+      const result = await rpc(socketRef.current, 'install_plugin', { pluginId, scope });
+      if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
+    } finally {
+      await refreshPlugins();
+      setState((prev) => ({ ...prev, installing: null }));
+    }
+  };
+
+  const uninstall = async (pluginId: string) => {
+    const result = await rpc(socketRef.current, 'uninstall_plugin', { pluginId });
+    if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
+    await refreshPlugins();
+  };
+
+  const toggle = async (pluginId: string, enabled: boolean) => {
+    const result = await rpc(socketRef.current, 'set_plugin_enabled', {
+      pluginId,
+      enabled: !enabled,
+    });
+    if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
+    await refreshPlugins();
+  };
+
+  const addMp = async (source: string) => {
+    await rpc(socketRef.current, 'add_marketplace', { source });
+    await refreshMarketplaces();
+  };
+
+  const removeMp = async (marketplaceId: string) => {
+    await rpc(socketRef.current, 'remove_marketplace', { marketplaceId });
+    await refreshMarketplaces();
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: actions use socketRef (stable ref), not direct deps
+  const value = useMemo<PluginContextValue>(
+    () => ({
+      ...state,
+      refreshPlugins,
+      refreshMarketplaces,
+      install,
+      uninstall,
+      toggle,
+      addMarketplace: addMp,
+      removeMarketplace: removeMp,
+    }),
+    [state],
+  );
+
+  return <PluginContext.Provider value={value}>{children}</PluginContext.Provider>;
+}

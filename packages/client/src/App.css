@@ -4,76 +4,134 @@
   --font-sans: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 
-  --color-bg: #1e1e2e;
-  --color-surface: #2a2a3e;
-  --color-border: #4a4a6a;
+  /* VS Code Dark+ neutral palette */
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-border: #3e3e42;
 
-  --color-text: #d1d5e0;
-  --color-text-muted: #7a7f9a;
-  --color-text-bright: #eef0f6;
+  --color-text: #cccccc;
+  --color-text-muted: #9d9d9d;
+  --color-text-bright: #e8e8e8;
 
-  --color-accent: #58a6ff;
-  --color-success: #56d4a0;
-  --color-warning: #e3b341;
-  --color-danger: #f47067;
+  /* Claude Orange as primary accent */
+  --color-accent: #d97757;
+  --color-success: #81b88b;
+  --color-warning: #e1c08d;
+  --color-danger: #f48771;
 
-  --color-user: #79c0ff;
-  --color-assistant: #b392f0;
+  /* Assistant brand color (used for ✦ icon and plan review header) */
+  --color-assistant: #d97757;
 
-  --color-code: #1a1a2a;
-  --color-code-block: #151522;
-  --color-user-bg: #141928;
-  --color-assistant-bg: #1a1528;
-  --color-tool-bg: #111827;
-  --color-warning-bg: #1c1a0e;
-  --color-danger-bg: #1f1315;
+  /* Semantic backgrounds */
+  --color-code: #252526;
+  --color-code-block: #1e1e1e;
+  --color-input-bg: #3c3c3c;
+  --color-tool-bg: #1a1a1a;
+  --color-success-bg: #1a1f1a;
+  --color-warning-bg: #201f1a;
+  --color-danger-bg: #201a1a;
 
-  --shadow-glow-success: 0 0 6px 1px rgba(86, 212, 160, 0.5);
-  --shadow-glow-danger: 0 0 6px 1px rgba(244, 112, 103, 0.5);
-  --shadow-glow-accent: 0 0 6px 1px rgba(88, 166, 255, 0.5);
-  --shadow-glow-accent-ring: 0 0 0 1px rgba(88, 166, 255, 0.4), 0 0 12px -2px rgba(88, 166, 255, 0.15);
-  --shadow-glow-accent-lg: 0 0 16px -2px rgba(88, 166, 255, 0.4);
+  /* Interactive */
+  --color-selected: #094771;
+  --color-toggle: #0e639c;
+  --color-button: #0078d4;
+
+  /* Claude brand */
+  --color-claude-clay-orange: #c6613f;
+  --color-claude-orange: #d97757;
 }
 
-/* --- Custom utilities (modifier-aware) --- */
+/* --- Custom utilities --- */
 
-@utility glow-success {
-  box-shadow: var(--shadow-glow-success);
+@utility animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
 
-@utility glow-danger {
-  box-shadow: var(--shadow-glow-danger);
+@utility animate-fade-in-fast {
+  animation: fadeIn 0.15s ease-out;
 }
 
-@utility glow-accent {
-  box-shadow: var(--shadow-glow-accent);
+@utility animate-slide-up {
+  animation: slideUp 0.15s ease-out;
 }
 
-@utility glow-accent-ring {
-  box-shadow: var(--shadow-glow-accent-ring);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@utility glow-accent-lg {
-  box-shadow: var(--shadow-glow-accent-lg);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@utility scrollbar-thin {
-  &::-webkit-scrollbar {
-    width: 6px;
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(121, 121, 121, 0.4) transparent;
   }
-  &::-webkit-scrollbar-track {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  &::-webkit-scrollbar-thumb {
-    background: var(--color-border);
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(121, 121, 121, 0.4);
     border-radius: 3px;
   }
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-muted);
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(121, 121, 121, 0.7);
   }
 }
 
-/* --- Base resets (Tailwind preflight doesn't set height on root elements) --- */
+@utility bg-input {
+  background-color: var(--color-input-bg);
+}
+
+/* --- Permission Mode color system --- */
+
+/* Default: normal mode (claude clay orange) */
+.send-btn {
+  background-color: var(--color-claude-clay-orange);
+}
+
+[data-permission-mode="acceptEdits"] .send-btn {
+  background-color: var(--color-text);
+}
+
+[data-permission-mode="plan"] .send-btn {
+  background-color: var(--color-button);
+}
+
+[data-permission-mode="bypassPermissions"] .send-btn,
+[data-permission-mode="auto"] .send-btn {
+  background-color: var(--color-danger);
+}
+
+/* Input container border focus colors by permission mode */
+[data-permission-mode="normal"]:focus-within {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 1px 2px rgba(217, 119, 87, 0.2);
+}
+
+[data-permission-mode="plan"]:focus-within {
+  border-color: var(--color-button) !important;
+  box-shadow: 0 1px 2px rgba(0, 127, 212, 0.2);
+}
+
+[data-permission-mode="bypassPermissions"]:focus-within,
+[data-permission-mode="auto"]:focus-within {
+  border-color: var(--color-danger) !important;
+}
+
+[data-permission-mode="acceptEdits"]:focus-within {
+  border-color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(204, 204, 204, 0.1);
+}
+
+/* --- Base resets --- */
 
 @layer base {
   html, body, #root {

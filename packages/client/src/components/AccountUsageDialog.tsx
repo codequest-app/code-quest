@@ -1,0 +1,169 @@
+import type { UsageQuota } from '@code-quest/shared';
+
+interface AccountUsageDialogProps {
+  open: boolean;
+  onClose: () => void;
+  model?: string;
+  authMethod?: string;
+  email?: string;
+  organization?: string;
+  subscriptionType?: string;
+  usage?: UsageQuota;
+}
+
+function formatAuthMethod(method: string): string {
+  switch (method) {
+    case 'claudeai':
+      return 'Claude AI';
+    case 'console':
+      return 'Anthropic Console';
+    case 'api-key':
+      return 'API Key';
+    case '3p':
+      return 'Third Party';
+    case 'not-specified':
+      return 'Not Specified';
+    default:
+      return 'Not authenticated';
+  }
+}
+
+function formatResetTime(resetsAt: string): string | null {
+  try {
+    const ms = new Date(resetsAt).getTime() - Date.now();
+    if (ms <= 0) return 'soon';
+    const min = Math.floor(ms / 60000);
+    const hrs = Math.floor(ms / 3600000);
+    const days = Math.floor(ms / 86400000);
+    if (min < 60) return `in ${min}m`;
+    if (hrs < 24) return `in ${hrs}h`;
+    return `in ${days}d`;
+  } catch {
+    return null;
+  }
+}
+
+function AccountRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center text-[13px] py-1">
+      <span className="text-text/70">{label}</span>
+      <span className="text-text">{value}</span>
+    </div>
+  );
+}
+
+function UsageBarRow({
+  label,
+  utilization,
+  resetsAt,
+}: {
+  label: string;
+  utilization: number;
+  resetsAt?: string;
+}) {
+  const pct = Math.min(100, Math.floor(utilization * 100));
+  const isHigh = pct >= 80;
+  const resetText = resetsAt ? formatResetTime(resetsAt) : null;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-[13px]">
+        <span className="text-text">{label}</span>
+        <span className="text-text tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${isHigh ? 'bg-danger' : 'bg-accent'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {resetText && <div className="text-[11px] text-text/50">Resets {resetText}</div>}
+    </div>
+  );
+}
+
+const USAGE_TIERS = [
+  { key: 'five_hour' as const, label: 'Session (5hr)' },
+  { key: 'seven_day' as const, label: 'Weekly (7 day)' },
+  { key: 'seven_day_sonnet' as const, label: 'Weekly Sonnet' },
+];
+
+export function AccountUsageDialog({
+  open,
+  onClose,
+  model,
+  authMethod,
+  email,
+  organization,
+  subscriptionType,
+  usage,
+}: AccountUsageDialogProps) {
+  if (!open) return null;
+
+  return (
+    <div
+      role="none"
+      data-testid="dialog-backdrop"
+      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/50"
+      onClick={onClose}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-label="Account & Usage"
+        className="bg-bg border border-border rounded-lg w-[400px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-64px)] overflow-y-auto m-4 p-4 select-text outline-none"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-base font-semibold text-text">Account & Usage</h2>
+          <button
+            type="button"
+            aria-label="close"
+            onClick={onClose}
+            className="text-text-muted hover:text-text transition-colors text-lg leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* ACCOUNT section */}
+          <div className="space-y-1">
+            <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px] mb-2">
+              Account
+            </h4>
+            {model && <AccountRow label="Model" value={model} />}
+            {authMethod && <AccountRow label="Auth method" value={formatAuthMethod(authMethod)} />}
+            {email && <AccountRow label="Email" value={email} />}
+            {organization && <AccountRow label="Organization" value={organization} />}
+            {subscriptionType && <AccountRow label="Plan" value={subscriptionType} />}
+          </div>
+
+          {/* USAGE section */}
+          <div className="space-y-3">
+            <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
+              Usage
+            </h4>
+            {usage ? (
+              USAGE_TIERS.map(({ key, label }) => {
+                const tier = usage[key];
+                if (!tier) return null;
+                return (
+                  <UsageBarRow
+                    key={key}
+                    label={label}
+                    utilization={tier.utilization}
+                    resetsAt={tier.resets_at}
+                  />
+                );
+              })
+            ) : (
+              <p className="text-xs text-text-muted">Loading usage data…</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
