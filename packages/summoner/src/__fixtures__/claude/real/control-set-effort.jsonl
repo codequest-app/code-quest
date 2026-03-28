@@ -1,0 +1,2 @@
+{"request_id":"eegs242126k","type":"control_request","request":{"subtype":"apply_flag_settings","settings":{"effortLevel":"low"}}}
+{"type":"control_response","response":{"subtype":"success","request_id":"eegs242126k"}}

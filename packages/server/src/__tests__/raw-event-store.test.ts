@@ -1,25 +1,14 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
+import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEntries, sessions } from '../db/schema-sqlite.ts';
+import { rawEntries } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
-
-function seedSession(db: ReturnType<typeof createDatabase>, id: string) {
-  db.insert(sessions)
-    .values({
-      id,
-      provider: 'claude',
-      command: 'claude',
-      args: '[]',
-      createdAt: new Date().toISOString(),
-    })
-    .run();
-}
 
 describe('DrizzleRawStore', () => {
   let db: ReturnType<typeof createDatabase>;
@@ -31,15 +20,14 @@ describe('DrizzleRawStore', () => {
     store = new DrizzleRawStore(db, rawEntries);
   });
 
-  it('appends and retrieves raw entries', async () => {
-    seedSession(db, 'sess-1');
-
+  it('appends and retrieves raw entries via getBySession', async () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       promptId: 'prompt-aaa',
       direction: 'out',
-      raw: '{"type":"text","content":"hello"}',
+      raw: s.assistant('hello'),
+      seq: 0,
     };
 
     await store.append(entry);
@@ -58,8 +46,6 @@ describe('DrizzleRawStore', () => {
   });
 
   it('appends multiple entries for same session', async () => {
-    seedSession(db, 'sess-3');
-
     for (let i = 0; i < 3; i++) {
       await store.append({
         timestamp: Date.now() + i,
@@ -67,6 +53,7 @@ describe('DrizzleRawStore', () => {
         promptId: `prompt-${i}`,
         direction: 'out',
         raw: `line ${i}`,
+        seq: i,
       });
     }
 
@@ -75,8 +62,6 @@ describe('DrizzleRawStore', () => {
   });
 
   it('returns entries ordered by createdAt', async () => {
-    seedSession(db, 'sess-4');
-
     const now = Date.now();
     await store.append({
       timestamp: now + 200,
@@ -84,6 +69,7 @@ describe('DrizzleRawStore', () => {
       promptId: 'prompt-c',
       direction: 'out',
       raw: 'c',
+      seq: 2,
     });
     await store.append({
       timestamp: now,
@@ -91,6 +77,7 @@ describe('DrizzleRawStore', () => {
       promptId: 'prompt-a',
       direction: 'out',
       raw: 'a',
+      seq: 0,
     });
     await store.append({
       timestamp: now + 100,
@@ -98,6 +85,7 @@ describe('DrizzleRawStore', () => {
       promptId: 'prompt-b',
       direction: 'out',
       raw: 'b',
+      seq: 1,
     });
 
     const results = await store.getBySession('sess-4');

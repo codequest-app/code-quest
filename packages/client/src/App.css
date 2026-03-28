@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  /* VS Code Dark+ neutral palette */
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-border: #3e3e42;
+
+  --color-text: #cccccc;
+  --color-text-muted: #9d9d9d;
+  --color-text-bright: #e8e8e8;
+
+  /* Claude Orange as primary accent */
+  --color-accent: #d97757;
+  --color-success: #81b88b;
+  --color-warning: #e1c08d;
+  --color-danger: #f48771;
+
+  /* Assistant brand color (used for ✦ icon and plan review header) */
+  --color-assistant: #d97757;
+
+  /* Semantic backgrounds */
+  --color-code: #252526;
+  --color-code-block: #1e1e1e;
+  --color-input-bg: #3c3c3c;
+  --color-tool-bg: #1a1a1a;
+  --color-success-bg: #1a1f1a;
+  --color-warning-bg: #201f1a;
+  --color-danger-bg: #201a1a;
+
+  /* Interactive */
+  --color-selected: #094771;
+  --color-toggle: #0e639c;
+  --color-button: #0078d4;
+
+  /* Claude brand */
+  --color-claude-clay-orange: #c6613f;
+  --color-claude-orange: #d97757;
+}
+
+/* --- Custom utilities --- */
+
+@utility animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@utility animate-fade-in-fast {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@utility animate-slide-up {
+  animation: slideUp 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(121, 121, 121, 0.4) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(121, 121, 121, 0.4);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(121, 121, 121, 0.7);
+  }
+}
+
+@utility bg-input {
+  background-color: var(--color-input-bg);
+}
+
+/* --- Permission Mode color system --- */
+
+/* Default: normal mode (claude clay orange) */
+.send-btn {
+  background-color: var(--color-claude-clay-orange);
+}
+
+[data-permission-mode="acceptEdits"] .send-btn {
+  background-color: var(--color-text);
+}
+
+[data-permission-mode="plan"] .send-btn {
+  background-color: var(--color-button);
+}
+
+[data-permission-mode="bypassPermissions"] .send-btn,
+[data-permission-mode="auto"] .send-btn {
+  background-color: var(--color-danger);
+}
+
+/* Input container border focus colors by permission mode */
+[data-permission-mode="normal"]:focus-within {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 1px 2px rgba(217, 119, 87, 0.2);
+}
+
+[data-permission-mode="plan"]:focus-within {
+  border-color: var(--color-button) !important;
+  box-shadow: 0 1px 2px rgba(0, 127, 212, 0.2);
+}
+
+[data-permission-mode="bypassPermissions"]:focus-within,
+[data-permission-mode="auto"]:focus-within {
+  border-color: var(--color-danger) !important;
+}
+
+[data-permission-mode="acceptEdits"]:focus-within {
+  border-color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(204, 204, 204, 0.1);
+}
+
+/* --- Base resets --- */
+
+@layer base {
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* --- Prose (Markdown-rendered DOM, no className access) --- */
+
+@layer base {
+  [data-type="text"] p {
+    margin: 6px 0;
+    line-height: 1.7;
+  }
+
+  [data-type="text"] code {
+    background: var(--color-code);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--color-border);
+  }
+
+  [data-type="text"] pre {
+    margin: 10px 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  [data-type="text"] pre code {
+    background: none;
+    padding: 0;
+    border: none;
+  }
+}

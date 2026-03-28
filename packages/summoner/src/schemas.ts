@@ -13,20 +13,10 @@ export const cliSystemInitSchema = z.looseObject({
   claude_code_version: z.string().optional(),
 });
 
-export const cliSystemHookStartedSchema = z.looseObject({
+export const cliSystemStatusSchema = z.looseObject({
   type: z.literal('system'),
-  subtype: z.literal('hook_started'),
-  hook_id: z.string(),
-  hook_name: z.string(),
-  hook_event: z.string(),
-});
-
-export const cliSystemHookResponseSchema = z.looseObject({
-  type: z.literal('system'),
-  subtype: z.literal('hook_response'),
-  hook_id: z.string(),
-  hook_name: z.string(),
-  hook_event: z.string(),
+  subtype: z.literal('status'),
+  status: z.string(),
 });
 
 // --- Assistant event ---
@@ -36,13 +26,6 @@ export const cliAssistantSchema = z.looseObject({
   message: z.looseObject({
     content: z.array(z.any()).optional(),
   }),
-});
-
-// --- User event (echo-back) ---
-
-export const cliUserSchema = z.looseObject({
-  type: z.literal('user'),
-  message: z.looseObject({}),
 });
 
 // --- Result event ---
@@ -81,11 +64,3 @@ export const cliControlRequestSchema = z.looseObject({
     callback_id: z.string().optional(),
   }),
 });
-
-// Inferred types
-export type CliSystemInit = z.infer<typeof cliSystemInitSchema>;
-export type CliAssistant = z.infer<typeof cliAssistantSchema>;
-export type CliUser = z.infer<typeof cliUserSchema>;
-export type CliResult = z.infer<typeof cliResultSchema>;
-export type CliControlResponse = z.infer<typeof cliControlResponseSchema>;
-export type CliControlRequest = z.infer<typeof cliControlRequestSchema>;

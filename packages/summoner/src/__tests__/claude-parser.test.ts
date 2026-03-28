@@ -147,6 +147,27 @@ describe('ClaudeParser', () => {
     });
   });
 
+  describe('system/status', () => {
+    it('emits status event from system/status message', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'system',
+          subtype: 'status',
+          status: 'Thinking…',
+        }),
+      );
+
+      expect(events).toEqual([{ type: 'status', message: 'Thinking…' }]);
+    });
+
+    it('returns empty for system/status with missing status field', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(JSON.stringify({ type: 'system', subtype: 'status' }));
+      expect(events).toEqual([]);
+    });
+  });
+
   describe('edge cases', () => {
     it('should return empty array for malformed JSON', () => {
       const parser = new ClaudeParser();
@@ -162,6 +183,118 @@ describe('ClaudeParser', () => {
     it('should return empty array for unknown types', () => {
       const parser = new ClaudeParser();
       expect(parser.parseLine('{"type":"unknown_thing"}')).toHaveLength(0);
+    });
+  });
+
+  describe('stream_event', () => {
+    it('emits text_delta from content_block_delta with text_delta', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: {
+            type: 'content_block_delta',
+            index: 0,
+            delta: { type: 'text_delta', text: 'Hello' },
+          },
+        }),
+      );
+      expect(events).toEqual([{ type: 'text_delta', content: 'Hello' }]);
+    });
+
+    it('emits thinking_delta from content_block_delta with thinking', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: {
+            type: 'content_block_delta',
+            index: 0,
+            delta: { type: 'thinking', thinking: 'Let me think...' },
+          },
+        }),
+      );
+      expect(events).toEqual([{ type: 'thinking_delta', content: 'Let me think...' }]);
+    });
+
+    it('emits message_end from message_stop', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: { type: 'message_stop' },
+        }),
+      );
+      expect(events).toEqual([{ type: 'message_end' }]);
+    });
+
+    it('ignores unknown stream_event types', () => {
+      const parser = new ClaudeParser();
+      const events = parser.parseLine(
+        JSON.stringify({
+          type: 'stream_event',
+          event: { type: 'message_start' },
+        }),
+      );
+      expect(events).toEqual([]);
+    });
+  });
+
+  describe('stream-text.jsonl', () => {
+    it('should emit full streaming lifecycle: init → text_delta → text (replay) → message_end → result', () => {
+      const parser = new ClaudeParser();
+      const lines = loadFixtureLines('stream-text.jsonl');
+      const events: ChatStreamEvent[] = [];
+
+      for (const line of lines) {
+        events.push(...parser.parseLine(line));
+      }
+
+      // init (from real CLI recording)
+      expect(events[0]).toMatchObject({
+        type: 'init',
+        sessionId: '23fd70bf-47d4-41d4-896e-0e328fc9bf4c',
+        model: 'claude-opus-4-6',
+      });
+
+      // text deltas
+      const textDeltas = events.filter((e) => e.type === 'text_delta');
+      expect(textDeltas).toHaveLength(2);
+      expect(textDeltas[0]).toMatchObject({ type: 'text_delta', content: 'hello' });
+      expect(textDeltas[1]).toMatchObject({ type: 'text_delta', content: ' world' });
+
+      // assistant replay produces text event
+      const textEvents = events.filter((e) => e.type === 'text');
+      expect(textEvents).toHaveLength(1);
+      expect(textEvents[0]).toMatchObject({ type: 'text', content: 'hello world' });
+
+      // message_end
+      const messageEnd = events.filter((e) => e.type === 'message_end');
+      expect(messageEnd).toHaveLength(1);
+
+      // result
+      const resultEvents = events.filter((e) => e.type === 'result');
+      expect(resultEvents).toHaveLength(1);
+      expect(resultEvents[0]).toMatchObject({
+        type: 'result',
+        stats: expect.objectContaining({ costUsd: expect.any(Number) }),
+      });
+    });
+
+    it('should ignore non-delta stream_events (message_start, content_block_start, content_block_stop, message_delta)', () => {
+      const parser = new ClaudeParser();
+      const lines = loadFixtureLines('stream-text.jsonl');
+      const events: ChatStreamEvent[] = [];
+
+      for (const line of lines) {
+        events.push(...parser.parseLine(line));
+      }
+
+      // These stream_event types should NOT produce any events
+      const allTypes = events.map((e) => e.type);
+      expect(allTypes).not.toContain('message_start');
+      expect(allTypes).not.toContain('content_block_start');
+      expect(allTypes).not.toContain('content_block_stop');
     });
   });
 

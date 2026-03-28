@@ -24,7 +24,7 @@ export default defineConfig({
         statements: 80,
       },
     },
-    passWithNoTests: true,
+    passWithNoTests: false,
     include: ['src/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
   },

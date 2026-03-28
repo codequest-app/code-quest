@@ -63,6 +63,9 @@ Thumbs.db
 .claude/skills/*/
 !.claude/skills/README.md
 
+# Worktrees
+.worktrees/
+
 # Temporary files
 *.tmp
 *.temp

@@ -1,47 +1,48 @@
 import 'reflect-metadata';
-import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
-import type { ProcessFactory } from '@code-quest/summoner';
+import { ChildProcessProvider } from '@code-quest/summoner';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { Server } from 'socket.io';
+import { config } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
+import { createProfileRouter } from '../routes/profile.ts';
+import { createSessionsRouter } from '../routes/sessions.ts';
+import { createUsageRouter } from '../routes/usage.ts';
+import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { SessionStore } from '../services/session-store.ts';
+import type { UsageTracker } from '../services/usage-tracker.ts';
 import type { ChatHandler } from '../socket/chat-handler.ts';
 import { TYPES } from '../types.ts';
 
-const PORT = Number(process.env.PORT ?? 3001);
+const storeConfig: StoreConfig = {};
 
-const processFactory: ProcessFactory = (command, args, options) => spawn(command, args, options);
-
-const sqlitePath = process.env.DB_SQLITE_PATH ?? './data/code-quest.db';
-
-const storeConfig: StoreConfig = { sqlite: true };
-
-if (process.env.DATABASE_URL) {
-  storeConfig.mysql = { database: createMysqlDatabase(process.env.DATABASE_URL) };
+if (config.rawStore.drivers.includes('sqlite')) {
+  storeConfig.sqlite = true;
 }
 
-if (process.env.RAW_EVENT_DIR) {
-  storeConfig.file = { dir: process.env.RAW_EVENT_DIR };
+if (config.rawStore.drivers.includes('mysql') && config.databaseUrl) {
+  storeConfig.mysql = { database: createMysqlDatabase(config.databaseUrl) };
+}
+
+if (config.rawStore.drivers.includes('file')) {
+  storeConfig.file = { dir: config.rawStore.fileDir };
 }
 
 const container = createContainer({
-  processFactory,
-  dbPath: sqlitePath,
+  processProvider: new ChildProcessProvider(),
+  dbPath: config.rawStore.sqlitePath,
   storeConfig,
 });
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(helmet());
 app.use(cors());
-app.use(express.static(resolve(__dirname, '../../public')));
 
 const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
@@ -51,9 +52,26 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
 chatHandler.register(io);
 
+const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
+const usageTracker = container.get<UsageTracker>(TYPES.UsageTracker);
+app.use(createSessionsRouter(sessionStore, rawEventStore));
+app.use(createUsageRouter(usageTracker));
+app.use(createProfileRouter(() => ({ authenticated: false })));
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
+
+const clientDist = join(import.meta.dirname, '../../..', 'client/dist');
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  // SPA fallback
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/health')) return next();
+    res.sendFile(join(clientDist, 'index.html'));
+  });
+}
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const status = err instanceof Error && 'status' in err ? (err as { status: number }).status : 500;
@@ -61,8 +79,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ error: message });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+httpServer.listen(config.port, () => {
+  console.log(`Server listening on port ${config.port}`);
 });
 
 const shutdown = () => {
