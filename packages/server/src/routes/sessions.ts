@@ -20,7 +20,6 @@ export function createSessionsRouter(
         );
         const enriched = result.sessions.map((s, i) => ({
           ...s,
-          firstUserMessage: previews[i].firstUser,
           lastAssistantMessage: previews[i].lastAssistant,
         }));
         res.json({ sessions: enriched, total: result.total });

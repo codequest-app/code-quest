@@ -356,7 +356,6 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         return {
           ...s,
           isActive: !!(ch && !ch.exited),
-          firstUserMessage: previews[i].firstUser,
           lastAssistantMessage: previews[i].lastAssistant,
         };
       });

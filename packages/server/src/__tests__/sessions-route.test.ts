@@ -138,16 +138,14 @@ describe('GET /api/sessions with preview', () => {
     ]);
     const eventStore = createMockEventStore();
     (eventStore.getPreview as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ firstUser: 'fix bug', lastAssistant: 'Done' })
-      .mockResolvedValueOnce({ firstUser: 'add feature', lastAssistant: undefined });
+      .mockResolvedValueOnce({ lastAssistant: 'Done' })
+      .mockResolvedValueOnce({});
 
     const app = express();
     app.use(createSessionsRouter(store, eventStore));
 
     const res = await request(app).get('/api/sessions');
-    expect(res.body.sessions[0].firstUserMessage).toBe('fix bug');
     expect(res.body.sessions[0].lastAssistantMessage).toBe('Done');
-    expect(res.body.sessions[1].firstUserMessage).toBe('add feature');
     expect(res.body.sessions[1].lastAssistantMessage).toBeUndefined();
   });
 });

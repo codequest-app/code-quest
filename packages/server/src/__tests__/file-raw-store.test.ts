@@ -107,16 +107,13 @@ describe('FileRawStore', () => {
   });
 
   describe('getPreview', () => {
-    it('returns first user and last assistant text', async () => {
+    it('returns last assistant text', async () => {
       await store.append({
         timestamp: Date.now(),
         sessionId: 'sess-prev',
         promptId: 'p1',
-        direction: 'in',
-        raw: JSON.stringify({
-          type: 'user',
-          message: { content: [{ type: 'text', text: 'fix bug' }] },
-        }),
+        direction: 'out',
+        raw: s.assistant('Looking...'),
         seq: 0,
       });
       await store.append({
@@ -124,26 +121,16 @@ describe('FileRawStore', () => {
         sessionId: 'sess-prev',
         promptId: 'p1',
         direction: 'out',
-        raw: s.assistant('Looking...'),
-        seq: 1,
-      });
-      await store.append({
-        timestamp: Date.now() + 2,
-        sessionId: 'sess-prev',
-        promptId: 'p1',
-        direction: 'out',
         raw: s.assistant('Done fixing'),
-        seq: 2,
+        seq: 1,
       });
 
       const preview = await store.getPreview('sess-prev');
-      expect(preview.firstUser).toBe('fix bug');
       expect(preview.lastAssistant).toBe('Done fixing');
     });
 
     it('returns empty for nonexistent session', async () => {
       const preview = await store.getPreview('nope');
-      expect(preview.firstUser).toBeUndefined();
       expect(preview.lastAssistant).toBeUndefined();
     });
   });
