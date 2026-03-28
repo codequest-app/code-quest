@@ -105,6 +105,11 @@ export function SessionRow({
               {new Date(s.createdAt).toLocaleString()}
             </div>
           </div>
+          {s.cwd && (
+            <div className="text-[10px] font-mono text-text-muted truncate mt-0.5">
+              {s.cwd.split('/').pop() || s.cwd}
+            </div>
+          )}
           {s.lastAssistantMessage && (
             <div
               data-testid="session-preview"

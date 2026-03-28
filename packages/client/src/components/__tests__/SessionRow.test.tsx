@@ -61,9 +61,14 @@ describe('SessionRow', () => {
     expect(preview.textContent!.length).toBeLessThanOrEqual(83);
   });
 
-  it('does not show cwd and args in list view', () => {
+  it('shows last folder name from cwd', () => {
     render(<SessionRow session={baseSession} {...defaultProps} />);
+    expect(screen.getByText('project')).toBeInTheDocument();
     expect(screen.queryByText(/\/Users\/test\/project/)).not.toBeInTheDocument();
+  });
+
+  it('does not show args in list view', () => {
+    render(<SessionRow session={baseSession} {...defaultProps} />);
     expect(screen.queryByText(/--verbose/)).not.toBeInTheDocument();
   });
 
