@@ -276,10 +276,10 @@
 
 ### Group 18：Code Review Round 2 — Component 職責 + Storybook
 
-#### 18.1 P0 — WorkspaceLayout 直接用 socket → SessionContext
-- [ ] SessionContext 加 `closeSession(channelId: string)` action
-- [ ] WorkspaceLayout 移除 `useSocket()`，改用 `useSession().closeSession`
-- [ ] 確認零 component 直接用 useSocket
+#### 18.1 P0 — WorkspaceLayout 直接用 socket → SessionContext — DONE
+- [x] SessionContext 加 `closeSession(channelId: string)` action
+- [x] WorkspaceLayout 移除 `useSocket()`，改用 `useSession().closeSession`
+- [x] 確認零 component 直接用 useSocket
 
 #### 18.2 P1 — Storybook 補缺（>100 行 component）
 - [ ] CommandMenu.stories.tsx（697 行）

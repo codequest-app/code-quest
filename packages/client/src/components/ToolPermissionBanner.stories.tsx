@@ -1,0 +1,54 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
+import type { PendingControl } from '../types/chat';
+import { ToolPermissionBanner } from './ToolPermissionBanner';
+
+const meta = {
+  component: ToolPermissionBanner,
+  tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="bg-bg text-text max-w-lg p-4">
+        <Story />
+      </div>
+    ),
+  ],
+  args: { onRespond: fn() },
+} satisfies Meta<typeof ToolPermissionBanner>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+const bashPending: PendingControl = {
+  requestId: 'req-1',
+  subtype: 'can_use_tool',
+  toolName: 'Bash',
+  input: { command: 'rm -rf /tmp/build' },
+};
+
+export const BashPermission: Story = {
+  args: { pending: bashPending },
+};
+
+export const WritePermission: Story = {
+  args: {
+    pending: {
+      requestId: 'req-2',
+      subtype: 'can_use_tool',
+      toolName: 'Write',
+      input: { file_path: '/src/components/App.tsx' },
+    },
+  },
+};
+
+export const WithPermissionSuggestions: Story = {
+  args: {
+    pending: {
+      requestId: 'req-3',
+      subtype: 'can_use_tool',
+      toolName: 'Bash',
+      input: { command: 'npm test' },
+      permissionSuggestions: [{ tool: 'Bash', rule: 'npm test' }],
+    },
+  },
+};
