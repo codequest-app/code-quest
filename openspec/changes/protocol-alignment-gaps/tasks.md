@@ -94,7 +94,36 @@
 - [x] 沒有 active channel 時只回 usageTracker 資料（現有行為）
 - [x] test：FakeClaude.onControlRequest mock
 
-#### 9.2 Client — DONE
-- [x] ChannelMessagesContext：state:usage handler 合併 contextUsage 到 stats
-- [x] Context percentage 從 server push 的 contextUsage 即時更新
-- [x] ComposeToolbar test：驗證 context % 從 state:usage 更新
+#### 9.2 Client — REVERTED (contextUsage 不應混入 stats)
+
+> context usage 和 turn usage 語意不同，獨立存。
+> ContextPieChart 保持用 message:result 的 stats（不改）。
+> AccountUsageDialog 開啟時查 get_context_usage 顯示 breakdown。
+
+### Group 10：AccountUsageDialog 對齊 — context breakdown + session cost
+
+> 不打 Anthropic API。帳號 quota 只靠 rate_limit_event 被動拿。
+
+#### 10.1 ChannelState 加 contextUsage
+- [ ] types/chat.ts ChannelState 加 `contextUsage?: { categories, totalTokens, maxTokens, percentage }`
+- [ ] onStateUsage handler 存到 contextUsage（不碰 stats）
+- [ ] test
+
+#### 10.2 AccountUsageDialog 開啟時查 get_context_usage
+- [ ] ComposeToolbar：開 usage dialog 時 emit request_usage_update
+- [ ] test
+
+#### 10.3 AccountUsageDialog 顯示 context breakdown
+- [ ] 顯示 categories 列表（name + tokens）
+- [ ] 顯示 percentage + totalTokens / maxTokens
+- [ ] test
+
+#### 10.4 AccountUsageDialog 顯示 session cost
+- [ ] 顯示 total_cost_usd（從 message:result stats）
+- [ ] 顯示 num_turns
+- [ ] 顯示 modelUsage per-model breakdown
+- [ ] test
+
+#### 10.5 清理
+- [ ] revert ComposeToolbar test 的 contextUsage → stats 測試
+- [ ] 確認 ContextPieChart 不受影響（保持用 stats）

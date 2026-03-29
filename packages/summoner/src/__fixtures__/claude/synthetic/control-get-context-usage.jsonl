@@ -1,2 +1,0 @@
-{"request_id":"ctx-usage-1","type":"control_request","request":{"subtype":"get_context_usage"}}
-{"type":"control_response","response":{"subtype":"success","request_id":"ctx-usage-1","response":{"input_tokens":15000,"output_tokens":3000,"cache_read_input_tokens":10000,"context_window":200000}}}

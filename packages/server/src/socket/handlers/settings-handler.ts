@@ -160,12 +160,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       try {
         const resp = await channel.sendControlRequest('get_context_usage', {});
         if (resp.response) {
-          const r = resp.response as Record<string, unknown>;
-          contextUsage = {
-            inputTokens: r.input_tokens,
-            outputTokens: r.output_tokens,
-            contextWindow: r.context_window,
-          };
+          contextUsage = resp.response as Record<string, unknown>;
         }
       } catch {
         // CLI may not support get_context_usage — ignore

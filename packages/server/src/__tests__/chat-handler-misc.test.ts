@@ -185,7 +185,16 @@ describe('ChatHandler > misc', () => {
 
       claude.onControlRequest((req) => {
         if (req.subtype === 'get_context_usage') {
-          return { input_tokens: 50000, output_tokens: 5000, context_window: 200000 };
+          return {
+            categories: [
+              { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+              { name: 'Messages', tokens: 4000, color: 'purple' },
+              { name: 'Free space', tokens: 190000, color: 'promptBorder' },
+            ],
+            totalTokens: 10000,
+            maxTokens: 200000,
+            percentage: 5,
+          };
         }
         return null;
       });
@@ -198,11 +207,12 @@ describe('ChatHandler > misc', () => {
       await claude.send('request_usage_update', { channelId });
 
       expect(usageUpdates.length).toBe(1);
-      expect((usageUpdates[0] as any).contextUsage).toMatchObject({
-        inputTokens: 50000,
-        outputTokens: 5000,
-        contextWindow: 200000,
-      });
+      const ctx = (usageUpdates[0] as any).contextUsage;
+      expect(ctx.totalTokens).toBe(10000);
+      expect(ctx.maxTokens).toBe(200000);
+      expect(ctx.percentage).toBe(5);
+      expect(ctx.categories).toHaveLength(3);
+      expect(ctx.categories[0].name).toBe('System prompt');
     });
   });
 
