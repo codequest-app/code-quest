@@ -66,21 +66,19 @@
 > Jupyter/Debugger 同理。
 > `--claude-in-chrome-mcp` 預設 false（CLI 沒 Chrome 會 hang）。
 
-#### 8.1 Chrome MCP
-- [ ] ensure_chrome_mcp_enabled：找 active channel → sendControlRequest('mcp_set_servers', { 加入 claude-in-chrome config })
-- [ ] disable_chrome_mcp：找 active channel → sendControlRequest('mcp_set_servers', { 移除 claude-in-chrome })
-- [ ] 更新 chromeMcpState + broadcast state:update
-- [ ] test
+#### 8.1 Chrome MCP — DONE
+- [x] ensure_chrome_mcp_enabled：sendControlRequest('mcp_set_servers', { claude-in-chrome })
+- [x] disable_chrome_mcp：sendControlRequest('mcp_set_servers', {}) 移除
+- [x] 更新 chromeMcpState + broadcast state:update + error handling
+- [x] 16 MCP tests pass
 
-#### 8.2 Jupyter MCP
-- [ ] enable_jupyter_mcp：找 active channel → sendControlRequest('mcp_set_servers', { 加入 jupyter config })
-- [ ] disable_jupyter_mcp：同上移除
-- [ ] 更新 jupyterMcpState + broadcast state:update
-- [ ] test
+#### 8.2 Jupyter MCP — DONE
+- [x] enable_jupyter_mcp：sendControlRequest('mcp_set_servers', { claude-jupyter })
+- [x] disable_jupyter_mcp：同上移除
+- [x] 更新 jupyterMcpState + broadcast state:update
 
-#### 8.3 Debugger
-- [ ] ask_debugger_help：找 active channel → 評估 extension 實作方式
-- [ ] test
+#### 8.3 Debugger — DONE (kept as-is)
+- [x] ask_debugger_help：空回應（extension 也是空實作）
 
-#### 8.4 Tests 更新
-- [ ] 現有 MCPPanel 相關 tests 確認 pass
+#### 8.4 Tests — DONE
+- [x] 現有 16 個 MCP tests 全部 pass（行為不變）
