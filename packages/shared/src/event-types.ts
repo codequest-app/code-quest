@@ -97,13 +97,8 @@ export interface SocketEvent {
   payload: Record<string, unknown>;
 }
 
-// ── Control response (shared across server, summoner, client) ──
-
-export interface ControlResponse {
-  success: boolean;
-  response?: Record<string, unknown>;
-  error?: string;
-}
+// ── Control response — re-exported from Zod schema ──
+export type { ControlResponse } from './schemas/chat.ts';
 
 // ── Model info (shared across server and client) ──
 

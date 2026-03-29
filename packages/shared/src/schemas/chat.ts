@@ -231,6 +231,27 @@ export const chatRespondSchema = z.object({
 });
 export type ChatRespondPayload = z.infer<typeof chatRespondSchema>;
 
+// --- Shared response schemas ---
+
+export const successResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+export type SuccessResponse = z.infer<typeof successResponseSchema>;
+
+export const controlResponseSchema = z.object({
+  success: z.boolean(),
+  response: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
+export type ControlResponse = z.infer<typeof controlResponseSchema>;
+
+export const sessionListResponseSchema = z.object({
+  sessions: z.array(z.record(z.string(), z.unknown())),
+  total: z.number(),
+});
+export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
+
 // --- Inferred types ---
 
 export type ChatCreatePayload = z.infer<typeof chatCreateSchema>;

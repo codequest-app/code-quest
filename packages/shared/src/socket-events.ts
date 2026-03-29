@@ -25,6 +25,7 @@ import type {
   ChatSetThinkingLevelPayload,
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
+  ControlResponse,
   DebuggerHelpPayload,
   GitCheckoutPayload,
   GitExecPayload,
@@ -64,6 +65,7 @@ import type {
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
+  SuccessResponse,
 } from './schemas/chat.ts';
 
 export interface ChatStats {
@@ -177,24 +179,17 @@ export interface ClientToServerEvents {
   // ── Chat Operations ──
   rewind_code: (
     payload: ChatRewindCodePayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: ControlResponse) => void,
   ) => void;
 
   // ── Aligned: Settings ──
-  set_model: (
-    payload: ChatSetModelPayload,
-    cb: (res: { success: boolean; error?: string }) => void,
-  ) => void;
+  set_model: (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
   set_permission_mode: (payload: ChatSetPermissionModePayload) => void;
   set_thinking_level: (payload: ChatSetThinkingLevelPayload) => void;
   request_usage_update: (payload: { channelId: string }) => void;
   apply_settings: (
     payload: SettingsApplyPayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
   get_claude_state: (
     payload: ChatGetStatePayload,
@@ -247,41 +242,29 @@ export interface ClientToServerEvents {
   ) => void;
   rename_session: (
     payload: SessionRenamePayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
   delete_session: (
     payload: SessionDeletePayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
   update_session_state: (
     payload: SessionUpdateStatePayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
 
   // ── Aligned: MCP ──
   get_mcp_servers: (
     payload: McpGetServersPayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: ControlResponse) => void,
   ) => void;
   set_mcp_server_enabled: (
     payload: McpSetEnabledPayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: ControlResponse) => void,
   ) => void;
   reconnect_mcp_server: (
     payload: McpReconnectPayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: ControlResponse) => void,
   ) => void;
   authenticate_mcp_server: (
     payload: McpAuthenticatePayload,
@@ -289,28 +272,17 @@ export interface ClientToServerEvents {
   ) => void;
   clear_mcp_server_auth: (
     payload: McpAuthenticatePayload,
-    callback: (result: { success: boolean; error?: string }) => void,
+    callback: (result: SuccessResponse) => void,
   ) => void;
   submit_mcp_oauth_callback_url: (
     payload: McpOAuthCallbackPayload,
-    callback: (result: { success: boolean; error?: string }) => void,
+    callback: (result: SuccessResponse) => void,
   ) => void;
   mcp_set_servers: (
     payload: McpSetServersPayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: ControlResponse) => void,
   ) => void;
-  mcp_message: (
-    payload: McpMessagePayload,
-    callback: (response: {
-      success: boolean;
-      response?: Record<string, unknown>;
-      error?: string;
-    }) => void,
-  ) => void;
+  mcp_message: (payload: McpMessagePayload, callback: (response: ControlResponse) => void) => void;
   ensure_chrome_mcp_enabled: (
     payload: ChromeMcpControlPayload,
     callback: (response: {
@@ -364,7 +336,7 @@ export interface ClientToServerEvents {
   check_git_status: (callback: (result: GitStatusResult) => void) => void;
   update_skipped_branch: (
     payload: GitUpdateSkippedBranchPayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
   exec: (
     payload: GitExecPayload,
@@ -405,17 +377,14 @@ export interface ClientToServerEvents {
   submit_oauth_code: (payload: OAuthCodePayload, callback: (result: AuthResult) => void) => void;
 
   // ── Aligned: Plan ──
-  comment: (
-    payload: PlanCommentPayload,
-    callback: (response: { success: boolean; error?: string }) => void,
-  ) => void;
+  comment: (payload: PlanCommentPayload, callback: (response: SuccessResponse) => void) => void;
   get_plan_comments: (
     payload: PlanGetCommentsPayload,
     callback: (response: { comments: PlanCommentData[] }) => void,
   ) => void;
   remove_plan_comment: (
     payload: PlanRemoveCommentPayload,
-    callback: (response: { success: boolean; error?: string }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
   close_plan_preview: (
     payload: PlanClosePreviewPayload,
