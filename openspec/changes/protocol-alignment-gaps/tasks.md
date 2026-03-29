@@ -273,3 +273,36 @@
 - [x] 分析結論：import 牆是 domain schema 拆分的正常結果，editor 摺疊即可
 - [x] C2S + S2C 是純 event registry，職責清晰不需再拆
 - [x] `import * as S` 降低可讀性，不採用
+
+### Group 18：Code Review Round 2 — Component 職責 + Storybook
+
+#### 18.1 P0 — WorkspaceLayout 直接用 socket → SessionContext
+- [ ] SessionContext 加 `closeSession(channelId: string)` action
+- [ ] WorkspaceLayout 移除 `useSocket()`，改用 `useSession().closeSession`
+- [ ] 確認零 component 直接用 useSocket
+
+#### 18.2 P1 — Storybook 補缺（>100 行 component）
+- [ ] CommandMenu.stories.tsx（697 行）
+- [ ] SystemBlocks.stories.tsx（237 行）
+- [ ] ToolUseBlock.stories.tsx（203 行）
+- [ ] InstalledPluginList.stories.tsx（224 行）
+- [ ] AuthDialog.stories.tsx（135 行）
+- [ ] WorkspaceLayout.stories.tsx（104 行）
+- [ ] ToolPermissionBanner.stories.tsx（124 行）
+- [ ] CollapsibleTimeline.stories.tsx（110 行）
+
+#### 18.3 P2 — Storybook 補缺（<100 行 component，低優先）
+- [ ] AddButton, ChatInputArea, ContextPieChart, HookCallbackBanner
+- [ ] MarketplaceSection, MessageNodeList, OptionButton, PermissionHeader
+- [ ] SubagentChildren, EffortSwitch, PermissionModeIcons
+- [ ] ui/Icons, ui/ToggleSwitch
+- [ ] message-blocks/HookBlocks, message-blocks/ToolResultBlock
+
+### Group 19：Final Cleanup
+- [ ] 確認零 component 直接 useSocket（全部走 Context）
+- [ ] 確認零 `as never`、零 `as any`（production code）
+- [ ] 確認零 `claude.socket.emit`、零 `if (el) { expect }` guard（test code）
+- [ ] 確認 `schemas/` 無 dead export（所有 schema 至少被一處引用）
+- [ ] 確認 `index.ts` re-export 無多餘項
+- [ ] skills 內容與實際 codebase 一致（檔案路徑、pattern）
+- [ ] tasks.md 所有 group 標記完成狀態

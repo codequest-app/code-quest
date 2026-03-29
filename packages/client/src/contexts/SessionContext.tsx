@@ -38,6 +38,8 @@ export interface SessionContextValue {
     update: { title?: string; state?: 'busy' | 'idle' },
   ) => Promise<{ success: boolean; error?: string }>;
 
+  closeSession: (channelId: string) => void;
+
   initOptions: Record<string, unknown>;
   setInitOptions: (opts: Record<string, unknown>) => void;
 
@@ -109,6 +111,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       deleteSession: (channelId) => rpc(socket, 'delete_session', { channelId }),
       updateSessionState: (channelId, update) =>
         rpc(socket, 'update_session_state', { channelId, ...update }),
+      closeSession: (channelId: string) => {
+        socket.emit('session:close', { channelId });
+      },
       login: () => {
         setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
         socket.emit('login', { method: 'oauth' }, (res) => {
