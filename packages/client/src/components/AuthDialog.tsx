@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSocket } from '../contexts/SocketContext';
+import { useSession } from '../contexts/SessionContext';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 interface AuthDialogProps {
@@ -8,58 +8,24 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ open, onClose }: AuthDialogProps) {
-  const { socket } = useSocket();
-  const [status, setStatus] = useState<'idle' | 'waiting' | 'code' | 'success' | 'error'>('idle');
-  const [authUrl, setAuthUrl] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { auth, login, submitOAuthCode, resetAuth } = useSession();
   const [code, setCode] = useState('');
   const [state, setState] = useState('');
 
   useEffect(() => {
     if (!open) {
-      setStatus('idle');
-      setAuthUrl(null);
-      setErrorMsg(null);
+      resetAuth();
       setCode('');
       setState('');
     }
-  }, [open]);
+  }, [open, resetAuth]);
 
   useEffect(() => {
-    if (!open) return;
-    const onAuthUrl = (payload: { channelId: string; url: string; method: string }) => {
-      setAuthUrl(payload.url);
-      setStatus('code');
-    };
-    socket.on('notification:auth_url', onAuthUrl);
-    return () => {
-      socket.off('notification:auth_url', onAuthUrl);
-    };
-  }, [open, socket]);
-
-  const handleLogin = () => {
-    setStatus('waiting');
-    setErrorMsg(null);
-    socket.emit('login', { method: 'oauth' }, (res) => {
-      if (!res.success) {
-        setStatus('error');
-        setErrorMsg(res.error ?? 'Login failed');
-      }
-    });
-  };
-
-  const handleSubmitCode = () => {
-    setStatus('waiting');
-    socket.emit('submit_oauth_code', { code, state }, (res) => {
-      if (res.success) {
-        setStatus('success');
-        setTimeout(onClose, 1500);
-      } else {
-        setStatus('error');
-        setErrorMsg(res.error ?? 'OAuth failed');
-      }
-    });
-  };
+    if (auth.status === 'success') {
+      const timer = setTimeout(onClose, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [auth.status, onClose]);
 
   return (
     <Dialog
@@ -69,14 +35,14 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
       }}
     >
       <DialogContent title="Login to Claude">
-        {status === 'idle' && (
+        {auth.status === 'idle' && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-text-muted">
               Login to Claude to use your account. An active session is required.
             </p>
             <button
               type="button"
-              onClick={handleLogin}
+              onClick={login}
               className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 text-sm"
             >
               Login with Browser
@@ -84,21 +50,21 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
           </div>
         )}
 
-        {status === 'waiting' && (
+        {auth.status === 'waiting' && (
           <p className="text-sm text-text-muted animate-pulse">Connecting...</p>
         )}
 
-        {status === 'code' && (
+        {auth.status === 'code' && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-text-muted">Open the URL below and authorize access:</p>
-            {authUrl && (
+            {auth.authUrl && (
               <a
-                href={authUrl}
+                href={auth.authUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-accent underline break-all"
               >
-                {authUrl}
+                {auth.authUrl}
               </a>
             )}
             <div className="flex flex-col gap-2 mt-2">
@@ -127,7 +93,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
             </div>
             <button
               type="button"
-              onClick={handleSubmitCode}
+              onClick={() => submitOAuthCode(code, state)}
               disabled={!code}
               className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 text-sm disabled:opacity-40"
             >
@@ -136,14 +102,14 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
           </div>
         )}
 
-        {status === 'success' && <p className="text-sm text-success">Login successful!</p>}
+        {auth.status === 'success' && <p className="text-sm text-success">Login successful!</p>}
 
-        {status === 'error' && (
+        {auth.status === 'error' && (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-danger">{errorMsg}</p>
+            <p className="text-sm text-danger">{auth.errorMsg}</p>
             <button
               type="button"
-              onClick={() => setStatus('idle')}
+              onClick={resetAuth}
               className="px-4 py-2 bg-surface-hover text-text rounded text-sm"
             >
               Try Again
@@ -151,7 +117,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
           </div>
         )}
 
-        {status !== 'success' && (
+        {auth.status !== 'success' && (
           <div className="flex justify-end mt-3">
             <DialogClose asChild>
               <button
