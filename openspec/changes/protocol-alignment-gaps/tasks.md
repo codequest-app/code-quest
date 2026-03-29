@@ -243,6 +243,8 @@
   - `clean-relay-protocol.test.ts` → `chat-handler-control.test.ts`（input/inputs check）
   - 其餘 expects 已被 unit tests 覆蓋，刪除
 
-#### 15.7 ServerToClientEvents inline 型別 → Zod schema
-- [ ] 所有 S→C event payload 用 named Zod-inferred 型別
-- [ ] payload 引用 ContentBlock, StreamChunk, SessionStats 等已完成的 schema
+#### 15.7 ServerToClientEvents inline 型別 → Zod schema — DONE
+- [x] 47 new S2C payload schemas（message, stream, control, system, notification, action）
+- [x] ServerToClientEvents: 零 inline 型別
+- [x] event-types.ts 已刪除
+- [x] **ClientToServerEvents + ServerToClientEvents 全部 100% Zod-inferred**
