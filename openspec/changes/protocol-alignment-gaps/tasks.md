@@ -135,5 +135,21 @@
 
 #### 11.2 ContextPieChart — 優先用 contextUsage — DONE
 - [x] ComposeToolbar：contextPct 優先用 contextUsage.percentage，fallback 用 stats
-- [x] 零額外呼叫 — contextUsage 在開 AccountUsageDialog 時填充
-- [x] test：驗證 25% used 從 contextUsage.percentage 顯示
+
+### Group 12：Client emit request_usage_update + 重構 serverSocket 測試
+
+> 順序：先實作 UI 觸發點，再重構測試改成 user interaction。
+> 所有測試不得直接操作 serverSocket 或 claude.socket.emit。
+
+#### 12.1 ComposeToolbar — 開 AccountUsageDialog 時 emit request_usage_update
+- [ ] 開 dialog 時透過 rpc 或 socket.emit 呼叫 request_usage_update
+- [ ] test：開 dialog → onControlRequest mock → dialog 顯示 context breakdown
+
+#### 12.2 重構 serverSocket 測試 — 全部改成 user interaction
+- [ ] config-from-session.test.tsx（3 處）→ 透過 renderWithWorkspace + prepareInit + claude.emit(s.status(...))
+- [ ] ChannelProvider.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
+- [ ] ComposeToolbar.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
+- [ ] AccountUsageDialog.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
+- [ ] 確認零 `(claude.socket as any).serverSocket`
+- [ ] 確認零 `claude.socket.emit(... as never`
+- [ ] 所有 tests pass

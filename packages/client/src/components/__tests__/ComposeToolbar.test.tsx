@@ -113,24 +113,26 @@ describe('ComposeToolbar', () => {
     it('uses contextUsage percentage when available', async () => {
       const { claude } = await renderWithProviders();
 
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'get_context_usage') {
+          return {
+            categories: [],
+            totalTokens: 50000,
+            maxTokens: 200000,
+            percentage: 25,
+          };
+        }
+        return null;
+      });
+
       // First get stats from result
       await userEvent.click(screen.getByText('TriggerSend'));
       await claude.emit(s.assistant('done'));
       await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
 
-      // Then receive contextUsage via state:usage
-      await act(async () => {
-        (claude.socket as any).serverSocket.emit('state:usage', {
-          channelId: '',
-          usage: {},
-          contextUsage: {
-            categories: [],
-            totalTokens: 50000,
-            maxTokens: 200000,
-            percentage: 25,
-          },
-        });
-      });
+      // Trigger request_usage_update — server queries CLI, pushes state:usage with contextUsage
+      claude.socket.emit('request_usage_update' as never, {}, () => {});
+      await new Promise((r) => setTimeout(r, 50));
 
       // Should show contextUsage.percentage (25%) not stats-based calculation
       expect(await screen.findByText(/25% used/)).toBeInTheDocument();

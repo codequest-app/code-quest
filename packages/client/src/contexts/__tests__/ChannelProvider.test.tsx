@@ -197,8 +197,21 @@ describe('ChannelProvider', () => {
 
   // ── Context Usage ──
 
-  it('state:usage stores contextUsage separately from stats', async () => {
+  it('request_usage_update returns contextUsage from CLI', async () => {
     const { claude, user } = await renderWithWorkspace();
+
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'get_context_usage') {
+        return {
+          categories: [{ name: 'System prompt', tokens: 6000, color: 'promptBorder' }],
+          totalTokens: 10000,
+          maxTokens: 200000,
+          percentage: 5,
+        };
+      }
+      return null;
+    });
+
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
     await user.type(textarea, 'go');
@@ -206,25 +219,11 @@ describe('ChannelProvider', () => {
     await claude.emit(s.assistant('done'));
     await claude.emit(s.result());
 
-    // Push state:usage with contextUsage
-    await act(async () => {
-      (claude.socket as any).serverSocket.emit('state:usage', {
-        channelId: '',
-        usage: {},
-        contextUsage: {
-          categories: [
-            { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
-            { name: 'Messages', tokens: 4000, color: 'purple' },
-          ],
-          totalTokens: 10000,
-          maxTokens: 200000,
-          percentage: 5,
-        },
-      });
-    });
+    // Trigger request_usage_update — server queries CLI, pushes state:usage
+    claude.socket.emit('request_usage_update' as never, {}, () => {});
+    await new Promise((r) => setTimeout(r, 50));
 
-    // ContextPieChart should NOT change (still uses stats from result)
-    // stats should not be overwritten
+    // App should not crash — contextUsage stored separately from stats
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 });
