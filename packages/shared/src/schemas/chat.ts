@@ -201,9 +201,11 @@ export const chatSetFastModeSchema = z.object({
 export type ChatSetFastModePayload = z.infer<typeof chatSetFastModeSchema>;
 
 export const fileListSchema = z.object({ channelId: z.string(), pattern: z.string() });
+export type FileListPayload = z.infer<typeof fileListSchema>;
 
 export const gitCheckoutSchema = z.object({ branch: z.string().min(1) });
 export const gitLogSchema = z.object({ limit: z.number().min(1).max(100).optional() });
+export type GitLogPayload = z.infer<typeof gitLogSchema>;
 
 export const pluginInstallSchema = z.object({
   pluginId: z.string(),
@@ -211,9 +213,13 @@ export const pluginInstallSchema = z.object({
 });
 export const pluginToggleSchema = z.object({ pluginId: z.string(), enabled: z.boolean() });
 export const pluginUninstallSchema = z.object({ pluginId: z.string() });
+export type PluginUninstallPayload = z.infer<typeof pluginUninstallSchema>;
 export const addMarketplaceSchema = z.object({ source: z.string().min(1) });
+export type AddMarketplacePayload = z.infer<typeof addMarketplaceSchema>;
 export const removeMarketplaceSchema = z.object({ marketplaceId: z.string() });
+export type RemoveMarketplacePayload = z.infer<typeof removeMarketplaceSchema>;
 export const refreshMarketplaceSchema = z.object({ marketplaceId: z.string() });
+export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplaceSchema>;
 
 export const sessionUpdateStateSchema = z.object({
   channelId: z.string(),

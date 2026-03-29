@@ -196,3 +196,51 @@
 - [x] channel-hooks.ts：`as Parameters<typeof ctx.usageTracker.update>[0]>`
 - [x] 零 `as never` in production code（server + summoner + client）
 - [x] 986 tests pass（374 server + 612 client）
+
+### Group 15：Socket Events inline 型別 → Zod schema 統一
+
+> ClientToServerEvents / ServerToClientEvents 裡的 inline 型別全部改成從 Zod schema 推導。
+> Single source of truth：Zod schema → z.infer → Socket.IO typed events。
+> 分 4 batch，每 batch 獨立 commit。
+
+#### 15.1 共用 response schema（消除重複 inline）
+- [ ] `successResponseSchema` — `{ success: boolean; error?: string }` ×10 處
+- [ ] `controlResponseSchema` — `{ success; response?; error? }` ×6 處（已有 ControlResponse in event-types.ts，統一用 Zod）
+- [ ] `sessionListResponseSchema` — `{ sessions: SessionSummary[]; total: number }` ×2 處
+- [ ] ClientToServerEvents callback 型別全部換成 Zod infer
+
+#### 15.2 已有 Zod schema 但 inline 未引用的（換引用）
+- [ ] `list_files_request` payload → `fileListSchema`
+- [ ] `uninstall_plugin` payload → `pluginUninstallSchema`
+- [ ] `add_marketplace` payload → `addMarketplaceSchema`
+- [ ] `remove/refresh_marketplace` payload → 對應 schema
+- [ ] `git:log` payload → `gitLogSchema`
+- [ ] `chat:respond` payload → `chatRespondSchema`
+
+#### 15.3 新建 payload/callback schema
+- [ ] `session:launch` callback → `sessionLaunchResponseSchema`
+- [ ] `session:join` callback → `sessionJoinResponseSchema`
+- [ ] `session:raw_events` payload + callback
+- [ ] `init` callback → `initResponseSchema`
+- [ ] `file:read` payload + callback
+- [ ] `terminal:get_contents` payload + callback
+- [ ] `terminal:open_claude` payload + callback
+- [ ] `list_plugins` payload + callback
+- [ ] `get_plan_comments` callback
+- [ ] `cancel_request` payload
+- [ ] `request_usage_update` payload
+- [ ] `get_claude_state` callback
+- [ ] `start/stop_speech_to_text` payload
+
+#### 15.4 Chrome/Jupyter/Debugger specific response schema
+- [ ] `ensure_chrome_mcp_enabled` callback response
+- [ ] `disable_chrome_mcp` callback response
+- [ ] `enable_jupyter_mcp` callback response
+- [ ] `disable_jupyter_mcp` callback response
+- [ ] `ask_debugger_help` callback response
+
+#### 15.5 清理 re-export + 向下相容
+- [ ] `index.ts` re-export 整理：移除不再需要的 re-export
+- [ ] 確認 server/client/summoner 所有 import 都從正確位置引入
+- [ ] 確認 `event-types.ts` 的 `ControlResponse` re-export 不會造成 circular dependency
+- [ ] 向下相容：確認 client 端現有 import 路徑不變

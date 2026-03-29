@@ -10,27 +10,36 @@ import type {
 } from './event-types.ts';
 import type {
   AccountInfo,
+  AddMarketplacePayload,
   AuthResult,
   AuthStatus,
+  ChatCancelAsyncMessagePayload,
   ChatCreatePayload,
+  ChatGenerateSessionTitlePayload,
   ChatGetStatePayload,
+  ChatHookCallbackRespondPayload,
   ChatInterruptPayload,
   ChatJoinPayload,
   ChatKillPayload,
+  ChatRespondPayload,
   ChatRewindCodePayload,
   ChatSendPayload,
   ChatSetFastModePayload,
   ChatSetModelPayload,
   ChatSetPermissionModePayload,
+  ChatSetProactivePayload,
+  ChatSetRemoteControlPayload,
   ChatSetThinkingLevelPayload,
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
   ControlResponse,
   DebuggerHelpPayload,
+  FileListPayload,
   GitCheckoutPayload,
   GitExecPayload,
   GitFileChange,
   GitLogEntry,
+  GitLogPayload,
   GitUpdateSkippedBranchPayload,
   JupyterMcpControlPayload,
   LoginPayload,
@@ -56,6 +65,9 @@ import type {
   PluginInstallPayload,
   PluginResult,
   PluginTogglePayload,
+  PluginUninstallPayload,
+  RefreshMarketplacePayload,
+  RemoveMarketplacePayload,
   SessionDeletePayload,
   SessionForkPayload,
   SessionGetPayload,
@@ -66,6 +78,8 @@ import type {
   SessionUpdateStatePayload,
   SettingsApplyPayload,
   SuccessResponse,
+  TerminalGetContentsPayload,
+  TerminalOpenClaudePayload,
 } from './schemas/chat.ts';
 
 export interface ChatStats {
@@ -326,7 +340,7 @@ export interface ClientToServerEvents {
 
   // ── Aligned: File & Git ──
   list_files_request: (
-    payload: { channelId: string; pattern: string },
+    payload: FileListPayload,
     callback: (response: { files: FileSearchResult[] }) => void,
   ) => void;
   checkout_branch: (
@@ -350,7 +364,7 @@ export interface ClientToServerEvents {
   ) => void;
   install_plugin: (payload: PluginInstallPayload, callback: (result: PluginResult) => void) => void;
   uninstall_plugin: (
-    payload: { pluginId: string },
+    payload: PluginUninstallPayload,
     callback: (result: PluginResult) => void,
   ) => void;
   set_plugin_enabled: (
@@ -359,15 +373,15 @@ export interface ClientToServerEvents {
   ) => void;
   list_marketplaces: (callback: (result: { marketplaces: MarketplaceInfo[] }) => void) => void;
   add_marketplace: (
-    payload: { source: string },
+    payload: AddMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
   remove_marketplace: (
-    payload: { marketplaceId: string },
+    payload: RemoveMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
   refresh_marketplace: (
-    payload: { marketplaceId: string },
+    payload: RefreshMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
 
@@ -424,7 +438,7 @@ export interface ClientToServerEvents {
   ) => void;
   'chat:send': (payload: ChatSendPayload) => void;
   'chat:cancel': (payload: ChatInterruptPayload) => void;
-  'chat:respond': (payload: { channelId: string; requestId: string; response: unknown }) => void;
+  'chat:respond': (payload: ChatRespondPayload) => void;
 
   'chat:stop_task': (payload: ChatStopTaskPayload) => void;
   'chat:set_fast_mode': (payload: ChatSetFastModePayload) => void;
@@ -432,7 +446,7 @@ export interface ClientToServerEvents {
     payload: { channelId: string },
     callback: (response: { events: unknown[] }) => void,
   ) => void;
-  'git:log': (payload: { limit?: number }, callback: (result: GitLogResult) => void) => void;
+  'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
   'git:diff': (callback: (result: GitDiffResult) => void) => void;
   init: (
     callback: (response: {
@@ -445,11 +459,11 @@ export interface ClientToServerEvents {
   ) => void;
   cancel_request: (payload: { targetRequestId: string }) => void;
   'terminal:get_contents': (
-    payload: { channelId: string; terminalId?: string },
+    payload: TerminalGetContentsPayload,
     callback: (response: { content: string | null }) => void,
   ) => void;
   'terminal:open_claude': (
-    payload: { channelId: string; prompt?: string; args?: string[]; cwd?: string },
+    payload: TerminalOpenClaudePayload,
     callback: (response: { success: boolean; channelId?: string; error?: string }) => void,
   ) => void;
 
@@ -458,18 +472,14 @@ export interface ClientToServerEvents {
   stop_speech_to_text: (payload: { channelId: string }) => void;
 
   // ── Protocol Alignment: new control_request subtypes ──
-  cancel_async_message: (payload: { channelId: string; messageUuid: string }) => void;
-  set_proactive: (payload: { channelId: string; enabled: boolean }) => void;
+  cancel_async_message: (payload: ChatCancelAsyncMessagePayload) => void;
+  set_proactive: (payload: ChatSetProactivePayload) => void;
   generate_session_title: (
-    payload: { channelId: string; description: string; persist: boolean },
+    payload: ChatGenerateSessionTitlePayload,
     callback: (response: { success: boolean; result?: unknown; error?: string }) => void,
   ) => void;
-  set_remote_control: (payload: { channelId: string; enabled: boolean }) => void;
-  hook_callback_respond: (payload: {
-    channelId: string;
-    requestId: string;
-    response: { continue: boolean };
-  }) => void;
+  set_remote_control: (payload: ChatSetRemoteControlPayload) => void;
+  hook_callback_respond: (payload: ChatHookCallbackRespondPayload) => void;
 }
 
 export interface ChannelMetaCache {
