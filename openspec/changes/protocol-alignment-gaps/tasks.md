@@ -58,16 +58,29 @@
 - [x] 115/115 = 100% protocol coverage
 - [x] 移除「VS Code 專屬」標記
 
-### Group 8：Chrome/Jupyter/Debugger stubs 清理
+### Group 8：Chrome/Jupyter/Debugger — 從 fake stub 改為真實實作
 
-> 這些 handler 是 extension-host 層操作，不走 CLI control_request。
-> MCP 狀態由 session:init 的 mcpServers list 顯示。
-> toggle 由 set_mcp_server_enabled handler 處理。
-> stubs 刪除不影響功能。
+> Extension 做法：透過 `mcp_set_servers` control_request 動態增減 MCP server config。
+> ensure_chrome = 加入 `claude-in-chrome` server config
+> disable_chrome = 移除 `claude-in-chrome` server config
+> Jupyter/Debugger 同理。
+> `--claude-in-chrome-mcp` 預設 false（CLI 沒 Chrome 會 hang）。
 
-- [ ] 8.1 刪除 ensure_chrome_mcp_enabled / disable_chrome_mcp handler
-- [ ] 8.2 刪除 enable_jupyter_mcp / disable_jupyter_mcp handler
-- [ ] 8.3 刪除 ask_debugger_help handler
-- [ ] 8.4 刪除 shared socket-events.ts 中相關型別
-- [ ] 8.5 刪除 client 中相關 UI（如果有）
-- [ ] 8.6 更新 tests
+#### 8.1 Chrome MCP
+- [ ] ensure_chrome_mcp_enabled：找 active channel → sendControlRequest('mcp_set_servers', { 加入 claude-in-chrome config })
+- [ ] disable_chrome_mcp：找 active channel → sendControlRequest('mcp_set_servers', { 移除 claude-in-chrome })
+- [ ] 更新 chromeMcpState + broadcast state:update
+- [ ] test
+
+#### 8.2 Jupyter MCP
+- [ ] enable_jupyter_mcp：找 active channel → sendControlRequest('mcp_set_servers', { 加入 jupyter config })
+- [ ] disable_jupyter_mcp：同上移除
+- [ ] 更新 jupyterMcpState + broadcast state:update
+- [ ] test
+
+#### 8.3 Debugger
+- [ ] ask_debugger_help：找 active channel → 評估 extension 實作方式
+- [ ] test
+
+#### 8.4 Tests 更新
+- [ ] 現有 MCPPanel 相關 tests 確認 pass
