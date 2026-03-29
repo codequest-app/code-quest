@@ -34,6 +34,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isCancelling,
     stats,
     contextUsage,
+    requestUsageUpdate,
     isContextCompressed,
     usageQuota,
     accountInfo,
@@ -183,7 +184,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
         <CommandMenu
           onOpenModelPicker={() => setActiveDialog('modelPicker')}
-          onOpenAccountUsage={() => setActiveDialog('usage')}
+          onOpenAccountUsage={() => { setActiveDialog('usage'); requestUsageUpdate(); }}
           onToggleMcp={() => setActiveDialog('manageMcp')}
           onMcpStatus={() => setActiveDialog('mcpStatus')}
           onResumeConversation={onResumeConversation}

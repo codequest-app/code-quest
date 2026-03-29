@@ -103,6 +103,7 @@ export interface ChannelMessagesValue {
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<{ events: unknown[] }>;
+  requestUsageUpdate: () => void;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   searchFiles: (pattern: string) => Promise<{ files: FileSearchResult[] }>;
   getTerminalContents: () => Promise<{ content: string | null }>;
@@ -898,6 +899,7 @@ export function ChannelMessagesProvider({
         setChannelState((prev) => ({ ...prev, planComments: [...prev.planComments, comment] })),
       clearPlanComments: () => setChannelState((prev) => ({ ...prev, planComments: [] })),
       fetchRawEvents: () => rpc(socket, 'session:raw_events', { channelId }),
+      requestUsageUpdate: () => { socket.emit('request_usage_update' as never, { channelId }); },
       subscribeRawEvents: (cb: (evt: unknown) => void) => {
         const handler = (eventName: string, ...args: unknown[]) => {
           const payload = args[0] as Record<string, unknown> | undefined;
