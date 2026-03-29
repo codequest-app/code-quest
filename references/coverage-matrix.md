@@ -1,4 +1,7 @@
-# Protocol Coverage Matrix — Extension 2.1.45 vs cc-office
+# Protocol Coverage Matrix — Extension 2.1.86 vs cc-office
+
+> Updated: 2026-03-29
+> 所有 CLI 支援的功能 web 都能用（不存在「VS Code 專屬」）
 
 ## Event Types (CLI stdout → cc-office)
 
@@ -13,8 +16,9 @@
 | `system` (task_progress) | ✅ | ✅ | ✅ | ✅ |
 | `system` (compact_boundary) | ✅ | ✅ | ✅ | ✅ |
 | `system` (bridge_state) | ✅ | — | ✅ | ✅ |
-| `system` (post_turn_summary) | ✅ skip | — | — | ❌ Missing |
-| `system` (session_state_changed) | ✅ special | — | — | ❌ Missing |
+| `system` (post_turn_summary) | ✅ skip | ✅ | ✅ skip | ✅ |
+| `system` (session_state_changed) | ✅ filter | ✅ | ✅ skip | ✅ |
+| `system` (api_retry) | — | ✅ | ✅ → system:api_retry | ✅ |
 | `assistant` | ✅ | ✅ | ✅ | ✅ |
 | `user` | ✅ | ✅ | ✅ | ✅ |
 | `result` | ✅ | ✅ | ✅ | ✅ |
@@ -35,7 +39,7 @@
 | `auth_url` | — | ✅ | ✅ | ✅ |
 | `auth_status` | — | ✅ | ✅ | ✅ |
 
-## Stream Delta Types (within content_block_delta)
+## Stream Delta Types
 
 | Delta Type | Extension | Adapter | Status |
 |---|---|---|---|
@@ -44,7 +48,7 @@
 | `input_json_delta` | ✅ | ✅ | ✅ |
 | `citations_delta` | ✅ | ✅ | ✅ |
 | `signature_delta` | ✅ | ✅ skip | ✅ |
-| `compaction_delta` | ✅ | — | ❌ Missing |
+| `compaction_delta` | ✅ | ✅ skip | ✅ |
 
 ## Control Request Subtypes RECEIVED (CLI → cc-office)
 
@@ -88,13 +92,13 @@
 | `mcp_status` | ✅ | ✅ | ✅ |
 | `mcp_set_servers` | ✅ | ✅ | ✅ |
 | `reload_plugins` | ✅ | ✅ | ✅ |
-| `get_context_usage` | ✅ | — | ❌ Missing |
-| `seed_read_state` | ✅ | — | ❌ Missing |
-| `side_question` | ✅ | — | ❌ Missing |
-| `channel_enable` | ✅ | — | ❌ Missing |
-| `claude_authenticate` | ✅ | — | ❌ Missing |
-| `claude_oauth_callback` | ✅ | — | ❌ Missing |
-| `claude_oauth_wait_for_completion` | ✅ | — | ❌ Missing |
+| `get_context_usage` | ✅ | ✅ fixture | ✅ |
+| `seed_read_state` | ✅ | ✅ fixture | ✅ |
+| `side_question` | ✅ | ✅ fixture | ✅ |
+| `channel_enable` | ✅ | ✅ fixture | ✅ |
+| `claude_authenticate` | ✅ | ✅ handler | ✅ |
+| `claude_oauth_callback` | ✅ | ✅ handler | ✅ |
+| `claude_oauth_wait_for_completion` | ✅ | ✅ handler | ✅ |
 
 ## CLI Spawn Flags
 
@@ -136,38 +140,17 @@
 | `--session-id` | ✅ | ✅ | ✅ |
 | `--no-session-persistence` | ✅ | ✅ | ✅ |
 | `--mcp-config` | ✅ | ✅ | ✅ |
-| `--task-budget` | ✅ | — | ❌ Missing |
-| `--channels` | ✅ | — | ❌ Missing |
-| `--claude-in-chrome-mcp` | ✅ | — | ❌ Missing |
+| `--task-budget` | ✅ | ✅ | ✅ |
+| `--channels` | ✅ | ✅ | ✅ |
+| `--claude-in-chrome-mcp` | ✅ | ✅ | ✅ |
 
 ## Summary
 
-| Category | Total | ✅ | ❌ | Coverage |
-|---|---|---|---|---|
-| Event Types | 30 | 28 | 2 | 93% |
-| Stream Deltas | 6 | 5 | 1 | 83% |
-| Control Received | 12 | 12 | 0 | 100% |
-| Control Sent | 27 | 20 | 7 | 74% |
-| CLI Flags | 39 | 36 | 3 | 92% |
-| **Total** | **114** | **101** | **13** | **89%** |
-
-## Missing Items (13)
-
-### Should implement (有用):
-1. `compaction_delta` — message compaction 壓縮提示
-2. `get_context_usage` — context window 使用率查詢
-3. `--task-budget` — task 預算控制
-
-### Nice to have (不急):
-4. `system` (post_turn_summary) — extension 也 skip
-5. `system` (session_state_changed) — extension 特殊處理
-6. `seed_read_state` — file mtime seeding
-7. `side_question` — side question 功能
-8. `channel_enable` — MCP channel 控制
-9. `--channels` — MCP channels flag
-10. `--claude-in-chrome-mcp` — Chrome MCP mode
-
-### Auth specific (web 不需要):
-11. `claude_authenticate` — Claude OAuth（web 有自己的 auth）
-12. `claude_oauth_callback` — OAuth callback
-13. `claude_oauth_wait_for_completion` — OAuth wait
+| Category | Total | ✅ | Coverage |
+|---|---|---|---|
+| Event Types | 31 | 31 | **100%** |
+| Stream Deltas | 6 | 6 | **100%** |
+| Control Received | 12 | 12 | **100%** |
+| Control Sent | 27 | 27 | **100%** |
+| CLI Flags | 39 | 39 | **100%** |
+| **Total** | **115** | **115** | **100%** |

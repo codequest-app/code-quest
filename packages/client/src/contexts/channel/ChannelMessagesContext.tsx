@@ -651,6 +651,14 @@ export function ChannelMessagesProvider({
       });
     };
 
+    const onApiRetry = (p: Payload<'system:api_retry'>) => {
+      if (!guard(p)) return;
+      setChannelState((prev) => ({
+        ...prev,
+        statusText: `Retrying... (${p.attempt}/${p.maxRetries})`,
+      }));
+    };
+
     // ── Lifecycle events ──
 
     const onFileUpdated = (p: Payload<'file_updated'>) => {
@@ -790,6 +798,7 @@ export function ChannelMessagesProvider({
 
     socket.on('error:message', onErrorMessage);
     socket.on('system:rate_limit', onRateLimit);
+    socket.on('system:api_retry', onApiRetry);
 
     socket.on('file_updated', onFileUpdated);
     socket.on('plan_comment', onPlanComment);
@@ -826,6 +835,7 @@ export function ChannelMessagesProvider({
 
       socket.off('error:message', onErrorMessage);
       socket.off('system:rate_limit', onRateLimit);
+      socket.off('system:api_retry', onApiRetry);
 
       socket.off('file_updated', onFileUpdated);
       socket.off('plan_comment', onPlanComment);

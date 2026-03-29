@@ -943,6 +943,14 @@ export interface ServerToClientEvents {
   }) => void;
   'system:compact_boundary': (payload: { channelId: string; preservedSegment?: boolean }) => void;
   'system:rate_limit': (payload: { channelId: string; info: RateLimitInfo }) => void;
+  'system:api_retry': (payload: {
+    channelId: string;
+    attempt: number;
+    maxRetries: number;
+    retryDelayMs?: number;
+    errorStatus?: number;
+    error?: string;
+  }) => void;
   'system:file_updated': (payload: {
     channelId: string;
     filePath: string;
