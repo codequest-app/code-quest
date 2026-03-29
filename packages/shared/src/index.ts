@@ -1,6 +1,5 @@
 export type {
   ContentBlock,
-  ControlResponse,
   HookResponseInfo,
   HookStartedInfo,
   ModelInfo,
@@ -35,6 +34,7 @@ export type {
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
   ControlPermissionResponse,
+  ControlResponse,
   DebuggerHelpPayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,

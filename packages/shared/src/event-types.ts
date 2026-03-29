@@ -97,8 +97,7 @@ export interface SocketEvent {
   payload: Record<string, unknown>;
 }
 
-// ── Control response — re-exported from Zod schema ──
-export type { ControlResponse } from './schemas/chat.ts';
+// ── Control response type is now in schemas/chat.ts (Zod-inferred) ──
 
 // ── Model info (shared across server and client) ──
 
