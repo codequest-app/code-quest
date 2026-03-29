@@ -54,28 +54,36 @@
 ### Group 3：Auth Flow — 完整功能（3 項）
 
 > 取代 misc-handler 假 auth stub，接上 CLI 的 OAuth flow。
+> 使用第一個 active channel 送 control_request（不建臨時 channel）。
+> 沒有 active channel 時 UI 提示「請先開一個 session」。
 
-#### 3.1 `claude_authenticate`
+#### 3.1 Fixtures
 - [ ] 從 extension 提取結構 → `synthetic/control-claude-authenticate.jsonl`
-- [ ] server handler：收到 login request → sendControlRequest('claude_authenticate') → 推 auth URL 到 client
-- [ ] test
-
-#### 3.2 `claude_oauth_callback`
 - [ ] 從 extension 提取結構 → `synthetic/control-claude-oauth-callback.jsonl`
-- [ ] server handler：收到 OAuth code → sendControlRequest('claude_oauth_callback')
-- [ ] test
-
-#### 3.3 `claude_oauth_wait_for_completion`
 - [ ] 從 extension 提取結構 → `synthetic/control-claude-oauth-wait.jsonl`
-- [ ] server handler：sendControlRequest('claude_oauth_wait_for_completion') 等待完成
+
+#### 3.2 Server — 取代 auth stub
+- [ ] misc-handler `login`：找第一個 active channel → `channel.sendControlRequest('claude_authenticate', { method })`
+- [ ] CLI 回傳 `{ manualUrl, automaticUrl }` → server emit `notification:auth_url` 到 client
+- [ ] misc-handler `submit_oauth_code`：找 channel → `channel.sendControlRequest('claude_oauth_callback', { authorizationCode, state })`
+- [ ] 接著送 `channel.sendControlRequest('claude_oauth_wait_for_completion')` 等待完成
+- [ ] CLI 回 success → 更新 `ctx.authState` → callback success
+- [ ] 沒有 active channel 時 callback `{ success: false, error: 'No active session' }`
+- [ ] test：FakeClaude mock control_response
+
+#### 3.3 Client UI
+- [ ] 未登入時顯示 Login 按鈕（HeaderBar 或 ComposeToolbar）
+- [ ] 點 Login → emit `login` → 收到 `notification:auth_url` → 開新分頁或顯示 URL
+- [ ] 用戶登入完成 → 輸入 OAuth code → emit `submit_oauth_code`
+- [ ] 登入成功 → 更新 UI 狀態
+- [ ] 沒有 active session → 顯示提示「請先開一個 session」
 - [ ] test
 
-#### 3.4 Client UI
-- [ ] 登入按鈕（未登入時顯示）
-- [ ] 顯示 auth URL / 開瀏覽器
-- [ ] OAuth code 提交表單
-- [ ] 登入狀態顯示
-- [ ] test
+#### 3.4 舊 stub 清理
+- [ ] Chrome MCP handler（ensure/disable）— 目前是 fake stub，同樣應該透過 channel sendControlRequest
+- [ ] Jupyter MCP handler（enable/disable）— 同上
+- [ ] Debugger handler（ask_debugger_help）— 同上
+- [ ] 評估是否在這個 change 一起修，或開獨立 change
 
 ### Group 4：CLI Flags — LaunchOptions + buildArgs（3 項）
 
