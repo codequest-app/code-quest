@@ -1,3 +1,4 @@
+import type { ServerToClientEvents } from '@code-quest/shared';
 import {
   chatGetStateSchema,
   chatSetFastModeSchema,
@@ -173,10 +174,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
     }
 
-    socket.emit('state:usage', {
-      channelId: '',
-      usage,
-      ...(contextUsage ? { contextUsage } : {}),
-    } as never);
+    const usagePayload: Record<string, unknown> = { channelId: '', usage };
+    if (contextUsage) usagePayload.contextUsage = contextUsage;
+    socket.emit('state:usage', usagePayload as Parameters<ServerToClientEvents['state:usage']>[0]);
   });
 }

@@ -180,6 +180,7 @@ export interface LoginPayload {
 
 export interface OAuthCodePayload {
   code: string;
+  state?: string;
 }
 
 export interface AuthResult {
@@ -525,6 +526,7 @@ export interface ClientToServerEvents {
       slashCommands?: string[];
       models?: unknown[];
       account?: Record<string, unknown>;
+      error?: string;
     }) => void,
   ) => void;
   'session:close': (payload: ChatKillPayload) => void;

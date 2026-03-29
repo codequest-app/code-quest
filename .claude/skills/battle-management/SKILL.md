@@ -1,18 +1,9 @@
 ---
 name: battle-management
-description: |
-  Explains battle management, AI dispatch system, and multi-battle handling with DQ-style menu.
-
-  AUTO-INVOKE when:
-  - User asks about "battle", "combat", "AI dispatch", "parallel battles", "multiple AI"
-  - Implementing battle system or AI agent management
-  - Designing combat flow or battle UI
-  - Planning async battle or multi-model features
-  - Working on Haiku/Sonnet/Opus integration
-  - Discussing battle monitoring or switching mechanisms
-  - Implementing worktree-based battle isolation
-
-  Keywords: battle, combat, fight, dispatch, AI agent, Haiku, Sonnet, Opus, parallel, multi-battle, DQ menu, battle management, async battle, worktree
+description: >
+  Battle management system with AI dispatch and multi-battle handling.
+  Use when implementing combat flow, managing parallel AI battles,
+  designing battle UI, or working with worktree-based battle isolation.
 ---
 
 # 戰鬥管理系統 - 多 AI 並行戰鬥設計

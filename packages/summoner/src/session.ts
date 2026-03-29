@@ -2,16 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { createInterface } from 'node:readline';
 import { ClaudeParser } from './claude-parser.ts';
-import type {
-  ChatStreamEvent,
-  ControllableSession,
-  ControlResponse,
-  ProcessFactory,
-  RawEntry,
-} from './types.ts';
+import type { ChatStreamEvent, ControlResponseEvent, ProcessFactory, RawEntry } from './types.ts';
 
 interface PendingRequest {
-  resolve: (value: ControlResponse) => void;
+  resolve: (value: ControlResponseEvent) => void;
   reject: (reason: Error) => void;
   timer: ReturnType<typeof setTimeout>;
 }
@@ -24,7 +18,7 @@ interface InteractiveSessionOptions {
   resumeSessionId?: string;
 }
 
-export class InteractiveSession extends EventEmitter implements ControllableSession {
+export class InteractiveSession extends EventEmitter {
   readonly id: string;
   private _state: 'idle' | 'processing' = 'idle';
   private _cliSessionId: string | null = null;
@@ -95,20 +89,20 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
     }
   }
 
-  async initialize(options?: Record<string, unknown>): Promise<ControlResponse> {
+  async initialize(options?: Record<string, unknown>): Promise<ControlResponseEvent> {
     this.ensureProcess();
     return this.sendControlRequest('initialize', options);
   }
 
-  async setModel(model: string): Promise<ControlResponse> {
+  async setModel(model: string): Promise<ControlResponseEvent> {
     return this.sendControlRequest('set_model', { model });
   }
 
-  async setPermissionMode(mode: string): Promise<ControlResponse> {
+  async setPermissionMode(mode: string): Promise<ControlResponseEvent> {
     return this.sendControlRequest('set_permission_mode', { mode });
   }
 
-  async interrupt(): Promise<ControlResponse> {
+  async interrupt(): Promise<ControlResponseEvent> {
     return this.sendControlRequest('interrupt');
   }
 
@@ -200,7 +194,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
 
       // Resolve pending control requests
       if (event.type === 'control_response') {
-        this.resolveControlResponse(event);
+        this.resolveControlResponseEvent(event);
       }
 
       this.emit('event', event);
@@ -214,6 +208,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
       promptId: this.currentPromptId ?? '',
       direction,
       raw,
+      seq: 0,
     };
 
     this.emit('raw', entry);
@@ -222,12 +217,12 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
   private async sendControlRequest(
     subtype: string,
     params?: Record<string, unknown>,
-  ): Promise<ControlResponse> {
+  ): Promise<ControlResponseEvent> {
     this.ensureProcess();
     this.requestCounter++;
     const requestId = `${subtype}-${String(this.requestCounter).padStart(3, '0')}`;
 
-    return new Promise<ControlResponse>((resolve, reject) => {
+    return new Promise<ControlResponseEvent>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         reject(new Error(`Control request ${requestId} timed out`));
@@ -245,7 +240,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
     });
   }
 
-  private resolveControlResponse(
+  private resolveControlResponseEvent(
     event: Extract<ChatStreamEvent, { type: 'control_response' }>,
   ): void {
     const pending = this.pendingRequests.get(event.requestId);
@@ -255,6 +250,7 @@ export class InteractiveSession extends EventEmitter implements ControllableSess
     this.pendingRequests.delete(event.requestId);
 
     pending.resolve({
+      requestId: event.requestId,
       success: event.success,
       response: event.response,
       error: event.error,

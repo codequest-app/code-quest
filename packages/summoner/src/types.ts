@@ -1,6 +1,45 @@
-import type { SpawnOptions } from 'node:child_process';
+import type { ChildProcess, SpawnOptions } from 'node:child_process';
+import type { ChatStats } from '@code-quest/shared';
 
 export type { ControlPermissionResponse } from '@code-quest/shared';
+
+// --- Chat stream events (discriminated union) ---
+
+export type ChatStreamEvent =
+  | { type: 'init'; sessionId: string; model?: string; tools?: unknown[] }
+  | { type: 'status'; message: string }
+  | { type: 'text'; content: string }
+  | { type: 'thinking'; content: string }
+  | { type: 'tool_use'; id: string; name: string; input: unknown }
+  | { type: 'tool_result'; id: string; name: string; output: string }
+  | { type: 'result'; stats: ChatStats }
+  | {
+      type: 'control_response';
+      requestId: string;
+      success: boolean;
+      response?: Record<string, unknown>;
+      error?: string;
+    }
+  | { type: 'text_delta'; content: string }
+  | { type: 'thinking_delta'; content: string }
+  | { type: 'message_end' }
+  | {
+      type: 'control_request';
+      requestId: string;
+      subtype: string;
+      toolName?: string;
+      input?: unknown;
+      callbackId?: string;
+      toolUseId?: string;
+    };
+
+// --- Process factory (spawn-style) ---
+
+export type ProcessFactory = (
+  command: string,
+  args: string[],
+  options: SpawnOptions,
+) => ChildProcess;
 
 // --- Raw entry for recording ---
 

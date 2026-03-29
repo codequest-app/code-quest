@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useSession } from '../contexts/SessionContext';
 import { useSocket } from '../contexts/SocketContext';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
@@ -28,20 +27,20 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
 
   useEffect(() => {
     if (!open) return;
-    const onAuthUrl = (payload: { url: string }) => {
+    const onAuthUrl = (payload: { channelId: string; url: string; method: string }) => {
       setAuthUrl(payload.url);
       setStatus('code');
     };
-    socket.on('notification:auth_url', onAuthUrl as never);
+    socket.on('notification:auth_url', onAuthUrl);
     return () => {
-      socket.off('notification:auth_url', onAuthUrl as never);
+      socket.off('notification:auth_url', onAuthUrl);
     };
   }, [open, socket]);
 
   const handleLogin = () => {
     setStatus('waiting');
     setErrorMsg(null);
-    socket.emit('login' as never, { method: 'oauth' }, (res: { success: boolean; error?: string }) => {
+    socket.emit('login', { method: 'oauth' }, (res) => {
       if (!res.success) {
         setStatus('error');
         setErrorMsg(res.error ?? 'Login failed');
@@ -51,7 +50,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
 
   const handleSubmitCode = () => {
     setStatus('waiting');
-    socket.emit('submit_oauth_code' as never, { code, state }, (res: { success: boolean; error?: string }) => {
+    socket.emit('submit_oauth_code', { code, state }, (res) => {
       if (res.success) {
         setStatus('success');
         setTimeout(onClose, 1500);
@@ -63,7 +62,12 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent title="Login to Claude">
         {status === 'idle' && (
           <div className="flex flex-col gap-3">
@@ -86,9 +90,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
 
         {status === 'code' && (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-text-muted">
-              Open the URL below and authorize access:
-            </p>
+            <p className="text-sm text-text-muted">Open the URL below and authorize access:</p>
             {authUrl && (
               <a
                 href={authUrl}
@@ -100,16 +102,22 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
               </a>
             )}
             <div className="flex flex-col gap-2 mt-2">
-              <label className="text-xs text-text-muted">Authorization Code</label>
+              <label htmlFor="auth-code" className="text-xs text-text-muted">
+                Authorization Code
+              </label>
               <input
+                id="auth-code"
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Paste code here"
                 className="bg-input-bg border border-border rounded px-3 py-1.5 text-sm text-text"
               />
-              <label className="text-xs text-text-muted">State (if provided)</label>
+              <label htmlFor="auth-state" className="text-xs text-text-muted">
+                State (if provided)
+              </label>
               <input
+                id="auth-state"
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
@@ -128,9 +136,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
           </div>
         )}
 
-        {status === 'success' && (
-          <p className="text-sm text-success">Login successful!</p>
-        )}
+        {status === 'success' && <p className="text-sm text-success">Login successful!</p>}
 
         {status === 'error' && (
           <div className="flex flex-col gap-3">
@@ -148,7 +154,10 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
         {status !== 'success' && (
           <div className="flex justify-end mt-3">
             <DialogClose asChild>
-              <button type="button" className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded"
+              >
                 Cancel
               </button>
             </DialogClose>

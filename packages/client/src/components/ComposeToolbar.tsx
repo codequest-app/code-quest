@@ -4,8 +4,8 @@ import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { openUrl } from '../utils/open-url';
 import { AccountUsageDialog } from './AccountUsageDialog';
-import { AuthDialog } from './AuthDialog';
 import { AddButton } from './AddButton';
+import { AuthDialog } from './AuthDialog';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
 import { InitOptionsDialog } from './InitOptionsDialog';
@@ -38,7 +38,6 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isContextCompressed,
     usageQuota,
     accountInfo,
-    sendMessage,
     abort,
   } = useChannelMessages();
   const {
@@ -184,7 +183,10 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
         <CommandMenu
           onOpenModelPicker={() => setActiveDialog('modelPicker')}
-          onOpenAccountUsage={() => { setActiveDialog('usage'); requestUsageUpdate(); }}
+          onOpenAccountUsage={() => {
+            setActiveDialog('usage');
+            requestUsageUpdate();
+          }}
           onToggleMcp={() => setActiveDialog('manageMcp')}
           onMcpStatus={() => setActiveDialog('mcpStatus')}
           onResumeConversation={onResumeConversation}

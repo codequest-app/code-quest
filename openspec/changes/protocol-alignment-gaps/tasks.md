@@ -154,3 +154,45 @@
 - [x] 零 `(claude.socket as any).serverSocket` in tests
 - [x] 零 `claude.socket.emit(... as never` in tests
 - [x] 986 tests pass
+
+### Group 13：Client `as never` cleanup — DONE
+
+- [x] `OAuthCodePayload` 加 `state?: string`
+- [x] `AuthDialog.tsx` — 3 處 `as never` 移除（notification:auth_url, login, submit_oauth_code）
+- [x] `ChannelMessagesContext.tsx` — `request_usage_update` 移除 `as never`
+- [x] `claude-adapter.ts` — `system:api_retry` 移除 `as never`（SocketEvent.name 已是 string）
+- [x] 測試重構：`AuthDialog.test.tsx` 刪除未使用的 `renderAuthWithSession`
+- [x] 測試重構：`ChannelProvider.test.tsx` — socket.emit → UI 觸發 /usage dialog
+- [x] 測試重構：`ComposeToolbar.test.tsx` — socket.emit → renderWithWorkspace + UI 觸發 /usage dialog
+- [x] 零 `as never` + 零 `claude.socket.emit` in client（packages/client/src）
+- [x] 986 tests pass
+
+### Group 14：Server `as never` cleanup — 用已定義 interface 取代型別斷言
+
+> server 端 31 處 `as never`，分 5 類。用 ClientToServerEvents/ServerToClientEvents 已定義的 interface 消除。
+> 測試檔 `as any` 不在此範圍（test code 可接受）。
+
+#### 14.1 Handler registration — socket.on(event, handler as never)（8 處）— DONE
+- [x] message-handler.ts：inline handler into socket.on()
+- [x] session-handler.ts：inline launchHandler/joinHandler/closeHandler
+- [x] mcp-handler.ts：ensureChannel callback 用 arrow wrapper
+
+#### 14.2 Callback response casts — callback({...} as never)（18 處）— DONE
+- [x] message-handler.ts：respondAndBroadcast 改用 `as Record<string, unknown>`
+- [x] mcp-handler.ts：error callback 加 `success: false`
+- [x] misc-handler.ts：login/oauth 用 AuthResult 型別
+- [x] session-handler.ts：list/get error 回傳正確型別
+
+#### 14.3 emit() type bridge — socket.emit(event, payload as never)（5 處）— DONE
+- [x] session-handler.ts：用 `Parameters<ServerToClientEvents[event]>[0]>` 型別
+- [x] settings-handler.ts：state:usage payload 型別化
+- [x] channel.ts：dynamic emit 用 `(socket.emit as (event: string, ...args: unknown[]) => void)`
+
+#### 14.4 Protocol transformation — adapter.transform(obj as never)（2 處）— DONE
+- [x] process-runner.ts：`as ProtocolEvent`（import from local schema）
+- [x] channel-manager.ts：`as ProtocolEvent`（import from @code-quest/summoner）
+
+#### 14.5 Rate limit info — usageTracker.update(p.info as never)（1 處）— DONE
+- [x] channel-hooks.ts：`as Parameters<typeof ctx.usageTracker.update>[0]>`
+- [x] 零 `as never` in production code（server + summoner + client）
+- [x] 986 tests pass（374 server + 612 client）

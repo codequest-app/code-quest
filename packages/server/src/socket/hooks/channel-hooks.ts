@@ -27,7 +27,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         }
         case 'system:rate_limit':
-          ctx.usageTracker.update(p.info as never);
+          ctx.usageTracker.update(p.info as Parameters<typeof ctx.usageTracker.update>[0]);
           break;
         case 'system:file_updated':
           ctx.emitToSession(channelId, 'file_updated', {
@@ -65,7 +65,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
               jsonrpc: '2.0',
               error: { code: -32603, message: 'no client' },
               id: (p.message as Record<string, unknown>)?.id ?? null,
-            } as never);
+            });
             break;
           }
           const mcpTimeout = setTimeout(() => {
@@ -74,7 +74,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
               jsonrpc: '2.0',
               error: { code: -32603, message: 'timeout' },
               id: (p.message as Record<string, unknown>)?.id ?? null,
-            } as never);
+            });
           }, 10_000);
           ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
           ch.mcpTimeouts.set(requestId, mcpTimeout);

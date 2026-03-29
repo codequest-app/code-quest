@@ -1,20 +1,9 @@
 ---
 name: frontend-data-layer
-description: |
-  Best practices for ky + @tanstack/react-query + zod + react-hook-form integration.
-  Covers API client setup, service layer, queryOptions pattern, form validation,
-  error handling (Error Boundary + toast), and pre-emit socket validation.
-
-  AUTO-INVOKE when:
-  - Implementing HTTP API calls or REST endpoints on the client
-  - Creating or modifying service layer / API client
-  - Working with react-query queries or mutations
-  - Building forms with react-hook-form + zod validation
-  - Setting up error boundaries or toast notifications
-  - Configuring ky hooks (beforeRequest, afterResponse, beforeError)
-  - Discussing client-side data fetching architecture
-
-  Keywords: ky, react-query, tanstack-query, zod, react-hook-form, API client, service, fetch, mutation, query, queryOptions, error boundary, toast, form validation, hookform resolver
+description: >
+  Frontend data layer patterns with ky, React Query, Zod, and React Hook Form.
+  Use when implementing API calls, building service layers, working with queries or mutations,
+  adding form validation, or configuring error boundaries and toast notifications.
 ---
 
 # Frontend Data Layer — ky + React Query + Zod + React Hook Form

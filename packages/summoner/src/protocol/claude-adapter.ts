@@ -396,7 +396,7 @@ export class ClaudeAdapter implements ProviderAdapter {
         error?: string;
       };
       return {
-        name: 'system:api_retry' as never,
+        name: 'system:api_retry',
         payload: {
           attempt: e.attempt,
           maxRetries: e.max_retries,

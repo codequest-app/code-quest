@@ -1,5 +1,10 @@
 import type { ControlResponse } from '@code-quest/shared';
-import type { LaunchOptions, ProviderAdapter, SocketEvent } from '@code-quest/summoner';
+import type {
+  LaunchOptions,
+  ProtocolEvent,
+  ProviderAdapter,
+  SocketEvent,
+} from '@code-quest/summoner';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { RunnerFactory } from '../types.ts';
@@ -189,7 +194,7 @@ export class ChannelManager {
         if (typeof obj !== 'object' || obj === null) continue;
 
         if (entry.direction === 'out' && 'type' in obj) {
-          const converted = this.adapter.transform(obj as never).events;
+          const converted = this.adapter.transform(obj as ProtocolEvent).events;
           result.push(...converted);
         } else if (entry.direction === 'in' && obj.type === 'user') {
           // Skip stdin user messages when stdout already echoes them (avoids duplicates)

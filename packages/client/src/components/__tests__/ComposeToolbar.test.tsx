@@ -1,13 +1,14 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ChannelProvider, useChannelMessages } from '../../contexts/channel';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { TabProvider } from '../../contexts/TabContext';
 import { createFakeClaude } from '../../test/fake-claude';
+import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { ComposeToolbar } from '../ComposeToolbar';
 
 /** Helper to trigger sendMessage from context */
@@ -111,7 +112,7 @@ describe('ComposeToolbar', () => {
     });
 
     it('uses contextUsage percentage when available', async () => {
-      const { claude } = await renderWithProviders();
+      const { claude, user } = await renderWithWorkspace();
 
       claude.onControlRequest((req) => {
         if (req.subtype === 'get_context_usage') {
@@ -126,16 +127,27 @@ describe('ComposeToolbar', () => {
       });
 
       // First get stats from result
-      await userEvent.click(screen.getByText('TriggerSend'));
+      const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+      await user.click(textarea);
+      await user.type(textarea, 'go');
+      await user.keyboard('{Enter}');
       await claude.emit(s.assistant('done'));
       await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
 
-      // Trigger request_usage_update — server queries CLI, pushes state:usage with contextUsage
-      claude.socket.emit('request_usage_update' as never, {}, () => {});
-      await new Promise((r) => setTimeout(r, 50));
+      // Trigger request_usage_update via UI — open /usage dialog
+      await act(async () => {
+        textarea.focus();
+      });
+      await user.type(textarea, '/usage');
+      const usageItem = await screen.findByText(/Account & usage/i);
+      await user.click(usageItem);
+      // Wait for server pipeline: request_usage_update → get_context_usage → state:usage
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 200));
+      });
 
-      // Should show contextUsage.percentage (25%) not stats-based calculation
-      expect(await screen.findByText(/25% used/)).toBeInTheDocument();
+      // Should show contextUsage.percentage (25%) — toolbar + dialog both show it
+      expect(screen.getAllByText(/25% used/).length).toBeGreaterThan(0);
     });
   });
 });

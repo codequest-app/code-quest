@@ -17,21 +17,21 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('reconnect_mcp_server', async (payload, callback) => {
     try {
       const { channelId, serverName } = mcpReconnectSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, callback as never);
+      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_reconnect', {
         server_name: serverName,
       });
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to reconnect MCP server') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to reconnect MCP server') });
     }
   });
 
   socket.on('set_mcp_server_enabled', async (payload, callback) => {
     try {
       const { channelId, serverName, enabled } = mcpSetEnabledSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, callback as never);
+      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_toggle', {
         server_name: serverName,
@@ -39,38 +39,38 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to set MCP server enabled') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to set MCP server enabled') });
     }
   });
 
   socket.on('get_mcp_servers', async (payload, callback) => {
     try {
       const { channelId } = mcpGetServersSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, callback as never);
+      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_status', {});
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to get MCP servers') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to get MCP servers') });
     }
   });
 
   socket.on('mcp_set_servers', async (payload, callback) => {
     try {
       const { channelId, servers } = mcpSetServersSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, callback as never);
+      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_set_servers', { servers });
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to set MCP servers') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to set MCP servers') });
     }
   });
 
   socket.on('mcp_message', async (payload, callback) => {
     try {
       const { channelId, serverName, message } = mcpMessageSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, callback as never);
+      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_message', {
         server_name: serverName,
@@ -78,7 +78,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to send MCP message') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to send MCP message') });
     }
   });
 
@@ -156,7 +156,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         response: { type: 'ensure_chrome_mcp_enabled_response', wasDisabled },
       });
     } catch (err) {
-      ctx.chromeMcpState = { status: 'error', error: errMsg(err, 'Failed') };
+      ctx.chromeMcpState = { status: 'disconnected' };
       ctx.io?.emit('state:update', { channelId: '', chromeMcpState: ctx.chromeMcpState });
       callback({ success: false, error: errMsg(err, 'Failed to enable Chrome MCP') });
     }
@@ -198,7 +198,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       ctx.io?.emit('state:update', { channelId: '', jupyterMcpState: { status: 'active' } });
       callback({ success: true, response: { type: 'enable_jupyter_mcp_response' } });
     } catch (err) {
-      ctx.io?.emit('state:update', { channelId: '', jupyterMcpState: { status: 'error', error: errMsg(err, 'Failed') } });
+      ctx.io?.emit('state:update', {
+        channelId: '',
+        jupyterMcpState: { status: 'inactive' },
+      });
       callback({ success: false, error: errMsg(err, 'Failed to enable Jupyter MCP') });
     }
   });

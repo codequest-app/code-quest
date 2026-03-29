@@ -1,17 +1,9 @@
 ---
 name: project-overview
-description: |
-  Explains Code Quest's core concept, architecture, and design philosophy.
-
-  AUTO-INVOKE when:
-  - User asks "what is this project", "project overview", "what does Code Quest do"
-  - Starting implementation planning or architecture design
-  - Reviewing or writing design documents
-  - Need to understand the three-layer architecture (UI/Bridge/CLI)
-  - Discussing AI→RPG element mapping
-  - Planning new systems or features (need overall context)
-
-  Keywords: project, overview, architecture, what is, explain project, Code Quest concept, three-layer, RPG wrapper, design philosophy
+description: >
+  Code Quest project overview covering core concept, three-layer architecture, and design philosophy.
+  Use when asking what this project does, planning architecture, reviewing design documents,
+  or needing overall context for new features.
 ---
 
 # Code Quest - RPG 化的 Claude Code 體驗

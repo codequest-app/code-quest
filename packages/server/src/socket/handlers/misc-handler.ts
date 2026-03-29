@@ -1,3 +1,4 @@
+import type { AuthResult } from '@code-quest/shared';
 import {
   planClosePreviewSchema,
   planCommentSchema,
@@ -19,26 +20,28 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback?.({
           success: false,
           error: 'No active session. Please open a tab first.',
-        } as never);
+        });
         return;
       }
       const controlResp = await channel.sendControlRequest('claude_authenticate', {
         loginWithClaudeAi: payload.method !== 'api_key',
       });
-      const authData = controlResp.response as {
-        manualUrl?: string;
-        automaticUrl?: string;
-      } | undefined;
+      const authData = controlResp.response as
+        | {
+            manualUrl?: string;
+            automaticUrl?: string;
+          }
+        | undefined;
       if (authData?.manualUrl || authData?.automaticUrl) {
         socket.emit('notification:auth_url', {
           channelId: '',
           url: authData.automaticUrl ?? authData.manualUrl ?? '',
           method: 'browser',
-        } as never);
+        });
       }
-      callback?.({ success: true, auth: authData } as never);
+      callback?.({ success: true, auth: authData as AuthResult['auth'] });
     } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Login failed') } as never);
+      callback?.({ success: false, error: errMsg(err, 'Login failed') });
     }
   });
 
@@ -46,7 +49,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     try {
       const channel = ctx.channelManager.getFirstAlive();
       if (!channel) {
-        callback({ success: false, error: 'No active session' } as never);
+        callback({ success: false, error: 'No active session' });
         return;
       }
       await channel.sendControlRequest('claude_oauth_callback', {
@@ -61,7 +64,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       };
       callback({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'OAuth failed') } as never);
+      callback({ success: false, error: errMsg(err, 'OAuth failed') });
     }
   });
 

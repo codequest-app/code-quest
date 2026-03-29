@@ -219,8 +219,15 @@ describe('ChannelProvider', () => {
     await claude.emit(s.assistant('done'));
     await claude.emit(s.result());
 
-    // Trigger request_usage_update — server queries CLI, pushes state:usage
-    claude.socket.emit('request_usage_update' as never, {}, () => {});
+    // Trigger request_usage_update via UI — open /usage dialog
+    await act(async () => {
+      textarea.focus();
+    });
+    await user.type(textarea, '/usage');
+    const usageItem = screen.queryByText(/Account & usage/i);
+    if (usageItem) {
+      await user.click(usageItem);
+    }
     await new Promise((r) => setTimeout(r, 50));
 
     // App should not crash — contextUsage stored separately from stats

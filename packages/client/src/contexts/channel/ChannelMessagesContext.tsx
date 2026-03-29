@@ -899,7 +899,9 @@ export function ChannelMessagesProvider({
         setChannelState((prev) => ({ ...prev, planComments: [...prev.planComments, comment] })),
       clearPlanComments: () => setChannelState((prev) => ({ ...prev, planComments: [] })),
       fetchRawEvents: () => rpc(socket, 'session:raw_events', { channelId }),
-      requestUsageUpdate: () => { socket.emit('request_usage_update' as never, { channelId }); },
+      requestUsageUpdate: () => {
+        socket.emit('request_usage_update', { channelId });
+      },
       subscribeRawEvents: (cb: (evt: unknown) => void) => {
         const handler = (eventName: string, ...args: unknown[]) => {
           const payload = args[0] as Record<string, unknown> | undefined;
