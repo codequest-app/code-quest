@@ -94,6 +94,23 @@
 - [ ] buildArgs 加 `--claude-in-chrome-mcp`
 - [ ] test
 
-### Group 5：Coverage Matrix 更新
+### Group 5：Fixtures Checklist
+
+#### 5.1 真實 JSON（從 DB）
+- [ ] `system/api_retry` → `real/api-retry.jsonl`
+
+#### 5.2 合成 JSON（從 extension 提取結構）
+- [ ] `system/post_turn_summary` → `synthetic/post-turn-summary.jsonl`
+- [ ] `system/session_state_changed` → `synthetic/session-state-changed.jsonl`
+- [ ] `stream/compaction_delta` → `synthetic/compaction-delta.jsonl`
+- [ ] `control-request/get_context_usage` → `synthetic/control-get-context-usage.jsonl`
+- [ ] `control-request/seed_read_state` → `synthetic/control-seed-read-state.jsonl`
+- [ ] `control-request/side_question` → `synthetic/control-side-question.jsonl`
+- [ ] `control-request/channel_enable` → `synthetic/control-channel-enable.jsonl`
+- [ ] `control-request/claude_authenticate` → `synthetic/control-claude-authenticate.jsonl`
+- [ ] `control-request/claude_oauth_callback` → `synthetic/control-claude-oauth-callback.jsonl`
+- [ ] `control-request/claude_oauth_wait_for_completion` → `synthetic/control-claude-oauth-wait.jsonl`
+
+### Group 6：Coverage Matrix 更新
 - [ ] 更新 `references/coverage-matrix.md` 所有項目狀態
 - [ ] 移除「VS Code 專屬」標記（所有 CLI 功能 web 都能用）
