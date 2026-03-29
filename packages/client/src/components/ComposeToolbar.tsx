@@ -118,9 +118,10 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   }, [activeDialog]);
 
   const contextPct =
-    stats?.inputTokens != null && stats.inputTokens > 0
+    (contextUsage as { percentage?: number } | null)?.percentage ??
+    (stats?.inputTokens != null && stats.inputTokens > 0
       ? Math.min(Math.round((stats.inputTokens / (stats.contextWindow ?? 200000)) * 100), 100)
-      : null;
+      : null);
   const showContextUsage = isContextCompressed || contextPct !== null;
 
   return (

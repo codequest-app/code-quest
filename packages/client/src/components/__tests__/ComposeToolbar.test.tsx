@@ -110,6 +110,30 @@ describe('ComposeToolbar', () => {
       expect(screen.queryByText(/% used/)).not.toBeInTheDocument();
     });
 
-    // contextUsage is stored separately from stats — ContextPieChart uses stats only
+    it('uses contextUsage percentage when available', async () => {
+      const { claude } = await renderWithProviders();
+
+      // First get stats from result
+      await userEvent.click(screen.getByText('TriggerSend'));
+      await claude.emit(s.assistant('done'));
+      await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
+
+      // Then receive contextUsage via state:usage
+      await act(async () => {
+        (claude.socket as any).serverSocket.emit('state:usage', {
+          channelId: '',
+          usage: {},
+          contextUsage: {
+            categories: [],
+            totalTokens: 50000,
+            maxTokens: 200000,
+            percentage: 25,
+          },
+        });
+      });
+
+      // Should show contextUsage.percentage (25%) not stats-based calculation
+      expect(await screen.findByText(/25% used/)).toBeInTheDocument();
+    });
   });
 });

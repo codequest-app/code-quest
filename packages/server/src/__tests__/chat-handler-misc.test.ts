@@ -193,7 +193,11 @@ describe('ChatHandler > misc', () => {
             ],
             totalTokens: 10000,
             maxTokens: 200000,
+            rawMaxTokens: 200000,
             percentage: 5,
+            gridRows: [[{ color: 'x', isFilled: true }]],
+            apiUsage: { something: 'extra' },
+            mcpTools: ['tool1'],
           };
         }
         return null;
@@ -213,6 +217,11 @@ describe('ChatHandler > misc', () => {
       expect(ctx.percentage).toBe(5);
       expect(ctx.categories).toHaveLength(3);
       expect(ctx.categories[0].name).toBe('System prompt');
+      // Extra fields should be stripped
+      expect(ctx.gridRows).toBeUndefined();
+      expect(ctx.apiUsage).toBeUndefined();
+      expect(ctx.mcpTools).toBeUndefined();
+      expect(ctx.rawMaxTokens).toBeUndefined();
     });
   });
 
