@@ -82,3 +82,19 @@
 
 #### 8.4 Tests — DONE
 - [x] 現有 16 個 MCP tests 全部 pass（行為不變）
+
+### Group 9：get_context_usage — 主動查詢 context 使用量
+
+> 目前只從 message:result 被動拿 stats，加上主動查詢讓數字即時。
+> Extension 用 get_context_usage control_request 問 CLI。
+
+#### 9.1 Server
+- [ ] settings-handler `request_usage_update`：找 active channel → sendControlRequest('get_context_usage')
+- [ ] CLI 回傳 context usage → emit `state:usage` 到 client（合併 usageTracker + context usage）
+- [ ] 沒有 active channel 時只回 usageTracker 資料（現有行為）
+- [ ] test：FakeClaude mock get_context_usage response
+
+#### 9.2 Client
+- [ ] ChannelConfigContext 或 ComposeToolbar：打開 AccountUsageDialog 時呼叫 request_usage_update
+- [ ] 顯示即時 context usage
+- [ ] test

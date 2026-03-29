@@ -151,10 +151,31 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('request_usage_update', (_payload) => {
+  socket.on('request_usage_update', async (_payload) => {
+    const usage = ctx.usageTracker.getUsage();
+    let contextUsage: Record<string, unknown> | undefined;
+
+    const channel = ctx.channelManager.getFirstAlive();
+    if (channel) {
+      try {
+        const resp = await channel.sendControlRequest('get_context_usage', {});
+        if (resp.response) {
+          const r = resp.response as Record<string, unknown>;
+          contextUsage = {
+            inputTokens: r.input_tokens,
+            outputTokens: r.output_tokens,
+            contextWindow: r.context_window,
+          };
+        }
+      } catch {
+        // CLI may not support get_context_usage — ignore
+      }
+    }
+
     socket.emit('state:usage', {
       channelId: '',
-      usage: ctx.usageTracker.getUsage(),
-    });
+      usage,
+      ...(contextUsage ? { contextUsage } : {}),
+    } as never);
   });
 }

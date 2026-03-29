@@ -179,6 +179,31 @@ describe('ChatHandler > misc', () => {
         five_hour: { utilization: 0 },
       });
     });
+
+    it('request_usage_update includes context usage from CLI', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'get_context_usage') {
+          return { input_tokens: 50000, output_tokens: 5000, context_window: 200000 };
+        }
+        return null;
+      });
+
+      const usageUpdates: any[] = [];
+      claude.socket.on('state:usage' as any, (payload: any) => {
+        usageUpdates.push(payload);
+      });
+
+      await claude.send('request_usage_update', { channelId });
+
+      expect(usageUpdates.length).toBe(1);
+      expect((usageUpdates[0] as any).contextUsage).toMatchObject({
+        inputTokens: 50000,
+        outputTokens: 5000,
+        contextWindow: 200000,
+      });
+    });
   });
 
   describe('auth handlers', () => {
