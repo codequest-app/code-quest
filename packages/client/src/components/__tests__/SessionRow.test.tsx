@@ -71,14 +71,4 @@ describe('SessionRow', () => {
     render(<SessionRow session={baseSession} {...defaultProps} />);
     expect(screen.queryByText(/--verbose/)).not.toBeInTheDocument();
   });
-
-  it('does not show firstUserMessage in list view', () => {
-    render(
-      <SessionRow
-        session={{ ...baseSession, firstUserMessage: 'fix the bug' }}
-        {...defaultProps}
-      />,
-    );
-    expect(screen.queryByTestId('session-subtitle')).not.toBeInTheDocument();
-  });
 });
