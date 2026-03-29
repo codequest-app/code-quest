@@ -5,11 +5,9 @@ import type {
   RateLimitInfo,
   RemoteControlStateInfo,
   SessionStats,
-  SocketEvent,
   StreamChunk,
 } from './event-types.ts';
 import type {
-  AccountInfo,
   AddMarketplacePayload,
   AskDebuggerHelpResponse,
   AuthResult,
@@ -51,10 +49,12 @@ import type {
   GetPlanCommentsResponse,
   GetSessionResponse,
   GitCheckoutPayload,
+  GitCheckoutResult,
+  GitDiffResult,
   GitExecPayload,
-  GitFileChange,
-  GitLogEntry,
   GitLogPayload,
+  GitLogResult,
+  GitStatusResult,
   GitUpdateSkippedBranchPayload,
   InitResponse,
   JupyterMcpControlPayload,
@@ -72,10 +72,6 @@ import type {
   McpReconnectPayload,
   McpSetEnabledPayload,
   McpSetServersPayload,
-  ModelUsageEntry,
-  NotificationButton,
-  NotificationPayload,
-  NotificationResponse,
   OAuthCodePayload,
   PlanClosePreviewPayload,
   PlanCommentData,
@@ -98,6 +94,7 @@ import type {
   SessionListRemotePayload,
   SessionListResponse,
   SessionRenamePayload,
+  SessionStateSummary,
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
@@ -107,114 +104,9 @@ import type {
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
   TerminalOpenClaudeResponse,
+  UpdateStatePayload,
+  UsageQuota,
 } from './schemas/chat.ts';
-
-export interface ChatStats {
-  costUsd?: number;
-  durationMs?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-  numTurns?: number;
-  modelUsage?: Record<string, ModelUsageEntry>;
-  contextWindow?: number;
-}
-
-export interface SessionSummary {
-  id: string;
-  provider: string;
-  command: string;
-  args: string;
-  cwd?: string;
-  mode: string;
-  role: string;
-  parentId?: string;
-  title?: string;
-  createdAt: string;
-  isActive?: boolean;
-  lastAssistantMessage?: string;
-}
-
-export interface UsageQuotaTier {
-  utilization: number;
-  resets_at?: string;
-}
-
-export interface UsageQuota {
-  five_hour?: UsageQuotaTier;
-  seven_day?: UsageQuotaTier;
-  seven_day_sonnet?: UsageQuotaTier;
-  extra_usage?: {
-    is_enabled: boolean;
-    monthly_limit?: number;
-    used_credits?: number;
-    utilization?: number;
-    overageStatus?: string;
-  };
-}
-
-export interface FileSearchResult {
-  path: string;
-  name: string;
-  type: 'file' | 'directory' | 'terminal';
-}
-
-export interface GitStatusResult {
-  branch: string;
-  isClean: boolean;
-  changedFiles: GitFileChange[];
-}
-
-export interface GitLogResult {
-  entries: GitLogEntry[];
-}
-
-export interface GitDiffResult {
-  diff: string;
-}
-
-export interface GitCheckoutResult {
-  success: boolean;
-  error?: string;
-}
-
-export interface PluginInfo {
-  id: string;
-  version: string;
-  scope: string;
-  enabled: boolean;
-  installPath: string;
-  installedAt: string;
-  lastUpdated: string;
-}
-
-export interface AvailablePlugin {
-  pluginId: string;
-  name: string;
-  description?: string;
-  marketplaceName: string;
-  version: string;
-  source: string;
-  installCount?: number;
-}
-
-export type MarketplaceSourceConfig =
-  | { source: 'npm'; package: string }
-  | { source: 'github'; repo: string }
-  | { source: 'git'; url: string }
-  | { source: 'url'; url: string }
-  | { source: 'directory'; path: string }
-  | { source: 'file'; path: string }
-  | { source: 'local'; path: string };
-
-export interface MarketplaceInfo {
-  name: string;
-  config: {
-    source: MarketplaceSourceConfig;
-    installLocation: string;
-  };
-  pluginCount: number;
-  installedCount: number;
-}
 
 export interface ClientToServerEvents {
   // ── Chat Operations ──
@@ -435,84 +327,6 @@ export interface ClientToServerEvents {
   ) => void;
   set_remote_control: (payload: ChatSetRemoteControlPayload) => void;
   hook_callback_respond: (payload: ChatHookCallbackRespondPayload) => void;
-}
-
-export interface ChannelMetaCache {
-  model?: string;
-  tools?: string[];
-  permissionMode?: string;
-  slashCommands?: string[];
-  fastModeState?: unknown;
-  mcpServers?: Array<{ name: string; status: string }>;
-}
-
-export interface SessionStateSummary {
-  channelId: string;
-  state: 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected';
-  title?: string;
-  modelSetting?: string;
-  permissionMode?: string;
-  effort?: string;
-}
-
-// ── update_state enum types ──────────────────────────────────────────────────
-export type AuthStatusValue = 'logged_in' | 'logged_out' | 'unknown';
-export interface ChromeMcpState {
-  status: 'disconnected' | 'connecting' | 'connected' | 'error';
-}
-export interface DebuggerMcpState {
-  status: 'inactive' | 'active' | 'error';
-}
-export interface JupyterMcpState {
-  status: 'inactive' | 'available' | 'active';
-}
-
-export interface OpenFileLocation {
-  startLine?: number;
-  endLine?: number;
-  searchText?: string;
-}
-/** Full state snapshot pushed by the Extension via `update_state`.
- *  `channelId = ""` → global broadcast; non-empty → per-channel update.
- *  All fields are optional because the extension may send partial updates. */
-export interface UpdateStatePayload {
-  channelId: string;
-  // ── Global fields (channelId = "") ────────────────────────────────────────
-  authStatus?: AuthStatusValue;
-  accountInfo?: AccountInfo;
-  platform?: string;
-  speechToTextEnabled?: boolean;
-  showTerminalBanner?: boolean;
-  showReviewUpsellBanner?: boolean;
-  isOnboardingEnabled?: boolean;
-  isOnboardingDismissed?: boolean;
-  marketplaceType?: string;
-  chromeMcpState?: ChromeMcpState;
-  debuggerMcpState?: DebuggerMcpState;
-  jupyterMcpState?: JupyterMcpState;
-  remoteControlState?: { status: string };
-  browserIntegrationSupported?: boolean;
-  experimentGates?: Record<string, boolean>;
-  openNewInTab?: boolean;
-  spinnerVerbsConfig?: string[];
-  settings?: Record<string, unknown>;
-  claudeSettings?: Record<string, unknown>;
-  // ── Per-channel fields (channelId = specific ID) ──────────────────────────
-  cwd?: string;
-  modelSetting?: string;
-  tools?: string[];
-  apiKeyStatus?: string;
-  allowDangerouslySkipPermissions?: boolean;
-  useCtrlEnterToSend?: boolean;
-  currentRepo?: string | null;
-  config?: Record<string, unknown>;
-  // ── Legacy / both ─────────────────────────────────────────────────────────
-  defaultCwd?: string;
-  initialPermissionMode?: string;
-  thinkingLevel?: string;
-  mcpServers?: Array<{ name: string; status: string; scope?: string }>;
-  effort?: string;
-  fastModeState?: string;
 }
 
 export interface ServerToClientEvents {

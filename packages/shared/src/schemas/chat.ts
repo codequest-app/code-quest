@@ -97,7 +97,7 @@ export const controlPermissionResponseSchema = z.union([
   z.object({
     behavior: z.literal('allow'),
     updatedInput: z.record(z.string(), z.unknown()),
-    updatedPermissions: z.array(z.record(z.string(), z.unknown())).optional(),
+    updatedPermissions: z.array(z.any()).optional(),
     toolUseID: z.string().optional(),
     userFeedback: z.string().optional(),
   }),
@@ -251,12 +251,6 @@ export const controlResponseSchema = z.object({
   error: z.string().optional(),
 });
 export type ControlResponse = z.infer<typeof controlResponseSchema>;
-
-export const sessionListResponseSchema = z.object({
-  sessions: z.array(z.record(z.string(), z.unknown())),
-  total: z.number(),
-});
-export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 // --- Inferred types ---
 
@@ -546,7 +540,231 @@ export const fileReadPayloadSchema = z.object({
 });
 export type FileReadPayload = z.infer<typeof fileReadPayloadSchema>;
 
+// ── Converted from socket-events.ts interfaces ──
+
+export const socketEventSchema = z.object({
+  name: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+});
+export type SocketEvent = z.infer<typeof socketEventSchema>;
+
+export const channelMetaCacheSchema = z.object({
+  model: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  permissionMode: z.string().optional(),
+  slashCommands: z.array(z.string()).optional(),
+  fastModeState: z.unknown().optional(),
+  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+});
+export type ChannelMetaCache = z.infer<typeof channelMetaCacheSchema>;
+
+export const sessionSummarySchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  command: z.string(),
+  args: z.string(),
+  cwd: z.string().optional(),
+  mode: z.string(),
+  role: z.string(),
+  parentId: z.string().optional(),
+  title: z.string().optional(),
+  createdAt: z.string(),
+  isActive: z.boolean().optional(),
+  lastAssistantMessage: z.string().optional(),
+});
+export type SessionSummary = z.infer<typeof sessionSummarySchema>;
+
+export const sessionStateSummarySchema = z.object({
+  channelId: z.string(),
+  state: z.enum(['launching', 'busy', 'idle', 'exited', 'disconnected']),
+  title: z.string().optional(),
+  modelSetting: z.string().optional(),
+  permissionMode: z.string().optional(),
+  effort: z.string().optional(),
+});
+export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
+
+export const usageQuotaTierSchema = z.object({
+  utilization: z.number(),
+  resets_at: z.string().optional(),
+});
+export type UsageQuotaTier = z.infer<typeof usageQuotaTierSchema>;
+
+export const usageQuotaSchema = z.object({
+  five_hour: usageQuotaTierSchema.optional(),
+  seven_day: usageQuotaTierSchema.optional(),
+  seven_day_sonnet: usageQuotaTierSchema.optional(),
+  extra_usage: z
+    .object({
+      is_enabled: z.boolean(),
+      monthly_limit: z.number().optional(),
+      used_credits: z.number().optional(),
+      utilization: z.number().optional(),
+      overageStatus: z.string().optional(),
+    })
+    .optional(),
+});
+export type UsageQuota = z.infer<typeof usageQuotaSchema>;
+
+export const chatStatsSchema = z.object({
+  costUsd: z.number().optional(),
+  durationMs: z.number().optional(),
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+  numTurns: z.number().optional(),
+  modelUsage: z.record(z.string(), modelUsageEntrySchema).optional(),
+  contextWindow: z.number().optional(),
+});
+export type ChatStats = z.infer<typeof chatStatsSchema>;
+
+export const fileSearchResultSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  type: z.enum(['file', 'directory', 'terminal']),
+});
+export type FileSearchResult = z.infer<typeof fileSearchResultSchema>;
+
+export const gitStatusResultSchema = z.object({
+  branch: z.string(),
+  isClean: z.boolean(),
+  changedFiles: z.array(gitFileChangeSchema),
+});
+export type GitStatusResult = z.infer<typeof gitStatusResultSchema>;
+
+export const gitLogResultSchema = z.object({
+  entries: z.array(gitLogEntrySchema),
+});
+export type GitLogResult = z.infer<typeof gitLogResultSchema>;
+
+export const gitDiffResultSchema = z.object({
+  diff: z.string(),
+});
+export type GitDiffResult = z.infer<typeof gitDiffResultSchema>;
+
+export const gitCheckoutResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+export type GitCheckoutResult = z.infer<typeof gitCheckoutResultSchema>;
+
+export const pluginInfoSchema = z.object({
+  id: z.string(),
+  version: z.string(),
+  scope: z.string(),
+  enabled: z.boolean(),
+  installPath: z.string(),
+  installedAt: z.string(),
+  lastUpdated: z.string(),
+});
+export type PluginInfo = z.infer<typeof pluginInfoSchema>;
+
+export const availablePluginSchema = z.object({
+  pluginId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  marketplaceName: z.string(),
+  version: z.string(),
+  source: z.string(),
+  installCount: z.number().optional(),
+});
+export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
+
+export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('npm'), package: z.string() }),
+  z.object({ source: z.literal('github'), repo: z.string() }),
+  z.object({ source: z.literal('git'), url: z.string() }),
+  z.object({ source: z.literal('url'), url: z.string() }),
+  z.object({ source: z.literal('directory'), path: z.string() }),
+  z.object({ source: z.literal('file'), path: z.string() }),
+  z.object({ source: z.literal('local'), path: z.string() }),
+]);
+export type MarketplaceSourceConfig = z.infer<typeof marketplaceSourceConfigSchema>;
+
+export const marketplaceInfoSchema = z.object({
+  name: z.string(),
+  config: z.object({
+    source: marketplaceSourceConfigSchema,
+    installLocation: z.string(),
+  }),
+  pluginCount: z.number(),
+  installedCount: z.number(),
+});
+export type MarketplaceInfo = z.infer<typeof marketplaceInfoSchema>;
+
+export type AuthStatusValue = 'logged_in' | 'logged_out' | 'unknown';
+
+export const chromeMcpStateSchema = z.object({
+  status: z.enum(['disconnected', 'connecting', 'connected', 'error']),
+});
+export type ChromeMcpState = z.infer<typeof chromeMcpStateSchema>;
+
+export const debuggerMcpStateSchema = z.object({
+  status: z.enum(['inactive', 'active', 'error']),
+});
+export type DebuggerMcpState = z.infer<typeof debuggerMcpStateSchema>;
+
+export const jupyterMcpStateSchema = z.object({
+  status: z.enum(['inactive', 'available', 'active']),
+});
+export type JupyterMcpState = z.infer<typeof jupyterMcpStateSchema>;
+
+export const openFileLocationSchema = z.object({
+  startLine: z.number().optional(),
+  endLine: z.number().optional(),
+  searchText: z.string().optional(),
+});
+export type OpenFileLocation = z.infer<typeof openFileLocationSchema>;
+
+export const updateStatePayloadSchema = z.object({
+  channelId: z.string(),
+  // Global fields
+  authStatus: z.enum(['logged_in', 'logged_out', 'unknown']).optional(),
+  accountInfo: accountInfoSchema.optional(),
+  platform: z.string().optional(),
+  speechToTextEnabled: z.boolean().optional(),
+  showTerminalBanner: z.boolean().optional(),
+  showReviewUpsellBanner: z.boolean().optional(),
+  isOnboardingEnabled: z.boolean().optional(),
+  isOnboardingDismissed: z.boolean().optional(),
+  marketplaceType: z.string().optional(),
+  chromeMcpState: chromeMcpStateSchema.optional(),
+  debuggerMcpState: debuggerMcpStateSchema.optional(),
+  jupyterMcpState: jupyterMcpStateSchema.optional(),
+  remoteControlState: z.object({ status: z.string() }).optional(),
+  browserIntegrationSupported: z.boolean().optional(),
+  experimentGates: z.record(z.string(), z.boolean()).optional(),
+  openNewInTab: z.boolean().optional(),
+  spinnerVerbsConfig: z.array(z.string()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+  claudeSettings: z.record(z.string(), z.unknown()).optional(),
+  // Per-channel fields
+  cwd: z.string().optional(),
+  modelSetting: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  apiKeyStatus: z.string().optional(),
+  allowDangerouslySkipPermissions: z.boolean().optional(),
+  useCtrlEnterToSend: z.boolean().optional(),
+  currentRepo: z.string().nullable().optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
+  // Legacy / both
+  defaultCwd: z.string().optional(),
+  initialPermissionMode: z.string().optional(),
+  thinkingLevel: z.string().optional(),
+  mcpServers: z
+    .array(z.object({ name: z.string(), status: z.string(), scope: z.string().optional() }))
+    .optional(),
+  effort: z.string().optional(),
+  fastModeState: z.string().optional(),
+});
+export type UpdateStatePayload = z.infer<typeof updateStatePayloadSchema>;
+
 // ── Response schemas ──
+
+export const sessionListResponseSchema = z.object({
+  sessions: z.array(sessionSummarySchema),
+  total: z.number(),
+});
+export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 export const getClaudeStateResponseSchema = z
   .object({
@@ -560,9 +778,9 @@ export type GetClaudeStateResponse = z.infer<typeof getClaudeStateResponseSchema
 export const getSessionResponseSchema = z.union([
   z
     .object({
-      session: z.record(z.string(), z.unknown()),
-      events: z.array(z.record(z.string(), z.unknown())),
-      meta: z.record(z.string(), z.unknown()),
+      session: sessionSummarySchema,
+      events: z.array(socketEventSchema),
+      meta: channelMetaCacheSchema,
     })
     .passthrough(),
   z.object({ error: z.string() }),
@@ -573,7 +791,7 @@ export const teleportSessionResponseSchema = z
   .object({
     success: z.boolean(),
     channelId: z.string().optional(),
-    events: z.array(z.record(z.string(), z.unknown())).optional(),
+    events: z.array(socketEventSchema).optional(),
     error: z.string().optional(),
   })
   .passthrough();
@@ -584,7 +802,7 @@ export const forkConversationResponseSchema = z
     success: z.boolean(),
     channelId: z.string().optional(),
     parentSessionId: z.string().optional(),
-    events: z.array(z.record(z.string(), z.unknown())).optional(),
+    events: z.array(socketEventSchema).optional(),
     error: z.string().optional(),
   })
   .passthrough();
@@ -641,13 +859,7 @@ export type AskDebuggerHelpResponse = z.infer<typeof askDebuggerHelpResponseSche
 
 export const listFilesResponseSchema = z
   .object({
-    files: z.array(
-      z.object({
-        path: z.string(),
-        name: z.string(),
-        type: z.enum(['file', 'directory', 'terminal']),
-      }),
-    ),
+    files: z.array(fileSearchResultSchema),
   })
   .passthrough();
 export type ListFilesResponse = z.infer<typeof listFilesResponseSchema>;
@@ -663,15 +875,15 @@ export type ExecResponse = z.infer<typeof execResponseSchema>;
 
 export const listPluginsResponseSchema = z
   .object({
-    installed: z.array(z.record(z.string(), z.unknown())),
-    available: z.array(z.record(z.string(), z.unknown())),
+    installed: z.array(pluginInfoSchema),
+    available: z.array(availablePluginSchema),
   })
   .passthrough();
 export type ListPluginsResponse = z.infer<typeof listPluginsResponseSchema>;
 
 export const listMarketplacesResponseSchema = z
   .object({
-    marketplaces: z.array(z.record(z.string(), z.unknown())),
+    marketplaces: z.array(marketplaceInfoSchema),
   })
   .passthrough();
 export type ListMarketplacesResponse = z.infer<typeof listMarketplacesResponseSchema>;
@@ -705,8 +917,8 @@ export const sessionJoinResponseSchema = z.union([
     .object({
       channelId: z.string(),
       state: z.string(),
-      meta: z.record(z.string(), z.unknown()),
-      events: z.array(z.record(z.string(), z.unknown())),
+      meta: channelMetaCacheSchema,
+      events: z.array(socketEventSchema),
     })
     .passthrough(),
   z.object({ error: z.string() }),
@@ -723,7 +935,7 @@ export type RawEventsResponse = z.infer<typeof rawEventsResponseSchema>;
 export const initResponseSchema = z
   .object({
     settings: z.record(z.string(), z.unknown()),
-    sessions: z.array(z.record(z.string(), z.unknown())),
+    sessions: z.array(sessionStateSummarySchema),
     activeSessionId: z.string().optional(),
     models: z.array(z.unknown()).optional(),
     state: z.record(z.string(), z.unknown()).optional(),

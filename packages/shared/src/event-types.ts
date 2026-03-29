@@ -90,12 +90,8 @@ export interface HookResponseInfo {
   additionalContext?: string;
 }
 
-// ── SocketEvent — named event ready for socket.emit ──
-
-export interface SocketEvent {
-  name: string;
-  payload: Record<string, unknown>;
-}
+// ── SocketEvent — now defined as Zod schema in schemas/chat.ts ──
+export type { SocketEvent } from './schemas/chat.ts';
 
 // ── Control response type is now in schemas/chat.ts (Zod-inferred) ──
 

@@ -31,6 +31,8 @@ describe('ChatHandler > control', () => {
       expect(permEvents.length).toBeGreaterThan(0);
       expect(permEvents[0].toolName).toBe('Bash');
       expect(permEvents[0].requestId).toBe('req-1');
+      expect(permEvents[0].input).toEqual({ command: 'ls' });
+      expect((permEvents[0] as Record<string, unknown>).inputs).toBeUndefined();
     });
 
     it('control_request tracked in channel', async () => {
