@@ -98,7 +98,7 @@ export interface SessionSummary {
   title?: string;
   createdAt: string;
   isActive?: boolean;
-  firstUserMessage?: string;
+  lastAssistantMessage?: string;
 }
 
 export interface UsageQuotaTier {

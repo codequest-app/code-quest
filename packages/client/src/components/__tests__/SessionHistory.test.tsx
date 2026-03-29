@@ -502,74 +502,7 @@ describe('SessionHistory (teleport)', () => {
   });
 });
 
-describe('SessionHistory detail info', () => {
-  it('displays cwd when available', () => {
-    render(
-      <SessionHistory
-        sessions={[
-          {
-            id: 's1',
-            provider: 'claude',
-            command: 'claude',
-            args: '--model opus',
-            cwd: '/home/user/project',
-            mode: 'code',
-            role: 'user',
-            createdAt: '2026-01-01T00:00:00Z',
-          },
-        ]}
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
-    expect(screen.getByText('/home/user/project')).toBeInTheDocument();
-  });
-
-  it('displays parentId as resumed-from info', () => {
-    render(
-      <SessionHistory
-        sessions={[
-          {
-            id: 's1',
-            provider: 'claude',
-            command: 'claude',
-            args: '',
-            cwd: '/tmp',
-            mode: 'code',
-            role: 'user',
-            parentId: 'p1',
-            createdAt: '2026-01-01T00:00:00Z',
-          },
-        ]}
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
-    expect(screen.getByText(/p1/)).toBeInTheDocument();
-  });
-
-  it('displays args when available', () => {
-    render(
-      <SessionHistory
-        sessions={[
-          {
-            id: 's1',
-            provider: 'claude',
-            command: 'claude',
-            args: '--model opus',
-            cwd: '/tmp',
-            mode: 'code',
-            role: 'user',
-            createdAt: '2026-01-01T00:00:00Z',
-          },
-        ]}
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
-    expect(screen.getByText('--model opus')).toBeInTheDocument();
-  });
-});
+// cwd, args, parentId are hidden from list view — shown only in expanded detail
 
 describe('SessionHistory in workspace', () => {
   it('shows history button in header bar', async () => {

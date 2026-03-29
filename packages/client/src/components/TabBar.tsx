@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
+
 export interface TabInfo {
   sessionId: string;
   title?: string;
@@ -27,6 +30,8 @@ export function TabBar({
   onNewTab,
   onOpenHistory,
 }: TabBarProps) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
   if (tabs.length === 0 && !onNewTab) return null;
 
   return (
@@ -70,7 +75,7 @@ export function TabBar({
             className="ml-1 text-text-muted hover:text-text text-[10px]"
             onClick={(e) => {
               e.stopPropagation();
-              onCloseTab(tab.sessionId);
+              setConfirmingId(tab.sessionId);
             }}
             aria-label={`Close ${tab.title || tab.sessionId}`}
           >
@@ -98,6 +103,38 @@ export function TabBar({
           ☰
         </button>
       )}
+      <Dialog
+        open={confirmingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingId(null);
+        }}
+      >
+        <DialogContent title="Close Session">
+          <p className="text-sm text-text-muted mb-4">
+            Are you sure you want to close this session? The CLI process will be terminated.
+          </p>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded"
+              >
+                Cancel
+              </button>
+            </DialogClose>
+            <button
+              type="button"
+              className="px-3 py-1.5 text-sm bg-danger text-white rounded hover:bg-danger/80"
+              onClick={() => {
+                if (confirmingId) onCloseTab(confirmingId);
+                setConfirmingId(null);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

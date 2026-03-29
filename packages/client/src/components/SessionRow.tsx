@@ -99,26 +99,26 @@ export function SessionRow({
           onClick={() => (onGetDetail ? handleExpandClick() : onSelect(s.id))}
           className="flex-1 text-left px-4 py-3 hover:bg-white/5 transition-colors"
         >
-          <div className="text-xs font-mono text-text truncate">{s.title || s.id}</div>
-          <div className="text-[11px] text-text-muted mt-0.5">
-            {s.mode} · {new Date(s.createdAt).toLocaleString()}
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-medium text-text truncate">{s.title || s.id}</div>
+            <div className="text-[10px] text-text-muted shrink-0">
+              {new Date(s.createdAt).toLocaleString()}
+            </div>
           </div>
-          {s.firstUserMessage && (
-            <div
-              data-testid="session-subtitle"
-              className="text-[10px] text-text-muted/70 truncate mt-0.5"
-            >
-              {s.firstUserMessage.length > 60
-                ? `${s.firstUserMessage.slice(0, 60)}...`
-                : s.firstUserMessage}
+          {s.cwd && (
+            <div className="text-[10px] font-mono text-text-muted truncate mt-0.5">
+              {s.cwd.split('/').pop() || s.cwd}
             </div>
           )}
-          {s.cwd && (
-            <div className="text-[10px] font-mono text-text-muted/60 truncate mt-0.5">{s.cwd}</div>
-          )}
-          {s.args && <div className="text-[10px] text-text-muted/50 truncate mt-0.5">{s.args}</div>}
-          {s.parentId && (
-            <div className="text-[10px] text-text-muted/50 mt-0.5">resumed from: {s.parentId}</div>
+          {s.lastAssistantMessage && (
+            <div
+              data-testid="session-preview"
+              className="text-[11px] text-text-muted truncate mt-0.5"
+            >
+              {s.lastAssistantMessage.length > 80
+                ? `${s.lastAssistantMessage.slice(0, 80)}...`
+                : s.lastAssistantMessage}
+            </div>
           )}
         </button>
         <div className="flex items-center gap-1 pr-2">

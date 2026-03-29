@@ -1,7 +1,7 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { RawEntry } from '@code-quest/summoner';
-import type { RawEventStore } from './raw-event-store.ts';
+import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
 const SAFE_SESSION_ID = /^[a-zA-Z0-9_-]+$/;
 
@@ -32,6 +32,19 @@ export class FileRawStore implements RawEventStore {
       }
       throw err;
     }
+  }
+
+  async getPreview(sessionId: string): Promise<SessionPreview> {
+    const entries = await this.getBySession(sessionId);
+
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].direction === 'out') {
+        const text = extractTextFromRaw(entries[i].raw, 'assistant');
+        if (text) return { lastAssistant: text };
+      }
+    }
+
+    return {};
   }
 
   private ensureDir(): Promise<void> {

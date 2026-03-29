@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useChannelConfig, useChannelMessages } from '../contexts/channel';
 import type { SessionStatus } from '../types/ui';
 import { shortModelName } from '../utils/model-utils';
@@ -14,51 +13,13 @@ const statusConfig: Record<SessionStatus, { label: string; dotClass: string }> =
 
 const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors';
 
-function KillButton({ onKill }: { onKill: () => void }) {
-  const [confirming, setConfirming] = useState(false);
-  if (confirming) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px]">
-        <span className="text-danger">Kill?</span>
-        <button
-          type="button"
-          onClick={() => {
-            onKill();
-            setConfirming(false);
-          }}
-          className="text-danger hover:text-danger/80 font-medium transition-colors"
-        >
-          Confirm
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          className="text-text-muted hover:text-text transition-colors"
-        >
-          Cancel
-        </button>
-      </span>
-    );
-  }
-  return (
-    <button
-      type="button"
-      title="Kill Session"
-      onClick={() => setConfirming(true)}
-      className="text-danger hover:text-danger/80 text-[11px] transition-colors"
-    >
-      Kill
-    </button>
-  );
-}
-
 export interface HeaderBarProps {
   title?: string | null;
   onToggleRaw?: () => void;
 }
 
 export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
-  const { status, channelId, kill } = useChannelMessages();
+  const { status, channelId } = useChannelMessages();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
   const cfg =
@@ -87,7 +48,6 @@ export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
         </span>
       )}
       {!sessionLabel && <div className="flex-1" />}
-      {channelId && <KillButton onKill={kill} />}
       {onToggleRaw && (
         <button type="button" title="Raw Events" onClick={onToggleRaw} className={HDR_BTN}>
           Raw

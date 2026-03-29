@@ -105,4 +105,33 @@ describe('FileRawStore', () => {
     const results = await nestedStore.getBySession('sess-3');
     expect(results).toHaveLength(1);
   });
+
+  describe('getPreview', () => {
+    it('returns last assistant text', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 'sess-prev',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Looking...'),
+        seq: 0,
+      });
+      await store.append({
+        timestamp: Date.now() + 1,
+        sessionId: 'sess-prev',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Done fixing'),
+        seq: 1,
+      });
+
+      const preview = await store.getPreview('sess-prev');
+      expect(preview.lastAssistant).toBe('Done fixing');
+    });
+
+    it('returns empty for nonexistent session', async () => {
+      const preview = await store.getPreview('nope');
+      expect(preview.lastAssistant).toBeUndefined();
+    });
+  });
 });

@@ -348,9 +348,16 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         limit: parsed.limit,
         offset: parsed.offset,
       });
-      const sessions = result.sessions.map((s) => {
+      const previews = await Promise.all(
+        result.sessions.map((s) => ctx.rawEventStore.getPreview(s.sessionId ?? s.id)),
+      );
+      const sessions = result.sessions.map((s, i) => {
         const ch = ctx.channelManager.get(s.id);
-        return { ...s, isActive: !!(ch && !ch.exited) };
+        return {
+          ...s,
+          isActive: !!(ch && !ch.exited),
+          lastAssistantMessage: previews[i].lastAssistant,
+        };
       });
       callback({ sessions, total: result.total });
     } catch (err) {

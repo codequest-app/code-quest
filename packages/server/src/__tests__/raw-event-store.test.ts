@@ -61,6 +61,53 @@ describe('DrizzleRawStore', () => {
     expect(results).toHaveLength(3);
   });
 
+  describe('getPreview', () => {
+    it('returns last assistant text', async () => {
+      const now = Date.now();
+      await store.append({
+        timestamp: now,
+        sessionId: 'sess-p',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Looking at the code'),
+        seq: 0,
+      });
+      await store.append({
+        timestamp: now + 1,
+        sessionId: 'sess-p',
+        promptId: 'p1',
+        direction: 'out',
+        raw: s.assistant('Fixed the bug'),
+        seq: 1,
+      });
+
+      const preview = await store.getPreview('sess-p');
+      expect(preview.lastAssistant).toBe('Fixed the bug');
+    });
+
+    it('returns empty for unknown session', async () => {
+      const preview = await store.getPreview('nonexistent');
+      expect(preview.lastAssistant).toBeUndefined();
+    });
+
+    it('returns empty when no assistant messages', async () => {
+      await store.append({
+        timestamp: Date.now(),
+        sessionId: 'sess-u',
+        promptId: 'p1',
+        direction: 'in',
+        raw: JSON.stringify({
+          type: 'user',
+          message: { content: [{ type: 'text', text: 'hello' }] },
+        }),
+        seq: 0,
+      });
+
+      const preview = await store.getPreview('sess-u');
+      expect(preview.lastAssistant).toBeUndefined();
+    });
+  });
+
   it('returns entries ordered by createdAt', async () => {
     const now = Date.now();
     await store.append({

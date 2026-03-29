@@ -13,7 +13,19 @@ export function createSessionsRouter(
       const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
       const offset = Math.max(Number(req.query.offset) || 0, 0);
       const result = await sessionStore.list({ limit, offset });
-      res.json(result);
+
+      if (rawEventStore) {
+        const previews = await Promise.all(
+          result.sessions.map((s) => rawEventStore.getPreview(s.sessionId ?? s.id)),
+        );
+        const enriched = result.sessions.map((s, i) => ({
+          ...s,
+          lastAssistantMessage: previews[i].lastAssistant,
+        }));
+        res.json({ sessions: enriched, total: result.total });
+      } else {
+        res.json(result);
+      }
     } catch (err) {
       res
         .status(500)

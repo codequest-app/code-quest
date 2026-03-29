@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
@@ -87,5 +88,36 @@ describe('WorkspaceLayout', () => {
     });
 
     expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
+  });
+
+  it('close tab emits session:close and removes tab', async () => {
+    const claude = createFakeClaude();
+    const emitSpy = vi.spyOn(claude.socket, 'emit');
+
+    render(
+      <SocketProvider socket={claude.socket}>
+        <SessionProvider>
+          <PluginProvider>
+            <TabProvider
+              initialState={{
+                tabs: {
+                  'sess-a': { tabStatus: 'default' },
+                  'sess-b': { tabStatus: 'default' },
+                },
+                activeTabId: 'sess-a',
+              }}
+            >
+              <WorkspaceLayout />
+            </TabProvider>
+          </PluginProvider>
+        </SessionProvider>
+      </SocketProvider>,
+    );
+
+    await userEvent.click(screen.getByLabelText('Close sess-b'));
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+
+    expect(emitSpy).toHaveBeenCalledWith('session:close', { channelId: 'sess-b' });
+    expect(screen.queryByLabelText('Close sess-b')).not.toBeInTheDocument();
   });
 });
