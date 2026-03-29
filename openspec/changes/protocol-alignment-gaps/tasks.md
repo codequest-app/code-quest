@@ -214,27 +214,17 @@
 - [x] `git:log` → `gitLogSchema`, `chat:respond` → `chatRespondSchema`
 - [x] terminal, speech, cancel_async, set_proactive, generate_session_title 等全部換引用
 
-#### 15.3 新建 payload/callback schema
-- [ ] `session:launch` callback → `sessionLaunchResponseSchema`
-- [ ] `session:join` callback → `sessionJoinResponseSchema`
-- [ ] `session:raw_events` payload + callback
-- [ ] `init` callback → `initResponseSchema`
-- [ ] `file:read` payload + callback
-- [ ] `terminal:get_contents` payload + callback
-- [ ] `terminal:open_claude` payload + callback
-- [ ] `list_plugins` payload + callback
-- [ ] `get_plan_comments` callback
-- [ ] `cancel_request` payload
-- [ ] `request_usage_update` payload
-- [ ] `get_claude_state` callback
-- [ ] `start/stop_speech_to_text` payload
+#### 15.3 新建 payload/callback schema — DONE
+- [x] 27 new schemas: channelIdPayload, cancelRequest, listPlugins, fileRead payloads
+- [x] sessionLaunch/Join/Teleport/Fork response schemas
+- [x] init, getClaudeState, rawEvents, terminalGet/Open response schemas
+- [x] listFiles, exec, listPlugins, listMarketplaces, getPlanComments response schemas
+- [x] fileRead, generateSessionTitle response schemas
+- [x] Reuse ChannelIdPayload for request_usage_update, speech_to_text, raw_events
 
-#### 15.4 Chrome/Jupyter/Debugger specific response schema
-- [ ] `ensure_chrome_mcp_enabled` callback response
-- [ ] `disable_chrome_mcp` callback response
-- [ ] `enable_jupyter_mcp` callback response
-- [ ] `disable_jupyter_mcp` callback response
-- [ ] `ask_debugger_help` callback response
+#### 15.4 Chrome/Jupyter/Debugger specific response schema — DONE
+- [x] ensureChromeMcp, disableChromeMcp, enableJupyterMcp, disableJupyterMcp, askDebuggerHelp response schemas
+- [x] ClientToServerEvents: **零 inline 型別**
 
 #### 15.5 清理 re-export + 向下相容
 - [ ] `index.ts` re-export 整理：移除不再需要的 re-export
