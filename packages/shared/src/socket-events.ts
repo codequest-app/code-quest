@@ -9,6 +9,9 @@ import type {
   StreamChunk,
 } from './event-types.ts';
 import type {
+  AccountInfo,
+  AuthResult,
+  AuthStatus,
   ChatCreatePayload,
   ChatGetStatePayload,
   ChatInterruptPayload,
@@ -23,20 +26,35 @@ import type {
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
   DebuggerHelpPayload,
+  GitCheckoutPayload,
   GitExecPayload,
+  GitFileChange,
+  GitLogEntry,
   GitUpdateSkippedBranchPayload,
   JupyterMcpControlPayload,
+  LoginPayload,
+  MarketplaceResult,
+  McpAuthenticatePayload,
+  McpAuthResult,
   McpGetServersPayload,
   McpMessagePayload,
   McpOAuthCallbackPayload,
   McpReconnectPayload,
   McpSetEnabledPayload,
   McpSetServersPayload,
+  ModelUsageEntry,
+  NotificationButton,
+  NotificationPayload,
+  NotificationResponse,
+  OAuthCodePayload,
   PlanClosePreviewPayload,
   PlanCommentData,
   PlanCommentPayload,
   PlanGetCommentsPayload,
   PlanRemoveCommentPayload,
+  PluginInstallPayload,
+  PluginResult,
+  PluginTogglePayload,
   SessionDeletePayload,
   SessionForkPayload,
   SessionGetPayload,
@@ -48,16 +66,6 @@ import type {
   SettingsApplyPayload,
 } from './schemas/chat.ts';
 
-export interface ModelUsageEntry {
-  inputTokens?: number;
-  outputTokens?: number;
-  cacheReadInputTokens?: number;
-  cacheCreationInputTokens?: number;
-  costUSD?: number;
-  contextWindow?: number;
-  maxOutputTokens?: number;
-}
-
 export interface ChatStats {
   costUsd?: number;
   durationMs?: number;
@@ -66,24 +74,6 @@ export interface ChatStats {
   numTurns?: number;
   modelUsage?: Record<string, ModelUsageEntry>;
   contextWindow?: number;
-}
-
-export interface NotificationButton {
-  label: string;
-  value: string;
-}
-
-export interface NotificationPayload {
-  id: string;
-  message: string;
-  severity?: 'info' | 'warning' | 'error';
-  buttons?: NotificationButton[];
-  onlyIfNotVisible?: boolean;
-}
-
-export interface NotificationResponse {
-  buttonValue?: string;
-  [key: string]: unknown;
 }
 
 export interface SessionSummary {
@@ -125,22 +115,10 @@ export interface FileSearchResult {
   type: 'file' | 'directory' | 'terminal';
 }
 
-export interface GitFileChange {
-  status: string; // M, A, D, etc.
-  file: string;
-}
-
 export interface GitStatusResult {
   branch: string;
   isClean: boolean;
   changedFiles: GitFileChange[];
-}
-
-export interface GitLogEntry {
-  hash: string;
-  message: string;
-  author: string;
-  date: string;
 }
 
 export interface GitLogResult {
@@ -151,56 +129,8 @@ export interface GitDiffResult {
   diff: string;
 }
 
-export interface GitCheckoutPayload {
-  branch: string;
-}
-
 export interface GitCheckoutResult {
   success: boolean;
-  error?: string;
-}
-
-export interface AuthStatus {
-  authenticated: boolean;
-  user?: { name: string; email?: string };
-  method?: 'api_key' | 'oauth';
-}
-
-export interface AccountInfo {
-  model?: string;
-  email?: string;
-  subscriptionType?: string;
-  authMethod?: string;
-  organization?: string;
-}
-
-export interface LoginPayload {
-  method: 'api_key' | 'oauth';
-}
-
-export interface OAuthCodePayload {
-  code: string;
-  state?: string;
-}
-
-export interface AuthResult {
-  success: boolean;
-  error?: string;
-  authUrl?: string;
-  auth?: {
-    authenticated: boolean;
-    user?: { name: string; email?: string };
-    method?: string;
-  };
-}
-
-export interface McpAuthenticatePayload {
-  channelId: string;
-  serverName: string;
-}
-export interface McpAuthResult {
-  success: boolean;
-  authUrl?: string;
   error?: string;
 }
 
@@ -224,22 +154,6 @@ export interface AvailablePlugin {
   installCount?: number;
 }
 
-export interface PluginInstallPayload {
-  pluginId: string;
-  scope?: 'user' | 'project' | 'local' | 'workspace';
-}
-
-export interface PluginTogglePayload {
-  pluginId: string;
-  enabled: boolean;
-}
-
-export interface PluginResult {
-  success: boolean;
-  needsRestart?: boolean;
-  error?: string;
-}
-
 export type MarketplaceSourceConfig =
   | { source: 'npm'; package: string }
   | { source: 'github'; repo: string }
@@ -257,10 +171,6 @@ export interface MarketplaceInfo {
   };
   pluginCount: number;
   installedCount: number;
-}
-export interface MarketplaceResult {
-  success: boolean;
-  error?: string;
 }
 
 export interface ClientToServerEvents {
@@ -623,69 +533,11 @@ export interface JupyterMcpState {
   status: 'inactive' | 'available' | 'active';
 }
 
-// ── MCP control request/response types ───────────────────────────────────────
-export interface EnsureChromeMcpEnabledRequest {
-  type: 'ensure_chrome_mcp_enabled';
-}
-export interface EnsureChromeMcpEnabledResponse {
-  type: 'ensure_chrome_mcp_enabled_response';
-  success: boolean;
-  reason?: string;
-}
-export interface DisableChromeMcpRequest {
-  type: 'disable_chrome_mcp';
-}
-export interface DisableChromeMcpResponse {
-  type: 'disable_chrome_mcp_response';
-  success: boolean;
-  reason?: string;
-}
-export interface EnableJupyterMcpRequest {
-  type: 'enable_jupyter_mcp';
-}
-export interface EnableJupyterMcpResponse {
-  type: 'enable_jupyter_mcp_response';
-  success: boolean;
-  reason?: string;
-}
-export interface DisableJupyterMcpRequest {
-  type: 'disable_jupyter_mcp';
-}
-export interface DisableJupyterMcpResponse {
-  type: 'disable_jupyter_mcp_response';
-  success: boolean;
-  reason?: string;
-}
-export interface AskDebuggerHelpRequest {
-  type: 'ask_debugger_help';
-}
-export interface AskDebuggerHelpResponse {
-  type: 'ask_debugger_help_response';
-  cancelled: boolean;
-}
-
-// ── Open URL / Open File types ────────────────────────────────────────────────
-export interface OpenUrlRequest {
-  type: 'open_url';
-  url: string;
-}
-export interface OpenUrlResponse {
-  type: 'open_url_response';
-}
 export interface OpenFileLocation {
   startLine?: number;
   endLine?: number;
   searchText?: string;
 }
-export interface OpenFileRequest {
-  type: 'open_file';
-  filePath: string;
-  location?: OpenFileLocation;
-}
-export interface OpenFileResponse {
-  type: 'open_file_response';
-}
-
 /** Full state snapshot pushed by the Extension via `update_state`.
  *  `channelId = ""` → global broadcast; non-empty → per-channel update.
  *  All fields are optional because the extension may send partial updates. */
@@ -728,64 +580,6 @@ export interface UpdateStatePayload {
   effort?: string;
   fastModeState?: string;
 }
-
-/** Discriminated union of all server-initiated push types, matching the Extension protocol. */
-export type ServerPushRequest =
-  | { type: 'update_state'; state: UpdateStatePayload }
-  | {
-      type: 'usage_update';
-      utilization: UsageQuota;
-      error?: { type: string; message: string };
-    }
-  | { type: 'auth_url'; url: string; method: string }
-  | { type: 'session_states_update'; sessions: SessionStateSummary[]; activeSessionId?: string }
-  | {
-      type: 'tool_permission_request';
-      toolName: string;
-      inputs: unknown;
-      suggestions?: unknown[];
-    }
-  | {
-      type: 'show_notification';
-      message: string;
-      severity: 'error' | 'warning' | 'info';
-      buttons?: string[];
-      onlyIfNotVisible?: boolean;
-    }
-  | { type: 'proactive_suggestions_update'; suggestions: string[] }
-  | {
-      type: 'elicitation_request';
-      requestId: string;
-      prompt: string;
-      inputType: 'text' | 'url' | 'select';
-      options?: string[];
-      url?: string;
-    }
-  | {
-      type: 'diff_review_request';
-      toolId: string;
-      oldContent: string;
-      newContent: string;
-      filePath: string;
-    }
-  | {
-      type: 'mcp_message';
-      requestId: string;
-      serverName: string;
-      message: Record<string, unknown>;
-    }
-  | { type: 'open_url'; url: string }
-  | { type: 'open_file'; filePath: string; location?: OpenFileLocation }
-  | {
-      type: 'unknown_control_request';
-      requestId: string;
-      subtype: string;
-      toolName?: string;
-      toolUseId?: string;
-      input?: unknown;
-      suggestions?: unknown[];
-      callbackId?: string;
-    };
 
 export interface ServerToClientEvents {
   // ── Direct streaming events (per-channel content) ──

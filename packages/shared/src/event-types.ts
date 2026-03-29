@@ -7,7 +7,7 @@
 
 // ── Message content blocks (flattened from assistant/user content arrays) ──
 
-export interface TextBlock {
+interface TextBlock {
   type: 'text';
   text: string;
 }
@@ -66,61 +66,6 @@ export interface RateLimitInfo {
   utilization?: Record<string, unknown>;
   overageStatus?: string;
   isUsingOverage?: boolean;
-}
-
-// ── Permission request (tool approval) ──
-
-export interface PermissionRequest {
-  requestId: string;
-  toolName: string;
-  toolUseId?: string;
-  input: unknown;
-  suggestions?: unknown[];
-  callbackId?: string;
-  blockedPath?: string;
-  decisionReason?: string;
-  agentId?: string;
-}
-
-// ── Elicitation request ──
-
-export interface ElicitationRequest {
-  requestId: string;
-  prompt: string;
-  inputType: 'text' | 'url' | 'select';
-  options?: string[];
-  url?: string;
-  elicitationId?: string;
-  mcpServerName?: string;
-  requestedSchema?: Record<string, unknown>;
-}
-
-// ── Diff review request ──
-
-export interface DiffReviewRequest {
-  toolId: string;
-  filePath: string;
-  oldContent: string;
-  newContent: string;
-}
-
-// ── MCP message request ──
-
-export interface McpMessageRequest {
-  requestId: string;
-  serverName: string;
-  message: Record<string, unknown>;
-}
-
-// ── Hook info ──
-
-// ── Hook callback request (forwarded to client for decision) ──
-
-export interface HookCallbackRequest {
-  requestId: string;
-  callbackId: string;
-  input: unknown;
-  toolUseId?: string;
 }
 
 // ── Remote control state ──

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // --- Schemas ---
 
-export const initializeOptionsSchema = z
+const initializeOptionsSchema = z
   .object({
     hooks: z
       .record(
@@ -73,10 +73,6 @@ export const chatCreateSchema = z.object({
 export const chatSendSchema = z.object({
   channelId: z.string(),
   message: z.string().min(1),
-});
-
-export const chatAbortSchema = z.object({
-  channelId: z.string(),
 });
 
 export const chatInterruptSchema = z.object({
@@ -204,12 +200,6 @@ export const chatSetFastModeSchema = z.object({
 });
 export type ChatSetFastModePayload = z.infer<typeof chatSetFastModeSchema>;
 
-export const diffRespondSchema = z.object({
-  channelId: z.string(),
-  requestId: z.string(),
-  accepted: z.boolean(),
-});
-
 export const fileListSchema = z.object({ channelId: z.string(), pattern: z.string() });
 
 export const gitCheckoutSchema = z.object({ branch: z.string().min(1) });
@@ -232,12 +222,6 @@ export const sessionUpdateStateSchema = z.object({
 });
 export type SessionUpdateStatePayload = z.infer<typeof sessionUpdateStateSchema>;
 
-export const chatControlResponseSchema = z.object({
-  channelId: z.string(),
-  requestId: z.string(),
-  response: controlPermissionResponseSchema,
-});
-
 /** Loose schema for chat:respond handler — accepts any response shape
  *  (permission, elicitation, MCP, diff review) */
 export const chatRespondSchema = z.object({
@@ -251,12 +235,10 @@ export type ChatRespondPayload = z.infer<typeof chatRespondSchema>;
 
 export type ChatCreatePayload = z.infer<typeof chatCreateSchema>;
 export type ChatSendPayload = z.infer<typeof chatSendSchema>;
-export type ChatAbortPayload = z.infer<typeof chatAbortSchema>;
 export type ChatInterruptPayload = z.infer<typeof chatInterruptSchema>;
 export type ChatKillPayload = z.infer<typeof chatKillSchema>;
 export type ChatJoinPayload = z.infer<typeof chatJoinSchema>;
 export type ControlPermissionResponse = z.infer<typeof controlPermissionResponseSchema>;
-export type ChatControlResponsePayload = z.infer<typeof chatControlResponseSchema>;
 export type ChatSetPermissionModePayload = z.infer<typeof chatSetPermissionModeSchema>;
 export type ChatSetModelPayload = z.infer<typeof chatSetModelSchema>;
 export type ChatSetThinkingLevelPayload = z.infer<typeof chatSetThinkingLevelSchema>;
@@ -272,7 +254,6 @@ export type SessionRenamePayload = z.infer<typeof sessionRenameSchema>;
 export type SessionDeletePayload = z.infer<typeof sessionDeleteSchema>;
 export type SessionForkPayload = z.infer<typeof sessionForkSchema>;
 export type ChatStopTaskPayload = z.infer<typeof chatStopTaskSchema>;
-export type DiffRespondPayload = z.infer<typeof diffRespondSchema>;
 
 export const sessionListRemoteSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
@@ -286,9 +267,6 @@ export const sessionTeleportSchema = z.object({
   newSessionId: z.string(),
 });
 export type SessionTeleportPayload = z.infer<typeof sessionTeleportSchema>;
-
-export const settingsGetSchema = z.object({});
-export type SettingsGetPayload = z.infer<typeof settingsGetSchema>;
 
 export const settingsApplySchema = z.object({
   channelId: z.string(),
@@ -388,6 +366,126 @@ export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackResp
 
 export const debuggerHelpSchema = z.object({ channelId: z.string() });
 export type DebuggerHelpPayload = z.infer<typeof debuggerHelpSchema>;
+
+// ── Auth ──
+export const loginPayloadSchema = z.object({
+  method: z.enum(['api_key', 'oauth']),
+});
+export type LoginPayload = z.infer<typeof loginPayloadSchema>;
+
+export const oauthCodePayloadSchema = z.object({
+  code: z.string(),
+  state: z.string().optional(),
+});
+export type OAuthCodePayload = z.infer<typeof oauthCodePayloadSchema>;
+
+export const authResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+  authUrl: z.string().optional(),
+  auth: z
+    .object({
+      authenticated: z.boolean(),
+      user: z.object({ name: z.string(), email: z.string().optional() }).optional(),
+      method: z.string().optional(),
+    })
+    .optional(),
+});
+export type AuthResult = z.infer<typeof authResultSchema>;
+
+export const authStatusSchema = z.object({
+  authenticated: z.boolean(),
+  user: z.object({ name: z.string(), email: z.string().optional() }).optional(),
+  method: z.enum(['api_key', 'oauth']).optional(),
+});
+export type AuthStatus = z.infer<typeof authStatusSchema>;
+
+export const accountInfoSchema = z.object({
+  model: z.string().optional(),
+  email: z.string().optional(),
+  subscriptionType: z.string().optional(),
+  authMethod: z.string().optional(),
+  organization: z.string().optional(),
+});
+export type AccountInfo = z.infer<typeof accountInfoSchema>;
+
+// ── MCP Auth Result ──
+export const mcpAuthResultSchema = z.object({
+  success: z.boolean(),
+  authUrl: z.string().optional(),
+  error: z.string().optional(),
+});
+export type McpAuthResult = z.infer<typeof mcpAuthResultSchema>;
+
+// ── Plugin / Marketplace Results ──
+export const pluginResultSchema = z.object({
+  success: z.boolean(),
+  needsRestart: z.boolean().optional(),
+  error: z.string().optional(),
+});
+export type PluginResult = z.infer<typeof pluginResultSchema>;
+
+export const marketplaceResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+export type MarketplaceResult = z.infer<typeof marketplaceResultSchema>;
+
+// ── Model Usage ──
+export const modelUsageEntrySchema = z.object({
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+  cacheReadInputTokens: z.number().optional(),
+  cacheCreationInputTokens: z.number().optional(),
+  costUSD: z.number().optional(),
+  contextWindow: z.number().optional(),
+  maxOutputTokens: z.number().optional(),
+});
+export type ModelUsageEntry = z.infer<typeof modelUsageEntrySchema>;
+
+// ── Git ──
+export const gitFileChangeSchema = z.object({
+  status: z.string(),
+  file: z.string(),
+});
+export type GitFileChange = z.infer<typeof gitFileChangeSchema>;
+
+export const gitLogEntrySchema = z.object({
+  hash: z.string(),
+  message: z.string(),
+  author: z.string(),
+  date: z.string(),
+});
+export type GitLogEntry = z.infer<typeof gitLogEntrySchema>;
+
+// ── Notifications ──
+export const notificationButtonSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+export type NotificationButton = z.infer<typeof notificationButtonSchema>;
+
+export const notificationPayloadSchema = z.object({
+  id: z.string(),
+  message: z.string(),
+  severity: z.enum(['info', 'warning', 'error']).optional(),
+  buttons: z.array(notificationButtonSchema).optional(),
+  onlyIfNotVisible: z.boolean().optional(),
+});
+export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
+
+export const notificationResponseSchema = z
+  .object({
+    buttonValue: z.string().optional(),
+  })
+  .passthrough();
+export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
+
+// ── Existing schemas that now get inferred types ──
+export type PluginInstallPayload = z.infer<typeof pluginInstallSchema>;
+export type PluginTogglePayload = z.infer<typeof pluginToggleSchema>;
+export type GitCheckoutPayload = z.infer<typeof gitCheckoutSchema>;
+export type McpAuthenticatePayload = z.infer<typeof mcpAuthenticateSchema>;
 
 // ── Terminal Requests ──
 export const terminalGetContentsSchema = z.object({
