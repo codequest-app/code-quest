@@ -1,8 +1,11 @@
 import type {
+  ActionOpenFilePayload,
+  ActionOpenUrlPayload,
   AddMarketplacePayload,
   AskDebuggerHelpResponse,
   AuthResult,
   AuthStatus,
+  CancelRequestEventPayload,
   CancelRequestPayload,
   ChannelIdPayload,
   ChatCancelAsyncMessagePayload,
@@ -24,17 +27,25 @@ import type {
   ChatSetThinkingLevelPayload,
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
-  ContentBlock,
+  CloseChannelPayload,
+  ControlCancelPayload,
+  ControlDiffReviewPayload,
+  ControlElicitationPayload,
+  ControlHookCallbackPayload,
+  ControlMcpPayload,
+  ControlPermissionPayload,
   ControlResponse,
   DebuggerHelpPayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
   EnableJupyterMcpResponse,
   EnsureChromeMcpResponse,
+  ErrorMessagePayload,
   ExecResponse,
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
+  FileUpdatedPayload,
   ForkConversationResponse,
   GenerateSessionTitleResponse,
   GetClaudeStateResponse,
@@ -48,8 +59,6 @@ import type {
   GitLogResult,
   GitStatusResult,
   GitUpdateSkippedBranchPayload,
-  HookResponseInfo,
-  HookStartedInfo,
   InitResponse,
   JupyterMcpControlPayload,
   ListFilesResponse,
@@ -66,9 +75,16 @@ import type {
   McpReconnectPayload,
   McpSetEnabledPayload,
   McpSetServersPayload,
+  MessageAssistantPayload,
+  MessageResultPayload,
+  MessageUserPayload,
+  NotificationAuthStatusPayload,
+  NotificationAuthUrlPayload,
+  NotificationShowPayload,
+  NotificationToastPayload,
   OAuthCodePayload,
   PlanClosePreviewPayload,
-  PlanCommentData,
+  PlanCommentEventPayload,
   PlanCommentPayload,
   PlanGetCommentsPayload,
   PlanRemoveCommentPayload,
@@ -76,34 +92,55 @@ import type {
   PluginResult,
   PluginTogglePayload,
   PluginUninstallPayload,
-  RateLimitInfo,
+  RawEventPayload,
   RawEventsResponse,
   RefreshMarketplacePayload,
-  RemoteControlStateInfo,
+  RemoveCommentPayload,
   RemoveMarketplacePayload,
+  SessionClosedPayload,
+  SessionCreatedPayload,
+  SessionDeadPayload,
   SessionDeletePayload,
   SessionForkPayload,
   SessionGetPayload,
+  SessionInitPayload,
   SessionJoinResponse,
   SessionLaunchResponse,
   SessionListPayload,
   SessionListRemotePayload,
   SessionListResponse,
   SessionRenamePayload,
-  SessionStateSummary,
-  SessionStats,
+  SessionStatesPayload,
+  SessionStatusPayload,
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
-  StreamChunk,
+  SpeechToTextMessagePayload,
+  StateUsagePayload,
+  StreamBlockStartPayload,
+  StreamChunkPayload,
+  StreamEndPayload,
+  StreamTextPayload,
+  StreamToolSummaryPayload,
   SuccessResponse,
+  SystemApiRetryPayload,
+  SystemAvailableModelsPayload,
+  SystemCompactBoundaryPayload,
+  SystemExperimentGatesPayload,
+  SystemFileUpdatedPayload,
+  SystemHookResponsePayload,
+  SystemHookStartedPayload,
+  SystemRateLimitPayload,
+  SystemRemoteControlPayload,
+  SystemTaskNotificationPayload,
+  SystemTaskProgressPayload,
+  SystemTaskStartedPayload,
   TeleportSessionResponse,
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
   TerminalOpenClaudeResponse,
   UpdateStatePayload,
-  UsageQuota,
 } from './schemas/chat.ts';
 
 export interface ClientToServerEvents {
@@ -329,28 +366,20 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
   // ── Direct streaming events (per-channel content) ──
-  close_channel: (payload: { channelId: string; error?: string }) => void;
-  cancel_request: (payload: { channelId: string; targetRequestId: string }) => void;
-  file_updated: (payload: {
-    channelId: string;
-    filePath: string;
-    oldContent?: string | null;
-    newContent?: string | null;
-  }) => void;
-  plan_comment: (payload: { channelId: string; comment: PlanCommentData }) => void;
-  removeComment: (payload: { channelId: string; commentId: string }) => void;
+  close_channel: (payload: CloseChannelPayload) => void;
+  cancel_request: (payload: CancelRequestEventPayload) => void;
+  file_updated: (payload: FileUpdatedPayload) => void;
+  plan_comment: (payload: PlanCommentEventPayload) => void;
+  removeComment: (payload: RemoveCommentPayload) => void;
 
   // ── Aligned: Speech-to-Text ──
-  speech_to_text_message: (payload: { channelId: string; text: string; done: boolean }) => void;
+  speech_to_text_message: (payload: SpeechToTextMessagePayload) => void;
 
   // ── Session lifecycle ──
-  'session:created': (payload: { channelId: string }) => void;
-  'session:closed': (payload: { channelId: string; error?: string }) => void;
-  'session:dead': (payload: { channelId: string }) => void;
-  'session:states': (payload: {
-    sessions: SessionStateSummary[];
-    activeSessionId?: string;
-  }) => void;
+  'session:created': (payload: SessionCreatedPayload) => void;
+  'session:closed': (payload: SessionClosedPayload) => void;
+  'session:dead': (payload: SessionDeadPayload) => void;
+  'session:states': (payload: SessionStatesPayload) => void;
 
   // ══════════════════════════════════════════════════════════
   // Named socket events (type:subtype format)
@@ -358,190 +387,60 @@ export interface ServerToClientEvents {
   // ══════════════════════════════════════════════════════════
 
   // ── Messages ──
-  'message:assistant': (payload: {
-    channelId: string;
-    content: ContentBlock[];
-    parentToolUseId?: string;
-  }) => void;
-  'message:user': (payload: {
-    channelId: string;
-    content: ContentBlock[];
-    parentToolUseId?: string;
-  }) => void;
-  'message:result': (payload: {
-    channelId: string;
-    stats: SessionStats;
-    errors?: string[];
-    isError?: boolean;
-    subtype?: string;
-  }) => void;
+  'message:assistant': (payload: MessageAssistantPayload) => void;
+  'message:user': (payload: MessageUserPayload) => void;
+  'message:result': (payload: MessageResultPayload) => void;
 
   // ── Streaming ──
-  'stream:chunk': (payload: {
-    channelId: string;
-    chunk: StreamChunk;
-    parentToolUseId?: string;
-  }) => void;
-  'stream:end': (payload: { channelId: string }) => void;
-  'stream:text': (payload: { channelId: string; text: string }) => void;
-  'stream:tool_summary': (payload: { channelId: string; toolSummary: string }) => void;
-  'stream:block_start': (payload: {
-    channelId: string;
-    index: number;
-    blockType: string;
-    contentBlock?: Record<string, unknown>;
-    parentToolUseId?: string;
-  }) => void;
+  'stream:chunk': (payload: StreamChunkPayload) => void;
+  'stream:end': (payload: StreamEndPayload) => void;
+  'stream:text': (payload: StreamTextPayload) => void;
+  'stream:tool_summary': (payload: StreamToolSummaryPayload) => void;
+  'stream:block_start': (payload: StreamBlockStartPayload) => void;
 
   // ── Session (extends existing session:* pattern) ──
-  'session:init': (payload: {
-    channelId: string;
-    sessionId: string;
-    model?: string;
-    tools?: string[];
-    permissionMode?: string;
-    fastModeState?: unknown;
-    slashCommands?: string[];
-    mcpServers?: Array<{ name: string; status: string }>;
-    config: Record<string, unknown>;
-  }) => void;
-  'session:status': (payload: {
-    channelId: string;
-    status: string;
-    permissionMode?: string;
-  }) => void;
+  'session:init': (payload: SessionInitPayload) => void;
+  'session:status': (payload: SessionStatusPayload) => void;
 
   // ── Control ──
-  'control:permission': (payload: {
-    channelId: string;
-    requestId: string;
-    toolName: string;
-    toolUseId?: string;
-    input: unknown;
-    suggestions?: unknown[];
-    callbackId?: string;
-    blockedPath?: string;
-    decisionReason?: string;
-    agentId?: string;
-  }) => void;
-  'control:elicitation': (payload: {
-    channelId: string;
-    requestId: string;
-    prompt: string;
-    inputType: 'text' | 'url' | 'select';
-    options?: string[];
-    url?: string;
-    elicitationId?: string;
-    mcpServerName?: string;
-    requestedSchema?: Record<string, unknown>;
-  }) => void;
-  'control:diff_review': (payload: {
-    channelId: string;
-    requestId?: string;
-    toolId: string;
-    filePath: string;
-    oldContent: string;
-    newContent: string;
-  }) => void;
-  'control:mcp': (payload: {
-    channelId: string;
-    requestId: string;
-    serverName: string;
-    message: Record<string, unknown>;
-  }) => void;
-  'control:cancel': (payload: { channelId: string; requestId: string }) => void;
-  'control:hook_callback': (payload: {
-    channelId: string;
-    requestId: string;
-    callbackId: string;
-    input: unknown;
-    toolUseId?: string;
-  }) => void;
+  'control:permission': (payload: ControlPermissionPayload) => void;
+  'control:elicitation': (payload: ControlElicitationPayload) => void;
+  'control:diff_review': (payload: ControlDiffReviewPayload) => void;
+  'control:mcp': (payload: ControlMcpPayload) => void;
+  'control:cancel': (payload: ControlCancelPayload) => void;
+  'control:hook_callback': (payload: ControlHookCallbackPayload) => void;
 
   // ── System ──
-  'system:hook_started': (payload: { channelId: string; hook: HookStartedInfo }) => void;
-  'system:hook_response': (payload: { channelId: string; hook: HookResponseInfo }) => void;
-  'system:task_started': (payload: {
-    channelId: string;
-    description: string;
-    taskType?: string;
-  }) => void;
-  'system:task_progress': (payload: {
-    channelId: string;
-    taskId: string;
-    toolUseId?: string;
-    description?: string;
-    lastToolName?: string;
-    usage?: Record<string, unknown>;
-  }) => void;
-  'system:task_notification': (payload: {
-    channelId: string;
-    taskId: string;
-    toolUseId?: string;
-    status?: string;
-    outputFile?: string;
-    summary?: string;
-    usage?: Record<string, unknown>;
-  }) => void;
-  'system:compact_boundary': (payload: { channelId: string; preservedSegment?: boolean }) => void;
-  'system:rate_limit': (payload: { channelId: string; info: RateLimitInfo }) => void;
-  'system:api_retry': (payload: {
-    channelId: string;
-    attempt: number;
-    maxRetries: number;
-    retryDelayMs?: number;
-    errorStatus?: number;
-    error?: string;
-  }) => void;
-  'system:file_updated': (payload: {
-    channelId: string;
-    filePath: string;
-    oldContent?: string | null;
-    newContent?: string | null;
-  }) => void;
-  'system:experiment_gates': (payload: {
-    channelId: string;
-    gates: Record<string, unknown>;
-  }) => void;
-  'system:available_models': (payload: { channelId: string; models: unknown[] }) => void;
-  'system:remote_control': (payload: { channelId: string; info: RemoteControlStateInfo }) => void;
+  'system:hook_started': (payload: SystemHookStartedPayload) => void;
+  'system:hook_response': (payload: SystemHookResponsePayload) => void;
+  'system:task_started': (payload: SystemTaskStartedPayload) => void;
+  'system:task_progress': (payload: SystemTaskProgressPayload) => void;
+  'system:task_notification': (payload: SystemTaskNotificationPayload) => void;
+  'system:compact_boundary': (payload: SystemCompactBoundaryPayload) => void;
+  'system:rate_limit': (payload: SystemRateLimitPayload) => void;
+  'system:api_retry': (payload: SystemApiRetryPayload) => void;
+  'system:file_updated': (payload: SystemFileUpdatedPayload) => void;
+  'system:experiment_gates': (payload: SystemExperimentGatesPayload) => void;
+  'system:available_models': (payload: SystemAvailableModelsPayload) => void;
+  'system:remote_control': (payload: SystemRemoteControlPayload) => void;
 
   // ── Notifications ──
-  'notification:toast': (payload: { channelId: string; message: string }) => void;
-  'notification:show': (payload: {
-    channelId: string;
-    message: string;
-    severity: 'error' | 'warning' | 'info';
-    buttons?: string[];
-    onlyIfNotVisible?: boolean;
-  }) => void;
-  'notification:auth_url': (payload: { channelId: string; url: string; method: string }) => void;
-  'notification:auth_status': (payload: {
-    channelId: string;
-    status: string;
-    output?: string;
-    account?: Record<string, unknown>;
-  }) => void;
+  'notification:toast': (payload: NotificationToastPayload) => void;
+  'notification:show': (payload: NotificationShowPayload) => void;
+  'notification:auth_url': (payload: NotificationAuthUrlPayload) => void;
+  'notification:auth_status': (payload: NotificationAuthStatusPayload) => void;
 
   // ── Actions ──
-  'action:open_url': (payload: { channelId: string; url: string }) => void;
-  'action:open_file': (payload: {
-    channelId: string;
-    filePath: string;
-    location?: { startLine?: number; endLine?: number; searchText?: string };
-  }) => void;
+  'action:open_url': (payload: ActionOpenUrlPayload) => void;
+  'action:open_file': (payload: ActionOpenFilePayload) => void;
 
   // ── Error ──
-  'error:message': (payload: { channelId: string; message: string }) => void;
+  'error:message': (payload: ErrorMessagePayload) => void;
 
   // ── Raw / unknown ──
-  'raw:event': (payload: {
-    channelId: string;
-    rawType: string;
-    data: Record<string, unknown>;
-  }) => void;
+  'raw:event': (payload: RawEventPayload) => void;
 
   // ── State (replaces request-based state updates) ──
   'state:update': (payload: UpdateStatePayload) => void;
-  'state:usage': (payload: { channelId: string; usage: UsageQuota }) => void;
+  'state:usage': (payload: StateUsagePayload) => void;
 }

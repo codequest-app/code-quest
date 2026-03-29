@@ -1081,3 +1081,358 @@ export const modelInfoSchema = z.object({
   supportsFastMode: z.boolean().optional(),
 });
 export type ModelInfo = z.infer<typeof modelInfoSchema>;
+
+// ── Server→Client event payload schemas ──
+
+export const closeChannelPayloadSchema = z.object({
+  channelId: z.string(),
+  error: z.string().optional(),
+});
+export type CloseChannelPayload = z.infer<typeof closeChannelPayloadSchema>;
+
+export const cancelRequestEventPayloadSchema = z.object({
+  channelId: z.string(),
+  targetRequestId: z.string(),
+});
+export type CancelRequestEventPayload = z.infer<typeof cancelRequestEventPayloadSchema>;
+
+export const fileUpdatedPayloadSchema = z.object({
+  channelId: z.string(),
+  filePath: z.string(),
+  oldContent: z.string().nullable().optional(),
+  newContent: z.string().nullable().optional(),
+});
+export type FileUpdatedPayload = z.infer<typeof fileUpdatedPayloadSchema>;
+
+export const planCommentEventPayloadSchema = z.object({
+  channelId: z.string(),
+  comment: planCommentDataSchema,
+});
+export type PlanCommentEventPayload = z.infer<typeof planCommentEventPayloadSchema>;
+
+export const removeCommentPayloadSchema = z.object({
+  channelId: z.string(),
+  commentId: z.string(),
+});
+export type RemoveCommentPayload = z.infer<typeof removeCommentPayloadSchema>;
+
+export const speechToTextMessagePayloadSchema = z.object({
+  channelId: z.string(),
+  text: z.string(),
+  done: z.boolean(),
+});
+export type SpeechToTextMessagePayload = z.infer<typeof speechToTextMessagePayloadSchema>;
+
+export const sessionCreatedPayloadSchema = z.object({
+  channelId: z.string(),
+});
+export type SessionCreatedPayload = z.infer<typeof sessionCreatedPayloadSchema>;
+
+export const sessionClosedPayloadSchema = z.object({
+  channelId: z.string(),
+  error: z.string().optional(),
+});
+export type SessionClosedPayload = z.infer<typeof sessionClosedPayloadSchema>;
+
+export const sessionDeadPayloadSchema = z.object({
+  channelId: z.string(),
+});
+export type SessionDeadPayload = z.infer<typeof sessionDeadPayloadSchema>;
+
+export const sessionStatesPayloadSchema = z.object({
+  sessions: z.array(sessionStateSummarySchema),
+  activeSessionId: z.string().optional(),
+});
+export type SessionStatesPayload = z.infer<typeof sessionStatesPayloadSchema>;
+
+export const messageAssistantPayloadSchema = z.object({
+  channelId: z.string(),
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+});
+export type MessageAssistantPayload = z.infer<typeof messageAssistantPayloadSchema>;
+
+export const messageUserPayloadSchema = z.object({
+  channelId: z.string(),
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+});
+export type MessageUserPayload = z.infer<typeof messageUserPayloadSchema>;
+
+export const messageResultPayloadSchema = z.object({
+  channelId: z.string(),
+  stats: sessionStatsSchema,
+  errors: z.array(z.string()).optional(),
+  isError: z.boolean().optional(),
+  subtype: z.string().optional(),
+});
+export type MessageResultPayload = z.infer<typeof messageResultPayloadSchema>;
+
+export const streamChunkPayloadSchema = z.object({
+  channelId: z.string(),
+  chunk: streamChunkSchema,
+  parentToolUseId: z.string().optional(),
+});
+export type StreamChunkPayload = z.infer<typeof streamChunkPayloadSchema>;
+
+export const streamEndPayloadSchema = z.object({
+  channelId: z.string(),
+});
+export type StreamEndPayload = z.infer<typeof streamEndPayloadSchema>;
+
+export const streamTextPayloadSchema = z.object({
+  channelId: z.string(),
+  text: z.string(),
+});
+export type StreamTextPayload = z.infer<typeof streamTextPayloadSchema>;
+
+export const streamToolSummaryPayloadSchema = z.object({
+  channelId: z.string(),
+  toolSummary: z.string(),
+});
+export type StreamToolSummaryPayload = z.infer<typeof streamToolSummaryPayloadSchema>;
+
+export const streamBlockStartPayloadSchema = z.object({
+  channelId: z.string(),
+  index: z.number(),
+  blockType: z.string(),
+  contentBlock: z.record(z.string(), z.unknown()).optional(),
+  parentToolUseId: z.string().optional(),
+});
+export type StreamBlockStartPayload = z.infer<typeof streamBlockStartPayloadSchema>;
+
+export const sessionInitPayloadSchema = z.object({
+  channelId: z.string(),
+  sessionId: z.string(),
+  model: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  permissionMode: z.string().optional(),
+  fastModeState: z.unknown().optional(),
+  slashCommands: z.array(z.string()).optional(),
+  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+  config: z.record(z.string(), z.unknown()),
+});
+export type SessionInitPayload = z.infer<typeof sessionInitPayloadSchema>;
+
+export const sessionStatusPayloadSchema = z.object({
+  channelId: z.string(),
+  status: z.string(),
+  permissionMode: z.string().optional(),
+});
+export type SessionStatusPayload = z.infer<typeof sessionStatusPayloadSchema>;
+
+export const controlPermissionPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  toolName: z.string(),
+  toolUseId: z.string().optional(),
+  input: z.unknown(),
+  suggestions: z.array(z.unknown()).optional(),
+  callbackId: z.string().optional(),
+  blockedPath: z.string().optional(),
+  decisionReason: z.string().optional(),
+  agentId: z.string().optional(),
+});
+export type ControlPermissionPayload = z.infer<typeof controlPermissionPayloadSchema>;
+
+export const controlElicitationPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  prompt: z.string(),
+  inputType: z.enum(['text', 'url', 'select']),
+  options: z.array(z.string()).optional(),
+  url: z.string().optional(),
+  elicitationId: z.string().optional(),
+  mcpServerName: z.string().optional(),
+  requestedSchema: z.record(z.string(), z.unknown()).optional(),
+});
+export type ControlElicitationPayload = z.infer<typeof controlElicitationPayloadSchema>;
+
+export const controlDiffReviewPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string().optional(),
+  toolId: z.string(),
+  filePath: z.string(),
+  oldContent: z.string(),
+  newContent: z.string(),
+});
+export type ControlDiffReviewPayload = z.infer<typeof controlDiffReviewPayloadSchema>;
+
+export const controlMcpPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  serverName: z.string(),
+  message: z.record(z.string(), z.unknown()),
+});
+export type ControlMcpPayload = z.infer<typeof controlMcpPayloadSchema>;
+
+export const controlCancelPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+});
+export type ControlCancelPayload = z.infer<typeof controlCancelPayloadSchema>;
+
+export const controlHookCallbackPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  callbackId: z.string(),
+  input: z.unknown(),
+  toolUseId: z.string().optional(),
+});
+export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPayloadSchema>;
+
+export const systemHookStartedPayloadSchema = z.object({
+  channelId: z.string(),
+  hook: hookStartedInfoSchema,
+});
+export type SystemHookStartedPayload = z.infer<typeof systemHookStartedPayloadSchema>;
+
+export const systemHookResponsePayloadSchema = z.object({
+  channelId: z.string(),
+  hook: hookResponseInfoSchema,
+});
+export type SystemHookResponsePayload = z.infer<typeof systemHookResponsePayloadSchema>;
+
+export const systemTaskStartedPayloadSchema = z.object({
+  channelId: z.string(),
+  description: z.string(),
+  taskType: z.string().optional(),
+});
+export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;
+
+export const systemTaskProgressPayloadSchema = z.object({
+  channelId: z.string(),
+  taskId: z.string(),
+  toolUseId: z.string().optional(),
+  description: z.string().optional(),
+  lastToolName: z.string().optional(),
+  usage: z.record(z.string(), z.unknown()).optional(),
+});
+export type SystemTaskProgressPayload = z.infer<typeof systemTaskProgressPayloadSchema>;
+
+export const systemTaskNotificationPayloadSchema = z.object({
+  channelId: z.string(),
+  taskId: z.string(),
+  toolUseId: z.string().optional(),
+  status: z.string().optional(),
+  outputFile: z.string().optional(),
+  summary: z.string().optional(),
+  usage: z.record(z.string(), z.unknown()).optional(),
+});
+export type SystemTaskNotificationPayload = z.infer<typeof systemTaskNotificationPayloadSchema>;
+
+export const systemCompactBoundaryPayloadSchema = z.object({
+  channelId: z.string(),
+  preservedSegment: z.boolean().optional(),
+});
+export type SystemCompactBoundaryPayload = z.infer<typeof systemCompactBoundaryPayloadSchema>;
+
+export const systemRateLimitPayloadSchema = z.object({
+  channelId: z.string(),
+  info: rateLimitInfoSchema,
+});
+export type SystemRateLimitPayload = z.infer<typeof systemRateLimitPayloadSchema>;
+
+export const systemApiRetryPayloadSchema = z.object({
+  channelId: z.string(),
+  attempt: z.number(),
+  maxRetries: z.number(),
+  retryDelayMs: z.number().optional(),
+  errorStatus: z.number().optional(),
+  error: z.string().optional(),
+});
+export type SystemApiRetryPayload = z.infer<typeof systemApiRetryPayloadSchema>;
+
+export const systemFileUpdatedPayloadSchema = z.object({
+  channelId: z.string(),
+  filePath: z.string(),
+  oldContent: z.string().nullable().optional(),
+  newContent: z.string().nullable().optional(),
+});
+export type SystemFileUpdatedPayload = z.infer<typeof systemFileUpdatedPayloadSchema>;
+
+export const systemExperimentGatesPayloadSchema = z.object({
+  channelId: z.string(),
+  gates: z.record(z.string(), z.unknown()),
+});
+export type SystemExperimentGatesPayload = z.infer<typeof systemExperimentGatesPayloadSchema>;
+
+export const systemAvailableModelsPayloadSchema = z.object({
+  channelId: z.string(),
+  models: z.array(z.unknown()),
+});
+export type SystemAvailableModelsPayload = z.infer<typeof systemAvailableModelsPayloadSchema>;
+
+export const systemRemoteControlPayloadSchema = z.object({
+  channelId: z.string(),
+  info: remoteControlStateInfoSchema,
+});
+export type SystemRemoteControlPayload = z.infer<typeof systemRemoteControlPayloadSchema>;
+
+export const notificationToastPayloadSchema = z.object({
+  channelId: z.string(),
+  message: z.string(),
+});
+export type NotificationToastPayload = z.infer<typeof notificationToastPayloadSchema>;
+
+export const notificationShowPayloadSchema = z.object({
+  channelId: z.string(),
+  message: z.string(),
+  severity: z.enum(['error', 'warning', 'info']),
+  buttons: z.array(z.string()).optional(),
+  onlyIfNotVisible: z.boolean().optional(),
+});
+export type NotificationShowPayload = z.infer<typeof notificationShowPayloadSchema>;
+
+export const notificationAuthUrlPayloadSchema = z.object({
+  channelId: z.string(),
+  url: z.string(),
+  method: z.string(),
+});
+export type NotificationAuthUrlPayload = z.infer<typeof notificationAuthUrlPayloadSchema>;
+
+export const notificationAuthStatusPayloadSchema = z.object({
+  channelId: z.string(),
+  status: z.string(),
+  output: z.string().optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+export type NotificationAuthStatusPayload = z.infer<typeof notificationAuthStatusPayloadSchema>;
+
+export const actionOpenUrlPayloadSchema = z.object({
+  channelId: z.string(),
+  url: z.string(),
+});
+export type ActionOpenUrlPayload = z.infer<typeof actionOpenUrlPayloadSchema>;
+
+export const actionOpenFilePayloadSchema = z.object({
+  channelId: z.string(),
+  filePath: z.string(),
+  location: z
+    .object({
+      startLine: z.number().optional(),
+      endLine: z.number().optional(),
+      searchText: z.string().optional(),
+    })
+    .optional(),
+});
+export type ActionOpenFilePayload = z.infer<typeof actionOpenFilePayloadSchema>;
+
+export const errorMessagePayloadSchema = z.object({
+  channelId: z.string(),
+  message: z.string(),
+});
+export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
+
+export const rawEventPayloadSchema = z.object({
+  channelId: z.string(),
+  rawType: z.string(),
+  data: z.record(z.string(), z.unknown()),
+});
+export type RawEventPayload = z.infer<typeof rawEventPayloadSchema>;
+
+export const stateUsagePayloadSchema = z.object({
+  channelId: z.string(),
+  usage: usageQuotaSchema,
+});
+export type StateUsagePayload = z.infer<typeof stateUsagePayloadSchema>;
