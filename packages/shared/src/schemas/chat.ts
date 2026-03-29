@@ -967,3 +967,117 @@ export const generateSessionTitleResponseSchema = z
   })
   .passthrough();
 export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;
+
+// ── Message content blocks ──
+
+export const textBlockSchema = z.object({
+  type: z.literal('text'),
+  text: z.string(),
+});
+export type TextBlock = z.infer<typeof textBlockSchema>;
+
+export const thinkingBlockSchema = z.object({
+  type: z.literal('thinking'),
+  thinking: z.string(),
+});
+export type ThinkingBlock = z.infer<typeof thinkingBlockSchema>;
+
+export const toolUseBlockSchema = z.object({
+  type: z.literal('tool_use'),
+  toolId: z.string(),
+  toolName: z.string(),
+  input: z.unknown(),
+});
+export type ToolUseBlock = z.infer<typeof toolUseBlockSchema>;
+
+export const toolResultBlockSchema = z.object({
+  type: z.literal('tool_result'),
+  toolUseId: z.string(),
+  toolName: z.string().optional(),
+  content: z.unknown(),
+});
+export type ToolResultBlock = z.infer<typeof toolResultBlockSchema>;
+
+export const contentBlockSchema = z.union([
+  textBlockSchema,
+  thinkingBlockSchema,
+  toolUseBlockSchema,
+  toolResultBlockSchema,
+]);
+export type ContentBlock = z.infer<typeof contentBlockSchema>;
+
+// ── Stream chunks ──
+
+export const streamChunkSchema = z.object({
+  kind: z.enum(['text', 'thinking', 'input_json', 'citations', 'signature']),
+  content: z.string(),
+  citations: z.array(z.unknown()).optional(),
+});
+export type StreamChunk = z.infer<typeof streamChunkSchema>;
+
+// ── Session stats ──
+
+export const sessionStatsSchema = z.object({
+  totalCostUsd: z.number().optional(),
+  durationMs: z.number().optional(),
+  inputTokens: z.number().optional(),
+  outputTokens: z.number().optional(),
+  cacheReadInputTokens: z.number().optional(),
+  cacheCreationInputTokens: z.number().optional(),
+  numTurns: z.number().optional(),
+  modelUsage: z.record(z.string(), z.unknown()).optional(),
+});
+export type SessionStats = z.infer<typeof sessionStatsSchema>;
+
+// ── Rate limit info ──
+
+export const rateLimitInfoSchema = z.object({
+  status: z.string(),
+  rateLimitType: z.string().optional(),
+  resetsAt: z.string().optional(),
+  utilization: z.record(z.string(), z.unknown()).optional(),
+  overageStatus: z.string().optional(),
+  isUsingOverage: z.boolean().optional(),
+});
+export type RateLimitInfo = z.infer<typeof rateLimitInfoSchema>;
+
+// ── Remote control state ──
+
+export const remoteControlStateInfoSchema = z.object({
+  state: z.enum(['ready', 'disconnected', 'error']),
+  detail: z.string().optional(),
+});
+export type RemoteControlStateInfo = z.infer<typeof remoteControlStateInfoSchema>;
+
+// ── Hook info ──
+
+export const hookStartedInfoSchema = z.object({
+  hookName: z.string(),
+  hookId: z.string(),
+  hookEvent: z.string(),
+});
+export type HookStartedInfo = z.infer<typeof hookStartedInfoSchema>;
+
+export const hookResponseInfoSchema = z.object({
+  hookName: z.string(),
+  hookId: z.string(),
+  hookEvent: z.string(),
+  hookEventName: z.string().optional(),
+  output: z.string().optional(),
+  additionalContext: z.string().optional(),
+});
+export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
+
+// ── Model info ──
+
+export const modelInfoSchema = z.object({
+  value: z.string(),
+  label: z.string().optional(),
+  displayName: z.string().optional(),
+  description: z.string().optional(),
+  supportsEffort: z.boolean().optional(),
+  supportedEffortLevels: z.array(z.string()).optional(),
+  supportsAdaptiveThinking: z.boolean().optional(),
+  supportsFastMode: z.boolean().optional(),
+});
+export type ModelInfo = z.infer<typeof modelInfoSchema>;

@@ -226,8 +226,23 @@
 - [x] ensureChromeMcp, disableChromeMcp, enableJupyterMcp, disableJupyterMcp, askDebuggerHelp response schemas
 - [x] ClientToServerEvents: **零 inline 型別**
 
-#### 15.5 清理 re-export + 向下相容
-- [ ] `index.ts` re-export 整理：移除不再需要的 re-export
-- [ ] 確認 server/client/summoner 所有 import 都從正確位置引入
-- [ ] 確認 `event-types.ts` 的 `ControlResponse` re-export 不會造成 circular dependency
-- [ ] 向下相容：確認 client 端現有 import 路徑不變
+#### 15.5 清理 re-export + 向下相容 — DONE
+- [x] ControlResponse 直接從 chat.ts 匯出，移除 event-types.ts re-export
+- [x] 確認零 deep import（所有 import 走 @code-quest/shared barrel）
+- [x] integration tests 合併到 handler tests（clean-relay-protocol, named-event-integration 刪除）
+- [x] socket-events.ts 所有 interface → Zod schema（20 個）
+
+#### 15.6 event-types.ts 剩餘 interface → Zod schema — DONE
+- [x] TextBlock, ThinkingBlock, ToolUseBlock, ToolResultBlock → Zod schema
+- [x] ContentBlock → `z.union([text, thinking, toolUse, toolResult])`
+- [x] StreamChunk, SessionStats（與 ChatStats 不同，保留兩個）
+- [x] RateLimitInfo, RemoteControlStateInfo, HookStartedInfo, HookResponseInfo, ModelInfo
+- [x] 刪除 event-types.ts（所有型別移到 chat.ts）
+- [x] integration tests 合併到 handler tests：
+  - `named-event-integration.test.ts` → `chat-handler-message.test.ts`（stream:text）
+  - `clean-relay-protocol.test.ts` → `chat-handler-control.test.ts`（input/inputs check）
+  - 其餘 expects 已被 unit tests 覆蓋，刪除
+
+#### 15.7 ServerToClientEvents inline 型別 → Zod schema
+- [ ] 所有 S→C event payload 用 named Zod-inferred 型別
+- [ ] payload 引用 ContentBlock, StreamChunk, SessionStats 等已完成的 schema
