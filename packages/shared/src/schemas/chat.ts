@@ -528,3 +528,230 @@ export const terminalOpenClaudeSchema = z.object({
   cwd: z.string().optional(),
 });
 export type TerminalOpenClaudePayload = z.infer<typeof terminalOpenClaudeSchema>;
+
+// ── Shared payloads ──
+
+export const channelIdPayloadSchema = z.object({ channelId: z.string() });
+export type ChannelIdPayload = z.infer<typeof channelIdPayloadSchema>;
+
+export const cancelRequestPayloadSchema = z.object({ targetRequestId: z.string() });
+export type CancelRequestPayload = z.infer<typeof cancelRequestPayloadSchema>;
+
+export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });
+export type ListPluginsPayload = z.infer<typeof listPluginsPayloadSchema>;
+
+export const fileReadPayloadSchema = z.object({
+  channelId: z.string(),
+  filePath: z.string(),
+});
+export type FileReadPayload = z.infer<typeof fileReadPayloadSchema>;
+
+// ── Response schemas ──
+
+export const getClaudeStateResponseSchema = z
+  .object({
+    success: z.boolean(),
+    state: z.record(z.string(), z.unknown()).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type GetClaudeStateResponse = z.infer<typeof getClaudeStateResponseSchema>;
+
+export const getSessionResponseSchema = z.union([
+  z
+    .object({
+      session: z.record(z.string(), z.unknown()),
+      events: z.array(z.record(z.string(), z.unknown())),
+      meta: z.record(z.string(), z.unknown()),
+    })
+    .passthrough(),
+  z.object({ error: z.string() }),
+]);
+export type GetSessionResponse = z.infer<typeof getSessionResponseSchema>;
+
+export const teleportSessionResponseSchema = z
+  .object({
+    success: z.boolean(),
+    channelId: z.string().optional(),
+    events: z.array(z.record(z.string(), z.unknown())).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type TeleportSessionResponse = z.infer<typeof teleportSessionResponseSchema>;
+
+export const forkConversationResponseSchema = z
+  .object({
+    success: z.boolean(),
+    channelId: z.string().optional(),
+    parentSessionId: z.string().optional(),
+    events: z.array(z.record(z.string(), z.unknown())).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type ForkConversationResponse = z.infer<typeof forkConversationResponseSchema>;
+
+export const ensureChromeMcpResponseSchema = z
+  .object({
+    success: z.boolean(),
+    response: z
+      .object({ type: z.literal('ensure_chrome_mcp_enabled_response'), wasDisabled: z.boolean() })
+      .optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type EnsureChromeMcpResponse = z.infer<typeof ensureChromeMcpResponseSchema>;
+
+export const disableChromeMcpResponseSchema = z
+  .object({
+    success: z.boolean(),
+    response: z
+      .object({ type: z.literal('disable_chrome_mcp_response'), wasEnabled: z.boolean() })
+      .optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type DisableChromeMcpResponse = z.infer<typeof disableChromeMcpResponseSchema>;
+
+export const enableJupyterMcpResponseSchema = z
+  .object({
+    success: z.boolean(),
+    response: z.object({ type: z.literal('enable_jupyter_mcp_response') }).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type EnableJupyterMcpResponse = z.infer<typeof enableJupyterMcpResponseSchema>;
+
+export const disableJupyterMcpResponseSchema = z
+  .object({
+    success: z.boolean(),
+    response: z.object({ type: z.literal('disable_jupyter_mcp_response') }).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type DisableJupyterMcpResponse = z.infer<typeof disableJupyterMcpResponseSchema>;
+
+export const askDebuggerHelpResponseSchema = z
+  .object({
+    success: z.boolean(),
+    response: z.object({ type: z.literal('ask_debugger_help_response') }).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type AskDebuggerHelpResponse = z.infer<typeof askDebuggerHelpResponseSchema>;
+
+export const listFilesResponseSchema = z
+  .object({
+    files: z.array(
+      z.object({
+        path: z.string(),
+        name: z.string(),
+        type: z.enum(['file', 'directory', 'terminal']),
+      }),
+    ),
+  })
+  .passthrough();
+export type ListFilesResponse = z.infer<typeof listFilesResponseSchema>;
+
+export const execResponseSchema = z
+  .object({
+    exitCode: z.number(),
+    stdout: z.string(),
+    stderr: z.string(),
+  })
+  .passthrough();
+export type ExecResponse = z.infer<typeof execResponseSchema>;
+
+export const listPluginsResponseSchema = z
+  .object({
+    installed: z.array(z.record(z.string(), z.unknown())),
+    available: z.array(z.record(z.string(), z.unknown())),
+  })
+  .passthrough();
+export type ListPluginsResponse = z.infer<typeof listPluginsResponseSchema>;
+
+export const listMarketplacesResponseSchema = z
+  .object({
+    marketplaces: z.array(z.record(z.string(), z.unknown())),
+  })
+  .passthrough();
+export type ListMarketplacesResponse = z.infer<typeof listMarketplacesResponseSchema>;
+
+export const getPlanCommentsResponseSchema = z
+  .object({
+    comments: z.array(planCommentDataSchema),
+  })
+  .passthrough();
+export type GetPlanCommentsResponse = z.infer<typeof getPlanCommentsResponseSchema>;
+
+export const fileReadResponseSchema = z.union([
+  z.object({ content: z.string() }),
+  z.object({ error: z.string() }),
+]);
+export type FileReadResponse = z.infer<typeof fileReadResponseSchema>;
+
+export const sessionLaunchResponseSchema = z
+  .object({
+    channelId: z.string(),
+    slashCommands: z.array(z.string()).optional(),
+    models: z.array(z.unknown()).optional(),
+    account: z.record(z.string(), z.unknown()).optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type SessionLaunchResponse = z.infer<typeof sessionLaunchResponseSchema>;
+
+export const sessionJoinResponseSchema = z.union([
+  z
+    .object({
+      channelId: z.string(),
+      state: z.string(),
+      meta: z.record(z.string(), z.unknown()),
+      events: z.array(z.record(z.string(), z.unknown())),
+    })
+    .passthrough(),
+  z.object({ error: z.string() }),
+]);
+export type SessionJoinResponse = z.infer<typeof sessionJoinResponseSchema>;
+
+export const rawEventsResponseSchema = z
+  .object({
+    events: z.array(z.unknown()),
+  })
+  .passthrough();
+export type RawEventsResponse = z.infer<typeof rawEventsResponseSchema>;
+
+export const initResponseSchema = z
+  .object({
+    settings: z.record(z.string(), z.unknown()),
+    sessions: z.array(z.record(z.string(), z.unknown())),
+    activeSessionId: z.string().optional(),
+    models: z.array(z.unknown()).optional(),
+    state: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
+export type InitResponse = z.infer<typeof initResponseSchema>;
+
+export const terminalGetContentsResponseSchema = z
+  .object({
+    content: z.string().nullable(),
+  })
+  .passthrough();
+export type TerminalGetContentsResponse = z.infer<typeof terminalGetContentsResponseSchema>;
+
+export const terminalOpenClaudeResponseSchema = z
+  .object({
+    success: z.boolean(),
+    channelId: z.string().optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type TerminalOpenClaudeResponse = z.infer<typeof terminalOpenClaudeResponseSchema>;
+
+export const generateSessionTitleResponseSchema = z
+  .object({
+    success: z.boolean(),
+    result: z.unknown().optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;

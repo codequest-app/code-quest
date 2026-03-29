@@ -203,19 +203,16 @@
 > Single source of truth：Zod schema → z.infer → Socket.IO typed events。
 > 分 4 batch，每 batch 獨立 commit。
 
-#### 15.1 共用 response schema（消除重複 inline）
-- [ ] `successResponseSchema` — `{ success: boolean; error?: string }` ×10 處
-- [ ] `controlResponseSchema` — `{ success; response?; error? }` ×6 處（已有 ControlResponse in event-types.ts，統一用 Zod）
-- [ ] `sessionListResponseSchema` — `{ sessions: SessionSummary[]; total: number }` ×2 處
-- [ ] ClientToServerEvents callback 型別全部換成 Zod infer
+#### 15.1 共用 response schema（消除重複 inline）— DONE
+- [x] `successResponseSchema` — `{ success: boolean; error?: string }` ×10 處
+- [x] `controlResponseSchema` — `{ success; response?; error? }` ×6 處
+- [x] `sessionListResponseSchema` — `{ sessions; total }` ×2 處
+- [x] ControlResponse 統一：刪 event-types.ts 手寫 interface，re-export from Zod
 
-#### 15.2 已有 Zod schema 但 inline 未引用的（換引用）
-- [ ] `list_files_request` payload → `fileListSchema`
-- [ ] `uninstall_plugin` payload → `pluginUninstallSchema`
-- [ ] `add_marketplace` payload → `addMarketplaceSchema`
-- [ ] `remove/refresh_marketplace` payload → 對應 schema
-- [ ] `git:log` payload → `gitLogSchema`
-- [ ] `chat:respond` payload → `chatRespondSchema`
+#### 15.2 已有 Zod schema 但 inline 未引用的（換引用）— DONE
+- [x] `list_files_request`, `uninstall_plugin`, `add/remove/refresh_marketplace` → 對應 schema
+- [x] `git:log` → `gitLogSchema`, `chat:respond` → `chatRespondSchema`
+- [x] terminal, speech, cancel_async, set_proactive, generate_session_title 等全部換引用
 
 #### 15.3 新建 payload/callback schema
 - [ ] `session:launch` callback → `sessionLaunchResponseSchema`

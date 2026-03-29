@@ -11,8 +11,11 @@ import type {
 import type {
   AccountInfo,
   AddMarketplacePayload,
+  AskDebuggerHelpResponse,
   AuthResult,
   AuthStatus,
+  CancelRequestPayload,
+  ChannelIdPayload,
   ChatCancelAsyncMessagePayload,
   ChatCreatePayload,
   ChatGenerateSessionTitlePayload,
@@ -34,14 +37,31 @@ import type {
   ChromeMcpControlPayload,
   ControlResponse,
   DebuggerHelpPayload,
+  DisableChromeMcpResponse,
+  DisableJupyterMcpResponse,
+  EnableJupyterMcpResponse,
+  EnsureChromeMcpResponse,
+  ExecResponse,
   FileListPayload,
+  FileReadPayload,
+  FileReadResponse,
+  ForkConversationResponse,
+  GenerateSessionTitleResponse,
+  GetClaudeStateResponse,
+  GetPlanCommentsResponse,
+  GetSessionResponse,
   GitCheckoutPayload,
   GitExecPayload,
   GitFileChange,
   GitLogEntry,
   GitLogPayload,
   GitUpdateSkippedBranchPayload,
+  InitResponse,
   JupyterMcpControlPayload,
+  ListFilesResponse,
+  ListMarketplacesResponse,
+  ListPluginsPayload,
+  ListPluginsResponse,
   LoginPayload,
   MarketplaceResult,
   McpAuthenticatePayload,
@@ -66,20 +86,27 @@ import type {
   PluginResult,
   PluginTogglePayload,
   PluginUninstallPayload,
+  RawEventsResponse,
   RefreshMarketplacePayload,
   RemoveMarketplacePayload,
   SessionDeletePayload,
   SessionForkPayload,
   SessionGetPayload,
+  SessionJoinResponse,
+  SessionLaunchResponse,
   SessionListPayload,
   SessionListRemotePayload,
+  SessionListResponse,
   SessionRenamePayload,
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
   SuccessResponse,
+  TeleportSessionResponse,
   TerminalGetContentsPayload,
+  TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
+  TerminalOpenClaudeResponse,
 } from './schemas/chat.ts';
 
 export interface ChatStats {
@@ -200,59 +227,36 @@ export interface ClientToServerEvents {
   set_model: (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
   set_permission_mode: (payload: ChatSetPermissionModePayload) => void;
   set_thinking_level: (payload: ChatSetThinkingLevelPayload) => void;
-  request_usage_update: (payload: { channelId: string }) => void;
+  request_usage_update: (payload: ChannelIdPayload) => void;
   apply_settings: (
     payload: SettingsApplyPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
   get_claude_state: (
     payload: ChatGetStatePayload,
-    callback: (response: {
-      success: boolean;
-      state?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: GetClaudeStateResponse) => void,
   ) => void;
 
   // ── Aligned: Session Management ──
   list_sessions_request: (
     payload: SessionListPayload,
-    callback: (response: { sessions: SessionSummary[]; total: number }) => void,
+    callback: (response: SessionListResponse) => void,
   ) => void;
   list_remote_sessions: (
     payload: SessionListRemotePayload,
-    callback: (response: { sessions: SessionSummary[]; total: number }) => void,
+    callback: (response: SessionListResponse) => void,
   ) => void;
   get_session_request: (
     payload: SessionGetPayload,
-    callback: (
-      response:
-        | {
-            session: SessionSummary;
-            events: SocketEvent[];
-            meta: ChannelMetaCache;
-          }
-        | { error: string },
-    ) => void,
+    callback: (response: GetSessionResponse) => void,
   ) => void;
   teleport_session: (
     payload: SessionTeleportPayload,
-    callback: (response: {
-      success: boolean;
-      channelId?: string;
-      events?: SocketEvent[];
-      error?: string;
-    }) => void,
+    callback: (response: TeleportSessionResponse) => void,
   ) => void;
   fork_conversation: (
     payload: SessionForkPayload,
-    callback: (response: {
-      success: boolean;
-      channelId?: string;
-      parentSessionId?: string;
-      events?: SocketEvent[];
-      error?: string;
-    }) => void,
+    callback: (response: ForkConversationResponse) => void,
   ) => void;
   rename_session: (
     payload: SessionRenamePayload,
@@ -299,49 +303,29 @@ export interface ClientToServerEvents {
   mcp_message: (payload: McpMessagePayload, callback: (response: ControlResponse) => void) => void;
   ensure_chrome_mcp_enabled: (
     payload: ChromeMcpControlPayload,
-    callback: (response: {
-      success: boolean;
-      response?: { type: 'ensure_chrome_mcp_enabled_response'; wasDisabled: boolean };
-      error?: string;
-    }) => void,
+    callback: (response: EnsureChromeMcpResponse) => void,
   ) => void;
   disable_chrome_mcp: (
     payload: ChromeMcpControlPayload,
-    callback: (response: {
-      success: boolean;
-      response?: { type: 'disable_chrome_mcp_response'; wasEnabled: boolean };
-      error?: string;
-    }) => void,
+    callback: (response: DisableChromeMcpResponse) => void,
   ) => void;
   enable_jupyter_mcp: (
     payload: JupyterMcpControlPayload,
-    callback: (response: {
-      success: boolean;
-      response?: { type: 'enable_jupyter_mcp_response' };
-      error?: string;
-    }) => void,
+    callback: (response: EnableJupyterMcpResponse) => void,
   ) => void;
   disable_jupyter_mcp: (
     payload: JupyterMcpControlPayload,
-    callback: (response: {
-      success: boolean;
-      response?: { type: 'disable_jupyter_mcp_response' };
-      error?: string;
-    }) => void,
+    callback: (response: DisableJupyterMcpResponse) => void,
   ) => void;
   ask_debugger_help: (
     payload: DebuggerHelpPayload,
-    callback: (response: {
-      success: boolean;
-      response?: { type: 'ask_debugger_help_response' };
-      error?: string;
-    }) => void,
+    callback: (response: AskDebuggerHelpResponse) => void,
   ) => void;
 
   // ── Aligned: File & Git ──
   list_files_request: (
     payload: FileListPayload,
-    callback: (response: { files: FileSearchResult[] }) => void,
+    callback: (response: ListFilesResponse) => void,
   ) => void;
   checkout_branch: (
     payload: GitCheckoutPayload,
@@ -352,15 +336,12 @@ export interface ClientToServerEvents {
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  exec: (
-    payload: GitExecPayload,
-    callback: (response: { exitCode: number; stdout: string; stderr: string }) => void,
-  ) => void;
+  exec: (payload: GitExecPayload, callback: (response: ExecResponse) => void) => void;
 
   // ── Aligned: Plugin ──
   list_plugins: (
-    payload: { includeAvailable?: boolean },
-    callback: (result: { installed: PluginInfo[]; available: AvailablePlugin[] }) => void,
+    payload: ListPluginsPayload,
+    callback: (result: ListPluginsResponse) => void,
   ) => void;
   install_plugin: (payload: PluginInstallPayload, callback: (result: PluginResult) => void) => void;
   uninstall_plugin: (
@@ -371,7 +352,7 @@ export interface ClientToServerEvents {
     payload: PluginTogglePayload,
     callback: (result: PluginResult) => void,
   ) => void;
-  list_marketplaces: (callback: (result: { marketplaces: MarketplaceInfo[] }) => void) => void;
+  list_marketplaces: (callback: (result: ListMarketplacesResponse) => void) => void;
   add_marketplace: (
     payload: AddMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
@@ -394,7 +375,7 @@ export interface ClientToServerEvents {
   comment: (payload: PlanCommentPayload, callback: (response: SuccessResponse) => void) => void;
   get_plan_comments: (
     payload: PlanGetCommentsPayload,
-    callback: (response: { comments: PlanCommentData[] }) => void,
+    callback: (response: GetPlanCommentsResponse) => void,
   ) => void;
   remove_plan_comment: (
     payload: PlanRemoveCommentPayload,
@@ -402,39 +383,21 @@ export interface ClientToServerEvents {
   ) => void;
   close_plan_preview: (
     payload: PlanClosePreviewPayload,
-    callback: (response: { success: boolean }) => void,
+    callback: (response: SuccessResponse) => void,
   ) => void;
 
   // ── File Operations ──
-  'file:read': (
-    payload: { channelId: string; filePath: string },
-    callback: (response: { content: string } | { error: string }) => void,
-  ) => void;
+  'file:read': (payload: FileReadPayload, callback: (response: FileReadResponse) => void) => void;
 
   // ── Clean relay protocol: new C→S events ──
   'session:launch': (
     payload: ChatCreatePayload,
-    callback: (response: {
-      channelId: string;
-      slashCommands?: string[];
-      models?: unknown[];
-      account?: Record<string, unknown>;
-      error?: string;
-    }) => void,
+    callback: (response: SessionLaunchResponse) => void,
   ) => void;
   'session:close': (payload: ChatKillPayload) => void;
   'session:join': (
     payload: ChatJoinPayload,
-    callback: (
-      response:
-        | {
-            channelId: string;
-            state: string;
-            meta: ChannelMetaCache;
-            events: SocketEvent[];
-          }
-        | { error: string },
-    ) => void,
+    callback: (response: SessionJoinResponse) => void,
   ) => void;
   'chat:send': (payload: ChatSendPayload) => void;
   'chat:cancel': (payload: ChatInterruptPayload) => void;
@@ -443,40 +406,32 @@ export interface ClientToServerEvents {
   'chat:stop_task': (payload: ChatStopTaskPayload) => void;
   'chat:set_fast_mode': (payload: ChatSetFastModePayload) => void;
   'session:raw_events': (
-    payload: { channelId: string },
-    callback: (response: { events: unknown[] }) => void,
+    payload: ChannelIdPayload,
+    callback: (response: RawEventsResponse) => void,
   ) => void;
   'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
   'git:diff': (callback: (result: GitDiffResult) => void) => void;
-  init: (
-    callback: (response: {
-      settings: Record<string, unknown>;
-      sessions: SessionStateSummary[];
-      activeSessionId?: string;
-      models?: unknown[];
-      state?: Record<string, unknown>;
-    }) => void,
-  ) => void;
-  cancel_request: (payload: { targetRequestId: string }) => void;
+  init: (callback: (response: InitResponse) => void) => void;
+  cancel_request: (payload: CancelRequestPayload) => void;
   'terminal:get_contents': (
     payload: TerminalGetContentsPayload,
-    callback: (response: { content: string | null }) => void,
+    callback: (response: TerminalGetContentsResponse) => void,
   ) => void;
   'terminal:open_claude': (
     payload: TerminalOpenClaudePayload,
-    callback: (response: { success: boolean; channelId?: string; error?: string }) => void,
+    callback: (response: TerminalOpenClaudeResponse) => void,
   ) => void;
 
   // ── Aligned: Speech-to-Text ──
-  start_speech_to_text: (payload: { channelId: string }) => void;
-  stop_speech_to_text: (payload: { channelId: string }) => void;
+  start_speech_to_text: (payload: ChannelIdPayload) => void;
+  stop_speech_to_text: (payload: ChannelIdPayload) => void;
 
   // ── Protocol Alignment: new control_request subtypes ──
   cancel_async_message: (payload: ChatCancelAsyncMessagePayload) => void;
   set_proactive: (payload: ChatSetProactivePayload) => void;
   generate_session_title: (
     payload: ChatGenerateSessionTitlePayload,
-    callback: (response: { success: boolean; result?: unknown; error?: string }) => void,
+    callback: (response: GenerateSessionTitleResponse) => void,
   ) => void;
   set_remote_control: (payload: ChatSetRemoteControlPayload) => void;
   hook_callback_respond: (payload: ChatHookCallbackRespondPayload) => void;
