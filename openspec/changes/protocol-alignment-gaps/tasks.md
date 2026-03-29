@@ -128,13 +128,12 @@
 
 ### Group 11：Server 轉換 + ContextPieChart 漸進增強
 
-#### 11.1 Server — get_context_usage response 只取需要的欄位
-- [ ] settings-handler：`resp.response` 只取 `categories`, `totalTokens`, `maxTokens`, `percentage`
-- [ ] 不傳 gridRows, apiUsage, mcpTools 等無用資料
-- [ ] test
+#### 11.1 Server — get_context_usage response 只取需要的欄位 — DONE
+- [x] settings-handler：只取 categories, totalTokens, maxTokens, percentage
+- [x] 不傳 gridRows, apiUsage, mcpTools 等無用資料
+- [x] test：驗證 extra fields stripped
 
-#### 11.2 ContextPieChart — 優先用 contextUsage
-- [ ] ComposeToolbar：`contextPct` 優先用 `contextUsage.percentage`，fallback 用 `stats.inputTokens / stats.contextWindow`
-- [ ] 開過 AccountUsageDialog 後 contextUsage 有值，ContextPieChart 自動切到精確數字
-- [ ] 零額外呼叫
-- [ ] test
+#### 11.2 ContextPieChart — 優先用 contextUsage — DONE
+- [x] ComposeToolbar：contextPct 優先用 contextUsage.percentage，fallback 用 stats
+- [x] 零額外呼叫 — contextUsage 在開 AccountUsageDialog 時填充
+- [x] test：驗證 25% used 從 contextUsage.percentage 顯示
