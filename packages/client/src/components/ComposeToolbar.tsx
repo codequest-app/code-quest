@@ -4,6 +4,7 @@ import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { openUrl } from '../utils/open-url';
 import { AccountUsageDialog } from './AccountUsageDialog';
+import { AuthDialog } from './AuthDialog';
 import { AddButton } from './AddButton';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
@@ -78,6 +79,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     | 'initOptions'
     | 'usage'
     | 'plugins'
+    | 'auth'
     | null;
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
@@ -160,6 +162,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         subscriptionType={accountInfo?.subscriptionType}
       />
       <PluginsPanel open={activeDialog === 'plugins'} onClose={closeDialog} />
+      <AuthDialog open={activeDialog === 'auth'} onClose={closeDialog} />
       <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
           <div ref={pickerRef}>
@@ -182,7 +185,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           onResumeConversation={onResumeConversation}
           onManagePlugins={() => setActiveDialog('plugins')}
           onOpenConfig={() => setActiveDialog('initOptions')}
-          onSwitchAccount={() => sendMessage('/login')}
+          onSwitchAccount={() => setActiveDialog('auth')}
           onOpenHelp={() => openUrl('https://docs.anthropic.com/en/docs/claude-code/overview')}
           onAttachFile={onAttachFile}
         />
