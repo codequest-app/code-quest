@@ -248,3 +248,23 @@
 - [x] ServerToClientEvents: 零 inline 型別
 - [x] event-types.ts 已刪除
 - [x] **ClientToServerEvents + ServerToClientEvents 全部 100% Zod-inferred**
+
+### Group 16：Code Review 重構
+
+#### 16.1 P0 — chat.ts 1438 行 God File 拆分 — DONE
+- [x] 14 個 domain file：common, auth, session, message, control, settings, plugin, git, mcp, terminal, notification, plan, file, system
+- [x] chat.ts → barrel re-export（向下相容）
+- [x] schemas/index.ts re-export all
+- [x] 最大 270 行（session.ts），平均 ~100 行
+
+#### 16.2 P1 — AuthDialog 直接用 socket → SessionContext — DONE
+- [x] SessionContext：加 auth state + login/submitOAuthCode/resetAuth
+- [x] notification:auth_url listener 搬到 SessionContext
+- [x] AuthDialog 改用 useSession()，不再 useSocket()
+
+#### 16.3 P1 — ChannelMessagesContext 957 行 — SKIP
+- [x] 分析結論：event handler 邏輯內聚，拆 hook 只增加 indirection 不減複雜度
+- [x] 暫不拆
+
+#### 16.4 P2 — ChatStats vs SessionStats — SKIP
+- [x] ChatStats（client UI 用）vs SessionStats（CLI message:result 用）— 不同語意，不合併
