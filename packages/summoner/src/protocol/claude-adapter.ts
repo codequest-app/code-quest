@@ -382,6 +382,31 @@ export class ClaudeAdapter implements ProviderAdapter {
       };
     }
 
+    // Skip: extension also ignores these
+    if (event.subtype === 'post_turn_summary' || event.subtype === 'session_state_changed') {
+      return null;
+    }
+
+    if (event.subtype === 'api_retry') {
+      const e = event as unknown as {
+        attempt: number;
+        max_retries: number;
+        retry_delay_ms?: number;
+        error_status?: number;
+        error?: string;
+      };
+      return {
+        name: 'system:api_retry' as never,
+        payload: {
+          attempt: e.attempt,
+          maxRetries: e.max_retries,
+          retryDelayMs: e.retry_delay_ms,
+          errorStatus: e.error_status,
+          error: e.error,
+        },
+      };
+    }
+
     if (event.subtype === 'bridge_state') {
       const e = event as unknown as { state: string; detail?: string };
       return {
@@ -571,7 +596,8 @@ export class ClaudeAdapter implements ProviderAdapter {
               },
             };
           case 'signature_delta':
-            return null; // no-op
+          case 'compaction_delta':
+            return null; // no-op — CLI handles compaction internally
           default:
             return {
               name: 'raw:event',

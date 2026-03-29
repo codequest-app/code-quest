@@ -1,0 +1,1 @@
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"compaction_delta","content":"compressed context here"}},"session_id":"test-sess","uuid":"00000000-0000-0000-0000-000000000003"}

@@ -1,0 +1,2 @@
+{"request_id":"seed-1","type":"control_request","request":{"subtype":"seed_read_state","path":"/src/main.ts","mtime":1711612800000}}
+{"type":"control_response","response":{"subtype":"success","request_id":"seed-1"}}

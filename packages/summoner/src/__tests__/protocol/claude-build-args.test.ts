@@ -231,6 +231,30 @@ describe('ClaudeProtocol.buildArgs', () => {
     expect(args).not.toContain('--plugin-dir');
   });
 
+  it('adds --task-budget', () => {
+    const args = protocol.buildArgs({ taskBudget: { total: 500 } });
+    expect(args).toContain('--task-budget');
+    expect(args[args.indexOf('--task-budget') + 1]).toBe('500');
+  });
+
+  it('adds --channels space-separated', () => {
+    const args = protocol.buildArgs({ channels: ['slack', 'discord'] });
+    expect(args).toContain('--channels');
+    const idx = args.indexOf('--channels');
+    expect(args[idx + 1]).toBe('slack');
+    expect(args[idx + 2]).toBe('discord');
+  });
+
+  it('adds --claude-in-chrome-mcp when true', () => {
+    const args = protocol.buildArgs({ claudeInChromeMcp: true });
+    expect(args).toContain('--claude-in-chrome-mcp');
+  });
+
+  it('does not add --claude-in-chrome-mcp when false', () => {
+    const args = protocol.buildArgs({ claudeInChromeMcp: false });
+    expect(args).not.toContain('--claude-in-chrome-mcp');
+  });
+
   // ── Combined ──
 
   it('combines multiple options', () => {

@@ -94,6 +94,15 @@ export class ClaudeProtocol {
     if (options.pluginDirs?.length) {
       for (const dir of options.pluginDirs) args.push('--plugin-dir', dir);
     }
+    if (options.taskBudget) {
+      args.push('--task-budget', options.taskBudget.total.toString());
+    }
+    if (options.channels?.length) {
+      args.push('--channels', ...options.channels);
+    }
+    if (options.claudeInChromeMcp) {
+      args.push('--claude-in-chrome-mcp');
+    }
 
     return args;
   }

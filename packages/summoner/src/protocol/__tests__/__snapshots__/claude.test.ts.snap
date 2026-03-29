@@ -1,5 +1,19 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses api-retry.jsonl:1 1`] = `
+{
+  "attempt": 1,
+  "error": "rate_limit",
+  "error_status": 529,
+  "max_retries": 10,
+  "retry_delay_ms": 570.9269102540532,
+  "session_id": "66bd8eaa-9a72-4b1c-af68-7802e4aa6538",
+  "subtype": "api_retry",
+  "type": "system",
+  "uuid": "34dbd394-d0a0-424c-8d80-47ffae25cee5",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-text.jsonl:1 1`] = `
 {
   "message": {
@@ -1264,6 +1278,136 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses compact-boundary
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses compaction-delta.jsonl:1 1`] = `
+{
+  "event": {
+    "delta": {
+      "content": "compressed context here",
+      "type": "compaction_delta",
+    },
+    "index": 0,
+    "type": "content_block_delta",
+  },
+  "session_id": "test-sess",
+  "type": "stream_event",
+  "uuid": "00000000-0000-0000-0000-000000000003",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-channel-enable.jsonl:1 1`] = `
+{
+  "request": {
+    "serverName": "slack-mcp",
+    "subtype": "channel_enable",
+  },
+  "request_id": "ch-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-channel-enable.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "ch-1",
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-authenticate.jsonl:1 1`] = `
+{
+  "request": {
+    "loginWithClaudeAi": true,
+    "subtype": "claude_authenticate",
+  },
+  "request_id": "auth-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-authenticate.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "auth-1",
+    "response": {
+      "automaticUrl": "https://console.anthropic.com/oauth/authorize?auto=true",
+      "manualUrl": "https://console.anthropic.com/oauth/authorize?code=abc123",
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-oauth-callback.jsonl:1 1`] = `
+{
+  "request": {
+    "authorizationCode": "code_xyz",
+    "state": "state_abc",
+    "subtype": "claude_oauth_callback",
+  },
+  "request_id": "oauth-cb-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-oauth-callback.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "oauth-cb-1",
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-oauth-wait.jsonl:1 1`] = `
+{
+  "request": {
+    "subtype": "claude_oauth_wait_for_completion",
+  },
+  "request_id": "oauth-wait-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-oauth-wait.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "oauth-wait-1",
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-get-context-usage.jsonl:1 1`] = `
+{
+  "request": {
+    "subtype": "get_context_usage",
+  },
+  "request_id": "ctx-usage-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-get-context-usage.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "ctx-usage-1",
+    "response": {
+      "cache_read_input_tokens": 10000,
+      "context_window": 200000,
+      "input_tokens": 15000,
+      "output_tokens": 3000,
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-elicitation.jsonl:1 1`] = `
 {
   "request": {
@@ -1345,6 +1489,52 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-seed-read-state.jsonl:1 1`] = `
+{
+  "request": {
+    "mtime": 1711612800000,
+    "path": "/src/main.ts",
+    "subtype": "seed_read_state",
+  },
+  "request_id": "seed-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-seed-read-state.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "seed-1",
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-side-question.jsonl:1 1`] = `
+{
+  "request": {
+    "question": "What does this function do?",
+    "subtype": "side_question",
+  },
+  "request_id": "sq-1",
+  "type": "control_request",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-side-question.jsonl:2 1`] = `
+{
+  "response": {
+    "request_id": "sq-1",
+    "response": {
+      "response": "This function parses JSON input and returns a typed object.",
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses experiment-gates.jsonl:1 1`] = `
 {
   "gates": {
@@ -1371,6 +1561,16 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses notification.jso
   "timestamp": 1700000000000,
   "type": "notification",
   "uuid": "fake-notification-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses post-turn-summary.jsonl:1 1`] = `
+{
+  "session_id": "test-sess",
+  "subtype": "post_turn_summary",
+  "summary": "User asked about authentication. Assistant explained OAuth flow.",
+  "type": "system",
+  "uuid": "00000000-0000-0000-0000-000000000001",
 }
 `;
 
@@ -1409,6 +1609,20 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses result-resume-no
     "speed": "standard",
   },
   "uuid": "b75adca7-2490-4fee-a571-5ffeb25833a3",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses session-state-changed.jsonl:1 1`] = `
+{
+  "session_id": "test-sess",
+  "state": {
+    "effort": "high",
+    "model": "claude-sonnet-4-6",
+    "permissionMode": "default",
+  },
+  "subtype": "session_state_changed",
+  "type": "system",
+  "uuid": "00000000-0000-0000-0000-000000000002",
 }
 `;
 

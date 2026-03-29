@@ -74,6 +74,33 @@ export const systemCompactBoundarySchema = z
   })
   .loose();
 
+export const systemPostTurnSummarySchema = z
+  .object({
+    type: z.literal('system'),
+    subtype: z.literal('post_turn_summary'),
+    summary: z.string().optional(),
+  })
+  .loose();
+
+export const systemSessionStateChangedSchema = z
+  .object({
+    type: z.literal('system'),
+    subtype: z.literal('session_state_changed'),
+  })
+  .loose();
+
+export const systemApiRetrySchema = z
+  .object({
+    type: z.literal('system'),
+    subtype: z.literal('api_retry'),
+    attempt: z.number(),
+    max_retries: z.number(),
+    retry_delay_ms: z.number().optional(),
+    error_status: z.number().optional(),
+    error: z.string().optional(),
+  })
+  .loose();
+
 export const systemTaskStartedSchema = z
   .object({
     type: z.literal('system'),
@@ -395,6 +422,9 @@ const systemSubtypeRegistry: Record<string, z.ZodType> = {
   hook_started: systemHookStartedSchema,
   hook_response: systemHookResponseSchema,
   compact_boundary: systemCompactBoundarySchema,
+  post_turn_summary: systemPostTurnSummarySchema,
+  session_state_changed: systemSessionStateChangedSchema,
+  api_retry: systemApiRetrySchema,
   task_started: systemTaskStartedSchema,
   task_notification: systemTaskNotificationSchema,
   task_progress: systemTaskProgressSchema,

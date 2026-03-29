@@ -1,0 +1,2 @@
+{"request_id":"ch-1","type":"control_request","request":{"subtype":"channel_enable","serverName":"slack-mcp"}}
+{"type":"control_response","response":{"subtype":"success","request_id":"ch-1"}}

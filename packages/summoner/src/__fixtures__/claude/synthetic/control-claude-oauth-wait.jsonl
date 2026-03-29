@@ -1,0 +1,2 @@
+{"request_id":"oauth-wait-1","type":"control_request","request":{"subtype":"claude_oauth_wait_for_completion"}}
+{"type":"control_response","response":{"subtype":"success","request_id":"oauth-wait-1"}}

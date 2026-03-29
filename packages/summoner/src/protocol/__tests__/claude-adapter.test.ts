@@ -265,6 +265,25 @@ describe('ClaudeAdapter', () => {
       });
     });
 
+    it('skips system/post_turn_summary', () => {
+      const raw = JSON.stringify({ type: 'system', subtype: 'post_turn_summary', summary: 'test', session_id: 'x', uuid: 'u' });
+      expect(toSocketEvent(raw)).toBeNull();
+    });
+
+    it('skips system/session_state_changed', () => {
+      const raw = JSON.stringify({ type: 'system', subtype: 'session_state_changed', state: {}, session_id: 'x', uuid: 'u' });
+      expect(toSocketEvent(raw)).toBeNull();
+    });
+
+    it('converts system/api_retry', () => {
+      const raw = JSON.stringify({ type: 'system', subtype: 'api_retry', attempt: 1, max_retries: 10, retry_delay_ms: 500, error_status: 529, error: 'rate_limit', session_id: 'x', uuid: 'u' });
+      const result = toSocketEvent(raw);
+      expect(result).toMatchObject({
+        name: 'system:api_retry',
+        payload: { attempt: 1, maxRetries: 10, retryDelayMs: 500, errorStatus: 529, error: 'rate_limit' },
+      });
+    });
+
     it('converts system/compact_boundary without compactMetadata', () => {
       const result = toSocketEvent(s.compactBoundary());
       expect((result as any).payload.preservedSegment).toBeUndefined();
@@ -456,6 +475,11 @@ describe('ClaudeAdapter', () => {
 
     it('skips signature_delta', () => {
       expect(toSocketEvent(s.signatureDelta('sig'))).toBeNull();
+    });
+
+    it('skips compaction_delta', () => {
+      const raw = JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'compaction_delta', content: 'compressed' } }, session_id: 'x', uuid: 'u' });
+      expect(toSocketEvent(raw)).toBeNull();
     });
   });
 

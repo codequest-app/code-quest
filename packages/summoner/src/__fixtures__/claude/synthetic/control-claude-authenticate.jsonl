@@ -1,0 +1,2 @@
+{"request_id":"auth-1","type":"control_request","request":{"subtype":"claude_authenticate","loginWithClaudeAi":true}}
+{"type":"control_response","response":{"subtype":"success","request_id":"auth-1","response":{"manualUrl":"https://console.anthropic.com/oauth/authorize?code=abc123","automaticUrl":"https://console.anthropic.com/oauth/authorize?auto=true"}}}
