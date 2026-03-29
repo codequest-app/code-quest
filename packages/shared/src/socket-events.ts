@@ -141,7 +141,7 @@ import type {
   TerminalOpenClaudePayload,
   TerminalOpenClaudeResponse,
   UpdateStatePayload,
-} from './schemas/chat.ts';
+} from './schemas/index.ts';
 
 export interface ClientToServerEvents {
   // ── Chat Operations ──
