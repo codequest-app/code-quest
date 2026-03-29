@@ -268,3 +268,8 @@
 
 #### 16.4 P2 — ChatStats vs SessionStats — SKIP
 - [x] ChatStats（client UI 用）vs SessionStats（CLI message:result 用）— 不同語意，不合併
+
+### Group 17：socket-events.ts — SKIP
+- [x] 分析結論：import 牆是 domain schema 拆分的正常結果，editor 摺疊即可
+- [x] C2S + S2C 是純 event registry，職責清晰不需再拆
+- [x] `import * as S` 降低可讀性，不採用
