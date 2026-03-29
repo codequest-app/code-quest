@@ -12,29 +12,57 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     callback(ctx.authState);
   });
 
-  socket.on('login', (payload, callback) => {
-    ctx.authState = {
-      authenticated: true,
-      user: { name: payload.method === 'api_key' ? 'api-key-user' : 'unknown' },
-      method: payload.method,
-    };
-    callback?.({
-      success: true,
-      auth: {
-        authenticated: true,
-        user: ctx.authState?.user,
-        method: payload.method,
-      },
-    });
+  socket.on('login', async (payload, callback) => {
+    try {
+      const channel = ctx.channelManager.getFirstAlive();
+      if (!channel) {
+        callback?.({
+          success: false,
+          error: 'No active session. Please open a tab first.',
+        } as never);
+        return;
+      }
+      const controlResp = await channel.sendControlRequest('claude_authenticate', {
+        loginWithClaudeAi: payload.method !== 'api_key',
+      });
+      const authData = controlResp.response as {
+        manualUrl?: string;
+        automaticUrl?: string;
+      } | undefined;
+      if (authData?.manualUrl || authData?.automaticUrl) {
+        socket.emit('notification:auth_url', {
+          channelId: '',
+          url: authData.automaticUrl ?? authData.manualUrl ?? '',
+          method: 'browser',
+        } as never);
+      }
+      callback?.({ success: true, auth: authData } as never);
+    } catch (err) {
+      callback?.({ success: false, error: errMsg(err, 'Login failed') } as never);
+    }
   });
 
-  socket.on('submit_oauth_code', (_payload, callback) => {
-    ctx.authState = {
-      authenticated: true,
-      user: { name: 'oauth-user' },
-      method: 'oauth',
-    };
-    callback({ success: true });
+  socket.on('submit_oauth_code', async (payload, callback) => {
+    try {
+      const channel = ctx.channelManager.getFirstAlive();
+      if (!channel) {
+        callback({ success: false, error: 'No active session' } as never);
+        return;
+      }
+      await channel.sendControlRequest('claude_oauth_callback', {
+        authorizationCode: payload.code,
+        state: payload.state,
+      });
+      await channel.sendControlRequest('claude_oauth_wait_for_completion', {});
+      ctx.authState = {
+        authenticated: true,
+        user: { name: 'oauth-user' },
+        method: 'oauth',
+      };
+      callback({ success: true });
+    } catch (err) {
+      callback({ success: false, error: errMsg(err, 'OAuth failed') } as never);
+    }
   });
 
   socket.on('init', (callback) => {

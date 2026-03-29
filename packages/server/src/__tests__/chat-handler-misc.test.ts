@@ -190,45 +190,43 @@ describe('ChatHandler > misc', () => {
       expect(status.authenticated).toBe(false);
     });
 
-    it('auth:login with apiKey sets authenticated state', async () => {
+    it('auth:login sends claude_authenticate to CLI and returns auth URL', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean }>('login', { method: 'api_key' });
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'claude_authenticate') {
+          return {
+            manualUrl: 'https://auth.example.com/manual',
+            automaticUrl: 'https://auth.example.com/auto',
+          };
+        }
+        return null;
+      });
+
+      const result = await claude.send<{ success: boolean; auth?: { response?: { manualUrl?: string } } }>(
+        'login',
+        { method: 'oauth' },
+      );
       expect(result.success).toBe(true);
-
-      const status = await claude.send<{
-        authenticated: boolean;
-        user?: { name: string };
-        method?: string;
-      }>('get_auth_status');
-
-      expect(status.authenticated).toBe(true);
-      expect(status.user?.name).toBe('api-key-user');
-      expect(status.method).toBe('api_key');
     });
 
-    it('auth:login with oauth method sets authenticated state', async () => {
-      const { claude } = await setup();
+    it('auth:login fails when no active session', async () => {
+      const claude = createFakeClaude();
+      // Don't initialize — no active channel
 
-      const result = await claude.send<{ success: boolean }>('login', { method: 'oauth' });
-      expect(result.success).toBe(true);
-
-      const status = await claude.send<{
-        authenticated: boolean;
-        user?: { name: string };
-        method?: string;
-      }>('get_auth_status');
-
-      expect(status.authenticated).toBe(true);
-      expect(status.user?.name).toBe('unknown');
-      expect(status.method).toBe('oauth');
+      const result = await claude.send<{ success: boolean; error?: string }>('login', {
+        method: 'oauth',
+      });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No active session');
     });
 
-    it('auth:oauth_code sets authenticated state', async () => {
+    it('auth:oauth_code sends claude_oauth_callback to CLI', async () => {
       const { claude } = await setup();
 
       const result = await claude.send<{ success: boolean }>('submit_oauth_code', {
         code: 'test-code',
+        state: 'test-state',
       });
       expect(result.success).toBe(true);
 

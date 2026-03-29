@@ -129,6 +129,13 @@ export class ChannelManager {
     this.channels.delete(channelId);
   }
 
+  getFirstAlive(): Channel | undefined {
+    for (const [, ch] of this.channels) {
+      if (!ch.exited) return ch;
+    }
+    return undefined;
+  }
+
   getAliveChannels(): ChannelSummary[] {
     const result: ChannelSummary[] = [];
     for (const [id, ch] of this.channels) {

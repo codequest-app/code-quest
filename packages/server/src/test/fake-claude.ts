@@ -33,6 +33,16 @@ export class FakeClaude {
   private _initSegments: string[] | null = null;
   private _lastInitRequestId: string | null = null;
   private _connectionHandler: ((serverSocket: unknown) => void) | null = null;
+  private _controlRequestHandler:
+    | ((request: Record<string, unknown>) => Record<string, unknown> | null)
+    | null = null;
+
+  /** Register a custom handler for control_request subtypes. Return response payload or null for default. */
+  onControlRequest(
+    handler: (request: Record<string, unknown>) => Record<string, unknown> | null,
+  ): void {
+    this._controlRequestHandler = handler;
+  }
 
   constructor() {
     this.provider = new FakeProcessProvider();
@@ -170,6 +180,20 @@ export class FakeClaude {
             h.emit(JSON.stringify({ type: 'control_response', response }));
           }
           return;
+        }
+
+        // Check custom handler first
+        if (this._controlRequestHandler) {
+          const customResponse = this._controlRequestHandler(request ?? {});
+          if (customResponse) {
+            h.emit(
+              JSON.stringify({
+                type: 'control_response',
+                response: { subtype: 'success', request_id: requestId, response: customResponse },
+              }),
+            );
+            return;
+          }
         }
 
         h.emit(
