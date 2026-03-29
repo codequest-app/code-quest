@@ -1,4 +1,17 @@
-import type { UsageQuota } from '@code-quest/shared';
+import type { ChatStats, UsageQuota } from '@code-quest/shared';
+
+interface ContextCategory {
+  name: string;
+  tokens: number;
+  color: string;
+}
+
+interface ContextUsageData {
+  categories?: ContextCategory[];
+  totalTokens?: number;
+  maxTokens?: number;
+  percentage?: number;
+}
 
 interface AccountUsageDialogProps {
   open: boolean;
@@ -9,6 +22,8 @@ interface AccountUsageDialogProps {
   organization?: string;
   subscriptionType?: string;
   usage?: UsageQuota;
+  contextUsage?: Record<string, unknown>;
+  stats?: ChatStats;
 }
 
 function formatAuthMethod(method: string): string {
@@ -88,6 +103,12 @@ const USAGE_TIERS = [
   { key: 'seven_day_sonnet' as const, label: 'Weekly Sonnet' },
 ];
 
+function formatTokens(n: number): string {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
 export function AccountUsageDialog({
   open,
   onClose,
@@ -97,7 +118,10 @@ export function AccountUsageDialog({
   organization,
   subscriptionType,
   usage,
+  contextUsage: rawContextUsage,
+  stats,
 }: AccountUsageDialogProps) {
+  const contextUsage = rawContextUsage as ContextUsageData | undefined;
   if (!open) return null;
 
   return (
@@ -140,10 +164,50 @@ export function AccountUsageDialog({
             {subscriptionType && <AccountRow label="Plan" value={subscriptionType} />}
           </div>
 
-          {/* USAGE section */}
+          {/* SESSION section */}
+          {stats && (stats.costUsd != null || stats.numTurns != null) && (
+            <div className="space-y-1">
+              <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px] mb-2">
+                Session
+              </h4>
+              {stats.costUsd != null && (
+                <AccountRow label="Cost" value={`$${stats.costUsd.toFixed(2)}`} />
+              )}
+              {stats.numTurns != null && (
+                <AccountRow label="Turns" value={String(stats.numTurns)} />
+              )}
+              {stats.modelUsage && Object.entries(stats.modelUsage).map(([m, u]) => (
+                <AccountRow
+                  key={m}
+                  label={m.split('-').slice(0, 2).join(' ')}
+                  value={`$${((u as { costUSD?: number }).costUSD ?? 0).toFixed(2)}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* CONTEXT section */}
+          {contextUsage?.categories && (
+            <div className="space-y-2">
+              <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
+                Context ({contextUsage.percentage ?? 0}% used)
+              </h4>
+              <div className="text-[11px] text-text-muted mb-1">
+                {formatTokens(contextUsage.totalTokens ?? 0)} / {formatTokens(contextUsage.maxTokens ?? 0)} tokens
+              </div>
+              {contextUsage.categories.filter(c => c.name !== 'Free space').map((cat) => (
+                <div key={cat.name} className="flex justify-between text-[12px]">
+                  <span className="text-text/70">{cat.name}</span>
+                  <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* QUOTA section */}
           <div className="space-y-3">
             <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
-              Usage
+              Quota
             </h4>
             {usage ? (
               USAGE_TIERS.map(({ key, label }) => {

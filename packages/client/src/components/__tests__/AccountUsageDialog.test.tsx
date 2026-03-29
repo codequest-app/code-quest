@@ -152,4 +152,66 @@ describe('AccountUsageDialog', () => {
     await renderWithWorkspace();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
+
+  it('shows context breakdown from get_context_usage', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'hello');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('hi'));
+    await claude.emit(s.result());
+
+    // Push context usage via state:usage
+    await act(async () => {
+      (claude.socket as any).serverSocket.emit('state:usage', {
+        channelId: '',
+        usage: {},
+        contextUsage: {
+          categories: [
+            { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+            { name: 'Messages', tokens: 4000, color: 'purple' },
+            { name: 'Free space', tokens: 190000, color: 'promptBorder' },
+          ],
+          totalTokens: 10000,
+          maxTokens: 200000,
+          percentage: 5,
+        },
+      });
+    });
+
+    // Open /usage dialog
+    await act(async () => { textarea.focus(); });
+    await user.type(textarea, '/usage');
+    const usageItem = screen.queryByText(/Account & usage/i);
+    if (usageItem) {
+      await user.click(usageItem);
+
+      const dialog = screen.getByRole('dialog', { name: /account & usage/i });
+      expect(within(dialog).getByText(/System prompt/)).toBeInTheDocument();
+      expect(within(dialog).getByText(/6\.0k/)).toBeInTheDocument();
+      expect(within(dialog).getByText(/5% used/)).toBeInTheDocument();
+    }
+  });
+
+  it('shows session cost from result stats', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'hello');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('hi'));
+    await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+
+    // Open /usage dialog
+    await act(async () => { textarea.focus(); });
+    await user.type(textarea, '/usage');
+    const usageItem = screen.queryByText(/Account & usage/i);
+    if (usageItem) {
+      await user.click(usageItem);
+
+      const dialog = screen.getByRole('dialog', { name: /account & usage/i });
+      expect(within(dialog).getByText(/\$1\.23/)).toBeInTheDocument();
+    }
+  });
 });

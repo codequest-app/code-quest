@@ -33,6 +33,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isProcessing,
     isCancelling,
     stats,
+    contextUsage,
     isContextCompressed,
     usageQuota,
     accountInfo,
@@ -155,6 +156,8 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         open={activeDialog === 'usage'}
         onClose={closeDialog}
         usage={usageQuota ?? undefined}
+        contextUsage={contextUsage ?? undefined}
+        stats={stats ?? undefined}
         model={accountInfo?.model}
         authMethod={accountInfo?.authMethod}
         email={accountInfo?.email}

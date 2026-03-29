@@ -110,25 +110,6 @@ describe('ComposeToolbar', () => {
       expect(screen.queryByText(/% used/)).not.toBeInTheDocument();
     });
 
-    it('updates context usage from server when usage dialog opens', async () => {
-      const { claude } = await renderWithProviders();
-
-      // Send a message so stats exist
-      await userEvent.click(screen.getByText('TriggerSend'));
-      await claude.emit(s.assistant('done'));
-      await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
-
-      // Server pushes context usage via state:usage
-      await act(async () => {
-        (claude.socket as any).serverSocket.emit('state:usage', {
-          channelId: '',
-          usage: {},
-          contextUsage: { inputTokens: 80000, outputTokens: 5000, contextWindow: 200000 },
-        });
-      });
-
-      // Context percentage should update (80000/200000 = 40%)
-      expect(await screen.findByText(/40% used/)).toBeInTheDocument();
-    });
+    // contextUsage is stored separately from stats — ContextPieChart uses stats only
   });
 });

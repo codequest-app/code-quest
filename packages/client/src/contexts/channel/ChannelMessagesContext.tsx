@@ -88,6 +88,7 @@ export interface ChannelMessagesValue {
   planComments: ChannelState['planComments'];
   statusText: ChannelState['statusText'];
   usageQuota: ChannelState['usageQuota'];
+  contextUsage: ChannelState['contextUsage'];
   accountInfo: ChannelState['accountInfo'];
   experimentGates: ChannelState['experimentGates'];
   isProcessing: boolean;
@@ -765,18 +766,11 @@ export function ChannelMessagesProvider({
 
     const onStateUsage = (p: Payload<'state:usage'>) => {
       if (!guard(p)) return;
-      const contextUsage = (p as unknown as { contextUsage?: { inputTokens: number; outputTokens: number; contextWindow: number } }).contextUsage;
+      const ctx = (p as unknown as { contextUsage?: Record<string, unknown> }).contextUsage;
       setState((prev) => ({
         ...prev,
         usageQuota: p.usage,
-        ...(contextUsage ? {
-          stats: {
-            ...prev.stats,
-            inputTokens: contextUsage.inputTokens,
-            outputTokens: contextUsage.outputTokens,
-            contextWindow: contextUsage.contextWindow,
-          },
-        } : {}),
+        ...(ctx ? { contextUsage: ctx } : {}),
       }));
     };
 
@@ -940,6 +934,7 @@ export function ChannelMessagesProvider({
       planComments: channelState.planComments,
       statusText: channelState.statusText,
       usageQuota: channelState.usageQuota,
+      contextUsage: channelState.contextUsage,
       accountInfo: channelState.accountInfo,
       experimentGates: channelState.experimentGates,
       isProcessing:

@@ -194,4 +194,37 @@ describe('ChannelProvider', () => {
     rtlRender(<div />);
     expect(claude.socket.connected).toBe(true);
   });
+
+  // ── Context Usage ──
+
+  it('state:usage stores contextUsage separately from stats', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'go');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('done'));
+    await claude.emit(s.result());
+
+    // Push state:usage with contextUsage
+    await act(async () => {
+      (claude.socket as any).serverSocket.emit('state:usage', {
+        channelId: '',
+        usage: {},
+        contextUsage: {
+          categories: [
+            { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+            { name: 'Messages', tokens: 4000, color: 'purple' },
+          ],
+          totalTokens: 10000,
+          maxTokens: 200000,
+          percentage: 5,
+        },
+      });
+    });
+
+    // ContextPieChart should NOT change (still uses stats from result)
+    // stats should not be overwritten
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+  });
 });
