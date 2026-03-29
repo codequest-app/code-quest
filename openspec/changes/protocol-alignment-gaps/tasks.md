@@ -94,7 +94,7 @@
 - [x] 沒有 active channel 時只回 usageTracker 資料（現有行為）
 - [x] test：FakeClaude.onControlRequest mock
 
-#### 9.2 Client
-- [ ] ComposeToolbar：打開 AccountUsageDialog 時呼叫 request_usage_update 拿即時資料
-- [ ] 顯示即時 context usage
-- [ ] test
+#### 9.2 Client — DONE
+- [x] ChannelMessagesContext：state:usage handler 合併 contextUsage 到 stats
+- [x] Context percentage 從 server push 的 contextUsage 即時更新
+- [x] ComposeToolbar test：驗證 context % 從 state:usage 更新
