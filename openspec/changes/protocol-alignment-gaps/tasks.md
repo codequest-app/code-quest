@@ -141,15 +141,16 @@
 > 順序：先實作 UI 觸發點，再重構測試改成 user interaction。
 > 所有測試不得直接操作 serverSocket 或 claude.socket.emit。
 
-#### 12.1 ComposeToolbar — 開 AccountUsageDialog 時 emit request_usage_update
-- [ ] 開 dialog 時透過 rpc 或 socket.emit 呼叫 request_usage_update
-- [ ] test：開 dialog → onControlRequest mock → dialog 顯示 context breakdown
+#### 12.1 ComposeToolbar — 開 AccountUsageDialog 時 emit request_usage_update — DONE
+- [x] ChannelMessagesContext 加 requestUsageUpdate action
+- [x] ComposeToolbar onOpenAccountUsage 呼叫 requestUsageUpdate
+- [x] test：開 dialog → onControlRequest mock → dialog 顯示 context breakdown
 
-#### 12.2 重構 serverSocket 測試 — 全部改成 user interaction
-- [ ] config-from-session.test.tsx（3 處）→ 透過 renderWithWorkspace + prepareInit + claude.emit(s.status(...))
-- [ ] ChannelProvider.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
-- [ ] ComposeToolbar.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
-- [ ] AccountUsageDialog.test.tsx（1 處）→ 透過開 dialog 觸發 request_usage_update
-- [ ] 確認零 `(claude.socket as any).serverSocket`
-- [ ] 確認零 `claude.socket.emit(... as never`
-- [ ] 所有 tests pass
+#### 12.2 重構 serverSocket 測試 — DONE
+- [x] config-from-session.test.tsx → renderWithWorkspace + prepareInit + claude.emit(s.status)
+- [x] ChannelProvider.test.tsx → onControlRequest mock
+- [x] ComposeToolbar.test.tsx → onControlRequest mock
+- [x] AccountUsageDialog.test.tsx → onControlRequest mock
+- [x] 零 `(claude.socket as any).serverSocket` in tests
+- [x] 零 `claude.socket.emit(... as never` in tests
+- [x] 986 tests pass
