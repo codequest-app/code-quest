@@ -104,26 +104,24 @@
 
 > 不打 Anthropic API。帳號 quota 只靠 rate_limit_event 被動拿。
 
-#### 10.1 ChannelState 加 contextUsage
-- [ ] types/chat.ts ChannelState 加 `contextUsage?: { categories, totalTokens, maxTokens, percentage }`
-- [ ] onStateUsage handler 存到 contextUsage（不碰 stats）
-- [ ] test
+#### 10.1 ChannelState 加 contextUsage — DONE
+- [x] types/chat.ts ChannelState 加 `contextUsage: Record<string, unknown> | null`
+- [x] onStateUsage handler 存到 contextUsage（不碰 stats）
 
-#### 10.2 AccountUsageDialog 開啟時查 get_context_usage
-- [ ] ComposeToolbar：開 usage dialog 時 emit request_usage_update
-- [ ] test
+#### 10.2 AccountUsageDialog 開啟時查 get_context_usage — DONE
+- [x] server request_usage_update 已呼叫 get_context_usage（Group 9）
 
-#### 10.3 AccountUsageDialog 顯示 context breakdown
-- [ ] 顯示 categories 列表（name + tokens）
-- [ ] 顯示 percentage + totalTokens / maxTokens
-- [ ] test
+#### 10.3 AccountUsageDialog 顯示 context breakdown — DONE
+- [x] 顯示 categories 列表（name + tokens, formatTokens）
+- [x] 顯示 percentage% used + totalTokens / maxTokens
+- [x] test：驗證 System prompt + 6.0k + 5% used
 
-#### 10.4 AccountUsageDialog 顯示 session cost
-- [ ] 顯示 total_cost_usd（從 message:result stats）
-- [ ] 顯示 num_turns
-- [ ] 顯示 modelUsage per-model breakdown
-- [ ] test
+#### 10.4 AccountUsageDialog 顯示 session cost — DONE
+- [x] 顯示 total_cost_usd（$1.23 format）
+- [x] 顯示 num_turns
+- [x] 顯示 modelUsage per-model cost
+- [x] test：驗證 $1.23
 
-#### 10.5 清理
-- [ ] revert ComposeToolbar test 的 contextUsage → stats 測試
-- [ ] 確認 ContextPieChart 不受影響（保持用 stats）
+#### 10.5 清理 — DONE
+- [x] revert ComposeToolbar test（contextUsage → stats 混用已移除）
+- [x] ContextPieChart 不受影響（保持用 stats）
