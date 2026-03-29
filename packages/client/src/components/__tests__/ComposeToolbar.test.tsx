@@ -1,7 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ChannelProvider, useChannelMessages } from '../../contexts/channel';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
@@ -108,6 +108,27 @@ describe('ComposeToolbar', () => {
     it('does not render when stats is null', async () => {
       await renderWithProviders();
       expect(screen.queryByText(/% used/)).not.toBeInTheDocument();
+    });
+
+    it('updates context usage from server when usage dialog opens', async () => {
+      const { claude } = await renderWithProviders();
+
+      // Send a message so stats exist
+      await userEvent.click(screen.getByText('TriggerSend'));
+      await claude.emit(s.assistant('done'));
+      await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
+
+      // Server pushes context usage via state:usage
+      await act(async () => {
+        (claude.socket as any).serverSocket.emit('state:usage', {
+          channelId: '',
+          usage: {},
+          contextUsage: { inputTokens: 80000, outputTokens: 5000, contextWindow: 200000 },
+        });
+      });
+
+      // Context percentage should update (80000/200000 = 40%)
+      expect(await screen.findByText(/40% used/)).toBeInTheDocument();
     });
   });
 });

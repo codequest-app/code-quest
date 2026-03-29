@@ -765,7 +765,19 @@ export function ChannelMessagesProvider({
 
     const onStateUsage = (p: Payload<'state:usage'>) => {
       if (!guard(p)) return;
-      setState((prev) => ({ ...prev, usageQuota: p.usage }));
+      const contextUsage = (p as unknown as { contextUsage?: { inputTokens: number; outputTokens: number; contextWindow: number } }).contextUsage;
+      setState((prev) => ({
+        ...prev,
+        usageQuota: p.usage,
+        ...(contextUsage ? {
+          stats: {
+            ...prev.stats,
+            inputTokens: contextUsage.inputTokens,
+            outputTokens: contextUsage.outputTokens,
+            contextWindow: contextUsage.contextWindow,
+          },
+        } : {}),
+      }));
     };
 
     const onDisconnect = () => {
