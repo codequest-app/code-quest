@@ -238,6 +238,15 @@ export const chatControlResponseSchema = z.object({
   response: controlPermissionResponseSchema,
 });
 
+/** Loose schema for chat:respond handler — accepts any response shape
+ *  (permission, elicitation, MCP, diff review) */
+export const chatRespondSchema = z.object({
+  channelId: z.string().optional(),
+  requestId: z.string(),
+  response: z.record(z.string(), z.unknown()),
+});
+export type ChatRespondPayload = z.infer<typeof chatRespondSchema>;
+
 // --- Inferred types ---
 
 export type ChatCreatePayload = z.infer<typeof chatCreateSchema>;

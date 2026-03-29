@@ -3,6 +3,7 @@ import {
   chatGenerateSessionTitleSchema,
   chatHookCallbackRespondSchema,
   chatInterruptSchema,
+  chatRespondSchema,
   chatRewindCodeSchema,
   chatSendSchema,
   chatStopTaskSchema,
@@ -54,15 +55,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   /** Unified response handler — replaces `tool_permission_response`. */
   socket.on('chat:respond', async (payload) => {
     try {
-      const { requestId, response } = payload as {
-        requestId: string;
-        response: {
-          behavior: 'allow' | 'deny';
-          updatedInput?: unknown;
-          updatedPermissions?: unknown[];
-          message?: string;
-        };
-      };
+      const { requestId, response } = chatRespondSchema.parse(payload);
 
       // Single lookup for both notification and control requests
       const match = ctx.channelManager.findByRequestId(requestId);

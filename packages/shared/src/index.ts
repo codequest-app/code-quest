@@ -58,6 +58,7 @@ export {
   chatInterruptSchema,
   chatJoinSchema,
   chatKillSchema,
+  chatRespondSchema,
   chatRewindCodeSchema,
   chatSendSchema,
   chatSetFastModeSchema,

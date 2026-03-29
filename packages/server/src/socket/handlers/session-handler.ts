@@ -145,7 +145,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         ctx.io?.emit('session:dead', { channelId: resumeSessionId });
         return;
       }
-      callback?.({ channelId: '', error: message } as { channelId: string; error: string });
+      callback?.({ channelId: '', error: message });
     }
   });
 
@@ -401,7 +401,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   socket.on('session:raw_events', async (payload, callback) => {
     try {
-      const { channelId } = payload as { channelId: string };
+      const { channelId } = payload;
       const entries = await ctx.rawEventStore.getBySession(await ctx.resolveSessionId(channelId));
       const events = entries.map((e) => {
         try {

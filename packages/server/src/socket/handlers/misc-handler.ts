@@ -146,11 +146,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   // ── Speech-to-Text socket handlers ──
   socket.on('start_speech_to_text', (payload) => {
-    console.log('start_speech_to_text', (payload as { channelId?: string }).channelId);
+    console.log('start_speech_to_text', payload.channelId);
   });
 
   socket.on('stop_speech_to_text', (payload) => {
-    console.log('stop_speech_to_text', (payload as { channelId?: string }).channelId);
+    console.log('stop_speech_to_text', payload.channelId);
   });
 
   socket.on('disconnect', () => {

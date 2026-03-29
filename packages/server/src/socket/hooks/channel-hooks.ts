@@ -13,7 +13,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
 
   return {
     onSocketEvent: (ch, se) => {
-      const p = se.payload as Record<string, unknown>;
+      const p = se.payload;
       switch (se.name) {
         case 'session:init': {
           ctx.broadcastSessionState(channelId, 'busy');
