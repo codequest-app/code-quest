@@ -36,9 +36,9 @@
 - [x] GREEN：model-utils.ts 接收 modelDisplayMap，刪除 hardcoded opus/sonnet/haiku
 - [x] REFACTOR：HeaderBar、ModelPickerPanel、ComposeToolbar 帶入 modelDisplayMap from providerConfig
 
-### 2.2 CommandMenu fast mode
-- [ ] RED：寫測試 — fast mode toggle 用 `ModelInfo.supportsFastMode`，fallback 查 `modelDisplayMap`
-- [ ] GREEN：CommandMenu 刪除 `opus-4-6` string match，改用 ModelInfo + modelDisplayMap
+### 2.2 CommandMenu fast mode — DONE
+- [x] CommandMenu：`opus-4-6` string match → `ModelInfo.supportsFastMode` + `modelDisplayMap` fallback
+- [x] "Toggle fast mode (Opus 4.6 only)" → "Toggle fast mode"（label 不再 hardcode model 名）
 
 ### 2.3 Brand 文字（8 檔）
 - [ ] AuthDialog：`providerConfig.brand.loginTitle` / `.brand.name`
@@ -65,7 +65,9 @@
 ### 2.8 Docs URL
 - [ ] ComposeToolbar：hardcoded URL → `providerConfig.brand.docsUrl`
 
-## 3. Code Review + 重構
+## 3. Code Review + 重構（全部程式碼）
+
+> 範圍：所有 packages（shared、summoner、server、client）的 production + test code
 
 - [ ] code review 找出職責不清、過度設計、code smell
 - [ ] 該用 Zod 的地方必須用 Zod（`as` type assertion → Zod parse）
