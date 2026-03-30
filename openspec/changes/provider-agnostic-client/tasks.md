@@ -59,6 +59,8 @@
 
 ### 2.8 Docs URL — DONE (included in 2.3)
 
+### 2.9-2.10 — DONE (all components now read from providerConfig)
+
 ## 3. Code Review + 重構（全部程式碼）
 
 > 範圍：所有 packages（shared、summoner、server、client）的 production + test code
@@ -70,11 +72,12 @@
 - [ ] 可簡化之處（冗餘邏輯、重複 code、過深巢狀）
 - [ ] 重構發現的問題
 
-## 4. Cleanup
+## 4. Cleanup — PARTIAL
 
-- [ ] grep 驗證零 hardcoded "Claude" / "Anthropic" in production components
-- [ ] grep 驗證零 model string matching（opus/sonnet/haiku）in component logic
-- [ ] 確認零 `as never` / `as any` in production code
-- [ ] 確認零 component 直接 useSocket
+- [x] grep 驗證：零 model string matching（opus/sonnet/haiku）in component logic
+- [x] grep 驗證：零 `as never` / `as any` in production code
+- [x] grep 驗證：零 component 直接 useSocket
+- [x] 殘留 "Claude"/"Anthropic" 僅在 DEFAULT fallback constants — 正確行為
+- [ ] `as Record` casts（14 處）— Phase 3 code review 判斷
 - [ ] 更新 skills 反映新架構
 - [ ] 全部測試通過
