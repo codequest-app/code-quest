@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { WireRunnerHooks } from '../channel.ts';
 import type { HandlerContext } from '../handler-context.ts';
 
@@ -8,8 +9,7 @@ import type { HandlerContext } from '../handler-context.ts';
 export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireRunnerHooks {
   let lastResultErrors: string[] | undefined;
 
-  const readFileOrEmpty = (path: string) =>
-    import('node:fs/promises').then((fs) => fs.readFile(path, 'utf-8')).catch(() => '');
+  const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
 
   return {
     onSocketEvent: (ch, se) => {

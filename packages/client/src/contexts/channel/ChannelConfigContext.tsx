@@ -13,7 +13,7 @@ type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEv
 
 export interface ConfigState {
   model: string | null;
-  availableModels: Array<{ value: string; label?: string; displayName?: string }>;
+  availableModels: ModelInfo[];
   mcpServers: Array<{ name: string; status: string; scope?: string }>;
   tools: string[];
   permissionMode: string | null;

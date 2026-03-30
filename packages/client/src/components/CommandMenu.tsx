@@ -325,14 +325,12 @@ export function CommandMenu({
   // Compute modelLabel
   const models = availableModels ?? [];
   const currentModel = model ?? null;
-  const modelEntry = models.find(
-    (m: { value: string; label?: string }) => m.value === currentModel,
-  );
+  const modelEntry = models.find((m) => m.value === currentModel);
   const modelLabel = modelEntry?.label ?? currentModel ?? 'Default';
 
   // Fast mode: prefer ModelInfo.supportsFastMode, fallback to modelDisplayMap
   const supportsFastMode =
-    (modelEntry as { supportsFastMode?: boolean } | undefined)?.supportsFastMode ??
+    modelEntry?.supportsFastMode ??
     providerConfig?.modelDisplayMap.find((m) => currentModel?.toLowerCase().includes(m.pattern))
       ?.supportsFastMode ??
     false;
