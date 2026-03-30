@@ -20,11 +20,11 @@
 - [x] GREEN：channelManager 暴露 `providerClientConfig`（不暴露整個 adapter）
 - [x] GREEN：initResponseSchema 加 optional providerConfig
 
-### 1.4 Client SessionContext 接收
-- [ ] RED：寫 renderWithWorkspace 測試 — `useSession().providerConfig` 有值且結構正確
-- [ ] GREEN：SessionContext init callback 存 `providerConfig`
-- [ ] GREEN：default fallback config（= 現有 Claude hardcoded 值），providerConfig 為 optional
-- [ ] REFACTOR：export `ProviderClientConfig` type 給 components 用
+### 1.4 Client SessionContext 接收 — DONE
+- [x] RED：ProviderConfigDisplay test component + `findByTestId('brand-name')` === "Claude"
+- [x] GREEN：SessionContext init callback 存 `providerConfig` state
+- [x] GREEN：providerConfig 為 optional（向下相容）
+- [x] ProviderClientConfig type 已從 @code-quest/shared export
 
 ## 2. Phase 2 — Components 消費 clientConfig
 
@@ -66,9 +66,16 @@
 ### 2.8 Docs URL
 - [ ] ComposeToolbar：hardcoded URL → `providerConfig.brand.docsUrl`
 
-## 3. Cleanup
+## 3. Code Review + 重構
+
+- [ ] code review 找出職責不清、過度設計、code smell
+- [ ] 重構發現的問題
+
+## 4. Cleanup
 
 - [ ] grep 驗證零 hardcoded "Claude" / "Anthropic" in production components
 - [ ] grep 驗證零 model string matching（opus/sonnet/haiku）in component logic
+- [ ] 確認零 `as never` / `as any` in production code
+- [ ] 確認零 component 直接 useSocket
 - [ ] 更新 skills 反映新架構
 - [ ] 全部測試通過
