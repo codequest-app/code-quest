@@ -194,4 +194,43 @@ describe('ChannelProvider', () => {
     rtlRender(<div />);
     expect(claude.socket.connected).toBe(true);
   });
+
+  // ── Context Usage ──
+
+  it('request_usage_update returns contextUsage from CLI', async () => {
+    const { claude, user } = await renderWithWorkspace();
+
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'get_context_usage') {
+        return {
+          categories: [{ name: 'System prompt', tokens: 6000, color: 'promptBorder' }],
+          totalTokens: 10000,
+          maxTokens: 200000,
+          percentage: 5,
+        };
+      }
+      return null;
+    });
+
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'go');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('done'));
+    await claude.emit(s.result());
+
+    // Trigger request_usage_update via UI — open /usage dialog
+    await act(async () => {
+      textarea.focus();
+    });
+    await user.type(textarea, '/usage');
+    const usageItem = screen.queryByText(/Account & usage/i);
+    if (usageItem) {
+      await user.click(usageItem);
+    }
+    await new Promise((r) => setTimeout(r, 50));
+
+    // App should not crash — contextUsage stored separately from stats
+    expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+  });
 });

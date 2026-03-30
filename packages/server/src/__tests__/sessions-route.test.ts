@@ -2,9 +2,22 @@ import express from 'express';
 import request from 'supertest';
 import { createSessionsRouter } from '../routes/sessions.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
-import type { SessionStore } from '../services/session-store.ts';
+import type { SessionRecord, SessionStore } from '../services/session-store.ts';
 
-function createMockStore(sessions: { id: string }[] = []): SessionStore {
+const sessionDefaults: Omit<SessionRecord, 'id'> = {
+  provider: 'claude',
+  command: 'claude',
+  args: '[]',
+  mode: 'interactive',
+  role: 'chat',
+  createdAt: new Date().toISOString(),
+};
+
+function mockSession(overrides: { id: string; title?: string }): SessionRecord {
+  return { ...sessionDefaults, ...overrides };
+}
+
+function createMockStore(sessions: SessionRecord[] = []): SessionStore {
   return {
     persist: vi.fn(),
     list: vi.fn().mockResolvedValue({ sessions, total: sessions.length }),
@@ -25,7 +38,7 @@ function createMockEventStore(events: unknown[] = []): RawEventStore {
 
 describe('GET /api/sessions', () => {
   it('returns sessions from store', async () => {
-    const store = createMockStore([{ id: 's1' } as never, { id: 's2' } as never]);
+    const store = createMockStore([mockSession({ id: 's1' }), mockSession({ id: 's2' })]);
     const app = express();
     app.use(createSessionsRouter(store));
 
@@ -133,8 +146,8 @@ describe('GET /api/sessions/:id/events', () => {
 describe('GET /api/sessions with preview', () => {
   it('returns sessions enriched with preview text', async () => {
     const store = createMockStore([
-      { id: 's1', title: 'Session 1' } as never,
-      { id: 's2', title: 'Session 2' } as never,
+      mockSession({ id: 's1', title: 'Session 1' }),
+      mockSession({ id: 's2', title: 'Session 2' }),
     ]);
     const eventStore = createMockEventStore();
     (eventStore.getPreview as ReturnType<typeof vi.fn>)

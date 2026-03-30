@@ -11,6 +11,7 @@ import { createFakeClaude, type FakeClaude } from './fake-claude';
 export interface RenderWithChannelOptions {
   channelId?: string;
   claude?: FakeClaude;
+  initSegment?: string;
 }
 
 export interface RenderWithChannelResult extends RenderResult {

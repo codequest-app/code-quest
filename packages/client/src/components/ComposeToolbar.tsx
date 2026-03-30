@@ -5,6 +5,7 @@ import { useSpeechToText } from '../hooks/useSpeechToText';
 import { openUrl } from '../utils/open-url';
 import { AccountUsageDialog } from './AccountUsageDialog';
 import { AddButton } from './AddButton';
+import { AuthDialog } from './AuthDialog';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
 import { InitOptionsDialog } from './InitOptionsDialog';
@@ -32,10 +33,11 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isProcessing,
     isCancelling,
     stats,
+    contextUsage,
+    requestUsageUpdate,
     isContextCompressed,
     usageQuota,
     accountInfo,
-    sendMessage,
     abort,
   } = useChannelMessages();
   const {
@@ -78,6 +80,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     | 'initOptions'
     | 'usage'
     | 'plugins'
+    | 'auth'
     | null;
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
@@ -115,9 +118,10 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   }, [activeDialog]);
 
   const contextPct =
-    stats?.inputTokens != null && stats.inputTokens > 0
+    (contextUsage as { percentage?: number } | null)?.percentage ??
+    (stats?.inputTokens != null && stats.inputTokens > 0
       ? Math.min(Math.round((stats.inputTokens / (stats.contextWindow ?? 200000)) * 100), 100)
-      : null;
+      : null);
   const showContextUsage = isContextCompressed || contextPct !== null;
 
   return (
@@ -153,6 +157,8 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         open={activeDialog === 'usage'}
         onClose={closeDialog}
         usage={usageQuota ?? undefined}
+        contextUsage={contextUsage ?? undefined}
+        stats={stats ?? undefined}
         model={accountInfo?.model}
         authMethod={accountInfo?.authMethod}
         email={accountInfo?.email}
@@ -160,6 +166,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         subscriptionType={accountInfo?.subscriptionType}
       />
       <PluginsPanel open={activeDialog === 'plugins'} onClose={closeDialog} />
+      <AuthDialog open={activeDialog === 'auth'} onClose={closeDialog} />
       <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
           <div ref={pickerRef}>
@@ -176,13 +183,16 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
         <CommandMenu
           onOpenModelPicker={() => setActiveDialog('modelPicker')}
-          onOpenAccountUsage={() => setActiveDialog('usage')}
+          onOpenAccountUsage={() => {
+            setActiveDialog('usage');
+            requestUsageUpdate();
+          }}
           onToggleMcp={() => setActiveDialog('manageMcp')}
           onMcpStatus={() => setActiveDialog('mcpStatus')}
           onResumeConversation={onResumeConversation}
           onManagePlugins={() => setActiveDialog('plugins')}
           onOpenConfig={() => setActiveDialog('initOptions')}
-          onSwitchAccount={() => sendMessage('/login')}
+          onSwitchAccount={() => setActiveDialog('auth')}
           onOpenHelp={() => openUrl('https://docs.anthropic.com/en/docs/claude-code/overview')}
           onAttachFile={onAttachFile}
         />

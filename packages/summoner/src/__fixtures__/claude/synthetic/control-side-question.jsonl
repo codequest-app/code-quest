@@ -1,0 +1,2 @@
+{"request_id":"sq-1","type":"control_request","request":{"subtype":"side_question","question":"What does this function do?"}}
+{"type":"control_response","response":{"subtype":"success","request_id":"sq-1","response":{"response":"This function parses JSON input and returns a typed object."}}}

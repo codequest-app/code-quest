@@ -47,6 +47,9 @@ export interface LaunchOptions {
   debugToStderr?: boolean;
   addDirs?: string[];
   pluginDirs?: string[];
+  taskBudget?: { total: number };
+  channels?: string[];
+  claudeInChromeMcp?: boolean;
 }
 
 // --- AutoResponse: provider knows CLI expects an immediate reply ---

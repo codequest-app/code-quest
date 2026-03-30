@@ -179,6 +179,50 @@ describe('ChatHandler > misc', () => {
         five_hour: { utilization: 0 },
       });
     });
+
+    it('request_usage_update includes context usage from CLI', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'get_context_usage') {
+          return {
+            categories: [
+              { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+              { name: 'Messages', tokens: 4000, color: 'purple' },
+              { name: 'Free space', tokens: 190000, color: 'promptBorder' },
+            ],
+            totalTokens: 10000,
+            maxTokens: 200000,
+            rawMaxTokens: 200000,
+            percentage: 5,
+            gridRows: [[{ color: 'x', isFilled: true }]],
+            apiUsage: { something: 'extra' },
+            mcpTools: ['tool1'],
+          };
+        }
+        return null;
+      });
+
+      const usageUpdates: any[] = [];
+      claude.socket.on('state:usage' as any, (payload: any) => {
+        usageUpdates.push(payload);
+      });
+
+      await claude.send('request_usage_update', { channelId });
+
+      expect(usageUpdates.length).toBe(1);
+      const ctx = (usageUpdates[0] as any).contextUsage;
+      expect(ctx.totalTokens).toBe(10000);
+      expect(ctx.maxTokens).toBe(200000);
+      expect(ctx.percentage).toBe(5);
+      expect(ctx.categories).toHaveLength(3);
+      expect(ctx.categories[0].name).toBe('System prompt');
+      // Extra fields should be stripped
+      expect(ctx.gridRows).toBeUndefined();
+      expect(ctx.apiUsage).toBeUndefined();
+      expect(ctx.mcpTools).toBeUndefined();
+      expect(ctx.rawMaxTokens).toBeUndefined();
+    });
   });
 
   describe('auth handlers', () => {
@@ -190,45 +234,43 @@ describe('ChatHandler > misc', () => {
       expect(status.authenticated).toBe(false);
     });
 
-    it('auth:login with apiKey sets authenticated state', async () => {
+    it('auth:login sends claude_authenticate to CLI and returns auth URL', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean }>('login', { method: 'api_key' });
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'claude_authenticate') {
+          return {
+            manualUrl: 'https://auth.example.com/manual',
+            automaticUrl: 'https://auth.example.com/auto',
+          };
+        }
+        return null;
+      });
+
+      const result = await claude.send<{ success: boolean; auth?: { response?: { manualUrl?: string } } }>(
+        'login',
+        { method: 'oauth' },
+      );
       expect(result.success).toBe(true);
-
-      const status = await claude.send<{
-        authenticated: boolean;
-        user?: { name: string };
-        method?: string;
-      }>('get_auth_status');
-
-      expect(status.authenticated).toBe(true);
-      expect(status.user?.name).toBe('api-key-user');
-      expect(status.method).toBe('api_key');
     });
 
-    it('auth:login with oauth method sets authenticated state', async () => {
-      const { claude } = await setup();
+    it('auth:login fails when no active session', async () => {
+      const claude = createFakeClaude();
+      // Don't initialize — no active channel
 
-      const result = await claude.send<{ success: boolean }>('login', { method: 'oauth' });
-      expect(result.success).toBe(true);
-
-      const status = await claude.send<{
-        authenticated: boolean;
-        user?: { name: string };
-        method?: string;
-      }>('get_auth_status');
-
-      expect(status.authenticated).toBe(true);
-      expect(status.user?.name).toBe('unknown');
-      expect(status.method).toBe('oauth');
+      const result = await claude.send<{ success: boolean; error?: string }>('login', {
+        method: 'oauth',
+      });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No active session');
     });
 
-    it('auth:oauth_code sets authenticated state', async () => {
+    it('auth:oauth_code sends claude_oauth_callback to CLI', async () => {
       const { claude } = await setup();
 
       const result = await claude.send<{ success: boolean }>('submit_oauth_code', {
         code: 'test-code',
+        state: 'test-state',
       });
       expect(result.success).toBe(true);
 

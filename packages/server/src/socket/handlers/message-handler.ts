@@ -3,6 +3,7 @@ import {
   chatGenerateSessionTitleSchema,
   chatHookCallbackRespondSchema,
   chatInterruptSchema,
+  chatRespondSchema,
   chatRewindCodeSchema,
   chatSendSchema,
   chatStopTaskSchema,
@@ -12,7 +13,7 @@ import { errMsg } from '../handler-context.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   // chat:send — alias for send_message
-  const sendHandler = (payload: unknown) => {
+  socket.on('chat:send', (payload) => {
     try {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
@@ -30,8 +31,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       console.error('Failed to send message:', err);
     }
-  };
-  socket.on('chat:send', sendHandler as never);
+  });
 
   const interruptedChannels = new Set<string>();
   socket.on('chat:cancel', (payload) => {
@@ -53,17 +53,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   /** Unified response handler — replaces `tool_permission_response`. */
-  const responseHandler = async (payload: unknown) => {
+  socket.on('chat:respond', async (payload) => {
     try {
-      const { requestId, response } = payload as {
-        requestId: string;
-        response: {
-          behavior: 'allow' | 'deny';
-          updatedInput?: unknown;
-          updatedPermissions?: unknown[];
-          message?: string;
-        };
-      };
+      const { requestId, response } = chatRespondSchema.parse(payload);
 
       // Single lookup for both notification and control requests
       const match = ctx.channelManager.findByRequestId(requestId);
@@ -78,7 +70,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const notifResolve = channel.notificationRequests.get(requestId);
       if (notifResolve) {
         channel.notificationRequests.delete(requestId);
-        notifResolve(response as never);
+        notifResolve(response as Record<string, unknown>);
         return;
       }
 
@@ -97,7 +89,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         const t = channel.mcpTimeouts.get(requestId);
         if (t) clearTimeout(t);
         channel.mcpTimeouts.delete(requestId);
-        respondAndBroadcast(response as never);
+        respondAndBroadcast(response as Record<string, unknown>);
         return;
       }
 
@@ -107,7 +99,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           behavior === 'allow'
             ? { action: 'accept' as const, result: (updatedInput as Record<string, unknown>) ?? {} }
             : { action: 'decline' as const };
-        respondAndBroadcast(elicitationResponse as never);
+        respondAndBroadcast(elicitationResponse as Record<string, unknown>);
         return;
       }
 
@@ -129,12 +121,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         }
       }
 
-      respondAndBroadcast(responseObj as never);
+      respondAndBroadcast(responseObj);
     } catch (err) {
       console.error('Failed to respond to control request:', err);
     }
-  };
-  socket.on('chat:respond', responseHandler as never);
+  });
 
   socket.on('chat:stop_task', (payload) => {
     try {
@@ -169,7 +160,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
       if (!channel) {
-        callback({ error: 'Session not found' } as never);
+        callback({ success: false, error: 'Session not found' });
         return;
       }
       const result = await channel.sendControlRequest('rewind_files', {
@@ -178,7 +169,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
       callback(result);
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to rewind code') } as never);
+      callback({ success: false, error: errMsg(err, 'Failed to rewind code') });
     }
   });
 

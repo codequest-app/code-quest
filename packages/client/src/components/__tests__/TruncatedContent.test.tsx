@@ -43,13 +43,9 @@ describe('TruncatedContent', () => {
 
     render(<TruncatedContent>Very long text</TruncatedContent>);
 
-    const btn = screen.queryByText('Show more');
-    if (btn) {
-      await userEvent.click(btn);
-      expect(screen.getByText('Show less')).toBeInTheDocument();
-    }
-    // Test passes even if overflow isn't detected in jsdom (no layout engine)
-    expect(screen.getByText('Very long text')).toBeInTheDocument();
+    const btn = screen.getByText('Show more');
+    await userEvent.click(btn);
+    expect(screen.getByText('Show less')).toBeInTheDocument();
   });
 
   it('applies maxHeight style when not expanded', () => {
@@ -63,12 +59,9 @@ describe('TruncatedContent', () => {
     vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(300);
 
     render(<TruncatedContent maxHeight={300}>Content</TruncatedContent>);
-    const btn = screen.queryByText('Show more');
-    if (btn) {
-      await userEvent.click(btn);
-      const inner = screen.getByTestId('truncated-inner');
-      expect(inner.style.maxHeight).toBe('');
-    }
-    expect(screen.getByText('Content')).toBeInTheDocument();
+    const btn = screen.getByText('Show more');
+    await userEvent.click(btn);
+    const inner = screen.getByTestId('truncated-inner');
+    expect(inner.style.maxHeight).toBe('');
   });
 });

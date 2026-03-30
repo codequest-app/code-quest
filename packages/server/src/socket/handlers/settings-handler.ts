@@ -1,3 +1,4 @@
+import type { ServerToClientEvents } from '@code-quest/shared';
 import {
   chatGetStateSchema,
   chatSetFastModeSchema,
@@ -151,10 +152,30 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('request_usage_update', (_payload) => {
-    socket.emit('state:usage', {
-      channelId: '',
-      usage: ctx.usageTracker.getUsage(),
-    });
+  socket.on('request_usage_update', async (_payload) => {
+    const usage = ctx.usageTracker.getUsage();
+    let contextUsage: Record<string, unknown> | undefined;
+
+    const channel = ctx.channelManager.getFirstAlive();
+    if (channel) {
+      try {
+        const resp = await channel.sendControlRequest('get_context_usage', {});
+        if (resp.response) {
+          const r = resp.response as Record<string, unknown>;
+          contextUsage = {
+            categories: r.categories,
+            totalTokens: r.totalTokens,
+            maxTokens: r.maxTokens,
+            percentage: r.percentage,
+          };
+        }
+      } catch {
+        // CLI may not support get_context_usage — ignore
+      }
+    }
+
+    const usagePayload: Record<string, unknown> = { channelId: '', usage };
+    if (contextUsage) usagePayload.contextUsage = contextUsage;
+    socket.emit('state:usage', usagePayload as Parameters<ServerToClientEvents['state:usage']>[0]);
   });
 }

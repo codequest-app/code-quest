@@ -8,6 +8,7 @@ import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { TabProvider } from '../../contexts/TabContext';
 import { createFakeClaude } from '../../test/fake-claude';
+import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { ComposeToolbar } from '../ComposeToolbar';
 
 /** Helper to trigger sendMessage from context */
@@ -108,6 +109,45 @@ describe('ComposeToolbar', () => {
     it('does not render when stats is null', async () => {
       await renderWithProviders();
       expect(screen.queryByText(/% used/)).not.toBeInTheDocument();
+    });
+
+    it('uses contextUsage percentage when available', async () => {
+      const { claude, user } = await renderWithWorkspace();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'get_context_usage') {
+          return {
+            categories: [],
+            totalTokens: 50000,
+            maxTokens: 200000,
+            percentage: 25,
+          };
+        }
+        return null;
+      });
+
+      // First get stats from result
+      const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+      await user.click(textarea);
+      await user.type(textarea, 'go');
+      await user.keyboard('{Enter}');
+      await claude.emit(s.assistant('done'));
+      await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
+
+      // Trigger request_usage_update via UI — open /usage dialog
+      await act(async () => {
+        textarea.focus();
+      });
+      await user.type(textarea, '/usage');
+      const usageItem = await screen.findByText(/Account & usage/i);
+      await user.click(usageItem);
+      // Wait for server pipeline: request_usage_update → get_context_usage → state:usage
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 200));
+      });
+
+      // Should show contextUsage.percentage (25%) — toolbar + dialog both show it
+      expect(screen.getAllByText(/25% used/).length).toBeGreaterThan(0);
     });
   });
 });

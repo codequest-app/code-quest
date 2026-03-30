@@ -1,3 +1,4 @@
+import type { AuthResult } from '@code-quest/shared';
 import {
   planClosePreviewSchema,
   planCommentSchema,
@@ -12,29 +13,59 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     callback(ctx.authState);
   });
 
-  socket.on('login', (payload, callback) => {
-    ctx.authState = {
-      authenticated: true,
-      user: { name: payload.method === 'api_key' ? 'api-key-user' : 'unknown' },
-      method: payload.method,
-    };
-    callback?.({
-      success: true,
-      auth: {
-        authenticated: true,
-        user: ctx.authState?.user,
-        method: payload.method,
-      },
-    });
+  socket.on('login', async (payload, callback) => {
+    try {
+      const channel = ctx.channelManager.getFirstAlive();
+      if (!channel) {
+        callback?.({
+          success: false,
+          error: 'No active session. Please open a tab first.',
+        });
+        return;
+      }
+      const controlResp = await channel.sendControlRequest('claude_authenticate', {
+        loginWithClaudeAi: payload.method !== 'api_key',
+      });
+      const authData = controlResp.response as
+        | {
+            manualUrl?: string;
+            automaticUrl?: string;
+          }
+        | undefined;
+      if (authData?.manualUrl || authData?.automaticUrl) {
+        socket.emit('notification:auth_url', {
+          channelId: '',
+          url: authData.automaticUrl ?? authData.manualUrl ?? '',
+          method: 'browser',
+        });
+      }
+      callback?.({ success: true, auth: authData as AuthResult['auth'] });
+    } catch (err) {
+      callback?.({ success: false, error: errMsg(err, 'Login failed') });
+    }
   });
 
-  socket.on('submit_oauth_code', (_payload, callback) => {
-    ctx.authState = {
-      authenticated: true,
-      user: { name: 'oauth-user' },
-      method: 'oauth',
-    };
-    callback({ success: true });
+  socket.on('submit_oauth_code', async (payload, callback) => {
+    try {
+      const channel = ctx.channelManager.getFirstAlive();
+      if (!channel) {
+        callback({ success: false, error: 'No active session' });
+        return;
+      }
+      await channel.sendControlRequest('claude_oauth_callback', {
+        authorizationCode: payload.code,
+        state: payload.state,
+      });
+      await channel.sendControlRequest('claude_oauth_wait_for_completion', {});
+      ctx.authState = {
+        authenticated: true,
+        user: { name: 'oauth-user' },
+        method: 'oauth',
+      };
+      callback({ success: true });
+    } catch (err) {
+      callback({ success: false, error: errMsg(err, 'OAuth failed') });
+    }
   });
 
   socket.on('init', (callback) => {
@@ -115,11 +146,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   // ── Speech-to-Text socket handlers ──
   socket.on('start_speech_to_text', (payload) => {
-    console.log('start_speech_to_text', (payload as { channelId?: string }).channelId);
+    console.log('start_speech_to_text', payload.channelId);
   });
 
   socket.on('stop_speech_to_text', (payload) => {
-    console.log('stop_speech_to_text', (payload as { channelId?: string }).channelId);
+    console.log('stop_speech_to_text', payload.channelId);
   });
 
   socket.on('disconnect', () => {

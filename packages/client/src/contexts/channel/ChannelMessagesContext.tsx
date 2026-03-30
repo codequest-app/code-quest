@@ -88,6 +88,7 @@ export interface ChannelMessagesValue {
   planComments: ChannelState['planComments'];
   statusText: ChannelState['statusText'];
   usageQuota: ChannelState['usageQuota'];
+  contextUsage: ChannelState['contextUsage'];
   accountInfo: ChannelState['accountInfo'];
   experimentGates: ChannelState['experimentGates'];
   isProcessing: boolean;
@@ -102,6 +103,7 @@ export interface ChannelMessagesValue {
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<{ events: unknown[] }>;
+  requestUsageUpdate: () => void;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   searchFiles: (pattern: string) => Promise<{ files: FileSearchResult[] }>;
   getTerminalContents: () => Promise<{ content: string | null }>;
@@ -651,6 +653,14 @@ export function ChannelMessagesProvider({
       });
     };
 
+    const onApiRetry = (p: Payload<'system:api_retry'>) => {
+      if (!guard(p)) return;
+      setChannelState((prev) => ({
+        ...prev,
+        statusText: `Retrying... (${p.attempt}/${p.maxRetries})`,
+      }));
+    };
+
     // ── Lifecycle events ──
 
     const onFileUpdated = (p: Payload<'file_updated'>) => {
@@ -757,7 +767,12 @@ export function ChannelMessagesProvider({
 
     const onStateUsage = (p: Payload<'state:usage'>) => {
       if (!guard(p)) return;
-      setState((prev) => ({ ...prev, usageQuota: p.usage }));
+      const ctx = (p as unknown as { contextUsage?: Record<string, unknown> }).contextUsage;
+      setState((prev) => ({
+        ...prev,
+        usageQuota: p.usage,
+        ...(ctx ? { contextUsage: ctx } : {}),
+      }));
     };
 
     const onDisconnect = () => {
@@ -790,6 +805,7 @@ export function ChannelMessagesProvider({
 
     socket.on('error:message', onErrorMessage);
     socket.on('system:rate_limit', onRateLimit);
+    socket.on('system:api_retry', onApiRetry);
 
     socket.on('file_updated', onFileUpdated);
     socket.on('plan_comment', onPlanComment);
@@ -826,6 +842,7 @@ export function ChannelMessagesProvider({
 
       socket.off('error:message', onErrorMessage);
       socket.off('system:rate_limit', onRateLimit);
+      socket.off('system:api_retry', onApiRetry);
 
       socket.off('file_updated', onFileUpdated);
       socket.off('plan_comment', onPlanComment);
@@ -882,6 +899,9 @@ export function ChannelMessagesProvider({
         setChannelState((prev) => ({ ...prev, planComments: [...prev.planComments, comment] })),
       clearPlanComments: () => setChannelState((prev) => ({ ...prev, planComments: [] })),
       fetchRawEvents: () => rpc(socket, 'session:raw_events', { channelId }),
+      requestUsageUpdate: () => {
+        socket.emit('request_usage_update', { channelId });
+      },
       subscribeRawEvents: (cb: (evt: unknown) => void) => {
         const handler = (eventName: string, ...args: unknown[]) => {
           const payload = args[0] as Record<string, unknown> | undefined;
@@ -918,6 +938,7 @@ export function ChannelMessagesProvider({
       planComments: channelState.planComments,
       statusText: channelState.statusText,
       usageQuota: channelState.usageQuota,
+      contextUsage: channelState.contextUsage,
       accountInfo: channelState.accountInfo,
       experimentGates: channelState.experimentGates,
       isProcessing:

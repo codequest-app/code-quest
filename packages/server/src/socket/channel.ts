@@ -185,13 +185,11 @@ export class Channel {
     for (const { requestId, event } of pendingRequests) {
       if (respondedRequestIds.has(requestId)) continue;
 
-      socket.emit(
-        event.name as keyof ServerToClientEvents,
-        {
-          channelId: this.id,
-          ...event.payload,
-        } as never,
-      );
+      const eventName = event.name as keyof ServerToClientEvents;
+      (socket.emit as (event: string, ...args: unknown[]) => void)(eventName, {
+        channelId: this.id,
+        ...event.payload,
+      });
     }
   }
 

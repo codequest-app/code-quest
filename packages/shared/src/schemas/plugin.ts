@@ -1,0 +1,105 @@
+import { z } from 'zod';
+
+// ── C2S ──
+
+export const pluginInstallSchema = z.object({
+  pluginId: z.string(),
+  scope: z.enum(['user', 'workspace', 'project', 'local']).optional(),
+});
+export type PluginInstallPayload = z.infer<typeof pluginInstallSchema>;
+
+export const pluginToggleSchema = z.object({ pluginId: z.string(), enabled: z.boolean() });
+export type PluginTogglePayload = z.infer<typeof pluginToggleSchema>;
+
+export const pluginUninstallSchema = z.object({ pluginId: z.string() });
+export type PluginUninstallPayload = z.infer<typeof pluginUninstallSchema>;
+
+export const addMarketplaceSchema = z.object({ source: z.string().min(1) });
+export type AddMarketplacePayload = z.infer<typeof addMarketplaceSchema>;
+
+export const removeMarketplaceSchema = z.object({ marketplaceId: z.string() });
+export type RemoveMarketplacePayload = z.infer<typeof removeMarketplaceSchema>;
+
+export const refreshMarketplaceSchema = z.object({ marketplaceId: z.string() });
+export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplaceSchema>;
+
+// ── Info schemas ──
+
+export const pluginInfoSchema = z.object({
+  id: z.string(),
+  version: z.string(),
+  scope: z.string(),
+  enabled: z.boolean(),
+  installPath: z.string(),
+  installedAt: z.string(),
+  lastUpdated: z.string(),
+});
+export type PluginInfo = z.infer<typeof pluginInfoSchema>;
+
+export const availablePluginSchema = z.object({
+  pluginId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  marketplaceName: z.string(),
+  version: z.string(),
+  source: z.string(),
+  installCount: z.number().optional(),
+});
+export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
+
+export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('npm'), package: z.string() }),
+  z.object({ source: z.literal('github'), repo: z.string() }),
+  z.object({ source: z.literal('git'), url: z.string() }),
+  z.object({ source: z.literal('url'), url: z.string() }),
+  z.object({ source: z.literal('directory'), path: z.string() }),
+  z.object({ source: z.literal('file'), path: z.string() }),
+  z.object({ source: z.literal('local'), path: z.string() }),
+]);
+export type MarketplaceSourceConfig = z.infer<typeof marketplaceSourceConfigSchema>;
+
+export const marketplaceInfoSchema = z.object({
+  name: z.string(),
+  config: z.object({
+    source: marketplaceSourceConfigSchema,
+    installLocation: z.string(),
+  }),
+  pluginCount: z.number(),
+  installedCount: z.number(),
+});
+export type MarketplaceInfo = z.infer<typeof marketplaceInfoSchema>;
+
+// ── Results ──
+
+export const pluginResultSchema = z.object({
+  success: z.boolean(),
+  needsRestart: z.boolean().optional(),
+  error: z.string().optional(),
+});
+export type PluginResult = z.infer<typeof pluginResultSchema>;
+
+export const marketplaceResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+export type MarketplaceResult = z.infer<typeof marketplaceResultSchema>;
+
+// ── Response schemas ──
+
+export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });
+export type ListPluginsPayload = z.infer<typeof listPluginsPayloadSchema>;
+
+export const listPluginsResponseSchema = z
+  .object({
+    installed: z.array(pluginInfoSchema),
+    available: z.array(availablePluginSchema),
+  })
+  .passthrough();
+export type ListPluginsResponse = z.infer<typeof listPluginsResponseSchema>;
+
+export const listMarketplacesResponseSchema = z
+  .object({
+    marketplaces: z.array(marketplaceInfoSchema),
+  })
+  .passthrough();
+export type ListMarketplacesResponse = z.infer<typeof listMarketplacesResponseSchema>;

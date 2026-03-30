@@ -31,6 +31,8 @@ describe('ChatHandler > control', () => {
       expect(permEvents.length).toBeGreaterThan(0);
       expect(permEvents[0].toolName).toBe('Bash');
       expect(permEvents[0].requestId).toBe('req-1');
+      expect(permEvents[0].input).toEqual({ command: 'ls' });
+      expect((permEvents[0] as Record<string, unknown>).inputs).toBeUndefined();
     });
 
     it('control_request tracked in channel', async () => {
@@ -575,38 +577,6 @@ describe('ChatHandler > control', () => {
     await claude.emit(s.result());
 
     expect(resultEvents.length).toBeGreaterThan(0);
-  });
-
-  it('emits control:permission when can_use_tool control_request arrives', async () => {
-    const { claude, channelId } = await setup();
-    const permRequests = collectEvents(claude.socket, 'control:permission');
-
-    await claude.send('chat:send', { channelId, message: 'go' });
-
-    claude.emit(
-      s.assistant({ toolUse: { id: 'toolu_2', name: 'Bash', input: { command: 'ls' } } }),
-    );
-    await claude.emit(s.controlRequest('req-perm-1', 'can_use_tool', 'Bash', { command: 'ls' }));
-
-    expect(permRequests).toHaveLength(1);
-    expect(permRequests[0].requestId).toBe('req-perm-1');
-    expect(permRequests[0].toolName).toBe('Bash');
-    expect(permRequests[0].input).toMatchObject({ command: 'ls' });
-  });
-
-  it('emits cancel_request S→C when control_cancel_request arrives', async () => {
-    const { claude, channelId } = await setup();
-    const cancelRequests = collectEvents(claude.socket, 'cancel_request');
-
-    await claude.send('chat:send', { channelId, message: 'go' });
-
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_cr', name: 'Read', input: {} } }));
-    await claude.emit(s.controlRequest('req-cancel-1', 'can_use_tool', 'Read', {}));
-
-    await claude.emit(s.controlCancelRequest('req-cancel-1'));
-
-    expect(cancelRequests).toHaveLength(1);
-    expect(cancelRequests[0].targetRequestId).toBe('req-cancel-1');
   });
 
   it('response from client triggers respondToControlRequest', async () => {

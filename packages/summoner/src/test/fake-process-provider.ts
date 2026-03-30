@@ -42,7 +42,7 @@ export class FakeProcessHandle implements ProcessHandle {
     if (this.resolver) {
       const r = this.resolver;
       this.resolver = null;
-      r({ value: undefined as never, done: true });
+      r({ value: undefined, done: true });
     }
   }
 
@@ -54,7 +54,7 @@ export class FakeProcessHandle implements ProcessHandle {
           return Promise.resolve({ value: this.lineQueue.shift()!, done: false });
         }
         if (this.signal.aborted) {
-          return Promise.resolve({ value: undefined as never, done: true });
+          return Promise.resolve({ value: undefined, done: true });
         }
         return new Promise<IteratorResult<string>>((resolve) => {
           this.resolver = resolve;

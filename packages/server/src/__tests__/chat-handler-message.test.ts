@@ -105,6 +105,17 @@ describe('ChatHandler > message', () => {
     expect(resultEvents.length).toBeGreaterThan(0);
   });
 
+  it('emits stream:text for streamlined_text', async () => {
+    const { claude, channelId } = await setup();
+    const textEvents = collectEvents(claude.socket, 'stream:text');
+
+    await claude.send('chat:send', { channelId, message: 'go' });
+    await claude.emit(s.streamlinedText('fast mode text'));
+
+    expect(textEvents.length).toBeGreaterThan(0);
+    expect(textEvents[0].text).toBe('fast mode text');
+  });
+
   it('persists raw events to store', async () => {
     const { claude, channelId } = await setup();
 

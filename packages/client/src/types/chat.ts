@@ -33,6 +33,7 @@ export interface ChannelState {
   planComments: PlanCommentData[];
   terminalSessions: Record<string, TerminalSession>;
   usageQuota: UsageQuota | null;
+  contextUsage: Record<string, unknown> | null;
   accountInfo: AccountInfo | null;
   experimentGates: Record<string, boolean>;
 }
@@ -49,6 +50,7 @@ export function initialChannelState(channelId: string): ChannelState {
     planComments: [],
     terminalSessions: {},
     usageQuota: null,
+    contextUsage: null,
     accountInfo: null,
     experimentGates: {},
   };

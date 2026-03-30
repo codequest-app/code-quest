@@ -1,17 +1,9 @@
 ---
 name: inversify-di
-description: |
-  Inversify dependency injection patterns for Code Quest server.
-  Covers container setup, TYPES symbols, binding patterns, and testing.
-
-  AUTO-INVOKE when:
-  - Creating or modifying DI container bindings
-  - Adding new injectable services
-  - Writing tests that need dependency overrides (rebindSync)
-  - Discussing server-side architecture or dependency graph
-  - Adding new TYPES symbols
-
-  Keywords: inversify, DI, dependency injection, container, inject, injectable, bind, rebind, factory, toConstantValue, TYPES, Symbol
+description: >
+  Inversify dependency injection patterns for the server.
+  Use when creating or modifying DI container bindings, adding injectable services,
+  writing tests with dependency overrides, or managing TYPES symbols.
 ---
 
 # Inversify DI

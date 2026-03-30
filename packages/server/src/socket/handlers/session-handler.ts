@@ -1,3 +1,4 @@
+import type { ServerToClientEvents } from '@code-quest/shared';
 import {
   chatCreateSchema,
   chatJoinSchema,
@@ -18,7 +19,7 @@ import { errMsg } from '../handler-context.ts';
 import { execGit } from './helpers.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  const launchHandler = async (payload: unknown, callback: (...args: unknown[]) => void) => {
+  socket.on('session:launch', async (payload, callback) => {
     let resumeSessionId: string | undefined;
     try {
       const parsed = chatCreateSchema.parse(payload);
@@ -94,7 +95,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const models = initResponse?.models as unknown[] | undefined;
       if (models) {
         ctx.cachedModels = models;
-        ctx.io?.emit('system:available_models', { channelId: '', models } as never);
+        ctx.io?.emit('system:available_models', { channelId: '', models });
       }
       const account = initResponse?.account as Record<string, unknown> | undefined;
 
@@ -120,12 +121,15 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
 
       // Emit session:init with final metaCache to socket
-      socket.emit('session:init', channel.buildSessionInitPayload() as never);
+      socket.emit(
+        'session:init',
+        channel.buildSessionInitPayload() as Parameters<ServerToClientEvents['session:init']>[0],
+      );
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {
           channelId: '',
           models: ctx.cachedModels,
-        } as never);
+        });
       }
 
       ctx.io?.emit('session:created', { channelId });
@@ -141,12 +145,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         ctx.io?.emit('session:dead', { channelId: resumeSessionId });
         return;
       }
-      callback?.({ error: message } as never);
+      callback?.({ channelId: '', error: message });
     }
-  };
-  socket.on('session:launch', launchHandler as never);
+  });
 
-  const joinHandler = async (payload: unknown, callback: (...args: unknown[]) => void) => {
+  socket.on('session:join', async (payload, callback) => {
     try {
       const { channelId } = chatJoinSchema.parse(payload);
       const existingChannel = ctx.channelManager.get(channelId);
@@ -183,12 +186,15 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       );
 
       // Emit session:init with final metaCache to socket
-      socket.emit('session:init', channel.buildSessionInitPayload() as never);
+      socket.emit(
+        'session:init',
+        channel.buildSessionInitPayload() as Parameters<ServerToClientEvents['session:init']>[0],
+      );
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {
           channelId: '',
           models: ctx.cachedModels,
-        } as never);
+        });
       }
 
       const events = await ctx.getSessionHistory(channelId);
@@ -196,10 +202,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback?.({ error: errMsg(err, 'Failed to join session') });
     }
-  };
-  socket.on('session:join', joinHandler as never);
+  });
 
-  const closeHandler = (payload: unknown) => {
+  socket.on('session:close', (payload) => {
     try {
       const { channelId } = chatKillSchema.parse(payload);
       const ch = ctx.channelManager.get(channelId);
@@ -209,8 +214,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore
     }
-  };
-  socket.on('session:close', closeHandler as never);
+  });
 
   socket.on('fork_conversation', async (payload, callback) => {
     try {
@@ -360,8 +364,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         };
       });
       callback({ sessions, total: result.total });
-    } catch (err) {
-      callback({ error: errMsg(err, 'Failed to list sessions') } as never);
+    } catch {
+      callback({ sessions: [], total: 0 });
     }
   });
 
@@ -374,8 +378,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
       const remoteSessions = result.sessions.filter((s) => s.parentId);
       callback({ sessions: remoteSessions, total: remoteSessions.length });
-    } catch (err) {
-      callback({ error: errMsg(err, 'Failed to list remote sessions') } as never);
+    } catch {
+      callback({ sessions: [], total: 0 });
     }
   });
 
@@ -391,13 +395,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const channel = ctx.channelManager.get(channelId);
       callback({ session, events, meta: channel?.metaCache ?? {} });
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to get session') } as never);
+      callback({ error: errMsg(err, 'Failed to get session') });
     }
   });
 
   socket.on('session:raw_events', async (payload, callback) => {
     try {
-      const { channelId } = payload as { channelId: string };
+      const { channelId } = payload;
       const entries = await ctx.rawEventStore.getBySession(await ctx.resolveSessionId(channelId));
       const events = entries.map((e) => {
         try {
@@ -407,8 +411,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         }
       });
       callback({ events });
-    } catch (err) {
-      callback({ error: errMsg(err, 'Failed to get raw events') } as never);
+    } catch (_err) {
+      callback({ events: [] });
     }
   });
 

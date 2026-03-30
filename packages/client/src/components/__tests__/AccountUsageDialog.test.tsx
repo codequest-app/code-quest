@@ -1,7 +1,19 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
+
+async function openUsageDialog(user: UserEvent) {
+  const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+  await act(async () => {
+    textarea.focus();
+  });
+  await user.type(textarea, '/usage');
+  const usageItem = await screen.findByText(/Account & usage/i);
+  await user.click(usageItem);
+  return screen.getByRole('dialog', { name: /account & usage/i });
+}
 
 describe('AccountUsageDialog', () => {
   it('renders after rate limit event', async () => {
@@ -53,23 +65,11 @@ describe('AccountUsageDialog', () => {
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result());
 
-    // Focus textarea and type /usage
-    await act(async () => {
-      textarea.focus();
-    });
-    await user.type(textarea, '/usage');
-
-    // Look for the usage menu item
-    const usageItem = screen.queryByText(/Account & usage/i);
-    if (usageItem) {
-      await user.click(usageItem);
-      // Dialog should open
-      const dialog = screen.queryByRole('dialog', { name: /account & usage/i });
-      expect(dialog).toBeTruthy();
-    }
+    const dialog = await openUsageDialog(user);
+    expect(dialog).toBeInTheDocument();
   });
 
-  it('dialog shows loading when no rate_limit data', async () => {
+  it('dialog opens and shows quota section', async () => {
     const { claude, user } = await renderWithWorkspace();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -78,21 +78,9 @@ describe('AccountUsageDialog', () => {
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result());
 
-    await act(async () => {
-      textarea.focus();
-    });
-    await user.type(textarea, '/usage');
-
-    const usageItem = screen.queryByText(/Account & usage/i);
-    if (usageItem) {
-      await user.click(usageItem);
-      // Should show loading or empty state
-      const dialog = screen.queryByRole('dialog', { name: /account & usage/i });
-      if (dialog) {
-        const loadingEl = screen.queryByText(/loading usage/i);
-        expect(loadingEl).toBeTruthy();
-      }
-    }
+    const dialog = await openUsageDialog(user);
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText(/Quota/)).toBeInTheDocument();
   });
 
   it('rate_limit data appears in dialog after event', async () => {
@@ -106,21 +94,9 @@ describe('AccountUsageDialog', () => {
     await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
     await claude.emit(s.result());
 
-    await act(async () => {
-      textarea.focus();
-    });
-    await user.type(textarea, '/usage');
-
-    const usageItem = screen.queryByText(/Account & usage/i);
-    if (usageItem) {
-      await user.click(usageItem);
-
-      const dialog = screen.queryByRole('dialog', { name: /account & usage/i });
-      if (dialog) {
-        // Should show session usage data
-        expect(screen.queryAllByText(/Session|5hr|resets/i).length).toBeGreaterThan(0);
-      }
-    }
+    const dialog = await openUsageDialog(user);
+    // Should show session usage data
+    expect(within(dialog).queryAllByText(/Session|5hr|resets/i).length).toBeGreaterThan(0);
   });
 
   it('dialog closes when close button clicked', async () => {
@@ -132,24 +108,59 @@ describe('AccountUsageDialog', () => {
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result());
 
-    await act(async () => {
-      textarea.focus();
-    });
-    await user.type(textarea, '/usage');
-
-    const usageItem = screen.queryByText(/Account & usage/i);
-    if (usageItem) {
-      await user.click(usageItem);
-
-      const dialog = screen.getByRole('dialog', { name: /account & usage/i });
-      const closeBtn = within(dialog).getByLabelText('close');
-      await user.click(closeBtn);
-      expect(screen.queryByRole('dialog', { name: /account & usage/i })).not.toBeInTheDocument();
-    }
+    const dialog = await openUsageDialog(user);
+    const closeBtn = within(dialog).getByLabelText('close');
+    await user.click(closeBtn);
+    expect(screen.queryByRole('dialog', { name: /account & usage/i })).not.toBeInTheDocument();
   });
 
   it('renders after init with account info', async () => {
     await renderWithWorkspace();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+  });
+
+  it('shows context breakdown when opening usage dialog', async () => {
+    const { claude, user } = await renderWithWorkspace();
+
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'get_context_usage') {
+        return {
+          categories: [
+            { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+            { name: 'Messages', tokens: 4000, color: 'purple' },
+            { name: 'Free space', tokens: 190000, color: 'promptBorder' },
+          ],
+          totalTokens: 10000,
+          maxTokens: 200000,
+          percentage: 5,
+        };
+      }
+      return null;
+    });
+
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'hello');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('hi'));
+    await claude.emit(s.result());
+
+    const dialog = await openUsageDialog(user);
+    expect(within(dialog).getByText(/System prompt/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/6\.0k/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/5% used/)).toBeInTheDocument();
+  });
+
+  it('shows session cost from result stats', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'hello');
+    await user.keyboard('{Enter}');
+    await claude.emit(s.assistant('hi'));
+    await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+
+    const dialog = await openUsageDialog(user);
+    expect(within(dialog).getByText(/\$1\.23/)).toBeInTheDocument();
   });
 });
