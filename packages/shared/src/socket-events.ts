@@ -50,6 +50,7 @@ import type {
   GenerateSessionTitleResponse,
   GetClaudeStateResponse,
   GetPlanCommentsResponse,
+  GetProviderConfigResponse,
   GetSessionResponse,
   GitCheckoutPayload,
   GitCheckoutResult,
@@ -340,6 +341,10 @@ export interface ClientToServerEvents {
   'git:diff': (callback: (result: GitDiffResult) => void) => void;
   init: (callback: (response: InitResponse) => void) => void;
   cancel_request: (payload: CancelRequestPayload) => void;
+  get_provider_config: (
+    payload: ChannelIdPayload,
+    callback: (response: GetProviderConfigResponse) => void,
+  ) => void;
   'terminal:get_contents': (
     payload: TerminalGetContentsPayload,
     callback: (response: TerminalGetContentsResponse) => void,

@@ -64,10 +64,6 @@ export class ChatHandler implements HandlerContext {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
   }
 
-  get providerConfig() {
-    return this.channelManager.providerClientConfig;
-  }
-
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     this.io = io;
     io.on('connection', (socket) => this.handleConnection(socket));

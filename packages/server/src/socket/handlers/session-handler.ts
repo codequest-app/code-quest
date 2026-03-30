@@ -123,7 +123,6 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Emit session:init with final metaCache to socket
       socket.emit('session:init', {
         ...channel.buildSessionInitPayload(),
-        ...(ctx.providerConfig ? { providerConfig: ctx.providerConfig } : {}),
       } as Parameters<ServerToClientEvents['session:init']>[0]);
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {
@@ -188,7 +187,6 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Emit session:init with final metaCache to socket
       socket.emit('session:init', {
         ...channel.buildSessionInitPayload(),
-        ...(ctx.providerConfig ? { providerConfig: ctx.providerConfig } : {}),
       } as Parameters<ServerToClientEvents['session:init']>[0]);
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {

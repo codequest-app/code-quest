@@ -114,6 +114,13 @@ export function ChannelConfigProvider({
   useEffect(() => {
     if (!channelId) return;
 
+    // Fetch provider config on mount (static adapter data, doesn't need CLI)
+    socket.emit('get_provider_config', { channelId }, (res) => {
+      if (res.providerConfig) {
+        setConfigState((prev) => ({ ...prev, providerConfig: res.providerConfig }));
+      }
+    });
+
     const guard = (payload: { channelId: string }) =>
       payload.channelId === channelId || payload.channelId === '';
 
@@ -162,7 +169,6 @@ export function ChannelConfigProvider({
           permissionMode: prev.permissionMode ?? payload.permissionMode ?? null,
           fastModeState: (payload.fastModeState as string) ?? null,
           slashCommands: [...new Set([...(payload.slashCommands ?? []), 'usage'])],
-          ...(payload.providerConfig ? { providerConfig: payload.providerConfig } : {}),
         };
       });
     };

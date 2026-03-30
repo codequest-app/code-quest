@@ -6,7 +6,6 @@ import type {
   NotificationPayload,
   NotificationResponse,
   PluginInfo,
-  ProviderClientConfig,
   ServerToClientEvents,
 } from '@code-quest/shared';
 import type { ProcessRunner, SocketEvent } from '@code-quest/summoner';
@@ -48,7 +47,6 @@ export interface HandlerContext {
   readonly io?: TypedServer | undefined;
 
   // ── Shared state ──
-  readonly providerConfig?: ProviderClientConfig;
   authState: AuthStatus;
   cachedModels: unknown[] | undefined;
   chromeMcpState: { status: 'disconnected' | 'connecting' | 'connected' };

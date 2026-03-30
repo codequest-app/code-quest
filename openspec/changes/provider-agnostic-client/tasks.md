@@ -51,4 +51,5 @@
 - [x] 零 component 直接 useSocket
 - [x] 零 inline import
 - [ ] 更新 skills 反映新架構
+- [ ] 審查所有 event 命名（namespace 一致性：`session:*` vs `chat:*` vs bare `get_*`），提出調整方案
 - [ ] 全部測試通過

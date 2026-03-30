@@ -47,3 +47,8 @@ export const providerClientConfigSchema = z.object({
 });
 
 export type ProviderClientConfig = z.infer<typeof providerClientConfigSchema>;
+
+export const getProviderConfigResponseSchema = z.object({
+  providerConfig: providerClientConfigSchema,
+});
+export type GetProviderConfigResponse = z.infer<typeof getProviderConfigResponseSchema>;
