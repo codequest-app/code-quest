@@ -1,4 +1,8 @@
-import type { ContentBlock } from '@code-quest/shared';
+import {
+  type ContentBlock,
+  type ProviderClientConfig,
+  providerClientConfigSchema,
+} from '@code-quest/shared';
 import type { ControlResponseEvent } from '../types.ts';
 import { ClaudeProtocol } from './claude.ts';
 import type { ProtocolEvent } from './claude-schemas.ts';
@@ -22,6 +26,66 @@ const EMPTY: ConvertResult = { events: [], serverActions: [], controlResponses: 
 
 export class ClaudeAdapter implements ProviderAdapter {
   private readonly protocol = new ClaudeProtocol();
+
+  readonly clientConfig: ProviderClientConfig = providerClientConfigSchema.parse({
+    brand: {
+      name: 'Claude',
+      company: 'Anthropic',
+      docsUrl: 'https://docs.anthropic.com/en/docs/claude-code/overview',
+      placeholder: '⌘ Esc to focus or unfocus Claude',
+      loginTitle: 'Login to Claude',
+    },
+    permissionModes: [
+      { id: 'normal', label: 'Normal', description: 'Claude asks before any changes' },
+      {
+        id: 'acceptEdits',
+        label: 'Auto-accept edits',
+        description:
+          'Claude applies code changes without asking, but still asks before other actions',
+      },
+      {
+        id: 'plan',
+        label: 'Plan mode',
+        description: 'Claude creates a plan and asks for approval before executing',
+      },
+      {
+        id: 'bypassPermissions',
+        label: 'Yolo mode',
+        description:
+          'Claude runs without asking for permission (requires --dangerously-skip-permissions)',
+      },
+    ],
+    authMethods: [
+      { id: 'claudeai', label: 'Claude AI' },
+      { id: 'console', label: 'Anthropic Console' },
+      { id: 'api-key', label: 'API Key' },
+      { id: '3p', label: 'Third Party' },
+      { id: 'not-specified', label: 'Not Specified' },
+    ],
+    mcpScopes: [
+      { id: 'project', label: 'Project' },
+      { id: 'local', label: 'Local' },
+      { id: 'user', label: 'User' },
+      { id: 'claudeai', label: 'claude.ai', prefix: 'claude.ai ' },
+      { id: 'managed', label: 'Managed' },
+      { id: 'enterprise', label: 'Enterprise' },
+    ],
+    usageTiers: [
+      { key: 'five_hour', label: 'Session (5hr)', shortLabel: '5hr' },
+      { key: 'seven_day', label: 'Weekly (7 day)', shortLabel: '7day' },
+      { key: 'seven_day_sonnet', label: 'Weekly Sonnet', shortLabel: 'Sonnet' },
+    ],
+    modelDisplayMap: [
+      { pattern: 'opus', displayName: 'Opus 4.6', supportsFastMode: true },
+      {
+        pattern: 'sonnet',
+        displayName: 'Sonnet',
+        subLabel: 'Sonnet 4.6 · Best for everyday tasks',
+      },
+      { pattern: 'haiku', displayName: 'Haiku', subLabel: 'Haiku 4.5 · Fastest for quick answers' },
+    ],
+    defaultModelDescription: 'Most capable for complex work',
+  });
 
   get command(): string {
     return this.protocol.command;

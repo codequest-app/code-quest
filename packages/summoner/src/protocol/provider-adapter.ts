@@ -1,4 +1,4 @@
-import type { SocketEvent } from '@code-quest/shared';
+import type { ProviderClientConfig, SocketEvent } from '@code-quest/shared';
 import type { ZodError } from 'zod';
 import type { ControlResponseEvent } from '../types.ts';
 import type { ProtocolEvent } from './claude-schemas.ts';
@@ -75,6 +75,7 @@ export interface AdapterOutput {
 
 export interface ProviderAdapter {
   readonly command: string;
+  readonly clientConfig: ProviderClientConfig;
 
   buildArgs(options?: LaunchOptions): string[];
 

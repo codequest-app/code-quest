@@ -3,15 +3,15 @@
 > TDD：先寫測試再寫 code。FakeClaude + real JSON fixture。
 > init 是 per-connection，providerConfig 在 launch/join 前就有。
 
-### 1.1 Zod schema + type
-- [ ] RED：寫 `providerClientConfigSchema` 的 parse 測試（valid / invalid / optional fields）
-- [ ] GREEN：`shared/schemas/provider.ts` 建立 schema + type
-- [ ] REFACTOR：export from index.ts
+### 1.1 Zod schema + type — DONE
+- [x] RED：5 tests（valid, missing brand, empty arrays, optional prefix, optional supportsFastMode）
+- [x] GREEN：`shared/schemas/provider.ts` — providerClientConfigSchema + ProviderClientConfig
+- [x] REFACTOR：export from schemas/index.ts
 
-### 1.2 ProviderAdapter interface 擴展
-- [ ] RED：寫測試驗證 `ClaudeAdapter` 有 `clientConfig` 屬性且結構正確
-- [ ] GREEN：`provider-adapter.ts` 加 `readonly clientConfig: ProviderClientConfig`
-- [ ] GREEN：`claude-adapter.ts` 實作 `clientConfig`（brand、permissionModes、authMethods、mcpScopes、usageTiers、modelDisplayMap 從現有 component hardcode 搬過來）
+### 1.2 ProviderAdapter interface 擴展 — DONE
+- [x] RED：8 tests（clientConfig exists, Zod valid, brand, permissionModes, usageTiers, modelDisplayMap, mcpScopes）
+- [x] GREEN：`provider-adapter.ts` 加 `readonly clientConfig: ProviderClientConfig`
+- [x] GREEN：`claude-adapter.ts` 用 `providerClientConfigSchema.parse()` 建 clientConfig
 
 ### 1.3 Server init 推送
 - [ ] RED：寫 FakeClaude 測試 — `init` callback response 包含 `providerConfig` 欄位
