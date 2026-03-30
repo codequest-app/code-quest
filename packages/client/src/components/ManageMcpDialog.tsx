@@ -1,37 +1,41 @@
+import type { ProviderClientConfig } from '@code-quest/shared';
 import { useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import type { McpServerInfo } from './MCPPanel';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];
 
-function scopeLabel(scope: string): string {
-  switch (scope) {
-    case 'project':
-      return 'Project';
-    case 'local':
-      return 'Local';
-    case 'user':
-      return 'User';
-    case 'claudeai':
-      return 'claude.ai';
-    case 'managed':
-      return 'Managed';
-    case 'enterprise':
-      return 'Enterprise';
-    default:
-      return scope;
-  }
+const DEFAULT_SCOPE_LABELS: Record<string, string> = {
+  project: 'Project',
+  local: 'Local',
+  user: 'User',
+  claudeai: 'claude.ai',
+  managed: 'Managed',
+  enterprise: 'Enterprise',
+};
+
+function scopeLabel(scope: string, mcpScopes?: ProviderClientConfig['mcpScopes']): string {
+  const configLabel = mcpScopes?.find((s) => s.id === scope)?.label;
+  return configLabel ?? DEFAULT_SCOPE_LABELS[scope] ?? scope;
 }
 
-function inferScope(name: string): string {
+function inferScope(name: string, mcpScopes?: ProviderClientConfig['mcpScopes']): string {
+  if (mcpScopes) {
+    const match = mcpScopes.find((s) => s.prefix && name.startsWith(s.prefix));
+    if (match) return match.id;
+  }
   return name.startsWith('claude.ai ') ? 'claudeai' : 'user';
 }
 
-function groupByScope(servers: McpServerInfo[]): Array<[string, McpServerInfo[]]> {
+function groupByScope(
+  servers: McpServerInfo[],
+  mcpScopes?: ProviderClientConfig['mcpScopes'],
+): Array<[string, McpServerInfo[]]> {
   const map = new Map<string, McpServerInfo[]>();
   for (const s of servers) {
-    const scope = s.scope ?? inferScope(s.name);
+    const scope = s.scope ?? inferScope(s.name, mcpScopes);
     const group = map.get(scope);
     if (group) group.push(s);
     else map.set(scope, [s]);
@@ -141,12 +145,15 @@ export function ManageMcpDialog({
   onClearAuth,
   onRefresh,
 }: ManageMcpDialogProps) {
+  const { providerConfig } = useChannelConfig();
+  const mcpScopes = providerConfig?.mcpScopes;
+
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAction>(null);
   const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const isManageable = !!(onReconnect || onToggle || onAuthenticate);
-  const groups = groupByScope(servers);
+  const groups = groupByScope(servers, mcpScopes);
   const detail = selectedServer ? servers.find((s) => s.name === selectedServer) : null;
 
   const act = async (action: string, fn: () => Promise<void>) => {
@@ -247,7 +254,7 @@ export function ManageMcpDialog({
                 {groups.map(([scope, group]) => (
                   <div key={scope}>
                     <div className="text-[12px] font-semibold text-text-muted pb-1 pt-2 first:pt-0">
-                      {scopeLabel(scope)} ({group.length})
+                      {scopeLabel(scope, mcpScopes)} ({group.length})
                     </div>
                     {group.map((s) => (
                       <button

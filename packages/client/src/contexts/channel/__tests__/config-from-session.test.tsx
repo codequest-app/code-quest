@@ -1,10 +1,42 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { PluginProvider } from '../../../contexts/PluginContext';
+import { SessionProvider } from '../../../contexts/SessionContext';
+import { SocketProvider } from '../../../contexts/SocketContext';
+import { TabProvider } from '../../../contexts/TabContext';
 import { createFakeClaude } from '../../../test/fake-claude';
 import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { ChannelProvider } from '../ChannelContext';
+import { useChannelConfig } from '../index';
+
+function ProviderConfigDisplay() {
+  const { providerConfig } = useChannelConfig();
+  if (!providerConfig) return <div data-testid="no-provider-config">none</div>;
+  return <div data-testid="provider-brand">{providerConfig.brand.name}</div>;
+}
 
 describe('ChannelConfigContext', () => {
+  it('providerConfig available on mount via get_provider_config', async () => {
+    const claude = createFakeClaude();
+
+    render(
+      <SocketProvider socket={claude.socket}>
+        <SessionProvider>
+          <PluginProvider>
+            <TabProvider>
+              <ChannelProvider channelId="test-ch">
+                <ProviderConfigDisplay />
+              </ChannelProvider>
+            </TabProvider>
+          </PluginProvider>
+        </SessionProvider>
+      </SocketProvider>,
+    );
+
+    expect(await screen.findByTestId('provider-brand')).toHaveTextContent('Claude');
+  });
+
   it('receives config from session:init on launch', async () => {
     const claude = createFakeClaude();
     claude.prepareInit(

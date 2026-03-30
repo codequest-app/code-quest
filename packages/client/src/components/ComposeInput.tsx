@@ -23,7 +23,7 @@ function autogrow(el: HTMLTextAreaElement | null) {
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
-  const { effort, isFastMode } = useChannelConfig();
+  const { effort, isFastMode, providerConfig } = useChannelConfig();
   const compose = useChannelCompose();
 
   const {
@@ -212,7 +212,11 @@ export function ComposeInput() {
         onKeyDown={handleKeyDown}
         onSelect={syncCursorPos}
         onClick={syncCursorPos}
-        placeholder={isProcessing ? 'Queue another message…' : '⌘ Esc to focus or unfocus Claude'}
+        placeholder={
+          isProcessing
+            ? 'Queue another message…'
+            : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
+        }
         className="w-full bg-transparent text-text px-[14px] pt-[10px] pb-[2px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted min-h-[1.5em] max-h-[200px] overflow-y-auto"
       />
       {showMentionDropdown && (

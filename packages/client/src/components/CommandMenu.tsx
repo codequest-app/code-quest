@@ -34,6 +34,7 @@ interface BuildMenuItemsParams {
   isFastMode: boolean;
   fastModeState: string | null;
   modelLabel: string;
+  supportsFastMode: boolean;
   onSetEffort: (effort: 'low' | 'medium' | 'high' | 'max') => void;
   onSetThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
@@ -59,7 +60,8 @@ interface BuildMenuItemsParams {
 }
 
 function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const { slashCommands, effort, isThinkingOn, isFastMode, fastModeState, modelLabel } = params;
+  const { slashCommands, effort, isThinkingOn, isFastMode, fastModeState, supportsFastMode } =
+    params;
   const { onSetEffort, onSetThinkingLevel, setFastMode, close, compose, actions, callbacks } =
     params;
 
@@ -147,11 +149,11 @@ function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
         close();
       },
     },
-    ...(modelLabel?.toLowerCase().includes('opus-4-6') || modelLabel?.toLowerCase() === 'opus'
+    ...(supportsFastMode
       ? [
           {
             id: 'fast-mode',
-            label: 'Toggle fast mode (Opus 4.6 only)',
+            label: 'Toggle fast mode',
             section: 'Model' as const,
             trailing: <ToggleSwitch isOn={isFastMode} />,
             onClick: () => setFastMode(fastModeState === 'off' || !fastModeState),
@@ -318,13 +320,20 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
 
+  const { providerConfig } = useChannelConfig();
+
   // Compute modelLabel
   const models = availableModels ?? [];
   const currentModel = model ?? null;
-  const modelEntry = models.find(
-    (m: { value: string; label?: string }) => m.value === currentModel,
-  );
+  const modelEntry = models.find((m) => m.value === currentModel);
   const modelLabel = modelEntry?.label ?? currentModel ?? 'Default';
+
+  // Fast mode: prefer ModelInfo.supportsFastMode, fallback to modelDisplayMap
+  const supportsFastMode =
+    modelEntry?.supportsFastMode ??
+    providerConfig?.modelDisplayMap.find((m) => currentModel?.toLowerCase().includes(m.pattern))
+      ?.supportsFastMode ??
+    false;
 
   // Compose bindings
   const externalOpen = compose.slashFilter != null;
@@ -445,6 +454,7 @@ export function CommandMenu({
     isFastMode,
     fastModeState,
     modelLabel,
+    supportsFastMode,
     onSetEffort,
     onSetThinkingLevel,
     setFastMode,

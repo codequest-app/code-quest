@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { usePlugins } from '../contexts/PluginContext';
 import { InstalledPluginList } from './InstalledPluginList';
 import { MarketplaceSection } from './MarketplaceSection';
@@ -24,6 +25,7 @@ export function PluginsPanel({ open, onClose }: PluginsPanelProps) {
     addMarketplace,
     removeMarketplace,
   } = usePlugins();
+  const { providerConfig } = useChannelConfig();
 
   const [activeTab, setActiveTab] = useState<'plugins' | 'marketplaces'>('plugins');
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,7 +83,7 @@ export function PluginsPanel({ open, onClose }: PluginsPanelProps) {
 
         {needsRestart && (
           <div className="flex items-center justify-between bg-warning/15 border border-warning text-text rounded-md px-3 py-2.5 mb-3 text-[0.85em]">
-            <span>Restart Claude to apply plugin changes</span>
+            <span>Restart {providerConfig?.brand.name ?? 'Claude'} to apply plugin changes</span>
             <button
               type="button"
               className="ml-3 px-2.5 py-1 rounded bg-button text-white text-xs border-0"

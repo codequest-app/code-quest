@@ -5,7 +5,7 @@ import type {
   NotificationResponse,
   ServerToClientEvents,
 } from '@code-quest/shared';
-import type { ProcessRunner } from '@code-quest/summoner';
+import type { ProcessRunner, SocketEvent } from '@code-quest/summoner';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -74,9 +74,7 @@ export class ChatHandler implements HandlerContext {
   }
 
   /** Retrieve parsed history events — delegates to ChannelManager. */
-  async getSessionHistory(
-    channelId: string,
-  ): Promise<import('@code-quest/summoner').SocketEvent[]> {
+  async getSessionHistory(channelId: string): Promise<SocketEvent[]> {
     return this.channelManager.getSessionHistory(channelId);
   }
 

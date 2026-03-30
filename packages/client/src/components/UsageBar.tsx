@@ -1,4 +1,5 @@
 import type { UsageQuota } from '@code-quest/shared';
+import { useChannelConfig } from '../contexts/channel';
 
 interface UsageBarProps {
   usage: UsageQuota;
@@ -42,20 +43,24 @@ function TierBar({
   );
 }
 
-const USAGE_TIERS = [
+const DEFAULT_USAGE_TIERS = [
   { key: 'five_hour', label: '5hr' },
   { key: 'seven_day', label: '7day' },
   { key: 'seven_day_sonnet', label: 'Sonnet' },
-] as const;
+];
 
 export function UsageBar({ usage }: UsageBarProps) {
+  const { providerConfig } = useChannelConfig();
+  const usageTiers =
+    providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.shortLabel })) ??
+    DEFAULT_USAGE_TIERS;
   return (
     <div
       className="flex flex-col gap-1 text-[11px] text-text-muted/60 font-mono"
       data-testid="usage-bar"
     >
-      {USAGE_TIERS.map(({ key, label }) => {
-        const tier = usage[key];
+      {usageTiers.map(({ key, label }) => {
+        const tier = (usage as Record<string, { utilization: number; resets_at?: string }>)[key];
         if (!tier) return null;
         return (
           <TierBar

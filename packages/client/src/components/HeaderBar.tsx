@@ -20,7 +20,7 @@ export interface HeaderBarProps {
 
 export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
   const { status, channelId } = useChannelMessages();
-  const { model, thinkingLevel, availableModels } = useChannelConfig();
+  const { model, thinkingLevel, availableModels, providerConfig } = useChannelConfig();
 
   const cfg =
     status in statusConfig ? statusConfig[status as SessionStatus] : statusConfig.disconnected;
@@ -34,7 +34,7 @@ export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
       {model && (
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
           {availableModels?.find((m: { value: string }) => m.value === model)?.displayName ??
-            shortModelName(model)}
+            shortModelName(model, providerConfig?.modelDisplayMap)}
         </span>
       )}
       {thinkingLevel && thinkingLevel !== 'off' && (

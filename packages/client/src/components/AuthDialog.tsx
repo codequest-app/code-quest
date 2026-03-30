@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
@@ -9,6 +10,7 @@ interface AuthDialogProps {
 
 export function AuthDialog({ open, onClose }: AuthDialogProps) {
   const { auth, login, submitOAuthCode, resetAuth } = useSession();
+  const { providerConfig } = useChannelConfig();
   const [code, setCode] = useState('');
   const [state, setState] = useState('');
 
@@ -34,11 +36,12 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
         if (!o) onClose();
       }}
     >
-      <DialogContent title="Login to Claude">
+      <DialogContent title={providerConfig?.brand.loginTitle ?? 'Login to Claude'}>
         {auth.status === 'idle' && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-text-muted">
-              Login to Claude to use your account. An active session is required.
+              Login to {providerConfig?.brand.name ?? 'Claude'} to use your account. An active
+              session is required.
             </p>
             <button
               type="button"

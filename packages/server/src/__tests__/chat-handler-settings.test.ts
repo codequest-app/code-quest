@@ -187,6 +187,18 @@ describe('ChatHandler > settings', () => {
     expect(result.sessions).toEqual(expect.any(Array));
   });
 
+  it('get_provider_config returns providerConfig from adapter', async () => {
+    const claude = createFakeClaude();
+
+    const result = await claude.send<{
+      providerConfig: { brand: { name: string; company: string } };
+    }>('get_provider_config', { channelId: '' });
+
+    expect(result.providerConfig).toBeDefined();
+    expect(result.providerConfig.brand.name).toBe('Claude');
+    expect(result.providerConfig.brand.company).toBe('Anthropic');
+  });
+
   it('apply_settings forwards settings to CLI session', async () => {
     const { claude, channelId } = await setup();
 

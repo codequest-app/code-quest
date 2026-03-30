@@ -40,6 +40,10 @@ export class ChannelManager {
     private adapter: ProviderAdapter,
   ) {}
 
+  get providerClientConfig() {
+    return this.adapter.clientConfig;
+  }
+
   get(channelId: string): Channel | undefined {
     return this.channels.get(channelId);
   }

@@ -18,7 +18,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { showNotificationToast } from '../../components/NotificationToast';
-import { rpc } from '../../socket/rpc';
+import { channelEmit, rpc } from '../../socket/rpc';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import type { SessionStatus } from '../../types/ui';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
@@ -767,11 +767,10 @@ export function ChannelMessagesProvider({
 
     const onStateUsage = (p: Payload<'state:usage'>) => {
       if (!guard(p)) return;
-      const ctx = (p as unknown as { contextUsage?: Record<string, unknown> }).contextUsage;
       setState((prev) => ({
         ...prev,
         usageQuota: p.usage,
-        ...(ctx ? { contextUsage: ctx } : {}),
+        ...(p.contextUsage ? { contextUsage: p.contextUsage } : {}),
       }));
     };
 
@@ -863,9 +862,8 @@ export function ChannelMessagesProvider({
 
   // ── Stable actions (don't depend on channelState) ──
   const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) => {
-      (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
-    };
+    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
+      channelEmit(socket, channelId, event, payload, ...rest);
 
     const sendMessage = (message: string) => {
       if (statusRef.current === 'processing') {

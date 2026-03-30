@@ -2,6 +2,20 @@ import type { ClientToServerEvents } from '@code-quest/shared';
 import type { TypedSocket } from './client';
 
 /**
+ * Emit a socket event with channelId injected into the payload.
+ * Bypasses Socket.IO typed-emit constraints for dynamic event names.
+ */
+export function channelEmit(
+  socket: TypedSocket,
+  channelId: string,
+  event: string,
+  payload: Record<string, unknown>,
+  ...rest: unknown[]
+): void {
+  (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
+}
+
+/**
  * Promise-based wrapper around socket.emit with callback.
  * Sends a typed event and resolves with the server's callback response.
  */

@@ -178,4 +178,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     if (contextUsage) usagePayload.contextUsage = contextUsage;
     socket.emit('state:usage', usagePayload as Parameters<ServerToClientEvents['state:usage']>[0]);
   });
+
+  socket.on('get_provider_config', (_payload, callback) => {
+    callback({ providerConfig: ctx.channelManager.providerClientConfig });
+  });
 }

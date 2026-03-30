@@ -54,6 +54,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     setModel,
     setPermissionMode,
     setEffort,
+    providerConfig,
   } = useChannelConfig();
   const { initOptions, setInitOptions } = useSession();
   const compose = useChannelCompose();
@@ -164,6 +165,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         email={accountInfo?.email}
         organization={accountInfo?.organization}
         subscriptionType={accountInfo?.subscriptionType}
+        providerConfig={providerConfig}
       />
       <PluginsPanel open={activeDialog === 'plugins'} onClose={closeDialog} />
       <AuthDialog open={activeDialog === 'auth'} onClose={closeDialog} />
@@ -175,6 +177,8 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
               availableModels={availableModels}
               onSwitch={setModel}
               onClose={closeDialog}
+              modelDisplayMap={providerConfig?.modelDisplayMap}
+              defaultModelDescription={providerConfig?.defaultModelDescription}
             />
           </div>
         )}
@@ -193,7 +197,12 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           onManagePlugins={() => setActiveDialog('plugins')}
           onOpenConfig={() => setActiveDialog('initOptions')}
           onSwitchAccount={() => setActiveDialog('auth')}
-          onOpenHelp={() => openUrl('https://docs.anthropic.com/en/docs/claude-code/overview')}
+          onOpenHelp={() =>
+            openUrl(
+              providerConfig?.brand.docsUrl ??
+                'https://docs.anthropic.com/en/docs/claude-code/overview',
+            )
+          }
           onAttachFile={onAttachFile}
         />
 

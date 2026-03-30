@@ -8,6 +8,7 @@ export * from './message.ts';
 export * from './notification.ts';
 export * from './plan.ts';
 export * from './plugin.ts';
+export * from './provider.ts';
 export * from './session.ts';
 export * from './settings.ts';
 export * from './system.ts';

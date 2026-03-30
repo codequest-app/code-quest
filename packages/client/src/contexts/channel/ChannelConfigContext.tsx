@@ -1,14 +1,19 @@
-import type { McpAuthResult, ModelInfo, ServerToClientEvents } from '@code-quest/shared';
+import type {
+  McpAuthResult,
+  ModelInfo,
+  ProviderClientConfig,
+  ServerToClientEvents,
+} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { rpc } from '../../socket/rpc';
+import { channelEmit, rpc } from '../../socket/rpc';
 import { useSocket } from '../SocketContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
 export interface ConfigState {
   model: string | null;
-  availableModels: Array<{ value: string; label?: string; displayName?: string }>;
+  availableModels: ModelInfo[];
   mcpServers: Array<{ name: string; status: string; scope?: string }>;
   tools: string[];
   permissionMode: string | null;
@@ -18,6 +23,7 @@ export interface ConfigState {
   config: Record<string, unknown>;
   currentRepo: string | null;
   slashCommands: string[];
+  providerConfig?: ProviderClientConfig;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -25,6 +31,7 @@ export type McpResponse = { success: boolean; response?: Record<string, unknown>
 export interface ChannelConfigValue extends Omit<ConfigState, 'effort'> {
   effort: 'low' | 'medium' | 'high' | 'max';
   isFastMode: boolean;
+  providerConfig?: ProviderClientConfig;
   // Config actions
   setModel: (model: string) => void;
   setPermissionMode: (mode: string) => void;
@@ -106,6 +113,13 @@ export function ChannelConfigProvider({
 
   useEffect(() => {
     if (!channelId) return;
+
+    // Fetch provider config on mount (static adapter data, doesn't need CLI)
+    socket.emit('get_provider_config', { channelId }, (res) => {
+      if (res.providerConfig) {
+        setConfigState((prev) => ({ ...prev, providerConfig: res.providerConfig }));
+      }
+    });
 
     const guard = (payload: { channelId: string }) =>
       payload.channelId === channelId || payload.channelId === '';
@@ -190,9 +204,8 @@ export function ChannelConfigProvider({
 
   // ── Stable actions (don't depend on configState) ──
   const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) => {
-      (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
-    };
+    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
+      channelEmit(socket, channelId, event, payload, ...rest);
 
     return {
       setModel: (model: string) =>

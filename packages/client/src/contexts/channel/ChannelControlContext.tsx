@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { toast } from 'sonner';
+import { channelEmit } from '../../socket/rpc';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { getFeedbackLabel } from '../../utils/feedback-label';
 import { msg } from '../../utils/message';
@@ -210,9 +211,8 @@ export function ChannelControlProvider({
 
   // ── Stable actions (don't depend on controls/elicitation/diffReview state) ──
   const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) => {
-      (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
-    };
+    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
+      channelEmit(socket, channelId, event, payload, ...rest);
 
     const respondToControl = (response: ControlPermissionResponse, requestId?: string) => {
       const ctrls = controlsRef.current;

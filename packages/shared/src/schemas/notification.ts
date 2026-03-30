@@ -107,6 +107,7 @@ export type RawEventPayload = z.infer<typeof rawEventPayloadSchema>;
 export const stateUsagePayloadSchema = z.object({
   channelId: z.string(),
   usage: usageQuotaSchema,
+  contextUsage: z.record(z.string(), z.unknown()).optional(),
 });
 export type StateUsagePayload = z.infer<typeof stateUsagePayloadSchema>;
 
