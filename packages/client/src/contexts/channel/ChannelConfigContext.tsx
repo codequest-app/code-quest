@@ -6,7 +6,7 @@ import type {
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { rpc } from '../../socket/rpc';
+import { channelEmit, rpc } from '../../socket/rpc';
 import { useSocket } from '../SocketContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
@@ -198,9 +198,8 @@ export function ChannelConfigProvider({
 
   // ── Stable actions (don't depend on configState) ──
   const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) => {
-      (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
-    };
+    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
+      channelEmit(socket, channelId, event, payload, ...rest);
 
     return {
       setModel: (model: string) =>

@@ -2,8 +2,6 @@ import { z } from 'zod';
 import { channelMetaCacheSchema, sessionSummarySchema, socketEventSchema } from './common.ts';
 import { providerClientConfigSchema } from './provider.ts';
 
-export { providerClientConfigSchema };
-
 // Re-export so consumers can still import from session
 export { type SessionSummary, sessionSummarySchema } from './common.ts';
 
