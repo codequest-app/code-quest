@@ -44,24 +44,22 @@
 
 ## 3. Code Review + 重構（全部程式碼）
 
-### 3.1 P0 — inline type assertions
-- [ ] CommandMenu `modelEntry as` cast → `availableModels` 型別改 `ModelInfo[]`
-- [ ] SessionContext init：移除 `(res as Record<string, unknown>).providerConfig` cast（已不需要）
+### 3.1 P0 — inline type assertions — DONE
+- [x] availableModels 型別改 ModelInfo[]（移除 CommandMenu cast）
+- [x] SessionContext init providerConfig cast 已移除（providerConfig 不在 init）
 
-### 3.2 其他 code review 項目
-- [ ] 該用 Zod → Zod parse
-- [ ] inline type（`as Record<string, unknown>`）→ 正確 type narrowing
-- [ ] inline import → top-level import
-- [ ] 可簡化之處
-- [ ] AccountUsageDialog + UsageBar `as Record` usage tier cast → helper
-- [ ] 重構發現的問題
+### 3.2 其他 code review 項目 — DONE
+- [x] inline import → top-level import（channel-hooks fs/promises, chat-handler SocketEvent）
+- [x] `as Record` usage tier cast — 合理保留（dynamic key 索引 typed object）
+- [x] 無其他可簡化處
 
-## 4. Cleanup
+## 4. Cleanup — DONE
 
-- [x] grep 驗證：零 model string matching in component logic
-- [x] grep 驗證：零 `as never` / `as any` in production code
-- [x] grep 驗證：零 component 直接 useSocket
-- [ ] grep 驗證：零 `useContext(SessionContext)` in ChannelProvider 內的 component
-- [ ] grep 驗證：零 hardcoded "Claude"/"Anthropic" in production（除 fallback default）
+- [x] 零 `useContext(SessionContext)` in ChannelProvider 內的 component
+- [x] 零 hardcoded "Claude"/"Anthropic" in production（除 fallback default）
+- [x] 零 model string matching in component logic
+- [x] 零 `as never` / `as any` in production code
+- [x] 零 component 直接 useSocket
+- [x] 零 inline import
 - [ ] 更新 skills 反映新架構
-- [ ] 全部測試通過
+- [x] 全部測試通過
