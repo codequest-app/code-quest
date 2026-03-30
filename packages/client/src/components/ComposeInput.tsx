@@ -2,6 +2,7 @@ import type { FileSearchResult } from '@code-quest/shared';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { useSession } from '../contexts/SessionContext';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
@@ -25,6 +26,7 @@ export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
   const { effort, isFastMode } = useChannelConfig();
   const compose = useChannelCompose();
+  const { providerConfig } = useSession();
 
   const {
     value,
@@ -212,7 +214,11 @@ export function ComposeInput() {
         onKeyDown={handleKeyDown}
         onSelect={syncCursorPos}
         onClick={syncCursorPos}
-        placeholder={isProcessing ? 'Queue another message…' : '⌘ Esc to focus or unfocus Claude'}
+        placeholder={
+          isProcessing
+            ? 'Queue another message…'
+            : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
+        }
         className="w-full bg-transparent text-text px-[14px] pt-[10px] pb-[2px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted min-h-[1.5em] max-h-[200px] overflow-y-auto"
       />
       {showMentionDropdown && (

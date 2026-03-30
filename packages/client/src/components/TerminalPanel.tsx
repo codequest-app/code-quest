@@ -1,8 +1,9 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelMessages } from '../contexts/channel';
+import { SessionContext } from '../contexts/SessionContext';
 
 function XtermView({ lines }: { lines: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,8 @@ function XtermView({ lines }: { lines: string[] }) {
 
 export function TerminalPanel() {
   const { terminalSessions, getTerminalContents, openClaudeTerminal } = useChannelMessages();
+  const session = useContext(SessionContext);
+  const brandName = session?.providerConfig?.brand.name ?? 'Claude';
   const sessionList = Object.values(terminalSessions);
   const activeSession = sessionList[sessionList.length - 1];
   const [clearedLines, setClearedLines] = useState(0);
@@ -74,9 +77,9 @@ export function TerminalPanel() {
   const handleOpenClaude = async () => {
     const res = await openClaudeTerminal();
     if (res.success) {
-      toast.success('New Claude terminal opened');
+      toast.success(`New ${brandName} terminal opened`);
     } else {
-      toast.error(res.error ?? 'Failed to open Claude terminal');
+      toast.error(res.error ?? `Failed to open ${brandName} terminal`);
     }
   };
 
@@ -117,11 +120,11 @@ export function TerminalPanel() {
           )}
           <button
             type="button"
-            title="Open Claude in terminal"
+            title={`Open ${brandName} in terminal`}
             onClick={handleOpenClaude}
             className="text-text-muted hover:text-text text-xs transition-colors"
           >
-            Open Claude
+            Open {brandName}
           </button>
         </div>
       </div>

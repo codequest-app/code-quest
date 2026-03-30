@@ -1,5 +1,6 @@
 import type { ControlPermissionResponse } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { SessionContext } from '../contexts/SessionContext';
 import type { PendingControl } from '../types/chat';
 import { OptionButton } from './OptionButton';
 import { PermissionHeader } from './PermissionHeader';
@@ -11,6 +12,8 @@ export function ToolPermissionBanner({
   pending: PendingControl;
   onRespond: (response: ControlPermissionResponse) => void;
 }) {
+  const session = useContext(SessionContext);
+  const providerConfig = session?.providerConfig;
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [denyMessage, setDenyMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +108,7 @@ export function ToolPermissionBanner({
         <input
           ref={inputRef}
           type="text"
-          placeholder="Tell Claude what to do instead"
+          placeholder={`Tell ${providerConfig?.brand.name ?? 'Claude'} what to do instead`}
           value={denyMessage}
           onChange={(e) => setDenyMessage(e.target.value)}
           onKeyDown={(e) => {

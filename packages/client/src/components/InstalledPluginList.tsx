@@ -1,5 +1,6 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { SessionContext } from '../contexts/SessionContext';
 import { IconButton, TrashIcon } from './ui/Icons';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
@@ -51,6 +52,8 @@ export function InstalledPluginList({
   onInstall,
   installing,
 }: InstalledPluginListProps) {
+  const session = useContext(SessionContext);
+  const providerConfig = session?.providerConfig;
   const [selectedForInstall, setSelectedForInstall] = useState<string | null>(null);
 
   const installedIds = new Set(installed.map((p) => p.id));
@@ -144,7 +147,10 @@ export function InstalledPluginList({
                       <div className="flex items-center gap-1.5 text-[0.75em] text-text-muted">
                         <span>from {plugin.marketplaceName}</span>
                         {isOfficial && (
-                          <span title="Official Claude Code marketplace" className="text-button">
+                          <span
+                            title={`Official ${providerConfig?.brand.name ?? 'Claude'} Code marketplace`}
+                            className="text-button"
+                          >
                             ✓
                           </span>
                         )}
@@ -165,8 +171,9 @@ export function InstalledPluginList({
                   {isSelected && (
                     <div className="mt-2 border-t border-border pt-2">
                       <p className="text-[0.78em] text-text-muted mb-2">
-                        Make sure you trust a plugin before installing. Anthropic does not control
-                        what MCP servers, files, or other software are included in plugins.
+                        Make sure you trust a plugin before installing.{' '}
+                        {providerConfig?.brand.company ?? 'Anthropic'} does not control what MCP
+                        servers, files, or other software are included in plugins.
                       </p>
                       {(
                         [

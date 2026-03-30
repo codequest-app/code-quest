@@ -1,33 +1,37 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { SessionContext } from '../contexts/SessionContext';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { Dialog, DialogContent } from './ui/Dialog';
 
-const STEPS = [
-  {
-    title: 'Welcome',
-    description: 'Welcome to Code Quest! This walkthrough will help you get started.',
-  },
-  {
-    title: 'Open Chat',
-    description:
-      'Use the chat panel to communicate with Claude. Type your message in the input box below.',
-  },
-  {
-    title: 'Send Message',
-    description:
-      'Press Enter or click Send to submit your message. Claude will stream a response in real time.',
-  },
-  {
-    title: 'History',
-    description: 'Click the History button in the header to browse and resume previous sessions.',
-  },
-];
+function getSteps(brandName: string) {
+  return [
+    {
+      title: 'Welcome',
+      description: 'Welcome to Code Quest! This walkthrough will help you get started.',
+    },
+    {
+      title: 'Open Chat',
+      description: `Use the chat panel to communicate with ${brandName}. Type your message in the input box below.`,
+    },
+    {
+      title: 'Send Message',
+      description: `Press Enter or click Send to submit your message. ${brandName} will stream a response in real time.`,
+    },
+    {
+      title: 'History',
+      description: 'Click the History button in the header to browse and resume previous sessions.',
+    },
+  ];
+}
 
 export function OnboardingOverlay() {
+  const session = useContext(SessionContext);
+  const providerConfig = session?.providerConfig;
   const { isOnboardingDismissed, dismissOnboarding } = usePreferencesStore();
   const [step, setStep] = useState(0);
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const steps = getSteps(providerConfig?.brand.name ?? 'Claude');
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
 
   if (isOnboardingDismissed) return null;
 
@@ -36,7 +40,7 @@ export function OnboardingOverlay() {
       <DialogContent title="Onboarding" hideTitle className="max-w-md w-full mx-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-text-muted">
-            Step {step + 1} of {STEPS.length}
+            Step {step + 1} of {steps.length}
           </span>
           <button
             type="button"

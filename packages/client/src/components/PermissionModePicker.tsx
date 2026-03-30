@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { SessionContext } from '../contexts/SessionContext';
 import { EffortSwitch, effortLabel } from './icons/EffortSwitch';
 import {
   AskBeforeEditsSmallIcon,
@@ -7,38 +8,37 @@ import {
   PERMISSION_MODE_ICONS,
 } from './icons/PermissionModeIcons';
 
-const PERMISSION_MODES = [
-  {
-    id: 'normal',
-    label: 'Ask before edits',
-    title: 'Claude will ask before each edit. Click, or press Shift+Tab, to switch modes.',
-    description: 'Claude will ask for approval before making each edit',
-  },
-  {
-    id: 'acceptEdits',
-    label: 'Edit automatically',
-    title:
-      'Claude will edit your selected text or the whole file. Click, or press Shift+Tab, to switch modes.',
-    description: 'Claude will edit your selected text or the whole file',
-  },
-  {
-    id: 'plan',
-    label: 'Plan mode',
-    title:
-      'Claude will explore the code and present a plan before editing. Click, or press Shift+Tab, to switch modes.',
-    description: 'Claude will explore the code and present a plan before editing',
-  },
-  {
-    id: 'bypassPermissions',
-    label: 'Bypass permissions',
-    title:
-      'Claude Code will not ask for your approval before running potentially dangerous commands.',
-    description: 'Claude will not ask for approval before running potentially dangerous commands',
-  },
-];
+function getPermissionModes(brandName: string) {
+  return [
+    {
+      id: 'normal',
+      label: 'Ask before edits',
+      title: `${brandName} will ask before each edit. Click, or press Shift+Tab, to switch modes.`,
+      description: `${brandName} will ask for approval before making each edit`,
+    },
+    {
+      id: 'acceptEdits',
+      label: 'Edit automatically',
+      title: `${brandName} will edit your selected text or the whole file. Click, or press Shift+Tab, to switch modes.`,
+      description: `${brandName} will edit your selected text or the whole file`,
+    },
+    {
+      id: 'plan',
+      label: 'Plan mode',
+      title: `${brandName} will explore the code and present a plan before editing. Click, or press Shift+Tab, to switch modes.`,
+      description: `${brandName} will explore the code and present a plan before editing`,
+    },
+    {
+      id: 'bypassPermissions',
+      label: 'Bypass permissions',
+      title: `${brandName} Code will not ask for your approval before running potentially dangerous commands.`,
+      description: `${brandName} will not ask for approval before running potentially dangerous commands`,
+    },
+  ];
+}
 
-const PERMISSION_BY_ID = Object.fromEntries(PERMISSION_MODES.map((m) => [m.id, m]));
-const DEFAULT_MODE = PERMISSION_MODES[0];
+const DEFAULT_MODES = getPermissionModes('Claude');
+const DEFAULT_MODE = DEFAULT_MODES[0];
 
 export const PERMISSION_MODE_IDS = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'] as const;
 export type PermissionModeId = (typeof PERMISSION_MODE_IDS)[number];
@@ -56,6 +56,14 @@ export function PermissionModePicker({
   onSetPermissionMode,
   onSetEffort,
 }: PermissionModePickerProps) {
+  const providerConfig = useContext(SessionContext)?.providerConfig;
+  const brandName = providerConfig?.brand.name ?? 'Claude';
+  const permissionModes = useMemo(() => getPermissionModes(brandName), [brandName]);
+  const permissionById = useMemo(
+    () => Object.fromEntries(permissionModes.map((m) => [m.id, m])),
+    [permissionModes],
+  );
+
   const [showModePicker, setShowModePicker] = useState(false);
   const modePickerRef = useRef<HTMLDivElement>(null);
   const modeButtonRef = useRef<HTMLButtonElement>(null);
@@ -79,7 +87,7 @@ export function PermissionModePicker({
       <button
         ref={modeButtonRef}
         type="button"
-        title={(PERMISSION_BY_ID[mode] ?? DEFAULT_MODE).title}
+        title={(permissionById[mode] ?? DEFAULT_MODE).title}
         onClick={() => setShowModePicker((v) => !v)}
         className="permission-mode-btn text-[0.85em] bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-[4px] px-[4px] py-[2px] rounded-[2px] hover:bg-white/5"
       >
@@ -87,7 +95,7 @@ export function PermissionModePicker({
           {(PERMISSION_MODE_ICONS as Record<string, { smallIcon: React.ReactNode }>)[mode]
             ?.smallIcon ?? <AskBeforeEditsSmallIcon />}
         </span>
-        <span>{(PERMISSION_BY_ID[mode] ?? DEFAULT_MODE).label}</span>
+        <span>{(permissionById[mode] ?? DEFAULT_MODE).label}</span>
       </button>
       {showModePicker && (
         <div
@@ -101,7 +109,7 @@ export function PermissionModePicker({
               <kbd className="bg-white/10 rounded px-1 text-[10px]">tab</kbd> to switch
             </span>
           </div>
-          {PERMISSION_MODES.map((m) => (
+          {permissionModes.map((m) => (
             <button
               key={m.id}
               type="button"

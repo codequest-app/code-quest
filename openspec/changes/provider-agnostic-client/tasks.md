@@ -40,15 +40,10 @@
 - [x] CommandMenu：`opus-4-6` string match → `ModelInfo.supportsFastMode` + `modelDisplayMap` fallback
 - [x] "Toggle fast mode (Opus 4.6 only)" → "Toggle fast mode"（label 不再 hardcode model 名）
 
-### 2.3 Brand 文字（8 檔）
-- [ ] AuthDialog：`providerConfig.brand.loginTitle` / `.brand.name`
-- [ ] ComposeInput：`providerConfig.brand.placeholder`
-- [ ] ToolPermissionBanner：`providerConfig.brand.name`
-- [ ] OnboardingOverlay：`providerConfig.brand.name`
-- [ ] TerminalPanel：`providerConfig.brand.name`
-- [ ] PluginsPanel：`providerConfig.brand.name`
-- [ ] InstalledPluginList：`providerConfig.brand.name` / `.brand.company`
-- [ ] PermissionModePicker：`providerConfig.brand.name`
+### 2.3 Brand 文字（9 檔）— DONE
+- [x] AuthDialog, ComposeInput, ToolPermissionBanner, OnboardingOverlay
+- [x] TerminalPanel, PluginsPanel, InstalledPluginList, PermissionModePicker
+- [x] ComposeToolbar docs URL
 
 ### 2.4 Permission modes
 - [ ] PermissionModePicker：PERMISSION_MODES array → `providerConfig.permissionModes`
@@ -62,8 +57,7 @@
 ### 2.7 Usage tiers
 - [ ] AccountUsageDialog + UsageBar：USAGE_TIERS → `providerConfig.usageTiers`（消除重複定義）
 
-### 2.8 Docs URL
-- [ ] ComposeToolbar：hardcoded URL → `providerConfig.brand.docsUrl`
+### 2.8 Docs URL — DONE (included in 2.3)
 
 ## 3. Code Review + 重構（全部程式碼）
 

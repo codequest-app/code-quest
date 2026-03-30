@@ -195,7 +195,12 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           onManagePlugins={() => setActiveDialog('plugins')}
           onOpenConfig={() => setActiveDialog('initOptions')}
           onSwitchAccount={() => setActiveDialog('auth')}
-          onOpenHelp={() => openUrl('https://docs.anthropic.com/en/docs/claude-code/overview')}
+          onOpenHelp={() =>
+            openUrl(
+              providerConfig?.brand.docsUrl ??
+                'https://docs.anthropic.com/en/docs/claude-code/overview',
+            )
+          }
           onAttachFile={onAttachFile}
         />
 
