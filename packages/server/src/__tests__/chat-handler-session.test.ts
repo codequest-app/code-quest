@@ -110,6 +110,16 @@ describe('ChatHandler > session', () => {
       expect(initEvents[0].slashCommands).toEqual(['commit', 'review']);
     });
 
+    it('session:init includes providerConfig from adapter', async () => {
+      const claude = createFakeClaude();
+      const initEvents = collectEvents(claude.socket, 'session:init');
+
+      await claude.initialize(s.init('cli-sess'));
+
+      expect(initEvents[0].providerConfig).toBeDefined();
+      expect(initEvents[0].providerConfig.brand.name).toBe('Claude');
+    });
+
     it('chat:create callback includes slashCommands from initialize response', async () => {
       const claude = createFakeClaude();
       claude.initialize(s.init('cli-sess', { slashCommands: ['commit', 'review', 'debug'] }));

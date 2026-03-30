@@ -1,4 +1,9 @@
-import type { McpAuthResult, ModelInfo, ServerToClientEvents } from '@code-quest/shared';
+import type {
+  McpAuthResult,
+  ModelInfo,
+  ProviderClientConfig,
+  ServerToClientEvents,
+} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../../socket/rpc';
@@ -18,6 +23,7 @@ export interface ConfigState {
   config: Record<string, unknown>;
   currentRepo: string | null;
   slashCommands: string[];
+  providerConfig?: ProviderClientConfig;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -25,6 +31,7 @@ export type McpResponse = { success: boolean; response?: Record<string, unknown>
 export interface ChannelConfigValue extends Omit<ConfigState, 'effort'> {
   effort: 'low' | 'medium' | 'high' | 'max';
   isFastMode: boolean;
+  providerConfig?: ProviderClientConfig;
   // Config actions
   setModel: (model: string) => void;
   setPermissionMode: (mode: string) => void;
@@ -155,6 +162,7 @@ export function ChannelConfigProvider({
           permissionMode: prev.permissionMode ?? payload.permissionMode ?? null,
           fastModeState: (payload.fastModeState as string) ?? null,
           slashCommands: [...new Set([...(payload.slashCommands ?? []), 'usage'])],
+          ...(payload.providerConfig ? { providerConfig: payload.providerConfig } : {}),
         };
       });
     };

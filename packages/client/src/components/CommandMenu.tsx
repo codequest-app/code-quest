@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
-import { useSession } from '../contexts/SessionContext';
 import { navigateItems } from '../utils/navigate-items';
 import { EffortSwitch } from './icons/EffortSwitch';
 import { ToggleSwitch } from './ui/ToggleSwitch';
@@ -321,7 +320,7 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
 
-  const { providerConfig } = useSession();
+  const { providerConfig } = useChannelConfig();
 
   // Compute modelLabel
   const models = availableModels ?? [];

@@ -2,7 +2,6 @@ import type { FileSearchResult } from '@code-quest/shared';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
-import { useSession } from '../contexts/SessionContext';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
@@ -24,9 +23,8 @@ function autogrow(el: HTMLTextAreaElement | null) {
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
-  const { effort, isFastMode } = useChannelConfig();
+  const { effort, isFastMode, providerConfig } = useChannelConfig();
   const compose = useChannelCompose();
-  const { providerConfig } = useSession();
 
   const {
     value,

@@ -1,6 +1,6 @@
 import type { ControlPermissionResponse } from '@code-quest/shared';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useEffect, useRef, useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import type { PendingControl } from '../types/chat';
 import { OptionButton } from './OptionButton';
 import { PermissionHeader } from './PermissionHeader';
@@ -12,8 +12,7 @@ export function ToolPermissionBanner({
   pending: PendingControl;
   onRespond: (response: ControlPermissionResponse) => void;
 }) {
-  const session = useContext(SessionContext);
-  const providerConfig = session?.providerConfig;
+  const { providerConfig } = useChannelConfig();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [denyMessage, setDenyMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);

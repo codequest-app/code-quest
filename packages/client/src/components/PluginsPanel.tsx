@@ -1,6 +1,6 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { usePlugins } from '../contexts/PluginContext';
-import { SessionContext } from '../contexts/SessionContext';
 import { InstalledPluginList } from './InstalledPluginList';
 import { MarketplaceSection } from './MarketplaceSection';
 import { XIcon } from './ui/Icons';
@@ -25,8 +25,7 @@ export function PluginsPanel({ open, onClose }: PluginsPanelProps) {
     addMarketplace,
     removeMarketplace,
   } = usePlugins();
-  const session = useContext(SessionContext);
-  const providerConfig = session?.providerConfig;
+  const { providerConfig } = useChannelConfig();
 
   const [activeTab, setActiveTab] = useState<'plugins' | 'marketplaces'>('plugins');
   const [searchQuery, setSearchQuery] = useState('');

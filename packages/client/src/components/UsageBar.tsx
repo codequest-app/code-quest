@@ -1,6 +1,5 @@
 import type { UsageQuota } from '@code-quest/shared';
-import { useContext } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useChannelConfig } from '../contexts/channel';
 
 interface UsageBarProps {
   usage: UsageQuota;
@@ -51,7 +50,7 @@ const DEFAULT_USAGE_TIERS = [
 ];
 
 export function UsageBar({ usage }: UsageBarProps) {
-  const providerConfig = useContext(SessionContext)?.providerConfig;
+  const { providerConfig } = useChannelConfig();
   const usageTiers =
     providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.shortLabel })) ??
     DEFAULT_USAGE_TIERS;

@@ -1,5 +1,5 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { EffortSwitch, effortLabel } from './icons/EffortSwitch';
 import {
   AskBeforeEditsSmallIcon,
@@ -56,7 +56,7 @@ export function PermissionModePicker({
   onSetPermissionMode,
   onSetEffort,
 }: PermissionModePickerProps) {
-  const providerConfig = useContext(SessionContext)?.providerConfig;
+  const { providerConfig } = useChannelConfig();
   const brandName = providerConfig?.brand.name ?? 'Claude';
   const permissionModes = useMemo(() => {
     const configModes = providerConfig?.permissionModes;

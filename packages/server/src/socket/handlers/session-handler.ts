@@ -121,10 +121,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
 
       // Emit session:init with final metaCache to socket
-      socket.emit(
-        'session:init',
-        channel.buildSessionInitPayload() as Parameters<ServerToClientEvents['session:init']>[0],
-      );
+      socket.emit('session:init', {
+        ...channel.buildSessionInitPayload(),
+        ...(ctx.providerConfig ? { providerConfig: ctx.providerConfig } : {}),
+      } as Parameters<ServerToClientEvents['session:init']>[0]);
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {
           channelId: '',
@@ -186,10 +186,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       );
 
       // Emit session:init with final metaCache to socket
-      socket.emit(
-        'session:init',
-        channel.buildSessionInitPayload() as Parameters<ServerToClientEvents['session:init']>[0],
-      );
+      socket.emit('session:init', {
+        ...channel.buildSessionInitPayload(),
+        ...(ctx.providerConfig ? { providerConfig: ctx.providerConfig } : {}),
+      } as Parameters<ServerToClientEvents['session:init']>[0]);
       if (ctx.cachedModels) {
         socket.emit('system:available_models', {
           channelId: '',

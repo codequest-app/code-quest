@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
@@ -8,7 +9,8 @@ interface AuthDialogProps {
 }
 
 export function AuthDialog({ open, onClose }: AuthDialogProps) {
-  const { auth, login, submitOAuthCode, resetAuth, providerConfig } = useSession();
+  const { auth, login, submitOAuthCode, resetAuth } = useSession();
+  const { providerConfig } = useChannelConfig();
   const [code, setCode] = useState('');
   const [state, setState] = useState('');
 

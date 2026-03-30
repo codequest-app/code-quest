@@ -1,9 +1,8 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useChannelMessages } from '../contexts/channel';
-import { SessionContext } from '../contexts/SessionContext';
+import { useChannelConfig, useChannelMessages } from '../contexts/channel';
 
 function XtermView({ lines }: { lines: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,8 +45,8 @@ function XtermView({ lines }: { lines: string[] }) {
 
 export function TerminalPanel() {
   const { terminalSessions, getTerminalContents, openClaudeTerminal } = useChannelMessages();
-  const session = useContext(SessionContext);
-  const brandName = session?.providerConfig?.brand.name ?? 'Claude';
+  const { providerConfig } = useChannelConfig();
+  const brandName = providerConfig?.brand.name ?? 'Claude';
   const sessionList = Object.values(terminalSessions);
   const activeSession = sessionList[sessionList.length - 1];
   const [clearedLines, setClearedLines] = useState(0);

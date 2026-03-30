@@ -1,5 +1,4 @@
-import { useContext, useState } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useState } from 'react';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { Dialog, DialogContent } from './ui/Dialog';
 
@@ -25,11 +24,9 @@ function getSteps(brandName: string) {
 }
 
 export function OnboardingOverlay() {
-  const session = useContext(SessionContext);
-  const providerConfig = session?.providerConfig;
   const { isOnboardingDismissed, dismissOnboarding } = usePreferencesStore();
   const [step, setStep] = useState(0);
-  const steps = getSteps(providerConfig?.brand.name ?? 'Claude');
+  const steps = getSteps('Claude');
   const current = steps[step];
   const isLast = step === steps.length - 1;
 

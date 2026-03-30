@@ -1,4 +1,4 @@
-import type { ProviderClientConfig, SessionSummary } from '@code-quest/shared';
+import type { SessionSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
@@ -40,7 +40,6 @@ export interface SessionContextValue {
 
   closeSession: (channelId: string) => void;
 
-  providerConfig?: ProviderClientConfig;
   initOptions: Record<string, unknown>;
   setInitOptions: (opts: Record<string, unknown>) => void;
 
@@ -63,7 +62,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
 
   const [initOptions, setInitOptions] = useState<Record<string, unknown>>({});
-  const [providerConfig, setProviderConfig] = useState<ProviderClientConfig | undefined>();
   const [auth, setAuth] = useState<AuthState>({ status: 'idle', authUrl: null, errorMsg: null });
 
   useEffect(() => {
@@ -72,10 +70,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (res.settings && Object.keys(res.settings).length > 0) {
           setInitOptions((prev) => ({ ...prev, ...res.settings }));
         }
-        const pc = (res as Record<string, unknown>).providerConfig as
-          | ProviderClientConfig
-          | undefined;
-        if (pc) setProviderConfig(pc);
       });
     };
     socket.on('connect', onConnect);
@@ -148,8 +142,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value: SessionContextValue = useMemo(
-    () => ({ initOptions, providerConfig, auth, ...actions }),
-    [initOptions, providerConfig, auth, actions],
+    () => ({ initOptions, auth, ...actions }),
+    [initOptions, auth, actions],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -1,5 +1,4 @@
 import { useChannelConfig, useChannelMessages } from '../contexts/channel';
-import { useSession } from '../contexts/SessionContext';
 import type { SessionStatus } from '../types/ui';
 import { shortModelName } from '../utils/model-utils';
 
@@ -21,8 +20,7 @@ export interface HeaderBarProps {
 
 export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
   const { status, channelId } = useChannelMessages();
-  const { model, thinkingLevel, availableModels } = useChannelConfig();
-  const { providerConfig } = useSession();
+  const { model, thinkingLevel, availableModels, providerConfig } = useChannelConfig();
 
   const cfg =
     status in statusConfig ? statusConfig[status as SessionStatus] : statusConfig.disconnected;

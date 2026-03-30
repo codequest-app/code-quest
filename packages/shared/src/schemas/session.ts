@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { channelMetaCacheSchema, sessionSummarySchema, socketEventSchema } from './common.ts';
 import { providerClientConfigSchema } from './provider.ts';
 
+export { providerClientConfigSchema };
+
 // Re-export so consumers can still import from session
 export { type SessionSummary, sessionSummarySchema } from './common.ts';
 
@@ -257,6 +259,7 @@ export const sessionInitPayloadSchema = z.object({
   slashCommands: z.array(z.string()).optional(),
   mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
   config: z.record(z.string(), z.unknown()),
+  providerConfig: providerClientConfigSchema.optional(),
 });
 export type SessionInitPayload = z.infer<typeof sessionInitPayloadSchema>;
 

@@ -1,6 +1,6 @@
 import type { ProviderClientConfig } from '@code-quest/shared';
-import { useContext, useState } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import type { McpServerInfo } from './MCPPanel';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
@@ -145,7 +145,7 @@ export function ManageMcpDialog({
   onClearAuth,
   onRefresh,
 }: ManageMcpDialogProps) {
-  const providerConfig = useContext(SessionContext)?.providerConfig;
+  const { providerConfig } = useChannelConfig();
   const mcpScopes = providerConfig?.mcpScopes;
 
   const [selectedServer, setSelectedServer] = useState<string | null>(null);

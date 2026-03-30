@@ -1,6 +1,6 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
-import { useContext, useState } from 'react';
-import { SessionContext } from '../contexts/SessionContext';
+import { useState } from 'react';
+import { useChannelConfig } from '../contexts/channel';
 import { IconButton, TrashIcon } from './ui/Icons';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
@@ -52,8 +52,7 @@ export function InstalledPluginList({
   onInstall,
   installing,
 }: InstalledPluginListProps) {
-  const session = useContext(SessionContext);
-  const providerConfig = session?.providerConfig;
+  const { providerConfig } = useChannelConfig();
   const [selectedForInstall, setSelectedForInstall] = useState<string | null>(null);
 
   const installedIds = new Set(installed.map((p) => p.id));
