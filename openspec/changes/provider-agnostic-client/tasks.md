@@ -13,10 +13,12 @@
 - [x] GREEN：`provider-adapter.ts` 加 `readonly clientConfig: ProviderClientConfig`
 - [x] GREEN：`claude-adapter.ts` 用 `providerClientConfigSchema.parse()` 建 clientConfig
 
-### 1.3 Server init 推送
-- [ ] RED：寫 FakeClaude 測試 — `init` callback response 包含 `providerConfig` 欄位
-- [ ] GREEN：`misc-handler.ts` init handler 帶 `providerConfig`
-- [ ] GREEN：`initResponseSchema` 加 optional `providerConfig` 欄位
+### 1.3 Server init 推送 — DONE
+- [x] RED：chat-handler-settings.test.ts — init response 包含 providerConfig.brand.name
+- [x] GREEN：misc-handler init 帶 `ctx.providerConfig`
+- [x] GREEN：HandlerContext 加 `providerConfig?`，ChatHandler getter 從 channelManager 取
+- [x] GREEN：channelManager 暴露 `providerClientConfig`（不暴露整個 adapter）
+- [x] GREEN：initResponseSchema 加 optional providerConfig
 
 ### 1.4 Client SessionContext 接收
 - [ ] RED：寫 renderWithWorkspace 測試 — `useSession().providerConfig` 有值且結構正確

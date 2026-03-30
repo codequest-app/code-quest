@@ -79,6 +79,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       settings: ctx.settingsStore.getAll(),
       sessions,
       models: ctx.cachedModels,
+      providerConfig: ctx.providerConfig,
       state: {
         platform: process.platform,
         speechToTextEnabled: false,
