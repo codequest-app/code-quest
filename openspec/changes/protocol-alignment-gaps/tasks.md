@@ -281,15 +281,15 @@
 - [x] WorkspaceLayout 移除 `useSocket()`，改用 `useSession().closeSession`
 - [x] 確認零 component 直接用 useSocket
 
-#### 18.2 P1 — Storybook 補缺（>100 行 component）
-- [ ] CommandMenu.stories.tsx（697 行）
-- [ ] SystemBlocks.stories.tsx（237 行）
-- [ ] ToolUseBlock.stories.tsx（203 行）
-- [ ] InstalledPluginList.stories.tsx（224 行）
-- [ ] AuthDialog.stories.tsx（135 行）
-- [ ] WorkspaceLayout.stories.tsx（104 行）
-- [ ] ToolPermissionBanner.stories.tsx（124 行）
-- [ ] CollapsibleTimeline.stories.tsx（110 行）
+#### 18.2 P1 — Storybook 補缺（>100 行 component）— PARTIAL
+- [x] SystemBlocks.stories.tsx（14 variants）
+- [x] ToolUseBlock.stories.tsx（4 variants）
+- [x] InstalledPluginList.stories.tsx（3 variants）
+- [x] ToolPermissionBanner.stories.tsx（3 variants）
+- [ ] CommandMenu.stories.tsx（697 行，context-dependent — 需 decorator）
+- [ ] AuthDialog.stories.tsx（135 行，context-dependent）
+- [ ] WorkspaceLayout.stories.tsx（104 行，context-dependent）
+- [ ] CollapsibleTimeline.stories.tsx（110 行，complex deps）
 
 #### 18.3 P2 — Storybook 補缺（<100 行 component，低優先）
 - [ ] AddButton, ChatInputArea, ContextPieChart, HookCallbackBanner
