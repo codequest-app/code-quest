@@ -36,23 +36,26 @@ export class ClaudeAdapter implements ProviderAdapter {
       loginTitle: 'Login to Claude',
     },
     permissionModes: [
-      { id: 'normal', label: 'Normal', description: 'Claude asks before any changes' },
+      {
+        id: 'normal',
+        label: 'Ask before edits',
+        description: 'Claude will ask for approval before making each edit',
+      },
       {
         id: 'acceptEdits',
-        label: 'Auto-accept edits',
-        description:
-          'Claude applies code changes without asking, but still asks before other actions',
+        label: 'Edit automatically',
+        description: 'Claude will edit your selected text or the whole file',
       },
       {
         id: 'plan',
         label: 'Plan mode',
-        description: 'Claude creates a plan and asks for approval before executing',
+        description: 'Claude will explore the code and present a plan before editing',
       },
       {
         id: 'bypassPermissions',
-        label: 'Yolo mode',
+        label: 'Bypass permissions',
         description:
-          'Claude runs without asking for permission (requires --dangerously-skip-permissions)',
+          'Claude will not ask for approval before running potentially dangerous commands',
       },
     ],
     authMethods: [

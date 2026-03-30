@@ -45,17 +45,17 @@
 - [x] TerminalPanel, PluginsPanel, InstalledPluginList, PermissionModePicker
 - [x] ComposeToolbar docs URL
 
-### 2.4 Permission modes
-- [ ] PermissionModePicker：PERMISSION_MODES array → `providerConfig.permissionModes`
+### 2.4 Permission modes — DONE
+- [x] PermissionModePicker：用 providerConfig.permissionModes，fallback getPermissionModes(brandName)
 
-### 2.5 Auth methods
-- [ ] AccountUsageDialog：formatAuthMethod switch → `providerConfig.authMethods.find()`
+### 2.5 Auth methods — DONE
+- [x] AccountUsageDialog：formatAuthMethod → providerConfig.authMethods.find()，fallback DEFAULT_AUTH_METHODS
 
-### 2.6 MCP scopes
-- [ ] ManageMcpDialog：scopeLabel switch + inferScope → `providerConfig.mcpScopes`
+### 2.6 MCP scopes — DONE
+- [x] ManageMcpDialog：scopeLabel + inferScope → providerConfig.mcpScopes
 
-### 2.7 Usage tiers
-- [ ] AccountUsageDialog + UsageBar：USAGE_TIERS → `providerConfig.usageTiers`（消除重複定義）
+### 2.7 Usage tiers — DONE
+- [x] AccountUsageDialog + UsageBar：USAGE_TIERS → providerConfig.usageTiers（消除重複）
 
 ### 2.8 Docs URL — DONE (included in 2.3)
 

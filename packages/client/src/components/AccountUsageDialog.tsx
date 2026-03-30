@@ -1,4 +1,4 @@
-import type { ChatStats, UsageQuota } from '@code-quest/shared';
+import type { ChatStats, ProviderClientConfig, UsageQuota } from '@code-quest/shared';
 
 interface ContextCategory {
   name: string;
@@ -24,23 +24,24 @@ interface AccountUsageDialogProps {
   usage?: UsageQuota;
   contextUsage?: Record<string, unknown>;
   stats?: ChatStats;
+  providerConfig?: ProviderClientConfig;
 }
 
-function formatAuthMethod(method: string): string {
-  switch (method) {
-    case 'claudeai':
-      return 'Claude AI';
-    case 'console':
-      return 'Anthropic Console';
-    case 'api-key':
-      return 'API Key';
-    case '3p':
-      return 'Third Party';
-    case 'not-specified':
-      return 'Not Specified';
-    default:
-      return 'Not authenticated';
-  }
+const DEFAULT_AUTH_METHODS: Record<string, string> = {
+  claudeai: 'Claude AI',
+  console: 'Anthropic Console',
+  'api-key': 'API Key',
+  '3p': 'Third Party',
+  'not-specified': 'Not Specified',
+};
+
+function formatAuthMethod(
+  method: string,
+  authMethods?: ProviderClientConfig['authMethods'],
+): string {
+  const configLabel = authMethods?.find((m) => m.id === method)?.label;
+  if (configLabel) return configLabel;
+  return DEFAULT_AUTH_METHODS[method] ?? 'Not authenticated';
 }
 
 function formatResetTime(resetsAt: string): string | null {
@@ -97,10 +98,10 @@ function UsageBarRow({
   );
 }
 
-const USAGE_TIERS = [
-  { key: 'five_hour' as const, label: 'Session (5hr)' },
-  { key: 'seven_day' as const, label: 'Weekly (7 day)' },
-  { key: 'seven_day_sonnet' as const, label: 'Weekly Sonnet' },
+const DEFAULT_USAGE_TIERS = [
+  { key: 'five_hour', label: 'Session (5hr)' },
+  { key: 'seven_day', label: 'Weekly (7 day)' },
+  { key: 'seven_day_sonnet', label: 'Weekly Sonnet' },
 ];
 
 function formatTokens(n: number): string {
@@ -120,6 +121,7 @@ export function AccountUsageDialog({
   usage,
   contextUsage: rawContextUsage,
   stats,
+  providerConfig,
 }: AccountUsageDialogProps) {
   const contextUsage = rawContextUsage as ContextUsageData | undefined;
   if (!open) return null;
@@ -158,7 +160,12 @@ export function AccountUsageDialog({
               Account
             </h4>
             {model && <AccountRow label="Model" value={model} />}
-            {authMethod && <AccountRow label="Auth method" value={formatAuthMethod(authMethod)} />}
+            {authMethod && (
+              <AccountRow
+                label="Auth method"
+                value={formatAuthMethod(authMethod, providerConfig?.authMethods)}
+              />
+            )}
             {email && <AccountRow label="Email" value={email} />}
             {organization && <AccountRow label="Organization" value={organization} />}
             {subscriptionType && <AccountRow label="Plan" value={subscriptionType} />}
@@ -176,13 +183,14 @@ export function AccountUsageDialog({
               {stats.numTurns != null && (
                 <AccountRow label="Turns" value={String(stats.numTurns)} />
               )}
-              {stats.modelUsage && Object.entries(stats.modelUsage).map(([m, u]) => (
-                <AccountRow
-                  key={m}
-                  label={m.split('-').slice(0, 2).join(' ')}
-                  value={`$${((u as { costUSD?: number }).costUSD ?? 0).toFixed(2)}`}
-                />
-              ))}
+              {stats.modelUsage &&
+                Object.entries(stats.modelUsage).map(([m, u]) => (
+                  <AccountRow
+                    key={m}
+                    label={m.split('-').slice(0, 2).join(' ')}
+                    value={`$${((u as { costUSD?: number }).costUSD ?? 0).toFixed(2)}`}
+                  />
+                ))}
             </div>
           )}
 
@@ -193,14 +201,17 @@ export function AccountUsageDialog({
                 Context ({contextUsage.percentage ?? 0}% used)
               </h4>
               <div className="text-[11px] text-text-muted mb-1">
-                {formatTokens(contextUsage.totalTokens ?? 0)} / {formatTokens(contextUsage.maxTokens ?? 0)} tokens
+                {formatTokens(contextUsage.totalTokens ?? 0)} /{' '}
+                {formatTokens(contextUsage.maxTokens ?? 0)} tokens
               </div>
-              {contextUsage.categories.filter(c => c.name !== 'Free space').map((cat) => (
-                <div key={cat.name} className="flex justify-between text-[12px]">
-                  <span className="text-text/70">{cat.name}</span>
-                  <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
-                </div>
-              ))}
+              {contextUsage.categories
+                .filter((c) => c.name !== 'Free space')
+                .map((cat) => (
+                  <div key={cat.name} className="flex justify-between text-[12px]">
+                    <span className="text-text/70">{cat.name}</span>
+                    <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
+                  </div>
+                ))}
             </div>
           )}
 
@@ -210,8 +221,13 @@ export function AccountUsageDialog({
               Quota
             </h4>
             {usage ? (
-              USAGE_TIERS.map(({ key, label }) => {
-                const tier = usage[key];
+              (
+                providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
+                DEFAULT_USAGE_TIERS
+              ).map(({ key, label }) => {
+                const tier = (usage as Record<string, { utilization: number; resets_at?: string }>)[
+                  key
+                ];
                 if (!tier) return null;
                 return (
                   <UsageBarRow

@@ -58,7 +58,16 @@ export function PermissionModePicker({
 }: PermissionModePickerProps) {
   const providerConfig = useContext(SessionContext)?.providerConfig;
   const brandName = providerConfig?.brand.name ?? 'Claude';
-  const permissionModes = useMemo(() => getPermissionModes(brandName), [brandName]);
+  const permissionModes = useMemo(() => {
+    const configModes = providerConfig?.permissionModes;
+    if (configModes?.length) {
+      return configModes.map((m) => ({
+        ...m,
+        title: `${m.description}. Click, or press Shift+Tab, to switch modes.`,
+      }));
+    }
+    return getPermissionModes(brandName);
+  }, [providerConfig?.permissionModes, brandName]);
   const permissionById = useMemo(
     () => Object.fromEntries(permissionModes.map((m) => [m.id, m])),
     [permissionModes],

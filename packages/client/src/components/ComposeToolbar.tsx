@@ -164,6 +164,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         email={accountInfo?.email}
         organization={accountInfo?.organization}
         subscriptionType={accountInfo?.subscriptionType}
+        providerConfig={providerConfig}
       />
       <PluginsPanel open={activeDialog === 'plugins'} onClose={closeDialog} />
       <AuthDialog open={activeDialog === 'auth'} onClose={closeDialog} />
