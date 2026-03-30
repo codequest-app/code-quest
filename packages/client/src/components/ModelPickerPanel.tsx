@@ -1,10 +1,18 @@
+import type { ProviderClientConfig } from '@code-quest/shared';
 import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../utils/model-utils';
 
 interface ModelPickerPanelProps {
   currentModel: string | null;
-  availableModels: Array<{ value: string; label?: string; displayName?: string }>;
+  availableModels: Array<{
+    value: string;
+    label?: string;
+    displayName?: string;
+    description?: string;
+  }>;
   onSwitch: (model: string) => void;
   onClose: () => void;
+  modelDisplayMap?: ProviderClientConfig['modelDisplayMap'];
+  defaultModelDescription?: string;
 }
 
 export function ModelPickerPanel({
@@ -12,6 +20,8 @@ export function ModelPickerPanel({
   availableModels,
   onSwitch,
   onClose,
+  modelDisplayMap = [],
+  defaultModelDescription,
 }: ModelPickerPanelProps) {
   const defaultModelValue = availableModels[0]?.value ?? null;
   // Skip the synthetic "Default" sentinel when the server already provides one
@@ -34,7 +44,12 @@ export function ModelPickerPanel({
       {/* Default (recommended) sentinel — only when server doesn't provide one */}
       {!hasDefaultEntry &&
         (() => {
-          const { displayName, subLabel } = getModelDisplayInfo('', defaultModelValue);
+          const { displayName, subLabel } = getModelDisplayInfo(
+            '',
+            defaultModelValue,
+            modelDisplayMap,
+            defaultModelDescription,
+          );
           const isSelected = currentModel === defaultModelValue;
           return (
             <button
@@ -52,7 +67,11 @@ export function ModelPickerPanel({
           );
         })()}
       {availableModels.map((item) => {
-        const { displayName, subLabel } = getModelInfoDisplayName(item, item.value);
+        const { displayName, subLabel } = getModelInfoDisplayName(
+          item,
+          item.value,
+          modelDisplayMap,
+        );
         const isSelected = currentModel === item.value;
         return (
           <button
@@ -76,9 +95,10 @@ export function ModelPickerPanel({
 export function currentModelLabel(
   model: string | null,
   availableModels?: { value: string; displayName?: string }[],
+  modelDisplayMap: ProviderClientConfig['modelDisplayMap'] = [],
 ): string {
   if (!model) return 'Model';
   const info = availableModels?.find((m) => m.value === model);
   if (info?.displayName) return info.displayName;
-  return shortModelName(model);
+  return shortModelName(model, modelDisplayMap);
 }

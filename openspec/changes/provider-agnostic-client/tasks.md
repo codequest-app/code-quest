@@ -31,11 +31,10 @@
 > 每個 component 從 Context 讀取 providerConfig，刪除 hardcode。
 > expect 不變或等價。TDD refactoring。
 
-### 2.1 model-utils.ts
-- [ ] RED：寫測試 — `shortModelName` 接收 `modelDisplayMap` 參數，用 map 取 displayName
-- [ ] RED：寫測試 — `getModelDisplayInfo` 從 `modelDisplayMap` 讀取，無 match 時顯示 raw ID
-- [ ] GREEN：重構 model-utils.ts 接收 modelDisplayMap 參數，刪除 hardcoded opus/sonnet/haiku
-- [ ] REFACTOR：更新 ModelPickerPanel、HeaderBar 呼叫端帶入 modelDisplayMap
+### 2.1 model-utils.ts — DONE
+- [x] RED：11 tests（shortModelName 4, getModelDisplayInfo 4, getModelInfoDisplayName 3）
+- [x] GREEN：model-utils.ts 接收 modelDisplayMap，刪除 hardcoded opus/sonnet/haiku
+- [x] REFACTOR：HeaderBar、ModelPickerPanel、ComposeToolbar 帶入 modelDisplayMap from providerConfig
 
 ### 2.2 CommandMenu fast mode
 - [ ] RED：寫測試 — fast mode toggle 用 `ModelInfo.supportsFastMode`，fallback 查 `modelDisplayMap`
@@ -69,6 +68,10 @@
 ## 3. Code Review + 重構
 
 - [ ] code review 找出職責不清、過度設計、code smell
+- [ ] 該用 Zod 的地方必須用 Zod（`as` type assertion → Zod parse）
+- [ ] inline type（`as Record<string, unknown>`、`as X | undefined`）→ 用 Zod schema 或正確的 type narrowing
+- [ ] inline import（`import('node:fs/promises')`、動態 import）→ top-level import
+- [ ] 可簡化之處（冗餘邏輯、重複 code、過深巢狀）
 - [ ] 重構發現的問題
 
 ## 4. Cleanup

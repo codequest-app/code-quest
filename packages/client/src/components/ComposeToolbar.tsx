@@ -55,7 +55,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     setPermissionMode,
     setEffort,
   } = useChannelConfig();
-  const { initOptions, setInitOptions } = useSession();
+  const { initOptions, setInitOptions, providerConfig } = useSession();
   const compose = useChannelCompose();
 
   // MCP server refresh logic (inlined from ConnectedManageMcpDialog)
@@ -175,6 +175,8 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
               availableModels={availableModels}
               onSwitch={setModel}
               onClose={closeDialog}
+              modelDisplayMap={providerConfig?.modelDisplayMap}
+              defaultModelDescription={providerConfig?.defaultModelDescription}
             />
           </div>
         )}
