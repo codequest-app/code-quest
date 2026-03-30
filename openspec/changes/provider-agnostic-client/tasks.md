@@ -3,24 +3,22 @@
 ### 1.1 Zod schema + type — DONE
 ### 1.2 ProviderAdapter interface 擴展 — DONE
 
-### 1.3 get_provider_config event
-- [ ] `shared/schemas/`：新增 `getProviderConfigResponseSchema`（response 含 `providerConfig`）
-- [ ] `shared/socket-events.ts`：ClientToServerEvents 加 `get_provider_config` event
-- [ ] `server/handlers/settings-handler.ts`：handler 回傳 `channelManager.providerClientConfig`
-- [ ] 測試：FakeClaude send get_provider_config → 回傳 providerConfig.brand.name === "Claude"
+### 1.3 get_provider_config event — DONE
+- [x] getProviderConfigResponseSchema + GetProviderConfigResponse type
+- [x] ClientToServerEvents 加 get_provider_config
+- [x] settings-handler 回傳 channelManager.providerClientConfig
+- [x] 測試：get_provider_config → brand.name === "Claude"
 
-### 1.4 Client ChannelConfigContext 主動請求
-- [ ] ChannelConfigContext useEffect mount 時 emit `get_provider_config`
-- [ ] callback 存 providerConfig 到 configState
-- [ ] 測試：renderWithWorkspace → useChannelConfig().providerConfig 有值
+### 1.4 Client ChannelConfigContext 主動請求 — DONE
+- [x] ChannelConfigContext useEffect mount 時 emit get_provider_config
+- [x] 測試：ProviderConfigDisplay 驗證 brand.name === "Claude"
 
-### 1.5 移除舊的 providerConfig 傳遞路徑
-- [ ] session:init payload 移除 providerConfig 欄位
-- [ ] session-handler launch/join 移除 providerConfig spread
-- [ ] sessionInitPayloadSchema 移除 providerConfig
-- [ ] SessionContext 已無 providerConfig（已完成）
-- [ ] init response 已無 providerConfig（已完成）
-- [ ] handler-context.ts 移除 providerConfig field（改在 handler 裡直接取）
+### 1.5 移除舊的 providerConfig 傳遞路徑 — DONE
+- [x] session:init payload + sessionInitPayloadSchema 移除 providerConfig
+- [x] session-handler launch/join 移除 providerConfig spread
+- [x] initResponseSchema 移除 providerConfig
+- [x] handler-context.ts 移除 providerConfig field
+- [x] chat-handler.ts 移除 providerConfig getter
 
 ## 2. Phase 2 — Components 消費 clientConfig
 
