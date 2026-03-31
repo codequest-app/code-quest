@@ -36,3 +36,14 @@
 - [x] 20. 新增 summoner-structure skill（記錄資料夾結構和命名慣例）
 - [x] 21. 刪除舊的 `protocol/` 資料夾和空檔案
 - [x] 22. 最終全量 test + typecheck + lint
+
+### Phase 6: Test 重構 — adapter.test.ts 按 transform 拆分
+
+- [ ] 23. 提取 system event tests → `__tests__/claude/transforms/system.test.ts`
+- [ ] 24. 提取 assistant tests → `__tests__/claude/transforms/assistant.test.ts`
+- [ ] 25. 提取 user tests → `__tests__/claude/transforms/user.test.ts`
+- [ ] 26. 提取 result tests → `__tests__/claude/transforms/result.test.ts`
+- [ ] 27. 提取 control request tests → `__tests__/claude/transforms/control.test.ts`
+- [ ] 28. 提取 stream tests → `__tests__/claude/transforms/stream.test.ts`
+- [ ] 29. adapter.test.ts 只留 adapter 層級測試（parseLine, format, dispatch, misc）
+- [ ] 30. 確認 summoner 266 tests 全部通過，數量不變
