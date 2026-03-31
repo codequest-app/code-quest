@@ -33,6 +33,6 @@
 
 ### Phase 5: Skill + Cleanup
 
-- [ ] 20. 新增 summoner-structure skill（記錄資料夾結構和命名慣例）
-- [ ] 21. 刪除舊的 `protocol/` 資料夾和空檔案
-- [ ] 22. 最終全量 test + typecheck + lint
+- [x] 20. 新增 summoner-structure skill（記錄資料夾結構和命名慣例）
+- [x] 21. 刪除舊的 `protocol/` 資料夾和空檔案
+- [x] 22. 最終全量 test + typecheck + lint
