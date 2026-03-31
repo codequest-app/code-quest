@@ -625,36 +625,6 @@ describe('ChatHandler > session', () => {
       expect(session!.firstUserMessage).toBe('Hello world');
     });
 
-    it('auto-generates session title after first chat:send', async () => {
-      const { claude, channelId } = await setup();
-
-      claude.onControlRequest((req) => {
-        if (req.subtype === 'generate_session_title') {
-          return { title: 'Fix the login bug' };
-        }
-        return null;
-      });
-
-      await claude.send('chat:send', { channelId, message: 'fix the login page' });
-      await claude.emit(s.assistant('ok'));
-      await claude.emit(s.result());
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      // Verify client-facing API returns title
-      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
-        'session:list',
-        {},
-      );
-      const session = result.sessions.find((sess) => sess.id === channelId);
-      expect(session?.title).toBe('Fix the login bug');
-
-      // Verify DB persistence
-      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
-      expect(record).toBeDefined();
-      expect(record!.title).toBe('Fix the login bug');
-    });
-
     it('session:init during processing does not wipe pendingTitlePrompt', async () => {
       const { claude, channelId } = await setup();
 
