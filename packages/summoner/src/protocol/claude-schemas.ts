@@ -196,7 +196,7 @@ export const userSchema = z
     parent_tool_use_id: z.string().nullable().optional(),
     session_id: z.string().optional(),
     uuid: z.string().optional(),
-    tool_use_result: z.string().optional(),
+    tool_use_result: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
   })
   .loose();
 
