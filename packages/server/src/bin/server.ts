@@ -18,7 +18,7 @@ import { createUsageRouter } from '../routes/usage.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
-import type { ChatHandler } from '../socket/chat-handler.ts';
+import type { SocketServer } from '../socket/server.ts';
 import { TYPES } from '../types.ts';
 
 const storeConfig: StoreConfig = {};
@@ -50,8 +50,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: '*' },
 });
 
-const chatHandler = container.get<ChatHandler>(TYPES.ChatHandler);
-chatHandler.register(io);
+const socketServer = container.get<SocketServer>(TYPES.SocketServer);
+socketServer.register(io);
 
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);

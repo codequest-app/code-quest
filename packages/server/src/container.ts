@@ -19,7 +19,7 @@ import type { SettingsStore } from './services/settings-store.ts';
 import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
-import { ChatHandler } from './socket/chat-handler.ts';
+import { SocketServer } from './socket/server.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
@@ -68,7 +68,7 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
-  container.bind<ChatHandler>(TYPES.ChatHandler).to(ChatHandler).inSingletonScope();
+  container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
 
   const settingsStore: SettingsStore = settingsStores[0];
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);

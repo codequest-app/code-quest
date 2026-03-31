@@ -31,7 +31,7 @@ export interface PluginCacheEntry {
 
 /**
  * Shared context that all handler modules receive.
- * ChatHandler implements this interface.
+ * SocketServer implements this interface.
  */
 export interface HandlerContext {
   // ── Factories ──

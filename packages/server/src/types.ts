@@ -10,7 +10,7 @@ export const TYPES = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
   RawEventStore: Symbol.for('RawEventStore'),
-  ChatHandler: Symbol.for('ChatHandler'),
+  SocketServer: Symbol.for('SocketServer'),
   Database: Symbol.for('Database'),
   UsageTracker: Symbol.for('UsageTracker'),
   SettingsStore: Symbol.for('SettingsStore'),

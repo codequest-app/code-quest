@@ -339,7 +339,7 @@ export class Channel {
         this.emit(se.name, { channelId: this.id, ...se.payload });
       }
 
-      // Invoke hook for ChatHandler-owned logic
+      // Invoke hook for SocketServer-owned logic
       hooks.onSocketEvent?.(this, se);
     };
 
@@ -361,7 +361,7 @@ export class Channel {
         this.pendingRequests.delete(id);
       }
 
-      // Delegate cleanup to hook — ChatHandler owns business logic
+      // Delegate cleanup to hook — SocketServer owns business logic
       // (custom rejection messages, broadcastSessionState, session:closed emit)
       hooks.onExit?.(this, code);
     };

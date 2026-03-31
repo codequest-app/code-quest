@@ -64,7 +64,7 @@ function jsonRpcError(id: unknown, message: string): Record<string, unknown> {
 }
 
 @injectable()
-export class ChatHandler implements HandlerContext {
+export class SocketServer implements HandlerContext {
   // socket.id → set of channelIds this socket is joined to
   socketChannelsMap = new Map<string, Set<string>>();
   // Socket.IO server reference for broadcasting
