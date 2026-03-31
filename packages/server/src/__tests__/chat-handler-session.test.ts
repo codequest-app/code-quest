@@ -648,6 +648,31 @@ describe('ChatHandler > session', () => {
       expect(session?.title).toBe('Fix the login bug');
     });
 
+    it('session:init during processing does not wipe pendingTitlePrompt', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'generate_session_title') {
+          return { title: 'Generated Title' };
+        }
+        return null;
+      });
+
+      await claude.send('chat:send', { channelId, message: 'hello world' });
+      // CLI sends session:init mid-processing (e.g. system event with config update)
+      await claude.emit(s.init('cli-sess', { model: 'claude-sonnet-4-6' }));
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.result());
+      await new Promise<void>((r) => setTimeout(r, 100));
+
+      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
+        'session:list',
+        {},
+      );
+      const session = result.sessions.find((sess) => sess.id === channelId);
+      expect(session?.title).toBe('Generated Title');
+    });
+
     it('filters sessions by cwd when provided', async () => {
       const { claude } = await setup();
 

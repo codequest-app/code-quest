@@ -312,7 +312,7 @@ export class Channel {
       if (se.name === 'session:init') {
         const init = sessionInitPayload.parse(se.payload);
         if (init.sessionId) this.sessionId = init.sessionId;
-        this._sessionState = sessionInitConfigSchema.parse(init.config ?? {});
+        this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
         this.updateMetaCache({
           ...(init.model ? { model: init.model } : {}),
           ...(init.permissionMode ? { permissionMode: init.permissionMode } : {}),
