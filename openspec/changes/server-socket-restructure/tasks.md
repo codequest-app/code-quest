@@ -20,12 +20,12 @@
 
 ### Phase 2: helpers.ts 拆散
 
-- [ ] 14. `persistNewSession` + `DEFAULT_THINKING_TOKENS` 搬到 `session-lifecycle.ts`
-- [ ] 15. `execGit` 搬到 `git.ts`（session-fork import from git.ts）
-- [ ] 16. `runPluginCommand*` 搬到 `plugin.ts`
-- [ ] 17. `rg*` 搬到 `file.ts`
-- [ ] 18. 刪除 `helpers.ts`
-- [ ] 19. 跑全部 test 確認通過
+- [x] 14. `persistNewSession` + `DEFAULT_THINKING_TOKENS` 搬到 `session-lifecycle.ts`
+- [x] 15. `execGit` 搬到 `git.ts`（session-fork import from git.ts）
+- [x] 16. `runPluginCommand*` 搬到 `plugin.ts`
+- [x] 17. `rg*` 搬到 `file.ts`
+- [x] 18. 刪除 `helpers.ts`
+- [x] 19. 跑全部 test 確認通過
 
 ### Phase 3: session/ 資料夾
 
