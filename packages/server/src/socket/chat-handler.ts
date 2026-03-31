@@ -205,7 +205,7 @@ export class ChatHandler implements HandlerContext {
                   .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
                 this.broadcastSessionState(channelId, 'idle', title);
               })
-              .catch((e) => logger.warn({ err: e }, 'Failed to generate session title'));
+              .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
           }
           return;
         }

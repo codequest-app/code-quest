@@ -96,6 +96,36 @@ describe('Channel', () => {
     });
   });
 
+  describe('sessionIdReady', () => {
+    it('does not resolve until session:init sets sessionId', async () => {
+      const runner = fakeRunner();
+      const channel = new Channel(runner, 'sess-1', 'claude');
+
+      let onSocketEvent!: (event: { name: string; payload: Record<string, unknown> }) => void;
+      (runner.on as ReturnType<typeof vi.fn>).mockImplementation((event: string, handler: any) => {
+        if (event === 'socket_event') onSocketEvent = handler;
+      });
+      channel.wireRunner();
+
+      let resolved = false;
+      channel.sessionIdReady.then(() => {
+        resolved = true;
+      });
+      await new Promise<void>((r) => setTimeout(r, 10));
+      expect(resolved).toBe(false);
+      expect(channel.sessionId).toBeNull();
+
+      onSocketEvent({
+        name: 'session:init',
+        payload: { sessionId: 'cli-sess-1', config: { model: 'opus' } },
+      });
+      await channel.sessionIdReady;
+
+      expect(resolved).toBe(true);
+      expect(channel.sessionId).toBe('cli-sess-1');
+    });
+  });
+
   describe('nextSeq', () => {
     it('increments sequence', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');

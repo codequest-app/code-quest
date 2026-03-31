@@ -102,6 +102,9 @@ export class ChannelManager {
     // Initialize and wait for control_response
     const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
 
+    // Ensure session:init has been processed (sessionId needed for persist)
+    await channel.sessionIdReady;
+
     return { channel, initResult };
   }
 

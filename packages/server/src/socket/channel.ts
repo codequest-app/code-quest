@@ -101,6 +101,8 @@ export class Channel {
   planComments: PlanCommentData[] = [];
   terminalLines: string[] = [];
   sessionId: string | null = null;
+  private _resolveSessionId: (() => void) | null = null;
+  readonly sessionIdReady: Promise<void>;
 
   get sessionState(): SessionState {
     return this._sessionState;
@@ -148,6 +150,9 @@ export class Channel {
     this.runner = runner;
     this.provider = provider;
     this.controlTimeout = controlTimeout;
+    this.sessionIdReady = new Promise((resolve) => {
+      this._resolveSessionId = resolve;
+    });
   }
 
   get isWired(): boolean {
@@ -311,7 +316,11 @@ export class Channel {
       // Update internal state based on event name
       if (se.name === 'session:init') {
         const init = sessionInitPayload.parse(se.payload);
-        if (init.sessionId) this.sessionId = init.sessionId;
+        if (init.sessionId) {
+          this.sessionId = init.sessionId;
+          this._resolveSessionId?.();
+          this._resolveSessionId = null;
+        }
         this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
         this.updateMetaCache({
           ...(init.model ? { model: init.model } : {}),
