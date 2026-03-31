@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ClaudeProtocol } from '../../protocol/claude-protocol.ts';
+import { ClaudeProtocol } from '../../claude/protocol.ts';
 
 describe('ClaudeProtocol.buildArgs', () => {
   const protocol = new ClaudeProtocol();
