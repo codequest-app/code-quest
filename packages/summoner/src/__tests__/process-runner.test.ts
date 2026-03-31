@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ProcessRunner } from '../process-runner.ts';
 import { ClaudeAdapter } from '../protocol/claude-adapter.ts';
+import { ProcessRunner } from '../runner.ts';
 import { FakeProcessProvider, segments as s } from '../test/index.ts';
 import type { SocketEvent } from '../types.ts';
 
