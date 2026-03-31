@@ -358,6 +358,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         limit: parsed.limit,
         offset: parsed.offset,
         cwd: parsed.cwd,
+        hasParentId: parsed.hasParentId,
       });
       const previews = await Promise.all(
         result.sessions.map((s) => ctx.rawEventStore.getPreview(s.sessionId ?? s.id)),
@@ -383,9 +384,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const result = await ctx.sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
+        hasParentId: true,
       });
-      const remoteSessions = result.sessions.filter((s) => s.parentId);
-      callback({ sessions: remoteSessions, total: remoteSessions.length });
+      callback({ sessions: result.sessions, total: result.total });
     } catch {
       callback({ sessions: [], total: 0 });
     }

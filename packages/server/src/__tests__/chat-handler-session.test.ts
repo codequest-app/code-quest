@@ -617,6 +617,25 @@ describe('ChatHandler > session', () => {
       expect(noMatchResult.sessions).toHaveLength(0);
       expect(noMatchResult.total).toBe(0);
     });
+
+    it('session:list with hasParentId only returns sessions with parentId', async () => {
+      const { claude } = await setup();
+
+      // Default session has no parentId
+      const allResult = await claude.send<{
+        sessions: Record<string, unknown>[];
+        total: number;
+      }>('session:list', {});
+      expect(allResult.total).toBeGreaterThanOrEqual(1);
+
+      const remoteResult = await claude.send<{
+        sessions: Record<string, unknown>[];
+        total: number;
+      }>('session:list', { hasParentId: true });
+      expect(
+        remoteResult.sessions.every((s) => s.parentId !== undefined && s.parentId !== null),
+      ).toBe(true);
+    });
   });
 
   describe('session:get', () => {

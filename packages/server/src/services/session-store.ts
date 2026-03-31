@@ -19,6 +19,7 @@ export interface SessionStore {
     limit?: number;
     offset?: number;
     cwd?: string;
+    hasParentId?: boolean;
   }): Promise<{ sessions: SessionRecord[]; total: number }>;
   getById(id: string): Promise<SessionRecord | null>;
   rename(id: string, title: string): Promise<boolean>;
