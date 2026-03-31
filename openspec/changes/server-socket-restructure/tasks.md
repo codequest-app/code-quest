@@ -4,19 +4,19 @@
 
 ### Phase 1: Handler 檔名去 `-handler` 後綴
 
-- [ ] 1. `connection-handler.ts` → `connection.ts`
-- [ ] 2. `message-handler.ts` → `message.ts`
-- [ ] 3. `settings-handler.ts` → `settings.ts`
-- [ ] 4. `file-handler.ts` → `file.ts`
-- [ ] 5. `git-handler.ts` → `git.ts`
-- [ ] 6. `terminal-handler.ts` → `terminal.ts`
-- [ ] 7. `mcp-handler.ts` → `mcp.ts`
-- [ ] 8. `plan-handler.ts` → `plan.ts`
-- [ ] 9. `speech-handler.ts` → `speech.ts`
-- [ ] 10. `auth-handler.ts` → `auth.ts`（暫留 handlers/，Phase 4 再搬）
-- [ ] 11. `plugin-handler.ts` → `plugin.ts`（暫留 handlers/，Phase 4 再搬）
-- [ ] 12. 更新 chat-handler.ts 的 import paths
-- [ ] 13. 跑全部 test 確認通過
+- [x] 1. `connection-handler.ts` → `connection.ts`
+- [x] 2. `message-handler.ts` → `message.ts`
+- [x] 3. `settings-handler.ts` → `settings.ts`
+- [x] 4. `file-handler.ts` → `file.ts`
+- [x] 5. `git-handler.ts` → `git.ts`
+- [x] 6. `terminal-handler.ts` → `terminal.ts`
+- [x] 7. `mcp-handler.ts` → `mcp.ts`
+- [x] 8. `plan-handler.ts` → `plan.ts`
+- [x] 9. `speech-handler.ts` → `speech.ts`
+- [x] 10. `auth-handler.ts` → `auth.ts`（暫留 handlers/，Phase 4 再搬）
+- [x] 11. `plugin-handler.ts` → `plugin.ts`（暫留 handlers/，Phase 4 再搬）
+- [x] 12. 更新 chat-handler.ts 的 import paths
+- [x] 13. 跑全部 test 確認通過
 
 ### Phase 2: helpers.ts 拆散
 
