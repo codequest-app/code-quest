@@ -13,6 +13,7 @@ export interface RenderWithWorkspaceOptions {
 
 export interface RenderWithWorkspaceResult {
   claude: FakeClaude;
+  channelId: string;
   user: ReturnType<typeof userEvent.setup>;
 }
 
@@ -26,6 +27,11 @@ export async function renderWithWorkspace(
   if (!claude.hasInitSegments) {
     claude.prepareInit();
   }
+
+  let channelId = '';
+  claude.socket.on('session:init', (p) => {
+    channelId = p.channelId;
+  });
 
   render(
     <SocketProvider socket={claude.socket}>
@@ -41,5 +47,5 @@ export async function renderWithWorkspace(
 
   await user.click(await screen.findByLabelText('New tab'));
 
-  return { claude, user };
+  return { claude, channelId, user };
 }

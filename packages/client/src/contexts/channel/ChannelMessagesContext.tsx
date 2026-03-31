@@ -175,9 +175,11 @@ export function ChannelMessagesProvider({
   const onTitleChangeRef = useRef(onTitleChange);
   onTitleChangeRef.current = onTitleChange;
 
-  // ── Join session ──
+  // ── Join session + cross-window status sync ──
   useEffect(() => {
     if (!channelId) return;
+    let joined = false;
+
     socket.emit('session:join', { channelId }, (snapshot) => {
       if ('error' in snapshot) return;
       setChannelState((prev) => {
@@ -190,7 +192,28 @@ export function ChannelMessagesProvider({
         }
         return updated;
       });
+      joined = true;
     });
+
+    const onSessionStates = (payload: Parameters<ServerToClientEvents['session:states']>[0]) => {
+      if (!joined) return;
+      const match = payload.sessions.find((s) => s.channelId === channelId);
+      if (!match) return;
+      setChannelState((prev) => {
+        if (prev.status === 'processing' || prev.status === 'cancelling') return prev;
+        const next =
+          match.state === 'busy'
+            ? ('busy' as const)
+            : match.state === 'exited'
+              ? ('disconnected' as const)
+              : ('idle' as const);
+        return prev.status === next ? prev : { ...prev, status: next };
+      });
+    };
+    socket.on('session:states', onSessionStates);
+    return () => {
+      socket.off('session:states', onSessionStates);
+    };
   }, [channelId, socket]);
 
   // ── Status change callback ──
