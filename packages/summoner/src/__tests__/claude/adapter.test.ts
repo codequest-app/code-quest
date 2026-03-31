@@ -1,32 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
-import { ClaudeAdapter } from '../../claude/adapter.ts';
 import { resetSeq, segments as s } from '../../test/fake-claude.ts';
-
-const adapter = new ClaudeAdapter();
-
-/** Extract the ProtocolEvent from a parseLine result, handling 'ok', 'unknown', and 'error' statuses */
-function parseEvent(line: string) {
-  const parsed = adapter.parseLine(line);
-  if (parsed.status === 'ok') return parsed.event;
-  if (parsed.status === 'unknown') return parsed.data as any;
-  if (parsed.status === 'error') return JSON.parse(parsed.raw) as any;
-  return null;
-}
-
-/** Helper: parseLine + transform → extract single SocketEvent (or null / array) */
-function toSocketEvent(line: string) {
-  const event = parseEvent(line);
-  if (!event) return null;
-  const r = adapter.transform(event);
-  return r.events.length === 0 ? null : r.events.length === 1 ? r.events[0] : r.events;
-}
-
-function transformResult(line: string) {
-  const event = parseEvent(line);
-  if (!event) return { events: [], controlResponses: [], serverActions: [] };
-  return adapter.transform(event);
-}
+import { adapter, toSocketEvent, transformResult } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {
   beforeEach(() => resetSeq());
