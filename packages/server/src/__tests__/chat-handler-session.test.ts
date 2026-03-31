@@ -1,14 +1,12 @@
+import type { SocketEvent } from '@code-quest/shared';
+import { messageContentSchema } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
+import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import * as helpers from '../socket/handlers/helpers.ts';
 import { createFakeClaude } from '../test/index.ts';
 import { TYPES } from '../types.ts';
-
-interface SocketEvent {
-  name: string;
-  payload?: { content?: Array<{ type: string; text: string }> };
-}
 
 async function setup(sessionId = 'cli-sess') {
   const claude = createFakeClaude();
@@ -329,7 +327,8 @@ describe('ChatHandler > session', () => {
       expect(names).toContain('message:user');
 
       const userEvent = result.events!.find((e) => e.name === 'message:user');
-      expect(userEvent?.payload?.content).toEqual([{ type: 'text', text: 'hi' }]);
+      const { content } = messageContentSchema.parse(userEvent?.payload);
+      expect(content).toEqual([{ type: 'text', text: 'hi' }]);
     });
 
     it('does not duplicate user message in history when CLI echoes it back', async () => {
@@ -374,11 +373,13 @@ describe('ChatHandler > session', () => {
       }>('session:join', { channelId });
 
       expect(result.error).toBeUndefined();
-      const userTextEvents = result.events!.filter(
-        (e) =>
-          e.name === 'message:user' &&
-          e.payload?.content?.some?.((b) => b.type === 'text' && b.text === 'hello'),
-      );
+      const userTextEvents = result.events!.filter((e) => {
+        if (e.name !== 'message:user') return false;
+        const parsed = messageContentSchema.safeParse(e.payload);
+        return (
+          parsed.success && parsed.data.content.some((b) => b.type === 'text' && b.text === 'hello')
+        );
+      });
       expect(userTextEvents.length).toBe(1);
     });
 
@@ -445,6 +446,36 @@ describe('ChatHandler > session', () => {
 
       expect(createdEvents.length).toBeGreaterThan(0);
       expect(createdEvents.some((e) => e.channelId === newChannelId)).toBe(true);
+    });
+  });
+
+  it('session:launch succeeds when initResult.response is undefined', async () => {
+    const claude = createFakeClaude();
+    // control_response without a nested response field (response.response is undefined)
+    const controlResp = JSON.stringify({
+      type: 'control_response',
+      response: { subtype: 'success', request_id: '__PLACEHOLDER__' },
+    });
+    const channelId = await claude.initialize(s.init('sess-no-resp'), controlResp);
+
+    expect(channelId).toBeTruthy();
+    expect(channelId).not.toBe('');
+  });
+
+  describe('session:launch error logging', () => {
+    it('logs error when session:launch fails', async () => {
+      const claude = createFakeClaude();
+      const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger);
+
+      // Send invalid payload to trigger catch — missing required init segments
+      claude.socket.emit('session:launch', null, () => {});
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error) }),
+        'Failed to create session',
+      );
+      errorSpy.mockRestore();
     });
   });
 
