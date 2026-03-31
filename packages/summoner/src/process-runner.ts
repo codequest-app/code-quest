@@ -1,7 +1,6 @@
 import { EventEmitter } from 'node:events';
-import type { ProtocolEvent } from './protocol/claude-schemas.ts';
-import type { LaunchOptions, ProviderAdapter } from './protocol/provider-adapter.ts';
-import type { ProcessHandle, ProcessProvider } from './types.ts';
+import type { LaunchOptions } from './protocol/provider-adapter.ts';
+import type { ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
 
 interface ProcessRunnerOptions {
   adapter: ProviderAdapter;
@@ -80,9 +79,7 @@ export class ProcessRunner extends EventEmitter {
 
     if (!protocolEvent) return;
 
-    const { events, controlResponses, serverActions } = this.adapter.transform(
-      protocolEvent as ProtocolEvent,
-    );
+    const { events, controlResponses, serverActions } = this.adapter.transform(protocolEvent);
     for (const cr of controlResponses) {
       this.emit('control_response', cr);
     }

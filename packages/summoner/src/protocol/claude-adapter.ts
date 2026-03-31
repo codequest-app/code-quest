@@ -27,7 +27,7 @@ interface ConvertResult {
 
 const EMPTY: ConvertResult = { events: [], serverActions: [], controlResponses: [] };
 
-export class ClaudeAdapter implements ProviderAdapter {
+export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
 
   readonly clientConfig: ProviderClientConfig = providerClientConfigSchema.parse({
@@ -116,7 +116,7 @@ export class ClaudeAdapter implements ProviderAdapter {
     return this.protocol.buildArgs(options);
   }
 
-  parseLine(line: string): ParseResult {
+  parseLine(line: string): ParseResult<ProtocolEvent> {
     return this.protocol.parseLine(line);
   }
 
