@@ -28,20 +28,21 @@ import type { RunnerFactory } from '../types.ts';
 import { TYPES } from '../types.ts';
 import type { Channel, WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
+import { register as registerAuthHandlers } from './claude/auth.ts';
+import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
+import { register as registerPluginHandlers } from './claude/plugin.ts';
 import type {
   HandlerContext,
   PluginCacheEntry,
   TypedServer,
   TypedSocket,
 } from './handler-context.ts';
-import { register as registerAuthHandlers } from './handlers/auth.ts';
 import { register as registerConnectionHandlers } from './handlers/connection.ts';
 import { register as registerFileHandlers } from './handlers/file.ts';
 import { register as registerGitHandlers } from './handlers/git.ts';
 import { register as registerMcpHandlers } from './handlers/mcp.ts';
 import { register as registerMessageHandlers } from './handlers/message.ts';
 import { register as registerPlanHandlers } from './handlers/plan.ts';
-import { register as registerPluginHandlers } from './handlers/plugin.ts';
 import { register as registerSessionHandlers } from './handlers/session/index.ts';
 import { register as registerSettingsHandlers } from './handlers/settings.ts';
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
@@ -375,6 +376,7 @@ export class ChatHandler implements HandlerContext {
     registerMessageHandlers(socket, this);
     registerSettingsHandlers(socket, this);
     registerMcpHandlers(socket, this);
+    registerClaudeMcpServers(socket, this);
     registerFileHandlers(socket, this);
     registerTerminalHandlers(socket, this);
     registerGitHandlers(socket, this);

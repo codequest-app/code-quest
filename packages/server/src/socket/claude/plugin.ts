@@ -11,7 +11,7 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { runPluginCommand, runPluginCommandAsync } from './claude-cli.ts';
+import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 
 function buildMarketplaceSource(k: {
   source: string;
