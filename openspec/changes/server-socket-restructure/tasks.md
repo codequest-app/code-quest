@@ -48,19 +48,19 @@
 
 ### Phase 5: chat-handler.ts → server.ts
 
-- [ ] 33. `chat-handler.ts` → `server.ts`
-- [ ] 34. class `ChatHandler` → `SocketServer`
-- [ ] 35. 更新 DI binding（container.ts, types.ts symbol）
-- [ ] 36. 更新所有 test import
-- [ ] 37. 跑全部 test 確認通過
+- [x] 33. `chat-handler.ts` → `server.ts`
+- [x] 34. class `ChatHandler` → `SocketServer`
+- [x] 35. 更新 DI binding（container.ts, types.ts symbol）
+- [x] 36. 更新所有 test import
+- [x] 37. 跑全部 test 確認通過
 
 ### Phase 6: handler-context.ts → types.ts + context.ts
 
-- [ ] 38. 提取 `TypedSocket`, `TypedServer`, `errMsg`, `ensureChannel` → `types.ts`
-- [ ] 39. `HandlerContext` interface + `PluginCacheEntry` → `context.ts`
-- [ ] 40. 刪除 `handler-context.ts`
-- [ ] 41. 更新所有 import
-- [ ] 42. 跑全部 test 確認通過
+- [x] 38. 提取 `TypedSocket`, `TypedServer`, `errMsg`, `ensureChannel` → `types.ts`
+- [x] 39. `HandlerContext` interface + `PluginCacheEntry` → `context.ts`
+- [x] 40. 刪除 `handler-context.ts`
+- [x] 41. 更新所有 import
+- [x] 42. 跑全部 test 確認通過
 
 ### Phase 7: HandlerContext 瘦身
 
