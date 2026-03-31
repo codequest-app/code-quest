@@ -42,7 +42,7 @@ import { register as registerMcpHandlers } from './handlers/mcp.ts';
 import { register as registerMessageHandlers } from './handlers/message.ts';
 import { register as registerPlanHandlers } from './handlers/plan.ts';
 import { register as registerPluginHandlers } from './handlers/plugin.ts';
-import { register as registerSessionHandlers } from './handlers/session-handler.ts';
+import { register as registerSessionHandlers } from './handlers/session/index.ts';
 import { register as registerSettingsHandlers } from './handlers/settings.ts';
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
 import { register as registerTerminalHandlers } from './handlers/terminal.ts';

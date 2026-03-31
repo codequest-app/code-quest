@@ -7,10 +7,10 @@ import {
   sessionRenameSchema,
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
-import { register as registerForkHandlers } from './session-fork.ts';
-import { register as registerLifecycleHandlers } from './session-lifecycle.ts';
+import type { HandlerContext, TypedSocket } from '../../handler-context.ts';
+import { errMsg } from '../../handler-context.ts';
+import { register as registerForkHandlers } from './fork.ts';
+import { register as registerLifecycleHandlers } from './lifecycle.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   registerLifecycleHandlers(socket, ctx);

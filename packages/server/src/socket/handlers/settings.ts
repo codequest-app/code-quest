@@ -9,7 +9,7 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { DEFAULT_THINKING_TOKENS } from './session-lifecycle.ts';
+import { DEFAULT_THINKING_TOKENS } from './session/lifecycle.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on(

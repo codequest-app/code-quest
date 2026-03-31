@@ -7,11 +7,11 @@ import {
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
-import { config } from '../../config.ts';
-import { logger } from '../../logger.ts';
-import type { Channel } from '../channel.ts';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
+import { config } from '../../../config.ts';
+import { logger } from '../../../logger.ts';
+import type { Channel } from '../../channel.ts';
+import type { HandlerContext, TypedSocket } from '../../handler-context.ts';
+import { errMsg } from '../../handler-context.ts';
 /** Default max thinking tokens when thinking is enabled (matches CLI default). */
 export const DEFAULT_THINKING_TOKENS = 31999;
 
