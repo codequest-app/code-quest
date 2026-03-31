@@ -96,7 +96,7 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
 
   return (
     <div className="relative z-[3] flex items-center gap-1.5 h-[1.85em] mt-1 px-4">
-      <span data-testid="spinner-icon" className="text-accent text-sm">
+      <span data-testid="spinner-icon" className="text-accent text-sm inline-block w-4 text-center">
         {ICON_CYCLE[iconIndex]}
       </span>
       <span data-testid="spinner-verb" className="text-xs text-text-muted">
