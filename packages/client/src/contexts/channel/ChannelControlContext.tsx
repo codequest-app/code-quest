@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { toast } from 'sonner';
 import { channelEmit } from '../../socket/rpc';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { getFeedbackLabel } from '../../utils/feedback-label';
@@ -149,18 +148,7 @@ export function ChannelControlProvider({
 
     const onCancelRequest = (payload: Payload<'chat:cancel_request'>) => {
       if (!guard(payload)) return;
-      const cancelled = controlsRef.current.find((c) => c.requestId === payload.targetRequestId);
-      if (!cancelled) return;
-      const controlLabel = cancelled.toolName ?? cancelled.subtype ?? payload.targetRequestId;
       setControls((prev) => prev.filter((c) => c.requestId !== payload.targetRequestId));
-      toast.info(`Cancelled: ${controlLabel}`);
-      setChannelState((s) => ({
-        ...s,
-        messages: [
-          ...s.messages,
-          msg({ role: 'system', type: 'action_result', content: `Cancelled: ${controlLabel}` }),
-        ],
-      }));
     };
 
     const onSessionClosed = (payload: Payload<'session:closed'>) => {

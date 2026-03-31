@@ -10,9 +10,10 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { cliGenerateTitleResponseSchema } from './cli-response-schemas.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
+  const interruptedChannels = new Set<string>();
+
   // chat:send — alias for send_message
   socket.on('chat:send', (payload) => {
     try {
@@ -31,29 +32,15 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         content: [{ type: 'text', text: textMessage }],
       });
 
-      // Auto-generate session title on first message
+      // Remember first message for title generation (triggered on result)
       if (channel && !channel.sessionState.titleGenerated) {
-        channel.updateSessionState({ titleGenerated: true });
-        channel
-          .sendControlRequest('generate_session_title', { description: textMessage })
-          .then((res) => {
-            const parsed = cliGenerateTitleResponseSchema.safeParse(res.response);
-            if (parsed.success) {
-              const { title } = parsed.data;
-              ctx.sessionStore
-                .rename(channelId, title)
-                .catch((e) => console.warn('Failed to persist session title:', e));
-              ctx.broadcastSessionState(channelId, channel.isProcessing ? 'busy' : 'idle', title);
-            }
-          })
-          .catch((e) => console.warn('Failed to generate session title:', e));
+        channel.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
       }
     } catch (err) {
       console.error('Failed to send message:', err);
     }
   });
 
-  const interruptedChannels = new Set<string>();
   socket.on('chat:cancel', (payload) => {
     try {
       const { channelId } = chatInterruptSchema.parse(payload);
@@ -200,21 +187,24 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   socket.on('chat:cancel_request', (payload) => {
-    const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
-    const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
-    if (cancelMatch) {
-      const [channelId, channel] = cancelMatch;
-      channel.removeControlRequest(targetRequestId);
-      channel.runner.respondToControlRequest(targetRequestId, {
-        behavior: 'deny',
-        message: 'User cancelled',
-        interrupt: false,
-      });
-      // Broadcast to all sockets so other windows dismiss the pending banner
-      ctx.emitToSession(channelId, 'chat:cancel_request', {
-        channelId,
-        targetRequestId,
-      });
+    try {
+      const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
+      const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
+      if (cancelMatch) {
+        const [channelId, channel] = cancelMatch;
+        channel.removeControlRequest(targetRequestId);
+        channel.runner.respondToControlRequest(targetRequestId, {
+          behavior: 'deny',
+          message: 'User cancelled',
+          interrupt: false,
+        });
+        ctx.emitToSession(channelId, 'chat:cancel_request', {
+          channelId,
+          targetRequestId,
+        });
+      }
+    } catch {
+      // ignore invalid payload
     }
   });
 

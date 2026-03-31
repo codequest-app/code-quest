@@ -581,6 +581,7 @@ describe('ChatHandler > session', () => {
       await claude.send('chat:send', { channelId, message: 'fix the login page' });
       await claude.emit(s.assistant('ok'));
       await claude.emit(s.result());
+      await new Promise<void>((r) => setTimeout(r, 50));
 
       const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
         'session:list',
@@ -736,6 +737,57 @@ describe('ChatHandler > session', () => {
 
       expect(bEvents.length).toBeGreaterThan(0);
       expect(bEvents[0].channelId).toBe(channelId);
+    });
+
+    it('window B receives only expected events when A sends a message (no cancel)', async () => {
+      const { claude, channelId } = await setup();
+      const socketB = claude.connect();
+      const allBEvents: Array<{ event: string; payload: Record<string, unknown> }> = [];
+      for (const ev of [
+        'chat:cancel_request',
+        'control:cancel',
+        'control:permission',
+        'message:assistant',
+        'session:states',
+        'session:closed',
+      ]) {
+        socketB.on(ev, (p: Record<string, unknown>) => allBEvents.push({ event: ev, payload: p }));
+      }
+
+      await new Promise<void>((resolve) => {
+        socketB.emit('session:join', { channelId }, () => resolve());
+      });
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      allBEvents.length = 0; // clear join-time events
+
+      await claude.send('chat:send', { channelId, message: 'hello' });
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.result());
+
+      const cancelEvents = allBEvents.filter(
+        (e) => e.event === 'chat:cancel_request' || e.event === 'control:cancel',
+      );
+      expect(cancelEvents).toHaveLength(0);
+    });
+
+    it('window B does NOT receive chat:cancel_request when A sends a message', async () => {
+      const { claude, channelId } = await setup();
+      const socketB = claude.connect();
+      const bCancelEvents: Record<string, unknown>[] = [];
+      socketB.on('chat:cancel_request', (p: Record<string, unknown>) => bCancelEvents.push(p));
+
+      await new Promise<void>((resolve) => {
+        socketB.emit('session:join', { channelId }, () => resolve());
+      });
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      // A sends message — should NOT trigger cancel_request on B
+      await claude.send('chat:send', { channelId, message: 'hello' });
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.result());
+
+      expect(bCancelEvents).toHaveLength(0);
     });
 
     it('window B receives chat:cancel_request when window A responds to permission', async () => {

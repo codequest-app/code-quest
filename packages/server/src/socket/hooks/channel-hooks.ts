@@ -1,43 +1,18 @@
 import { readFile } from 'node:fs/promises';
-import { z } from 'zod';
+import {
+  controlGenerateTitleResponseSchema,
+  diffReviewPayloadSchema,
+  fileUpdatedPayloadSchema,
+  mcpPayloadSchema,
+  permissionPayloadSchema,
+  rateLimitPayloadSchema,
+  requestIdPayloadSchema,
+  resultPayloadSchema,
+  serverActionModelSchema,
+  serverActionModeSchema,
+} from '@code-quest/shared';
 import type { WireRunnerHooks } from '../channel.ts';
 import type { HandlerContext } from '../handler-context.ts';
-
-const resultPayload = z.object({ errors: z.array(z.string()).optional() }).passthrough();
-const fileUpdatedPayload = z
-  .object({
-    filePath: z.string(),
-    oldContent: z.string().nullable().optional(),
-    newContent: z.string().nullable().optional(),
-  })
-  .passthrough();
-const requestIdPayload = z.object({ requestId: z.string() }).passthrough();
-const permissionPayload = z
-  .object({ requestId: z.string(), toolName: z.string(), toolUseId: z.string() })
-  .passthrough();
-const diffReviewPayload = z.object({ toolId: z.string() }).passthrough();
-const rateLimitPayload = z
-  .object({
-    info: z
-      .object({
-        status: z.string(),
-        rateLimitType: z.string().optional(),
-        resetsAt: z.coerce.number().optional(),
-        utilization: z.number().optional(),
-        overageStatus: z.string().optional(),
-        isUsingOverage: z.boolean().optional(),
-      })
-      .passthrough(),
-  })
-  .passthrough();
-const serverActionInputModel = z.object({ model: z.string() }).passthrough();
-const serverActionInputMode = z.object({ mode: z.string() }).passthrough();
-const mcpPayload = z
-  .object({
-    requestId: z.string(),
-    message: z.record(z.string(), z.unknown()).optional(),
-  })
-  .passthrough();
 
 /** Timeout for MCP JSON-RPC message relay (ms). */
 const MCP_MESSAGE_TIMEOUT = 10_000;
@@ -63,23 +38,45 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         }
         case 'message:result': {
-          resultPayload.parse(p);
+          resultPayloadSchema.parse(p);
           ch.endProcessing();
           ctx.broadcastSessionState(channelId, 'idle');
+
+          // Generate title after first message completes (CLI is idle now)
+          const pendingPrompt = ch.sessionState.pendingTitlePrompt as string | undefined;
+          if (pendingPrompt) {
+            ch.updateSessionState({ pendingTitlePrompt: undefined });
+            ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
+              .then((res) => {
+                const parsed = controlGenerateTitleResponseSchema.safeParse(res.response);
+                if (parsed.success) {
+                  ctx.sessionStore
+                    .rename(channelId, parsed.data.title)
+                    .catch((e) => console.warn('Failed to persist session title:', e));
+                  ctx.broadcastSessionState(channelId, 'idle', parsed.data.title);
+                }
+              })
+              .catch((e) => console.warn('Failed to generate session title:', e));
+          }
           break;
         }
         case 'system:rate_limit': {
-          const { info } = rateLimitPayload.parse(p);
+          const { info } = rateLimitPayloadSchema.parse(p);
           ctx.usageTracker.update(info);
           break;
         }
         case 'system:file_updated': {
-          const file = fileUpdatedPayload.parse(p);
-          ctx.emitToSession(channelId, 'file:updated', { channelId, ...file });
+          const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(p);
+          ctx.emitToSession(channelId, 'file:updated', {
+            channelId,
+            filePath,
+            oldContent,
+            newContent,
+          });
           break;
         }
         case 'control:cancel': {
-          const { requestId } = requestIdPayload.parse(p);
+          const { requestId } = requestIdPayloadSchema.parse(p);
           ch.removeControlRequest(requestId);
           ctx.emitToSession(channelId, 'chat:cancel_request', {
             channelId,
@@ -88,7 +85,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         }
         case 'control:permission': {
-          const perm = permissionPayload.parse(p);
+          const perm = permissionPayloadSchema.parse(p);
           ch.trackControlRequest(perm.requestId, {
             subtype: 'can_use_tool',
             toolName: perm.toolName,
@@ -97,17 +94,17 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         }
         case 'control:elicitation': {
-          const { requestId } = requestIdPayload.parse(p);
+          const { requestId } = requestIdPayloadSchema.parse(p);
           ch.trackControlRequest(requestId, { subtype: 'elicitation' });
           break;
         }
         case 'control:diff_review': {
-          const { toolId } = diffReviewPayload.parse(p);
+          const { toolId } = diffReviewPayloadSchema.parse(p);
           ch.trackControlRequest(toolId, { subtype: 'open_diff' });
           break;
         }
         case 'control:mcp': {
-          const mcp = mcpPayload.parse(p);
+          const mcp = mcpPayloadSchema.parse(p);
           const hasClient = ch.sockets.size > 0;
           const mcpId = mcp.message?.id;
           if (!hasClient) {
@@ -155,14 +152,14 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
               break;
             }
             case 'set_model': {
-              const { model } = serverActionInputModel.parse(action.input ?? {});
+              const { model } = serverActionModelSchema.parse(action.input ?? {});
               ch.updateSessionState({ model });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
               break;
             }
             case 'set_permission_mode': {
-              const { mode } = serverActionInputMode.parse(action.input ?? {});
+              const { mode } = serverActionModeSchema.parse(action.input ?? {});
               ch.updateSessionState({ permissionMode: mode });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
