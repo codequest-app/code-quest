@@ -15,114 +15,114 @@
 - [x] 369 server + 624 client tests pass（跟 main 一致，零遺失）
 
 ### 0.5 拆 misc test
-- [ ] chat-handler-misc.test.ts 拆分：
+- [x] chat-handler-misc.test.ts 拆分：
   - `chat-handler-connection.test.ts` ← init + get_provider_config 測試（get_provider_config 從 settings test 搬過來）
   - `chat-handler-file.test.ts` ← file:read, list_files 測試
   - `chat-handler-terminal.test.ts` ← terminal 測試
   - `chat-handler-speech.test.ts` ← speech 測試
   - 刪除 chat-handler-misc.test.ts
-- [ ] chat-handler-settings.test.ts：移除 get_provider_config 測試（已搬到 connection）
-- [ ] chat-handler-message.test.ts：移除 generate_session_title 測試（已搬到 session）
-- [ ] GREEN：369 server + 624 client tests（跟 main 一致）
+- [x] chat-handler-settings.test.ts：移除 get_provider_config 測試（已搬到 connection）
+- [x] chat-handler-message.test.ts：移除 generate_session_title 測試（已搬到 session）
+- [x] GREEN：369 server + 624 client tests（跟 main 一致）
 
 ## 1. Batch 1 — app + auth rename
 
 > TDD：先改 ClientToServerEvents type → RED（client emit 不匹配），再改 client emit → GREEN。
 > Server handler 同時 listen 新舊 name（向下相容）。
 
-- [ ] `init` → `app:init`
-- [ ] `get_provider_config` → `app:get_provider_config`
-- [ ] `login` → `auth:login`
-- [ ] `submit_oauth_code` → `auth:submit_oauth_code`
-- [ ] `get_auth_status` → `auth:get_status`
-- [ ] ClientToServerEvents type 更新
-- [ ] Server handler 同時 listen 新舊 name
-- [ ] Client emit 改新 name
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `init` → `app:init`
+- [x] `get_provider_config` → `app:get_provider_config`
+- [x] `login` → `auth:login`
+- [x] `submit_oauth_code` → `auth:submit_oauth_code`
+- [x] `get_auth_status` → `auth:get_status`
+- [x] ClientToServerEvents type 更新
+- [x] Server handler 同時 listen 新舊 name
+- [x] Client emit 改新 name
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 2. Batch 2 — settings rename
 
-- [ ] `set_model` → `settings:set_model`
-- [ ] `set_permission_mode` → `settings:set_permission_mode`
-- [ ] `set_thinking_level` → `settings:set_thinking_level`
-- [ ] `apply_settings` → `settings:apply`
-- [ ] `get_claude_state` → `settings:get_state`
-- [ ] `request_usage_update` → `settings:request_usage_update`
-- [ ] `set_proactive` → `settings:set_proactive`
-- [ ] `set_remote_control` → `settings:set_remote_control`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `set_model` → `settings:set_model`
+- [x] `set_permission_mode` → `settings:set_permission_mode`
+- [x] `set_thinking_level` → `settings:set_thinking_level`
+- [x] `apply_settings` → `settings:apply`
+- [x] `get_claude_state` → `settings:get_state`
+- [x] `request_usage_update` → `settings:request_usage_update`
+- [x] `set_proactive` → `settings:set_proactive`
+- [x] `set_remote_control` → `settings:set_remote_control`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 3. Batch 3 — session bare events rename
 
-- [ ] `list_sessions_request` → `session:list`
-- [ ] `list_remote_sessions` → `session:list_remote`
-- [ ] `get_session_request` → `session:get`
-- [ ] `delete_session` → `session:delete`
-- [ ] `rename_session` → `session:rename`
-- [ ] `fork_conversation` → `session:fork`
-- [ ] `teleport_session` → `session:teleport`
-- [ ] `update_session_state` → `session:update_state`
-- [ ] `generate_session_title` → `session:generate_title`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `list_sessions_request` → `session:list`
+- [x] `list_remote_sessions` → `session:list_remote`
+- [x] `get_session_request` → `session:get`
+- [x] `delete_session` → `session:delete`
+- [x] `rename_session` → `session:rename`
+- [x] `fork_conversation` → `session:fork`
+- [x] `teleport_session` → `session:teleport`
+- [x] `update_session_state` → `session:update_state`
+- [x] `generate_session_title` → `session:generate_title`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 4. Batch 4 — chat bare events rename
 
-- [ ] `cancel_async_message` → `chat:cancel_async`
-- [ ] `hook_callback_respond` → `chat:hook_callback_respond`
-- [ ] `cancel_request` (C→S) → `chat:cancel_request`
-- [ ] `rewind_code` → `chat:rewind_code`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `cancel_async_message` → `chat:cancel_async`
+- [x] `hook_callback_respond` → `chat:hook_callback_respond`
+- [x] `cancel_request` (C→S) → `chat:cancel_request`
+- [x] `rewind_code` → `chat:rewind_code`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 5. Batch 5 — mcp rename
 
-- [ ] `get_mcp_servers` → `mcp:get_servers`
-- [ ] `set_mcp_server_enabled` → `mcp:set_enabled`
-- [ ] `reconnect_mcp_server` → `mcp:reconnect`
-- [ ] `mcp_set_servers` → `mcp:set_servers`
-- [ ] `mcp_message` → `mcp:message`
-- [ ] `authenticate_mcp_server` → `mcp:authenticate`
-- [ ] `clear_mcp_server_auth` → `mcp:clear_auth`
-- [ ] `submit_mcp_oauth_callback_url` → `mcp:oauth_callback`
-- [ ] `ensure_chrome_mcp_enabled` → `mcp:ensure_chrome`
-- [ ] `disable_chrome_mcp` → `mcp:disable_chrome`
-- [ ] `enable_jupyter_mcp` → `mcp:enable_jupyter`
-- [ ] `disable_jupyter_mcp` → `mcp:disable_jupyter`
-- [ ] `ask_debugger_help` → `mcp:ask_debugger`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `get_mcp_servers` → `mcp:get_servers`
+- [x] `set_mcp_server_enabled` → `mcp:set_enabled`
+- [x] `reconnect_mcp_server` → `mcp:reconnect`
+- [x] `mcp_set_servers` → `mcp:set_servers`
+- [x] `mcp_message` → `mcp:message`
+- [x] `authenticate_mcp_server` → `mcp:authenticate`
+- [x] `clear_mcp_server_auth` → `mcp:clear_auth`
+- [x] `submit_mcp_oauth_callback_url` → `mcp:oauth_callback`
+- [x] `ensure_chrome_mcp_enabled` → `mcp:ensure_chrome`
+- [x] `disable_chrome_mcp` → `mcp:disable_chrome`
+- [x] `enable_jupyter_mcp` → `mcp:enable_jupyter`
+- [x] `disable_jupyter_mcp` → `mcp:disable_jupyter`
+- [x] `ask_debugger_help` → `mcp:ask_debugger`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 6. Batch 6 — file + git rename
 
-- [ ] `list_files_request` → `file:list`
-- [ ] `checkout_branch` → `git:checkout`
-- [ ] `check_git_status` → `git:status`
-- [ ] `update_skipped_branch` → `git:update_skipped_branch`
-- [ ] `exec` → `git:exec`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `list_files_request` → `file:list`
+- [x] `checkout_branch` → `git:checkout`
+- [x] `check_git_status` → `git:status`
+- [x] `update_skipped_branch` → `git:update_skipped_branch`
+- [x] `exec` → `git:exec`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 7. Batch 7 — plugin + plan + speech + terminal rename
 
-- [ ] `install_plugin` → `plugin:install`
-- [ ] `uninstall_plugin` → `plugin:uninstall`
-- [ ] `set_plugin_enabled` → `plugin:set_enabled`
-- [ ] `list_plugins` → `plugin:list`
-- [ ] `list_marketplaces` → `plugin:list_marketplaces`
-- [ ] `add_marketplace` → `plugin:add_marketplace`
-- [ ] `remove_marketplace` → `plugin:remove_marketplace`
-- [ ] `refresh_marketplace` → `plugin:refresh_marketplace`
-- [ ] `comment` → `plan:comment`
-- [ ] `get_plan_comments` → `plan:get_comments`
-- [ ] `remove_plan_comment` → `plan:remove_comment`
-- [ ] `close_plan_preview` → `plan:close_preview`
-- [ ] `start_speech_to_text` → `speech:start`
-- [ ] `stop_speech_to_text` → `speech:stop`
-- [ ] Tests 更新
-- [ ] GREEN：所有測試通過
+- [x] `install_plugin` → `plugin:install`
+- [x] `uninstall_plugin` → `plugin:uninstall`
+- [x] `set_plugin_enabled` → `plugin:set_enabled`
+- [x] `list_plugins` → `plugin:list`
+- [x] `list_marketplaces` → `plugin:list_marketplaces`
+- [x] `add_marketplace` → `plugin:add_marketplace`
+- [x] `remove_marketplace` → `plugin:remove_marketplace`
+- [x] `refresh_marketplace` → `plugin:refresh_marketplace`
+- [x] `comment` → `plan:comment`
+- [x] `get_plan_comments` → `plan:get_comments`
+- [x] `remove_plan_comment` → `plan:remove_comment`
+- [x] `close_plan_preview` → `plan:close_preview`
+- [x] `start_speech_to_text` → `speech:start`
+- [x] `stop_speech_to_text` → `speech:stop`
+- [x] Tests 更新
+- [x] GREEN：所有測試通過
 
 ## 8. Code Review — DONE
 
@@ -463,11 +463,11 @@
 > adapter hardcode 了 server 需要 enrichment 的 subtype list，違反層級分離。
 > 方案：移除 adapter 的 auto_response 分流，全部交給 server hooks 的 onServerAction 處理。
 > channel-hooks 的 `auto_respond` default case 已有 `ch.runner.respondToControlRequest()` 直接回覆。
-- [ ] `ClaudeAdapter.transform()` — 移除 `SERVER_ENRICHED_SUBTYPES` 過濾，全部 `auto_respond` 保留在 `serverActions`
-- [ ] `AdapterOutput.autoResponses` 移除
-- [ ] `ProcessRunner` 移除 `auto_response` event emit
-- [ ] `Channel.wireRunner` 移除 `onAutoResponse` listener
-- [ ] `AutoResponse` type 移除
+- [x] `ClaudeAdapter.transform()` — 移除 `SERVER_ENRICHED_SUBTYPES` 過濾，全部 `auto_respond` 保留在 `serverActions`
+- [x] `AdapterOutput.autoResponses` 移除
+- [x] `ProcessRunner` 移除 `auto_response` event emit
+- [x] `Channel.wireRunner` 移除 `onAutoResponse` listener
+- [x] `AutoResponse` type 移除
 - [x] `summoner/index.ts` 移除 `AutoResponse` export
 - [x] 測試：`claude-adapter.test.ts` expect `autoResponses` → `serverActions.filter(auto_respond)`
 - [x] 測試：`adapter-integration.test.ts` 同步更新
