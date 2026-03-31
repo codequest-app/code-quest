@@ -4,7 +4,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
-import * as helpers from '../socket/handlers/helpers.ts';
+import * as execGitModule from '../socket/handlers/exec-git.ts';
 import { createFakeClaude } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
@@ -1464,7 +1464,7 @@ describe('session:teleport', () => {
   });
 
   it('should attempt git checkout if branch provided', async () => {
-    const execGitSpy = vi.spyOn(helpers, 'execGit').mockResolvedValue('');
+    const execGitSpy = vi.spyOn(execGitModule, 'execGit').mockResolvedValue('');
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
@@ -1480,7 +1480,9 @@ describe('session:teleport', () => {
   });
 
   it('should succeed even if git checkout fails', async () => {
-    const execGitSpy = vi.spyOn(helpers, 'execGit').mockRejectedValue(new Error('checkout failed'));
+    const execGitSpy = vi
+      .spyOn(execGitModule, 'execGit')
+      .mockRejectedValue(new Error('checkout failed'));
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
