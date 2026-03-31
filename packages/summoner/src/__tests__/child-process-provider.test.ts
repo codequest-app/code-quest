@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ChildProcessProvider } from '../child-process-provider.ts';
+import { ChildProcessProvider } from '../transports/child-process.ts';
 
 describe('ChildProcessProvider', () => {
   it('lines yields parsed lines from stdout', async () => {
