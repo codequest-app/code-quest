@@ -86,6 +86,7 @@ export const sessionListSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
   cwd: z.string().optional(),
+  hasParentId: z.boolean().optional(),
 });
 export type SessionListPayload = z.infer<typeof sessionListSchema>;
 
