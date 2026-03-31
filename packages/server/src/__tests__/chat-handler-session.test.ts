@@ -422,6 +422,18 @@ describe('ChatHandler > session', () => {
     });
   });
 
+  describe('session persist timing', () => {
+    it('session record has sessionId immediately after launch', async () => {
+      const { claude, channelId } = await setup();
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const record = await sessionStore.getById(channelId);
+      expect(record).toBeDefined();
+      expect(record!.sessionId).toBeTruthy();
+    });
+  });
+
   describe('session persistence', () => {
     it('session persists after socket disconnect (no grace kill)', async () => {
       const { claude } = await setup();
@@ -1141,6 +1153,23 @@ describe('ChatHandler > session', () => {
       );
       expect(forkPersist).toBeDefined();
       expect((forkPersist![0] as Record<string, unknown>).parentId).toBe(channelId);
+    });
+
+    it('forked session parentId !== newSessionId', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('session:fork', {
+        forkedFromSession: channelId,
+        resumeSessionAt: 'msg-1',
+        newSessionId: 'fork-verify',
+      });
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const forked = await sessionStore.getById('fork-verify');
+      expect(forked).toBeDefined();
+      expect(forked!.parentId).toBe(channelId);
+      expect(forked!.parentId).not.toBe('fork-verify');
     });
 
     it('fork_conversation emits session:created exactly once', async () => {

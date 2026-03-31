@@ -26,13 +26,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   socket.on('file:list', (payload, callback) => {
-    const parsed = fileListSchema.safeParse(payload);
-    if (!parsed.success) {
-      callback({ files: [] });
-      return;
-    }
-    const { pattern } = parsed.data;
     try {
+      const { pattern } = fileListSchema.parse(payload);
       const cwd = process.cwd();
       const pat = pattern.toLowerCase();
 

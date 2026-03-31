@@ -1,13 +1,41 @@
 import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
+import { logger } from '../../logger.ts';
+import type { HandlerContext } from '../handler-context.ts';
+
+export function persistNewSession(
+  ctx: HandlerContext,
+  opts: { channelId: string; sessionId: string; parentId?: string },
+): void {
+  ctx.sessionStore
+    .persist({
+      id: opts.channelId,
+      sessionId: opts.sessionId,
+      provider: ctx.channelManager.provider,
+      command: ctx.runnerFactory.command,
+      args: JSON.stringify(ctx.runnerFactory.args),
+      cwd: process.cwd(),
+      mode: 'interactive',
+      role: 'chat',
+      ...(opts.parentId ? { parentId: opts.parentId } : {}),
+      createdAt: new Date().toISOString(),
+    })
+    .catch((err) => logger.error({ err }, 'Failed to persist session'));
+}
 
 /** Default max thinking tokens when thinking is enabled (matches CLI default). */
 export const DEFAULT_THINKING_TOKENS = 31999;
 
 const execFileAsync = promisify(execFile);
 
-export async function execGit(args: string[], timeoutMs?: number): Promise<string> {
-  const { stdout } = await execFileAsync('git', args, { cwd: process.cwd(), timeout: timeoutMs });
+export async function execGit(
+  args: string[],
+  opts?: { timeout?: number; cwd?: string },
+): Promise<string> {
+  const { stdout } = await execFileAsync('git', args, {
+    cwd: opts?.cwd ?? process.cwd(),
+    timeout: opts?.timeout,
+  });
   return stdout;
 }
 

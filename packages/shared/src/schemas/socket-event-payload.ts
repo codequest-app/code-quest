@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-/** message:result payload */
-export const resultPayloadSchema = z
-  .object({ errors: z.array(z.string()).optional() })
-  .passthrough();
-
 /** control:cancel / control:elicitation payload (requestId only) */
 export const requestIdPayloadSchema = z.object({ requestId: z.string() }).passthrough();
 

@@ -14,6 +14,7 @@ import type {
   SocketEvent,
 } from '@code-quest/summoner';
 import { z } from 'zod';
+import { logger } from '../logger.ts';
 import type { TypedSocket } from './handler-context.ts';
 
 /** Default timeout for control requests (ms). */
@@ -27,12 +28,14 @@ const errorPayload = z.object({ message: z.string() }).passthrough();
 const sessionInitPayload = z
   .object({
     sessionId: z.string().optional(),
-    config: z.record(z.string(), z.unknown()).optional(),
+    config: z.record(z.string(), z.unknown()).nullable().optional(),
     model: z.string().optional(),
     permissionMode: z.string().optional(),
     tools: z.array(z.string()).optional(),
     fastModeState: z.unknown().optional(),
-    mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+    mcpServers: z
+      .array(z.object({ name: z.string(), status: z.string() }).passthrough())
+      .optional(),
     slashCommands: z.array(z.string()).optional(),
   })
   .passthrough();
@@ -52,8 +55,8 @@ export interface SessionState {
   tools?: string[];
   mcpServers?: Array<{ name: string; status: string }>;
   titleGenerated?: boolean;
+  pendingTitlePrompt?: string;
   title?: string;
-  [key: string]: unknown;
 }
 
 export interface PendingRequest {
@@ -195,7 +198,7 @@ export class Channel {
       ...(meta.fastModeState !== undefined ? { fastModeState: meta.fastModeState } : {}),
       ...(meta.mcpServers ? { mcpServers: meta.mcpServers } : {}),
       ...(meta.slashCommands ? { slashCommands: meta.slashCommands } : {}),
-      config: this.sessionState ?? {},
+      config: { ...this.sessionState },
     };
   }
 
@@ -300,7 +303,13 @@ export class Channel {
       if (se.name === 'session:init') {
         const init = sessionInitPayload.parse(se.payload);
         if (init.sessionId) this.sessionId = init.sessionId;
-        this._sessionState = (init.config ?? {}) as SessionState;
+        const cfg = init.config ?? {};
+        this._sessionState = {
+          model: typeof cfg.model === 'string' ? cfg.model : undefined,
+          permissionMode: typeof cfg.permissionMode === 'string' ? cfg.permissionMode : undefined,
+          cwd: typeof cfg.cwd === 'string' ? cfg.cwd : undefined,
+          effort: typeof cfg.effort === 'string' ? cfg.effort : undefined,
+        };
         this.updateMetaCache({
           ...(init.model ? { model: init.model } : {}),
           ...(init.permissionMode ? { permissionMode: init.permissionMode } : {}),

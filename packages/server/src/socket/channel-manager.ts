@@ -5,6 +5,7 @@ import type {
   ProviderAdapter,
   SocketEvent,
 } from '@code-quest/summoner';
+import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { RunnerFactory } from '../types.ts';
@@ -90,8 +91,26 @@ export class ChannelManager {
 
     runner.spawn();
 
-    // Initialize and wait for session_init
+    // Initialize and wait for control_response
     const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
+
+    // Ensure session:init event has been processed (may arrive after control_response)
+    if (!channel.sessionId) {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          runner.off('socket_event', onEvent);
+          reject(new Error('Timed out waiting for session:init'));
+        }, 30_000);
+        const onEvent = (se: { name: string }) => {
+          if (se.name === 'session:init') {
+            clearTimeout(timeout);
+            runner.off('socket_event', onEvent);
+            resolve();
+          }
+        };
+        runner.on('socket_event', onEvent);
+      });
+    }
 
     return { channel, initResult };
   }
@@ -126,11 +145,10 @@ export class ChannelManager {
     const channel = this.channels.get(channelId);
     if (!channel) return;
 
-    // Kill first so onExit hook fires (e.g. session:closed), then unwire
     try {
       channel.runner.kill();
     } catch {}
-    channel.unwireRunner();
+    channel.destroy();
     this.channels.delete(channelId);
   }
 
@@ -237,7 +255,7 @@ export class ChannelManager {
       for (const pending of pendingRawEntries) {
         this.rawEventStore
           .append({ ...pending, sessionId, promptId: '' })
-          .catch((err) => console.error('Failed to persist buffered raw event:', err));
+          .catch((err) => logger.error({ err }, 'Failed to persist buffered raw event'));
       }
       pendingRawEntries.length = 0;
     };
@@ -258,7 +276,7 @@ export class ChannelManager {
           direction,
           seq: seqCounter++,
         })
-        .catch((err) => console.error('Failed to persist raw event:', err));
+        .catch((err) => logger.error({ err }, 'Failed to persist raw event'));
     };
 
     runner.on('stdout', (line: string) => recordRaw(line, 'out'));

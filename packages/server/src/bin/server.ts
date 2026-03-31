@@ -11,6 +11,7 @@ import { Server } from 'socket.io';
 import { config } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
+import { logger } from '../logger.ts';
 import { createProfileRouter } from '../routes/profile.ts';
 import { createSessionsRouter } from '../routes/sessions.ts';
 import { createUsageRouter } from '../routes/usage.ts';
@@ -74,17 +75,23 @@ if (existsSync(clientDist)) {
 }
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  const status = err instanceof Error && 'status' in err ? (err as { status: number }).status : 500;
+  const status =
+    err instanceof Error &&
+    'status' in err &&
+    typeof (err as Record<string, unknown>).status === 'number'
+      ? ((err as Record<string, unknown>).status as number)
+      : 500;
   const message = err instanceof Error ? err.message : 'Internal Server Error';
+  if (status >= 500) logger.error({ err, status }, 'Unhandled request error');
   res.status(status).json({ error: message });
 });
 
 httpServer.listen(config.port, () => {
-  console.log(`Server listening on port ${config.port}`);
+  logger.info({ port: config.port }, 'Server listening');
 });
 
 const shutdown = () => {
-  console.log('Shutting down gracefully...');
+  logger.info('Shutting down gracefully...');
   io.close();
   httpServer.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();

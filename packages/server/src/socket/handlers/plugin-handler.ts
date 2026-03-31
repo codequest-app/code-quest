@@ -77,10 +77,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
     }
 
-    const parsedInstalled = pluginInfoSchema.array().safeParse(installed);
-    const parsedAvailable = availablePluginSchema.array().safeParse(available);
-    const validInstalled = parsedInstalled.success ? parsedInstalled.data : [];
-    const validAvailable = parsedAvailable.success ? parsedAvailable.data : [];
+    const validInstalled = pluginInfoSchema.array().parse(installed);
+    const validAvailable = availablePluginSchema.array().parse(available);
 
     const existing = ctx.pluginCache.get(cwd);
     ctx.pluginCache.set(cwd, {

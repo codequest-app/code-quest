@@ -8,6 +8,7 @@ import {
   chatSendSchema,
   chatStopTaskSchema,
 } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
 
@@ -37,7 +38,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         channel.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
       }
     } catch (err) {
-      console.error('Failed to send message:', err);
+      logger.error({ err }, 'Failed to send message');
     }
   });
 
@@ -67,7 +68,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Single lookup for both notification and control requests
       const match = ctx.channelManager.findByRequestId(requestId);
       if (!match) {
-        console.warn('[control_response] No channel found for requestId:', requestId);
+        logger.warn({ requestId }, 'No channel found for control_response');
         return;
       }
       const [channelId, channel] = match;
@@ -136,7 +137,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
       respondAndBroadcast(responseObj);
     } catch (err) {
-      console.error('Failed to respond to control request:', err);
+      logger.error({ err }, 'Failed to respond to control request');
     }
   });
 

@@ -1,3 +1,4 @@
+import { logger } from '../logger.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
 
 export class CompositeSessionStore implements SessionStore {
@@ -25,7 +26,7 @@ export class CompositeSessionStore implements SessionStore {
     const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
     if (failures.length > 0 && failures.length < results.length) {
       for (const f of failures) {
-        console.warn('Partial session persist failure:', f.reason);
+        logger.error({ err: f.reason }, 'Partial session persist failure');
       }
     }
     if (failures.length === results.length) {
@@ -37,15 +38,32 @@ export class CompositeSessionStore implements SessionStore {
   }
 
   async rename(id: string, title: string): Promise<boolean> {
-    return this.stores[0].rename(id, title);
+    const results = await Promise.allSettled(this.stores.map((s) => s.rename(id, title)));
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        logger.error({ err: r.reason }, 'Partial session rename failure');
+      }
+    }
+    return results.some((r) => r.status === 'fulfilled' && r.value);
   }
 
   async updateStatus(id: string, status: string): Promise<boolean> {
-    return this.stores[0].updateStatus(id, status);
+    const results = await Promise.allSettled(this.stores.map((s) => s.updateStatus(id, status)));
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        logger.error({ err: r.reason }, 'Partial session updateStatus failure');
+      }
+    }
+    return results.some((r) => r.status === 'fulfilled' && r.value);
   }
 
   async delete(id: string): Promise<boolean> {
     const results = await Promise.allSettled(this.stores.map((s) => s.delete(id)));
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        logger.error({ err: r.reason }, 'Partial session delete failure');
+      }
+    }
     return results.some((r) => r.status === 'fulfilled' && r.value);
   }
 }

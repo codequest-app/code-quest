@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 /** Parse env var as boolean. Accepts 'true'/'1' as true, 'false'/'0' as false. */
 export function envBool(key: string, defaultValue = false, raw?: string): boolean {
   const v = raw ?? process.env[key];

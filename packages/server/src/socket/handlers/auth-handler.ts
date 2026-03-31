@@ -20,9 +20,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const controlResp = await channel.sendControlRequest('claude_authenticate', {
         loginWithClaudeAi: payload.method !== 'api_key',
       });
-      const parsed = controlAuthenticateResponseSchema.safeParse(controlResp.response);
-      const authData = parsed.success ? parsed.data : undefined;
-      if (authData?.manualUrl || authData?.automaticUrl) {
+      const authData = controlAuthenticateResponseSchema.parse(controlResp.response);
+      if (authData.manualUrl || authData.automaticUrl) {
         socket.emit('notification:auth_url', {
           channelId: '',
           url: authData.automaticUrl ?? authData.manualUrl ?? '',
@@ -49,7 +48,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       await channel.sendControlRequest('claude_oauth_wait_for_completion', {});
       ctx.authState = {
         authenticated: true,
-        user: { name: 'oauth-user' },
+        user: { name: 'authenticated' },
         method: 'oauth',
       };
       callback({ success: true });

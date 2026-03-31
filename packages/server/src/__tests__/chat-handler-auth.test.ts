@@ -82,7 +82,7 @@ describe('ChatHandler > auth', () => {
     }>('auth:status');
 
     expect(status.authenticated).toBe(true);
-    expect(status.user?.name).toBe('oauth-user');
+    expect(status.user?.name).toBe('authenticated');
     expect(status.method).toBe('oauth');
   });
 });
