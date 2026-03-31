@@ -1,5 +1,9 @@
-import { index, int, mysqlTable, text, varchar } from 'drizzle-orm/mysql-core';
-import type { RawEntryColumnName, SessionColumnName } from './schema-columns.ts';
+import { index, int, mysqlTable, primaryKey, text, varchar } from 'drizzle-orm/mysql-core';
+import type {
+  RawEntryColumnName,
+  SessionColumnName,
+  SettingsColumnName,
+} from './schema-columns.ts';
 
 export const sessions = mysqlTable('sessions', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -37,7 +41,22 @@ type _AssertSessionCols = keyof typeof sessions._.columns extends SessionColumnN
 type _AssertRawEntryCols = keyof typeof rawEntries._.columns extends RawEntryColumnName
   ? true
   : never;
+export const settings = mysqlTable(
+  'settings',
+  {
+    provider: varchar('provider', { length: 20 }).notNull(),
+    key: varchar('key', { length: 100 }).notNull(),
+    value: text('value').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.provider, table.key] })],
+);
+
 const _sessionCheck: _AssertSessionCols = true;
 const _rawEntryCheck: _AssertRawEntryCols = true;
+type _AssertSettingsCols = keyof typeof settings._.columns extends SettingsColumnName
+  ? true
+  : never;
+const _settingsCheck: _AssertSettingsCols = true;
 void _sessionCheck;
 void _rawEntryCheck;
+void _settingsCheck;
