@@ -13,10 +13,14 @@ export class FakeClaude extends ServerFakeClaude {
     return result;
   }
 
-  /** Simulate server pushing a socket event to client (e.g. state:update, state:usage) */
+  /** Simulate server pushing a socket event to client (e.g. settings:update, settings:usage) */
   async pushServerEvent(event: string, payload: Record<string, unknown>): Promise<void> {
     await act(async () => {
-      (this.socket as unknown as { serverSocket: { emit: (e: string, ...args: unknown[]) => void } }).serverSocket.emit(event, payload);
+      (
+        this.socket as unknown as {
+          serverSocket: { emit: (e: string, ...args: unknown[]) => void };
+        }
+      ).serverSocket.emit(event, payload);
     });
   }
 }

@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import { channelMetaCacheSchema, sessionSummarySchema, socketEventSchema } from './common.ts';
 
-// Re-export so consumers can still import from session
-export { type SessionSummary, sessionSummarySchema } from './common.ts';
-
 // ── Internal schemas ──
 
 const initializeOptionsSchema = z

@@ -90,7 +90,7 @@ export type SystemFileUpdatedPayload = z.infer<typeof systemFileUpdatedPayloadSc
 
 export const systemExperimentGatesPayloadSchema = z.object({
   channelId: z.string(),
-  gates: z.record(z.string(), z.unknown()),
+  gates: z.record(z.string(), z.boolean()),
 });
 export type SystemExperimentGatesPayload = z.infer<typeof systemExperimentGatesPayloadSchema>;
 

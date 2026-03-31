@@ -44,9 +44,9 @@ export function PluginProvider({ children }: { children: ReactNode }) {
 
   const refreshPlugins = async () => {
     const s = socketRef.current;
-    const installedResult = await rpc(s, 'list_plugins', {});
+    const installedResult = await rpc(s, 'plugin:list', {});
     setState((prev) => ({ ...prev, installed: installedResult.installed }));
-    rpc(s, 'list_plugins', { includeAvailable: true })
+    rpc(s, 'plugin:list', { includeAvailable: true })
       .then((result) => {
         setState((prev) => ({
           ...prev,
@@ -58,14 +58,14 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshMarketplaces = async () => {
-    const result = await rpc(socketRef.current, 'list_marketplaces');
+    const result = await rpc(socketRef.current, 'plugin:list_marketplaces');
     setState((prev) => ({ ...prev, marketplaces: result.marketplaces }));
   };
 
   const install = async (pluginId: string, scope: 'user' | 'project' | 'local') => {
     setState((prev) => ({ ...prev, installing: pluginId }));
     try {
-      const result = await rpc(socketRef.current, 'install_plugin', { pluginId, scope });
+      const result = await rpc(socketRef.current, 'plugin:install', { pluginId, scope });
       if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
     } finally {
       await refreshPlugins();
@@ -74,13 +74,13 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   };
 
   const uninstall = async (pluginId: string) => {
-    const result = await rpc(socketRef.current, 'uninstall_plugin', { pluginId });
+    const result = await rpc(socketRef.current, 'plugin:uninstall', { pluginId });
     if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
     await refreshPlugins();
   };
 
   const toggle = async (pluginId: string, enabled: boolean) => {
-    const result = await rpc(socketRef.current, 'set_plugin_enabled', {
+    const result = await rpc(socketRef.current, 'plugin:toggle', {
       pluginId,
       enabled: !enabled,
     });
@@ -89,12 +89,12 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   };
 
   const addMp = async (source: string) => {
-    await rpc(socketRef.current, 'add_marketplace', { source });
+    await rpc(socketRef.current, 'plugin:add_marketplace', { source });
     await refreshMarketplaces();
   };
 
   const removeMp = async (marketplaceId: string) => {
-    await rpc(socketRef.current, 'remove_marketplace', { marketplaceId });
+    await rpc(socketRef.current, 'plugin:remove_marketplace', { marketplaceId });
     await refreshMarketplaces();
   };
 

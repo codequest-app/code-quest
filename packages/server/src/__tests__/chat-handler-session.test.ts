@@ -147,13 +147,13 @@ describe('ChatHandler > session', () => {
       expect(result.account).toEqual(account);
     });
 
-    it('session:launch emits system:available_models when initialize response has models', async () => {
+    it('session:launch emits app:models when initialize response has models', async () => {
       const models = [
         { value: 'default', displayName: 'Default' },
         { value: 'haiku', displayName: 'Haiku' },
       ];
       const claude = createFakeClaude();
-      const modelEvents = collectEvents(claude.socket, 'system:available_models');
+      const modelEvents = collectEvents(claude.socket, 'app:models');
 
       await claude.initialize(s.init('cli-sess'), s.controlResponse('init', { models }));
 
@@ -161,7 +161,7 @@ describe('ChatHandler > session', () => {
       expect(modelEvents[0].models).toEqual(models);
     });
 
-    it('session:join emits system:available_models to joining socket when cachedModels available', async () => {
+    it('session:join emits app:models to joining socket when cachedModels available', async () => {
       const models = [
         { value: 'default', displayName: 'Default' },
         { value: 'haiku', displayName: 'Haiku' },
@@ -173,7 +173,7 @@ describe('ChatHandler > session', () => {
       );
 
       const socketB = claude.connect();
-      const modelEvents = collectEvents(socketB, 'system:available_models');
+      const modelEvents = collectEvents(socketB, 'app:models');
 
       await new Promise<void>((resolve) => {
         socketB.emit('session:join', { channelId }, () => resolve());
@@ -473,11 +473,11 @@ describe('ChatHandler > session', () => {
     });
   });
 
-  describe('cancel_request broadcast', () => {
-    it('cancel_request fires when permission is responded', async () => {
+  describe('chat:cancel_request broadcast', () => {
+    it('chat:cancel_request fires when permission is responded', async () => {
       const { claude, channelId } = await setup();
       const cancelEvents: any[] = [];
-      claude.socket.on('cancel_request', (p: any) => cancelEvents.push(p));
+      claude.socket.on('chat:cancel_request', (p: any) => cancelEvents.push(p));
 
       await claude.send('chat:send', { channelId, message: 'read file' });
       await claude.emit(
@@ -502,10 +502,7 @@ describe('ChatHandler > session', () => {
     it('session:list returns isActive=true for sessions with live process', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ sessions: any[]; total: number }>(
-        'list_sessions_request',
-        {},
-      );
+      const result = await claude.send<{ sessions: any[]; total: number }>('session:list', {});
 
       const session = result.sessions.find((s: any) => s.id === channelId);
       expect(session).toBeDefined();
@@ -513,21 +510,18 @@ describe('ChatHandler > session', () => {
     });
   });
 
-  describe('list_sessions_request', () => {
+  describe('session:list', () => {
     it('returns sessions and total', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ sessions: any[]; total: number }>(
-        'list_sessions_request',
-        {},
-      );
+      const result = await claude.send<{ sessions: any[]; total: number }>('session:list', {});
 
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.sessions.length).toBeGreaterThanOrEqual(1);
     });
   });
 
-  describe('get_session_request', () => {
+  describe('session:get', () => {
     it('returns session metadata and events when found', async () => {
       const { claude, channelId } = await setup();
 
@@ -536,7 +530,7 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       const result = await claude.send<{ session?: any; events?: any[]; error?: string }>(
-        'get_session_request',
+        'session:get',
         { channelId },
       );
 
@@ -551,10 +545,9 @@ describe('ChatHandler > session', () => {
     it('returns error when not found', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ session?: unknown; error?: string }>(
-        'get_session_request',
-        { channelId: 'nonexistent' },
-      );
+      const result = await claude.send<{ session?: unknown; error?: string }>('session:get', {
+        channelId: 'nonexistent',
+      });
 
       expect(result.error).toBe('Session not found');
     });
@@ -580,7 +573,7 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       const result = await claude.send<{ session?: any; events?: any[]; error?: string }>(
-        'get_session_request',
+        'session:get',
         { channelId },
       );
 
@@ -646,11 +639,11 @@ describe('ChatHandler > session', () => {
       expect(bEvents[0].channelId).toBe(channelId);
     });
 
-    it('window B receives cancel_request when window A responds to permission', async () => {
+    it('window B receives chat:cancel_request when window A responds to permission', async () => {
       const { claude, channelId } = await setup();
       const socketB = claude.connect();
       const bCancelEvents: any[] = [];
-      socketB.on('cancel_request', (p: any) => bCancelEvents.push(p));
+      socketB.on('chat:cancel_request', (p: any) => bCancelEvents.push(p));
 
       await new Promise<void>((resolve) => {
         socketB.emit('session:join', { channelId }, () => resolve());
@@ -665,7 +658,7 @@ describe('ChatHandler > session', () => {
         s.controlRequest('req-ab', 'can_use_tool', 'Read', { file_path: '/tmp/x' }),
       );
 
-      // A responds → B gets cancel_request
+      // A responds → B gets chat:cancel_request
       await claude.send('chat:respond', {
         requestId: 'req-ab',
         response: { behavior: 'allow', updatedInput: {} },
@@ -909,7 +902,7 @@ describe('ChatHandler > session', () => {
         if (id === 'fork-1') forkCustomCreatedFiredBeforePersist = !persistResolved;
       });
 
-      await claude.send('fork_conversation', {
+      await claude.send('session:fork', {
         forkedFromSession: channelId,
         resumeSessionAt: 'msg-1',
         newSessionId: 'fork-1',
@@ -930,7 +923,7 @@ describe('ChatHandler > session', () => {
         createdEvents.push(id);
       });
 
-      await claude.send('fork_conversation', {
+      await claude.send('session:fork', {
         forkedFromSession: channelId,
         resumeSessionAt: 'msg-1',
         newSessionId: 'fork-once',
@@ -1027,7 +1020,7 @@ describe('ChatHandler > session', () => {
   });
 });
 
-describe('update_session_state', () => {
+describe('session:update_state', () => {
   it('should broadcast state change to all sockets', async () => {
     const { claude, channelId } = await setup();
 
@@ -1038,7 +1031,7 @@ describe('update_session_state', () => {
       }
     });
 
-    const result = await claude.send<{ success: boolean; error?: string }>('update_session_state', {
+    const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
       channelId,
       title: 'New Title',
     });
@@ -1060,7 +1053,7 @@ describe('update_session_state', () => {
       }
     });
 
-    const result = await claude.send<{ success: boolean; error?: string }>('update_session_state', {
+    const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
       channelId,
       title: 'Busy Tab',
       state: 'busy',
@@ -1077,7 +1070,7 @@ describe('update_session_state', () => {
     const claude = createFakeClaude();
 
     const result = await claude.send<{ success: boolean; error?: string }>(
-      'update_session_state',
+      'session:update_state',
       {},
     );
 
@@ -1142,13 +1135,13 @@ describe('session_states_update enrichment', () => {
   });
 });
 
-describe('teleport_session', () => {
+describe('session:teleport', () => {
   it('should create session with resume from remote session ID', async () => {
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
-      'teleport_session',
+      'session:teleport',
       { remoteSessionId: 'remote-123', newSessionId: 'client-teleport-1' },
     );
 
@@ -1165,7 +1158,7 @@ describe('teleport_session', () => {
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
-      'teleport_session',
+      'session:teleport',
       { remoteSessionId: 'remote-123', branch: 'feature/x', newSessionId: 'client-teleport-2' },
     );
 
@@ -1186,7 +1179,7 @@ describe('teleport_session', () => {
       error?: string;
       branchCheckoutFailed?: boolean;
       branch?: string;
-    }>('teleport_session', {
+    }>('session:teleport', {
       remoteSessionId: 'remote-123',
       branch: 'feature/x',
       newSessionId: 'client-teleport-3',
@@ -1213,7 +1206,7 @@ describe('teleport_session', () => {
       channelId?: string;
       events?: any[];
       error?: string;
-    }>('teleport_session', { remoteSessionId: channelId, newSessionId: 'client-teleport-4' });
+    }>('session:teleport', { remoteSessionId: channelId, newSessionId: 'client-teleport-4' });
 
     expect(result.success).toBe(true);
     expect(result.events).toBeDefined();
@@ -1230,7 +1223,7 @@ describe('chat:fork enhanced', () => {
       channelId?: string;
       parentSessionId?: string;
       error?: string;
-    }>('fork_conversation', {
+    }>('session:fork', {
       forkedFromSession: channelId,
       resumeSessionAt: 'msg-1',
       newSessionId: 'client-fork-1',
@@ -1243,7 +1236,7 @@ describe('chat:fork enhanced', () => {
     expect(forkResult.channelId).toBe('client-fork-1');
 
     const getResult = await claude.send<{ session?: { parentId?: string }; error?: string }>(
-      'get_session_request',
+      'session:get',
       { channelId: forkResult.channelId! },
     );
 
@@ -1259,7 +1252,7 @@ describe('chat:fork enhanced', () => {
       channelId?: string;
       parentSessionId?: string;
       error?: string;
-    }>('fork_conversation', {
+    }>('session:fork', {
       forkedFromSession: channelId,
       resumeSessionAt: 'msg-1',
       newSessionId: 'client-fork-2',
@@ -1283,7 +1276,7 @@ describe('chat:fork enhanced', () => {
       parentSessionId?: string;
       events?: any[];
       error?: string;
-    }>('fork_conversation', {
+    }>('session:fork', {
       forkedFromSession: channelId,
       resumeSessionAt: 'msg-1',
       newSessionId: 'client-fork-3',

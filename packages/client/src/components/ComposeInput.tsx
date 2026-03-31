@@ -183,7 +183,7 @@ export function ComposeInput() {
 
   return (
     <>
-      <SparkLegend effort={effort} isFastMode={isFastMode} />
+      <SparkLegend effort={effort ?? undefined} isFastMode={isFastMode} />
       {attachedFiles.length > 0 && (
         <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
           {attachedFiles.map((file, index) => (

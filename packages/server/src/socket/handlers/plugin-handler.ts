@@ -1,6 +1,8 @@
-import type { AvailablePlugin, MarketplaceSourceConfig, PluginInfo } from '@code-quest/shared';
 import {
   addMarketplaceSchema,
+  availablePluginSchema,
+  type MarketplaceSourceConfig,
+  pluginInfoSchema,
   pluginInstallSchema,
   pluginToggleSchema,
   pluginUninstallSchema,
@@ -37,7 +39,7 @@ function buildMarketplaceSource(k: {
 }
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('list_plugins', async (payload, callback) => {
+  socket.on('plugin:list', async (payload, callback) => {
     const cwd = process.cwd();
     const includeAvailable = payload?.includeAvailable ?? false;
     const cached = ctx.pluginCache.get(cwd);
@@ -75,17 +77,22 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
     }
 
+    const parsedInstalled = pluginInfoSchema.array().safeParse(installed);
+    const parsedAvailable = availablePluginSchema.array().safeParse(available);
+    const validInstalled = parsedInstalled.success ? parsedInstalled.data : [];
+    const validAvailable = parsedAvailable.success ? parsedAvailable.data : [];
+
     const existing = ctx.pluginCache.get(cwd);
     ctx.pluginCache.set(cwd, {
-      installed: installed as PluginInfo[],
-      available: available as AvailablePlugin[],
+      installed: validInstalled,
+      available: validAvailable,
       marketplaces: existing?.marketplaces ?? [],
       ts: Date.now(),
     });
-    callback({ installed: installed as PluginInfo[], available: available as AvailablePlugin[] });
+    callback({ installed: validInstalled, available: validAvailable });
   });
 
-  socket.on('install_plugin', (payload, callback) => {
+  socket.on('plugin:install', (payload, callback) => {
     try {
       const { pluginId } = pluginInstallSchema.parse(payload);
       const result = runPluginCommand(['install', pluginId]);
@@ -103,7 +110,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('uninstall_plugin', (payload, callback) => {
+  socket.on('plugin:uninstall', (payload, callback) => {
     try {
       const { pluginId } = pluginUninstallSchema.parse(payload);
       const result = runPluginCommand(['uninstall', pluginId]);
@@ -121,7 +128,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('set_plugin_enabled', (payload, callback) => {
+  socket.on('plugin:toggle', (payload, callback) => {
     try {
       const { pluginId, enabled } = pluginToggleSchema.parse(payload);
       const result = runPluginCommand([enabled ? 'enable' : 'disable', pluginId]);
@@ -139,7 +146,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('list_marketplaces', (callback) => {
+  socket.on('plugin:list_marketplaces', (callback) => {
     const cwd = process.cwd();
     const cached = ctx.pluginCache.get(cwd);
     if (cached && Date.now() - cached.ts < ctx.PLUGIN_CACHE_TTL && cached.marketplaces.length > 0) {
@@ -184,7 +191,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('add_marketplace', (payload, callback) => {
+  socket.on('plugin:add_marketplace', (payload, callback) => {
     try {
       const { source } = addMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'add', source]);
@@ -202,7 +209,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('remove_marketplace', (payload, callback) => {
+  socket.on('plugin:remove_marketplace', (payload, callback) => {
     try {
       const { marketplaceId } = removeMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'remove', marketplaceId]);
@@ -220,7 +227,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('refresh_marketplace', (payload, callback) => {
+  socket.on('plugin:refresh_marketplace', (payload, callback) => {
     try {
       const { marketplaceId } = refreshMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'update', marketplaceId]);

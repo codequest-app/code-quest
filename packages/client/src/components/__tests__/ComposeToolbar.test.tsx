@@ -134,14 +134,14 @@ describe('ComposeToolbar', () => {
       await claude.emit(s.assistant('done'));
       await claude.emit(s.result({ costUsd: 0.01, durationMs: 100 }));
 
-      // Trigger request_usage_update via UI — open /usage dialog
+      // Trigger settings:refresh_usage via UI — open /usage dialog
       await act(async () => {
         textarea.focus();
       });
       await user.type(textarea, '/usage');
       const usageItem = await screen.findByText(/Account & usage/i);
       await user.click(usageItem);
-      // Wait for server pipeline: request_usage_update → get_context_usage → state:usage
+      // Wait for server pipeline: refresh_usage → get_context_usage → settings:usage
       await act(async () => {
         await new Promise((r) => setTimeout(r, 200));
       });

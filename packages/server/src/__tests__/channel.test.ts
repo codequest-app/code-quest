@@ -20,12 +20,12 @@ function fakeSocket() {
 describe('Channel', () => {
   describe('state machine', () => {
     it('starts in launching state', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       expect(channel.state).toBe('launching');
     });
 
     it('allows valid transitions: launching → active → streaming → active', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.transition('active');
       expect(channel.state).toBe('active');
 
@@ -37,7 +37,7 @@ describe('Channel', () => {
     });
 
     it('allows streaming → cancelling → active', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.transition('active');
       channel.transition('streaming');
       channel.transition('cancelling');
@@ -48,7 +48,7 @@ describe('Channel', () => {
     });
 
     it('rejects invalid transitions', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       expect(() => channel.transition('streaming')).toThrow(
         'Invalid Channel state transition: launching → streaming',
       );
@@ -56,7 +56,7 @@ describe('Channel', () => {
     });
 
     it('rejects transitions from closed', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.transition('closed');
       expect(() => channel.transition('active')).toThrow(
         'Invalid Channel state transition: closed → active',
@@ -64,7 +64,7 @@ describe('Channel', () => {
     });
 
     it('allows any state to transition to closed', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.transition('active');
       channel.transition('closed');
       expect(channel.state).toBe('closed');
@@ -73,7 +73,7 @@ describe('Channel', () => {
 
   describe('socket management', () => {
     it('adds and removes sockets', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       const sock = fakeSocket();
       channel.addSocket(sock);
       expect(channel.sockets.size).toBe(1);
@@ -83,7 +83,7 @@ describe('Channel', () => {
     });
 
     it('broadcasts to all sockets', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       const sock1 = fakeSocket();
       const sock2 = fakeSocket();
       channel.addSocket(sock1);
@@ -104,7 +104,7 @@ describe('Channel', () => {
 
   describe('buildSessionInitPayload', () => {
     it('returns session:init payload from metaCache + sessionState', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.sessionId = 'cli-sess-1';
       channel.updateMetaCache({
         model: 'claude-sonnet-4-6',
@@ -132,7 +132,7 @@ describe('Channel', () => {
     });
 
     it('omits undefined metaCache fields', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.sessionId = 'cli-sess-2';
       channel.updateMetaCache({ model: 'haiku' });
 
@@ -151,7 +151,7 @@ describe('Channel', () => {
 
   describe('nextSeq', () => {
     it('increments sequence', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       expect(channel.nextSeq()).toBe(1);
       expect(channel.nextSeq()).toBe(2);
       expect(channel.nextSeq()).toBe(3);
@@ -160,7 +160,7 @@ describe('Channel', () => {
 
   describe('controlRequestMeta', () => {
     it('trackControlRequest adds entry and hasControlRequest returns true', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool', toolName: 'Read' });
       expect(channel.hasControlRequest('req-1')).toBe(true);
       expect(channel.getControlRequestMeta('req-1')).toEqual({
@@ -170,7 +170,7 @@ describe('Channel', () => {
     });
 
     it('removeControlRequest clears entry', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool' });
       channel.removeControlRequest('req-1');
       expect(channel.hasControlRequest('req-1')).toBe(false);
@@ -178,7 +178,7 @@ describe('Channel', () => {
     });
 
     it('destroy clears all tracked control requests', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       const sock = fakeSocket();
       channel.addSocket(sock);
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool' });
@@ -193,7 +193,7 @@ describe('Channel', () => {
 
   describe('destroy', () => {
     it('cleans up all resources', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       const sock = fakeSocket();
       channel.addSocket(sock);
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool' });
@@ -208,21 +208,21 @@ describe('Channel', () => {
 
   describe('updateSessionState', () => {
     it('merges partial state', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.updateSessionState({ model: 'claude-sonnet-4-6' });
       channel.updateSessionState({ cwd: '/home' });
       expect(channel.sessionState).toEqual({ model: 'claude-sonnet-4-6', cwd: '/home' });
     });
 
     it('replaces existing keys', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.updateSessionState({ model: 'old' });
       channel.updateSessionState({ model: 'new' });
       expect(channel.sessionState).toEqual({ model: 'new' });
     });
 
     it('resets state when called with empty object after resetSessionState', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.updateSessionState({ model: 'x' });
       channel.resetSessionState();
       expect(channel.sessionState).toEqual({});
@@ -231,7 +231,7 @@ describe('Channel', () => {
 
   describe('updateMetaCache', () => {
     it('merges partial cache', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1');
+      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.updateMetaCache({ model: 'claude-sonnet-4-6' });
       channel.updateMetaCache({ tools: ['Read'] });
       expect(channel.metaCache).toEqual({ model: 'claude-sonnet-4-6', tools: ['Read'] });

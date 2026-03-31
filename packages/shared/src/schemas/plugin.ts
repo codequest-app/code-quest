@@ -25,26 +25,30 @@ export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplaceSchema>
 
 // ── Info schemas ──
 
-export const pluginInfoSchema = z.object({
-  id: z.string(),
-  version: z.string(),
-  scope: z.string(),
-  enabled: z.boolean(),
-  installPath: z.string(),
-  installedAt: z.string(),
-  lastUpdated: z.string(),
-});
+export const pluginInfoSchema = z
+  .object({
+    id: z.string(),
+    version: z.string().optional(),
+    scope: z.string().optional(),
+    enabled: z.boolean().optional(),
+    installPath: z.string().optional(),
+    installedAt: z.string().optional(),
+    lastUpdated: z.string().optional(),
+  })
+  .passthrough();
 export type PluginInfo = z.infer<typeof pluginInfoSchema>;
 
-export const availablePluginSchema = z.object({
-  pluginId: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  marketplaceName: z.string(),
-  version: z.string(),
-  source: z.string(),
-  installCount: z.number().optional(),
-});
+export const availablePluginSchema = z
+  .object({
+    pluginId: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    marketplaceName: z.string().optional(),
+    version: z.string().optional(),
+    source: z.string().optional(),
+    installCount: z.number().optional(),
+  })
+  .passthrough();
 export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
 
 export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [

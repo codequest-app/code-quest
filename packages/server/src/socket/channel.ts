@@ -5,9 +5,9 @@ import type {
   NotificationResponse,
   PlanCommentData,
   ServerToClientEvents,
+  SessionInitPayload,
 } from '@code-quest/shared';
 import type {
-  AutoResponse,
   ControlResponseEvent,
   ProcessRunner,
   ServerAction,
@@ -15,6 +15,13 @@ import type {
 } from '@code-quest/summoner';
 import type { TypedSocket } from './handler-context.ts';
 
+/** Default timeout for control requests (ms). */
+const DEFAULT_CONTROL_TIMEOUT = 30_000;
+
+/**
+ * Maps adapter SocketEvent names to our socket protocol names.
+ * Adapter names that differ from our protocol are remapped here.
+ */
 export type ChannelState = 'launching' | 'active' | 'streaming' | 'cancelling' | 'closed';
 
 const VALID_TRANSITIONS: Record<ChannelState, ChannelState[]> = {
@@ -46,6 +53,7 @@ export interface WireRunnerHooks {
 export class Channel {
   readonly id: string;
   readonly runner: ProcessRunner;
+  readonly provider: string;
   readonly sockets = new Set<TypedSocket>();
   private readonly _controlRequestMeta = new Map<string, RequestMeta>();
   readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
@@ -82,9 +90,15 @@ export class Channel {
   private _state: ChannelState = 'launching';
   readonly controlTimeout: number;
 
-  constructor(runner: ProcessRunner, id: string, controlTimeout = 30000) {
+  constructor(
+    runner: ProcessRunner,
+    id: string,
+    provider: string,
+    controlTimeout = DEFAULT_CONTROL_TIMEOUT,
+  ) {
     this.id = id;
     this.runner = runner;
+    this.provider = provider;
     this.controlTimeout = controlTimeout;
   }
 
@@ -131,20 +145,22 @@ export class Channel {
   }
 
   emit(event: string, ...args: unknown[]): void {
-    for (const sock of this.sockets) {
-      (sock.emit as (...a: unknown[]) => void)(event, ...args);
-    }
+    this.emitToSockets(null, event, ...args);
   }
 
   emitToOthers(exclude: TypedSocket, event: string, ...args: unknown[]): void {
+    this.emitToSockets(exclude, event, ...args);
+  }
+
+  private emitToSockets(exclude: TypedSocket | null, event: string, ...args: unknown[]): void {
     for (const sock of this.sockets) {
-      if (sock.id !== exclude.id) {
+      if (!exclude || sock.id !== exclude.id) {
         (sock.emit as (...a: unknown[]) => void)(event, ...args);
       }
     }
   }
 
-  buildSessionInitPayload(): Record<string, unknown> {
+  buildSessionInitPayload(): SessionInitPayload {
     const meta = this.metaCache;
     return {
       channelId: this.id,
@@ -243,7 +259,6 @@ export class Channel {
     socketEvent: (event: SocketEvent) => void;
     controlResponse: (event: ControlResponseEvent) => void;
     serverAction: (action: ServerAction) => void;
-    autoResponse: (ar: AutoResponse) => void;
     exit: (code: number | null) => void;
   } | null = null;
 
@@ -300,11 +315,6 @@ export class Channel {
       hooks.onServerAction?.(this, action);
     };
 
-    const onAutoResponse = (ar: AutoResponse) => {
-      // Auto-respond back to CLI stdin — provider says this needs immediate reply
-      this.runner.respondToControlRequest(ar.requestId, ar.response);
-    };
-
     const onExit = (code: number | null) => {
       this.exited = true;
 
@@ -329,14 +339,12 @@ export class Channel {
       socketEvent: onSocketEvent,
       controlResponse: onControlResponse,
       serverAction: onServerAction,
-      autoResponse: onAutoResponse,
       exit: onExit,
     };
 
     this.runner.on('socket_event', onSocketEvent);
     this.runner.on('control_response', onControlResponse);
     this.runner.on('server_action', onServerAction);
-    this.runner.on('auto_response', onAutoResponse);
     this.runner.on('exit', onExit);
   }
 
@@ -346,7 +354,6 @@ export class Channel {
     this.runner.removeListener('socket_event', l.socketEvent);
     this.runner.removeListener('control_response', l.controlResponse);
     this.runner.removeListener('server_action', l.serverAction);
-    this.runner.removeListener('auto_response', l.autoResponse);
     this.runner.removeListener('exit', l.exit);
     this._runnerListeners = null;
   }

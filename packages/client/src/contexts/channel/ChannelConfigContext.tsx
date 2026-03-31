@@ -1,12 +1,14 @@
-import type {
-  McpAuthResult,
-  ModelInfo,
-  ProviderClientConfig,
-  ServerToClientEvents,
+import {
+  type McpAuthResult,
+  type ModelInfo,
+  modelInfoSchema,
+  type ProviderClientConfig,
+  type ServerToClientEvents,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { channelEmit, rpc } from '../../socket/rpc';
+import { findModel } from '../../utils/model-utils';
 import { useSocket } from '../SocketContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
@@ -28,8 +30,7 @@ export interface ConfigState {
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
 
-export interface ChannelConfigValue extends Omit<ConfigState, 'effort'> {
-  effort: 'low' | 'medium' | 'high' | 'max';
+export interface ChannelConfigValue extends ConfigState {
   isFastMode: boolean;
   providerConfig?: ProviderClientConfig;
   // Config actions
@@ -37,9 +38,7 @@ export interface ChannelConfigValue extends Omit<ConfigState, 'effort'> {
   setPermissionMode: (mode: string) => void;
   setThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
-  setEffort: (
-    effort: 'low' | 'medium' | 'high' | 'max',
-  ) => Promise<{ success: boolean; error?: string }>;
+  setEffort: (effort: string) => Promise<{ success: boolean; error?: string }>;
   // MCP actions
   mcpStatus: () => Promise<McpResponse>;
   mcpToggle: (serverName: string, enabled: boolean) => Promise<McpResponse>;
@@ -83,17 +82,10 @@ const INITIAL_CONFIG: ConfigState = {
   slashCommands: [],
 };
 
-const CONFIG_MAP: Record<string, keyof ConfigState> = {
-  modelSetting: 'model',
-  initialPermissionMode: 'permissionMode',
-  tools: 'tools',
-  thinkingLevel: 'thinkingLevel',
-  effort: 'effort',
-  fastModeState: 'fastModeState',
-  currentRepo: 'currentRepo',
-  config: 'config',
-  mcpServers: 'mcpServers',
-};
+function toEffort(value: string | undefined): ConfigState['effort'] {
+  if (value === 'low' || value === 'medium' || value === 'high' || value === 'max') return value;
+  return null;
+}
 
 export function ChannelConfigProvider({
   channelId,
@@ -114,25 +106,47 @@ export function ChannelConfigProvider({
   useEffect(() => {
     if (!channelId) return;
 
-    // Fetch provider config on mount (static adapter data, doesn't need CLI)
-    socket.emit('get_provider_config', { channelId }, (res) => {
-      if (res.providerConfig) {
-        setConfigState((prev) => ({ ...prev, providerConfig: res.providerConfig }));
-      }
+    const parseModels = (raw: unknown[]): ModelInfo[] =>
+      raw
+        .map((m) => {
+          if (typeof m === 'string') return { value: m };
+          const parsed = modelInfoSchema.safeParse(m);
+          return parsed.success ? parsed.data : null;
+        })
+        .filter((m): m is ModelInfo => m !== null);
+
+    // Fetch provider config + cached models on mount
+    socket.emit('app:config', { channelId }, (res) => {
+      const models =
+        Array.isArray(res.models) && res.models.length > 0
+          ? parseModels(res.models)
+          : res.providerConfig?.defaultModels
+            ? parseModels(res.providerConfig.defaultModels)
+            : undefined;
+      setConfigState((prev) => ({
+        ...prev,
+        ...(res.providerConfig ? { providerConfig: res.providerConfig } : {}),
+        ...(models ? { availableModels: models } : {}),
+        ...(res.effort ? { effort: toEffort(res.effort) } : {}),
+      }));
     });
 
     const guard = (payload: { channelId: string }) =>
       payload.channelId === channelId || payload.channelId === '';
 
-    const onStateUpdate = (payload: Payload<'state:update'>) => {
+    const onStateUpdate = (payload: Payload<'settings:update'>) => {
       if (!guard(payload)) return;
       const update: Partial<ConfigState> = {};
-      for (const [payloadKey, stateKey] of Object.entries(CONFIG_MAP)) {
-        const value = (payload as unknown as Record<string, unknown>)[payloadKey];
-        if (value !== undefined) {
-          (update as Record<string, unknown>)[stateKey] = value;
-        }
-      }
+      if (payload.modelSetting !== undefined) update.model = payload.modelSetting;
+      if (payload.initialPermissionMode !== undefined)
+        update.permissionMode = payload.initialPermissionMode;
+      if (payload.tools !== undefined) update.tools = payload.tools;
+      if (payload.thinkingLevel !== undefined) update.thinkingLevel = payload.thinkingLevel;
+      if (payload.effort !== undefined) update.effort = toEffort(payload.effort);
+      if (payload.fastModeState !== undefined) update.fastModeState = payload.fastModeState;
+      if (payload.currentRepo !== undefined) update.currentRepo = payload.currentRepo ?? null;
+      if (payload.config !== undefined) update.config = payload.config;
+      if (payload.mcpServers !== undefined) update.mcpServers = payload.mcpServers;
       if (Object.keys(update).length > 0) {
         setConfigState((prev) => ({ ...prev, ...update }));
       }
@@ -144,7 +158,7 @@ export function ChannelConfigProvider({
         const update: Partial<ConfigState> = {};
         if (summary.modelSetting) update.model = summary.modelSetting;
         if (summary.permissionMode) update.permissionMode = summary.permissionMode;
-        if (summary.effort) update.effort = summary.effort as ConfigState['effort'];
+        if (summary.effort) update.effort = toEffort(summary.effort);
         if (Object.keys(update).length > 0) {
           setConfigState((prev) => ({ ...prev, ...update }));
         }
@@ -154,11 +168,16 @@ export function ChannelConfigProvider({
     const onSessionInit = (payload: Payload<'session:init'>) => {
       if (!guard(payload)) return;
       setConfigState((prev) => {
-        // Preserve existing availableModels (managed by system:available_models event)
-        // Only ensure the current model is in the list
+        // Preserve existing availableModels (managed by app:models event)
+        // Only ensure the current model is in the list — inherit from defaultModels if possible
         const availableModels = [...prev.availableModels];
-        if (payload.model && !availableModels.some((m) => m.value === payload.model)) {
-          availableModels.push({ value: payload.model });
+        if (payload.model && !findModel(payload.model, availableModels)) {
+          const defaults = prev.providerConfig?.defaultModels ?? [];
+          const match = findModel(
+            payload.model,
+            defaults.map((d) => ({ ...d })),
+          );
+          availableModels.push(match ?? { value: payload.model });
         }
         return {
           ...prev,
@@ -167,7 +186,7 @@ export function ChannelConfigProvider({
           mcpServers: payload.mcpServers ?? prev.mcpServers,
           tools: payload.tools ?? [],
           permissionMode: prev.permissionMode ?? payload.permissionMode ?? null,
-          fastModeState: (payload.fastModeState as string) ?? null,
+          fastModeState: typeof payload.fastModeState === 'string' ? payload.fastModeState : null,
           slashCommands: [...new Set([...(payload.slashCommands ?? []), 'usage'])],
         };
       });
@@ -180,25 +199,23 @@ export function ChannelConfigProvider({
       }
     };
 
-    const onAvailableModels = (payload: Payload<'system:available_models'>) => {
-      const models = (payload.models as Array<string | { value: string }>).map((m) =>
-        typeof m === 'string' ? { value: m } : (m as ModelInfo),
-      );
-      setConfigState((prev) => ({ ...prev, availableModels: models }));
+    const onAvailableModels = (payload: Payload<'app:models'>) => {
+      if (!Array.isArray(payload.models)) return;
+      setConfigState((prev) => ({ ...prev, availableModels: parseModels(payload.models) }));
     };
 
-    socket.on('state:update', onStateUpdate);
+    socket.on('settings:update', onStateUpdate);
     socket.on('session:states', onSessionStates);
     socket.on('session:init', onSessionInit);
     socket.on('session:status', onSessionStatus);
-    socket.on('system:available_models', onAvailableModels);
+    socket.on('app:models', onAvailableModels);
 
     return () => {
-      socket.off('state:update', onStateUpdate);
+      socket.off('settings:update', onStateUpdate);
       socket.off('session:states', onSessionStates);
       socket.off('session:init', onSessionInit);
       socket.off('session:status', onSessionStatus);
-      socket.off('system:available_models', onAvailableModels);
+      socket.off('app:models', onAvailableModels);
     };
   }, [channelId, socket]);
 
@@ -209,46 +226,51 @@ export function ChannelConfigProvider({
 
     return {
       setModel: (model: string) =>
-        emit('set_model', { model }, (res: { success: boolean; error?: string }) => {
+        emit('settings:set_model', { model }, (res: { success: boolean; error?: string }) => {
           if (!res?.success) toast.error(res?.error ?? 'Failed to switch model');
         }),
-      setPermissionMode: (mode: string) => emit('set_permission_mode', { mode }),
-      setThinkingLevel: (thinkingLevel: string) => emit('set_thinking_level', { thinkingLevel }),
-      setFastMode: (enabled: boolean) => emit('chat:set_fast_mode', { enabled }),
-      setEffort: (effort: 'low' | 'medium' | 'high' | 'max') =>
-        rpc(socket, 'apply_settings', { channelId, settings: { effortLevel: effort } }),
-      mcpStatus: () => rpc(socket, 'get_mcp_servers', { channelId }),
+      setPermissionMode: (mode: string) => emit('settings:set_permission_mode', { mode }),
+      setThinkingLevel: (thinkingLevel: string) =>
+        emit('settings:set_thinking_level', { thinkingLevel }),
+      setFastMode: (enabled: boolean) => emit('settings:set_proactive', { enabled }),
+      setEffort: (effort: string) =>
+        rpc(socket, 'settings:apply', { channelId, settings: { effortLevel: effort } }),
+      mcpStatus: () => rpc(socket, 'mcp:servers', { channelId }),
       mcpToggle: (serverName: string, enabled: boolean) =>
-        rpc(socket, 'set_mcp_server_enabled', { channelId, serverName, enabled }),
-      mcpReconnect: (serverName: string) =>
-        rpc(socket, 'reconnect_mcp_server', { channelId, serverName }),
+        rpc(socket, 'mcp:toggle', { channelId, serverName, enabled }),
+      mcpReconnect: (serverName: string) => rpc(socket, 'mcp:reconnect', { channelId, serverName }),
       mcpSetServers: (servers: Record<string, unknown>) =>
-        rpc(socket, 'mcp_set_servers', { channelId, servers }),
+        rpc(socket, 'mcp:set_servers', { channelId, servers }),
       mcpMessage: (serverName: string, message: Record<string, unknown>) =>
-        rpc(socket, 'mcp_message', { channelId, serverName, message }),
+        rpc(socket, 'mcp:message', { channelId, serverName, message }),
       mcpListTools: async (serverName: string) => {
-        const result = await rpc(socket, 'mcp_message', {
+        const result = await rpc(socket, 'mcp:message', {
           channelId,
           serverName,
           message: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: Date.now() },
         });
-        if (result.success && result.response) {
-          const tools = (result.response as Record<string, unknown>).tools;
-          return Array.isArray(tools) ? tools : [];
+        if (
+          result.success &&
+          result.response &&
+          typeof result.response === 'object' &&
+          'tools' in result.response &&
+          Array.isArray(result.response.tools)
+        ) {
+          return result.response.tools;
         }
         return [];
       },
       mcpAuthenticate: (serverName: string) =>
-        rpc(socket, 'authenticate_mcp_server', { channelId, serverName }),
+        rpc(socket, 'mcp:authenticate', { channelId, serverName }),
       mcpOAuthCallback: (serverName: string, callbackUrl: string) =>
-        rpc(socket, 'submit_mcp_oauth_callback_url', { channelId, serverName, callbackUrl }),
+        rpc(socket, 'mcp:oauth_callback', { channelId, serverName, callbackUrl }),
       mcpClearAuth: (serverName: string) =>
-        rpc(socket, 'clear_mcp_server_auth', { channelId, serverName }),
-      ensureChromeMcpEnabled: () => rpc(socket, 'ensure_chrome_mcp_enabled', { channelId }),
-      disableChromeMcp: () => rpc(socket, 'disable_chrome_mcp', { channelId }),
-      enableJupyterMcp: () => rpc(socket, 'enable_jupyter_mcp', { channelId }),
-      disableJupyterMcp: () => rpc(socket, 'disable_jupyter_mcp', { channelId }),
-      askDebuggerHelp: () => rpc(socket, 'ask_debugger_help', { channelId }),
+        rpc(socket, 'mcp:clear_auth', { channelId, serverName }),
+      ensureChromeMcpEnabled: () => rpc(socket, 'mcp:ensure_chrome', { channelId }),
+      disableChromeMcp: () => rpc(socket, 'mcp:disable_chrome', { channelId }),
+      enableJupyterMcp: () => rpc(socket, 'mcp:enable_jupyter', { channelId }),
+      disableJupyterMcp: () => rpc(socket, 'mcp:disable_jupyter', { channelId }),
+      askDebuggerHelp: () => rpc(socket, 'mcp:ask_debugger', { channelId }),
     };
   }, [socket, channelId]);
 
@@ -256,7 +278,6 @@ export function ChannelConfigProvider({
   const value = useMemo<ChannelConfigValue>(
     () => ({
       ...configState,
-      effort: configState.effort ?? 'max',
       isFastMode: !!configState.fastModeState && configState.fastModeState !== 'off',
       ...actions,
     }),

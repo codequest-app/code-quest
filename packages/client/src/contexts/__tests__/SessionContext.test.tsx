@@ -1,5 +1,6 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
+import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
@@ -18,7 +19,7 @@ describe('SessionProvider (global config only)', () => {
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
-  it('state:update config updates are processed without crash', async () => {
+  it('settings:update config updates are processed without crash', async () => {
     const { claude, user } = await renderWithWorkspace();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -38,14 +39,27 @@ describe('SessionProvider (global config only)', () => {
   });
 
   it('disconnect shows toast warning', async () => {
-    const { toast } = await import('sonner');
+    const mockedToast = vi.mocked(toast);
     const { claude } = await renderWithWorkspace();
 
     await act(async () => {
       claude.socket.disconnect();
     });
 
-    expect(toast.warning).toHaveBeenCalledWith('Disconnected from server');
+    expect(mockedToast.warning).toHaveBeenCalledWith('Disconnected from server');
+  });
+
+  it('connect_error shows toast error', async () => {
+    const mockedToast = vi.mocked(toast);
+    const { claude } = await renderWithWorkspace();
+
+    // Manually invoke the connect_error listener registered by SessionContext
+    const listeners = claude.socket.listeners('connect_error');
+    await act(async () => {
+      for (const fn of listeners) (fn as (err: Error) => void)(new Error('Connection refused'));
+    });
+
+    expect(mockedToast.error).toHaveBeenCalledWith(expect.stringContaining('Connection refused'));
   });
 
   it('does not crash on reconnect', async () => {

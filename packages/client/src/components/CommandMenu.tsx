@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { findModel } from '../utils/model-utils';
 import { navigateItems } from '../utils/navigate-items';
 import { EffortSwitch } from './icons/EffortSwitch';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
-const EFFORT_CYCLE: Array<'low' | 'medium' | 'high' | 'max'> = ['low', 'medium', 'high', 'max'];
+const DEFAULT_EFFORT_LEVELS: string[] = ['low', 'medium', 'high', 'max'];
 
 interface MenuItem {
   id: string;
@@ -29,13 +30,14 @@ interface MenuSections {
 
 interface BuildMenuItemsParams {
   slashCommands: string[];
-  effort: 'low' | 'medium' | 'high' | 'max';
+  effort: 'low' | 'medium' | 'high' | 'max' | null;
+  effortLevels: string[];
   isThinkingOn: boolean;
   isFastMode: boolean;
   fastModeState: string | null;
   modelLabel: string;
   supportsFastMode: boolean;
-  onSetEffort: (effort: 'low' | 'medium' | 'high' | 'max') => void;
+  onSetEffort: (effort: string) => void;
   onSetThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
   close: () => void;
@@ -60,8 +62,15 @@ interface BuildMenuItemsParams {
 }
 
 function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const { slashCommands, effort, isThinkingOn, isFastMode, fastModeState, supportsFastMode } =
-    params;
+  const {
+    slashCommands,
+    effort,
+    effortLevels,
+    isThinkingOn,
+    isFastMode,
+    fastModeState,
+    supportsFastMode,
+  } = params;
   const { onSetEffort, onSetThinkingLevel, setFastMode, close, compose, actions, callbacks } =
     params;
 
@@ -122,15 +131,12 @@ function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       label: 'Effort',
       section: 'Model',
       trailing: (
-        <EffortSwitch
-          level={effort}
-          levels={EFFORT_CYCLE}
-          onSelect={(l) => onSetEffort(l as 'low' | 'medium' | 'high' | 'max')}
-        />
+        <EffortSwitch level={effort ?? undefined} levels={effortLevels} onSelect={onSetEffort} />
       ),
       onClick: () => {
-        const idx = EFFORT_CYCLE.indexOf(effort);
-        onSetEffort(EFFORT_CYCLE[(idx + 1) % EFFORT_CYCLE.length]);
+        if (effortLevels.length === 0) return;
+        const idx = effort ? effortLevels.indexOf(effort) : -1;
+        onSetEffort(effortLevels[(idx + 1) % effortLevels.length]);
       },
     },
     {
@@ -320,20 +326,15 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
 
-  const { providerConfig } = useChannelConfig();
-
   // Compute modelLabel
   const models = availableModels ?? [];
   const currentModel = model ?? null;
-  const modelEntry = models.find((m) => m.value === currentModel);
-  const modelLabel = modelEntry?.label ?? currentModel ?? 'Default';
+  const modelEntry = (currentModel ? findModel(currentModel, models) : undefined) ?? models[0];
+  const modelLabel = modelEntry?.label ?? modelEntry?.displayName ?? currentModel ?? 'Default';
 
-  // Fast mode: prefer ModelInfo.supportsFastMode, fallback to modelDisplayMap
-  const supportsFastMode =
-    modelEntry?.supportsFastMode ??
-    providerConfig?.modelDisplayMap.find((m) => currentModel?.toLowerCase().includes(m.pattern))
-      ?.supportsFastMode ??
-    false;
+  const supportsFastMode = modelEntry?.supportsFastMode ?? false;
+  const effortLevels =
+    modelEntry?.supportedEffortLevels ?? (modelEntry?.supportsEffort ? DEFAULT_EFFORT_LEVELS : []);
 
   // Compose bindings
   const externalOpen = compose.slashFilter != null;
@@ -450,6 +451,7 @@ export function CommandMenu({
   const sections = buildMenuItems({
     slashCommands,
     effort,
+    effortLevels,
     isThinkingOn,
     isFastMode,
     fastModeState,

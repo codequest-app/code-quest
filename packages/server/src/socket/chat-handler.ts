@@ -22,14 +22,18 @@ import type {
   TypedServer,
   TypedSocket,
 } from './handler-context.ts';
+import { register as registerAuthHandlers } from './handlers/auth-handler.ts';
+import { register as registerConnectionHandlers } from './handlers/connection-handler.ts';
 import { register as registerFileHandlers } from './handlers/file-handler.ts';
 import { register as registerGitHandlers } from './handlers/git-handler.ts';
 import { register as registerMcpHandlers } from './handlers/mcp-handler.ts';
 import { register as registerMessageHandlers } from './handlers/message-handler.ts';
-import { register as registerMiscHandlers } from './handlers/misc-handler.ts';
+import { register as registerPlanHandlers } from './handlers/plan-handler.ts';
 import { register as registerPluginHandlers } from './handlers/plugin-handler.ts';
 import { register as registerSessionHandlers } from './handlers/session-handler.ts';
 import { register as registerSettingsHandlers } from './handlers/settings-handler.ts';
+import { register as registerSpeechHandlers } from './handlers/speech-handler.ts';
+import { register as registerTerminalHandlers } from './handlers/terminal-handler.ts';
 import { buildChannelHooks } from './hooks/channel-hooks.ts';
 
 @injectable()
@@ -115,7 +119,7 @@ export class ChatHandler implements HandlerContext {
       ],
     });
     if (cache.model || cache.cwd || cache.permissionMode) {
-      this.io?.emit('state:update', {
+      this.io?.emit('settings:update', {
         channelId,
         ...(cache.model !== undefined ? { modelSetting: cache.model as string } : {}),
         ...(cache.cwd !== undefined ? { defaultCwd: cache.cwd as string } : {}),
@@ -165,13 +169,17 @@ export class ChatHandler implements HandlerContext {
   }
 
   private handleConnection(socket: TypedSocket): void {
+    registerConnectionHandlers(socket, this);
+    registerAuthHandlers(socket, this);
     registerSessionHandlers(socket, this);
     registerMessageHandlers(socket, this);
     registerSettingsHandlers(socket, this);
     registerMcpHandlers(socket, this);
     registerFileHandlers(socket, this);
+    registerTerminalHandlers(socket, this);
     registerGitHandlers(socket, this);
     registerPluginHandlers(socket, this);
-    registerMiscHandlers(socket, this);
+    registerPlanHandlers(socket, this);
+    registerSpeechHandlers(socket, this);
   }
 }

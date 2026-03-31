@@ -152,7 +152,7 @@ export function TabProvider({
     const onConnect = initialState
       ? undefined
       : () => {
-          socket.emit('init', (res) => {
+          socket.emit('app:init', (res) => {
             if (res.sessions && Array.isArray(res.sessions)) {
               actions.syncFromServer(res.sessions);
             }

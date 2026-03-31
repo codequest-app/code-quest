@@ -102,8 +102,9 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → SocketEvent', () => {
     expect(output.events[0].payload.url).toBe('https://example.com');
 
     // AutoResponse stays server-side
-    expect(output.autoResponses).toHaveLength(1);
-    expect(output.autoResponses[0].subtype).toBe('open_url');
+    const autoResponses = output.serverActions.filter((a) => a.action === 'auto_respond');
+    expect(autoResponses).toHaveLength(1);
+    expect(autoResponses[0].subtype).toBe('open_url');
   });
 
   it('message_stop → stream:end', () => {

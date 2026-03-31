@@ -35,11 +35,14 @@ export const providerClientConfigSchema = z.object({
       shortLabel: z.string(),
     }),
   ),
-  modelDisplayMap: z.array(
+  defaultModels: z.array(
     z.object({
-      pattern: z.string(),
-      displayName: z.string(),
-      subLabel: z.string().optional(),
+      value: z.string(),
+      displayName: z.string().optional(),
+      description: z.string().optional(),
+      supportsEffort: z.boolean().optional(),
+      supportedEffortLevels: z.array(z.string()).optional(),
+      supportsAdaptiveThinking: z.boolean().optional(),
       supportsFastMode: z.boolean().optional(),
     }),
   ),
@@ -50,5 +53,7 @@ export type ProviderClientConfig = z.infer<typeof providerClientConfigSchema>;
 
 export const getProviderConfigResponseSchema = z.object({
   providerConfig: providerClientConfigSchema,
+  models: z.array(z.unknown()).optional(),
+  effort: z.string().optional(),
 });
 export type GetProviderConfigResponse = z.infer<typeof getProviderConfigResponseSchema>;
