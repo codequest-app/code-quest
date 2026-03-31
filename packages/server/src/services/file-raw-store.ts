@@ -36,15 +36,25 @@ export class FileRawStore implements RawEventStore {
 
   async getPreview(sessionId: string): Promise<SessionPreview> {
     const entries = await this.getBySession(sessionId);
+    let lastAssistant: string | undefined;
+    let firstUser: string | undefined;
 
+    for (const entry of entries) {
+      if (!firstUser && entry.direction === 'in') {
+        firstUser = extractTextFromRaw(entry.raw, 'user');
+      }
+    }
     for (let i = entries.length - 1; i >= 0; i--) {
       if (entries[i].direction === 'out') {
         const text = extractTextFromRaw(entries[i].raw, 'assistant');
-        if (text) return { lastAssistant: text };
+        if (text) {
+          lastAssistant = text;
+          break;
+        }
       }
     }
 
-    return {};
+    return { lastAssistant, firstUser };
   }
 
   private ensureDir(): Promise<void> {

@@ -1,22 +1,6 @@
-import { type Column, count, desc, eq, ne } from 'drizzle-orm';
+import { and, type Column, count, desc, eq, ne } from 'drizzle-orm';
+import type { DrizzleDb } from './drizzle-types.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
-
-interface DrizzleQueryResult extends Promise<unknown[]> {
-  orderBy(...cols: unknown[]): { limit(n: number): { offset(n: number): Promise<unknown[]> } };
-}
-
-interface DrizzleDb {
-  insert(table: unknown): { values(v: unknown): Promise<unknown> };
-  select(cols?: unknown): {
-    from(table: unknown): {
-      where(cond: unknown): DrizzleQueryResult;
-    };
-  };
-  update(table: unknown): {
-    set(values: unknown): { where(cond: unknown): Promise<unknown> };
-  };
-  delete(table: unknown): { where(cond: unknown): Promise<unknown> };
-}
 
 interface SessionsTable {
   id: Column;
@@ -48,22 +32,24 @@ export class DrizzleSessionStore implements SessionStore {
   async list(opts?: {
     limit?: number;
     offset?: number;
+    cwd?: string;
   }): Promise<{ sessions: SessionRecord[]; total: number }> {
     const limit = opts?.limit ?? 50;
     const offset = opts?.offset ?? 0;
 
+    const condition = opts?.cwd
+      ? and(ne(this.sessions.status, 'dead'), eq(this.sessions.cwd, opts.cwd))
+      : ne(this.sessions.status, 'dead');
+
     const rows = (await this.db
       .select()
       .from(this.sessions)
-      .where(ne(this.sessions.status, 'dead'))
+      .where(condition)
       .orderBy(desc(this.sessions.createdAt))
       .limit(limit)
       .offset(offset)) as SessionRecord[];
 
-    const totalRows = await this.db
-      .select({ count: count() })
-      .from(this.sessions)
-      .where(ne(this.sessions.status, 'dead'));
+    const totalRows = await this.db.select({ count: count() }).from(this.sessions).where(condition);
     const totalResult = totalRows[0] as { count: number } | undefined;
 
     return { sessions: rows, total: totalResult?.count ?? 0 };

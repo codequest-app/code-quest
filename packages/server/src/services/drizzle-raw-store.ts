@@ -2,15 +2,9 @@ import type { RawEntry } from '@code-quest/summoner';
 import type { Column } from 'drizzle-orm';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
+import type { DrizzleDb } from './drizzle-types.ts';
 import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
-/**
- * Drizzle does not expose a shared base type across SQLite / MySQL dialects.
- * We define a minimal structural interface so the store works with both
- * without resorting to bare `any`.
- *
- * @see https://deepwiki.com/drizzle-team/drizzle-orm/2.2-query-building
- */
 interface RawEntryRow {
   sessionId: string;
   promptId: string;
@@ -18,19 +12,6 @@ interface RawEntryRow {
   raw: string;
   seq: number;
   createdAt: string;
-}
-
-interface DrizzleDb {
-  insert(table: unknown): { values(v: unknown): Promise<unknown> };
-  select(): {
-    from(table: unknown): {
-      where(cond: unknown): {
-        orderBy(...cols: unknown[]): {
-          limit(n: number): Promise<unknown[]>;
-        } & Promise<unknown[]>;
-      };
-    };
-  };
 }
 
 interface RawEntriesTable {
@@ -78,7 +59,18 @@ export class DrizzleRawStore implements RawEventStore {
       .orderBy(desc(this.table.seq))
       .limit(10)) as RawEntryRow[];
 
-    return { lastAssistant: findText(lastOutRows, 'assistant') };
+    // First 'in' entry is the first user message
+    const firstInRows = (await this.db
+      .select()
+      .from(this.table)
+      .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
+      .orderBy(asc(this.table.seq))
+      .limit(5)) as RawEntryRow[];
+
+    return {
+      lastAssistant: findText(lastOutRows, 'assistant'),
+      firstUser: findText(firstInRows, 'user'),
+    };
   }
 
   async getBySession(sessionId: string): Promise<RawEntry[]> {

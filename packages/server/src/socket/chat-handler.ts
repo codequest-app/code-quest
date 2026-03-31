@@ -22,14 +22,18 @@ import type {
   TypedServer,
   TypedSocket,
 } from './handler-context.ts';
+import { register as registerAuthHandlers } from './handlers/auth-handler.ts';
+import { register as registerConnectionHandlers } from './handlers/connection-handler.ts';
 import { register as registerFileHandlers } from './handlers/file-handler.ts';
 import { register as registerGitHandlers } from './handlers/git-handler.ts';
 import { register as registerMcpHandlers } from './handlers/mcp-handler.ts';
 import { register as registerMessageHandlers } from './handlers/message-handler.ts';
-import { register as registerMiscHandlers } from './handlers/misc-handler.ts';
+import { register as registerPlanHandlers } from './handlers/plan-handler.ts';
 import { register as registerPluginHandlers } from './handlers/plugin-handler.ts';
 import { register as registerSessionHandlers } from './handlers/session-handler.ts';
 import { register as registerSettingsHandlers } from './handlers/settings-handler.ts';
+import { register as registerSpeechHandlers } from './handlers/speech-handler.ts';
+import { register as registerTerminalHandlers } from './handlers/terminal-handler.ts';
 import { buildChannelHooks } from './hooks/channel-hooks.ts';
 
 @injectable()
@@ -106,28 +110,32 @@ export class ChatHandler implements HandlerContext {
           channelId,
           state,
           ...(title !== undefined ? { title } : {}),
-          ...(cache.model !== undefined ? { modelSetting: cache.model as string } : {}),
-          ...(cache.permissionMode !== undefined
-            ? { permissionMode: cache.permissionMode as string }
-            : {}),
-          ...(cache.effort !== undefined ? { effort: cache.effort as string } : {}),
+          ...(cache.model !== undefined ? { modelSetting: cache.model } : {}),
+          ...(cache.permissionMode !== undefined ? { permissionMode: cache.permissionMode } : {}),
+          ...(cache.effort !== undefined ? { effort: cache.effort } : {}),
         },
       ],
     });
-    if (cache.model || cache.cwd || cache.permissionMode) {
-      this.io?.emit('state:update', {
+    const hasSettings =
+      cache.model ||
+      cache.cwd ||
+      cache.permissionMode ||
+      cache.thinkingLevel ||
+      cache.mcpServers ||
+      cache.tools ||
+      cache.effort;
+    if (hasSettings) {
+      this.io?.emit('settings:update', {
         channelId,
-        ...(cache.model !== undefined ? { modelSetting: cache.model as string } : {}),
-        ...(cache.cwd !== undefined ? { defaultCwd: cache.cwd as string } : {}),
+        ...(cache.model !== undefined ? { modelSetting: cache.model } : {}),
+        ...(cache.cwd !== undefined ? { defaultCwd: cache.cwd } : {}),
         ...(cache.permissionMode !== undefined
-          ? { initialPermissionMode: cache.permissionMode as string }
+          ? { initialPermissionMode: cache.permissionMode }
           : {}),
-        ...(cache.thinkingLevel !== undefined
-          ? { thinkingLevel: cache.thinkingLevel as string }
-          : {}),
-        ...(cache.mcpServers !== undefined ? { mcpServers: cache.mcpServers as [] } : {}),
-        ...(cache.tools !== undefined ? { tools: cache.tools as string[] } : {}),
-        ...(cache.effort !== undefined ? { effort: cache.effort as string } : {}),
+        ...(cache.thinkingLevel !== undefined ? { thinkingLevel: cache.thinkingLevel } : {}),
+        ...(cache.mcpServers !== undefined ? { mcpServers: cache.mcpServers } : {}),
+        ...(cache.tools !== undefined ? { tools: cache.tools } : {}),
+        ...(cache.effort !== undefined ? { effort: cache.effort } : {}),
       });
     }
   }
@@ -165,13 +173,17 @@ export class ChatHandler implements HandlerContext {
   }
 
   private handleConnection(socket: TypedSocket): void {
+    registerConnectionHandlers(socket, this);
+    registerAuthHandlers(socket, this);
     registerSessionHandlers(socket, this);
     registerMessageHandlers(socket, this);
     registerSettingsHandlers(socket, this);
     registerMcpHandlers(socket, this);
     registerFileHandlers(socket, this);
+    registerTerminalHandlers(socket, this);
     registerGitHandlers(socket, this);
     registerPluginHandlers(socket, this);
-    registerMiscHandlers(socket, this);
+    registerPlanHandlers(socket, this);
+    registerSpeechHandlers(socket, this);
   }
 }

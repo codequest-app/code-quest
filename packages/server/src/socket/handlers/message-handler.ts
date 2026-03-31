@@ -1,6 +1,6 @@
 import {
+  cancelRequestPayloadSchema,
   chatCancelAsyncMessageSchema,
-  chatGenerateSessionTitleSchema,
   chatHookCallbackRespondSchema,
   chatInterruptSchema,
   chatRespondSchema,
@@ -10,6 +10,7 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
+import { cliGenerateTitleResponseSchema } from './cli-response-schemas.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   // chat:send — alias for send_message
@@ -20,6 +21,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const runner = ctx.requireRunner(socket, channelId);
       if (!runner) return;
       const channel = ctx.channelManager.get(channelId);
+      channel?.startProcessing();
       runner.sendMessage(textMessage);
       ctx.broadcastSessionState(channelId, 'busy');
 
@@ -28,6 +30,24 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         channelId,
         content: [{ type: 'text', text: textMessage }],
       });
+
+      // Auto-generate session title on first message
+      if (channel && !channel.sessionState.titleGenerated) {
+        channel.updateSessionState({ titleGenerated: true });
+        channel
+          .sendControlRequest('generate_session_title', { description: textMessage })
+          .then((res) => {
+            const parsed = cliGenerateTitleResponseSchema.safeParse(res.response);
+            if (parsed.success) {
+              const { title } = parsed.data;
+              ctx.sessionStore
+                .rename(channelId, title)
+                .catch((e) => console.warn('Failed to persist session title:', e));
+              ctx.broadcastSessionState(channelId, channel.isProcessing ? 'busy' : 'idle', title);
+            }
+          })
+          .catch((e) => console.warn('Failed to generate session title:', e));
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
     }
@@ -70,7 +90,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const notifResolve = channel.notificationRequests.get(requestId);
       if (notifResolve) {
         channel.notificationRequests.delete(requestId);
-        notifResolve(response as Record<string, unknown>);
+        notifResolve({ ...response });
         return;
       }
 
@@ -81,7 +101,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const respondAndBroadcast = (cliResponse: Record<string, unknown>) => {
         channel.removeControlRequest(requestId);
         channel.runner.respondToControlRequest(requestId, cliResponse);
-        ctx.emitToSession(channelId, 'cancel_request', { channelId, targetRequestId: requestId });
+        ctx.emitToSession(channelId, 'chat:cancel_request', {
+          channelId,
+          targetRequestId: requestId,
+        });
       };
 
       // mcp_message — relay JSON-RPC response, clear timeout
@@ -89,7 +112,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         const t = channel.mcpTimeouts.get(requestId);
         if (t) clearTimeout(t);
         channel.mcpTimeouts.delete(requestId);
-        respondAndBroadcast(response as Record<string, unknown>);
+        respondAndBroadcast({ ...response });
         return;
       }
 
@@ -97,9 +120,12 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       if (meta?.subtype === 'elicitation') {
         const elicitationResponse =
           behavior === 'allow'
-            ? { action: 'accept' as const, result: (updatedInput as Record<string, unknown>) ?? {} }
+            ? {
+                action: 'accept' as const,
+                result: typeof updatedInput === 'object' && updatedInput ? updatedInput : {},
+              }
             : { action: 'decline' as const };
-        respondAndBroadcast(elicitationResponse as Record<string, unknown>);
+        respondAndBroadcast({ ...elicitationResponse });
         return;
       }
 
@@ -141,7 +167,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('cancel_async_message', (payload) => {
+  socket.on('chat:cancel_async', (payload) => {
     try {
       const { channelId, messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -155,7 +181,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('rewind_code', async (payload, callback) => {
+  socket.on('chat:rewind_code', async (payload, callback) => {
     try {
       const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -173,8 +199,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('cancel_request', (payload) => {
-    const { targetRequestId } = payload;
+  socket.on('chat:cancel_request', (payload) => {
+    const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
     const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
     if (cancelMatch) {
       const [channelId, channel] = cancelMatch;
@@ -185,30 +211,14 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         interrupt: false,
       });
       // Broadcast to all sockets so other windows dismiss the pending banner
-      ctx.emitToSession(channelId, 'cancel_request', {
+      ctx.emitToSession(channelId, 'chat:cancel_request', {
         channelId,
         targetRequestId,
       });
     }
   });
 
-  socket.on('generate_session_title', async (payload, callback) => {
-    try {
-      const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
-      if (channel) {
-        const result = await channel.sendControlRequest('generate_session_title', {
-          description,
-          persist,
-        });
-        callback?.({ success: true, result });
-      }
-    } catch (err) {
-      callback?.({ success: false, error: String(err) });
-    }
-  });
-
-  socket.on('hook_callback_respond', (payload) => {
+  socket.on('chat:hook_respond', (payload) => {
     try {
       const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);

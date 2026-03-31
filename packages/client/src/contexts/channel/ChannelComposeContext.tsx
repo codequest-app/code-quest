@@ -71,9 +71,9 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
         value: prev.value ? `${prev.value} ${payload.text}` : payload.text,
       }));
     };
-    socket.on('speech_to_text_message', onSpeechToText);
+    socket.on('speech:message', onSpeechToText);
     return () => {
-      socket.off('speech_to_text_message', onSpeechToText);
+      socket.off('speech:message', onSpeechToText);
     };
   }, [channelId, socket]);
 

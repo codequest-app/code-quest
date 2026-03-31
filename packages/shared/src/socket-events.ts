@@ -19,7 +19,6 @@ import type {
   ChatRespondPayload,
   ChatRewindCodePayload,
   ChatSendPayload,
-  ChatSetFastModePayload,
   ChatSetModelPayload,
   ChatSetPermissionModePayload,
   ChatSetProactivePayload,
@@ -111,6 +110,7 @@ import type {
   SessionListRemotePayload,
   SessionListResponse,
   SessionRenamePayload,
+  SessionResumePayload,
   SessionStatesPayload,
   SessionStatusPayload,
   SessionTeleportPayload,
@@ -146,170 +146,173 @@ import type {
 
 export interface ClientToServerEvents {
   // ── Chat Operations ──
-  rewind_code: (
+  'chat:rewind_code': (
     payload: ChatRewindCodePayload,
     callback: (response: ControlResponse) => void,
   ) => void;
 
   // ── Aligned: Settings ──
-  set_model: (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
-  set_permission_mode: (payload: ChatSetPermissionModePayload) => void;
-  set_thinking_level: (payload: ChatSetThinkingLevelPayload) => void;
-  request_usage_update: (payload: ChannelIdPayload) => void;
-  apply_settings: (
+  'settings:set_model': (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
+  'settings:set_permission_mode': (payload: ChatSetPermissionModePayload) => void;
+  'settings:set_thinking_level': (payload: ChatSetThinkingLevelPayload) => void;
+  'settings:refresh_usage': (payload: ChannelIdPayload) => void;
+  'settings:apply': (
     payload: SettingsApplyPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  get_claude_state: (
+  'settings:state': (
     payload: ChatGetStatePayload,
     callback: (response: GetClaudeStateResponse) => void,
   ) => void;
 
   // ── Aligned: Session Management ──
-  list_sessions_request: (
+  'session:list': (
     payload: SessionListPayload,
     callback: (response: SessionListResponse) => void,
   ) => void;
-  list_remote_sessions: (
+  'session:list_remote': (
     payload: SessionListRemotePayload,
     callback: (response: SessionListResponse) => void,
   ) => void;
-  get_session_request: (
+  'session:get': (
     payload: SessionGetPayload,
     callback: (response: GetSessionResponse) => void,
   ) => void;
-  teleport_session: (
+  'session:teleport': (
     payload: SessionTeleportPayload,
     callback: (response: TeleportSessionResponse) => void,
   ) => void;
-  fork_conversation: (
+  'session:fork': (
     payload: SessionForkPayload,
     callback: (response: ForkConversationResponse) => void,
   ) => void;
-  rename_session: (
+  'session:rename': (
     payload: SessionRenamePayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  delete_session: (
+  'session:delete': (
     payload: SessionDeletePayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  update_session_state: (
+  'session:update_state': (
     payload: SessionUpdateStatePayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
 
   // ── Aligned: MCP ──
-  get_mcp_servers: (
+  'mcp:servers': (
     payload: McpGetServersPayload,
     callback: (response: ControlResponse) => void,
   ) => void;
-  set_mcp_server_enabled: (
+  'mcp:toggle': (
     payload: McpSetEnabledPayload,
     callback: (response: ControlResponse) => void,
   ) => void;
-  reconnect_mcp_server: (
+  'mcp:reconnect': (
     payload: McpReconnectPayload,
     callback: (response: ControlResponse) => void,
   ) => void;
-  authenticate_mcp_server: (
+  'mcp:authenticate': (
     payload: McpAuthenticatePayload,
     callback: (result: McpAuthResult) => void,
   ) => void;
-  clear_mcp_server_auth: (
+  'mcp:clear_auth': (
     payload: McpAuthenticatePayload,
     callback: (result: SuccessResponse) => void,
   ) => void;
-  submit_mcp_oauth_callback_url: (
+  'mcp:oauth_callback': (
     payload: McpOAuthCallbackPayload,
     callback: (result: SuccessResponse) => void,
   ) => void;
-  mcp_set_servers: (
+  'mcp:set_servers': (
     payload: McpSetServersPayload,
     callback: (response: ControlResponse) => void,
   ) => void;
-  mcp_message: (payload: McpMessagePayload, callback: (response: ControlResponse) => void) => void;
-  ensure_chrome_mcp_enabled: (
+  'mcp:message': (
+    payload: McpMessagePayload,
+    callback: (response: ControlResponse) => void,
+  ) => void;
+  'mcp:ensure_chrome': (
     payload: ChromeMcpControlPayload,
     callback: (response: EnsureChromeMcpResponse) => void,
   ) => void;
-  disable_chrome_mcp: (
+  'mcp:disable_chrome': (
     payload: ChromeMcpControlPayload,
     callback: (response: DisableChromeMcpResponse) => void,
   ) => void;
-  enable_jupyter_mcp: (
+  'mcp:enable_jupyter': (
     payload: JupyterMcpControlPayload,
     callback: (response: EnableJupyterMcpResponse) => void,
   ) => void;
-  disable_jupyter_mcp: (
+  'mcp:disable_jupyter': (
     payload: JupyterMcpControlPayload,
     callback: (response: DisableJupyterMcpResponse) => void,
   ) => void;
-  ask_debugger_help: (
+  'mcp:ask_debugger': (
     payload: DebuggerHelpPayload,
     callback: (response: AskDebuggerHelpResponse) => void,
   ) => void;
 
   // ── Aligned: File & Git ──
-  list_files_request: (
-    payload: FileListPayload,
-    callback: (response: ListFilesResponse) => void,
-  ) => void;
-  checkout_branch: (
+  'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
+  'git:checkout': (
     payload: GitCheckoutPayload,
     callback: (result: GitCheckoutResult) => void,
   ) => void;
-  check_git_status: (callback: (result: GitStatusResult) => void) => void;
-  update_skipped_branch: (
+  'git:status': (callback: (result: GitStatusResult) => void) => void;
+  'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  exec: (payload: GitExecPayload, callback: (response: ExecResponse) => void) => void;
+  'git:exec': (payload: GitExecPayload, callback: (response: ExecResponse) => void) => void;
 
   // ── Aligned: Plugin ──
-  list_plugins: (
+  'plugin:list': (
     payload: ListPluginsPayload,
     callback: (result: ListPluginsResponse) => void,
   ) => void;
-  install_plugin: (payload: PluginInstallPayload, callback: (result: PluginResult) => void) => void;
-  uninstall_plugin: (
+  'plugin:install': (
+    payload: PluginInstallPayload,
+    callback: (result: PluginResult) => void,
+  ) => void;
+  'plugin:uninstall': (
     payload: PluginUninstallPayload,
     callback: (result: PluginResult) => void,
   ) => void;
-  set_plugin_enabled: (
-    payload: PluginTogglePayload,
-    callback: (result: PluginResult) => void,
-  ) => void;
-  list_marketplaces: (callback: (result: ListMarketplacesResponse) => void) => void;
-  add_marketplace: (
+  'plugin:toggle': (payload: PluginTogglePayload, callback: (result: PluginResult) => void) => void;
+  'plugin:list_marketplaces': (callback: (result: ListMarketplacesResponse) => void) => void;
+  'plugin:add_marketplace': (
     payload: AddMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
-  remove_marketplace: (
+  'plugin:remove_marketplace': (
     payload: RemoveMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
-  refresh_marketplace: (
+  'plugin:refresh_marketplace': (
     payload: RefreshMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
   ) => void;
 
   // ── Aligned: Auth ──
-  get_auth_status: (callback: (result: AuthStatus) => void) => void;
-  login: (payload: LoginPayload, callback: (result: AuthResult) => void) => void;
-  submit_oauth_code: (payload: OAuthCodePayload, callback: (result: AuthResult) => void) => void;
+  'auth:status': (callback: (result: AuthStatus) => void) => void;
+  'auth:login': (payload: LoginPayload, callback: (result: AuthResult) => void) => void;
+  'auth:oauth_code': (payload: OAuthCodePayload, callback: (result: AuthResult) => void) => void;
 
   // ── Aligned: Plan ──
-  comment: (payload: PlanCommentPayload, callback: (response: SuccessResponse) => void) => void;
-  get_plan_comments: (
+  'plan:comment': (
+    payload: PlanCommentPayload,
+    callback: (response: SuccessResponse) => void,
+  ) => void;
+  'plan:comments': (
     payload: PlanGetCommentsPayload,
     callback: (response: GetPlanCommentsResponse) => void,
   ) => void;
-  remove_plan_comment: (
+  'plan:remove_comment': (
     payload: PlanRemoveCommentPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  close_plan_preview: (
+  'plan:close_preview': (
     payload: PlanClosePreviewPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
@@ -323,6 +326,7 @@ export interface ClientToServerEvents {
     callback: (response: SessionLaunchResponse) => void,
   ) => void;
   'session:close': (payload: ChatKillPayload) => void;
+  'session:resume': (payload: SessionResumePayload) => void;
   'session:join': (
     payload: ChatJoinPayload,
     callback: (response: SessionJoinResponse) => void,
@@ -332,20 +336,19 @@ export interface ClientToServerEvents {
   'chat:respond': (payload: ChatRespondPayload) => void;
 
   'chat:stop_task': (payload: ChatStopTaskPayload) => void;
-  'chat:set_fast_mode': (payload: ChatSetFastModePayload) => void;
   'session:raw_events': (
     payload: ChannelIdPayload,
     callback: (response: RawEventsResponse) => void,
   ) => void;
   'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
   'git:diff': (callback: (result: GitDiffResult) => void) => void;
-  init: (callback: (response: InitResponse) => void) => void;
-  cancel_request: (payload: CancelRequestPayload) => void;
-  get_provider_config: (
+  'app:init': (callback: (response: InitResponse) => void) => void;
+  'chat:cancel_request': (payload: CancelRequestPayload) => void;
+  'app:config': (
     payload: ChannelIdPayload,
     callback: (response: GetProviderConfigResponse) => void,
   ) => void;
-  'terminal:get_contents': (
+  'terminal:read': (
     payload: TerminalGetContentsPayload,
     callback: (response: TerminalGetContentsResponse) => void,
   ) => void;
@@ -355,35 +358,34 @@ export interface ClientToServerEvents {
   ) => void;
 
   // ── Aligned: Speech-to-Text ──
-  start_speech_to_text: (payload: ChannelIdPayload) => void;
-  stop_speech_to_text: (payload: ChannelIdPayload) => void;
+  'speech:start': (payload: ChannelIdPayload) => void;
+  'speech:stop': (payload: ChannelIdPayload) => void;
 
   // ── Protocol Alignment: new control_request subtypes ──
-  cancel_async_message: (payload: ChatCancelAsyncMessagePayload) => void;
-  set_proactive: (payload: ChatSetProactivePayload) => void;
-  generate_session_title: (
+  'chat:cancel_async': (payload: ChatCancelAsyncMessagePayload) => void;
+  'settings:set_proactive': (payload: ChatSetProactivePayload) => void;
+  'session:generate_title': (
     payload: ChatGenerateSessionTitlePayload,
     callback: (response: GenerateSessionTitleResponse) => void,
   ) => void;
-  set_remote_control: (payload: ChatSetRemoteControlPayload) => void;
-  hook_callback_respond: (payload: ChatHookCallbackRespondPayload) => void;
+  'settings:set_remote_control': (payload: ChatSetRemoteControlPayload) => void;
+  'chat:hook_respond': (payload: ChatHookCallbackRespondPayload) => void;
 }
 
 export interface ServerToClientEvents {
-  // ── Direct streaming events (per-channel content) ──
-  close_channel: (payload: CloseChannelPayload) => void;
-  cancel_request: (payload: CancelRequestEventPayload) => void;
-  file_updated: (payload: FileUpdatedPayload) => void;
-  plan_comment: (payload: PlanCommentEventPayload) => void;
-  removeComment: (payload: RemoveCommentPayload) => void;
-
-  // ── Aligned: Speech-to-Text ──
-  speech_to_text_message: (payload: SpeechToTextMessagePayload) => void;
+  // ── Per-channel broadcast events ──
+  'chat:cancel_request': (payload: CancelRequestEventPayload) => void;
+  'file:updated': (payload: FileUpdatedPayload) => void;
+  'plan:comment_added': (payload: PlanCommentEventPayload) => void;
+  'plan:comment_removed': (payload: RemoveCommentPayload) => void;
+  'speech:message': (payload: SpeechToTextMessagePayload) => void;
 
   // ── Session lifecycle ──
+  'session:close_channel': (payload: CloseChannelPayload) => void;
   'session:created': (payload: SessionCreatedPayload) => void;
   'session:closed': (payload: SessionClosedPayload) => void;
   'session:dead': (payload: SessionDeadPayload) => void;
+  'session:resume': (payload: SessionResumePayload) => void;
   'session:states': (payload: SessionStatesPayload) => void;
 
   // ══════════════════════════════════════════════════════════
@@ -425,8 +427,8 @@ export interface ServerToClientEvents {
   'system:rate_limit': (payload: SystemRateLimitPayload) => void;
   'system:api_retry': (payload: SystemApiRetryPayload) => void;
   'system:file_updated': (payload: SystemFileUpdatedPayload) => void;
-  'system:experiment_gates': (payload: SystemExperimentGatesPayload) => void;
-  'system:available_models': (payload: SystemAvailableModelsPayload) => void;
+  'app:experiment_gates': (payload: SystemExperimentGatesPayload) => void;
+  'app:models': (payload: SystemAvailableModelsPayload) => void;
   'system:remote_control': (payload: SystemRemoteControlPayload) => void;
 
   // ── Notifications ──
@@ -446,6 +448,6 @@ export interface ServerToClientEvents {
   'raw:event': (payload: RawEventPayload) => void;
 
   // ── State (replaces request-based state updates) ──
-  'state:update': (payload: UpdateStatePayload) => void;
-  'state:usage': (payload: StateUsagePayload) => void;
+  'settings:update': (payload: UpdateStatePayload) => void;
+  'settings:usage': (payload: StateUsagePayload) => void;
 }

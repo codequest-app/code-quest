@@ -1,9 +1,8 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
-import { createFakeClaude } from '../../test/fake-claude';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ChatPanel } from '../ChatPanel';
 
@@ -13,13 +12,13 @@ describe('ChatPanel', () => {
   });
 
   it('renders input and message list', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     expect(screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude')).toBeInTheDocument();
     expect(screen.getByTitle('Send')).toBeInTheDocument();
   });
 
   it('sends message — message appears in UI', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     act(() => {
       fireEvent.change(textarea, { target: { value: 'test message' } });
@@ -30,9 +29,7 @@ describe('ChatPanel', () => {
   });
 
   it('displays messages from pipeline', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'Hello{Enter}');
     await claude.emit(s.assistant('Hi back'));
@@ -42,9 +39,7 @@ describe('ChatPanel', () => {
   });
 
   it('shows control request banner when pending', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
@@ -55,71 +50,36 @@ describe('ChatPanel', () => {
   });
 
   it('renders HeaderBar with connection status', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     expect(screen.getByText(/connected|disconnected/i)).toBeInTheDocument();
   });
 
   it('keeps input enabled when processing', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     expect(screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude')).toBeEnabled();
   });
 
   it('shows Stop button when processing', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
 
   it('shows session title in HeaderBar when title is set', async () => {
-    await renderWithChannel(
-      <ChatPanel title="Fix the login bug" joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    await renderWithChannel(<ChatPanel title="Fix the login bug" />);
     expect(screen.getByText('Fix the login bug')).toBeInTheDocument();
   });
 
-  describe('sessions mode join', () => {
-    it('calls joinSession when Join is clicked', async () => {
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '?mode=sessions' },
-        writable: true,
-        configurable: true,
-      });
-
-      const claude = createFakeClaude();
-      await claude.initialize();
-
-      const joinSession = vi.fn();
-      await renderWithChannel(<ChatPanel joinSession={joinSession} toggleHistory={vi.fn()} />, {
-        claude,
-      });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /join/i })).toBeInTheDocument();
-      });
-
-      await userEvent.click(screen.getByRole('button', { name: /join/i }));
-      expect(joinSession).toHaveBeenCalledWith(expect.any(String));
-
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '' },
-        writable: true,
-        configurable: true,
-      });
-    });
-  });
-
   it('does not render TabBar', async () => {
-    await renderWithChannel(<ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />);
+    await renderWithChannel(<ChatPanel />);
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
   // ── Control flow pipeline ──
 
   it('tool_use interrupts streaming — text after tool_result still renders', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.textDelta('Before tool'));
@@ -138,9 +98,7 @@ describe('ChatPanel', () => {
   });
 
   it('tool_result flows through pipeline (verified via received)', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
@@ -158,9 +116,7 @@ describe('ChatPanel', () => {
   });
 
   it('elicitation control_request renders dialog', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
@@ -168,10 +124,8 @@ describe('ChatPanel', () => {
     expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
   });
 
-  it('cancel_request shows "Cancelled" feedback in DOM', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+  it('chat:cancel_request shows "Cancelled" feedback in DOM', async () => {
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
@@ -183,9 +137,7 @@ describe('ChatPanel', () => {
   });
 
   it('notification error shows message in UI', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
@@ -199,9 +151,7 @@ describe('ChatPanel', () => {
   });
 
   it('notification warning shows message in UI', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
@@ -212,9 +162,7 @@ describe('ChatPanel', () => {
   });
 
   it('notification with buttons shows in UI', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
@@ -229,9 +177,7 @@ describe('ChatPanel', () => {
   });
 
   it('open_diff control_request does not crash', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant('hi'));
@@ -247,9 +193,7 @@ describe('ChatPanel', () => {
   });
 
   it('diffRespond with unknown toolId does not crash', async () => {
-    const { claude } = await renderWithChannel(
-      <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
-    );
+    const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant('hi'));

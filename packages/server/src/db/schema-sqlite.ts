@@ -1,5 +1,9 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import type { RawEntryColumnName, SessionColumnName } from './schema-columns.ts';
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type {
+  RawEntryColumnName,
+  SessionColumnName,
+  SettingsColumnName,
+} from './schema-columns.ts';
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
@@ -37,7 +41,22 @@ type _AssertSessionCols = keyof typeof sessions._.columns extends SessionColumnN
 type _AssertRawEntryCols = keyof typeof rawEntries._.columns extends RawEntryColumnName
   ? true
   : never;
+export const settings = sqliteTable(
+  'settings',
+  {
+    provider: text('provider').notNull(),
+    key: text('key').notNull(),
+    value: text('value').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.provider, table.key] })],
+);
+
 const _sessionCheck: _AssertSessionCols = true;
 const _rawEntryCheck: _AssertRawEntryCols = true;
+type _AssertSettingsCols = keyof typeof settings._.columns extends SettingsColumnName
+  ? true
+  : never;
+const _settingsCheck: _AssertSettingsCols = true;
 void _sessionCheck;
 void _rawEntryCheck;
+void _settingsCheck;

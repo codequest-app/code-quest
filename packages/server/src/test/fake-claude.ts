@@ -33,6 +33,7 @@ export class FakeClaude {
   private _initSegments: string[] | null = null;
   private _lastInitRequestId: string | null = null;
   private _connectionHandler: ((serverSocket: unknown) => void) | null = null;
+  private _allServerSockets: Array<{ emit: (event: string, ...args: unknown[]) => void }> = [];
   private _controlRequestHandler:
     | ((request: Record<string, unknown>) => Record<string, unknown> | null)
     | null = null;
@@ -64,6 +65,7 @@ export class FakeClaude {
       register: (io: unknown) => void;
     };
 
+    this._allServerSockets = [serverSocket];
     chatHandler.register({
       on: (event: string, cb: (...args: unknown[]) => void) => {
         if (event === 'connection') {
@@ -71,8 +73,10 @@ export class FakeClaude {
           cb(serverSocket);
         }
       },
-      emit(event: string, ...args: unknown[]) {
-        serverSocket.emit(event, ...args);
+      emit: (event: string, ...args: unknown[]) => {
+        for (const ss of this._allServerSockets) {
+          ss.emit(event, ...args);
+        }
       },
     });
   }
@@ -81,6 +85,7 @@ export class FakeClaude {
   connect(): ReturnType<typeof io> {
     const socket2 = io();
     const serverSocket2 = (socket2 as any).serverSocket;
+    this._allServerSockets.push(serverSocket2);
     this._connectionHandler?.(serverSocket2);
     return socket2;
   }

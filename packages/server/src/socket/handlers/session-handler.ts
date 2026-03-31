@@ -1,6 +1,6 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
 import {
   chatCreateSchema,
+  chatGenerateSessionTitleSchema,
   chatJoinSchema,
   chatKillSchema,
   sessionDeleteSchema,
@@ -9,14 +9,15 @@ import {
   sessionListRemoteSchema,
   sessionListSchema,
   sessionRenameSchema,
+  sessionResumePayloadSchema,
   sessionTeleportSchema,
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
-import { ClaudeAdapter } from '@code-quest/summoner';
 import { config } from '../../config.ts';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { execGit } from './helpers.ts';
+import { cliInitResponseSchema } from './cli-response-schemas.ts';
+import { DEFAULT_THINKING_TOKENS, execGit } from './helpers.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:launch', async (payload, callback) => {
@@ -32,10 +33,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           ? { allowDangerouslySkipPermissions: true }
           : {}),
       };
-      const clientOpts = (parsed.initOptions ?? {}) as Record<string, unknown>;
+      const clientOpts = parsed.initOptions ?? {};
       const initInput: Record<string, unknown> = {
         ...clientOpts,
-        appendSystemPrompt: [clientOpts.appendSystemPrompt as string, config.systemPrompt]
+        appendSystemPrompt: [clientOpts.appendSystemPrompt, config.systemPrompt]
           .filter(Boolean)
           .join('\n'),
       };
@@ -53,7 +54,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           .persist({
             id: channelId,
             sessionId: channel.sessionId,
-            provider: 'claude',
+            provider: ctx.channelManager.provider,
             command: ctx.runnerFactory.command,
             args: JSON.stringify(ctx.runnerFactory.args),
             cwd: process.cwd(),
@@ -78,7 +79,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       if (parsed.thinkingLevel) {
         await channel
           .sendControlRequest('set_max_thinking_tokens', {
-            tokens: ClaudeAdapter.THINKING_LEVEL_TOKENS[parsed.thinkingLevel] ?? 31999,
+            tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
           })
           .catch(() => {});
       }
@@ -87,27 +88,23 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
 
       // Extract data from initialize response
-      const initResponse = initResult.response as Record<string, unknown> | undefined;
-      const commands = initResponse?.commands;
+      const initResponse = cliInitResponseSchema.safeParse(initResult.response);
+      const commands = initResponse.success ? initResponse.data.commands : undefined;
       const slashCommands = Array.isArray(commands)
-        ? [...new Set(commands.map((c: { name: string }) => c.name))]
+        ? [...new Set(commands.map((c) => c.name))]
         : undefined;
-      const models = initResponse?.models as unknown[] | undefined;
+      const models = initResponse.success ? initResponse.data.models : undefined;
       if (models) {
         ctx.cachedModels = models;
-        ctx.io?.emit('system:available_models', { channelId: '', models });
+        await ctx.settingsStore.set(ctx.channelManager.provider, 'models', models);
+        ctx.io?.emit('app:models', { channelId: '', models });
       }
-      const account = initResponse?.account as Record<string, unknown> | undefined;
+      const account = initResponse.success ? initResponse.data.account : undefined;
 
       // Push account info from initialize response to all clients
       if (account && Object.keys(account).length > 0) {
-        const { email, subscriptionType, authMethod, organization } = account as {
-          email?: string;
-          subscriptionType?: string;
-          authMethod?: string;
-          organization?: string;
-        };
-        ctx.io?.emit('state:update', {
+        const { email, subscriptionType, authMethod, organization } = account;
+        ctx.io?.emit('settings:update', {
           channelId: '',
           accountInfo: { email, subscriptionType, authMethod, organization },
         });
@@ -123,9 +120,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Emit session:init with final metaCache to socket
       socket.emit('session:init', {
         ...channel.buildSessionInitPayload(),
-      } as Parameters<ServerToClientEvents['session:init']>[0]);
+      });
       if (ctx.cachedModels) {
-        socket.emit('system:available_models', {
+        socket.emit('app:models', {
           channelId: '',
           models: ctx.cachedModels,
         });
@@ -187,16 +184,17 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Emit session:init with final metaCache to socket
       socket.emit('session:init', {
         ...channel.buildSessionInitPayload(),
-      } as Parameters<ServerToClientEvents['session:init']>[0]);
+      });
       if (ctx.cachedModels) {
-        socket.emit('system:available_models', {
+        socket.emit('app:models', {
           channelId: '',
           models: ctx.cachedModels,
         });
       }
 
       const events = await ctx.getSessionHistory(channelId);
-      callback?.({ channelId, state: 'idle', meta: channel.metaCache ?? {}, events });
+      const state = channel.isProcessing ? 'busy' : 'idle';
+      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
     } catch (err) {
       callback?.({ error: errMsg(err, 'Failed to join session') });
     }
@@ -208,13 +206,23 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const ch = ctx.channelManager.get(channelId);
       if (ch) {
         ch.runner.kill();
+        ctx.io?.emit('session:dead', { channelId });
       }
     } catch {
       // ignore
     }
   });
 
-  socket.on('fork_conversation', async (payload, callback) => {
+  socket.on('session:resume', (payload) => {
+    try {
+      const { channelId } = sessionResumePayloadSchema.parse(payload);
+      ctx.io?.emit('session:resume', { channelId });
+    } catch {
+      // ignore invalid payload
+    }
+  });
+
+  socket.on('session:fork', async (payload, callback) => {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
       const events = await ctx.getSessionHistory(forkedFromSession);
@@ -232,7 +240,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           .persist({
             id: newSessionId,
             sessionId: forkChannel.sessionId,
-            provider: 'claude',
+            provider: ctx.channelManager.provider,
             command: ctx.runnerFactory.command,
             args: JSON.stringify(ctx.runnerFactory.args),
             cwd: process.cwd(),
@@ -258,7 +266,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('teleport_session', async (payload, callback) => {
+  socket.on('session:teleport', async (payload, callback) => {
     try {
       const parsed = sessionTeleportSchema.parse(payload);
 
@@ -309,7 +317,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('delete_session', async (payload, callback) => {
+  socket.on('session:delete', async (payload, callback) => {
     try {
       const { channelId } = sessionDeleteSchema.parse(payload);
       const success = await ctx.sessionStore.delete(channelId);
@@ -326,7 +334,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('rename_session', async (payload, callback) => {
+  socket.on('session:rename', async (payload, callback) => {
     try {
       const { channelId, title } = sessionRenameSchema.parse(payload);
       const success = await ctx.sessionStore.rename(channelId, title);
@@ -343,12 +351,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('list_sessions_request', async (payload, callback) => {
+  socket.on('session:list', async (payload, callback) => {
     try {
       const parsed = sessionListSchema.parse(payload);
       const result = await ctx.sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
+        cwd: parsed.cwd,
       });
       const previews = await Promise.all(
         result.sessions.map((s) => ctx.rawEventStore.getPreview(s.sessionId ?? s.id)),
@@ -359,6 +368,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           ...s,
           isActive: !!(ch && !ch.exited),
           lastAssistantMessage: previews[i].lastAssistant,
+          firstUserMessage: previews[i].firstUser,
         };
       });
       callback({ sessions, total: result.total });
@@ -367,7 +377,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('list_remote_sessions', async (payload, callback) => {
+  socket.on('session:list_remote', async (payload, callback) => {
     try {
       const parsed = sessionListRemoteSchema.parse(payload);
       const result = await ctx.sessionStore.list({
@@ -381,7 +391,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('get_session_request', async (payload, callback) => {
+  socket.on('session:get', async (payload, callback) => {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
       const session = await ctx.sessionStore.getById(channelId);
@@ -399,7 +409,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   socket.on('session:raw_events', async (payload, callback) => {
     try {
-      const { channelId } = payload;
+      const { channelId } = sessionGetSchema.parse(payload);
       const entries = await ctx.rawEventStore.getBySession(await ctx.resolveSessionId(channelId));
       const events = entries.map((e) => {
         try {
@@ -414,7 +424,23 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('update_session_state', (payload, callback) => {
+  socket.on('session:generate_title', async (payload, callback) => {
+    try {
+      const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (channel) {
+        const result = await channel.sendControlRequest('generate_session_title', {
+          description,
+          persist,
+        });
+        callback?.({ success: true, result });
+      }
+    } catch (err) {
+      callback?.({ success: false, error: String(err) });
+    }
+  });
+
+  socket.on('session:update_state', (payload, callback) => {
     try {
       const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
       ctx.io?.emit('session:states', {

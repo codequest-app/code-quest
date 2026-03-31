@@ -1,6 +1,8 @@
+import type { SessionSummary } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useChannelCompose, useChannelControl, useChannelMessages } from '../contexts/channel';
+import { useSession } from '../contexts/SessionContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -9,22 +11,15 @@ import { MessageList } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
 import { SearchBar } from './SearchBar';
-import { SessionListPage } from './SessionListPage';
+import { SessionDropdown } from './SessionDropdown';
 
 const SIDE_PANEL = 'w-72 shrink-0';
 const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
-export function ChatPanel({
-  title,
-  joinSession,
-  toggleHistory,
-}: {
-  title?: string;
-  joinSession: (id: string) => void;
-  toggleHistory: () => void;
-}) {
+export function ChatPanel({ title }: { title?: string }) {
   const { channelId, subscribeRawEvents } = useChannelMessages();
   const { focusTextarea } = useChannelCompose();
+  const { listSessions, renameSession, deleteSession, resumeSession } = useSession();
   const {
     pendingDiffReview,
     diffRespond,
@@ -37,12 +32,27 @@ export function ChatPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
+  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
+  const [resumeSessions, setResumeSessions] = useState<{
+    sessions: SessionSummary[];
+    total: number;
+  }>({ sessions: [], total: 0 });
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const searchBarRef = useRef<HTMLInputElement>(null);
 
-  const [isSessionsMode] = useState(
-    () => new URLSearchParams(window.location.search).get('mode') === 'sessions',
-  );
+  const openResumeOverlay = () => {
+    setShowResumeOverlay(true);
+    setResumeLoading(true);
+    listSessions({ limit: 50 })
+      .then(setResumeSessions)
+      .finally(() => setResumeLoading(false));
+  };
+
+  const handleResumeSelect = (sessionId: string) => {
+    resumeSession(sessionId);
+    setShowResumeOverlay(false);
+  };
 
   useHotkeys('/', () => focusTextarea(), NO_FORM);
   useHotkeys('mod+k', () => searchBarRef.current?.focus(), NO_FORM);
@@ -52,20 +62,6 @@ export function ChatPanel({
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
         No active session — click + to create a new tab
       </div>
-    );
-  }
-
-  if (isSessionsMode) {
-    return (
-      <SessionListPage
-        onSelect={(id) => {
-          window.location.search = `?session=${id}`;
-        }}
-        onJoin={(id) => {
-          joinSession(id);
-          window.location.search = '';
-        }}
-      />
     );
   }
 
@@ -106,9 +102,19 @@ export function ChatPanel({
           inputRef={searchBarRef}
         />
         <MessageList searchQuery={searchQuery} typeFilter={typeFilter} />
+        {showResumeOverlay && (
+          <SessionDropdown
+            sessions={resumeSessions.sessions}
+            loading={resumeLoading}
+            onSelect={handleResumeSelect}
+            onClose={() => setShowResumeOverlay(false)}
+            onRename={renameSession}
+            onDelete={deleteSession}
+          />
+        )}
         <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
-            <ChatInputArea toggleHistory={toggleHistory} />
+            <ChatInputArea onResumeConversation={openResumeOverlay} />
           </div>
         </div>
       </div>

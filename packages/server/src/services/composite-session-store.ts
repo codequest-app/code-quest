@@ -10,6 +10,7 @@ export class CompositeSessionStore implements SessionStore {
   async list(opts?: {
     limit?: number;
     offset?: number;
+    cwd?: string;
   }): Promise<{ sessions: SessionRecord[]; total: number }> {
     return this.stores[0].list(opts);
   }

@@ -1,4 +1,4 @@
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import 'reflect-metadata';
 import type { ProcessProvider } from '@code-quest/summoner';
 import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
@@ -11,10 +11,12 @@ import { CompositeRawStore } from './services/composite-raw-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
+import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
 import { FileRawStore } from './services/file-raw-store.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
-import { FileSettingsStore, type SettingsStore } from './services/settings-store.ts';
+import type { SettingsStore } from './services/settings-store.ts';
+import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
 import { ChatHandler } from './socket/chat-handler.ts';
@@ -52,7 +54,7 @@ export function createContainer(options: ContainerOptions): Container {
   const db = options.database ?? createDatabase(options.dbPath);
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
-  const { eventStores, sessionStores } = buildStores(db, options.storeConfig);
+  const { eventStores, sessionStores, settingsStores } = buildStores(db, options.storeConfig);
 
   const rawEventStore: RawEventStore =
     eventStores.length === 1 ? eventStores[0] : new CompositeRawStore(eventStores);
@@ -68,10 +70,8 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<ChatHandler>(TYPES.ChatHandler).to(ChatHandler).inSingletonScope();
 
-  const settingsPath = join(dirname(options.dbPath ?? 'data/cc-office.db'), 'settings.json');
-  container
-    .bind<SettingsStore>(TYPES.SettingsStore)
-    .toConstantValue(new FileSettingsStore(settingsPath));
+  const settingsStore: SettingsStore = settingsStores[0];
+  container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
 
   return container;
 }
@@ -79,22 +79,30 @@ export function createContainer(options: ContainerOptions): Container {
 function buildStores(
   db: DrizzleDatabase,
   config?: StoreConfig,
-): { eventStores: RawEventStore[]; sessionStores: SessionStore[] } {
+): {
+  eventStores: RawEventStore[];
+  sessionStores: SessionStore[];
+  settingsStores: SettingsStore[];
+} {
   const eventStores: RawEventStore[] = [];
   const sessionStores: SessionStore[] = [];
+  const settingsStores: SettingsStore[] = [];
 
   if (config?.sqlite) {
     eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
   if (config?.mysql) {
     eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
   }
 
   if (config?.file) {
     eventStores.push(new FileRawStore(config.file.dir));
+    settingsStores.push(new FileSettingsStore(join(config.file.dir, 'settings.json')));
   }
 
   if (eventStores.length === 0) {
@@ -103,6 +111,9 @@ function buildStores(
   if (sessionStores.length === 0) {
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
   }
+  if (settingsStores.length === 0) {
+    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
+  }
 
-  return { eventStores, sessionStores };
+  return { eventStores, sessionStores, settingsStores };
 }

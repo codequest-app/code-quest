@@ -1,52 +1,59 @@
-import type { ModelInfo, ProviderClientConfig } from '@code-quest/shared';
+import type { ModelInfo } from '@code-quest/shared';
 
 export interface ModelDisplayInfo {
   displayName: string;
   subLabel: string;
 }
 
-type ModelDisplayMapEntry = ProviderClientConfig['modelDisplayMap'][number];
-
-function findInMap(id: string, map: ModelDisplayMapEntry[]): ModelDisplayMapEntry | undefined {
-  const lower = id.toLowerCase();
-  return map.find((entry) => lower.includes(entry.pattern));
+/** Find model by exact value match, then substring match (strips [context] suffix). */
+export function findModel(id: string, models: ModelInfo[]): ModelInfo | undefined {
+  // Exact match
+  const exact = models.find((m) => m.value === id);
+  if (exact) return exact;
+  // Strip context window suffix like [1m] for matching
+  const baseId = id.replace(/\[.*\]$/, '');
+  if (baseId !== id) {
+    const stripped = models.find((m) => m.value === baseId);
+    if (stripped) return stripped;
+  }
+  // Substring: id contains value (e.g. "claude-opus-4-6" contains "opus")
+  return models.find((m) => m.value.length > 2 && id.includes(m.value));
 }
 
-/** Short display name for a model ID. Uses modelDisplayMap, falls back to raw ID. */
-export function shortModelName(id: string, modelDisplayMap: ModelDisplayMapEntry[] = []): string {
-  return findInMap(id, modelDisplayMap)?.displayName ?? id;
+/** Short display name for a model ID. Looks up in availableModels, falls back to raw ID. */
+export function shortModelName(id: string, models: ModelInfo[] = []): string {
+  return findModel(id, models)?.displayName ?? id;
 }
 
-/** Display info for model picker. Uses modelDisplayMap for matching. */
+/** Display info for model picker. Looks up in availableModels. */
 export function getModelDisplayInfo(
   id: string,
-  defaultModel?: string | null,
-  modelDisplayMap: ModelDisplayMapEntry[] = [],
+  models: ModelInfo[] = [],
   defaultModelDescription = 'Most capable for complex work',
 ): ModelDisplayInfo {
   if (id === '') {
-    const defaultEntry = defaultModel ? findInMap(defaultModel, modelDisplayMap) : undefined;
-    const label = defaultEntry?.displayName ?? defaultModel ?? '';
+    const defaultEntry = models[0];
+    const label = defaultEntry?.displayName ?? '';
     return {
       displayName: 'Default (recommended)',
       subLabel: label ? `${label} · ${defaultModelDescription}` : defaultModelDescription,
     };
   }
-  const entry = findInMap(id, modelDisplayMap);
-  if (entry) {
-    return { displayName: entry.displayName, subLabel: entry.subLabel ?? id };
+  const entry = findModel(id, models);
+  if (entry?.displayName) {
+    return { displayName: entry.displayName, subLabel: entry.description ?? id };
   }
   return { displayName: id, subLabel: id };
 }
 
-/** Display info from ModelInfo (CLI data). Falls back to modelDisplayMap, then raw ID. */
+/** Display info from ModelInfo (CLI data). Falls back to availableModels lookup, then raw ID. */
 export function getModelInfoDisplayName(
   info: ModelInfo | undefined,
   fallbackId: string,
-  modelDisplayMap: ModelDisplayMapEntry[] = [],
+  models: ModelInfo[] = [],
 ): ModelDisplayInfo {
   if (info?.displayName) {
     return { displayName: info.displayName, subLabel: info.description ?? fallbackId };
   }
-  return getModelDisplayInfo(fallbackId, null, modelDisplayMap);
+  return getModelDisplayInfo(fallbackId, models);
 }

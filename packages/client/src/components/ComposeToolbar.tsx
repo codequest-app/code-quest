@@ -177,7 +177,6 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
               availableModels={availableModels}
               onSwitch={setModel}
               onClose={closeDialog}
-              modelDisplayMap={providerConfig?.modelDisplayMap}
               defaultModelDescription={providerConfig?.defaultModelDescription}
             />
           </div>
@@ -223,7 +222,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
         <PermissionModePicker
           mode={permissionMode ?? 'normal'}
-          effort={effort}
+          effort={effort ?? undefined}
           onSetPermissionMode={setPermissionMode}
           onSetEffort={setEffort}
         />

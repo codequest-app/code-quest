@@ -50,6 +50,7 @@ export const sessionSummarySchema = z.object({
   createdAt: z.string(),
   isActive: z.boolean().optional(),
   lastAssistantMessage: z.string().optional(),
+  firstUserMessage: z.string().optional(),
 });
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 

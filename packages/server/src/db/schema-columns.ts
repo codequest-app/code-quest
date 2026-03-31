@@ -29,5 +29,8 @@ export const RAW_ENTRY_COLUMNS = [
   'createdAt',
 ] as const;
 
+export const SETTINGS_COLUMNS = ['provider', 'key', 'value'] as const;
+
 export type SessionColumnName = (typeof SESSION_COLUMNS)[number];
 export type RawEntryColumnName = (typeof RAW_ENTRY_COLUMNS)[number];
+export type SettingsColumnName = (typeof SETTINGS_COLUMNS)[number];

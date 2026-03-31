@@ -12,11 +12,11 @@ async function setup(sessionId = 'cli-sess') {
 }
 
 describe('ChatHandler > settings', () => {
-  describe('set_permission_mode', () => {
+  describe('settings:set_permission_mode', () => {
     it('sends set_permission_mode control_request to CLI', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_permission_mode', { channelId, mode: 'plan' });
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'set_permission_mode')).toBe(
@@ -27,7 +27,7 @@ describe('ChatHandler > settings', () => {
     it('silently ignores set_permission_mode for unknown session', async () => {
       const { claude } = await setup();
 
-      await claude.send('set_permission_mode', { channelId: 'unknown', mode: 'plan' });
+      await claude.send('settings:set_permission_mode', { channelId: 'unknown', mode: 'plan' });
 
       expect(claude.socket.connected).toBe(true);
     });
@@ -35,28 +35,28 @@ describe('ChatHandler > settings', () => {
     it('persists permissionMode to settingsStore on success', async () => {
       const { claude, channelId, settingsStore } = await setup();
 
-      await claude.send('set_permission_mode', { channelId, mode: 'plan' });
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
-      expect(settingsStore.get('permissionMode')).toBe('plan');
+      expect(await settingsStore.get('claude', 'permissionMode')).toBe('plan');
     });
 
-    it('emits state:update with permissionMode after success', async () => {
+    it('emits settings:update with permissionMode after success', async () => {
       const { claude, channelId } = await setup();
       const events: any[] = [];
-      claude.socket.on('state:update', (p: any) => events.push(p));
+      claude.socket.on('settings:update', (p: any) => events.push(p));
 
-      await claude.send('set_permission_mode', { channelId, mode: 'plan' });
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
       const match = events.find((e) => e.initialPermissionMode === 'plan');
       expect(match).toBeDefined();
     });
   });
 
-  describe('set_model', () => {
+  describe('settings:set_model', () => {
     it('sends set_model control_request to CLI', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_model', { channelId, model: 'claude-sonnet-4-6' });
+      await claude.send('settings:set_model', { channelId, model: 'claude-sonnet-4-6' });
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'set_model')).toBe(true);
@@ -65,7 +65,7 @@ describe('ChatHandler > settings', () => {
     it('returns error via callback for unknown session', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send('set_model', {
+      const result = await claude.send('settings:set_model', {
         channelId: 'unknown',
         model: 'claude-sonnet-4-6',
       });
@@ -75,24 +75,27 @@ describe('ChatHandler > settings', () => {
     it('returns success via callback', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send('set_model', { channelId, model: 'claude-sonnet-4-6' });
+      const result = await claude.send('settings:set_model', {
+        channelId,
+        model: 'claude-sonnet-4-6',
+      });
       expect(result).toEqual({ success: true });
     });
 
     it('persists model to settingsStore on success', async () => {
       const { claude, channelId, settingsStore } = await setup();
 
-      await claude.send('set_model', { channelId, model: 'claude-sonnet-4-6' });
+      await claude.send('settings:set_model', { channelId, model: 'claude-sonnet-4-6' });
 
-      expect(settingsStore.get('model')).toBe('claude-sonnet-4-6');
+      expect(await settingsStore.get('claude', 'model')).toBe('claude-sonnet-4-6');
     });
   });
 
-  describe('set_thinking_level', () => {
+  describe('settings:set_thinking_level', () => {
     it('sends set_max_thinking_tokens for "default_on"', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_thinking_level', { channelId, thinkingLevel: 'default_on' });
+      await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'set_max_thinking_tokens')).toBe(
@@ -103,7 +106,7 @@ describe('ChatHandler > settings', () => {
     it('sends set_max_thinking_tokens(0) for "off"', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_thinking_level', { channelId, thinkingLevel: 'off' });
+      await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'off' });
 
       const received = claude.received('control_request');
       expect(
@@ -115,12 +118,12 @@ describe('ChatHandler > settings', () => {
       ).toBe(true);
     });
 
-    it('emits state:update with thinkingLevel after success', async () => {
+    it('emits settings:update with thinkingLevel after success', async () => {
       const { claude, channelId } = await setup();
       const events: any[] = [];
-      claude.socket.on('state:update', (p: any) => events.push(p));
+      claude.socket.on('settings:update', (p: any) => events.push(p));
 
-      await claude.send('set_thinking_level', { channelId, thinkingLevel: 'default_on' });
+      await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
       const match = events.find((e) => e.thinkingLevel === 'default_on');
       expect(match).toBeDefined();
@@ -129,7 +132,7 @@ describe('ChatHandler > settings', () => {
     it('silently ignores set_thinking_level for unknown session', async () => {
       const { claude } = await setup();
 
-      await claude.send('set_thinking_level', {
+      await claude.send('settings:set_thinking_level', {
         channelId: 'unknown',
         thinkingLevel: 'default_on',
       });
@@ -140,9 +143,9 @@ describe('ChatHandler > settings', () => {
     it('persists thinkingLevel to settingsStore on success', async () => {
       const { claude, channelId, settingsStore } = await setup();
 
-      await claude.send('set_thinking_level', { channelId, thinkingLevel: 'default_on' });
+      await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
-      expect(settingsStore.get('thinkingLevel')).toBe('default_on');
+      expect(await settingsStore.get('claude', 'thinkingLevel')).toBe('default_on');
     });
   });
 
@@ -174,35 +177,10 @@ describe('ChatHandler > settings', () => {
     });
   });
 
-  it('init returns settings and sessions in one response', async () => {
-    const claude = createFakeClaude();
-
-    const result = await claude.send<{
-      settings: Record<string, unknown>;
-      sessions: Array<{ channelId: string; state: string }>;
-      activeSessionId?: string;
-    }>('init');
-
-    expect(result.settings).toMatchObject({});
-    expect(result.sessions).toEqual(expect.any(Array));
-  });
-
-  it('get_provider_config returns providerConfig from adapter', async () => {
-    const claude = createFakeClaude();
-
-    const result = await claude.send<{
-      providerConfig: { brand: { name: string; company: string } };
-    }>('get_provider_config', { channelId: '' });
-
-    expect(result.providerConfig).toBeDefined();
-    expect(result.providerConfig.brand.name).toBe('Claude');
-    expect(result.providerConfig.brand.company).toBe('Anthropic');
-  });
-
   it('apply_settings forwards settings to CLI session', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('apply_settings', {
+    const result = await claude.send<{ success: boolean; error?: string }>('settings:apply', {
       channelId,
       settings: { effortLevel: 'high' },
     });
@@ -218,12 +196,12 @@ describe('ChatHandler > settings', () => {
     ).toBe(true);
   });
 
-  it('apply_settings emits state:update with effort after success', async () => {
+  it('apply_settings emits settings:update with effort after success', async () => {
     const { claude, channelId } = await setup();
     const events: unknown[] = [];
-    claude.socket.on('state:update', (payload: unknown) => events.push(payload));
+    claude.socket.on('settings:update', (payload: unknown) => events.push(payload));
 
-    await claude.send('apply_settings', {
+    await claude.send('settings:apply', {
       channelId,
       settings: { effortLevel: 'low' },
     });
@@ -232,16 +210,40 @@ describe('ChatHandler > settings', () => {
     expect(effortUpdate).toBeTruthy();
   });
 
+  it('apply_settings persists effortLevel to settingsStore', async () => {
+    const { claude, channelId } = await setup();
+
+    await claude.send('settings:apply', {
+      channelId,
+      settings: { effortLevel: 'high' },
+    });
+
+    const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
+    expect(await settingsStore.get('claude', 'effortLevel')).toBe('high');
+  });
+
+  it('app:config returns persisted effort after settings:apply', async () => {
+    const { claude, channelId } = await setup();
+
+    await claude.send('settings:apply', {
+      channelId,
+      settings: { effortLevel: 'medium' },
+    });
+
+    const result = await claude.send<{ effort?: string }>('app:config', { channelId: '' });
+    expect(result.effort).toBe('medium');
+  });
+
   it('chat:get_state returns settings for an active session', async () => {
     const { claude, channelId } = await setup();
 
     const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
-    settingsStore.set('model', 'opus');
+    await settingsStore.set('claude', 'model', 'opus');
 
     const result = await claude.send<{
       success: boolean;
       state?: Record<string, unknown>;
-    }>('get_claude_state', { channelId });
+    }>('settings:state', { channelId });
 
     expect(result.success).toBe(true);
     expect(result.state).toMatchObject({ model: 'opus' });
@@ -250,7 +252,7 @@ describe('ChatHandler > settings', () => {
   it('chat:get_state returns error for missing session', async () => {
     const claude = createFakeClaude();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('get_claude_state', {
+    const result = await claude.send<{ success: boolean; error?: string }>('settings:state', {
       channelId: 'nonexistent',
     });
 
@@ -262,11 +264,11 @@ describe('ChatHandler > settings', () => {
     const { claude, channelId } = await setup();
 
     const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
-    settingsStore.set('model', 'opus');
-    settingsStore.set('permissionMode', 'plan');
+    await settingsStore.set('claude', 'model', 'opus');
+    await settingsStore.set('claude', 'permissionMode', 'plan');
 
     const result = await claude.send<{ success: boolean; state?: Record<string, unknown> }>(
-      'get_claude_state',
+      'settings:state',
       { channelId },
     );
 
@@ -274,11 +276,11 @@ describe('ChatHandler > settings', () => {
     expect(result.state).toMatchObject({ model: 'opus', permissionMode: 'plan' });
   });
 
-  describe('rewind_code', () => {
+  describe('chat:rewind_code', () => {
     it('sends rewind_files control_request and returns result via callback', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send('rewind_code', {
+      const result = await claude.send('chat:rewind_code', {
         channelId,
         userMessageId: 'msg-1',
         dryRun: true,
@@ -292,7 +294,7 @@ describe('ChatHandler > settings', () => {
     it('returns error via callback for unknown session', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send('rewind_code', {
+      const result = await claude.send('chat:rewind_code', {
         channelId: 'unknown',
         userMessageId: 'msg-1',
         dryRun: false,
@@ -301,16 +303,106 @@ describe('ChatHandler > settings', () => {
     });
   });
 
-  describe('chat:set_fast_mode', () => {
-    it('emits state:update with fastModeState after success', async () => {
+  describe('settings:set_proactive', () => {
+    it('emits settings:update with fastModeState after success', async () => {
       const { claude, channelId } = await setup();
       const events: any[] = [];
-      claude.socket.on('state:update', (p: any) => events.push(p));
+      claude.socket.on('settings:update', (p: any) => events.push(p));
 
-      await claude.send('chat:set_fast_mode', { channelId, enabled: true });
+      await claude.send('settings:set_proactive', { channelId, enabled: true });
 
       const match = events.find((e) => e.fastModeState != null);
       expect(match).toBeDefined();
+    });
+  });
+
+  describe('usage tracking', () => {
+    it('does NOT emit usage_update when rate_limit_event is received', async () => {
+      const { claude, channelId } = await setup();
+      const usageUpdates: any[] = [];
+      claude.socket.on('request', (payload: any) => {
+        if (payload.request?.type === 'usage_update') usageUpdates.push(payload.request);
+      });
+
+      await claude.send('chat:send', { channelId, message: 'hello' });
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(
+        s.rateLimitEvent({
+          status: 'blocked',
+          rateLimitType: 'five_hour',
+          resetsAt: 1772319600,
+        }),
+      );
+      await claude.emit(s.result());
+
+      expect(usageUpdates.length).toBe(0);
+    });
+
+    it('responds to request_usage_update with current usage', async () => {
+      const { claude, channelId } = await setup();
+      const usageUpdates: any[] = [];
+      claude.socket.on('settings:usage' as any, (payload: any) => {
+        usageUpdates.push(payload);
+      });
+
+      await claude.send('chat:send', { channelId, message: 'hello' });
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.rateLimitEvent({ status: 'allowed', rateLimitType: 'five_hour' }));
+      await claude.emit(s.result());
+
+      usageUpdates.length = 0;
+
+      await claude.send('settings:refresh_usage', { channelId });
+
+      expect(usageUpdates.length).toBe(1);
+      expect(usageUpdates[0]).not.toHaveProperty('sessionId');
+      expect((usageUpdates[0] as any).usage).toMatchObject({
+        five_hour: { utilization: 0 },
+      });
+    });
+
+    it('request_usage_update includes context usage from CLI', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'get_context_usage') {
+          return {
+            categories: [
+              { name: 'System prompt', tokens: 6000, color: 'promptBorder' },
+              { name: 'Messages', tokens: 4000, color: 'purple' },
+              { name: 'Free space', tokens: 190000, color: 'promptBorder' },
+            ],
+            totalTokens: 10000,
+            maxTokens: 200000,
+            rawMaxTokens: 200000,
+            percentage: 5,
+            gridRows: [[{ color: 'x', isFilled: true }]],
+            apiUsage: { something: 'extra' },
+            mcpTools: ['tool1'],
+          };
+        }
+        return null;
+      });
+
+      const usageUpdates: any[] = [];
+      claude.socket.on('settings:usage' as any, (payload: any) => {
+        usageUpdates.push(payload);
+      });
+
+      await claude.send('settings:refresh_usage', { channelId });
+
+      expect(usageUpdates.length).toBe(1);
+      const ctx = (usageUpdates[0] as any).contextUsage;
+      expect(ctx.totalTokens).toBe(10000);
+      expect(ctx.maxTokens).toBe(200000);
+      expect(ctx.percentage).toBe(5);
+      expect(ctx.categories).toHaveLength(3);
+      expect(ctx.categories[0].name).toBe('System prompt');
+      // Extra fields should be stripped
+      expect(ctx.gridRows).toBeUndefined();
+      expect(ctx.apiUsage).toBeUndefined();
+      expect(ctx.mcpTools).toBeUndefined();
+      expect(ctx.rawMaxTokens).toBeUndefined();
     });
   });
 });

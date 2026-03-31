@@ -2,6 +2,7 @@ import type { RawEntry } from '@code-quest/summoner';
 
 export interface SessionPreview {
   lastAssistant?: string;
+  firstUser?: string;
 }
 
 /** Extract text content from a raw JSON entry if it matches the given type. */

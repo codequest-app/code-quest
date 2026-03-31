@@ -5,25 +5,56 @@ import type {
   NotificationResponse,
   PlanCommentData,
   ServerToClientEvents,
+  SessionInitPayload,
 } from '@code-quest/shared';
 import type {
-  AutoResponse,
   ControlResponseEvent,
   ProcessRunner,
   ServerAction,
   SocketEvent,
 } from '@code-quest/summoner';
+import { z } from 'zod';
 import type { TypedSocket } from './handler-context.ts';
 
-export type ChannelState = 'launching' | 'active' | 'streaming' | 'cancelling' | 'closed';
+/** Default timeout for control requests (ms). */
+const DEFAULT_CONTROL_TIMEOUT = 30_000;
 
-const VALID_TRANSITIONS: Record<ChannelState, ChannelState[]> = {
-  launching: ['active', 'closed'],
-  active: ['streaming', 'closed'],
-  streaming: ['active', 'cancelling', 'closed'],
-  cancelling: ['active', 'closed'],
-  closed: [],
-};
+/**
+ * Maps adapter SocketEvent names to our socket protocol names.
+ * Adapter names that differ from our protocol are remapped here.
+ */
+const errorPayload = z.object({ message: z.string() }).passthrough();
+const sessionInitPayload = z
+  .object({
+    sessionId: z.string().optional(),
+    config: z.record(z.string(), z.unknown()).optional(),
+    model: z.string().optional(),
+    permissionMode: z.string().optional(),
+    tools: z.array(z.string()).optional(),
+    fastModeState: z.unknown().optional(),
+    mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+    slashCommands: z.array(z.string()).optional(),
+  })
+  .passthrough();
+const sessionStatusPayload = z
+  .object({
+    permissionMode: z.string().optional(),
+  })
+  .passthrough();
+const replayRequestPayload = z.object({ requestId: z.string() }).passthrough();
+
+export interface SessionState {
+  model?: string;
+  permissionMode?: string;
+  cwd?: string;
+  effort?: string;
+  thinkingLevel?: string;
+  tools?: string[];
+  mcpServers?: Array<{ name: string; status: string }>;
+  titleGenerated?: boolean;
+  title?: string;
+  [key: string]: unknown;
+}
 
 export interface PendingRequest {
   resolve: (value: ControlResponse) => void;
@@ -46,19 +77,20 @@ export interface WireRunnerHooks {
 export class Channel {
   readonly id: string;
   readonly runner: ProcessRunner;
+  readonly provider: string;
   readonly sockets = new Set<TypedSocket>();
   private readonly _controlRequestMeta = new Map<string, RequestMeta>();
   readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
   readonly pendingRequests = new Map<string, PendingRequest>();
   readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private _messageSeq = 0;
-  private _sessionState: Record<string, unknown> = {};
+  private _sessionState: SessionState = {};
   private _metaCache: ChannelMetaCache = {};
   planComments: PlanCommentData[] = [];
   terminalLines: string[] = [];
   sessionId: string | null = null;
 
-  get sessionState(): Record<string, unknown> {
+  get sessionState(): SessionState {
     return this._sessionState;
   }
 
@@ -66,7 +98,7 @@ export class Channel {
     return this._metaCache;
   }
 
-  updateSessionState(partial: Record<string, unknown>): void {
+  updateSessionState(partial: Partial<SessionState>): void {
     this._sessionState = { ...this._sessionState, ...partial };
   }
 
@@ -78,30 +110,36 @@ export class Channel {
     this._metaCache = { ...this._metaCache, ...partial };
   }
   lastError: string | undefined;
+  private _isProcessing = false;
+
+  get isProcessing(): boolean {
+    return this._isProcessing;
+  }
+
+  startProcessing(): void {
+    this._isProcessing = true;
+  }
+
+  endProcessing(): void {
+    this._isProcessing = false;
+  }
   exited = false;
-  private _state: ChannelState = 'launching';
   readonly controlTimeout: number;
 
-  constructor(runner: ProcessRunner, id: string, controlTimeout = 30000) {
+  constructor(
+    runner: ProcessRunner,
+    id: string,
+    provider: string,
+    controlTimeout = DEFAULT_CONTROL_TIMEOUT,
+  ) {
     this.id = id;
     this.runner = runner;
+    this.provider = provider;
     this.controlTimeout = controlTimeout;
   }
 
   get isWired(): boolean {
     return this._runnerListeners !== null;
-  }
-
-  get state(): ChannelState {
-    return this._state;
-  }
-
-  transition(next: ChannelState): void {
-    const allowed = VALID_TRANSITIONS[this._state];
-    if (!allowed.includes(next)) {
-      throw new Error(`Invalid Channel state transition: ${this._state} → ${next}`);
-    }
-    this._state = next;
   }
 
   addSocket(socket: TypedSocket): void {
@@ -131,20 +169,22 @@ export class Channel {
   }
 
   emit(event: string, ...args: unknown[]): void {
-    for (const sock of this.sockets) {
-      (sock.emit as (...a: unknown[]) => void)(event, ...args);
-    }
+    this.emitToSockets(null, event, ...args);
   }
 
   emitToOthers(exclude: TypedSocket, event: string, ...args: unknown[]): void {
+    this.emitToSockets(exclude, event, ...args);
+  }
+
+  private emitToSockets(exclude: TypedSocket | null, event: string, ...args: unknown[]): void {
     for (const sock of this.sockets) {
-      if (sock.id !== exclude.id) {
+      if (!exclude || sock.id !== exclude.id) {
         (sock.emit as (...a: unknown[]) => void)(event, ...args);
       }
     }
   }
 
-  buildSessionInitPayload(): Record<string, unknown> {
+  buildSessionInitPayload(): SessionInitPayload {
     const meta = this.metaCache;
     return {
       channelId: this.id,
@@ -172,12 +212,12 @@ export class Channel {
     const pendingRequests: Array<{ requestId: string; event: SocketEvent }> = [];
 
     for (const event of events) {
-      if (event.name === 'control:permission') {
-        pendingRequests.push({ requestId: event.payload.requestId as string, event });
-      } else if (event.name === 'control:elicitation') {
-        pendingRequests.push({ requestId: event.payload.requestId as string, event });
+      if (event.name === 'control:permission' || event.name === 'control:elicitation') {
+        const { requestId } = replayRequestPayload.parse(event.payload);
+        pendingRequests.push({ requestId, event });
       } else if (event.name === 'control:cancel') {
-        respondedRequestIds.add(event.payload.requestId as string);
+        const { requestId } = replayRequestPayload.parse(event.payload);
+        respondedRequestIds.add(requestId);
       }
     }
 
@@ -243,7 +283,6 @@ export class Channel {
     socketEvent: (event: SocketEvent) => void;
     controlResponse: (event: ControlResponseEvent) => void;
     serverAction: (action: ServerAction) => void;
-    autoResponse: (ar: AutoResponse) => void;
     exit: (code: number | null) => void;
   } | null = null;
 
@@ -253,32 +292,27 @@ export class Channel {
     const onSocketEvent = (se: SocketEvent) => {
       // Track last error for exit rejection messages
       if (se.name === 'error:message') {
-        this.lastError = se.payload.message as string;
+        const { message } = errorPayload.parse(se.payload);
+        this.lastError = message;
       }
 
       // Update internal state based on event name
       if (se.name === 'session:init') {
-        this.sessionId = se.payload.sessionId as string;
-        this._sessionState = (se.payload.config ?? {}) as Record<string, unknown>;
+        const init = sessionInitPayload.parse(se.payload);
+        if (init.sessionId) this.sessionId = init.sessionId;
+        this._sessionState = (init.config ?? {}) as SessionState;
         this.updateMetaCache({
-          ...(se.payload.model ? { model: se.payload.model as string } : {}),
-          ...(se.payload.permissionMode
-            ? { permissionMode: se.payload.permissionMode as string }
-            : {}),
-          ...(se.payload.tools ? { tools: se.payload.tools as string[] } : {}),
-          ...(se.payload.fastModeState !== undefined
-            ? { fastModeState: se.payload.fastModeState }
-            : {}),
-          ...(se.payload.mcpServers
-            ? { mcpServers: se.payload.mcpServers as Array<{ name: string; status: string }> }
-            : {}),
-          ...(se.payload.slashCommands
-            ? { slashCommands: se.payload.slashCommands as string[] }
-            : {}),
+          ...(init.model ? { model: init.model } : {}),
+          ...(init.permissionMode ? { permissionMode: init.permissionMode } : {}),
+          ...(init.tools ? { tools: init.tools } : {}),
+          ...(init.fastModeState !== undefined ? { fastModeState: init.fastModeState } : {}),
+          ...(init.mcpServers ? { mcpServers: init.mcpServers } : {}),
+          ...(init.slashCommands ? { slashCommands: init.slashCommands } : {}),
         });
       } else if (se.name === 'session:status') {
-        if (se.payload.permissionMode !== undefined) {
-          this.updateSessionState({ permissionMode: se.payload.permissionMode });
+        const status = sessionStatusPayload.parse(se.payload);
+        if (status.permissionMode !== undefined) {
+          this.updateSessionState({ permissionMode: status.permissionMode });
         }
       }
 
@@ -300,18 +334,8 @@ export class Channel {
       hooks.onServerAction?.(this, action);
     };
 
-    const onAutoResponse = (ar: AutoResponse) => {
-      // Auto-respond back to CLI stdin — provider says this needs immediate reply
-      this.runner.respondToControlRequest(ar.requestId, ar.response);
-    };
-
     const onExit = (code: number | null) => {
       this.exited = true;
-
-      // Transition to closed
-      if (this._state !== 'closed') {
-        this._state = 'closed';
-      }
 
       // Reject all pending control requests — process is gone
       for (const [id, pending] of this.pendingRequests) {
@@ -329,14 +353,12 @@ export class Channel {
       socketEvent: onSocketEvent,
       controlResponse: onControlResponse,
       serverAction: onServerAction,
-      autoResponse: onAutoResponse,
       exit: onExit,
     };
 
     this.runner.on('socket_event', onSocketEvent);
     this.runner.on('control_response', onControlResponse);
     this.runner.on('server_action', onServerAction);
-    this.runner.on('auto_response', onAutoResponse);
     this.runner.on('exit', onExit);
   }
 
@@ -346,7 +368,6 @@ export class Channel {
     this.runner.removeListener('socket_event', l.socketEvent);
     this.runner.removeListener('control_response', l.controlResponse);
     this.runner.removeListener('server_action', l.serverAction);
-    this.runner.removeListener('auto_response', l.autoResponse);
     this.runner.removeListener('exit', l.exit);
     this._runnerListeners = null;
   }
@@ -368,8 +389,6 @@ export class Channel {
     this.resetSessionState();
     this.planComments = [];
     this.sockets.clear();
-    if (this._state !== 'closed') {
-      this._state = 'closed';
-    }
+    this.exited = true;
   }
 }

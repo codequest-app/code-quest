@@ -28,8 +28,8 @@ export function GitProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<GitContextValue>(
     () => ({
-      gitStatus: () => rpc(socket, 'check_git_status'),
-      gitCheckout: (branch) => rpc(socket, 'checkout_branch', { branch }),
+      gitStatus: () => rpc(socket, 'git:status'),
+      gitCheckout: (branch) => rpc(socket, 'git:checkout', { branch }),
       gitLog: (limit) => rpc(socket, 'git:log', { limit }),
       gitDiff: () => rpc(socket, 'git:diff'),
     }),

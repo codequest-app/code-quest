@@ -32,7 +32,7 @@ function withChannel(initialState?: ChannelInitialState) {
 const meta = {
   component: ChatInputArea,
   tags: ['autodocs'],
-  args: { toggleHistory: () => {} },
+  args: {},
 } satisfies Meta<typeof ChatInputArea>;
 
 export default meta;

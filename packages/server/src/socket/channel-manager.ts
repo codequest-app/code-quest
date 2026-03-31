@@ -40,20 +40,16 @@ export class ChannelManager {
     private adapter: ProviderAdapter,
   ) {}
 
+  get provider(): string {
+    return this.adapter.command;
+  }
+
   get providerClientConfig() {
     return this.adapter.clientConfig;
   }
 
   get(channelId: string): Channel | undefined {
     return this.channels.get(channelId);
-  }
-
-  /** Find channel by its runner instance. */
-  findByRunner(runner: unknown): Channel | undefined {
-    for (const ch of this.channels.values()) {
-      if (ch.runner === runner) return ch;
-    }
-    return undefined;
   }
 
   /** Find channel that owns a pending control/notification request. Returns [channelId, channel]. */
@@ -82,7 +78,7 @@ export class ChannelManager {
     },
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
     const runner = this.runnerFactory.create(opts?.launchOptions);
-    const channel = new Channel(runner, channelId);
+    const channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
 
     channel.wireRunner(opts?.hooks);
@@ -115,7 +111,7 @@ export class ChannelManager {
     }
 
     const runner = this.runnerFactory.create({ resumeSessionId: record.sessionId });
-    channel = new Channel(runner, channelId);
+    channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
     channel.wireRunner(opts?.hooks);
     this.wireRawPersistence(channel);
@@ -151,9 +147,9 @@ export class ChannelManager {
       if (ch.exited) continue;
       result.push({
         channelId: id,
-        state: ch.state === 'streaming' ? 'busy' : 'idle',
-        title: ch.sessionState?.title as string | undefined,
-        model: ch.sessionState?.model as string | undefined,
+        state: ch.isProcessing ? 'busy' : 'idle',
+        title: ch.sessionState?.title,
+        model: ch.sessionState?.model,
       });
     }
     return result;

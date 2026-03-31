@@ -1,26 +1,14 @@
-import type { SessionSummary } from '@code-quest/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTab } from '../contexts/TabContext';
 import { ChatPanel } from './ChatPanel';
-import { SessionHistory } from './SessionHistory';
 import { TabBar } from './TabBar';
 
-const SIDE_PANEL = 'w-72 shrink-0';
-
 export function WorkspaceLayout() {
-  const {
-    activeTabId,
-    tabs,
-    joinSession,
-    setActiveTab,
-    removeTab,
-    createNewTab,
-    setTabTitle,
-    setTabStatus,
-  } = useTab();
-  const { listSessions, closeSession } = useSession();
+  const { activeTabId, tabs, setActiveTab, removeTab, createNewTab, setTabTitle, setTabStatus } =
+    useTab();
+  const { closeSession } = useSession();
 
   const handleCloseTab = useCallback(
     (id: string) => {
@@ -31,33 +19,11 @@ export function WorkspaceLayout() {
   );
   const tabIds = Object.keys(tabs);
 
-  // ── History sidebar (local UI state) ──
-  const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<{ sessions: SessionSummary[]; total: number }>({
-    sessions: [],
-    total: 0,
-  });
-  const toggleHistory = () => setShowHistory((v) => !v);
-
-  useEffect(() => {
-    if (!showHistory) return;
-    listSessions({ limit: 50 }).then(setHistory);
-  }, [showHistory, listSessions]);
-
-  const openTabs = useMemo(
-    () =>
-      Object.entries(tabs).map(([id, meta]) => ({
-        sessionId: id,
-        title: meta.title,
-        status: meta.tabStatus,
-      })),
-    [tabs],
-  );
-
-  const handleSelectSession = (id: string) => {
-    joinSession(id);
-    setShowHistory(false);
-  };
+  const openTabs = Object.entries(tabs).map(([id, meta]) => ({
+    sessionId: id,
+    title: meta.title,
+    status: meta.tabStatus,
+  }));
 
   return (
     <>
@@ -67,7 +33,6 @@ export function WorkspaceLayout() {
         onSelectTab={setActiveTab}
         onCloseTab={handleCloseTab}
         onNewTab={() => createNewTab()}
-        onOpenHistory={toggleHistory}
       />
       <div className="flex flex-1 overflow-hidden relative">
         {tabIds.map((id) => (
@@ -77,25 +42,10 @@ export function WorkspaceLayout() {
               onTitleChange={(title) => setTabTitle(id, title)}
               onStatusChange={(status) => setTabStatus(id, status)}
             >
-              <ChatPanel
-                title={tabs[id]?.title}
-                joinSession={joinSession}
-                toggleHistory={toggleHistory}
-              />
+              <ChatPanel title={tabs[id]?.title} />
             </ChannelProvider>
           </div>
         ))}
-        {showHistory && (
-          <div className={tabIds.length > 0 ? SIDE_PANEL : 'flex-1'}>
-            <SessionHistory
-              sessions={history.sessions}
-              totalCount={history.total}
-              currentChannelId={activeTabId}
-              onSelect={handleSelectSession}
-              onClose={toggleHistory}
-            />
-          </div>
-        )}
       </div>
     </>
   );

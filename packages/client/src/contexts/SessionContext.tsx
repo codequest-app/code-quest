@@ -1,5 +1,6 @@
 import type { SessionSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
 
@@ -39,6 +40,7 @@ export interface SessionContextValue {
   ) => Promise<{ success: boolean; error?: string }>;
 
   closeSession: (channelId: string) => void;
+  resumeSession: (channelId: string) => void;
 
   initOptions: Record<string, unknown>;
   setInitOptions: (opts: Record<string, unknown>) => void;
@@ -66,16 +68,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onConnect = () => {
-      socket.emit('init', (res) => {
+      socket.emit('app:init', (res) => {
         if (res.settings && Object.keys(res.settings).length > 0) {
           setInitOptions((prev) => ({ ...prev, ...res.settings }));
         }
       });
     };
+    const onConnectError = (err: Error) => {
+      toast.error(`Connection error: ${err.message}`);
+    };
     socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
     socket.connect();
     return () => {
       socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
     };
   }, [socket]);
 
@@ -92,31 +99,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const actions = useMemo<Omit<SessionContextValue, 'initOptions' | 'auth'>>(
     () => ({
       setInitOptions,
-      listSessions: (opts) => rpc(socket, 'list_sessions_request', opts ?? {}),
-      listRemoteSessions: (opts) => rpc(socket, 'list_remote_sessions', opts ?? {}),
-      getSession: (channelId) => rpc(socket, 'get_session_request', { channelId }),
+      listSessions: (opts) => rpc(socket, 'session:list', opts ?? {}),
+      listRemoteSessions: (opts) => rpc(socket, 'session:list_remote', opts ?? {}),
+      getSession: (channelId) => rpc(socket, 'session:get', { channelId }),
       forkSession: (forkedFromSession, resumeSessionAt) =>
-        rpc(socket, 'fork_conversation', {
+        rpc(socket, 'session:fork', {
           forkedFromSession,
           resumeSessionAt,
           newSessionId: crypto.randomUUID(),
         }),
       teleportSession: (remoteSessionId, branch) =>
-        rpc(socket, 'teleport_session', {
+        rpc(socket, 'session:teleport', {
           remoteSessionId,
           branch,
           newSessionId: crypto.randomUUID(),
         }),
-      renameSession: (channelId, title) => rpc(socket, 'rename_session', { channelId, title }),
-      deleteSession: (channelId) => rpc(socket, 'delete_session', { channelId }),
+      renameSession: (channelId, title) => rpc(socket, 'session:rename', { channelId, title }),
+      deleteSession: (channelId) => rpc(socket, 'session:delete', { channelId }),
       updateSessionState: (channelId, update) =>
-        rpc(socket, 'update_session_state', { channelId, ...update }),
+        rpc(socket, 'session:update_state', { channelId, ...update }),
       closeSession: (channelId: string) => {
         socket.emit('session:close', { channelId });
       },
+      resumeSession: (channelId: string) => {
+        socket.emit('session:resume', { channelId });
+      },
       login: () => {
         setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
-        socket.emit('login', { method: 'oauth' }, (res) => {
+        socket.emit('auth:login', { method: 'oauth' }, (res) => {
           if (!res.success) {
             setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
           }
@@ -124,7 +134,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       },
       submitOAuthCode: (code: string, state?: string) => {
         setAuth((prev) => ({ ...prev, status: 'waiting' }));
-        socket.emit('submit_oauth_code', { code, state }, (res) => {
+        socket.emit('auth:oauth_code', { code, state }, (res) => {
           if (res.success) {
             setAuth({ status: 'success', authUrl: null, errorMsg: null });
           } else {

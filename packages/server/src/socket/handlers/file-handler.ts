@@ -1,12 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, normalize, resolve } from 'node:path';
-import {
-  fileListSchema,
-  terminalGetContentsSchema,
-  terminalOpenClaudeSchema,
-} from '@code-quest/shared';
+import { fileListSchema } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
 import { rgAvailable, rgListFiles } from './helpers.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
@@ -16,7 +11,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback({ error: 'Session not found' });
       return;
     }
-    const cwd = (channel.sessionState.cwd as string) || process.cwd();
+    const cwd = channel.sessionState.cwd ?? process.cwd();
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback({ error: 'Path traversal not allowed' });
@@ -30,7 +25,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('list_files_request', (payload, callback) => {
+  socket.on('file:list', (payload, callback) => {
     const parsed = fileListSchema.safeParse(payload);
     if (!parsed.success) {
       callback({ files: [] });
@@ -104,50 +99,6 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback({ files: combined });
     } catch {
       callback({ files: [] });
-    }
-  });
-
-  socket.on('terminal:get_contents', (payload, callback) => {
-    try {
-      const { channelId } = terminalGetContentsSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
-      if (!channel || channel.terminalLines.length === 0) {
-        callback({ content: null });
-        return;
-      }
-      const lines = channel.terminalLines.slice(-100);
-      callback({ content: lines.join('\n') });
-    } catch {
-      callback({ content: null });
-    }
-  });
-
-  socket.on('terminal:open_claude', async (payload, callback) => {
-    try {
-      const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
-      const existingChannel = ctx.channelManager.get(channelId);
-      const baseCwd =
-        cwd ?? (existingChannel?.sessionState.cwd as string | undefined) ?? process.cwd();
-
-      const newChannelId = crypto.randomUUID();
-      const hooks = ctx.buildChannelHooks(newChannelId);
-      const { channel: ch } = await ctx.channelManager.create(newChannelId, {
-        hooks,
-        onBeforeSpawn: (c) => ctx.addSocketToChannel(c, socket),
-      });
-      ch.updateSessionState({ cwd: baseCwd });
-
-      ctx.io?.emit('session:states', {
-        sessions: [{ channelId: newChannelId, state: 'idle' }],
-      });
-
-      if (prompt) {
-        ch.runner.sendMessage(prompt);
-      }
-
-      callback({ success: true, channelId: newChannelId });
-    } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to open claude terminal') });
     }
   });
 }

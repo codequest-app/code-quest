@@ -1,14 +1,56 @@
 import { readFile } from 'node:fs/promises';
+import { z } from 'zod';
 import type { WireRunnerHooks } from '../channel.ts';
 import type { HandlerContext } from '../handler-context.ts';
+
+const resultPayload = z.object({ errors: z.array(z.string()).optional() }).passthrough();
+const fileUpdatedPayload = z
+  .object({
+    filePath: z.string(),
+    oldContent: z.string().nullable().optional(),
+    newContent: z.string().nullable().optional(),
+  })
+  .passthrough();
+const requestIdPayload = z.object({ requestId: z.string() }).passthrough();
+const permissionPayload = z
+  .object({ requestId: z.string(), toolName: z.string(), toolUseId: z.string() })
+  .passthrough();
+const diffReviewPayload = z.object({ toolId: z.string() }).passthrough();
+const rateLimitPayload = z
+  .object({
+    info: z
+      .object({
+        status: z.string(),
+        rateLimitType: z.string().optional(),
+        resetsAt: z.coerce.number().optional(),
+        utilization: z.number().optional(),
+        overageStatus: z.string().optional(),
+        isUsingOverage: z.boolean().optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+const serverActionInputModel = z.object({ model: z.string() }).passthrough();
+const serverActionInputMode = z.object({ mode: z.string() }).passthrough();
+const mcpPayload = z
+  .object({
+    requestId: z.string(),
+    message: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
+
+/** Timeout for MCP JSON-RPC message relay (ms). */
+const MCP_MESSAGE_TIMEOUT = 10_000;
+
+function jsonRpcError(id: unknown, message: string): Record<string, unknown> {
+  return { jsonrpc: '2.0', error: { code: -32603, message }, id: id ?? null };
+}
 
 /**
  * Build WireRunnerHooks with ChatHandler-specific business logic.
  * Extracted from ChatHandler so it can be tested and composed independently.
  */
 export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireRunnerHooks {
-  let lastResultErrors: string[] | undefined;
-
   const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
 
   return {
@@ -21,63 +63,63 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         }
         case 'message:result': {
-          const errors = p.errors as string[] | undefined;
-          if (errors?.length) lastResultErrors = errors;
+          resultPayload.parse(p);
+          ch.endProcessing();
           ctx.broadcastSessionState(channelId, 'idle');
           break;
         }
-        case 'system:rate_limit':
-          ctx.usageTracker.update(p.info as Parameters<typeof ctx.usageTracker.update>[0]);
+        case 'system:rate_limit': {
+          const { info } = rateLimitPayload.parse(p);
+          ctx.usageTracker.update(info);
           break;
-        case 'system:file_updated':
-          ctx.emitToSession(channelId, 'file_updated', {
+        }
+        case 'system:file_updated': {
+          const file = fileUpdatedPayload.parse(p);
+          ctx.emitToSession(channelId, 'file:updated', { channelId, ...file });
+          break;
+        }
+        case 'control:cancel': {
+          const { requestId } = requestIdPayload.parse(p);
+          ch.removeControlRequest(requestId);
+          ctx.emitToSession(channelId, 'chat:cancel_request', {
             channelId,
-            filePath: p.filePath as string,
-            oldContent: p.oldContent as string | null | undefined,
-            newContent: p.newContent as string | null | undefined,
+            targetRequestId: requestId,
           });
           break;
-        case 'control:cancel':
-          ch.removeControlRequest(p.requestId as string);
-          ctx.emitToSession(channelId, 'cancel_request', {
-            channelId,
-            targetRequestId: p.requestId as string,
-          });
-          break;
-        case 'control:permission':
-          ch.trackControlRequest(p.requestId as string, {
+        }
+        case 'control:permission': {
+          const perm = permissionPayload.parse(p);
+          ch.trackControlRequest(perm.requestId, {
             subtype: 'can_use_tool',
-            toolName: p.toolName as string,
-            toolUseId: p.toolUseId as string,
+            toolName: perm.toolName,
+            toolUseId: perm.toolUseId,
           });
           break;
-        case 'control:elicitation':
-          ch.trackControlRequest(p.requestId as string, { subtype: 'elicitation' });
+        }
+        case 'control:elicitation': {
+          const { requestId } = requestIdPayload.parse(p);
+          ch.trackControlRequest(requestId, { subtype: 'elicitation' });
           break;
-        case 'control:diff_review':
-          ch.trackControlRequest(p.toolId as string, { subtype: 'open_diff' });
+        }
+        case 'control:diff_review': {
+          const { toolId } = diffReviewPayload.parse(p);
+          ch.trackControlRequest(toolId, { subtype: 'open_diff' });
           break;
+        }
         case 'control:mcp': {
-          const requestId = p.requestId as string;
+          const mcp = mcpPayload.parse(p);
           const hasClient = ch.sockets.size > 0;
+          const mcpId = mcp.message?.id;
           if (!hasClient) {
-            ch.runner.respondToControlRequest(requestId, {
-              jsonrpc: '2.0',
-              error: { code: -32603, message: 'no client' },
-              id: (p.message as Record<string, unknown>)?.id ?? null,
-            });
+            ch.runner.respondToControlRequest(mcp.requestId, jsonRpcError(mcpId, 'no client'));
             break;
           }
           const mcpTimeout = setTimeout(() => {
-            ch.removeControlRequest(requestId);
-            ch.runner.respondToControlRequest(requestId, {
-              jsonrpc: '2.0',
-              error: { code: -32603, message: 'timeout' },
-              id: (p.message as Record<string, unknown>)?.id ?? null,
-            });
-          }, 10_000);
-          ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
-          ch.mcpTimeouts.set(requestId, mcpTimeout);
+            ch.removeControlRequest(mcp.requestId);
+            ch.runner.respondToControlRequest(mcp.requestId, jsonRpcError(mcpId, 'timeout'));
+          }, MCP_MESSAGE_TIMEOUT);
+          ch.trackControlRequest(mcp.requestId, { subtype: 'mcp_message' });
+          ch.mcpTimeouts.set(mcp.requestId, mcpTimeout);
           break;
         }
       }
@@ -89,25 +131,38 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           switch (action.subtype) {
             case 'get_settings': {
               const state = ch.sessionState;
-              const settings = {
-                ...ctx.settingsStore.getAll(),
-                ...(state.model !== undefined ? { model: state.model } : {}),
-                ...(state.permissionMode !== undefined
-                  ? { permissionMode: state.permissionMode }
-                  : {}),
-              };
-              ch.runner.respondToControlRequest(action.requestId, settings);
+              void ctx.settingsStore
+                .getMany(ch.provider, ['model', 'permissionMode'])
+                .then((stored) => {
+                  const settings = {
+                    ...stored,
+                    ...(state.model !== undefined ? { model: state.model } : {}),
+                    ...(state.permissionMode !== undefined
+                      ? { permissionMode: state.permissionMode }
+                      : {}),
+                  };
+                  ch.runner.respondToControlRequest(action.requestId, settings);
+                })
+                .catch(() => {
+                  // Fallback: respond with sessionState only
+                  ch.runner.respondToControlRequest(action.requestId, {
+                    ...(state.model !== undefined ? { model: state.model } : {}),
+                    ...(state.permissionMode !== undefined
+                      ? { permissionMode: state.permissionMode }
+                      : {}),
+                  });
+                });
               break;
             }
             case 'set_model': {
-              const model = ((action.input as Record<string, unknown>)?.model as string) ?? '';
+              const { model } = serverActionInputModel.parse(action.input ?? {});
               ch.updateSessionState({ model });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
               break;
             }
             case 'set_permission_mode': {
-              const mode = ((action.input as Record<string, unknown>)?.mode as string) ?? '';
+              const { mode } = serverActionInputMode.parse(action.input ?? {});
               ch.updateSessionState({ permissionMode: mode });
               ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
               ctx.broadcastSessionState(channelId, 'busy');
@@ -160,13 +215,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
       }
     },
 
-    onExit: (ch, code) => {
-      const rejectMsg = lastResultErrors?.[0] ?? `Process closed with exit code ${code}`;
-      for (const [, pending] of ch.pendingRequests) {
-        clearTimeout(pending.timer);
-        pending.reject(new Error(rejectMsg));
-      }
-      ch.pendingRequests.clear();
+    onExit: (ch, _code) => {
       ctx.broadcastSessionState(channelId, 'exited');
       ch.resetSessionState();
       ctx.emitToSession(channelId, 'session:closed', {

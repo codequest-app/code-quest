@@ -6,7 +6,11 @@ import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel';
 import { PendingActionBanner } from './PendingActionBanner';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
-export function ChatInputArea({ toggleHistory }: { toggleHistory: () => void }) {
+export function ChatInputArea({
+  onResumeConversation,
+}: {
+  onResumeConversation?: () => void;
+} = {}) {
   const { permissionMode, isFastMode } = useChannelConfig();
   const { focusTextarea, addAttachments } = useChannelCompose();
   const { modifiedFiles, removeModifiedFile } = useChannelMessages();
@@ -45,7 +49,7 @@ export function ChatInputArea({ toggleHistory }: { toggleHistory: () => void }) 
         role="none"
       >
         <ComposeInput />
-        <ComposeToolbar onResumeConversation={toggleHistory} onAttachFile={openFilePicker} />
+        <ComposeToolbar onResumeConversation={onResumeConversation} onAttachFile={openFilePicker} />
       </div>
       {modifiedFileEntries.length > 0 && (
         <ModifiedFilesPanel files={modifiedFileList} onAccept={removeModifiedFile} />

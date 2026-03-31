@@ -14,7 +14,7 @@ import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { ensureChannel, errMsg } from '../handler-context.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('reconnect_mcp_server', async (payload, callback) => {
+  socket.on('mcp:reconnect', async (payload, callback) => {
     try {
       const { channelId, serverName } = mcpReconnectSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -28,7 +28,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('set_mcp_server_enabled', async (payload, callback) => {
+  socket.on('mcp:toggle', async (payload, callback) => {
     try {
       const { channelId, serverName, enabled } = mcpSetEnabledSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -43,7 +43,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('get_mcp_servers', async (payload, callback) => {
+  socket.on('mcp:servers', async (payload, callback) => {
     try {
       const { channelId } = mcpGetServersSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -55,7 +55,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('mcp_set_servers', async (payload, callback) => {
+  socket.on('mcp:set_servers', async (payload, callback) => {
     try {
       const { channelId, servers } = mcpSetServersSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -67,7 +67,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('mcp_message', async (payload, callback) => {
+  socket.on('mcp:message', async (payload, callback) => {
     try {
       const { channelId, serverName, message } = mcpMessageSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -82,7 +82,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('authenticate_mcp_server', async (payload, callback) => {
+  socket.on('mcp:authenticate', async (payload, callback) => {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -91,7 +91,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         server_name: serverName,
       });
       if (result.success) {
-        callback({ success: true, authUrl: result.response?.authUrl as string | undefined });
+        callback({ success: true, authUrl: String(result.response?.authUrl ?? '') || undefined });
       } else {
         callback({ success: false, error: result.error ?? 'Authentication failed' });
       }
@@ -100,7 +100,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('clear_mcp_server_auth', async (payload, callback) => {
+  socket.on('mcp:clear_auth', async (payload, callback) => {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -118,7 +118,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('submit_mcp_oauth_callback_url', async (payload, callback) => {
+  socket.on('mcp:oauth_callback', async (payload, callback) => {
     try {
       const { channelId, serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -133,7 +133,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('ensure_chrome_mcp_enabled', async (payload, callback) => {
+  socket.on('mcp:ensure_chrome', async (payload, callback) => {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -143,26 +143,26 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
       const wasDisabled = ctx.chromeMcpState.status !== 'connected';
       ctx.chromeMcpState = { status: 'connecting' };
-      ctx.io?.emit('state:update', { channelId: '', chromeMcpState: { status: 'connecting' } });
+      ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: { status: 'connecting' } });
 
       await channel.sendControlRequest('mcp_set_servers', {
         'claude-in-chrome': { command: 'claude', args: ['mcp', 'serve', 'chrome'] },
       });
 
       ctx.chromeMcpState = { status: 'connected' };
-      ctx.io?.emit('state:update', { channelId: '', chromeMcpState: { status: 'connected' } });
+      ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: { status: 'connected' } });
       callback({
         success: true,
         response: { type: 'ensure_chrome_mcp_enabled_response', wasDisabled },
       });
     } catch (err) {
       ctx.chromeMcpState = { status: 'disconnected' };
-      ctx.io?.emit('state:update', { channelId: '', chromeMcpState: ctx.chromeMcpState });
+      ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: ctx.chromeMcpState });
       callback({ success: false, error: errMsg(err, 'Failed to enable Chrome MCP') });
     }
   });
 
-  socket.on('disable_chrome_mcp', async (payload, callback) => {
+  socket.on('mcp:disable_chrome', async (payload, callback) => {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -175,14 +175,17 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       await channel.sendControlRequest('mcp_set_servers', {});
 
       ctx.chromeMcpState = { status: 'disconnected' };
-      ctx.io?.emit('state:update', { channelId: '', chromeMcpState: { status: 'disconnected' } });
+      ctx.io?.emit('settings:update', {
+        channelId: '',
+        chromeMcpState: { status: 'disconnected' },
+      });
       callback({ success: true, response: { type: 'disable_chrome_mcp_response', wasEnabled } });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to disable Chrome MCP') });
     }
   });
 
-  socket.on('enable_jupyter_mcp', async (payload, callback) => {
+  socket.on('mcp:enable_jupyter', async (payload, callback) => {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -195,10 +198,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         'claude-jupyter': { command: 'claude', args: ['mcp', 'serve', 'jupyter'] },
       });
 
-      ctx.io?.emit('state:update', { channelId: '', jupyterMcpState: { status: 'active' } });
+      ctx.io?.emit('settings:update', { channelId: '', jupyterMcpState: { status: 'active' } });
       callback({ success: true, response: { type: 'enable_jupyter_mcp_response' } });
     } catch (err) {
-      ctx.io?.emit('state:update', {
+      ctx.io?.emit('settings:update', {
         channelId: '',
         jupyterMcpState: { status: 'inactive' },
       });
@@ -206,7 +209,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('disable_jupyter_mcp', async (payload, callback) => {
+  socket.on('mcp:disable_jupyter', async (payload, callback) => {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -217,7 +220,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
       await channel.sendControlRequest('mcp_set_servers', {});
 
-      ctx.io?.emit('state:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
+      ctx.io?.emit('settings:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
       callback({ success: true, response: { type: 'disable_jupyter_mcp_response' } });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to disable Jupyter MCP') });
@@ -225,7 +228,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   // Debugger: extension also returns empty response — no CLI action needed
-  socket.on('ask_debugger_help', (payload, callback) => {
+  socket.on('mcp:ask_debugger', (payload, callback) => {
     try {
       debuggerHelpSchema.parse(payload);
       callback({ success: true, response: { type: 'ask_debugger_help_response' } });
