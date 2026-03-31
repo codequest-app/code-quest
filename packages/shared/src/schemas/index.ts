@@ -1,6 +1,7 @@
 export * from './auth.ts';
 export * from './common.ts';
 export * from './control.ts';
+export * from './control-response.ts';
 export * from './file.ts';
 export * from './git.ts';
 export * from './mcp.ts';
@@ -11,5 +12,6 @@ export * from './plugin.ts';
 export * from './provider.ts';
 export * from './session.ts';
 export * from './settings.ts';
+export * from './socket-event-payload.ts';
 export * from './system.ts';
 export * from './terminal.ts';

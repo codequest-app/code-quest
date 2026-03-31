@@ -1,6 +1,6 @@
+import { controlAuthenticateResponseSchema } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { cliAuthenticateResponseSchema } from './cli-response-schemas.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('auth:status', (callback) => {
@@ -20,7 +20,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const controlResp = await channel.sendControlRequest('claude_authenticate', {
         loginWithClaudeAi: payload.method !== 'api_key',
       });
-      const parsed = cliAuthenticateResponseSchema.safeParse(controlResp.response);
+      const parsed = controlAuthenticateResponseSchema.safeParse(controlResp.response);
       const authData = parsed.success ? parsed.data : undefined;
       if (authData?.manualUrl || authData?.automaticUrl) {
         socket.emit('notification:auth_url', {

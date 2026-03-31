@@ -124,16 +124,21 @@ describe('ChatPanel', () => {
     expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
   });
 
-  it('chat:cancel_request shows "Cancelled" feedback in DOM', async () => {
+  it('chat:cancel_request silently removes pending control banner', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
     await claude.emit(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
+
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+
     await claude.emit(s.controlCancelRequest('r1'));
     await claude.emit(s.result());
 
-    expect(screen.queryAllByText(/Cancelled/i).length).toBeGreaterThan(0);
+    // Banner removed, no "Cancelled" text shown
+    expect(screen.queryByText('Yes')).not.toBeInTheDocument();
+    expect(screen.queryAllByText(/Cancelled/i)).toHaveLength(0);
   });
 
   it('notification error shows message in UI', async () => {

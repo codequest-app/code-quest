@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-/** CLI initialize control_response.response shape */
-export const cliInitResponseSchema = z
+/** initialize control_response.response shape */
+export const controlInitResponseSchema = z
   .object({
     commands: z.array(z.object({ name: z.string() }).passthrough()).optional(),
     models: z.array(z.unknown()).optional(),
@@ -17,21 +17,23 @@ export const cliInitResponseSchema = z
   })
   .passthrough();
 
-export type CliInitResponse = z.infer<typeof cliInitResponseSchema>;
+export type ControlInitResponse = z.infer<typeof controlInitResponseSchema>;
 
-/** CLI claude_authenticate control_response.response shape */
-export const cliAuthenticateResponseSchema = z
+/** claude_authenticate control_response.response shape */
+export const controlAuthenticateResponseSchema = z
   .object({
     manualUrl: z.string().optional(),
     automaticUrl: z.string().optional(),
   })
   .passthrough();
 
-export type CliAuthenticateResponse = z.infer<typeof cliAuthenticateResponseSchema>;
+export type ControlAuthenticateResponse = z.infer<typeof controlAuthenticateResponseSchema>;
 
-/** CLI generate_session_title control_response.response shape */
-export const cliGenerateTitleResponseSchema = z
+/** generate_session_title control_response.response shape */
+export const controlGenerateTitleResponseSchema = z
   .object({
     title: z.string(),
   })
   .passthrough();
+
+export type ControlGenerateTitleResponse = z.infer<typeof controlGenerateTitleResponseSchema>;

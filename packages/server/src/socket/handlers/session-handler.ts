@@ -3,6 +3,7 @@ import {
   chatGenerateSessionTitleSchema,
   chatJoinSchema,
   chatKillSchema,
+  controlInitResponseSchema,
   sessionDeleteSchema,
   sessionForkSchema,
   sessionGetSchema,
@@ -16,7 +17,6 @@ import {
 import { config } from '../../config.ts';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
-import { cliInitResponseSchema } from './cli-response-schemas.ts';
 import { DEFAULT_THINKING_TOKENS, execGit } from './helpers.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
@@ -88,7 +88,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
 
       // Extract data from initialize response
-      const initResponse = cliInitResponseSchema.safeParse(initResult.response);
+      const initResponse = controlInitResponseSchema.safeParse(initResult.response);
       const commands = initResponse.success ? initResponse.data.commands : undefined;
       const slashCommands = Array.isArray(commands)
         ? [...new Set(commands.map((c) => c.name))]
