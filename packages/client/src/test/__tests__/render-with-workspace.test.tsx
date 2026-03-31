@@ -29,4 +29,38 @@ describe('renderWithWorkspace', () => {
     // getByText (not findByText) — proves flush happened synchronously after emit
     expect(screen.getByText(/Reply from Claude/)).toBeInTheDocument();
   });
+
+  it('auto-generates title after first prompt and persists to DB', async () => {
+    const { claude, channelId, user } = await renderWithWorkspace();
+
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'generate_session_title') {
+        return { title: 'Fix the login bug' };
+      }
+      return null;
+    });
+
+    // User sends a prompt
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'fix the login page');
+    await user.keyboard('{Enter}');
+
+    // CLI responds
+    await claude.emit(s.assistant('ok'));
+    await claude.emit(s.result());
+    await new Promise<void>((r) => setTimeout(r, 100));
+
+    // Tab title shows in UI (from first user message)
+    const tab = screen.getByRole('tab', { selected: true });
+    expect(tab).toHaveTextContent('fix the login page');
+
+    // DB has CLI-generated title
+    const sessionStore = claude.container.get<{
+      getById(id: string): Promise<{ title?: string } | null>;
+    }>(Symbol.for('SessionStore'));
+    const record = await sessionStore.getById(channelId);
+    expect(record).toBeDefined();
+    expect(record!.title).toBe('Fix the login bug');
+  });
 });
