@@ -1,4 +1,7 @@
 import type { SpawnOptions } from 'node:child_process';
+import type { ProviderClientConfig, SocketEvent } from '@code-quest/shared';
+
+export type { SocketEvent };
 
 // --- Raw entry for recording ---
 
@@ -44,4 +47,90 @@ export interface ProcessHandle {
 
 export interface ProcessProvider {
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle;
+}
+
+// --- AdapterOutput: result of transforming a protocol event ---
+
+export interface AdapterOutput {
+  events: SocketEvent[];
+  controlResponses: ControlResponseEvent[];
+  serverActions: ServerAction[];
+}
+
+// --- ServerAction: adapter tells server what to do ---
+
+export interface AutoRespondAction {
+  action: 'auto_respond';
+  requestId: string;
+  subtype: string;
+  response: Record<string, unknown>;
+  input?: unknown;
+}
+
+export interface ReadDiffAction {
+  action: 'read_diff';
+  requestId: string;
+  originalPath: string;
+  newPath: string;
+}
+
+export interface ForwardToClientAction {
+  action: 'forward_to_client';
+  requestId: string;
+  subtype: string;
+  toolName?: string;
+  toolUseId?: string;
+  input?: unknown;
+  suggestions?: unknown[];
+  callbackId?: string;
+}
+
+export type ServerAction = AutoRespondAction | ReadDiffAction | ForwardToClientAction;
+
+// --- ParseResult: generic parse output ---
+
+export interface ParseOk<E = unknown> {
+  status: 'ok';
+  raw: string;
+  event: E;
+}
+
+export interface ParseSkip {
+  status: 'skip';
+  raw: string;
+  reason: string;
+}
+
+export interface ParseUnknown {
+  status: 'unknown';
+  raw: string;
+  type: string;
+  data: unknown;
+}
+
+export interface ParseError {
+  status: 'error';
+  raw: string;
+  error: unknown;
+}
+
+export type ParseResult<E = unknown> = ParseOk<E> | ParseSkip | ParseUnknown | ParseError;
+
+// --- ProviderAdapter: contract between ProcessRunner and CLI providers ---
+
+export interface ProviderAdapter<E = unknown, L = unknown> {
+  readonly command: string;
+  readonly clientConfig: ProviderClientConfig;
+
+  buildArgs(options?: L): string[];
+  parseLine(line: string): ParseResult<E>;
+  transform(event: E): AdapterOutput;
+  formatMessage(text: string): string;
+  formatControlRequest(
+    subtype: string,
+    input?: Record<string, unknown>,
+    requestId?: string,
+  ): string;
+  formatControlResponse(requestId: string, response: Record<string, unknown>): string;
+  extractRespondedRequestIds(rawEntries: Array<{ direction: string; raw: string }>): Set<string>;
 }

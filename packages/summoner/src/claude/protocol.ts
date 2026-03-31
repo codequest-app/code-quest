@@ -1,5 +1,6 @@
-import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolEvent } from './claude-schemas.ts';
-import type { LaunchOptions, ParseResult } from './provider-adapter.ts';
+import type { ParseResult } from '../types.ts';
+import type { LaunchOptions } from './launch-options.ts';
+import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolEvent } from './schemas.ts';
 
 // ── ClaudeProtocol ──
 
@@ -111,7 +112,7 @@ export class ClaudeProtocol {
    * Parse a single line of CLI stdout JSON into a typed result.
    * Always returns a ParseResult — never null.
    */
-  parseLine(line: string): ParseResult {
+  parseLine(line: string): ParseResult<ProtocolEvent> {
     const trimmed = line.trim();
     if (!trimmed) return { status: 'skip', raw: line, reason: 'empty' };
 

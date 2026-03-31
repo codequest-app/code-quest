@@ -7,8 +7,9 @@ import type {
   NotificationResponse,
   PluginInfo,
   ServerToClientEvents,
+  SocketEvent,
 } from '@code-quest/shared';
-import type { ProcessRunner, SocketEvent } from '@code-quest/summoner';
+import type { ProcessRunner } from '@code-quest/summoner';
 import type { Server, Socket } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';

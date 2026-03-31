@@ -1,6 +1,6 @@
 import { providerClientConfigSchema } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
-import { ClaudeAdapter } from '../../protocol/claude-adapter.ts';
+import { ClaudeAdapter } from '../../claude/adapter.ts';
 
 describe('ClaudeAdapter.clientConfig', () => {
   const adapter = new ClaudeAdapter();
