@@ -4,17 +4,20 @@ import {
   providerClientConfigSchema,
 } from '@code-quest/shared';
 import type { ControlResponseEvent } from '../types.ts';
-import { ClaudeProtocol } from './claude.ts';
+import { ClaudeProtocol } from './claude-protocol.ts';
 import type { ProtocolEvent } from './claude-schemas.ts';
 import type {
   AdapterOutput,
-  AutoResponse,
   LaunchOptions,
   ParseResult,
   ProviderAdapter,
+  ServerAction,
   SocketEvent,
 } from './provider-adapter.ts';
-import type { ServerAction } from './server-action.ts';
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
+}
 
 interface ConvertResult {
   events: SocketEvent[];
@@ -78,14 +81,29 @@ export class ClaudeAdapter implements ProviderAdapter {
       { key: 'seven_day', label: 'Weekly (7 day)', shortLabel: '7day' },
       { key: 'seven_day_sonnet', label: 'Weekly Sonnet', shortLabel: 'Sonnet' },
     ],
-    modelDisplayMap: [
-      { pattern: 'opus', displayName: 'Opus 4.6', supportsFastMode: true },
+    defaultModels: [
       {
-        pattern: 'sonnet',
-        displayName: 'Sonnet',
-        subLabel: 'Sonnet 4.6 · Best for everyday tasks',
+        value: 'default',
+        displayName: 'Default (recommended)',
+        description: 'Opus 4.6 · Most capable for complex work',
+        supportsEffort: true,
+        supportedEffortLevels: ['low', 'medium', 'high', 'max'],
+        supportsAdaptiveThinking: true,
+        supportsFastMode: true,
       },
-      { pattern: 'haiku', displayName: 'Haiku', subLabel: 'Haiku 4.5 · Fastest for quick answers' },
+      {
+        value: 'sonnet',
+        displayName: 'Sonnet',
+        description: 'Sonnet 4.6 · Best for everyday tasks',
+        supportsEffort: true,
+        supportedEffortLevels: ['low', 'medium', 'high', 'max'],
+        supportsAdaptiveThinking: true,
+      },
+      {
+        value: 'haiku',
+        displayName: 'Haiku',
+        description: 'Haiku 4.5 · Fastest for quick answers',
+      },
     ],
     defaultModelDescription: 'Most capable for complex work',
   });
@@ -102,37 +120,9 @@ export class ClaudeAdapter implements ProviderAdapter {
     return this.protocol.parseLine(line);
   }
 
-  /** Subtypes that need server-side enrichment before responding to CLI */
-  private static readonly SERVER_ENRICHED_SUBTYPES = new Set([
-    'get_settings',
-    'set_model',
-    'set_permission_mode',
-  ]);
-
   transform(event: ProtocolEvent): AdapterOutput {
     const { events, serverActions, controlResponses } = this.convertEvent(event);
-
-    const autoResponses: AutoResponse[] = [];
-    const remainingServerActions = [];
-    for (const sa of serverActions) {
-      if (sa.action === 'auto_respond' && !ClaudeAdapter.SERVER_ENRICHED_SUBTYPES.has(sa.subtype)) {
-        autoResponses.push({
-          requestId: sa.requestId,
-          subtype: sa.subtype,
-          response: sa.response,
-          input: sa.input,
-        });
-      } else {
-        remainingServerActions.push(sa);
-      }
-    }
-
-    return {
-      events,
-      autoResponses,
-      controlResponses,
-      serverActions: remainingServerActions,
-    };
+    return { events, controlResponses, serverActions };
   }
 
   formatMessage(text: string): string {
@@ -156,9 +146,10 @@ export class ClaudeAdapter implements ProviderAdapter {
     for (const entry of rawEntries) {
       if (entry.direction !== 'in') continue;
       try {
-        const obj = JSON.parse(entry.raw.trim()) as Record<string, unknown>;
-        const resp = obj.response as Record<string, unknown> | undefined;
-        if (resp?.request_id) ids.add(resp.request_id as string);
+        const obj = JSON.parse(entry.raw.trim());
+        if (!isRecord(obj)) continue;
+        const resp = isRecord(obj.response) ? obj.response : undefined;
+        if (typeof resp?.request_id === 'string') ids.add(resp.request_id);
       } catch {
         // ignore
       }
@@ -166,26 +157,22 @@ export class ClaudeAdapter implements ProviderAdapter {
     return ids;
   }
 
-  static readonly THINKING_LEVEL_TOKENS: Record<string, number> = {
-    off: 0,
-  };
-
   // ── Core dispatch ──
 
   private convertEvent(event: ProtocolEvent): ConvertResult {
     if (event.type === 'keep_alive') return EMPTY;
 
     if (event.type === 'control_response') {
-      const resp = event.response as Record<string, unknown>;
+      const resp = event.response;
       return {
         events: [],
         serverActions: [],
         controlResponses: [
           {
-            requestId: resp.request_id as string,
-            success: (resp as { subtype: string }).subtype === 'success',
-            response: resp.response as Record<string, unknown> | undefined,
-            error: resp.error as string | undefined,
+            requestId: resp.request_id,
+            success: resp.subtype === 'success',
+            response: resp.response,
+            error: resp.error,
           },
         ],
       };
@@ -220,112 +207,80 @@ export class ClaudeAdapter implements ProviderAdapter {
     if (event.type === 'stream_event') return this.convertStreamEvent(event);
 
     if (event.type === 'rate_limit_event') {
-      const rli = event.rate_limit_info as Record<string, unknown> | undefined;
+      const rli = event.rate_limit_info;
       return {
         name: 'system:rate_limit',
         payload: {
           info: {
-            status: (rli?.status as string) ?? '',
-            rateLimitType: rli?.rateLimitType as string | undefined,
-            resetsAt: rli?.resetsAt as string | undefined,
-            utilization: rli?.utilization as Record<string, unknown> | undefined,
-            overageStatus: rli?.overageStatus as string | undefined,
-            isUsingOverage: rli?.isUsingOverage as boolean | undefined,
+            status: rli.status ?? '',
+            rateLimitType: rli.rateLimitType,
+            resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
+            utilization: rli.utilization != null ? rli.utilization : undefined,
+            overageStatus: rli.overageStatus,
+            isUsingOverage: rli.isUsingOverage,
           },
         },
       };
     }
 
-    if ((event.type as string) === 'file_updated') {
-      const fe = event as unknown as {
-        filePath: string;
-        oldContent?: string | null;
-        newContent?: string | null;
-      };
+    if (event.type === 'speech_to_text_message') {
       return {
-        name: 'system:file_updated',
-        payload: { filePath: fe.filePath, oldContent: fe.oldContent, newContent: fe.newContent },
+        name: 'speech:message',
+        payload: { channelId: event.channelId, text: event.text, done: event.done },
       };
     }
 
     if (event.type === 'streamlined_text') {
-      return { name: 'stream:text', payload: { text: (event as { text: string }).text } };
+      return { name: 'stream:text', payload: { text: event.text } };
     }
 
     if (event.type === 'streamlined_tool_use_summary') {
-      return {
-        name: 'stream:tool_summary',
-        payload: { toolSummary: (event as { tool_summary: string }).tool_summary },
-      };
+      return { name: 'stream:tool_summary', payload: { toolSummary: event.tool_summary } };
     }
 
     if (event.type === 'error') {
       return {
         name: 'error:message',
-        payload: {
-          message:
-            (event as { error?: { message?: string }; message?: string }).error?.message ??
-            (event as { message?: string }).message ??
-            'Unknown error',
-        },
+        payload: { message: event.error?.message ?? 'Unknown error' },
       };
     }
 
-    if ((event.type as string) === 'experiment_gates') {
-      return {
-        name: 'system:experiment_gates',
-        payload: { gates: (event as unknown as { gates: Record<string, unknown> }).gates },
-      };
+    if (event.type === 'experiment_gates') {
+      return { name: 'app:experiment_gates', payload: { gates: event.gates } };
     }
 
-    if ((event.type as string) === 'available_models') {
-      return {
-        name: 'system:available_models',
-        payload: { models: (event as unknown as { models: unknown[] }).models },
-      };
+    if (event.type === 'available_models') {
+      return { name: 'app:models', payload: { models: event.models } };
     }
 
-    if ((event.type as string) === 'notification') {
-      return {
-        name: 'notification:toast',
-        payload: { message: (event as unknown as { message: string }).message },
-      };
+    if (event.type === 'notification') {
+      return { name: 'notification:toast', payload: { message: event.message } };
     }
 
-    if ((event.type as string) === 'auth_status') {
-      const authEvt = event as unknown as {
-        isAuthenticating?: boolean;
-        output?: unknown[];
-        account?: Record<string, unknown>;
-      };
+    if (event.type === 'auth_status') {
       return {
         name: 'notification:auth_status',
         payload: {
-          status: authEvt.isAuthenticating ? 'authenticating' : 'authenticated',
-          output: Array.isArray(authEvt.output) ? authEvt.output.join('\n') : undefined,
-          account: authEvt.account,
+          status: event.isAuthenticating ? 'authenticating' : 'authenticated',
+          output: Array.isArray(event.output) ? event.output.join('\n') : undefined,
+          account: event.account,
         },
       };
     }
 
-    if ((event.type as string) === 'auth_url') {
-      const authEvent = event as unknown as { url: string; method?: string };
+    if (event.type === 'auth_url') {
       return {
         name: 'notification:auth_url',
-        payload: { url: authEvent.url, method: authEvent.method ?? 'oauth' },
+        payload: { url: event.url, method: event.method ?? 'oauth' },
       };
     }
 
-    if ((event.type as string) === 'raw_event') {
-      const re = event as unknown as { rawType: string; data: Record<string, unknown> };
-      return { name: 'raw:event', payload: { rawType: re.rawType, data: re.data } };
-    }
-
     // Unknown/unhandled → raw:event
-    return {
-      name: 'raw:event',
-      payload: { rawType: event.type, data: event as unknown as Record<string, unknown> },
-    };
+    const data = event as unknown as Record<string, unknown>;
+    if (typeof data.rawType === 'string' && isRecord(data.data)) {
+      return { name: 'raw:event', payload: { rawType: data.rawType, data: data.data } };
+    }
+    return { name: 'raw:event', payload: { rawType: event.type, data } };
   }
 
   // ── System events ──
@@ -334,117 +289,90 @@ export class ClaudeAdapter implements ProviderAdapter {
     event: Extract<ProtocolEvent, { type: 'system' }>,
   ): SocketEvent | null {
     if (event.subtype === 'init') {
-      const {
-        type: _t,
-        subtype: _s,
-        session_id,
-        mcp_servers,
-        ...rest
-      } = event as Record<string, unknown>;
       return {
         name: 'session:init',
         payload: {
-          sessionId: session_id as string,
-          model: rest.model as string | undefined,
-          tools: rest.tools as string[] | undefined,
-          permissionMode: rest.permissionMode as string | undefined,
-          fastModeState: rest.fast_mode_state,
-          slashCommands: rest.slash_commands as string[] | undefined,
-          mcpServers: mcp_servers as Array<{ name: string; status: string }> | undefined,
-          config: rest as Record<string, unknown>,
+          sessionId: event.session_id,
+          model: event.model,
+          tools: event.tools,
+          permissionMode: event.permissionMode,
+          fastModeState: event.fast_mode_state,
+          slashCommands: event.slash_commands,
+          mcpServers: event.mcp_servers,
+          config: event as Record<string, unknown>,
         },
       };
     }
 
     if (event.subtype === 'status') {
-      const statusEvent = event as unknown as { status?: string; permissionMode?: string };
       return {
         name: 'session:status',
         payload: {
-          status: statusEvent.status ?? '',
-          permissionMode: statusEvent.permissionMode,
+          status: event.status ?? '',
+          permissionMode: event.permissionMode,
         },
       };
     }
 
     if (event.subtype === 'hook_started') {
-      const e = event as unknown as { hook_name: string; hook_id: string; hook_event: string };
       return {
         name: 'system:hook_started',
-        payload: { hook: { hookName: e.hook_name, hookId: e.hook_id, hookEvent: e.hook_event } },
+        payload: {
+          hook: {
+            hookName: event.hook_name,
+            hookId: event.hook_id,
+            hookEvent: event.hook_event,
+          },
+        },
       };
     }
 
     if (event.subtype === 'hook_response') {
-      const e = event as unknown as {
-        hook_name: string;
-        hook_id: string;
-        hook_event: string;
-        hook_event_name?: string;
-        output?: string;
-        additional_context?: string;
-      };
       return {
         name: 'system:hook_response',
         payload: {
           hook: {
-            hookName: e.hook_name,
-            hookId: e.hook_id,
-            hookEvent: e.hook_event,
-            hookEventName: e.hook_event_name,
-            output: e.output,
-            additionalContext: e.additional_context,
+            hookName: event.hook_name,
+            hookId: event.hook_id,
+            hookEvent: event.hook_event,
+            hookEventName: event.hook_event_name,
+            output: event.output,
+            additionalContext: event.additional_context,
           },
         },
       };
     }
 
     if (event.subtype === 'task_started') {
-      const e = event as unknown as { description: string; task_type?: string };
       return {
         name: 'system:task_started',
-        payload: { description: e.description, taskType: e.task_type },
+        payload: { description: event.description, taskType: event.task_type },
       };
     }
 
     if (event.subtype === 'task_notification') {
-      const e = event as unknown as {
-        task_id: string;
-        tool_use_id?: string;
-        status?: string;
-        output_file?: string;
-        summary?: string;
-        usage?: Record<string, unknown>;
-      };
       return {
         name: 'system:task_notification',
         payload: {
-          taskId: e.task_id,
-          toolUseId: e.tool_use_id,
-          status: e.status,
-          outputFile: e.output_file,
-          summary: e.summary,
-          usage: e.usage,
+          taskId: event.task_id,
+          toolUseId: event.tool_use_id,
+          status: event.status,
+          outputFile: event.output_file,
+          summary: event.summary,
+          usage: event.usage,
         },
       };
     }
 
     if (event.subtype === 'task_progress') {
-      const e = event as unknown as {
-        task_id: string;
-        tool_use_id?: string;
-        description?: string;
-        last_tool_name?: string;
-        usage?: Record<string, unknown>;
-      };
       return {
         name: 'system:task_progress',
         payload: {
-          taskId: e.task_id,
-          toolUseId: e.tool_use_id,
-          description: e.description,
-          lastToolName: e.last_tool_name,
-          usage: e.usage,
+          taskId: event.task_id,
+          toolUseId: event.tool_use_id,
+          description: event.description,
+          lastToolName: event.last_tool_name,
+          usage: event.usage,
         },
       };
     }
@@ -455,44 +383,34 @@ export class ClaudeAdapter implements ProviderAdapter {
     }
 
     if (event.subtype === 'api_retry') {
-      const e = event as unknown as {
-        attempt: number;
-        max_retries: number;
-        retry_delay_ms?: number;
-        error_status?: number;
-        error?: string;
-      };
       return {
         name: 'system:api_retry',
         payload: {
-          attempt: e.attempt,
-          maxRetries: e.max_retries,
-          retryDelayMs: e.retry_delay_ms,
-          errorStatus: e.error_status,
-          error: e.error,
+          attempt: event.attempt,
+          maxRetries: event.max_retries,
+          retryDelayMs: event.retry_delay_ms,
+          errorStatus: event.error_status,
+          error: event.error,
         },
       };
     }
 
     if (event.subtype === 'bridge_state') {
-      const e = event as unknown as { state: string; detail?: string };
       return {
         name: 'system:remote_control',
         payload: {
-          info: { state: e.state as 'ready' | 'disconnected' | 'error', detail: e.detail },
+          info: { state: event.state, detail: event.detail },
         },
       };
     }
 
     if (event.subtype === 'compact_boundary') {
-      const meta = (event as unknown as { compactMetadata?: { preservedSegment?: boolean } })
-        .compactMetadata;
+      const meta = event.compactMetadata;
+      const preserved = isRecord(meta) ? meta.preservedSegment : undefined;
       return {
         name: 'system:compact_boundary',
         payload: {
-          ...(meta?.preservedSegment != null
-            ? { preservedSegment: Boolean(meta.preservedSegment) }
-            : {}),
+          ...(preserved != null ? { preservedSegment: Boolean(preserved) } : {}),
         },
       };
     }
@@ -512,26 +430,24 @@ export class ClaudeAdapter implements ProviderAdapter {
   private convertAssistantEvent(
     event: Extract<ProtocolEvent, { type: 'assistant' }>,
   ): SocketEvent | null {
-    const parentToolUseId = (event as unknown as { parent_tool_use_id?: string })
-      .parent_tool_use_id;
+    const parentToolUseId = event.parent_tool_use_id ?? undefined;
     const content = event.message?.content;
     if (!Array.isArray(content)) return null;
 
     const blocks: ContentBlock[] = [];
-    for (const block of content) {
-      const b = block as Record<string, unknown>;
+    for (const b of content) {
       switch (b.type) {
         case 'text':
-          blocks.push({ type: 'text', text: (b.text as string) ?? '' });
+          blocks.push({ type: 'text', text: String(b.text ?? '') });
           break;
         case 'thinking':
-          blocks.push({ type: 'thinking', thinking: (b.thinking as string) ?? '' });
+          blocks.push({ type: 'thinking', thinking: String(b.thinking ?? '') });
           break;
         case 'tool_use':
           blocks.push({
             type: 'tool_use',
-            toolId: (b.id as string) ?? '',
-            toolName: (b.name as string) ?? '',
+            toolId: String(b.id ?? ''),
+            toolName: String(b.name ?? ''),
             input: b.input,
           });
           break;
@@ -547,23 +463,21 @@ export class ClaudeAdapter implements ProviderAdapter {
   // ── User events ──
 
   private convertUserEvent(event: Extract<ProtocolEvent, { type: 'user' }>): SocketEvent | null {
-    const parentToolUseId = (event as unknown as { parent_tool_use_id?: string })
-      .parent_tool_use_id;
+    const parentToolUseId = event.parent_tool_use_id ?? undefined;
     const content = event.message?.content;
     if (!Array.isArray(content)) return null;
 
     const blocks: ContentBlock[] = [];
-    for (const block of content) {
-      const b = block as Record<string, unknown>;
+    for (const b of content) {
       switch (b.type) {
         case 'text':
-          blocks.push({ type: 'text', text: (b.text as string) ?? '' });
+          blocks.push({ type: 'text', text: String(b.text ?? '') });
           break;
         case 'tool_result':
           blocks.push({
             type: 'tool_result',
-            toolUseId: (b.tool_use_id as string) ?? '',
-            toolName: b.name as string | undefined,
+            toolUseId: String(b.tool_use_id ?? ''),
+            toolName: typeof b.name === 'string' ? b.name : undefined,
             content: b.content,
           });
           break;
@@ -581,29 +495,30 @@ export class ClaudeAdapter implements ProviderAdapter {
   private convertResultEvent(
     event: Extract<ProtocolEvent, { type: 'result' }>,
   ): SocketEvent | SocketEvent[] {
-    const obj = event as Record<string, unknown>;
-    const usage = obj.usage as Record<string, unknown> | undefined;
+    const usage = event.usage;
     const resultPayload = {
       stats: {
-        totalCostUsd: obj.total_cost_usd as number | undefined,
-        durationMs: obj.duration_ms as number | undefined,
-        inputTokens: usage?.input_tokens as number | undefined,
-        outputTokens: usage?.output_tokens as number | undefined,
-        cacheReadInputTokens: usage?.cache_read_input_tokens as number | undefined,
-        cacheCreationInputTokens: usage?.cache_creation_input_tokens as number | undefined,
-        numTurns: obj.num_turns as number | undefined,
-        modelUsage: obj.modelUsage as Record<string, unknown> | undefined,
+        totalCostUsd: event.total_cost_usd,
+        durationMs: event.duration_ms,
+        inputTokens: usage?.input_tokens,
+        outputTokens: usage?.output_tokens,
+        cacheReadInputTokens: usage?.cache_read_input_tokens,
+        cacheCreationInputTokens: usage?.cache_creation_input_tokens,
+        numTurns: event.num_turns,
+        modelUsage: event.modelUsage,
       },
-      errors: obj.errors as string[] | undefined,
-      isError: obj.is_error as boolean | undefined,
-      subtype: obj.subtype as string | undefined,
+      errors: event.errors,
+      isError: event.is_error,
+      subtype: event.subtype,
     };
 
     const resultEvent: SocketEvent = { name: 'message:result', payload: resultPayload };
 
-    const errors = obj.errors as string[] | undefined;
-    if (obj.is_error && Array.isArray(errors) && errors.length > 0) {
-      return [resultEvent, { name: 'error:message', payload: { message: errors.join('; ') } }];
+    if (event.is_error && Array.isArray(event.errors) && event.errors.length > 0) {
+      return [
+        resultEvent,
+        { name: 'error:message', payload: { message: event.errors.join('; ') } },
+      ];
     }
 
     return resultEvent;
@@ -614,15 +529,14 @@ export class ClaudeAdapter implements ProviderAdapter {
   private convertStreamEvent(
     event: Extract<ProtocolEvent, { type: 'stream_event' }>,
   ): SocketEvent | null {
-    const se = (event as unknown as { event: Record<string, unknown> }).event;
+    const se = event.event;
     if (!se) return null;
 
-    const parentToolUseId = (event as unknown as { parent_tool_use_id?: string })
-      .parent_tool_use_id;
+    const parentToolUseId = event.parent_tool_use_id ?? undefined;
 
     switch (se.type) {
       case 'content_block_delta': {
-        const delta = se.delta as Record<string, unknown> | undefined;
+        const delta = se.delta;
         if (!delta) return null;
 
         switch (delta.type) {
@@ -630,7 +544,7 @@ export class ClaudeAdapter implements ProviderAdapter {
             return {
               name: 'stream:chunk',
               payload: {
-                chunk: { kind: 'text', content: (delta.text as string) ?? '' },
+                chunk: { kind: 'text', content: delta.text ?? '' },
                 ...(parentToolUseId ? { parentToolUseId } : {}),
               },
             };
@@ -638,7 +552,7 @@ export class ClaudeAdapter implements ProviderAdapter {
             return {
               name: 'stream:chunk',
               payload: {
-                chunk: { kind: 'thinking', content: (delta.thinking as string) ?? '' },
+                chunk: { kind: 'thinking', content: delta.thinking ?? '' },
                 ...(parentToolUseId ? { parentToolUseId } : {}),
               },
             };
@@ -646,7 +560,7 @@ export class ClaudeAdapter implements ProviderAdapter {
             return {
               name: 'stream:chunk',
               payload: {
-                chunk: { kind: 'input_json', content: (delta.partial_json as string) ?? '' },
+                chunk: { kind: 'input_json', content: delta.partial_json ?? '' },
                 ...(parentToolUseId ? { parentToolUseId } : {}),
               },
             };
@@ -657,7 +571,7 @@ export class ClaudeAdapter implements ProviderAdapter {
                 chunk: {
                   kind: 'citations',
                   content: '',
-                  citations: [delta.citation ?? delta.citations].flat().filter(Boolean),
+                  citations: [delta.citations ?? delta.citation].flat().filter(Boolean),
                 },
                 ...(parentToolUseId ? { parentToolUseId } : {}),
               },
@@ -670,18 +584,18 @@ export class ClaudeAdapter implements ProviderAdapter {
               name: 'raw:event',
               payload: {
                 rawType: 'unknown_delta',
-                data: { deltaType: delta.type, ...(delta as Record<string, unknown>) },
+                data: { deltaType: delta.type, ...delta },
               },
             };
         }
       }
       case 'content_block_start': {
-        const block = se.content_block as Record<string, unknown> | undefined;
+        const block = se.content_block;
         return {
           name: 'stream:block_start',
           payload: {
-            index: se.index as number,
-            blockType: (block?.type as string) ?? 'unknown',
+            index: se.index ?? 0,
+            blockType: block?.type ?? 'unknown',
             ...(block && Object.keys(block).length > 1 ? { contentBlock: block } : {}),
             ...(parentToolUseId ? { parentToolUseId } : {}),
           },
@@ -715,79 +629,78 @@ export class ClaudeAdapter implements ProviderAdapter {
           name: 'control:permission',
           payload: {
             requestId,
-            toolName: request.tool_name as string,
-            toolUseId: request.tool_use_id as string | undefined,
+            toolName: request.tool_name ?? '',
+            toolUseId: request.tool_use_id,
             input: request.input,
-            suggestions: request.permission_suggestions as unknown[] | undefined,
-            callbackId: request.callback_id as string | undefined,
-            blockedPath: request.blocked_path as string | undefined,
-            decisionReason: request.decision_reason as string | undefined,
-            agentId: request.agent_id as string | undefined,
+            suggestions: request.permission_suggestions,
+            callbackId: request.callback_id,
+            blockedPath: request.blocked_path ?? undefined,
+            decisionReason: request.decision_reason,
+            agentId: request.agent_id,
           },
         });
         break;
 
-      case 'hook_callback': {
-        const hookInput = request.input as Record<string, unknown> | undefined;
+      case 'hook_callback':
         events.push({
           name: 'control:hook_callback',
           payload: {
             requestId,
-            callbackId: (request.callback_id as string) ?? '',
-            input: hookInput,
-            toolUseId: request.tool_use_id as string | undefined,
+            callbackId: request.callback_id ?? '',
+            input: request.input,
+            toolUseId: request.tool_use_id,
           },
         });
         break;
-      }
 
       case 'elicitation': {
-        const elInput = request.input as Record<string, unknown> | undefined;
-        const mode = elInput?.mode as string | undefined;
+        const elInput = isRecord(request.input) ? request.input : undefined;
+        const mode = typeof elInput?.mode === 'string' ? elInput.mode : undefined;
         const inputType = mode === 'url' ? 'url' : mode === 'form' ? 'select' : 'text';
+        const reqSchema = isRecord(elInput?.requested_schema)
+          ? elInput.requested_schema
+          : undefined;
         const options =
           mode === 'form'
             ? Object.keys(
-                (elInput?.requested_schema as { properties?: Record<string, unknown> })
-                  ?.properties ?? {},
+                (isRecord(reqSchema?.properties) ? reqSchema.properties : undefined) ?? {},
               )
             : undefined;
-        const requestedSchema = elInput?.requested_schema as Record<string, unknown> | undefined;
         events.push({
           name: 'control:elicitation',
           payload: {
             requestId,
-            prompt: (elInput?.message as string) ?? '',
-            inputType: inputType as 'text' | 'url' | 'select',
+            prompt: typeof elInput?.message === 'string' ? elInput.message : '',
+            inputType,
             options,
-            url: mode === 'url' ? (elInput?.url as string | undefined) : undefined,
-            elicitationId: request.elicitation_id as string | undefined,
-            mcpServerName: (elInput?.mcp_server_name ?? request.mcp_server_name) as
-              | string
-              | undefined,
-            requestedSchema,
+            url: mode === 'url' && typeof elInput?.url === 'string' ? elInput.url : undefined,
+            elicitationId: request.elicitation_id,
+            mcpServerName:
+              (typeof elInput?.mcp_server_name === 'string'
+                ? elInput.mcp_server_name
+                : undefined) ?? request.mcp_server_name,
+            requestedSchema: reqSchema,
           },
         });
         break;
       }
 
       case 'open_diff': {
-        const diffInput = request.input as Record<string, unknown> | undefined;
-        const originalFilePath = (diffInput?.originalFilePath as string) ?? '';
-        const newFilePath = (diffInput?.newFilePath as string) ?? '';
+        const diffInput = isRecord(request.input) ? request.input : undefined;
         serverActions.push({
           action: 'read_diff',
           requestId,
-          originalPath: originalFilePath,
-          newPath: newFilePath,
+          originalPath:
+            typeof diffInput?.originalFilePath === 'string' ? diffInput.originalFilePath : '',
+          newPath: typeof diffInput?.newFilePath === 'string' ? diffInput.newFilePath : '',
         });
         break;
       }
 
       case 'mcp_message': {
-        const mcpInput = request.input as Record<string, unknown> | undefined;
-        const serverName = (mcpInput?.server_name ?? request.tool_name ?? '') as string;
-        const mcpMsg = (mcpInput?.message ?? mcpInput ?? {}) as Record<string, unknown>;
+        const mcpInput = isRecord(request.input) ? request.input : undefined;
+        const serverName = String(mcpInput?.server_name ?? request.tool_name ?? '');
+        const mcpMsg = isRecord(mcpInput?.message) ? mcpInput.message : (mcpInput ?? {});
 
         if (mcpMsg.id == null) {
           serverActions.push({
@@ -807,9 +720,11 @@ export class ClaudeAdapter implements ProviderAdapter {
 
       // Dual-output: emit SocketEvent + auto-respond ServerAction
       case 'open_url': {
-        const urlInput = request.input as Record<string, unknown> | undefined;
-        const url = (urlInput?.url as string) ?? '';
-        events.push({ name: 'action:open_url', payload: { url } });
+        const urlInput = isRecord(request.input) ? request.input : undefined;
+        events.push({
+          name: 'action:open_url',
+          payload: { url: typeof urlInput?.url === 'string' ? urlInput.url : '' },
+        });
         serverActions.push({
           action: 'auto_respond',
           requestId,
@@ -820,12 +735,13 @@ export class ClaudeAdapter implements ProviderAdapter {
       }
 
       case 'open_file': {
-        const fileInput = request.input as Record<string, unknown> | undefined;
-        const filePath = (fileInput?.file_path as string) ?? '';
-        const location = fileInput?.location as
-          | { startLine?: number; endLine?: number; searchText?: string }
-          | undefined;
-        events.push({ name: 'action:open_file', payload: { filePath, location } });
+        const fileInput = isRecord(request.input) ? request.input : undefined;
+        const filePath = typeof fileInput?.file_path === 'string' ? fileInput.file_path : '';
+        const location = isRecord(fileInput?.location) ? fileInput.location : undefined;
+        events.push({
+          name: 'action:open_file',
+          payload: { filePath, location },
+        });
         serverActions.push({
           action: 'auto_respond',
           requestId,
@@ -836,14 +752,18 @@ export class ClaudeAdapter implements ProviderAdapter {
       }
 
       case 'show_notification': {
-        const notifInput = request.input as Record<string, unknown> | undefined;
+        const notifInput = isRecord(request.input) ? request.input : undefined;
+        const severity = typeof notifInput?.severity === 'string' ? notifInput.severity : 'info';
         events.push({
           name: 'notification:show',
           payload: {
-            message: (notifInput?.message as string) ?? '',
-            severity: ((notifInput?.severity as string) ?? 'info') as 'error' | 'warning' | 'info',
-            buttons: notifInput?.buttons as string[] | undefined,
-            onlyIfNotVisible: notifInput?.onlyIfNotVisible as boolean | undefined,
+            message: typeof notifInput?.message === 'string' ? notifInput.message : '',
+            severity: severity === 'error' || severity === 'warning' ? severity : 'info',
+            buttons: Array.isArray(notifInput?.buttons) ? notifInput.buttons : undefined,
+            onlyIfNotVisible:
+              typeof notifInput?.onlyIfNotVisible === 'boolean'
+                ? notifInput.onlyIfNotVisible
+                : undefined,
           },
         });
         serverActions.push({
@@ -878,11 +798,11 @@ export class ClaudeAdapter implements ProviderAdapter {
           action: 'forward_to_client',
           requestId,
           subtype: request?.subtype ?? '',
-          toolName: request?.tool_name as string | undefined,
-          toolUseId: request?.tool_use_id as string | undefined,
+          toolName: request?.tool_name,
+          toolUseId: request?.tool_use_id,
           input: request?.input,
-          suggestions: request?.permission_suggestions as unknown[] | undefined,
-          callbackId: request?.callback_id as string | undefined,
+          suggestions: request?.permission_suggestions,
+          callbackId: request?.callback_id,
         });
         break;
     }

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ClaudeProtocol } from '../claude.ts';
+import { ClaudeProtocol } from '../claude-protocol.ts';
 
 const protocol = new ClaudeProtocol();
 

@@ -71,6 +71,7 @@ export const systemCompactBoundarySchema = z
   .object({
     type: z.literal('system'),
     subtype: z.literal('compact_boundary'),
+    compactMetadata: z.object({ preservedSegment: z.boolean().optional() }).loose().optional(),
   })
   .loose();
 
@@ -143,6 +144,15 @@ export const systemTaskProgressSchema = z
   })
   .loose();
 
+export const systemBridgeStateSchema = z
+  .object({
+    type: z.literal('system'),
+    subtype: z.literal('bridge_state'),
+    state: z.enum(['ready', 'disconnected', 'error']),
+    detail: z.string().optional(),
+  })
+  .loose();
+
 // Fallback for unknown system subtypes
 export const systemFallbackSchema = z
   .object({
@@ -204,7 +214,15 @@ export const resultSchema = z
     stop_reason: z.string().nullable().optional(),
     session_id: z.string().optional(),
     total_cost_usd: z.number().optional(),
-    usage: z.record(z.string(), z.unknown()).optional(),
+    usage: z
+      .object({
+        input_tokens: z.number().optional(),
+        output_tokens: z.number().optional(),
+        cache_read_input_tokens: z.number().optional(),
+        cache_creation_input_tokens: z.number().optional(),
+      })
+      .loose()
+      .optional(),
     modelUsage: z.record(z.string(), z.unknown()).optional(),
     errors: z.array(z.string()).optional(),
     uuid: z.string().optional(),
@@ -228,6 +246,10 @@ export const controlRequestSchema = z
         decision_reason: z.string().optional(),
         tool_use_id: z.string().optional(),
         callback_id: z.string().optional(),
+        blocked_path: z.string().nullable().optional(),
+        agent_id: z.string().optional(),
+        elicitation_id: z.string().optional(),
+        mcp_server_name: z.string().optional(),
       })
       .loose(),
   })
@@ -267,8 +289,27 @@ export const streamEventSchema = z
       .object({
         type: z.string(),
         index: z.number().optional(),
-        delta: z.record(z.string(), z.unknown()).optional(),
-        content_block: z.record(z.string(), z.unknown()).optional(),
+        delta: z
+          .object({
+            type: z.string().optional(),
+            text: z.string().optional(),
+            thinking: z.string().optional(),
+            partial_json: z.string().optional(),
+            citation: z.unknown().optional(),
+            citations: z.array(z.unknown()).optional(),
+            signature: z.string().optional(),
+          })
+          .loose()
+          .optional(),
+        content_block: z
+          .object({
+            type: z.string().optional(),
+            id: z.string().optional(),
+            name: z.string().optional(),
+            input: z.record(z.string(), z.unknown()).optional(),
+          })
+          .loose()
+          .optional(),
         message: z.record(z.string(), z.unknown()).optional(),
         usage: z.record(z.string(), z.unknown()).optional(),
       })
@@ -287,9 +328,9 @@ export const rateLimitEventSchema = z
     rate_limit_info: z
       .object({
         status: z.string(),
-        resetsAt: z.number().optional(),
+        resetsAt: z.union([z.number(), z.string()]).optional(),
         rateLimitType: z.string().optional(),
-        utilization: z.number().optional(),
+        utilization: z.union([z.number(), z.record(z.string(), z.unknown())]).optional(),
         overageStatus: z.string().optional(),
         isUsingOverage: z.boolean().optional(),
       })
@@ -409,8 +450,20 @@ export const authStatusSchema = z
     type: z.literal('auth_status'),
     isAuthenticating: z.boolean(),
     output: z.array(z.unknown()),
+    account: z.record(z.string(), z.unknown()).optional(),
     uuid: z.string().optional(),
     session_id: z.string().optional(),
+  })
+  .loose();
+
+// ── Speech ──
+
+export const speechToTextMessageSchema = z
+  .object({
+    type: z.literal('speech_to_text_message'),
+    channelId: z.string(),
+    text: z.string(),
+    done: z.boolean(),
   })
   .loose();
 
@@ -428,6 +481,7 @@ const systemSubtypeRegistry: Record<string, z.ZodType> = {
   task_started: systemTaskStartedSchema,
   task_notification: systemTaskNotificationSchema,
   task_progress: systemTaskProgressSchema,
+  bridge_state: systemBridgeStateSchema,
 };
 
 const typeRegistry: Record<string, z.ZodType> = {
@@ -450,6 +504,7 @@ const typeRegistry: Record<string, z.ZodType> = {
   auth_url: authUrlSchema,
   auth_status: authStatusSchema,
   keep_alive: keepAliveSchema,
+  speech_to_text_message: speechToTextMessageSchema,
 };
 
 /**
@@ -476,6 +531,7 @@ export type ProtocolEvent =
   | z.infer<typeof systemTaskStartedSchema>
   | z.infer<typeof systemTaskNotificationSchema>
   | z.infer<typeof systemTaskProgressSchema>
+  | z.infer<typeof systemBridgeStateSchema>
   | z.infer<typeof systemFallbackSchema>
   | z.infer<typeof assistantSchema>
   | z.infer<typeof userSchema>
@@ -495,4 +551,5 @@ export type ProtocolEvent =
   | z.infer<typeof errorSchema>
   | z.infer<typeof authUrlSchema>
   | z.infer<typeof authStatusSchema>
-  | z.infer<typeof keepAliveSchema>;
+  | z.infer<typeof keepAliveSchema>
+  | z.infer<typeof speechToTextMessageSchema>;
