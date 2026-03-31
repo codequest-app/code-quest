@@ -12,10 +12,11 @@ import {
   rateLimitPayloadSchema,
   requestIdPayloadSchema,
   type ServerToClientEvents,
+  type SocketEvent,
   serverActionModelSchema,
   serverActionModeSchema,
 } from '@code-quest/shared';
-import type { ProcessRunner, SocketEvent } from '@code-quest/summoner';
+import type { ProcessRunner } from '@code-quest/summoner';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
 import { logger } from '../logger.ts';

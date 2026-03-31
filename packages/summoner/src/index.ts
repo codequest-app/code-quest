@@ -13,5 +13,4 @@ export type {
   ProviderAdapter,
   RawEntry,
   ServerAction,
-  SocketEvent,
 } from './types.ts';
