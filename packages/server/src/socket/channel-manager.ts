@@ -1,10 +1,5 @@
 import type { ControlResponse } from '@code-quest/shared';
-import type {
-  LaunchOptions,
-  ProtocolEvent,
-  ProviderAdapter,
-  SocketEvent,
-} from '@code-quest/summoner';
+import type { LaunchOptions, ProviderAdapter, SocketEvent } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -207,7 +202,7 @@ export class ChannelManager {
         if (entry.direction === 'out') {
           const parsed = protocolEventBase.safeParse(raw);
           if (parsed.success) {
-            const converted = this.adapter.transform(parsed.data as ProtocolEvent).events;
+            const converted = this.adapter.transform(parsed.data).events;
             result.push(...converted);
           }
         } else if (entry.direction === 'in') {
