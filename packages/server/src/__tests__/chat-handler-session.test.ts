@@ -640,12 +640,10 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
       await new Promise<void>((r) => setTimeout(r, 50));
 
-      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
-        'session:list',
-        {},
-      );
-      const session = result.sessions.find((s) => s.id === channelId);
-      expect(session?.title).toBe('Fix the login bug');
+      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const record = await sessionStore.getById(channelId);
+      expect(record).toBeDefined();
+      expect(record!.title).toBe('Fix the login bug');
     });
 
     it('session:init during processing does not wipe pendingTitlePrompt', async () => {
@@ -665,12 +663,10 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
       await new Promise<void>((r) => setTimeout(r, 100));
 
-      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
-        'session:list',
-        {},
-      );
-      const session = result.sessions.find((sess) => sess.id === channelId);
-      expect(session?.title).toBe('Generated Title');
+      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const record = await sessionStore.getById(channelId);
+      expect(record).toBeDefined();
+      expect(record!.title).toBe('Generated Title');
     });
 
     it('filters sessions by cwd when provided', async () => {
