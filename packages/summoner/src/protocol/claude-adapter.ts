@@ -4,6 +4,7 @@ import {
   providerClientConfigSchema,
 } from '@code-quest/shared';
 import type { LaunchOptions } from '../claude/launch-options.ts';
+import type { ProtocolEvent } from '../claude/schemas.ts';
 import type {
   AdapterOutput,
   ControlResponseEvent,
@@ -13,7 +14,6 @@ import type {
   SocketEvent,
 } from '../types.ts';
 import { ClaudeProtocol } from './claude-protocol.ts';
-import type { ProtocolEvent } from './claude-schemas.ts';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
