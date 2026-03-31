@@ -1,7 +1,7 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
+import { ClaudeAdapter } from '../../claude/adapter.ts';
 import { resetSeq, segments as s } from '../../test/fake-claude.ts';
-import { ClaudeAdapter } from '../claude-adapter.ts';
 
 const adapter = new ClaudeAdapter();
 

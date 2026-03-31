@@ -3,15 +3,6 @@ import {
   type ProviderClientConfig,
   providerClientConfigSchema,
 } from '@code-quest/shared';
-import type { LaunchOptions } from '../claude/launch-options.ts';
-import { ClaudeProtocol } from '../claude/protocol.ts';
-import type { ProtocolEvent } from '../claude/schemas.ts';
-import { transformAssistantEvent } from '../claude/transforms/assistant.ts';
-import { transformControlRequest } from '../claude/transforms/control.ts';
-import { transformResultEvent } from '../claude/transforms/result.ts';
-import { transformStreamEvent } from '../claude/transforms/stream.ts';
-import { transformSystemEvent } from '../claude/transforms/system.ts';
-import { transformUserEvent } from '../claude/transforms/user.ts';
 import type {
   AdapterOutput,
   ControlResponseEvent,
@@ -20,6 +11,15 @@ import type {
   ServerAction,
   SocketEvent,
 } from '../types.ts';
+import type { LaunchOptions } from './launch-options.ts';
+import { ClaudeProtocol } from './protocol.ts';
+import type { ProtocolEvent } from './schemas.ts';
+import { transformAssistantEvent } from './transforms/assistant.ts';
+import { transformControlRequest } from './transforms/control.ts';
+import { transformResultEvent } from './transforms/result.ts';
+import { transformStreamEvent } from './transforms/stream.ts';
+import { transformSystemEvent } from './transforms/system.ts';
+import { transformUserEvent } from './transforms/user.ts';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
