@@ -640,6 +640,15 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
       await new Promise<void>((r) => setTimeout(r, 50));
 
+      // Verify client-facing API returns title
+      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
+        'session:list',
+        {},
+      );
+      const session = result.sessions.find((sess) => sess.id === channelId);
+      expect(session?.title).toBe('Fix the login bug');
+
+      // Verify DB persistence
       const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getById(channelId);
       expect(record).toBeDefined();
@@ -663,6 +672,15 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
       await new Promise<void>((r) => setTimeout(r, 100));
 
+      // Verify client-facing API returns title
+      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
+        'session:list',
+        {},
+      );
+      const session = result.sessions.find((sess) => sess.id === channelId);
+      expect(session?.title).toBe('Generated Title');
+
+      // Verify DB persistence
       const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getById(channelId);
       expect(record).toBeDefined();
