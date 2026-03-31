@@ -1,5 +1,4 @@
 import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
-import { logger } from '../../logger.ts';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
 import { execGit, persistNewSession } from './helpers.ts';

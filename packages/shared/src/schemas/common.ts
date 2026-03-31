@@ -21,6 +21,11 @@ export const socketEventSchema = z.object({
 });
 export type SocketEvent = z.infer<typeof socketEventSchema>;
 
+export const messageContentSchema = z.object({
+  content: z.array(z.object({ type: z.string(), text: z.string() })),
+});
+export type MessageContent = z.infer<typeof messageContentSchema>;
+
 export const channelIdPayloadSchema = z.object({ channelId: z.string() });
 export type ChannelIdPayload = z.infer<typeof channelIdPayloadSchema>;
 

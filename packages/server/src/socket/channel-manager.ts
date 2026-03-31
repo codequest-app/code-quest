@@ -5,23 +5,31 @@ import type {
   ProviderAdapter,
   SocketEvent,
 } from '@code-quest/summoner';
+import { z } from 'zod';
 import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type WireRunnerHooks } from './channel.ts';
 
-export interface ChannelSummary {
-  channelId: string;
-  state: 'busy' | 'idle' | 'exited';
-  title?: string;
-  model?: string;
-}
+const channelSummarySchema = z.object({
+  channelId: z.string(),
+  state: z.enum(['busy', 'idle', 'exited']),
+  title: z.string().optional(),
+  model: z.string().optional(),
+});
+export type ChannelSummary = z.infer<typeof channelSummarySchema>;
 
 export interface JoinResult {
   channel: Channel;
   events: SocketEvent[];
 }
+
+const protocolEventBase = z.object({ type: z.string() }).passthrough();
+const userMessagePayload = z.object({
+  type: z.literal('user'),
+  message: z.object({ content: z.array(z.unknown()) }).passthrough(),
+});
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */
 const HISTORY_NAMES = new Set([
@@ -93,9 +101,6 @@ export class ChannelManager {
 
     // Initialize and wait for control_response
     const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
-
-    // Wait for session:init to set sessionId (may arrive after control_response)
-    await channel.sessionIdReady;
 
     return { channel, initResult };
   }
@@ -193,20 +198,23 @@ export class ChannelManager {
       if (!trimmed) continue;
 
       try {
-        const obj = JSON.parse(trimmed) as Record<string, unknown>;
-        if (typeof obj !== 'object' || obj === null) continue;
+        const raw = JSON.parse(trimmed);
+        if (typeof raw !== 'object' || raw === null) continue;
 
-        if (entry.direction === 'out' && 'type' in obj) {
-          const converted = this.adapter.transform(obj as ProtocolEvent).events;
-          result.push(...converted);
-        } else if (entry.direction === 'in' && obj.type === 'user') {
+        if (entry.direction === 'out') {
+          const parsed = protocolEventBase.safeParse(raw);
+          if (parsed.success) {
+            const converted = this.adapter.transform(parsed.data as ProtocolEvent).events;
+            result.push(...converted);
+          }
+        } else if (entry.direction === 'in') {
           // Skip stdin user messages when stdout already echoes them (avoids duplicates)
           if (hasStdoutUserEcho) continue;
-          const msg = obj.message as { content?: unknown[] } | undefined;
-          if (msg?.content) {
+          const parsed = userMessagePayload.safeParse(raw);
+          if (parsed.success) {
             result.push({
               name: 'message:user',
-              payload: { content: msg.content },
+              payload: { content: parsed.data.message.content },
             });
           }
         }

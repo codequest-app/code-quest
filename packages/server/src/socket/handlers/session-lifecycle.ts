@@ -1,4 +1,4 @@
-import type { ControlResponse } from '@code-quest/shared';
+import type { ChatCreatePayload, ControlResponse } from '@code-quest/shared';
 import {
   chatCreateSchema,
   chatJoinSchema,
@@ -6,6 +6,7 @@ import {
   controlInitResponseSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 import { config } from '../../config.ts';
 import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
@@ -13,9 +14,16 @@ import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
 import { DEFAULT_THINKING_TOKENS, persistNewSession } from './helpers.ts';
 
+const initResponseResultSchema = z.object({
+  slashCommands: z.array(z.string()).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+type InitResponseResult = z.infer<typeof initResponseResultSchema>;
+
 async function applyPerLaunchSettings(
   channel: Channel,
-  parsed: { model?: string; permissionMode?: string; thinkingLevel?: string; cwd?: string },
+  parsed: Pick<ChatCreatePayload, 'model' | 'permissionMode' | 'thinkingLevel' | 'cwd'>,
 ): Promise<void> {
   if (parsed.model) {
     await channel
@@ -42,8 +50,8 @@ async function applyPerLaunchSettings(
 async function handleInitResponse(
   ctx: HandlerContext,
   initResult: ControlResponse,
-): Promise<{ slashCommands?: string[]; models?: unknown[]; account?: Record<string, unknown> }> {
-  const initResponse = controlInitResponseSchema.parse(initResult.response);
+): Promise<InitResponseResult> {
+  const initResponse = controlInitResponseSchema.parse(initResult.response ?? {});
   const { commands, models, account } = initResponse;
   const slashCommands = Array.isArray(commands)
     ? [...new Set(commands.map((c) => c.name))]
@@ -120,6 +128,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         channel.runner.sendMessage(parsed.initialPrompt);
       }
     } catch (err) {
+      logger.error({ err }, 'Failed to create session');
       const message = errMsg(err, 'Failed to create session');
       if (resumeSessionId && message.includes('No conversation found')) {
         await ctx.sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
