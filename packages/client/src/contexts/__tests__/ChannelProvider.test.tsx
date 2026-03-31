@@ -160,6 +160,32 @@ describe('ChannelProvider', () => {
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
+  // ── Cross-window processing sync ──
+
+  it('session:states busy shows spinner (Stop button)', async () => {
+    const { claude, channelId } = await renderWithWorkspace();
+
+    await claude.pushServerEvent('session:states', {
+      sessions: [{ channelId, state: 'busy' }],
+    });
+
+    expect(screen.getByTitle('Stop')).toBeInTheDocument();
+  });
+
+  it('session:states idle hides spinner after busy', async () => {
+    const { claude, channelId } = await renderWithWorkspace();
+
+    await claude.pushServerEvent('session:states', {
+      sessions: [{ channelId, state: 'busy' }],
+    });
+    expect(screen.getByTitle('Stop')).toBeInTheDocument();
+
+    await claude.pushServerEvent('session:states', {
+      sessions: [{ channelId, state: 'idle' }],
+    });
+    expect(screen.getByTitle('Send')).toBeInTheDocument();
+  });
+
   // ── Abort state ──
 
   it('abort resets on result — can abort again next turn', async () => {
