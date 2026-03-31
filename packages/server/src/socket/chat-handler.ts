@@ -110,28 +110,32 @@ export class ChatHandler implements HandlerContext {
           channelId,
           state,
           ...(title !== undefined ? { title } : {}),
-          ...(cache.model !== undefined ? { modelSetting: cache.model as string } : {}),
-          ...(cache.permissionMode !== undefined
-            ? { permissionMode: cache.permissionMode as string }
-            : {}),
-          ...(cache.effort !== undefined ? { effort: cache.effort as string } : {}),
+          ...(cache.model !== undefined ? { modelSetting: cache.model } : {}),
+          ...(cache.permissionMode !== undefined ? { permissionMode: cache.permissionMode } : {}),
+          ...(cache.effort !== undefined ? { effort: cache.effort } : {}),
         },
       ],
     });
-    if (cache.model || cache.cwd || cache.permissionMode) {
+    const hasSettings =
+      cache.model ||
+      cache.cwd ||
+      cache.permissionMode ||
+      cache.thinkingLevel ||
+      cache.mcpServers ||
+      cache.tools ||
+      cache.effort;
+    if (hasSettings) {
       this.io?.emit('settings:update', {
         channelId,
-        ...(cache.model !== undefined ? { modelSetting: cache.model as string } : {}),
-        ...(cache.cwd !== undefined ? { defaultCwd: cache.cwd as string } : {}),
+        ...(cache.model !== undefined ? { modelSetting: cache.model } : {}),
+        ...(cache.cwd !== undefined ? { defaultCwd: cache.cwd } : {}),
         ...(cache.permissionMode !== undefined
-          ? { initialPermissionMode: cache.permissionMode as string }
+          ? { initialPermissionMode: cache.permissionMode }
           : {}),
-        ...(cache.thinkingLevel !== undefined
-          ? { thinkingLevel: cache.thinkingLevel as string }
-          : {}),
-        ...(cache.mcpServers !== undefined ? { mcpServers: cache.mcpServers as [] } : {}),
-        ...(cache.tools !== undefined ? { tools: cache.tools as string[] } : {}),
-        ...(cache.effort !== undefined ? { effort: cache.effort as string } : {}),
+        ...(cache.thinkingLevel !== undefined ? { thinkingLevel: cache.thinkingLevel } : {}),
+        ...(cache.mcpServers !== undefined ? { mcpServers: cache.mcpServers } : {}),
+        ...(cache.tools !== undefined ? { tools: cache.tools } : {}),
+        ...(cache.effort !== undefined ? { effort: cache.effort } : {}),
       });
     }
   }

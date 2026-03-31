@@ -20,7 +20,7 @@ export interface TabContextValue {
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (initialPrompt?: string) => Promise<{ channelId: string }>;
-  joinSession: (channelId: string) => void;
+  replaceActiveTab: (newChannelId: string) => void;
   syncFromServer: (sessions: Array<{ channelId: string; state: string }>) => void;
 }
 
@@ -129,11 +129,15 @@ export function TabProvider({
       });
     };
 
-    const joinSession = (channelId: string) => {
-      setState((prev) => ({
-        tabs: channelId in prev.tabs ? prev.tabs : { ...prev.tabs, [channelId]: DEFAULT_META },
-        activeTabId: channelId,
-      }));
+    const replaceActiveTab = (newChannelId: string) => {
+      setState((prev) => {
+        if (!prev.activeTabId) return prev;
+        const { [prev.activeTabId]: _, ...rest } = prev.tabs;
+        return {
+          tabs: { ...rest, [newChannelId]: DEFAULT_META },
+          activeTabId: newChannelId,
+        };
+      });
     };
 
     return {
@@ -143,7 +147,7 @@ export function TabProvider({
       setTabTitle,
       setTabStatus,
       createNewTab,
-      joinSession,
+      replaceActiveTab,
       syncFromServer,
     };
   }, [socket]);
@@ -170,17 +174,23 @@ export function TabProvider({
       actions.removeTab(channelId);
     };
 
+    const onResume = ({ channelId }: { channelId: string }) => {
+      actions.replaceActiveTab(channelId);
+    };
+
     if (onConnect) {
       socket.on('connect', onConnect);
       if (socket.connected) onConnect();
     }
     socket.on('session:created', onCreated);
     socket.on('session:dead', onDead);
+    socket.on('session:resume', onResume);
 
     return () => {
       if (onConnect) socket.off('connect', onConnect);
       socket.off('session:created', onCreated);
       socket.off('session:dead', onDead);
+      socket.off('session:resume', onResume);
     };
   }, [socket, actions, initialState]);
 

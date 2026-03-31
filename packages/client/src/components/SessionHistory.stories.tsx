@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { SessionHistory } from './SessionHistory';
 
 const meta = {
@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Loading: Story = {
-  args: { sessions: [], loading: true, onSelect: () => {}, onClose: () => {} },
+  args: { sessions: [], loading: true, onSelect: () => {} },
 };
 
 export const WithSessions: Story = {
@@ -31,6 +31,7 @@ export const WithSessions: Story = {
         args: '',
         mode: 'chat',
         role: 'user',
+        title: 'Fix login bug',
         createdAt: '2025-06-01T10:00:00Z',
       },
       {
@@ -40,46 +41,16 @@ export const WithSessions: Story = {
         args: '',
         mode: 'code',
         role: 'user',
+        title: 'Add dark mode',
         createdAt: '2025-06-02T14:30:00Z',
       },
     ],
     onSelect: (id) => console.log(id),
-    onClose: () => {},
   },
 };
 
 export const Empty: Story = {
-  args: { sessions: [], onSelect: () => {}, onClose: () => {} },
-};
-
-export const WithLoadMore: Story = {
-  args: {
-    sessions: [
-      {
-        id: 'sess-001',
-        provider: 'anthropic',
-        command: 'claude',
-        args: '--chat',
-        mode: 'chat',
-        role: 'user',
-        createdAt: '2025-06-01T10:00:00Z',
-        cwd: '/home/user/project',
-      },
-      {
-        id: 'sess-002',
-        provider: 'anthropic',
-        command: 'claude',
-        args: '',
-        mode: 'code',
-        role: 'user',
-        createdAt: '2025-06-02T14:30:00Z',
-      },
-    ],
-    hasMore: true,
-    onSelect: (id) => console.log('select', id),
-    onClose: () => {},
-    onLoadMore: () => console.log('load more'),
-  },
+  args: { sessions: [], onSelect: () => {} },
 };
 
 export const WithRename: Story = {
@@ -97,44 +68,6 @@ export const WithRename: Story = {
       },
     ],
     onSelect: fn(),
-    onClose: fn(),
     onRename: fn().mockResolvedValue({ success: true }),
-  },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByTitle(/rename session/i));
-    const input = canvas.getByRole('textbox', { name: /rename session/i });
-    await userEvent.clear(input);
-    await userEvent.type(input, 'New title');
-    await userEvent.keyboard('{Enter}');
-    await expect(args.onRename).toHaveBeenCalledWith('sess-abc', 'New title');
-  },
-};
-
-export const WithDetailExpansion: Story = {
-  args: {
-    sessions: [
-      {
-        id: 'sess-abc',
-        provider: 'anthropic',
-        command: 'claude',
-        args: 'claude --chat',
-        mode: 'chat',
-        role: 'user',
-        createdAt: '2025-06-01T10:00:00Z',
-        cwd: '/home/user/my-project',
-      },
-    ],
-    onSelect: (id) => console.log('select', id),
-    onClose: () => {},
-    onGetDetail: async (id) => ({
-      id,
-      provider: 'anthropic',
-      command: 'claude',
-      args: 'claude --chat',
-      mode: 'chat',
-      role: 'user',
-      createdAt: '2025-06-01T10:00:00Z',
-      cwd: '/home/user/my-project',
-    }),
   },
 };

@@ -52,14 +52,6 @@ export class ChannelManager {
     return this.channels.get(channelId);
   }
 
-  /** Find channel by its runner instance. */
-  findByRunner(runner: unknown): Channel | undefined {
-    for (const ch of this.channels.values()) {
-      if (ch.runner === runner) return ch;
-    }
-    return undefined;
-  }
-
   /** Find channel that owns a pending control/notification request. Returns [channelId, channel]. */
   findByRequestId(requestId: string): [string, Channel] | undefined {
     for (const [id, ch] of this.channels) {
@@ -155,9 +147,9 @@ export class ChannelManager {
       if (ch.exited) continue;
       result.push({
         channelId: id,
-        state: ch.state === 'streaming' ? 'busy' : 'idle',
-        title: ch.sessionState?.title as string | undefined,
-        model: ch.sessionState?.model as string | undefined,
+        state: ch.isProcessing ? 'busy' : 'idle',
+        title: ch.sessionState?.title,
+        model: ch.sessionState?.model,
       });
     }
     return result;

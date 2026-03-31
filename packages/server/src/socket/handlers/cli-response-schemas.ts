@@ -28,3 +28,10 @@ export const cliAuthenticateResponseSchema = z
   .passthrough();
 
 export type CliAuthenticateResponse = z.infer<typeof cliAuthenticateResponseSchema>;
+
+/** CLI generate_session_title control_response.response shape */
+export const cliGenerateTitleResponseSchema = z
+  .object({
+    title: z.string(),
+  })
+  .passthrough();

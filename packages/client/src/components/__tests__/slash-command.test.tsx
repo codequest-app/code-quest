@@ -1,7 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ChannelProvider } from '../../contexts/channel';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
@@ -19,7 +19,7 @@ async function renderChatInputArea(initOpts?: Parameters<typeof s.init>[1]) {
         <PluginProvider>
           <TabProvider>
             <ChannelProvider channelId={channelId}>
-              <ChatInputArea toggleHistory={vi.fn()} />
+              <ChatInputArea />
             </ChannelProvider>
           </TabProvider>
         </PluginProvider>

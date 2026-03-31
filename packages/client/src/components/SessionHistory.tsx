@@ -1,143 +1,97 @@
 import type { SessionSummary } from '@code-quest/shared';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SessionRow } from './SessionRow';
-
-const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 
 interface SessionHistoryProps {
   sessions: SessionSummary[];
   loading?: boolean;
-  hasMore?: boolean;
-  currentChannelId?: string | null;
   onSelect: (id: string) => void;
-  onClose: () => void;
-  onLoadMore?: () => void;
-  onGetDetail?: (id: string) => Promise<SessionSummary | null>;
   onRename?: (id: string, title: string) => Promise<{ success: boolean; error?: string }>;
   onDelete?: (id: string) => Promise<{ success: boolean; error?: string }>;
-  remoteSessions?: SessionSummary[];
-  remoteLoading?: boolean;
-  onLoadRemote?: () => void;
-  onTeleport?: (channelId: string) => void;
-  onExport?: (channelId: string) => void;
-  onImport?: () => void;
-  onJoin?: (channelId: string) => void;
-  totalCount?: number;
 }
 
 export function SessionHistory({
   sessions,
   loading,
-  hasMore,
-  currentChannelId,
   onSelect,
-  onClose,
-  onLoadMore,
-  onGetDetail,
   onRename,
   onDelete,
-  remoteSessions = [],
-  remoteLoading = false,
-  onLoadRemote,
-  onTeleport,
-  onExport,
-  onImport,
-  onJoin,
-  totalCount,
 }: SessionHistoryProps) {
-  const [activeTab, setActiveTab] = useState<'local' | 'remote'>('local');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [focusIndex, setFocusIndex] = useState(0);
 
-  const handleSwitchToRemote = () => {
-    setActiveTab('remote');
-    onLoadRemote?.();
-  };
+  const filtered = useMemo(() => {
+    const visible = sessions.filter((s) => !deletedIds.has(s.id));
+    if (!search.trim()) return visible;
+    const q = search.toLowerCase();
+    return visible.filter((s) => (s.title ?? s.id).toLowerCase().includes(q));
+  }, [sessions, search, deletedIds]);
 
-  const handleExpand = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
-  };
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!onDelete) return { success: false };
+      const result = await onDelete(id);
+      if (result.success) setDeletedIds((prev) => new Set(prev).add(id));
+      return result;
+    },
+    [onDelete],
+  );
 
-  const visibleSessions = sessions.filter((s) => !deletedIds.has(s.id));
-  const displaySessions = activeTab === 'local' ? visibleSessions : (remoteSessions ?? []);
-  const isLoading = activeTab === 'local' ? loading : remoteLoading;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setFocusIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setFocusIndex((prev) => Math.max(prev - 1, 0));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (filtered[focusIndex]) {
+            onSelect(filtered[focusIndex].id);
+          }
+          break;
+      }
+    },
+    [filtered, focusIndex, onSelect],
+  );
 
   return (
-    <div className="flex flex-col h-full bg-surface border-r border-border">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <span className="text-sm font-medium text-text">
-          Session History{' '}
-          <span data-testid="session-count" className="text-text-muted font-normal">
-            {totalCount !== undefined
-              ? `(${sessions.length} of ${totalCount})`
-              : `(${sessions.length})`}
-          </span>
-        </span>
-        <div className="flex items-center gap-1">
-          {onImport && (
-            <button type="button" title="Import session" onClick={onImport} className={ICON_BTN}>
-              ⬆
-            </button>
-          )}
-          <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
-            ✕
-          </button>
-        </div>
+    <div className="flex flex-col h-full min-h-0 bg-surface">
+      <div className="px-3 pt-3 pb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setFocusIndex(0);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search sessions..."
+          className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
+        />
       </div>
-
-      {onLoadRemote && (
-        <div className="flex border-b border-border">
-          <button
-            type="button"
-            onClick={() => setActiveTab('local')}
-            className={`flex-1 py-2 text-xs text-center transition-colors ${activeTab === 'local' ? 'text-accent border-b-2 border-accent font-medium' : 'text-text-muted hover:text-text'}`}
-          >
-            Local
-          </button>
-          <button
-            type="button"
-            onClick={handleSwitchToRemote}
-            className={`flex-1 py-2 text-xs text-center transition-colors ${activeTab === 'remote' ? 'text-accent border-b-2 border-accent font-medium' : 'text-text-muted hover:text-text'}`}
-          >
-            Remote
-          </button>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-        {isLoading && (
-          <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
+        {loading && <div className="px-3 py-8 text-center text-text-muted text-sm">Loading...</div>}
+        {!loading && filtered.length === 0 && (
+          <div className="px-3 py-8 text-center text-text-muted text-sm">No sessions</div>
         )}
-        {!isLoading && displaySessions.length === 0 && (
-          <div className="px-4 py-8 text-center text-text-muted text-sm">No sessions</div>
-        )}
-        {displaySessions.map((s) => (
+        {filtered.map((s, i) => (
           <SessionRow
             key={s.id}
             session={s}
-            isExpanded={expandedId === s.id}
-            isCurrent={currentChannelId === s.id}
-            isRemote={activeTab === 'remote'}
-            onExpand={handleExpand}
+            isFocused={i === focusIndex}
             onSelect={onSelect}
-            onGetDetail={onGetDetail}
+            onMouseEnter={() => setFocusIndex(i)}
             onRename={onRename}
-            onDelete={onDelete}
-            onExport={onExport}
-            onJoin={onJoin}
-            onTeleport={onTeleport}
-            onDeleted={(id) => setDeletedIds((prev) => new Set(prev).add(id))}
+            onDelete={onDelete ? handleDelete : undefined}
+            searchQuery={search || undefined}
           />
         ))}
-        {activeTab === 'local' && hasMore && onLoadMore && (
-          <button
-            type="button"
-            onClick={onLoadMore}
-            className="w-full py-3 text-center text-xs text-accent hover:underline"
-          >
-            Load More
-          </button>
-        )}
       </div>
     </div>
   );

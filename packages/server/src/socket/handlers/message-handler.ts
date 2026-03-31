@@ -1,4 +1,5 @@
 import {
+  cancelRequestPayloadSchema,
   chatCancelAsyncMessageSchema,
   chatHookCallbackRespondSchema,
   chatInterruptSchema,
@@ -9,6 +10,7 @@ import {
 } from '@code-quest/shared';
 import type { HandlerContext, TypedSocket } from '../handler-context.ts';
 import { errMsg } from '../handler-context.ts';
+import { cliGenerateTitleResponseSchema } from './cli-response-schemas.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   // chat:send — alias for send_message
@@ -19,6 +21,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const runner = ctx.requireRunner(socket, channelId);
       if (!runner) return;
       const channel = ctx.channelManager.get(channelId);
+      channel?.startProcessing();
       runner.sendMessage(textMessage);
       ctx.broadcastSessionState(channelId, 'busy');
 
@@ -27,6 +30,24 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         channelId,
         content: [{ type: 'text', text: textMessage }],
       });
+
+      // Auto-generate session title on first message
+      if (channel && !channel.sessionState.titleGenerated) {
+        channel.updateSessionState({ titleGenerated: true });
+        channel
+          .sendControlRequest('generate_session_title', { description: textMessage })
+          .then((res) => {
+            const parsed = cliGenerateTitleResponseSchema.safeParse(res.response);
+            if (parsed.success) {
+              const { title } = parsed.data;
+              ctx.sessionStore
+                .rename(channelId, title)
+                .catch((e) => console.warn('Failed to persist session title:', e));
+              ctx.broadcastSessionState(channelId, channel.isProcessing ? 'busy' : 'idle', title);
+            }
+          })
+          .catch((e) => console.warn('Failed to generate session title:', e));
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
     }
@@ -179,7 +200,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   socket.on('chat:cancel_request', (payload) => {
-    const { targetRequestId } = payload;
+    const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
     const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
     if (cancelMatch) {
       const [channelId, channel] = cancelMatch;

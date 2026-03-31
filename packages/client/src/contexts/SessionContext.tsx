@@ -40,6 +40,7 @@ export interface SessionContextValue {
   ) => Promise<{ success: boolean; error?: string }>;
 
   closeSession: (channelId: string) => void;
+  resumeSession: (channelId: string) => void;
 
   initOptions: Record<string, unknown>;
   setInitOptions: (opts: Record<string, unknown>) => void;
@@ -119,6 +120,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         rpc(socket, 'session:update_state', { channelId, ...update }),
       closeSession: (channelId: string) => {
         socket.emit('session:close', { channelId });
+      },
+      resumeSession: (channelId: string) => {
+        socket.emit('session:resume', { channelId });
       },
       login: () => {
         setAuth({ status: 'waiting', authUrl: null, errorMsg: null });

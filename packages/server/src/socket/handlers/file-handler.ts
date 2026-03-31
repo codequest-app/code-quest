@@ -11,8 +11,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback({ error: 'Session not found' });
       return;
     }
-    const cwd =
-      typeof channel.sessionState.cwd === 'string' ? channel.sessionState.cwd : process.cwd();
+    const cwd = channel.sessionState.cwd ?? process.cwd();
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback({ error: 'Path traversal not allowed' });

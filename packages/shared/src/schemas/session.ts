@@ -85,6 +85,7 @@ export type ChatKillPayload = z.infer<typeof chatKillSchema>;
 export const sessionListSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
+  cwd: z.string().optional(),
 });
 export type SessionListPayload = z.infer<typeof sessionListSchema>;
 
@@ -235,6 +236,11 @@ export const sessionDeadPayloadSchema = z.object({
   channelId: z.string(),
 });
 export type SessionDeadPayload = z.infer<typeof sessionDeadPayloadSchema>;
+
+export const sessionResumePayloadSchema = z.object({
+  channelId: z.string(),
+});
+export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
 
 export const sessionStatesPayloadSchema = z.object({
   sessions: z.array(sessionStateSummarySchema),

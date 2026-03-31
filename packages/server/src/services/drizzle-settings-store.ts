@@ -7,14 +7,7 @@ interface SettingsTable {
   value: Column;
 }
 
-interface DrizzleDb {
-  insert(table: unknown): { values(v: unknown): Promise<unknown> };
-  update(table: unknown): { set(values: unknown): { where(cond: unknown): Promise<unknown> } };
-  delete(table: unknown): { where(cond: unknown): Promise<unknown> };
-  select(cols?: unknown): {
-    from(table: unknown): { where(cond: unknown): Promise<unknown[]> };
-  };
-}
+import type { DrizzleDb } from './drizzle-types.ts';
 
 export class DrizzleSettingsStore implements SettingsStore {
   constructor(

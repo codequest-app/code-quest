@@ -18,59 +18,6 @@ function fakeSocket() {
 }
 
 describe('Channel', () => {
-  describe('state machine', () => {
-    it('starts in launching state', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      expect(channel.state).toBe('launching');
-    });
-
-    it('allows valid transitions: launching → active → streaming → active', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.transition('active');
-      expect(channel.state).toBe('active');
-
-      channel.transition('streaming');
-      expect(channel.state).toBe('streaming');
-
-      channel.transition('active');
-      expect(channel.state).toBe('active');
-    });
-
-    it('allows streaming → cancelling → active', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.transition('active');
-      channel.transition('streaming');
-      channel.transition('cancelling');
-      expect(channel.state).toBe('cancelling');
-
-      channel.transition('active');
-      expect(channel.state).toBe('active');
-    });
-
-    it('rejects invalid transitions', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      expect(() => channel.transition('streaming')).toThrow(
-        'Invalid Channel state transition: launching → streaming',
-      );
-      expect(channel.state).toBe('launching');
-    });
-
-    it('rejects transitions from closed', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.transition('closed');
-      expect(() => channel.transition('active')).toThrow(
-        'Invalid Channel state transition: closed → active',
-      );
-    });
-
-    it('allows any state to transition to closed', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.transition('active');
-      channel.transition('closed');
-      expect(channel.state).toBe('closed');
-    });
-  });
-
   describe('socket management', () => {
     it('adds and removes sockets', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
@@ -200,7 +147,7 @@ describe('Channel', () => {
 
       channel.destroy();
 
-      expect(channel.state).toBe('closed');
+      expect(channel.exited).toBe(true);
       expect(channel.sockets.size).toBe(0);
       expect(channel.hasControlRequest('req-1')).toBe(false);
     });

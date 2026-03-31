@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { expect } from 'storybook/test';
 import { ChannelProvider } from '../contexts/channel';
 import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -13,10 +13,6 @@ const socket = createSocket();
 const meta = {
   component: ChatPanel,
   tags: ['autodocs'],
-  args: {
-    joinSession: fn(),
-    toggleHistory: fn(),
-  },
   parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => {

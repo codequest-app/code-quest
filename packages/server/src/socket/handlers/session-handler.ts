@@ -9,6 +9,7 @@ import {
   sessionListRemoteSchema,
   sessionListSchema,
   sessionRenameSchema,
+  sessionResumePayloadSchema,
   sessionTeleportSchema,
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
@@ -192,7 +193,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
 
       const events = await ctx.getSessionHistory(channelId);
-      callback?.({ channelId, state: 'idle', meta: channel.metaCache ?? {}, events });
+      const state = channel.isProcessing ? 'busy' : 'idle';
+      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
     } catch (err) {
       callback?.({ error: errMsg(err, 'Failed to join session') });
     }
@@ -204,9 +206,19 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const ch = ctx.channelManager.get(channelId);
       if (ch) {
         ch.runner.kill();
+        ctx.io?.emit('session:dead', { channelId });
       }
     } catch {
       // ignore
+    }
+  });
+
+  socket.on('session:resume', (payload) => {
+    try {
+      const { channelId } = sessionResumePayloadSchema.parse(payload);
+      ctx.io?.emit('session:resume', { channelId });
+    } catch {
+      // ignore invalid payload
     }
   });
 
@@ -345,6 +357,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const result = await ctx.sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
+        cwd: parsed.cwd,
       });
       const previews = await Promise.all(
         result.sessions.map((s) => ctx.rawEventStore.getPreview(s.sessionId ?? s.id)),
@@ -355,6 +368,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           ...s,
           isActive: !!(ch && !ch.exited),
           lastAssistantMessage: previews[i].lastAssistant,
+          firstUserMessage: previews[i].firstUser,
         };
       });
       callback({ sessions, total: result.total });
@@ -395,7 +409,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   socket.on('session:raw_events', async (payload, callback) => {
     try {
-      const { channelId } = payload;
+      const { channelId } = sessionGetSchema.parse(payload);
       const entries = await ctx.rawEventStore.getBySession(await ctx.resolveSessionId(channelId));
       const events = entries.map((e) => {
         try {

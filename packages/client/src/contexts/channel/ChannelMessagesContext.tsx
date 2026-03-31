@@ -178,15 +178,15 @@ export function ChannelMessagesProvider({
   // ── Join session ──
   useEffect(() => {
     if (!channelId) return;
-    socket.emit('session:join', { channelId }, (joinRes) => {
-      if ('error' in joinRes) return;
+    socket.emit('session:join', { channelId }, (snapshot) => {
+      if ('error' in snapshot) return;
       setChannelState((prev) => {
         const updated = {
           ...prev,
-          status: joinRes.state === 'busy' ? ('busy' as const) : ('idle' as const),
+          status: snapshot.state === 'busy' ? ('busy' as const) : ('idle' as const),
         };
-        if (prev.messages.length === 0 && joinRes.events?.length) {
-          updated.messages = buildMessagesFromHistory(joinRes.events);
+        if (prev.messages.length === 0 && snapshot.events?.length) {
+          updated.messages = buildMessagesFromHistory(snapshot.events);
         }
         return updated;
       });
