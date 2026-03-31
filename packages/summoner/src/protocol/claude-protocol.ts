@@ -1,6 +1,6 @@
+import type { LaunchOptions } from '../claude/launch-options.ts';
 import type { ParseResult } from '../types.ts';
 import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolEvent } from './claude-schemas.ts';
-import type { LaunchOptions } from './provider-adapter.ts';
 
 // ── ClaudeProtocol ──
 

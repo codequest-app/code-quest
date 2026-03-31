@@ -1,11 +1,10 @@
 import { EventEmitter } from 'node:events';
-import type { LaunchOptions } from './protocol/provider-adapter.ts';
 import type { ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
 
-interface ProcessRunnerOptions {
+export interface ProcessRunnerOptions {
   adapter: ProviderAdapter;
   processProvider?: ProcessProvider;
-  args?: LaunchOptions;
+  args?: unknown;
   parentEnv?: NodeJS.ProcessEnv;
 }
 

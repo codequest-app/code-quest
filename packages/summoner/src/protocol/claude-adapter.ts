@@ -3,17 +3,17 @@ import {
   type ProviderClientConfig,
   providerClientConfigSchema,
 } from '@code-quest/shared';
-import type { ControlResponseEvent } from '../types.ts';
-import { ClaudeProtocol } from './claude-protocol.ts';
-import type { ProtocolEvent } from './claude-schemas.ts';
+import type { LaunchOptions } from '../claude/launch-options.ts';
 import type {
   AdapterOutput,
-  LaunchOptions,
+  ControlResponseEvent,
   ParseResult,
   ProviderAdapter,
   ServerAction,
   SocketEvent,
-} from './provider-adapter.ts';
+} from '../types.ts';
+import { ClaudeProtocol } from './claude-protocol.ts';
+import type { ProtocolEvent } from './claude-schemas.ts';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
