@@ -1,4 +1,7 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeClaude } from '../test/index.ts';
@@ -80,9 +83,9 @@ describe('ChatHandler > control', () => {
       expect(hookEvents.length).toBeGreaterThan(0);
     });
 
-    it('removes pending on control_cancel_request and forwards cancel_request', async () => {
+    it('removes pending on control_cancel_request and forwards chat:cancel_request', async () => {
       const { claude, channelId } = await setup();
-      const cancelEvents = collectEvents(claude.socket, 'cancel_request');
+      const cancelEvents = collectEvents(claude.socket, 'chat:cancel_request');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: {} } }));
@@ -267,9 +270,9 @@ describe('ChatHandler > control', () => {
   });
 
   describe('initialize control_request', () => {
-    it('system/init pushes state:update on launch', async () => {
+    it('system/init pushes settings:update on launch', async () => {
       const claude = createFakeClaude();
-      const configEvents = collectEvents(claude.socket, 'state:update');
+      const configEvents = collectEvents(claude.socket, 'settings:update');
 
       await claude.initialize();
 
@@ -338,7 +341,7 @@ describe('ChatHandler > control', () => {
     it('set_model auto-responds and updates sessionState', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_model', { channelId, model: 'haiku' });
+      await claude.send('settings:set_model', { channelId, model: 'haiku' });
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'set_model')).toBe(true);
@@ -347,7 +350,7 @@ describe('ChatHandler > control', () => {
     it('set_permission_mode auto-responds and updates sessionState', async () => {
       const { claude, channelId } = await setup();
 
-      await claude.send('set_permission_mode', { channelId, mode: 'plan' });
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'set_permission_mode')).toBe(
@@ -376,7 +379,7 @@ describe('ChatHandler > control', () => {
   describe('initialize response fields', () => {
     it('initialize response includes accountInfo from controlResponse', async () => {
       const claude = createFakeClaude();
-      const stateUpdates = collectEvents(claude.socket, 'state:update');
+      const stateUpdates = collectEvents(claude.socket, 'settings:update');
 
       await claude.initialize(
         s.init('sess'),
@@ -431,10 +434,6 @@ describe('ChatHandler > control', () => {
 
   describe('open_diff with file content', () => {
     it('emits diff_review_request with real file content', async () => {
-      const { writeFileSync, mkdirSync, rmSync } = await import('node:fs');
-      const { join } = await import('node:path');
-      const { tmpdir } = await import('node:os');
-
       const dir = join(tmpdir(), `cc-diff-test-${Date.now()}`);
       mkdirSync(dir, { recursive: true });
       const origPath = join(dir, 'original.ts');
@@ -635,7 +634,7 @@ describe('ChatHandler > control', () => {
       s.controlRequest('req-cancel-test', 'can_use_tool', 'Bash', { command: 'ls' }),
     );
 
-    await claude.send('cancel_request', { targetRequestId: 'req-cancel-test' });
+    await claude.send('chat:cancel_request', { targetRequestId: 'req-cancel-test' });
 
     const received = claude.received();
     expect(
@@ -655,7 +654,7 @@ describe('ChatHandler > control', () => {
     );
     await claude.emit(s.controlRequest('req-cancel-cs', 'can_use_tool', 'Bash', { command: 'ls' }));
 
-    await claude.send('cancel_request', { targetRequestId: 'req-cancel-cs' });
+    await claude.send('chat:cancel_request', { targetRequestId: 'req-cancel-cs' });
 
     expect(claude.socket.connected).toBe(true);
   });

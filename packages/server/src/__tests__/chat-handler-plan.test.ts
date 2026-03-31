@@ -9,7 +9,7 @@ async function setup(sessionId = 'cli-sess') {
 }
 
 describe('ChatHandler > plan', () => {
-  it('plan:comment adds a comment and plan:get_comments retrieves it', async () => {
+  it('plan:comment adds a comment and plan:comments retrieves it', async () => {
     const { claude, channelId } = await setup();
 
     const comment = {
@@ -19,10 +19,13 @@ describe('ChatHandler > plan', () => {
       comment: 'my note',
     };
 
-    const addResult = await claude.send<{ success: boolean }>('comment', { channelId, comment });
+    const addResult = await claude.send<{ success: boolean }>('plan:comment', {
+      channelId,
+      comment,
+    });
     expect(addResult.success).toBe(true);
 
-    const getResult = await claude.send<{ comments: any[] }>('get_plan_comments', { channelId });
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
     expect(getResult.comments).toHaveLength(1);
     expect(getResult.comments[0]).toMatchObject(comment);
   });
@@ -30,22 +33,22 @@ describe('ChatHandler > plan', () => {
   it('plan:remove_comment removes a specific comment', async () => {
     const { claude, channelId } = await setup();
 
-    await claude.send<any>('comment', {
+    await claude.send<any>('plan:comment', {
       channelId,
       comment: { id: 'c1', selectedText: 't1', sectionHeading: 'h1', comment: 'n1' },
     });
-    await claude.send<any>('comment', {
+    await claude.send<any>('plan:comment', {
       channelId,
       comment: { id: 'c2', selectedText: 't2', sectionHeading: 'h2', comment: 'n2' },
     });
 
-    const removeResult = await claude.send<{ success: boolean }>('remove_plan_comment', {
+    const removeResult = await claude.send<{ success: boolean }>('plan:remove_comment', {
       channelId,
       commentId: 'c1',
     });
     expect(removeResult.success).toBe(true);
 
-    const getResult = await claude.send<{ comments: any[] }>('get_plan_comments', { channelId });
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
     expect(getResult.comments).toHaveLength(1);
     expect(getResult.comments[0].id).toBe('c2');
   });
@@ -53,7 +56,7 @@ describe('ChatHandler > plan', () => {
   it('plan:remove_comment returns error for unknown commentId', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('remove_plan_comment', {
+    const result = await claude.send<{ success: boolean; error?: string }>('plan:remove_comment', {
       channelId,
       commentId: 'unknown',
     });
@@ -64,17 +67,17 @@ describe('ChatHandler > plan', () => {
   it('plan:close_preview clears all comments for session', async () => {
     const { claude, channelId } = await setup();
 
-    await claude.send<any>('comment', {
+    await claude.send<any>('plan:comment', {
       channelId,
       comment: { id: 'c1', selectedText: 't1', sectionHeading: 'h1', comment: 'n1' },
     });
 
-    const closeResult = await claude.send<{ success: boolean }>('close_plan_preview', {
+    const closeResult = await claude.send<{ success: boolean }>('plan:close_preview', {
       channelId,
     });
     expect(closeResult.success).toBe(true);
 
-    const getResult = await claude.send<{ comments: any[] }>('get_plan_comments', { channelId });
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
     expect(getResult.comments).toHaveLength(0);
   });
 
@@ -86,7 +89,7 @@ describe('ChatHandler > plan', () => {
     await claude.emit(s.controlRequestExitPlanMode('req-plan-1'));
 
     // Add plan comments
-    await claude.send<any>('comment', {
+    await claude.send<any>('plan:comment', {
       channelId,
       comment: {
         id: 'c1',
@@ -95,7 +98,7 @@ describe('ChatHandler > plan', () => {
         comment: 'needs more detail',
       },
     });
-    await claude.send<any>('comment', {
+    await claude.send<any>('plan:comment', {
       channelId,
       comment: {
         id: 'c2',
@@ -113,7 +116,7 @@ describe('ChatHandler > plan', () => {
     });
 
     // Comments should be cleared (serialized into userFeedback)
-    const getResult = await claude.send<{ comments: any[] }>('get_plan_comments', { channelId });
+    const getResult = await claude.send<{ comments: any[] }>('plan:comments', { channelId });
     expect(getResult.comments).toHaveLength(0);
   });
 });

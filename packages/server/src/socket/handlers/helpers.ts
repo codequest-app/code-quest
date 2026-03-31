@@ -1,6 +1,9 @@
 import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 
+/** Default max thinking tokens when thinking is enabled (matches CLI default). */
+export const DEFAULT_THINKING_TOKENS = 31999;
+
 const execFileAsync = promisify(execFile);
 
 export async function execGit(args: string[], timeoutMs?: number): Promise<string> {

@@ -24,7 +24,7 @@ function toSocketEvent(line: string) {
 
 function transformResult(line: string) {
   const event = parseEvent(line);
-  if (!event) return { events: [], autoResponses: [], controlResponses: [], serverActions: [] };
+  if (!event) return { events: [], controlResponses: [], serverActions: [] };
   return adapter.transform(event);
 }
 
@@ -74,7 +74,7 @@ describe('ClaudeAdapter', () => {
         name: 'message:assistant',
         payload: { content: [{ type: 'text', text: 'hello world' }] },
       });
-      expect(output.autoResponses).toHaveLength(0);
+      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
       expect(output.controlResponses).toHaveLength(0);
     });
 
@@ -93,7 +93,7 @@ describe('ClaudeAdapter', () => {
       });
     });
 
-    it('separates auto_respond into autoResponses for open_url', () => {
+    it('separates auto_respond into serverActions for open_url', () => {
       const line = s.controlRequest('req-1', 'open_url', undefined, {
         url: 'https://example.com',
       });
@@ -109,14 +109,15 @@ describe('ClaudeAdapter', () => {
         payload: { url: 'https://example.com' },
       });
 
-      expect(output.autoResponses).toHaveLength(1);
-      expect(output.autoResponses[0]).toMatchObject({
+      const autoResponses = output.serverActions.filter((a) => a.action === 'auto_respond');
+      expect(autoResponses).toHaveLength(1);
+      expect(autoResponses[0]).toMatchObject({
         requestId: 'req-1',
         subtype: 'open_url',
       });
     });
 
-    it('does NOT put read_diff into autoResponses', () => {
+    it('does NOT put read_diff into auto_respond serverActions', () => {
       const line = s.controlRequestOpenDiff('req-2', {
         originalFilePath: '/tmp/a.ts',
         newFilePath: '/tmp/b.ts',
@@ -127,7 +128,7 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.autoResponses).toHaveLength(0);
+      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
       expect(output.events).toHaveLength(0);
     });
 
@@ -141,7 +142,7 @@ describe('ClaudeAdapter', () => {
 
       expect(output.events).toHaveLength(1);
       expect(output.events[0]).toMatchObject({ name: 'control:permission' });
-      expect(output.autoResponses).toHaveLength(0);
+      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
     });
 
     it('transforms control_response into controlResponses', () => {
@@ -266,21 +267,49 @@ describe('ClaudeAdapter', () => {
     });
 
     it('skips system/post_turn_summary', () => {
-      const raw = JSON.stringify({ type: 'system', subtype: 'post_turn_summary', summary: 'test', session_id: 'x', uuid: 'u' });
+      const raw = JSON.stringify({
+        type: 'system',
+        subtype: 'post_turn_summary',
+        summary: 'test',
+        session_id: 'x',
+        uuid: 'u',
+      });
       expect(toSocketEvent(raw)).toBeNull();
     });
 
     it('skips system/session_state_changed', () => {
-      const raw = JSON.stringify({ type: 'system', subtype: 'session_state_changed', state: {}, session_id: 'x', uuid: 'u' });
+      const raw = JSON.stringify({
+        type: 'system',
+        subtype: 'session_state_changed',
+        state: {},
+        session_id: 'x',
+        uuid: 'u',
+      });
       expect(toSocketEvent(raw)).toBeNull();
     });
 
     it('converts system/api_retry', () => {
-      const raw = JSON.stringify({ type: 'system', subtype: 'api_retry', attempt: 1, max_retries: 10, retry_delay_ms: 500, error_status: 529, error: 'rate_limit', session_id: 'x', uuid: 'u' });
+      const raw = JSON.stringify({
+        type: 'system',
+        subtype: 'api_retry',
+        attempt: 1,
+        max_retries: 10,
+        retry_delay_ms: 500,
+        error_status: 529,
+        error: 'rate_limit',
+        session_id: 'x',
+        uuid: 'u',
+      });
       const result = toSocketEvent(raw);
       expect(result).toMatchObject({
         name: 'system:api_retry',
-        payload: { attempt: 1, maxRetries: 10, retryDelayMs: 500, errorStatus: 529, error: 'rate_limit' },
+        payload: {
+          attempt: 1,
+          maxRetries: 10,
+          retryDelayMs: 500,
+          errorStatus: 529,
+          error: 'rate_limit',
+        },
       });
     });
 
@@ -478,7 +507,16 @@ describe('ClaudeAdapter', () => {
     });
 
     it('skips compaction_delta', () => {
-      const raw = JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'compaction_delta', content: 'compressed' } }, session_id: 'x', uuid: 'u' });
+      const raw = JSON.stringify({
+        type: 'stream_event',
+        event: {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'compaction_delta', content: 'compressed' },
+        },
+        session_id: 'x',
+        uuid: 'u',
+      });
       expect(toSocketEvent(raw)).toBeNull();
     });
   });
@@ -538,7 +576,7 @@ describe('ClaudeAdapter', () => {
         }),
       );
       expect(result.events).toHaveLength(0);
-      expect(result.autoResponses).toMatchObject([
+      expect(result.serverActions.filter((a) => a.action === 'auto_respond')).toMatchObject([
         { requestId: 'mcp-1', subtype: 'mcp_notification' },
       ]);
     });
@@ -573,7 +611,7 @@ describe('ClaudeAdapter', () => {
           },
         },
       ]);
-      expect(result.autoResponses).toMatchObject([
+      expect(result.serverActions.filter((a) => a.action === 'auto_respond')).toMatchObject([
         {
           requestId: 'sn-1',
           subtype: 'show_notification',

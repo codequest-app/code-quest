@@ -2,17 +2,37 @@ import type { ProviderClientConfig, SocketEvent } from '@code-quest/shared';
 import type { ZodError } from 'zod';
 import type { ControlResponseEvent } from '../types.ts';
 import type { ProtocolEvent } from './claude-schemas.ts';
-import type { ServerAction } from './server-action.ts';
 
 export type { SocketEvent };
 
 // --- ParseResult: output of parseLine ---
 
-export type ParseResult =
-  | { status: 'ok'; raw: string; event: ProtocolEvent }
-  | { status: 'skip'; raw: string; reason: 'empty' | 'keep_alive' | 'invalid_json' | 'no_type' }
-  | { status: 'unknown'; raw: string; type: string; data: Record<string, unknown> }
-  | { status: 'error'; raw: string; error: ZodError };
+export interface ParseOk {
+  status: 'ok';
+  raw: string;
+  event: ProtocolEvent;
+}
+
+export interface ParseSkip {
+  status: 'skip';
+  raw: string;
+  reason: 'empty' | 'keep_alive' | 'invalid_json' | 'no_type';
+}
+
+export interface ParseUnknown {
+  status: 'unknown';
+  raw: string;
+  type: string;
+  data: Record<string, unknown>;
+}
+
+export interface ParseError {
+  status: 'error';
+  raw: string;
+  error: ZodError;
+}
+
+export type ParseResult = ParseOk | ParseSkip | ParseUnknown | ParseError;
 
 // --- LaunchOptions: CLI launch parameters (provider-agnostic) ---
 
@@ -54,19 +74,11 @@ export interface LaunchOptions {
 
 // --- AutoResponse: provider knows CLI expects an immediate reply ---
 
-export interface AutoResponse {
-  requestId: string;
-  subtype: string;
-  response: Record<string, unknown>;
-  input?: unknown;
-}
-
 // --- AdapterOutput: result of transforming a ProtocolEvent ---
 
 export interface AdapterOutput {
   /** Named socket events ready for emit */
   events: SocketEvent[];
-  autoResponses: AutoResponse[];
   controlResponses: ControlResponseEvent[];
   serverActions: ServerAction[];
 }
@@ -95,3 +107,33 @@ export interface ProviderAdapter {
 
   extractRespondedRequestIds(rawEntries: Array<{ direction: string; raw: string }>): Set<string>;
 }
+
+// --- ServerAction: adapter tells server what to do ---
+
+export interface AutoRespondAction {
+  action: 'auto_respond';
+  requestId: string;
+  subtype: string;
+  response: Record<string, unknown>;
+  input?: unknown;
+}
+
+export interface ReadDiffAction {
+  action: 'read_diff';
+  requestId: string;
+  originalPath: string;
+  newPath: string;
+}
+
+export interface ForwardToClientAction {
+  action: 'forward_to_client';
+  requestId: string;
+  subtype: string;
+  toolName?: string;
+  toolUseId?: string;
+  input?: unknown;
+  suggestions?: unknown[];
+  callbackId?: string;
+}
+
+export type ServerAction = AutoRespondAction | ReadDiffAction | ForwardToClientAction;

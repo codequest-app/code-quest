@@ -40,6 +40,10 @@ export class ChannelManager {
     private adapter: ProviderAdapter,
   ) {}
 
+  get provider(): string {
+    return this.adapter.command;
+  }
+
   get providerClientConfig() {
     return this.adapter.clientConfig;
   }
@@ -82,7 +86,7 @@ export class ChannelManager {
     },
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
     const runner = this.runnerFactory.create(opts?.launchOptions);
-    const channel = new Channel(runner, channelId);
+    const channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
 
     channel.wireRunner(opts?.hooks);
@@ -115,7 +119,7 @@ export class ChannelManager {
     }
 
     const runner = this.runnerFactory.create({ resumeSessionId: record.sessionId });
-    channel = new Channel(runner, channelId);
+    channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
     channel.wireRunner(opts?.hooks);
     this.wireRawPersistence(channel);

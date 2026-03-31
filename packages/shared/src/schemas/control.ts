@@ -7,7 +7,7 @@ export const controlPermissionResponseSchema = z.union([
   z.object({
     behavior: z.literal('allow'),
     updatedInput: z.record(z.string(), z.unknown()),
-    updatedPermissions: z.array(z.any()).optional(),
+    updatedPermissions: z.array(z.unknown()).optional(),
     toolUseID: z.string().optional(),
     userFeedback: z.string().optional(),
   }),

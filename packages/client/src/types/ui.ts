@@ -39,7 +39,7 @@ export interface Message {
     | 'raw_event'
     | 'unhandled'
     | 'content_block_start'
-    | 'file_updated'
+    | 'file:updated'
     | 'image'
     | 'document'
     | 'meta'

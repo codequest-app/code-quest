@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
@@ -146,7 +146,7 @@ describe('ChannelProvider', () => {
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
-  it('speech_to_text_message does not crash', async () => {
+  it('speech:message does not crash', async () => {
     const { claude, user } = await renderWithWorkspace();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -190,14 +190,13 @@ describe('ChannelProvider', () => {
 
   it('unmount does not crash', async () => {
     const { claude } = await renderWithWorkspace();
-    const { render: rtlRender } = await import('@testing-library/react');
-    rtlRender(<div />);
+    render(<div />);
     expect(claude.socket.connected).toBe(true);
   });
 
   // ── Context Usage ──
 
-  it('request_usage_update returns contextUsage from CLI', async () => {
+  it('settings:refresh_usage returns contextUsage from CLI', async () => {
     const { claude, user } = await renderWithWorkspace();
 
     claude.onControlRequest((req) => {
@@ -219,7 +218,7 @@ describe('ChannelProvider', () => {
     await claude.emit(s.assistant('done'));
     await claude.emit(s.result());
 
-    // Trigger request_usage_update via UI — open /usage dialog
+    // Trigger settings:refresh_usage via UI — open /usage dialog
     await act(async () => {
       textarea.focus();
     });

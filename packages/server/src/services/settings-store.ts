@@ -2,9 +2,9 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 export interface SettingsStore {
-  get(key: string): unknown;
-  set(key: string, value: unknown): void;
-  getAll(): Record<string, unknown>;
+  get(provider: string, key: string): Promise<unknown>;
+  set(provider: string, key: string, value: unknown): Promise<void>;
+  getMany(provider: string, keys: string[]): Promise<Record<string, unknown>>;
 }
 
 export class FileSettingsStore implements SettingsStore {
@@ -15,7 +15,7 @@ export class FileSettingsStore implements SettingsStore {
     mkdirSync(this.dir, { recursive: true });
   }
 
-  private readFile(): Record<string, unknown> {
+  private readFile(): Record<string, Record<string, unknown>> {
     try {
       return JSON.parse(readFileSync(this.filePath, 'utf-8'));
     } catch {
@@ -23,36 +23,54 @@ export class FileSettingsStore implements SettingsStore {
     }
   }
 
-  get(key: string): unknown {
-    return this.readFile()[key];
-  }
-
-  set(key: string, value: unknown): void {
-    const data = this.readFile();
-    data[key] = value;
-    // Atomic write via temp file + rename
+  private writeFile(data: Record<string, Record<string, unknown>>): void {
     const tmpFile = join(this.dir, `.settings-${Date.now()}.tmp`);
     writeFileSync(tmpFile, JSON.stringify(data, null, 2));
     renameSync(tmpFile, this.filePath);
   }
 
-  getAll(): Record<string, unknown> {
-    return this.readFile();
+  async get(provider: string, key: string): Promise<unknown> {
+    return this.readFile()[provider]?.[key];
+  }
+
+  async set(provider: string, key: string, value: unknown): Promise<void> {
+    const data = this.readFile();
+    if (!data[provider]) data[provider] = {};
+    data[provider][key] = value;
+    this.writeFile(data);
+  }
+
+  async getMany(provider: string, keys: string[]): Promise<Record<string, unknown>> {
+    const providerData = this.readFile()[provider] ?? {};
+    const result: Record<string, unknown> = {};
+    for (const key of keys) {
+      if (key in providerData) result[key] = providerData[key];
+    }
+    return result;
   }
 }
 
 export class InMemorySettingsStore implements SettingsStore {
   private data = new Map<string, unknown>();
 
-  get(key: string): unknown {
-    return this.data.get(key);
+  private mapKey(provider: string, key: string): string {
+    return `${provider}:${key}`;
   }
 
-  set(key: string, value: unknown): void {
-    this.data.set(key, value);
+  async get(provider: string, key: string): Promise<unknown> {
+    return this.data.get(this.mapKey(provider, key));
   }
 
-  getAll(): Record<string, unknown> {
-    return Object.fromEntries(this.data);
+  async set(provider: string, key: string, value: unknown): Promise<void> {
+    this.data.set(this.mapKey(provider, key), value);
+  }
+
+  async getMany(provider: string, keys: string[]): Promise<Record<string, unknown>> {
+    const result: Record<string, unknown> = {};
+    for (const key of keys) {
+      const value = this.data.get(this.mapKey(provider, key));
+      if (value !== undefined) result[key] = value;
+    }
+    return result;
   }
 }

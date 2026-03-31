@@ -16,13 +16,7 @@ export const authResultSchema = z.object({
   success: z.boolean(),
   error: z.string().optional(),
   authUrl: z.string().optional(),
-  auth: z
-    .object({
-      authenticated: z.boolean(),
-      user: z.object({ name: z.string(), email: z.string().optional() }).optional(),
-      method: z.string().optional(),
-    })
-    .optional(),
+  auth: z.unknown().optional(),
 });
 export type AuthResult = z.infer<typeof authResultSchema>;
 

@@ -1,17 +1,11 @@
-import type { ProviderClientConfig } from '@code-quest/shared';
+import type { ModelInfo } from '@code-quest/shared';
 import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../utils/model-utils';
 
 interface ModelPickerPanelProps {
   currentModel: string | null;
-  availableModels: Array<{
-    value: string;
-    label?: string;
-    displayName?: string;
-    description?: string;
-  }>;
+  availableModels: ModelInfo[];
   onSwitch: (model: string) => void;
   onClose: () => void;
-  modelDisplayMap?: ProviderClientConfig['modelDisplayMap'];
   defaultModelDescription?: string;
 }
 
@@ -20,7 +14,6 @@ export function ModelPickerPanel({
   availableModels,
   onSwitch,
   onClose,
-  modelDisplayMap = [],
   defaultModelDescription,
 }: ModelPickerPanelProps) {
   const defaultModelValue = availableModels[0]?.value ?? null;
@@ -46,8 +39,7 @@ export function ModelPickerPanel({
         (() => {
           const { displayName, subLabel } = getModelDisplayInfo(
             '',
-            defaultModelValue,
-            modelDisplayMap,
+            availableModels,
             defaultModelDescription,
           );
           const isSelected = currentModel === defaultModelValue;
@@ -70,7 +62,7 @@ export function ModelPickerPanel({
         const { displayName, subLabel } = getModelInfoDisplayName(
           item,
           item.value,
-          modelDisplayMap,
+          availableModels,
         );
         const isSelected = currentModel === item.value;
         return (
@@ -92,13 +84,7 @@ export function ModelPickerPanel({
   );
 }
 
-export function currentModelLabel(
-  model: string | null,
-  availableModels?: { value: string; displayName?: string }[],
-  modelDisplayMap: ProviderClientConfig['modelDisplayMap'] = [],
-): string {
+export function currentModelLabel(model: string | null, availableModels: ModelInfo[] = []): string {
   if (!model) return 'Model';
-  const info = availableModels?.find((m) => m.value === model);
-  if (info?.displayName) return info.displayName;
-  return shortModelName(model, modelDisplayMap);
+  return shortModelName(model, availableModels);
 }

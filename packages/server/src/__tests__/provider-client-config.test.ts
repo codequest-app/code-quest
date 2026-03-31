@@ -17,10 +17,7 @@ describe('providerClientConfigSchema', () => {
       { id: 'claudeai', label: 'claude.ai', prefix: 'claude.ai ' },
     ],
     usageTiers: [{ key: 'five_hour', label: 'Session (5hr)', shortLabel: '5hr' }],
-    modelDisplayMap: [
-      { pattern: 'opus', displayName: 'Opus 4.6', supportsFastMode: true },
-      { pattern: 'sonnet', displayName: 'Sonnet', subLabel: 'Best for everyday tasks' },
-    ],
+    defaultModels: [{ value: 'default', displayName: 'Default', supportsEffort: true }],
     defaultModelDescription: 'Most capable for complex work',
   };
 
@@ -28,7 +25,7 @@ describe('providerClientConfigSchema', () => {
     const result = providerClientConfigSchema.parse(validConfig);
     expect(result.brand.name).toBe('Claude');
     expect(result.permissionModes).toHaveLength(1);
-    expect(result.modelDisplayMap).toHaveLength(2);
+    expect(result.defaultModels).toHaveLength(1);
   });
 
   it('rejects missing brand', () => {
@@ -43,7 +40,7 @@ describe('providerClientConfigSchema', () => {
       authMethods: [],
       mcpScopes: [],
       usageTiers: [],
-      modelDisplayMap: [],
+      defaultModels: [],
     };
     expect(providerClientConfigSchema.parse(minimal)).toBeDefined();
   });
@@ -57,13 +54,13 @@ describe('providerClientConfigSchema', () => {
     expect(result.mcpScopes[0].prefix).toBeUndefined();
   });
 
-  it('modelDisplayMap subLabel and supportsFastMode are optional', () => {
+  it('defaultModels fields are optional except value', () => {
     const config = {
       ...validConfig,
-      modelDisplayMap: [{ pattern: 'haiku', displayName: 'Haiku' }],
+      defaultModels: [{ value: 'haiku' }],
     };
     const result = providerClientConfigSchema.parse(config);
-    expect(result.modelDisplayMap[0].subLabel).toBeUndefined();
-    expect(result.modelDisplayMap[0].supportsFastMode).toBeUndefined();
+    expect(result.defaultModels[0].displayName).toBeUndefined();
+    expect(result.defaultModels[0].supportsEffort).toBeUndefined();
   });
 });

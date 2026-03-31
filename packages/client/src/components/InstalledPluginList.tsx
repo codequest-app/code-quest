@@ -88,15 +88,15 @@ export function InstalledPluginList({
                 className="flex items-center justify-between bg-surface border border-border rounded-md mb-2 p-3"
               >
                 <div className="flex items-center min-w-0 flex-1">
-                  <StatusDot enabled={plugin.enabled} />
+                  <StatusDot enabled={plugin.enabled ?? false} />
                   <span className="text-text font-medium text-[0.9em] truncate">
                     {pluginDisplayName(plugin.id)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                   <ToggleSwitch
-                    isOn={plugin.enabled}
-                    onClick={() => onToggle(plugin.id, plugin.enabled)}
+                    isOn={plugin.enabled ?? false}
+                    onClick={() => onToggle(plugin.id, plugin.enabled ?? false)}
                   />
                   <IconButton
                     onClick={() => onUninstall(plugin.id)}

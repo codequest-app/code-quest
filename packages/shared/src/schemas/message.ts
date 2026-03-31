@@ -109,7 +109,7 @@ export const sessionStatsSchema = z.object({
   cacheReadInputTokens: z.number().optional(),
   cacheCreationInputTokens: z.number().optional(),
   numTurns: z.number().optional(),
-  modelUsage: z.record(z.string(), z.unknown()).optional(),
+  modelUsage: z.record(z.string(), modelUsageEntrySchema).optional(),
 });
 export type SessionStats = z.infer<typeof sessionStatsSchema>;
 

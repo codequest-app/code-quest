@@ -21,51 +21,51 @@ describe('FileSettingsStore', () => {
     dirs.length = 0;
   });
 
-  it('returns undefined for missing key', () => {
+  it('returns undefined for missing key', async () => {
     const store = createStore();
-    expect(store.get('missing')).toBeUndefined();
+    expect(await store.get('claude', 'missing')).toBeUndefined();
   });
 
-  it('set then get returns value', () => {
+  it('set then get returns value', async () => {
     const store = createStore();
-    store.set('theme', 'dark');
-    expect(store.get('theme')).toBe('dark');
+    await store.set('claude', 'theme', 'dark');
+    expect(await store.get('claude', 'theme')).toBe('dark');
   });
 
-  it('getAll returns all values', () => {
+  it('getMany returns matching values', async () => {
     const store = createStore();
-    store.set('a', 1);
-    store.set('b', 'two');
-    expect(store.getAll()).toEqual({ a: 1, b: 'two' });
+    await store.set('claude', 'a', 1);
+    await store.set('claude', 'b', 'two');
+    expect(await store.getMany('claude', ['a', 'b'])).toEqual({ a: 1, b: 'two' });
   });
 
-  it('persists across new instances', () => {
+  it('persists across new instances', async () => {
     const dir = join(tmpdir(), `settings-test-${randomUUID()}`);
     dirs.push(dir);
     const filePath = join(dir, 'settings.json');
 
     const store1 = new FileSettingsStore(filePath);
-    store1.set('key', 'value');
+    await store1.set('claude', 'key', 'value');
 
     const store2 = new FileSettingsStore(filePath);
-    expect(store2.get('key')).toBe('value');
+    expect(await store2.get('claude', 'key')).toBe('value');
   });
 
-  it('handles concurrent set operations', () => {
+  it('handles concurrent set operations', async () => {
     const store = createStore();
-    store.set('a', 1);
-    store.set('b', 2);
-    store.set('a', 3);
-    expect(store.getAll()).toEqual({ a: 3, b: 2 });
+    await store.set('claude', 'a', 1);
+    await store.set('claude', 'b', 2);
+    await store.set('claude', 'a', 3);
+    expect(await store.getMany('claude', ['a', 'b'])).toEqual({ a: 3, b: 2 });
   });
 
-  it('creates directory if not exists', () => {
+  it('creates directory if not exists', async () => {
     const dir = join(tmpdir(), `settings-test-${randomUUID()}`, 'nested', 'dir');
     dirs.push(join(tmpdir(), dir.split('/').slice(0, -2).join('/')));
     // The constructor should create the directory
     const store = new FileSettingsStore(join(dir, 'settings.json'));
-    store.set('x', 42);
-    expect(store.get('x')).toBe(42);
+    await store.set('claude', 'x', 42);
+    expect(await store.get('claude', 'x')).toBe(42);
     // clean up the top-level random dir
     const topDir = join(tmpdir(), `settings-test-${dir.split('settings-test-')[1].split('/')[0]}`);
     dirs.push(topDir);

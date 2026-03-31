@@ -45,9 +45,9 @@ export type PermissionModeId = (typeof PERMISSION_MODE_IDS)[number];
 
 export interface PermissionModePickerProps {
   mode: string;
-  effort?: 'low' | 'medium' | 'high' | 'max';
+  effort?: string;
   onSetPermissionMode?: (mode: string) => void;
-  onSetEffort?: (effort: 'low' | 'medium' | 'high' | 'max') => void;
+  onSetEffort?: (effort: string) => void;
 }
 
 export function PermissionModePicker({
@@ -149,9 +149,9 @@ export function PermissionModePicker({
                 type="button"
                 className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:bg-white/5 cursor-pointer"
                 onClick={() => {
-                  const levels = ['low', 'medium', 'high', 'max'] as const;
-                  const idx = levels.indexOf(effort);
-                  onSetEffort(levels[(idx + 1) % levels.length]);
+                  const levels = ['low', 'medium', 'high', 'max'];
+                  const idx = effort ? levels.indexOf(effort) : -1;
+                  onSetEffort?.(levels[(idx + 1) % levels.length]);
                 }}
                 title="Click to cycle effort level"
               >

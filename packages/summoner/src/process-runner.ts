@@ -80,7 +80,7 @@ export class ProcessRunner extends EventEmitter {
 
     if (!protocolEvent) return;
 
-    const { events, autoResponses, controlResponses, serverActions } = this.adapter.transform(
+    const { events, controlResponses, serverActions } = this.adapter.transform(
       protocolEvent as ProtocolEvent,
     );
     for (const cr of controlResponses) {
@@ -88,9 +88,6 @@ export class ProcessRunner extends EventEmitter {
     }
     for (const se of events) {
       this.emit('socket_event', se);
-    }
-    for (const ar of autoResponses) {
-      this.emit('auto_response', ar);
     }
     for (const sa of serverActions) {
       this.emit('server_action', sa);

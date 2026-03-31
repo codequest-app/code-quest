@@ -1,4 +1,11 @@
-import type { AccountInfo, ChatStats, PlanCommentData, UsageQuota } from '@code-quest/shared';
+import type {
+  AccountInfo,
+  ChatStats,
+  ControlDiffReviewPayload,
+  ControlElicitationPayload,
+  PlanCommentData,
+  UsageQuota,
+} from '@code-quest/shared';
 import type { Message, SessionStatus } from './ui';
 
 export interface TerminalSession {
@@ -7,20 +14,9 @@ export interface TerminalSession {
   outputLines: string[];
 }
 
-export interface PendingElicitation {
-  requestId: string;
-  prompt: string;
-  inputType: 'text' | 'url' | 'select';
-  options?: string[];
-  url?: string;
-}
+export type PendingElicitation = Omit<ControlElicitationPayload, 'channelId'>;
 
-export interface PendingDiffReview {
-  toolId: string;
-  oldContent: string;
-  newContent: string;
-  filePath: string;
-}
+export type PendingDiffReview = Omit<ControlDiffReviewPayload, 'channelId'>;
 
 export interface ChannelState {
   channelId: string;

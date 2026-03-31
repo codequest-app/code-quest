@@ -1,4 +1,5 @@
-import type { ProcessHandle, ProcessProvider, ProcessSpawnOptions } from '../types.ts';
+import type { SpawnOptions } from 'node:child_process';
+import type { ProcessHandle, ProcessProvider } from '../types.ts';
 
 export class FakeProcessHandle implements ProcessHandle {
   private readonly controller = new AbortController();
@@ -67,7 +68,7 @@ export class FakeProcessHandle implements ProcessHandle {
 export class FakeProcessProvider implements ProcessProvider {
   private readonly handles: FakeProcessHandle[] = [];
 
-  spawn(_command: string, _args: string[], _options?: ProcessSpawnOptions): FakeProcessHandle {
+  spawn(_command: string, _args: string[], _options?: SpawnOptions): FakeProcessHandle {
     const handle = new FakeProcessHandle();
     this.handles.push(handle);
     return handle;

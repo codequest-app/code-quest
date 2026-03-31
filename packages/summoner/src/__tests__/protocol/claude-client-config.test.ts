@@ -29,16 +29,16 @@ describe('ClaudeAdapter.clientConfig', () => {
     expect(tiers.find((t) => t.key === 'seven_day_sonnet')).toBeDefined();
   });
 
-  it('modelDisplayMap has opus with supportsFastMode', () => {
-    const opus = adapter.clientConfig.modelDisplayMap.find((m) => m.pattern === 'opus');
-    expect(opus).toBeDefined();
-    expect(opus!.supportsFastMode).toBe(true);
+  it('defaultModels has default with supportsFastMode', () => {
+    const def = adapter.clientConfig.defaultModels.find((m) => m.value === 'default');
+    expect(def).toBeDefined();
+    expect(def!.supportsFastMode).toBe(true);
   });
 
-  it('modelDisplayMap has sonnet and haiku', () => {
-    const map = adapter.clientConfig.modelDisplayMap;
-    expect(map.find((m) => m.pattern === 'sonnet')).toBeDefined();
-    expect(map.find((m) => m.pattern === 'haiku')).toBeDefined();
+  it('defaultModels has sonnet and haiku', () => {
+    const models = adapter.clientConfig.defaultModels;
+    expect(models.find((m) => m.value === 'sonnet')).toBeDefined();
+    expect(models.find((m) => m.value === 'haiku')).toBeDefined();
   });
 
   it('mcpScopes includes claudeai with prefix', () => {

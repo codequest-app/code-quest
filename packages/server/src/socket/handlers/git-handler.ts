@@ -11,7 +11,7 @@ import { errMsg } from '../handler-context.ts';
 import { execGit } from './helpers.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('check_git_status', async (callback) => {
+  socket.on('git:status', async (callback) => {
     try {
       const [branchOut, statusOut] = await Promise.all([
         execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
@@ -30,7 +30,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('checkout_branch', async (payload, callback) => {
+  socket.on('git:checkout', async (payload, callback) => {
     try {
       const { branch } = gitCheckoutSchema.parse(payload);
       try {
@@ -80,7 +80,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('update_skipped_branch', async (payload, callback) => {
+  socket.on('git:update_skipped_branch', async (payload, callback) => {
     try {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
       const entry: RawEntry = {
@@ -102,7 +102,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     }
   });
 
-  socket.on('exec', async (payload, callback) => {
+  socket.on('git:exec', async (payload, callback) => {
     try {
       const { command, args } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {

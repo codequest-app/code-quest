@@ -2,6 +2,13 @@ import { readFile } from 'node:fs/promises';
 import type { WireRunnerHooks } from '../channel.ts';
 import type { HandlerContext } from '../handler-context.ts';
 
+/** Timeout for MCP JSON-RPC message relay (ms). */
+const MCP_MESSAGE_TIMEOUT = 10_000;
+
+function jsonRpcError(id: unknown, message: string): Record<string, unknown> {
+  return { jsonrpc: '2.0', error: { code: -32603, message }, id: id ?? null };
+}
+
 /**
  * Build WireRunnerHooks with ChatHandler-specific business logic.
  * Extracted from ChatHandler so it can be tested and composed independently.
@@ -30,7 +37,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           ctx.usageTracker.update(p.info as Parameters<typeof ctx.usageTracker.update>[0]);
           break;
         case 'system:file_updated':
-          ctx.emitToSession(channelId, 'file_updated', {
+          ctx.emitToSession(channelId, 'file:updated', {
             channelId,
             filePath: p.filePath as string,
             oldContent: p.oldContent as string | null | undefined,
@@ -39,7 +46,7 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           break;
         case 'control:cancel':
           ch.removeControlRequest(p.requestId as string);
-          ctx.emitToSession(channelId, 'cancel_request', {
+          ctx.emitToSession(channelId, 'chat:cancel_request', {
             channelId,
             targetRequestId: p.requestId as string,
           });
@@ -60,22 +67,15 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
         case 'control:mcp': {
           const requestId = p.requestId as string;
           const hasClient = ch.sockets.size > 0;
+          const mcpId = (p.message as Record<string, unknown>)?.id;
           if (!hasClient) {
-            ch.runner.respondToControlRequest(requestId, {
-              jsonrpc: '2.0',
-              error: { code: -32603, message: 'no client' },
-              id: (p.message as Record<string, unknown>)?.id ?? null,
-            });
+            ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'no client'));
             break;
           }
           const mcpTimeout = setTimeout(() => {
             ch.removeControlRequest(requestId);
-            ch.runner.respondToControlRequest(requestId, {
-              jsonrpc: '2.0',
-              error: { code: -32603, message: 'timeout' },
-              id: (p.message as Record<string, unknown>)?.id ?? null,
-            });
-          }, 10_000);
+            ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'timeout'));
+          }, MCP_MESSAGE_TIMEOUT);
           ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
           ch.mcpTimeouts.set(requestId, mcpTimeout);
           break;
@@ -89,14 +89,27 @@ export function buildChannelHooks(ctx: HandlerContext, channelId: string): WireR
           switch (action.subtype) {
             case 'get_settings': {
               const state = ch.sessionState;
-              const settings = {
-                ...ctx.settingsStore.getAll(),
-                ...(state.model !== undefined ? { model: state.model } : {}),
-                ...(state.permissionMode !== undefined
-                  ? { permissionMode: state.permissionMode }
-                  : {}),
-              };
-              ch.runner.respondToControlRequest(action.requestId, settings);
+              void ctx.settingsStore
+                .getMany(ch.provider, ['model', 'permissionMode'])
+                .then((stored) => {
+                  const settings = {
+                    ...stored,
+                    ...(state.model !== undefined ? { model: state.model } : {}),
+                    ...(state.permissionMode !== undefined
+                      ? { permissionMode: state.permissionMode }
+                      : {}),
+                  };
+                  ch.runner.respondToControlRequest(action.requestId, settings);
+                })
+                .catch(() => {
+                  // Fallback: respond with sessionState only
+                  ch.runner.respondToControlRequest(action.requestId, {
+                    ...(state.model !== undefined ? { model: state.model } : {}),
+                    ...(state.permissionMode !== undefined
+                      ? { permissionMode: state.permissionMode }
+                      : {}),
+                  });
+                });
               break;
             }
             case 'set_model': {

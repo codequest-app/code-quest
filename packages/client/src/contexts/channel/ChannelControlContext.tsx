@@ -147,7 +147,7 @@ export function ChannelControlProvider({
       }));
     };
 
-    const onCancelRequest = (payload: Payload<'cancel_request'>) => {
+    const onCancelRequest = (payload: Payload<'chat:cancel_request'>) => {
       if (!guard(payload)) return;
       const cancelled = controlsRef.current.find((c) => c.requestId === payload.targetRequestId);
       if (!cancelled) return;
@@ -186,7 +186,11 @@ export function ChannelControlProvider({
       socket.emit('chat:respond', {
         channelId,
         requestId: payload.requestId,
-        response: { jsonrpc: '2.0', result: {}, id: (mcpMsg.id as string | number | null) ?? null },
+        response: {
+          jsonrpc: '2.0',
+          result: {},
+          id: typeof mcpMsg.id === 'string' || typeof mcpMsg.id === 'number' ? mcpMsg.id : null,
+        },
       });
     };
 
@@ -194,7 +198,7 @@ export function ChannelControlProvider({
     socket.on('control:elicitation', onControlElicitation);
     socket.on('control:diff_review', onControlDiffReview);
     socket.on('control:hook_callback', onControlHookCallback);
-    socket.on('cancel_request', onCancelRequest);
+    socket.on('chat:cancel_request', onCancelRequest);
     socket.on('session:closed', onSessionClosed);
     socket.on('control:mcp', onControlMcp);
 
@@ -203,7 +207,7 @@ export function ChannelControlProvider({
       socket.off('control:elicitation', onControlElicitation);
       socket.off('control:diff_review', onControlDiffReview);
       socket.off('control:hook_callback', onControlHookCallback);
-      socket.off('cancel_request', onCancelRequest);
+      socket.off('chat:cancel_request', onCancelRequest);
       socket.off('session:closed', onSessionClosed);
       socket.off('control:mcp', onControlMcp);
     };

@@ -168,7 +168,7 @@ describe('ChatPanel', () => {
     expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
   });
 
-  it('cancel_request shows "Cancelled" feedback in DOM', async () => {
+  it('chat:cancel_request shows "Cancelled" feedback in DOM', async () => {
     const { claude } = await renderWithChannel(
       <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />,
     );
