@@ -432,6 +432,20 @@ describe('ChatHandler > session', () => {
       expect(record).toBeDefined();
       expect(record!.sessionId).toBeTruthy();
     });
+
+    it('session:created is broadcast to second socket after launch', async () => {
+      const { claude } = await setup();
+      const socketB = claude.connect();
+      const createdEvents = collectEvents<{ channelId: string }>(socketB, 'session:created');
+
+      // Launch a second session — socketB should receive session:created
+      const newChannelId = crypto.randomUUID();
+      await claude.send('session:launch', { channelId: newChannelId });
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      expect(createdEvents.length).toBeGreaterThan(0);
+      expect(createdEvents.some((e) => e.channelId === newChannelId)).toBe(true);
+    });
   });
 
   describe('session persistence', () => {

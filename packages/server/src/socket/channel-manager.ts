@@ -94,23 +94,8 @@ export class ChannelManager {
     // Initialize and wait for control_response
     const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
 
-    // Ensure session:init event has been processed (may arrive after control_response)
-    if (!channel.sessionId) {
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          runner.off('socket_event', onEvent);
-          reject(new Error('Timed out waiting for session:init'));
-        }, 30_000);
-        const onEvent = (se: { name: string }) => {
-          if (se.name === 'session:init') {
-            clearTimeout(timeout);
-            runner.off('socket_event', onEvent);
-            resolve();
-          }
-        };
-        runner.on('socket_event', onEvent);
-      });
-    }
+    // Wait for session:init to set sessionId (may arrive after control_response)
+    await channel.sessionIdReady;
 
     return { channel, initResult };
   }
