@@ -34,18 +34,18 @@ import type {
   TypedServer,
   TypedSocket,
 } from './handler-context.ts';
-import { register as registerAuthHandlers } from './handlers/auth-handler.ts';
-import { register as registerConnectionHandlers } from './handlers/connection-handler.ts';
-import { register as registerFileHandlers } from './handlers/file-handler.ts';
-import { register as registerGitHandlers } from './handlers/git-handler.ts';
-import { register as registerMcpHandlers } from './handlers/mcp-handler.ts';
-import { register as registerMessageHandlers } from './handlers/message-handler.ts';
-import { register as registerPlanHandlers } from './handlers/plan-handler.ts';
-import { register as registerPluginHandlers } from './handlers/plugin-handler.ts';
+import { register as registerAuthHandlers } from './handlers/auth.ts';
+import { register as registerConnectionHandlers } from './handlers/connection.ts';
+import { register as registerFileHandlers } from './handlers/file.ts';
+import { register as registerGitHandlers } from './handlers/git.ts';
+import { register as registerMcpHandlers } from './handlers/mcp.ts';
+import { register as registerMessageHandlers } from './handlers/message.ts';
+import { register as registerPlanHandlers } from './handlers/plan.ts';
+import { register as registerPluginHandlers } from './handlers/plugin.ts';
 import { register as registerSessionHandlers } from './handlers/session-handler.ts';
-import { register as registerSettingsHandlers } from './handlers/settings-handler.ts';
-import { register as registerSpeechHandlers } from './handlers/speech-handler.ts';
-import { register as registerTerminalHandlers } from './handlers/terminal-handler.ts';
+import { register as registerSettingsHandlers } from './handlers/settings.ts';
+import { register as registerSpeechHandlers } from './handlers/speech.ts';
+import { register as registerTerminalHandlers } from './handlers/terminal.ts';
 
 function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
