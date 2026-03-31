@@ -29,22 +29,22 @@
 
 ### Phase 3: session/ 資料夾
 
-- [ ] 20. 建立 `handlers/session/` 資料夾
-- [ ] 21. `session-handler.ts` 拆成 `session/management.ts`（CRUD + management）+ `session/index.ts`（barrel register）
-- [ ] 22. `session-lifecycle.ts` → `session/lifecycle.ts`
-- [ ] 23. `session-fork.ts` → `session/fork.ts`
-- [ ] 24. 刪除舊的 session-handler.ts, session-lifecycle.ts, session-fork.ts
-- [ ] 25. 跑全部 test 確認通過
+- [x] 20. 建立 `handlers/session/` 資料夾
+- [x] 21. `session-handler.ts` 拆成 `session/management.ts`（CRUD + management）+ `session/index.ts`（barrel register）
+- [x] 22. `session-lifecycle.ts` → `session/lifecycle.ts`
+- [x] 23. `session-fork.ts` → `session/fork.ts`
+- [x] 24. 刪除舊的 session-handler.ts, session-lifecycle.ts, session-fork.ts
+- [x] 25. 跑全部 test 確認通過
 
 ### Phase 4: Claude-specific 搬到 claude/
 
-- [ ] 26. 建立 `socket/claude/` 資料夾
-- [ ] 27. `handlers/auth.ts` → `claude/auth.ts`
-- [ ] 28. `handlers/plugin.ts` → `claude/plugin.ts`
-- [ ] 29. 從 `handlers/mcp.ts` 提取 chrome/jupyter handlers → `claude/mcp-servers.ts`
-- [ ] 30. `handlers/mcp.ts` 瘦身（只留 generic MCP operations）
-- [ ] 31. 更新 chat-handler.ts 的 import paths + handleConnection 註冊
-- [ ] 32. 跑全部 test 確認通過
+- [x] 26. 建立 `socket/claude/` 資料夾
+- [x] 27. `handlers/auth.ts` → `claude/auth.ts`
+- [x] 28. `handlers/plugin.ts` → `claude/plugin.ts`
+- [x] 29. 從 `handlers/mcp.ts` 提取 chrome/jupyter handlers → `claude/mcp-servers.ts`
+- [x] 30. `handlers/mcp.ts` 瘦身（只留 generic MCP operations）
+- [x] 31. 更新 chat-handler.ts 的 import paths + handleConnection 註冊
+- [x] 32. 跑全部 test 確認通過
 
 ### Phase 5: chat-handler.ts → server.ts
 
