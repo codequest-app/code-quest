@@ -10,8 +10,9 @@ import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { Channel } from '../../channel.ts';
-import type { HandlerContext, TypedSocket } from '../../handler-context.ts';
-import { errMsg } from '../../handler-context.ts';
+import type { HandlerContext } from '../../context.ts';
+import type { TypedSocket } from '../../types.ts';
+import { errMsg } from '../../types.ts';
 /** Default max thinking tokens when thinking is enabled (matches CLI default). */
 export const DEFAULT_THINKING_TOKENS = 31999;
 

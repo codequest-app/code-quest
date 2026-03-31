@@ -10,7 +10,7 @@ import type {
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
-import type { TypedSocket } from './handler-context.ts';
+import type { TypedSocket } from './types.ts';
 
 /** Default timeout for control requests (ms). */
 const DEFAULT_CONTROL_TIMEOUT = 30_000;

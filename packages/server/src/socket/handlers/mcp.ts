@@ -8,8 +8,9 @@ import {
   mcpSetEnabledSchema,
   mcpSetServersSchema,
 } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { ensureChannel, errMsg } from '../handler-context.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
+import { ensureChannel, errMsg } from '../types.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('mcp:reconnect', async (payload, callback) => {

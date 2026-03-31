@@ -1,4 +1,5 @@
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('app:init', async (callback) => {

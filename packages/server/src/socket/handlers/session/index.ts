@@ -7,8 +7,9 @@ import {
   sessionRenameSchema,
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../../handler-context.ts';
-import { errMsg } from '../../handler-context.ts';
+import type { HandlerContext } from '../../context.ts';
+import type { TypedSocket } from '../../types.ts';
+import { errMsg } from '../../types.ts';
 import { register as registerForkHandlers } from './fork.ts';
 import { register as registerLifecycleHandlers } from './lifecycle.ts';
 

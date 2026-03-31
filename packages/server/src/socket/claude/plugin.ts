@@ -9,8 +9,9 @@ import {
   refreshMarketplaceSchema,
   removeMarketplaceSchema,
 } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
+import { errMsg } from '../types.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 
 function buildMarketplaceSource(k: {

@@ -1,6 +1,7 @@
 import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
+import { errMsg } from '../types.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('mcp:ensure_chrome', async (payload, callback) => {

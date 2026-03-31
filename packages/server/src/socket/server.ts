@@ -31,12 +31,7 @@ import type { ChannelManager } from './channel-manager.ts';
 import { register as registerAuthHandlers } from './claude/auth.ts';
 import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
 import { register as registerPluginHandlers } from './claude/plugin.ts';
-import type {
-  HandlerContext,
-  PluginCacheEntry,
-  TypedServer,
-  TypedSocket,
-} from './handler-context.ts';
+import type { HandlerContext, PluginCacheEntry } from './context.ts';
 import { register as registerConnectionHandlers } from './handlers/connection.ts';
 import { register as registerFileHandlers } from './handlers/file.ts';
 import { register as registerGitHandlers } from './handlers/git.ts';
@@ -47,6 +42,7 @@ import { register as registerSessionHandlers } from './handlers/session/index.ts
 import { register as registerSettingsHandlers } from './handlers/settings.ts';
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
 import { register as registerTerminalHandlers } from './handlers/terminal.ts';
+import type { TypedServer, TypedSocket } from './types.ts';
 
 function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
