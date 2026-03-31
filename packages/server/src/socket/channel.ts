@@ -14,7 +14,6 @@ import type {
   SocketEvent,
 } from '@code-quest/summoner';
 import { z } from 'zod';
-import { logger } from '../logger.ts';
 import type { TypedSocket } from './handler-context.ts';
 
 /** Default timeout for control requests (ms). */
@@ -46,18 +45,27 @@ const sessionStatusPayload = z
   .passthrough();
 const replayRequestPayload = z.object({ requestId: z.string() }).passthrough();
 
-export interface SessionState {
-  model?: string;
-  permissionMode?: string;
-  cwd?: string;
-  effort?: string;
-  thinkingLevel?: string;
-  tools?: string[];
-  mcpServers?: Array<{ name: string; status: string }>;
-  titleGenerated?: boolean;
-  pendingTitlePrompt?: string;
-  title?: string;
-}
+const sessionStateSchema = z.object({
+  model: z.string().optional(),
+  permissionMode: z.string().optional(),
+  cwd: z.string().optional(),
+  effort: z.string().optional(),
+  thinkingLevel: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+  titleGenerated: z.boolean().optional(),
+  pendingTitlePrompt: z.string().optional(),
+  title: z.string().optional(),
+});
+export type SessionState = z.infer<typeof sessionStateSchema>;
+
+/** Extract config fields from session:init into SessionState. */
+const sessionInitConfigSchema = sessionStateSchema.pick({
+  model: true,
+  permissionMode: true,
+  cwd: true,
+  effort: true,
+});
 
 export interface PendingRequest {
   resolve: (value: ControlResponse) => void;
@@ -65,11 +73,12 @@ export interface PendingRequest {
   timer: ReturnType<typeof setTimeout>;
 }
 
-export interface RequestMeta {
-  subtype: string;
-  toolName?: string;
-  toolUseId?: string;
-}
+const requestMetaSchema = z.object({
+  subtype: z.string(),
+  toolName: z.string().optional(),
+  toolUseId: z.string().optional(),
+});
+export type RequestMeta = z.infer<typeof requestMetaSchema>;
 
 export interface WireRunnerHooks {
   onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
@@ -92,8 +101,6 @@ export class Channel {
   planComments: PlanCommentData[] = [];
   terminalLines: string[] = [];
   sessionId: string | null = null;
-  private _resolveSessionId: (() => void) | null = null;
-  readonly sessionIdReady: Promise<void>;
 
   get sessionState(): SessionState {
     return this._sessionState;
@@ -141,9 +148,6 @@ export class Channel {
     this.runner = runner;
     this.provider = provider;
     this.controlTimeout = controlTimeout;
-    this.sessionIdReady = new Promise((resolve) => {
-      this._resolveSessionId = resolve;
-    });
   }
 
   get isWired(): boolean {
@@ -254,7 +258,7 @@ export class Channel {
       socket.emit('notification:show', {
         channelId: this.id,
         message: payload.message,
-        severity: (payload.severity ?? 'info') as 'error' | 'warning' | 'info',
+        severity: z.enum(['error', 'warning', 'info']).catch('info').parse(payload.severity),
         buttons: payload.buttons?.map((b) => b.label),
       });
     });
@@ -307,18 +311,8 @@ export class Channel {
       // Update internal state based on event name
       if (se.name === 'session:init') {
         const init = sessionInitPayload.parse(se.payload);
-        if (init.sessionId) {
-          this.sessionId = init.sessionId;
-          this._resolveSessionId?.();
-          this._resolveSessionId = null;
-        }
-        const cfg = init.config ?? {};
-        this._sessionState = {
-          model: typeof cfg.model === 'string' ? cfg.model : undefined,
-          permissionMode: typeof cfg.permissionMode === 'string' ? cfg.permissionMode : undefined,
-          cwd: typeof cfg.cwd === 'string' ? cfg.cwd : undefined,
-          effort: typeof cfg.effort === 'string' ? cfg.effort : undefined,
-        };
+        if (init.sessionId) this.sessionId = init.sessionId;
+        this._sessionState = sessionInitConfigSchema.parse(init.config ?? {});
         this.updateMetaCache({
           ...(init.model ? { model: init.model } : {}),
           ...(init.permissionMode ? { permissionMode: init.permissionMode } : {}),
