@@ -2,7 +2,7 @@ import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../../context.ts';
 import type { TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
-import { execGit } from '../exec-git.ts';
+import { execGit } from '../../utils/exec-git.ts';
 import { persistNewSession } from './persist.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {

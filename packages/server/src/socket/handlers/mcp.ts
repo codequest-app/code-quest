@@ -15,13 +15,25 @@ import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
-import { ensureChannel, errMsg } from '../types.ts';
+import { errMsg } from '../types.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
+  function ensureChannel(
+    channelId: string,
+    callback?: (res: { error: string }) => void,
+  ): Channel | null {
+    const channel = ctx.channelManager.get(channelId);
+    if (!channel) {
+      callback?.({ error: 'Session not found' });
+      return null;
+    }
+    return channel;
+  }
+
   async function handleReconnect(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpReconnectSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_reconnect', {
         server_name: serverName,
@@ -35,7 +47,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleToggle(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, enabled } = mcpSetEnabledSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_toggle', {
         server_name: serverName,
@@ -50,7 +62,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleServers(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = mcpGetServersSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_status', {});
       callback(result);
@@ -62,7 +74,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleSetServers(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, servers } = mcpSetServersSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_set_servers', { servers });
       callback(result);
@@ -74,7 +86,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleMessage(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, message } = mcpMessageSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_message', {
         server_name: serverName,
@@ -89,7 +101,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleAuthenticate(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_authenticate', {
         server_name: serverName,
@@ -107,7 +119,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleClearAuth(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_clear_auth', {
         server_name: serverName,
@@ -125,7 +137,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleOAuthCallback(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
-      const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
+      const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
       if (!channel) return;
       const result = await channel.sendControlRequest('mcp_oauth_callback_url', {
         server_name: serverName,

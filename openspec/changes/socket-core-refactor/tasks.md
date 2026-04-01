@@ -124,12 +124,12 @@
 
 ## 11. types.ts 清理 + 檔案搬遷
 
-- [ ] 11.1 `types.ts`：`ensureChannel` 移到 mcp.ts 內部（只有它用）
-- [ ] 11.2 `types.ts`：`pickDefined`、`errMsg` 移到 `utils/` 或 shared（generic utility，不屬於 socket types）
-- [ ] 11.3 `types.ts`：`WireRunnerHooks`、`RunnerListeners` 評估是否移入 channel.ts 內部
-- [ ] 11.4 `handlers/exec-git.ts` + `handlers/rg.ts` 移到 `utils/`
-- [ ] 11.5 `handlers/session/index.ts` 原 CRUD handlers 改名 `crud.ts`，index.ts 只做 factory 組合
-- [ ] 11.6 server.ts 加 provider 條件載入（claude handlers 只在 provider === 'claude' 時註冊）
-- [ ] 11.7 移除 channel.ts 已無人使用的 re-export
-- [ ] 11.8 最終 typecheck + test 全過
-- [ ] 11.9 確認 test 執行時間無顯著退化（baseline: 397 tests, ~6.5s）
+- [x] 11.1 `ensureChannel` 移到 mcp.ts 內部，types.ts 移除 HandlerContext import
+- [x] 11.2 `pickDefined`、`errMsg` 移到 `utils/helpers.ts`，types.ts re-export
+- [x] 11.3 `WireRunnerHooks`/`RunnerListeners` 留在 types.ts（channel.ts + channel-manager.ts 共用）
+- [x] 11.4 `exec-git.ts` + `rg.ts` 移到 `utils/`，更新 handler + test imports
+- [x] 11.5 session CRUD 留在 index.ts（已是 named functions in factory，不需拆檔）
+- [x] 11.6 server.ts 加 provider 條件載入（commonHandlers + providerHandlers）
+- [x] 11.7 刪除舊 `connection.ts` + `control.ts`，移除 channel.ts 的 `RequestMeta`/`SessionState`/`PendingRequest` re-export
+- [x] 11.8 typecheck + test 全過（397/397）
+- [x] 11.9 test 時間 ~5.4s（baseline ~6.5s，改善 ~1s）

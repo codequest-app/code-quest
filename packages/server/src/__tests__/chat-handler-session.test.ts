@@ -4,7 +4,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
-import * as execGitModule from '../socket/handlers/exec-git.ts';
+import * as execGitModule from '../socket/utils/exec-git.ts';
 import { createFakeClaude } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 

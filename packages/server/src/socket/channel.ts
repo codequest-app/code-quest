@@ -25,8 +25,7 @@ import {
   type WireRunnerHooks,
 } from './types.ts';
 
-export type { RequestMeta, SessionState } from './schemas.ts';
-export type { PendingRequest, WireRunnerHooks } from './types.ts';
+export type { WireRunnerHooks } from './types.ts';
 
 /** Default timeout for control requests (ms). */
 const DEFAULT_CONTROL_TIMEOUT = 30_000;

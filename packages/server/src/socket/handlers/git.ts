@@ -9,7 +9,7 @@ import type { RawEntry } from '@code-quest/summoner';
 import type { HandlerContext } from '../context.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
-import { execGit } from './exec-git.ts';
+import { execGit } from '../utils/exec-git.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
   function handleStatus(callback: Function): void {

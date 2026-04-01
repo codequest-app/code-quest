@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import * as execGitModule from '../socket/handlers/exec-git.ts';
+import * as execGitModule from '../socket/utils/exec-git.ts';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {

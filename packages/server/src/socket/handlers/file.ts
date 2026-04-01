@@ -7,7 +7,7 @@ import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
-import { rgAvailable, rgListFiles } from './rg.ts';
+import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
   function handleRead(payload: { channelId: string; filePath: string }, callback: Function): void {

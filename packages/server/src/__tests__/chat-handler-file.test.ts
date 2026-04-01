@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import * as rg from '../socket/handlers/rg.ts';
+import * as rg from '../socket/utils/rg.ts';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {

@@ -52,7 +52,7 @@ export class SocketServer implements HandlerContext {
     this.io = io;
     this.channelManager.register(io);
 
-    this.handlers = [
+    const commonHandlers: SocketHandler[] = [
       speech.create(this),
       usage.create(this),
       plan.create(this),
@@ -65,10 +65,14 @@ export class SocketServer implements HandlerContext {
       permission.create(this),
       app.create(this),
       session.create(this),
-      claudeAuth.create(this),
-      claudeMcpServers.create(this),
-      claudePlugin.create(this),
     ];
+
+    const providerHandlers: SocketHandler[] =
+      this.channelManager.provider === 'claude'
+        ? [claudeAuth.create(this), claudeMcpServers.create(this), claudePlugin.create(this)]
+        : [];
+
+    this.handlers = [...commonHandlers, ...providerHandlers];
 
     for (const h of this.handlers) h.subscribe?.(this.router);
 
