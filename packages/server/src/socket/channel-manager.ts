@@ -5,7 +5,6 @@ import { Channel, type WireRunnerHooks } from './channel.ts';
 import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { RawRecorder } from './raw-recorder.ts';
 import type { ChannelSummary } from './schemas.ts';
-import type { SessionHistory } from './session-history.ts';
 import {
   pickDefined,
   type SessionBroadcastState,
@@ -24,7 +23,6 @@ export interface CreateChannelOptions {
 
 export class ChannelManager {
   private channels = new Map<string, Channel>();
-  private _sessionHistory!: SessionHistory;
   private socketChannelsMap = new Map<string, Set<string>>();
   private hooks: WireRunnerHooks;
   io?: TypedServer;
@@ -33,17 +31,14 @@ export class ChannelManager {
     private runnerFactory: RunnerFactory,
     private adapter: ProviderAdapter,
     private rawRecorder: RawRecorder,
-    private router: ChannelEventRouter,
+    router: ChannelEventRouter,
+    private resolveSessionId: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
       onSocketEvent: (ch, se) => router.dispatchEvent(ch.id, ch, se),
       onServerAction: (ch, action) => router.dispatchAction(ch.id, ch, action),
       onExit: (ch, code) => router.dispatchExit(ch.id, ch, code),
     };
-  }
-
-  set sessionHistory(sh: SessionHistory) {
-    this._sessionHistory = sh;
   }
 
   get channelHooks(): WireRunnerHooks {
@@ -123,7 +118,7 @@ export class ChannelManager {
     }
 
     // Lazy resume from DB — resolve sessionId via sessionHistory
-    const sessionId = await this._sessionHistory.resolveSessionId(channelId);
+    const sessionId = await this.resolveSessionId(channelId);
     if (sessionId === channelId) {
       throw new Error(`Session not found: ${channelId}`);
     }
@@ -191,13 +186,7 @@ export class ChannelManager {
       const channel = this.channels.get(channelId);
       if (!channel) continue;
 
-      // Find the socket object in channel's sockets set
-      for (const sock of channel.sockets) {
-        if (sock.id === socketId) {
-          channel.removeSocket(sock);
-          break;
-        }
-      }
+      channel.removeSocketById(socketId);
 
       if (channel.sockets.size === 0) {
         channel.unwireRunner();
@@ -209,8 +198,10 @@ export class ChannelManager {
 
   // ── Broadcasting ──
 
+  /** Broadcast session state + settings to all connected clients.
+   *  Key mapping (e.g. model → modelSetting) matches shared SessionStateSummary / UpdateStatePayload schemas. */
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
-    const cache = this.channels.get(channelId)?.sessionState ?? {};
+    const ss = this.channels.get(channelId)?.sessionState ?? {};
 
     this.io?.emit('session:states', {
       sessions: [
@@ -219,22 +210,22 @@ export class ChannelManager {
           state,
           ...pickDefined({
             title,
-            modelSetting: cache.model,
-            permissionMode: cache.permissionMode,
-            effort: cache.effort,
+            modelSetting: ss.model,
+            permissionMode: ss.permissionMode,
+            effort: ss.effort,
           }),
         },
       ],
     });
 
     const settings = pickDefined({
-      modelSetting: cache.model,
-      defaultCwd: cache.cwd,
-      initialPermissionMode: cache.permissionMode,
-      thinkingLevel: cache.thinkingLevel,
-      mcpServers: cache.mcpServers,
-      tools: cache.tools,
-      effort: cache.effort,
+      modelSetting: ss.model,
+      defaultCwd: ss.cwd,
+      initialPermissionMode: ss.permissionMode,
+      thinkingLevel: ss.thinkingLevel,
+      mcpServers: ss.mcpServers,
+      tools: ss.tools,
+      effort: ss.effort,
     });
     if (Object.keys(settings).length > 0) {
       this.io?.emit('settings:update', { channelId, ...settings });

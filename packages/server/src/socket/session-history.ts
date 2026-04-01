@@ -45,12 +45,18 @@ export class SessionHistory {
   }> {
     const rawEntries = await this.rawEventStore.getBySession(sessionId);
     const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
-    const events = await this.convertRawToSocketEvents(sessionId);
+    const events = this.convertRawEntriesToSocketEvents(rawEntries);
     return { events, respondedRequestIds };
   }
 
   private async convertRawToSocketEvents(sessionId: string): Promise<SocketEvent[]> {
     const rawEntries = await this.rawEventStore.getBySession(sessionId);
+    return this.convertRawEntriesToSocketEvents(rawEntries);
+  }
+
+  private convertRawEntriesToSocketEvents(
+    rawEntries: Array<{ raw: string; direction: string }>,
+  ): SocketEvent[] {
     const result: SocketEvent[] = [];
 
     // Check if stdout contains any user message echoes

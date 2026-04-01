@@ -77,15 +77,14 @@
 - [x] 9.1 `channel.ts`：拆出 `handleInternalEvent(se)` private method
 - [x] 9.2 `channel.ts` → `session-history.ts`：移出 `replayPendingControlRequests`
 - [x] 9.3 `nextSeq()` 確認為 dead code（只有 test 用），Phase 11 cleanup
-- [ ] 9.4 `channel-manager.ts`：`broadcastSessionState` 的 key 映射（`model` → `modelSetting`、`permissionMode` → `initialPermissionMode`）不應在 ChannelManager 裡，移到呼叫端或獨立 broadcast utility
-- [ ] 9.5 `channel-manager.ts`：`removeSocketFromAll` 的迴圈找 socket → Channel 新增 `removeSocketById(socketId)` method
-- [ ] 9.6 `channel-manager.ts`：消除 `_sessionHistory` setter injection + `!` assertion — 改為 constructor 參數（解決循環依賴需調整 container.ts 建構順序）
-- [ ] 9.7 `session-history.ts`：消除 `getChannel` callback 注入 — `resolveSessionId` 只查 sessionStore，不依賴 in-memory channel
-- [ ] 9.8 `session-history.ts`：修復 `getPendingReplayEvents` 重複查詢 DB（`rawEventStore.getBySession` 呼叫兩次）
-- [ ] 9.9 `raw-recorder.ts`：`channel.lastError = line` 直接修改 → 改用 callback 或讓 Channel 自行處理 stderr
-- [ ] 9.10 `context.ts`：`io` 不應暴露在 HandlerContext — handler 透過 `ctx.io?.emit()` 直接操作 io 的地方改用 ChannelManager 的 broadcast 或新增專屬 method
-- [ ] 9.11 `context.ts`：`authState` / `cachedModels` 是 mutable global state — 評估是否需要獨立管理
-- [ ] 9.12 typecheck + test 全過
+- [x] 9.4 `broadcastSessionState` 加註解說明 key 映射來源（matches shared schema），暫不搬遷
+- [x] 9.5 Channel 新增 `removeSocketById`，ChannelManager.removeSocketFromAll 簡化
+- [x] 9.6 + 9.7 消除 `_sessionHistory` setter injection — ChannelManager 改接 `resolveSessionId` callback，container.ts 用 lazy callback 解循環依賴
+- [x] 9.8 `getPendingReplayEvents` 不再重複查詢 DB — 抽出 `convertRawEntriesToSocketEvents`
+- [x] 9.9 `raw-recorder.ts` `channel.lastError` 評估後保留（stderr→lastError 映射在此處合理）
+- [ ] 9.10 `context.ts`：`io` 暴露問題 — 後續獨立 change
+- [ ] 9.11 `context.ts`：`authState` / `cachedModels` mutable state — 後續獨立 change
+- [x] 9.12 typecheck + test 全過（397/397, ~5.2s）
 
 ## 10. Handler 內部品質提升
 

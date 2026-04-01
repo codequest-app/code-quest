@@ -127,6 +127,16 @@ export class Channel {
     this.sockets.delete(socket);
   }
 
+  removeSocketById(socketId: string): boolean {
+    for (const sock of this.sockets) {
+      if (sock.id === socketId) {
+        this.sockets.delete(sock);
+        return true;
+      }
+    }
+    return false;
+  }
+
   // ── Control request tracking ──
 
   trackControlRequest(requestId: string, meta: RequestMeta): void {

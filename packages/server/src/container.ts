@@ -69,11 +69,21 @@ export function createContainer(options: ContainerOptions): Container {
 
   const rawRecorder = new RawRecorder(rawEventStore);
   const router = new ChannelEventRouter();
-  const channelManager = new ChannelManager(runnerFactory, adapter, rawRecorder, router);
-  const sessionHistory = new SessionHistory(rawEventStore, sessionStore, adapter, (id) =>
-    channelManager.get(id),
+  // SessionHistory and ChannelManager reference each other via lazy callbacks
+  // (neither is called during construction — only at runtime)
+  const sessionHistory: SessionHistory = new SessionHistory(
+    rawEventStore,
+    sessionStore,
+    adapter,
+    (id) => channelManager.get(id),
   );
-  channelManager.sessionHistory = sessionHistory;
+  const channelManager: ChannelManager = new ChannelManager(
+    runnerFactory,
+    adapter,
+    rawRecorder,
+    router,
+    (channelId) => sessionHistory.resolveSessionId(channelId),
+  );
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
   container.bind<ChannelEventRouter>(TYPES.ChannelEventRouter).toConstantValue(router);
