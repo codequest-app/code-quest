@@ -1,16 +1,13 @@
 import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
-import type { SessionStore } from '../../../services/session-store.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
 import { checkoutBranch } from '../../utils/exec-git.ts';
 import { errMsg } from '../../utils/helpers.ts';
-import { persistNewSession } from './persist.ts';
 
 export function create(
   channelManager: ChannelManager,
   sessionHistory: SessionHistory,
-  sessionStore: SessionStore,
 ): SocketHandler {
   async function handleFork(
     socket: TypedSocket,
@@ -23,16 +20,11 @@ export function create(
       const { channel: forkChannel } = await channelManager.create(newSessionId, {
         launchOptions: { resumeSessionId: forkedFromSession },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
-        onBeforeSpawn: (ch) => channelManager.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => {
+          ch.updateSessionState({ parentId: forkedFromSession });
+          channelManager.addSocketToChannel(ch, socket);
+        },
       });
-
-      if (forkChannel.sessionId) {
-        persistNewSession(channelManager, sessionStore, {
-          channelId: newSessionId,
-          sessionId: forkChannel.sessionId,
-          parentId: forkedFromSession,
-        });
-      }
       channelManager.broadcastSessionCreated(newSessionId);
       callback({
         success: true,

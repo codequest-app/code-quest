@@ -37,6 +37,7 @@ const sessionStateSchema = z.object({
   titleGenerated: z.boolean().optional(),
   pendingTitlePrompt: z.string().optional(),
   title: z.string().optional(),
+  parentId: z.string().optional(),
 });
 export type SessionState = z.infer<typeof sessionStateSchema>;
 

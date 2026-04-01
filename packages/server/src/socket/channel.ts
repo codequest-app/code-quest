@@ -53,8 +53,6 @@ export class Channel {
   private _sessionState: SessionState = {};
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
-  private _resolveSessionId: (() => void) | null = null;
-  readonly sessionIdReady: Promise<void>;
   lastError: string | undefined;
   exited = false;
 
@@ -86,9 +84,6 @@ export class Channel {
     this.runner = runner;
     this.provider = provider;
     this.controlTimeout = controlTimeout;
-    this.sessionIdReady = new Promise((resolve) => {
-      this._resolveSessionId = resolve;
-    });
   }
 
   // ── State accessors ──
@@ -278,8 +273,6 @@ export class Channel {
       const init = sessionInitEventSchema.parse(se.payload);
       if (init.sessionId) {
         this.sessionId = init.sessionId;
-        this._resolveSessionId?.();
-        this._resolveSessionId = null;
       }
       this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
       this.updateMetaCache(

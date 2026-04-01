@@ -119,12 +119,7 @@ export function create(
         onBeforeSpawn: (ch) => channelManager.addSocketToChannel(ch, socket),
       });
 
-      if (channel.sessionId) {
-        persistNewSession(channelManager, sessionStore, {
-          channelId,
-          sessionId: channel.sessionId,
-        });
-      }
+      // persist is deferred to onSessionInit (session:init may arrive after control_response)
 
       await applyPerLaunchSettings(channel, parsed);
       const { slashCommands, models, account } = await handleInitResponse(initResult);
@@ -205,6 +200,17 @@ export function create(
 
   function onSessionInit(channelId: string): void {
     channelManager.broadcastSessionState(channelId, 'busy');
+
+    // Persist when session:init arrives (sessionId now available)
+    const channel = channelManager.get(channelId);
+    if (channel?.sessionId) {
+      const parentId = channel.sessionState.parentId;
+      persistNewSession(channelManager, sessionStore, {
+        channelId,
+        sessionId: channel.sessionId,
+        ...(parentId ? { parentId } : {}),
+      });
+    }
   }
 
   function onChannelExit(channelId: string, ch: Channel): void {

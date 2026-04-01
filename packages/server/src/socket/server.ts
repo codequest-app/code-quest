@@ -77,7 +77,7 @@ export class SocketServer {
       app.create(channelManager, settingsStore),
       sessionConnect.create(channelManager, settingsStore, sessionStore, sessionHistory),
       sessionCommand.create(channelManager, sessionStore),
-      sessionFork.create(channelManager, sessionHistory, sessionStore),
+      sessionFork.create(channelManager, sessionHistory),
       sessionQuery.create(channelManager, sessionStore, sessionHistory),
     ];
 

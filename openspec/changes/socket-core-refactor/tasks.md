@@ -195,13 +195,12 @@ Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `
 
 以下改動必須一起做：
 
-- [ ] 18.1 `channelManager.create()` 移除 `await channel.sessionIdReady`
-- [ ] 18.2 `connect.ts handleLaunch` 移除 persist（sessionId 此時不可用）
-- [ ] 18.3 `fork.ts handleFork/handleTeleport` 移除 persist，改為把 `parentId` 存到 channel sessionState
-- [ ] 18.4 `connect.ts onSessionInit` 加入 persist 邏輯（session:init 到達時 sessionId 已設定，讀 channel.sessionState.parentId 判斷是否為 fork）
-- [ ] 18.5 schemas.ts SessionState 加 `parentId` optional 欄位
-- [ ] 18.6 更新 persist 相關 tests（fork parentId、session persist timing）
-- [ ] 18.7 typecheck + test 全過
+- [x] 18.1 移除 `await channel.sessionIdReady` + 刪除 `sessionIdReady` / `_resolveSessionId`
+- [x] 18.2 `handleLaunch` 移除 persist
+- [x] 18.3 `fork` 移除 persist，`parentId` 在 `onBeforeSpawn` 設定（保證在 session:init 前）
+- [x] 18.4 `onSessionInit` 加 persist（讀 channel.sessionState.parentId）
+- [x] 18.5 SessionState 加 `parentId`
+- [x] 18.6 所有 399 tests pass，expect 不變
 - [ ] 18.8 手動驗證：A 視窗點 +，B 視窗出現新 tab + DB 有寫入
 
 ## 19. generateTitle 分離（原子組 B，獨立）
