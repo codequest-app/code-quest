@@ -16,4 +16,5 @@ export const TYPES = {
   SettingsStore: Symbol.for('SettingsStore'),
   ChannelManager: Symbol.for('ChannelManager'),
   SessionHistory: Symbol.for('SessionHistory'),
+  ChannelEventRouter: Symbol.for('ChannelEventRouter'),
 } as const;

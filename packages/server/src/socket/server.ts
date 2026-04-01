@@ -6,7 +6,7 @@ import type { SessionStore } from '../services/session-store.ts';
 import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
 import { TYPES } from '../types.ts';
-import type { WireRunnerHooks } from './channel.ts';
+import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { ChannelManager } from './channel-manager.ts';
 import { register as registerAuthHandlers } from './claude/auth.ts';
 import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
@@ -60,6 +60,7 @@ export class SocketServer implements HandlerContext {
     @inject(TYPES.UsageTracker) public usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) public channelManager: ChannelManager,
     @inject(TYPES.SessionHistory) public sessionHistory: SessionHistory,
+    @inject(TYPES.ChannelEventRouter) private router: ChannelEventRouter,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
@@ -68,30 +69,43 @@ export class SocketServer implements HandlerContext {
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     this.io = io;
     this.channelManager.register(io);
+
+    // Subscribe existing handler functions to router
+    // (Phase 8 will migrate these into each handler's subscribe())
+    this.subscribeHandlersToRouter();
+
     io.on('connection', (socket) => this.handleConnection(socket));
   }
 
-  buildChannelHooks(channelId: string): WireRunnerHooks {
-    return {
-      onSocketEvent: (ch, se) => {
-        messageOnRunnerEvent(this, channelId, ch, se) ||
-          sessionOnRunnerEvent(this, channelId, ch, se) ||
-          fileOnRunnerEvent(this, channelId, ch, se) ||
-          mcpOnRunnerEvent(this, channelId, ch, se) ||
-          usageOnRunnerEvent(this, channelId, ch, se) ||
-          controlOnRunnerEvent(this, channelId, ch, se);
-      },
+  private subscribeHandlersToRouter(): void {
+    // SocketEvent handlers
+    this.router.onEvent('message:result', (cid, ch, se) => messageOnRunnerEvent(this, cid, ch, se));
+    this.router.onEvent('session:init', (cid, ch, se) => sessionOnRunnerEvent(this, cid, ch, se));
+    this.router.onEvent('system:file_updated', (cid, ch, se) =>
+      fileOnRunnerEvent(this, cid, ch, se),
+    );
+    this.router.onEvent('control:mcp', (cid, ch, se) => mcpOnRunnerEvent(this, cid, ch, se));
+    this.router.onEvent('system:rate_limit', (cid, ch, se) =>
+      usageOnRunnerEvent(this, cid, ch, se),
+    );
+    this.router.onEvent('control:cancel', (cid, ch, se) => controlOnRunnerEvent(this, cid, ch, se));
+    this.router.onEvent('control:permission', (cid, ch, se) =>
+      controlOnRunnerEvent(this, cid, ch, se),
+    );
+    this.router.onEvent('control:elicitation', (cid, ch, se) =>
+      controlOnRunnerEvent(this, cid, ch, se),
+    );
+    this.router.onEvent('control:diff_review', (cid, ch, se) =>
+      controlOnRunnerEvent(this, cid, ch, se),
+    );
 
-      onServerAction: (ch, action) => {
-        fileOnServerAction(this, channelId, ch, action) ||
-          settingsOnServerAction(this, channelId, ch, action) ||
-          controlOnServerAction(this, channelId, ch, action);
-      },
+    // ServerAction handlers
+    this.router.onAction((cid, ch, action) => fileOnServerAction(this, cid, ch, action));
+    this.router.onAction((cid, ch, action) => settingsOnServerAction(this, cid, ch, action));
+    this.router.onAction((cid, ch, action) => controlOnServerAction(this, cid, ch, action));
 
-      onExit: (ch, code) => {
-        sessionOnExit(this, channelId, ch, code);
-      },
-    };
+    // Exit handler
+    this.router.onExit((cid, ch, code) => sessionOnExit(this, cid, ch, code));
   }
 
   private handleConnection(socket: TypedSocket): void {

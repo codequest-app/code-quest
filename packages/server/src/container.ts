@@ -18,6 +18,7 @@ import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
+import { ChannelEventRouter } from './socket/channel-event-router.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
@@ -67,13 +68,15 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
   const rawRecorder = new RawRecorder(rawEventStore);
-  const channelManager = new ChannelManager(runnerFactory, adapter, rawRecorder);
+  const router = new ChannelEventRouter();
+  const channelManager = new ChannelManager(runnerFactory, adapter, rawRecorder, router);
   const sessionHistory = new SessionHistory(rawEventStore, sessionStore, adapter, (id) =>
     channelManager.get(id),
   );
   channelManager.sessionHistory = sessionHistory;
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
+  container.bind<ChannelEventRouter>(TYPES.ChannelEventRouter).toConstantValue(router);
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();

@@ -7,6 +7,7 @@ import type {
 import type { ControlResponseEvent, ServerAction } from '@code-quest/summoner';
 import type { Server, Socket } from 'socket.io';
 import type { Channel } from './channel.ts';
+import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { HandlerContext } from './context.ts';
 
 export type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -47,6 +48,19 @@ export interface RunnerListeners {
   serverAction: (action: ServerAction) => void;
   exit: (code: number | null) => void;
 }
+
+// ── SocketHandler ──
+
+export type ChannelEventFn = (channelId: string, ch: Channel, se: SocketEvent) => void;
+export type ChannelActionFn = (channelId: string, ch: Channel, action: ServerAction) => boolean;
+export type ChannelExitFn = (channelId: string, ch: Channel, code: number | null) => void;
+
+export interface SocketHandler {
+  register(socket: TypedSocket): void;
+  subscribe?(router: ChannelEventRouter): void;
+}
+
+// ── Utilities ──
 
 export function ensureChannel(
   ctx: HandlerContext,

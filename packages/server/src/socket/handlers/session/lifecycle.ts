@@ -112,9 +112,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           .filter(Boolean)
           .join('\n'),
       };
-      const hooks = ctx.buildChannelHooks(channelId);
       const { channel, initResult } = await ctx.channelManager.create(channelId, {
-        hooks,
         launchOptions: launchOpts,
         initOptions: initInput,
         onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
@@ -163,9 +161,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const isAlive = existingChannel && !existingChannel.exited;
 
       if (!isAlive) {
-        const hooks = ctx.buildChannelHooks(channelId);
         try {
-          await ctx.channelManager.join(channelId, { hooks });
+          await ctx.channelManager.join(channelId);
         } catch {
           callback?.({ error: 'Session not found' });
           return;
@@ -181,8 +178,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       ctx.channelManager.addSocketToChannel(channel, socket);
 
       if (!channel.isWired) {
-        const hooks = ctx.buildChannelHooks(channelId);
-        channel.wireRunner(hooks);
+        channel.wireRunner(ctx.channelManager.channelHooks);
       }
 
       const replaySessionId = await ctx.sessionHistory.resolveSessionId(channelId);

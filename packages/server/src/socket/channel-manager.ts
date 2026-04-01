@@ -1,8 +1,8 @@
 import type { ControlResponse } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
-import type { Server } from 'socket.io';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type WireRunnerHooks } from './channel.ts';
+import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { RawRecorder } from './raw-recorder.ts';
 import type { ChannelSummary } from './schemas.ts';
 import type { SessionHistory } from './session-history.ts';
@@ -16,7 +16,6 @@ import {
 export type { ChannelSummary } from './schemas.ts';
 
 export interface CreateChannelOptions {
-  hooks?: WireRunnerHooks;
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */
@@ -26,19 +25,29 @@ export interface CreateChannelOptions {
 export class ChannelManager {
   private channels = new Map<string, Channel>();
   private _sessionHistory!: SessionHistory;
-  // socket.id → set of channelIds this socket is joined to
   private socketChannelsMap = new Map<string, Set<string>>();
-  // Socket.IO server reference for broadcasting
+  private hooks: WireRunnerHooks;
   io?: TypedServer;
 
   constructor(
     private runnerFactory: RunnerFactory,
     private adapter: ProviderAdapter,
     private rawRecorder: RawRecorder,
-  ) {}
+    private router: ChannelEventRouter,
+  ) {
+    this.hooks = {
+      onSocketEvent: (ch, se) => router.dispatchEvent(ch.id, ch, se),
+      onServerAction: (ch, action) => router.dispatchAction(ch.id, ch, action),
+      onExit: (ch, code) => router.dispatchExit(ch.id, ch, code),
+    };
+  }
 
   set sessionHistory(sh: SessionHistory) {
     this._sessionHistory = sh;
+  }
+
+  get channelHooks(): WireRunnerHooks {
+    return this.hooks;
   }
 
   register(io: TypedServer): void {
@@ -88,7 +97,7 @@ export class ChannelManager {
     const channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
 
-    channel.wireRunner(opts?.hooks);
+    channel.wireRunner(this.hooks);
 
     // Record raw I/O
     this.rawRecorder.wire(channel);
@@ -106,7 +115,7 @@ export class ChannelManager {
     return { channel, initResult };
   }
 
-  async join(channelId: string, opts?: { hooks?: WireRunnerHooks }): Promise<{ channel: Channel }> {
+  async join(channelId: string): Promise<{ channel: Channel }> {
     let channel = this.channels.get(channelId);
 
     if (channel && !channel.exited) {
@@ -122,7 +131,7 @@ export class ChannelManager {
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
     channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
-    channel.wireRunner(opts?.hooks);
+    channel.wireRunner(this.hooks);
     this.rawRecorder.wire(channel);
     runner.spawn();
     await channel.sendControlRequest('initialize', {});

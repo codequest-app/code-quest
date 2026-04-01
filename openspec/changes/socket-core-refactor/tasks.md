@@ -45,13 +45,13 @@
 
 ## 7. ChannelEventRouter + SocketHandler 基礎設施
 
-- [ ] 7.1 `types.ts` 新增 `SocketHandler` interface（`register` + `subscribe?`）和 channel event type aliases
-- [ ] 7.2 建立 `channel-event-router.ts`（`onEvent`/`onAction`/`onExit` 訂閱 + `dispatchEvent`/`dispatchAction`/`dispatchExit` 分發）
-- [ ] 7.3 ChannelManager 接收 router，建構共用 hooks，`CreateChannelOptions` 移除 `hooks` 欄位
-- [ ] 7.4 server.ts 改用 handler array + router（subscribe + register loop），移除 `buildChannelHooks` 和 handler import
-- [ ] 7.5 HandlerContext 移除 `buildChannelHooks`
-- [ ] 7.6 lifecycle.ts / fork.ts / terminal.ts 移除 `ctx.buildChannelHooks()` 呼叫
-- [ ] 7.7 typecheck + test 全過
+- [x] 7.1 `types.ts` 新增 `SocketHandler` interface + `ChannelEventFn`/`ChannelActionFn`/`ChannelExitFn`
+- [x] 7.2 建立 `channel-event-router.ts`
+- [x] 7.3 ChannelManager 接收 router，共用 hooks，`CreateChannelOptions` 移除 `hooks`
+- [x] 7.4 server.ts 用 `subscribeHandlersToRouter()` 橋接現有 handler functions 到 router
+- [x] 7.5 HandlerContext 移除 `buildChannelHooks`
+- [x] 7.6 lifecycle.ts / fork.ts / terminal.ts 移除 `ctx.buildChannelHooks()` 呼叫
+- [x] 7.7 typecheck + test 全過（397/397, ~5.6s）
 
 ## 8. Handler 遷移到 factory pattern（逐檔）
 

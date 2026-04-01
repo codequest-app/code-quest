@@ -3,7 +3,6 @@ import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
-import type { WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
 import type { SessionHistory } from './session-history.ts';
 import type { TypedServer } from './types.ts';
@@ -27,7 +26,4 @@ export interface HandlerContext {
   // ── Shared state ──
   authState: AuthStatus;
   cachedModels: unknown[] | undefined;
-
-  // ── Methods ──
-  buildChannelHooks(channelId: string): WireRunnerHooks;
 }

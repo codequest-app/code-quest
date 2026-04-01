@@ -10,9 +10,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
       const parentEvents = await ctx.sessionHistory.getSessionHistory(forkedFromSession);
-      const hooks = ctx.buildChannelHooks(newSessionId);
       const { channel: forkChannel } = await ctx.channelManager.create(newSessionId, {
-        hooks,
         launchOptions: { resumeSessionId: forkedFromSession },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
         onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
@@ -68,9 +66,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         }
       }
 
-      const hooks = ctx.buildChannelHooks(parsed.newSessionId);
       await ctx.channelManager.create(parsed.newSessionId, {
-        hooks,
         launchOptions: { resumeSessionId: parsed.remoteSessionId },
         onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
       });

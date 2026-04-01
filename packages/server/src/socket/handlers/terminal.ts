@@ -26,9 +26,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const baseCwd = cwd ?? (String(existingChannel?.sessionState.cwd ?? '') || process.cwd());
 
       const newChannelId = crypto.randomUUID();
-      const hooks = ctx.buildChannelHooks(newChannelId);
       const { channel: ch } = await ctx.channelManager.create(newChannelId, {
-        hooks,
         onBeforeSpawn: (c) => ctx.channelManager.addSocketToChannel(c, socket),
       });
       ch.updateSessionState({ cwd: baseCwd });
