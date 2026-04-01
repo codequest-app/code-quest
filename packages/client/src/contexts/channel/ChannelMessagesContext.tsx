@@ -4,7 +4,6 @@ import type {
   FileSearchResult,
   PlanCommentData,
   ServerToClientEvents,
-  UsageQuota,
 } from '@code-quest/shared';
 import {
   createContext,
@@ -18,22 +17,15 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { showNotificationToast } from '../../components/NotificationToast';
-import { channelEmit, rpc } from '../../socket/rpc';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { openUrl } from '../../utils/open-url';
 import { useSocket } from '../SocketContext';
+import { createMessagesActions, messagesHandlers } from './messagesHandlers';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
-
-// ── Type guards ──
-
-type TierKey = 'five_hour' | 'seven_day' | 'seven_day_sonnet';
-function isTierKey(v: string | undefined): v is TierKey {
-  return v === 'five_hour' || v === 'seven_day' || v === 'seven_day_sonnet';
-}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -234,33 +226,59 @@ export function ChannelMessagesProvider({
     }
   }, [channelState.messages]);
 
-  // ── Socket message events ──
+  // ── Streaming refs ──
+  const resetStreamingRefs = () => {
+    isTextStreaming.current = false;
+    isThinkingStreaming.current = false;
+    wasStreamedViaDelta.current = false;
+  };
+  resetStreamingRefsRef.current = resetStreamingRefs;
+
+  const guard = (payload: { channelId: string }): boolean =>
+    payload.channelId === channelId || payload.channelId === '';
+
+  // ── Auto-wiring: handler map events ──
+  // Each handler is a pure function: (state, payload) → newState.
+  // Events that also reset streaming refs do so here in the wiring layer.
   useEffect(() => {
     if (!socket) return;
 
-    const resetStreamingRefs = () => {
-      isTextStreaming.current = false;
-      isThinkingStreaming.current = false;
-      wasStreamedViaDelta.current = false;
+    const resetEvents = new Set([
+      'system:compact_boundary',
+      'error:message',
+      'stream:text',
+      'stream:tool_summary',
+    ]);
+
+    const entries = Object.entries(messagesHandlers) as Array<
+      [string, (state: ChannelState, payload: never) => ChannelState]
+    >;
+    const wired = entries.map(([event, handler]) => {
+      const fn = (payload: { channelId: string }) => {
+        if (event !== 'disconnect' && !guard(payload)) return;
+        if (resetEvents.has(event)) resetStreamingRefs();
+        setChannelState((prev) => handler(prev, payload as never));
+      };
+      socket.on(event as never, fn as never);
+      return { event, fn };
+    });
+
+    return () => {
+      for (const { event, fn } of wired) {
+        socket.off(event as never, fn as never);
+      }
     };
-    resetStreamingRefsRef.current = resetStreamingRefs;
+  }, [channelId, socket]);
+
+  // ── Special: stream:chunk (ref-based, cannot be a pure handler) ──
+  useEffect(() => {
+    if (!socket) return;
 
     const setState = setChannelState;
-    const guard = (payload: { channelId: string }): boolean =>
-      payload.channelId === channelId || payload.channelId === '';
-
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
     const appendToLastMessage = (content: string) => streamingAppendToLast(setState, content);
     const appendOrCreateText = (content: string, parentToolUseId?: string) =>
-      streamingAppendOrCreate(
-        setState,
-        isTextStreaming,
-        removePlaceholder,
-        content,
-        parentToolUseId,
-      );
-
-    // ── Streaming events ──
+      streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
 
     const onStreamChunk = (p: Payload<'stream:chunk'>) => {
       if (!guard(p)) return;
@@ -283,12 +301,7 @@ export function ChannelMessagesProvider({
               ...prev,
               messages: [
                 ...prev.messages,
-                msg({
-                  role: 'assistant',
-                  type: 'thinking',
-                  content: chunk.content,
-                  parentToolUseId,
-                }),
+                msg({ role: 'assistant', type: 'thinking', content: chunk.content, parentToolUseId }),
               ],
             }));
           }
@@ -298,22 +311,14 @@ export function ChannelMessagesProvider({
           setState((prev) => {
             let lastToolUse: (typeof prev.messages)[number] | undefined;
             for (let i = prev.messages.length - 1; i >= 0; i--) {
-              if (prev.messages[i].type === 'tool_use') {
-                lastToolUse = prev.messages[i];
-                break;
-              }
+              if (prev.messages[i].type === 'tool_use') { lastToolUse = prev.messages[i]; break; }
             }
             if (!lastToolUse) return prev;
-            const partial =
-              typeof lastToolUse.meta?.partialInput === 'string'
-                ? lastToolUse.meta.partialInput
-                : '';
+            const partial = typeof lastToolUse.meta?.partialInput === 'string' ? lastToolUse.meta.partialInput : '';
             return {
               ...prev,
               messages: prev.messages.map((m) =>
-                m.id === lastToolUse.id
-                  ? { ...m, meta: { ...m.meta, partialInput: partial + chunk.content } }
-                  : m,
+                m.id === lastToolUse.id ? { ...m, meta: { ...m.meta, partialInput: partial + chunk.content } } : m,
               ),
             };
           });
@@ -325,10 +330,7 @@ export function ChannelMessagesProvider({
               const ms = [...prev.messages];
               const last = ms[ms.length - 1];
               const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
-              ms[ms.length - 1] = {
-                ...last,
-                meta: { ...last.meta, citations: [...existing, ...(chunk.citations ?? [])] },
-              };
+              ms[ms.length - 1] = { ...last, meta: { ...last.meta, citations: [...existing, ...(chunk.citations ?? [])] } };
               return { ...prev, messages: ms };
             });
           }
@@ -338,63 +340,41 @@ export function ChannelMessagesProvider({
       }
     };
 
+    socket.on('stream:chunk', onStreamChunk);
+    return () => { socket.off('stream:chunk', onStreamChunk); };
+  }, [channelId, socket]);
+
+  // ── Special: stream:end (ref-only, no state change) ──
+  useEffect(() => {
+    if (!socket) return;
     const onStreamEnd = (p: Payload<'stream:end'>) => {
       if (!guard(p)) return;
       resetStreamingRefs();
     };
+    socket.on('stream:end', onStreamEnd);
+    return () => { socket.off('stream:end', onStreamEnd); };
+  }, [channelId, socket]);
 
-    const onStreamText = (p: Payload<'stream:text'>) => {
-      if (!guard(p)) return;
-      resetStreamingRefs();
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({ role: 'assistant', type: 'streamlined_text', content: p.text }),
-        ],
-      }));
-    };
+  // ── Special: message:assistant (depends on streaming refs) ──
+  useEffect(() => {
+    if (!socket) return;
 
-    const onStreamToolSummary = (p: Payload<'stream:tool_summary'>) => {
-      if (!guard(p)) return;
-      resetStreamingRefs();
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({
-            role: 'assistant',
-            type: 'streamlined_tool_use_summary',
-            content: p.toolSummary,
-          }),
-        ],
-      }));
-    };
+    const setState = setChannelState;
+    const removePlaceholder = () => streamingRemovePlaceholder(setState);
+    const appendOrCreateText = (content: string, parentToolUseId?: string) =>
+      streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
 
-    // ── Message events ──
-
-    const fetchFileContentIfNeeded = (
-      block: { toolName: string; input: unknown },
-      toolMsgId: string,
-    ) => {
+    const fetchFileContentIfNeeded = (block: { toolName: string; input: unknown }, toolMsgId: string) => {
       if (block.toolName !== 'open_file' || !block.input) return;
       const inp = block.input;
       const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
       if (!filePath) return;
-
       socket.emit('file:read', { channelId, filePath }, (res) => {
         setState((prev) => {
           const ms = [...prev.messages];
           const idx = ms.findIndex((m) => m.id === toolMsgId);
           if (idx < 0) return prev;
-          ms[idx] = {
-            ...ms[idx],
-            meta: {
-              ...ms[idx].meta,
-              fileContent: 'content' in res ? res.content : undefined,
-              fileError: 'error' in res ? res.error : undefined,
-            },
-          };
+          ms[idx] = { ...ms[idx], meta: { ...ms[idx].meta, fileContent: 'content' in res ? res.content : undefined, fileError: 'error' in res ? res.error : undefined } };
           return { ...prev, messages: ms };
         });
       });
@@ -404,76 +384,22 @@ export function ChannelMessagesProvider({
       for (const block of content) {
         if (block.type === 'text') {
           isThinkingStreaming.current = false;
-          if (!wasStreamedViaDelta.current) {
-            appendOrCreateText(block.text, parentToolUseId);
-          }
+          if (!wasStreamedViaDelta.current) appendOrCreateText(block.text, parentToolUseId);
         } else if (block.type === 'thinking') {
           if (!isThinkingStreaming.current) {
             setState((prev) => ({
               ...prev,
-              messages: [
-                ...prev.messages,
-                msg({
-                  role: 'assistant',
-                  type: 'thinking',
-                  content: block.thinking,
-                  parentToolUseId,
-                }),
-              ],
+              messages: [...prev.messages, msg({ role: 'assistant', type: 'thinking', content: block.thinking, parentToolUseId })],
             }));
           }
         } else if (block.type === 'tool_use') {
           resetStreamingRefs();
-          const toolMsg = msg({
-            role: 'assistant',
-            type: 'tool_use',
-            content: block.toolName,
-            meta: { toolId: block.toolId, input: block.input },
-            parentToolUseId,
-          });
-          setState((prev) => ({
-            ...prev,
-            messages: [...prev.messages, toolMsg],
-          }));
+          const toolMsg = msg({ role: 'assistant', type: 'tool_use', content: block.toolName, meta: { toolId: block.toolId, input: block.input }, parentToolUseId });
+          setState((prev) => ({ ...prev, messages: [...prev.messages, toolMsg] }));
           fetchFileContentIfNeeded(block, toolMsg.id);
         }
       }
       resetStreamingRefs();
-    };
-
-    const handleUserContent = (content: ContentBlock[], parentToolUseId?: string) => {
-      for (const block of content) {
-        if (block.type === 'text') {
-          setState((prev) => {
-            const last = prev.messages[prev.messages.length - 1];
-            if (last?.role === 'user' && last?.type === 'text' && last?.content === block.text) {
-              return prev;
-            }
-            return {
-              ...prev,
-              messages: [
-                ...prev.messages,
-                msg({ role: 'user', type: 'text', content: block.text }),
-              ],
-            };
-          });
-        } else if (block.type === 'tool_result') {
-          resetStreamingRefs();
-          setState((prev) => ({
-            ...prev,
-            messages: [
-              ...prev.messages,
-              msg({
-                role: 'assistant',
-                type: 'tool_result',
-                content: String(block.content ?? ''),
-                meta: { toolId: block.toolUseId, name: block.toolName },
-                parentToolUseId,
-              }),
-            ],
-          }));
-        }
-      }
     };
 
     const onMessageAssistant = (p: Payload<'message:assistant'>) => {
@@ -481,490 +407,101 @@ export function ChannelMessagesProvider({
       handleAssistantContent(p.content, p.parentToolUseId);
     };
 
-    const onMessageUser = (p: Payload<'message:user'>) => {
-      if (!guard(p)) return;
-      handleUserContent(p.content, p.parentToolUseId);
-    };
+    socket.on('message:assistant', onMessageAssistant);
+    return () => { socket.off('message:assistant', onMessageAssistant); };
+  }, [channelId, socket]);
 
+  // ── Special: message:result (dequeue + socket.emit) ──
+  useEffect(() => {
+    if (!socket) return;
     const onMessageResult = (p: Payload<'message:result'>) => {
       if (!guard(p)) return;
       resetStreamingRefs();
       const stats: ChatStats = {
-        costUsd: p.stats.totalCostUsd,
-        durationMs: p.stats.durationMs,
-        inputTokens: p.stats.inputTokens,
-        outputTokens: p.stats.outputTokens,
-        numTurns: p.stats.numTurns,
-        modelUsage: p.stats.modelUsage,
+        costUsd: p.stats.totalCostUsd, durationMs: p.stats.durationMs,
+        inputTokens: p.stats.inputTokens, outputTokens: p.stats.outputTokens,
+        numTurns: p.stats.numTurns, modelUsage: p.stats.modelUsage,
       };
-      setState((prev) => ({
-        ...prev,
-        status: 'idle' as const,
-        stats,
-        isContextCompressed: false,
-        statusText: null,
+      setChannelState((prev) => ({
+        ...prev, status: 'idle' as const, stats, isContextCompressed: false, statusText: null,
         messages: p.errors?.length
-          ? [
-              ...prev.messages,
-              msg({ role: 'system', type: 'error', content: p.errors[0] }),
-              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
-            ]
-          : [
-              ...prev.messages,
-              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
-            ],
+          ? [...prev.messages, msg({ role: 'system', type: 'error', content: p.errors[0] }), msg({ role: 'system', type: 'result', content: '', meta: { stats } })]
+          : [...prev.messages, msg({ role: 'system', type: 'result', content: '', meta: { stats } })],
       }));
-
       const next = dequeueMessageRef.current();
       if (!next) return;
       socket.emit('chat:send', { channelId, message: next });
-      setState((prev) => ({ ...prev, status: 'processing' as const }));
+      setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
     };
+    socket.on('message:result', onMessageResult);
+    return () => { socket.off('message:result', onMessageResult); };
+  }, [channelId, socket]);
 
-    // ── Session events ──
+  // ── Special: side-effect-only events ──
+  useEffect(() => {
+    if (!socket) return;
 
-    const onSessionStatus = (p: Payload<'session:status'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({ ...prev, statusText: p.status || null }));
-    };
-
-    const onCompactBoundary = (p: Payload<'system:compact_boundary'>) => {
-      if (!guard(p)) return;
-      resetStreamingRefs();
-      setState((prev) => ({
-        ...prev,
-        isContextCompressed: true,
-        messages: [
-          ...prev.messages,
-          msg({ role: 'system', type: 'compact_boundary', content: 'Context was compressed' }),
-        ],
-      }));
-    };
-
-    const onHookStarted = (p: Payload<'system:hook_started'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({
-            role: 'system',
-            type: 'hook_started',
-            content: p.hook.hookName,
-            meta: { hookId: p.hook.hookId, hookEvent: p.hook.hookEvent },
-          }),
-        ],
-      }));
-    };
-
-    const onHookResponse = (p: Payload<'system:hook_response'>) => {
-      if (!guard(p)) return;
-      const h = p.hook;
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({
-            role: 'system',
-            type: 'hook_response',
-            content: h.hookName,
-            meta: { hookId: h.hookId, hookEvent: h.hookEvent, output: h.output },
-          }),
-          ...(h.additionalContext
-            ? [
-                msg({
-                  role: 'system',
-                  type: 'hook_diagnostics',
-                  content: h.hookEventName ?? 'hook',
-                  meta: { diagnostics: h.additionalContext },
-                }),
-              ]
-            : []),
-        ],
-      }));
-    };
-
-    const onTaskStarted = (p: Payload<'system:task_started'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({
-            role: 'system',
-            type: 'task_started',
-            content: p.description,
-            meta: { taskType: p.taskType },
-          }),
-        ],
-      }));
-    };
-
-    // ── Notification events ──
-
-    const onNotificationToast = (p: Payload<'notification:toast'>) => {
-      if (!guard(p)) return;
-      toast.info(p.message ?? '');
-    };
-
+    const onNotificationToast = (p: Payload<'notification:toast'>) => { if (guard(p)) toast.info(p.message ?? ''); };
     const onAuthUrl = (p: Payload<'notification:auth_url'>) => {
       if (!guard(p)) return;
-      toast.info(`Authentication required (${p.method})`, {
-        duration: 30_000,
-        action: { label: 'Open', onClick: () => openUrl(p.url) },
-      });
+      toast.info(`Authentication required (${p.method})`, { duration: 30_000, action: { label: 'Open', onClick: () => openUrl(p.url) } });
     };
-
-    const onActionOpenUrl = (p: Payload<'action:open_url'>) => {
-      if (!guard(p)) return;
-      openUrl(p.url);
-    };
-
+    const onActionOpenUrl = (p: Payload<'action:open_url'>) => { if (guard(p)) openUrl(p.url); };
     const onActionOpenFile = (p: Payload<'action:open_file'>) => {
       if (!guard(p)) return;
-      const locationStr = p.location
-        ? ` (line ${p.location.startLine ?? '?'}${p.location.endLine ? `–${p.location.endLine}` : ''})`
-        : '';
-      toast.info(`Open file: ${p.filePath}${locationStr}`);
+      const loc = p.location ? ` (line ${p.location.startLine ?? '?'}${p.location.endLine ? `–${p.location.endLine}` : ''})` : '';
+      toast.info(`Open file: ${p.filePath}${loc}`);
     };
-
     const onNotificationShow = (p: Payload<'notification:show'> & { requestId?: string }) => {
       if (!guard(p)) return;
       const severity = p.severity ?? 'info';
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, msg({ role: 'system', type: 'text', content: p.message })],
-      }));
       const reqId = p.requestId;
       if (p.buttons?.length && reqId) {
         showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-          socket.emit('chat:respond', {
-            channelId,
-            requestId: reqId,
-            response,
-          }),
-        );
+          socket.emit('chat:respond', { channelId, requestId: reqId, response }));
         return;
       }
-      const showToast =
-        severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
+      const showToast = severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
       showToast(p.message ?? '');
     };
-
-    // ── Error events ──
-
-    const onErrorMessage = (p: Payload<'error:message'>) => {
+    const onRawEventSideEffects = (p: Payload<'raw:event'>) => {
       if (!guard(p)) return;
-      resetStreamingRefs();
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, msg({ role: 'system', type: 'error', content: p.message })],
-      }));
-    };
-
-    const onRateLimit = (p: Payload<'system:rate_limit'>) => {
-      if (!guard(p)) return;
-      const { rateLimitType, resetsAt, utilization } = p.info;
-      setState((prev) => {
-        const quotaUpdate: Partial<{ usageQuota: UsageQuota }> = {};
-        if (isTierKey(rateLimitType)) {
-          const currentQuota: UsageQuota = prev.usageQuota ?? {};
-          const util = utilization;
-          quotaUpdate.usageQuota = {
-            ...currentQuota,
-            [rateLimitType]: {
-              utilization: typeof util === 'number' ? util : 0,
-              ...(resetsAt != null
-                ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() }
-                : {}),
-            },
-          };
-        }
-        return {
-          ...prev,
-          ...quotaUpdate,
-          messages: [
-            ...prev.messages,
-            msg({
-              role: 'system',
-              type: 'rate_limit_event',
-              content: `Rate limit: ${p.info.status}`,
-              meta: { rateLimitInfo: p.info },
-            }),
-          ],
-        };
-      });
-    };
-
-    const onApiRetry = (p: Payload<'system:api_retry'>) => {
-      if (!guard(p)) return;
-      setChannelState((prev) => ({
-        ...prev,
-        statusText: `Retrying... (${p.attempt}/${p.maxRetries})`,
-      }));
-    };
-
-    // ── Lifecycle events ──
-
-    const onFileUpdated = (p: Payload<'file:updated'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({
-        ...prev,
-        modifiedFiles: {
-          ...prev.modifiedFiles,
-          [p.filePath]: { oldContent: p.oldContent, newContent: p.newContent },
-        },
-      }));
-    };
-
-    const onPlanComment = (p: Payload<'plan:comment_added'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({ ...prev, planComments: [...prev.planComments, p.comment] }));
-    };
-
-    const onRemoveComment = (p: Payload<'plan:comment_removed'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({
-        ...prev,
-        planComments: prev.planComments.filter((c) => c.id !== p.commentId),
-      }));
-    };
-
-    const onRawEvent = (p: Payload<'raw:event'>) => {
-      if (!guard(p)) return;
-      if (p.rawType === 'tool_use') {
-        setState((prev) => ({
-          ...prev,
-          messages: [
-            ...prev.messages,
-            msg({
-              role: 'assistant',
-              type: 'tool_use',
-              content: typeof p.data.name === 'string' ? p.data.name : '',
-              meta: { toolId: p.data.id, input: p.data.input },
-            }),
-          ],
-        }));
-        return;
-      }
-      if (p.rawType === 'unknown_delta') {
-        setState((prev) => ({
-          ...prev,
-          messages: [
-            ...prev.messages,
-            msg({
-              role: 'system',
-              type: 'unknown_delta',
-              content: `Unknown delta: ${p.data.deltaType}`,
-              meta: { deltaType: p.data.deltaType, data: p.data },
-            }),
-          ],
-        }));
-        return;
-      }
-      if (p.rawType === 'new_session_notification') {
-        toast.info('New session started');
-        return;
-      }
-      if (p.rawType === 'control_request/open_in_editor') {
+      if (p.rawType === 'new_session_notification') toast.info('New session started');
+      else if (p.rawType === 'control_request/open_in_editor') {
         toast.info('Open in Editor is not supported in web mode');
-        socket.emit('chat:respond', {
-          channelId,
-          requestId: String(p.data.requestId),
-          response: { behavior: 'allow' },
-        });
-        return;
+        socket.emit('chat:respond', { channelId, requestId: String(p.data.requestId), response: { behavior: 'allow' } });
       }
-
-      setState((prev) => ({
-        ...prev,
-        messages: [
-          ...prev.messages,
-          msg({
-            role: 'system',
-            type: 'raw_event',
-            content: `Raw: ${p.rawType}`,
-            meta: { rawType: p.rawType, data: p.data },
-          }),
-        ],
-      }));
     };
-
-    // ── Global events ──
-
-    const onStateUpdate = (p: Payload<'settings:update'>) => {
-      if (p.channelId && p.channelId !== '') return;
-      if (p.accountInfo === undefined) return;
-      setState((prev) => ({
-        ...prev,
-        accountInfo: prev.accountInfo
-          ? { ...prev.accountInfo, ...p.accountInfo }
-          : (p.accountInfo ?? null),
-      }));
-    };
-
-    const onExperimentGates = (p: Payload<'app:experiment_gates'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({ ...prev, experimentGates: p.gates }));
-    };
-
-    const onStateUsage = (p: Payload<'settings:usage'>) => {
-      if (!guard(p)) return;
-      setState((prev) => ({
-        ...prev,
-        usageQuota: p.usage,
-        ...(p.contextUsage ? { contextUsage: p.contextUsage } : {}),
-      }));
-    };
-
-    const onDisconnect = () => {
-      setState((prev) => ({ ...prev, status: 'disconnected' }));
-      toast.warning('Disconnected from server');
-    };
-
-    // ── Register all events ──
-
-    socket.on('stream:chunk', onStreamChunk);
-    socket.on('stream:end', onStreamEnd);
-    socket.on('stream:text', onStreamText);
-    socket.on('stream:tool_summary', onStreamToolSummary);
-
-    socket.on('message:assistant', onMessageAssistant);
-    socket.on('message:user', onMessageUser);
-    socket.on('message:result', onMessageResult);
-
-    socket.on('session:status', onSessionStatus);
-    socket.on('system:compact_boundary', onCompactBoundary);
-    socket.on('system:hook_started', onHookStarted);
-    socket.on('system:hook_response', onHookResponse);
-    socket.on('system:task_started', onTaskStarted);
+    const onDisconnectToast = () => { toast.warning('Disconnected from server'); };
 
     socket.on('notification:toast', onNotificationToast);
     socket.on('notification:auth_url', onAuthUrl);
     socket.on('action:open_url', onActionOpenUrl);
     socket.on('action:open_file', onActionOpenFile);
     socket.on('notification:show', onNotificationShow);
-
-    socket.on('error:message', onErrorMessage);
-    socket.on('system:rate_limit', onRateLimit);
-    socket.on('system:api_retry', onApiRetry);
-
-    socket.on('file:updated', onFileUpdated);
-    socket.on('plan:comment_added', onPlanComment);
-    socket.on('plan:comment_removed', onRemoveComment);
-    socket.on('raw:event', onRawEvent);
-
-    socket.on('settings:update', onStateUpdate);
-    socket.on('app:experiment_gates', onExperimentGates);
-    socket.on('settings:usage', onStateUsage);
-
-    socket.on('disconnect', onDisconnect);
+    socket.on('raw:event', onRawEventSideEffects);
+    socket.on('disconnect', onDisconnectToast);
 
     return () => {
-      socket.off('stream:chunk', onStreamChunk);
-      socket.off('stream:end', onStreamEnd);
-      socket.off('stream:text', onStreamText);
-      socket.off('stream:tool_summary', onStreamToolSummary);
-
-      socket.off('message:assistant', onMessageAssistant);
-      socket.off('message:user', onMessageUser);
-      socket.off('message:result', onMessageResult);
-
-      socket.off('session:status', onSessionStatus);
-      socket.off('system:compact_boundary', onCompactBoundary);
-      socket.off('system:hook_started', onHookStarted);
-      socket.off('system:hook_response', onHookResponse);
-      socket.off('system:task_started', onTaskStarted);
-
       socket.off('notification:toast', onNotificationToast);
       socket.off('notification:auth_url', onAuthUrl);
       socket.off('action:open_url', onActionOpenUrl);
       socket.off('action:open_file', onActionOpenFile);
       socket.off('notification:show', onNotificationShow);
-
-      socket.off('error:message', onErrorMessage);
-      socket.off('system:rate_limit', onRateLimit);
-      socket.off('system:api_retry', onApiRetry);
-
-      socket.off('file:updated', onFileUpdated);
-      socket.off('plan:comment_added', onPlanComment);
-      socket.off('plan:comment_removed', onRemoveComment);
-      socket.off('raw:event', onRawEvent);
-
-      socket.off('settings:update', onStateUpdate);
-      socket.off('app:experiment_gates', onExperimentGates);
-      socket.off('settings:usage', onStateUsage);
-
-      socket.off('disconnect', onDisconnect);
+      socket.off('raw:event', onRawEventSideEffects);
+      socket.off('disconnect', onDisconnectToast);
     };
-  }, [channelId, socket, resetStreamingRefsRef]);
+  }, [channelId, socket]);
 
   // ── Ref for status used in actions ──
   const statusRef = useRef(channelState.status);
   statusRef.current = channelState.status;
 
   // ── Stable actions (don't depend on channelState) ──
-  const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-      channelEmit(socket, channelId, event, payload, ...rest);
-
-    const sendMessage = (message: string) => {
-      if (statusRef.current === 'processing') {
-        if (messageQueueRef.current.length < 10) messageQueueRef.current.push(message);
-      } else {
-        emit('chat:send', { message });
-      }
-      setChannelState((s) => ({
-        ...s,
-        messages: [...s.messages, msg({ role: 'user', type: 'text', content: message })],
-        ...(s.status !== 'processing' ? { status: 'processing' as const } : {}),
-      }));
-    };
-
-    return {
-      setChannelState,
-      sendMessage,
-      abort: () => {
-        emit('chat:cancel', {});
-        setChannelState((prev) => ({ ...prev, status: 'cancelling' as const }));
-      },
-      kill: () => emit('session:close', {}),
-      clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
-      clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
-      removeModifiedFile: (path: string) =>
-        setChannelState((prev) => {
-          const { [path]: _, ...rest } = prev.modifiedFiles;
-          return { ...prev, modifiedFiles: rest };
-        }),
-      addPlanComment: (comment: PlanCommentData) =>
-        setChannelState((prev) => ({ ...prev, planComments: [...prev.planComments, comment] })),
-      clearPlanComments: () => setChannelState((prev) => ({ ...prev, planComments: [] })),
-      fetchRawEvents: () => rpc(socket, 'session:raw_events', { channelId }),
-      requestUsageUpdate: () => {
-        socket.emit('settings:refresh_usage', { channelId });
-      },
-      subscribeRawEvents: (cb: (evt: unknown) => void) => {
-        const handler = (eventName: string, ...args: unknown[]) => {
-          const payload = isRecord(args[0]) ? args[0] : undefined;
-          if (payload?.channelId && payload.channelId !== channelId) return;
-          cb({ type: eventName, ...(payload ?? {}) });
-        };
-        socket.onAny(handler);
-        return () => socket.offAny(handler);
-      },
-      searchFiles: (pattern: string) => rpc(socket, 'file:list', { channelId, pattern }),
-      getTerminalContents: () => rpc(socket, 'terminal:read', { channelId }),
-      openClaudeTerminal: () => rpc(socket, 'terminal:open_claude', { channelId }),
-      forkSession: (messageId: string) =>
-        rpc(socket, 'session:fork', {
-          forkedFromSession: channelId,
-          resumeSessionAt: messageId,
-          newSessionId: crypto.randomUUID(),
-        }),
-      rewindToMessage: (userMessageId: string, dryRun = false) =>
-        rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun }),
-    };
-  }, [socket, channelId, messageQueueRef]);
+  const actions = useMemo(
+    () => createMessagesActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
+    [socket, channelId, messageQueueRef],
+  );
 
   // ── Context value (state + stable actions) ──
   const value = useMemo(
