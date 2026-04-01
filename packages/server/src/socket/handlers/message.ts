@@ -76,9 +76,7 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     requestId: string,
     response: Record<string, unknown>,
   ): Record<string, unknown> {
-    const t = channel.mcpTimeouts.get(requestId);
-    if (t) clearTimeout(t);
-    channel.mcpTimeouts.delete(requestId);
+    channel.clearMcpTimeout(requestId);
     return { ...response };
   }
 
@@ -137,10 +135,7 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
       if (!channel) return;
 
       // Notification response
-      const notifResolve = channel.notificationRequests.get(requestId);
-      if (notifResolve) {
-        channel.notificationRequests.delete(requestId);
-        notifResolve({ ...response });
+      if (channel.resolveNotificationRequest(requestId, { ...response })) {
         return;
       }
 

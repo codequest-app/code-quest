@@ -7,11 +7,11 @@ export function create(
   settingsStore: SettingsStore,
 ): SocketHandler {
   async function handleInit(callback: SocketCallback): Promise<void> {
-    const sessions = channelManager.getAliveChannels().map((ch) => ({
-      channelId: ch.channelId,
-      state: ch.state,
-      title: ch.title,
-      modelSetting: ch.model,
+    const sessions = channelManager.getAliveChannels().map(([id, ch]) => ({
+      channelId: id,
+      state: ch.isProcessing ? 'busy' : 'idle',
+      title: ch.sessionState?.title,
+      modelSetting: ch.sessionState?.model,
     }));
     let settings: Record<string, unknown> = {};
     try {

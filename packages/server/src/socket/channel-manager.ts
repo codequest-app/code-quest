@@ -4,11 +4,9 @@ import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { ChannelSummary, SessionBroadcastState } from './schemas.ts';
+import type { SessionBroadcastState } from './schemas.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
-
-export type { ChannelSummary } from './schemas.ts';
 
 export interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
@@ -80,7 +78,7 @@ export class ChannelManager {
   /** Find channel that owns a pending control/notification request. Returns [channelId, channel]. */
   findByRequestId(requestId: string): [string, Channel] | undefined {
     for (const [id, ch] of this.channels) {
-      if (ch.hasControlRequest(requestId) || ch.notificationRequests.has(requestId)) {
+      if (ch.hasControlRequest(requestId) || ch.hasNotificationRequest(requestId)) {
         return [id, ch];
       }
     }
@@ -160,16 +158,10 @@ export class ChannelManager {
     return undefined;
   }
 
-  getAliveChannels(): ChannelSummary[] {
-    const result: ChannelSummary[] = [];
+  getAliveChannels(): Array<[string, Channel]> {
+    const result: Array<[string, Channel]> = [];
     for (const [id, ch] of this.channels) {
-      if (ch.exited) continue;
-      result.push({
-        channelId: id,
-        state: ch.isProcessing ? 'busy' : 'idle',
-        title: ch.sessionState?.title,
-        model: ch.sessionState?.model,
-      });
+      if (!ch.exited) result.push([id, ch]);
     }
     return result;
   }

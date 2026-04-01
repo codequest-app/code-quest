@@ -1,4 +1,4 @@
-import type { ChatCreatePayload, ControlResponse } from '@code-quest/shared';
+import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
 import { chatCreateSchema, chatJoinSchema, controlInitResponseSchema } from '@code-quest/shared';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
@@ -14,8 +14,25 @@ import {
 } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
-import { errMsg } from '../../utils/helpers.ts';
+import { errMsg, pickDefined } from '../../utils/helpers.ts';
 import { persistNewSession } from './persist.ts';
+
+function buildSessionInitPayload(channel: Channel): SessionInitPayload {
+  const meta = channel.metaCache;
+  return {
+    channelId: channel.id,
+    sessionId: channel.sessionId ?? '',
+    ...pickDefined({
+      model: meta.model,
+      tools: meta.tools,
+      permissionMode: meta.permissionMode,
+      fastModeState: meta.fastModeState,
+      mcpServers: meta.mcpServers,
+      slashCommands: meta.slashCommands,
+    }),
+    config: { ...channel.sessionState },
+  };
+}
 
 export function create(
   channelManager: ChannelManager,
@@ -118,7 +135,7 @@ export function create(
         ...(slashCommands && { slashCommands }),
       });
 
-      socket.emit('session:init', { ...channel.buildSessionInitPayload() });
+      socket.emit('session:init', { ...buildSessionInitPayload(channel) });
       if (channelManager.cachedModels) {
         socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
       }
@@ -173,7 +190,7 @@ export function create(
       const replaySessionId = await sessionHistory.resolveSessionId(channelId);
       await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
 
-      socket.emit('session:init', { ...channel.buildSessionInitPayload() });
+      socket.emit('session:init', { ...buildSessionInitPayload(channel) });
       if (channelManager.cachedModels) {
         socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
       }

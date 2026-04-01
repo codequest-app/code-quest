@@ -4,7 +4,6 @@ import type {
   NotificationPayload,
   NotificationResponse,
   PlanCommentData,
-  SessionInitPayload,
   SocketEvent,
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
@@ -68,9 +67,12 @@ export class Channel {
 
   // ── Control requests ──
   private readonly _controlRequestMeta = new Map<string, RequestMeta>();
-  readonly pendingRequests = new Map<string, PendingRequest>();
-  readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
-  readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly pendingRequests = new Map<string, PendingRequest>();
+  private readonly notificationRequests = new Map<
+    string,
+    (response: NotificationResponse) => void
+  >();
+  private readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── Meta ──
   planComments: PlanCommentData[] = [];
@@ -167,6 +169,28 @@ export class Channel {
     return this._controlRequestMeta.get(requestId);
   }
 
+  hasNotificationRequest(requestId: string): boolean {
+    return this.notificationRequests.has(requestId);
+  }
+
+  setMcpTimeout(requestId: string, timer: ReturnType<typeof setTimeout>): void {
+    this.mcpTimeouts.set(requestId, timer);
+  }
+
+  clearMcpTimeout(requestId: string): void {
+    const t = this.mcpTimeouts.get(requestId);
+    if (t) clearTimeout(t);
+    this.mcpTimeouts.delete(requestId);
+  }
+
+  resolveNotificationRequest(requestId: string, response: NotificationResponse): boolean {
+    const resolve = this.notificationRequests.get(requestId);
+    if (!resolve) return false;
+    this.notificationRequests.delete(requestId);
+    resolve(response);
+    return true;
+  }
+
   emit(event: string, ...args: unknown[]): void {
     this.emitToSockets(null, event, ...args);
   }
@@ -181,23 +205,6 @@ export class Channel {
         (sock.emit as (...a: unknown[]) => void)(event, ...args);
       }
     }
-  }
-
-  buildSessionInitPayload(): SessionInitPayload {
-    const meta = this.metaCache;
-    return {
-      channelId: this.id,
-      sessionId: this.sessionId ?? '',
-      ...pickDefined({
-        model: meta.model,
-        tools: meta.tools,
-        permissionMode: meta.permissionMode,
-        fastModeState: meta.fastModeState,
-        mcpServers: meta.mcpServers,
-        slashCommands: meta.slashCommands,
-      }),
-      config: { ...this.sessionState },
-    };
   }
 
   // ── Runner wrappers ──

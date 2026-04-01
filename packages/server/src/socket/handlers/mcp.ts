@@ -171,7 +171,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
       ch.respondToRequest(requestId, jsonRpcError(mcpId, 'timeout'));
     }, MCP_MESSAGE_TIMEOUT);
     ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
-    ch.mcpTimeouts.set(requestId, mcpTimeout);
+    ch.setMcpTimeout(requestId, mcpTimeout);
   }
 
   return {

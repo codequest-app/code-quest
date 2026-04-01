@@ -180,12 +180,12 @@
 - [x] 17.1f typecheck + test 全過（401/401）
 
 ### 17.2 需要更大設計改動（後續 change）
-- [ ] 17.2a channel.ts `pendingRequests` public → 透過 method 操作（影響 message.ts chat:respond）
-- [ ] 17.2b channel.ts `notificationRequests` + `mcpTimeouts` + `planComments` + `terminalLines` 移到各自 handler（需拆 chat:respond dispatcher）
-- [ ] 17.2c channel.ts `buildSessionInitPayload()` 移到 connect handler（presentation 邏輯不屬於 Channel）
-- [ ] 17.2d channel.ts `sendNotification()` 移出 Channel（Channel 不應知道 socket event 名稱）
-- [ ] 17.2e channel-manager.ts `getAliveChannels()` 的 presentation mapping 移到呼叫端
-- [ ] 17.2f message.ts `buildMcpResponse` / `buildToolPermissionResponse` 操作 channel.mcpTimeouts / channel.planComments — 跨域操作（需拆 chat:respond）
+- [x] 17.2a `pendingRequests` + `notificationRequests` + `mcpTimeouts` 全部 private + method 封裝
+- [x] 17.2c `buildSessionInitPayload()` 移到 connect.ts（Channel 不再有 presentation 邏輯）
+- [x] 17.2e `getAliveChannels()` 回傳 raw `[id, Channel][]`，presentation mapping 移到 app.ts
+- [ ] 17.2b `planComments` + `terminalLines` 移到各自 handler — 後續 change（需拆 chat:respond）
+- [ ] 17.2d `sendNotification()` 移出 Channel — 後續 change
+- [ ] 17.2f chat:respond 跨域操作 — 後續 change
 
 ## 14. 移除 HandlerContext + handler 依賴精確化
 

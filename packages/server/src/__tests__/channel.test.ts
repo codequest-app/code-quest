@@ -49,53 +49,6 @@ describe('Channel', () => {
     });
   });
 
-  describe('buildSessionInitPayload', () => {
-    it('returns session:init payload from metaCache + sessionState', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.sessionId = 'cli-sess-1';
-      channel.updateMetaCache({
-        model: 'claude-sonnet-4-6',
-        tools: ['Read', 'Write'],
-        permissionMode: 'default',
-        fastModeState: 'off',
-        mcpServers: [{ name: 'github', status: 'connected' }],
-        slashCommands: ['commit', 'review'],
-      });
-      channel.updateSessionState({ cwd: '/home/user', effort: 'high' });
-
-      const payload = channel.buildSessionInitPayload();
-
-      expect(payload).toEqual({
-        channelId: 'sess-1',
-        sessionId: 'cli-sess-1',
-        model: 'claude-sonnet-4-6',
-        tools: ['Read', 'Write'],
-        permissionMode: 'default',
-        fastModeState: 'off',
-        mcpServers: [{ name: 'github', status: 'connected' }],
-        slashCommands: ['commit', 'review'],
-        config: { cwd: '/home/user', effort: 'high' },
-      });
-    });
-
-    it('omits undefined metaCache fields', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.sessionId = 'cli-sess-2';
-      channel.updateMetaCache({ model: 'haiku' });
-
-      const payload = channel.buildSessionInitPayload();
-
-      expect(payload).toEqual({
-        channelId: 'sess-1',
-        sessionId: 'cli-sess-2',
-        model: 'haiku',
-        config: {},
-      });
-      expect(payload).not.toHaveProperty('tools');
-      expect(payload).not.toHaveProperty('permissionMode');
-    });
-  });
-
   describe('controlRequestMeta', () => {
     it('trackControlRequest adds entry and hasControlRequest returns true', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
