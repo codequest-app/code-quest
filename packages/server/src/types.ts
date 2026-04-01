@@ -15,4 +15,5 @@ export const TYPES = {
   UsageTracker: Symbol.for('UsageTracker'),
   SettingsStore: Symbol.for('SettingsStore'),
   ChannelManager: Symbol.for('ChannelManager'),
+  SessionHistory: Symbol.for('SessionHistory'),
 } as const;

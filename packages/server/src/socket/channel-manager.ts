@@ -1,11 +1,17 @@
-import type { ControlResponse, SocketEvent } from '@code-quest/shared';
+import type { ControlResponse } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
+import type { Server } from 'socket.io';
 import { z } from 'zod';
-import { logger } from '../logger.ts';
-import type { RawEventStore } from '../services/raw-event-store.ts';
-import type { SessionStore } from '../services/session-store.ts';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type WireRunnerHooks } from './channel.ts';
+import type { RawRecorder } from './raw-recorder.ts';
+import type { SessionHistory } from './session-history.ts';
+import {
+  pickDefined,
+  type SessionBroadcastState,
+  type TypedServer,
+  type TypedSocket,
+} from './types.ts';
 
 const channelSummarySchema = z.object({
   channelId: z.string(),
@@ -14,25 +20,6 @@ const channelSummarySchema = z.object({
   model: z.string().optional(),
 });
 export type ChannelSummary = z.infer<typeof channelSummarySchema>;
-
-export interface JoinResult {
-  channel: Channel;
-  events: SocketEvent[];
-}
-
-const protocolEventBase = z.object({ type: z.string() }).passthrough();
-const userMessagePayload = z.object({
-  type: z.literal('user'),
-  message: z.object({ content: z.array(z.unknown()) }).passthrough(),
-});
-
-/** History-relevant socket event names — excludes streaming, control, and transient types. */
-const HISTORY_NAMES = new Set([
-  'message:assistant',
-  'message:user',
-  'message:result',
-  'session:init',
-]);
 
 export interface CreateChannelOptions {
   hooks?: WireRunnerHooks;
@@ -44,16 +31,36 @@ export interface CreateChannelOptions {
 
 export class ChannelManager {
   private channels = new Map<string, Channel>();
+  private _sessionHistory!: SessionHistory;
+  // socket.id → set of channelIds this socket is joined to
+  private socketChannelsMap = new Map<string, Set<string>>();
+  // Socket.IO server reference for broadcasting
+  io?: TypedServer;
 
   constructor(
     private runnerFactory: RunnerFactory,
-    private rawEventStore: RawEventStore,
-    private sessionStore: SessionStore,
     private adapter: ProviderAdapter,
+    private rawRecorder: RawRecorder,
   ) {}
+
+  set sessionHistory(sh: SessionHistory) {
+    this._sessionHistory = sh;
+  }
+
+  register(io: TypedServer): void {
+    this.io = io;
+  }
 
   get provider(): string {
     return this.adapter.command;
+  }
+
+  get runnerCommand(): string {
+    return this.runnerFactory.command;
+  }
+
+  get runnerArgs(): string[] {
+    return this.runnerFactory.args;
   }
 
   get providerClientConfig() {
@@ -90,7 +97,7 @@ export class ChannelManager {
     channel.wireRunner(opts?.hooks);
 
     // Record raw I/O
-    this.wireRawPersistence(channel);
+    this.rawRecorder.wire(channel);
 
     opts?.onBeforeSpawn?.(channel);
 
@@ -105,30 +112,28 @@ export class ChannelManager {
     return { channel, initResult };
   }
 
-  async join(channelId: string, opts?: { hooks?: WireRunnerHooks }): Promise<JoinResult> {
+  async join(channelId: string, opts?: { hooks?: WireRunnerHooks }): Promise<{ channel: Channel }> {
     let channel = this.channels.get(channelId);
 
     if (channel && !channel.exited) {
-      const events = await this.getSessionHistory(channelId);
-      return { channel, events };
+      return { channel };
     }
 
-    // Lazy resume from DB
-    const record = await this.sessionStore.getById(channelId);
-    if (!record?.sessionId) {
+    // Lazy resume from DB — resolve sessionId via sessionHistory
+    const sessionId = await this._sessionHistory.resolveSessionId(channelId);
+    if (sessionId === channelId) {
       throw new Error(`Session not found: ${channelId}`);
     }
 
-    const runner = this.runnerFactory.create({ resumeSessionId: record.sessionId });
+    const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
     channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
     channel.wireRunner(opts?.hooks);
-    this.wireRawPersistence(channel);
+    this.rawRecorder.wire(channel);
     runner.spawn();
     await channel.sendControlRequest('initialize', {});
 
-    const events = await this.getSessionHistory(channelId);
-    return { channel, events };
+    return { channel };
   }
 
   destroy(channelId: string): void {
@@ -136,7 +141,7 @@ export class ChannelManager {
     if (!channel) return;
 
     try {
-      channel.runner.kill();
+      channel.kill();
     } catch {}
     channel.destroy();
     this.channels.delete(channelId);
@@ -163,120 +168,73 @@ export class ChannelManager {
     return result;
   }
 
-  // ── Private helpers ──
+  // ── Socket tracking ──
 
-  async resolveSessionId(channelId: string): Promise<string> {
-    const channel = this.channels.get(channelId);
-    if (channel?.sessionId) return channel.sessionId;
-    const record = await this.sessionStore.getById(channelId);
-    return record?.sessionId ?? channelId;
+  addSocketToChannel(channel: Channel, socket: TypedSocket): void {
+    channel.addSocket(socket);
+    let channelIds = this.socketChannelsMap.get(socket.id);
+    if (!channelIds) {
+      channelIds = new Set();
+      this.socketChannelsMap.set(socket.id, channelIds);
+    }
+    channelIds.add(channel.id);
   }
 
-  async getSessionHistory(channelId: string): Promise<SocketEvent[]> {
-    const sessionId = await this.resolveSessionId(channelId);
-    const all = await this.convertRawToSocketEvents(sessionId);
-    return all.filter((e) => HISTORY_NAMES.has(e.name));
-  }
+  removeSocketFromAll(socketId: string): void {
+    const channelIds = this.socketChannelsMap.get(socketId);
+    if (!channelIds) return;
 
-  private async convertRawToSocketEvents(sessionId: string): Promise<SocketEvent[]> {
-    const rawEntries = await this.rawEventStore.getBySession(sessionId);
-    const result: SocketEvent[] = [];
+    for (const channelId of channelIds) {
+      const channel = this.channels.get(channelId);
+      if (!channel) continue;
 
-    // Check if stdout contains any user message echoes
-    const hasStdoutUserEcho = rawEntries.some((e) => {
-      if (e.direction !== 'out') return false;
-      try {
-        const obj = JSON.parse(e.raw.trim());
-        return obj?.type === 'user';
-      } catch {
-        return false;
-      }
-    });
-
-    for (const entry of rawEntries) {
-      const trimmed = entry.raw.trim();
-      if (!trimmed) continue;
-
-      try {
-        const raw = JSON.parse(trimmed);
-        if (typeof raw !== 'object' || raw === null) continue;
-
-        if (entry.direction === 'out') {
-          const parsed = protocolEventBase.safeParse(raw);
-          if (parsed.success) {
-            const converted = this.adapter.transform(parsed.data).events;
-            result.push(...converted);
-          }
-        } else if (entry.direction === 'in') {
-          // Skip stdin user messages when stdout already echoes them (avoids duplicates)
-          if (hasStdoutUserEcho) continue;
-          const parsed = userMessagePayload.safeParse(raw);
-          if (parsed.success) {
-            result.push({
-              name: 'message:user',
-              payload: { content: parsed.data.message.content },
-            });
-          }
+      // Find the socket object in channel's sockets set
+      for (const sock of channel.sockets) {
+        if (sock.id === socketId) {
+          channel.removeSocket(sock);
+          break;
         }
-      } catch {}
+      }
+
+      if (channel.sockets.size === 0) {
+        channel.unwireRunner();
+      }
     }
 
-    return result;
+    this.socketChannelsMap.delete(socketId);
   }
 
-  async getPendingReplayEvents(sessionId: string): Promise<{
-    events: SocketEvent[];
-    respondedRequestIds: Set<string>;
-  }> {
-    const rawEntries = await this.rawEventStore.getBySession(sessionId);
-    const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
-    const events = await this.convertRawToSocketEvents(sessionId);
-    return { events, respondedRequestIds };
-  }
+  // ── Broadcasting ──
 
-  private wireRawPersistence(channel: Channel): void {
-    const { runner } = channel;
-    let seqCounter = 0;
-    const pendingRawEntries: Array<{
-      raw: string;
-      direction: 'in' | 'out' | 'err';
-      timestamp: number;
-      seq: number;
-    }> = [];
+  broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
+    const cache = this.channels.get(channelId)?.sessionState ?? {};
 
-    const flushPending = (sessionId: string) => {
-      for (const pending of pendingRawEntries) {
-        this.rawEventStore
-          .append({ ...pending, sessionId, promptId: '' })
-          .catch((err) => logger.error({ err }, 'Failed to persist buffered raw event'));
-      }
-      pendingRawEntries.length = 0;
-    };
-
-    const recordRaw = (raw: string, direction: 'in' | 'out' | 'err') => {
-      const sessionId = channel.sessionId;
-      if (!sessionId) {
-        pendingRawEntries.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
-        return;
-      }
-      if (pendingRawEntries.length > 0) flushPending(sessionId);
-      this.rawEventStore
-        .append({
-          timestamp: Date.now(),
-          sessionId,
-          promptId: '',
-          raw,
-          direction,
-          seq: seqCounter++,
-        })
-        .catch((err) => logger.error({ err }, 'Failed to persist raw event'));
-    };
-
-    runner.on('stdout', (line: string) => recordRaw(line, 'out'));
-    runner.on('stdin', (raw: string) => recordRaw(raw, 'in'));
-    runner.on('stderr', (line: string) => {
-      recordRaw(line, 'err');
-      channel.lastError = line;
+    this.io?.emit('session:states', {
+      sessions: [
+        {
+          channelId,
+          state,
+          ...pickDefined({
+            title,
+            modelSetting: cache.model,
+            permissionMode: cache.permissionMode,
+            effort: cache.effort,
+          }),
+        },
+      ],
     });
+
+    const settings = pickDefined({
+      modelSetting: cache.model,
+      defaultCwd: cache.cwd,
+      initialPermissionMode: cache.permissionMode,
+      thinkingLevel: cache.thinkingLevel,
+      mcpServers: cache.mcpServers,
+      tools: cache.tools,
+      effort: cache.effort,
+    });
+    if (Object.keys(settings).length > 0) {
+      this.io?.emit('settings:update', { channelId, ...settings });
+    }
   }
 }

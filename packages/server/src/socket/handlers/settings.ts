@@ -198,32 +198,32 @@ export function onServerAction(
       void ctx.settingsStore
         .getMany(ch.provider, ['model', 'permissionMode'])
         .then((stored) => {
-          ch.runner.respondToControlRequest(action.requestId, {
+          ch.respondToRequest(action.requestId, {
             ...stored,
             ...overrides,
           });
         })
         .catch(() => {
-          ch.runner.respondToControlRequest(action.requestId, overrides);
+          ch.respondToRequest(action.requestId, overrides);
         });
       return true;
     }
     case 'set_model': {
       const { model } = serverActionModelSchema.parse(action.input ?? {});
       ch.updateSessionState({ model });
-      ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
-      ctx.broadcastSessionState(channelId, 'busy');
+      ch.respondToRequest(action.requestId, { subtype: 'success' });
+      ctx.channelManager.broadcastSessionState(channelId, 'busy');
       return true;
     }
     case 'set_permission_mode': {
       const { mode } = serverActionModeSchema.parse(action.input ?? {});
       ch.updateSessionState({ permissionMode: mode });
-      ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
-      ctx.broadcastSessionState(channelId, 'busy');
+      ch.respondToRequest(action.requestId, { subtype: 'success' });
+      ctx.channelManager.broadcastSessionState(channelId, 'busy');
       return true;
     }
     default:
-      ch.runner.respondToControlRequest(action.requestId, action.response);
+      ch.respondToRequest(action.requestId, action.response);
       return true;
   }
 }

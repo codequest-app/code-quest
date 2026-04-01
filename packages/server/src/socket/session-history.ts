@@ -1,0 +1,98 @@
+import type { SocketEvent } from '@code-quest/shared';
+import type { ProviderAdapter } from '@code-quest/summoner';
+import { z } from 'zod';
+import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { SessionStore } from '../services/session-store.ts';
+import type { Channel } from './channel.ts';
+
+const protocolEventBase = z.object({ type: z.string() }).passthrough();
+const userMessagePayload = z.object({
+  type: z.literal('user'),
+  message: z.object({ content: z.array(z.unknown()) }).passthrough(),
+});
+
+/** History-relevant socket event names — excludes streaming, control, and transient types. */
+const HISTORY_NAMES = new Set([
+  'message:assistant',
+  'message:user',
+  'message:result',
+  'session:init',
+]);
+
+export class SessionHistory {
+  constructor(
+    private rawEventStore: RawEventStore,
+    private sessionStore: SessionStore,
+    private adapter: ProviderAdapter,
+    private getChannel: (id: string) => Channel | undefined,
+  ) {}
+
+  async resolveSessionId(channelId: string): Promise<string> {
+    const channel = this.getChannel(channelId);
+    if (channel?.sessionId) return channel.sessionId;
+    const record = await this.sessionStore.getById(channelId);
+    return record?.sessionId ?? channelId;
+  }
+
+  async getSessionHistory(channelId: string): Promise<SocketEvent[]> {
+    const sessionId = await this.resolveSessionId(channelId);
+    const all = await this.convertRawToSocketEvents(sessionId);
+    return all.filter((e) => HISTORY_NAMES.has(e.name));
+  }
+
+  async getPendingReplayEvents(sessionId: string): Promise<{
+    events: SocketEvent[];
+    respondedRequestIds: Set<string>;
+  }> {
+    const rawEntries = await this.rawEventStore.getBySession(sessionId);
+    const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
+    const events = await this.convertRawToSocketEvents(sessionId);
+    return { events, respondedRequestIds };
+  }
+
+  private async convertRawToSocketEvents(sessionId: string): Promise<SocketEvent[]> {
+    const rawEntries = await this.rawEventStore.getBySession(sessionId);
+    const result: SocketEvent[] = [];
+
+    // Check if stdout contains any user message echoes
+    const hasStdoutUserEcho = rawEntries.some((e) => {
+      if (e.direction !== 'out') return false;
+      try {
+        const obj = JSON.parse(e.raw.trim());
+        return obj?.type === 'user';
+      } catch {
+        return false;
+      }
+    });
+
+    for (const entry of rawEntries) {
+      const trimmed = entry.raw.trim();
+      if (!trimmed) continue;
+
+      try {
+        const raw = JSON.parse(trimmed);
+        if (typeof raw !== 'object' || raw === null) continue;
+
+        if (entry.direction === 'out') {
+          const parsed = protocolEventBase.safeParse(raw);
+          if (parsed.success) {
+            const converted = this.adapter.transform(parsed.data).events;
+            result.push(...converted);
+          }
+        } else if (entry.direction === 'in') {
+          // Skip stdin user messages when stdout already echoes them (avoids duplicates)
+          if (hasStdoutUserEcho) continue;
+          const parsed = userMessagePayload.safeParse(raw);
+          if (parsed.success) {
+            result.push({
+              name: 'message:user',
+              payload: { content: parsed.data.message.content },
+            });
+          }
+        }
+      } catch {}
+    }
+
+    return result;
+  }
+}

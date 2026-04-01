@@ -9,13 +9,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:fork', async (payload, callback) => {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
-      const parentEvents = await ctx.channelManager.getSessionHistory(forkedFromSession);
+      const parentEvents = await ctx.sessionHistory.getSessionHistory(forkedFromSession);
       const hooks = ctx.buildChannelHooks(newSessionId);
       const { channel: forkChannel } = await ctx.channelManager.create(newSessionId, {
         hooks,
         launchOptions: { resumeSessionId: forkedFromSession },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
-        onBeforeSpawn: (ch) => ctx.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
       });
 
       if (forkChannel.sessionId) {
@@ -43,7 +43,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:teleport', async (payload, callback) => {
     try {
       const parsed = sessionTeleportSchema.parse(payload);
-      const events = await ctx.channelManager.getSessionHistory(parsed.remoteSessionId);
+      const events = await ctx.sessionHistory.getSessionHistory(parsed.remoteSessionId);
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
@@ -72,7 +72,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       await ctx.channelManager.create(parsed.newSessionId, {
         hooks,
         launchOptions: { resumeSessionId: parsed.remoteSessionId },
-        onBeforeSpawn: (ch) => ctx.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
       });
 
       ctx.io?.emit('session:created', { channelId: parsed.newSessionId });

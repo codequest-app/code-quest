@@ -29,7 +29,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const hooks = ctx.buildChannelHooks(newChannelId);
       const { channel: ch } = await ctx.channelManager.create(newChannelId, {
         hooks,
-        onBeforeSpawn: (c) => ctx.addSocketToChannel(c, socket),
+        onBeforeSpawn: (c) => ctx.channelManager.addSocketToChannel(c, socket),
       });
       ch.updateSessionState({ cwd: baseCwd });
 
@@ -38,7 +38,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
 
       if (prompt) {
-        ch.runner.sendMessage(prompt);
+        ch.sendMessage(prompt);
       }
 
       callback({ success: true, channelId: newChannelId });

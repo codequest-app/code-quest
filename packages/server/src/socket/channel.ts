@@ -218,6 +218,28 @@ export class Channel {
     return ++this._messageSeq;
   }
 
+  // ── Runner wrappers ──
+
+  sendMessage(text: string): void {
+    this.runner.sendMessage(text);
+  }
+
+  respondToRequest(requestId: string, response: Record<string, unknown>): void {
+    this.runner.respondToControlRequest(requestId, response);
+  }
+
+  abort(): void {
+    this.runner.abort();
+  }
+
+  write(data: string): void {
+    this.runner.write(data);
+  }
+
+  kill(): void {
+    this.runner.kill();
+  }
+
   sendNotification(payload: NotificationPayload): Promise<NotificationResponse> {
     const socket = this.sockets.size > 0 ? this.sockets.values().next().value : undefined;
     if (!socket) return Promise.resolve({});

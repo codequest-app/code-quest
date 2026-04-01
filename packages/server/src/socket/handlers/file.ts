@@ -103,19 +103,19 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 }
 
 export function onRunnerEvent(
-  ctx: HandlerContext,
+  _ctx: HandlerContext,
   channelId: string,
-  _ch: Channel,
+  ch: Channel,
   se: SocketEvent,
 ): boolean {
   if (se.name !== 'system:file_updated') return false;
   const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
-  ctx.emitToSession(channelId, 'file:updated', { channelId, filePath, oldContent, newContent });
+  ch.emit('file:updated', { channelId, filePath, oldContent, newContent });
   return true;
 }
 
 export function onServerAction(
-  ctx: HandlerContext,
+  _ctx: HandlerContext,
   channelId: string,
   ch: Channel,
   action: ServerAction,
@@ -125,7 +125,7 @@ export function onServerAction(
   void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
     ([oldContent, newContent]) => {
       ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-      ctx.emitToSession(channelId, 'control:diff_review', {
+      ch.emit('control:diff_review', {
         channelId,
         requestId: action.requestId,
         toolId: action.requestId,

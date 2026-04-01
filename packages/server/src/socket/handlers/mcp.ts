@@ -158,12 +158,12 @@ export function onRunnerEvent(
   const hasClient = ch.sockets.size > 0;
   const mcpId = mcpMsg?.id;
   if (!hasClient) {
-    ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'no client'));
+    ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));
     return true;
   }
   const mcpTimeout = setTimeout(() => {
     ch.removeControlRequest(requestId);
-    ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'timeout'));
+    ch.respondToRequest(requestId, jsonRpcError(mcpId, 'timeout'));
   }, MCP_MESSAGE_TIMEOUT);
   ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
   ch.mcpTimeouts.set(requestId, mcpTimeout);

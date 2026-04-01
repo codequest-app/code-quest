@@ -26,8 +26,8 @@ export function persistNewSession(
       id: opts.channelId,
       sessionId: opts.sessionId,
       provider: ctx.channelManager.provider,
-      command: ctx.runnerFactory.command,
-      args: JSON.stringify(ctx.runnerFactory.args),
+      command: ctx.channelManager.runnerCommand,
+      args: JSON.stringify(ctx.channelManager.runnerArgs),
       cwd: process.cwd(),
       mode: 'interactive',
       role: 'chat',
@@ -123,7 +123,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         hooks,
         launchOptions: launchOpts,
         initOptions: initInput,
-        onBeforeSpawn: (ch) => ctx.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
       });
 
       if (channel.sessionId) {
@@ -148,7 +148,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback?.({ channelId, slashCommands, models, account });
 
       if (parsed.initialPrompt) {
-        channel.runner.sendMessage(parsed.initialPrompt);
+        channel.sendMessage(parsed.initialPrompt);
       }
     } catch (err) {
       logger.error({ err }, 'Failed to create session');
@@ -184,17 +184,17 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         return;
       }
 
-      ctx.addSocketToChannel(channel, socket);
+      ctx.channelManager.addSocketToChannel(channel, socket);
 
       if (!channel.isWired) {
         const hooks = ctx.buildChannelHooks(channelId);
         channel.wireRunner(hooks);
       }
 
-      const replaySessionId = await ctx.channelManager.resolveSessionId(channelId);
+      const replaySessionId = await ctx.sessionHistory.resolveSessionId(channelId);
       await channel.replayPendingControlRequests(
         socket,
-        (sid) => ctx.channelManager.getPendingReplayEvents(sid),
+        (sid) => ctx.sessionHistory.getPendingReplayEvents(sid),
         replaySessionId,
       );
 
@@ -203,7 +203,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         socket.emit('app:models', { channelId: '', models: ctx.cachedModels });
       }
 
-      const events = await ctx.channelManager.getSessionHistory(channelId);
+      const events = await ctx.sessionHistory.getSessionHistory(channelId);
       const state = channel.isProcessing ? 'busy' : 'idle';
       callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
     } catch (err) {
@@ -216,7 +216,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const { channelId } = chatKillSchema.parse(payload);
       const ch = ctx.channelManager.get(channelId);
       if (ch) {
-        ch.runner.kill();
+        ch.kill();
         ctx.io?.emit('session:dead', { channelId });
       }
     } catch {
@@ -241,7 +241,7 @@ export function onRunnerEvent(
   se: SocketEvent,
 ): boolean {
   if (se.name !== 'session:init') return false;
-  ctx.broadcastSessionState(channelId, 'busy');
+  ctx.channelManager.broadcastSessionState(channelId, 'busy');
   return true;
 }
 
@@ -251,9 +251,9 @@ export function onExit(
   ch: Channel,
   _code: number | null,
 ): void {
-  ctx.broadcastSessionState(channelId, 'exited');
+  ctx.channelManager.broadcastSessionState(channelId, 'exited');
   ch.resetSessionState();
-  ctx.emitToSession(channelId, 'session:closed', {
+  ch.emit('session:closed', {
     channelId,
     ...(ch.lastError ? { error: ch.lastError } : {}),
   });

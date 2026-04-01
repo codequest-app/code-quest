@@ -25,11 +25,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
       const channel = ctx.channelManager.get(channelId);
-      const runner = channel?.runner;
-      if (!runner) return;
-      channel?.startProcessing();
-      runner.sendMessage(textMessage);
-      ctx.broadcastSessionState(channelId, 'busy');
+      if (!channel) return;
+      channel.startProcessing();
+      channel.sendMessage(textMessage);
+      ctx.channelManager.broadcastSessionState(channelId, 'busy');
 
       // Broadcast user message to other windows joined to this channel
       channel?.emitToOthers(socket, 'message:user', {
@@ -53,7 +52,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       if (!channel) return;
       if (interruptedChannels.has(channelId)) {
         // Second cancel → force abort
-        channel.runner.abort();
+        channel.abort();
       } else {
         // First cancel → graceful interrupt
         interruptedChannels.add(channelId);
@@ -92,8 +91,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // Common cleanup + respond + broadcast
       const respondAndBroadcast = (cliResponse: Record<string, unknown>) => {
         channel.removeControlRequest(requestId);
-        channel.runner.respondToControlRequest(requestId, cliResponse);
-        ctx.emitToSession(channelId, 'chat:cancel_request', {
+        channel.respondToRequest(requestId, cliResponse);
+        channel.emit('chat:cancel_request', {
           channelId,
           targetRequestId: requestId,
         });
@@ -198,12 +197,12 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       if (cancelMatch) {
         const [channelId, channel] = cancelMatch;
         channel.removeControlRequest(targetRequestId);
-        channel.runner.respondToControlRequest(targetRequestId, {
+        channel.respondToRequest(targetRequestId, {
           behavior: 'deny',
           message: 'User cancelled',
           interrupt: false,
         });
-        ctx.emitToSession(channelId, 'chat:cancel_request', {
+        channel.emit('chat:cancel_request', {
           channelId,
           targetRequestId,
         });
@@ -218,7 +217,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
       if (channel) {
-        channel.runner.respondToControlRequest(requestId, response);
+        channel.respondToRequest(requestId, response);
       }
     } catch {
       // ignore
@@ -235,7 +234,7 @@ export function onRunnerEvent(
   if (se.name !== 'message:result') return false;
 
   ch.endProcessing();
-  ctx.broadcastSessionState(channelId, 'idle');
+  ctx.channelManager.broadcastSessionState(channelId, 'idle');
 
   const pendingPrompt = ch.sessionState.pendingTitlePrompt;
   if (pendingPrompt) {
@@ -246,7 +245,7 @@ export function onRunnerEvent(
         ctx.sessionStore
           .rename(channelId, title)
           .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-        ctx.broadcastSessionState(channelId, 'idle', title);
+        ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
       })
       .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
   }

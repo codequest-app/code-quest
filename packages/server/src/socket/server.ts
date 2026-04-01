@@ -5,9 +5,8 @@ import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
-import type { RunnerFactory } from '../types.ts';
 import { TYPES } from '../types.ts';
-import type { Channel, WireRunnerHooks } from './channel.ts';
+import type { WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
 import { register as registerAuthHandlers } from './claude/auth.ts';
 import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
@@ -45,33 +44,22 @@ import {
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
 import { register as registerTerminalHandlers } from './handlers/terminal.ts';
 import { onRunnerEvent as usageOnRunnerEvent } from './handlers/usage.ts';
-import {
-  pickDefined,
-  type SessionBroadcastState,
-  type TypedServer,
-  type TypedSocket,
-} from './types.ts';
+import type { SessionHistory } from './session-history.ts';
+import type { TypedServer, TypedSocket } from './types.ts';
 
 @injectable()
 export class SocketServer implements HandlerContext {
-  // socket.id → set of channelIds this socket is joined to
-  socketChannelsMap = new Map<string, Set<string>>();
-  // Socket.IO server reference for broadcasting
   io?: TypedServer;
   settingsStore: SettingsStore;
-  // In-memory auth state
-  authState: AuthStatus = {
-    authenticated: false,
-  };
-  // Cached models from last initialize response (persists across sessions)
+  authState: AuthStatus = { authenticated: false };
   cachedModels: unknown[] | undefined;
 
   constructor(
-    @inject(TYPES.RunnerFactory) public runnerFactory: RunnerFactory,
     @inject(TYPES.RawEventStore) public rawEventStore: RawEventStore,
     @inject(TYPES.SessionStore) public sessionStore: SessionStore,
     @inject(TYPES.UsageTracker) public usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) public channelManager: ChannelManager,
+    @inject(TYPES.SessionHistory) public sessionHistory: SessionHistory,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
@@ -79,56 +67,8 @@ export class SocketServer implements HandlerContext {
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     this.io = io;
+    this.channelManager.register(io);
     io.on('connection', (socket) => this.handleConnection(socket));
-  }
-
-  broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
-    const cache = this.channelManager.get(channelId)?.sessionState ?? {};
-
-    this.io?.emit('session:states', {
-      sessions: [
-        {
-          channelId,
-          state,
-          ...pickDefined({
-            title,
-            modelSetting: cache.model,
-            permissionMode: cache.permissionMode,
-            effort: cache.effort,
-          }),
-        },
-      ],
-    });
-
-    const settings = pickDefined({
-      modelSetting: cache.model,
-      defaultCwd: cache.cwd,
-      initialPermissionMode: cache.permissionMode,
-      thinkingLevel: cache.thinkingLevel,
-      mcpServers: cache.mcpServers,
-      tools: cache.tools,
-      effort: cache.effort,
-    });
-    if (Object.keys(settings).length > 0) {
-      this.io?.emit('settings:update', { channelId, ...settings });
-    }
-  }
-
-  emitToSession(channelId: string, ...args: Parameters<TypedSocket['emit']>): void {
-    const channel = this.channelManager.get(channelId);
-    if (!channel) return;
-    channel.emit(args[0] as string, ...(args.slice(1) as unknown[]));
-  }
-
-  /** Add socket to channel and track in socketChannelsMap. */
-  addSocketToChannel(channel: Channel, socket: TypedSocket): void {
-    channel.addSocket(socket);
-    let channelIds = this.socketChannelsMap.get(socket.id);
-    if (!channelIds) {
-      channelIds = new Set();
-      this.socketChannelsMap.set(socket.id, channelIds);
-    }
-    channelIds.add(channel.id);
   }
 
   buildChannelHooks(channelId: string): WireRunnerHooks {

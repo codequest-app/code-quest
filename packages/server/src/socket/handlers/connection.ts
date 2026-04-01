@@ -55,20 +55,6 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   });
 
   socket.on('disconnect', () => {
-    const channelIds = ctx.socketChannelsMap.get(socket.id);
-    if (!channelIds) return;
-
-    for (const channelId of channelIds) {
-      const channel = ctx.channelManager.get(channelId);
-      if (!channel) continue;
-
-      channel.removeSocket(socket);
-
-      if (channel.sockets.size === 0) {
-        channel.unwireRunner();
-      }
-    }
-
-    ctx.socketChannelsMap.delete(socket.id);
+    ctx.channelManager.removeSocketFromAll(socket.id);
   });
 }

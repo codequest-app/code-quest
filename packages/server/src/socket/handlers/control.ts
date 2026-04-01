@@ -18,7 +18,7 @@ export function onRunnerEvent(
     case 'control:cancel': {
       const { requestId } = requestIdPayloadSchema.parse(se.payload);
       ch.removeControlRequest(requestId);
-      ctx.emitToSession(channelId, 'chat:cancel_request', {
+      ch.emit('chat:cancel_request', {
         channelId,
         targetRequestId: requestId,
       });
@@ -57,7 +57,7 @@ export function onServerAction(
     toolName: action.toolName,
     toolUseId: action.toolUseId,
   });
-  ctx.emitToSession(channelId, 'raw:event', {
+  ch.emit('raw:event', {
     channelId,
     rawType: `control_request/${action.subtype}`,
     data: {

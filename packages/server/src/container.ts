@@ -19,7 +19,9 @@ import type { SettingsStore } from './services/settings-store.ts';
 import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
+import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
+import { SessionHistory } from './socket/session-history.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
@@ -64,8 +66,14 @@ export function createContainer(options: ContainerOptions): Container {
     sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  const channelManager = new ChannelManager(runnerFactory, rawEventStore, sessionStore, adapter);
+  const rawRecorder = new RawRecorder(rawEventStore);
+  const channelManager = new ChannelManager(runnerFactory, adapter, rawRecorder);
+  const sessionHistory = new SessionHistory(rawEventStore, sessionStore, adapter, (id) =>
+    channelManager.get(id),
+  );
+  channelManager.sessionHistory = sessionHistory;
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
+  container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
