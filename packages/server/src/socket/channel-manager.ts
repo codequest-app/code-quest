@@ -34,6 +34,14 @@ const HISTORY_NAMES = new Set([
   'session:init',
 ]);
 
+export interface CreateChannelOptions {
+  hooks?: WireRunnerHooks;
+  launchOptions?: LaunchOptions;
+  initOptions?: Record<string, unknown>;
+  /** Called after wiring but before spawn — use to add sockets so they receive init events. */
+  onBeforeSpawn?: (channel: Channel) => void;
+}
+
 export class ChannelManager {
   private channels = new Map<string, Channel>();
 
@@ -73,13 +81,7 @@ export class ChannelManager {
 
   async create(
     channelId: string,
-    opts?: {
-      hooks?: WireRunnerHooks;
-      launchOptions?: LaunchOptions;
-      initOptions?: Record<string, unknown>;
-      /** Called after wiring but before spawn — use to add sockets so they receive init events. */
-      onBeforeSpawn?: (channel: Channel) => void;
-    },
+    opts?: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
     const runner = this.runnerFactory.create(opts?.launchOptions);
     const channel = new Channel(runner, channelId, this.provider);

@@ -42,22 +42,13 @@ import { register as registerSessionHandlers } from './handlers/session/index.ts
 import { register as registerSettingsHandlers } from './handlers/settings.ts';
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
 import { register as registerTerminalHandlers } from './handlers/terminal.ts';
-import type { TypedServer, TypedSocket } from './types.ts';
-
-function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== undefined) result[k] = v;
-  }
-  return result;
-}
-
-/** Timeout for MCP JSON-RPC message relay (ms). */
-const MCP_MESSAGE_TIMEOUT = 10_000;
-
-function jsonRpcError(id: unknown, message: string): Record<string, unknown> {
-  return { jsonrpc: '2.0', error: { code: -32603, message }, id: id ?? null };
-}
+import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from './schemas.ts';
+import {
+  pickDefined,
+  type SessionBroadcastState,
+  type TypedServer,
+  type TypedSocket,
+} from './types.ts';
 
 @injectable()
 export class SocketServer implements HandlerContext {
@@ -112,11 +103,7 @@ export class SocketServer implements HandlerContext {
     return runner;
   }
 
-  broadcastSessionState(
-    channelId: string,
-    state: 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected',
-    title?: string,
-  ): void {
+  broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
     const cache = this.channelManager.get(channelId)?.sessionState ?? {};
 
     this.io?.emit('session:states', {

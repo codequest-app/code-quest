@@ -10,95 +10,78 @@ import type {
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
-import type { TypedSocket } from './types.ts';
+import {
+  errorPayload,
+  type RequestMeta,
+  replayRequestPayload,
+  type SessionState,
+  sessionInitConfigSchema,
+  sessionInitPayload,
+  sessionStatusPayload,
+} from './schemas.ts';
+import {
+  type PendingRequest,
+  pickDefined,
+  type RunnerListeners,
+  type TypedSocket,
+  type WireRunnerHooks,
+} from './types.ts';
+
+export type { RequestMeta, SessionState } from './schemas.ts';
+export type { PendingRequest, WireRunnerHooks } from './types.ts';
 
 /** Default timeout for control requests (ms). */
 const DEFAULT_CONTROL_TIMEOUT = 30_000;
 
-/**
- * Maps adapter SocketEvent names to our socket protocol names.
- * Adapter names that differ from our protocol are remapped here.
- */
-const errorPayload = z.object({ message: z.string() }).passthrough();
-const sessionInitPayload = z
-  .object({
-    sessionId: z.string().optional(),
-    config: z.record(z.string(), z.unknown()).nullable().optional(),
-    model: z.string().optional(),
-    permissionMode: z.string().optional(),
-    tools: z.array(z.string()).optional(),
-    fastModeState: z.unknown().optional(),
-    mcpServers: z
-      .array(z.object({ name: z.string(), status: z.string() }).passthrough())
-      .optional(),
-    slashCommands: z.array(z.string()).optional(),
-  })
-  .passthrough();
-const sessionStatusPayload = z
-  .object({
-    permissionMode: z.string().optional(),
-  })
-  .passthrough();
-const replayRequestPayload = z.object({ requestId: z.string() }).passthrough();
-
-const sessionStateSchema = z.object({
-  model: z.string().optional(),
-  permissionMode: z.string().optional(),
-  cwd: z.string().optional(),
-  effort: z.string().optional(),
-  thinkingLevel: z.string().optional(),
-  tools: z.array(z.string()).optional(),
-  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
-  titleGenerated: z.boolean().optional(),
-  pendingTitlePrompt: z.string().optional(),
-  title: z.string().optional(),
-});
-export type SessionState = z.infer<typeof sessionStateSchema>;
-
-/** Extract config fields from session:init into SessionState. */
-const sessionInitConfigSchema = sessionStateSchema.pick({
-  model: true,
-  permissionMode: true,
-  cwd: true,
-  effort: true,
-});
-
-export interface PendingRequest {
-  resolve: (value: ControlResponse) => void;
-  reject: (reason: Error) => void;
-  timer: ReturnType<typeof setTimeout>;
-}
-
-const requestMetaSchema = z.object({
-  subtype: z.string(),
-  toolName: z.string().optional(),
-  toolUseId: z.string().optional(),
-});
-export type RequestMeta = z.infer<typeof requestMetaSchema>;
-
-export interface WireRunnerHooks {
-  onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
-  onServerAction?: (channel: Channel, action: ServerAction) => void;
-  onExit?: (channel: Channel, code: number | null) => void;
-}
-
 export class Channel {
+  // ── Identity ──
   readonly id: string;
   readonly runner: ProcessRunner;
   readonly provider: string;
-  readonly sockets = new Set<TypedSocket>();
-  private readonly _controlRequestMeta = new Map<string, RequestMeta>();
-  readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
-  readonly pendingRequests = new Map<string, PendingRequest>();
-  readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
-  private _messageSeq = 0;
+  readonly controlTimeout: number;
+
+  // ── State ──
   private _sessionState: SessionState = {};
   private _metaCache: ChannelMetaCache = {};
-  planComments: PlanCommentData[] = [];
-  terminalLines: string[] = [];
   sessionId: string | null = null;
   private _resolveSessionId: (() => void) | null = null;
   readonly sessionIdReady: Promise<void>;
+  lastError: string | undefined;
+  exited = false;
+
+  // ── Processing ──
+  private _isProcessing = false;
+  private _messageSeq = 0;
+
+  // ── Sockets ──
+  readonly sockets = new Set<TypedSocket>();
+
+  // ── Control requests ──
+  private readonly _controlRequestMeta = new Map<string, RequestMeta>();
+  readonly pendingRequests = new Map<string, PendingRequest>();
+  readonly notificationRequests = new Map<string, (response: NotificationResponse) => void>();
+  readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+  // ── Meta ──
+  planComments: PlanCommentData[] = [];
+  terminalLines: string[] = [];
+
+  constructor(
+    runner: ProcessRunner,
+    id: string,
+    provider: string,
+    controlTimeout = DEFAULT_CONTROL_TIMEOUT,
+  ) {
+    this.id = id;
+    this.runner = runner;
+    this.provider = provider;
+    this.controlTimeout = controlTimeout;
+    this.sessionIdReady = new Promise((resolve) => {
+      this._resolveSessionId = resolve;
+    });
+  }
+
+  // ── State accessors ──
 
   get sessionState(): SessionState {
     return this._sessionState;
@@ -119,8 +102,8 @@ export class Channel {
   updateMetaCache(partial: Partial<ChannelMetaCache>): void {
     this._metaCache = { ...this._metaCache, ...partial };
   }
-  lastError: string | undefined;
-  private _isProcessing = false;
+
+  // ── Processing ──
 
   get isProcessing(): boolean {
     return this._isProcessing;
@@ -132,23 +115,6 @@ export class Channel {
 
   endProcessing(): void {
     this._isProcessing = false;
-  }
-  exited = false;
-  readonly controlTimeout: number;
-
-  constructor(
-    runner: ProcessRunner,
-    id: string,
-    provider: string,
-    controlTimeout = DEFAULT_CONTROL_TIMEOUT,
-  ) {
-    this.id = id;
-    this.runner = runner;
-    this.provider = provider;
-    this.controlTimeout = controlTimeout;
-    this.sessionIdReady = new Promise((resolve) => {
-      this._resolveSessionId = resolve;
-    });
   }
 
   get isWired(): boolean {
@@ -163,7 +129,7 @@ export class Channel {
     this.sockets.delete(socket);
   }
 
-  // ── Control request tracking (unified from controlRequests Set + pendingRequestMeta Map) ──
+  // ── Control request tracking ──
 
   trackControlRequest(requestId: string, meta: RequestMeta): void {
     this._controlRequestMeta.set(requestId, meta);
@@ -202,12 +168,14 @@ export class Channel {
     return {
       channelId: this.id,
       sessionId: this.sessionId ?? '',
-      ...(meta.model ? { model: meta.model } : {}),
-      ...(meta.tools ? { tools: meta.tools } : {}),
-      ...(meta.permissionMode ? { permissionMode: meta.permissionMode } : {}),
-      ...(meta.fastModeState !== undefined ? { fastModeState: meta.fastModeState } : {}),
-      ...(meta.mcpServers ? { mcpServers: meta.mcpServers } : {}),
-      ...(meta.slashCommands ? { slashCommands: meta.slashCommands } : {}),
+      ...pickDefined({
+        model: meta.model,
+        tools: meta.tools,
+        permissionMode: meta.permissionMode,
+        fastModeState: meta.fastModeState,
+        mcpServers: meta.mcpServers,
+        slashCommands: meta.slashCommands,
+      }),
       config: { ...this.sessionState },
     };
   }
@@ -292,12 +260,7 @@ export class Channel {
     });
   }
 
-  private _runnerListeners: {
-    socketEvent: (event: SocketEvent) => void;
-    controlResponse: (event: ControlResponseEvent) => void;
-    serverAction: (action: ServerAction) => void;
-    exit: (code: number | null) => void;
-  } | null = null;
+  private _runnerListeners: RunnerListeners | null = null;
 
   wireRunner(hooks: WireRunnerHooks = {}): void {
     if (this._runnerListeners) return; // already wired
@@ -318,14 +281,16 @@ export class Channel {
           this._resolveSessionId = null;
         }
         this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
-        this.updateMetaCache({
-          ...(init.model ? { model: init.model } : {}),
-          ...(init.permissionMode ? { permissionMode: init.permissionMode } : {}),
-          ...(init.tools ? { tools: init.tools } : {}),
-          ...(init.fastModeState !== undefined ? { fastModeState: init.fastModeState } : {}),
-          ...(init.mcpServers ? { mcpServers: init.mcpServers } : {}),
-          ...(init.slashCommands ? { slashCommands: init.slashCommands } : {}),
-        });
+        this.updateMetaCache(
+          pickDefined({
+            model: init.model,
+            tools: init.tools,
+            permissionMode: init.permissionMode,
+            fastModeState: init.fastModeState,
+            mcpServers: init.mcpServers,
+            slashCommands: init.slashCommands,
+          }),
+        );
       } else if (se.name === 'session:status') {
         const status = sessionStatusPayload.parse(se.payload);
         if (status.permissionMode !== undefined) {

@@ -12,7 +12,7 @@ import type { UsageTracker } from '../services/usage-tracker.ts';
 import type { RunnerFactory } from '../types.ts';
 import type { Channel, WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
-import type { TypedServer, TypedSocket } from './types.ts';
+import type { SessionBroadcastState, TypedServer, TypedSocket } from './types.ts';
 
 /**
  * Shared context that all handler modules receive.
@@ -40,11 +40,7 @@ export interface HandlerContext {
   // ── Methods ──
   requireRunner(socket: TypedSocket, channelId: string): ProcessRunner | null;
 
-  broadcastSessionState(
-    channelId: string,
-    state: 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected',
-    title?: string,
-  ): void;
+  broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void;
 
   emitToSession(channelId: string, ...args: Parameters<TypedSocket['emit']>): void;
 
