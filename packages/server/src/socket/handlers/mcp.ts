@@ -11,13 +11,14 @@ import {
   type SocketEvent,
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
+import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { ensureChannel, errMsg } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('mcp:reconnect', async (payload, callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  async function handleReconnect(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpReconnectSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -29,9 +30,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to reconnect MCP server') });
     }
-  });
+  }
 
-  socket.on('mcp:toggle', async (payload, callback) => {
+  async function handleToggle(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, enabled } = mcpSetEnabledSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -44,9 +45,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to set MCP server enabled') });
     }
-  });
+  }
 
-  socket.on('mcp:servers', async (payload, callback) => {
+  async function handleServers(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = mcpGetServersSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -56,9 +57,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to get MCP servers') });
     }
-  });
+  }
 
-  socket.on('mcp:set_servers', async (payload, callback) => {
+  async function handleSetServers(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, servers } = mcpSetServersSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -68,9 +69,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to set MCP servers') });
     }
-  });
+  }
 
-  socket.on('mcp:message', async (payload, callback) => {
+  async function handleMessage(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, message } = mcpMessageSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -83,9 +84,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to send MCP message') });
     }
-  });
+  }
 
-  socket.on('mcp:authenticate', async (payload, callback) => {
+  async function handleAuthenticate(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -101,9 +102,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
-  });
+  }
 
-  socket.on('mcp:clear_auth', async (payload, callback) => {
+  async function handleClearAuth(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -119,9 +120,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
-  });
+  }
 
-  socket.on('mcp:oauth_callback', async (payload, callback) => {
+  async function handleOAuthCallback(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
       const channel = ensureChannel(ctx, channelId, (e) => callback({ success: false, ...e }));
@@ -134,38 +135,47 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
-  });
+  }
 
-  // Debugger: extension also returns empty response — no CLI action needed
-  socket.on('mcp:ask_debugger', (payload, callback) => {
+  function handleAskDebugger(payload: unknown, callback: Function): void {
     try {
       debuggerHelpSchema.parse(payload);
       callback({ success: true, response: { type: 'ask_debugger_help_response' } });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
-  });
-}
-
-export function onRunnerEvent(
-  _ctx: HandlerContext,
-  _channelId: string,
-  ch: Channel,
-  se: SocketEvent,
-): boolean {
-  if (se.name !== 'control:mcp') return false;
-  const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
-  const hasClient = ch.sockets.size > 0;
-  const mcpId = mcpMsg?.id;
-  if (!hasClient) {
-    ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));
-    return true;
   }
-  const mcpTimeout = setTimeout(() => {
-    ch.removeControlRequest(requestId);
-    ch.respondToRequest(requestId, jsonRpcError(mcpId, 'timeout'));
-  }, MCP_MESSAGE_TIMEOUT);
-  ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
-  ch.mcpTimeouts.set(requestId, mcpTimeout);
-  return true;
+
+  function onMcpControlEvent(_channelId: string, ch: Channel, se: SocketEvent): void {
+    const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
+    const hasClient = ch.sockets.size > 0;
+    const mcpId = mcpMsg?.id;
+    if (!hasClient) {
+      ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));
+      return;
+    }
+    const mcpTimeout = setTimeout(() => {
+      ch.removeControlRequest(requestId);
+      ch.respondToRequest(requestId, jsonRpcError(mcpId, 'timeout'));
+    }, MCP_MESSAGE_TIMEOUT);
+    ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
+    ch.mcpTimeouts.set(requestId, mcpTimeout);
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('mcp:reconnect', handleReconnect);
+      socket.on('mcp:toggle', handleToggle);
+      socket.on('mcp:servers', handleServers);
+      socket.on('mcp:set_servers', handleSetServers);
+      socket.on('mcp:message', handleMessage);
+      socket.on('mcp:authenticate', handleAuthenticate);
+      socket.on('mcp:clear_auth', handleClearAuth);
+      socket.on('mcp:oauth_callback', handleOAuthCallback);
+      socket.on('mcp:ask_debugger', handleAskDebugger);
+    },
+    subscribe(router: ChannelEventRouter) {
+      router.onEvent('control:mcp', onMcpControlEvent);
+    },
+  };
 }

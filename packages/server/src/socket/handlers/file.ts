@@ -4,19 +4,20 @@ import { join, normalize, resolve } from 'node:path';
 import { fileListSchema, fileUpdatedPayloadSchema, type SocketEvent } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
+import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from './rg.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('file:read', ({ channelId, filePath }, callback) => {
-    const channel = ctx.channelManager.get(channelId);
+export function create(ctx: HandlerContext): SocketHandler {
+  function handleRead(payload: { channelId: string; filePath: string }, callback: Function): void {
+    const channel = ctx.channelManager.get(payload.channelId);
     if (!channel) {
       callback({ error: 'Session not found' });
       return;
     }
     const cwd = channel.sessionState.cwd ?? process.cwd();
-    const absolute = resolve(cwd, normalize(filePath));
+    const absolute = resolve(cwd, normalize(payload.filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback({ error: 'Path traversal not allowed' });
       return;
@@ -25,11 +26,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const content = readFileSync(absolute, 'utf-8');
       callback({ content });
     } catch {
-      callback({ error: `File not found: ${filePath}` });
+      callback({ error: `File not found: ${payload.filePath}` });
     }
-  });
+  }
 
-  socket.on('file:list', (payload, callback) => {
+  function handleList(payload: unknown, callback: Function): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
       const cwd = process.cwd();
@@ -99,41 +100,40 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ files: [] });
     }
-  });
-}
+  }
 
-export function onRunnerEvent(
-  _ctx: HandlerContext,
-  channelId: string,
-  ch: Channel,
-  se: SocketEvent,
-): boolean {
-  if (se.name !== 'system:file_updated') return false;
-  const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
-  ch.emit('file:updated', { channelId, filePath, oldContent, newContent });
-  return true;
-}
+  function onFileUpdated(channelId: string, ch: Channel, se: SocketEvent): void {
+    const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
+    ch.emit('file:updated', { channelId, filePath, oldContent, newContent });
+  }
 
-export function onServerAction(
-  _ctx: HandlerContext,
-  channelId: string,
-  ch: Channel,
-  action: ServerAction,
-): boolean {
-  if (action.action !== 'read_diff') return false;
-  const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
-  void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
-    ([oldContent, newContent]) => {
-      ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-      ch.emit('control:diff_review', {
-        channelId,
-        requestId: action.requestId,
-        toolId: action.requestId,
-        filePath: action.originalPath || action.newPath,
-        oldContent,
-        newContent,
-      });
+  function onReadDiff(channelId: string, ch: Channel, action: ServerAction): boolean {
+    if (action.action !== 'read_diff') return false;
+    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
+    void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
+      ([oldContent, newContent]) => {
+        ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
+        ch.emit('control:diff_review', {
+          channelId,
+          requestId: action.requestId,
+          toolId: action.requestId,
+          filePath: action.originalPath || action.newPath,
+          oldContent,
+          newContent,
+        });
+      },
+    );
+    return true;
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('file:read', (p, cb) => handleRead(p, cb));
+      socket.on('file:list', (p, cb) => handleList(p, cb));
     },
-  );
-  return true;
+    subscribe(router: ChannelEventRouter) {
+      router.onEvent('system:file_updated', onFileUpdated);
+      router.onAction(onReadDiff);
+    },
+  };
 }

@@ -1,11 +1,11 @@
 import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { claudeState } from './state.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('mcp:ensure_chrome', async (payload, callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  async function handleEnsureChrome(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -35,9 +35,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
       callback({ success: false, error: errMsg(err, 'Failed to enable Chrome MCP') });
     }
-  });
+  }
 
-  socket.on('mcp:disable_chrome', async (payload, callback) => {
+  async function handleDisableChrome(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -46,9 +46,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         return;
       }
       const wasEnabled = claudeState.chromeMcpState.status === 'connected';
-
       await channel.sendControlRequest('mcp_set_servers', {});
-
       claudeState.chromeMcpState = { status: 'disconnected' };
       ctx.io?.emit('settings:update', {
         channelId: '',
@@ -58,9 +56,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to disable Chrome MCP') });
     }
-  });
+  }
 
-  socket.on('mcp:enable_jupyter', async (payload, callback) => {
+  async function handleEnableJupyter(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -68,23 +66,18 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: 'No active session' });
         return;
       }
-
       await channel.sendControlRequest('mcp_set_servers', {
         'claude-jupyter': { command: 'claude', args: ['mcp', 'serve', 'jupyter'] },
       });
-
       ctx.io?.emit('settings:update', { channelId: '', jupyterMcpState: { status: 'active' } });
       callback({ success: true, response: { type: 'enable_jupyter_mcp_response' } });
     } catch (err) {
-      ctx.io?.emit('settings:update', {
-        channelId: '',
-        jupyterMcpState: { status: 'inactive' },
-      });
+      ctx.io?.emit('settings:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
       callback({ success: false, error: errMsg(err, 'Failed to enable Jupyter MCP') });
     }
-  });
+  }
 
-  socket.on('mcp:disable_jupyter', async (payload, callback) => {
+  async function handleDisableJupyter(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
@@ -92,13 +85,20 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: 'No active session' });
         return;
       }
-
       await channel.sendControlRequest('mcp_set_servers', {});
-
       ctx.io?.emit('settings:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
       callback({ success: true, response: { type: 'disable_jupyter_mcp_response' } });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to disable Jupyter MCP') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('mcp:ensure_chrome', handleEnsureChrome);
+      socket.on('mcp:disable_chrome', handleDisableChrome);
+      socket.on('mcp:enable_jupyter', handleEnableJupyter);
+      socket.on('mcp:disable_jupyter', handleDisableJupyter);
+    },
+  };
 }

@@ -5,11 +5,11 @@ import {
   planRemoveCommentSchema,
 } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('plan:comment', (payload, callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  function addComment(socket: TypedSocket, payload: unknown, callback: Function): void {
     try {
       const { channelId, comment } = planCommentSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -21,9 +21,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to add comment') });
     }
-  });
+  }
 
-  socket.on('plan:comments', (payload, callback) => {
+  function getComments(payload: unknown, callback: Function): void {
     try {
       const { channelId } = planGetCommentsSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -31,9 +31,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ comments: [] });
     }
-  });
+  }
 
-  socket.on('plan:remove_comment', (payload, callback) => {
+  function removeComment(socket: TypedSocket, payload: unknown, callback: Function): void {
     try {
       const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -53,9 +53,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to remove comment') });
     }
-  });
+  }
 
-  socket.on('plan:close_preview', (payload, callback) => {
+  function closePreview(payload: unknown, callback: Function): void {
     try {
       const { channelId } = planClosePreviewSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -64,5 +64,14 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ success: true });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('plan:comment', (p, cb) => addComment(socket, p, cb));
+      socket.on('plan:comments', (p, cb) => getComments(p, cb));
+      socket.on('plan:remove_comment', (p, cb) => removeComment(socket, p, cb));
+      socket.on('plan:close_preview', (p, cb) => closePreview(p, cb));
+    },
+  };
 }

@@ -7,31 +7,31 @@ import {
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { execGit } from './exec-git.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('git:status', async (callback) => {
-    try {
-      const [branchOut, statusOut] = await Promise.all([
-        execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
-        execGit(['status', '--porcelain']),
-      ]);
-      const branch = branchOut.trim();
-      const lines = statusOut.trim().split('\n').filter(Boolean);
-      const changedFiles = lines.map((line) => ({
-        status: line.substring(0, 2).trim(),
-        file: line.substring(3),
-      }));
+export function create(ctx: HandlerContext): SocketHandler {
+  function handleStatus(callback: Function): void {
+    Promise.all([
+      execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
+      execGit(['status', '--porcelain']),
+    ])
+      .then(([branchOut, statusOut]) => {
+        const branch = branchOut.trim();
+        const lines = statusOut.trim().split('\n').filter(Boolean);
+        const changedFiles = lines.map((line) => ({
+          status: line.substring(0, 2).trim(),
+          file: line.substring(3),
+        }));
+        callback({ branch, isClean: changedFiles.length === 0, changedFiles });
+      })
+      .catch(() => {
+        callback({ branch: 'unknown', isClean: true, changedFiles: [] });
+      });
+  }
 
-      callback({ branch, isClean: changedFiles.length === 0, changedFiles });
-    } catch {
-      callback({ branch: 'unknown', isClean: true, changedFiles: [] });
-    }
-  });
-
-  socket.on('git:checkout', async (payload, callback) => {
+  async function handleCheckout(payload: unknown, callback: Function): Promise<void> {
     try {
       const { branch } = gitCheckoutSchema.parse(payload);
       try {
@@ -46,14 +46,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
       callback({ success: true });
     } catch (err) {
-      callback({
-        success: false,
-        error: errMsg(err, 'Failed to checkout'),
-      });
+      callback({ success: false, error: errMsg(err, 'Failed to checkout') });
     }
-  });
+  }
 
-  socket.on('git:log', async (payload, callback) => {
+  async function handleLog(payload: unknown, callback: Function): Promise<void> {
     try {
       const { limit } = gitLogSchema.parse(payload);
       const n = limit ?? 20;
@@ -70,18 +67,18 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ entries: [] });
     }
-  });
+  }
 
-  socket.on('git:diff', async (callback) => {
+  async function handleDiff(callback: Function): Promise<void> {
     try {
       const diff = await execGit(['diff']);
       callback({ diff });
     } catch {
       callback({ diff: '' });
     }
-  });
+  }
 
-  socket.on('git:update_skipped_branch', async (payload, callback) => {
+  async function handleUpdateSkippedBranch(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
       const entry: RawEntry = {
@@ -89,11 +86,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         sessionId: await ctx.sessionHistory.resolveSessionId(channelId),
         promptId: '',
         direction: 'out',
-        raw: JSON.stringify({
-          type: 'teleport-skipped-branch',
-          branch,
-          failed,
-        }),
+        raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,
       };
       await ctx.rawEventStore.append(entry);
@@ -101,9 +94,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to update skipped branch') });
     }
-  });
+  }
 
-  socket.on('git:exec', async (payload, callback) => {
+  function handleExec(payload: unknown, callback: Function): void {
     try {
       const { command, args } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
@@ -111,13 +104,20 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         timeout: 30_000,
         encoding: 'utf-8',
       });
-      callback({
-        exitCode: status ?? -1,
-        stdout: stdout ?? '',
-        stderr: stderr ?? '',
-      });
+      callback({ exitCode: status ?? -1, stdout: stdout ?? '', stderr: stderr ?? '' });
     } catch (err) {
       callback({ exitCode: -1, stdout: '', stderr: errMsg(err, 'Failed to execute command') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('git:status', handleStatus);
+      socket.on('git:checkout', handleCheckout);
+      socket.on('git:log', handleLog);
+      socket.on('git:diff', handleDiff);
+      socket.on('git:update_skipped_branch', handleUpdateSkippedBranch);
+      socket.on('git:exec', handleExec);
+    },
+  };
 }

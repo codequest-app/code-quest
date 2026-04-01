@@ -10,7 +10,7 @@ import {
   removeMarketplaceSchema,
 } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 import { claudeState } from './state.ts';
@@ -40,7 +40,15 @@ function buildMarketplaceSource(k: {
   }
 }
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
+export function create(ctx: HandlerContext): SocketHandler {
+  return {
+    register(socket: TypedSocket) {
+      registerEvents(socket, ctx);
+    },
+  };
+}
+
+function registerEvents(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('plugin:list', async (payload, callback) => {
     const cwd = process.cwd();
     const includeAvailable = payload?.includeAvailable ?? false;

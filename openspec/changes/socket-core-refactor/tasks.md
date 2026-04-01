@@ -57,20 +57,20 @@
 
 每個 handler：`export function register(socket, ctx)` → `export function create(ctx): SocketHandler`，onRunnerEvent/onServerAction/onExit 移到 subscribe()，anonymous closure → named function。
 
-- [ ] 8.1 `handlers/speech.ts`（最小，驗證 factory pattern）
-- [ ] 8.2 `handlers/usage.ts`（只有 subscribe，無 register）
-- [ ] 8.3 `handlers/plan.ts`
-- [ ] 8.4 `handlers/git.ts`
-- [ ] 8.5 `handlers/terminal.ts`
-- [ ] 8.6 `handlers/file.ts`（register + subscribe onEvent + onAction）
-- [ ] 8.7 `handlers/mcp.ts`（register + subscribe onEvent）
-- [ ] 8.8 `handlers/settings.ts`（register + subscribe onAction）
-- [ ] 8.9 `handlers/message.ts`（register + subscribe onEvent）
-- [ ] 8.10 `handlers/control.ts` → `handlers/permission.ts`（改名，只有 subscribe）
-- [ ] 8.11 `handlers/connection.ts` → `handlers/app.ts`（改名）
-- [ ] 8.12 `handlers/session/`（lifecycle + crud + fork 組合成一個 SocketHandler）
-- [ ] 8.13 `claude/auth.ts`、`claude/mcp-servers.ts`、`claude/plugin.ts`（factory，留在 claude/）
-- [ ] 8.14 typecheck + test 全過
+- [x] 8.1 `handlers/speech.ts`
+- [x] 8.2 `handlers/usage.ts`
+- [x] 8.3 `handlers/plan.ts`
+- [x] 8.4 `handlers/git.ts`
+- [x] 8.5 `handlers/terminal.ts`
+- [x] 8.6 `handlers/file.ts`
+- [x] 8.7 `handlers/mcp.ts`
+- [x] 8.8 `handlers/settings.ts`
+- [x] 8.9 `handlers/message.ts`
+- [x] 8.10 `handlers/control.ts` → `handlers/permission.ts`
+- [x] 8.11 `handlers/connection.ts` → `handlers/app.ts`
+- [x] 8.12 `handlers/session/`（factory 組合 lifecycle + crud + fork）
+- [x] 8.13 `claude/auth.ts`、`claude/mcp-servers.ts`、`claude/plugin.ts`
+- [x] 8.14 typecheck + test 全過（397/397, ~6.2s）
 
 ## 9. 核心層命名與職責修正
 

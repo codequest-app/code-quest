@@ -1,21 +1,22 @@
 import { controlAuthenticateResponseSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('auth:status', (callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  function handleStatus(callback: Function): void {
     callback(ctx.authState);
-  });
+  }
 
-  socket.on('auth:login', async (payload, callback) => {
+  async function handleLogin(
+    socket: TypedSocket,
+    payload: { method?: string },
+    callback: Function,
+  ): Promise<void> {
     try {
       const channel = ctx.channelManager.getFirstAlive();
       if (!channel) {
-        callback?.({
-          success: false,
-          error: 'No active session. Please open a tab first.',
-        });
+        callback?.({ success: false, error: 'No active session. Please open a tab first.' });
         return;
       }
       const controlResp = await channel.sendControlRequest('claude_authenticate', {
@@ -33,9 +34,12 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Login failed') });
     }
-  });
+  }
 
-  socket.on('auth:oauth_code', async (payload, callback) => {
+  async function handleOAuthCode(
+    payload: { code: string; state?: string },
+    callback: Function,
+  ): Promise<void> {
     try {
       const channel = ctx.channelManager.getFirstAlive();
       if (!channel) {
@@ -56,5 +60,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'OAuth failed') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('auth:status', handleStatus);
+      socket.on('auth:login', (p, cb) => handleLogin(socket, p, cb));
+      socket.on('auth:oauth_code', handleOAuthCode);
+    },
+  };
 }

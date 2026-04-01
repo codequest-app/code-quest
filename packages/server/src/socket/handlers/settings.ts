@@ -11,75 +11,75 @@ import {
 } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
+import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../types.ts';
 import { DEFAULT_THINKING_TOKENS } from './session/lifecycle.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on(
-    'settings:set_model',
-    async (payload, callback?: (res: { success: boolean; error?: string }) => void) => {
-      try {
-        const { channelId, model } = chatSetModelSchema.parse(payload);
-        const channel = ctx.channelManager.get(channelId);
-        if (!channel) {
-          callback?.({ success: false, error: 'Session not found' });
-          return;
-        }
-        await channel.sendControlRequest('set_model', { model });
-        await ctx.settingsStore.set(channel.provider, 'model', model);
-        callback?.({ success: true });
-      } catch (err) {
-        const message = errMsg(err, 'Failed to set model');
-        callback?.({ success: false, error: message });
+export function create(ctx: HandlerContext): SocketHandler {
+  async function handleSetModel(
+    payload: unknown,
+    callback?: (res: { success: boolean; error?: string }) => void,
+  ): Promise<void> {
+    try {
+      const { channelId, model } = chatSetModelSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (!channel) {
+        callback?.({ success: false, error: 'Session not found' });
+        return;
       }
-    },
-  );
+      await channel.sendControlRequest('set_model', { model });
+      await ctx.settingsStore.set(channel.provider, 'model', model);
+      callback?.({ success: true });
+    } catch (err) {
+      callback?.({ success: false, error: errMsg(err, 'Failed to set model') });
+    }
+  }
 
-  socket.on(
-    'settings:set_permission_mode',
-    async (payload, callback?: (res: { success: boolean; error?: string }) => void) => {
-      try {
-        const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
-        const channel = ctx.channelManager.get(channelId);
-        if (!channel) {
-          callback?.({ success: false, error: 'Session not found' });
-          return;
-        }
-        await channel.sendControlRequest('set_permission_mode', { mode });
-        await ctx.settingsStore.set(channel.provider, 'permissionMode', mode);
-        ctx.io?.emit('settings:update', { channelId, initialPermissionMode: mode });
-        callback?.({ success: true });
-      } catch (err) {
-        callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
+  async function handleSetPermissionMode(
+    payload: unknown,
+    callback?: (res: { success: boolean; error?: string }) => void,
+  ): Promise<void> {
+    try {
+      const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (!channel) {
+        callback?.({ success: false, error: 'Session not found' });
+        return;
       }
-    },
-  );
+      await channel.sendControlRequest('set_permission_mode', { mode });
+      await ctx.settingsStore.set(channel.provider, 'permissionMode', mode);
+      ctx.io?.emit('settings:update', { channelId, initialPermissionMode: mode });
+      callback?.({ success: true });
+    } catch (err) {
+      callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
+    }
+  }
 
-  socket.on(
-    'settings:set_thinking_level',
-    async (payload, callback?: (res: { success: boolean; error?: string }) => void) => {
-      try {
-        const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
-        const channel = ctx.channelManager.get(channelId);
-        if (!channel) {
-          callback?.({ success: false, error: 'Session not found' });
-          return;
-        }
-        await channel.sendControlRequest('set_max_thinking_tokens', {
-          tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
-        });
-        await ctx.settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
-        ctx.io?.emit('settings:update', { channelId, thinkingLevel });
-        callback?.({ success: true });
-      } catch (err) {
-        callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
+  async function handleSetThinkingLevel(
+    payload: unknown,
+    callback?: (res: { success: boolean; error?: string }) => void,
+  ): Promise<void> {
+    try {
+      const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
+      const channel = ctx.channelManager.get(channelId);
+      if (!channel) {
+        callback?.({ success: false, error: 'Session not found' });
+        return;
       }
-    },
-  );
+      await channel.sendControlRequest('set_max_thinking_tokens', {
+        tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
+      });
+      await ctx.settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
+      ctx.io?.emit('settings:update', { channelId, thinkingLevel });
+      callback?.({ success: true });
+    } catch (err) {
+      callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
+    }
+  }
 
-  socket.on('settings:set_proactive', async (payload) => {
+  async function handleSetProactive(payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -92,9 +92,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore
     }
-  });
+  }
 
-  socket.on('settings:set_remote_control', (payload) => {
+  function handleSetRemoteControl(payload: unknown): void {
     try {
       const { channelId, enabled } = chatSetRemoteControlSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -104,9 +104,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore
     }
-  });
+  }
 
-  socket.on('settings:apply', async (payload, callback) => {
+  async function handleApply(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -121,14 +121,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
       callback({ success: true });
     } catch (err) {
-      callback({
-        success: false,
-        error: errMsg(err, 'Invalid payload'),
-      });
+      callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
-  });
+  }
 
-  socket.on('settings:state', async (payload, callback) => {
+  async function handleState(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chatGetStateSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -148,10 +145,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to get state') });
     }
-  });
+  }
 
-  socket.on('settings:refresh_usage', async (_payload) => {
-    const usage = ctx.usageTracker.getUsage();
+  async function handleRefreshUsage(socket: TypedSocket): Promise<void> {
+    const usageData = ctx.usageTracker.getUsage();
     let contextUsage: Record<string, unknown> | undefined;
 
     const channel = ctx.channelManager.getFirstAlive();
@@ -174,56 +171,64 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
     socket.emit('settings:usage', {
       channelId: '',
-      usage,
+      usage: usageData,
       ...(contextUsage ? { contextUsage } : {}),
     });
-  });
-}
-
-export function onServerAction(
-  ctx: HandlerContext,
-  channelId: string,
-  ch: Channel,
-  action: ServerAction,
-): boolean {
-  if (action.action !== 'auto_respond') return false;
-
-  switch (action.subtype) {
-    case 'get_settings': {
-      const state = ch.sessionState;
-      const overrides = pickDefined({
-        model: state.model,
-        permissionMode: state.permissionMode,
-      });
-      void ctx.settingsStore
-        .getMany(ch.provider, ['model', 'permissionMode'])
-        .then((stored) => {
-          ch.respondToRequest(action.requestId, {
-            ...stored,
-            ...overrides,
-          });
-        })
-        .catch(() => {
-          ch.respondToRequest(action.requestId, overrides);
-        });
-      return true;
-    }
-    case 'set_model': {
-      const { model } = serverActionModelSchema.parse(action.input ?? {});
-      ch.updateSessionState({ model });
-      ch.respondToRequest(action.requestId, { subtype: 'success' });
-      ctx.channelManager.broadcastSessionState(channelId, 'busy');
-      return true;
-    }
-    case 'set_permission_mode': {
-      const { mode } = serverActionModeSchema.parse(action.input ?? {});
-      ch.updateSessionState({ permissionMode: mode });
-      ch.respondToRequest(action.requestId, { subtype: 'success' });
-      ctx.channelManager.broadcastSessionState(channelId, 'busy');
-      return true;
-    }
-    default:
-      ch.respondToRequest(action.requestId, action.response);
-      return true;
   }
+
+  function onAutoRespond(channelId: string, ch: Channel, action: ServerAction): boolean {
+    if (action.action !== 'auto_respond') return false;
+
+    switch (action.subtype) {
+      case 'get_settings': {
+        const state = ch.sessionState;
+        const overrides = pickDefined({
+          model: state.model,
+          permissionMode: state.permissionMode,
+        });
+        void ctx.settingsStore
+          .getMany(ch.provider, ['model', 'permissionMode'])
+          .then((stored) => {
+            ch.respondToRequest(action.requestId, { ...stored, ...overrides });
+          })
+          .catch(() => {
+            ch.respondToRequest(action.requestId, overrides);
+          });
+        return true;
+      }
+      case 'set_model': {
+        const { model } = serverActionModelSchema.parse(action.input ?? {});
+        ch.updateSessionState({ model });
+        ch.respondToRequest(action.requestId, { subtype: 'success' });
+        ctx.channelManager.broadcastSessionState(channelId, 'busy');
+        return true;
+      }
+      case 'set_permission_mode': {
+        const { mode } = serverActionModeSchema.parse(action.input ?? {});
+        ch.updateSessionState({ permissionMode: mode });
+        ch.respondToRequest(action.requestId, { subtype: 'success' });
+        ctx.channelManager.broadcastSessionState(channelId, 'busy');
+        return true;
+      }
+      default:
+        ch.respondToRequest(action.requestId, action.response);
+        return true;
+    }
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('settings:set_model', handleSetModel);
+      socket.on('settings:set_permission_mode', handleSetPermissionMode);
+      socket.on('settings:set_thinking_level', handleSetThinkingLevel);
+      socket.on('settings:set_proactive', handleSetProactive);
+      socket.on('settings:set_remote_control', handleSetRemoteControl);
+      socket.on('settings:apply', handleApply);
+      socket.on('settings:state', handleState);
+      socket.on('settings:refresh_usage', () => handleRefreshUsage(socket));
+    },
+    subscribe(router: ChannelEventRouter) {
+      router.onAction(onAutoRespond);
+    },
+  };
 }

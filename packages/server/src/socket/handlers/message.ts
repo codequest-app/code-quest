@@ -12,15 +12,15 @@ import {
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
+import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
+export function create(ctx: HandlerContext): SocketHandler {
   const interruptedChannels = new Set<string>();
 
-  // chat:send — alias for send_message
-  socket.on('chat:send', (payload) => {
+  function handleSend(socket: TypedSocket, payload: unknown): void {
     try {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
@@ -30,45 +30,39 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       channel.sendMessage(textMessage);
       ctx.channelManager.broadcastSessionState(channelId, 'busy');
 
-      // Broadcast user message to other windows joined to this channel
-      channel?.emitToOthers(socket, 'message:user', {
+      channel.emitToOthers(socket, 'message:user', {
         channelId,
         content: [{ type: 'text', text: textMessage }],
       });
 
-      // Remember first message for title generation (triggered on result)
-      if (channel && !channel.sessionState.titleGenerated) {
+      if (!channel.sessionState.titleGenerated) {
         channel.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
       }
     } catch (err) {
       logger.error({ err }, 'Failed to send message');
     }
-  });
+  }
 
-  socket.on('chat:cancel', (payload) => {
+  function handleCancel(payload: unknown): void {
     try {
       const { channelId } = chatInterruptSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
       if (!channel) return;
       if (interruptedChannels.has(channelId)) {
-        // Second cancel → force abort
         channel.abort();
       } else {
-        // First cancel → graceful interrupt
         interruptedChannels.add(channelId);
         channel.sendControlRequest('interrupt').catch(() => {});
       }
     } catch {
       // ignore
     }
-  });
+  }
 
-  /** Unified response handler — replaces `tool_permission_response`. */
-  socket.on('chat:respond', async (payload) => {
+  async function handleRespond(payload: unknown): Promise<void> {
     try {
       const { requestId, response } = chatRespondSchema.parse(payload);
 
-      // Single lookup for both notification and control requests
       const match = ctx.channelManager.findByRequestId(requestId);
       if (!match) {
         logger.warn({ requestId }, 'No channel found for control_response');
@@ -77,7 +71,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const [channelId, channel] = match;
       if (!channel) return;
 
-      // Notification response — resolve and exit early
+      // Notification response
       const notifResolve = channel.notificationRequests.get(requestId);
       if (notifResolve) {
         channel.notificationRequests.delete(requestId);
@@ -88,17 +82,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const meta = channel.getControlRequestMeta(requestId);
       const { behavior, updatedInput, updatedPermissions, message } = response;
 
-      // Common cleanup + respond + broadcast
       const respondAndBroadcast = (cliResponse: Record<string, unknown>) => {
         channel.removeControlRequest(requestId);
         channel.respondToRequest(requestId, cliResponse);
-        channel.emit('chat:cancel_request', {
-          channelId,
-          targetRequestId: requestId,
-        });
+        channel.emit('chat:cancel_request', { channelId, targetRequestId: requestId });
       };
 
-      // mcp_message — relay JSON-RPC response, clear timeout
+      // mcp_message
       if (meta?.subtype === 'mcp_message') {
         const t = channel.mcpTimeouts.get(requestId);
         if (t) clearTimeout(t);
@@ -107,7 +97,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         return;
       }
 
-      // elicitation — convert to accept/decline format
+      // elicitation
       if (meta?.subtype === 'elicitation') {
         const elicitationResponse =
           behavior === 'allow'
@@ -120,14 +110,14 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         return;
       }
 
-      // Tool permission — build response object
+      // Tool permission
       const responseObj: Record<string, unknown> = { behavior };
       if (updatedInput !== undefined) responseObj.updatedInput = updatedInput;
       if (message !== undefined) responseObj.message = message;
       if (updatedPermissions !== undefined) responseObj.updatedPermissions = updatedPermissions;
       if (meta?.toolUseId) responseObj.toolUseID = meta.toolUseId;
 
-      // ExitPlanMode — serialize plan comments as userFeedback
+      // ExitPlanMode
       if (meta?.toolName === 'ExitPlanMode' && behavior === 'allow') {
         const comments = channel.planComments;
         if (comments.length > 0) {
@@ -142,23 +132,21 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       logger.error({ err }, 'Failed to respond to control request');
     }
-  });
+  }
 
-  socket.on('chat:stop_task', (payload) => {
+  function handleStopTask(payload: unknown): void {
     try {
       const { channelId, taskId } = chatStopTaskSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
       if (channel) {
-        channel.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {
-          // ignore
-        });
+        channel.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {});
       }
     } catch {
       // ignore
     }
-  });
+  }
 
-  socket.on('chat:cancel_async', (payload) => {
+  function handleCancelAsync(payload: unknown): void {
     try {
       const { channelId, messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -170,9 +158,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore
     }
-  });
+  }
 
-  socket.on('chat:rewind_code', async (payload, callback) => {
+  async function handleRewindCode(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -188,9 +176,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to rewind code') });
     }
-  });
+  }
 
-  socket.on('chat:cancel_request', (payload) => {
+  function handleCancelRequest(payload: unknown): void {
     try {
       const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
       const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
@@ -202,17 +190,14 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           message: 'User cancelled',
           interrupt: false,
         });
-        channel.emit('chat:cancel_request', {
-          channelId,
-          targetRequestId,
-        });
+        channel.emit('chat:cancel_request', { channelId, targetRequestId });
       }
     } catch {
-      // ignore invalid payload
+      // ignore
     }
-  });
+  }
 
-  socket.on('chat:hook_respond', (payload) => {
+  function handleHookRespond(payload: unknown): void {
     try {
       const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -222,33 +207,40 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore
     }
-  });
-}
-
-export function onRunnerEvent(
-  ctx: HandlerContext,
-  channelId: string,
-  ch: Channel,
-  se: SocketEvent,
-): boolean {
-  if (se.name !== 'message:result') return false;
-
-  ch.endProcessing();
-  ctx.channelManager.broadcastSessionState(channelId, 'idle');
-
-  const pendingPrompt = ch.sessionState.pendingTitlePrompt;
-  if (pendingPrompt) {
-    ch.updateSessionState({ pendingTitlePrompt: undefined });
-    ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
-      .then((res) => {
-        const { title } = controlGenerateTitleResponseSchema.parse(res.response);
-        ctx.sessionStore
-          .rename(channelId, title)
-          .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-        ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
-      })
-      .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
   }
 
-  return true;
+  function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {
+    ch.endProcessing();
+    ctx.channelManager.broadcastSessionState(channelId, 'idle');
+
+    const pendingPrompt = ch.sessionState.pendingTitlePrompt;
+    if (pendingPrompt) {
+      ch.updateSessionState({ pendingTitlePrompt: undefined });
+      ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
+        .then((res) => {
+          const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+          ctx.sessionStore
+            .rename(channelId, title)
+            .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
+          ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
+        })
+        .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
+    }
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('chat:send', (p) => handleSend(socket, p));
+      socket.on('chat:cancel', handleCancel);
+      socket.on('chat:respond', handleRespond);
+      socket.on('chat:stop_task', handleStopTask);
+      socket.on('chat:cancel_async', handleCancelAsync);
+      socket.on('chat:rewind_code', handleRewindCode);
+      socket.on('chat:cancel_request', handleCancelRequest);
+      socket.on('chat:hook_respond', handleHookRespond);
+    },
+    subscribe(router: ChannelEventRouter) {
+      router.onEvent('message:result', onMessageResult);
+    },
+  };
 }

@@ -7,17 +7,19 @@ import {
   sessionRenameSchema,
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
+import type { ChannelEventRouter } from '../../channel-event-router.ts';
 import type { HandlerContext } from '../../context.ts';
-import type { TypedSocket } from '../../types.ts';
+import type { SocketHandler, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 import { register as registerForkHandlers } from './fork.ts';
-import { register as registerLifecycleHandlers } from './lifecycle.ts';
+import {
+  register as registerLifecycleHandlers,
+  onExit as sessionOnExit,
+  onRunnerEvent as sessionOnRunnerEvent,
+} from './lifecycle.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  registerLifecycleHandlers(socket, ctx);
-  registerForkHandlers(socket, ctx);
-
-  socket.on('session:delete', async (payload, callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  async function handleDelete(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = sessionDeleteSchema.parse(payload);
       const success = await ctx.sessionStore.delete(channelId);
@@ -29,9 +31,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to delete session') });
     }
-  });
+  }
 
-  socket.on('session:rename', async (payload, callback) => {
+  async function handleRename(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, title } = sessionRenameSchema.parse(payload);
       const success = await ctx.sessionStore.rename(channelId, title);
@@ -43,9 +45,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to rename session') });
     }
-  });
+  }
 
-  socket.on('session:list', async (payload, callback) => {
+  async function handleList(payload: unknown, callback: Function): Promise<void> {
     try {
       const parsed = sessionListSchema.parse(payload);
       const result = await ctx.sessionStore.list({
@@ -70,9 +72,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ sessions: [], total: 0 });
     }
-  });
+  }
 
-  socket.on('session:list_remote', async (payload, callback) => {
+  async function handleListRemote(payload: unknown, callback: Function): Promise<void> {
     try {
       const parsed = sessionListRemoteSchema.parse(payload);
       const result = await ctx.sessionStore.list({
@@ -84,9 +86,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ sessions: [], total: 0 });
     }
-  });
+  }
 
-  socket.on('session:get', async (payload, callback) => {
+  async function handleGet(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
       const session = await ctx.sessionStore.getById(channelId);
@@ -100,9 +102,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ error: errMsg(err, 'Failed to get session') });
     }
-  });
+  }
 
-  socket.on('session:raw_events', async (payload, callback) => {
+  async function handleRawEvents(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
       const entries = await ctx.rawEventStore.getBySession(
@@ -119,9 +121,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ events: [] });
     }
-  });
+  }
 
-  socket.on('session:generate_title', async (payload, callback) => {
+  async function handleGenerateTitle(payload: unknown, callback?: Function): Promise<void> {
     try {
       const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -135,9 +137,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback?.({ success: false, error: String(err) });
     }
-  });
+  }
 
-  socket.on('session:update_state', (payload, callback) => {
+  function handleUpdateState(payload: unknown, callback: Function): void {
     try {
       const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
       ctx.io?.emit('session:states', {
@@ -147,5 +149,24 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to update session state') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      registerLifecycleHandlers(socket, ctx);
+      registerForkHandlers(socket, ctx);
+      socket.on('session:delete', handleDelete);
+      socket.on('session:rename', handleRename);
+      socket.on('session:list', handleList);
+      socket.on('session:list_remote', handleListRemote);
+      socket.on('session:get', handleGet);
+      socket.on('session:raw_events', handleRawEvents);
+      socket.on('session:generate_title', handleGenerateTitle);
+      socket.on('session:update_state', handleUpdateState);
+    },
+    subscribe(router: ChannelEventRouter) {
+      router.onEvent('session:init', (cid, ch, se) => sessionOnRunnerEvent(ctx, cid, ch, se));
+      router.onExit((cid, ch, code) => sessionOnExit(ctx, cid, ch, code));
+    },
+  };
 }

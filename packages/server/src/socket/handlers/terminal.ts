@@ -1,10 +1,10 @@
 import { terminalGetContentsSchema, terminalOpenClaudeSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('terminal:read', (payload, callback) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  function handleRead(payload: unknown, callback: Function): void {
     try {
       const { channelId } = terminalGetContentsSchema.parse(payload);
       const channel = ctx.channelManager.get(channelId);
@@ -17,9 +17,13 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       callback({ content: null });
     }
-  });
+  }
 
-  socket.on('terminal:open_claude', async (payload, callback) => {
+  async function handleOpenClaude(
+    socket: TypedSocket,
+    payload: unknown,
+    callback: Function,
+  ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
       const existingChannel = ctx.channelManager.get(channelId);
@@ -43,5 +47,12 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to open claude terminal') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('terminal:read', (p, cb) => handleRead(p, cb));
+      socket.on('terminal:open_claude', (p, cb) => handleOpenClaude(socket, p, cb));
+    },
+  };
 }

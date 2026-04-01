@@ -1,16 +1,23 @@
 import type { HandlerContext } from '../context.ts';
-import type { TypedSocket } from '../types.ts';
+import type { SocketHandler, TypedSocket } from '../types.ts';
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('speech:start', (payload) => {
+export function create(ctx: HandlerContext): SocketHandler {
+  function handleStart(payload: { channelId: string }): void {
     const channel = ctx.channelManager.get(payload.channelId);
     if (!channel) return;
     channel.write(JSON.stringify({ type: 'start_speech_to_text', channelId: payload.channelId }));
-  });
+  }
 
-  socket.on('speech:stop', (payload) => {
+  function handleStop(payload: { channelId: string }): void {
     const channel = ctx.channelManager.get(payload.channelId);
     if (!channel) return;
     channel.write(JSON.stringify({ type: 'stop_speech_to_text', channelId: payload.channelId }));
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('speech:start', handleStart);
+      socket.on('speech:stop', handleStop);
+    },
+  };
 }
