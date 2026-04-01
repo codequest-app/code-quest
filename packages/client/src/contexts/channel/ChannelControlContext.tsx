@@ -1,19 +1,11 @@
-import type { ControlPermissionResponse, ServerToClientEvents } from '@code-quest/shared';
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { channelEmit } from '../../socket/rpc';
+import type { ServerToClientEvents } from '@code-quest/shared';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
-import { getFeedbackLabel } from '../../utils/feedback-label';
+import type { ChannelState } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
+import { type ControlState, controlHandlers, createControlActions } from './controlHandlers';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -25,7 +17,7 @@ export interface ChannelControlValue {
   setPendingElicitation: (v: PendingElicitation | null) => void;
   setPendingDiffReview: (v: PendingDiffReview | null) => void;
   getPendingControls: () => PendingControl[];
-  respondToControl: (response: ControlPermissionResponse, requestId?: string) => void;
+  respondToControl: (response: import('@code-quest/shared').ControlPermissionResponse, requestId?: string) => void;
   diffRespond: (toolId: string, accepted: boolean) => void;
   stopTask: (taskId: string) => void;
   clearPendingDiffReview: () => void;
@@ -63,13 +55,41 @@ export function ChannelControlProvider({
   const controlsRef = useRef(controls);
   controlsRef.current = controls;
 
-  // ── Socket events ──
+  const guard = (payload: { channelId: string }) =>
+    payload.channelId === channelId || payload.channelId === '';
+
+  // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {
     if (!channelId) return;
 
-    const guard = (payload: { channelId: string }) =>
-      payload.channelId === channelId || payload.channelId === '';
+    const entries = Object.entries(controlHandlers) as Array<
+      [string, (state: ControlState, payload: never) => Partial<ControlState>]
+    >;
+    const wired = entries.map(([event, handler]) => {
+      const fn = (payload: { channelId: string }) => {
+        if (!guard(payload)) return;
+        const patch = handler(
+          { controls: controlsRef.current, elicitation, diffReview },
+          payload as never,
+        );
+        if (patch.controls !== undefined) setControls(() => patch.controls!);
+        if (patch.elicitation !== undefined) setElicitation(patch.elicitation);
+        if (patch.diffReview !== undefined) setDiffReview(patch.diffReview);
+      };
+      socket.on(event as never, fn as never);
+      return { event, fn };
+    });
 
+    return () => {
+      for (const { event, fn } of wired) {
+        socket.off(event as never, fn as never);
+      }
+    };
+  }, [channelId, socket]);
+
+  // ── Special: control:permission (local state + parent state + resetRef) ──
+  useEffect(() => {
+    if (!channelId) return;
     const onControlPermission = (payload: Payload<'control:permission'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -97,28 +117,13 @@ export function ChannelControlProvider({
         ],
       }));
     };
+    socket.on('control:permission', onControlPermission);
+    return () => { socket.off('control:permission', onControlPermission); };
+  }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
-    const onControlElicitation = (payload: Payload<'control:elicitation'>) => {
-      if (!guard(payload)) return;
-      setElicitation({
-        requestId: payload.requestId,
-        prompt: payload.prompt,
-        inputType: payload.inputType ?? 'text',
-        options: payload.options,
-        url: payload.url,
-      });
-    };
-
-    const onControlDiffReview = (payload: Payload<'control:diff_review'>) => {
-      if (!guard(payload)) return;
-      setDiffReview({
-        toolId: payload.toolId,
-        oldContent: payload.oldContent,
-        newContent: payload.newContent,
-        filePath: payload.filePath,
-      });
-    };
-
+  // ── Special: control:hook_callback (local state + parent state + resetRef) ──
+  useEffect(() => {
+    if (!channelId) return;
     const onControlHookCallback = (payload: Payload<'control:hook_callback'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -145,12 +150,13 @@ export function ChannelControlProvider({
         ],
       }));
     };
+    socket.on('control:hook_callback', onControlHookCallback);
+    return () => { socket.off('control:hook_callback', onControlHookCallback); };
+  }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
-    const onCancelRequest = (payload: Payload<'chat:cancel_request'>) => {
-      if (!guard(payload)) return;
-      setControls((prev) => prev.filter((c) => c.requestId !== payload.targetRequestId));
-    };
-
+  // ── Special: session:closed (reset + parent state) ──
+  useEffect(() => {
+    if (!channelId) return;
     const onSessionClosed = (payload: Payload<'session:closed'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -167,7 +173,13 @@ export function ChannelControlProvider({
         status: 'idle',
       }));
     };
+    socket.on('session:closed', onSessionClosed);
+    return () => { socket.off('session:closed', onSessionClosed); };
+  }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
+  // ── Special: control:mcp (side effect only — auto-respond) ──
+  useEffect(() => {
+    if (!channelId) return;
     const onControlMcp = (payload: Payload<'control:mcp'>) => {
       if (!guard(payload)) return;
       const mcpMsg = payload.message;
@@ -181,85 +193,26 @@ export function ChannelControlProvider({
         },
       });
     };
-
-    socket.on('control:permission', onControlPermission);
-    socket.on('control:elicitation', onControlElicitation);
-    socket.on('control:diff_review', onControlDiffReview);
-    socket.on('control:hook_callback', onControlHookCallback);
-    socket.on('chat:cancel_request', onCancelRequest);
-    socket.on('session:closed', onSessionClosed);
     socket.on('control:mcp', onControlMcp);
+    return () => { socket.off('control:mcp', onControlMcp); };
+  }, [channelId, socket]);
 
-    return () => {
-      socket.off('control:permission', onControlPermission);
-      socket.off('control:elicitation', onControlElicitation);
-      socket.off('control:diff_review', onControlDiffReview);
-      socket.off('control:hook_callback', onControlHookCallback);
-      socket.off('chat:cancel_request', onCancelRequest);
-      socket.off('session:closed', onSessionClosed);
-      socket.off('control:mcp', onControlMcp);
-    };
-  }, [channelId, socket, setChannelState, resetStreamingRefs]);
+  // ── Stable actions ──
+  const actions = useMemo(
+    () =>
+      createControlActions({
+        socket,
+        channelId,
+        controlsRef,
+        setControls,
+        setElicitation,
+        setDiffReview,
+        setChannelState,
+      }),
+    [socket, channelId, setChannelState],
+  );
 
-  // ── Stable actions (don't depend on controls/elicitation/diffReview state) ──
-  const actions = useMemo(() => {
-    const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-      channelEmit(socket, channelId, event, payload, ...rest);
-
-    const respondToControl = (response: ControlPermissionResponse, requestId?: string) => {
-      const ctrls = controlsRef.current;
-      const target = requestId
-        ? (ctrls.find((c) => c.requestId === requestId) ?? ctrls[0])
-        : ctrls[0];
-      if (!target) return;
-      emit('chat:respond', { requestId: target.requestId, response });
-      const controlLabel = target.toolName ?? target.subtype;
-      const action = getFeedbackLabel(response);
-      setControls((prev) => prev.filter((c) => c.requestId !== target.requestId));
-      setChannelState((s) => ({
-        ...s,
-        messages: [
-          ...s.messages,
-          msg({ role: 'user', type: 'action_result', content: `${action}: ${controlLabel}` }),
-        ],
-      }));
-    };
-
-    const diffRespond = (toolId: string, accepted: boolean) => {
-      const ctrl = controlsRef.current.find((c) => c.toolUseId === toolId);
-      if (!ctrl) return;
-      emit('chat:respond', {
-        requestId: ctrl.requestId,
-        response: accepted
-          ? { behavior: 'allow' as const, updatedInput: {} }
-          : { behavior: 'deny' as const, message: 'User rejected diff' },
-      });
-    };
-
-    return {
-      setPendingControls: setControls,
-      setPendingElicitation: setElicitation,
-      setPendingDiffReview: setDiffReview,
-      getPendingControls: () => controlsRef.current,
-      respondToControl,
-      diffRespond,
-      stopTask: (taskId: string) => emit('chat:stop_task', { taskId }),
-      clearPendingDiffReview: () => setDiffReview(null),
-      respondToElicitation: (requestId: string, answer: string) => {
-        emit('chat:respond', {
-          requestId,
-          response: { behavior: 'allow', updatedInput: { url: answer, value: answer } },
-        });
-        setElicitation(null);
-      },
-      cancelElicitation: (requestId: string) => {
-        emit('chat:respond', { requestId, response: { behavior: 'deny' } });
-        setElicitation(null);
-      },
-    };
-  }, [socket, channelId, setChannelState]);
-
-  // ── Context value (state + stable actions) ──
+  // ── Context value ──
   const value = useMemo<ChannelControlValue>(
     () => ({
       pendingControls: controls,

@@ -31,11 +31,10 @@ Context 只負責接線，不定義業務邏輯。
 
 ## 4. ChannelControlContext handler map + auto-wiring
 
-- [ ] 4.1 新建 `contexts/channel/controlHandlers.ts`：on handlers（純 state）+ createControlActions（emit）
-- [ ] 4.2 搬入 on：control:permission, control:elicitation, control:diff_review, control:hook_callback, chat:cancel_request, session:closed
-- [ ] 4.3 搬入 emit：respondToControl, diffRespond, stopTask, respondToElicitation, cancelElicitation
-- [ ] 4.4 context 改用 auto-wiring + 個別保留 control:mcp（side effect: auto-respond）
-- [ ] 4.5 typecheck + 615 test pass
+- [x] 4.1 新建 `contexts/channel/controlHandlers.ts`：3 個 on handlers + createControlActions（10 個 emit actions）
+- [x] 4.2-4.3 on + emit 一次搬完
+- [x] 4.4 context 改用 auto-wiring（3 events）+ 個別保留 4 個特殊 events
+- [x] 4.5 typecheck + 615 test pass
 
 ## 5. ChannelConfigContext handler map + auto-wiring
 
