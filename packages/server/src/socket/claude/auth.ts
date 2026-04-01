@@ -1,10 +1,10 @@
 import { controlAuthenticateResponseSchema } from '@code-quest/shared';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { claudeState } from './state.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   function handleStatus(callback: Function): void {
     callback(claudeState.authState);
   }
@@ -15,7 +15,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     callback: Function,
   ): Promise<void> {
     try {
-      const channel = ctx.channelManager.getFirstAlive();
+      const channel = channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session. Please open a tab first.' });
         return;
@@ -42,7 +42,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     callback: Function,
   ): Promise<void> {
     try {
-      const channel = ctx.channelManager.getFirstAlive();
+      const channel = channelManager.getFirstAlive();
       if (!channel) {
         callback({ success: false, error: 'No active session' });
         return;

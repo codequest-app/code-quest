@@ -10,27 +10,33 @@ import {
   settingsApplySchema,
 } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
+import type { SettingsStore } from '../../services/settings-store.ts';
+import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(
+  channelManager: ChannelManager,
+  settingsStore: SettingsStore,
+  usageTracker: UsageTracker,
+): SocketHandler {
   async function handleSetModel(
     payload: unknown,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
       const { channelId, model } = chatSetModelSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback?.({ success: false, error: 'Session not found' });
         return;
       }
       await channel.sendControlRequest('set_model', { model });
-      await ctx.settingsStore.set(channel.provider, 'model', model);
+      await settingsStore.set(channel.provider, 'model', model);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set model') });
@@ -43,14 +49,14 @@ export function create(ctx: HandlerContext): SocketHandler {
   ): Promise<void> {
     try {
       const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback?.({ success: false, error: 'Session not found' });
         return;
       }
       await channel.sendControlRequest('set_permission_mode', { mode });
-      await ctx.settingsStore.set(channel.provider, 'permissionMode', mode);
-      ctx.channelManager.broadcastSettingsUpdate(channelId, { initialPermissionMode: mode });
+      await settingsStore.set(channel.provider, 'permissionMode', mode);
+      channelManager.broadcastSettingsUpdate(channelId, { initialPermissionMode: mode });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
@@ -63,7 +69,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   ): Promise<void> {
     try {
       const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback?.({ success: false, error: 'Session not found' });
         return;
@@ -71,8 +77,8 @@ export function create(ctx: HandlerContext): SocketHandler {
       await channel.sendControlRequest('set_max_thinking_tokens', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
-      await ctx.settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
-      ctx.channelManager.broadcastSettingsUpdate(channelId, { thinkingLevel });
+      await settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
+      channelManager.broadcastSettingsUpdate(channelId, { thinkingLevel });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
@@ -82,10 +88,10 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleSetProactive(payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) return;
       await channel.sendControlRequest('set_proactive', { enabled });
-      ctx.channelManager.broadcastSettingsUpdate(channelId, {
+      channelManager.broadcastSettingsUpdate(channelId, {
         fastModeState: enabled ? 'on' : 'off',
       });
     } catch {
@@ -96,7 +102,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleSetRemoteControl(payload: unknown): void {
     try {
       const { channelId, enabled } = chatSetRemoteControlSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) {
         channel.sendControlRequest('remote_control', { enabled }).catch(() => {});
       }
@@ -108,15 +114,15 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleApply(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback({ success: false, error: 'Session not found' });
         return;
       }
       await channel.sendControlRequest('apply_flag_settings', { settings });
       if (settings.effortLevel != null) {
-        await ctx.settingsStore.set(channel.provider, 'effortLevel', String(settings.effortLevel));
-        ctx.channelManager.broadcastSettingsUpdate(channelId, {
+        await settingsStore.set(channel.provider, 'effortLevel', String(settings.effortLevel));
+        channelManager.broadcastSettingsUpdate(channelId, {
           effort: String(settings.effortLevel),
         });
       }
@@ -129,13 +135,13 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleState(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chatGetStateSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback({ success: false, error: 'Session not found' });
         return;
       }
       const state: Record<string, unknown> = {
-        ...(await ctx.settingsStore.getMany(channel.provider, [
+        ...(await settingsStore.getMany(channel.provider, [
           'model',
           'permissionMode',
           'thinkingLevel',
@@ -149,10 +155,10 @@ export function create(ctx: HandlerContext): SocketHandler {
   }
 
   async function handleRefreshUsage(socket: TypedSocket): Promise<void> {
-    const usageData = ctx.usageTracker.getUsage();
+    const usageData = usageTracker.getUsage();
     let contextUsage: Record<string, unknown> | undefined;
 
-    const channel = ctx.channelManager.getFirstAlive();
+    const channel = channelManager.getFirstAlive();
     if (channel) {
       try {
         const resp = await channel.sendControlRequest('get_context_usage', {});
@@ -187,7 +193,7 @@ export function create(ctx: HandlerContext): SocketHandler {
           model: state.model,
           permissionMode: state.permissionMode,
         });
-        void ctx.settingsStore
+        void settingsStore
           .getMany(ch.provider, ['model', 'permissionMode'])
           .then((stored) => {
             ch.respondToRequest(action.requestId, { ...stored, ...overrides });
@@ -201,14 +207,14 @@ export function create(ctx: HandlerContext): SocketHandler {
         const { model } = serverActionModelSchema.parse(action.input ?? {});
         ch.updateSessionState({ model });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
-        ctx.channelManager.broadcastSessionState(channelId, 'busy');
+        channelManager.broadcastSessionState(channelId, 'busy');
         return true;
       }
       case 'set_permission_mode': {
         const { mode } = serverActionModeSchema.parse(action.input ?? {});
         ch.updateSessionState({ permissionMode: mode });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
-        ctx.channelManager.broadcastSessionState(channelId, 'busy');
+        channelManager.broadcastSessionState(channelId, 'busy');
         return true;
       }
       default:

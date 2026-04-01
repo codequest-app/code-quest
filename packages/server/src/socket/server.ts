@@ -11,7 +11,6 @@ import type { ChannelManager } from './channel-manager.ts';
 import * as claudeAuth from './claude/auth.ts';
 import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
-import type { HandlerContext } from './context.ts';
 import * as app from './handlers/app.ts';
 import * as file from './handlers/file.ts';
 import * as git from './handlers/git.ts';
@@ -25,19 +24,19 @@ import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
 import type { SessionHistory } from './session-history.ts';
-import type { SocketHandler, TypedServer, TypedSocket } from './types.ts';
+import type { SocketHandler, TypedServer } from './types.ts';
 
 @injectable()
-export class SocketServer implements HandlerContext {
+export class SocketServer {
   io?: TypedServer;
   settingsStore: SettingsStore;
 
   constructor(
-    @inject(TYPES.RawEventStore) public rawEventStore: RawEventStore,
-    @inject(TYPES.SessionStore) public sessionStore: SessionStore,
-    @inject(TYPES.UsageTracker) public usageTracker: UsageTracker,
-    @inject(TYPES.ChannelManager) public channelManager: ChannelManager,
-    @inject(TYPES.SessionHistory) public sessionHistory: SessionHistory,
+    @inject(TYPES.RawEventStore) private rawEventStore: RawEventStore,
+    @inject(TYPES.SessionStore) private sessionStore: SessionStore,
+    @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
+    @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
+    @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
     @inject(TYPES.ChannelEventRouter) private router: ChannelEventRouter,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
@@ -50,24 +49,31 @@ export class SocketServer implements HandlerContext {
     this.io = io;
     this.channelManager.register(io);
 
+    const cm = this.channelManager;
+    const ss = this.sessionStore;
+    const sh = this.sessionHistory;
+    const st = this.settingsStore;
+    const ut = this.usageTracker;
+    const re = this.rawEventStore;
+
     const commonHandlers: SocketHandler[] = [
-      speech.create(this),
-      usage.create(this),
-      plan.create(this),
-      git.create(this),
-      terminal.create(this),
-      file.create(this),
-      mcp.create(this),
-      settings.create(this),
-      message.create(this),
-      permission.create(this),
-      app.create(this),
-      session.create(this),
+      speech.create(cm),
+      usage.create(ut),
+      plan.create(cm),
+      git.create(cm, sh, re),
+      terminal.create(cm),
+      file.create(cm),
+      mcp.create(cm),
+      settings.create(cm, st, ut),
+      message.create(cm, ss),
+      permission.create(),
+      app.create(cm, st),
+      session.create(cm, ss, st, sh),
     ];
 
     const providerHandlers: SocketHandler[] =
-      this.channelManager.provider === 'claude'
-        ? [claudeAuth.create(this), claudeMcpServers.create(this), claudePlugin.create(this)]
+      cm.provider === 'claude'
+        ? [claudeAuth.create(cm), claudeMcpServers.create(cm), claudePlugin.create()]
         : [];
 
     this.handlers = [...commonHandlers, ...providerHandlers];

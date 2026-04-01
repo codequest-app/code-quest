@@ -12,17 +12,17 @@ import {
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   function ensureChannel(
     channelId: string,
     callback?: (res: { error: string }) => void,
   ): Channel | null {
-    const channel = ctx.channelManager.get(channelId);
+    const channel = channelManager.get(channelId);
     if (!channel) {
       callback?.({ error: 'Session not found' });
       return null;

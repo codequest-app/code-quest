@@ -1,9 +1,13 @@
-import type { HandlerContext } from '../context.ts';
+import type { SettingsStore } from '../../services/settings-store.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(
+  channelManager: ChannelManager,
+  settingsStore: SettingsStore,
+): SocketHandler {
   async function handleInit(callback: Function): Promise<void> {
-    const sessions = ctx.channelManager.getAliveChannels().map((ch) => ({
+    const sessions = channelManager.getAliveChannels().map((ch) => ({
       channelId: ch.channelId,
       state: ch.state,
       title: ch.title,
@@ -11,7 +15,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     }));
     let settings: Record<string, unknown> = {};
     try {
-      settings = await ctx.settingsStore.getMany(ctx.channelManager.provider, [
+      settings = await settingsStore.getMany(channelManager.provider, [
         'model',
         'permissionMode',
         'thinkingLevel',
@@ -23,7 +27,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     callback({
       settings,
       sessions,
-      models: ctx.channelManager.cachedModels,
+      models: channelManager.cachedModels,
       state: {
         platform: process.platform,
         speechToTextEnabled: false,
@@ -33,29 +37,29 @@ export function create(ctx: HandlerContext): SocketHandler {
   }
 
   async function handleConfig(_payload: unknown, callback: Function): Promise<void> {
-    let models: unknown[] | undefined = ctx.channelManager.cachedModels;
+    let models: unknown[] | undefined = channelManager.cachedModels;
     let effort: string | undefined;
     try {
       if (!models) {
-        models = (await ctx.settingsStore.get(ctx.channelManager.provider, 'models')) as
+        models = (await settingsStore.get(channelManager.provider, 'models')) as
           | unknown[]
           | undefined;
       }
-      effort = (await ctx.settingsStore.get(ctx.channelManager.provider, 'effortLevel')) as
+      effort = (await settingsStore.get(channelManager.provider, 'effortLevel')) as
         | string
         | undefined;
     } catch {
       // Settings table may not exist yet
     }
     callback({
-      providerConfig: ctx.channelManager.providerClientConfig,
+      providerConfig: channelManager.providerClientConfig,
       ...(Array.isArray(models) ? { models } : {}),
       ...(typeof effort === 'string' ? { effort } : {}),
     });
   }
 
   function handleDisconnect(socket: TypedSocket): void {
-    ctx.channelManager.removeSocketFromAll(socket.id);
+    channelManager.removeSocketFromAll(socket.id);
   }
 
   return {

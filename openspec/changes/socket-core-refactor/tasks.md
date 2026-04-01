@@ -172,29 +172,9 @@ record.ts（新）— session 記錄的讀取與維護
 
 ### 14.3 每個 handler factory 改成精確依賴
 
-- [ ] 14.3a `speech.ts` — `create(channelManager)`
-- [ ] 14.3b `usage.ts` — `create(usageTracker)`
-- [ ] 14.3c `plan.ts` — `create(channelManager)`
-- [ ] 14.3d `git.ts` — `create(channelManager, sessionHistory, rawEventStore)`
-- [ ] 14.3e `terminal.ts` — `create(channelManager)`
-- [ ] 14.3f `file.ts` — `create(channelManager)`
-- [ ] 14.3g `mcp.ts` — `create(channelManager)`
-- [ ] 14.3h `settings.ts` — `create(channelManager, settingsStore, usageTracker)`
-- [ ] 14.3i `message.ts` — `create(channelManager, sessionStore)`
-- [ ] 14.3j `permission.ts` — `create()`（無依賴）
-- [ ] 14.3k `app.ts` — `create(channelManager, settingsStore)`
-- [ ] 14.3l `session/lifecycle.ts` — `create(channelManager, settingsStore, sessionStore, sessionHistory)`
-- [ ] 14.3m `session/fork.ts` — `create(channelManager, sessionHistory, sessionStore)`
-- [ ] 14.3n `session/record.ts` — `create(sessionStore, sessionHistory, channelManager)`
-- [ ] 14.3o `claude/auth.ts` — `create(channelManager)`
-- [ ] 14.3p `claude/mcp-servers.ts` — `create(channelManager)`
-- [ ] 14.3q `claude/plugin.ts` — `create()`（無依賴）
-- [ ] 14.3r typecheck + test 全過
-
-### 14.4 移除 HandlerContext
-- [ ] 14.4a 刪除 `context.ts`
-- [ ] 14.4b server.ts 從 container 取各 store，分別傳給各 handler factory
-- [ ] 14.4c SocketServer 不再 implements HandlerContext
-- [ ] 14.4d 更新 test 的 mock（不再需要完整 HandlerContext）
-- [ ] 14.4e typecheck + test 全過
-- [ ] 14.4f 確認 test 時間無顯著退化
+- [x] 14.3 所有 handler factory 改成精確依賴（18 個 handler 全部更新）
+- [x] 14.4a 刪除 `context.ts`
+- [x] 14.4b server.ts 從 constructor 注入取各 store，分別傳給各 handler
+- [x] 14.4c SocketServer 不再 implements HandlerContext
+- [x] 14.4d test 不需更新（不直接 reference HandlerContext）
+- [x] 14.4e typecheck + test 全過（401/401, ~5.2s）

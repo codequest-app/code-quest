@@ -1,13 +1,13 @@
 import { terminalGetContentsSchema, terminalOpenClaudeSchema } from '@code-quest/shared';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   function handleRead(payload: unknown, callback: Function): void {
     try {
       const { channelId } = terminalGetContentsSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel || channel.terminalLines.length === 0) {
         callback({ content: null });
         return;
@@ -26,16 +26,16 @@ export function create(ctx: HandlerContext): SocketHandler {
   ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
-      const existingChannel = ctx.channelManager.get(channelId);
+      const existingChannel = channelManager.get(channelId);
       const baseCwd = cwd ?? (String(existingChannel?.sessionState.cwd ?? '') || process.cwd());
 
       const newChannelId = crypto.randomUUID();
-      const { channel: ch } = await ctx.channelManager.create(newChannelId, {
-        onBeforeSpawn: (c) => ctx.channelManager.addSocketToChannel(c, socket),
+      const { channel: ch } = await channelManager.create(newChannelId, {
+        onBeforeSpawn: (c) => channelManager.addSocketToChannel(c, socket),
       });
       ch.updateSessionState({ cwd: baseCwd });
 
-      ctx.channelManager.broadcastSessionState(newChannelId, 'idle');
+      channelManager.broadcastSessionState(newChannelId, 'idle');
 
       if (prompt) {
         ch.sendMessage(prompt);

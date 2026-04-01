@@ -1,35 +1,35 @@
 import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/shared';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { claudeState } from './state.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   async function handleEnsureChrome(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
+      const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback({ success: false, error: 'No active session' });
         return;
       }
       const wasDisabled = claudeState.chromeMcpState.status !== 'connected';
       claudeState.chromeMcpState = { status: 'connecting' };
-      ctx.channelManager.broadcastSettingsUpdate('', { chromeMcpState: { status: 'connecting' } });
+      channelManager.broadcastSettingsUpdate('', { chromeMcpState: { status: 'connecting' } });
 
       await channel.sendControlRequest('mcp_set_servers', {
         'claude-in-chrome': { command: 'claude', args: ['mcp', 'serve', 'chrome'] },
       });
 
       claudeState.chromeMcpState = { status: 'connected' };
-      ctx.channelManager.broadcastSettingsUpdate('', { chromeMcpState: { status: 'connected' } });
+      channelManager.broadcastSettingsUpdate('', { chromeMcpState: { status: 'connected' } });
       callback({
         success: true,
         response: { type: 'ensure_chrome_mcp_enabled_response', wasDisabled },
       });
     } catch (err) {
       claudeState.chromeMcpState = { status: 'disconnected' };
-      ctx.channelManager.broadcastSettingsUpdate('', {
+      channelManager.broadcastSettingsUpdate('', {
         chromeMcpState: claudeState.chromeMcpState,
       });
       callback({ success: false, error: errMsg(err, 'Failed to enable Chrome MCP') });
@@ -39,7 +39,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleDisableChrome(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
+      const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback({ success: false, error: 'No active session' });
         return;
@@ -47,7 +47,7 @@ export function create(ctx: HandlerContext): SocketHandler {
       const wasEnabled = claudeState.chromeMcpState.status === 'connected';
       await channel.sendControlRequest('mcp_set_servers', {});
       claudeState.chromeMcpState = { status: 'disconnected' };
-      ctx.channelManager.broadcastSettingsUpdate('', {
+      channelManager.broadcastSettingsUpdate('', {
         chromeMcpState: { status: 'disconnected' },
       });
       callback({ success: true, response: { type: 'disable_chrome_mcp_response', wasEnabled } });
@@ -59,7 +59,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleEnableJupyter(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
+      const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback({ success: false, error: 'No active session' });
         return;
@@ -67,10 +67,10 @@ export function create(ctx: HandlerContext): SocketHandler {
       await channel.sendControlRequest('mcp_set_servers', {
         'claude-jupyter': { command: 'claude', args: ['mcp', 'serve', 'jupyter'] },
       });
-      ctx.channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'active' } });
+      channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'active' } });
       callback({ success: true, response: { type: 'enable_jupyter_mcp_response' } });
     } catch (err) {
-      ctx.channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'inactive' } });
+      channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'inactive' } });
       callback({ success: false, error: errMsg(err, 'Failed to enable Jupyter MCP') });
     }
   }
@@ -78,13 +78,13 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleDisableJupyter(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId) ?? ctx.channelManager.getFirstAlive();
+      const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback({ success: false, error: 'No active session' });
         return;
       }
       await channel.sendControlRequest('mcp_set_servers', {});
-      ctx.channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'inactive' } });
+      channelManager.broadcastSettingsUpdate('', { jupyterMcpState: { status: 'inactive' } });
       callback({ success: true, response: { type: 'disable_jupyter_mcp_response' } });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to disable Jupyter MCP') });

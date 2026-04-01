@@ -6,12 +6,18 @@ import {
   gitUpdateSkippedBranchSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
-import type { HandlerContext } from '../context.ts';
+import type { RawEventStore } from '../../services/raw-event-store.ts';
+import type { ChannelManager } from '../channel-manager.ts';
+import type { SessionHistory } from '../session-history.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { checkoutBranch, execGit } from '../utils/exec-git.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(
+  channelManager: ChannelManager,
+  sessionHistory: SessionHistory,
+  rawEventStore: RawEventStore,
+): SocketHandler {
   function handleStatus(callback: Function): void {
     Promise.all([
       execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
@@ -74,13 +80,13 @@ export function create(ctx: HandlerContext): SocketHandler {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
       const entry: RawEntry = {
         timestamp: Date.now(),
-        sessionId: await ctx.sessionHistory.resolveSessionId(channelId),
+        sessionId: await sessionHistory.resolveSessionId(channelId),
         promptId: '',
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,
       };
-      await ctx.rawEventStore.append(entry);
+      await rawEventStore.append(entry);
       callback({ success: true });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to update skipped branch') });

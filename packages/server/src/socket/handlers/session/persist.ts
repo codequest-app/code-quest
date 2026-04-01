@@ -1,8 +1,9 @@
 import { logger } from '../../../logger.ts';
-import type { HandlerContext } from '../../context.ts';
+import type { SessionStore } from '../../../services/session-store.ts';
+import type { ChannelManager } from '../../channel-manager.ts';
 
 export function persistNewSession(
-  ctx: HandlerContext,
+  ctx: { channelManager: ChannelManager; sessionStore: SessionStore },
   opts: { channelId: string; sessionId: string; parentId?: string },
 ): void {
   ctx.sessionStore

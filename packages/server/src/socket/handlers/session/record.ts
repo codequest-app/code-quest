@@ -5,31 +5,38 @@ import {
   sessionListSchema,
   sessionRenameSchema,
 } from '@code-quest/shared';
-import type { HandlerContext } from '../../context.ts';
+import type { SessionStore } from '../../../services/session-store.ts';
+import type { ChannelManager } from '../../channel-manager.ts';
+import type { SessionHistory } from '../../session-history.ts';
 import type { TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 
-export function registerRecord(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('session:delete', async (payload, callback) => handleDelete(ctx, payload, callback));
-  socket.on('session:rename', async (payload, callback) => handleRename(ctx, payload, callback));
-  socket.on('session:list', async (payload, callback) => handleList(ctx, payload, callback));
-  socket.on('session:list_remote', async (payload, callback) =>
-    handleListRemote(ctx, payload, callback),
+export function registerRecord(
+  socket: TypedSocket,
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  sessionHistory: SessionHistory,
+): void {
+  socket.on('session:delete', (p, cb) => handleDelete(sessionStore, p, cb));
+  socket.on('session:rename', (p, cb) => handleRename(sessionStore, p, cb));
+  socket.on('session:list', (p, cb) =>
+    handleList(channelManager, sessionStore, sessionHistory, p, cb),
   );
-  socket.on('session:get', async (payload, callback) => handleGet(ctx, payload, callback));
-  socket.on('session:raw_events', async (payload, callback) =>
-    handleRawEvents(ctx, payload, callback),
+  socket.on('session:list_remote', (p, cb) => handleListRemote(sessionStore, p, cb));
+  socket.on('session:get', (p, cb) =>
+    handleGet(channelManager, sessionStore, sessionHistory, p, cb),
   );
+  socket.on('session:raw_events', (p, cb) => handleRawEvents(sessionHistory, p, cb));
 }
 
 async function handleDelete(
-  ctx: HandlerContext,
+  sessionStore: SessionStore,
   payload: unknown,
   callback: Function,
 ): Promise<void> {
   try {
     const { channelId } = sessionDeleteSchema.parse(payload);
-    const success = await ctx.sessionStore.delete(channelId);
+    const success = await sessionStore.delete(channelId);
     if (!success) {
       callback({ success: false, error: 'Session not found' });
       return;
@@ -41,13 +48,13 @@ async function handleDelete(
 }
 
 async function handleRename(
-  ctx: HandlerContext,
+  sessionStore: SessionStore,
   payload: unknown,
   callback: Function,
 ): Promise<void> {
   try {
     const { channelId, title } = sessionRenameSchema.parse(payload);
-    const success = await ctx.sessionStore.rename(channelId, title);
+    const success = await sessionStore.rename(channelId, title);
     if (!success) {
       callback({ success: false, error: 'Session not found' });
       return;
@@ -59,23 +66,25 @@ async function handleRename(
 }
 
 async function handleList(
-  ctx: HandlerContext,
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  sessionHistory: SessionHistory,
   payload: unknown,
   callback: Function,
 ): Promise<void> {
   try {
     const parsed = sessionListSchema.parse(payload);
-    const result = await ctx.sessionStore.list({
+    const result = await sessionStore.list({
       limit: parsed.limit,
       offset: parsed.offset,
       cwd: parsed.cwd,
       hasParentId: parsed.hasParentId,
     });
     const previews = await Promise.all(
-      result.sessions.map((s) => ctx.sessionHistory.getPreview(s.sessionId ?? s.id)),
+      result.sessions.map((s) => sessionHistory.getPreview(s.sessionId ?? s.id)),
     );
     const sessions = result.sessions.map((s, i) => {
-      const ch = ctx.channelManager.get(s.id);
+      const ch = channelManager.get(s.id);
       return {
         ...s,
         isActive: !!(ch && !ch.exited),
@@ -90,13 +99,13 @@ async function handleList(
 }
 
 async function handleListRemote(
-  ctx: HandlerContext,
+  sessionStore: SessionStore,
   payload: unknown,
   callback: Function,
 ): Promise<void> {
   try {
     const parsed = sessionListRemoteSchema.parse(payload);
-    const result = await ctx.sessionStore.list({
+    const result = await sessionStore.list({
       limit: parsed.limit,
       offset: parsed.offset,
       hasParentId: true,
@@ -107,16 +116,22 @@ async function handleListRemote(
   }
 }
 
-async function handleGet(ctx: HandlerContext, payload: unknown, callback: Function): Promise<void> {
+async function handleGet(
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  sessionHistory: SessionHistory,
+  payload: unknown,
+  callback: Function,
+): Promise<void> {
   try {
     const { channelId } = sessionGetSchema.parse(payload);
-    const session = await ctx.sessionStore.getById(channelId);
+    const session = await sessionStore.getById(channelId);
     if (!session) {
       callback({ error: 'Session not found' });
       return;
     }
-    const events = await ctx.sessionHistory.getSessionHistory(channelId);
-    const channel = ctx.channelManager.get(channelId);
+    const events = await sessionHistory.getSessionHistory(channelId);
+    const channel = channelManager.get(channelId);
     callback({ session, events, meta: channel?.metaCache ?? {} });
   } catch (err) {
     callback({ error: errMsg(err, 'Failed to get session') });
@@ -124,13 +139,13 @@ async function handleGet(ctx: HandlerContext, payload: unknown, callback: Functi
 }
 
 async function handleRawEvents(
-  ctx: HandlerContext,
+  sessionHistory: SessionHistory,
   payload: unknown,
   callback: Function,
 ): Promise<void> {
   try {
     const { channelId } = sessionGetSchema.parse(payload);
-    const entries = await ctx.sessionHistory.getRawEntries(channelId);
+    const entries = await sessionHistory.getRawEntries(channelId);
     const events = entries.map((e) => {
       try {
         return { direction: e.direction, seq: e.seq, ...JSON.parse(e.raw) };

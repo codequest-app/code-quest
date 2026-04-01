@@ -4,15 +4,15 @@ import {
   planGetCommentsSchema,
   planRemoveCommentSchema,
 } from '@code-quest/shared';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   function addComment(socket: TypedSocket, payload: unknown, callback: Function): void {
     try {
       const { channelId, comment } = planCommentSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) {
         channel.planComments.push(comment);
       }
@@ -26,7 +26,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function getComments(payload: unknown, callback: Function): void {
     try {
       const { channelId } = planGetCommentsSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       callback({ comments: channel?.planComments ?? [] });
     } catch {
       callback({ comments: [] });
@@ -36,7 +36,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function removeComment(socket: TypedSocket, payload: unknown, callback: Function): void {
     try {
       const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       const comments = channel?.planComments;
       if (!comments) {
         callback({ success: false, error: 'Comment not found' });
@@ -58,7 +58,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function closePreview(payload: unknown, callback: Function): void {
     try {
       const { channelId } = planClosePreviewSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) channel.planComments = [];
       callback({ success: true });
     } catch {

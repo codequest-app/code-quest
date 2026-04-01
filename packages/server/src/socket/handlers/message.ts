@@ -11,24 +11,25 @@ import {
   type SocketEvent,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
+import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager, sessionStore: SessionStore): SocketHandler {
   const interruptedChannels = new Set<string>();
 
   function handleSend(socket: TypedSocket, payload: unknown): void {
     try {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) return;
       channel.startProcessing();
       channel.sendMessage(textMessage);
-      ctx.channelManager.broadcastSessionState(channelId, 'busy');
+      channelManager.broadcastSessionState(channelId, 'busy');
 
       channel.emitToOthers(socket, 'message:user', {
         channelId,
@@ -46,7 +47,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleCancel(payload: unknown): void {
     try {
       const { channelId } = chatInterruptSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) return;
       if (interruptedChannels.has(channelId)) {
         channel.abort();
@@ -127,7 +128,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     try {
       const { requestId, response } = chatRespondSchema.parse(payload);
 
-      const match = ctx.channelManager.findByRequestId(requestId);
+      const match = channelManager.findByRequestId(requestId);
       if (!match) {
         logger.warn({ requestId }, 'No channel found for control_response');
         return;
@@ -163,7 +164,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleStopTask(payload: unknown): void {
     try {
       const { channelId, taskId } = chatStopTaskSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) {
         channel.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {});
       }
@@ -175,7 +176,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleCancelAsync(payload: unknown): void {
     try {
       const { channelId, messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) {
         channel
           .sendControlRequest('cancel_async_message', { message_uuid: messageUuid })
@@ -189,7 +190,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleRewindCode(payload: unknown, callback: Function): Promise<void> {
     try {
       const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (!channel) {
         callback({ success: false, error: 'Session not found' });
         return;
@@ -207,7 +208,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleCancelRequest(payload: unknown): void {
     try {
       const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
-      const cancelMatch = ctx.channelManager.findByRequestId(targetRequestId);
+      const cancelMatch = channelManager.findByRequestId(targetRequestId);
       if (cancelMatch) {
         const [channelId, channel] = cancelMatch;
         channel.removeControlRequest(targetRequestId);
@@ -226,7 +227,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleHookRespond(payload: unknown): void {
     try {
       const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
-      const channel = ctx.channelManager.get(channelId);
+      const channel = channelManager.get(channelId);
       if (channel) {
         channel.respondToRequest(requestId, response);
       }
@@ -243,17 +244,17 @@ export function create(ctx: HandlerContext): SocketHandler {
     ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
       .then((res) => {
         const { title } = controlGenerateTitleResponseSchema.parse(res.response);
-        ctx.sessionStore
+        sessionStore
           .rename(channelId, title)
           .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-        ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
+        channelManager.broadcastSessionState(channelId, 'idle', title);
       })
       .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
   }
 
   function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {
     ch.endProcessing();
-    ctx.channelManager.broadcastSessionState(channelId, 'idle');
+    channelManager.broadcastSessionState(channelId, 'idle');
     generateTitleIfNeeded(channelId, ch);
   }
 

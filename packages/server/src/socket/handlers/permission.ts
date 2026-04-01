@@ -6,10 +6,10 @@ import {
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
-import type { HandlerContext } from '../context.ts';
+
 import type { SocketHandler } from '../types.ts';
 
-export function create(_ctx: HandlerContext): SocketHandler {
+export function create(): SocketHandler {
   function onCancel(_channelId: string, ch: Channel, se: { payload: unknown }): void {
     const { requestId } = requestIdPayloadSchema.parse(se.payload);
     ch.removeControlRequest(requestId);

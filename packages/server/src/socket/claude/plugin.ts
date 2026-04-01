@@ -9,7 +9,7 @@ import {
   refreshMarketplaceSchema,
   removeMarketplaceSchema,
 } from '@code-quest/shared';
-import type { HandlerContext } from '../context.ts';
+
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
@@ -40,15 +40,15 @@ function buildMarketplaceSource(k: {
   }
 }
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(): SocketHandler {
   return {
     register(socket: TypedSocket) {
-      registerEvents(socket, ctx);
+      registerEvents(socket);
     },
   };
 }
 
-function registerEvents(socket: TypedSocket, ctx: HandlerContext): void {
+function registerEvents(socket: TypedSocket): void {
   socket.on('plugin:list', async (payload, callback) => {
     const cwd = process.cwd();
     const includeAvailable = payload?.includeAvailable ?? false;

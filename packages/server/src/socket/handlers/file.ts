@@ -5,13 +5,13 @@ import { fileListSchema, fileUpdatedPayloadSchema, type SocketEvent } from '@cod
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
-import type { HandlerContext } from '../context.ts';
+import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(channelManager: ChannelManager): SocketHandler {
   function handleRead(payload: { channelId: string; filePath: string }, callback: Function): void {
-    const channel = ctx.channelManager.get(payload.channelId);
+    const channel = channelManager.get(payload.channelId);
     if (!channel) {
       callback({ error: 'Session not found' });
       return;
@@ -82,7 +82,7 @@ export function create(ctx: HandlerContext): SocketHandler {
 
   function listTerminals(pattern: string): FileResult[] {
     const results: FileResult[] = [];
-    for (const routingId of ctx.channelManager.getAllChannelIds()) {
+    for (const routingId of channelManager.getAllChannelIds()) {
       if (routingId.toLowerCase().includes(pattern)) {
         results.push({ type: 'terminal', path: routingId, name: routingId });
       }

@@ -1,5 +1,8 @@
+import type { SessionStore } from '../../../services/session-store.ts';
+import type { SettingsStore } from '../../../services/settings-store.ts';
 import type { ChannelEventRouter } from '../../channel-event-router.ts';
-import type { HandlerContext } from '../../context.ts';
+import type { ChannelManager } from '../../channel-manager.ts';
+import type { SessionHistory } from '../../session-history.ts';
 import type { SocketHandler, TypedSocket } from '../../types.ts';
 import { register as registerForkHandlers } from './fork.ts';
 import {
@@ -9,29 +12,37 @@ import {
   handleLaunch,
   handleResume,
   handleUpdateState,
+  type LifecycleDeps,
   onChannelExit,
   onSessionInit,
 } from './lifecycle.ts';
 import { registerRecord } from './record.ts';
 
-export function create(ctx: HandlerContext): SocketHandler {
+export function create(
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  settingsStore: SettingsStore,
+  sessionHistory: SessionHistory,
+): SocketHandler {
+  const deps: LifecycleDeps = { channelManager, settingsStore, sessionStore, sessionHistory };
+
   return {
     register(socket: TypedSocket) {
       // Lifecycle
-      socket.on('session:launch', (p, cb) => handleLaunch(socket, ctx, p, cb));
-      socket.on('session:join', (p, cb) => handleJoin(socket, ctx, p, cb));
-      socket.on('session:close', (p) => handleClose(ctx, p));
-      socket.on('session:resume', (p) => handleResume(ctx, p));
-      socket.on('session:generate_title', (p, cb) => handleGenerateTitle(ctx, p, cb));
-      socket.on('session:update_state', (p, cb) => handleUpdateState(ctx, p, cb));
+      socket.on('session:launch', (p, cb) => handleLaunch(socket, deps, p, cb));
+      socket.on('session:join', (p, cb) => handleJoin(socket, deps, p, cb));
+      socket.on('session:close', (p) => handleClose(deps, p));
+      socket.on('session:resume', (p) => handleResume(deps, p));
+      socket.on('session:generate_title', (p, cb) => handleGenerateTitle(deps, p, cb));
+      socket.on('session:update_state', (p, cb) => handleUpdateState(deps, p, cb));
       // Fork
-      registerForkHandlers(socket, ctx);
+      registerForkHandlers(socket, channelManager, sessionHistory, sessionStore);
       // Record
-      registerRecord(socket, ctx);
+      registerRecord(socket, channelManager, sessionStore, sessionHistory);
     },
     subscribe(router: ChannelEventRouter) {
-      router.onEvent('session:init', (cid) => onSessionInit(ctx, cid));
-      router.onExit((cid, ch) => onChannelExit(ctx, cid, ch));
+      router.onEvent('session:init', (cid) => onSessionInit(deps, cid));
+      router.onExit((cid, ch) => onChannelExit(deps, cid, ch));
     },
   };
 }

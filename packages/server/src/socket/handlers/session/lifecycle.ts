@@ -10,16 +10,26 @@ import {
 } from '@code-quest/shared';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
+import type { SessionStore } from '../../../services/session-store.ts';
+import type { SettingsStore } from '../../../services/settings-store.ts';
 import type { Channel } from '../../channel.ts';
-import type { HandlerContext } from '../../context.ts';
+import type { ChannelManager } from '../../channel-manager.ts';
 import {
   DEFAULT_THINKING_TOKENS,
   type InitResponseResult,
   initResponseResultSchema,
 } from '../../schemas.ts';
+import type { SessionHistory } from '../../session-history.ts';
 import type { TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 import { persistNewSession } from './persist.ts';
+
+export interface LifecycleDeps {
+  channelManager: ChannelManager;
+  settingsStore: SettingsStore;
+  sessionStore: SessionStore;
+  sessionHistory: SessionHistory;
+}
 
 async function applyPerLaunchSettings(
   channel: Channel,
@@ -48,7 +58,7 @@ async function applyPerLaunchSettings(
 }
 
 async function handleInitResponse(
-  ctx: HandlerContext,
+  ctx: LifecycleDeps,
   initResult: ControlResponse,
 ): Promise<InitResponseResult> {
   const initResponse = controlInitResponseSchema.parse(initResult.response ?? {});
@@ -75,7 +85,7 @@ async function handleInitResponse(
 
 export async function handleLaunch(
   socket: TypedSocket,
-  ctx: HandlerContext,
+  ctx: LifecycleDeps,
   payload: unknown,
   callback?: Function,
 ): Promise<void> {
@@ -140,7 +150,7 @@ export async function handleLaunch(
 
 export async function handleJoin(
   socket: TypedSocket,
-  ctx: HandlerContext,
+  ctx: LifecycleDeps,
   payload: unknown,
   callback?: Function,
 ): Promise<void> {
@@ -186,7 +196,7 @@ export async function handleJoin(
   }
 }
 
-export function handleClose(ctx: HandlerContext, payload: unknown): void {
+export function handleClose(ctx: LifecycleDeps, payload: unknown): void {
   try {
     const { channelId } = chatKillSchema.parse(payload);
     const ch = ctx.channelManager.get(channelId);
@@ -199,7 +209,7 @@ export function handleClose(ctx: HandlerContext, payload: unknown): void {
   }
 }
 
-export function handleResume(ctx: HandlerContext, payload: unknown): void {
+export function handleResume(ctx: LifecycleDeps, payload: unknown): void {
   try {
     const { channelId } = sessionResumePayloadSchema.parse(payload);
     ctx.channelManager.broadcastSessionResume(channelId);
@@ -209,7 +219,7 @@ export function handleResume(ctx: HandlerContext, payload: unknown): void {
 }
 
 export async function handleGenerateTitle(
-  ctx: HandlerContext,
+  ctx: LifecycleDeps,
   payload: unknown,
   callback?: Function,
 ): Promise<void> {
@@ -228,7 +238,7 @@ export async function handleGenerateTitle(
   }
 }
 
-export function handleUpdateState(ctx: HandlerContext, payload: unknown, callback: Function): void {
+export function handleUpdateState(ctx: LifecycleDeps, payload: unknown, callback: Function): void {
   try {
     const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
     ctx.channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
@@ -238,11 +248,11 @@ export function handleUpdateState(ctx: HandlerContext, payload: unknown, callbac
   }
 }
 
-export function onSessionInit(ctx: HandlerContext, channelId: string): void {
+export function onSessionInit(ctx: LifecycleDeps, channelId: string): void {
   ctx.channelManager.broadcastSessionState(channelId, 'busy');
 }
 
-export function onChannelExit(ctx: HandlerContext, channelId: string, ch: Channel): void {
+export function onChannelExit(ctx: LifecycleDeps, channelId: string, ch: Channel): void {
   ctx.channelManager.broadcastSessionState(channelId, 'exited');
   ch.resetSessionState();
   ch.emit('session:closed', {
