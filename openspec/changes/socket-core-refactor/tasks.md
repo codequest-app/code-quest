@@ -187,6 +187,29 @@
 - [x] 17.2d `sendNotification()` 保留在 Channel（目前無呼叫者，未來 CLI notification 功能可能需要）— 後續有呼叫者時再決定位置
 - [x] 17.2f chat:respond mcpTimeouts 跨域問題已透過 method 封裝（setMcpTimeout/clearMcpTimeout）解決
 
+## 18. sessionIdReady blocking 修正 + persist 分離（原子組 A）
+
+Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `session:init`（帶 sessionId）不一定在 `control_response` 之後立即到達，可能要等第一則訊息才觸發。導致 `handleLaunch` 整個被卡住，`broadcastSessionCreated` 永遠不執行，B 視窗看不到新 tab。
+
+修正原則：create() 只等 control_response，persist 由 session:init event 驅動。
+
+以下改動必須一起做：
+
+- [ ] 18.1 `channelManager.create()` 移除 `await channel.sessionIdReady`
+- [ ] 18.2 `connect.ts handleLaunch` 移除 persist（sessionId 此時不可用）
+- [ ] 18.3 `fork.ts handleFork/handleTeleport` 移除 persist，改為把 `parentId` 存到 channel sessionState
+- [ ] 18.4 `connect.ts onSessionInit` 加入 persist 邏輯（session:init 到達時 sessionId 已設定，讀 channel.sessionState.parentId 判斷是否為 fork）
+- [ ] 18.5 schemas.ts SessionState 加 `parentId` optional 欄位
+- [ ] 18.6 更新 persist 相關 tests（fork parentId、session persist timing）
+- [ ] 18.7 typecheck + test 全過
+- [ ] 18.8 手動驗證：A 視窗點 +，B 視窗出現新 tab + DB 有寫入
+
+## 19. generateTitle 分離（原子組 B，獨立）
+
+- [ ] 19.1 `message.ts onMessageResult` 不再直接呼叫 generateTitle — 只做 endProcessing + broadcastIdle
+- [ ] 19.2 generateTitle 改為在 onMessageResult 之後 fire-and-forget（或獨立 event subscriber）
+- [ ] 19.3 typecheck + test 全過
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
