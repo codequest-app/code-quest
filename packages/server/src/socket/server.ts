@@ -1,15 +1,6 @@
-import type {
-  AuthStatus,
-  ClientToServerEvents,
-  NotificationPayload,
-  NotificationResponse,
-  ServerToClientEvents,
-  SocketEvent,
-} from '@code-quest/shared';
-import type { ProcessRunner } from '@code-quest/summoner';
+import type { AuthStatus, ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
-import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
@@ -91,29 +82,6 @@ export class SocketServer implements HandlerContext {
     io.on('connection', (socket) => this.handleConnection(socket));
   }
 
-  resolveSessionId(channelId: string): Promise<string> {
-    return this.channelManager.resolveSessionId(channelId);
-  }
-
-  /** Retrieve parsed history events — delegates to ChannelManager. */
-  async getSessionHistory(channelId: string): Promise<SocketEvent[]> {
-    return this.channelManager.getSessionHistory(channelId);
-  }
-
-  /** Get pending control events and responded IDs for replay — delegates to ChannelManager. */
-  getPendingReplayEvents(sessionId: string) {
-    return this.channelManager.getPendingReplayEvents(sessionId);
-  }
-
-  requireRunner(_socket: TypedSocket, channelId: string): ProcessRunner | null {
-    const runner = this.channelManager.get(channelId)?.runner ?? null;
-    if (!runner) {
-      logger.warn({ channelId }, 'Runner not found');
-      return null;
-    }
-    return runner;
-  }
-
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
     const cache = this.channelManager.get(channelId)?.sessionState ?? {};
 
@@ -144,16 +112,6 @@ export class SocketServer implements HandlerContext {
     if (Object.keys(settings).length > 0) {
       this.io?.emit('settings:update', { channelId, ...settings });
     }
-  }
-
-  /**
-   * Send a notification with optional action buttons to the client connected to
-   * the given session. Returns the client's response (e.g. which button was clicked).
-   */
-  sendNotification(channelId: string, payload: NotificationPayload): Promise<NotificationResponse> {
-    const channel = this.channelManager.get(channelId);
-    if (!channel) return Promise.resolve({});
-    return channel.sendNotification(payload);
   }
 
   emitToSession(channelId: string, ...args: Parameters<TypedSocket['emit']>): void {

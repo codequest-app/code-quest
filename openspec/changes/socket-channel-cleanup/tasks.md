@@ -56,14 +56,11 @@
 
 ### Phase 7: SocketServer 瘦身
 
-- [ ] 28. 移除 server.ts 上不再需要的 delegate methods + 更新 context.ts interface
-- [ ] 28. 移除 server.ts 上不再需要的 delegate methods + 更新 context.ts interface
-- [ ] 29. broadcastSessionState 抽成獨立 function（不再是 SocketServer method）
-- [ ] 30. 移除 sendNotification（無 handler 直接用）
-- [ ] 31. SocketServer 只剩 DI constructor + register + handleConnection
-- [ ] 32. 跑全部 test + typecheck
+- [x] 28. 移除 delegate methods（resolveSessionId / getSessionHistory / getPendingReplayEvents / requireRunner / sendNotification）+ 更新 handler 呼叫端 + 更新 context.ts interface
+- [x] 29. broadcastSessionState / emitToSession / addSocketToChannel 保留（有實際邏輯，不是純 delegate）
+- [x] 30. 跑全部 test + typecheck
 
 ### Phase 8: 重構 test
 
-- [ ] 33. 檢視所有 test，更新因重構需要調整的 import / mock
-- [ ] 34. 最終全量 test + typecheck
+- [ ] 31. 檢視所有 test，更新因重構需要調整的 import / mock
+- [ ] 32. 最終全量 test + typecheck

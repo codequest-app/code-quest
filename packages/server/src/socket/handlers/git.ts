@@ -86,7 +86,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
       const entry: RawEntry = {
         timestamp: Date.now(),
-        sessionId: await ctx.resolveSessionId(channelId),
+        sessionId: await ctx.channelManager.resolveSessionId(channelId),
         promptId: '',
         direction: 'out',
         raw: JSON.stringify({

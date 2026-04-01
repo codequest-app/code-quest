@@ -1,10 +1,4 @@
-import type {
-  AuthStatus,
-  NotificationPayload,
-  NotificationResponse,
-  SocketEvent,
-} from '@code-quest/shared';
-import type { ProcessRunner } from '@code-quest/summoner';
+import type { AuthStatus } from '@code-quest/shared';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
@@ -38,23 +32,11 @@ export interface HandlerContext {
   socketChannelsMap: Map<string, Set<string>>;
 
   // ── Methods ──
-  requireRunner(socket: TypedSocket, channelId: string): ProcessRunner | null;
-
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void;
 
   emitToSession(channelId: string, ...args: Parameters<TypedSocket['emit']>): void;
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void;
 
-  getSessionHistory(channelId: string): Promise<SocketEvent[]>;
-
-  getPendingReplayEvents(
-    sessionId: string,
-  ): Promise<{ events: SocketEvent[]; respondedRequestIds: Set<string> }>;
-
   buildChannelHooks(channelId: string): WireRunnerHooks;
-
-  resolveSessionId(channelId: string): Promise<string>;
-
-  sendNotification(channelId: string, payload: NotificationPayload): Promise<NotificationResponse>;
 }

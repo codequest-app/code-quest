@@ -94,7 +94,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ error: 'Session not found' });
         return;
       }
-      const events = await ctx.getSessionHistory(channelId);
+      const events = await ctx.channelManager.getSessionHistory(channelId);
       const channel = ctx.channelManager.get(channelId);
       callback({ session, events, meta: channel?.metaCache ?? {} });
     } catch (err) {
@@ -105,7 +105,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:raw_events', async (payload, callback) => {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
-      const entries = await ctx.rawEventStore.getBySession(await ctx.resolveSessionId(channelId));
+      const entries = await ctx.rawEventStore.getBySession(
+        await ctx.channelManager.resolveSessionId(channelId),
+      );
       const events = entries.map((e) => {
         try {
           return { direction: e.direction, seq: e.seq, ...JSON.parse(e.raw) };

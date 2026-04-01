@@ -9,7 +9,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:fork', async (payload, callback) => {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
-      const parentEvents = await ctx.getSessionHistory(forkedFromSession);
+      const parentEvents = await ctx.channelManager.getSessionHistory(forkedFromSession);
       const hooks = ctx.buildChannelHooks(newSessionId);
       const { channel: forkChannel } = await ctx.channelManager.create(newSessionId, {
         hooks,
@@ -43,7 +43,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:teleport', async (payload, callback) => {
     try {
       const parsed = sessionTeleportSchema.parse(payload);
-      const events = await ctx.getSessionHistory(parsed.remoteSessionId);
+      const events = await ctx.channelManager.getSessionHistory(parsed.remoteSessionId);
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
