@@ -12,7 +12,7 @@ import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
-import { composeHandlers } from './composeHandlers';
+import { composeHandlers } from './handlers/composeHandlers';
 
 export interface ChannelComposeContextValue {
   value: string;

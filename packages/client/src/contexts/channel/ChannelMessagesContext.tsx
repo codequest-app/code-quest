@@ -21,7 +21,7 @@ import { type ChannelInitialState, type ChannelState, initialChannelState } from
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { openUrl } from '../../utils/open-url';
 import { useSocket } from '../SocketContext';
-import { createMessagesActions, messagesHandlers } from './messagesHandlers';
+import { createMessagesActions, messagesHandlers } from './handlers/messagesHandlers';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
