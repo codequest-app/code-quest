@@ -434,6 +434,39 @@ describe('ChatHandler > session', () => {
       expect(record!.sessionId).toBeTruthy();
     });
 
+    it('session:created is NOT blocked when session:init has no sessionId', async () => {
+      const claude = createFakeClaude();
+      const socketB = claude.connect();
+      const createdEvents = collectEvents<{ channelId: string }>(socketB, 'session:created');
+
+      // session:init without sessionId (simulates delayed sessionId)
+      const initWithoutSessionId = JSON.stringify({
+        type: 'init',
+        session_id: '',
+      });
+      const controlResp = JSON.stringify({
+        type: 'control_response',
+        response: { subtype: 'success', request_id: '' },
+      });
+
+      const channelId = crypto.randomUUID();
+      await claude.initialize({ launch: { channelId } }, initWithoutSessionId, controlResp);
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      // session:created should fire even without sessionId
+      expect(createdEvents.some((e) => e.channelId === channelId)).toBe(true);
+    });
+
+    it('persist happens when session:init arrives with sessionId', async () => {
+      const { claude, channelId } = await setup();
+      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+
+      // session:init already arrived during setup() — persist should have happened
+      const record = await sessionStore.getById(channelId);
+      expect(record).toBeDefined();
+      expect(record!.sessionId).toBe('cli-sess');
+    });
+
     it('session:created is broadcast to second socket after launch', async () => {
       const { claude } = await setup();
       const socketB = claude.connect();

@@ -201,7 +201,7 @@ Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `
 - [x] 18.4 `onSessionInit` 加 persist（讀 channel.sessionState.parentId）
 - [x] 18.5 SessionState 加 `parentId`
 - [x] 18.6 所有 399 tests pass，expect 不變
-- [ ] 18.8 手動驗證：A 視窗點 +，B 視窗出現新 tab + DB 有寫入
+- [x] 18.8 自動化測試：「session:created not blocked when sessionId empty」+「persist happens when session:init arrives」（401 pass）
 
 ## 19. generateTitle 分離（原子組 B，獨立）
 
