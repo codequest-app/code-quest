@@ -12,6 +12,7 @@ import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
+import { composeHandlers } from './composeHandlers';
 
 export interface ChannelComposeContextValue {
   value: string;
@@ -62,18 +63,24 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);
   stateRef.current = state;
+  // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    const onSpeechToText = (payload: { channelId: string; text: string }) => {
-      if (payload.channelId !== channelId && payload.channelId !== '') return;
-      setState((prev) => ({
-        ...prev,
-        value: prev.value ? `${prev.value} ${payload.text}` : payload.text,
-      }));
-    };
-    socket.on('speech:message', onSpeechToText);
+    const guard = (payload: { channelId: string }) =>
+      payload.channelId === channelId || payload.channelId === '';
+    const entries = Object.entries(composeHandlers) as Array<
+      [string, (state: ComposeState, payload: never) => ComposeState]
+    >;
+    const wired = entries.map(([event, handler]) => {
+      const fn = (payload: { channelId: string }) => {
+        if (!guard(payload)) return;
+        setState((prev) => handler(prev, payload as never));
+      };
+      socket.on(event as never, fn as never);
+      return { event, fn };
+    });
     return () => {
-      socket.off('speech:message', onSpeechToText);
+      for (const { event, fn } of wired) socket.off(event as never, fn as never);
     };
   }, [channelId, socket]);
 

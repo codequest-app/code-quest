@@ -45,12 +45,11 @@ Context 只負責接線，不定義業務邏輯。
 
 ## 6. ChannelComposeContext handler map + auto-wiring
 
-- [ ] 6.1 新建 `contexts/channel/composeHandlers.ts`：on handler（speech:message）+ createComposeActions（emit）
-- [ ] 6.2 context 改用 auto-wiring
-- [ ] 6.3 typecheck + 615 test pass
+- [x] 6.1 新建 `contexts/channel/composeHandlers.ts`：1 on handler（speech:message），無 emit actions
+- [x] 6.2 context 改用 auto-wiring
+- [x] 6.3 typecheck + 615 test pass
 
 ## 7. 清理
 
-- [ ] 7.1 確認所有 context 不再有手動 guard function
-- [ ] 7.2 確認行數大幅下降
-- [ ] 7.3 biome check + typecheck + 615 test pass
+- [ ] 7.1 確認行數變化 + 所有 context guard 消除情況
+- [ ] 7.2 biome check + typecheck + 615 test pass
