@@ -82,13 +82,13 @@
 - [x] 9.6 + 9.7 消除 `_sessionHistory` setter injection — ChannelManager 改接 `resolveSessionId` callback，container.ts 用 lazy callback 解循環依賴
 - [x] 9.8 `getPendingReplayEvents` 不再重複查詢 DB — 抽出 `convertRawEntriesToSocketEvents`
 - [x] 9.9 `raw-recorder.ts` `channel.lastError` 評估後保留（stderr→lastError 映射在此處合理）
-- [ ] 9.10 `context.ts`：`io` 不再暴露 — ChannelManager 新增 broadcast 方法，handler 改用：
-  - [ ] 9.10a `broadcastSettingsUpdate(channelId, settings)` — 取代 10 處 `ctx.io?.emit('settings:update', ...)`
-  - [ ] 9.10b `broadcastSessionCreated(channelId)` / `broadcastSessionDead(channelId)` / `broadcastSessionResume(channelId)` — 取代 5 處
-  - [ ] 9.10c `broadcastModels(models)` — 取代 2 處 `ctx.io?.emit('app:models', ...)`
-  - [ ] 9.10d 剩餘的 `session:states` 直接呼叫改用 `broadcastSessionState`
-  - [ ] 9.10e HandlerContext 移除 `io` 屬性，SocketServer 移除 `io` 暴露
-  - [ ] 9.10f typecheck + test 全過
+- [x] 9.10 `io` 不再暴露 — 22 處 `ctx.io?.emit` 全部改用 ChannelManager broadcast methods
+  - [x] 9.10a `broadcastSettingsUpdate` — 取代 10 處
+  - [x] 9.10b `broadcastSessionCreated/Dead/Resume` — 取代 5 處
+  - [x] 9.10c `broadcastModels` — 取代 2 處
+  - [x] 9.10d `session:states` 改用 `broadcastSessionState` — 取代 2 處
+  - [x] 9.10e HandlerContext 移除 `io`
+  - [x] 9.10f typecheck + test 全過（397/397）
 - [ ] 9.11 `authState` / `cachedModels` 從 HandlerContext 移到專屬管理：
   - [ ] 9.11a `cachedModels` 移到 ChannelManager（lifecycle 寫入，app/connection 讀取，都已有 channelManager 存取）
   - [ ] 9.11b `authState` 移到 `claude/state.ts`（只有 claude/auth.ts 讀寫）

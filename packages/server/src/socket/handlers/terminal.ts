@@ -35,9 +35,7 @@ export function create(ctx: HandlerContext): SocketHandler {
       });
       ch.updateSessionState({ cwd: baseCwd });
 
-      ctx.io?.emit('session:states', {
-        sessions: [{ channelId: newChannelId, state: 'idle' }],
-      });
+      ctx.channelManager.broadcastSessionState(newChannelId, 'idle');
 
       if (prompt) {
         ch.sendMessage(prompt);

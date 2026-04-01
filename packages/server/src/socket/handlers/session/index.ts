@@ -142,9 +142,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   function handleUpdateState(payload: unknown, callback: Function): void {
     try {
       const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
-      ctx.io?.emit('session:states', {
-        sessions: [{ channelId, state: state ?? 'idle', ...(title ? { title } : {}) }],
-      });
+      ctx.channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
       callback({ success: true });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to update session state') });

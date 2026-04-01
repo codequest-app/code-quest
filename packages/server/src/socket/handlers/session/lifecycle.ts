@@ -59,13 +59,12 @@ async function handleInitResponse(
   if (models) {
     ctx.cachedModels = models;
     await ctx.settingsStore.set(ctx.channelManager.provider, 'models', models);
-    ctx.io?.emit('app:models', { channelId: '', models });
+    ctx.channelManager.broadcastModels(models);
   }
 
   if (account && Object.keys(account).length > 0) {
     const { email, subscriptionType, authMethod, organization } = account;
-    ctx.io?.emit('settings:update', {
-      channelId: '',
+    ctx.channelManager.broadcastSettingsUpdate('', {
       accountInfo: { email, subscriptionType, authMethod, organization },
     });
   }
@@ -118,7 +117,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         socket.emit('app:models', { channelId: '', models: ctx.cachedModels });
       }
 
-      ctx.io?.emit('session:created', { channelId });
+      ctx.channelManager.broadcastSessionCreated(channelId);
       callback?.({ channelId, slashCommands, models, account });
 
       if (parsed.initialPrompt) {
@@ -129,7 +128,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const message = errMsg(err, 'Failed to create session');
       if (resumeSessionId && message.includes('No conversation found')) {
         await ctx.sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
-        ctx.io?.emit('session:dead', { channelId: resumeSessionId });
+        ctx.channelManager.broadcastSessionDead(resumeSessionId);
         return;
       }
       callback?.({ channelId: '', error: message });
@@ -185,7 +184,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       const ch = ctx.channelManager.get(channelId);
       if (ch) {
         ch.kill();
-        ctx.io?.emit('session:dead', { channelId });
+        ctx.channelManager.broadcastSessionDead(channelId);
       }
     } catch {
       // ignore
@@ -195,7 +194,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:resume', (payload) => {
     try {
       const { channelId } = sessionResumePayloadSchema.parse(payload);
-      ctx.io?.emit('session:resume', { channelId });
+      ctx.channelManager.broadcastSessionResume(channelId);
     } catch {
       // ignore invalid payload
     }

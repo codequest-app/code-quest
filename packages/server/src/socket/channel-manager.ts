@@ -198,6 +198,26 @@ export class ChannelManager {
 
   // ── Broadcasting ──
 
+  broadcastSettingsUpdate(channelId: string, settings: Record<string, unknown>): void {
+    this.io?.emit('settings:update', { channelId, ...settings });
+  }
+
+  broadcastSessionCreated(channelId: string): void {
+    this.io?.emit('session:created', { channelId });
+  }
+
+  broadcastSessionDead(channelId: string): void {
+    this.io?.emit('session:dead', { channelId });
+  }
+
+  broadcastSessionResume(channelId: string): void {
+    this.io?.emit('session:resume', { channelId });
+  }
+
+  broadcastModels(models: unknown[]): void {
+    this.io?.emit('app:models', { channelId: '', models });
+  }
+
   /** Broadcast session state + settings to all connected clients.
    *  Key mapping (e.g. model → modelSetting) matches shared SessionStateSummary / UpdateStatePayload schemas. */
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {

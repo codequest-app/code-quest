@@ -23,7 +23,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
           parentId: forkedFromSession,
         });
       }
-      ctx.io?.emit('session:created', { channelId: newSessionId });
+      ctx.channelManager.broadcastSessionCreated(newSessionId);
       callback({
         success: true,
         channelId: newSessionId,
@@ -71,7 +71,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
       });
 
-      ctx.io?.emit('session:created', { channelId: parsed.newSessionId });
+      ctx.channelManager.broadcastSessionCreated(parsed.newSessionId);
       callback({
         success: true,
         channelId: parsed.newSessionId,

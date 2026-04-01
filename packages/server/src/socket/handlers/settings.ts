@@ -50,7 +50,7 @@ export function create(ctx: HandlerContext): SocketHandler {
       }
       await channel.sendControlRequest('set_permission_mode', { mode });
       await ctx.settingsStore.set(channel.provider, 'permissionMode', mode);
-      ctx.io?.emit('settings:update', { channelId, initialPermissionMode: mode });
+      ctx.channelManager.broadcastSettingsUpdate(channelId, { initialPermissionMode: mode });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
@@ -72,7 +72,7 @@ export function create(ctx: HandlerContext): SocketHandler {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await ctx.settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
-      ctx.io?.emit('settings:update', { channelId, thinkingLevel });
+      ctx.channelManager.broadcastSettingsUpdate(channelId, { thinkingLevel });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
@@ -85,8 +85,7 @@ export function create(ctx: HandlerContext): SocketHandler {
       const channel = ctx.channelManager.get(channelId);
       if (!channel) return;
       await channel.sendControlRequest('set_proactive', { enabled });
-      ctx.io?.emit('settings:update', {
-        channelId,
+      ctx.channelManager.broadcastSettingsUpdate(channelId, {
         fastModeState: enabled ? 'on' : 'off',
       });
     } catch {
@@ -117,7 +116,9 @@ export function create(ctx: HandlerContext): SocketHandler {
       await channel.sendControlRequest('apply_flag_settings', { settings });
       if (settings.effortLevel != null) {
         await ctx.settingsStore.set(channel.provider, 'effortLevel', String(settings.effortLevel));
-        ctx.io?.emit('settings:update', { channelId, effort: String(settings.effortLevel) });
+        ctx.channelManager.broadcastSettingsUpdate(channelId, {
+          effort: String(settings.effortLevel),
+        });
       }
       callback({ success: true });
     } catch (err) {
