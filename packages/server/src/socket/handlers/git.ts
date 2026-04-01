@@ -9,7 +9,7 @@ import type { RawEntry } from '@code-quest/summoner';
 import type { HandlerContext } from '../context.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
-import { execGit } from '../utils/exec-git.ts';
+import { checkoutBranch, execGit } from '../utils/exec-git.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
   function handleStatus(callback: Function): void {
@@ -34,16 +34,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   async function handleCheckout(payload: unknown, callback: Function): Promise<void> {
     try {
       const { branch } = gitCheckoutSchema.parse(payload);
-      try {
-        await execGit(['checkout', branch]);
-      } catch {
-        try {
-          await execGit(['fetch', 'origin']);
-          await execGit(['checkout', branch]);
-        } catch {
-          await execGit(['checkout', '--track', `origin/${branch}`]);
-        }
-      }
+      await checkoutBranch(branch);
       callback({ success: true });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to checkout') });

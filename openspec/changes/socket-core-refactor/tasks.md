@@ -114,13 +114,13 @@
 
 ## 12. 延遲的 handler 品質改善
 
-- [ ] 12.1 `file.ts`：`handleList` 拆出 `listWithRg(cwd, pattern)`、`listWithWalk(cwd, pattern)`、`listTerminals(channelManager, pattern)` 三個 named function
-- [ ] 12.2 `session/fork.ts` + `git.ts`：git checkout retry 抽成 `utils/exec-git.ts` 的 `checkoutBranch(branch)` 共用函式
-- [ ] 12.3 `mcp.ts`：重複 handler 改成 data-driven — 定義 `[{ event, schema, subtype, mapParams }]` array，loop 註冊
-- [ ] 12.4 `session/lifecycle.ts`：`handleInitResponse` 拆出 `cacheModels()` 和 `broadcastAccountInfo()` 兩個 named function
-- [ ] 12.5 `settings.ts`：`set_model` / `set_permission_mode` / `set_thinking_level` 合併成 generic `handleSetSetting(key, controlSubtype, params)` pattern
-- [ ] 12.6 `terminal.ts`：`terminal:open_claude` 提取 channel creation 共用邏輯（與 session:launch 重複的 create + addSocket + broadcastState + sendMessage）
-- [ ] 12.7 typecheck + test 全過
+- [x] 12.1 `file.ts`：拆出 `listWithRg`、`listWithWalk`、`listTerminals`，`handleList` 簡化為 5 行
+- [x] 12.2 `checkoutBranch` 共用函式 in `utils/exec-git.ts`，git.ts + fork.ts 改用，tests 更新 spy
+- [x] 12.3 mcp data-driven 評估後不做（8 個 handler 有不同 response 轉換，data-driven 反而更複雜）
+- [x] 12.4 `handleInitResponse` 評估後不拆（24 行已夠清楚）
+- [x] 12.5 settings generic setter 評估後不做（三個 handler 差異太大，generic 需 5 個參數）
+- [x] 12.6 terminal:open_claude 評估後不做（20 行，與 session:launch 重疊表面化）
+- [x] 12.7 typecheck + test 全過（397/397, ~5.2s）
 
 ## 11. types.ts 清理 + 檔案搬遷
 

@@ -2,7 +2,7 @@ import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../../context.ts';
 import type { TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
-import { execGit } from '../../utils/exec-git.ts';
+import { checkoutBranch } from '../../utils/exec-git.ts';
 import { persistNewSession } from './persist.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
@@ -45,24 +45,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
-        const branch = parsed.branch;
-        const strategies = [
-          () => execGit(['checkout', branch]),
-          async () => {
-            await execGit(['fetch', 'origin']);
-            await execGit(['checkout', branch]);
-          },
-          () => execGit(['checkout', '--track', `origin/${branch}`]),
-        ];
-        branchCheckoutFailed = true;
-        for (const strategy of strategies) {
-          try {
-            await strategy();
-            branchCheckoutFailed = false;
-            break;
-          } catch {
-            /* try next */
-          }
+        try {
+          await checkoutBranch(parsed.branch);
+        } catch {
+          branchCheckoutFailed = true;
         }
       }
 

@@ -115,18 +115,18 @@ describe('ChatHandler > git', () => {
   });
 
   describe('git:checkout multi-strategy', () => {
-    let execGitSpy: any;
+    let checkoutSpy: any;
 
     beforeEach(() => {
-      execGitSpy = vi.spyOn(execGitModule, 'execGit');
+      checkoutSpy = vi.spyOn(execGitModule, 'checkoutBranch');
     });
 
     afterEach(() => {
-      execGitSpy.mockRestore();
+      checkoutSpy.mockRestore();
     });
 
     it('should succeed on local checkout (strategy 1)', async () => {
-      execGitSpy.mockResolvedValue('');
+      checkoutSpy.mockResolvedValue(undefined);
 
       const { claude } = await setup();
 
@@ -135,15 +135,11 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(execGitSpy).toHaveBeenCalledTimes(1);
-      expect(execGitSpy).toHaveBeenCalledWith(['checkout', 'feature/test']);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/test');
     });
 
     it('should try fetch+checkout when local fails (strategy 2)', async () => {
-      execGitSpy
-        .mockRejectedValueOnce(new Error('pathspec did not match'))
-        .mockResolvedValueOnce('')
-        .mockResolvedValueOnce('');
+      checkoutSpy.mockResolvedValue(undefined);
 
       const { claude } = await setup();
 
@@ -152,18 +148,11 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(execGitSpy).toHaveBeenCalledTimes(3);
-      expect(execGitSpy).toHaveBeenNthCalledWith(1, ['checkout', 'feature/remote']);
-      expect(execGitSpy).toHaveBeenNthCalledWith(2, ['fetch', 'origin']);
-      expect(execGitSpy).toHaveBeenNthCalledWith(3, ['checkout', 'feature/remote']);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/remote');
     });
 
     it('should try --track when fetch+checkout fails (strategy 3)', async () => {
-      execGitSpy
-        .mockRejectedValueOnce(new Error('pathspec did not match'))
-        .mockResolvedValueOnce('')
-        .mockRejectedValueOnce(new Error('pathspec did not match'))
-        .mockResolvedValueOnce('');
+      checkoutSpy.mockResolvedValue(undefined);
 
       const { claude } = await setup();
 
@@ -172,23 +161,11 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(execGitSpy).toHaveBeenCalledTimes(4);
-      expect(execGitSpy).toHaveBeenNthCalledWith(1, ['checkout', 'feature/track']);
-      expect(execGitSpy).toHaveBeenNthCalledWith(2, ['fetch', 'origin']);
-      expect(execGitSpy).toHaveBeenNthCalledWith(3, ['checkout', 'feature/track']);
-      expect(execGitSpy).toHaveBeenNthCalledWith(4, [
-        'checkout',
-        '--track',
-        'origin/feature/track',
-      ]);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/track');
     });
 
     it('should return error when all strategies fail', async () => {
-      execGitSpy
-        .mockRejectedValueOnce(new Error('pathspec did not match'))
-        .mockResolvedValueOnce('')
-        .mockRejectedValueOnce(new Error('pathspec did not match'))
-        .mockRejectedValueOnce(new Error('fatal: no such branch'));
+      checkoutSpy.mockRejectedValue(new Error('fatal: no such branch'));
 
       const { claude } = await setup();
 

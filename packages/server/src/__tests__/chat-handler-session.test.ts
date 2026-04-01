@@ -1464,7 +1464,7 @@ describe('session:teleport', () => {
   });
 
   it('should attempt git checkout if branch provided', async () => {
-    const execGitSpy = vi.spyOn(execGitModule, 'execGit').mockResolvedValue('');
+    const checkoutSpy = vi.spyOn(execGitModule, 'checkoutBranch').mockResolvedValue(undefined);
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
@@ -1474,14 +1474,14 @@ describe('session:teleport', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(execGitSpy).toHaveBeenCalledWith(['checkout', 'feature/x']);
+    expect(checkoutSpy).toHaveBeenCalledWith('feature/x');
 
-    execGitSpy.mockRestore();
+    checkoutSpy.mockRestore();
   });
 
   it('should succeed even if git checkout fails', async () => {
     const execGitSpy = vi
-      .spyOn(execGitModule, 'execGit')
+      .spyOn(execGitModule, 'checkoutBranch')
       .mockRejectedValue(new Error('checkout failed'));
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
