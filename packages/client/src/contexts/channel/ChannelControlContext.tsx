@@ -89,7 +89,7 @@ export function ChannelControlProvider({
   useEffect(() => {
     if (!channelId) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onControlPermission = (payload: Payload<'control:permission'>) => {
+    function onControlPermission(payload: Payload<'control:permission'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
       setControls((prev) => [
@@ -115,7 +115,7 @@ export function ChannelControlProvider({
           }),
         ],
       }));
-    };
+    }
     socket.on('control:permission', onControlPermission);
     return () => { socket.off('control:permission', onControlPermission); };
   }, [channelId, socket, setChannelState, resetStreamingRefs]);
@@ -124,7 +124,7 @@ export function ChannelControlProvider({
   useEffect(() => {
     if (!channelId) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onControlHookCallback = (payload: Payload<'control:hook_callback'>) => {
+    function onControlHookCallback(payload: Payload<'control:hook_callback'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
       setControls((prev) => [
@@ -149,7 +149,7 @@ export function ChannelControlProvider({
           }),
         ],
       }));
-    };
+    }
     socket.on('control:hook_callback', onControlHookCallback);
     return () => { socket.off('control:hook_callback', onControlHookCallback); };
   }, [channelId, socket, setChannelState, resetStreamingRefs]);
@@ -158,7 +158,7 @@ export function ChannelControlProvider({
   useEffect(() => {
     if (!channelId) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onSessionClosed = (payload: Payload<'session:closed'>) => {
+    function onSessionClosed(payload: Payload<'session:closed'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
       setControls([]);
@@ -173,7 +173,7 @@ export function ChannelControlProvider({
         ],
         status: 'idle',
       }));
-    };
+    }
     socket.on('session:closed', onSessionClosed);
     return () => { socket.off('session:closed', onSessionClosed); };
   }, [channelId, socket, setChannelState, resetStreamingRefs]);
@@ -182,7 +182,7 @@ export function ChannelControlProvider({
   useEffect(() => {
     if (!channelId) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onControlMcp = (payload: Payload<'control:mcp'>) => {
+    function onControlMcp(payload: Payload<'control:mcp'>) {
       if (!guard(payload)) return;
       const mcpMsg = payload.message;
       socket.emit('chat:respond', {
@@ -194,7 +194,7 @@ export function ChannelControlProvider({
           id: typeof mcpMsg.id === 'string' || typeof mcpMsg.id === 'number' ? mcpMsg.id : null,
         },
       });
-    };
+    }
     socket.on('control:mcp', onControlMcp);
     return () => { socket.off('control:mcp', onControlMcp); };
   }, [channelId, socket]);

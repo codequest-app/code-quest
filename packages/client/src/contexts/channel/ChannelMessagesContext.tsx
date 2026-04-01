@@ -185,7 +185,7 @@ export function ChannelMessagesProvider({
       joined = true;
     });
 
-    const onSessionStates = (payload: Parameters<ServerToClientEvents['session:states']>[0]) => {
+    function onSessionStates(payload: Parameters<ServerToClientEvents['session:states']>[0]) {
       if (!joined) return;
       const match = payload.sessions.find((s) => s.channelId === channelId);
       if (!match) return;
@@ -199,7 +199,7 @@ export function ChannelMessagesProvider({
               : ('idle' as const);
         return prev.status === next ? prev : { ...prev, status: next };
       });
-    };
+    }
     socket.on('session:states', onSessionStates);
     return () => {
       socket.off('session:states', onSessionStates);
@@ -283,7 +283,7 @@ export function ChannelMessagesProvider({
     const appendOrCreateText = (content: string, parentToolUseId?: string) =>
       streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
 
-    const onStreamChunk = (p: Payload<'stream:chunk'>) => {
+    function onStreamChunk(p: Payload<'stream:chunk'>) {
       if (!guard(p)) return;
       const { chunk, parentToolUseId } = p;
       switch (chunk.kind) {
@@ -341,7 +341,7 @@ export function ChannelMessagesProvider({
         case 'signature':
           break;
       }
-    };
+    }
 
     socket.on('stream:chunk', onStreamChunk);
     return () => { socket.off('stream:chunk', onStreamChunk); };
@@ -351,10 +351,10 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onStreamEnd = (p: Payload<'stream:end'>) => {
+    function onStreamEnd(p: Payload<'stream:end'>) {
       if (!guard(p)) return;
       resetStreamingRefs();
-    };
+    }
     socket.on('stream:end', onStreamEnd);
     return () => { socket.off('stream:end', onStreamEnd); };
   }, [channelId, socket]);
@@ -407,10 +407,10 @@ export function ChannelMessagesProvider({
       resetStreamingRefs();
     };
 
-    const onMessageAssistant = (p: Payload<'message:assistant'>) => {
+    function onMessageAssistant(p: Payload<'message:assistant'>) {
       if (!guard(p)) return;
       handleAssistantContent(p.content, p.parentToolUseId);
-    };
+    }
 
     socket.on('message:assistant', onMessageAssistant);
     return () => { socket.off('message:assistant', onMessageAssistant); };
@@ -420,7 +420,7 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
     const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
-    const onMessageResult = (p: Payload<'message:result'>) => {
+    function onMessageResult(p: Payload<'message:result'>) {
       if (!guard(p)) return;
       resetStreamingRefs();
       const stats: ChatStats = {
@@ -438,7 +438,7 @@ export function ChannelMessagesProvider({
       if (!next) return;
       socket.emit('chat:send', { channelId, message: next });
       setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
-    };
+    }
     socket.on('message:result', onMessageResult);
     return () => { socket.off('message:result', onMessageResult); };
   }, [channelId, socket]);

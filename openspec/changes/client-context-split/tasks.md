@@ -53,11 +53,11 @@
 
 ## 10. 待辦：named function 整理
 
-- [ ] 10.1 messagesEffects 內的 handler 確認都是 named function（已完成）
-- [ ] 10.2 context 裡殘留的 socket.on handler（stream:chunk, message:assistant, message:result 等）改為 named function
-- [ ] 10.3 biome check + typecheck + 615 test pass
+- [x] 10.1 messagesEffects 內的 handler 確認都是 named function
+- [x] 10.2 context 裡殘留的 socket.on handler 改為 named function（Messages 5個 + Control 4個）
+- [x] 10.3 615 test pass
 
 ## 11. 清理
 
-- [ ] 11.1 確認行數變化
-- [ ] 11.2 biome check + typecheck + 615 test pass
+- [x] 11.1 Contexts 合計 1,801→1,123 行（-38%），handlers 911 行
+- [x] 11.2 615 test pass
