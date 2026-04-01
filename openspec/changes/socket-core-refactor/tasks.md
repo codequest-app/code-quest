@@ -217,6 +217,38 @@ Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `
 - [x] 20.4 `initResponseResultSchema` 移到 connect.ts 內部
 - [x] 20.5 typecheck + test 全過（401/401）
 
+## 21. Test 重構：一個 test file 對應一個 handler
+
+規則：只搬 test，不改 expect。搬完全過才下一步。
+
+### 21.1 拆分 chat-handler-session.test.ts（1637L → 4 files）
+- [ ] 21.1a `session-connect.test.ts` ← session creation + join + persist timing + broadcast + launch error + resume failure
+- [ ] 21.1b `session-command.test.ts` ← close + delete + rename + generate_title + update_state + session:list isActive
+- [ ] 21.1c `session-fork.test.ts` ← fork + teleport + parentId + chat:fork enhanced
+- [ ] 21.1d `session-query.test.ts` ← list + list_remote + get + raw_events
+- [ ] 21.1e 刪除 chat-handler-session.test.ts，全量 test pass
+
+### 21.2 拆分 chat-handler-control.test.ts（710L → 分散到對應 handler）
+- [ ] 21.2a `permission.test.ts` ← control_request forward/track/cancel + pending CR replay + reconnect
+- [ ] 21.2b 移到 message.test.ts ← chat:respond + chat:cancel + chat:cancel_request + interrupt
+- [ ] 21.2c 移到 settings.test.ts ← auto-respond (set_model, set_permission_mode, get_settings)
+- [ ] 21.2d 移到 mcp.test.ts ← mcp_message relay + timeout
+- [ ] 21.2e 刪除 chat-handler-control.test.ts，全量 test pass
+
+### 21.3 改名（機械化）
+- [ ] 21.3a `chat-handler-connection.test.ts` → `app.test.ts`
+- [ ] 21.3b `chat-handler-message.test.ts` → 合併到 `message.test.ts`
+- [ ] 21.3c `chat-handler-plan.test.ts` → `plan.test.ts`
+- [ ] 21.3d `chat-handler-settings.test.ts` → `settings.test.ts`
+- [ ] 21.3e `chat-handler-mcp.test.ts` → `mcp.test.ts`
+- [ ] 21.3f `chat-handler-file.test.ts` → `file.test.ts`
+- [ ] 21.3g `chat-handler-git.test.ts` → `git.test.ts`
+- [ ] 21.3h `chat-handler-auth.test.ts` → `auth.test.ts`
+- [ ] 21.3i `chat-handler-plugin.test.ts` → `plugin.test.ts`
+- [ ] 21.3j `chat-handler-terminal.test.ts` → `terminal.test.ts`
+- [ ] 21.3k `chat-handler-speech.test.ts` → `speech.test.ts`
+- [ ] 21.3l 全量 test pass
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
