@@ -182,11 +182,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       }
 
       const replaySessionId = await ctx.sessionHistory.resolveSessionId(channelId);
-      await channel.replayPendingControlRequests(
-        socket,
-        (sid) => ctx.sessionHistory.getPendingReplayEvents(sid),
-        replaySessionId,
-      );
+      await ctx.sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
 
       socket.emit('session:init', { ...channel.buildSessionInitPayload() });
       if (ctx.cachedModels) {

@@ -4,14 +4,12 @@ import type {
   NotificationPayload,
   NotificationResponse,
   PlanCommentData,
-  ServerToClientEvents,
   SessionInitPayload,
   SocketEvent,
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
 import {
-  controlRequestEventSchema,
   errorMessageEventSchema,
   type RequestMeta,
   type SessionState,
@@ -180,40 +178,6 @@ export class Channel {
     };
   }
 
-  async replayPendingControlRequests(
-    socket: TypedSocket,
-    getPendingEvents: (sessionId: string) => Promise<{
-      events: SocketEvent[];
-      respondedRequestIds: Set<string>;
-    }>,
-    sessionId: string,
-  ): Promise<void> {
-    const { events, respondedRequestIds } = await getPendingEvents(sessionId);
-
-    const pendingRequests: Array<{ requestId: string; event: SocketEvent }> = [];
-
-    for (const event of events) {
-      if (event.name === 'control:permission' || event.name === 'control:elicitation') {
-        const { requestId } = controlRequestEventSchema.parse(event.payload);
-        pendingRequests.push({ requestId, event });
-      } else if (event.name === 'control:cancel') {
-        const { requestId } = controlRequestEventSchema.parse(event.payload);
-        respondedRequestIds.add(requestId);
-      }
-    }
-
-    // Replay pending (not yet responded/cancelled) via named events
-    for (const { requestId, event } of pendingRequests) {
-      if (respondedRequestIds.has(requestId)) continue;
-
-      const eventName = event.name as keyof ServerToClientEvents;
-      (socket.emit as (event: string, ...args: unknown[]) => void)(eventName, {
-        channelId: this.id,
-        ...event.payload,
-      });
-    }
-  }
-
   nextSeq(): number {
     return ++this._messageSeq;
   }
@@ -282,43 +246,44 @@ export class Channel {
     });
   }
 
+  /** Update channel internal state from runner events. */
+  private handleInternalEvent(se: SocketEvent): void {
+    if (se.name === 'error:message') {
+      const { message } = errorMessageEventSchema.parse(se.payload);
+      this.lastError = message;
+    } else if (se.name === 'session:init') {
+      const init = sessionInitEventSchema.parse(se.payload);
+      if (init.sessionId) {
+        this.sessionId = init.sessionId;
+        this._resolveSessionId?.();
+        this._resolveSessionId = null;
+      }
+      this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
+      this.updateMetaCache(
+        pickDefined({
+          model: init.model,
+          tools: init.tools,
+          permissionMode: init.permissionMode,
+          fastModeState: init.fastModeState,
+          mcpServers: init.mcpServers,
+          slashCommands: init.slashCommands,
+        }),
+      );
+    } else if (se.name === 'session:status') {
+      const status = sessionStatusEventSchema.parse(se.payload);
+      if (status.permissionMode !== undefined) {
+        this.updateSessionState({ permissionMode: status.permissionMode });
+      }
+    }
+  }
+
   private _runnerListeners: RunnerListeners | null = null;
 
   wireRunner(hooks: WireRunnerHooks = {}): void {
     if (this._runnerListeners) return; // already wired
 
     const onSocketEvent = (se: SocketEvent) => {
-      // Track last error for exit rejection messages
-      if (se.name === 'error:message') {
-        const { message } = errorMessageEventSchema.parse(se.payload);
-        this.lastError = message;
-      }
-
-      // Update internal state based on event name
-      if (se.name === 'session:init') {
-        const init = sessionInitEventSchema.parse(se.payload);
-        if (init.sessionId) {
-          this.sessionId = init.sessionId;
-          this._resolveSessionId?.();
-          this._resolveSessionId = null;
-        }
-        this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
-        this.updateMetaCache(
-          pickDefined({
-            model: init.model,
-            tools: init.tools,
-            permissionMode: init.permissionMode,
-            fastModeState: init.fastModeState,
-            mcpServers: init.mcpServers,
-            slashCommands: init.slashCommands,
-          }),
-        );
-      } else if (se.name === 'session:status') {
-        const status = sessionStatusEventSchema.parse(se.payload);
-        if (status.permissionMode !== undefined) {
-          this.updateSessionState({ permissionMode: status.permissionMode });
-        }
-      }
+      this.handleInternalEvent(se);
 
       // Broadcast directly — except session:init which is emitted explicitly
       // by launch/join handlers with the final merged metaCache
@@ -326,7 +291,6 @@ export class Channel {
         this.emit(se.name, { channelId: this.id, ...se.payload });
       }
 
-      // Invoke hook for SocketServer-owned logic
       hooks.onSocketEvent?.(this, se);
     };
 

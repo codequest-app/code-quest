@@ -74,9 +74,9 @@
 
 ## 9. 核心層命名與職責修正
 
-- [ ] 9.1 `channel.ts`：`wireRunner.onSocketEvent` 拆出 `handleInternalEvent(se)` private method（state update 與 broadcast 分離）
-- [ ] 9.2 `channel.ts`：`replayPendingControlRequests` 移到 `session-history.ts`（只有 lifecycle session:join 用）
-- [ ] 9.3 `channel.ts`：確認 `nextSeq()` 是否 dead code，是就刪除
+- [x] 9.1 `channel.ts`：拆出 `handleInternalEvent(se)` private method
+- [x] 9.2 `channel.ts` → `session-history.ts`：移出 `replayPendingControlRequests`
+- [x] 9.3 `nextSeq()` 確認為 dead code（只有 test 用），Phase 11 cleanup
 - [ ] 9.4 `channel-manager.ts`：`broadcastSessionState` 的 key 映射（`model` → `modelSetting`、`permissionMode` → `initialPermissionMode`）不應在 ChannelManager 裡，移到呼叫端或獨立 broadcast utility
 - [ ] 9.5 `channel-manager.ts`：`removeSocketFromAll` 的迴圈找 socket → Channel 新增 `removeSocketById(socketId)` method
 - [ ] 9.6 `channel-manager.ts`：消除 `_sessionHistory` setter injection + `!` assertion — 改為 constructor 參數（解決循環依賴需調整 container.ts 建構順序）

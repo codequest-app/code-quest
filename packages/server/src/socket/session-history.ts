@@ -1,9 +1,14 @@
-import type { SocketEvent } from '@code-quest/shared';
+import type { ServerToClientEvents, SocketEvent } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
-import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
+import {
+  controlRequestEventSchema,
+  typedJsonObjectSchema,
+  userMessageInputSchema,
+} from './schemas.ts';
+import type { TypedSocket } from './types.ts';
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */
 const HISTORY_NAMES = new Set([
@@ -88,5 +93,35 @@ export class SessionHistory {
     }
 
     return result;
+  }
+
+  async replayPendingControlRequests(
+    socket: TypedSocket,
+    channelId: string,
+    sessionId: string,
+  ): Promise<void> {
+    const { events, respondedRequestIds } = await this.getPendingReplayEvents(sessionId);
+
+    const pendingRequests: Array<{ requestId: string; event: SocketEvent }> = [];
+
+    for (const event of events) {
+      if (event.name === 'control:permission' || event.name === 'control:elicitation') {
+        const { requestId } = controlRequestEventSchema.parse(event.payload);
+        pendingRequests.push({ requestId, event });
+      } else if (event.name === 'control:cancel') {
+        const { requestId } = controlRequestEventSchema.parse(event.payload);
+        respondedRequestIds.add(requestId);
+      }
+    }
+
+    for (const { requestId, event } of pendingRequests) {
+      if (respondedRequestIds.has(requestId)) continue;
+
+      const eventName = event.name as keyof ServerToClientEvents;
+      (socket.emit as (event: string, ...args: unknown[]) => void)(eventName, {
+        channelId,
+        ...event.payload,
+      });
+    }
   }
 }
