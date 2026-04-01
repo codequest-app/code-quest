@@ -103,10 +103,10 @@ export function create(
       });
 
       if (channel.sessionId) {
-        persistNewSession(
-          { channelManager, sessionStore },
-          { channelId, sessionId: channel.sessionId },
-        );
+        persistNewSession(channelManager, sessionStore, {
+          channelId,
+          sessionId: channel.sessionId,
+        });
       }
 
       await applyPerLaunchSettings(channel, parsed);
@@ -168,9 +168,7 @@ export function create(
 
       channelManager.addSocketToChannel(channel, socket);
 
-      if (!channel.isWired) {
-        channel.wireRunner(channelManager.channelHooks);
-      }
+      channelManager.ensureWired(channel);
 
       const replaySessionId = await sessionHistory.resolveSessionId(channelId);
       await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);

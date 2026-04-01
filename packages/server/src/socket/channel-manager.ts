@@ -21,8 +21,16 @@ export class ChannelManager {
   private channels = new Map<string, Channel>();
   private socketChannelsMap = new Map<string, Set<string>>();
   private hooks: ChannelHooks;
-  io?: TypedServer;
-  cachedModels: unknown[] | undefined;
+  private io?: TypedServer;
+  private _cachedModels: unknown[] | undefined;
+
+  get cachedModels(): unknown[] | undefined {
+    return this._cachedModels;
+  }
+
+  set cachedModels(models: unknown[] | undefined) {
+    this._cachedModels = models;
+  }
 
   constructor(
     private runnerFactory: RunnerFactory,
@@ -38,8 +46,11 @@ export class ChannelManager {
     };
   }
 
-  get channelHooks(): ChannelHooks {
-    return this.hooks;
+  /** Re-wire a channel if it was unwired (e.g. after all sockets disconnected). */
+  ensureWired(channel: Channel): void {
+    if (!channel.isWired) {
+      channel.wireRunner(this.hooks);
+    }
   }
 
   register(io: TypedServer): void {

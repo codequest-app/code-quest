@@ -169,6 +169,24 @@
 - [x] 16.6 typecheck + test 全過（401/401）
 - [x] 16.7 修正 channel.ts 過時註解
 
+## 17. Code smell 修正
+
+### 17.1 快速修正（此 change）
+- [x] 17.1a server.ts 局部變數改全名（destructuring）
+- [x] 17.1b persist.ts 拆成獨立參數
+- [x] 17.1c channel-manager.ts `io` 改 private
+- [x] 17.1d channel-manager.ts `cachedModels` 改 private + getter/setter
+- [x] 17.1e `channelHooks` getter → `ensureWired(channel)` method，connect.ts 不再直接存取 hooks
+- [x] 17.1f typecheck + test 全過（401/401）
+
+### 17.2 需要更大設計改動（後續 change）
+- [ ] 17.2a channel.ts `pendingRequests` public → 透過 method 操作（影響 message.ts chat:respond）
+- [ ] 17.2b channel.ts `notificationRequests` + `mcpTimeouts` + `planComments` + `terminalLines` 移到各自 handler（需拆 chat:respond dispatcher）
+- [ ] 17.2c channel.ts `buildSessionInitPayload()` 移到 connect handler（presentation 邏輯不屬於 Channel）
+- [ ] 17.2d channel.ts `sendNotification()` 移出 Channel（Channel 不應知道 socket event 名稱）
+- [ ] 17.2e channel-manager.ts `getAliveChannels()` 的 presentation mapping 移到呼叫端
+- [ ] 17.2f message.ts `buildMcpResponse` / `buildToolPermissionResponse` 操作 channel.mcpTimeouts / channel.planComments — 跨域操作（需拆 chat:respond）
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）

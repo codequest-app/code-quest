@@ -52,34 +52,40 @@ export class SocketServer {
     this.io = io;
     this.channelManager.register(io);
 
-    const cm = this.channelManager;
-    const ss = this.sessionStore;
-    const sh = this.sessionHistory;
-    const st = this.settingsStore;
-    const ut = this.usageTracker;
-    const re = this.rawEventStore;
+    const {
+      channelManager,
+      sessionStore,
+      sessionHistory,
+      settingsStore,
+      usageTracker,
+      rawEventStore,
+    } = this;
 
     const commonHandlers: SocketHandler[] = [
-      speech.create(cm),
-      usage.create(ut),
-      plan.create(cm),
-      git.create(cm, sh, re),
-      terminal.create(cm),
-      file.create(cm),
-      mcp.create(cm),
-      settings.create(cm, st, ut),
-      message.create(cm, ss),
+      speech.create(channelManager),
+      usage.create(usageTracker),
+      plan.create(channelManager),
+      git.create(channelManager, sessionHistory, rawEventStore),
+      terminal.create(channelManager),
+      file.create(channelManager),
+      mcp.create(channelManager),
+      settings.create(channelManager, settingsStore, usageTracker),
+      message.create(channelManager, sessionStore),
       permission.create(),
-      app.create(cm, st),
-      sessionConnect.create(cm, st, ss, sh),
-      sessionCommand.create(cm, ss),
-      sessionFork.create(cm, sh, ss),
-      sessionQuery.create(cm, ss, sh),
+      app.create(channelManager, settingsStore),
+      sessionConnect.create(channelManager, settingsStore, sessionStore, sessionHistory),
+      sessionCommand.create(channelManager, sessionStore),
+      sessionFork.create(channelManager, sessionHistory, sessionStore),
+      sessionQuery.create(channelManager, sessionStore, sessionHistory),
     ];
 
     const providerHandlers: SocketHandler[] =
-      cm.provider === 'claude'
-        ? [claudeAuth.create(cm), claudeMcpServers.create(cm), claudePlugin.create()]
+      channelManager.provider === 'claude'
+        ? [
+            claudeAuth.create(channelManager),
+            claudeMcpServers.create(channelManager),
+            claudePlugin.create(),
+          ]
         : [];
 
     this.handlers = [...commonHandlers, ...providerHandlers];

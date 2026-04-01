@@ -27,14 +27,11 @@ export function create(
       });
 
       if (forkChannel.sessionId) {
-        persistNewSession(
-          { channelManager, sessionStore },
-          {
-            channelId: newSessionId,
-            sessionId: forkChannel.sessionId,
-            parentId: forkedFromSession,
-          },
-        );
+        persistNewSession(channelManager, sessionStore, {
+          channelId: newSessionId,
+          sessionId: forkChannel.sessionId,
+          parentId: forkedFromSession,
+        });
       }
       channelManager.broadcastSessionCreated(newSessionId);
       callback({
