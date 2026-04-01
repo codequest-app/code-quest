@@ -159,6 +159,16 @@
 - [x] 15.3a typecheck + test 全過（401/401）
 - [x] 15.3b 零 LifecycleDeps / HandlerContext 殘留
 
+## 16. types.ts 最終 cleanup
+
+- [x] 16.1 `PendingRequest` + `RunnerListeners`(→`RunnerListenerRefs`) 移到 channel.ts 內部
+- [x] 16.2 `WireRunnerHooks` → `ChannelHooks`，移到 channel.ts（export 給 channel-manager.ts）
+- [x] 16.3 `ChannelEventFn`/`ChannelActionFn`/`ChannelExitFn` 移到 channel-event-router.ts
+- [x] 16.4 `SessionBroadcastState` 移到 schemas.ts
+- [x] 16.5 移除 re-export，13 files 改為直接 import utils/helpers.ts
+- [x] 16.6 typecheck + test 全過（401/401）
+- [x] 16.7 修正 channel.ts 過時註解
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）

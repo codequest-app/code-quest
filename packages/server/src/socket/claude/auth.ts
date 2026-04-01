@@ -1,7 +1,7 @@
 import { controlAuthenticateResponseSchema } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 import { claudeState } from './state.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {

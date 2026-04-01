@@ -1,16 +1,12 @@
 import type { ControlResponse } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { RunnerFactory } from '../types.ts';
-import { Channel, type WireRunnerHooks } from './channel.ts';
+import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEventRouter } from './channel-event-router.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { ChannelSummary } from './schemas.ts';
-import {
-  pickDefined,
-  type SessionBroadcastState,
-  type TypedServer,
-  type TypedSocket,
-} from './types.ts';
+import type { ChannelSummary, SessionBroadcastState } from './schemas.ts';
+import type { TypedServer, TypedSocket } from './types.ts';
+import { pickDefined } from './utils/helpers.ts';
 
 export type { ChannelSummary } from './schemas.ts';
 
@@ -24,7 +20,7 @@ export interface CreateChannelOptions {
 export class ChannelManager {
   private channels = new Map<string, Channel>();
   private socketChannelsMap = new Map<string, Set<string>>();
-  private hooks: WireRunnerHooks;
+  private hooks: ChannelHooks;
   io?: TypedServer;
   cachedModels: unknown[] | undefined;
 
@@ -42,7 +38,7 @@ export class ChannelManager {
     };
   }
 
-  get channelHooks(): WireRunnerHooks {
+  get channelHooks(): ChannelHooks {
     return this.hooks;
   }
 

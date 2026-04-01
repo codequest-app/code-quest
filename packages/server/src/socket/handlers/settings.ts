@@ -17,7 +17,7 @@ import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg, pickDefined } from '../types.ts';
+import { errMsg, pickDefined } from '../utils/helpers.ts';
 
 export function create(
   channelManager: ChannelManager,

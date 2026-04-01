@@ -10,8 +10,8 @@ import type { RawEventStore } from '../../services/raw-event-store.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SessionHistory } from '../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
 import { checkoutBranch, execGit } from '../utils/exec-git.ts';
+import { errMsg } from '../utils/helpers.ts';
 
 export function create(
   channelManager: ChannelManager,

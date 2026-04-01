@@ -17,15 +17,29 @@ import {
   sessionInitEventSchema,
   sessionStatusEventSchema,
 } from './schemas.ts';
-import {
-  type PendingRequest,
-  pickDefined,
-  type RunnerListeners,
-  type TypedSocket,
-  type WireRunnerHooks,
-} from './types.ts';
+import type { TypedSocket } from './types.ts';
+import { pickDefined } from './utils/helpers.ts';
 
-export type { WireRunnerHooks } from './types.ts';
+/** Callbacks invoked by Channel when runner events occur. */
+export interface ChannelHooks {
+  onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
+  onServerAction?: (channel: Channel, action: ServerAction) => void;
+  onExit?: (channel: Channel, code: number | null) => void;
+}
+
+interface PendingRequest {
+  resolve: (value: ControlResponse) => void;
+  reject: (reason: Error) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+/** Stored listener references for unwireRunner cleanup. */
+interface RunnerListenerRefs {
+  socketEvent: (event: SocketEvent) => void;
+  controlResponse: (event: ControlResponseEvent) => void;
+  serverAction: (action: ServerAction) => void;
+  exit: (code: number | null) => void;
+}
 
 /** Default timeout for control requests (ms). */
 const DEFAULT_CONTROL_TIMEOUT = 30_000;
@@ -281,9 +295,9 @@ export class Channel {
     }
   }
 
-  private _runnerListeners: RunnerListeners | null = null;
+  private _runnerListeners: RunnerListenerRefs | null = null;
 
-  wireRunner(hooks: WireRunnerHooks = {}): void {
+  wireRunner(hooks: ChannelHooks = {}): void {
     if (this._runnerListeners) return; // already wired
 
     const onSocketEvent = (se: SocketEvent) => {
@@ -316,8 +330,7 @@ export class Channel {
         this.pendingRequests.delete(id);
       }
 
-      // Delegate cleanup to hook — SocketServer owns business logic
-      // (custom rejection messages, broadcastSessionState, session:closed emit)
+      // Delegate cleanup to hook (broadcastSessionState, session:closed emit)
       hooks.onExit?.(this, code);
     };
 

@@ -16,7 +16,7 @@ import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 
 export function create(channelManager: ChannelManager, sessionStore: SessionStore): SocketHandler {
   const interruptedChannels = new Set<string>();

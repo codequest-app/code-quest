@@ -14,7 +14,7 @@ import {
 } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
-import { errMsg } from '../../types.ts';
+import { errMsg } from '../../utils/helpers.ts';
 import { persistNewSession } from './persist.ts';
 
 export function create(

@@ -11,7 +11,7 @@ import {
 } from '@code-quest/shared';
 
 import type { SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 import { claudeState } from './state.ts';
 

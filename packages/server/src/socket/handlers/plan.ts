@@ -6,7 +6,7 @@ import {
 } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
   function addComment(socket: TypedSocket, payload: unknown, callback: SocketCallback): void {

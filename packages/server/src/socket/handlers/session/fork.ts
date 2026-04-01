@@ -3,8 +3,8 @@ import type { SessionStore } from '../../../services/session-store.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
-import { errMsg } from '../../types.ts';
 import { checkoutBranch } from '../../utils/exec-git.ts';
+import { errMsg } from '../../utils/helpers.ts';
 import { persistNewSession } from './persist.ts';
 
 export function create(

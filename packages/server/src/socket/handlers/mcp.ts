@@ -15,7 +15,7 @@ import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg } from '../utils/helpers.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
   function ensureChannel(
