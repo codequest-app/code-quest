@@ -2,9 +2,9 @@ import type { SocketEvent } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from './channel.ts';
 
-export type ChannelEventFn = (channelId: string, ch: Channel, se: SocketEvent) => void;
-export type ChannelActionFn = (channelId: string, ch: Channel, action: ServerAction) => boolean;
-export type ChannelExitFn = (channelId: string, ch: Channel, code: number | null) => void;
+type ChannelEventFn = (channelId: string, ch: Channel, se: SocketEvent) => void;
+type ChannelActionFn = (channelId: string, ch: Channel, action: ServerAction) => boolean;
+type ChannelExitFn = (channelId: string, ch: Channel, code: number | null) => void;
 
 export class ChannelEventRouter {
   private eventMap = new Map<string, ChannelEventFn[]>();

@@ -8,7 +8,7 @@ import type { SessionBroadcastState } from './schemas.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
-export interface CreateChannelOptions {
+interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */

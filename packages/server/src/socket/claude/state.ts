@@ -1,6 +1,6 @@
 import type { AuthStatus, AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
 
-export interface PluginCacheEntry {
+interface PluginCacheEntry {
   installed: PluginInfo[];
   available: AvailablePlugin[];
   marketplaces: MarketplaceInfo[];

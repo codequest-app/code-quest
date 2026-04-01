@@ -26,7 +26,7 @@ export const sessionStatusEventSchema = z.looseObject({
 
 export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
 
-export const sessionStateSchema = z.object({
+const sessionStateSchema = z.object({
   model: z.string().optional(),
   permissionMode: z.string().optional(),
   cwd: z.string().optional(),
@@ -48,7 +48,7 @@ export const sessionInitConfigSchema = sessionStateSchema.pick({
   effort: true,
 });
 
-export const requestMetaSchema = z.object({
+const requestMetaSchema = z.object({
   subtype: z.string(),
   toolName: z.string().optional(),
   toolUseId: z.string().optional(),
@@ -59,14 +59,6 @@ export type RequestMeta = z.infer<typeof requestMetaSchema>;
 export const DEFAULT_THINKING_TOKENS = 31999;
 
 export type SessionBroadcastState = 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected';
-
-export const channelSummarySchema = z.object({
-  channelId: z.string(),
-  state: z.enum(['busy', 'idle', 'exited']),
-  title: z.string().optional(),
-  model: z.string().optional(),
-});
-export type ChannelSummary = z.infer<typeof channelSummarySchema>;
 
 export const initResponseResultSchema = z.object({
   slashCommands: z.array(z.string()).optional(),
