@@ -2,18 +2,21 @@ import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { TypedSocket } from '../../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 import { checkoutBranch } from '../../utils/exec-git.ts';
 import { persistNewSession } from './persist.ts';
 
-export function register(
-  socket: TypedSocket,
+export function create(
   channelManager: ChannelManager,
   sessionHistory: SessionHistory,
   sessionStore: SessionStore,
-): void {
-  socket.on('session:fork', async (payload, callback) => {
+): SocketHandler {
+  async function handleFork(
+    socket: TypedSocket,
+    payload: unknown,
+    callback: SocketCallback,
+  ): Promise<void> {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
       const parentEvents = await sessionHistory.getSessionHistory(forkedFromSession);
@@ -41,14 +44,15 @@ export function register(
         events: parentEvents,
       });
     } catch (err) {
-      callback({
-        success: false,
-        error: errMsg(err, 'Failed to fork session'),
-      });
+      callback({ success: false, error: errMsg(err, 'Failed to fork session') });
     }
-  });
+  }
 
-  socket.on('session:teleport', async (payload, callback) => {
+  async function handleTeleport(
+    socket: TypedSocket,
+    payload: unknown,
+    callback: SocketCallback,
+  ): Promise<void> {
     try {
       const parsed = sessionTeleportSchema.parse(payload);
       const events = await sessionHistory.getSessionHistory(parsed.remoteSessionId);
@@ -75,10 +79,14 @@ export function register(
         ...(branchCheckoutFailed && { branchCheckoutFailed: true, branch: parsed.branch }),
       });
     } catch (err) {
-      callback({
-        success: false,
-        error: errMsg(err, 'Failed to teleport session'),
-      });
+      callback({ success: false, error: errMsg(err, 'Failed to teleport session') });
     }
-  });
+  }
+
+  return {
+    register(socket: TypedSocket) {
+      socket.on('session:fork', (p, cb) => handleFork(socket, p, cb));
+      socket.on('session:teleport', (p, cb) => handleTeleport(socket, p, cb));
+    },
+  };
 }
