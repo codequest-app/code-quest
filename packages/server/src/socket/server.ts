@@ -31,7 +31,7 @@ import type { ChannelManager } from './channel-manager.ts';
 import { register as registerAuthHandlers } from './claude/auth.ts';
 import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
 import { register as registerPluginHandlers } from './claude/plugin.ts';
-import type { HandlerContext, PluginCacheEntry } from './context.ts';
+import type { HandlerContext } from './context.ts';
 import { register as registerConnectionHandlers } from './handlers/connection.ts';
 import { register as registerFileHandlers } from './handlers/file.ts';
 import { register as registerGitHandlers } from './handlers/git.ts';
@@ -72,13 +72,6 @@ export class SocketServer implements HandlerContext {
   };
   // Cached models from last initialize response (persists across sessions)
   cachedModels: unknown[] | undefined;
-  // Global MCP state
-  chromeMcpState: { status: 'disconnected' | 'connecting' | 'connected' } = {
-    status: 'disconnected',
-  };
-  // CWD-keyed plugin listing cache
-  pluginCache = new Map<string, PluginCacheEntry>();
-  readonly PLUGIN_CACHE_TTL = 30_000;
 
   constructor(
     @inject(TYPES.RunnerFactory) public runnerFactory: RunnerFactory,

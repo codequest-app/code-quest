@@ -1,6 +1,7 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
 import * as claudeCli from '../socket/claude/cli.ts';
+import { resetClaudeState } from '../socket/claude/state.ts';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
@@ -10,6 +11,7 @@ async function setup(sessionId = 'cli-sess') {
 }
 
 describe('ChatHandler > plugin', () => {
+  beforeEach(() => resetClaudeState());
   describe('plugin handlers', () => {
     let runPluginSpy: any;
 

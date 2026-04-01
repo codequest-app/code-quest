@@ -2,6 +2,7 @@ import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/sha
 import type { HandlerContext } from '../context.ts';
 import type { TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
+import { claudeState } from './state.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('mcp:ensure_chrome', async (payload, callback) => {
@@ -12,23 +13,26 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: 'No active session' });
         return;
       }
-      const wasDisabled = ctx.chromeMcpState.status !== 'connected';
-      ctx.chromeMcpState = { status: 'connecting' };
+      const wasDisabled = claudeState.chromeMcpState.status !== 'connected';
+      claudeState.chromeMcpState = { status: 'connecting' };
       ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: { status: 'connecting' } });
 
       await channel.sendControlRequest('mcp_set_servers', {
         'claude-in-chrome': { command: 'claude', args: ['mcp', 'serve', 'chrome'] },
       });
 
-      ctx.chromeMcpState = { status: 'connected' };
+      claudeState.chromeMcpState = { status: 'connected' };
       ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: { status: 'connected' } });
       callback({
         success: true,
         response: { type: 'ensure_chrome_mcp_enabled_response', wasDisabled },
       });
     } catch (err) {
-      ctx.chromeMcpState = { status: 'disconnected' };
-      ctx.io?.emit('settings:update', { channelId: '', chromeMcpState: ctx.chromeMcpState });
+      claudeState.chromeMcpState = { status: 'disconnected' };
+      ctx.io?.emit('settings:update', {
+        channelId: '',
+        chromeMcpState: claudeState.chromeMcpState,
+      });
       callback({ success: false, error: errMsg(err, 'Failed to enable Chrome MCP') });
     }
   });
@@ -41,11 +45,11 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: 'No active session' });
         return;
       }
-      const wasEnabled = ctx.chromeMcpState.status === 'connected';
+      const wasEnabled = claudeState.chromeMcpState.status === 'connected';
 
       await channel.sendControlRequest('mcp_set_servers', {});
 
-      ctx.chromeMcpState = { status: 'disconnected' };
+      claudeState.chromeMcpState = { status: 'disconnected' };
       ctx.io?.emit('settings:update', {
         channelId: '',
         chromeMcpState: { status: 'disconnected' },

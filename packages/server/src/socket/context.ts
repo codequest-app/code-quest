@@ -1,10 +1,7 @@
 import type {
   AuthStatus,
-  AvailablePlugin,
-  MarketplaceInfo,
   NotificationPayload,
   NotificationResponse,
-  PluginInfo,
   SocketEvent,
 } from '@code-quest/shared';
 import type { ProcessRunner } from '@code-quest/summoner';
@@ -16,13 +13,6 @@ import type { RunnerFactory } from '../types.ts';
 import type { Channel, WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
-
-export interface PluginCacheEntry {
-  installed: PluginInfo[];
-  available: AvailablePlugin[];
-  marketplaces: MarketplaceInfo[];
-  ts: number;
-}
 
 /**
  * Shared context that all handler modules receive.
@@ -45,9 +35,6 @@ export interface HandlerContext {
   // ── Shared state ──
   authState: AuthStatus;
   cachedModels: unknown[] | undefined;
-  chromeMcpState: { status: 'disconnected' | 'connecting' | 'connected' };
-  pluginCache: Map<string, PluginCacheEntry>;
-  readonly PLUGIN_CACHE_TTL: number;
   socketChannelsMap: Map<string, Set<string>>;
 
   // ── Methods ──

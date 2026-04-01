@@ -13,6 +13,7 @@ import type { HandlerContext } from '../context.ts';
 import type { TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
+import { claudeState } from './state.ts';
 
 function buildMarketplaceSource(k: {
   source: string;
@@ -43,8 +44,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('plugin:list', async (payload, callback) => {
     const cwd = process.cwd();
     const includeAvailable = payload?.includeAvailable ?? false;
-    const cached = ctx.pluginCache.get(cwd);
-    if (cached && Date.now() - cached.ts < ctx.PLUGIN_CACHE_TTL) {
+    const cached = claudeState.pluginCache.get(cwd);
+    if (cached && Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL) {
       if (!includeAvailable || cached.available.length > 0) {
         callback({ installed: cached.installed, available: cached.available });
         return;
@@ -81,8 +82,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     const validInstalled = pluginInfoSchema.array().parse(installed);
     const validAvailable = availablePluginSchema.array().parse(available);
 
-    const existing = ctx.pluginCache.get(cwd);
-    ctx.pluginCache.set(cwd, {
+    const existing = claudeState.pluginCache.get(cwd);
+    claudeState.pluginCache.set(cwd, {
       installed: validInstalled,
       available: validAvailable,
       marketplaces: existing?.marketplaces ?? [],
@@ -99,7 +100,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to install plugin' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true, needsRestart: true });
     } catch (err) {
       callback({
@@ -117,7 +118,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to uninstall plugin' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true, needsRestart: true });
     } catch (err) {
       callback({
@@ -135,7 +136,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to toggle plugin' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true, needsRestart: true });
     } catch (err) {
       callback({
@@ -147,8 +148,12 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
 
   socket.on('plugin:list_marketplaces', (callback) => {
     const cwd = process.cwd();
-    const cached = ctx.pluginCache.get(cwd);
-    if (cached && Date.now() - cached.ts < ctx.PLUGIN_CACHE_TTL && cached.marketplaces.length > 0) {
+    const cached = claudeState.pluginCache.get(cwd);
+    if (
+      cached &&
+      Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL &&
+      cached.marketplaces.length > 0
+    ) {
       callback({ marketplaces: cached.marketplaces });
       return;
     }
@@ -177,8 +182,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         pluginCount: 0,
         installedCount: 0,
       }));
-      const existing = ctx.pluginCache.get(cwd);
-      ctx.pluginCache.set(cwd, {
+      const existing = claudeState.pluginCache.get(cwd);
+      claudeState.pluginCache.set(cwd, {
         installed: existing?.installed ?? [],
         available: existing?.available ?? [],
         marketplaces,
@@ -198,7 +203,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to add marketplace' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true });
     } catch (err) {
       callback({
@@ -216,7 +221,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to remove marketplace' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true });
     } catch (err) {
       callback({
@@ -234,7 +239,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         callback({ success: false, error: result.stderr || 'Failed to refresh marketplace' });
         return;
       }
-      ctx.pluginCache.delete(process.cwd());
+      claudeState.pluginCache.delete(process.cwd());
       callback({ success: true });
     } catch (err) {
       callback({
