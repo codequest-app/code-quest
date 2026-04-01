@@ -183,7 +183,7 @@
 - [x] 17.2a `pendingRequests` + `notificationRequests` + `mcpTimeouts` 全部 private + method 封裝
 - [x] 17.2c `buildSessionInitPayload()` 移到 connect.ts（Channel 不再有 presentation 邏輯）
 - [x] 17.2e `getAliveChannels()` 回傳 raw `[id, Channel][]`，presentation mapping 移到 app.ts
-- [ ] 17.2b `planComments` + `terminalLines` 移到各自 handler — 後續 change（需拆 chat:respond）
+- [x] 17.2b `planComments` 移到 plan handler（自管 `Map<channelId, PlanCommentData[]>`），暴露 `PlanApi.consumeCommentsAsUserFeedback` 給 message handler。`terminalLines` 暫留（production code 無寫入點，可能是 dead feature）
 - [ ] 17.2d `sendNotification()` 移出 Channel — 後續 change
 - [ ] 17.2f chat:respond 跨域操作 — 後續 change
 

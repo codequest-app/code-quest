@@ -17,8 +17,13 @@ import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import type { PlanApi } from './plan.ts';
 
-export function create(channelManager: ChannelManager, sessionStore: SessionStore): SocketHandler {
+export function create(
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  planApi: PlanApi,
+): SocketHandler {
   const interruptedChannels = new Set<string>();
 
   function handleSend(socket: TypedSocket, payload: unknown): void {
@@ -93,7 +98,7 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
   }
 
   function buildToolPermissionResponse(
-    channel: Channel,
+    channelId: string,
     meta: { toolName?: string; toolUseId?: string } | undefined,
     response: {
       behavior?: string;
@@ -110,13 +115,8 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     if (meta?.toolUseId) result.toolUseID = meta.toolUseId;
 
     if (meta?.toolName === 'ExitPlanMode' && behavior === 'allow') {
-      const comments = channel.planComments;
-      if (comments.length > 0) {
-        result.userFeedback = comments
-          .map((c) => `[Re: "${c.selectedText}"] ${c.comment}`)
-          .join('\n');
-        channel.planComments = [];
-      }
+      const feedback = planApi.consumeCommentsAsUserFeedback(channelId);
+      if (feedback) result.userFeedback = feedback;
     }
 
     return result;
@@ -147,7 +147,7 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
       } else if (meta?.subtype === 'elicitation') {
         cliResponse = buildElicitationResponse(response.behavior, response.updatedInput);
       } else {
-        cliResponse = buildToolPermissionResponse(channel, meta, response);
+        cliResponse = buildToolPermissionResponse(channelId, meta, response);
       }
 
       respondAndDismiss(channel, channelId, requestId, cliResponse);

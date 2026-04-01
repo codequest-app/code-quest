@@ -61,16 +61,18 @@ export class SocketServer {
       rawEventStore,
     } = this;
 
+    const planHandler = plan.create(channelManager);
+
     const commonHandlers: SocketHandler[] = [
       speech.create(channelManager),
       usage.create(usageTracker),
-      plan.create(channelManager),
+      planHandler,
       git.create(channelManager, sessionHistory, rawEventStore),
       terminal.create(channelManager),
       file.create(channelManager),
       mcp.create(channelManager),
       settings.create(channelManager, settingsStore, usageTracker),
-      message.create(channelManager, sessionStore),
+      message.create(channelManager, sessionStore, planHandler),
       permission.create(),
       app.create(channelManager, settingsStore),
       sessionConnect.create(channelManager, settingsStore, sessionStore, sessionHistory),

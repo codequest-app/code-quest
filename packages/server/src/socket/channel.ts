@@ -3,7 +3,6 @@ import type {
   ControlResponse,
   NotificationPayload,
   NotificationResponse,
-  PlanCommentData,
   SocketEvent,
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
@@ -75,7 +74,6 @@ export class Channel {
   private readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── Meta ──
-  planComments: PlanCommentData[] = [];
   terminalLines: string[] = [];
 
   constructor(
@@ -379,7 +377,6 @@ export class Channel {
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
     this.resetSessionState();
-    this.planComments = [];
     this.sockets.clear();
     this.exited = true;
   }
