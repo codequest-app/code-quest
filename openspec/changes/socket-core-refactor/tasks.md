@@ -145,20 +145,33 @@
 
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
-### 14.1 SessionHistory 擴充（減少 handler 直接依賴 rawEventStore）
-- [ ] 14.1a SessionHistory 新增 `getPreview(sessionId)` 包裝 rawEventStore.getPreview
-- [ ] 14.1b SessionHistory 新增 `getRawEntries(channelId)` 包裝 resolveSessionId + rawEventStore.getBySession
-- [ ] 14.1c 更新 session query handlers 改用 SessionHistory methods
+### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
+- [ ] 14.1a SessionHistory 新增 `getPreview(sessionId)` — 包裝 rawEventStore.getPreview
+- [ ] 14.1b SessionHistory 新增 `getRawEntries(channelId)` — 包裝 resolveSessionId + rawEventStore.getBySession
+- [ ] 14.1c session record handler 改用 SessionHistory methods，不再直接依賴 rawEventStore
+- [ ] 14.1d typecheck + test 全過
 
-### 14.2 Session handler 按操作域拆分
-- [ ] 14.2a `session/index.ts` 現有 CRUD handlers 拆出：
-  - `query.ts` — list, list_remote, get, raw_events（deps: sessionStore, sessionHistory, channelManager）
-  - `manage.ts` — delete, rename, generate_title, update_state（deps: sessionStore, channelManager）
-- [ ] 14.2b `session/fork.ts` 改名 `session/branch.ts`
-- [ ] 14.2c `session/index.ts` 只做 factory 組合（lifecycle + branch + query + manage）
+### 14.2 Session handler 按功能拆分
+
+lifecycle.ts（已存在）— 操作 live session：建立/連接/關閉/指令/廣播
+- launch, join, close, resume, generate_title, update_state + channel events
+- deps: channelManager, settingsStore, sessionStore, sessionHistory
+
+fork.ts（已存在，不改名）— 從既有 session 衍生新 session
+- fork, teleport
+- deps: channelManager, sessionHistory, sessionStore
+
+record.ts（新）— session 記錄的讀取與維護
+- list, list_remote, get, raw_events, delete, rename
+- deps: sessionStore, sessionHistory, channelManager
+
+- [ ] 14.2a `generate_title` + `update_state` 從 index.ts 移到 lifecycle.ts
+- [ ] 14.2b `list` + `list_remote` + `get` + `raw_events` + `delete` + `rename` 從 index.ts 移到 `record.ts`
+- [ ] 14.2c `session/index.ts` 只做 factory 組合（lifecycle + fork + record）
 - [ ] 14.2d typecheck + test 全過
 
-### 14.3 每個 handler factory 改成只注入需要的依賴（移除 HandlerContext）
+### 14.3 每個 handler factory 改成精確依賴
+
 - [ ] 14.3a `speech.ts` — `create(channelManager)`
 - [ ] 14.3b `usage.ts` — `create(usageTracker)`
 - [ ] 14.3c `plan.ts` — `create(channelManager)`
@@ -168,16 +181,15 @@
 - [ ] 14.3g `mcp.ts` — `create(channelManager)`
 - [ ] 14.3h `settings.ts` — `create(channelManager, settingsStore, usageTracker)`
 - [ ] 14.3i `message.ts` — `create(channelManager, sessionStore)`
-- [ ] 14.3j `permission.ts` — `create()`（無依賴，只用 channel 參數）
+- [ ] 14.3j `permission.ts` — `create()`（無依賴）
 - [ ] 14.3k `app.ts` — `create(channelManager, settingsStore)`
-- [ ] 14.3l `session/lifecycle.ts` — `create(channelManager, settingsStore)`
-- [ ] 14.3m `session/branch.ts` — `create(channelManager, sessionHistory, sessionStore)`
-- [ ] 14.3n `session/query.ts` — `create(sessionStore, sessionHistory, channelManager)`
-- [ ] 14.3o `session/manage.ts` — `create(sessionStore, channelManager)`
-- [ ] 14.3p `claude/auth.ts` — `create(channelManager)`
-- [ ] 14.3q `claude/mcp-servers.ts` — `create(channelManager)`
-- [ ] 14.3r `claude/plugin.ts` — `create()`（無依賴）
-- [ ] 14.3s typecheck + test 全過
+- [ ] 14.3l `session/lifecycle.ts` — `create(channelManager, settingsStore, sessionStore, sessionHistory)`
+- [ ] 14.3m `session/fork.ts` — `create(channelManager, sessionHistory, sessionStore)`
+- [ ] 14.3n `session/record.ts` — `create(sessionStore, sessionHistory, channelManager)`
+- [ ] 14.3o `claude/auth.ts` — `create(channelManager)`
+- [ ] 14.3p `claude/mcp-servers.ts` — `create(channelManager)`
+- [ ] 14.3q `claude/plugin.ts` — `create()`（無依賴）
+- [ ] 14.3r typecheck + test 全過
 
 ### 14.4 移除 HandlerContext
 - [ ] 14.4a 刪除 `context.ts`
