@@ -26,6 +26,7 @@ export class ChannelManager {
   private socketChannelsMap = new Map<string, Set<string>>();
   private hooks: WireRunnerHooks;
   io?: TypedServer;
+  cachedModels: unknown[] | undefined;
 
   constructor(
     private runnerFactory: RunnerFactory,

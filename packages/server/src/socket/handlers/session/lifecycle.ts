@@ -57,7 +57,7 @@ async function handleInitResponse(
     : undefined;
 
   if (models) {
-    ctx.cachedModels = models;
+    ctx.channelManager.cachedModels = models;
     await ctx.settingsStore.set(ctx.channelManager.provider, 'models', models);
     ctx.channelManager.broadcastModels(models);
   }
@@ -113,8 +113,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       });
 
       socket.emit('session:init', { ...channel.buildSessionInitPayload() });
-      if (ctx.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: ctx.cachedModels });
+      if (ctx.channelManager.cachedModels) {
+        socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
       }
 
       ctx.channelManager.broadcastSessionCreated(channelId);
@@ -166,8 +166,8 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       await ctx.sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
 
       socket.emit('session:init', { ...channel.buildSessionInitPayload() });
-      if (ctx.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: ctx.cachedModels });
+      if (ctx.channelManager.cachedModels) {
+        socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
       }
 
       const events = await ctx.sessionHistory.getSessionHistory(channelId);

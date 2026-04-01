@@ -2,10 +2,11 @@ import { controlAuthenticateResponseSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../context.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
+import { claudeState } from './state.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
   function handleStatus(callback: Function): void {
-    callback(ctx.authState);
+    callback(claudeState.authState);
   }
 
   async function handleLogin(
@@ -51,7 +52,7 @@ export function create(ctx: HandlerContext): SocketHandler {
         state: payload.state,
       });
       await channel.sendControlRequest('claude_oauth_wait_for_completion', {});
-      ctx.authState = {
+      claudeState.authState = {
         authenticated: true,
         user: { name: 'authenticated' },
         method: 'oauth',

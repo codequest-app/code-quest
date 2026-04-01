@@ -23,7 +23,7 @@ export function create(ctx: HandlerContext): SocketHandler {
     callback({
       settings,
       sessions,
-      models: ctx.cachedModels,
+      models: ctx.channelManager.cachedModels,
       state: {
         platform: process.platform,
         speechToTextEnabled: false,
@@ -33,7 +33,7 @@ export function create(ctx: HandlerContext): SocketHandler {
   }
 
   async function handleConfig(_payload: unknown, callback: Function): Promise<void> {
-    let models: unknown[] | undefined = ctx.cachedModels;
+    let models: unknown[] | undefined = ctx.channelManager.cachedModels;
     let effort: string | undefined;
     try {
       if (!models) {

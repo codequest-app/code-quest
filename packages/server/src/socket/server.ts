@@ -1,4 +1,4 @@
-import type { AuthStatus, ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
+import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -31,8 +31,6 @@ import type { SocketHandler, TypedServer, TypedSocket } from './types.ts';
 export class SocketServer implements HandlerContext {
   io?: TypedServer;
   settingsStore: SettingsStore;
-  authState: AuthStatus = { authenticated: false };
-  cachedModels: unknown[] | undefined;
 
   constructor(
     @inject(TYPES.RawEventStore) public rawEventStore: RawEventStore,

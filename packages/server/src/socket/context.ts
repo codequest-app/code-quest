@@ -1,4 +1,3 @@
-import type { AuthStatus } from '@code-quest/shared';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
@@ -18,8 +17,4 @@ export interface HandlerContext {
   readonly sessionHistory: SessionHistory;
   readonly settingsStore: SettingsStore;
   readonly usageTracker: UsageTracker;
-
-  // ── Shared state ──
-  authState: AuthStatus;
-  cachedModels: unknown[] | undefined;
 }

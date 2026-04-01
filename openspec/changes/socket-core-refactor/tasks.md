@@ -89,11 +89,11 @@
   - [x] 9.10d `session:states` 改用 `broadcastSessionState` — 取代 2 處
   - [x] 9.10e HandlerContext 移除 `io`
   - [x] 9.10f typecheck + test 全過（397/397）
-- [ ] 9.11 `authState` / `cachedModels` 從 HandlerContext 移到專屬管理：
-  - [ ] 9.11a `cachedModels` 移到 ChannelManager（lifecycle 寫入，app/connection 讀取，都已有 channelManager 存取）
-  - [ ] 9.11b `authState` 移到 `claude/state.ts`（只有 claude/auth.ts 讀寫）
-  - [ ] 9.11c HandlerContext 移除 `authState` / `cachedModels`
-  - [ ] 9.11d typecheck + test 全過
+- [x] 9.11 `authState` / `cachedModels` 從 HandlerContext 移出
+  - [x] 9.11a `cachedModels` 移到 ChannelManager
+  - [x] 9.11b `authState` 移到 `claude/state.ts`
+  - [x] 9.11c HandlerContext 移除 `authState` / `cachedModels`
+  - [x] 9.11d typecheck + test 全過（397/397）
 - [x] 9.12 typecheck + test 全過（397/397, ~5.2s）
 
 ## 10. Handler 內部品質提升
