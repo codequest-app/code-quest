@@ -205,9 +205,9 @@ Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `
 
 ## 19. generateTitle 分離（原子組 B，獨立）
 
-- [ ] 19.1 `message.ts onMessageResult` 不再直接呼叫 generateTitle — 只做 endProcessing + broadcastIdle
-- [ ] 19.2 generateTitle 改為在 onMessageResult 之後 fire-and-forget（或獨立 event subscriber）
-- [ ] 19.3 typecheck + test 全過
+- [x] 19.1 `onMessageResult` 只做 endProcessing + broadcastIdle
+- [x] 19.2 `onMessageResultTitle` 獨立 subscriber（router 多 subscriber 支援）
+- [x] 19.3 typecheck + test 全過（401/401）
 
 ## 14. 移除 HandlerContext + handler 依賴精確化
 

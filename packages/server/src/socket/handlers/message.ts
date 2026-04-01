@@ -250,6 +250,9 @@ export function create(
   function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {
     ch.endProcessing();
     channelManager.broadcastSessionState(channelId, 'idle');
+  }
+
+  function onMessageResultTitle(channelId: string, ch: Channel, _se: SocketEvent): void {
     generateTitleIfNeeded(channelId, ch);
   }
 
@@ -266,6 +269,7 @@ export function create(
     },
     subscribe(router: ChannelEventRouter) {
       router.onEvent('message:result', onMessageResult);
+      router.onEvent('message:result', onMessageResultTitle);
     },
   };
 }
