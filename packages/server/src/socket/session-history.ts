@@ -1,6 +1,6 @@
 import type { ServerToClientEvents, SocketEvent } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
 import {
@@ -37,6 +37,17 @@ export class SessionHistory {
     const sessionId = await this.resolveSessionId(channelId);
     const all = await this.convertRawToSocketEvents(sessionId);
     return all.filter((e) => HISTORY_NAMES.has(e.name));
+  }
+
+  async getPreview(sessionId: string): Promise<SessionPreview> {
+    return this.rawEventStore.getPreview(sessionId);
+  }
+
+  async getRawEntries(
+    channelId: string,
+  ): Promise<Array<{ direction: string; seq: number; raw: string }>> {
+    const sessionId = await this.resolveSessionId(channelId);
+    return this.rawEventStore.getBySession(sessionId);
   }
 
   async getPendingReplayEvents(sessionId: string): Promise<{

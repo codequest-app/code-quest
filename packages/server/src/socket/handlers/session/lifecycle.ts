@@ -1,10 +1,12 @@
 import type { ChatCreatePayload, ControlResponse } from '@code-quest/shared';
 import {
   chatCreateSchema,
+  chatGenerateSessionTitleSchema,
   chatJoinSchema,
   chatKillSchema,
   controlInitResponseSchema,
   sessionResumePayloadSchema,
+  sessionUpdateStateSchema,
 } from '@code-quest/shared';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
@@ -203,6 +205,36 @@ export function handleResume(ctx: HandlerContext, payload: unknown): void {
     ctx.channelManager.broadcastSessionResume(channelId);
   } catch {
     // ignore
+  }
+}
+
+export async function handleGenerateTitle(
+  ctx: HandlerContext,
+  payload: unknown,
+  callback?: Function,
+): Promise<void> {
+  try {
+    const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
+    const channel = ctx.channelManager.get(channelId);
+    if (channel) {
+      const result = await channel.sendControlRequest('generate_session_title', {
+        description,
+        persist,
+      });
+      callback?.({ success: true, result });
+    }
+  } catch (err) {
+    callback?.({ success: false, error: String(err) });
+  }
+}
+
+export function handleUpdateState(ctx: HandlerContext, payload: unknown, callback: Function): void {
+  try {
+    const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
+    ctx.channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
+    callback({ success: true });
+  } catch (err) {
+    callback({ success: false, error: errMsg(err, 'Failed to update session state') });
   }
 }
 

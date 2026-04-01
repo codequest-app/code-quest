@@ -146,10 +146,10 @@
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
-- [ ] 14.1a SessionHistory 新增 `getPreview(sessionId)` — 包裝 rawEventStore.getPreview
-- [ ] 14.1b SessionHistory 新增 `getRawEntries(channelId)` — 包裝 resolveSessionId + rawEventStore.getBySession
-- [ ] 14.1c session record handler 改用 SessionHistory methods，不再直接依賴 rawEventStore
-- [ ] 14.1d typecheck + test 全過
+- [x] 14.1a SessionHistory 新增 `getPreview(sessionId)`
+- [x] 14.1b SessionHistory 新增 `getRawEntries(channelId)`
+- [x] 14.1c session handlers 改用 SessionHistory methods
+- [x] 14.1d typecheck + test 全過（401/401）
 
 ### 14.2 Session handler 按功能拆分
 
@@ -165,10 +165,10 @@ record.ts（新）— session 記錄的讀取與維護
 - list, list_remote, get, raw_events, delete, rename
 - deps: sessionStore, sessionHistory, channelManager
 
-- [ ] 14.2a `generate_title` + `update_state` 從 index.ts 移到 lifecycle.ts
-- [ ] 14.2b `list` + `list_remote` + `get` + `raw_events` + `delete` + `rename` 從 index.ts 移到 `record.ts`
-- [ ] 14.2c `session/index.ts` 只做 factory 組合（lifecycle + fork + record）
-- [ ] 14.2d typecheck + test 全過
+- [x] 14.2a `generate_title` + `update_state` 移到 lifecycle.ts
+- [x] 14.2b `record.ts` 新建：list, list_remote, get, raw_events, delete, rename
+- [x] 14.2c `session/index.ts` 只做 factory 組合（lifecycle + fork + record）
+- [x] 14.2d typecheck + test 全過（401/401）
 
 ### 14.3 每個 handler factory 改成精確依賴
 
