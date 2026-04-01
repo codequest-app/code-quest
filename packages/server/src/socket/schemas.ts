@@ -61,13 +61,6 @@ export const DEFAULT_THINKING_TOKENS = 31999;
 
 export type SessionBroadcastState = 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected';
 
-export const initResponseResultSchema = z.object({
-  slashCommands: z.array(z.string()).optional(),
-  models: z.array(z.unknown()).optional(),
-  account: z.record(z.string(), z.unknown()).optional(),
-});
-export type InitResponseResult = z.infer<typeof initResponseResultSchema>;
-
 /** Validates raw stdout JSON has a `type` field — gate before adapter.transform(). */
 export const typedJsonObjectSchema = z.looseObject({ type: z.string() });
 

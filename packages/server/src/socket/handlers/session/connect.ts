@@ -1,5 +1,6 @@
 import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
 import { chatCreateSchema, chatJoinSchema, controlInitResponseSchema } from '@code-quest/shared';
+import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
@@ -7,15 +8,17 @@ import type { SettingsStore } from '../../../services/settings-store.ts';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEventRouter } from '../../channel-event-router.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
-import {
-  DEFAULT_THINKING_TOKENS,
-  type InitResponseResult,
-  initResponseResultSchema,
-} from '../../schemas.ts';
+import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
-import { persistNewSession } from './persist.ts';
+
+const initResponseResultSchema = z.object({
+  slashCommands: z.array(z.string()).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+type InitResponseResult = z.infer<typeof initResponseResultSchema>;
 
 function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   const meta = channel.metaCache;
@@ -205,11 +208,20 @@ export function create(
     const channel = channelManager.get(channelId);
     if (channel?.sessionId) {
       const parentId = channel.sessionState.parentId;
-      persistNewSession(channelManager, sessionStore, {
-        channelId,
-        sessionId: channel.sessionId,
-        ...(parentId ? { parentId } : {}),
-      });
+      sessionStore
+        .persist({
+          id: channelId,
+          sessionId: channel.sessionId,
+          provider: channelManager.provider,
+          command: channelManager.runnerCommand,
+          args: JSON.stringify(channelManager.runnerArgs),
+          cwd: process.cwd(),
+          mode: 'interactive',
+          role: 'chat',
+          ...(parentId ? { parentId } : {}),
+          createdAt: new Date().toISOString(),
+        })
+        .catch((err) => logger.error({ err }, 'Failed to persist session'));
     }
   }
 

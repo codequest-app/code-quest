@@ -231,20 +231,23 @@ export function create(
     }
   }
 
-  function generateTitleIfNeeded(channelId: string, ch: Channel): void {
+  async function generateTitleIfNeeded(channelId: string, ch: Channel): Promise<void> {
     const pendingPrompt = ch.sessionState.pendingTitlePrompt;
     if (!pendingPrompt) return;
 
     ch.updateSessionState({ pendingTitlePrompt: undefined });
-    ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
-      .then((res) => {
-        const { title } = controlGenerateTitleResponseSchema.parse(res.response);
-        sessionStore
-          .rename(channelId, title)
-          .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-        channelManager.broadcastSessionState(channelId, 'idle', title);
-      })
-      .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
+    try {
+      const res = await ch.sendControlRequest('generate_session_title', {
+        description: pendingPrompt,
+      });
+      const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+      sessionStore
+        .rename(channelId, title)
+        .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
+      channelManager.broadcastSessionState(channelId, 'idle', title);
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to generate session title');
+    }
   }
 
   function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {

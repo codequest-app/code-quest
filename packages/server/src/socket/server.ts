@@ -27,11 +27,10 @@ import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
 import type { SessionHistory } from './session-history.ts';
-import type { SocketHandler, TypedServer } from './types.ts';
+import type { SocketHandler } from './types.ts';
 
 @injectable()
 export class SocketServer {
-  io?: TypedServer;
   settingsStore: SettingsStore;
 
   constructor(
@@ -49,7 +48,6 @@ export class SocketServer {
   private handlers: SocketHandler[] = [];
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
-    this.io = io;
     this.channelManager.register(io);
 
     const {

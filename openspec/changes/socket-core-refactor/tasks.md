@@ -209,6 +209,14 @@ Bug: `await channel.sessionIdReady` 在 `channelManager.create()` 裡 hang — `
 - [x] 19.2 `onMessageResultTitle` 獨立 subscriber（router 多 subscriber 支援）
 - [x] 19.3 typecheck + test 全過（401/401）
 
+## 20. Code Review 修正
+
+- [x] 20.1 `persist.ts` inline 到 connect.ts，刪除 persist.ts
+- [x] 20.2 `server.ts` 刪除未使用的 `io` property
+- [x] 20.3 `generateTitleIfNeeded` → async/await
+- [x] 20.4 `initResponseResultSchema` 移到 connect.ts 內部
+- [x] 20.5 typecheck + test 全過（401/401）
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
