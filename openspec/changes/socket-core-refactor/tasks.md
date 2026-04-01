@@ -42,3 +42,75 @@
 - [x] 6.4 `channelSummarySchema` + `ChannelSummary` type 從 channel-manager.ts 移入 schemas.ts
 - [x] 6.5 `initResponseResultSchema` + `InitResponseResult` type 從 lifecycle.ts 移入 schemas.ts
 - [x] 6.6 typecheck + test 全過（397/397）
+
+## 7. ChannelEventRouter + SocketHandler 基礎設施
+
+- [ ] 7.1 `types.ts` 新增 `SocketHandler` interface（`register` + `subscribe?`）和 channel event type aliases
+- [ ] 7.2 建立 `channel-event-router.ts`（`onEvent`/`onAction`/`onExit` 訂閱 + `dispatchEvent`/`dispatchAction`/`dispatchExit` 分發）
+- [ ] 7.3 ChannelManager 接收 router，建構共用 hooks，`CreateChannelOptions` 移除 `hooks` 欄位
+- [ ] 7.4 server.ts 改用 handler array + router（subscribe + register loop），移除 `buildChannelHooks` 和 handler import
+- [ ] 7.5 HandlerContext 移除 `buildChannelHooks`
+- [ ] 7.6 lifecycle.ts / fork.ts / terminal.ts 移除 `ctx.buildChannelHooks()` 呼叫
+- [ ] 7.7 typecheck + test 全過
+
+## 8. Handler 遷移到 factory pattern（逐檔）
+
+每個 handler：`export function register(socket, ctx)` → `export function create(ctx): SocketHandler`，onRunnerEvent/onServerAction/onExit 移到 subscribe()，anonymous closure → named function。
+
+- [ ] 8.1 `handlers/speech.ts`（最小，驗證 factory pattern）
+- [ ] 8.2 `handlers/usage.ts`（只有 subscribe，無 register）
+- [ ] 8.3 `handlers/plan.ts`
+- [ ] 8.4 `handlers/git.ts`
+- [ ] 8.5 `handlers/terminal.ts`
+- [ ] 8.6 `handlers/file.ts`（register + subscribe onEvent + onAction）
+- [ ] 8.7 `handlers/mcp.ts`（register + subscribe onEvent）
+- [ ] 8.8 `handlers/settings.ts`（register + subscribe onAction）
+- [ ] 8.9 `handlers/message.ts`（register + subscribe onEvent）
+- [ ] 8.10 `handlers/control.ts` → `handlers/permission.ts`（改名，只有 subscribe）
+- [ ] 8.11 `handlers/connection.ts` → `handlers/app.ts`（改名）
+- [ ] 8.12 `handlers/session/`（lifecycle + crud + fork 組合成一個 SocketHandler）
+- [ ] 8.13 `claude/auth.ts`、`claude/mcp-servers.ts`、`claude/plugin.ts`（factory，留在 claude/）
+- [ ] 8.14 typecheck + test 全過
+
+## 9. 核心層命名與職責修正
+
+- [ ] 9.1 `channel.ts`：`wireRunner.onSocketEvent` 拆出 `handleInternalEvent(se)` private method（state update 與 broadcast 分離）
+- [ ] 9.2 `channel.ts`：`replayPendingControlRequests` 移到 `session-history.ts`（只有 lifecycle session:join 用）
+- [ ] 9.3 `channel.ts`：確認 `nextSeq()` 是否 dead code，是就刪除
+- [ ] 9.4 `channel-manager.ts`：`broadcastSessionState` 的 key 映射（`model` → `modelSetting`、`permissionMode` → `initialPermissionMode`）不應在 ChannelManager 裡，移到呼叫端或獨立 broadcast utility
+- [ ] 9.5 `channel-manager.ts`：`removeSocketFromAll` 的迴圈找 socket → Channel 新增 `removeSocketById(socketId)` method
+- [ ] 9.6 `channel-manager.ts`：消除 `_sessionHistory` setter injection + `!` assertion — 改為 constructor 參數（解決循環依賴需調整 container.ts 建構順序）
+- [ ] 9.7 `session-history.ts`：消除 `getChannel` callback 注入 — `resolveSessionId` 只查 sessionStore，不依賴 in-memory channel
+- [ ] 9.8 `session-history.ts`：修復 `getPendingReplayEvents` 重複查詢 DB（`rawEventStore.getBySession` 呼叫兩次）
+- [ ] 9.9 `raw-recorder.ts`：`channel.lastError = line` 直接修改 → 改用 callback 或讓 Channel 自行處理 stderr
+- [ ] 9.10 `context.ts`：`io` 不應暴露在 HandlerContext — handler 透過 `ctx.io?.emit()` 直接操作 io 的地方改用 ChannelManager 的 broadcast 或新增專屬 method
+- [ ] 9.11 `context.ts`：`authState` / `cachedModels` 是 mutable global state — 評估是否需要獨立管理
+- [ ] 9.12 typecheck + test 全過
+
+## 10. Handler 內部品質提升
+
+- [ ] 10.1 `message.ts`：`chat:respond` 拆成 response strategy（notification / mcp / elicitation / permission，各自 named function）
+- [ ] 10.2 `message.ts`：title generation 邏輯從 `onResult` 移到 session handler
+- [ ] 10.3 `message.ts`：`interruptedChannels` 清理（socket disconnect 時清除，或改為 per-channel tracking）
+- [ ] 10.4 `message.ts`：移除 L34 多餘的 `channel?.` optional chain（L28 已 guard）
+- [ ] 10.5 `settings.ts`：前三個 handler 合併成 generic setter pattern
+- [ ] 10.6 `settings.ts`：`DEFAULT_THINKING_TOKENS` 移到 `schemas.ts`，消除 settings → lifecycle 跨模組 import
+- [ ] 10.7 `mcp.ts`：8 個重複 handler 改成 data-driven registration
+- [ ] 10.8 `file.ts`：`file:list` 拆出 `listWithRg()`、`listWithWalk()`、`listTerminals()` named function
+- [ ] 10.9 `session/lifecycle.ts`：`persistNewSession` 移到共用位置（fork.ts 也用），修正 L39 的 import 位置
+- [ ] 10.10 `session/lifecycle.ts`：`handleInitResponse` 拆分 models caching 和 account broadcasting
+- [ ] 10.11 `session/fork.ts`：git checkout retry 抽成 `utils/exec-git.ts` 的 `checkoutBranch(branch)` 共用
+- [ ] 10.12 `terminal.ts`：`terminal:open_claude` 重用 session launch 共用邏輯（避免重複 create + wire + broadcast）
+- [ ] 10.13 typecheck + test 全過
+
+## 11. types.ts 清理 + 檔案搬遷
+
+- [ ] 11.1 `types.ts`：`ensureChannel` 移到 mcp.ts 內部（只有它用）
+- [ ] 11.2 `types.ts`：`pickDefined`、`errMsg` 移到 `utils/` 或 shared（generic utility，不屬於 socket types）
+- [ ] 11.3 `types.ts`：`WireRunnerHooks`、`RunnerListeners` 評估是否移入 channel.ts 內部
+- [ ] 11.4 `handlers/exec-git.ts` + `handlers/rg.ts` 移到 `utils/`
+- [ ] 11.5 `handlers/session/index.ts` 原 CRUD handlers 改名 `crud.ts`，index.ts 只做 factory 組合
+- [ ] 11.6 server.ts 加 provider 條件載入（claude handlers 只在 provider === 'claude' 時註冊）
+- [ ] 11.7 移除 channel.ts 已無人使用的 re-export
+- [ ] 11.8 最終 typecheck + test 全過
+- [ ] 11.9 確認 test 執行時間無顯著退化（baseline: 397 tests, ~6.5s）
