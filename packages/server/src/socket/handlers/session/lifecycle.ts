@@ -11,32 +11,14 @@ import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { Channel } from '../../channel.ts';
 import type { HandlerContext } from '../../context.ts';
+import {
+  DEFAULT_THINKING_TOKENS,
+  type InitResponseResult,
+  initResponseResultSchema,
+} from '../../schemas.ts';
 import type { TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
-/** Default max thinking tokens when thinking is enabled (matches CLI default). */
-export const DEFAULT_THINKING_TOKENS = 31999;
-
-export function persistNewSession(
-  ctx: HandlerContext,
-  opts: { channelId: string; sessionId: string; parentId?: string },
-): void {
-  ctx.sessionStore
-    .persist({
-      id: opts.channelId,
-      sessionId: opts.sessionId,
-      provider: ctx.channelManager.provider,
-      command: ctx.channelManager.runnerCommand,
-      args: JSON.stringify(ctx.channelManager.runnerArgs),
-      cwd: process.cwd(),
-      mode: 'interactive',
-      role: 'chat',
-      ...(opts.parentId ? { parentId: opts.parentId } : {}),
-      createdAt: new Date().toISOString(),
-    })
-    .catch((err) => logger.error({ err }, 'Failed to persist session'));
-}
-
-import { type InitResponseResult, initResponseResultSchema } from '../../schemas.ts';
+import { persistNewSession } from './persist.ts';
 
 async function applyPerLaunchSettings(
   channel: Channel,

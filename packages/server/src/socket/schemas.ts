@@ -55,6 +55,9 @@ export const requestMetaSchema = z.object({
 });
 export type RequestMeta = z.infer<typeof requestMetaSchema>;
 
+/** Default max thinking tokens when thinking is enabled (matches CLI default). */
+export const DEFAULT_THINKING_TOKENS = 31999;
+
 export const channelSummarySchema = z.object({
   channelId: z.string(),
   state: z.enum(['busy', 'idle', 'exited']),

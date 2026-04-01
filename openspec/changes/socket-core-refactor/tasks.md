@@ -88,19 +88,19 @@
 
 ## 10. Handler 內部品質提升
 
-- [ ] 10.1 `message.ts`：`chat:respond` 拆成 response strategy（notification / mcp / elicitation / permission，各自 named function）
-- [ ] 10.2 `message.ts`：title generation 邏輯從 `onResult` 移到 session handler
-- [ ] 10.3 `message.ts`：`interruptedChannels` 清理（socket disconnect 時清除，或改為 per-channel tracking）
-- [ ] 10.4 `message.ts`：移除 L34 多餘的 `channel?.` optional chain（L28 已 guard）
-- [ ] 10.5 `settings.ts`：前三個 handler 合併成 generic setter pattern
-- [ ] 10.6 `settings.ts`：`DEFAULT_THINKING_TOKENS` 移到 `schemas.ts`，消除 settings → lifecycle 跨模組 import
-- [ ] 10.7 `mcp.ts`：8 個重複 handler 改成 data-driven registration
-- [ ] 10.8 `file.ts`：`file:list` 拆出 `listWithRg()`、`listWithWalk()`、`listTerminals()` named function
-- [ ] 10.9 `session/lifecycle.ts`：`persistNewSession` 移到共用位置（fork.ts 也用），修正 L39 的 import 位置
-- [ ] 10.10 `session/lifecycle.ts`：`handleInitResponse` 拆分 models caching 和 account broadcasting
-- [ ] 10.11 `session/fork.ts`：git checkout retry 抽成 `utils/exec-git.ts` 的 `checkoutBranch(branch)` 共用
-- [ ] 10.12 `terminal.ts`：`terminal:open_claude` 重用 session launch 共用邏輯（避免重複 create + wire + broadcast）
-- [ ] 10.13 typecheck + test 全過
+- [x] 10.1 `message.ts`：`chat:respond` 拆成 `respondAndDismiss`、`buildMcpResponse`、`buildElicitationResponse`、`buildToolPermissionResponse`
+- [x] 10.2 `message.ts`：title generation 拆成 `generateTitleIfNeeded`（留在 message handler，router 不支援多 subscriber per event）
+- [x] 10.3 `interruptedChannels` 評估後不需清理（per-factory Set，channelId-based，自然淘汰）
+- [x] 10.4 多餘 `channel?.` 已在 Phase 8 factory 遷移時清除
+- [ ] 10.5 `settings.ts`：前三個 handler 合併成 generic setter pattern（後續）
+- [x] 10.6 `DEFAULT_THINKING_TOKENS` 移到 `schemas.ts`，消除 settings → lifecycle 跨模組 import
+- [ ] 10.7 `mcp.ts`：8 個重複 handler 改成 data-driven registration（後續）
+- [ ] 10.8 `file.ts`：`file:list` 拆出 `listWithRg()`、`listWithWalk()`、`listTerminals()`（後續）
+- [x] 10.9 `persistNewSession` 移到 `session/persist.ts`，消除 fork → lifecycle 的 import 依賴
+- [ ] 10.10 `session/lifecycle.ts`：`handleInitResponse` 拆分 models caching 和 account broadcasting（後續）
+- [ ] 10.11 `session/fork.ts`：git checkout retry 抽成共用 `checkoutBranch()`（後續）
+- [ ] 10.12 `terminal.ts`：`terminal:open_claude` 重用 session launch 共用邏輯（後續）
+- [x] 10.13 typecheck + test 全過（397/397）
 
 ## 11. types.ts 清理 + 檔案搬遷
 

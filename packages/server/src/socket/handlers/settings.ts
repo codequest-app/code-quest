@@ -13,9 +13,9 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { HandlerContext } from '../context.ts';
+import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../types.ts';
-import { DEFAULT_THINKING_TOKENS } from './session/lifecycle.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
   async function handleSetModel(

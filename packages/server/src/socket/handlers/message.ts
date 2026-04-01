@@ -59,6 +59,70 @@ export function create(ctx: HandlerContext): SocketHandler {
     }
   }
 
+  function respondAndDismiss(
+    channel: Channel,
+    channelId: string,
+    requestId: string,
+    cliResponse: Record<string, unknown>,
+  ): void {
+    channel.removeControlRequest(requestId);
+    channel.respondToRequest(requestId, cliResponse);
+    channel.emit('chat:cancel_request', { channelId, targetRequestId: requestId });
+  }
+
+  function buildMcpResponse(
+    channel: Channel,
+    requestId: string,
+    response: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const t = channel.mcpTimeouts.get(requestId);
+    if (t) clearTimeout(t);
+    channel.mcpTimeouts.delete(requestId);
+    return { ...response };
+  }
+
+  function buildElicitationResponse(
+    behavior: unknown,
+    updatedInput: unknown,
+  ): Record<string, unknown> {
+    return behavior === 'allow'
+      ? {
+          action: 'accept' as const,
+          result: typeof updatedInput === 'object' && updatedInput ? updatedInput : {},
+        }
+      : { action: 'decline' as const };
+  }
+
+  function buildToolPermissionResponse(
+    channel: Channel,
+    meta: { toolName?: string; toolUseId?: string } | undefined,
+    response: {
+      behavior?: string;
+      updatedInput?: unknown;
+      updatedPermissions?: unknown;
+      message?: string;
+    },
+  ): Record<string, unknown> {
+    const { behavior, updatedInput, updatedPermissions, message } = response;
+    const result: Record<string, unknown> = { behavior };
+    if (updatedInput !== undefined) result.updatedInput = updatedInput;
+    if (message !== undefined) result.message = message;
+    if (updatedPermissions !== undefined) result.updatedPermissions = updatedPermissions;
+    if (meta?.toolUseId) result.toolUseID = meta.toolUseId;
+
+    if (meta?.toolName === 'ExitPlanMode' && behavior === 'allow') {
+      const comments = channel.planComments;
+      if (comments.length > 0) {
+        result.userFeedback = comments
+          .map((c) => `[Re: "${c.selectedText}"] ${c.comment}`)
+          .join('\n');
+        channel.planComments = [];
+      }
+    }
+
+    return result;
+  }
+
   async function handleRespond(payload: unknown): Promise<void> {
     try {
       const { requestId, response } = chatRespondSchema.parse(payload);
@@ -80,55 +144,17 @@ export function create(ctx: HandlerContext): SocketHandler {
       }
 
       const meta = channel.getControlRequestMeta(requestId);
-      const { behavior, updatedInput, updatedPermissions, message } = response;
 
-      const respondAndBroadcast = (cliResponse: Record<string, unknown>) => {
-        channel.removeControlRequest(requestId);
-        channel.respondToRequest(requestId, cliResponse);
-        channel.emit('chat:cancel_request', { channelId, targetRequestId: requestId });
-      };
-
-      // mcp_message
+      let cliResponse: Record<string, unknown>;
       if (meta?.subtype === 'mcp_message') {
-        const t = channel.mcpTimeouts.get(requestId);
-        if (t) clearTimeout(t);
-        channel.mcpTimeouts.delete(requestId);
-        respondAndBroadcast({ ...response });
-        return;
+        cliResponse = buildMcpResponse(channel, requestId, response);
+      } else if (meta?.subtype === 'elicitation') {
+        cliResponse = buildElicitationResponse(response.behavior, response.updatedInput);
+      } else {
+        cliResponse = buildToolPermissionResponse(channel, meta, response);
       }
 
-      // elicitation
-      if (meta?.subtype === 'elicitation') {
-        const elicitationResponse =
-          behavior === 'allow'
-            ? {
-                action: 'accept' as const,
-                result: typeof updatedInput === 'object' && updatedInput ? updatedInput : {},
-              }
-            : { action: 'decline' as const };
-        respondAndBroadcast({ ...elicitationResponse });
-        return;
-      }
-
-      // Tool permission
-      const responseObj: Record<string, unknown> = { behavior };
-      if (updatedInput !== undefined) responseObj.updatedInput = updatedInput;
-      if (message !== undefined) responseObj.message = message;
-      if (updatedPermissions !== undefined) responseObj.updatedPermissions = updatedPermissions;
-      if (meta?.toolUseId) responseObj.toolUseID = meta.toolUseId;
-
-      // ExitPlanMode
-      if (meta?.toolName === 'ExitPlanMode' && behavior === 'allow') {
-        const comments = channel.planComments;
-        if (comments.length > 0) {
-          responseObj.userFeedback = comments
-            .map((c) => `[Re: "${c.selectedText}"] ${c.comment}`)
-            .join('\n');
-          channel.planComments = [];
-        }
-      }
-
-      respondAndBroadcast(responseObj);
+      respondAndDismiss(channel, channelId, requestId, cliResponse);
     } catch (err) {
       logger.error({ err }, 'Failed to respond to control request');
     }
@@ -209,23 +235,26 @@ export function create(ctx: HandlerContext): SocketHandler {
     }
   }
 
+  function generateTitleIfNeeded(channelId: string, ch: Channel): void {
+    const pendingPrompt = ch.sessionState.pendingTitlePrompt;
+    if (!pendingPrompt) return;
+
+    ch.updateSessionState({ pendingTitlePrompt: undefined });
+    ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
+      .then((res) => {
+        const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+        ctx.sessionStore
+          .rename(channelId, title)
+          .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
+        ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
+      })
+      .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
+  }
+
   function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {
     ch.endProcessing();
     ctx.channelManager.broadcastSessionState(channelId, 'idle');
-
-    const pendingPrompt = ch.sessionState.pendingTitlePrompt;
-    if (pendingPrompt) {
-      ch.updateSessionState({ pendingTitlePrompt: undefined });
-      ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
-        .then((res) => {
-          const { title } = controlGenerateTitleResponseSchema.parse(res.response);
-          ctx.sessionStore
-            .rename(channelId, title)
-            .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-          ctx.channelManager.broadcastSessionState(channelId, 'idle', title);
-        })
-        .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
-    }
+    generateTitleIfNeeded(channelId, ch);
   }
 
   return {
