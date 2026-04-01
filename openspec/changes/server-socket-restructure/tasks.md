@@ -64,9 +64,9 @@
 
 ### Phase 7: HandlerContext 瘦身
 
-- [ ] 43. 從 HandlerContext 移除 `chromeMcpState` → claude/ 專屬 state
-- [ ] 44. 從 HandlerContext 移除 `pluginCache` + `PLUGIN_CACHE_TTL` → claude/ 專屬 state
-- [ ] 45. 跑全部 test 確認通過
+- [x] 43. 從 HandlerContext 移除 `chromeMcpState` → claude/ 專屬 state
+- [x] 44. 從 HandlerContext 移除 `pluginCache` + `PLUGIN_CACHE_TTL` → claude/ 專屬 state
+- [x] 45. 跑全部 test 確認通過
 
 ### Phase 8: Code review + Refactor + Cleanup
 
