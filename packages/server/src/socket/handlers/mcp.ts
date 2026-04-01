@@ -4,11 +4,15 @@ import {
   mcpGetServersSchema,
   mcpMessageSchema,
   mcpOAuthCallbackSchema,
+  mcpPayloadSchema,
   mcpReconnectSchema,
   mcpSetEnabledSchema,
   mcpSetServersSchema,
+  type SocketEvent,
 } from '@code-quest/shared';
+import type { Channel } from '../channel.ts';
 import type { HandlerContext } from '../context.ts';
+import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { TypedSocket } from '../types.ts';
 import { ensureChannel, errMsg } from '../types.ts';
 
@@ -141,4 +145,27 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback({ success: false, error: errMsg(err, 'Invalid payload') });
     }
   });
+}
+
+export function onRunnerEvent(
+  _ctx: HandlerContext,
+  _channelId: string,
+  ch: Channel,
+  se: SocketEvent,
+): boolean {
+  if (se.name !== 'control:mcp') return false;
+  const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
+  const hasClient = ch.sockets.size > 0;
+  const mcpId = mcpMsg?.id;
+  if (!hasClient) {
+    ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'no client'));
+    return true;
+  }
+  const mcpTimeout = setTimeout(() => {
+    ch.removeControlRequest(requestId);
+    ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'timeout'));
+  }, MCP_MESSAGE_TIMEOUT);
+  ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
+  ch.mcpTimeouts.set(requestId, mcpTimeout);
+  return true;
 }

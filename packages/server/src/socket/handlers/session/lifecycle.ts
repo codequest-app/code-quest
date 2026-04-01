@@ -1,4 +1,4 @@
-import type { ChatCreatePayload, ControlResponse } from '@code-quest/shared';
+import type { ChatCreatePayload, ControlResponse, SocketEvent } from '@code-quest/shared';
 import {
   chatCreateSchema,
   chatJoinSchema,
@@ -6,6 +6,7 @@ import {
   controlInitResponseSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
+import type { ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
@@ -190,10 +191,10 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         channel.wireRunner(hooks);
       }
 
-      const replaySessionId = await ctx.resolveSessionId(channelId);
+      const replaySessionId = await ctx.channelManager.resolveSessionId(channelId);
       await channel.replayPendingControlRequests(
         socket,
-        (sid) => ctx.getPendingReplayEvents(sid),
+        (sid) => ctx.channelManager.getPendingReplayEvents(sid),
         replaySessionId,
       );
 
@@ -202,7 +203,7 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
         socket.emit('app:models', { channelId: '', models: ctx.cachedModels });
       }
 
-      const events = await ctx.getSessionHistory(channelId);
+      const events = await ctx.channelManager.getSessionHistory(channelId);
       const state = channel.isProcessing ? 'busy' : 'idle';
       callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
     } catch (err) {
@@ -230,5 +231,30 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     } catch {
       // ignore invalid payload
     }
+  });
+}
+
+export function onRunnerEvent(
+  ctx: HandlerContext,
+  channelId: string,
+  _ch: Channel,
+  se: SocketEvent,
+): boolean {
+  if (se.name !== 'session:init') return false;
+  ctx.broadcastSessionState(channelId, 'busy');
+  return true;
+}
+
+export function onExit(
+  ctx: HandlerContext,
+  channelId: string,
+  ch: Channel,
+  _code: number | null,
+): void {
+  ctx.broadcastSessionState(channelId, 'exited');
+  ch.resetSessionState();
+  ctx.emitToSession(channelId, 'session:closed', {
+    channelId,
+    ...(ch.lastError ? { error: ch.lastError } : {}),
   });
 }

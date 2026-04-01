@@ -1,6 +1,9 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { join, normalize, resolve } from 'node:path';
-import { fileListSchema } from '@code-quest/shared';
+import { fileListSchema, fileUpdatedPayloadSchema, type SocketEvent } from '@code-quest/shared';
+import type { ServerAction } from '@code-quest/summoner';
+import type { Channel } from '../channel.ts';
 import type { HandlerContext } from '../context.ts';
 import type { TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from './rg.ts';
@@ -97,4 +100,40 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       callback({ files: [] });
     }
   });
+}
+
+export function onRunnerEvent(
+  ctx: HandlerContext,
+  channelId: string,
+  _ch: Channel,
+  se: SocketEvent,
+): boolean {
+  if (se.name !== 'system:file_updated') return false;
+  const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
+  ctx.emitToSession(channelId, 'file:updated', { channelId, filePath, oldContent, newContent });
+  return true;
+}
+
+export function onServerAction(
+  ctx: HandlerContext,
+  channelId: string,
+  ch: Channel,
+  action: ServerAction,
+): boolean {
+  if (action.action !== 'read_diff') return false;
+  const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
+  void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
+    ([oldContent, newContent]) => {
+      ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
+      ctx.emitToSession(channelId, 'control:diff_review', {
+        channelId,
+        requestId: action.requestId,
+        toolId: action.requestId,
+        filePath: action.originalPath || action.newPath,
+        oldContent,
+        newContent,
+      });
+    },
+  );
+  return true;
 }

@@ -1,20 +1,10 @@
-import { readFile } from 'node:fs/promises';
-import {
-  type AuthStatus,
-  type ClientToServerEvents,
-  controlGenerateTitleResponseSchema,
-  diffReviewPayloadSchema,
-  fileUpdatedPayloadSchema,
-  mcpPayloadSchema,
-  type NotificationPayload,
-  type NotificationResponse,
-  permissionPayloadSchema,
-  rateLimitPayloadSchema,
-  requestIdPayloadSchema,
-  type ServerToClientEvents,
-  type SocketEvent,
-  serverActionModelSchema,
-  serverActionModeSchema,
+import type {
+  AuthStatus,
+  ClientToServerEvents,
+  NotificationPayload,
+  NotificationResponse,
+  ServerToClientEvents,
+  SocketEvent,
 } from '@code-quest/shared';
 import type { ProcessRunner } from '@code-quest/summoner';
 import { inject, injectable, optional } from 'inversify';
@@ -33,16 +23,37 @@ import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
 import { register as registerPluginHandlers } from './claude/plugin.ts';
 import type { HandlerContext } from './context.ts';
 import { register as registerConnectionHandlers } from './handlers/connection.ts';
-import { register as registerFileHandlers } from './handlers/file.ts';
+import {
+  onRunnerEvent as controlOnRunnerEvent,
+  onServerAction as controlOnServerAction,
+} from './handlers/control.ts';
+import {
+  onRunnerEvent as fileOnRunnerEvent,
+  onServerAction as fileOnServerAction,
+  register as registerFileHandlers,
+} from './handlers/file.ts';
 import { register as registerGitHandlers } from './handlers/git.ts';
-import { register as registerMcpHandlers } from './handlers/mcp.ts';
-import { register as registerMessageHandlers } from './handlers/message.ts';
+import {
+  onRunnerEvent as mcpOnRunnerEvent,
+  register as registerMcpHandlers,
+} from './handlers/mcp.ts';
+import {
+  onRunnerEvent as messageOnRunnerEvent,
+  register as registerMessageHandlers,
+} from './handlers/message.ts';
 import { register as registerPlanHandlers } from './handlers/plan.ts';
 import { register as registerSessionHandlers } from './handlers/session/index.ts';
-import { register as registerSettingsHandlers } from './handlers/settings.ts';
+import {
+  onExit as sessionOnExit,
+  onRunnerEvent as sessionOnRunnerEvent,
+} from './handlers/session/lifecycle.ts';
+import {
+  register as registerSettingsHandlers,
+  onServerAction as settingsOnServerAction,
+} from './handlers/settings.ts';
 import { register as registerSpeechHandlers } from './handlers/speech.ts';
 import { register as registerTerminalHandlers } from './handlers/terminal.ts';
-import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from './schemas.ts';
+import { onRunnerEvent as usageOnRunnerEvent } from './handlers/usage.ts';
 import {
   pickDefined,
   type SessionBroadcastState,
@@ -163,184 +174,24 @@ export class SocketServer implements HandlerContext {
   }
 
   buildChannelHooks(channelId: string): WireRunnerHooks {
-    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
-
     return {
       onSocketEvent: (ch, se) => {
-        const p = se.payload;
-
-        if (se.name === 'message:result') {
-          ch.endProcessing();
-          this.broadcastSessionState(channelId, 'idle');
-          const pendingPrompt = ch.sessionState.pendingTitlePrompt;
-          if (pendingPrompt) {
-            ch.updateSessionState({ pendingTitlePrompt: undefined });
-            ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
-              .then((res) => {
-                const { title } = controlGenerateTitleResponseSchema.parse(res.response);
-                this.sessionStore
-                  .rename(channelId, title)
-                  .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
-                this.broadcastSessionState(channelId, 'idle', title);
-              })
-              .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
-          }
-          return;
-        }
-
-        switch (se.name) {
-          case 'session:init':
-            this.broadcastSessionState(channelId, 'busy');
-            break;
-          case 'system:rate_limit': {
-            const { info } = rateLimitPayloadSchema.parse(p);
-            this.usageTracker.update(info);
-            break;
-          }
-          case 'system:file_updated': {
-            const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(p);
-            this.emitToSession(channelId, 'file:updated', {
-              channelId,
-              filePath,
-              oldContent,
-              newContent,
-            });
-            break;
-          }
-          case 'control:cancel': {
-            const { requestId } = requestIdPayloadSchema.parse(p);
-            ch.removeControlRequest(requestId);
-            this.emitToSession(channelId, 'chat:cancel_request', {
-              channelId,
-              targetRequestId: requestId,
-            });
-            break;
-          }
-          case 'control:permission': {
-            const { requestId, toolName, toolUseId } = permissionPayloadSchema.parse(p);
-            ch.trackControlRequest(requestId, { subtype: 'can_use_tool', toolName, toolUseId });
-            break;
-          }
-          case 'control:elicitation': {
-            const { requestId } = requestIdPayloadSchema.parse(p);
-            ch.trackControlRequest(requestId, { subtype: 'elicitation' });
-            break;
-          }
-          case 'control:diff_review': {
-            const { toolId } = diffReviewPayloadSchema.parse(p);
-            ch.trackControlRequest(toolId, { subtype: 'open_diff' });
-            break;
-          }
-          case 'control:mcp': {
-            const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(p);
-            const hasClient = ch.sockets.size > 0;
-            const mcpId = mcpMsg?.id;
-            if (!hasClient) {
-              ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'no client'));
-              break;
-            }
-            const mcpTimeout = setTimeout(() => {
-              ch.removeControlRequest(requestId);
-              ch.runner.respondToControlRequest(requestId, jsonRpcError(mcpId, 'timeout'));
-            }, MCP_MESSAGE_TIMEOUT);
-            ch.trackControlRequest(requestId, { subtype: 'mcp_message' });
-            ch.mcpTimeouts.set(requestId, mcpTimeout);
-            break;
-          }
-        }
+        messageOnRunnerEvent(this, channelId, ch, se) ||
+          sessionOnRunnerEvent(this, channelId, ch, se) ||
+          fileOnRunnerEvent(this, channelId, ch, se) ||
+          mcpOnRunnerEvent(this, channelId, ch, se) ||
+          usageOnRunnerEvent(this, channelId, ch, se) ||
+          controlOnRunnerEvent(this, channelId, ch, se);
       },
 
       onServerAction: (ch, action) => {
-        switch (action.action) {
-          case 'auto_respond': {
-            switch (action.subtype) {
-              case 'get_settings': {
-                const state = ch.sessionState;
-                const overrides = pickDefined({
-                  model: state.model,
-                  permissionMode: state.permissionMode,
-                });
-                void this.settingsStore
-                  .getMany(ch.provider, ['model', 'permissionMode'])
-                  .then((stored) => {
-                    ch.runner.respondToControlRequest(action.requestId, {
-                      ...stored,
-                      ...overrides,
-                    });
-                  })
-                  .catch(() => {
-                    ch.runner.respondToControlRequest(action.requestId, overrides);
-                  });
-                break;
-              }
-              case 'set_model': {
-                const { model } = serverActionModelSchema.parse(action.input ?? {});
-                ch.updateSessionState({ model });
-                ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
-                this.broadcastSessionState(channelId, 'busy');
-                break;
-              }
-              case 'set_permission_mode': {
-                const { mode } = serverActionModeSchema.parse(action.input ?? {});
-                ch.updateSessionState({ permissionMode: mode });
-                ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
-                this.broadcastSessionState(channelId, 'busy');
-                break;
-              }
-              default:
-                ch.runner.respondToControlRequest(action.requestId, action.response);
-                break;
-            }
-            break;
-          }
-          case 'read_diff': {
-            void Promise.all([
-              readFileOrEmpty(action.originalPath),
-              readFileOrEmpty(action.newPath),
-            ]).then(([oldContent, newContent]) => {
-              ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-              this.emitToSession(channelId, 'control:diff_review', {
-                channelId,
-                requestId: action.requestId,
-                toolId: action.requestId,
-                filePath: action.originalPath || action.newPath,
-                oldContent,
-                newContent,
-              });
-            });
-            break;
-          }
-          case 'forward_to_client': {
-            ch.trackControlRequest(action.requestId, {
-              subtype: action.subtype,
-              toolName: action.toolName,
-              toolUseId: action.toolUseId,
-            });
-            this.emitToSession(channelId, 'raw:event', {
-              channelId,
-              rawType: `control_request/${action.subtype}`,
-              data: {
-                requestId: action.requestId,
-                subtype: action.subtype,
-                toolName: action.toolName,
-                toolUseId: action.toolUseId,
-                input: action.input,
-                suggestions: action.suggestions,
-                callbackId: action.callbackId,
-              },
-            });
-            break;
-          }
-        }
+        fileOnServerAction(this, channelId, ch, action) ||
+          settingsOnServerAction(this, channelId, ch, action) ||
+          controlOnServerAction(this, channelId, ch, action);
       },
 
-      onExit: (ch, _code) => {
-        this.broadcastSessionState(channelId, 'exited');
-        ch.resetSessionState();
-        this.emitToSession(channelId, 'session:closed', {
-          channelId,
-          ...(ch.lastError ? { error: ch.lastError } : {}),
-        });
+      onExit: (ch, code) => {
+        sessionOnExit(this, channelId, ch, code);
       },
     };
   }

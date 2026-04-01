@@ -5,11 +5,15 @@ import {
   chatSetProactiveSchema,
   chatSetRemoteControlSchema,
   chatSetThinkingLevelSchema,
+  serverActionModelSchema,
+  serverActionModeSchema,
   settingsApplySchema,
 } from '@code-quest/shared';
+import type { ServerAction } from '@code-quest/summoner';
+import type { Channel } from '../channel.ts';
 import type { HandlerContext } from '../context.ts';
 import type { TypedSocket } from '../types.ts';
-import { errMsg } from '../types.ts';
+import { errMsg, pickDefined } from '../types.ts';
 import { DEFAULT_THINKING_TOKENS } from './session/lifecycle.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
@@ -174,4 +178,52 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       ...(contextUsage ? { contextUsage } : {}),
     });
   });
+}
+
+export function onServerAction(
+  ctx: HandlerContext,
+  channelId: string,
+  ch: Channel,
+  action: ServerAction,
+): boolean {
+  if (action.action !== 'auto_respond') return false;
+
+  switch (action.subtype) {
+    case 'get_settings': {
+      const state = ch.sessionState;
+      const overrides = pickDefined({
+        model: state.model,
+        permissionMode: state.permissionMode,
+      });
+      void ctx.settingsStore
+        .getMany(ch.provider, ['model', 'permissionMode'])
+        .then((stored) => {
+          ch.runner.respondToControlRequest(action.requestId, {
+            ...stored,
+            ...overrides,
+          });
+        })
+        .catch(() => {
+          ch.runner.respondToControlRequest(action.requestId, overrides);
+        });
+      return true;
+    }
+    case 'set_model': {
+      const { model } = serverActionModelSchema.parse(action.input ?? {});
+      ch.updateSessionState({ model });
+      ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
+      ctx.broadcastSessionState(channelId, 'busy');
+      return true;
+    }
+    case 'set_permission_mode': {
+      const { mode } = serverActionModeSchema.parse(action.input ?? {});
+      ch.updateSessionState({ permissionMode: mode });
+      ch.runner.respondToControlRequest(action.requestId, { subtype: 'success' });
+      ctx.broadcastSessionState(channelId, 'busy');
+      return true;
+    }
+    default:
+      ch.runner.respondToControlRequest(action.requestId, action.response);
+      return true;
+  }
 }

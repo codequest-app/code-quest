@@ -7,8 +7,11 @@ import {
   chatRewindCodeSchema,
   chatSendSchema,
   chatStopTaskSchema,
+  controlGenerateTitleResponseSchema,
+  type SocketEvent,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
+import type { Channel } from '../channel.ts';
 import type { HandlerContext } from '../context.ts';
 import type { TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
@@ -21,9 +24,9 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
     try {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
-      const runner = ctx.requireRunner(socket, channelId);
-      if (!runner) return;
       const channel = ctx.channelManager.get(channelId);
+      const runner = channel?.runner;
+      if (!runner) return;
       channel?.startProcessing();
       runner.sendMessage(textMessage);
       ctx.broadcastSessionState(channelId, 'busy');
@@ -221,4 +224,32 @@ export function register(socket: TypedSocket, ctx: HandlerContext): void {
       // ignore
     }
   });
+}
+
+export function onRunnerEvent(
+  ctx: HandlerContext,
+  channelId: string,
+  ch: Channel,
+  se: SocketEvent,
+): boolean {
+  if (se.name !== 'message:result') return false;
+
+  ch.endProcessing();
+  ctx.broadcastSessionState(channelId, 'idle');
+
+  const pendingPrompt = ch.sessionState.pendingTitlePrompt;
+  if (pendingPrompt) {
+    ch.updateSessionState({ pendingTitlePrompt: undefined });
+    ch.sendControlRequest('generate_session_title', { description: pendingPrompt })
+      .then((res) => {
+        const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+        ctx.sessionStore
+          .rename(channelId, title)
+          .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
+        ctx.broadcastSessionState(channelId, 'idle', title);
+      })
+      .catch((e) => logger.error({ err: e }, 'Failed to generate session title'));
+  }
+
+  return true;
 }
