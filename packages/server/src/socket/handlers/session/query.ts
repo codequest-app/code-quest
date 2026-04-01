@@ -1,10 +1,4 @@
-import {
-  sessionDeleteSchema,
-  sessionGetSchema,
-  sessionListRemoteSchema,
-  sessionListSchema,
-  sessionRenameSchema,
-} from '@code-quest/shared';
+import { sessionGetSchema, sessionListRemoteSchema, sessionListSchema } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
@@ -16,34 +10,6 @@ export function create(
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
 ): SocketHandler {
-  async function handleDelete(payload: unknown, callback: SocketCallback): Promise<void> {
-    try {
-      const { channelId } = sessionDeleteSchema.parse(payload);
-      const success = await sessionStore.delete(channelId);
-      if (!success) {
-        callback({ success: false, error: 'Session not found' });
-        return;
-      }
-      callback({ success: true });
-    } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to delete session') });
-    }
-  }
-
-  async function handleRename(payload: unknown, callback: SocketCallback): Promise<void> {
-    try {
-      const { channelId, title } = sessionRenameSchema.parse(payload);
-      const success = await sessionStore.rename(channelId, title);
-      if (!success) {
-        callback({ success: false, error: 'Session not found' });
-        return;
-      }
-      callback({ success: true });
-    } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to rename session') });
-    }
-  }
-
   async function handleList(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const parsed = sessionListSchema.parse(payload);
@@ -120,8 +86,6 @@ export function create(
 
   return {
     register(socket: TypedSocket) {
-      socket.on('session:delete', handleDelete);
-      socket.on('session:rename', handleRename);
       socket.on('session:list', handleList);
       socket.on('session:list_remote', handleListRemote);
       socket.on('session:get', handleGet);

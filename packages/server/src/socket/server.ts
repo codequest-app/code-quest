@@ -18,7 +18,10 @@ import * as mcp from './handlers/mcp.ts';
 import * as message from './handlers/message.ts';
 import * as permission from './handlers/permission.ts';
 import * as plan from './handlers/plan.ts';
-import * as session from './handlers/session/index.ts';
+import * as sessionCommand from './handlers/session/command.ts';
+import * as sessionConnect from './handlers/session/connect.ts';
+import * as sessionFork from './handlers/session/fork.ts';
+import * as sessionQuery from './handlers/session/query.ts';
 import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
@@ -68,7 +71,10 @@ export class SocketServer {
       message.create(cm, ss),
       permission.create(),
       app.create(cm, st),
-      session.create(cm, ss, st, sh),
+      sessionConnect.create(cm, st, ss, sh),
+      sessionCommand.create(cm, ss),
+      sessionFork.create(cm, sh, ss),
+      sessionQuery.create(cm, ss, sh),
     ];
 
     const providerHandlers: SocketHandler[] =

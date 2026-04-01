@@ -7,7 +7,7 @@ export interface PluginCacheEntry {
   ts: number;
 }
 
-/** Claude-specific state — not part of generic HandlerContext. */
+/** Claude-specific state. */
 export const claudeState = {
   chromeMcpState: { status: 'disconnected' as 'disconnected' | 'connecting' | 'connected' },
   pluginCache: new Map<string, PluginCacheEntry>(),
