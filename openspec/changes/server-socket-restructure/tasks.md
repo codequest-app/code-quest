@@ -70,8 +70,8 @@
 
 ### Phase 8: Code review + Refactor + Cleanup
 
-- [ ] 46. Code review：檢查所有搬移後的檔案，找出 interface/inline type 該改 zod 的
-- [ ] 47. Refactor：執行 code review 發現的改進
-- [ ] 48. 更新 server-socket-structure skill
-- [ ] 49. 最終全量 test + typecheck + lint
-- [ ] 50. 確認 server + client test 數量不變
+- [x] 46. Code review：檢查所有搬移後的檔案，找出 interface/inline type 該改 zod 的
+- [x] 47. Refactor：執行 code review 發現的改進
+- [x] 48. 更新 server-socket-structure skill
+- [x] 49. 最終全量 test + typecheck + lint
+- [x] 50. 確認 server + client test 數量不變
