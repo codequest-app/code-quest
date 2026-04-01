@@ -1,4 +1,5 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+import { segments as s } from '@code-quest/summoner/test';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup() {
@@ -253,6 +254,42 @@ describe('ChatHandler > mcp', () => {
         expect(res.success).toBe(false);
         expect(res.error).toBeDefined();
       }
+    });
+  });
+
+  describe('mcp_message control_request', () => {
+    it('forwards to client as control:mcp event', async () => {
+      const { claude, channelId } = await setup();
+      const mcpEvents: any[] = [];
+      claude.socket.on('control:mcp', (p: any) => mcpEvents.push(p));
+
+      await claude.send('chat:send', { channelId, message: 'go' });
+      await claude.emit(
+        s.controlRequest('mcp-1', 'mcp_message', undefined, {
+          server_name: 'test-server',
+          message: { jsonrpc: '2.0', method: 'test', id: 1 },
+        }),
+      );
+
+      expect(mcpEvents.length).toBeGreaterThan(0);
+    });
+
+    it('mcp_message is NOT auto-responded — passthrough to client', async () => {
+      const { claude, channelId } = await setup();
+      const mcpEvents: any[] = [];
+      claude.socket.on('control:mcp', (p: any) => mcpEvents.push(p));
+
+      await claude.send('chat:send', { channelId, message: 'go' });
+      await claude.emit(
+        s.controlRequest('mcp-pass', 'mcp_message', undefined, {
+          server_name: 'test',
+          message: { jsonrpc: '2.0', method: 'test', id: 1 },
+        }),
+      );
+
+      expect(mcpEvents.length).toBeGreaterThan(0);
+      // mcp_message should be forwarded to client, not auto-responded
+      expect(mcpEvents[0].requestId).toBe('mcp-pass');
     });
   });
 });

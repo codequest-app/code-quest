@@ -64,11 +64,11 @@ describe('ChatHandler > file', () => {
 
       const result = await claude.send<{
         files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: 'chat-handler' });
+      }>('file:list', { channelId, pattern: 'session-connect' });
 
       expect(rgListFilesSpy).not.toHaveBeenCalled();
       expect(result.files.length).toBeGreaterThan(0);
-      expect(result.files.some((f) => f.name.includes('chat-handler'))).toBe(true);
+      expect(result.files.some((f) => f.name.includes('session-connect'))).toBe(true);
     });
 
     it('returns empty array for no matches', async () => {

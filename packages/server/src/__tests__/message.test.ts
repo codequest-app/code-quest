@@ -136,4 +136,109 @@ describe('ChatHandler > message', () => {
 
     // No error — test passes if we reach here
   });
+
+  describe('chat:stop_task', () => {
+    it('sends stop_task control_request to CLI', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('chat:stop_task', { channelId, taskId: 'task-1' });
+
+      expect(
+        claude
+          .received('control_request')
+          .some((r: any) => (r.request as any)?.subtype === 'stop_task'),
+      ).toBe(true);
+    });
+  });
+
+  it('silently ignores control_response for unknown requestId', async () => {
+    const claude = createFakeClaude();
+
+    await claude.send('chat:respond', {
+      requestId: 'req-1',
+      response: { behavior: 'allow', updatedInput: {} },
+    });
+
+    // No error — test passes if we reach here
+  });
+
+  it('first chat:cancel sends interrupt, second chat:cancel aborts', async () => {
+    const { claude, channelId } = await setup();
+
+    // First cancel → interrupt (sends interrupt JSON via stdin)
+    await claude.send('chat:cancel', { channelId });
+
+    const afterFirst = claude
+      .received()
+      .filter((r: any) => JSON.stringify(r).includes('"interrupt"'));
+    expect(afterFirst.length).toBeGreaterThan(0);
+
+    // Second cancel → abort
+    await claude.send('chat:cancel', { channelId });
+
+    expect(claude.handle.signal.aborted).toBe(true);
+  });
+
+  it('after session returns to idle, next cancel is graceful interrupt (not force abort)', async () => {
+    const { claude, channelId } = await setup();
+
+    // Turn 1: send message
+    await claude.send('chat:send', { channelId, message: 'go' });
+
+    await claude.emit(s.assistant('turn1'));
+    await claude.emit(s.result());
+
+    // Turn 2: cancel should be graceful (not abort) since session returned to idle
+    await claude.send('chat:send', { channelId, message: 'go again' });
+
+    await claude.send('chat:cancel', { channelId });
+
+    expect(claude.handle.signal.aborted).toBe(false);
+  });
+
+  it('interrupts a session', async () => {
+    const { claude, channelId } = await setup();
+
+    await claude.send('chat:cancel', { channelId });
+
+    const received = claude.received();
+    expect(received.some((r: any) => JSON.stringify(r).includes('"interrupt"'))).toBe(true);
+  });
+
+  it('cancel_request C→S calls respondToControlRequest with deny to unblock CLI', async () => {
+    const { claude, channelId } = await setup();
+
+    await claude.send('chat:send', { channelId, message: 'go' });
+
+    claude.emit(
+      s.assistant({ toolUse: { id: 'toolu_cancel', name: 'Bash', input: { command: 'ls' } } }),
+    );
+    await claude.emit(
+      s.controlRequest('req-cancel-test', 'can_use_tool', 'Bash', { command: 'ls' }),
+    );
+
+    await claude.send('chat:cancel_request', { targetRequestId: 'req-cancel-test' });
+
+    const received = claude.received();
+    expect(
+      received.some(
+        (r: any) =>
+          JSON.stringify(r).includes('req-cancel-test') && JSON.stringify(r).includes('"deny"'),
+      ),
+    ).toBe(true);
+  });
+
+  it('cancel_request C→S is received by server without error', async () => {
+    const { claude, channelId } = await setup();
+
+    await claude.send('chat:send', { channelId, message: 'go' });
+    await claude.emit(
+      s.assistant({ toolUse: { id: 'toolu_c', name: 'Bash', input: { command: 'ls' } } }),
+    );
+    await claude.emit(s.controlRequest('req-cancel-cs', 'can_use_tool', 'Bash', { command: 'ls' }));
+
+    await claude.send('chat:cancel_request', { targetRequestId: 'req-cancel-cs' });
+
+    expect(claude.socket.connected).toBe(true);
+  });
 });

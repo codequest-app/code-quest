@@ -405,4 +405,33 @@ describe('ChatHandler > settings', () => {
       expect(ctx.rawMaxTokens).toBeUndefined();
     });
   });
+
+  describe('auto-respond control_requests', () => {
+    it('set_model auto-responds and updates sessionState', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('settings:set_model', { channelId, model: 'haiku' });
+
+      const received = claude.received('control_request');
+      expect(received.some((r: any) => (r.request as any)?.subtype === 'set_model')).toBe(true);
+    });
+
+    it('set_permission_mode auto-responds and updates sessionState', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
+
+      const received = claude.received('control_request');
+      expect(received.some((r: any) => (r.request as any)?.subtype === 'set_permission_mode')).toBe(
+        true,
+      );
+    });
+
+    it('auto-responds to get_settings control_request from CLI', async () => {
+      const { claude } = await setup();
+
+      // FakeClaude auto-responds to all control_requests including get_settings
+      expect(claude.received().length).toBeGreaterThan(0);
+    });
+  });
 });
