@@ -17,7 +17,7 @@ export function create(
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
       const parentEvents = await sessionHistory.getSessionHistory(forkedFromSession);
-      const { channel: forkChannel } = await channelManager.create(newSessionId, {
+      await channelManager.create(newSessionId, {
         launchOptions: { resumeSessionId: forkedFromSession },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
         onBeforeSpawn: (ch) => {

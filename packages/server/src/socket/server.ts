@@ -48,44 +48,32 @@ export class SocketServer {
   private handlers: SocketHandler[] = [];
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
-    this.channelManager.register(io);
+    const cm = this.channelManager;
+    cm.register(io);
 
-    const {
-      channelManager,
-      sessionStore,
-      sessionHistory,
-      settingsStore,
-      usageTracker,
-      rawEventStore,
-    } = this;
-
-    const planHandler = plan.create(channelManager);
+    const planHandler = plan.create(cm);
 
     const commonHandlers: SocketHandler[] = [
-      speech.create(channelManager),
-      usage.create(usageTracker),
+      speech.create(cm),
+      usage.create(this.usageTracker),
       planHandler,
-      git.create(channelManager, sessionHistory, rawEventStore),
-      terminal.create(channelManager),
-      file.create(channelManager),
-      mcp.create(channelManager),
-      settings.create(channelManager, settingsStore, usageTracker),
-      message.create(channelManager, sessionStore, planHandler),
+      git.create(this.sessionHistory, this.rawEventStore),
+      terminal.create(cm),
+      file.create(cm),
+      mcp.create(cm),
+      settings.create(cm, this.settingsStore, this.usageTracker),
+      message.create(cm, this.sessionStore, planHandler),
       permission.create(),
-      app.create(channelManager, settingsStore),
-      sessionConnect.create(channelManager, settingsStore, sessionStore, sessionHistory),
-      sessionCommand.create(channelManager, sessionStore),
-      sessionFork.create(channelManager, sessionHistory),
-      sessionQuery.create(channelManager, sessionStore, sessionHistory),
+      app.create(cm, this.settingsStore),
+      sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory),
+      sessionCommand.create(cm, this.sessionStore),
+      sessionFork.create(cm, this.sessionHistory),
+      sessionQuery.create(cm, this.sessionStore, this.sessionHistory),
     ];
 
     const providerHandlers: SocketHandler[] =
-      channelManager.provider === 'claude'
-        ? [
-            claudeAuth.create(channelManager),
-            claudeMcpServers.create(channelManager),
-            claudePlugin.create(),
-          ]
+      cm.provider === 'claude'
+        ? [claudeAuth.create(cm), claudeMcpServers.create(cm), claudePlugin.create()]
         : [];
 
     this.handlers = [...commonHandlers, ...providerHandlers];
