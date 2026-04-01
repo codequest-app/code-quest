@@ -16,7 +16,7 @@ import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../types.ts';
 
 export function create(
@@ -111,7 +111,7 @@ export function create(
     }
   }
 
-  async function handleApply(payload: unknown, callback: Function): Promise<void> {
+  async function handleApply(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -132,7 +132,7 @@ export function create(
     }
   }
 
-  async function handleState(payload: unknown, callback: Function): Promise<void> {
+  async function handleState(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = chatGetStateSchema.parse(payload);
       const channel = channelManager.get(channelId);

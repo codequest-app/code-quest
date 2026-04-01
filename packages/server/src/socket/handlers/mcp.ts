@@ -14,7 +14,7 @@ import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
@@ -30,7 +30,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     return channel;
   }
 
-  async function handleReconnect(payload: unknown, callback: Function): Promise<void> {
+  async function handleReconnect(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName } = mcpReconnectSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -44,7 +44,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleToggle(payload: unknown, callback: Function): Promise<void> {
+  async function handleToggle(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName, enabled } = mcpSetEnabledSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -59,7 +59,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleServers(payload: unknown, callback: Function): Promise<void> {
+  async function handleServers(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = mcpGetServersSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -71,7 +71,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleSetServers(payload: unknown, callback: Function): Promise<void> {
+  async function handleSetServers(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, servers } = mcpSetServersSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -83,7 +83,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleMessage(payload: unknown, callback: Function): Promise<void> {
+  async function handleMessage(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName, message } = mcpMessageSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -98,7 +98,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleAuthenticate(payload: unknown, callback: Function): Promise<void> {
+  async function handleAuthenticate(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -116,7 +116,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleClearAuth(payload: unknown, callback: Function): Promise<void> {
+  async function handleClearAuth(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName } = mcpAuthenticateSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -134,7 +134,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleOAuthCallback(payload: unknown, callback: Function): Promise<void> {
+  async function handleOAuthCallback(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
       const channel = ensureChannel(channelId, (e) => callback({ success: false, ...e }));
@@ -149,7 +149,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  function handleAskDebugger(payload: unknown, callback: Function): void {
+  function handleAskDebugger(payload: unknown, callback: SocketCallback): void {
     try {
       debuggerHelpSchema.parse(payload);
       callback({ success: true, response: { type: 'ask_debugger_help_response' } });

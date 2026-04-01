@@ -15,7 +15,7 @@ import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
 export function create(channelManager: ChannelManager, sessionStore: SessionStore): SocketHandler {
@@ -187,7 +187,7 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     }
   }
 
-  async function handleRewindCode(payload: unknown, callback: Function): Promise<void> {
+  async function handleRewindCode(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
       const channel = channelManager.get(channelId);

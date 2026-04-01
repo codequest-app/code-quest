@@ -20,7 +20,7 @@ import {
   initResponseResultSchema,
 } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 import { persistNewSession } from './persist.ts';
 
@@ -87,7 +87,7 @@ export async function handleLaunch(
   socket: TypedSocket,
   ctx: LifecycleDeps,
   payload: unknown,
-  callback?: Function,
+  callback?: SocketCallback,
 ): Promise<void> {
   let resumeSessionId: string | undefined;
   try {
@@ -152,7 +152,7 @@ export async function handleJoin(
   socket: TypedSocket,
   ctx: LifecycleDeps,
   payload: unknown,
-  callback?: Function,
+  callback?: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId } = chatJoinSchema.parse(payload);
@@ -221,7 +221,7 @@ export function handleResume(ctx: LifecycleDeps, payload: unknown): void {
 export async function handleGenerateTitle(
   ctx: LifecycleDeps,
   payload: unknown,
-  callback?: Function,
+  callback?: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
@@ -238,7 +238,11 @@ export async function handleGenerateTitle(
   }
 }
 
-export function handleUpdateState(ctx: LifecycleDeps, payload: unknown, callback: Function): void {
+export function handleUpdateState(
+  ctx: LifecycleDeps,
+  payload: unknown,
+  callback: SocketCallback,
+): void {
   try {
     const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
     ctx.channelManager.broadcastSessionState(channelId, state ?? 'idle', title);

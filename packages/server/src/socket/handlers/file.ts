@@ -6,11 +6,14 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import type { ChannelEventRouter } from '../channel-event-router.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
-  function handleRead(payload: { channelId: string; filePath: string }, callback: Function): void {
+  function handleRead(
+    payload: { channelId: string; filePath: string },
+    callback: SocketCallback,
+  ): void {
     const channel = channelManager.get(payload.channelId);
     if (!channel) {
       callback({ error: 'Session not found' });
@@ -90,7 +93,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     return results;
   }
 
-  function handleList(payload: unknown, callback: Function): void {
+  function handleList(payload: unknown, callback: SocketCallback): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
       const cwd = process.cwd();

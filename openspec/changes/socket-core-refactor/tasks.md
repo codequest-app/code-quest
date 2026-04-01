@@ -126,7 +126,7 @@
 
 - [x] 13.1 ChannelEventRouter 支援多 subscriber（Map<string, Fn[]>）+ 5 個 unit tests
 - [x] 13.2 `session/lifecycle.ts` 改成 named exports（handleLaunch/Join/Close/Resume/onSessionInit/onChannelExit），移除舊 register + onRunnerEvent + onExit
-- [x] 13.3 `callback: Function` 嘗試改成 `(...args: unknown[]) => void` 但與 socket.io typed events contravariance 不相容。需要從 `ClientToServerEvents` extract 每個 event 的 callback type — 另開 change
+- [x] 13.3 `callback: Function` → `SocketCallback`（`(result: any) => void`）— 用 `any` 解決 socket.io contravariance，biome `noBannedTypes` 零 warning
 - [x] 13.4 刪除 `nextSeq()` + `_messageSeq`（dead code）+ 刪除對應 test
 - [x] 13.5 `pickDefined`/`errMsg` re-export 保留（移除 re-export 影響 12 files，churn > benefit）
 - [x] 13.6 typecheck + test 全過（401/401, ~5.7s）

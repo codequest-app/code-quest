@@ -5,11 +5,11 @@ import {
   planRemoveCommentSchema,
 } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
-  function addComment(socket: TypedSocket, payload: unknown, callback: Function): void {
+  function addComment(socket: TypedSocket, payload: unknown, callback: SocketCallback): void {
     try {
       const { channelId, comment } = planCommentSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -23,7 +23,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  function getComments(payload: unknown, callback: Function): void {
+  function getComments(payload: unknown, callback: SocketCallback): void {
     try {
       const { channelId } = planGetCommentsSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -33,7 +33,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  function removeComment(socket: TypedSocket, payload: unknown, callback: Function): void {
+  function removeComment(socket: TypedSocket, payload: unknown, callback: SocketCallback): void {
     try {
       const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -55,7 +55,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  function closePreview(payload: unknown, callback: Function): void {
+  function closePreview(payload: unknown, callback: SocketCallback): void {
     try {
       const { channelId } = planClosePreviewSchema.parse(payload);
       const channel = channelManager.get(channelId);

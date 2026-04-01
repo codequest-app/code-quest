@@ -1,11 +1,11 @@
 import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { claudeState } from './state.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
-  async function handleEnsureChrome(payload: unknown, callback: Function): Promise<void> {
+  async function handleEnsureChrome(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
@@ -36,7 +36,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleDisableChrome(payload: unknown, callback: Function): Promise<void> {
+  async function handleDisableChrome(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = chromeMcpControlSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
@@ -56,7 +56,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleEnableJupyter(payload: unknown, callback: Function): Promise<void> {
+  async function handleEnableJupyter(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
@@ -75,7 +75,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     }
   }
 
-  async function handleDisableJupyter(payload: unknown, callback: Function): Promise<void> {
+  async function handleDisableJupyter(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { channelId } = jupyterMcpControlSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();

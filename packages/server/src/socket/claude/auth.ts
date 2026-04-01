@@ -1,18 +1,18 @@
 import { controlAuthenticateResponseSchema } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { claudeState } from './state.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
-  function handleStatus(callback: Function): void {
+  function handleStatus(callback: SocketCallback): void {
     callback(claudeState.authState);
   }
 
   async function handleLogin(
     socket: TypedSocket,
     payload: { method?: string },
-    callback: Function,
+    callback: SocketCallback,
   ): Promise<void> {
     try {
       const channel = channelManager.getFirstAlive();
@@ -39,7 +39,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
 
   async function handleOAuthCode(
     payload: { code: string; state?: string },
-    callback: Function,
+    callback: SocketCallback,
   ): Promise<void> {
     try {
       const channel = channelManager.getFirstAlive();

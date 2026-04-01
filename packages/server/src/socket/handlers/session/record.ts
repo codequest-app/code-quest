@@ -8,7 +8,7 @@ import {
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 
 export function registerRecord(
@@ -32,7 +32,7 @@ export function registerRecord(
 async function handleDelete(
   sessionStore: SessionStore,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId } = sessionDeleteSchema.parse(payload);
@@ -50,7 +50,7 @@ async function handleDelete(
 async function handleRename(
   sessionStore: SessionStore,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId, title } = sessionRenameSchema.parse(payload);
@@ -70,7 +70,7 @@ async function handleList(
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const parsed = sessionListSchema.parse(payload);
@@ -101,7 +101,7 @@ async function handleList(
 async function handleListRemote(
   sessionStore: SessionStore,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const parsed = sessionListRemoteSchema.parse(payload);
@@ -121,7 +121,7 @@ async function handleGet(
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId } = sessionGetSchema.parse(payload);
@@ -141,7 +141,7 @@ async function handleGet(
 async function handleRawEvents(
   sessionHistory: SessionHistory,
   payload: unknown,
-  callback: Function,
+  callback: SocketCallback,
 ): Promise<void> {
   try {
     const { channelId } = sessionGetSchema.parse(payload);

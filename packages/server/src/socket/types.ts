@@ -14,6 +14,10 @@ export type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export { errMsg, pickDefined } from './utils/helpers.ts';
 
+/** Generic socket.io callback — accepts any single result argument. */
+// biome-ignore lint/suspicious/noExplicitAny: required to match socket.io's typed callback contravariance
+export type SocketCallback = (result: any) => void;
+
 export type SessionBroadcastState = 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected';
 
 export interface PendingRequest {

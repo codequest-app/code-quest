@@ -1,10 +1,10 @@
 import { terminalGetContentsSchema, terminalOpenClaudeSchema } from '@code-quest/shared';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
-  function handleRead(payload: unknown, callback: Function): void {
+  function handleRead(payload: unknown, callback: SocketCallback): void {
     try {
       const { channelId } = terminalGetContentsSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -22,7 +22,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
   async function handleOpenClaude(
     socket: TypedSocket,
     payload: unknown,
-    callback: Function,
+    callback: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);

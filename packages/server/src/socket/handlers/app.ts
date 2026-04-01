@@ -1,12 +1,12 @@
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 
 export function create(
   channelManager: ChannelManager,
   settingsStore: SettingsStore,
 ): SocketHandler {
-  async function handleInit(callback: Function): Promise<void> {
+  async function handleInit(callback: SocketCallback): Promise<void> {
     const sessions = channelManager.getAliveChannels().map((ch) => ({
       channelId: ch.channelId,
       state: ch.state,
@@ -36,7 +36,7 @@ export function create(
     });
   }
 
-  async function handleConfig(_payload: unknown, callback: Function): Promise<void> {
+  async function handleConfig(_payload: unknown, callback: SocketCallback): Promise<void> {
     let models: unknown[] | undefined = channelManager.cachedModels;
     let effort: string | undefined;
     try {

@@ -9,7 +9,7 @@ import type { RawEntry } from '@code-quest/summoner';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SessionHistory } from '../session-history.ts';
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../types.ts';
 import { checkoutBranch, execGit } from '../utils/exec-git.ts';
 
@@ -18,7 +18,7 @@ export function create(
   sessionHistory: SessionHistory,
   rawEventStore: RawEventStore,
 ): SocketHandler {
-  function handleStatus(callback: Function): void {
+  function handleStatus(callback: SocketCallback): void {
     Promise.all([
       execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
       execGit(['status', '--porcelain']),
@@ -37,7 +37,7 @@ export function create(
       });
   }
 
-  async function handleCheckout(payload: unknown, callback: Function): Promise<void> {
+  async function handleCheckout(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { branch } = gitCheckoutSchema.parse(payload);
       await checkoutBranch(branch);
@@ -47,7 +47,7 @@ export function create(
     }
   }
 
-  async function handleLog(payload: unknown, callback: Function): Promise<void> {
+  async function handleLog(payload: unknown, callback: SocketCallback): Promise<void> {
     try {
       const { limit } = gitLogSchema.parse(payload);
       const n = limit ?? 20;
@@ -66,7 +66,7 @@ export function create(
     }
   }
 
-  async function handleDiff(callback: Function): Promise<void> {
+  async function handleDiff(callback: SocketCallback): Promise<void> {
     try {
       const diff = await execGit(['diff']);
       callback({ diff });
@@ -75,7 +75,10 @@ export function create(
     }
   }
 
-  async function handleUpdateSkippedBranch(payload: unknown, callback: Function): Promise<void> {
+  async function handleUpdateSkippedBranch(
+    payload: unknown,
+    callback: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
       const entry: RawEntry = {
@@ -93,7 +96,7 @@ export function create(
     }
   }
 
-  function handleExec(payload: unknown, callback: Function): void {
+  function handleExec(payload: unknown, callback: SocketCallback): void {
     try {
       const { command, args } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
