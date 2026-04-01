@@ -90,9 +90,6 @@ export function ChannelConfigProvider({
 
   const { socket } = useSocket();
 
-  const guard = (payload: { channelId: string }) =>
-    payload.channelId === channelId || payload.channelId === '';
-
   // ── Fetch provider config on mount ──
   useEffect(() => {
     if (!channelId) return;
@@ -115,6 +112,7 @@ export function ChannelConfigProvider({
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
 
     const entries = Object.entries(configHandlers) as Array<
       [string, (state: ConfigState, payload: never) => ConfigState]

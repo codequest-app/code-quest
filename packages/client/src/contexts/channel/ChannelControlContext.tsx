@@ -55,12 +55,10 @@ export function ChannelControlProvider({
   const controlsRef = useRef(controls);
   controlsRef.current = controls;
 
-  const guard = (payload: { channelId: string }) =>
-    payload.channelId === channelId || payload.channelId === '';
-
   // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
 
     const entries = Object.entries(controlHandlers) as Array<
       [string, (state: ControlState, payload: never) => Partial<ControlState>]
@@ -90,6 +88,7 @@ export function ChannelControlProvider({
   // ── Special: control:permission (local state + parent state + resetRef) ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onControlPermission = (payload: Payload<'control:permission'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -124,6 +123,7 @@ export function ChannelControlProvider({
   // ── Special: control:hook_callback (local state + parent state + resetRef) ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onControlHookCallback = (payload: Payload<'control:hook_callback'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -157,6 +157,7 @@ export function ChannelControlProvider({
   // ── Special: session:closed (reset + parent state) ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onSessionClosed = (payload: Payload<'session:closed'>) => {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -180,6 +181,7 @@ export function ChannelControlProvider({
   // ── Special: control:mcp (side effect only — auto-respond) ──
   useEffect(() => {
     if (!channelId) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onControlMcp = (payload: Payload<'control:mcp'>) => {
       if (!guard(payload)) return;
       const mcpMsg = payload.message;

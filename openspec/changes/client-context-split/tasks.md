@@ -1,79 +1,63 @@
-## 1. ChannelMessagesContext handler map + auto-wiring
+## 規則
 
-Handler map：`(state, payload) → newState` 純 function，不碰 setState/socket/side effect。
-Handler 使用 named function（不用 arrow），map 在底部集中宣告。
-Auto-wiring：一個 useEffect loop 統一 on/off + guard + `setState(prev => handler(prev, p))`。
-特殊 events（ref/side effect/socket.emit）個別保留在 context。
-每步 615 test pass。
+- Handler 使用 named function（不用 arrow），map 在底部集中宣告
+- Effects 也使用 named function
+- socket.on/off handler 使用 named function（不用 inline arrow）
+- 每步 615 test pass
 
-- [x] 1.1 新建 `contexts/channel/messagesHandlers.ts`，21 個純 state handler
-- [x] 1.2-1.6 所有 handler 一次完成
+## 1. ChannelMessagesContext on handlers
+
+- [x] 1.1 新建 `handlers/messagesHandlers.ts`，21 個純 state handler（named function）
 - [x] 1.7 typecheck + 615 test pass
 
-## 2. ChannelMessagesContext 改用 auto-wiring
+## 2. ChannelMessagesContext auto-wiring（state handlers）
 
-- [x] 2.1 import handler map，auto-wiring loop 接線
-- [x] 2.2 特殊 events 個別保留：stream:chunk, message:assistant, message:result, stream:end
-- [x] 2.3-2.4 side-effect events 個別保留：notifications, raw:event, disconnect
-- [x] 2.5 移除 guard + isTierKey + UsageQuota（搬到 handlers）
-- [x] 2.6 typecheck + 615 test pass
+- [x] 2.1-2.6 auto-wiring loop + 特殊 events 個別保留
 
-## 3. ChannelMessagesContext emit handlers 抽出
+## 3. ChannelMessagesContext emit actions
 
-- [x] 3.1 messagesHandlers.ts 新增 `createMessagesActions`，回傳 actions object（17 個 named function）
-- [x] 3.2-3.4 所有 actions 一次搬完
-- [x] 3.5 ChannelMessagesContext 的 actions useMemo 改用 createMessagesActions
-- [x] 3.6 typecheck + 615 test pass
+- [x] 3.1-3.6 createMessagesActions（17 個 named function）
 
-## 4. ChannelControlContext handler map + auto-wiring
+## 4. ChannelControlContext on + emit handlers
 
-- [x] 4.1 新建 `contexts/channel/controlHandlers.ts`：3 個 on handlers + createControlActions（10 個 emit actions）
-- [x] 4.2-4.3 on + emit 一次搬完
-- [x] 4.4 context 改用 auto-wiring（3 events）+ 個別保留 4 個特殊 events
-- [x] 4.5 typecheck + 615 test pass
+- [x] 4.1-4.5 controlHandlers.ts + auto-wiring
 
-## 5. ChannelConfigContext handler map + auto-wiring
+## 5. ChannelConfigContext on + emit handlers
 
-- [x] 5.1 新建 `contexts/channel/configHandlers.ts`：4 on handlers + createConfigActions（19 emit actions）
-- [x] 5.2-5.3 on + emit 一次搬完（session:states 因需 channelId 個別處理）
-- [x] 5.4 context 改用 auto-wiring
-- [x] 5.5 typecheck + 615 test pass
+- [x] 5.1-5.5 configHandlers.ts + auto-wiring
 
-## 6. ChannelComposeContext handler map + auto-wiring
+## 6. ChannelComposeContext on handler
 
-- [x] 6.1 新建 `contexts/channel/composeHandlers.ts`：1 on handler（speech:message），無 emit actions
-- [x] 6.2 context 改用 auto-wiring
-- [x] 6.3 typecheck + 615 test pass
+- [x] 6.1-6.3 composeHandlers.ts + auto-wiring
 
 ## 7. Handler 檔案搬到 handlers/ 目錄
 
-- [x] 7.1 建立 `contexts/channel/handlers/` 目錄
-- [x] 7.2 搬移 4 個 handler 檔案 + 更新 import 路徑
-- [x] 7.3 typecheck + 615 test pass
+- [x] 7.1-7.3 handlers/ 目錄 + import 更新
 
-## 8. Side-effect events 搬到 handler（messagesEffects）
+## 8. Side-effect events 搬到 messagesEffects
 
-把 context 裡殘留的手動 socket.on/off side-effect events 搬到 handler map。
-auto-wiring loop 同時接 state handlers + effect handlers。
-guard 移到 useEffect 內部解決 biome exhaustive-deps 問題。
+- [x] 8.1 messagesHandlers.ts 新增 `messagesEffects` map（7 個 named function）
+- [x] 8.2 auto-wiring loop 同時接 messagesHandlers + messagesEffects
+- [x] 8.3 移除 context 裡的 side-effect useEffect 區塊
+- [x] 8.4 guard 移到所有 useEffect 內部（解決 biome exhaustive-deps）
+- [x] 8.5 resetStreamingRefs 用 useCallback 包裝
+- [x] 8.6 MutableRefObject → RefObject
+- [x] 8.7 typecheck + 615 test pass
 
-- [ ] 8.1 messagesHandlers.ts 新增 `messagesEffects` map：notification:toast, notification:auth_url, action:open_url, action:open_file, notification:show（side effect 部分）, raw:event（side effect 部分）, disconnect（side effect 部分）
-- [ ] 8.2 auto-wiring loop 同時接 messagesHandlers + messagesEffects
-- [ ] 8.3 移除 context 裡的 side-effect useEffect 區塊
-- [ ] 8.4 guard 移到 useEffect 內部（解決 biome exhaustive-deps）
-- [ ] 8.5 resetStreamingRefs 用 useCallback 包裝（解決 biome exhaustive-deps）
-- [ ] 8.6 MutableRefObject → RefObject（解決 deprecation warning）
-- [ ] 8.7 typecheck + biome check + 615 test pass
+## 9. 其他 context biome exhaustive-deps 修正
 
-## 9. 其他 context 的 biome exhaustive-deps 修正
+- [x] 9.1 ChannelControlContext：guard 移到各 useEffect 內部
+- [x] 9.2 ChannelConfigContext：guard 移到 auto-wiring useEffect 內部
+- [x] 9.3 ChannelComposeContext：無問題（guard 已在 useEffect 內）
+- [x] 9.4 typecheck + 615 test pass
 
-- [ ] 9.1 ChannelControlContext：guard 移到各 useEffect 內部
-- [ ] 9.2 ChannelConfigContext：guard 移到各 useEffect 內部
-- [ ] 9.3 ChannelComposeContext：確認無問題
-- [ ] 9.4 typecheck + biome check + 615 test pass
+## 10. 待辦：named function 整理
 
-## 10. 清理
-
-- [ ] 10.1 確認所有 context 不再有共享 guard function
-- [ ] 10.2 確認行數變化
+- [ ] 10.1 messagesEffects 內的 handler 確認都是 named function（已完成）
+- [ ] 10.2 context 裡殘留的 socket.on handler（stream:chunk, message:assistant, message:result 等）改為 named function
 - [ ] 10.3 biome check + typecheck + 615 test pass
+
+## 11. 清理
+
+- [ ] 11.1 確認行數變化
+- [ ] 11.2 biome check + typecheck + 615 test pass

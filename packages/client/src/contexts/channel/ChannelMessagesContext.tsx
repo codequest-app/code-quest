@@ -7,21 +7,19 @@ import type {
 } from '@code-quest/shared';
 import {
   createContext,
-  type MutableRefObject,
   type ReactNode,
+  type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { toast } from 'sonner';
-import { showNotificationToast } from '../../components/NotificationToast';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
-import { openUrl } from '../../utils/open-url';
 import { useSocket } from '../SocketContext';
-import { createMessagesActions, messagesHandlers } from './handlers/messagesHandlers';
+import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from './handlers/messagesHandlers';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
@@ -59,7 +57,7 @@ function streamingAppendToLast(setState: SetChannelState, content: string) {
 
 function streamingAppendOrCreate(
   setState: SetChannelState,
-  isTextStreaming: MutableRefObject<boolean>,
+  isTextStreaming: RefObject<boolean>,
   removePlaceholder: () => void,
   content: string,
   parentToolUseId?: string,
@@ -142,8 +140,8 @@ export function ChannelMessagesProvider({
   onTitleChange?: (title: string) => void;
   onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
   dequeueMessage: () => string | undefined;
-  messageQueueRef: MutableRefObject<string[]>;
-  resetStreamingRefsRef: MutableRefObject<() => void>;
+  messageQueueRef: RefObject<string[]>;
+  resetStreamingRefsRef: RefObject<() => void>;
   children: ReactNode;
 }) {
   const { socket } = useSocket();
@@ -227,22 +225,19 @@ export function ChannelMessagesProvider({
   }, [channelState.messages]);
 
   // ── Streaming refs ──
-  const resetStreamingRefs = () => {
+  const resetStreamingRefs = useCallback(() => {
     isTextStreaming.current = false;
     isThinkingStreaming.current = false;
     wasStreamedViaDelta.current = false;
-  };
+  }, []);
   resetStreamingRefsRef.current = resetStreamingRefs;
 
-  const guard = (payload: { channelId: string }): boolean =>
-    payload.channelId === channelId || payload.channelId === '';
-
-  // ── Auto-wiring: handler map events ──
-  // Each handler is a pure function: (state, payload) → newState.
-  // Events that also reset streaming refs do so here in the wiring layer.
+  // ── Auto-wiring: state handlers + effect handlers ──
   useEffect(() => {
     if (!socket) return;
 
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const effectDeps: EffectDeps = { socket, channelId };
     const resetEvents = new Set([
       'system:compact_boundary',
       'error:message',
@@ -250,14 +245,21 @@ export function ChannelMessagesProvider({
       'stream:tool_summary',
     ]);
 
-    const entries = Object.entries(messagesHandlers) as Array<
-      [string, (state: ChannelState, payload: never) => ChannelState]
-    >;
-    const wired = entries.map(([event, handler]) => {
+    // Collect all events from both maps (state + effect)
+    const allEvents = new Set([
+      ...Object.keys(messagesHandlers),
+      ...Object.keys(messagesEffects),
+    ]);
+
+    const wired = [...allEvents].map((event) => {
+      const stateHandler = (messagesHandlers as Record<string, ((s: ChannelState, p: never) => ChannelState) | undefined>)[event];
+      const effectHandler = (messagesEffects as Record<string, ((d: EffectDeps, p: never) => void) | undefined>)[event];
+
       const fn = (payload: { channelId: string }) => {
         if (event !== 'disconnect' && !guard(payload)) return;
         if (resetEvents.has(event)) resetStreamingRefs();
-        setChannelState((prev) => handler(prev, payload as never));
+        if (stateHandler) setChannelState((prev) => stateHandler(prev, payload as never));
+        if (effectHandler) effectHandler(effectDeps, payload as never);
       };
       socket.on(event as never, fn as never);
       return { event, fn };
@@ -268,11 +270,12 @@ export function ChannelMessagesProvider({
         socket.off(event as never, fn as never);
       }
     };
-  }, [channelId, socket]);
+  }, [channelId, socket, resetStreamingRefs]);
 
   // ── Special: stream:chunk (ref-based, cannot be a pure handler) ──
   useEffect(() => {
     if (!socket) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
 
     const setState = setChannelState;
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
@@ -347,6 +350,7 @@ export function ChannelMessagesProvider({
   // ── Special: stream:end (ref-only, no state change) ──
   useEffect(() => {
     if (!socket) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onStreamEnd = (p: Payload<'stream:end'>) => {
       if (!guard(p)) return;
       resetStreamingRefs();
@@ -358,6 +362,7 @@ export function ChannelMessagesProvider({
   // ── Special: message:assistant (depends on streaming refs) ──
   useEffect(() => {
     if (!socket) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
 
     const setState = setChannelState;
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
@@ -414,6 +419,7 @@ export function ChannelMessagesProvider({
   // ── Special: message:result (dequeue + socket.emit) ──
   useEffect(() => {
     if (!socket) return;
+    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
     const onMessageResult = (p: Payload<'message:result'>) => {
       if (!guard(p)) return;
       resetStreamingRefs();
@@ -437,61 +443,7 @@ export function ChannelMessagesProvider({
     return () => { socket.off('message:result', onMessageResult); };
   }, [channelId, socket]);
 
-  // ── Special: side-effect-only events ──
-  useEffect(() => {
-    if (!socket) return;
-
-    const onNotificationToast = (p: Payload<'notification:toast'>) => { if (guard(p)) toast.info(p.message ?? ''); };
-    const onAuthUrl = (p: Payload<'notification:auth_url'>) => {
-      if (!guard(p)) return;
-      toast.info(`Authentication required (${p.method})`, { duration: 30_000, action: { label: 'Open', onClick: () => openUrl(p.url) } });
-    };
-    const onActionOpenUrl = (p: Payload<'action:open_url'>) => { if (guard(p)) openUrl(p.url); };
-    const onActionOpenFile = (p: Payload<'action:open_file'>) => {
-      if (!guard(p)) return;
-      const loc = p.location ? ` (line ${p.location.startLine ?? '?'}${p.location.endLine ? `–${p.location.endLine}` : ''})` : '';
-      toast.info(`Open file: ${p.filePath}${loc}`);
-    };
-    const onNotificationShow = (p: Payload<'notification:show'> & { requestId?: string }) => {
-      if (!guard(p)) return;
-      const severity = p.severity ?? 'info';
-      const reqId = p.requestId;
-      if (p.buttons?.length && reqId) {
-        showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-          socket.emit('chat:respond', { channelId, requestId: reqId, response }));
-        return;
-      }
-      const showToast = severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
-      showToast(p.message ?? '');
-    };
-    const onRawEventSideEffects = (p: Payload<'raw:event'>) => {
-      if (!guard(p)) return;
-      if (p.rawType === 'new_session_notification') toast.info('New session started');
-      else if (p.rawType === 'control_request/open_in_editor') {
-        toast.info('Open in Editor is not supported in web mode');
-        socket.emit('chat:respond', { channelId, requestId: String(p.data.requestId), response: { behavior: 'allow' } });
-      }
-    };
-    const onDisconnectToast = () => { toast.warning('Disconnected from server'); };
-
-    socket.on('notification:toast', onNotificationToast);
-    socket.on('notification:auth_url', onAuthUrl);
-    socket.on('action:open_url', onActionOpenUrl);
-    socket.on('action:open_file', onActionOpenFile);
-    socket.on('notification:show', onNotificationShow);
-    socket.on('raw:event', onRawEventSideEffects);
-    socket.on('disconnect', onDisconnectToast);
-
-    return () => {
-      socket.off('notification:toast', onNotificationToast);
-      socket.off('notification:auth_url', onAuthUrl);
-      socket.off('action:open_url', onActionOpenUrl);
-      socket.off('action:open_file', onActionOpenFile);
-      socket.off('notification:show', onNotificationShow);
-      socket.off('raw:event', onRawEventSideEffects);
-      socket.off('disconnect', onDisconnectToast);
-    };
-  }, [channelId, socket]);
+  // Side-effect events are now handled by auto-wiring via messagesEffects
 
   // ── Ref for status used in actions ──
   const statusRef = useRef(channelState.status);

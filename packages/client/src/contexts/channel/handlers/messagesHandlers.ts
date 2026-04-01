@@ -1,9 +1,12 @@
 import type { ContentBlock, FileSearchResult, PlanCommentData, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
+import { toast } from 'sonner';
+import { showNotificationToast } from '../../../components/NotificationToast';
 import type { TypedSocket } from '../../../socket/client';
 import { channelEmit, rpc } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
 import { msg } from '../../../utils/message';
+import { openUrl } from '../../../utils/open-url';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -306,6 +309,79 @@ export const messagesHandlers = {
   'disconnect': onDisconnect,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
+// ── Effect handlers (side effects, no state change) ──
+
+export interface EffectDeps {
+  socket: TypedSocket;
+  channelId: string;
+}
+
+function onNotificationToast(_deps: EffectDeps, p: Payload<'notification:toast'>): void {
+  toast.info(p.message ?? '');
+}
+
+function onNotificationAuthUrl(_deps: EffectDeps, p: Payload<'notification:auth_url'>): void {
+  toast.info(`Authentication required (${p.method})`, {
+    duration: 30_000,
+    action: { label: 'Open', onClick: () => openUrl(p.url) },
+  });
+}
+
+function onActionOpenUrl(_deps: EffectDeps, p: Payload<'action:open_url'>): void {
+  openUrl(p.url);
+}
+
+function onActionOpenFile(_deps: EffectDeps, p: Payload<'action:open_file'>): void {
+  const loc = p.location
+    ? ` (line ${p.location.startLine ?? '?'}${p.location.endLine ? `–${p.location.endLine}` : ''})`
+    : '';
+  toast.info(`Open file: ${p.filePath}${loc}`);
+}
+
+function onNotificationShowEffect(deps: EffectDeps, p: Payload<'notification:show'> & { requestId?: string }): void {
+  const severity = p.severity ?? 'info';
+  const reqId = p.requestId;
+  if (p.buttons?.length && reqId) {
+    showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
+      deps.socket.emit('chat:respond', {
+        channelId: deps.channelId,
+        requestId: reqId,
+        response,
+      } as never),
+    );
+    return;
+  }
+  const showToast = severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
+  showToast(p.message ?? '');
+}
+
+function onRawEventEffect(deps: EffectDeps, p: Payload<'raw:event'>): void {
+  if (p.rawType === 'new_session_notification') {
+    toast.info('New session started');
+  } else if (p.rawType === 'control_request/open_in_editor') {
+    toast.info('Open in Editor is not supported in web mode');
+    deps.socket.emit('chat:respond', {
+      channelId: deps.channelId,
+      requestId: String(p.data.requestId),
+      response: { behavior: 'allow' },
+    } as never);
+  }
+}
+
+function onDisconnectEffect(): void {
+  toast.warning('Disconnected from server');
+}
+
+export const messagesEffects = {
+  'notification:toast': onNotificationToast,
+  'notification:auth_url': onNotificationAuthUrl,
+  'action:open_url': onActionOpenUrl,
+  'action:open_file': onActionOpenFile,
+  'notification:show': onNotificationShowEffect,
+  'raw:event': onRawEventEffect,
+  'disconnect': onDisconnectEffect,
+} satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
+
 // ── Emit actions (send) ──
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -316,8 +392,8 @@ interface MessagesActionsDeps {
   socket: TypedSocket;
   channelId: string;
   setChannelState: (fn: (prev: ChannelState) => ChannelState) => void;
-  statusRef: MutableRefObject<string>;
-  messageQueueRef: MutableRefObject<string[]>;
+  statusRef: RefObject<string>;
+  messageQueueRef: RefObject<string[]>;
 }
 
 export function createMessagesActions({
