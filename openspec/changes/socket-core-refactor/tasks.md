@@ -143,6 +143,24 @@
 - [x] 11.8 typecheck + test 全過（397/397）
 - [x] 11.9 test 時間 ~5.4s（baseline ~6.5s，改善 ~1s）
 
+## 15. Session handler 最終拆分 + 移除 LifecycleDeps
+
+### 15.1 拆分 lifecycle.ts → connect.ts + command.ts
+- [ ] 15.1a `connect.ts` — launch, join + channel events（onSessionInit, onChannelExit）。每個 export function 接收精確參數，不用 deps object
+- [ ] 15.1b `command.ts` — close, resume, generate_title, update_state, delete, rename。每個 export function 接收精確參數
+- [ ] 15.1c 刪除 lifecycle.ts 和 LifecycleDeps interface
+- [ ] 15.1d delete/rename 從 record.ts 移出（record.ts 改名 query.ts 或刪除）
+
+### 15.2 刪除 index.ts，server.ts 直接註冊
+- [ ] 15.2a server.ts 註冊 4 個獨立 session handler：connect, command, fork, query
+- [ ] 15.2b 刪除 session/index.ts
+- [ ] 15.2c 刪除 session/record.ts（handlers 已搬到 command.ts 和 query.ts）
+
+### 15.3 驗證
+- [ ] 15.3a typecheck + test 全過
+- [ ] 15.3b 確認所有 handler 都是 `create()` factory + named functions，無 LifecycleDeps / HandlerContext 殘留
+- [ ] 15.3c push
+
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
 ### 14.1 SessionHistory 擴充（消除 handler 直接依賴 rawEventStore）
