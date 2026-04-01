@@ -13,9 +13,12 @@ import type { SocketHandler, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../types.ts';
 import { register as registerForkHandlers } from './fork.ts';
 import {
-  register as registerLifecycleHandlers,
-  onExit as sessionOnExit,
-  onRunnerEvent as sessionOnRunnerEvent,
+  handleClose,
+  handleJoin,
+  handleLaunch,
+  handleResume,
+  onChannelExit,
+  onSessionInit,
 } from './lifecycle.ts';
 
 export function create(ctx: HandlerContext): SocketHandler {
@@ -151,7 +154,10 @@ export function create(ctx: HandlerContext): SocketHandler {
 
   return {
     register(socket: TypedSocket) {
-      registerLifecycleHandlers(socket, ctx);
+      socket.on('session:launch', (p, cb) => handleLaunch(socket, ctx, p, cb));
+      socket.on('session:join', (p, cb) => handleJoin(socket, ctx, p, cb));
+      socket.on('session:close', (p) => handleClose(ctx, p));
+      socket.on('session:resume', (p) => handleResume(ctx, p));
       registerForkHandlers(socket, ctx);
       socket.on('session:delete', handleDelete);
       socket.on('session:rename', handleRename);
@@ -163,8 +169,8 @@ export function create(ctx: HandlerContext): SocketHandler {
       socket.on('session:update_state', handleUpdateState);
     },
     subscribe(router: ChannelEventRouter) {
-      router.onEvent('session:init', (cid, ch, se) => sessionOnRunnerEvent(ctx, cid, ch, se));
-      router.onExit((cid, ch, code) => sessionOnExit(ctx, cid, ch, code));
+      router.onEvent('session:init', (cid) => onSessionInit(ctx, cid));
+      router.onExit((cid, ch) => onChannelExit(ctx, cid, ch));
     },
   };
 }

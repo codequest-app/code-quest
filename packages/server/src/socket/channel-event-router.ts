@@ -1,12 +1,14 @@
 import type { ChannelActionFn, ChannelEventFn, ChannelExitFn } from './types.ts';
 
 export class ChannelEventRouter {
-  private eventMap = new Map<string, ChannelEventFn>();
+  private eventMap = new Map<string, ChannelEventFn[]>();
   private actionHandlers: ChannelActionFn[] = [];
   private exitHandlers: ChannelExitFn[] = [];
 
   onEvent(name: string, handler: ChannelEventFn): void {
-    this.eventMap.set(name, handler);
+    const handlers = this.eventMap.get(name) ?? [];
+    handlers.push(handler);
+    this.eventMap.set(name, handlers);
   }
 
   onAction(handler: ChannelActionFn): void {
@@ -19,7 +21,10 @@ export class ChannelEventRouter {
 
   dispatchEvent(...args: Parameters<ChannelEventFn>): void {
     const [, , se] = args;
-    this.eventMap.get(se.name)?.(...args);
+    const handlers = this.eventMap.get(se.name);
+    if (handlers) {
+      for (const h of handlers) h(...args);
+    }
   }
 
   dispatchAction(...args: Parameters<ChannelActionFn>): void {

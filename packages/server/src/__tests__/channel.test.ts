@@ -96,15 +96,6 @@ describe('Channel', () => {
     });
   });
 
-  describe('nextSeq', () => {
-    it('increments sequence', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      expect(channel.nextSeq()).toBe(1);
-      expect(channel.nextSeq()).toBe(2);
-      expect(channel.nextSeq()).toBe(3);
-    });
-  });
-
   describe('controlRequestMeta', () => {
     it('trackControlRequest adds entry and hasControlRequest returns true', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');

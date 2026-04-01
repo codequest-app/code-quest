@@ -1,4 +1,4 @@
-import type { ChatCreatePayload, ControlResponse, SocketEvent } from '@code-quest/shared';
+import type { ChatCreatePayload, ControlResponse } from '@code-quest/shared';
 import {
   chatCreateSchema,
   chatJoinSchema,
@@ -6,7 +6,6 @@ import {
   controlInitResponseSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { Channel } from '../../channel.ts';
@@ -72,152 +71,146 @@ async function handleInitResponse(
   return { slashCommands, models, account };
 }
 
-export function register(socket: TypedSocket, ctx: HandlerContext): void {
-  socket.on('session:launch', async (payload, callback) => {
-    let resumeSessionId: string | undefined;
-    try {
-      const parsed = chatCreateSchema.parse(payload);
-      resumeSessionId = parsed.resume;
-      const channelId = parsed.channelId ?? crypto.randomUUID();
-      const launchOpts = {
-        ...parsed.launchOptions,
-        ...(resumeSessionId ? { resumeSessionId } : {}),
-        ...(config.allowDangerouslySkipPermissions
-          ? { allowDangerouslySkipPermissions: true }
-          : {}),
-      };
-      const clientOpts = parsed.initOptions ?? {};
-      const initInput: Record<string, unknown> = {
-        ...clientOpts,
-        appendSystemPrompt: [clientOpts.appendSystemPrompt, config.systemPrompt]
-          .filter(Boolean)
-          .join('\n'),
-      };
-      const { channel, initResult } = await ctx.channelManager.create(channelId, {
-        launchOptions: launchOpts,
-        initOptions: initInput,
-        onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
-      });
+export async function handleLaunch(
+  socket: TypedSocket,
+  ctx: HandlerContext,
+  payload: unknown,
+  callback?: Function,
+): Promise<void> {
+  let resumeSessionId: string | undefined;
+  try {
+    const parsed = chatCreateSchema.parse(payload);
+    resumeSessionId = parsed.resume;
+    const channelId = parsed.channelId ?? crypto.randomUUID();
+    const launchOpts = {
+      ...parsed.launchOptions,
+      ...(resumeSessionId ? { resumeSessionId } : {}),
+      ...(config.allowDangerouslySkipPermissions ? { allowDangerouslySkipPermissions: true } : {}),
+    };
+    const clientOpts = parsed.initOptions ?? {};
+    const initInput: Record<string, unknown> = {
+      ...clientOpts,
+      appendSystemPrompt: [clientOpts.appendSystemPrompt, config.systemPrompt]
+        .filter(Boolean)
+        .join('\n'),
+    };
+    const { channel, initResult } = await ctx.channelManager.create(channelId, {
+      launchOptions: launchOpts,
+      initOptions: initInput,
+      onBeforeSpawn: (ch) => ctx.channelManager.addSocketToChannel(ch, socket),
+    });
 
-      if (channel.sessionId) {
-        persistNewSession(ctx, { channelId, sessionId: channel.sessionId });
-      }
-
-      await applyPerLaunchSettings(channel, parsed);
-      const { slashCommands, models, account } = await handleInitResponse(ctx, initResult);
-
-      channel.updateMetaCache({
-        ...(parsed.model && { model: parsed.model }),
-        ...(parsed.permissionMode && { permissionMode: parsed.permissionMode }),
-        ...(slashCommands && { slashCommands }),
-      });
-
-      socket.emit('session:init', { ...channel.buildSessionInitPayload() });
-      if (ctx.channelManager.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
-      }
-
-      ctx.channelManager.broadcastSessionCreated(channelId);
-      callback?.({ channelId, slashCommands, models, account });
-
-      if (parsed.initialPrompt) {
-        channel.sendMessage(parsed.initialPrompt);
-      }
-    } catch (err) {
-      logger.error({ err }, 'Failed to create session');
-      const message = errMsg(err, 'Failed to create session');
-      if (resumeSessionId && message.includes('No conversation found')) {
-        await ctx.sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
-        ctx.channelManager.broadcastSessionDead(resumeSessionId);
-        return;
-      }
-      callback?.({ channelId: '', error: message });
+    if (channel.sessionId) {
+      persistNewSession(ctx, { channelId, sessionId: channel.sessionId });
     }
-  });
 
-  socket.on('session:join', async (payload, callback) => {
-    try {
-      const { channelId } = chatJoinSchema.parse(payload);
-      const existingChannel = ctx.channelManager.get(channelId);
-      const isAlive = existingChannel && !existingChannel.exited;
+    await applyPerLaunchSettings(channel, parsed);
+    const { slashCommands, models, account } = await handleInitResponse(ctx, initResult);
 
-      if (!isAlive) {
-        try {
-          await ctx.channelManager.join(channelId);
-        } catch {
-          callback?.({ error: 'Session not found' });
-          return;
-        }
-      }
+    channel.updateMetaCache({
+      ...(parsed.model && { model: parsed.model }),
+      ...(parsed.permissionMode && { permissionMode: parsed.permissionMode }),
+      ...(slashCommands && { slashCommands }),
+    });
 
-      const channel = ctx.channelManager.get(channelId);
-      if (!channel) {
+    socket.emit('session:init', { ...channel.buildSessionInitPayload() });
+    if (ctx.channelManager.cachedModels) {
+      socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
+    }
+
+    ctx.channelManager.broadcastSessionCreated(channelId);
+    callback?.({ channelId, slashCommands, models, account });
+
+    if (parsed.initialPrompt) {
+      channel.sendMessage(parsed.initialPrompt);
+    }
+  } catch (err) {
+    logger.error({ err }, 'Failed to create session');
+    const message = errMsg(err, 'Failed to create session');
+    if (resumeSessionId && message.includes('No conversation found')) {
+      await ctx.sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
+      ctx.channelManager.broadcastSessionDead(resumeSessionId);
+      return;
+    }
+    callback?.({ channelId: '', error: message });
+  }
+}
+
+export async function handleJoin(
+  socket: TypedSocket,
+  ctx: HandlerContext,
+  payload: unknown,
+  callback?: Function,
+): Promise<void> {
+  try {
+    const { channelId } = chatJoinSchema.parse(payload);
+    const existingChannel = ctx.channelManager.get(channelId);
+    const isAlive = existingChannel && !existingChannel.exited;
+
+    if (!isAlive) {
+      try {
+        await ctx.channelManager.join(channelId);
+      } catch {
         callback?.({ error: 'Session not found' });
         return;
       }
-
-      ctx.channelManager.addSocketToChannel(channel, socket);
-
-      if (!channel.isWired) {
-        channel.wireRunner(ctx.channelManager.channelHooks);
-      }
-
-      const replaySessionId = await ctx.sessionHistory.resolveSessionId(channelId);
-      await ctx.sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
-
-      socket.emit('session:init', { ...channel.buildSessionInitPayload() });
-      if (ctx.channelManager.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
-      }
-
-      const events = await ctx.sessionHistory.getSessionHistory(channelId);
-      const state = channel.isProcessing ? 'busy' : 'idle';
-      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
-    } catch (err) {
-      callback?.({ error: errMsg(err, 'Failed to join session') });
     }
-  });
 
-  socket.on('session:close', (payload) => {
-    try {
-      const { channelId } = chatKillSchema.parse(payload);
-      const ch = ctx.channelManager.get(channelId);
-      if (ch) {
-        ch.kill();
-        ctx.channelManager.broadcastSessionDead(channelId);
-      }
-    } catch {
-      // ignore
+    const channel = ctx.channelManager.get(channelId);
+    if (!channel) {
+      callback?.({ error: 'Session not found' });
+      return;
     }
-  });
 
-  socket.on('session:resume', (payload) => {
-    try {
-      const { channelId } = sessionResumePayloadSchema.parse(payload);
-      ctx.channelManager.broadcastSessionResume(channelId);
-    } catch {
-      // ignore invalid payload
+    ctx.channelManager.addSocketToChannel(channel, socket);
+
+    if (!channel.isWired) {
+      channel.wireRunner(ctx.channelManager.channelHooks);
     }
-  });
+
+    const replaySessionId = await ctx.sessionHistory.resolveSessionId(channelId);
+    await ctx.sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
+
+    socket.emit('session:init', { ...channel.buildSessionInitPayload() });
+    if (ctx.channelManager.cachedModels) {
+      socket.emit('app:models', { channelId: '', models: ctx.channelManager.cachedModels });
+    }
+
+    const events = await ctx.sessionHistory.getSessionHistory(channelId);
+    const state = channel.isProcessing ? 'busy' : 'idle';
+    callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
+  } catch (err) {
+    callback?.({ error: errMsg(err, 'Failed to join session') });
+  }
 }
 
-export function onRunnerEvent(
-  ctx: HandlerContext,
-  channelId: string,
-  _ch: Channel,
-  se: SocketEvent,
-): boolean {
-  if (se.name !== 'session:init') return false;
+export function handleClose(ctx: HandlerContext, payload: unknown): void {
+  try {
+    const { channelId } = chatKillSchema.parse(payload);
+    const ch = ctx.channelManager.get(channelId);
+    if (ch) {
+      ch.kill();
+      ctx.channelManager.broadcastSessionDead(channelId);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function handleResume(ctx: HandlerContext, payload: unknown): void {
+  try {
+    const { channelId } = sessionResumePayloadSchema.parse(payload);
+    ctx.channelManager.broadcastSessionResume(channelId);
+  } catch {
+    // ignore
+  }
+}
+
+export function onSessionInit(ctx: HandlerContext, channelId: string): void {
   ctx.channelManager.broadcastSessionState(channelId, 'busy');
-  return true;
 }
 
-export function onExit(
-  ctx: HandlerContext,
-  channelId: string,
-  ch: Channel,
-  _code: number | null,
-): void {
+export function onChannelExit(ctx: HandlerContext, channelId: string, ch: Channel): void {
   ctx.channelManager.broadcastSessionState(channelId, 'exited');
   ch.resetSessionState();
   ch.emit('session:closed', {

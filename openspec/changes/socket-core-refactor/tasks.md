@@ -122,6 +122,15 @@
 - [x] 12.6 terminal:open_claude 評估後不做（20 行，與 session:launch 重疊表面化）
 - [x] 12.7 typecheck + test 全過（397/397, ~5.2s）
 
+## 13. 剩餘修正
+
+- [x] 13.1 ChannelEventRouter 支援多 subscriber（Map<string, Fn[]>）+ 5 個 unit tests
+- [x] 13.2 `session/lifecycle.ts` 改成 named exports（handleLaunch/Join/Close/Resume/onSessionInit/onChannelExit），移除舊 register + onRunnerEvent + onExit
+- [ ] 13.3 `callback: Function` → 具體型別（後續 — 40 處，機械化但量大，與核心重構無關）
+- [x] 13.4 刪除 `nextSeq()` + `_messageSeq`（dead code）+ 刪除對應 test
+- [x] 13.5 `pickDefined`/`errMsg` re-export 保留（移除 re-export 影響 12 files，churn > benefit）
+- [x] 13.6 typecheck + test 全過（401/401, ~5.7s）
+
 ## 11. types.ts 清理 + 檔案搬遷
 
 - [x] 11.1 `ensureChannel` 移到 mcp.ts 內部，types.ts 移除 HandlerContext import

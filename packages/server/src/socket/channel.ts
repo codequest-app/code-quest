@@ -48,7 +48,6 @@ export class Channel {
 
   // ── Processing ──
   private _isProcessing = false;
-  private _messageSeq = 0;
 
   // ── Sockets ──
   readonly sockets = new Set<TypedSocket>();
@@ -185,10 +184,6 @@ export class Channel {
       }),
       config: { ...this.sessionState },
     };
-  }
-
-  nextSeq(): number {
-    return ++this._messageSeq;
   }
 
   // ── Runner wrappers ──
