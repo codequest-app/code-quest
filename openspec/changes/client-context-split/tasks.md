@@ -38,11 +38,10 @@ Context 只負責接線，不定義業務邏輯。
 
 ## 5. ChannelConfigContext handler map + auto-wiring
 
-- [ ] 5.1 新建 `contexts/channel/configHandlers.ts`：on handlers + createConfigActions（emit）
-- [ ] 5.2 搬入 on：settings:update, session:states, session:init, session:status, app:models
-- [ ] 5.3 搬入 emit：setModel, setPermissionMode, setThinkingLevel, setFastMode, setEffort, mcp* 全部
-- [ ] 5.4 context 改用 auto-wiring
-- [ ] 5.5 typecheck + 615 test pass
+- [x] 5.1 新建 `contexts/channel/configHandlers.ts`：4 on handlers + createConfigActions（19 emit actions）
+- [x] 5.2-5.3 on + emit 一次搬完（session:states 因需 channelId 個別處理）
+- [x] 5.4 context 改用 auto-wiring
+- [x] 5.5 typecheck + 615 test pass
 
 ## 6. ChannelComposeContext handler map + auto-wiring
 
