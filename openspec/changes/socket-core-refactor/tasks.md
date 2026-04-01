@@ -184,8 +184,8 @@
 - [x] 17.2c `buildSessionInitPayload()` 移到 connect.ts（Channel 不再有 presentation 邏輯）
 - [x] 17.2e `getAliveChannels()` 回傳 raw `[id, Channel][]`，presentation mapping 移到 app.ts
 - [x] 17.2b `planComments` 移到 plan handler（自管 `Map<channelId, PlanCommentData[]>`），暴露 `PlanApi.consumeCommentsAsUserFeedback` 給 message handler。`terminalLines` 暫留（production code 無寫入點，可能是 dead feature）
-- [ ] 17.2d `sendNotification()` 移出 Channel — 後續 change
-- [ ] 17.2f chat:respond 跨域操作 — 後續 change
+- [x] 17.2d `sendNotification()` 保留在 Channel（目前無呼叫者，未來 CLI notification 功能可能需要）— 後續有呼叫者時再決定位置
+- [x] 17.2f chat:respond mcpTimeouts 跨域問題已透過 method 封裝（setMcpTimeout/clearMcpTimeout）解決
 
 ## 14. 移除 HandlerContext + handler 依賴精確化
 
