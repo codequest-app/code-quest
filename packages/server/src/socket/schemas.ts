@@ -7,30 +7,24 @@ export function jsonRpcError(id: unknown, message: string): Record<string, unkno
   return { jsonrpc: '2.0', error: { code: -32603, message }, id: id ?? null };
 }
 
-export const errorPayload = z.object({ message: z.string() }).passthrough();
+export const errorMessageEventSchema = z.looseObject({ message: z.string() });
 
-export const sessionInitPayload = z
-  .object({
-    sessionId: z.string().optional(),
-    config: z.record(z.string(), z.unknown()).nullable().optional(),
-    model: z.string().optional(),
-    permissionMode: z.string().optional(),
-    tools: z.array(z.string()).optional(),
-    fastModeState: z.unknown().optional(),
-    mcpServers: z
-      .array(z.object({ name: z.string(), status: z.string() }).passthrough())
-      .optional(),
-    slashCommands: z.array(z.string()).optional(),
-  })
-  .passthrough();
+export const sessionInitEventSchema = z.looseObject({
+  sessionId: z.string().optional(),
+  config: z.record(z.string(), z.unknown()).nullable().optional(),
+  model: z.string().optional(),
+  permissionMode: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  fastModeState: z.unknown().optional(),
+  mcpServers: z.array(z.looseObject({ name: z.string(), status: z.string() })).optional(),
+  slashCommands: z.array(z.string()).optional(),
+});
 
-export const sessionStatusPayload = z
-  .object({
-    permissionMode: z.string().optional(),
-  })
-  .passthrough();
+export const sessionStatusEventSchema = z.looseObject({
+  permissionMode: z.string().optional(),
+});
 
-export const replayRequestPayload = z.object({ requestId: z.string() }).passthrough();
+export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
 
 export const sessionStateSchema = z.object({
   model: z.string().optional(),
@@ -60,3 +54,27 @@ export const requestMetaSchema = z.object({
   toolUseId: z.string().optional(),
 });
 export type RequestMeta = z.infer<typeof requestMetaSchema>;
+
+export const channelSummarySchema = z.object({
+  channelId: z.string(),
+  state: z.enum(['busy', 'idle', 'exited']),
+  title: z.string().optional(),
+  model: z.string().optional(),
+});
+export type ChannelSummary = z.infer<typeof channelSummarySchema>;
+
+export const initResponseResultSchema = z.object({
+  slashCommands: z.array(z.string()).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+export type InitResponseResult = z.infer<typeof initResponseResultSchema>;
+
+/** Validates raw stdout JSON has a `type` field — gate before adapter.transform(). */
+export const typedJsonObjectSchema = z.looseObject({ type: z.string() });
+
+/** Validates stdin user message format for history replay. */
+export const userMessageInputSchema = z.looseObject({
+  type: z.literal('user'),
+  message: z.looseObject({ content: z.array(z.unknown()) }),
+});

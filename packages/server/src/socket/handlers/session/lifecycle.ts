@@ -7,7 +7,6 @@ import {
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
-import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { Channel } from '../../channel.ts';
@@ -37,12 +36,7 @@ export function persistNewSession(
     .catch((err) => logger.error({ err }, 'Failed to persist session'));
 }
 
-const initResponseResultSchema = z.object({
-  slashCommands: z.array(z.string()).optional(),
-  models: z.array(z.unknown()).optional(),
-  account: z.record(z.string(), z.unknown()).optional(),
-});
-type InitResponseResult = z.infer<typeof initResponseResultSchema>;
+import { type InitResponseResult, initResponseResultSchema } from '../../schemas.ts';
 
 async function applyPerLaunchSettings(
   channel: Channel,

@@ -1,15 +1,9 @@
 import type { SocketEvent } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
-import { z } from 'zod';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
-
-const protocolEventBase = z.object({ type: z.string() }).passthrough();
-const userMessagePayload = z.object({
-  type: z.literal('user'),
-  message: z.object({ content: z.array(z.unknown()) }).passthrough(),
-});
+import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */
 const HISTORY_NAMES = new Set([
@@ -74,7 +68,7 @@ export class SessionHistory {
         if (typeof raw !== 'object' || raw === null) continue;
 
         if (entry.direction === 'out') {
-          const parsed = protocolEventBase.safeParse(raw);
+          const parsed = typedJsonObjectSchema.safeParse(raw);
           if (parsed.success) {
             const converted = this.adapter.transform(parsed.data).events;
             result.push(...converted);
@@ -82,7 +76,7 @@ export class SessionHistory {
         } else if (entry.direction === 'in') {
           // Skip stdin user messages when stdout already echoes them (avoids duplicates)
           if (hasStdoutUserEcho) continue;
-          const parsed = userMessagePayload.safeParse(raw);
+          const parsed = userMessageInputSchema.safeParse(raw);
           if (parsed.success) {
             result.push({
               name: 'message:user',

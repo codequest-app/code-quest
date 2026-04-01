@@ -11,13 +11,13 @@ import type {
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
 import {
-  errorPayload,
+  controlRequestEventSchema,
+  errorMessageEventSchema,
   type RequestMeta,
-  replayRequestPayload,
   type SessionState,
   sessionInitConfigSchema,
-  sessionInitPayload,
-  sessionStatusPayload,
+  sessionInitEventSchema,
+  sessionStatusEventSchema,
 } from './schemas.ts';
 import {
   type PendingRequest,
@@ -194,10 +194,10 @@ export class Channel {
 
     for (const event of events) {
       if (event.name === 'control:permission' || event.name === 'control:elicitation') {
-        const { requestId } = replayRequestPayload.parse(event.payload);
+        const { requestId } = controlRequestEventSchema.parse(event.payload);
         pendingRequests.push({ requestId, event });
       } else if (event.name === 'control:cancel') {
-        const { requestId } = replayRequestPayload.parse(event.payload);
+        const { requestId } = controlRequestEventSchema.parse(event.payload);
         respondedRequestIds.add(requestId);
       }
     }
@@ -290,13 +290,13 @@ export class Channel {
     const onSocketEvent = (se: SocketEvent) => {
       // Track last error for exit rejection messages
       if (se.name === 'error:message') {
-        const { message } = errorPayload.parse(se.payload);
+        const { message } = errorMessageEventSchema.parse(se.payload);
         this.lastError = message;
       }
 
       // Update internal state based on event name
       if (se.name === 'session:init') {
-        const init = sessionInitPayload.parse(se.payload);
+        const init = sessionInitEventSchema.parse(se.payload);
         if (init.sessionId) {
           this.sessionId = init.sessionId;
           this._resolveSessionId?.();
@@ -314,7 +314,7 @@ export class Channel {
           }),
         );
       } else if (se.name === 'session:status') {
-        const status = sessionStatusPayload.parse(se.payload);
+        const status = sessionStatusEventSchema.parse(se.payload);
         if (status.permissionMode !== undefined) {
           this.updateSessionState({ permissionMode: status.permissionMode });
         }

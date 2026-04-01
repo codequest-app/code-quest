@@ -1,10 +1,10 @@
 import type { ControlResponse } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { Server } from 'socket.io';
-import { z } from 'zod';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type WireRunnerHooks } from './channel.ts';
 import type { RawRecorder } from './raw-recorder.ts';
+import type { ChannelSummary } from './schemas.ts';
 import type { SessionHistory } from './session-history.ts';
 import {
   pickDefined,
@@ -13,13 +13,7 @@ import {
   type TypedSocket,
 } from './types.ts';
 
-const channelSummarySchema = z.object({
-  channelId: z.string(),
-  state: z.enum(['busy', 'idle', 'exited']),
-  title: z.string().optional(),
-  model: z.string().optional(),
-});
-export type ChannelSummary = z.infer<typeof channelSummarySchema>;
+export type { ChannelSummary } from './schemas.ts';
 
 export interface CreateChannelOptions {
   hooks?: WireRunnerHooks;
