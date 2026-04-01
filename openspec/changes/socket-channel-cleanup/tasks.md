@@ -62,5 +62,5 @@
 
 ### Phase 8: 重構 test
 
-- [ ] 31. 檢視所有 test，更新因重構需要調整的 import / mock
-- [ ] 32. 最終全量 test + typecheck
+- [x] 31. 檢視所有 test — 無需更新，全部通過
+- [x] 32. 最終全量 test + typecheck ✓
