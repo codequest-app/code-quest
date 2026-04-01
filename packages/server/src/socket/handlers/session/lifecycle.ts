@@ -7,12 +7,34 @@ import {
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
-import { config } from '../../config.ts';
-import { logger } from '../../logger.ts';
-import type { Channel } from '../channel.ts';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
-import { DEFAULT_THINKING_TOKENS, persistNewSession } from './helpers.ts';
+import { config } from '../../../config.ts';
+import { logger } from '../../../logger.ts';
+import type { Channel } from '../../channel.ts';
+import type { HandlerContext } from '../../context.ts';
+import type { TypedSocket } from '../../types.ts';
+import { errMsg } from '../../types.ts';
+/** Default max thinking tokens when thinking is enabled (matches CLI default). */
+export const DEFAULT_THINKING_TOKENS = 31999;
+
+export function persistNewSession(
+  ctx: HandlerContext,
+  opts: { channelId: string; sessionId: string; parentId?: string },
+): void {
+  ctx.sessionStore
+    .persist({
+      id: opts.channelId,
+      sessionId: opts.sessionId,
+      provider: ctx.channelManager.provider,
+      command: ctx.runnerFactory.command,
+      args: JSON.stringify(ctx.runnerFactory.args),
+      cwd: process.cwd(),
+      mode: 'interactive',
+      role: 'chat',
+      ...(opts.parentId ? { parentId: opts.parentId } : {}),
+      createdAt: new Date().toISOString(),
+    })
+    .catch((err) => logger.error({ err }, 'Failed to persist session'));
+}
 
 const initResponseResultSchema = z.object({
   slashCommands: z.array(z.string()).optional(),

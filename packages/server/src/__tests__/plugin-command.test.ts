@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { runPluginCommand } from '../socket/handlers/helpers.ts';
+import { runPluginCommand } from '../socket/claude/cli.ts';
 
 vi.mock('node:child_process', async (importOriginal) => {
   const orig = await importOriginal<typeof import('node:child_process')>();

@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import * as helpers from '../socket/handlers/helpers.ts';
+import * as rg from '../socket/handlers/rg.ts';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
@@ -13,19 +13,19 @@ describe('ChatHandler > file', () => {
   describe('file:list', () => {
     // biome-ignore lint/suspicious/noExplicitAny: vi.spyOn generic inference
     let rgListFilesSpy: any;
-    const origRgAvailable = helpers.rgAvailable;
+    const origRgAvailable = rg.rgAvailable;
 
     beforeEach(() => {
-      rgListFilesSpy = vi.spyOn(helpers, 'rgListFiles');
+      rgListFilesSpy = vi.spyOn(rg, 'rgListFiles');
     });
 
     afterEach(() => {
-      helpers.setRgAvailable(origRgAvailable);
+      rg.setRgAvailable(origRgAvailable);
       rgListFilesSpy.mockRestore();
     });
 
     it('uses rg when available and returns matching files', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
       rgListFilesSpy.mockReturnValue([
         'src/socket/chat-handler.ts',
         'src/__tests__/chat-handler.test.ts',
@@ -44,7 +44,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('limits results to 20 entries', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
       const manyFiles = Array.from({ length: 30 }, (_, i) => `src/file-${i}.ts`);
       rgListFilesSpy.mockReturnValue(manyFiles);
 
@@ -58,7 +58,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('falls back to walk when rg is not available', async () => {
-      helpers.setRgAvailable(false);
+      rg.setRgAvailable(false);
 
       const { claude, channelId } = await setup();
 
@@ -72,7 +72,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('returns empty array for no matches', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
       rgListFilesSpy.mockReturnValue(['src/app.ts', 'src/main.ts']);
 
       const { claude, channelId } = await setup();
@@ -85,7 +85,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('returns terminal results for matching active sessions', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
       rgListFilesSpy.mockReturnValue([]);
 
       const { claude, channelId } = await setup();
@@ -102,7 +102,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('merges terminal results with file results', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
 
       const { claude, channelId } = await setup();
 
@@ -120,7 +120,7 @@ describe('ChatHandler > file', () => {
     });
 
     it('caps combined file and terminal results at 20', async () => {
-      helpers.setRgAvailable(true);
+      rg.setRgAvailable(true);
       const manyFiles = Array.from({ length: 25 }, (_, i) => `src/match-${i}.ts`);
       rgListFilesSpy.mockReturnValue(manyFiles);
 

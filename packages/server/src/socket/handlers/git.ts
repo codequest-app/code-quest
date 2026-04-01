@@ -6,9 +6,10 @@ import {
   gitUpdateSkippedBranchSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
-import { execGit } from './helpers.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
+import { errMsg } from '../types.ts';
+import { execGit } from './exec-git.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('git:status', async (callback) => {

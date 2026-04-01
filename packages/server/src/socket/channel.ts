@@ -10,7 +10,7 @@ import type {
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
 import { z } from 'zod';
-import type { TypedSocket } from './handler-context.ts';
+import type { TypedSocket } from './types.ts';
 
 /** Default timeout for control requests (ms). */
 const DEFAULT_CONTROL_TIMEOUT = 30_000;
@@ -339,7 +339,7 @@ export class Channel {
         this.emit(se.name, { channelId: this.id, ...se.payload });
       }
 
-      // Invoke hook for ChatHandler-owned logic
+      // Invoke hook for SocketServer-owned logic
       hooks.onSocketEvent?.(this, se);
     };
 
@@ -361,7 +361,7 @@ export class Channel {
         this.pendingRequests.delete(id);
       }
 
-      // Delegate cleanup to hook — ChatHandler owns business logic
+      // Delegate cleanup to hook — SocketServer owns business logic
       // (custom rejection messages, broadcastSessionState, session:closed emit)
       hooks.onExit?.(this, code);
     };

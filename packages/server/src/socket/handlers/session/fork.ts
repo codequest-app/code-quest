@@ -1,7 +1,9 @@
 import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { errMsg } from '../handler-context.ts';
-import { execGit, persistNewSession } from './helpers.ts';
+import type { HandlerContext } from '../../context.ts';
+import type { TypedSocket } from '../../types.ts';
+import { errMsg } from '../../types.ts';
+import { execGit } from '../exec-git.ts';
+import { persistNewSession } from './lifecycle.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('session:fork', async (payload, callback) => {

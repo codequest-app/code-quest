@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, normalize, resolve } from 'node:path';
 import { fileListSchema } from '@code-quest/shared';
-import type { HandlerContext, TypedSocket } from '../handler-context.ts';
-import { rgAvailable, rgListFiles } from './helpers.ts';
+import type { HandlerContext } from '../context.ts';
+import type { TypedSocket } from '../types.ts';
+import { rgAvailable, rgListFiles } from './rg.ts';
 
 export function register(socket: TypedSocket, ctx: HandlerContext): void {
   socket.on('file:read', ({ channelId, filePath }, callback) => {

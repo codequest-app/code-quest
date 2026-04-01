@@ -28,24 +28,21 @@ import type { RunnerFactory } from '../types.ts';
 import { TYPES } from '../types.ts';
 import type { Channel, WireRunnerHooks } from './channel.ts';
 import type { ChannelManager } from './channel-manager.ts';
-import type {
-  HandlerContext,
-  PluginCacheEntry,
-  TypedServer,
-  TypedSocket,
-} from './handler-context.ts';
-import { register as registerAuthHandlers } from './handlers/auth-handler.ts';
-import { register as registerConnectionHandlers } from './handlers/connection-handler.ts';
-import { register as registerFileHandlers } from './handlers/file-handler.ts';
-import { register as registerGitHandlers } from './handlers/git-handler.ts';
-import { register as registerMcpHandlers } from './handlers/mcp-handler.ts';
-import { register as registerMessageHandlers } from './handlers/message-handler.ts';
-import { register as registerPlanHandlers } from './handlers/plan-handler.ts';
-import { register as registerPluginHandlers } from './handlers/plugin-handler.ts';
-import { register as registerSessionHandlers } from './handlers/session-handler.ts';
-import { register as registerSettingsHandlers } from './handlers/settings-handler.ts';
-import { register as registerSpeechHandlers } from './handlers/speech-handler.ts';
-import { register as registerTerminalHandlers } from './handlers/terminal-handler.ts';
+import { register as registerAuthHandlers } from './claude/auth.ts';
+import { register as registerClaudeMcpServers } from './claude/mcp-servers.ts';
+import { register as registerPluginHandlers } from './claude/plugin.ts';
+import type { HandlerContext } from './context.ts';
+import { register as registerConnectionHandlers } from './handlers/connection.ts';
+import { register as registerFileHandlers } from './handlers/file.ts';
+import { register as registerGitHandlers } from './handlers/git.ts';
+import { register as registerMcpHandlers } from './handlers/mcp.ts';
+import { register as registerMessageHandlers } from './handlers/message.ts';
+import { register as registerPlanHandlers } from './handlers/plan.ts';
+import { register as registerSessionHandlers } from './handlers/session/index.ts';
+import { register as registerSettingsHandlers } from './handlers/settings.ts';
+import { register as registerSpeechHandlers } from './handlers/speech.ts';
+import { register as registerTerminalHandlers } from './handlers/terminal.ts';
+import type { TypedServer, TypedSocket } from './types.ts';
 
 function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -63,7 +60,7 @@ function jsonRpcError(id: unknown, message: string): Record<string, unknown> {
 }
 
 @injectable()
-export class ChatHandler implements HandlerContext {
+export class SocketServer implements HandlerContext {
   // socket.id → set of channelIds this socket is joined to
   socketChannelsMap = new Map<string, Set<string>>();
   // Socket.IO server reference for broadcasting
@@ -75,13 +72,6 @@ export class ChatHandler implements HandlerContext {
   };
   // Cached models from last initialize response (persists across sessions)
   cachedModels: unknown[] | undefined;
-  // Global MCP state
-  chromeMcpState: { status: 'disconnected' | 'connecting' | 'connected' } = {
-    status: 'disconnected',
-  };
-  // CWD-keyed plugin listing cache
-  pluginCache = new Map<string, PluginCacheEntry>();
-  readonly PLUGIN_CACHE_TTL = 30_000;
 
   constructor(
     @inject(TYPES.RunnerFactory) public runnerFactory: RunnerFactory,
@@ -375,6 +365,7 @@ export class ChatHandler implements HandlerContext {
     registerMessageHandlers(socket, this);
     registerSettingsHandlers(socket, this);
     registerMcpHandlers(socket, this);
+    registerClaudeMcpServers(socket, this);
     registerFileHandlers(socket, this);
     registerTerminalHandlers(socket, this);
     registerGitHandlers(socket, this);

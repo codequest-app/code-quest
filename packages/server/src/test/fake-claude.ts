@@ -61,12 +61,12 @@ export class FakeClaude {
     ).serverSocket;
 
     this.container = createTestContainer({ processProvider: this.provider });
-    const chatHandler = this.container.get(Symbol.for('ChatHandler')) as {
+    const socketServer = this.container.get(Symbol.for('SocketServer')) as {
       register: (io: unknown) => void;
     };
 
     this._allServerSockets = [serverSocket];
-    chatHandler.register({
+    socketServer.register({
       on: (event: string, cb: (...args: unknown[]) => void) => {
         if (event === 'connection') {
           this._connectionHandler = cb;
