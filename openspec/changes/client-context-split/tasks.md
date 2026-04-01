@@ -20,10 +20,6 @@ Auto-wiring：一個 useEffect loop 統一 on/off + guard + `setState(prev => ha
 
 ## 3. ChannelMessagesContext emit handlers 抽出
 
-Actions（send）從 context 搬到 messagesHandlers.ts。
-Emit handler：`(emit, setState?) → actions object`。
-Context 只負責接線，不定義業務邏輯。
-
 - [x] 3.1 messagesHandlers.ts 新增 `createMessagesActions`，回傳 actions object（17 個 named function）
 - [x] 3.2-3.4 所有 actions 一次搬完
 - [x] 3.5 ChannelMessagesContext 的 actions useMemo 改用 createMessagesActions
@@ -49,7 +45,35 @@ Context 只負責接線，不定義業務邏輯。
 - [x] 6.2 context 改用 auto-wiring
 - [x] 6.3 typecheck + 615 test pass
 
-## 7. 清理
+## 7. Handler 檔案搬到 handlers/ 目錄
 
-- [ ] 7.1 確認行數變化 + 所有 context guard 消除情況
-- [ ] 7.2 biome check + typecheck + 615 test pass
+- [x] 7.1 建立 `contexts/channel/handlers/` 目錄
+- [x] 7.2 搬移 4 個 handler 檔案 + 更新 import 路徑
+- [x] 7.3 typecheck + 615 test pass
+
+## 8. Side-effect events 搬到 handler（messagesEffects）
+
+把 context 裡殘留的手動 socket.on/off side-effect events 搬到 handler map。
+auto-wiring loop 同時接 state handlers + effect handlers。
+guard 移到 useEffect 內部解決 biome exhaustive-deps 問題。
+
+- [ ] 8.1 messagesHandlers.ts 新增 `messagesEffects` map：notification:toast, notification:auth_url, action:open_url, action:open_file, notification:show（side effect 部分）, raw:event（side effect 部分）, disconnect（side effect 部分）
+- [ ] 8.2 auto-wiring loop 同時接 messagesHandlers + messagesEffects
+- [ ] 8.3 移除 context 裡的 side-effect useEffect 區塊
+- [ ] 8.4 guard 移到 useEffect 內部（解決 biome exhaustive-deps）
+- [ ] 8.5 resetStreamingRefs 用 useCallback 包裝（解決 biome exhaustive-deps）
+- [ ] 8.6 MutableRefObject → RefObject（解決 deprecation warning）
+- [ ] 8.7 typecheck + biome check + 615 test pass
+
+## 9. 其他 context 的 biome exhaustive-deps 修正
+
+- [ ] 9.1 ChannelControlContext：guard 移到各 useEffect 內部
+- [ ] 9.2 ChannelConfigContext：guard 移到各 useEffect 內部
+- [ ] 9.3 ChannelComposeContext：確認無問題
+- [ ] 9.4 typecheck + biome check + 615 test pass
+
+## 10. 清理
+
+- [ ] 10.1 確認所有 context 不再有共享 guard function
+- [ ] 10.2 確認行數變化
+- [ ] 10.3 biome check + typecheck + 615 test pass
