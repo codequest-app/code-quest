@@ -82,8 +82,18 @@
 - [x] 9.6 + 9.7 消除 `_sessionHistory` setter injection — ChannelManager 改接 `resolveSessionId` callback，container.ts 用 lazy callback 解循環依賴
 - [x] 9.8 `getPendingReplayEvents` 不再重複查詢 DB — 抽出 `convertRawEntriesToSocketEvents`
 - [x] 9.9 `raw-recorder.ts` `channel.lastError` 評估後保留（stderr→lastError 映射在此處合理）
-- [ ] 9.10 `context.ts`：`io` 暴露問題 — 後續獨立 change
-- [ ] 9.11 `context.ts`：`authState` / `cachedModels` mutable state — 後續獨立 change
+- [ ] 9.10 `context.ts`：`io` 不再暴露 — ChannelManager 新增 broadcast 方法，handler 改用：
+  - [ ] 9.10a `broadcastSettingsUpdate(channelId, settings)` — 取代 10 處 `ctx.io?.emit('settings:update', ...)`
+  - [ ] 9.10b `broadcastSessionCreated(channelId)` / `broadcastSessionDead(channelId)` / `broadcastSessionResume(channelId)` — 取代 5 處
+  - [ ] 9.10c `broadcastModels(models)` — 取代 2 處 `ctx.io?.emit('app:models', ...)`
+  - [ ] 9.10d 剩餘的 `session:states` 直接呼叫改用 `broadcastSessionState`
+  - [ ] 9.10e HandlerContext 移除 `io` 屬性，SocketServer 移除 `io` 暴露
+  - [ ] 9.10f typecheck + test 全過
+- [ ] 9.11 `authState` / `cachedModels` 從 HandlerContext 移到專屬管理：
+  - [ ] 9.11a `cachedModels` 移到 ChannelManager（lifecycle 寫入，app/connection 讀取，都已有 channelManager 存取）
+  - [ ] 9.11b `authState` 移到 `claude/state.ts`（只有 claude/auth.ts 讀寫）
+  - [ ] 9.11c HandlerContext 移除 `authState` / `cachedModels`
+  - [ ] 9.11d typecheck + test 全過
 - [x] 9.12 typecheck + test 全過（397/397, ~5.2s）
 
 ## 10. Handler 內部品質提升
@@ -92,15 +102,25 @@
 - [x] 10.2 `message.ts`：title generation 拆成 `generateTitleIfNeeded`（留在 message handler，router 不支援多 subscriber per event）
 - [x] 10.3 `interruptedChannels` 評估後不需清理（per-factory Set，channelId-based，自然淘汰）
 - [x] 10.4 多餘 `channel?.` 已在 Phase 8 factory 遷移時清除
-- [ ] 10.5 `settings.ts`：前三個 handler 合併成 generic setter pattern（後續）
+- [x] 10.5 → 12.5 settings generic setter
 - [x] 10.6 `DEFAULT_THINKING_TOKENS` 移到 `schemas.ts`，消除 settings → lifecycle 跨模組 import
-- [ ] 10.7 `mcp.ts`：8 個重複 handler 改成 data-driven registration（後續）
-- [ ] 10.8 `file.ts`：`file:list` 拆出 `listWithRg()`、`listWithWalk()`、`listTerminals()`（後續）
+- [x] 10.7 → 12.3 mcp data-driven
+- [x] 10.8 → 12.1 file:list 拆函式
 - [x] 10.9 `persistNewSession` 移到 `session/persist.ts`，消除 fork → lifecycle 的 import 依賴
-- [ ] 10.10 `session/lifecycle.ts`：`handleInitResponse` 拆分 models caching 和 account broadcasting（後續）
-- [ ] 10.11 `session/fork.ts`：git checkout retry 抽成共用 `checkoutBranch()`（後續）
-- [ ] 10.12 `terminal.ts`：`terminal:open_claude` 重用 session launch 共用邏輯（後續）
+- [x] 10.10 → 12.4 handleInitResponse 拆分
+- [x] 10.11 → 12.2 git checkout 共用
+- [x] 10.12 → 12.6 terminal:open_claude 重用
 - [x] 10.13 typecheck + test 全過（397/397）
+
+## 12. 延遲的 handler 品質改善
+
+- [ ] 12.1 `file.ts`：`handleList` 拆出 `listWithRg(cwd, pattern)`、`listWithWalk(cwd, pattern)`、`listTerminals(channelManager, pattern)` 三個 named function
+- [ ] 12.2 `session/fork.ts` + `git.ts`：git checkout retry 抽成 `utils/exec-git.ts` 的 `checkoutBranch(branch)` 共用函式
+- [ ] 12.3 `mcp.ts`：重複 handler 改成 data-driven — 定義 `[{ event, schema, subtype, mapParams }]` array，loop 註冊
+- [ ] 12.4 `session/lifecycle.ts`：`handleInitResponse` 拆出 `cacheModels()` 和 `broadcastAccountInfo()` 兩個 named function
+- [ ] 12.5 `settings.ts`：`set_model` / `set_permission_mode` / `set_thinking_level` 合併成 generic `handleSetSetting(key, controlSubtype, params)` pattern
+- [ ] 12.6 `terminal.ts`：`terminal:open_claude` 提取 channel creation 共用邏輯（與 session:launch 重複的 create + addSocket + broadcastState + sendMessage）
+- [ ] 12.7 typecheck + test 全過
 
 ## 11. types.ts 清理 + 檔案搬遷
 
