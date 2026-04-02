@@ -91,17 +91,17 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     return results;
   }
 
-  function handleList(payload: unknown, callback: SocketCallback): void {
+  function handleList(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
-      const cwd = process.cwd();
+      const cwd = ch.workspaceFolder ?? process.cwd();
       const pat = pattern.toLowerCase();
 
       const fileResults = rgAvailable ? listWithRg(cwd, pat) : listWithWalk(cwd, pat);
       const combined = [...fileResults, ...listTerminals(pat)].slice(0, 20);
-      callback({ files: combined });
+      callback?.({ files: combined });
     } catch {
-      callback({ files: [] });
+      callback?.({ files: [] });
     }
   }
 
@@ -130,7 +130,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
   }
 
   emitter.on('file:read', withError(withChannel(handleRead)));
-  emitter.on('file:list', (_ch, payload, _socket, cb) => handleList(payload, cb!));
+  emitter.on('file:list', withChannel(handleList));
   emitter.on('system:file_updated', withChannel(onFileUpdated));
   emitter.on('server:action', withChannel(onReadDiff));
 }
