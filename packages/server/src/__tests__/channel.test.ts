@@ -1,4 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
 import type { ProcessRunner } from '@code-quest/summoner';
 import { describe, expect, it, vi } from 'vitest';
 import { Channel } from '../socket/channel.ts';
@@ -13,41 +12,9 @@ function fakeRunner(): ProcessRunner {
   } as unknown as ProcessRunner;
 }
 
-function fakeSocket() {
-  return { emit: vi.fn(), id: crypto.randomUUID() } as any;
-}
-
 describe('Channel', () => {
-  describe('socket management', () => {
-    it('adds and removes sockets', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      const sock = fakeSocket();
-      channel.addSocket(sock);
-      expect(channel.sockets.size).toBe(1);
-
-      channel.removeSocket(sock);
-      expect(channel.sockets.size).toBe(0);
-    });
-
-    it('broadcasts to all sockets', () => {
-      const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      const sock1 = fakeSocket();
-      const sock2 = fakeSocket();
-      channel.addSocket(sock1);
-      channel.addSocket(sock2);
-
-      channel.emit('error', { channelId: 'sess-1', event: { type: 'error', message: 'x' } });
-
-      expect(sock1.emit).toHaveBeenCalledWith('error', {
-        channelId: 'sess-1',
-        event: { type: 'error', message: 'x' },
-      });
-      expect(sock2.emit).toHaveBeenCalledWith('error', {
-        channelId: 'sess-1',
-        event: { type: 'error', message: 'x' },
-      });
-    });
-  });
+  // Socket management + broadcast tests removed.
+  // Behavior now covered by ChannelEmitter (integration tests verify emit/emitToOthers).
 
   describe('controlRequestMeta', () => {
     it('trackControlRequest adds entry and hasControlRequest returns true', () => {
@@ -70,8 +37,6 @@ describe('Channel', () => {
 
     it('destroy clears all tracked control requests', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      const sock = fakeSocket();
-      channel.addSocket(sock);
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool' });
       channel.trackControlRequest('req-2', { subtype: 'elicitation' });
 
@@ -85,14 +50,11 @@ describe('Channel', () => {
   describe('destroy', () => {
     it('cleans up all resources', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      const sock = fakeSocket();
-      channel.addSocket(sock);
       channel.trackControlRequest('req-1', { subtype: 'can_use_tool' });
 
       channel.destroy();
 
       expect(channel.exited).toBe(true);
-      expect(channel.sockets.size).toBe(0);
       expect(channel.hasControlRequest('req-1')).toBe(false);
     });
   });

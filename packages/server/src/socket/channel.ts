@@ -59,7 +59,7 @@ export class Channel {
   // ── Processing ──
   private _isProcessing = false;
 
-  // ── Sockets ──
+  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed along with socket methods. */
   readonly sockets = new Set<TypedSocket>();
 
   // ── Control requests ──
@@ -126,23 +126,12 @@ export class Channel {
     return this._runnerListeners !== null;
   }
 
-  addSocket(socket: TypedSocket): void {
-    this.sockets.add(socket);
-  }
-
-  removeSocket(socket: TypedSocket): void {
-    this.sockets.delete(socket);
-  }
-
-  removeSocketById(socketId: string): boolean {
-    for (const sock of this.sockets) {
-      if (sock.id === socketId) {
-        this.sockets.delete(sock);
-        return true;
-      }
-    }
-    return false;
-  }
+  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
+  addSocket(_socket: TypedSocket): void {}
+  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
+  removeSocket(_socket: TypedSocket): void {}
+  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
+  removeSocketById(_socketId: string): boolean { return false; }
 
   // ── Control request tracking ──
 
