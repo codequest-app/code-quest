@@ -29,7 +29,7 @@ export function create(
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      channelManager.broadcastSessionCreated(newSessionId);
+      emitter.broadcastAll('session:created', { channelId: newSessionId });
       callback?.({
         success: true,
         channelId: newSessionId,
@@ -67,7 +67,7 @@ export function create(
         },
       });
 
-      channelManager.broadcastSessionCreated(parsed.newSessionId);
+      emitter.broadcastAll('session:created', { channelId: parsed.newSessionId });
       callback?.({
         success: true,
         channelId: parsed.newSessionId,

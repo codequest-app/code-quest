@@ -27,7 +27,7 @@ export function create(
       const ch = channelManager.get(channelId);
       if (ch) {
         ch.kill();
-        channelManager.broadcastSessionDead(channelId);
+        emitter.broadcastAll('session:dead', { channelId });
       }
     } catch {
       // ignore
@@ -40,7 +40,7 @@ export function create(
   ): void {
     try {
       const { channelId } = sessionResumePayloadSchema.parse(payload);
-      channelManager.broadcastSessionResume(channelId);
+      emitter.broadcastAll('session:resume', { channelId });
     } catch {
       // ignore
     }

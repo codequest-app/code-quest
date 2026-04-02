@@ -80,12 +80,13 @@ export function create(
     if (models) {
       channelManager.cachedModels = models;
       await settingsStore.set(channelManager.provider, 'models', models);
-      channelManager.broadcastModels(models);
+      emitter.broadcastAll('app:models', { channelId: '', models });
     }
 
     if (account && Object.keys(account).length > 0) {
       const { email, subscriptionType, authMethod, organization } = account;
-      channelManager.broadcastSettingsUpdate('', {
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
         accountInfo: { email, subscriptionType, authMethod, organization },
       });
     }
@@ -142,7 +143,7 @@ export function create(
         socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
       }
 
-      channelManager.broadcastSessionCreated(channelId);
+      emitter.broadcastAll('session:created', { channelId });
       callback?.({ channelId, slashCommands, models, account });
 
       if (parsed.initialPrompt) {
@@ -153,7 +154,7 @@ export function create(
       const message = errMsg(err, 'Failed to create session');
       if (resumeSessionId && message.includes('No conversation found')) {
         await sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
-        channelManager.broadcastSessionDead(resumeSessionId);
+        emitter.broadcastAll('session:dead', { channelId: resumeSessionId });
         return;
       }
       callback?.({ channelId: '', error: message });

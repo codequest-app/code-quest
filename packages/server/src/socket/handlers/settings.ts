@@ -61,7 +61,7 @@ export function create(
       }
       await channel.sendControlRequest('set_permission_mode', { mode });
       await settingsStore.set(channel.provider, 'permissionMode', mode);
-      channelManager.broadcastSettingsUpdate(channelId, { initialPermissionMode: mode });
+      emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
@@ -85,7 +85,7 @@ export function create(
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
-      channelManager.broadcastSettingsUpdate(channelId, { thinkingLevel });
+      emitter.broadcastAll('settings:update', { channelId, thinkingLevel });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
@@ -98,7 +98,8 @@ export function create(
       const channel = channelManager.get(channelId);
       if (!channel) return;
       await channel.sendControlRequest('set_proactive', { enabled });
-      channelManager.broadcastSettingsUpdate(channelId, {
+      emitter.broadcastAll('settings:update', {
+        channelId,
         fastModeState: enabled ? 'on' : 'off',
       });
     } catch {
@@ -129,7 +130,8 @@ export function create(
       await channel.sendControlRequest('apply_flag_settings', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(channel.provider, 'effortLevel', String(settings.effortLevel));
-        channelManager.broadcastSettingsUpdate(channelId, {
+        emitter.broadcastAll('settings:update', {
+          channelId,
           effort: String(settings.effortLevel),
         });
       }
