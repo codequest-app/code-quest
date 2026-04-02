@@ -175,6 +175,20 @@ describe('ChatHandler > settings', () => {
       const channel = channelManager.get(channelId);
       expect(channel?.workspaceFolder).toBe('/some/path');
     });
+
+    it('resolves relative cwd to absolute path', async () => {
+      const claude = createFakeClaude();
+
+      const channelId = await claude.initialize({ launch: { cwd: '../' } });
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+        typeof ChannelManager
+      >;
+      const channel = channelManager.get(channelId);
+      expect(channel?.workspaceFolder).not.toBe('../');
+      expect(channel?.workspaceFolder?.startsWith('/')).toBe(true);
+    });
   });
 
   it('apply_settings forwards settings to CLI session', async () => {
