@@ -1,12 +1,20 @@
 import type { SettingsStore } from '../../services/settings-store.ts';
+import type { Channel } from '../channel.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 
 export function create(
   channelManager: ChannelManager,
   settingsStore: SettingsStore,
-): SocketHandler {
-  async function handleInit(callback: SocketCallback): Promise<void> {
+  emitter: ChannelEmitter,
+): void {
+  async function handleInit(
+    _ch: Channel | null,
+    _payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     const sessions = channelManager.getAliveChannels().map(([id, ch]) => ({
       channelId: id,
       state: ch.isProcessing ? 'busy' : 'idle',
@@ -24,7 +32,7 @@ export function create(
     } catch {
       // Settings table may not exist yet
     }
-    callback({
+    callback?.({
       settings,
       sessions,
       models: channelManager.cachedModels,
@@ -36,7 +44,12 @@ export function create(
     });
   }
 
-  async function handleConfig(_payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleConfig(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     let models: unknown[] | undefined = channelManager.cachedModels;
     let effort: string | undefined;
     try {
@@ -51,22 +64,24 @@ export function create(
     } catch {
       // Settings table may not exist yet
     }
-    callback({
+    callback?.({
       providerConfig: channelManager.providerClientConfig,
       ...(Array.isArray(models) ? { models } : {}),
       ...(typeof effort === 'string' ? { effort } : {}),
     });
   }
 
-  function handleDisconnect(socket: TypedSocket): void {
-    channelManager.removeSocketFromAll(socket.id);
+  function handleDisconnect(
+    _ch: Channel | null,
+    _payload: unknown,
+    socket?: TypedSocket,
+  ): void {
+    if (socket) {
+      channelManager.removeSocketFromAll(socket.id);
+    }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('app:init', handleInit);
-      socket.on('app:config', handleConfig);
-      socket.on('disconnect', () => handleDisconnect(socket));
-    },
-  };
+  emitter.on('app:init', handleInit);
+  emitter.on('app:config', handleConfig);
+  emitter.on('disconnect', handleDisconnect);
 }

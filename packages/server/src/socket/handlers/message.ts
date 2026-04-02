@@ -14,7 +14,7 @@ import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import type { PlanApi } from './plan.ts';
 

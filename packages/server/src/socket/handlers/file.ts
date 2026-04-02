@@ -6,7 +6,7 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
 export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {

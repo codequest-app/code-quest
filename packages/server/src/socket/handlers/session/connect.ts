@@ -10,7 +10,7 @@ import { type ChannelEmitter, withChannel } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
 
 const initResponseResultSchema = z.object({
@@ -43,7 +43,7 @@ export function create(
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
   emitter: ChannelEmitter,
-): SocketHandler {
+): void {
   async function applyPerLaunchSettings(
     channel: Channel,
     parsed: Pick<ChatCreatePayload, 'model' | 'permissionMode' | 'thinkingLevel' | 'cwd'>,
@@ -94,8 +94,9 @@ export function create(
   }
 
   async function handleLaunch(
-    socket: TypedSocket,
+    _ch: Channel | null,
     payload: unknown,
+    socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     let resumeSessionId: string | undefined;
@@ -120,7 +121,9 @@ export function create(
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions: launchOpts,
         initOptions: initInput,
-        onBeforeSpawn: (ch) => channelManager.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => {
+          if (socket) channelManager.addSocketToChannel(ch, socket);
+        },
       });
 
       // persist is deferred to onSessionInit (session:init may arrive after control_response)
@@ -134,9 +137,9 @@ export function create(
         ...(slashCommands && { slashCommands }),
       });
 
-      socket.emit('session:init', { ...buildSessionInitPayload(channel) });
+      socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
       if (channelManager.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+        socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
       }
 
       channelManager.broadcastSessionCreated(channelId);
@@ -158,8 +161,9 @@ export function create(
   }
 
   async function handleJoin(
-    socket: TypedSocket,
+    _ch: Channel | null,
     payload: unknown,
+    socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
@@ -182,16 +186,18 @@ export function create(
         return;
       }
 
-      channelManager.addSocketToChannel(channel, socket);
+      if (socket) channelManager.addSocketToChannel(channel, socket);
 
       channelManager.ensureBound(channel);
 
       const replaySessionId = await sessionHistory.resolveSessionId(channelId);
-      await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
+      if (socket) {
+        await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
+      }
 
-      socket.emit('session:init', { ...buildSessionInitPayload(channel) });
+      socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
       if (channelManager.cachedModels) {
-        socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+        socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
       }
 
       const events = await sessionHistory.getSessionHistory(channelId);
@@ -239,11 +245,6 @@ export function create(
 
   emitter.on('session:init', withChannel(onSessionInit));
   emitter.on('channel:exit', withChannel(onChannelExit));
-
-  return {
-    register(socket: TypedSocket) {
-      socket.on('session:launch', (p, cb) => handleLaunch(socket, p, cb));
-      socket.on('session:join', (p, cb) => handleJoin(socket, p, cb));
-    },
-  };
+  emitter.on('session:launch', handleLaunch);
+  emitter.on('session:join', handleJoin);
 }

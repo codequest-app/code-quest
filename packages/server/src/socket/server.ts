@@ -27,7 +27,6 @@ import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
 import type { SessionHistory } from './session-history.ts';
-import type { SocketHandler } from './types.ts';
 
 @injectable()
 export class SocketServer {
@@ -44,8 +43,6 @@ export class SocketServer {
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
   }
-
-  private handlers: SocketHandler[] = [];
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     const cm = this.channelManager;
@@ -67,24 +64,20 @@ export class SocketServer {
 
     message.create(cm, this.sessionStore, planHandler, em);
 
-    const commonHandlers: SocketHandler[] = [
-      app.create(cm, this.settingsStore),
-      sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em),
-      sessionCommand.create(cm, this.sessionStore),
-      sessionFork.create(cm, this.sessionHistory),
-      sessionQuery.create(cm, this.sessionStore, this.sessionHistory),
-    ];
+    app.create(cm, this.settingsStore, em);
+    sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em);
+    sessionCommand.create(cm, this.sessionStore, em);
+    sessionFork.create(cm, this.sessionHistory, em);
+    sessionQuery.create(cm, this.sessionStore, this.sessionHistory, em);
 
-    const providerHandlers: SocketHandler[] =
-      cm.provider === 'claude'
-        ? [claudeAuth.create(cm), claudeMcpServers.create(cm), claudePlugin.create()]
-        : [];
-
-    this.handlers = [...commonHandlers, ...providerHandlers];
+    if (cm.provider === 'claude') {
+      claudeAuth.create(cm, em);
+      claudeMcpServers.create(cm, em);
+      claudePlugin.create(em);
+    }
 
     io.on('connection', (socket) => {
       em.handleConnection(socket, (id) => cm.get(id));
-      for (const h of this.handlers) h.register(socket);
     });
   }
 }

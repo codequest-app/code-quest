@@ -16,7 +16,7 @@ import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
 
 export function create(

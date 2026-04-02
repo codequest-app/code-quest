@@ -10,7 +10,9 @@ import {
   removeMarketplaceSchema,
 } from '@code-quest/shared';
 
-import type { SocketHandler, TypedSocket } from '../types.ts';
+import type { Channel } from '../channel.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 import { claudeState } from './state.ts';
@@ -40,22 +42,20 @@ function buildMarketplaceSource(k: {
   }
 }
 
-export function create(): SocketHandler {
-  return {
-    register(socket: TypedSocket) {
-      registerEvents(socket);
-    },
-  };
-}
-
-function registerEvents(socket: TypedSocket): void {
-  socket.on('plugin:list', async (payload, callback) => {
+export function create(emitter: ChannelEmitter): void {
+  async function handleList(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     const cwd = process.cwd();
-    const includeAvailable = payload?.includeAvailable ?? false;
+    const p = payload as { includeAvailable?: boolean } | undefined;
+    const includeAvailable = p?.includeAvailable ?? false;
     const cached = claudeState.pluginCache.get(cwd);
     if (cached && Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL) {
       if (!includeAvailable || cached.available.length > 0) {
-        callback({ installed: cached.installed, available: cached.available });
+        callback?.({ installed: cached.installed, available: cached.available });
         return;
       }
     }
@@ -72,7 +72,7 @@ function registerEvents(socket: TypedSocket): void {
     }
 
     let available: unknown[] = [];
-    if (payload?.includeAvailable) {
+    if (includeAvailable) {
       const availableResult = await runPluginCommandAsync(['list', '--json', '--available']);
       if (availableResult.ok) {
         try {
@@ -97,64 +97,84 @@ function registerEvents(socket: TypedSocket): void {
       marketplaces: existing?.marketplaces ?? [],
       ts: Date.now(),
     });
-    callback({ installed: validInstalled, available: validAvailable });
-  });
+    callback?.({ installed: validInstalled, available: validAvailable });
+  }
 
-  socket.on('plugin:install', (payload, callback) => {
+  function handleInstall(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { pluginId } = pluginInstallSchema.parse(payload);
       const result = runPluginCommand(['install', pluginId]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to install plugin' });
+        callback?.({ success: false, error: result.stderr || 'Failed to install plugin' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true, needsRestart: true });
+      callback?.({ success: true, needsRestart: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
 
-  socket.on('plugin:uninstall', (payload, callback) => {
+  function handleUninstall(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { pluginId } = pluginUninstallSchema.parse(payload);
       const result = runPluginCommand(['uninstall', pluginId]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to uninstall plugin' });
+        callback?.({ success: false, error: result.stderr || 'Failed to uninstall plugin' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true, needsRestart: true });
+      callback?.({ success: true, needsRestart: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
 
-  socket.on('plugin:toggle', (payload, callback) => {
+  function handleToggle(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { pluginId, enabled } = pluginToggleSchema.parse(payload);
       const result = runPluginCommand([enabled ? 'enable' : 'disable', pluginId]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to toggle plugin' });
+        callback?.({ success: false, error: result.stderr || 'Failed to toggle plugin' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true, needsRestart: true });
+      callback?.({ success: true, needsRestart: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
 
-  socket.on('plugin:list_marketplaces', (callback) => {
+  function handleListMarketplaces(
+    _ch: Channel | null,
+    _payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     const cwd = process.cwd();
     const cached = claudeState.pluginCache.get(cwd);
     if (
@@ -162,13 +182,13 @@ function registerEvents(socket: TypedSocket): void {
       Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL &&
       cached.marketplaces.length > 0
     ) {
-      callback({ marketplaces: cached.marketplaces });
+      callback?.({ marketplaces: cached.marketplaces });
       return;
     }
 
     const result = runPluginCommand(['marketplace', 'list', '--json']);
     if (!result.ok) {
-      callback({ marketplaces: [] });
+      callback?.({ marketplaces: [] });
       return;
     }
     try {
@@ -197,63 +217,87 @@ function registerEvents(socket: TypedSocket): void {
         marketplaces,
         ts: existing?.ts ?? Date.now(),
       });
-      callback({ marketplaces });
+      callback?.({ marketplaces });
     } catch {
-      callback({ marketplaces: [] });
+      callback?.({ marketplaces: [] });
     }
-  });
+  }
 
-  socket.on('plugin:add_marketplace', (payload, callback) => {
+  function handleAddMarketplace(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { source } = addMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'add', source]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to add marketplace' });
+        callback?.({ success: false, error: result.stderr || 'Failed to add marketplace' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
 
-  socket.on('plugin:remove_marketplace', (payload, callback) => {
+  function handleRemoveMarketplace(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { marketplaceId } = removeMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'remove', marketplaceId]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to remove marketplace' });
+        callback?.({ success: false, error: result.stderr || 'Failed to remove marketplace' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
 
-  socket.on('plugin:refresh_marketplace', (payload, callback) => {
+  function handleRefreshMarketplace(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { marketplaceId } = refreshMarketplaceSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'update', marketplaceId]);
       if (!result.ok) {
-        callback({ success: false, error: result.stderr || 'Failed to refresh marketplace' });
+        callback?.({ success: false, error: result.stderr || 'Failed to refresh marketplace' });
         return;
       }
       claudeState.pluginCache.delete(process.cwd());
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({
+      callback?.({
         success: false,
         error: errMsg(err, 'Invalid payload'),
       });
     }
-  });
+  }
+
+  emitter.on('plugin:list', handleList);
+  emitter.on('plugin:install', handleInstall);
+  emitter.on('plugin:uninstall', handleUninstall);
+  emitter.on('plugin:toggle', handleToggle);
+  emitter.on('plugin:list_marketplaces', handleListMarketplaces);
+  emitter.on('plugin:add_marketplace', handleAddMarketplace);
+  emitter.on('plugin:remove_marketplace', handleRemoveMarketplace);
+  emitter.on('plugin:refresh_marketplace', handleRefreshMarketplace);
 }

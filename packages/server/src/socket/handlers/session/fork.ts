@@ -1,18 +1,22 @@
 import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
+import type { Channel } from '../../channel.ts';
+import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { checkoutBranch } from '../../utils/exec-git.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
 export function create(
   channelManager: ChannelManager,
   sessionHistory: SessionHistory,
-): SocketHandler {
+  emitter: ChannelEmitter,
+): void {
   async function handleFork(
-    socket: TypedSocket,
+    _ch: Channel | null,
     payload: unknown,
-    callback: SocketCallback,
+    socket?: TypedSocket,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
@@ -22,25 +26,26 @@ export function create(
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
         onBeforeSpawn: (ch) => {
           ch.updateSessionState({ parentId: forkedFromSession });
-          channelManager.addSocketToChannel(ch, socket);
+          if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
       channelManager.broadcastSessionCreated(newSessionId);
-      callback({
+      callback?.({
         success: true,
         channelId: newSessionId,
         parentSessionId: forkedFromSession,
         events: parentEvents,
       });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to fork session') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to fork session') });
     }
   }
 
   async function handleTeleport(
-    socket: TypedSocket,
+    _ch: Channel | null,
     payload: unknown,
-    callback: SocketCallback,
+    socket?: TypedSocket,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const parsed = sessionTeleportSchema.parse(payload);
@@ -57,25 +62,23 @@ export function create(
 
       await channelManager.create(parsed.newSessionId, {
         launchOptions: { resumeSessionId: parsed.remoteSessionId },
-        onBeforeSpawn: (ch) => channelManager.addSocketToChannel(ch, socket),
+        onBeforeSpawn: (ch) => {
+          if (socket) channelManager.addSocketToChannel(ch, socket);
+        },
       });
 
       channelManager.broadcastSessionCreated(parsed.newSessionId);
-      callback({
+      callback?.({
         success: true,
         channelId: parsed.newSessionId,
         events,
         ...(branchCheckoutFailed && { branchCheckoutFailed: true, branch: parsed.branch }),
       });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to teleport session') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to teleport session') });
     }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('session:fork', (p, cb) => handleFork(socket, p, cb));
-      socket.on('session:teleport', (p, cb) => handleTeleport(socket, p, cb));
-    },
-  };
+  emitter.on('session:fork', handleFork);
+  emitter.on('session:teleport', handleTeleport);
 }

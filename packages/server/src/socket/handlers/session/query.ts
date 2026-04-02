@@ -1,16 +1,24 @@
 import { sessionGetSchema, sessionListRemoteSchema, sessionListSchema } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
+import type { Channel } from '../../channel.ts';
+import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
 export function create(
   channelManager: ChannelManager,
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
-): SocketHandler {
-  async function handleList(payload: unknown, callback: SocketCallback): Promise<void> {
+  emitter: ChannelEmitter,
+): void {
+  async function handleList(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const parsed = sessionListSchema.parse(payload);
       const result = await sessionStore.list({
@@ -31,13 +39,18 @@ export function create(
           firstUserMessage: previews[i].firstUser,
         };
       });
-      callback({ sessions, total: result.total });
+      callback?.({ sessions, total: result.total });
     } catch {
-      callback({ sessions: [], total: 0 });
+      callback?.({ sessions: [], total: 0 });
     }
   }
 
-  async function handleListRemote(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleListRemote(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const parsed = sessionListRemoteSchema.parse(payload);
       const result = await sessionStore.list({
@@ -45,29 +58,39 @@ export function create(
         offset: parsed.offset,
         hasParentId: true,
       });
-      callback({ sessions: result.sessions, total: result.total });
+      callback?.({ sessions: result.sessions, total: result.total });
     } catch {
-      callback({ sessions: [], total: 0 });
+      callback?.({ sessions: [], total: 0 });
     }
   }
 
-  async function handleGet(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleGet(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
       const session = await sessionStore.getById(channelId);
       if (!session) {
-        callback({ error: 'Session not found' });
+        callback?.({ error: 'Session not found' });
         return;
       }
       const events = await sessionHistory.getSessionHistory(channelId);
       const channel = channelManager.get(channelId);
-      callback({ session, events, meta: channel?.metaCache ?? {} });
+      callback?.({ session, events, meta: channel?.metaCache ?? {} });
     } catch (err) {
-      callback({ error: errMsg(err, 'Failed to get session') });
+      callback?.({ error: errMsg(err, 'Failed to get session') });
     }
   }
 
-  async function handleRawEvents(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleRawEvents(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId } = sessionGetSchema.parse(payload);
       const entries = await sessionHistory.getRawEntries(channelId);
@@ -78,18 +101,14 @@ export function create(
           return { direction: e.direction, seq: e.seq, raw: e.raw };
         }
       });
-      callback({ events });
+      callback?.({ events });
     } catch {
-      callback({ events: [] });
+      callback?.({ events: [] });
     }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('session:list', handleList);
-      socket.on('session:list_remote', handleListRemote);
-      socket.on('session:get', handleGet);
-      socket.on('session:raw_events', handleRawEvents);
-    },
-  };
+  emitter.on('session:list', handleList);
+  emitter.on('session:list_remote', handleListRemote);
+  emitter.on('session:get', handleGet);
+  emitter.on('session:raw_events', handleRawEvents);
 }

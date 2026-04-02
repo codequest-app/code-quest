@@ -7,12 +7,21 @@ import {
   sessionUpdateStateSchema,
 } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
+import type { Channel } from '../../channel.ts';
+import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../../types.ts';
+import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
-export function create(channelManager: ChannelManager, sessionStore: SessionStore): SocketHandler {
-  function handleClose(payload: unknown): void {
+export function create(
+  channelManager: ChannelManager,
+  sessionStore: SessionStore,
+  emitter: ChannelEmitter,
+): void {
+  function handleClose(
+    _ch: Channel | null,
+    payload: unknown,
+  ): void {
     try {
       const { channelId } = chatKillSchema.parse(payload);
       const ch = channelManager.get(channelId);
@@ -25,7 +34,10 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     }
   }
 
-  function handleResume(payload: unknown): void {
+  function handleResume(
+    _ch: Channel | null,
+    payload: unknown,
+  ): void {
     try {
       const { channelId } = sessionResumePayloadSchema.parse(payload);
       channelManager.broadcastSessionResume(channelId);
@@ -34,35 +46,50 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     }
   }
 
-  async function handleDelete(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleDelete(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId } = sessionDeleteSchema.parse(payload);
       const success = await sessionStore.delete(channelId);
       if (!success) {
-        callback({ success: false, error: 'Session not found' });
+        callback?.({ success: false, error: 'Session not found' });
         return;
       }
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to delete session') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to delete session') });
     }
   }
 
-  async function handleRename(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleRename(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId, title } = sessionRenameSchema.parse(payload);
       const success = await sessionStore.rename(channelId, title);
       if (!success) {
-        callback({ success: false, error: 'Session not found' });
+        callback?.({ success: false, error: 'Session not found' });
         return;
       }
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to rename session') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to rename session') });
     }
   }
 
-  async function handleGenerateTitle(payload: unknown, callback?: SocketCallback): Promise<void> {
+  async function handleGenerateTitle(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -78,24 +105,25 @@ export function create(channelManager: ChannelManager, sessionStore: SessionStor
     }
   }
 
-  function handleUpdateState(payload: unknown, callback: SocketCallback): void {
+  function handleUpdateState(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
       channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to update session state') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to update session state') });
     }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('session:close', handleClose);
-      socket.on('session:resume', handleResume);
-      socket.on('session:delete', handleDelete);
-      socket.on('session:rename', handleRename);
-      socket.on('session:generate_title', handleGenerateTitle);
-      socket.on('session:update_state', handleUpdateState);
-    },
-  };
+  emitter.on('session:close', handleClose);
+  emitter.on('session:resume', handleResume);
+  emitter.on('session:delete', handleDelete);
+  emitter.on('session:rename', handleRename);
+  emitter.on('session:generate_title', handleGenerateTitle);
+  emitter.on('session:update_state', handleUpdateState);
 }
