@@ -169,7 +169,7 @@ export function create(
 
     switch (action.subtype) {
       case 'get_settings': {
-        const state = ch.sessionState;
+        const state = ch.sessionConfig;
         const overrides = pickDefined({
           model: state.model,
           permissionMode: state.permissionMode,
@@ -186,16 +186,16 @@ export function create(
       }
       case 'set_model': {
         const { model } = serverActionModelSchema.parse(action.input ?? {});
-        ch.updateSessionState({ model });
+        ch.updateSessionConfig({ model });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionState(channelId, 'busy');
+        channelManager.broadcastSessionConfig(channelId, 'busy');
         return;
       }
       case 'set_permission_mode': {
         const { mode } = serverActionModeSchema.parse(action.input ?? {});
-        ch.updateSessionState({ permissionMode: mode });
+        ch.updateSessionConfig({ permissionMode: mode });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionState(channelId, 'busy');
+        channelManager.broadcastSessionConfig(channelId, 'busy');
         return;
       }
       default:

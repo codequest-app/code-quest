@@ -26,7 +26,7 @@ export const sessionStatusEventSchema = z.looseObject({
 
 export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
 
-const sessionStateSchema = z.object({
+const sessionConfigSchema = z.object({
   model: z.string().optional(),
   permissionMode: z.string().optional(),
   effort: z.string().optional(),
@@ -34,10 +34,10 @@ const sessionStateSchema = z.object({
   tools: z.array(z.string()).optional(),
   mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
 });
-export type SessionState = z.infer<typeof sessionStateSchema>;
+export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 
 /** Extract config fields from session:init. cwd extracted separately to channel.workspaceFolder. */
-export const sessionInitConfigSchema = sessionStateSchema.pick({
+export const sessionInitConfigSchema = sessionConfigSchema.pick({
   model: true,
   permissionMode: true,
   effort: true,

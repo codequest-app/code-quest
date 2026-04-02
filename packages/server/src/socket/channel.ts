@@ -9,7 +9,7 @@ import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-qu
 import {
   errorMessageEventSchema,
   type RequestMeta,
-  type SessionState,
+  type SessionConfig,
   sessionInitConfigSchema,
   sessionInitEventSchema,
   sessionStatusEventSchema,
@@ -48,7 +48,7 @@ export class Channel {
   readonly controlTimeout: number;
 
   // ── State ──
-  private _sessionState: SessionState = {};
+  private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
   workspaceFolder: string | undefined;
@@ -90,20 +90,20 @@ export class Channel {
 
   // ── State accessors ──
 
-  get sessionState(): SessionState {
-    return this._sessionState;
+  get sessionConfig(): SessionConfig {
+    return this._sessionConfig;
   }
 
   get metaCache(): ChannelMetaCache {
     return this._metaCache;
   }
 
-  updateSessionState(partial: Partial<SessionState>): void {
-    this._sessionState = { ...this._sessionState, ...partial };
+  updateSessionConfig(partial: Partial<SessionConfig>): void {
+    this._sessionConfig = { ...this._sessionConfig, ...partial };
   }
 
-  resetSessionState(): void {
-    this._sessionState = {};
+  resetSessionConfig(): void {
+    this._sessionConfig = {};
   }
 
   updateMetaCache(partial: Partial<ChannelMetaCache>): void {
@@ -236,7 +236,7 @@ export class Channel {
       if (initCwd) {
         this.workspaceFolder = initCwd;
       }
-      this.updateSessionState(initConfig);
+      this.updateSessionConfig(initConfig);
       this.updateMetaCache(
         pickDefined({
           model: init.model,
@@ -250,7 +250,7 @@ export class Channel {
     } else if (se.name === 'session:status') {
       const status = sessionStatusEventSchema.parse(se.payload);
       if (status.permissionMode !== undefined) {
-        this.updateSessionState({ permissionMode: status.permissionMode });
+        this.updateSessionConfig({ permissionMode: status.permissionMode });
       }
     }
   }
@@ -284,7 +284,7 @@ export class Channel {
         this.pendingRequests.delete(id);
       }
 
-      // Delegate cleanup to hook (broadcastSessionState, session:closed emit)
+      // Delegate cleanup to hook (broadcastSessionConfig, session:closed emit)
       hooks.onExit?.(this, code);
     };
 
@@ -325,7 +325,7 @@ export class Channel {
     this.notificationRequests.clear();
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
-    this.resetSessionState();
+    this.resetSessionConfig();
     this.exited = true;
   }
 }

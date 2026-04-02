@@ -407,7 +407,7 @@ describe('ChatHandler > settings', () => {
   });
 
   describe('auto-respond control_requests', () => {
-    it('set_model auto-responds and updates sessionState', async () => {
+    it('set_model auto-responds and updates sessionConfig', async () => {
       const { claude, channelId } = await setup();
 
       await claude.send('settings:set_model', { channelId, model: 'haiku' });
@@ -416,7 +416,7 @@ describe('ChatHandler > settings', () => {
       expect(received.some((r: any) => (r.request as any)?.subtype === 'set_model')).toBe(true);
     });
 
-    it('set_permission_mode auto-responds and updates sessionState', async () => {
+    it('set_permission_mode auto-responds and updates sessionConfig', async () => {
       const { claude, channelId } = await setup();
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });

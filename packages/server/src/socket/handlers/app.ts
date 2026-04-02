@@ -19,7 +19,7 @@ export function create(
       channelId: id,
       state: ch.isProcessing ? 'busy' : 'idle',
       title: ch.title,
-      modelSetting: ch.sessionState?.model,
+      modelSetting: ch.sessionConfig?.model,
     }));
     let settings: Record<string, unknown> = {};
     try {

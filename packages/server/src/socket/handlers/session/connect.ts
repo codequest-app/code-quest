@@ -33,7 +33,7 @@ function buildSessionInitPayload(channel: Channel): SessionInitPayload {
       mcpServers: meta.mcpServers,
       slashCommands: meta.slashCommands,
     }),
-    config: { ...channel.sessionState },
+    config: { ...channel.sessionConfig },
   };
 }
 
@@ -237,7 +237,7 @@ export function create(
   function onChannelExit(ch: Channel, payload: unknown): void {
     const { code: _code } = payload as { code: number | null };
     channelManager.broadcastSessionState(ch.id, 'exited');
-    ch.resetSessionState();
+    ch.resetSessionConfig();
     emitter.emit(ch.id, 'session:closed', {
       channelId: ch.id,
       ...(ch.lastError ? { error: ch.lastError } : {}),

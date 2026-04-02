@@ -39,7 +39,7 @@ describe('Channel.bindRunner', () => {
       expect(events[0].toolName).toBe('Read');
     });
 
-    it('updates sessionId and sessionState from session:init event', async () => {
+    it('updates sessionId and sessionConfig from session:init event', async () => {
       const claude = createFakeClaude();
       const events: any[] = [];
       claude.socket.on('session:init', (p: any) => events.push(p));
