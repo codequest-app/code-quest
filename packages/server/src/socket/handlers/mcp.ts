@@ -17,8 +17,7 @@ import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
-export function create(channelManager: ChannelManager): SocketHandler {
-  let emitterRef: ChannelEmitter;
+export function create(channelManager: ChannelManager, emitter: ChannelEmitter): SocketHandler {
   function ensureChannel(
     channelId: string,
     callback?: (res: { error: string }) => void,
@@ -161,7 +160,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
 
   function onMcpControlEvent(_channelId: string, ch: Channel, se: SocketEvent): void {
     const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
-    const hasClient = emitterRef.getSocketCount(ch.id) > 0;
+    const hasClient = emitter.getSocketCount(ch.id) > 0;
     const mcpId = mcpMsg?.id;
     if (!hasClient) {
       ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));
@@ -175,6 +174,8 @@ export function create(channelManager: ChannelManager): SocketHandler {
     ch.setMcpTimeout(requestId, mcpTimeout);
   }
 
+  emitter.on('control:mcp', onMcpControlEvent);
+
   return {
     register(socket: TypedSocket) {
       socket.on('mcp:reconnect', handleReconnect);
@@ -186,10 +187,6 @@ export function create(channelManager: ChannelManager): SocketHandler {
       socket.on('mcp:clear_auth', handleClearAuth);
       socket.on('mcp:oauth_callback', handleOAuthCallback);
       socket.on('mcp:ask_debugger', handleAskDebugger);
-    },
-    subscribe(emitter: ChannelEmitter) {
-      emitterRef = emitter;
-      emitter.on('control:mcp', onMcpControlEvent);
     },
   };
 }

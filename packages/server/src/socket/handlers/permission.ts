@@ -9,13 +9,12 @@ import type { ChannelEmitter } from '../channel-emitter.ts';
 
 import type { SocketHandler } from '../types.ts';
 
-export function create(): SocketHandler {
-  let emitterRef: ChannelEmitter;
+export function create(emitter: ChannelEmitter): SocketHandler {
 
   function onCancel(_channelId: string, ch: Channel, se: { payload: unknown }): void {
     const { requestId } = requestIdPayloadSchema.parse(se.payload);
     ch.removeControlRequest(requestId);
-    emitterRef.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
+    emitter.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
   }
 
   function onPermission(_channelId: string, ch: Channel, se: { payload: unknown }): void {
@@ -41,7 +40,7 @@ export function create(): SocketHandler {
       toolName: action.toolName,
       toolUseId: action.toolUseId,
     });
-    emitterRef.emit(channelId, 'raw:event', {
+    emitter.emit(channelId, 'raw:event', {
       channelId,
       rawType: `control_request/${action.subtype}`,
       data: {
@@ -57,15 +56,11 @@ export function create(): SocketHandler {
     return true;
   }
 
-  return {
-    register() {},
-    subscribe(emitter: ChannelEmitter) {
-      emitterRef = emitter;
-      emitter.on('control:cancel', onCancel);
-      emitter.on('control:permission', onPermission);
-      emitter.on('control:elicitation', onElicitation);
-      emitter.on('control:diff_review', onDiffReview);
-      emitter.onAction(onForwardToClient);
-    },
-  };
+  emitter.on('control:cancel', onCancel);
+  emitter.on('control:permission', onPermission);
+  emitter.on('control:elicitation', onElicitation);
+  emitter.on('control:diff_review', onDiffReview);
+  emitter.onAction(onForwardToClient);
+
+  return { register() {} };
 }

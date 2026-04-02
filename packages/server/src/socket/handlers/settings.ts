@@ -23,6 +23,7 @@ export function create(
   channelManager: ChannelManager,
   settingsStore: SettingsStore,
   usageTracker: UsageTracker,
+  emitter: ChannelEmitter,
 ): SocketHandler {
   async function handleSetModel(
     payload: unknown,
@@ -223,6 +224,8 @@ export function create(
     }
   }
 
+  emitter.onAction(onAutoRespond);
+
   return {
     register(socket: TypedSocket) {
       socket.on('settings:set_model', handleSetModel);
@@ -233,9 +236,6 @@ export function create(
       socket.on('settings:apply', handleApply);
       socket.on('settings:state', handleState);
       socket.on('settings:refresh_usage', () => handleRefreshUsage(socket));
-    },
-    subscribe(emitter: ChannelEmitter) {
-      emitter.onAction(onAutoRespond);
     },
   };
 }

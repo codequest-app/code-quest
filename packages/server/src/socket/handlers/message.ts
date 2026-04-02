@@ -260,6 +260,9 @@ export function create(
     generateTitleIfNeeded(channelId, ch);
   }
 
+  emitter.on('message:result', onMessageResult);
+  emitter.on('message:result', onMessageResultTitle);
+
   return {
     register(socket: TypedSocket) {
       socket.on('chat:send', (p) => handleSend(socket, p));
@@ -270,10 +273,6 @@ export function create(
       socket.on('chat:rewind_code', handleRewindCode);
       socket.on('chat:cancel_request', handleCancelRequest);
       socket.on('chat:hook_respond', handleHookRespond);
-    },
-    subscribe(emitter: ChannelEmitter) {
-      emitter.on('message:result', onMessageResult);
-      emitter.on('message:result', onMessageResultTitle);
     },
   };
 }

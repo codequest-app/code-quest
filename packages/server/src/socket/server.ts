@@ -56,15 +56,15 @@ export class SocketServer {
 
     const commonHandlers: SocketHandler[] = [
       speech.create(cm),
-      usage.create(this.usageTracker),
+      usage.create(this.usageTracker, em),
       planHandler,
       git.create(this.sessionHistory, this.rawEventStore),
       terminal.create(cm),
-      file.create(cm),
-      mcp.create(cm),
-      settings.create(cm, this.settingsStore, this.usageTracker),
+      file.create(cm, em),
+      mcp.create(cm, em),
+      settings.create(cm, this.settingsStore, this.usageTracker, em),
       message.create(cm, this.sessionStore, planHandler, em),
-      permission.create(),
+      permission.create(em),
       app.create(cm, this.settingsStore),
       sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em),
       sessionCommand.create(cm, this.sessionStore),
@@ -78,8 +78,6 @@ export class SocketServer {
         : [];
 
     this.handlers = [...commonHandlers, ...providerHandlers];
-
-    for (const h of this.handlers) h.subscribe?.(this.emitter);
 
     io.on('connection', (socket) => {
       for (const h of this.handlers) h.register(socket);

@@ -235,14 +235,13 @@ export function create(
     });
   }
 
+  emitter.on('session:init', (cid) => onSessionInit(cid));
+  emitter.onExit((cid, ch) => onChannelExit(cid, ch));
+
   return {
     register(socket: TypedSocket) {
       socket.on('session:launch', (p, cb) => handleLaunch(socket, p, cb));
       socket.on('session:join', (p, cb) => handleJoin(socket, p, cb));
-    },
-    subscribe(emitter: ChannelEmitter) {
-      emitter.on('session:init', (cid) => onSessionInit(cid));
-      emitter.onExit((cid, ch) => onChannelExit(cid, ch));
     },
   };
 }
