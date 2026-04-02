@@ -22,12 +22,12 @@ export function create(
   emitter: ChannelEmitter,
 ): void {
   function handleStatus(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): void {
-    const { cwd } = gitStatusSchema.parse(payload);
+    const cwd = ch.workspaceFolder;
     Promise.all([
       execGit(['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }),
       execGit(['status', '--porcelain'], { cwd }),
@@ -47,14 +47,14 @@ export function create(
   }
 
   async function handleCheckout(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { branch, cwd } = gitCheckoutSchema.parse(payload);
-      await checkoutBranch(branch, cwd);
+      const { branch } = gitCheckoutSchema.parse(payload);
+      await checkoutBranch(branch, ch.workspaceFolder);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to checkout') });
@@ -62,15 +62,17 @@ export function create(
   }
 
   async function handleLog(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { limit, cwd } = gitLogSchema.parse(payload);
+      const { limit } = gitLogSchema.parse(payload);
       const n = limit ?? 20;
-      const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)], { cwd });
+      const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)], {
+        cwd: ch.workspaceFolder,
+      });
       const entries = stdout
         .trim()
         .split('\n')
@@ -86,14 +88,13 @@ export function create(
   }
 
   async function handleDiff(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { cwd } = gitDiffSchema.parse(payload);
-      const diff = await execGit(['diff'], { cwd });
+      const diff = await execGit(['diff'], { cwd: ch.workspaceFolder });
       callback?.({ diff });
     } catch {
       callback?.({ diff: '' });
@@ -124,15 +125,15 @@ export function create(
   }
 
   function handleExec(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): void {
     try {
-      const { command, args, cwd } = gitExecSchema.parse(payload);
+      const { command, args } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
-        cwd: cwd ?? process.cwd(),
+        cwd: ch.workspaceFolder,
         timeout: 30_000,
         encoding: 'utf-8',
       });
@@ -142,10 +143,10 @@ export function create(
     }
   }
 
-  emitter.on('git:status', handleStatus);
-  emitter.on('git:checkout', handleCheckout);
-  emitter.on('git:log', handleLog);
-  emitter.on('git:diff', handleDiff);
+  emitter.on('git:status', withChannel(handleStatus));
+  emitter.on('git:checkout', withChannel(handleCheckout));
+  emitter.on('git:log', withChannel(handleLog));
+  emitter.on('git:diff', withChannel(handleDiff));
   emitter.on('git:update_skipped_branch', withError(withChannel(handleUpdateSkippedBranch)));
-  emitter.on('git:exec', handleExec);
+  emitter.on('git:exec', withChannel(handleExec));
 }

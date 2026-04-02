@@ -1,4 +1,3 @@
-import { resolve } from 'node:path';
 import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
 import {
   channelExitPayloadSchema,
@@ -72,7 +71,7 @@ export function create(
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
     }
     if (parsed.cwd) {
-      channel.workspaceFolder = resolve(parsed.cwd);
+      channel.workspaceFolder = parsed.cwd;
     }
   }
 

@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import type {
   ChannelMetaCache,
   ControlResponse,
@@ -84,7 +85,7 @@ export class Channel {
     return this._workspaceFolder;
   }
   set workspaceFolder(v: string | undefined) {
-    this._workspaceFolder = v;
+    this._workspaceFolder = v ? resolve(v) : undefined;
   }
 
   get lastError(): string | undefined {
