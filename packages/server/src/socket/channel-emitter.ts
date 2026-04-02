@@ -112,6 +112,26 @@ export class ChannelEmitter {
     return this.channelSockets.get(channelId)?.size ?? 0;
   }
 
+  // ── Connection handling ──
+
+  private _resolveChannel?: (channelId: string) => Channel | undefined;
+
+  handleConnection(
+    socket: TypedSocket,
+    resolveChannel: (channelId: string) => Channel | undefined,
+  ): void {
+    this._resolveChannel = resolveChannel;
+
+    socket.on('disconnect', () => {
+      this.removeSocketFromAll(socket.id);
+    });
+  }
+
+  /** Resolve channelId → Channel (set by handleConnection). */
+  resolveChannel(channelId: string): Channel | undefined {
+    return this._resolveChannel?.(channelId);
+  }
+
   // ── Global broadcast (via io) ──
 
   register(io: TypedServer): void {

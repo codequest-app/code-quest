@@ -80,6 +80,7 @@ export class SocketServer {
     this.handlers = [...commonHandlers, ...providerHandlers];
 
     io.on('connection', (socket) => {
+      em.handleConnection(socket, (id) => cm.get(id));
       for (const h of this.handlers) h.register(socket);
     });
   }
