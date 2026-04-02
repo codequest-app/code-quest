@@ -72,7 +72,7 @@ describe('ChatHandler > git', () => {
         entries: Array<{ hash: string; message: string; author: string; date: string }>;
       }>('git:log', { limit: 5 });
 
-      expect(execGitSpy).toHaveBeenCalledWith(['log', '--format=%H|%s|%an|%ai', '-n', '5']);
+      expect(execGitSpy).toHaveBeenCalledWith(['log', '--format=%H|%s|%an|%ai', '-n', '5'], { cwd: undefined });
       expect(result.entries).toHaveLength(2);
       expect(result.entries[0]).toEqual({
         hash: 'abc123',
@@ -99,7 +99,7 @@ describe('ChatHandler > git', () => {
 
       const result = await claude.send<{ diff: string }>('git:diff');
 
-      expect(execGitSpy).toHaveBeenCalledWith(['diff']);
+      expect(execGitSpy).toHaveBeenCalledWith(['diff'], { cwd: undefined });
       expect(result.diff).toBe('+added\n-removed\n');
     });
 
@@ -135,7 +135,7 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/test');
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/test', undefined);
     });
 
     it('should try fetch+checkout when local fails (strategy 2)', async () => {
@@ -148,7 +148,7 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/remote');
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/remote', undefined);
     });
 
     it('should try --track when fetch+checkout fails (strategy 3)', async () => {
@@ -161,7 +161,7 @@ describe('ChatHandler > git', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/track');
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/track', undefined);
     });
 
     it('should return error when all strategies fail', async () => {

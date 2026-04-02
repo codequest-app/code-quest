@@ -1,8 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import {
   gitCheckoutSchema,
+  gitDiffSchema,
   gitExecSchema,
   gitLogSchema,
+  gitStatusSchema,
   gitUpdateSkippedBranchSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
@@ -19,10 +21,11 @@ export function create(
   rawEventStore: RawEventStore,
   emitter: ChannelEmitter,
 ): void {
-  function handleStatus(_ch: Channel | null, _payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
+  function handleStatus(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
+    const { cwd } = gitStatusSchema.parse(payload);
     Promise.all([
-      execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
-      execGit(['status', '--porcelain']),
+      execGit(['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }),
+      execGit(['status', '--porcelain'], { cwd }),
     ])
       .then(([branchOut, statusOut]) => {
         const branch = branchOut.trim();
@@ -40,8 +43,8 @@ export function create(
 
   async function handleCheckout(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
-      const { branch } = gitCheckoutSchema.parse(payload);
-      await checkoutBranch(branch);
+      const { branch, cwd } = gitCheckoutSchema.parse(payload);
+      await checkoutBranch(branch, cwd);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to checkout') });
@@ -50,9 +53,9 @@ export function create(
 
   async function handleLog(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
-      const { limit } = gitLogSchema.parse(payload);
+      const { limit, cwd } = gitLogSchema.parse(payload);
       const n = limit ?? 20;
-      const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)]);
+      const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)], { cwd });
       const entries = stdout
         .trim()
         .split('\n')
@@ -67,9 +70,10 @@ export function create(
     }
   }
 
-  async function handleDiff(_ch: Channel | null, _payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleDiff(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
-      const diff = await execGit(['diff']);
+      const { cwd } = gitDiffSchema.parse(payload);
+      const diff = await execGit(['diff'], { cwd });
       callback?.({ diff });
     } catch {
       callback?.({ diff: '' });
@@ -101,9 +105,9 @@ export function create(
 
   function handleExec(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
     try {
-      const { command, args } = gitExecSchema.parse(payload);
+      const { command, args, cwd } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
-        cwd: process.cwd(),
+        cwd: cwd ?? process.cwd(),
         timeout: 30_000,
         encoding: 'utf-8',
       });
