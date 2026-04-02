@@ -31,7 +31,7 @@ interface PendingRequest {
   timer: ReturnType<typeof setTimeout>;
 }
 
-/** Stored listener references for unwireRunner cleanup. */
+/** Stored listener references for unbindRunner cleanup. */
 interface RunnerListenerRefs {
   socketEvent: (event: SocketEvent) => void;
   controlResponse: (event: ControlResponseEvent) => void;
@@ -122,7 +122,7 @@ export class Channel {
     this._isProcessing = false;
   }
 
-  get isWired(): boolean {
+  get isBound(): boolean {
     return this._runnerListeners !== null;
   }
 
@@ -284,7 +284,7 @@ export class Channel {
 
   private _runnerListeners: RunnerListenerRefs | null = null;
 
-  wireRunner(hooks: ChannelHooks = {}): void {
+  bindRunner(hooks: ChannelHooks = {}): void {
     if (this._runnerListeners) return; // already wired
 
     const onSocketEvent = (se: SocketEvent) => {
@@ -328,7 +328,7 @@ export class Channel {
     this.runner.on('exit', onExit);
   }
 
-  unwireRunner(): void {
+  unbindRunner(): void {
     if (!this._runnerListeners) return;
     const l = this._runnerListeners;
     this.runner.removeListener('socket_event', l.socketEvent);
@@ -339,7 +339,7 @@ export class Channel {
   }
 
   destroy(): void {
-    this.unwireRunner();
+    this.unbindRunner();
     this._controlRequestMeta.clear();
     for (const [, pending] of this.pendingRequests) {
       clearTimeout(pending.timer);

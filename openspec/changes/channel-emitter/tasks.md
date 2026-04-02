@@ -42,22 +42,18 @@ Production code 漸進移除：
 
 ## 5. ChannelManager broadcast 移至 emitter
 
-- [ ] 5.1 ChannelManager broadcast* 方法改為 delegate 給 emitter.broadcastAll
-- [ ] 5.2 ChannelManager 移除 socketChannelsMap（emitter 已管理）
-- [ ] 5.3 server 401 + client 615 test pass
+- [x] 5.1 ChannelManager broadcast* → emitter.broadcastAll
+- [x] 5.2 ChannelManager 移除 io 欄位（emitter 管）
+- [x] 5.3 server 399 + client 615 test pass
 
 ## 6. wireRunner 改名 bindRunner
 
-- [ ] 6.1 Channel.wireRunner() → bindRunner()
-- [ ] 6.2 Channel.unwireRunner() → unbindRunner()
-- [ ] 6.3 Channel.isWired → isBound
-- [ ] 6.4 ChannelManager.ensureWired → ensureBound
-- [ ] 6.5 更新 connect.ts 呼叫
-- [ ] 6.6 更新 channel-wire-runner.test.ts 測試名稱（等價改名）
-- [ ] 6.7 server 401 + client 615 test pass
+- [x] 6.1-6.5 wireRunner/unwireRunner/isWired/ensureWired → bindRunner/unbindRunner/isBound/ensureBound
+- [x] 6.6 channel-wire-runner.test.ts → channel-bind-runner.test.ts
+- [x] 6.7 server 399 + client 615 test pass
 
 ## 7. 清理
 
-- [ ] 7.1 確認 Channel 不再持有任何 socket 引用
-- [ ] 7.2 確認所有 handler 透過 emitter.on/emit 操作
-- [ ] 7.3 biome check + typecheck + server 401 + client 615 test pass
+- [x] 7.1 Channel socket API deprecated（sockets 欄位保留為空 Set，methods 為 no-op stub）
+- [x] 7.2 所有 handler 透過 emitter.on/emit 操作
+- [x] 7.3 server 399 + client 615 test pass

@@ -184,7 +184,7 @@ export function create(
 
       channelManager.addSocketToChannel(channel, socket);
 
-      channelManager.ensureWired(channel);
+      channelManager.ensureBound(channel);
 
       const replaySessionId = await sessionHistory.resolveSessionId(channelId);
       await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);

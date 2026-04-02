@@ -19,7 +19,6 @@ export class ChannelManager {
   private channels = new Map<string, Channel>();
   private socketChannelsMap = new Map<string, Set<string>>();
   private hooks: ChannelHooks;
-  private io?: TypedServer;
   private _cachedModels: unknown[] | undefined;
 
   get cachedModels(): unknown[] | undefined {
@@ -46,14 +45,13 @@ export class ChannelManager {
   }
 
   /** Re-wire a channel if it was unwired (e.g. after all sockets disconnected). */
-  ensureWired(channel: Channel): void {
-    if (!channel.isWired) {
-      channel.wireRunner(this.hooks);
+  ensureBound(channel: Channel): void {
+    if (!channel.isBound) {
+      channel.bindRunner(this.hooks);
     }
   }
 
   register(io: TypedServer): void {
-    this.io = io;
     this.emitter.register(io);
   }
 
@@ -100,7 +98,7 @@ export class ChannelManager {
     const channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
 
-    channel.wireRunner(this.hooks);
+    channel.bindRunner(this.hooks);
 
     // Record raw I/O
     this.rawRecorder.wire(channel);
@@ -131,7 +129,7 @@ export class ChannelManager {
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
     channel = new Channel(runner, channelId, this.provider);
     this.channels.set(channelId, channel);
-    channel.wireRunner(this.hooks);
+    channel.bindRunner(this.hooks);
     this.rawRecorder.wire(channel);
     runner.spawn();
     await channel.sendControlRequest('initialize', {});
@@ -188,7 +186,7 @@ export class ChannelManager {
       if (!channel) continue;
 
       if (this.emitter.getSocketCount(channelId) === 0) {
-        channel.unwireRunner();
+        channel.unbindRunner();
       }
     }
 
@@ -198,23 +196,23 @@ export class ChannelManager {
   // ── Broadcasting ──
 
   broadcastSettingsUpdate(channelId: string, settings: Record<string, unknown>): void {
-    this.io?.emit('settings:update', { channelId, ...settings });
+    this.emitter.broadcastAll('settings:update', { channelId, ...settings });
   }
 
   broadcastSessionCreated(channelId: string): void {
-    this.io?.emit('session:created', { channelId });
+    this.emitter.broadcastAll('session:created', { channelId });
   }
 
   broadcastSessionDead(channelId: string): void {
-    this.io?.emit('session:dead', { channelId });
+    this.emitter.broadcastAll('session:dead', { channelId });
   }
 
   broadcastSessionResume(channelId: string): void {
-    this.io?.emit('session:resume', { channelId });
+    this.emitter.broadcastAll('session:resume', { channelId });
   }
 
   broadcastModels(models: unknown[]): void {
-    this.io?.emit('app:models', { channelId: '', models });
+    this.emitter.broadcastAll('app:models', { channelId: '', models });
   }
 
   /** Broadcast session state + settings to all connected clients.
@@ -222,7 +220,7 @@ export class ChannelManager {
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
     const ss = this.channels.get(channelId)?.sessionState ?? {};
 
-    this.io?.emit('session:states', {
+    this.emitter.broadcastAll('session:states', {
       sessions: [
         {
           channelId,
@@ -247,7 +245,7 @@ export class ChannelManager {
       effort: ss.effort,
     });
     if (Object.keys(settings).length > 0) {
-      this.io?.emit('settings:update', { channelId, ...settings });
+      this.emitter.broadcastAll('settings:update', { channelId, ...settings });
     }
   }
 }

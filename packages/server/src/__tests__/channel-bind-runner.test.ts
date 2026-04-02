@@ -9,7 +9,7 @@ async function setup() {
   return { claude, channelId };
 }
 
-describe('Channel.wireRunner', () => {
+describe('Channel.bindRunner', () => {
   describe('socket event handling (pipeline)', () => {
     it('broadcasts assistant message via message:assistant named event', async () => {
       const { claude, channelId } = await setup();
@@ -152,7 +152,7 @@ describe('Channel.wireRunner', () => {
       expect(ch2).toBe('ch-2');
     });
 
-    it('unwireRunner on destroy', async () => {
+    it('unbindRunner on destroy', async () => {
       const { claude, channelId } = await setup();
       await claude.send('session:close', { channelId });
       expect(claude.handle.signal.aborted).toBe(true);
