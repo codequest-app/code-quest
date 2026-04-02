@@ -1,5 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useInputHistory } from '../hooks/useInputHistory';
@@ -60,6 +60,10 @@ export function ComposeInput() {
   const [mentionOpen, setMentionOpen] = useState(false);
   const [fileResults, setFileResults] = useState<FileSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  const scrollActiveIntoView = useCallback((el: HTMLDivElement | null) => {
+    el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+  }, []);
   const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
   const mentionQuery = mentionOpen ? getMentionQuery(value, cursorPos) : null;
@@ -228,6 +232,8 @@ export function ComposeInput() {
           selectedIndex={selectedIndex}
           hasFileSearch={true}
           onSelectMention={handleSelectMention}
+          onHover={setSelectedIndex}
+          activeItemRef={scrollActiveIntoView}
         />
       )}
     </>
