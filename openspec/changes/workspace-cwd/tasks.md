@@ -3,51 +3,90 @@
 - Server 399 test + Client 615 test 全部 pass
 - 測試不變：不修改任何測試檔案的 expect
 - TDD：FakeClaude + real JSON + testing-library，先寫測試再寫 code
-- **Client 不直接 import config** — projectRoot 透過 ChannelProvider prop 傳入，context 提供給子 component
+- Client 不直接 import config — workspaceFolder 透過 ChannelProvider prop 傳入
+- 現在 workspaceFolder 寫死（config），未來 File Manager 動態設定
 
-## 1. Client 設定 projectRoot
+## 1. sessionState 拆分
 
-- [ ] 1.1 packages/client/src/config.ts 新增 `projectRoot`（`import.meta.env.VITE_PROJECT_ROOT ?? '../'`）
-- [ ] 1.2 ChannelProvider 加 `projectRoot` prop（從 config 讀取後傳入）
-- [ ] 1.3 ChannelMessagesContext（或新 context）暴露 projectRoot 給子 component
-- [ ] 1.4 615 test pass
+目前 sessionState 混了 CLI config、workspace info、UI state、metadata。
+拆成職責清楚的結構。
 
-## 2. Client git/file events 帶 cwd
+### 1.1 盤點 sessionState 所有欄位的讀寫者
 
-GitProvider 從 channel context 取 projectRoot，送 git 請求時帶 cwd。
-不直接 import config — 從 context 取。
+- [ ] 1.1a 列出每個欄位在 server/client 的讀寫位置
+- [ ] 1.1b 確認分類：CLI config / workspace / UI state / metadata
 
-- [ ] 2.1 GitProvider 改為從 context 取 projectRoot
-- [ ] 2.2 git:status, git:checkout, git:log, git:diff 帶 `cwd: projectRoot`
-- [ ] 2.3 確認 file:list 已帶 channelId（server 用 ch.sessionState.cwd）
-- [ ] 2.4 615 test pass
+### 1.2 Channel 獨立 workspaceFolder 屬性
 
-## 3. Shared schema 更新
+cwd 從 sessionState 搬出，成為 Channel 的獨立屬性。
+session:init 的 cwd 設到 channel.workspaceFolder（不再存 sessionState）。
 
-git events 的 payload schema 加 optional cwd 欄位。
+- [ ] 1.2a Channel 新增 `workspaceFolder: string` 屬性
+- [ ] 1.2b session:init handleInternalEvent — cwd 設到 channel.workspaceFolder
+- [ ] 1.2c sessionState schema 移除 cwd
+- [ ] 1.2d 所有讀 sessionState.cwd 的地方改讀 channel.workspaceFolder
+- [ ] 1.2e 399 + 615 test pass
 
-- [ ] 3.1 shared 的 git schema 加 `cwd: z.string().optional()`
-- [ ] 3.2 399 + 615 test pass
+### 1.3 UI state 從 sessionState 分離
 
-## 4. Server git handler 用 payload 的 cwd
+titleGenerated、pendingTitlePrompt、title 是 UI 關心的，不是 CLI session config。
 
-- [ ] 4.1 git.ts handleStatus/handleCheckout/handleLog/handleDiff — 從 payload 取 cwd，fallback process.cwd()
-- [ ] 4.2 git.ts handleExec — 從 payload 取 cwd，fallback process.cwd()
-- [ ] 4.3 exec-git.ts checkoutBranch 加 cwd 參數
-- [ ] 4.4 399 + 615 test pass
+- [ ] 1.3a 評估是否搬到獨立的 uiState 或保留在 sessionState（如果只有 server 用可保留）
+- [ ] 1.3b 如果搬：Channel 新增 uiState，更新讀寫者
+- [ ] 1.3c 399 + 615 test pass
 
-## 5. Server file handler 用 channel cwd
+### 1.4 sessionState 改名評估
 
-file:read 已用 ch.sessionState.cwd。
-file:list 改用 ch.sessionState.cwd。
+移除 cwd 和 UI state 後，sessionState 只剩 CLI config（model, permissionMode, effort, thinkingLevel, tools, mcpServers）+ parentId。
+評估是否改名為 `cliConfig` 或 `sessionConfig`。
 
-- [ ] 5.1 file.ts handleList — 改用 ch.sessionState.cwd ?? process.cwd()，改為 withChannel
-- [ ] 5.2 399 + 615 test pass
+- [ ] 1.4a 評估改名影響
+- [ ] 1.4b 如果改名：更新所有引用
+- [ ] 1.4c 399 + 615 test pass
 
-## 6. Server 其他 process.cwd() 確認
+## 2. Client ChannelProvider 加 workspaceFolder
 
-- [ ] 6.1 terminal.ts — fallback 保留 process.cwd()（合理：新 terminal 沒有 session cwd 時用 server cwd）
-- [ ] 6.2 connect.ts — session persist cwd 保留 process.cwd()（記錄 server 啟動目錄）
-- [ ] 6.3 claude/plugin.ts — cache key 保留 process.cwd()（plugin 是 per-server，不是 per-session）
-- [ ] 6.4 確認剩餘 process.cwd() 都是合理用途
-- [ ] 6.5 399 + 615 test pass
+- [ ] 2.1 config.ts 新增 `workspaceFolder`（`import.meta.env.VITE_WORKSPACE_FOLDER ?? '../'`）
+- [ ] 2.2 ChannelProvider 加 `workspaceFolder` prop
+- [ ] 2.3 新增 WorkspaceFolderContext + `useWorkspaceFolder()` hook（小 context，獨立於 ChannelMessages）
+- [ ] 2.4 WorkspaceLayout 傳 `workspaceFolder={config.workspaceFolder}` 給 ChannelProvider
+- [ ] 2.5 615 test pass
+
+## 3. Client git events 帶 cwd
+
+GitProvider 從 useWorkspaceFolder() 取值，送請求時帶 cwd。
+
+- [ ] 3.1 GitProvider 用 useWorkspaceFolder()
+- [ ] 3.2 git:status, git:checkout, git:log, git:diff 帶 `cwd`
+- [ ] 3.3 615 test pass
+
+## 4. Shared schema 更新
+
+- [ ] 4.1 git schema 加 `cwd: z.string().optional()`
+- [ ] 4.2 399 + 615 test pass
+
+## 5. Server git handler 用 payload 的 cwd
+
+- [ ] 5.1 git.ts 所有 handler — 從 payload 取 cwd，fallback process.cwd()
+- [ ] 5.2 exec-git.ts checkoutBranch 加 cwd 參數
+- [ ] 5.3 399 + 615 test pass
+
+## 6. Server file handler
+
+- [ ] 6.1 file:read — 已用 ch.sessionState.cwd → 改用 ch.workspaceFolder
+- [ ] 6.2 file:list — 從 payload 取 cwd（前端帶 workspaceFolder），fallback process.cwd()
+- [ ] 6.3 399 + 615 test pass
+
+## 7. Server 其他 process.cwd() 確認
+
+- [ ] 7.1 terminal.ts — fallback 保留 process.cwd()（合理）
+- [ ] 7.2 connect.ts — session persist cwd 改用 channel.workspaceFolder
+- [ ] 7.3 claude/plugin.ts — cache key 保留 process.cwd()（per-server）
+- [ ] 7.4 channel-manager.ts broadcastSessionState — ss.cwd 改用 channel.workspaceFolder
+- [ ] 7.5 399 + 615 test pass
+
+## 8. 清理
+
+- [ ] 8.1 確認 sessionState 不再有 cwd
+- [ ] 8.2 確認 workspaceFolder 一致使用
+- [ ] 8.3 biome check + typecheck + 399 server + 615 client test pass
