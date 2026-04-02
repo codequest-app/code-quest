@@ -51,7 +51,8 @@ export class SocketServer {
     const cm = this.channelManager;
     cm.register(io);
 
-    const planHandler = plan.create(cm);
+    const em = this.emitter;
+    const planHandler = plan.create(em);
 
     const commonHandlers: SocketHandler[] = [
       speech.create(cm),
@@ -62,10 +63,10 @@ export class SocketServer {
       file.create(cm),
       mcp.create(cm),
       settings.create(cm, this.settingsStore, this.usageTracker),
-      message.create(cm, this.sessionStore, planHandler),
+      message.create(cm, this.sessionStore, planHandler, em),
       permission.create(),
       app.create(cm, this.settingsStore),
-      sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory),
+      sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em),
       sessionCommand.create(cm, this.sessionStore),
       sessionFork.create(cm, this.sessionHistory),
       sessionQuery.create(cm, this.sessionStore, this.sessionHistory),

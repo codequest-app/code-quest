@@ -5,7 +5,7 @@ import {
   planGetCommentsSchema,
   planRemoveCommentSchema,
 } from '@code-quest/shared';
-import type { ChannelManager } from '../channel-manager.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
@@ -13,7 +13,7 @@ export interface PlanApi {
   consumeCommentsAsUserFeedback(channelId: string): string | undefined;
 }
 
-export function create(channelManager: ChannelManager): SocketHandler & PlanApi {
+export function create(emitter: ChannelEmitter): SocketHandler & PlanApi {
   const commentsMap = new Map<string, PlanCommentData[]>();
 
   function getOrCreate(channelId: string): PlanCommentData[] {
@@ -30,9 +30,7 @@ export function create(channelManager: ChannelManager): SocketHandler & PlanApi 
       const { channelId, comment } = planCommentSchema.parse(payload);
       getOrCreate(channelId).push(comment);
       callback({ success: true });
-      channelManager
-        .get(channelId)
-        ?.emitToOthers(socket, 'plan:comment_added', { channelId, comment });
+      emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to add comment') });
     }
@@ -62,9 +60,7 @@ export function create(channelManager: ChannelManager): SocketHandler & PlanApi 
       }
       comments.splice(idx, 1);
       callback({ success: true });
-      channelManager
-        .get(channelId)
-        ?.emitToOthers(socket, 'plan:comment_removed', { channelId, commentId });
+      emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', { channelId, commentId });
     } catch (err) {
       callback({ success: false, error: errMsg(err, 'Failed to remove comment') });
     }

@@ -42,6 +42,7 @@ export function create(
   settingsStore: SettingsStore,
   sessionStore: SessionStore,
   sessionHistory: SessionHistory,
+  emitter: ChannelEmitter,
 ): SocketHandler {
   async function applyPerLaunchSettings(
     channel: Channel,
@@ -228,7 +229,7 @@ export function create(
   function onChannelExit(channelId: string, ch: Channel): void {
     channelManager.broadcastSessionState(channelId, 'exited');
     ch.resetSessionState();
-    ch.emit('session:closed', {
+    emitter.emit(channelId, 'session:closed', {
       channelId,
       ...(ch.lastError ? { error: ch.lastError } : {}),
     });

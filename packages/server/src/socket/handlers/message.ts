@@ -23,6 +23,7 @@ export function create(
   channelManager: ChannelManager,
   sessionStore: SessionStore,
   planApi: PlanApi,
+  emitter: ChannelEmitter,
 ): SocketHandler {
   const interruptedChannels = new Set<string>();
 
@@ -36,7 +37,7 @@ export function create(
       channel.sendMessage(textMessage);
       channelManager.broadcastSessionState(channelId, 'busy');
 
-      channel.emitToOthers(socket, 'message:user', {
+      emitter.emitToOthers(channelId, socket.id, 'message:user', {
         channelId,
         content: [{ type: 'text', text: textMessage }],
       });
@@ -73,7 +74,7 @@ export function create(
   ): void {
     channel.removeControlRequest(requestId);
     channel.respondToRequest(requestId, cliResponse);
-    channel.emit('chat:cancel_request', { channelId, targetRequestId: requestId });
+    emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId: requestId });
   }
 
   function buildMcpResponse(
@@ -212,7 +213,7 @@ export function create(
           message: 'User cancelled',
           interrupt: false,
         });
-        channel.emit('chat:cancel_request', { channelId, targetRequestId });
+        emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
       }
     } catch {
       // ignore

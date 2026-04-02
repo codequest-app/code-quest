@@ -10,10 +10,12 @@ import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketHandler } from '../types.ts';
 
 export function create(): SocketHandler {
+  let emitterRef: ChannelEmitter;
+
   function onCancel(_channelId: string, ch: Channel, se: { payload: unknown }): void {
     const { requestId } = requestIdPayloadSchema.parse(se.payload);
     ch.removeControlRequest(requestId);
-    ch.emit('chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
+    emitterRef.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
   }
 
   function onPermission(_channelId: string, ch: Channel, se: { payload: unknown }): void {
@@ -39,7 +41,7 @@ export function create(): SocketHandler {
       toolName: action.toolName,
       toolUseId: action.toolUseId,
     });
-    ch.emit('raw:event', {
+    emitterRef.emit(channelId, 'raw:event', {
       channelId,
       rawType: `control_request/${action.subtype}`,
       data: {
@@ -58,6 +60,7 @@ export function create(): SocketHandler {
   return {
     register() {},
     subscribe(emitter: ChannelEmitter) {
+      emitterRef = emitter;
       emitter.on('control:cancel', onCancel);
       emitter.on('control:permission', onPermission);
       emitter.on('control:elicitation', onElicitation);

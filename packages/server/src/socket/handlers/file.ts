@@ -10,6 +10,7 @@ import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
+  let emitterRef: ChannelEmitter;
   function handleRead(
     payload: { channelId: string; filePath: string },
     callback: SocketCallback,
@@ -109,7 +110,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
 
   function onFileUpdated(channelId: string, ch: Channel, se: SocketEvent): void {
     const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
-    ch.emit('file:updated', { channelId, filePath, oldContent, newContent });
+    emitterRef.emit(channelId, 'file:updated', { channelId, filePath, oldContent, newContent });
   }
 
   function onReadDiff(channelId: string, ch: Channel, action: ServerAction): boolean {
@@ -118,7 +119,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
     void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
       ([oldContent, newContent]) => {
         ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-        ch.emit('control:diff_review', {
+        emitterRef.emit(channelId, 'control:diff_review', {
           channelId,
           requestId: action.requestId,
           toolId: action.requestId,
@@ -137,6 +138,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
       socket.on('file:list', (p, cb) => handleList(p, cb));
     },
     subscribe(emitter: ChannelEmitter) {
+      emitterRef = emitter;
       emitter.on('system:file_updated', onFileUpdated);
       emitter.onAction(onReadDiff);
     },

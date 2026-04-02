@@ -34,7 +34,7 @@ export class ChannelManager {
     private runnerFactory: RunnerFactory,
     private adapter: ProviderAdapter,
     private rawRecorder: RawRecorder,
-    emitter: ChannelEmitter,
+    private emitter: ChannelEmitter,
     private resolveSessionId: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
@@ -53,6 +53,7 @@ export class ChannelManager {
 
   register(io: TypedServer): void {
     this.io = io;
+    this.emitter.register(io);
   }
 
   get provider(): string {
@@ -167,6 +168,7 @@ export class ChannelManager {
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {
     channel.addSocket(socket);
+    this.emitter.addSocketToChannel(channel.id, socket);
     let channelIds = this.socketChannelsMap.get(socket.id);
     if (!channelIds) {
       channelIds = new Set();
@@ -191,6 +193,7 @@ export class ChannelManager {
     }
 
     this.socketChannelsMap.delete(socketId);
+    this.emitter.removeSocketFromAll(socketId);
   }
 
   // ── Broadcasting ──

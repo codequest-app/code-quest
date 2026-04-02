@@ -18,12 +18,10 @@ handler 透過 emitter.on 訂閱，透過 emitter.emit/emitToOthers 廣播。
 handler 的 ch.emit / ch.emitToOthers 改為 emitter.emit / emitter.emitToOthers。
 handler subscribe(emitter) 拿到 emitter 引用後直接呼叫。
 
-- [ ] 3.1 permission.ts：ch.emit → emitter.emit
-- [ ] 3.2 message.ts：ch.emitToOthers + ch.emit → emitter.emitToOthers + emitter.emit
-- [ ] 3.3 connect.ts：ch.emit → emitter.emit
-- [ ] 3.4 plan.ts：channelManager.get()?.emitToOthers → emitter.emitToOthers
-- [ ] 3.5 file.ts：ch.emit → emitter.emit
-- [ ] 3.6 typecheck + 401 test pass
+- [x] 3.1-3.5 所有 handler 的 ch.emit / ch.emitToOthers → emitter.emit / emitter.emitToOthers
+- [x] 3.6 Channel.wireRunner 移除自動廣播（由 emitter.dispatchEvent 處理）
+- [x] 3.7 ChannelManager 同步 socket tracking 到 emitter
+- [x] 3.8 typecheck + 401 test pass
 
 ## 4. Channel 移除 socket API
 

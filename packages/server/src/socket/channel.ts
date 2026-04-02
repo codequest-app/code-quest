@@ -300,13 +300,7 @@ export class Channel {
 
     const onSocketEvent = (se: SocketEvent) => {
       this.handleInternalEvent(se);
-
-      // Broadcast directly — except session:init which is emitted explicitly
-      // by launch/join handlers with the final merged metaCache
-      if (se.name !== 'session:init') {
-        this.emit(se.name, { channelId: this.id, ...se.payload });
-      }
-
+      // Broadcasting is now handled by ChannelEmitter.dispatchEvent()
       hooks.onSocketEvent?.(this, se);
     };
 
