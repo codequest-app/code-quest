@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTab } from '../contexts/TabContext';
@@ -10,13 +9,10 @@ export function WorkspaceLayout() {
     useTab();
   const { closeSession } = useSession();
 
-  const handleCloseTab = useCallback(
-    (id: string) => {
-      closeSession(id);
-      removeTab(id);
-    },
-    [closeSession, removeTab],
-  );
+  const handleCloseTab = (id: string) => {
+    closeSession(id);
+    removeTab(id);
+  };
   const tabIds = Object.keys(tabs);
 
   const openTabs = Object.entries(tabs).map(([id, meta]) => ({

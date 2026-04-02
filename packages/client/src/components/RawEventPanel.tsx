@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { JsonViewer } from './JsonViewer';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
@@ -29,7 +29,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     return unsubscribe;
   }, [onSubscribe]);
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     if (!onFetch) return;
     setLoading(true);
     try {
@@ -38,23 +38,21 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     } finally {
       setLoading(false);
     }
-  }, [onFetch]);
+  };
 
-  const uniqueTypes = useMemo(() => {
+  const uniqueTypes = (() => {
     const types = new Set<string>();
     for (const evt of events) {
       const t = getEventType(evt);
       if (t) types.add(t);
     }
     return Array.from(types).sort();
-  }, [events]);
+  })();
 
-  const filteredEvents = useMemo(() => {
-    const search = searchText.toLowerCase();
-    return events
-      .filter((evt) => !filterType || (evt as Record<string, unknown>).type === filterType)
-      .filter((evt) => !search || JSON.stringify(evt).toLowerCase().includes(search));
-  }, [events, filterType, searchText]);
+  const search = searchText.toLowerCase();
+  const filteredEvents = events
+    .filter((evt) => !filterType || (evt as Record<string, unknown>).type === filterType)
+    .filter((evt) => !search || JSON.stringify(evt).toLowerCase().includes(search));
 
   return (
     <div className="flex flex-col h-full bg-surface border-r border-border">

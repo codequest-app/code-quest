@@ -1,5 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useInputHistory } from '../hooks/useInputHistory';
@@ -62,9 +62,9 @@ export function ComposeInput() {
   const [fileResults, setFileResults] = useState<FileSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const scrollActiveIntoView = useCallback((el: HTMLDivElement | null) => {
+  const scrollActiveIntoView = (el: HTMLDivElement | null) => {
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
-  }, []);
+  };
 
   useEffect(() => {
     if (!mentionOpen) return;

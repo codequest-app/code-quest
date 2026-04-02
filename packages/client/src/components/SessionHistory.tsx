@@ -1,5 +1,5 @@
 import type { SessionSummary } from '@code-quest/shared';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { SessionRow } from './SessionRow';
 
 interface SessionHistoryProps {
@@ -21,44 +21,38 @@ export function SessionHistory({
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const filtered = useMemo(() => {
-    const visible = sessions.filter((s) => !deletedIds.has(s.id));
+  const visible = sessions.filter((s) => !deletedIds.has(s.id));
+  const filtered = (() => {
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
     return visible.filter((s) => (s.title ?? s.id).toLowerCase().includes(q));
-  }, [sessions, search, deletedIds]);
+  })();
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!onDelete) return { success: false };
-      const result = await onDelete(id);
-      if (result.success) setDeletedIds((prev) => new Set(prev).add(id));
-      return result;
-    },
-    [onDelete],
-  );
+  const handleDelete = async (id: string) => {
+    if (!onDelete) return { success: false };
+    const result = await onDelete(id);
+    if (result.success) setDeletedIds((prev) => new Set(prev).add(id));
+    return result;
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setFocusIndex((prev) => Math.min(prev + 1, filtered.length - 1));
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setFocusIndex((prev) => Math.max(prev - 1, 0));
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (filtered[focusIndex]) {
-            onSelect(filtered[focusIndex].id);
-          }
-          break;
-      }
-    },
-    [filtered, focusIndex, onSelect],
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusIndex((prev) => Math.max(prev - 1, 0));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (filtered[focusIndex]) {
+          onSelect(filtered[focusIndex].id);
+        }
+        break;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-surface">

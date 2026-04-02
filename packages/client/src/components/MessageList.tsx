@@ -1,5 +1,5 @@
 import type { MutableRefObject } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useChannelControl, useChannelMessages } from '../contexts/channel';
 import { buildMessageTree } from '../utils/message-tree';
@@ -67,14 +67,12 @@ export function MessageList({
     smoothScroll(scrollRef, programmaticScrollRef);
   };
 
-  const filtered = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return messages
-      .filter((m) => typeFilter.length === 0 || !typeFilter.includes(m.type))
-      .filter((m) => !q || m.content.toLowerCase().includes(q));
-  }, [messages, searchQuery, typeFilter]);
+  const q = searchQuery.toLowerCase();
+  const filtered = messages
+    .filter((m) => typeFilter.length === 0 || !typeFilter.includes(m.type))
+    .filter((m) => !q || m.content.toLowerCase().includes(q));
 
-  const tree = useMemo(() => buildMessageTree(filtered), [filtered]);
+  const tree = buildMessageTree(filtered);
 
   return (
     <div

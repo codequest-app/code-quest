@@ -9,7 +9,7 @@
     "./test": "./src/test/index.ts"
   },
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "biome check src"
   },
   "dependencies": {

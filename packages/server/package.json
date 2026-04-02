@@ -12,7 +12,7 @@
     "dev": "tsx watch --env-file=.env src/bin/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node --env-file=.env dist/bin/server.js",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "biome check src",

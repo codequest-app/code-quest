@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
@@ -58,7 +58,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   useLayoutEffect(() => {
     mcpStatusRef.current = mcpStatus;
   });
-  const baseMcpServers = useMemo(() => channelMcpServers.map(toMcpServerInfo), [channelMcpServers]);
+  const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
   const mcpRefresh = useCallback(async () => {
     const result = await mcpStatusRef.current();
