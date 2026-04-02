@@ -15,7 +15,18 @@ export function withChannel(
 ): EmitterHandler {
   return (ch, payload, socket, cb) => {
     if (!ch) return;
-    handler(ch, payload, socket, cb);
+    return handler(ch, payload, socket, cb);
+  };
+}
+
+/** Middleware: if no channel, callback with error instead of skip. */
+export function withError(handler: EmitterHandler): EmitterHandler {
+  return (ch, payload, socket, cb) => {
+    if (!ch) {
+      cb?.({ success: false, error: 'Session not found' });
+      return;
+    }
+    return handler(ch, payload, socket, cb);
   };
 }
 
@@ -25,7 +36,7 @@ export function withSocket(
 ): EmitterHandler {
   return (ch, payload, socket, cb) => {
     if (!ch || !socket) return;
-    handler(ch, socket, payload, cb);
+    return handler(ch, socket, payload, cb);
   };
 }
 
