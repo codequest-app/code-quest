@@ -1,6 +1,7 @@
 import {
   addMarketplaceSchema,
   availablePluginSchema,
+  listPluginsPayloadSchema,
   type MarketplaceSourceConfig,
   pluginInfoSchema,
   pluginInstallSchema,
@@ -50,8 +51,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): Promise<void> {
     const cwd = process.cwd();
-    const p = payload as { includeAvailable?: boolean } | undefined;
-    const includeAvailable = p?.includeAvailable ?? false;
+    const { includeAvailable = false } = listPluginsPayloadSchema.parse(payload ?? {});
     const cached = claudeState.pluginCache.get(cwd);
     if (cached && Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL) {
       if (!includeAvailable || cached.available.length > 0) {

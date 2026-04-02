@@ -35,6 +35,7 @@ export class FileRawStore implements RawEventStore {
   }
 
   async getPreview(sessionId: string): Promise<SessionPreview> {
+    validateSessionId(sessionId);
     const entries = await this.getBySession(sessionId);
     let lastAssistant: string | undefined;
     let firstUser: string | undefined;

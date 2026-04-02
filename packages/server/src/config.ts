@@ -13,10 +13,21 @@ const VALID_RAW_STORE_DRIVERS = ['sqlite', 'mysql', 'file'] as const;
 export type RawStoreDriver = (typeof VALID_RAW_STORE_DRIVERS)[number];
 
 export function parseRawStoreDrivers(raw: string): RawStoreDriver[] {
-  return raw
+  const parts = raw
     .split(',')
     .map((s) => s.trim())
-    .filter((s): s is RawStoreDriver => VALID_RAW_STORE_DRIVERS.includes(s as RawStoreDriver));
+    .filter(Boolean);
+  const valid: RawStoreDriver[] = [];
+  for (const part of parts) {
+    if (VALID_RAW_STORE_DRIVERS.includes(part as RawStoreDriver)) {
+      valid.push(part as RawStoreDriver);
+    } else {
+      console.warn(
+        `Unknown RAW_STORE driver "${part}" — ignored. Valid: ${VALID_RAW_STORE_DRIVERS.join(', ')}`,
+      );
+    }
+  }
+  return valid;
 }
 
 export const config = {

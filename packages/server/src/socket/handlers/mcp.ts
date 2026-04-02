@@ -9,87 +9,67 @@ import {
   mcpSetEnabledSchema,
   mcpSetServersSchema,
 } from '@code-quest/shared';
+import type { z } from 'zod';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
+/** Factory for simple parse → sendRequest → callback handlers. */
+function createRequestHandler<T extends z.ZodTypeAny>(
+  schema: T,
+  event: string,
+  errorMessage: string,
+  mapParsed?: (parsed: z.infer<T>) => Record<string, unknown>,
+) {
+  return async function handler(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
+    try {
+      const parsed = schema.parse(payload);
+      const requestPayload = mapParsed ? mapParsed(parsed) : (parsed as Record<string, unknown>);
+      const result = await ch.sendRequest(event, requestPayload);
+      cb?.(result);
+    } catch (err) {
+      cb?.({ success: false, error: errMsg(err, errorMessage) });
+    }
+  };
+}
+
 export function create(emitter: ChannelEmitter): void {
-  async function handleReconnect(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    cb?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { serverName } = mcpReconnectSchema.parse(payload);
-      const result = await ch.sendRequest('mcp:reconnect', { serverName });
-      cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to reconnect MCP server') });
-    }
-  }
+  const handleReconnect = createRequestHandler(
+    mcpReconnectSchema,
+    'mcp:reconnect',
+    'Failed to reconnect MCP server',
+  );
 
-  async function handleToggle(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    cb?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { serverName, enabled } = mcpSetEnabledSchema.parse(payload);
-      const result = await ch.sendRequest('mcp:toggle', { serverName, enabled });
-      cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to set MCP server enabled') });
-    }
-  }
+  const handleToggle = createRequestHandler(
+    mcpSetEnabledSchema,
+    'mcp:toggle',
+    'Failed to set MCP server enabled',
+  );
 
-  async function handleServers(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    cb?: SocketCallback,
-  ): Promise<void> {
-    try {
-      mcpGetServersSchema.parse(payload);
-      const result = await ch.sendRequest('mcp:servers');
-      cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to get MCP servers') });
-    }
-  }
+  const handleServers = createRequestHandler(
+    mcpGetServersSchema,
+    'mcp:servers',
+    'Failed to get MCP servers',
+  );
 
-  async function handleSetServers(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    cb?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { servers } = mcpSetServersSchema.parse(payload);
-      const result = await ch.sendRequest('mcp:set_servers', { servers });
-      cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to set MCP servers') });
-    }
-  }
+  const handleSetServers = createRequestHandler(
+    mcpSetServersSchema,
+    'mcp:set_servers',
+    'Failed to set MCP servers',
+  );
 
-  async function handleMessage(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    cb?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { serverName, message } = mcpMessageSchema.parse(payload);
-      const result = await ch.sendRequest('mcp:message', { serverName, message });
-      cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to send MCP message') });
-    }
-  }
+  const handleMessage = createRequestHandler(
+    mcpMessageSchema,
+    'mcp:message',
+    'Failed to send MCP message',
+  );
 
   async function handleAuthenticate(
     ch: Channel,

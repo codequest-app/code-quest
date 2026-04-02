@@ -1,7 +1,6 @@
 import type {
   ChannelMetaCache,
   ControlResponse,
-  NotificationPayload,
   NotificationResponse,
   SocketEvent,
 } from '@code-quest/shared';
@@ -48,16 +47,16 @@ export class Channel {
   // ── State ──
   private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
-  sessionId: string | null = null;
-  workspaceFolder: string | undefined;
-  lastError: string | undefined;
-  exited = false;
+  private _sessionId: string | null = null;
+  private _workspaceFolder: string | undefined;
+  private _lastError: string | undefined;
+  private _exited = false;
 
   // ── UI / Metadata (not CLI config) ──
-  titleGenerated = false;
-  pendingTitlePrompt: string | undefined;
-  title: string | undefined;
-  parentId: string | undefined;
+  private _titleGenerated = false;
+  private _pendingTitlePrompt: string | undefined;
+  private _title: string | undefined;
+  private _parentId: string | undefined;
 
   // ── Processing ──
   private _isProcessing = false;
@@ -72,7 +71,70 @@ export class Channel {
   private readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── Meta ──
-  terminalLines: string[] = [];
+  private _terminalLines: string[] = [];
+
+  get sessionId(): string | null {
+    return this._sessionId;
+  }
+  set sessionId(v: string | null) {
+    this._sessionId = v;
+  }
+
+  get workspaceFolder(): string | undefined {
+    return this._workspaceFolder;
+  }
+  set workspaceFolder(v: string | undefined) {
+    this._workspaceFolder = v;
+  }
+
+  get lastError(): string | undefined {
+    return this._lastError;
+  }
+  set lastError(v: string | undefined) {
+    this._lastError = v;
+  }
+
+  get exited(): boolean {
+    return this._exited;
+  }
+  set exited(v: boolean) {
+    this._exited = v;
+  }
+
+  get titleGenerated(): boolean {
+    return this._titleGenerated;
+  }
+  set titleGenerated(v: boolean) {
+    this._titleGenerated = v;
+  }
+
+  get pendingTitlePrompt(): string | undefined {
+    return this._pendingTitlePrompt;
+  }
+  set pendingTitlePrompt(v: string | undefined) {
+    this._pendingTitlePrompt = v;
+  }
+
+  get title(): string | undefined {
+    return this._title;
+  }
+  set title(v: string | undefined) {
+    this._title = v;
+  }
+
+  get parentId(): string | undefined {
+    return this._parentId;
+  }
+  set parentId(v: string | undefined) {
+    this._parentId = v;
+  }
+
+  get terminalLines(): string[] {
+    return this._terminalLines;
+  }
+  set terminalLines(v: string[]) {
+    this._terminalLines = v;
+  }
 
   constructor(
     runner: ProcessRunner,
@@ -186,11 +248,6 @@ export class Channel {
 
   kill(): void {
     this.runner.kill();
-  }
-
-  /** @todo Re-implement via ChannelEmitter when caller is added. */
-  sendNotification(_payload: NotificationPayload): Promise<NotificationResponse> {
-    return Promise.resolve({});
   }
 
   resolveControlResponse(event: ControlResponseEvent): void {

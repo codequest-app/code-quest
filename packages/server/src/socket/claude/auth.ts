@@ -1,4 +1,8 @@
-import { controlAuthenticateResponseSchema } from '@code-quest/shared';
+import {
+  controlAuthenticateResponseSchema,
+  loginPayloadSchema,
+  oauthCodePayloadSchema,
+} from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -28,7 +32,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         callback?.({ success: false, error: 'No active session. Please open a tab first.' });
         return;
       }
-      const { method } = payload as { method?: string };
+      const { method } = loginPayloadSchema.parse(payload);
       const controlResp = await channel.sendRequest('auth:authenticate', {
         loginWithClaudeAi: method !== 'api_key',
       });
@@ -53,7 +57,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { code, state } = payload as { code: string; state?: string };
+      const { code, state } = oauthCodePayloadSchema.parse(payload);
       const channel = channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session' });

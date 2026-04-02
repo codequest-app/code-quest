@@ -37,22 +37,22 @@ export function create(emitter: ChannelEmitter): void {
     });
   }
 
-  function onOpenDiff(ch: Channel, payload: unknown): void {
+  async function onOpenDiff(ch: Channel, payload: unknown): Promise<void> {
     const { requestId, originalPath, newPath } = controlOpenDiffPayloadSchema.parse(payload);
     const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
-    void Promise.all([readFileOrEmpty(originalPath), readFileOrEmpty(newPath)])
-      .then(([oldContent, newContent]) => {
-        ch.trackControlRequest(requestId, { subtype: 'open_diff' });
-        emitter.emit(ch.id, 'control:diff_review', {
-          channelId: ch.id,
-          requestId,
-          toolId: requestId,
-          filePath: originalPath || newPath,
-          oldContent,
-          newContent,
-        });
-      })
-      .catch(() => {});
+    const [oldContent, newContent] = await Promise.all([
+      readFileOrEmpty(originalPath),
+      readFileOrEmpty(newPath),
+    ]);
+    ch.trackControlRequest(requestId, { subtype: 'open_diff' });
+    emitter.emit(ch.id, 'control:diff_review', {
+      channelId: ch.id,
+      requestId,
+      toolId: requestId,
+      filePath: originalPath || newPath,
+      oldContent,
+      newContent,
+    });
   }
 
   emitter.on('control:cancel', withChannel(onCancel));

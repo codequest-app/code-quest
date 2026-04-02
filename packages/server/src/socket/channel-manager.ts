@@ -180,7 +180,8 @@ export class ChannelManager {
   /** Broadcast session state + settings to all connected clients.
    *  Key mapping (e.g. model → modelSetting) matches shared SessionConfigSummary / UpdateStatePayload schemas. */
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
-    const ss = this.channels.get(channelId)?.sessionConfig ?? {};
+    const ch = this.channels.get(channelId);
+    const ss = ch?.sessionConfig ?? {};
 
     this.emitter.broadcastAll('session:states', {
       sessions: [
@@ -197,7 +198,6 @@ export class ChannelManager {
       ],
     });
 
-    const ch = this.channels.get(channelId);
     const settings = pickDefined({
       modelSetting: ss.model,
       defaultCwd: ch?.workspaceFolder,

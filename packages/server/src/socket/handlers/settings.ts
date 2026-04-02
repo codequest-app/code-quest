@@ -176,21 +176,19 @@ export function create(
     });
   }
 
-  function onGetSettings(ch: Channel, payload: unknown): void {
+  async function onGetSettings(ch: Channel, payload: unknown): Promise<void> {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     const state = ch.sessionConfig;
     const overrides = pickDefined({
       model: state.model,
       permissionMode: state.permissionMode,
     });
-    void settingsStore
-      .getMany(ch.provider, ['model', 'permissionMode'])
-      .then((stored) => {
-        ch.respondToRequest(requestId, { ...stored, ...overrides });
-      })
-      .catch(() => {
-        ch.respondToRequest(requestId, overrides);
-      });
+    try {
+      const stored = await settingsStore.getMany(ch.provider, ['model', 'permissionMode']);
+      ch.respondToRequest(requestId, { ...stored, ...overrides });
+    } catch {
+      ch.respondToRequest(requestId, overrides);
+    }
   }
 
   function onModelUpdated(ch: Channel, payload: unknown): void {

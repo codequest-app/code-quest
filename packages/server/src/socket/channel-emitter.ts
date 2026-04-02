@@ -46,6 +46,7 @@ export class ChannelEmitter {
   // ── Socket tracking ──
   private channelSockets = new Map<string, Set<TypedSocket>>();
   private socketChannels = new Map<string, Set<string>>();
+  private socketRefs = new Map<string, TypedSocket>();
   private io?: TypedServer;
 
   // ── Subscribe ──
@@ -119,6 +120,7 @@ export class ChannelEmitter {
       this.channelSockets.set(channelId, sockets);
     }
     sockets.add(socket);
+    this.socketRefs.set(socket.id, socket);
 
     let channelIds = this.socketChannels.get(socket.id);
     if (!channelIds) {
@@ -132,18 +134,15 @@ export class ChannelEmitter {
     const channelIds = this.socketChannels.get(socketId);
     if (!channelIds) return undefined;
 
-    for (const channelId of channelIds) {
-      const sockets = this.channelSockets.get(channelId);
-      if (!sockets) continue;
-      for (const sock of sockets) {
-        if (sock.id === socketId) {
-          sockets.delete(sock);
-          break;
-        }
+    const socket = this.socketRefs.get(socketId);
+    if (socket) {
+      for (const channelId of channelIds) {
+        this.channelSockets.get(channelId)?.delete(socket);
       }
     }
 
     this.socketChannels.delete(socketId);
+    this.socketRefs.delete(socketId);
     return channelIds;
   }
 
