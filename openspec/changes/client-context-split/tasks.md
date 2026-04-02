@@ -54,5 +54,5 @@ handler 搬完後，messagesHandlers.ts 應該只剩真正屬於 message 的 han
 
 ## 17. 清理
 
-- [ ] 17.1 確認最終行數
-- [ ] 17.2 biome check + typecheck + 615 test pass
+- [x] 17.1 Contexts 1,801→1,079 行（-40%），ChannelMessagesContext 999→432（-57%）。handlers 995 行 + guard 9 行 + streamingHelpers 51 行
+- [x] 17.2 615 test pass
