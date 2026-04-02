@@ -8,7 +8,6 @@ import {
   chatSendSchema,
   chatStopTaskSchema,
   controlGenerateTitleResponseSchema,
-  type SocketEvent,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { SessionStore } from '../../services/session-store.ts';
@@ -251,13 +250,15 @@ export function create(
     }
   }
 
-  function onMessageResult(channelId: string, ch: Channel, _se: SocketEvent): void {
+  function onMessageResult(ch: Channel | null, _payload: unknown): void {
+    if (!ch) return;
     ch.endProcessing();
-    channelManager.broadcastSessionState(channelId, 'idle');
+    channelManager.broadcastSessionState(ch.id, 'idle');
   }
 
-  function onMessageResultTitle(channelId: string, ch: Channel, _se: SocketEvent): void {
-    generateTitleIfNeeded(channelId, ch);
+  function onMessageResultTitle(ch: Channel | null, _payload: unknown): void {
+    if (!ch) return;
+    generateTitleIfNeeded(ch.id, ch);
   }
 
   emitter.on('message:result', onMessageResult);

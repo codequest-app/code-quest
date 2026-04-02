@@ -1,4 +1,3 @@
-import type { SocketEvent } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import { describe, expect, it, vi } from 'vitest';
 import type { Channel } from '../socket/channel.ts';
@@ -8,22 +7,17 @@ function fakeChannel(id = 'ch-1'): Channel {
   return { id } as unknown as Channel;
 }
 
-function fakeEvent(name: string): SocketEvent {
-  return { name, payload: {} };
-}
-
 describe('ChannelEmitter', () => {
-  describe('on / dispatchEvent', () => {
+  describe('on / dispatch', () => {
     it('dispatches to registered handler by event name', () => {
       const emitter = new ChannelEmitter();
       const handler = vi.fn();
       emitter.on('message:result', handler);
 
       const ch = fakeChannel();
-      const se = fakeEvent('message:result');
-      emitter.dispatchEvent('ch-1', ch, se);
+      emitter.dispatch('message:result', ch, { some: 'data' });
 
-      expect(handler).toHaveBeenCalledWith('ch-1', ch, se);
+      expect(handler).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
     });
 
     it('does not dispatch unregistered event names', () => {
@@ -31,7 +25,7 @@ describe('ChannelEmitter', () => {
       const handler = vi.fn();
       emitter.on('message:result', handler);
 
-      emitter.dispatchEvent('ch-1', fakeChannel(), fakeEvent('session:init'));
+      emitter.dispatch('session:init', fakeChannel(), {});
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -44,47 +38,43 @@ describe('ChannelEmitter', () => {
       emitter.on('message:result', handler2);
 
       const ch = fakeChannel();
-      const se = fakeEvent('message:result');
-      emitter.dispatchEvent('ch-1', ch, se);
+      emitter.dispatch('message:result', ch, { some: 'data' });
 
-      expect(handler1).toHaveBeenCalledWith('ch-1', ch, se);
-      expect(handler2).toHaveBeenCalledWith('ch-1', ch, se);
+      expect(handler1).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
+      expect(handler2).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
     });
   });
 
-  describe('onAction / dispatchAction', () => {
-    it('dispatches to first handler that returns true', () => {
+  describe('server:action dispatch', () => {
+    it('dispatches to all action handlers', () => {
       const emitter = new ChannelEmitter();
-      const handler1 = vi.fn().mockReturnValue(false);
-      const handler2 = vi.fn().mockReturnValue(true);
-      const handler3 = vi.fn().mockReturnValue(false);
-      emitter.onAction(handler1);
-      emitter.onAction(handler2);
-      emitter.onAction(handler3);
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+      emitter.on('server:action', handler1);
+      emitter.on('server:action', handler2);
 
       const ch = fakeChannel();
       const action = { action: 'test' } as unknown as ServerAction;
-      emitter.dispatchAction('ch-1', ch, action);
+      emitter.dispatch('server:action', ch, action);
 
-      expect(handler1).toHaveBeenCalled();
-      expect(handler2).toHaveBeenCalled();
-      expect(handler3).not.toHaveBeenCalled();
+      expect(handler1).toHaveBeenCalledWith(ch, action, undefined, undefined);
+      expect(handler2).toHaveBeenCalledWith(ch, action, undefined, undefined);
     });
   });
 
-  describe('onExit / dispatchExit', () => {
+  describe('channel:exit dispatch', () => {
     it('dispatches to all exit handlers', () => {
       const emitter = new ChannelEmitter();
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      emitter.onExit(handler1);
-      emitter.onExit(handler2);
+      emitter.on('channel:exit', handler1);
+      emitter.on('channel:exit', handler2);
 
       const ch = fakeChannel();
-      emitter.dispatchExit('ch-1', ch, 0);
+      emitter.dispatch('channel:exit', ch, { code: 0 });
 
-      expect(handler1).toHaveBeenCalledWith('ch-1', ch, 0);
-      expect(handler2).toHaveBeenCalledWith('ch-1', ch, 0);
+      expect(handler1).toHaveBeenCalledWith(ch, { code: 0 }, undefined, undefined);
+      expect(handler2).toHaveBeenCalledWith(ch, { code: 0 }, undefined, undefined);
     });
   });
 });

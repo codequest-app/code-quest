@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, normalize, resolve } from 'node:path';
-import { fileListSchema, fileUpdatedPayloadSchema, type SocketEvent } from '@code-quest/shared';
+import { fileListSchema, fileUpdatedPayloadSchema } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
@@ -107,19 +107,22 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     }
   }
 
-  function onFileUpdated(channelId: string, ch: Channel, se: SocketEvent): void {
-    const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(se.payload);
-    emitter.emit(channelId, 'file:updated', { channelId, filePath, oldContent, newContent });
+  function onFileUpdated(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(payload);
+    emitter.emit(ch.id, 'file:updated', { channelId: ch.id, filePath, oldContent, newContent });
   }
 
-  function onReadDiff(channelId: string, ch: Channel, action: ServerAction): boolean {
-    if (action.action !== 'read_diff') return false;
+  function onReadDiff(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const action = payload as ServerAction;
+    if (action.action !== 'read_diff') return;
     const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
     void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
       ([oldContent, newContent]) => {
         ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-        emitter.emit(channelId, 'control:diff_review', {
-          channelId,
+        emitter.emit(ch.id, 'control:diff_review', {
+          channelId: ch.id,
           requestId: action.requestId,
           toolId: action.requestId,
           filePath: action.originalPath || action.newPath,
@@ -128,11 +131,10 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         });
       },
     );
-    return true;
   }
 
   emitter.on('system:file_updated', onFileUpdated);
-  emitter.onAction(onReadDiff);
+  emitter.on('server:action', onReadDiff);
 
   return {
     register(socket: TypedSocket) {

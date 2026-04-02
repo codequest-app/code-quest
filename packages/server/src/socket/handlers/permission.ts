@@ -11,37 +11,43 @@ import type { SocketHandler } from '../types.ts';
 
 export function create(emitter: ChannelEmitter): SocketHandler {
 
-  function onCancel(_channelId: string, ch: Channel, se: { payload: unknown }): void {
-    const { requestId } = requestIdPayloadSchema.parse(se.payload);
+  function onCancel(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);
     emitter.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
   }
 
-  function onPermission(_channelId: string, ch: Channel, se: { payload: unknown }): void {
-    const { requestId, toolName, toolUseId } = permissionPayloadSchema.parse(se.payload);
+  function onPermission(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { requestId, toolName, toolUseId } = permissionPayloadSchema.parse(payload);
     ch.trackControlRequest(requestId, { subtype: 'can_use_tool', toolName, toolUseId });
   }
 
-  function onElicitation(_channelId: string, ch: Channel, se: { payload: unknown }): void {
-    const { requestId } = requestIdPayloadSchema.parse(se.payload);
+  function onElicitation(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.trackControlRequest(requestId, { subtype: 'elicitation' });
   }
 
-  function onDiffReview(_channelId: string, ch: Channel, se: { payload: unknown }): void {
-    const { toolId } = diffReviewPayloadSchema.parse(se.payload);
+  function onDiffReview(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { toolId } = diffReviewPayloadSchema.parse(payload);
     ch.trackControlRequest(toolId, { subtype: 'open_diff' });
   }
 
-  function onForwardToClient(channelId: string, ch: Channel, action: ServerAction): boolean {
-    if (action.action !== 'forward_to_client') return false;
+  function onForwardToClient(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const action = payload as ServerAction;
+    if (action.action !== 'forward_to_client') return;
 
     ch.trackControlRequest(action.requestId, {
       subtype: action.subtype,
       toolName: action.toolName,
       toolUseId: action.toolUseId,
     });
-    emitter.emit(channelId, 'raw:event', {
-      channelId,
+    emitter.emit(ch.id, 'raw:event', {
+      channelId: ch.id,
       rawType: `control_request/${action.subtype}`,
       data: {
         requestId: action.requestId,
@@ -53,14 +59,13 @@ export function create(emitter: ChannelEmitter): SocketHandler {
         callbackId: action.callbackId,
       },
     });
-    return true;
   }
 
   emitter.on('control:cancel', onCancel);
   emitter.on('control:permission', onPermission);
   emitter.on('control:elicitation', onElicitation);
   emitter.on('control:diff_review', onDiffReview);
-  emitter.onAction(onForwardToClient);
+  emitter.on('server:action', onForwardToClient);
 
   return { register() {} };
 }

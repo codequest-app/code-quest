@@ -1,64 +1,54 @@
-import type { SocketEvent } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from './channel.ts';
-import type { TypedServer, TypedSocket } from './types.ts';
+import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
 
-type ChannelEventFn = (channelId: string, ch: Channel, se: SocketEvent) => void;
-type ChannelActionFn = (channelId: string, ch: Channel, action: ServerAction) => boolean;
-type ChannelExitFn = (channelId: string, ch: Channel, code: number | null) => void;
+/** Unified handler signature for all events (runner + client). */
+export type EmitterHandler = (
+  ch: Channel | null,
+  payload: unknown,
+  socket?: TypedSocket,
+  cb?: SocketCallback,
+) => void;
 
 export class ChannelEmitter {
-  // ── Event subscriptions (from ChannelEventRouter) ──
-  private eventMap = new Map<string, ChannelEventFn[]>();
-  private actionHandlers: ChannelActionFn[] = [];
-  private exitHandlers: ChannelExitFn[] = [];
+  private eventMap = new Map<string, EmitterHandler[]>();
 
   // ── Socket tracking ──
   private channelSockets = new Map<string, Set<TypedSocket>>();
   private socketChannels = new Map<string, Set<string>>();
   private io?: TypedServer;
 
-  // ── Subscribe (on) ──
+  // ── Subscribe ──
 
-  on(name: string, handler: ChannelEventFn): void {
+  on(name: string, handler: EmitterHandler): void {
     const handlers = this.eventMap.get(name) ?? [];
     handlers.push(handler);
     this.eventMap.set(name, handlers);
   }
 
-  onAction(handler: ChannelActionFn): void {
-    this.actionHandlers.push(handler);
-  }
+  // ── Dispatch ──
 
-  onExit(handler: ChannelExitFn): void {
-    this.exitHandlers.push(handler);
-  }
-
-  // ── Dispatch (from runner/client → to subscribers) ──
-
-  dispatchEvent(channelId: string, ch: Channel, se: SocketEvent): void {
-    // Auto-broadcast to channel sockets (except session:init — handled by connect handler)
-    if (se.name !== 'session:init') {
-      this.emit(channelId, se.name, { channelId, ...se.payload });
-    }
-
-    // Dispatch to subscribers
-    const handlers = this.eventMap.get(se.name);
+  dispatch(
+    event: string,
+    ch: Channel | null,
+    payload: unknown,
+    socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
+    const handlers = this.eventMap.get(event);
     if (handlers) {
-      for (const h of handlers) h(channelId, ch, se);
+      for (const h of handlers) h(ch, payload, socket, cb);
     }
   }
 
-  dispatchAction(channelId: string, ch: Channel, action: ServerAction): void {
-    for (const h of this.actionHandlers) {
-      if (h(channelId, ch, action)) break;
+  /**
+   * Dispatch a runner socket_event.
+   * Auto-broadcasts to channel sockets (except session:init).
+   */
+  dispatchRunnerEvent(channelId: string, ch: Channel, event: string, payload: unknown): void {
+    if (event !== 'session:init') {
+      this.emit(channelId, event, { channelId, ...((payload as Record<string, unknown>) ?? {}) });
     }
-  }
-
-  dispatchExit(channelId: string, ch: Channel, code: number | null): void {
-    for (const h of this.exitHandlers) {
-      h(channelId, ch, code);
-    }
+    this.dispatch(event, ch, payload);
   }
 
   // ── Emit (broadcast to sockets) ──

@@ -184,8 +184,11 @@ export function create(
     });
   }
 
-  function onAutoRespond(channelId: string, ch: Channel, action: ServerAction): boolean {
-    if (action.action !== 'auto_respond') return false;
+  function onAutoRespond(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const action = payload as ServerAction;
+    if (action.action !== 'auto_respond') return;
+    const channelId = ch.id;
 
     switch (action.subtype) {
       case 'get_settings': {
@@ -202,29 +205,29 @@ export function create(
           .catch(() => {
             ch.respondToRequest(action.requestId, overrides);
           });
-        return true;
+        return;
       }
       case 'set_model': {
         const { model } = serverActionModelSchema.parse(action.input ?? {});
         ch.updateSessionState({ model });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
         channelManager.broadcastSessionState(channelId, 'busy');
-        return true;
+        return;
       }
       case 'set_permission_mode': {
         const { mode } = serverActionModeSchema.parse(action.input ?? {});
         ch.updateSessionState({ permissionMode: mode });
         ch.respondToRequest(action.requestId, { subtype: 'success' });
         channelManager.broadcastSessionState(channelId, 'busy');
-        return true;
+        return;
       }
       default:
         ch.respondToRequest(action.requestId, action.response);
-        return true;
+        return;
     }
   }
 
-  emitter.onAction(onAutoRespond);
+  emitter.on('server:action', onAutoRespond);
 
   return {
     register(socket: TypedSocket) {

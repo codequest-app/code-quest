@@ -202,12 +202,14 @@ export function create(
     }
   }
 
-  function onSessionInit(channelId: string): void {
+  function onSessionInit(ch: Channel | null, _payload: unknown): void {
+    if (!ch) return;
+    const channelId = ch.id;
     channelManager.broadcastSessionState(channelId, 'busy');
 
     // Persist when session:init arrives (sessionId now available)
-    const channel = channelManager.get(channelId);
-    if (channel?.sessionId) {
+    const channel = ch;
+    if (channel.sessionId) {
       const parentId = channel.sessionState.parentId;
       sessionStore
         .persist({
@@ -226,17 +228,19 @@ export function create(
     }
   }
 
-  function onChannelExit(channelId: string, ch: Channel): void {
-    channelManager.broadcastSessionState(channelId, 'exited');
+  function onChannelExit(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { code } = payload as { code: number | null };
+    channelManager.broadcastSessionState(ch.id, 'exited');
     ch.resetSessionState();
-    emitter.emit(channelId, 'session:closed', {
-      channelId,
+    emitter.emit(ch.id, 'session:closed', {
+      channelId: ch.id,
       ...(ch.lastError ? { error: ch.lastError } : {}),
     });
   }
 
-  emitter.on('session:init', (cid) => onSessionInit(cid));
-  emitter.onExit((cid, ch) => onChannelExit(cid, ch));
+  emitter.on('session:init', onSessionInit);
+  emitter.on('channel:exit', onChannelExit);
 
   return {
     register(socket: TypedSocket) {

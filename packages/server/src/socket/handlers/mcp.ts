@@ -8,7 +8,6 @@ import {
   mcpReconnectSchema,
   mcpSetEnabledSchema,
   mcpSetServersSchema,
-  type SocketEvent,
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
@@ -158,8 +157,9 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     }
   }
 
-  function onMcpControlEvent(_channelId: string, ch: Channel, se: SocketEvent): void {
-    const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
+  function onMcpControlEvent(ch: Channel | null, payload: unknown): void {
+    if (!ch) return;
+    const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(payload);
     const hasClient = emitter.getSocketCount(ch.id) > 0;
     const mcpId = mcpMsg?.id;
     if (!hasClient) {
