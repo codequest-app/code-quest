@@ -288,16 +288,6 @@ export interface CommandMenuProps {
   onAttachFile?: () => void;
 }
 
-interface MenuItem {
-  id: string;
-  label: string;
-  section: string;
-  disabled?: boolean;
-  filterOnly?: boolean;
-  trailing?: React.ReactNode;
-  onClick?: () => void;
-}
-
 export function CommandMenu({
   onResumeConversation,
   onOpenModelPicker,
