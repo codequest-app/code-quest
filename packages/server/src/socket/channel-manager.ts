@@ -41,6 +41,7 @@ export class ChannelManager {
       onSocketEvent: (ch, se) => emitter.dispatchEvent(ch.id, ch, se),
       onServerAction: (ch, action) => emitter.dispatchAction(ch.id, ch, action),
       onExit: (ch, code) => emitter.dispatchExit(ch.id, ch, code),
+      emitToChannel: (channelId, event, ...args) => emitter.emit(channelId, event, ...args),
     };
   }
 
@@ -167,7 +168,6 @@ export class ChannelManager {
   // ── Socket tracking ──
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {
-    channel.addSocket(socket);
     this.emitter.addSocketToChannel(channel.id, socket);
     let channelIds = this.socketChannelsMap.get(socket.id);
     if (!channelIds) {
@@ -181,19 +181,18 @@ export class ChannelManager {
     const channelIds = this.socketChannelsMap.get(socketId);
     if (!channelIds) return;
 
+    this.emitter.removeSocketFromAll(socketId);
+
     for (const channelId of channelIds) {
       const channel = this.channels.get(channelId);
       if (!channel) continue;
 
-      channel.removeSocketById(socketId);
-
-      if (channel.sockets.size === 0) {
+      if (this.emitter.getSocketCount(channelId) === 0) {
         channel.unwireRunner();
       }
     }
 
     this.socketChannelsMap.delete(socketId);
-    this.emitter.removeSocketFromAll(socketId);
   }
 
   // ── Broadcasting ──

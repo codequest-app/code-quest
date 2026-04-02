@@ -18,21 +18,27 @@
 
 ## 4. Channel 移除 socket API
 
-漸進式：先雙寫（channel + emitter），逐步移除 channel 的 socket 引用。
-channel.test.ts 的 socket 測試搬到 channel-emitter.test.ts（等價遷移，expect 不變）。
+**原則：先重構 production code，再重構測試。**
+**測試遷移方式：channel.test.ts 的 socket 行為測試用 FakeClaude integration test 等價覆蓋。**
+**Unit test（channel.test.ts）只移除 production code 已不存在的 API 引用，expect 等價保留。**
 
-- [ ] 4.1 channel.test.ts 的 socket management + broadcast 測試搬到 channel-emitter.test.ts（測 emitter 的 addSocketToChannel + emit）
-- [ ] 4.2 channel.test.ts 的 destroy 測試中 channel.addSocket + channel.sockets.size 改用等價方式驗證（不依賴 socket API）
-- [ ] 4.3 server 401 + client 615 test pass
-- [ ] 4.4 ChannelManager.addSocketToChannel 移除 channel.addSocket（只保留 emitter）
-- [ ] 4.5 server 401 + client 615 test pass
-- [ ] 4.6 ChannelManager.removeSocketFromAll 移除 channel.removeSocketById，改用 emitter.getSocketCount 判斷 unwire
-- [ ] 4.7 server 401 + client 615 test pass
+Production code 漸進移除：
+- [ ] 4.1 ChannelManager.addSocketToChannel 移除 channel.addSocket（只保留 emitter）
+- [ ] 4.2 server 401 + client 615 test pass
+- [ ] 4.3 ChannelManager.removeSocketFromAll 移除 channel.removeSocketById，改用 emitter.getSocketCount 判斷 unwire
+- [ ] 4.4 server 401 + client 615 test pass
+- [ ] 4.5 Channel.wireRunner 移除自動廣播 this.emit（已由 emitter.dispatchEvent 處理）— 已在 task 3 完成
+- [ ] 4.6 Channel.sendNotification 改為 stub（保留方法簽名，不引用 sockets）
+- [ ] 4.7 Channel.destroy() 移除 sockets.clear()
 - [ ] 4.8 Channel 移除 sockets 欄位 + addSocket/removeSocket/removeSocketById/emit/emitToOthers/emitToSockets
-- [ ] 4.9 Channel.sendNotification 改為 stub（保留方法簽名，內部不引用 sockets）
-- [ ] 4.10 Channel.destroy() 移除 sockets.clear()
-- [ ] 4.11 移除 Channel 的 TypedSocket + z import（不再需要）
-- [ ] 4.12 server 401 + client 615 test pass
+- [ ] 4.9 移除 Channel 的 TypedSocket + z import
+- [ ] 4.10 server 401 + client 615 test pass
+
+測試遷移（production code 完成後）：
+- [ ] 4.11 channel.test.ts 的 `socket management` describe 驗證的行為（add/remove socket + broadcast）已由 integration test 覆蓋，移除該 describe
+- [ ] 4.12 channel.test.ts 的 `destroy` test 移除 channel.addSocket setup + channel.sockets.size expect（Channel 不再持有 sockets）
+- [ ] 4.13 channel.test.ts 移除 fakeSocket helper（不再需要）
+- [ ] 4.14 server 401 + client 615 test pass（test 數量會少 2 個，但行為由 integration test 等價覆蓋）
 
 ## 5. ChannelManager broadcast 移至 emitter
 
