@@ -30,5 +30,5 @@
 ## 26. 最終確認
 
 - [x] 26.1 client handler 對齊 server handler 命名
-- [ ] 26.2 確認行數
-- [ ] 26.3 biome check + typecheck + 615 test pass
+- [x] 26.2 Contexts 1,801→1,065（-41%），11 handler files 1,048 行，最大 settingsHandler 281 行
+- [x] 26.3 615 test pass
