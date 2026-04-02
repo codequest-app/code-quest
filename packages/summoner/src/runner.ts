@@ -67,13 +67,20 @@ export class ProcessRunner extends EventEmitter {
           data: result.data,
         };
         break;
-      case 'error':
+      case 'error': {
+        let data: unknown;
+        try {
+          data = JSON.parse(result.raw);
+        } catch {
+          data = { raw: result.raw };
+        }
         protocolEvent = {
           type: 'raw_event' as const,
           rawType: 'parse_error',
-          data: JSON.parse(result.raw),
+          data,
         };
         break;
+      }
     }
 
     if (!protocolEvent) return;

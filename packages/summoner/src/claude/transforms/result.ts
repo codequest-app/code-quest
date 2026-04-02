@@ -20,11 +20,16 @@ export function transformResultEvent(event: Record<string, unknown>): SocketEven
 
   const resultEvent: SocketEvent = { name: 'message:result', payload: resultPayload };
 
-  if (event.is_error && Array.isArray(event.errors) && (event.errors as unknown[]).length > 0) {
-    return [
-      resultEvent,
-      { name: 'error:message', payload: { message: (event.errors as string[]).join('; ') } },
-    ];
+  if (event.is_error && Array.isArray(event.errors) && event.errors.length > 0) {
+    const errorMessages = (event.errors as unknown[]).filter(
+      (e): e is string => typeof e === 'string',
+    );
+    if (errorMessages.length > 0) {
+      return [
+        resultEvent,
+        { name: 'error:message', payload: { message: errorMessages.join('; ') } },
+      ];
+    }
   }
 
   return resultEvent;

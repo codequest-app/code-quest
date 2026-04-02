@@ -1,8 +1,5 @@
 import type { SocketEvent } from '../../types.ts';
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
+import { asRecord } from '../../utils.ts';
 
 export function transformSystemEvent(event: Record<string, unknown>): SocketEvent | null {
   const subtype = event.subtype as string | undefined;
@@ -125,7 +122,7 @@ export function transformSystemEvent(event: Record<string, unknown>): SocketEven
 
   if (subtype === 'compact_boundary') {
     const meta = event.compactMetadata;
-    const preserved = isRecord(meta) ? meta.preservedSegment : undefined;
+    const preserved = asRecord(meta)?.preservedSegment;
     return {
       name: 'system:compact_boundary',
       payload: {

@@ -6,6 +6,7 @@ import type {
   ProviderAdapter,
   SocketEvent,
 } from '../types.ts';
+import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
 import type { ProtocolEvent } from './schemas.ts';
@@ -15,10 +16,6 @@ import { transformResultEvent } from './transforms/result.ts';
 import { transformStreamEvent } from './transforms/stream.ts';
 import { transformSystemEvent } from './transforms/system.ts';
 import { transformUserEvent } from './transforms/user.ts';
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
 
 interface ConvertResult {
   events: SocketEvent[];
@@ -75,6 +72,34 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
     },
   },
 };
+
+function convertRateLimitEvent(event: ProtocolEvent): SocketEvent {
+  const rli = event.rate_limit_info as Record<string, unknown>;
+  return {
+    name: 'system:rate_limit',
+    payload: {
+      info: {
+        status: rli.status ?? '',
+        rateLimitType: rli.rateLimitType,
+        resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
+        utilization: rli.utilization != null ? rli.utilization : undefined,
+        overageStatus: rli.overageStatus,
+        isUsingOverage: rli.isUsingOverage,
+      },
+    },
+  };
+}
+
+function convertAuthStatus(event: ProtocolEvent): SocketEvent {
+  return {
+    name: 'notification:auth_status',
+    payload: {
+      status: event.isAuthenticating ? 'authenticating' : 'authenticated',
+      output: Array.isArray(event.output) ? event.output.join('\n') : undefined,
+      account: event.account,
+    },
+  };
+}
 
 export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
@@ -259,87 +284,53 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
   // ── Non-control events → SocketEvent ──
 
   private convertOtherEvent(event: ProtocolEvent): SocketEvent | SocketEvent[] | null {
-    if (event.type === 'system') return transformSystemEvent(event as Record<string, unknown>);
     const e = event as Record<string, unknown>;
-    if (event.type === 'assistant') return transformAssistantEvent(e);
-    if (event.type === 'user') return transformUserEvent(e);
-    if (event.type === 'result') return transformResultEvent(e);
-    if (event.type === 'stream_event') return transformStreamEvent(e);
-
-    if (event.type === 'rate_limit_event') {
-      const rli = event.rate_limit_info;
-      return {
-        name: 'system:rate_limit',
-        payload: {
-          info: {
-            status: rli.status ?? '',
-            rateLimitType: rli.rateLimitType,
-            resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
-            utilization: rli.utilization != null ? rli.utilization : undefined,
-            overageStatus: rli.overageStatus,
-            isUsingOverage: rli.isUsingOverage,
-          },
-        },
-      };
+    switch (event.type) {
+      case 'system':
+        return transformSystemEvent(e);
+      case 'assistant':
+        return transformAssistantEvent(e);
+      case 'user':
+        return transformUserEvent(e);
+      case 'result':
+        return transformResultEvent(e);
+      case 'stream_event':
+        return transformStreamEvent(e);
+      case 'rate_limit_event':
+        return convertRateLimitEvent(event);
+      case 'speech_to_text_message':
+        return {
+          name: 'speech:message',
+          payload: { channelId: event.channelId, text: event.text, done: event.done },
+        };
+      case 'streamlined_text':
+        return { name: 'stream:text', payload: { text: event.text } };
+      case 'streamlined_tool_use_summary':
+        return { name: 'stream:tool_summary', payload: { toolSummary: event.tool_summary } };
+      case 'error':
+        return {
+          name: 'error:message',
+          payload: { message: event.error?.message ?? 'Unknown error' },
+        };
+      case 'experiment_gates':
+        return { name: 'app:experiment_gates', payload: { gates: event.gates } };
+      case 'available_models':
+        return { name: 'app:models', payload: { models: event.models } };
+      case 'notification':
+        return { name: 'notification:toast', payload: { message: event.message } };
+      case 'auth_status':
+        return convertAuthStatus(event);
+      case 'auth_url':
+        return {
+          name: 'notification:auth_url',
+          payload: { url: event.url, method: event.method ?? 'oauth' },
+        };
+      default: {
+        if (typeof e.rawType === 'string' && isRecord(e.data)) {
+          return { name: 'raw:event', payload: { rawType: e.rawType, data: e.data } };
+        }
+        return { name: 'raw:event', payload: { rawType: event.type, data: e } };
+      }
     }
-
-    if (event.type === 'speech_to_text_message') {
-      return {
-        name: 'speech:message',
-        payload: { channelId: event.channelId, text: event.text, done: event.done },
-      };
-    }
-
-    if (event.type === 'streamlined_text') {
-      return { name: 'stream:text', payload: { text: event.text } };
-    }
-
-    if (event.type === 'streamlined_tool_use_summary') {
-      return { name: 'stream:tool_summary', payload: { toolSummary: event.tool_summary } };
-    }
-
-    if (event.type === 'error') {
-      return {
-        name: 'error:message',
-        payload: { message: event.error?.message ?? 'Unknown error' },
-      };
-    }
-
-    if (event.type === 'experiment_gates') {
-      return { name: 'app:experiment_gates', payload: { gates: event.gates } };
-    }
-
-    if (event.type === 'available_models') {
-      return { name: 'app:models', payload: { models: event.models } };
-    }
-
-    if (event.type === 'notification') {
-      return { name: 'notification:toast', payload: { message: event.message } };
-    }
-
-    if (event.type === 'auth_status') {
-      return {
-        name: 'notification:auth_status',
-        payload: {
-          status: event.isAuthenticating ? 'authenticating' : 'authenticated',
-          output: Array.isArray(event.output) ? event.output.join('\n') : undefined,
-          account: event.account,
-        },
-      };
-    }
-
-    if (event.type === 'auth_url') {
-      return {
-        name: 'notification:auth_url',
-        payload: { url: event.url, method: event.method ?? 'oauth' },
-      };
-    }
-
-    // Unknown/unhandled → raw:event
-    const data = event as unknown as Record<string, unknown>;
-    if (typeof data.rawType === 'string' && isRecord(data.data)) {
-      return { name: 'raw:event', payload: { rawType: data.rawType, data: data.data } };
-    }
-    return { name: 'raw:event', payload: { rawType: event.type, data } };
   }
 }
