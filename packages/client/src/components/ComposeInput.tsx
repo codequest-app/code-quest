@@ -120,11 +120,15 @@ export function ComposeInput() {
     const start = before.length - match[0].length + (match[1] ? 1 : 0);
 
     if (navigateInto) {
-      // Navigate into directory — update query, don't close
+      // Navigate into directory — update query and trigger new search
       const newValue = `${value.slice(0, start)}${suggestion}${value.slice(pos)}`;
-      updateValue(newValue);
-      setCursorPos(start + suggestion.length);
+      const newCursorPos = start + suggestion.length;
+      updateValue(newValue, newCursorPos);
       setSelectedIndex(0);
+      const newQuery = getMentionQuery(newValue, newCursorPos);
+      if (newQuery !== null) {
+        debouncedSearch(newQuery);
+      }
       textareaRef.current?.focus();
       return;
     }

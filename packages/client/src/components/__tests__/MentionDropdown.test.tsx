@@ -87,6 +87,77 @@ describe('MentionDropdown', () => {
     expect(props.onSelectMention).toHaveBeenCalledWith('@README.md', false);
   });
 
+  it('click directory calls onSelectMention — caller should trigger new search', () => {
+    const props = createBaseProps();
+    // Simulate: after navigateInto, caller updates fileResults with new directory contents
+    const { rerender } = render(
+      <MentionDropdown
+        {...props}
+        fileResults={[
+          { path: 'src/', name: 'src', type: 'directory' },
+          { path: 'package.json', name: 'package.json', type: 'file' },
+        ]}
+      />,
+    );
+
+    // Click directory
+    fireEvent.mouseDown(screen.getByText('src/'));
+    expect(props.onSelectMention).toHaveBeenCalledWith('@src/', true);
+
+    // Simulate caller re-rendering with new directory contents
+    rerender(
+      <MentionDropdown
+        {...props}
+        mentionQuery="src/"
+        fileResults={[
+          { path: 'src/socket/', name: 'socket', type: 'directory' },
+          { path: 'src/services/', name: 'services', type: 'directory' },
+          { path: 'src/config.ts', name: 'config.ts', type: 'file' },
+        ]}
+      />,
+    );
+
+    // New directory contents should be visible
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(3);
+    expect(screen.getByText('config.ts')).toBeInTheDocument();
+    // Old entries should be gone
+    expect(screen.queryByText('package.json')).not.toBeInTheDocument();
+  });
+
+  it('navigateInto=true keeps dropdown open for new search', () => {
+    let lastSuggestion = '';
+    let lastNavigate = false;
+    const onSelect = (s: string, n: boolean) => {
+      lastSuggestion = s;
+      lastNavigate = n;
+    };
+
+    const { rerender } = render(
+      <MentionDropdown
+        {...baseProps}
+        onSelectMention={onSelect}
+        fileResults={[{ path: 'src/', name: 'src', type: 'directory' }]}
+      />,
+    );
+
+    // Click directory — navigateInto should be true
+    fireEvent.mouseDown(screen.getByRole('option'));
+    expect(lastSuggestion).toBe('@src/');
+    expect(lastNavigate).toBe(true);
+
+    // Dropdown should still be rendered (caller decides to keep it open and pass new results)
+    rerender(
+      <MentionDropdown
+        {...baseProps}
+        onSelectMention={onSelect}
+        mentionQuery="src/"
+        fileResults={[{ path: 'src/config.ts', name: 'config.ts', type: 'file' }]}
+      />,
+    );
+    expect(screen.getByText('config.ts')).toBeInTheDocument();
+  });
+
   it('hover changes active item', () => {
     const onHover = vi.fn();
     render(
