@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useRef } from 'react';
 import type { ChannelInitialState } from '../../types/chat';
+import { GitProvider } from '../GitContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
 import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
@@ -49,7 +50,9 @@ export function ChannelProvider({
           resetStreamingRefs={() => resetStreamingRefsRef.current()}
         >
           <ChannelConfigProvider channelId={channelId} initialConfig={initialState}>
-            <ChannelComposeProvider>{children}</ChannelComposeProvider>
+            <ChannelComposeProvider>
+            <GitProvider>{children}</GitProvider>
+          </ChannelComposeProvider>
           </ChannelConfigProvider>
         </ChannelControlProvider>
       </ChannelMessagesProvider>
