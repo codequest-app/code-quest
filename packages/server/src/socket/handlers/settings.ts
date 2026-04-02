@@ -1,13 +1,14 @@
 import {
-  chatGetStateSchema,
   chatSetModelSchema,
   chatSetPermissionModeSchema,
   chatSetProactiveSchema,
   chatSetRemoteControlSchema,
   chatSetThinkingLevelSchema,
+  requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
   settingsApplySchema,
+  settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
@@ -122,7 +123,7 @@ export function create(
 
   async function handleState(
     ch: Channel,
-    payload: unknown,
+    _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
@@ -176,7 +177,7 @@ export function create(
   }
 
   function onGetSettings(ch: Channel, payload: unknown): void {
-    const { requestId } = payload as { requestId: string };
+    const { requestId } = requestIdPayloadSchema.parse(payload);
     const state = ch.sessionConfig;
     const overrides = pickDefined({
       model: state.model,
@@ -192,16 +193,16 @@ export function create(
       });
   }
 
-  function onCliSetModel(ch: Channel, payload: unknown): void {
-    const { requestId, input } = payload as { requestId: string; input: unknown };
+  function onModelUpdated(ch: Channel, payload: unknown): void {
+    const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
     const { model } = serverActionModelSchema.parse(input ?? {});
     ch.updateSessionConfig({ model });
     ch.respondToRequest(requestId, { subtype: 'success' });
     channelManager.broadcastSessionState(ch.id, 'busy');
   }
 
-  function onCliSetPermissionMode(ch: Channel, payload: unknown): void {
-    const { requestId, input } = payload as { requestId: string; input: unknown };
+  function onPermissionModeUpdated(ch: Channel, payload: unknown): void {
+    const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
     const { mode } = serverActionModeSchema.parse(input ?? {});
     ch.updateSessionConfig({ permissionMode: mode });
     ch.respondToRequest(requestId, { subtype: 'success' });
@@ -209,8 +210,8 @@ export function create(
   }
 
   emitter.on('settings:get_settings', withChannel(onGetSettings));
-  emitter.on('cli:set_model', withChannel(onCliSetModel));
-  emitter.on('cli:set_permission_mode', withChannel(onCliSetPermissionMode));
+  emitter.on('settings:model_updated', withChannel(onModelUpdated));
+  emitter.on('settings:permission_mode_updated', withChannel(onPermissionModeUpdated));
   emitter.on('settings:set_model', withError(withChannel(handleSetModel)));
   emitter.on('settings:set_permission_mode', withError(withChannel(handleSetPermissionMode)));
   emitter.on('settings:set_thinking_level', withError(withChannel(handleSetThinkingLevel)));

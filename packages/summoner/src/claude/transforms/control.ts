@@ -155,14 +155,14 @@ export function transformControlRequest(event: Record<string, unknown>): Adapter
 
     case 'set_model':
       events.push({
-        name: 'cli:set_model',
+        name: 'settings:model_updated',
         payload: { requestId, input: request.input },
       });
       break;
 
     case 'set_permission_mode':
       events.push({
-        name: 'cli:set_permission_mode',
+        name: 'settings:permission_mode_updated',
         payload: { requestId, input: request.input },
       });
       break;

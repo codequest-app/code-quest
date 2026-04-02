@@ -36,3 +36,38 @@ export const serverActionModelSchema = z.looseObject({ model: z.string() });
 
 /** auto_respond set_permission_mode action input */
 export const serverActionModeSchema = z.looseObject({ mode: z.string() });
+
+/** auto-respond payload (action:open_url, action:open_file, notification:show, mcp:auto_respond) */
+export const autoRespondPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  response: z.record(z.string(), z.unknown()),
+});
+
+/** CLI-initiated settings update (settings:model_updated, settings:permission_mode_updated) */
+export const settingsUpdatedPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  input: z.unknown(),
+});
+
+/** control:forward payload (unknown control_request subtypes forwarded to client) */
+export const controlForwardPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  subtype: z.string(),
+  toolName: z.string().optional(),
+  toolUseId: z.string().optional(),
+  input: z.unknown().optional(),
+  suggestions: z.array(z.unknown()).optional(),
+  callbackId: z.string().optional(),
+});
+
+/** control:open_diff payload */
+export const controlOpenDiffPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  originalPath: z.string(),
+  newPath: z.string(),
+});
+
+/** channel:exit payload */
+export const channelExitPayloadSchema = z.looseObject({
+  code: z.number().nullable(),
+});

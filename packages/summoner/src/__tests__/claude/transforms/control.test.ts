@@ -44,22 +44,25 @@ describe('transform — control requests', () => {
     expect(result.serverActions).toHaveLength(0);
   });
 
-  it('converts set_model → cli:set_model event with input', () => {
+  it('converts set_model → settings:model_updated event with input', () => {
     const result = transformResult(
       s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }),
     );
     expect(result.events).toMatchObject([
-      { name: 'cli:set_model', payload: { requestId: 'sm-1', input: { model: 'haiku' } } },
+      { name: 'settings:model_updated', payload: { requestId: 'sm-1', input: { model: 'haiku' } } },
     ]);
     expect(result.serverActions).toHaveLength(0);
   });
 
-  it('converts set_permission_mode → cli:set_permission_mode event with input', () => {
+  it('converts set_permission_mode → settings:permission_mode_updated event with input', () => {
     const result = transformResult(
       s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
     );
     expect(result.events).toMatchObject([
-      { name: 'cli:set_permission_mode', payload: { requestId: 'sp-1', input: { mode: 'plan' } } },
+      {
+        name: 'settings:permission_mode_updated',
+        payload: { requestId: 'sp-1', input: { mode: 'plan' } },
+      },
     ]);
     expect(result.serverActions).toHaveLength(0);
   });

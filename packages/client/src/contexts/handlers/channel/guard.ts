@@ -10,8 +10,6 @@ export function createGuard(channelId: string) {
   };
 }
 
-type Guard = ReturnType<typeof createGuard>;
-
 /**
  * Auto-wire a handler map to socket events.
  * Each handler: (state, payload) → newState.
@@ -37,10 +35,7 @@ export function wireHandlers<S, D = never>(
   const guard = createGuard(channelId);
   const { skipGuard, beforeUpdate, effects, effectDeps } = options ?? {};
 
-  const allEvents = new Set([
-    ...Object.keys(handlers),
-    ...Object.keys(effects ?? {}),
-  ]);
+  const allEvents = new Set([...Object.keys(handlers), ...Object.keys(effects ?? {})]);
 
   const wired = [...allEvents].map((event) => {
     const stateHandler = handlers[event];

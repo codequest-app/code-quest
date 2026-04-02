@@ -1,4 +1,4 @@
-import type { FileSearchResult, ServerToClientEvents } from '@code-quest/shared';
+import type { ServerToClientEvents } from '@code-quest/shared';
 import type { TypedSocket } from '../../../socket/client';
 import { rpc } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
@@ -19,7 +19,7 @@ function onDisconnect(state: ChannelState): ChannelState {
 
 export const sessionHandlerOn = {
   'session:status': onSessionStatus,
-  'disconnect': onDisconnect,
+  disconnect: onDisconnect,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
 // ── Actions (emit) ──
@@ -48,7 +48,9 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     return () => socket.offAny(handler);
   }
 
-  function forkSession(messageId: string): Promise<{ success: boolean; sessionId?: string; error?: string }> {
+  function forkSession(
+    messageId: string,
+  ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
     return rpc(socket, 'session:fork', {
       forkedFromSession: channelId,
       resumeSessionAt: messageId,
@@ -56,7 +58,10 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     });
   }
 
-  function rewindToMessage(userMessageId: string, dryRun = false): Promise<{ success: boolean; error?: string }> {
+  function rewindToMessage(
+    userMessageId: string,
+    dryRun = false,
+  ): Promise<{ success: boolean; error?: string }> {
     return rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun });
   }
 

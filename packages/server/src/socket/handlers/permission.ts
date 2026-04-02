@@ -1,4 +1,10 @@
-import { permissionPayloadSchema, requestIdPayloadSchema } from '@code-quest/shared';
+import { readFile } from 'node:fs/promises';
+import {
+  controlForwardPayloadSchema,
+  controlOpenDiffPayloadSchema,
+  permissionPayloadSchema,
+  requestIdPayloadSchema,
+} from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 
@@ -20,15 +26,8 @@ export function create(emitter: ChannelEmitter): void {
   }
 
   function onForwardToClient(ch: Channel, payload: unknown): void {
-    const { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId } = payload as {
-      requestId: string;
-      subtype: string;
-      toolName?: string;
-      toolUseId?: string;
-      input?: unknown;
-      suggestions?: unknown[];
-      callbackId?: string;
-    };
+    const { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId } =
+      controlForwardPayloadSchema.parse(payload);
 
     ch.trackControlRequest(requestId, { subtype, toolName, toolUseId });
     emitter.emit(ch.id, 'raw:event', {
@@ -38,8 +37,27 @@ export function create(emitter: ChannelEmitter): void {
     });
   }
 
+  function onOpenDiff(ch: Channel, payload: unknown): void {
+    const { requestId, originalPath, newPath } = controlOpenDiffPayloadSchema.parse(payload);
+    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
+    void Promise.all([readFileOrEmpty(originalPath), readFileOrEmpty(newPath)]).then(
+      ([oldContent, newContent]) => {
+        ch.trackControlRequest(requestId, { subtype: 'open_diff' });
+        emitter.emit(ch.id, 'control:diff_review', {
+          channelId: ch.id,
+          requestId,
+          toolId: requestId,
+          filePath: originalPath || newPath,
+          oldContent,
+          newContent,
+        });
+      },
+    );
+  }
+
   emitter.on('control:cancel', withChannel(onCancel));
   emitter.on('control:permission', withChannel(onPermission));
   emitter.on('control:elicitation', withChannel(onElicitation));
   emitter.on('control:forward', withChannel(onForwardToClient));
+  emitter.on('control:open_diff', withChannel(onOpenDiff));
 }

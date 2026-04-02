@@ -1,12 +1,23 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
-import { createGuard, wireHandlers } from '../handlers/channel/guard';
-import type { ChannelState } from '../../types/chat';
 import { msg } from '../../utils/message';
+import { createGuard, wireHandlers } from '../handlers/channel/guard';
+import {
+  type ControlState,
+  controlHandlers,
+  createControlActions,
+} from '../handlers/channel/permissionHandler';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
-import { type ControlState, controlHandlers, createControlActions } from '../handlers/channel/permissionHandler';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -18,7 +29,10 @@ export interface ChannelControlValue {
   setPendingElicitation: (v: PendingElicitation | null) => void;
   setPendingDiffReview: (v: PendingDiffReview | null) => void;
   getPendingControls: () => PendingControl[];
-  respondToControl: (response: import('@code-quest/shared').ControlPermissionResponse, requestId?: string) => void;
+  respondToControl: (
+    response: import('@code-quest/shared').ControlPermissionResponse,
+    requestId?: string,
+  ) => void;
   diffRespond: (toolId: string, accepted: boolean) => void;
   stopTask: (taskId: string) => void;
   clearPendingDiffReview: () => void;
@@ -67,7 +81,7 @@ export function ChannelControlProvider({
     }
 
     return wireHandlers(socket, channelId, controlHandlers, setControlState);
-  }, [channelId, socket]);
+  }, [channelId, socket, elicitation, diffReview]);
 
   // ── Special: control:permission + control:hook_callback (local state + parent state + resetRef) ──
   useEffect(() => {
@@ -155,7 +169,9 @@ export function ChannelControlProvider({
       }));
     }
     socket.on('session:closed', onSessionClosed);
-    return () => { socket.off('session:closed', onSessionClosed); };
+    return () => {
+      socket.off('session:closed', onSessionClosed);
+    };
   }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
   // ── Special: control:mcp (side effect only — auto-respond) ──
@@ -176,7 +192,9 @@ export function ChannelControlProvider({
       });
     }
     socket.on('control:mcp', onControlMcp);
-    return () => { socket.off('control:mcp', onControlMcp); };
+    return () => {
+      socket.off('control:mcp', onControlMcp);
+    };
   }, [channelId, socket]);
 
   // ── Stable actions ──

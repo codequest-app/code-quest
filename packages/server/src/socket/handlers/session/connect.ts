@@ -1,5 +1,10 @@
 import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
-import { chatCreateSchema, chatJoinSchema, controlInitResponseSchema } from '@code-quest/shared';
+import {
+  channelExitPayloadSchema,
+  chatCreateSchema,
+  chatJoinSchema,
+  controlInitResponseSchema,
+} from '@code-quest/shared';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
@@ -235,7 +240,7 @@ export function create(
   }
 
   function onChannelExit(ch: Channel, payload: unknown): void {
-    const { code: _code } = payload as { code: number | null };
+    const { code: _code } = channelExitPayloadSchema.parse(payload);
     channelManager.broadcastSessionState(ch.id, 'exited');
     ch.resetSessionConfig();
     emitter.emit(ch.id, 'session:closed', {

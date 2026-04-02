@@ -18,15 +18,23 @@ import {
 } from 'react';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
-import { useSocket } from '../SocketContext';
+import { createFileActions } from '../handlers/channel/fileHandler';
 import { createGuard, wireHandlers } from '../handlers/channel/guard';
-import { fileHandlerOn, createFileActions } from '../handlers/channel/fileHandler';
 import { createMessageActions, messageHandlerOn } from '../handlers/channel/messageHandler';
-import { type EffectDeps, notificationHandlerEffects, notificationHandlerOn } from '../handlers/channel/notificationHandler';
-import { planHandlerOn, createPlanActions } from '../handlers/channel/planHandler';
-import { sessionHandlerOn, createSessionActions } from '../handlers/channel/sessionHandler';
-import { streamingAppendOrCreate, streamingAppendToLast, streamingRemovePlaceholder } from '../handlers/channel/streamingHelpers';
+import {
+  type EffectDeps,
+  notificationHandlerEffects,
+  notificationHandlerOn,
+} from '../handlers/channel/notificationHandler';
+import { createPlanActions, planHandlerOn } from '../handlers/channel/planHandler';
+import { createSessionActions, sessionHandlerOn } from '../handlers/channel/sessionHandler';
+import {
+  streamingAppendOrCreate,
+  streamingAppendToLast,
+  streamingRemovePlaceholder,
+} from '../handlers/channel/streamingHelpers';
 import { systemHandlerOn } from '../handlers/channel/systemHandler';
+import { useSocket } from '../SocketContext';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
@@ -190,20 +198,26 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
 
-    const resetEvents = new Set(['system:compact_boundary', 'error:message', 'stream:text', 'stream:tool_summary']);
+    const resetEvents = new Set([
+      'system:compact_boundary',
+      'error:message',
+      'stream:text',
+      'stream:tool_summary',
+    ]);
 
     const allHandlers = {
       ...messageHandlerOn,
       ...sessionHandlerOn,
       ...systemHandlerOn,
-      ...fileHandlerOn,
       ...planHandlerOn,
       ...notificationHandlerOn,
     };
 
     return wireHandlers<ChannelState, EffectDeps>(socket, channelId, allHandlers, setChannelState, {
       skipGuard: new Set(['disconnect']),
-      beforeUpdate(event) { if (resetEvents.has(event)) resetStreamingRefs(); },
+      beforeUpdate(event) {
+        if (resetEvents.has(event)) resetStreamingRefs();
+      },
       effects: notificationHandlerEffects,
       effectDeps: { socket, channelId },
     });
@@ -219,7 +233,13 @@ export function ChannelMessagesProvider({
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
     const appendToLastMessage = (content: string) => streamingAppendToLast(setState, content);
     const appendOrCreateText = (content: string, parentToolUseId?: string) =>
-      streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
+      streamingAppendOrCreate(
+        setState,
+        isTextStreaming,
+        removePlaceholder,
+        content,
+        parentToolUseId,
+      );
 
     // ── stream:chunk ──
     function onStreamChunk(p: Payload<'stream:chunk'>) {
@@ -243,7 +263,12 @@ export function ChannelMessagesProvider({
               ...prev,
               messages: [
                 ...prev.messages,
-                msg({ role: 'assistant', type: 'thinking', content: chunk.content, parentToolUseId }),
+                msg({
+                  role: 'assistant',
+                  type: 'thinking',
+                  content: chunk.content,
+                  parentToolUseId,
+                }),
               ],
             }));
           }
@@ -253,14 +278,22 @@ export function ChannelMessagesProvider({
           setState((prev) => {
             let lastToolUse: (typeof prev.messages)[number] | undefined;
             for (let i = prev.messages.length - 1; i >= 0; i--) {
-              if (prev.messages[i].type === 'tool_use') { lastToolUse = prev.messages[i]; break; }
+              if (prev.messages[i].type === 'tool_use') {
+                lastToolUse = prev.messages[i];
+                break;
+              }
             }
             if (!lastToolUse) return prev;
-            const partial = typeof lastToolUse.meta?.partialInput === 'string' ? lastToolUse.meta.partialInput : '';
+            const partial =
+              typeof lastToolUse.meta?.partialInput === 'string'
+                ? lastToolUse.meta.partialInput
+                : '';
             return {
               ...prev,
               messages: prev.messages.map((m) =>
-                m.id === lastToolUse.id ? { ...m, meta: { ...m.meta, partialInput: partial + chunk.content } } : m,
+                m.id === lastToolUse.id
+                  ? { ...m, meta: { ...m.meta, partialInput: partial + chunk.content } }
+                  : m,
               ),
             };
           });
@@ -272,7 +305,10 @@ export function ChannelMessagesProvider({
               const ms = [...prev.messages];
               const last = ms[ms.length - 1];
               const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
-              ms[ms.length - 1] = { ...last, meta: { ...last.meta, citations: [...existing, ...(chunk.citations ?? [])] } };
+              ms[ms.length - 1] = {
+                ...last,
+                meta: { ...last.meta, citations: [...existing, ...(chunk.citations ?? [])] },
+              };
               return { ...prev, messages: ms };
             });
           }
@@ -289,7 +325,10 @@ export function ChannelMessagesProvider({
     }
 
     // ── message:assistant ──
-    function fetchFileContentIfNeeded(block: { toolName: string; input: unknown }, toolMsgId: string) {
+    function fetchFileContentIfNeeded(
+      block: { toolName: string; input: unknown },
+      toolMsgId: string,
+    ) {
       if (block.toolName !== 'open_file' || !block.input) return;
       const inp = block.input;
       const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
@@ -299,7 +338,14 @@ export function ChannelMessagesProvider({
           const ms = [...prev.messages];
           const idx = ms.findIndex((m) => m.id === toolMsgId);
           if (idx < 0) return prev;
-          ms[idx] = { ...ms[idx], meta: { ...ms[idx].meta, fileContent: 'content' in res ? res.content : undefined, fileError: 'error' in res ? res.error : undefined } };
+          ms[idx] = {
+            ...ms[idx],
+            meta: {
+              ...ms[idx].meta,
+              fileContent: 'content' in res ? res.content : undefined,
+              fileError: 'error' in res ? res.error : undefined,
+            },
+          };
           return { ...prev, messages: ms };
         });
       });
@@ -314,12 +360,26 @@ export function ChannelMessagesProvider({
           if (!isThinkingStreaming.current) {
             setState((prev) => ({
               ...prev,
-              messages: [...prev.messages, msg({ role: 'assistant', type: 'thinking', content: block.thinking, parentToolUseId })],
+              messages: [
+                ...prev.messages,
+                msg({
+                  role: 'assistant',
+                  type: 'thinking',
+                  content: block.thinking,
+                  parentToolUseId,
+                }),
+              ],
             }));
           }
         } else if (block.type === 'tool_use') {
           resetStreamingRefs();
-          const toolMsg = msg({ role: 'assistant', type: 'tool_use', content: block.toolName, meta: { toolId: block.toolId, input: block.input }, parentToolUseId });
+          const toolMsg = msg({
+            role: 'assistant',
+            type: 'tool_use',
+            content: block.toolName,
+            meta: { toolId: block.toolId, input: block.input },
+            parentToolUseId,
+          });
           setState((prev) => ({ ...prev, messages: [...prev.messages, toolMsg] }));
           fetchFileContentIfNeeded(block, toolMsg.id);
         }
@@ -340,7 +400,7 @@ export function ChannelMessagesProvider({
       socket.off('stream:end', onStreamEnd);
       socket.off('message:assistant', onMessageAssistant);
     };
-  }, [channelId, socket]);
+  }, [channelId, socket, resetStreamingRefs]);
 
   // ── Special: message:result (dequeue + socket.emit) ──
   useEffect(() => {
@@ -350,15 +410,29 @@ export function ChannelMessagesProvider({
       if (!guard(p)) return;
       resetStreamingRefs();
       const stats: ChatStats = {
-        costUsd: p.stats.totalCostUsd, durationMs: p.stats.durationMs,
-        inputTokens: p.stats.inputTokens, outputTokens: p.stats.outputTokens,
-        numTurns: p.stats.numTurns, modelUsage: p.stats.modelUsage,
+        costUsd: p.stats.totalCostUsd,
+        durationMs: p.stats.durationMs,
+        inputTokens: p.stats.inputTokens,
+        outputTokens: p.stats.outputTokens,
+        numTurns: p.stats.numTurns,
+        modelUsage: p.stats.modelUsage,
       };
       setChannelState((prev) => ({
-        ...prev, status: 'idle' as const, stats, isContextCompressed: false, statusText: null,
+        ...prev,
+        status: 'idle' as const,
+        stats,
+        isContextCompressed: false,
+        statusText: null,
         messages: p.errors?.length
-          ? [...prev.messages, msg({ role: 'system', type: 'error', content: p.errors[0] }), msg({ role: 'system', type: 'result', content: '', meta: { stats } })]
-          : [...prev.messages, msg({ role: 'system', type: 'result', content: '', meta: { stats } })],
+          ? [
+              ...prev.messages,
+              msg({ role: 'system', type: 'error', content: p.errors[0] }),
+              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
+            ]
+          : [
+              ...prev.messages,
+              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
+            ],
       }));
       const next = dequeueMessageRef.current();
       if (!next) return;
@@ -366,8 +440,10 @@ export function ChannelMessagesProvider({
       setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
     }
     socket.on('message:result', onMessageResult);
-    return () => { socket.off('message:result', onMessageResult); };
-  }, [channelId, socket]);
+    return () => {
+      socket.off('message:result', onMessageResult);
+    };
+  }, [channelId, socket, resetStreamingRefs]);
 
   // Side-effect events are now handled by auto-wiring via messagesEffects
 

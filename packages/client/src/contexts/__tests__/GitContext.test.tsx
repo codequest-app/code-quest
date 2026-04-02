@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { useGit } from '../GitContext';
@@ -14,7 +14,11 @@ describe('GitContext', () => {
   it('git:status sends cwd from workspaceFolder', async () => {
     let gitActions!: ReturnType<typeof useGit>;
     const { claude } = await renderWithChannel(
-      <GitCaller onReady={(git) => { gitActions = git; }} />,
+      <GitCaller
+        onReady={(git) => {
+          gitActions = git;
+        }}
+      />,
       { workspaceFolder: '/my/project' },
     );
 
@@ -34,7 +38,11 @@ describe('GitContext', () => {
   it('git:checkout sends branch + cwd', async () => {
     let gitActions!: ReturnType<typeof useGit>;
     const { claude } = await renderWithChannel(
-      <GitCaller onReady={(git) => { gitActions = git; }} />,
+      <GitCaller
+        onReady={(git) => {
+          gitActions = git;
+        }}
+      />,
       { workspaceFolder: '/workspace' },
     );
 

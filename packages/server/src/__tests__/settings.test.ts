@@ -406,8 +406,8 @@ describe('ChatHandler > settings', () => {
     });
   });
 
-  describe('auto-respond control_requests', () => {
-    it('set_model auto-responds and updates sessionConfig', async () => {
+  describe('auto-respond control_requests (client → server → CLI)', () => {
+    it('set_model sends control_request to CLI', async () => {
       const { claude, channelId } = await setup();
 
       await claude.send('settings:set_model', { channelId, model: 'haiku' });
@@ -416,7 +416,7 @@ describe('ChatHandler > settings', () => {
       expect(received.some((r: any) => (r.request as any)?.subtype === 'set_model')).toBe(true);
     });
 
-    it('set_permission_mode auto-responds and updates sessionConfig', async () => {
+    it('set_permission_mode sends control_request to CLI', async () => {
       const { claude, channelId } = await setup();
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
@@ -426,12 +426,52 @@ describe('ChatHandler > settings', () => {
         true,
       );
     });
+  });
 
-    it('auto-responds to get_settings control_request from CLI', async () => {
-      const { claude } = await setup();
+  describe('control_request from CLI', () => {
+    it('set_model updates sessionConfig and responds', async () => {
+      const { claude, channelId } = await setup();
 
-      // FakeClaude auto-responds to all control_requests including get_settings
-      expect(claude.received().length).toBeGreaterThan(0);
+      await claude.emit(s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }));
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+        typeof ChannelManager
+      >;
+      const channel = channelManager.get(channelId);
+      expect(channel?.sessionConfig.model).toBe('haiku');
+      expect(
+        claude.received('control_response').some((r: any) => r.response?.request_id === 'sm-1'),
+      ).toBe(true);
+    });
+
+    it('set_permission_mode updates sessionConfig and responds', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.emit(
+        s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
+      );
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+        typeof ChannelManager
+      >;
+      const channel = channelManager.get(channelId);
+      expect(channel?.sessionConfig.permissionMode).toBe('plan');
+      expect(
+        claude.received('control_response').some((r: any) => r.response?.request_id === 'sp-1'),
+      ).toBe(true);
+    });
+
+    it('get_settings responds with current settings', async () => {
+      const { claude, settingsStore } = await setup();
+      await settingsStore.set('claude', 'model', 'opus');
+
+      await claude.emit(s.controlRequest('gs-1', 'get_settings'));
+
+      expect(
+        claude.received('control_response').some((r: any) => r.response?.request_id === 'gs-1'),
+      ).toBe(true);
     });
   });
 });

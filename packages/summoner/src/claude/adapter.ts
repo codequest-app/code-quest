@@ -1,8 +1,4 @@
-import {
-  type ContentBlock,
-  type ProviderClientConfig,
-  providerClientConfigSchema,
-} from '@code-quest/shared';
+import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
 import type {
   AdapterOutput,
   ControlResponseEvent,
