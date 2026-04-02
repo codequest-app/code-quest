@@ -111,27 +111,15 @@ export function ComposeInput() {
     }
   };
 
-  const handleSelectMention = (suggestion: string, navigateInto?: boolean) => {
+  const handleSelectMention = (suggestion: string) => {
     const pos = cursorPos;
     const before = value.slice(0, pos);
     const match = before.match(MENTION_REGEX);
-    if (!match) return;
-
-    const start = before.length - match[0].length + (match[1] ? 1 : 0);
-
-    if (navigateInto) {
-      // Navigate into directory — update query, don't close
-      const newValue = `${value.slice(0, start)}${suggestion}${value.slice(pos)}`;
+    if (match) {
+      const start = before.length - match[0].length + (match[1] ? 1 : 0);
+      const newValue = `${value.slice(0, start)}${suggestion} ${value.slice(pos)}`;
       updateValue(newValue);
-      setCursorPos(start + suggestion.length);
-      setSelectedIndex(0);
-      textareaRef.current?.focus();
-      return;
     }
-
-    // Select — insert and close
-    const newValue = `${value.slice(0, start)}${suggestion} ${value.slice(pos)}`;
-    updateValue(newValue);
     setMentionOpen(false);
     setFileResults([]);
     setSearchStatus('idle');
@@ -191,18 +179,11 @@ export function ComposeInput() {
       return;
     }
 
-    if (e.key === 'Tab' && mentionOpen && selectedIndex >= 0) {
-      e.preventDefault();
-      const item = fileResults[selectedIndex];
-      if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
-      return;
-    }
-
     if (e.key === 'Enter' && !e.shiftKey) {
       if (mentionOpen && selectedIndex >= 0) {
         e.preventDefault();
         const item = fileResults[selectedIndex];
-        if (item) handleSelectMention(`@${item.path}`, false);
+        if (item) handleSelectMention(`@${item.path}`);
         return;
       }
       if (mentionOpen) {
