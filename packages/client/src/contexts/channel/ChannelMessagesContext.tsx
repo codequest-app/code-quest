@@ -195,17 +195,19 @@ export function ChannelMessagesProvider({
     });
   }, [channelId, socket, resetStreamingRefs]);
 
-  // ── Special: stream:chunk (ref-based, cannot be a pure handler) ──
+  // ── Special: streaming + message:assistant (share ref-based helpers) ──
   useEffect(() => {
     if (!socket) return;
     const guard = createGuard(channelId);
-
     const setState = setChannelState;
+
+    // Shared streaming helpers
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
     const appendToLastMessage = (content: string) => streamingAppendToLast(setState, content);
     const appendOrCreateText = (content: string, parentToolUseId?: string) =>
       streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
 
+    // ── stream:chunk ──
     function onStreamChunk(p: Payload<'stream:chunk'>) {
       if (!guard(p)) return;
       const { chunk, parentToolUseId } = p;
@@ -266,33 +268,14 @@ export function ChannelMessagesProvider({
       }
     }
 
-    socket.on('stream:chunk', onStreamChunk);
-    return () => { socket.off('stream:chunk', onStreamChunk); };
-  }, [channelId, socket]);
-
-  // ── Special: stream:end (ref-only, no state change) ──
-  useEffect(() => {
-    if (!socket) return;
-    const guard = createGuard(channelId);
+    // ── stream:end ──
     function onStreamEnd(p: Payload<'stream:end'>) {
       if (!guard(p)) return;
       resetStreamingRefs();
     }
-    socket.on('stream:end', onStreamEnd);
-    return () => { socket.off('stream:end', onStreamEnd); };
-  }, [channelId, socket]);
 
-  // ── Special: message:assistant (depends on streaming refs) ──
-  useEffect(() => {
-    if (!socket) return;
-    const guard = createGuard(channelId);
-
-    const setState = setChannelState;
-    const removePlaceholder = () => streamingRemovePlaceholder(setState);
-    const appendOrCreateText = (content: string, parentToolUseId?: string) =>
-      streamingAppendOrCreate(setState, isTextStreaming, removePlaceholder, content, parentToolUseId);
-
-    const fetchFileContentIfNeeded = (block: { toolName: string; input: unknown }, toolMsgId: string) => {
+    // ── message:assistant ──
+    function fetchFileContentIfNeeded(block: { toolName: string; input: unknown }, toolMsgId: string) {
       if (block.toolName !== 'open_file' || !block.input) return;
       const inp = block.input;
       const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
@@ -306,9 +289,9 @@ export function ChannelMessagesProvider({
           return { ...prev, messages: ms };
         });
       });
-    };
+    }
 
-    const handleAssistantContent = (content: ContentBlock[], parentToolUseId?: string) => {
+    function handleAssistantContent(content: ContentBlock[], parentToolUseId?: string) {
       for (const block of content) {
         if (block.type === 'text') {
           isThinkingStreaming.current = false;
@@ -328,15 +311,21 @@ export function ChannelMessagesProvider({
         }
       }
       resetStreamingRefs();
-    };
+    }
 
     function onMessageAssistant(p: Payload<'message:assistant'>) {
       if (!guard(p)) return;
       handleAssistantContent(p.content, p.parentToolUseId);
     }
 
+    socket.on('stream:chunk', onStreamChunk);
+    socket.on('stream:end', onStreamEnd);
     socket.on('message:assistant', onMessageAssistant);
-    return () => { socket.off('message:assistant', onMessageAssistant); };
+    return () => {
+      socket.off('stream:chunk', onStreamChunk);
+      socket.off('stream:end', onStreamEnd);
+      socket.off('message:assistant', onMessageAssistant);
+    };
   }, [channelId, socket]);
 
   // ── Special: message:result (dequeue + socket.emit) ──

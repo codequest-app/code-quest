@@ -86,15 +86,35 @@ export function ChannelControlProvider({
     };
   }, [channelId, socket]);
 
-  // ── Special: control:permission (local state + parent state + resetRef) ──
+  // ── Special: control:permission + control:hook_callback (local state + parent state + resetRef) ──
   useEffect(() => {
     if (!channelId) return;
     const guard = createGuard(channelId);
+
+    function addControlAndMessage(
+      control: PendingControl,
+      messageRole: 'assistant' | 'system',
+      messageContent: string,
+    ) {
+      resetStreamingRefs();
+      setControls((prev) => [...prev, control]);
+      setChannelState((s) => ({
+        ...s,
+        messages: [
+          ...s.messages,
+          msg({
+            role: messageRole,
+            type: 'pending_action',
+            content: messageContent,
+            meta: { requestId: control.requestId, input: control.input },
+          }),
+        ],
+      }));
+    }
+
     function onControlPermission(payload: Payload<'control:permission'>) {
       if (!guard(payload)) return;
-      resetStreamingRefs();
-      setControls((prev) => [
-        ...prev,
+      addControlAndMessage(
         {
           requestId: payload.requestId,
           subtype: 'can_use_tool',
@@ -103,33 +123,14 @@ export function ChannelControlProvider({
           input: payload.input,
           permissionSuggestions: payload.suggestions,
         },
-      ]);
-      setChannelState((s) => ({
-        ...s,
-        messages: [
-          ...s.messages,
-          msg({
-            role: 'assistant',
-            type: 'pending_action',
-            content: payload.toolName,
-            meta: { requestId: payload.requestId, input: payload.input },
-          }),
-        ],
-      }));
+        'assistant',
+        payload.toolName,
+      );
     }
-    socket.on('control:permission', onControlPermission);
-    return () => { socket.off('control:permission', onControlPermission); };
-  }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
-  // ── Special: control:hook_callback (local state + parent state + resetRef) ──
-  useEffect(() => {
-    if (!channelId) return;
-    const guard = createGuard(channelId);
     function onControlHookCallback(payload: Payload<'control:hook_callback'>) {
       if (!guard(payload)) return;
-      resetStreamingRefs();
-      setControls((prev) => [
-        ...prev,
+      addControlAndMessage(
         {
           requestId: payload.requestId,
           subtype: 'hook_callback',
@@ -137,22 +138,17 @@ export function ChannelControlProvider({
           input: payload.input,
           toolUseId: payload.toolUseId,
         },
-      ]);
-      setChannelState((s) => ({
-        ...s,
-        messages: [
-          ...s.messages,
-          msg({
-            role: 'system',
-            type: 'pending_action',
-            content: `Hook callback: ${payload.callbackId}`,
-            meta: { requestId: payload.requestId, input: payload.input },
-          }),
-        ],
-      }));
+        'system',
+        `Hook callback: ${payload.callbackId}`,
+      );
     }
+
+    socket.on('control:permission', onControlPermission);
     socket.on('control:hook_callback', onControlHookCallback);
-    return () => { socket.off('control:hook_callback', onControlHookCallback); };
+    return () => {
+      socket.off('control:permission', onControlPermission);
+      socket.off('control:hook_callback', onControlHookCallback);
+    };
   }, [channelId, socket, setChannelState, resetStreamingRefs]);
 
   // ── Special: session:closed (reset + parent state) ──

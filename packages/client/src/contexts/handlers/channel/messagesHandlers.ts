@@ -10,6 +10,12 @@ import { openUrl } from '../../../utils/open-url';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
+// ── Helper ──
+
+function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
+  return { ...state, messages: [...state.messages, msg(fields)] };
+}
+
 // ══════════════════════════════════════════════════════════
 // State handlers: (state, payload) → newState
 // Pure functions — no setState, no socket, no side effects.
@@ -24,27 +30,11 @@ function onMessageUser(state: ChannelState, p: Payload<'message:user'>): Channel
 // ── Stream ──
 
 function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({ role: 'assistant', type: 'streamlined_text', content: p.text }),
-    ],
-  };
+  return addMessage(state, { role: 'assistant', type: 'streamlined_text', content: p.text });
 }
 
 function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summary'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({
-        role: 'assistant',
-        type: 'streamlined_tool_use_summary',
-        content: p.toolSummary,
-      }),
-    ],
-  };
+  return addMessage(state, { role: 'assistant', type: 'streamlined_tool_use_summary', content: p.toolSummary });
 }
 
 // ── Session ──
@@ -71,18 +61,12 @@ function onCompactBoundary(state: ChannelState, _p: Payload<'system:compact_boun
 }
 
 function onHookStarted(state: ChannelState, p: Payload<'system:hook_started'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({
-        role: 'system',
-        type: 'hook_started',
-        content: p.hook.hookName,
-        meta: { hookId: p.hook.hookId, hookEvent: p.hook.hookEvent },
-      }),
-    ],
-  };
+  return addMessage(state, {
+    role: 'system',
+    type: 'hook_started',
+    content: p.hook.hookName,
+    meta: { hookId: p.hook.hookId, hookEvent: p.hook.hookEvent },
+  });
 }
 
 function onHookResponse(state: ChannelState, p: Payload<'system:hook_response'>): ChannelState {
@@ -112,18 +96,7 @@ function onHookResponse(state: ChannelState, p: Payload<'system:hook_response'>)
 }
 
 function onTaskStarted(state: ChannelState, p: Payload<'system:task_started'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({
-        role: 'system',
-        type: 'task_started',
-        content: p.description,
-        meta: { taskType: p.taskType },
-      }),
-    ],
-  };
+  return addMessage(state, { role: 'system', type: 'task_started', content: p.description, meta: { taskType: p.taskType } });
 }
 
 function onApiRetry(state: ChannelState, p: Payload<'system:api_retry'>): ChannelState {
@@ -148,10 +121,7 @@ function onRateLimit(state: ChannelState, p: Payload<'system:rate_limit'>): Chan
 // ── Error ──
 
 function onErrorMessage(state: ChannelState, p: Payload<'error:message'>): ChannelState {
-  return {
-    ...state,
-    messages: [...state.messages, msg({ role: 'system', type: 'error', content: p.message })],
-  };
+  return addMessage(state, { role: 'system', type: 'error', content: p.message });
 }
 
 // ── File / Plan ──
@@ -177,10 +147,7 @@ function onPlanCommentRemoved(state: ChannelState, p: Payload<'plan:comment_remo
 // ── Notification / Raw (state part) ──
 
 function onNotificationShow(state: ChannelState, p: Payload<'notification:show'>): ChannelState {
-  return {
-    ...state,
-    messages: [...state.messages, msg({ role: 'system', type: 'text', content: p.message })],
-  };
+  return addMessage(state, { role: 'system', type: 'text', content: p.message });
 }
 
 function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState {

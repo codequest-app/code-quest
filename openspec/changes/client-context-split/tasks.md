@@ -26,26 +26,22 @@
 兩個 useEffect 各自定義 removePlaceholder, appendOrCreateText — 完全相同。
 提到 useEffect 外面共享。
 
-- [ ] 19.1 在 ChannelMessagesContext 把 streaming helper 提到 useEffect 外（用 useCallback 或 ref）
-- [ ] 19.2 stream:chunk 和 message:assistant 共用同一組 helper
-- [ ] 19.3 typecheck + 615 test pass
+- [x] 19.1-19.2 stream:chunk + stream:end + message:assistant 合成一個 useEffect，共用 streaming helpers
+- [x] 19.3 typecheck + 615 test pass
 
 ## 20. ControlContext 提取 addControlAndMessage helper
 
 control:permission 和 control:hook_callback 邏輯幾乎一樣。
 提取共用 function。
 
-- [ ] 20.1 在 ChannelControlContext 提取 `addControlAndMessage(control, messageFields)` helper
-- [ ] 20.2 control:permission 和 control:hook_callback 改用
-- [ ] 20.3 typecheck + 615 test pass
+- [x] 20.1-20.2 addControlAndMessage helper，permission + hook_callback 合成一個 useEffect
+- [x] 20.3 typecheck + 615 test pass
 
 ## 21. messagesHandlers 提取 addMessage helper
 
-`{ ...state, messages: [...state.messages, msg(...)] }` 重複 20+ 次。
-
-- [ ] 21.1 提取 `addMessage(state, msgFields)` helper
-- [ ] 21.2 所有 handler 改用
-- [ ] 21.3 typecheck + 615 test pass
+- [x] 21.1 addMessage(state, msgFields) helper
+- [x] 21.2 6 個 simple handler 改用（streamText, streamToolSummary, hookStarted, taskStarted, errorMessage, notificationShow）
+- [x] 21.3 typecheck + 615 test pass
 
 ## 22. configHandlers onSettingsUpdate 簡化
 
