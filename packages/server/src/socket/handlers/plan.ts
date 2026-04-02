@@ -26,18 +26,29 @@ export function create(emitter: ChannelEmitter): PlanApi {
     return list;
   }
 
-  function addComment(_ch: Channel | null, payload: unknown, socket?: TypedSocket, cb?: SocketCallback): void {
+  function addComment(
+    _ch: Channel | null,
+    payload: unknown,
+    socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
     try {
       const { channelId, comment } = planCommentSchema.parse(payload);
       getOrCreate(channelId).push(comment);
       cb?.({ success: true });
-      if (socket) emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
+      if (socket)
+        emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to add comment') });
     }
   }
 
-  function getComments(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
+  function getComments(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
     try {
       const { channelId } = planGetCommentsSchema.parse(payload);
       cb?.({ comments: commentsMap.get(channelId) ?? [] });
@@ -46,7 +57,12 @@ export function create(emitter: ChannelEmitter): PlanApi {
     }
   }
 
-  function removeComment(_ch: Channel | null, payload: unknown, socket?: TypedSocket, cb?: SocketCallback): void {
+  function removeComment(
+    _ch: Channel | null,
+    payload: unknown,
+    socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
     try {
       const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
       const comments = commentsMap.get(channelId);
@@ -61,19 +77,28 @@ export function create(emitter: ChannelEmitter): PlanApi {
       }
       comments.splice(idx, 1);
       cb?.({ success: true });
-      if (socket) emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', { channelId, commentId });
+      if (socket)
+        emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', {
+          channelId,
+          commentId,
+        });
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to remove comment') });
     }
   }
 
-  function closePreview(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
+  function closePreview(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
     try {
       const { channelId } = planClosePreviewSchema.parse(payload);
       commentsMap.delete(channelId);
       cb?.({ success: true });
-    } catch {
-      cb?.({ success: true });
+    } catch (err) {
+      cb?.({ success: false, error: errMsg(err, 'Failed to close preview') });
     }
   }
 
