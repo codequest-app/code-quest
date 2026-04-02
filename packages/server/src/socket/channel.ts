@@ -51,6 +51,7 @@ export class Channel {
   private _sessionState: SessionState = {};
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
+  workspaceFolder: string | undefined;
   lastError: string | undefined;
   exited = false;
 
@@ -225,7 +226,11 @@ export class Channel {
       if (init.sessionId) {
         this.sessionId = init.sessionId;
       }
-      this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
+      const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
+      if (initCwd) {
+        this.workspaceFolder = initCwd;
+      }
+      this.updateSessionState(initConfig);
       this.updateMetaCache(
         pickDefined({
           model: init.model,

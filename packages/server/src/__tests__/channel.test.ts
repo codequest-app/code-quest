@@ -63,8 +63,8 @@ describe('Channel', () => {
     it('merges partial state', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
       channel.updateSessionState({ model: 'claude-sonnet-4-6' });
-      channel.updateSessionState({ cwd: '/home' });
-      expect(channel.sessionState).toEqual({ model: 'claude-sonnet-4-6', cwd: '/home' });
+      channel.updateSessionState({ effort: 'high' });
+      expect(channel.sessionState).toEqual({ model: 'claude-sonnet-4-6', effort: 'high' });
     });
 
     it('replaces existing keys', () => {

@@ -28,13 +28,13 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
-      const baseCwd = cwd ?? (String(existingChannel?.sessionState.cwd ?? '') || process.cwd());
+      const baseCwd = cwd ?? (existingChannel?.workspaceFolder ?? process.cwd());
 
       const newChannelId = crypto.randomUUID();
       const { channel: ch } = await channelManager.create(newChannelId, {
         onBeforeSpawn: (c) => { if (socket) channelManager.addSocketToChannel(c, socket); },
       });
-      ch.updateSessionState({ cwd: baseCwd });
+      ch.workspaceFolder = baseCwd;
 
       channelManager.broadcastSessionState(newChannelId, 'idle');
 

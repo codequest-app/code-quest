@@ -66,7 +66,7 @@ export function create(
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
     }
     if (parsed.cwd) {
-      channel.updateSessionState({ cwd: parsed.cwd });
+      channel.workspaceFolder = parsed.cwd;
     }
   }
 

@@ -199,9 +199,10 @@ export class ChannelManager {
       ],
     });
 
+    const ch = this.channels.get(channelId);
     const settings = pickDefined({
       modelSetting: ss.model,
-      defaultCwd: ss.cwd,
+      defaultCwd: ch?.workspaceFolder,
       initialPermissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,
       mcpServers: ss.mcpServers,
