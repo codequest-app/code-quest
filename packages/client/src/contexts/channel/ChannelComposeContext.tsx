@@ -12,7 +12,7 @@ import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
 import { composeHandlers } from '../handlers/channel/composeHandlers';
-import { createGuard } from '../handlers/channel/guard';
+import { wireHandlers } from '../handlers/channel/guard';
 import { useChannelMessages } from './ChannelMessagesContext';
 
 export interface ChannelComposeContextValue {
@@ -67,21 +67,7 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = createGuard(channelId);
-    const entries = Object.entries(composeHandlers) as Array<
-      [string, (state: ComposeState, payload: never) => ComposeState]
-    >;
-    const wired = entries.map(([event, handler]) => {
-      const fn = (payload: { channelId: string }) => {
-        if (!guard(payload)) return;
-        setState((prev) => handler(prev, payload as never));
-      };
-      socket.on(event as never, fn as never);
-      return { event, fn };
-    });
-    return () => {
-      for (const { event, fn } of wired) socket.off(event as never, fn as never);
-    };
+    return wireHandlers(socket, channelId, composeHandlers, setState);
   }, [channelId, socket]);
 
   const { value, cursorPos, slashOpen, attachedFiles } = state;

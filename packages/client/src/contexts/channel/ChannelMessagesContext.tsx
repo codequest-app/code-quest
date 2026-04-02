@@ -19,7 +19,7 @@ import {
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
-import { createGuard } from '../handlers/channel/guard';
+import { createGuard, wireHandlers } from '../handlers/channel/guard';
 import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from '../handlers/channel/messagesHandlers';
 import { streamingAppendOrCreate, streamingAppendToLast, streamingRemovePlaceholder } from '../handlers/channel/streamingHelpers';
 
@@ -185,40 +185,14 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
 
-    const guard = createGuard(channelId);
-    const effectDeps: EffectDeps = { socket, channelId };
-    const resetEvents = new Set([
-      'system:compact_boundary',
-      'error:message',
-      'stream:text',
-      'stream:tool_summary',
-    ]);
+    const resetEvents = new Set(['system:compact_boundary', 'error:message', 'stream:text', 'stream:tool_summary']);
 
-    // Collect all events from both maps (state + effect)
-    const allEvents = new Set([
-      ...Object.keys(messagesHandlers),
-      ...Object.keys(messagesEffects),
-    ]);
-
-    const wired = [...allEvents].map((event) => {
-      const stateHandler = (messagesHandlers as Record<string, ((s: ChannelState, p: never) => ChannelState) | undefined>)[event];
-      const effectHandler = (messagesEffects as Record<string, ((d: EffectDeps, p: never) => void) | undefined>)[event];
-
-      const fn = (payload: { channelId: string }) => {
-        if (event !== 'disconnect' && !guard(payload)) return;
-        if (resetEvents.has(event)) resetStreamingRefs();
-        if (stateHandler) setChannelState((prev) => stateHandler(prev, payload as never));
-        if (effectHandler) effectHandler(effectDeps, payload as never);
-      };
-      socket.on(event as never, fn as never);
-      return { event, fn };
+    return wireHandlers<ChannelState, EffectDeps>(socket, channelId, messagesHandlers, setChannelState, {
+      skipGuard: new Set(['disconnect']),
+      beforeUpdate(event) { if (resetEvents.has(event)) resetStreamingRefs(); },
+      effects: messagesEffects,
+      effectDeps: { socket, channelId },
     });
-
-    return () => {
-      for (const { event, fn } of wired) {
-        socket.off(event as never, fn as never);
-      }
-    };
   }, [channelId, socket, resetStreamingRefs]);
 
   // ── Special: stream:chunk (ref-based, cannot be a pure handler) ──

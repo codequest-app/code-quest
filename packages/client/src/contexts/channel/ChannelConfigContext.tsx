@@ -1,7 +1,7 @@
 import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../SocketContext';
-import { createGuard } from '../handlers/channel/guard';
+import { wireHandlers } from '../handlers/channel/guard';
 import {
   configHandlers,
   createConfigActions,
@@ -122,25 +122,7 @@ export function ChannelConfigProvider({
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = createGuard(channelId);
-
-    const entries = Object.entries(configHandlers) as Array<
-      [string, (state: ConfigState, payload: never) => ConfigState]
-    >;
-    const wired = entries.map(([event, handler]) => {
-      const fn = (payload: { channelId: string }) => {
-        if (!guard(payload)) return;
-        setConfigState((prev) => handler(prev, payload as never));
-      };
-      socket.on(event as never, fn as never);
-      return { event, fn };
-    });
-
-    return () => {
-      for (const { event, fn } of wired) {
-        socket.off(event as never, fn as never);
-      }
-    };
+    return wireHandlers(socket, channelId, configHandlers, setConfigState);
   }, [channelId, socket]);
 
   // ── Special: session:states (needs channelId for matching) ──

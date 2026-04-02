@@ -5,54 +5,64 @@
 - socket.on/off handler 使用 named function（不用 inline arrow）
 - 每步 615 test pass
 
-## 1-11. Handler 抽取 + auto-wiring + effects + named function（已完成）
+## 1-17. Handler 抽取 + state 拆分 + 整理（已完成）
 
 - [x] 全部完成，詳見 git history
 
-## 12. handlers/ 搬到 contexts/handlers/channel/（已完成）
+## 18. 提取 auto-wiring utility
 
-- [x] 12.1-12.3 搬完 + import 更新
-- TabContext / SessionContext 留到之後
+4 個 context 重複 ~15 行相同的 socket.on/off + guard + cleanup loop。
+提取到 guard.ts 或獨立 utility。
 
-## 13. ChannelState 拆分 — 把不屬於 message 的 state 搬到對的 context
+- [x] 18.1 wireHandlers function（支援 state handlers + effects + beforeUpdate + skipGuard）
+- [x] 18.2 ChannelMessagesContext 改用 wireHandlers（~30 行 → 8 行）
+- [x] 18.3 ChannelControlContext 留到 23 統一 full state 後再改
+- [x] 18.4 ChannelConfigContext 改用 wireHandlers（~20 行 → 3 行）
+- [x] 18.5 ChannelComposeContext 改用 wireHandlers（~15 行 → 3 行）
+- [x] 18.6 typecheck + 615 test pass
 
-ChannelState 目前持有 12 個欄位，其中 accountInfo, experimentGates
-屬於 config/global，不屬於 messages。
-搬到 ChannelConfigContext 後，對應的 handler 也一起搬。
+## 19. 消除 stream:chunk 和 message:assistant 的重複 helper
 
-- [x] 13.1-13.4 accountInfo + experimentGates 搬到 ConfigState + configHandlers
-- [x] 13.5 ComposeToolbar 改用 useChannelConfig 取 accountInfo，ReviewUpsellBanner 改用 useChannelConfig 取 experimentGates
-- [x] 13.6-13.7 ChannelMessagesValue + ChannelState 移除 accountInfo/experimentGates
-- [x] 13.8 typecheck + 615 test pass + inline import 修正
+兩個 useEffect 各自定義 removePlaceholder, appendOrCreateText — 完全相同。
+提到 useEffect 外面共享。
 
-## 14. usageQuota/contextUsage 搬到 ChannelConfigContext
+- [ ] 19.1 在 ChannelMessagesContext 把 streaming helper 提到 useEffect 外（用 useCallback 或 ref）
+- [ ] 19.2 stream:chunk 和 message:assistant 共用同一組 helper
+- [ ] 19.3 typecheck + 615 test pass
 
-- [x] 14.1 usageQuota, contextUsage 搬到 ConfigState
-- [x] 14.2 settings:usage handler + requestUsageUpdate action 搬到 configHandlers
-- [x] 14.3 system:rate_limit 拆分：usageQuota 部分 → configHandlers，message 部分留 messagesHandlers
-- [x] 14.4 ComposeToolbar 改用 useChannelConfig 取 usageQuota/contextUsage/requestUsageUpdate
-- [x] 14.5 typecheck + 615 test pass
+## 20. ControlContext 提取 addControlAndMessage helper
 
-## 15. modifiedFiles/planComments 評估
+control:permission 和 control:hook_callback 邏輯幾乎一樣。
+提取共用 function。
 
-modifiedFiles 和 planComments 目前在 ChannelMessagesContext。
-評估是否值得拆成獨立 context（看消費端有多少 component 只用這兩個欄位）。
+- [ ] 20.1 在 ChannelControlContext 提取 `addControlAndMessage(control, messageFields)` helper
+- [ ] 20.2 control:permission 和 control:hook_callback 改用
+- [ ] 20.3 typecheck + 615 test pass
 
-- [x] 15.1 modifiedFiles 消費端：ChatInputArea（1 個），planComments 消費端：PlanReviewBanner（1 個）
-- [x] 15.2 決定：留在 ChannelMessagesContext（消費端太少，不值得拆）
+## 21. messagesHandlers 提取 addMessage helper
 
-## 16. messagesHandlers 內容整理
+`{ ...state, messages: [...state.messages, msg(...)] }` 重複 20+ 次。
 
-handler 搬完後，messagesHandlers.ts 應該只剩真正屬於 message 的 handler。
-整理 handler 分組順序和註解。
+- [ ] 21.1 提取 `addMessage(state, msgFields)` helper
+- [ ] 21.2 所有 handler 改用
+- [ ] 21.3 typecheck + 615 test pass
 
-- [x] 16.1 messagesHandlers 剩 message/stream/session/system/file/plan/notification/raw — 合理（不拆 files/plan context）
-- [x] 16.2 handler 按 domain 分組（message → stream → session → system → error → file/plan → notification/raw）+ 分隔註解
-- [x] 16.3 streaming helpers 搬到 `handlers/channel/streamingHelpers.ts`
-- [x] 16.4 guard 提取為 `handlers/channel/guard.ts` createGuard，所有 context 統一使用
-- [x] 16.5 typecheck + 615 test pass
+## 22. configHandlers onSettingsUpdate 簡化
 
-## 17. 清理
+9 個 `if (payload.X !== undefined) update.X = payload.X` 重複 pattern。
 
-- [x] 17.1 Contexts 1,801→1,079 行（-40%），ChannelMessagesContext 999→432（-57%）。handlers 995 行 + guard 9 行 + streamingHelpers 51 行
-- [x] 17.2 615 test pass
+- [ ] 22.1 改用 key mapping 或 pickDefined helper
+- [ ] 22.2 typecheck + 615 test pass
+
+## 23. controlHandlers 統一回傳 full state
+
+目前回傳 `Partial<ControlState>`，其他 handler 回傳 full state。
+統一為 full state。
+
+- [ ] 23.1 controlHandlers on handlers 改回傳 full ControlState
+- [ ] 23.2 ChannelControlContext auto-wiring 改為直接 setState（不 merge patch）
+- [ ] 23.3 typecheck + 615 test pass
+
+## 24. 清理
+
+- [ ] 24.1 biome check + typecheck + 615 test pass
