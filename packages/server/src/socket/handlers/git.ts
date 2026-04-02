@@ -7,16 +7,19 @@ import {
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
+import type { Channel } from '../channel.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SessionHistory } from '../session-history.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { checkoutBranch, execGit } from '../utils/exec-git.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export function create(
   sessionHistory: SessionHistory,
   rawEventStore: RawEventStore,
-): SocketHandler {
-  function handleStatus(callback: SocketCallback): void {
+  emitter: ChannelEmitter,
+): void {
+  function handleStatus(_ch: Channel | null, _payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
     Promise.all([
       execGit(['rev-parse', '--abbrev-ref', 'HEAD']),
       execGit(['status', '--porcelain']),
@@ -28,24 +31,24 @@ export function create(
           status: line.substring(0, 2).trim(),
           file: line.substring(3),
         }));
-        callback({ branch, isClean: changedFiles.length === 0, changedFiles });
+        callback?.({ branch, isClean: changedFiles.length === 0, changedFiles });
       })
       .catch(() => {
-        callback({ branch: 'unknown', isClean: true, changedFiles: [] });
+        callback?.({ branch: 'unknown', isClean: true, changedFiles: [] });
       });
   }
 
-  async function handleCheckout(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleCheckout(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const { branch } = gitCheckoutSchema.parse(payload);
       await checkoutBranch(branch);
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to checkout') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to checkout') });
     }
   }
 
-  async function handleLog(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleLog(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const { limit } = gitLogSchema.parse(payload);
       const n = limit ?? 20;
@@ -58,24 +61,26 @@ export function create(
           const [hash, message, author, date] = line.split('|');
           return { hash, message, author, date };
         });
-      callback({ entries });
+      callback?.({ entries });
     } catch {
-      callback({ entries: [] });
+      callback?.({ entries: [] });
     }
   }
 
-  async function handleDiff(callback: SocketCallback): Promise<void> {
+  async function handleDiff(_ch: Channel | null, _payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const diff = await execGit(['diff']);
-      callback({ diff });
+      callback?.({ diff });
     } catch {
-      callback({ diff: '' });
+      callback?.({ diff: '' });
     }
   }
 
   async function handleUpdateSkippedBranch(
+    _ch: Channel | null,
     payload: unknown,
-    callback: SocketCallback,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
@@ -88,13 +93,13 @@ export function create(
         seq: 0,
       };
       await rawEventStore.append(entry);
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to update skipped branch') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to update skipped branch') });
     }
   }
 
-  function handleExec(payload: unknown, callback: SocketCallback): void {
+  function handleExec(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
     try {
       const { command, args } = gitExecSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
@@ -102,20 +107,16 @@ export function create(
         timeout: 30_000,
         encoding: 'utf-8',
       });
-      callback({ exitCode: status ?? -1, stdout: stdout ?? '', stderr: stderr ?? '' });
+      callback?.({ exitCode: status ?? -1, stdout: stdout ?? '', stderr: stderr ?? '' });
     } catch (err) {
-      callback({ exitCode: -1, stdout: '', stderr: errMsg(err, 'Failed to execute command') });
+      callback?.({ exitCode: -1, stdout: '', stderr: errMsg(err, 'Failed to execute command') });
     }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('git:status', handleStatus);
-      socket.on('git:checkout', handleCheckout);
-      socket.on('git:log', handleLog);
-      socket.on('git:diff', handleDiff);
-      socket.on('git:update_skipped_branch', handleUpdateSkippedBranch);
-      socket.on('git:exec', handleExec);
-    },
-  };
+  emitter.on('git:status', handleStatus);
+  emitter.on('git:checkout', handleCheckout);
+  emitter.on('git:log', handleLog);
+  emitter.on('git:diff', handleDiff);
+  emitter.on('git:update_skipped_branch', handleUpdateSkippedBranch);
+  emitter.on('git:exec', handleExec);
 }
