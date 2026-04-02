@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -91,7 +91,7 @@ export function FileViewerConnected({ filePath, emit }: FileViewerConnectedProps
     loading: true,
   });
 
-  const fetchFile = useCallback(() => {
+  useEffect(() => {
     setState({ loading: true });
     emit('file:read', { filePath }, (res: unknown) => {
       const r = res as { content?: string; error?: string };
@@ -102,10 +102,6 @@ export function FileViewerConnected({ filePath, emit }: FileViewerConnectedProps
       }
     });
   }, [emit, filePath]);
-
-  useEffect(() => {
-    fetchFile();
-  }, [fetchFile]);
 
   return <FileViewer filePath={filePath} {...state} />;
 }

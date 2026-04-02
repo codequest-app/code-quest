@@ -1,6 +1,6 @@
 import type { PlanCommentData } from '@code-quest/shared';
 import { flip, shift, useFloating } from '@floating-ui/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface PlanCommentOverlayProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -21,7 +21,7 @@ export function PlanCommentOverlay({ containerRef, onAddComment }: PlanCommentOv
     middleware: [flip(), shift()],
   });
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !containerRef.current) {
       setSelection(null);
@@ -45,14 +45,15 @@ export function PlanCommentOverlay({ containerRef, onAddComment }: PlanCommentOv
       getBoundingClientRect: () => range.getBoundingClientRect(),
     });
     setSelection({ text });
-  }, [containerRef, refs]);
+  };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleMouseUp stable via React Compiler
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     container.addEventListener('mouseup', handleMouseUp);
     return () => container.removeEventListener('mouseup', handleMouseUp);
-  }, [containerRef, handleMouseUp]);
+  }, [containerRef]); // handleMouseUp stable via React Compiler
 
   useEffect(() => {
     if (selection) {

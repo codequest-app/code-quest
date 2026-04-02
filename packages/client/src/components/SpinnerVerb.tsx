@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
 const ICON_CYCLE = [...ICONS, ...[...ICONS].reverse()];
@@ -74,14 +74,15 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
   }, []);
 
   // Change verb on schedule: 2s, 3s, 5s, then every 5s
-  const scheduleNextVerb = useCallback(() => {
+  const scheduleNextVerb = () => {
     const delays = [2000, 3000, 5000];
     const count = verbTimerRef.current;
     const delay = count < delays.length ? delays[count] : 5000;
     verbTimerRef.current++;
     return delay;
-  }, []);
+  };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scheduleNextVerb stable via React Compiler
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
@@ -90,7 +91,7 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
     };
     timer = setTimeout(tick, scheduleNextVerb());
     return () => clearTimeout(timer);
-  }, [verbs, scheduleNextVerb]);
+  }, [verbs]); // scheduleNextVerb stable via React Compiler
 
   const displayText = statusText ?? verb;
 

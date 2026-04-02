@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
@@ -60,14 +60,14 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   });
   const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
-  const mcpRefresh = useCallback(async () => {
+  const mcpRefresh = async () => {
     const result = await mcpStatusRef.current();
     if (result.success && result.response?.mcpServers) {
       setEnrichedMcpServers(result.response.mcpServers as McpServerInfo[]);
     } else {
       setEnrichedMcpServers(null);
     }
-  }, []);
+  };
   const mcpServers = enrichedMcpServers ?? baseMcpServers;
 
   type ActiveDialog =
@@ -99,11 +99,12 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   }, [finalTranscript, compose.insertSlashCommand, resetTranscript]);
 
   // Auto-refresh MCP status when dialog opens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
   useEffect(() => {
     if (activeDialog === 'mcpStatus' && !enrichedMcpServers) {
       mcpRefresh();
     }
-  }, [activeDialog, enrichedMcpServers, mcpRefresh]);
+  }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
 
   useEffect(() => {
     if (activeDialog !== 'modelPicker') return;
