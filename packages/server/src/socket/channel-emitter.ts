@@ -77,10 +77,10 @@ export class ChannelEmitter {
    * Dispatch a runner socket_event.
    * Auto-broadcasts to channel sockets (except session:init).
    */
-  dispatchRunnerEvent(channelId: string, ch: Channel, event: string, payload: unknown): void {
+  dispatchRunnerEvent(ch: Channel, event: string, payload: unknown): void {
     if (event !== 'session:init') {
       const data = typeof payload === 'object' && payload !== null ? payload : {};
-      this.emit(channelId, event, { channelId, ...(data as Record<string, unknown>) });
+      this.emit(ch.id, event, { channelId: ch.id, ...(data as Record<string, unknown>) });
     }
     this.dispatch(event, ch, payload);
   }
@@ -95,7 +95,12 @@ export class ChannelEmitter {
     }
   }
 
-  emitToOthers(channelId: string, excludeSocketId: string, event: string, ...args: unknown[]): void {
+  emitToOthers(
+    channelId: string,
+    excludeSocketId: string,
+    event: string,
+    ...args: unknown[]
+  ): void {
     const sockets = this.channelSockets.get(channelId);
     if (!sockets) return;
     for (const sock of sockets) {
@@ -168,9 +173,10 @@ export class ChannelEmitter {
         } else {
           payload = args[0] ?? {};
         }
-        const channelId = typeof payload === 'object' && payload !== null && 'channelId' in payload
-          ? String((payload as Record<string, unknown>).channelId)
-          : undefined;
+        const channelId =
+          typeof payload === 'object' && payload !== null && 'channelId' in payload
+            ? String((payload as Record<string, unknown>).channelId)
+            : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
         return this.dispatch(event, ch, payload, socket, cb);
       });
