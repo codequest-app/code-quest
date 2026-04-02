@@ -9,7 +9,10 @@ function onPlanCommentAdded(state: ChannelState, p: Payload<'plan:comment_added'
   return { ...state, planComments: [...state.planComments, p.comment] };
 }
 
-function onPlanCommentRemoved(state: ChannelState, p: Payload<'plan:comment_removed'>): ChannelState {
+function onPlanCommentRemoved(
+  state: ChannelState,
+  p: Payload<'plan:comment_removed'>,
+): ChannelState {
   return { ...state, planComments: state.planComments.filter((c) => c.id !== p.commentId) };
 }
 

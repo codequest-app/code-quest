@@ -2,6 +2,7 @@ import type { ServerToClientEvents } from '@code-quest/shared';
 import type { TypedSocket } from '../../../socket/client';
 import { rpc } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
+import { isRecord } from '../../../utils/is-record';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -23,10 +24,6 @@ export const sessionHandlerOn = {
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
 // ── Actions (emit) ──
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
 
 interface SessionActionsDeps {
   socket: TypedSocket;

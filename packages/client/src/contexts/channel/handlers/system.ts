@@ -10,9 +10,16 @@ function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): Cha
 
 // ── On handlers ──
 
-function onCompactBoundary(state: ChannelState, _p: Payload<'system:compact_boundary'>): ChannelState {
+function onCompactBoundary(
+  state: ChannelState,
+  _p: Payload<'system:compact_boundary'>,
+): ChannelState {
   return {
-    ...addMessage(state, { role: 'system', type: 'compact_boundary', content: 'Context was compressed' }),
+    ...addMessage(state, {
+      role: 'system',
+      type: 'compact_boundary',
+      content: 'Context was compressed',
+    }),
     isContextCompressed: true,
   };
 }
@@ -53,7 +60,12 @@ function onHookResponse(state: ChannelState, p: Payload<'system:hook_response'>)
 }
 
 function onTaskStarted(state: ChannelState, p: Payload<'system:task_started'>): ChannelState {
-  return addMessage(state, { role: 'system', type: 'task_started', content: p.description, meta: { taskType: p.taskType } });
+  return addMessage(state, {
+    role: 'system',
+    type: 'task_started',
+    content: p.description,
+    meta: { taskType: p.taskType },
+  });
 }
 
 function onApiRetry(state: ChannelState, p: Payload<'system:api_retry'>): ChannelState {

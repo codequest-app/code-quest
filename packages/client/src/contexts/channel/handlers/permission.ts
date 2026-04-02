@@ -2,8 +2,12 @@ import type { ControlPermissionResponse, ServerToClientEvents } from '@code-ques
 import type { MutableRefObject } from 'react';
 import type { TypedSocket } from '../../../socket/client';
 import { channelEmit } from '../../../socket/rpc';
-import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../../types/chat';
-import type { ChannelState } from '../../../types/chat';
+import type {
+  ChannelState,
+  PendingControl,
+  PendingDiffReview,
+  PendingElicitation,
+} from '../../../types/chat';
 import { getFeedbackLabel } from '../../../utils/feedback-label';
 import { msg } from '../../../utils/message';
 

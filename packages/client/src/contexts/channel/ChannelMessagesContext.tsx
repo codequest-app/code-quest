@@ -17,31 +17,69 @@ import {
   useState,
 } from 'react';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
+import { isRecord } from '../../utils/is-record';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
-import { createFileActions } from '../handlers/channel/fileHandler';
-import { createGuard, wireHandlers } from '../handlers/channel/guard';
-import { createMessageActions, messageHandlerOn } from '../handlers/channel/messageHandler';
+import { useSocket } from '../SocketContext';
+import { createFileActions } from './handlers/file';
+import { createGuard, wireHandlers } from './handlers/guard';
+import { createMessageActions, messageHandlerOn } from './handlers/message';
 import {
   type EffectDeps,
   notificationHandlerEffects,
   notificationHandlerOn,
-} from '../handlers/channel/notificationHandler';
-import { createPlanActions, planHandlerOn } from '../handlers/channel/planHandler';
-import { createSessionActions, sessionHandlerOn } from '../handlers/channel/sessionHandler';
-import {
-  streamingAppendOrCreate,
-  streamingAppendToLast,
-  streamingRemovePlaceholder,
-} from '../handlers/channel/streamingHelpers';
-import { systemHandlerOn } from '../handlers/channel/systemHandler';
-import { useSocket } from '../SocketContext';
+} from './handlers/notification';
+import { createPlanActions, planHandlerOn } from './handlers/plan';
+import { createSessionActions, sessionHandlerOn } from './handlers/session';
+import { systemHandlerOn } from './handlers/system';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
+function streamingRemovePlaceholder(setState: SetChannelState): void {
+  setState((prev) => {
+    if (
+      prev.messages.length > 0 &&
+      prev.messages[prev.messages.length - 1].type === 'content_block_start'
+    ) {
+      return { ...prev, messages: prev.messages.slice(0, -1) };
+    }
+    return prev;
+  });
+}
+
+function streamingAppendToLast(setState: SetChannelState, content: string): void {
+  setState((prev) => {
+    if (prev.messages.length === 0) return prev;
+    const msgs = [...prev.messages];
+    msgs[msgs.length - 1] = {
+      ...msgs[msgs.length - 1],
+      content: msgs[msgs.length - 1].content + content,
+    };
+    return { ...prev, messages: msgs };
+  });
+}
+
+function streamingAppendOrCreate(
+  setState: SetChannelState,
+  isTextStreaming: RefObject<boolean>,
+  removePlaceholder: () => void,
+  content: string,
+  parentToolUseId?: string,
+): void {
+  removePlaceholder();
+  if (isTextStreaming.current) {
+    streamingAppendToLast(setState, content);
+  } else {
+    isTextStreaming.current = true;
+    setState((prev) => ({
+      ...prev,
+      messages: [
+        ...prev.messages,
+        msg({ role: 'assistant', type: 'text', content, parentToolUseId }),
+      ],
+    }));
+  }
 }
 
 export interface ChannelMessagesValue {
@@ -241,80 +279,81 @@ export function ChannelMessagesProvider({
         parentToolUseId,
       );
 
-    // ── stream:chunk ──
+    // ── stream:chunk handlers by kind ──
+    function handleTextChunk(content: string, parentToolUseId?: string) {
+      isThinkingStreaming.current = false;
+      wasStreamedViaDelta.current = true;
+      appendOrCreateText(content, parentToolUseId);
+    }
+
+    function handleThinkingChunk(content: string, parentToolUseId?: string) {
+      removePlaceholder();
+      if (isThinkingStreaming.current) {
+        appendToLastMessage(content);
+        return;
+      }
+      isThinkingStreaming.current = true;
+      isTextStreaming.current = false;
+      wasStreamedViaDelta.current = false;
+      setState((prev) => ({
+        ...prev,
+        messages: [
+          ...prev.messages,
+          msg({ role: 'assistant', type: 'thinking', content, parentToolUseId }),
+        ],
+      }));
+    }
+
+    function handleInputJsonChunk(content: string) {
+      setState((prev) => {
+        let lastToolUse: (typeof prev.messages)[number] | undefined;
+        for (let i = prev.messages.length - 1; i >= 0; i--) {
+          if (prev.messages[i].type === 'tool_use') {
+            lastToolUse = prev.messages[i];
+            break;
+          }
+        }
+        if (!lastToolUse) return prev;
+        const partial =
+          typeof lastToolUse.meta?.partialInput === 'string' ? lastToolUse.meta.partialInput : '';
+        return {
+          ...prev,
+          messages: prev.messages.map((m) =>
+            m.id === lastToolUse.id
+              ? { ...m, meta: { ...m.meta, partialInput: partial + content } }
+              : m,
+          ),
+        };
+      });
+    }
+
+    function handleCitationsChunk(citations: unknown[] | undefined) {
+      if (!citations?.length) return;
+      setState((prev) => {
+        if (prev.messages.length === 0) return prev;
+        const ms = [...prev.messages];
+        const last = ms[ms.length - 1];
+        const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
+        ms[ms.length - 1] = {
+          ...last,
+          meta: { ...last.meta, citations: [...existing, ...citations] },
+        };
+        return { ...prev, messages: ms };
+      });
+    }
+
     function onStreamChunk(p: Payload<'stream:chunk'>) {
       if (!guard(p)) return;
       const { chunk, parentToolUseId } = p;
       switch (chunk.kind) {
         case 'text':
-          isThinkingStreaming.current = false;
-          wasStreamedViaDelta.current = true;
-          appendOrCreateText(chunk.content, parentToolUseId);
-          break;
-        case 'thinking': {
-          removePlaceholder();
-          if (isThinkingStreaming.current) {
-            appendToLastMessage(chunk.content);
-          } else {
-            isThinkingStreaming.current = true;
-            isTextStreaming.current = false;
-            wasStreamedViaDelta.current = false;
-            setState((prev) => ({
-              ...prev,
-              messages: [
-                ...prev.messages,
-                msg({
-                  role: 'assistant',
-                  type: 'thinking',
-                  content: chunk.content,
-                  parentToolUseId,
-                }),
-              ],
-            }));
-          }
-          break;
-        }
+          return handleTextChunk(chunk.content, parentToolUseId);
+        case 'thinking':
+          return handleThinkingChunk(chunk.content, parentToolUseId);
         case 'input_json':
-          setState((prev) => {
-            let lastToolUse: (typeof prev.messages)[number] | undefined;
-            for (let i = prev.messages.length - 1; i >= 0; i--) {
-              if (prev.messages[i].type === 'tool_use') {
-                lastToolUse = prev.messages[i];
-                break;
-              }
-            }
-            if (!lastToolUse) return prev;
-            const partial =
-              typeof lastToolUse.meta?.partialInput === 'string'
-                ? lastToolUse.meta.partialInput
-                : '';
-            return {
-              ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === lastToolUse.id
-                  ? { ...m, meta: { ...m.meta, partialInput: partial + chunk.content } }
-                  : m,
-              ),
-            };
-          });
-          break;
+          return handleInputJsonChunk(chunk.content);
         case 'citations':
-          if (chunk.citations && chunk.citations.length > 0) {
-            setState((prev) => {
-              if (prev.messages.length === 0) return prev;
-              const ms = [...prev.messages];
-              const last = ms[ms.length - 1];
-              const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
-              ms[ms.length - 1] = {
-                ...last,
-                meta: { ...last.meta, citations: [...existing, ...(chunk.citations ?? [])] },
-              };
-              return { ...prev, messages: ms };
-            });
-          }
-          break;
-        case 'signature':
-          break;
+          return handleCitationsChunk(chunk.citations);
       }
     }
 

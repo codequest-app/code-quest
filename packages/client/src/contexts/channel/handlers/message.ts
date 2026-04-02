@@ -48,7 +48,11 @@ function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelSt
 }
 
 function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summary'>): ChannelState {
-  return addMessage(state, { role: 'assistant', type: 'streamlined_tool_use_summary', content: p.toolSummary });
+  return addMessage(state, {
+    role: 'assistant',
+    type: 'streamlined_tool_use_summary',
+    content: p.toolSummary,
+  });
 }
 
 // ── Handler map ──

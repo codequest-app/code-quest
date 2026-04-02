@@ -197,6 +197,44 @@ describe('ChatPanel', () => {
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
+  // ── message:result pipeline ──
+
+  it('message:result transitions from Stop to Send button (processing → idle)', async () => {
+    const { claude } = await renderWithChannel(<ChatPanel />);
+    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    await userEvent.type(textarea, 'go{Enter}');
+    expect(screen.getByTitle('Stop')).toBeInTheDocument();
+
+    await claude.emit(s.assistant('done'));
+    await claude.emit(s.result());
+
+    expect(await screen.findByTitle('Send')).toBeInTheDocument();
+  });
+
+  it('message:result with error shows error message', async () => {
+    const { claude } = await renderWithChannel(<ChatPanel />);
+    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    await userEvent.type(textarea, 'go{Enter}');
+
+    await claude.emit(s.resultError({ errors: ['Something failed'] }));
+
+    expect((await screen.findAllByText(/Something failed/)).length).toBeGreaterThan(0);
+    expect(await screen.findByTitle('Send')).toBeInTheDocument();
+  });
+
+  it('streaming text deltas accumulate and result returns to idle', async () => {
+    const { claude } = await renderWithChannel(<ChatPanel />);
+    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    await userEvent.type(textarea, 'go{Enter}');
+
+    await claude.emit(s.textDelta('Hello '));
+    await claude.emit(s.textDelta('World'));
+    await claude.emit(s.assistant('Hello World'));
+    await claude.emit(s.result());
+
+    expect(await screen.findByTitle('Send')).toBeInTheDocument();
+  });
+
   it('diffRespond with unknown toolId does not crash', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');

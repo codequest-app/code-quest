@@ -11,7 +11,10 @@ type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEv
 // ── On handlers (state part) ──
 
 function onNotificationShow(state: ChannelState, p: Payload<'notification:show'>): ChannelState {
-  return { ...state, messages: [...state.messages, msg({ role: 'system', type: 'text', content: p.message })] };
+  return {
+    ...state,
+    messages: [...state.messages, msg({ role: 'system', type: 'text', content: p.message })],
+  };
 }
 
 function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState {
@@ -94,7 +97,10 @@ function onActionOpenFile(_deps: EffectDeps, p: Payload<'action:open_file'>): vo
   toast.info(`Open file: ${p.filePath}${loc}`);
 }
 
-function onNotificationShowEffect(deps: EffectDeps, p: Payload<'notification:show'> & { requestId?: string }): void {
+function onNotificationShowEffect(
+  deps: EffectDeps,
+  p: Payload<'notification:show'> & { requestId?: string },
+): void {
   const severity = p.severity ?? 'info';
   const reqId = p.requestId;
   if (p.buttons?.length && reqId) {
@@ -107,7 +113,8 @@ function onNotificationShowEffect(deps: EffectDeps, p: Payload<'notification:sho
     );
     return;
   }
-  const showToast = severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
+  const showToast =
+    severity === 'error' ? toast.error : severity === 'warning' ? toast.warning : toast.info;
   showToast(p.message ?? '');
 }
 
@@ -135,5 +142,5 @@ export const notificationHandlerEffects = {
   'action:open_file': onActionOpenFile,
   'notification:show': onNotificationShowEffect,
   'raw:event': onRawEventEffect,
-  'disconnect': onDisconnectEffect,
+  disconnect: onDisconnectEffect,
 } satisfies Record<string, (deps: EffectDeps, payload: never) => void>;

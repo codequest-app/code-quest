@@ -11,9 +11,9 @@ import {
 import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
-import { composeHandlers } from '../handlers/channel/speechHandler';
-import { wireHandlers } from '../handlers/channel/guard';
 import { useChannelMessages } from './ChannelMessagesContext';
+import { wireHandlers } from './handlers/guard';
+import { composeHandlers } from './handlers/speech';
 
 export interface ChannelComposeContextValue {
   value: string;

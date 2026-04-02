@@ -1,14 +1,21 @@
-import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
+import type {
+  AccountInfo,
+  McpAuthResult,
+  ModelInfo,
+  ProviderClientConfig,
+  ServerToClientEvents,
+  UsageQuota,
+} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../SocketContext';
-import { wireHandlers } from '../handlers/channel/guard';
+import { wireHandlers } from './handlers/guard';
 import {
   configHandlers,
   createConfigActions,
   onSessionStates,
   parseModels,
   toEffort,
-} from '../handlers/channel/settingsHandler';
+} from './handlers/settings';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -48,7 +55,10 @@ export interface ChannelConfigValue extends ConfigState {
   mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<McpResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
   mcpAuthenticate: (serverName: string) => Promise<McpAuthResult>;
-  mcpOAuthCallback: (serverName: string, callbackUrl: string) => Promise<{ success: boolean; error?: string }>;
+  mcpOAuthCallback: (
+    serverName: string,
+    callbackUrl: string,
+  ) => Promise<{ success: boolean; error?: string }>;
   mcpClearAuth: (serverName: string) => Promise<{ success: boolean; error?: string }>;
   ensureChromeMcpEnabled: () => Promise<McpResponse>;
   disableChromeMcp: () => Promise<McpResponse>;
@@ -132,14 +142,13 @@ export function ChannelConfigProvider({
       setConfigState((prev) => onSessionStates(prev, payload, channelId));
     };
     socket.on('session:states', fn);
-    return () => { socket.off('session:states', fn); };
+    return () => {
+      socket.off('session:states', fn);
+    };
   }, [channelId, socket]);
 
   // ── Stable actions ──
-  const actions = useMemo(
-    () => createConfigActions({ socket, channelId }),
-    [socket, channelId],
-  );
+  const actions = useMemo(() => createConfigActions({ socket, channelId }), [socket, channelId]);
 
   // ── Context value ──
   const value = useMemo<ChannelConfigValue>(

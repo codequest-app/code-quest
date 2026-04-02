@@ -10,14 +10,10 @@ import {
 } from 'react';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { msg } from '../../utils/message';
-import { createGuard, wireHandlers } from '../handlers/channel/guard';
-import {
-  type ControlState,
-  controlHandlers,
-  createControlActions,
-} from '../handlers/channel/permissionHandler';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
+import { createGuard, wireHandlers } from './handlers/guard';
+import { type ControlState, controlHandlers, createControlActions } from './handlers/permission';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -67,13 +63,21 @@ export function ChannelControlProvider({
 
   const controlsRef = useRef(controls);
   controlsRef.current = controls;
+  const elicitationRef = useRef(elicitation);
+  elicitationRef.current = elicitation;
+  const diffReviewRef = useRef(diffReview);
+  diffReviewRef.current = diffReview;
 
   // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {
     if (!channelId) return;
 
     function setControlState(fn: (prev: ControlState) => ControlState) {
-      const prev: ControlState = { controls: controlsRef.current, elicitation, diffReview };
+      const prev: ControlState = {
+        controls: controlsRef.current,
+        elicitation: elicitationRef.current,
+        diffReview: diffReviewRef.current,
+      };
       const next = fn(prev);
       if (next.controls !== prev.controls) setControls(() => next.controls);
       if (next.elicitation !== prev.elicitation) setElicitation(next.elicitation);
@@ -81,7 +85,7 @@ export function ChannelControlProvider({
     }
 
     return wireHandlers(socket, channelId, controlHandlers, setControlState);
-  }, [channelId, socket, elicitation, diffReview]);
+  }, [channelId, socket]);
 
   // ── Special: control:permission + control:hook_callback (local state + parent state + resetRef) ──
   useEffect(() => {

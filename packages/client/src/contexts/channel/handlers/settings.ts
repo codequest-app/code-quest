@@ -1,16 +1,16 @@
 import {
   type McpAuthResult,
   type ModelInfo,
-  type UsageQuota,
   modelInfoSchema,
   type ServerToClientEvents,
+  type UsageQuota,
 } from '@code-quest/shared';
 import { toast } from 'sonner';
 import type { TypedSocket } from '../../../socket/client';
 import { channelEmit, rpc } from '../../../socket/rpc';
 import { findModel } from '../../../utils/model-utils';
 
-import type { ConfigState, McpResponse } from '../../channel/ChannelConfigContext';
+import type { ConfigState, McpResponse } from '../ChannelConfigContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -64,7 +64,11 @@ function onExperimentGates(state: ConfigState, p: Payload<'app:experiment_gates'
   return { ...state, experimentGates: p.gates };
 }
 
-function onSessionStates(state: ConfigState, payload: Payload<'session:states'>, channelId: string): ConfigState {
+function onSessionStates(
+  state: ConfigState,
+  payload: Payload<'session:states'>,
+  channelId: string,
+): ConfigState {
   for (const summary of payload.sessions) {
     if (summary.channelId !== channelId) continue;
     const update: Partial<ConfigState> = {};
@@ -80,7 +84,10 @@ function onSessionInit(state: ConfigState, payload: Payload<'session:init'>): Co
   const availableModels = [...state.availableModels];
   if (payload.model && !findModel(payload.model, availableModels)) {
     const defaults = state.providerConfig?.defaultModels ?? [];
-    const match = findModel(payload.model, defaults.map((d) => ({ ...d })));
+    const match = findModel(
+      payload.model,
+      defaults.map((d) => ({ ...d })),
+    );
     availableModels.push(match ?? { value: payload.model });
   }
   return {
@@ -120,9 +127,7 @@ function onRateLimitQuota(state: ConfigState, p: Payload<'system:rate_limit'>): 
       ...currentQuota,
       [rateLimitType]: {
         utilization: typeof utilization === 'number' ? utilization : 0,
-        ...(resetsAt != null
-          ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() }
-          : {}),
+        ...(resetsAt != null ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() } : {}),
       },
     },
   };
@@ -224,7 +229,10 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
     return rpc(socket, 'mcp:authenticate', { channelId, serverName });
   }
 
-  function mcpOAuthCallback(serverName: string, callbackUrl: string): Promise<{ success: boolean; error?: string }> {
+  function mcpOAuthCallback(
+    serverName: string,
+    callbackUrl: string,
+  ): Promise<{ success: boolean; error?: string }> {
     return rpc(socket, 'mcp:oauth_callback', { channelId, serverName, callbackUrl });
   }
 
