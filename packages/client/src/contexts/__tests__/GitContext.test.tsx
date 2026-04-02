@@ -11,7 +11,7 @@ function GitCaller({ onReady }: { onReady: (git: ReturnType<typeof useGit>) => v
 }
 
 describe('GitContext', () => {
-  it('git:status sends cwd from workspaceFolder', async () => {
+  it('git:status emits without cwd (server uses ch.workspaceFolder)', async () => {
     let gitActions!: ReturnType<typeof useGit>;
     const { claude } = await renderWithChannel(
       <GitCaller
@@ -19,7 +19,6 @@ describe('GitContext', () => {
           gitActions = git;
         }}
       />,
-      { workspaceFolder: '/my/project' },
     );
 
     const emitSpy = vi.spyOn(claude.socket as never, 'emit');
@@ -30,12 +29,18 @@ describe('GitContext', () => {
 
     expect(emitSpy).toHaveBeenCalledWith(
       'git:status',
-      expect.objectContaining({ cwd: '/my/project' }),
+      expect.objectContaining({}),
       expect.any(Function),
     );
+    // cwd should NOT be in payload
+    const payload = emitSpy.mock.calls.find((c) => c[0] === 'git:status')?.[1] as Record<
+      string,
+      unknown
+    >;
+    expect(payload.cwd).toBeUndefined();
   });
 
-  it('git:checkout sends branch + cwd', async () => {
+  it('git:checkout sends branch without cwd', async () => {
     let gitActions!: ReturnType<typeof useGit>;
     const { claude } = await renderWithChannel(
       <GitCaller
@@ -43,7 +48,6 @@ describe('GitContext', () => {
           gitActions = git;
         }}
       />,
-      { workspaceFolder: '/workspace' },
     );
 
     const emitSpy = vi.spyOn(claude.socket as never, 'emit');
@@ -54,8 +58,13 @@ describe('GitContext', () => {
 
     expect(emitSpy).toHaveBeenCalledWith(
       'git:checkout',
-      expect.objectContaining({ branch: 'feature-x', cwd: '/workspace' }),
+      expect.objectContaining({ branch: 'feature-x' }),
       expect.any(Function),
     );
+    const payload = emitSpy.mock.calls.find((c) => c[0] === 'git:checkout')?.[1] as Record<
+      string,
+      unknown
+    >;
+    expect(payload.cwd).toBeUndefined();
   });
 });

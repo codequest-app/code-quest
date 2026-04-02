@@ -1,10 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import {
   gitCheckoutSchema,
-  gitDiffSchema,
   gitExecSchema,
   gitLogSchema,
-  gitStatusSchema,
   gitUpdateSkippedBranchSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
@@ -23,7 +21,7 @@ export function create(
 ): void {
   function handleStatus(
     ch: Channel,
-    payload: unknown,
+    _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): void {
@@ -89,7 +87,7 @@ export function create(
 
   async function handleDiff(
     ch: Channel,
-    payload: unknown,
+    _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
