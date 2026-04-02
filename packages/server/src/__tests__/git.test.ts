@@ -23,11 +23,12 @@ describe('ChatHandler > git', () => {
   });
 
   it('git:exec runs a command and returns output', async () => {
-    const claude = createFakeClaude();
+    const { claude, channelId } = await setup();
 
     const result = await claude.send<{ exitCode: number; stdout: string; stderr: string }>(
       'git:exec',
       {
+        channelId,
         command: 'echo',
         args: ['hello'],
       },
@@ -38,11 +39,12 @@ describe('ChatHandler > git', () => {
   });
 
   it('git:exec returns error for non-existent command', async () => {
-    const claude = createFakeClaude();
+    const { claude, channelId } = await setup();
 
     const result = await claude.send<{ exitCode: number; stdout: string; stderr: string }>(
       'git:exec',
       {
+        channelId,
         command: 'nonexistent_cmd_xyz_12345',
       },
     );
@@ -66,13 +68,15 @@ describe('ChatHandler > git', () => {
         'abc123|feat: add login|Alice|2024-01-01 10:00:00 +0000\ndef456|fix: typo|Bob|2024-01-02 11:00:00 +0000\n',
       );
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
       const result = await claude.send<{
         entries: Array<{ hash: string; message: string; author: string; date: string }>;
-      }>('git:log', { limit: 5 });
+      }>('git:log', { channelId, limit: 5 });
 
-      expect(execGitSpy).toHaveBeenCalledWith(['log', '--format=%H|%s|%an|%ai', '-n', '5'], { cwd: undefined });
+      expect(execGitSpy).toHaveBeenCalledWith(['log', '--format=%H|%s|%an|%ai', '-n', '5'], {
+        cwd: expect.any(String),
+      });
       expect(result.entries).toHaveLength(2);
       expect(result.entries[0]).toEqual({
         hash: 'abc123',
@@ -85,9 +89,9 @@ describe('ChatHandler > git', () => {
     it('git:log returns empty entries on error', async () => {
       execGitSpy.mockRejectedValue(new Error('not a git repo'));
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ entries: unknown[] }>('git:log', {});
+      const result = await claude.send<{ entries: unknown[] }>('git:log', { channelId });
 
       expect(result.entries).toEqual([]);
     });
@@ -95,20 +99,20 @@ describe('ChatHandler > git', () => {
     it('git:diff returns diff output', async () => {
       execGitSpy.mockResolvedValue('+added\n-removed\n');
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ diff: string }>('git:diff');
+      const result = await claude.send<{ diff: string }>('git:diff', { channelId });
 
-      expect(execGitSpy).toHaveBeenCalledWith(['diff'], { cwd: undefined });
+      expect(execGitSpy).toHaveBeenCalledWith(['diff'], { cwd: expect.any(String) });
       expect(result.diff).toBe('+added\n-removed\n');
     });
 
     it('git:diff returns empty string on error', async () => {
       execGitSpy.mockRejectedValue(new Error('fail'));
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ diff: string }>('git:diff');
+      const result = await claude.send<{ diff: string }>('git:diff', { channelId });
 
       expect(result.diff).toBe('');
     });
@@ -128,48 +132,52 @@ describe('ChatHandler > git', () => {
     it('should succeed on local checkout (strategy 1)', async () => {
       checkoutSpy.mockResolvedValue(undefined);
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
       const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+        channelId,
         branch: 'feature/test',
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/test', undefined);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/test', expect.any(String));
     });
 
     it('should try fetch+checkout when local fails (strategy 2)', async () => {
       checkoutSpy.mockResolvedValue(undefined);
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
       const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+        channelId,
         branch: 'feature/remote',
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/remote', undefined);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/remote', expect.any(String));
     });
 
     it('should try --track when fetch+checkout fails (strategy 3)', async () => {
       checkoutSpy.mockResolvedValue(undefined);
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
       const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+        channelId,
         branch: 'feature/track',
       });
 
       expect(result.success).toBe(true);
-      expect(checkoutSpy).toHaveBeenCalledWith('feature/track', undefined);
+      expect(checkoutSpy).toHaveBeenCalledWith('feature/track', expect.any(String));
     });
 
     it('should return error when all strategies fail', async () => {
       checkoutSpy.mockRejectedValue(new Error('fatal: no such branch'));
 
-      const { claude } = await setup();
+      const { claude, channelId } = await setup();
 
       const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+        channelId,
         branch: 'nonexistent',
       });
 

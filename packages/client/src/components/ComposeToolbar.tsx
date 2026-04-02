@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
@@ -29,13 +29,7 @@ export interface ComposeToolbarProps {
 }
 
 export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeToolbarProps) {
-  const {
-    isProcessing,
-    isCancelling,
-    stats,
-    isContextCompressed,
-    abort,
-  } = useChannelMessages();
+  const { isProcessing, isCancelling, stats, isContextCompressed, abort } = useChannelMessages();
   const {
     accountInfo,
     usageQuota,
@@ -61,7 +55,9 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
   // MCP server refresh logic (inlined from ConnectedManageMcpDialog)
   const mcpStatusRef = useRef(mcpStatus);
-  mcpStatusRef.current = mcpStatus;
+  useLayoutEffect(() => {
+    mcpStatusRef.current = mcpStatus;
+  });
   const baseMcpServers = useMemo(() => channelMcpServers.map(toMcpServerInfo), [channelMcpServers]);
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
   const mcpRefresh = useCallback(async () => {

@@ -5,7 +5,7 @@ import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 export function create(emitter: ChannelEmitter): void {
   function onAutoRespond(ch: Channel, payload: unknown): void {
     const { requestId, response } = autoRespondPayloadSchema.parse(payload);
-    ch.respondToRequest(requestId, response as Record<string, unknown>);
+    ch.respondToRequest(requestId, response);
   }
 
   emitter.on('action:open_url', withChannel(onAutoRespond));

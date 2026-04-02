@@ -1,11 +1,121 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, normalize, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { basename, normalize, resolve } from 'node:path';
 import { fileListSchema, fileReadPayloadSchema } from '@code-quest/shared';
+import Fuse from 'fuse.js';
+import { globSync } from 'glob';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
-import { rgAvailable, rgListFiles } from '../utils/rg.ts';
+
+type FileResult = { path: string; name: string; type: 'file' | 'directory' | 'terminal' };
+
+const MAX_RESULTS = 20;
+const IGNORE_DIRS = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/dist/**',
+  '**/coverage/**',
+  '**/logs/**',
+];
+
+/** List all files in cwd (glob --files equivalent). Returns relative paths. */
+function getAllFiles(cwd: string): string[] {
+  return globSync('**/*', {
+    cwd,
+    dot: true,
+    ignore: IGNORE_DIRS,
+    nodir: true,
+    maxDepth: 10,
+  });
+}
+
+/** Extract unique directory paths from file list. */
+function extractDirectories(files: string[]): string[] {
+  const dirs = new Set<string>();
+  for (const f of files) {
+    let idx = f.indexOf('/');
+    while (idx !== -1) {
+      dirs.add(f.substring(0, idx));
+      idx = f.indexOf('/', idx + 1);
+    }
+  }
+  return [...dirs].map((d) => `${d}/`);
+}
+
+/** Empty pattern → list root-level entries only (first segment). */
+function listRootEntries(files: string[], dirs: string[]): FileResult[] {
+  const seen = new Set<string>();
+  const results: FileResult[] = [];
+
+  for (const d of dirs) {
+    const root = d.split('/')[0];
+    if (root && !seen.has(root)) {
+      seen.add(root);
+      results.push({ path: `${root}/`, name: root, type: 'directory' });
+    }
+  }
+
+  for (const f of files) {
+    if (!f.includes('/') && !seen.has(f)) {
+      seen.add(f);
+      results.push({ path: f, name: f, type: 'file' });
+    }
+  }
+
+  return results.sort((a, b) => a.path.localeCompare(b.path)).slice(0, MAX_RESULTS);
+}
+
+/** Pattern ends with `/` → list entries inside that directory. */
+function listDirectory(prefix: string, files: string[], dirs: string[]): FileResult[] {
+  const seen = new Set<string>();
+  const results: FileResult[] = [];
+  const prefixLower = prefix.toLowerCase();
+
+  for (const d of dirs) {
+    if (!d.toLowerCase().startsWith(prefixLower)) continue;
+    const rest = d.slice(prefix.length);
+    const segment = rest.split('/')[0];
+    if (segment && !seen.has(segment)) {
+      seen.add(segment);
+      results.push({ path: `${prefix}${segment}/`, name: segment, type: 'directory' });
+    }
+  }
+
+  for (const f of files) {
+    if (!f.toLowerCase().startsWith(prefixLower)) continue;
+    const rest = f.slice(prefix.length);
+    if (!rest.includes('/') && !seen.has(rest)) {
+      seen.add(rest);
+      results.push({ path: f, name: basename(f), type: 'file' });
+    }
+  }
+
+  return results.sort((a, b) => a.path.localeCompare(b.path)).slice(0, MAX_RESULTS);
+}
+
+/** Fuzzy search across all files + directories. */
+function fuzzySearch(pattern: string, files: string[], dirs: string[]): FileResult[] {
+  const items = [
+    ...files.map((f) => ({ path: f, filename: basename(f), isDirectory: false })),
+    ...dirs.map((d) => ({ path: d, filename: basename(d.slice(0, -1)), isDirectory: true })),
+  ];
+
+  const fuse = new Fuse(items, {
+    includeScore: true,
+    threshold: 0.5,
+    keys: [
+      { name: 'path', weight: 1 },
+      { name: 'filename', weight: 2 },
+    ],
+  });
+
+  return fuse.search(pattern, { limit: MAX_RESULTS }).map((r) => ({
+    path: r.item.path,
+    name: r.item.filename,
+    type: (r.item.isDirectory ? 'directory' : 'file') as 'file' | 'directory',
+  }));
+}
 
 export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
   function handleRead(
@@ -15,7 +125,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): void {
     const { filePath } = fileReadPayloadSchema.parse(payload);
-    const cwd = ch.workspaceFolder ?? process.cwd();
+    const cwd = ch.workspaceFolder;
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback?.({ error: 'Path traversal not allowed' });
@@ -29,60 +139,10 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     }
   }
 
-  type FileResult = { path: string; name: string; type: 'file' | 'directory' | 'terminal' };
-
-  function listWithRg(cwd: string, pattern: string): FileResult[] {
-    const lines = rgListFiles(cwd);
-    const matched = lines.filter((l) => l.toLowerCase().includes(pattern));
-    return matched.map((rel) => {
-      const name = rel.split('/').pop() ?? rel;
-      let type: 'file' | 'directory' = 'file';
-      try {
-        type = statSync(join(cwd, rel)).isDirectory() ? 'directory' : 'file';
-      } catch {
-        // default to file
-      }
-      return { path: rel, name, type };
-    });
-  }
-
-  function listWithWalk(cwd: string, pattern: string): FileResult[] {
-    const results: FileResult[] = [];
-    const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'logs']);
-
-    const walk = (dir: string, depth: number) => {
-      if (depth > 4) return;
-      let entries: string[];
-      try {
-        entries = readdirSync(dir);
-      } catch {
-        return;
-      }
-      for (const entry of entries) {
-        if (SKIP_DIRS.has(entry)) continue;
-        const full = join(dir, entry);
-        const rel = full.slice(cwd.length + 1);
-        let isDir = false;
-        try {
-          isDir = statSync(full).isDirectory();
-        } catch {
-          continue;
-        }
-        if (entry.toLowerCase().includes(pattern)) {
-          results.push({ path: rel, name: entry, type: isDir ? 'directory' : 'file' });
-        }
-        if (isDir) walk(full, depth + 1);
-      }
-    };
-
-    walk(cwd, 0);
-    return results;
-  }
-
   function listTerminals(pattern: string): FileResult[] {
     const results: FileResult[] = [];
     for (const routingId of channelManager.getAllChannelIds()) {
-      if (routingId.toLowerCase().includes(pattern)) {
+      if (!pattern || routingId.toLowerCase().includes(pattern)) {
         results.push({ type: 'terminal', path: routingId, name: routingId });
       }
     }
@@ -97,11 +157,24 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
   ): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
-      const cwd = ch.workspaceFolder ?? process.cwd();
-      const pat = pattern.toLowerCase();
+      const cwd = ch.workspaceFolder;
 
-      const fileResults = rgAvailable ? listWithRg(cwd, pat) : listWithWalk(cwd, pat);
-      const combined = [...fileResults, ...listTerminals(pat)].slice(0, 20);
+      const allFiles = getAllFiles(cwd);
+      const allDirs = extractDirectories(allFiles);
+
+      let fileResults: FileResult[];
+      if (!pattern) {
+        fileResults = listRootEntries(allFiles, allDirs);
+      } else if (pattern.endsWith('/')) {
+        fileResults = listDirectory(pattern, allFiles, allDirs);
+      } else {
+        fileResults = fuzzySearch(pattern.toLowerCase(), allFiles, allDirs);
+      }
+
+      const combined = [...fileResults, ...listTerminals(pattern.toLowerCase())].slice(
+        0,
+        MAX_RESULTS,
+      );
       callback?.({ files: combined });
     } catch {
       callback?.({ files: [] });

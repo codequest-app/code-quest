@@ -21,12 +21,6 @@ export const chatSetThinkingLevelSchema = z.object({
 });
 export type ChatSetThinkingLevelPayload = z.infer<typeof chatSetThinkingLevelSchema>;
 
-export const chatSetFastModeSchema = z.object({
-  channelId: z.string(),
-  enabled: z.boolean(),
-});
-export type ChatSetFastModePayload = z.infer<typeof chatSetFastModeSchema>;
-
 export const settingsApplySchema = z.object({
   channelId: z.string(),
   settings: z.record(z.string(), z.unknown()),

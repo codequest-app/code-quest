@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -63,7 +64,9 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  });
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;

@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -62,11 +63,13 @@ export function ChannelControlProvider({
   const [diffReview, setDiffReview] = useState<PendingDiffReview | null>(null);
 
   const controlsRef = useRef(controls);
-  controlsRef.current = controls;
   const elicitationRef = useRef(elicitation);
-  elicitationRef.current = elicitation;
   const diffReviewRef = useRef(diffReview);
-  diffReviewRef.current = diffReview;
+  useLayoutEffect(() => {
+    controlsRef.current = controls;
+    elicitationRef.current = elicitation;
+    diffReviewRef.current = diffReview;
+  });
 
   // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {

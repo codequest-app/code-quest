@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import type {
   ChannelMetaCache,
   ControlResponse,
@@ -80,11 +81,11 @@ export class Channel {
     this._sessionId = v;
   }
 
-  get workspaceFolder(): string | undefined {
-    return this._workspaceFolder;
+  get workspaceFolder(): string {
+    return this._workspaceFolder ?? process.cwd();
   }
   set workspaceFolder(v: string | undefined) {
-    this._workspaceFolder = v;
+    this._workspaceFolder = v ? resolve(v) : undefined;
   }
 
   get lastError(): string | undefined {

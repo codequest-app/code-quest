@@ -33,7 +33,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
-      const baseCwd = cwd ?? existingChannel?.workspaceFolder ?? process.cwd();
+      const baseCwd = cwd ?? existingChannel?.workspaceFolder;
 
       const newChannelId = crypto.randomUUID();
       const { channel: ch } = await channelManager.create(newChannelId, {

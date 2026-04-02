@@ -229,7 +229,7 @@ export function create(
           provider: channelManager.provider,
           command: channelManager.runnerCommand,
           args: JSON.stringify(channelManager.runnerArgs),
-          cwd: process.cwd(),
+          cwd: channel.workspaceFolder,
           mode: 'interactive',
           role: 'chat',
           ...(parentId ? { parentId } : {}),

@@ -164,9 +164,6 @@ export const permissionPayloadSchema = z.looseObject({
   toolUseId: z.string(),
 });
 
-/** control:diff_review payload */
-export const diffReviewPayloadSchema = z.looseObject({ toolId: z.string() });
-
 /** auto-respond payload (action:open_url, action:open_file, notification:show, mcp:auto_respond) */
 export const autoRespondPayloadSchema = z.looseObject({
   requestId: z.string(),

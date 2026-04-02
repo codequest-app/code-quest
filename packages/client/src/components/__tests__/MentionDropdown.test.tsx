@@ -1,0 +1,176 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { MentionDropdown } from '../MentionDropdown';
+
+function createBaseProps() {
+  return {
+    mentionQuery: '',
+    filteredSuggestions: [],
+    searchStatus: 'done' as const,
+    selectedIndex: 0,
+    hasFileSearch: true,
+    onSelectMention: vi.fn(),
+  };
+}
+const baseProps = createBaseProps();
+
+describe('MentionDropdown', () => {
+  it('renders file item with icon + name + directory path', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[{ path: 'src/utils/helpers.ts', name: 'helpers.ts', type: 'file' }]}
+      />,
+    );
+    expect(screen.getByText('helpers.ts')).toBeInTheDocument();
+    expect(screen.getByText('src/utils/')).toBeInTheDocument();
+    // SVG icon should be present
+    expect(document.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('renders directory item with icon + full path', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[{ path: 'src/utils/', name: 'utils', type: 'directory' }]}
+      />,
+    );
+    expect(screen.getByText('src/utils/')).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('renders terminal item with icon + name + terminal label', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[{ path: 'session-1', name: 'session-1', type: 'terminal' }]}
+      />,
+    );
+    expect(screen.getByText('session-1')).toBeInTheDocument();
+    expect(screen.getByText('terminal')).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('file item does not show directory path when path equals name', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[{ path: 'README.md', name: 'README.md', type: 'file' }]}
+      />,
+    );
+    expect(screen.getByText('README.md')).toBeInTheDocument();
+    // No directory path element
+    expect(screen.queryByText('/')).not.toBeInTheDocument();
+  });
+
+  it('click directory calls onSelectMention with navigateInto=true', () => {
+    const props = createBaseProps();
+    render(
+      <MentionDropdown
+        {...props}
+        fileResults={[{ path: 'src/', name: 'src', type: 'directory' }]}
+      />,
+    );
+    fireEvent.mouseDown(screen.getByText('src/'));
+    expect(props.onSelectMention).toHaveBeenCalledWith('@src/', true);
+  });
+
+  it('click file calls onSelectMention with navigateInto=false or undefined', () => {
+    const props = createBaseProps();
+    render(
+      <MentionDropdown
+        {...props}
+        fileResults={[{ path: 'README.md', name: 'README.md', type: 'file' }]}
+      />,
+    );
+    fireEvent.mouseDown(screen.getByText('README.md'));
+    expect(props.onSelectMention).toHaveBeenCalledWith('@README.md', false);
+  });
+
+  it('click directory calls onSelectMention — caller should trigger new search', () => {
+    const props = createBaseProps();
+    // Simulate: after navigateInto, caller updates fileResults with new directory contents
+    const { rerender } = render(
+      <MentionDropdown
+        {...props}
+        fileResults={[
+          { path: 'src/', name: 'src', type: 'directory' },
+          { path: 'package.json', name: 'package.json', type: 'file' },
+        ]}
+      />,
+    );
+
+    // Click directory
+    fireEvent.mouseDown(screen.getByText('src/'));
+    expect(props.onSelectMention).toHaveBeenCalledWith('@src/', true);
+
+    // Simulate caller re-rendering with new directory contents
+    rerender(
+      <MentionDropdown
+        {...props}
+        mentionQuery="src/"
+        fileResults={[
+          { path: 'src/socket/', name: 'socket', type: 'directory' },
+          { path: 'src/services/', name: 'services', type: 'directory' },
+          { path: 'src/config.ts', name: 'config.ts', type: 'file' },
+        ]}
+      />,
+    );
+
+    // New directory contents should be visible
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(3);
+    expect(screen.getByText('config.ts')).toBeInTheDocument();
+    // Old entries should be gone
+    expect(screen.queryByText('package.json')).not.toBeInTheDocument();
+  });
+
+  it('navigateInto=true keeps dropdown open for new search', () => {
+    let lastSuggestion = '';
+    let lastNavigate = false;
+    const onSelect = (s: string, n: boolean) => {
+      lastSuggestion = s;
+      lastNavigate = n;
+    };
+
+    const { rerender } = render(
+      <MentionDropdown
+        {...baseProps}
+        onSelectMention={onSelect}
+        fileResults={[{ path: 'src/', name: 'src', type: 'directory' }]}
+      />,
+    );
+
+    // Click directory — navigateInto should be true
+    fireEvent.mouseDown(screen.getByRole('option'));
+    expect(lastSuggestion).toBe('@src/');
+    expect(lastNavigate).toBe(true);
+
+    // Dropdown should still be rendered (caller decides to keep it open and pass new results)
+    rerender(
+      <MentionDropdown
+        {...baseProps}
+        onSelectMention={onSelect}
+        mentionQuery="src/"
+        fileResults={[{ path: 'src/config.ts', name: 'config.ts', type: 'file' }]}
+      />,
+    );
+    expect(screen.getByText('config.ts')).toBeInTheDocument();
+  });
+
+  it('hover changes active item', () => {
+    const onHover = vi.fn();
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[
+          { path: 'a.ts', name: 'a.ts', type: 'file' },
+          { path: 'b.ts', name: 'b.ts', type: 'file' },
+        ]}
+        onHover={onHover}
+      />,
+    );
+    fireEvent.mouseEnter(screen.getByText('b.ts'));
+    expect(onHover).toHaveBeenCalledWith(1);
+  });
+});

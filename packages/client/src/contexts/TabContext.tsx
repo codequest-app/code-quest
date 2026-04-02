@@ -37,9 +37,11 @@ const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'default' };
 export function TabProvider({
   children,
   initialState,
+  workspaceFolder = '../',
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
+  workspaceFolder?: string;
 }) {
   const [state, setState] = useState<TabState>(() => ({
     tabs: initialState?.tabs ?? {},
@@ -102,7 +104,7 @@ export function TabProvider({
         }));
         socket.emit(
           'session:launch',
-          { initialPrompt, channelId: clientId },
+          { initialPrompt, channelId: clientId, cwd: workspaceFolder },
           (_response: { channelId: string; slashCommands?: string[] }) => {
             resolve({ channelId: clientId });
           },
@@ -150,7 +152,7 @@ export function TabProvider({
       replaceActiveTab,
       syncFromServer,
     };
-  }, [socket]);
+  }, [socket, workspaceFolder]);
 
   useEffect(() => {
     const onConnect = initialState
