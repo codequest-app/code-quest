@@ -24,9 +24,11 @@ export function create(
   settingsStore: SettingsStore,
   usageTracker: UsageTracker,
   emitter: ChannelEmitter,
-): SocketHandler {
+): void {
   async function handleSetModel(
+    _ch: Channel | null,
     payload: unknown,
+    _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
@@ -45,7 +47,9 @@ export function create(
   }
 
   async function handleSetPermissionMode(
+    _ch: Channel | null,
     payload: unknown,
+    _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
@@ -65,7 +69,9 @@ export function create(
   }
 
   async function handleSetThinkingLevel(
+    _ch: Channel | null,
     payload: unknown,
+    _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
@@ -86,7 +92,7 @@ export function create(
     }
   }
 
-  async function handleSetProactive(payload: unknown): Promise<void> {
+  async function handleSetProactive(_ch: Channel | null, payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -100,7 +106,7 @@ export function create(
     }
   }
 
-  function handleSetRemoteControl(payload: unknown): void {
+  function handleSetRemoteControl(_ch: Channel | null, payload: unknown): void {
     try {
       const { channelId, enabled } = chatSetRemoteControlSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -112,7 +118,7 @@ export function create(
     }
   }
 
-  async function handleApply(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleApply(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -133,7 +139,7 @@ export function create(
     }
   }
 
-  async function handleState(payload: unknown, callback: SocketCallback): Promise<void> {
+  async function handleState(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const { channelId } = chatGetStateSchema.parse(payload);
       const channel = channelManager.get(channelId);
@@ -155,7 +161,8 @@ export function create(
     }
   }
 
-  async function handleRefreshUsage(socket: TypedSocket): Promise<void> {
+  async function handleRefreshUsage(_ch: Channel | null, _payload: unknown, socket?: TypedSocket): Promise<void> {
+    if (!socket) return;
     const usageData = usageTracker.getUsage();
     let contextUsage: Record<string, unknown> | undefined;
 
@@ -227,17 +234,12 @@ export function create(
   }
 
   emitter.on('server:action', withChannel(onAutoRespond));
-
-  return {
-    register(socket: TypedSocket) {
-      socket.on('settings:set_model', handleSetModel);
-      socket.on('settings:set_permission_mode', handleSetPermissionMode);
-      socket.on('settings:set_thinking_level', handleSetThinkingLevel);
-      socket.on('settings:set_proactive', handleSetProactive);
-      socket.on('settings:set_remote_control', handleSetRemoteControl);
-      socket.on('settings:apply', handleApply);
-      socket.on('settings:state', handleState);
-      socket.on('settings:refresh_usage', () => handleRefreshUsage(socket));
-    },
-  };
+  emitter.on('settings:set_model', handleSetModel);
+  emitter.on('settings:set_permission_mode', handleSetPermissionMode);
+  emitter.on('settings:set_thinking_level', handleSetThinkingLevel);
+  emitter.on('settings:set_proactive', handleSetProactive);
+  emitter.on('settings:set_remote_control', handleSetRemoteControl);
+  emitter.on('settings:apply', handleApply);
+  emitter.on('settings:state', handleState);
+  emitter.on('settings:refresh_usage', handleRefreshUsage);
 }

@@ -158,11 +158,14 @@ export class ChannelEmitter {
     for (const event of this.eventMap.keys()) {
       // biome-ignore lint/suspicious/noExplicitAny: socket.io typed emit signatures vary per event
       socket.on(event as any, (...args: any[]) => {
-        const payload = args[0] ?? {};
-        const cb = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : undefined;
+        // Separate payload from callback: socket.io may send (payload, cb) or just (cb)
+        const lastArg = args[args.length - 1];
+        const hasCb = typeof lastArg === 'function';
+        const cb = hasCb ? lastArg : undefined;
+        const payload = hasCb && args.length > 1 ? args[0] : (hasCb ? {} : (args[0] ?? {}));
         const channelId = typeof payload?.channelId === 'string' ? payload.channelId : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
-        return this.dispatch(event, ch, payload, socket, cb !== payload ? cb : undefined);
+        return this.dispatch(event, ch, payload, socket, cb);
       });
     }
 

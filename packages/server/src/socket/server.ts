@@ -62,9 +62,10 @@ export class SocketServer {
     mcp.create(em);
     file.create(cm, em);
 
+    settings.create(cm, this.settingsStore, this.usageTracker, em);
+
     const commonHandlers: SocketHandler[] = [
       git.create(this.sessionHistory, this.rawEventStore),
-      settings.create(cm, this.settingsStore, this.usageTracker, em),
       message.create(cm, this.sessionStore, planHandler, em),
       app.create(cm, this.settingsStore),
       sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em),
