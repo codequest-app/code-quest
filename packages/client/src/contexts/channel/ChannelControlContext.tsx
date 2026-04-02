@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -37,12 +36,21 @@ export interface ChannelControlValue {
   cancelElicitation: (requestId: string) => void;
 }
 
-const ChannelControlContext = createContext<ChannelControlValue | null>(null);
+type ControlStateValue = Pick<
+  ChannelControlValue,
+  'pendingControls' | 'pendingElicitation' | 'pendingDiffReview'
+>;
+type ControlActionsValue = Omit<ChannelControlValue, keyof ControlStateValue>;
+
+const ControlStateContext = createContext<ControlStateValue | null>(null);
+const ControlActionsContext = createContext<ControlActionsValue | null>(null);
 
 export function useChannelControl(): ChannelControlValue {
-  const ctx = useContext(ChannelControlContext);
-  if (!ctx) throw new Error('useChannelControl must be used within a ChannelProvider');
-  return ctx;
+  const state = useContext(ControlStateContext);
+  const actions = useContext(ControlActionsContext);
+  if (!state || !actions)
+    throw new Error('useChannelControl must be used within a ChannelProvider');
+  return { ...state, ...actions };
 }
 
 export function ChannelControlProvider({
@@ -205,30 +213,27 @@ export function ChannelControlProvider({
   }, [channelId, socket]);
 
   // ── Stable actions ──
-  const actions = useMemo(
-    () =>
-      createControlActions({
-        socket,
-        channelId,
-        controlsRef,
-        setControls,
-        setElicitation,
-        setDiffReview,
-        setChannelState,
-      }),
-    [socket, channelId, setChannelState],
-  );
+  const actions = createControlActions({
+    socket,
+    channelId,
+    controlsRef,
+    setControls,
+    setElicitation,
+    setDiffReview,
+    setChannelState,
+  });
 
-  // ── Context value ──
-  const value = useMemo<ChannelControlValue>(
-    () => ({
-      pendingControls: controls,
-      pendingElicitation: elicitation,
-      pendingDiffReview: diffReview,
-      ...actions,
-    }),
-    [controls, elicitation, diffReview, actions],
+  return (
+    <ControlActionsContext.Provider value={actions}>
+      <ControlStateContext.Provider
+        value={{
+          pendingControls: controls,
+          pendingElicitation: elicitation,
+          pendingDiffReview: diffReview,
+        }}
+      >
+        {children}
+      </ControlStateContext.Provider>
+    </ControlActionsContext.Provider>
   );
-
-  return <ChannelControlContext.Provider value={value}>{children}</ChannelControlContext.Provider>;
 }

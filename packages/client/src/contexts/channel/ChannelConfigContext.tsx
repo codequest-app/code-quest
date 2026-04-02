@@ -6,7 +6,7 @@ import type {
   ServerToClientEvents,
   UsageQuota,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSocket } from '../SocketContext';
 import { wireHandlers } from './handlers/guard';
 import {
@@ -68,12 +68,17 @@ export interface ChannelConfigValue extends ConfigState {
   requestUsageUpdate: () => void;
 }
 
-const ChannelConfigContext = createContext<ChannelConfigValue | null>(null);
+type ConfigStateValue = ConfigState & { isFastMode: boolean };
+type ConfigActionsValue = Omit<ChannelConfigValue, keyof ConfigStateValue>;
+
+const ConfigStateContext = createContext<ConfigStateValue | null>(null);
+const ConfigActionsContext = createContext<ConfigActionsValue | null>(null);
 
 export function useChannelConfig(): ChannelConfigValue {
-  const ctx = useContext(ChannelConfigContext);
-  if (!ctx) throw new Error('useChannelConfig must be used within a ChannelProvider');
-  return ctx;
+  const state = useContext(ConfigStateContext);
+  const actions = useContext(ConfigActionsContext);
+  if (!state || !actions) throw new Error('useChannelConfig must be used within a ChannelProvider');
+  return { ...state, ...actions };
 }
 
 const INITIAL_CONFIG: ConfigState = {
@@ -147,18 +152,18 @@ export function ChannelConfigProvider({
     };
   }, [channelId, socket]);
 
-  // ── Stable actions ──
-  const actions = useMemo(() => createConfigActions({ socket, channelId }), [socket, channelId]);
+  // ── Stable actions (only re-created when socket/channelId change) ──
+  const actions = createConfigActions({ socket, channelId });
 
-  // ── Context value ──
-  const value = useMemo<ChannelConfigValue>(
-    () => ({
-      ...configState,
-      isFastMode: !!configState.fastModeState && configState.fastModeState !== 'off',
-      ...actions,
-    }),
-    [configState, actions],
+  // ── State value ──
+  const stateValue: ConfigStateValue = {
+    ...configState,
+    isFastMode: !!configState.fastModeState && configState.fastModeState !== 'off',
+  };
+
+  return (
+    <ConfigActionsContext.Provider value={actions}>
+      <ConfigStateContext.Provider value={stateValue}>{children}</ConfigStateContext.Provider>
+    </ConfigActionsContext.Provider>
   );
-
-  return <ChannelConfigContext.Provider value={value}>{children}</ChannelConfigContext.Provider>;
 }

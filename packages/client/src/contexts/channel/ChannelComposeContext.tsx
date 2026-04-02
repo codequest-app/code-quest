@@ -1,11 +1,9 @@
 import {
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -37,12 +35,27 @@ export interface ChannelComposeContextValue {
   removeAttachment: (index: number) => void;
 }
 
-const ChannelComposeContext = createContext<ChannelComposeContextValue | null>(null);
+type ComposeStateValue = Pick<
+  ChannelComposeContextValue,
+  | 'value'
+  | 'hasText'
+  | 'cursorPos'
+  | 'slashOpen'
+  | 'slashFilter'
+  | 'hasTextBeforeSlash'
+  | 'attachedFiles'
+>;
+type ComposeActionsValue = Omit<ChannelComposeContextValue, keyof ComposeStateValue>;
+
+const ComposeStateContext = createContext<ComposeStateValue | null>(null);
+const ComposeActionsContext = createContext<ComposeActionsValue | null>(null);
 
 export function useChannelCompose(): ChannelComposeContextValue {
-  const ctx = useContext(ChannelComposeContext);
-  if (!ctx) throw new Error('useChannelCompose must be used within a ChannelComposeProvider');
-  return ctx;
+  const state = useContext(ComposeStateContext);
+  const actions = useContext(ComposeActionsContext);
+  if (!state || !actions)
+    throw new Error('useChannelCompose must be used within a ChannelComposeProvider');
+  return { ...state, ...actions };
 }
 
 interface ComposeState {
@@ -84,11 +97,11 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
     : false;
 
   const requestFocusRef = useRef<((pos?: number) => void) | null>(null);
-  const registerFocus = useCallback((fn: (pos?: number) => void) => {
+  const registerFocus = (fn: (pos?: number) => void) => {
     requestFocusRef.current = fn;
-  }, []);
+  };
 
-  const actions = useMemo(() => {
+  const actionsBlock = (() => {
     const get = () => stateRef.current;
 
     const submit = () => {
@@ -200,34 +213,23 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
       addAttachments,
       removeAttachment,
     };
-  }, [sendMessage]);
-
-  const contextValue = useMemo<ChannelComposeContextValue>(
-    () => ({
-      value,
-      hasText,
-      cursorPos,
-      slashOpen,
-      slashFilter,
-      hasTextBeforeSlash,
-      attachedFiles,
-      registerFocus,
-      ...actions,
-    }),
-    [
-      value,
-      hasText,
-      cursorPos,
-      slashOpen,
-      slashFilter,
-      hasTextBeforeSlash,
-      attachedFiles,
-      registerFocus,
-      actions,
-    ],
-  );
+  })();
 
   return (
-    <ChannelComposeContext.Provider value={contextValue}>{children}</ChannelComposeContext.Provider>
+    <ComposeActionsContext.Provider value={{ registerFocus, ...actionsBlock }}>
+      <ComposeStateContext.Provider
+        value={{
+          value,
+          hasText,
+          cursorPos,
+          slashOpen,
+          slashFilter,
+          hasTextBeforeSlash,
+          attachedFiles,
+        }}
+      >
+        {children}
+      </ComposeStateContext.Provider>
+    </ComposeActionsContext.Provider>
   );
 }
