@@ -15,7 +15,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): void {
     const { filePath } = fileReadPayloadSchema.parse(payload);
-    const cwd = ch.workspaceFolder ?? process.cwd();
+    const cwd = ch.workspaceFolder;
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback?.({ error: 'Path traversal not allowed' });
@@ -97,7 +97,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
   ): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
-      const cwd = ch.workspaceFolder ?? process.cwd();
+      const cwd = ch.workspaceFolder;
       const pat = pattern.toLowerCase();
 
       const fileResults = rgAvailable ? listWithRg(cwd, pat) : listWithWalk(cwd, pat);

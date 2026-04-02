@@ -81,8 +81,8 @@ export class Channel {
     this._sessionId = v;
   }
 
-  get workspaceFolder(): string | undefined {
-    return this._workspaceFolder;
+  get workspaceFolder(): string {
+    return this._workspaceFolder ?? process.cwd();
   }
   set workspaceFolder(v: string | undefined) {
     this._workspaceFolder = v ? resolve(v) : undefined;
