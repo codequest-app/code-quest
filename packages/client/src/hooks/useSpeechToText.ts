@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 type SpeechRecognitionResult = {
   isFinal: boolean;
@@ -34,12 +34,12 @@ export function useSpeechToText() {
   const SpeechRecognitionClass = getSpeechRecognitionClass();
   const isSupported = SpeechRecognitionClass !== null;
 
-  const resetTranscript = useCallback(() => {
+  const resetTranscript = () => {
     setInterimTranscript('');
     setFinalTranscript('');
-  }, []);
+  };
 
-  const start = useCallback(() => {
+  const start = () => {
     const SpeechRecognition = SpeechRecognitionClass;
     if (!SpeechRecognition) return;
 
@@ -79,19 +79,19 @@ export function useSpeechToText() {
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [SpeechRecognitionClass]);
+  };
 
-  const stop = useCallback(() => {
+  const stop = () => {
     recognitionRef.current?.stop();
-  }, []);
+  };
 
-  const toggleListening = useCallback(() => {
+  const toggleListening = () => {
     if (isListening) {
       stop();
     } else {
       start();
     }
-  }, [isListening, start, stop]);
+  };
 
   return {
     isListening,

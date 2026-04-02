@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
@@ -12,7 +12,7 @@ import { createSocket } from './socket/client';
 import './App.css';
 
 export function App() {
-  const socket = useMemo(() => createSocket(), []);
+  const [socket] = useState(() => createSocket());
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">

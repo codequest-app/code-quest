@@ -92,11 +92,12 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isSupported,
   } = useSpeechToText();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetTranscript/insertSlashCommand stable via React Compiler
   useEffect(() => {
     if (!finalTranscript) return;
     compose.insertSlashCommand(finalTranscript);
     resetTranscript();
-  }, [finalTranscript, compose.insertSlashCommand, resetTranscript]);
+  }, [finalTranscript]);
 
   // Auto-refresh MCP status when dialog opens
   // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler

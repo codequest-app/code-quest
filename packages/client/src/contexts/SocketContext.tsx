@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import type { TypedSocket } from '../socket/client';
 
 interface SocketContextValue {
@@ -14,6 +14,5 @@ export function useSocket(): SocketContextValue {
 }
 
 export function SocketProvider({ socket, children }: { socket: TypedSocket; children: ReactNode }) {
-  const value = useMemo(() => ({ socket }), [socket]);
-  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+  return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 }
