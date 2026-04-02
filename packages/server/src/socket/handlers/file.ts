@@ -11,25 +11,23 @@ import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
 export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
   function handleRead(
-    payload: { channelId: string; filePath: string },
-    callback: SocketCallback,
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
   ): void {
-    const channel = channelManager.get(payload.channelId);
-    if (!channel) {
-      callback({ error: 'Session not found' });
-      return;
-    }
-    const cwd = channel.sessionState.cwd ?? process.cwd();
-    const absolute = resolve(cwd, normalize(payload.filePath));
+    const { filePath } = payload as { filePath: string };
+    const cwd = ch.sessionState.cwd ?? process.cwd();
+    const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
-      callback({ error: 'Path traversal not allowed' });
+      callback?.({ error: 'Path traversal not allowed' });
       return;
     }
     try {
       const content = readFileSync(absolute, 'utf-8');
-      callback({ content });
+      callback?.({ content });
     } catch {
-      callback({ error: `File not found: ${payload.filePath}` });
+      callback?.({ error: `File not found: ${filePath}` });
     }
   }
 
@@ -131,7 +129,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     );
   }
 
-  emitter.on('file:read', withError((_ch, payload, _socket, cb) => handleRead(payload as { channelId: string; filePath: string }, cb!)));
+  emitter.on('file:read', withError(withChannel(handleRead)));
   emitter.on('file:list', (_ch, payload, _socket, cb) => handleList(payload, cb!));
   emitter.on('system:file_updated', withChannel(onFileUpdated));
   emitter.on('server:action', withChannel(onReadDiff));

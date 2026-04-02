@@ -12,7 +12,7 @@ import {
 import { logger } from '../../logger.ts';
 import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
@@ -26,39 +26,35 @@ export function create(
 ): void {
   const interruptedChannels = new Set<string>();
 
-  function handleSend(_ch: Channel | null, payload: unknown, socket?: TypedSocket): void {
+  function handleSend(ch: Channel, socket: TypedSocket, payload: unknown): void {
     try {
       const { channelId, message: textMessage } = chatSendSchema.parse(payload);
       interruptedChannels.delete(channelId);
-      const channel = channelManager.get(channelId);
-      if (!channel) return;
-      channel.startProcessing();
-      channel.sendMessage(textMessage);
+      ch.startProcessing();
+      ch.sendMessage(textMessage);
       channelManager.broadcastSessionState(channelId, 'busy');
 
-      if (socket) emitter.emitToOthers(channelId, socket.id, 'message:user', {
+      emitter.emitToOthers(channelId, socket.id, 'message:user', {
         channelId,
         content: [{ type: 'text', text: textMessage }],
       });
 
-      if (!channel.sessionState.titleGenerated) {
-        channel.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
+      if (!ch.sessionState.titleGenerated) {
+        ch.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
       }
     } catch (err) {
       logger.error({ err }, 'Failed to send message');
     }
   }
 
-  function handleCancel(_ch: Channel | null, payload: unknown): void {
+  function handleCancel(ch: Channel, payload: unknown): void {
     try {
       const { channelId } = chatInterruptSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) return;
       if (interruptedChannels.has(channelId)) {
-        channel.abort();
+        ch.abort();
       } else {
         interruptedChannels.add(channelId);
-        channel.sendControlRequest('interrupt').catch(() => {});
+        ch.sendControlRequest('interrupt').catch(() => {});
       }
     } catch {
       // ignore
@@ -156,47 +152,34 @@ export function create(
     }
   }
 
-  function handleStopTask(_ch: Channel | null, payload: unknown): void {
+  function handleStopTask(ch: Channel, payload: unknown): void {
     try {
-      const { channelId, taskId } = chatStopTaskSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (channel) {
-        channel.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {});
-      }
+      const { taskId } = chatStopTaskSchema.parse(payload);
+      ch.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {});
     } catch {
       // ignore
     }
   }
 
-  function handleCancelAsync(_ch: Channel | null, payload: unknown): void {
+  function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
-      const { channelId, messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (channel) {
-        channel
-          .sendControlRequest('cancel_async_message', { message_uuid: messageUuid })
-          .catch(() => {});
-      }
+      const { messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
+      ch.sendControlRequest('cancel_async_message', { message_uuid: messageUuid }).catch(() => {});
     } catch {
       // ignore
     }
   }
 
-  async function handleRewindCode(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleRewindCode(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
-      const { channelId, userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback({ success: false, error: 'Session not found' });
-        return;
-      }
-      const result = await channel.sendControlRequest('rewind_files', {
+      const { userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
+      const result = await ch.sendControlRequest('rewind_files', {
         user_message_id: userMessageId ?? '',
         dry_run: dryRun ?? false,
       });
-      callback(result);
+      callback?.(result);
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to rewind code') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to rewind code') });
     }
   }
 
@@ -219,13 +202,10 @@ export function create(
     }
   }
 
-  function handleHookRespond(_ch: Channel | null, payload: unknown): void {
+  function handleHookRespond(ch: Channel, payload: unknown): void {
     try {
-      const { channelId, requestId, response } = chatHookCallbackRespondSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (channel) {
-        channel.respondToRequest(requestId, response);
-      }
+      const { requestId, response } = chatHookCallbackRespondSchema.parse(payload);
+      ch.respondToRequest(requestId, response);
     } catch {
       // ignore
     }
@@ -261,12 +241,12 @@ export function create(
 
   emitter.on('message:result', withChannel(onMessageResult));
   emitter.on('message:result', withChannel(onMessageResultTitle));
-  emitter.on('chat:send', handleSend);
-  emitter.on('chat:cancel', handleCancel);
+  emitter.on('chat:send', withSocket(handleSend));
+  emitter.on('chat:cancel', withChannel(handleCancel));
   emitter.on('chat:respond', handleRespond);
-  emitter.on('chat:stop_task', handleStopTask);
-  emitter.on('chat:cancel_async', handleCancelAsync);
-  emitter.on('chat:rewind_code', handleRewindCode);
+  emitter.on('chat:stop_task', withChannel(handleStopTask));
+  emitter.on('chat:cancel_async', withChannel(handleCancelAsync));
+  emitter.on('chat:rewind_code', withError(withChannel(handleRewindCode)));
   emitter.on('chat:cancel_request', handleCancelRequest);
-  emitter.on('chat:hook_respond', handleHookRespond);
+  emitter.on('chat:hook_respond', withChannel(handleHookRespond));
 }

@@ -13,7 +13,7 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
@@ -26,20 +26,15 @@ export function create(
   emitter: ChannelEmitter,
 ): void {
   async function handleSetModel(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, model } = chatSetModelSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback?.({ success: false, error: 'Session not found' });
-        return;
-      }
-      await channel.sendControlRequest('set_model', { model });
-      await settingsStore.set(channel.provider, 'model', model);
+      const { model } = chatSetModelSchema.parse(payload);
+      await ch.sendControlRequest('set_model', { model });
+      await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to set model') });
@@ -47,20 +42,15 @@ export function create(
   }
 
   async function handleSetPermissionMode(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
       const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback?.({ success: false, error: 'Session not found' });
-        return;
-      }
-      await channel.sendControlRequest('set_permission_mode', { mode });
-      await settingsStore.set(channel.provider, 'permissionMode', mode);
+      await ch.sendControlRequest('set_permission_mode', { mode });
+      await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
       callback?.({ success: true });
     } catch (err) {
@@ -69,22 +59,17 @@ export function create(
   }
 
   async function handleSetThinkingLevel(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
       const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback?.({ success: false, error: 'Session not found' });
-        return;
-      }
-      await channel.sendControlRequest('set_max_thinking_tokens', {
+      await ch.sendControlRequest('set_max_thinking_tokens', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
-      await settingsStore.set(channel.provider, 'thinkingLevel', thinkingLevel);
+      await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
       emitter.broadcastAll('settings:update', { channelId, thinkingLevel });
       callback?.({ success: true });
     } catch (err) {
@@ -92,12 +77,10 @@ export function create(
     }
   }
 
-  async function handleSetProactive(_ch: Channel | null, payload: unknown): Promise<void> {
+  async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) return;
-      await channel.sendControlRequest('set_proactive', { enabled });
+      await ch.sendControlRequest('set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
@@ -107,59 +90,45 @@ export function create(
     }
   }
 
-  function handleSetRemoteControl(_ch: Channel | null, payload: unknown): void {
+  function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
-      const { channelId, enabled } = chatSetRemoteControlSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (channel) {
-        channel.sendControlRequest('remote_control', { enabled }).catch(() => {});
-      }
+      const { enabled } = chatSetRemoteControlSchema.parse(payload);
+      ch.sendControlRequest('remote_control', { enabled }).catch(() => {});
     } catch {
       // ignore
     }
   }
 
-  async function handleApply(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleApply(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback({ success: false, error: 'Session not found' });
-        return;
-      }
-      await channel.sendControlRequest('apply_flag_settings', { settings });
+      await ch.sendControlRequest('apply_flag_settings', { settings });
       if (settings.effortLevel != null) {
-        await settingsStore.set(channel.provider, 'effortLevel', String(settings.effortLevel));
+        await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
         emitter.broadcastAll('settings:update', {
           channelId,
           effort: String(settings.effortLevel),
         });
       }
-      callback({ success: true });
+      callback?.({ success: true });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Invalid payload') });
+      callback?.({ success: false, error: errMsg(err, 'Invalid payload') });
     }
   }
 
-  async function handleState(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleState(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
     try {
-      const { channelId } = chatGetStateSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback({ success: false, error: 'Session not found' });
-        return;
-      }
       const state: Record<string, unknown> = {
-        ...(await settingsStore.getMany(channel.provider, [
+        ...(await settingsStore.getMany(ch.provider, [
           'model',
           'permissionMode',
           'thinkingLevel',
           'effortLevel',
         ])),
       };
-      callback({ success: true, state });
+      callback?.({ success: true, state });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to get state') });
+      callback?.({ success: false, error: errMsg(err, 'Failed to get state') });
     }
   }
 
@@ -236,12 +205,12 @@ export function create(
   }
 
   emitter.on('server:action', withChannel(onAutoRespond));
-  emitter.on('settings:set_model', handleSetModel);
-  emitter.on('settings:set_permission_mode', handleSetPermissionMode);
-  emitter.on('settings:set_thinking_level', handleSetThinkingLevel);
-  emitter.on('settings:set_proactive', handleSetProactive);
-  emitter.on('settings:set_remote_control', handleSetRemoteControl);
-  emitter.on('settings:apply', handleApply);
-  emitter.on('settings:state', handleState);
+  emitter.on('settings:set_model', withError(withChannel(handleSetModel)));
+  emitter.on('settings:set_permission_mode', withError(withChannel(handleSetPermissionMode)));
+  emitter.on('settings:set_thinking_level', withError(withChannel(handleSetThinkingLevel)));
+  emitter.on('settings:set_proactive', withChannel(handleSetProactive));
+  emitter.on('settings:set_remote_control', withChannel(handleSetRemoteControl));
+  emitter.on('settings:apply', withError(withChannel(handleApply)));
+  emitter.on('settings:state', withError(withChannel(handleState)));
   emitter.on('settings:refresh_usage', handleRefreshUsage);
 }

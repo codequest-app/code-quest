@@ -8,7 +8,7 @@ import {
 } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
-import type { ChannelEmitter } from '../../channel-emitter.ts';
+import { type ChannelEmitter, withChannel, withError } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
@@ -19,16 +19,13 @@ export function create(
   emitter: ChannelEmitter,
 ): void {
   function handleClose(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
   ): void {
     try {
       const { channelId } = chatKillSchema.parse(payload);
-      const ch = channelManager.get(channelId);
-      if (ch) {
-        ch.kill();
-        emitter.broadcastAll('session:dead', { channelId });
-      }
+      ch.kill();
+      emitter.broadcastAll('session:dead', { channelId });
     } catch {
       // ignore
     }
@@ -85,21 +82,18 @@ export function create(
   }
 
   async function handleGenerateTitle(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId, description, persist } = chatGenerateSessionTitleSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (channel) {
-        const result = await channel.sendControlRequest('generate_session_title', {
-          description,
-          persist,
-        });
-        callback?.({ success: true, result });
-      }
+      const { description, persist } = chatGenerateSessionTitleSchema.parse(payload);
+      const result = await ch.sendControlRequest('generate_session_title', {
+        description,
+        persist,
+      });
+      callback?.({ success: true, result });
     } catch (err) {
       callback?.({ success: false, error: String(err) });
     }
@@ -120,10 +114,10 @@ export function create(
     }
   }
 
-  emitter.on('session:close', handleClose);
+  emitter.on('session:close', withChannel(handleClose));
   emitter.on('session:resume', handleResume);
   emitter.on('session:delete', handleDelete);
   emitter.on('session:rename', handleRename);
-  emitter.on('session:generate_title', handleGenerateTitle);
+  emitter.on('session:generate_title', withChannel(handleGenerateTitle));
   emitter.on('session:update_state', handleUpdateState);
 }
