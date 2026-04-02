@@ -40,7 +40,7 @@ function FileResultItem({
   index: number;
   selectedIndex: number;
   mentionQuery: string;
-  onSelect: (path: string) => void;
+  onSelect: (path: string, navigateInto?: boolean) => void;
   onHover: (index: number) => void;
   itemRef: React.Ref<HTMLDivElement> | null;
 }) {
@@ -55,7 +55,7 @@ function FileResultItem({
       ref={itemRef}
       onMouseDown={(e) => {
         e.preventDefault();
-        onSelect(`@${file.path}`);
+        onSelect(`@${file.path}`, file.type === 'directory');
       }}
       onMouseEnter={() => onHover(index)}
       role="option"
@@ -113,7 +113,7 @@ export interface MentionDropdownProps {
   searchStatus: 'idle' | 'loading' | 'done';
   selectedIndex: number;
   hasFileSearch: boolean;
-  onSelectMention: (suggestion: string) => void;
+  onSelectMention: (suggestion: string, navigateInto?: boolean) => void;
   onHover?: (index: number) => void;
   activeItemRef?: React.Ref<HTMLDivElement>;
 }
