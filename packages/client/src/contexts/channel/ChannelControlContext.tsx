@@ -1,6 +1,7 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
+import { createGuard } from '../handlers/channel/guard';
 import type { ChannelState } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
@@ -58,7 +59,7 @@ export function ChannelControlProvider({
   // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
 
     const entries = Object.entries(controlHandlers) as Array<
       [string, (state: ControlState, payload: never) => Partial<ControlState>]
@@ -88,7 +89,7 @@ export function ChannelControlProvider({
   // ── Special: control:permission (local state + parent state + resetRef) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onControlPermission(payload: Payload<'control:permission'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -123,7 +124,7 @@ export function ChannelControlProvider({
   // ── Special: control:hook_callback (local state + parent state + resetRef) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onControlHookCallback(payload: Payload<'control:hook_callback'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -157,7 +158,7 @@ export function ChannelControlProvider({
   // ── Special: session:closed (reset + parent state) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onSessionClosed(payload: Payload<'session:closed'>) {
       if (!guard(payload)) return;
       resetStreamingRefs();
@@ -181,7 +182,7 @@ export function ChannelControlProvider({
   // ── Special: control:mcp (side effect only — auto-respond) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onControlMcp(payload: Payload<'control:mcp'>) {
       if (!guard(payload)) return;
       const mcpMsg = payload.message;

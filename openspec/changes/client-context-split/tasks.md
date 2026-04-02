@@ -47,10 +47,10 @@ handler 搬完後，messagesHandlers.ts 應該只剩真正屬於 message 的 han
 整理 handler 分組順序和註解。
 
 - [x] 16.1 messagesHandlers 剩 message/stream/session/system/file/plan/notification/raw — 合理（不拆 files/plan context）
-- [ ] 16.2 整理 handler 順序 + 分組註解
-- [ ] 16.3 streaming helper 從 ChannelMessagesContext 頂層搬到獨立檔案
-- [ ] 16.4 guard 重複 → 提取 createGuard utility
-- [ ] 16.5 typecheck + 615 test pass
+- [x] 16.2 handler 按 domain 分組（message → stream → session → system → error → file/plan → notification/raw）+ 分隔註解
+- [x] 16.3 streaming helpers 搬到 `handlers/channel/streamingHelpers.ts`
+- [x] 16.4 guard 提取為 `handlers/channel/guard.ts` createGuard，所有 context 統一使用
+- [x] 16.5 typecheck + 615 test pass
 
 ## 17. 清理
 

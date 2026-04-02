@@ -10,11 +10,54 @@ import { openUrl } from '../../../utils/open-url';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
-// ── Handlers: (state, payload) → newState ──
+// ══════════════════════════════════════════════════════════
+// State handlers: (state, payload) → newState
+// Pure functions — no setState, no socket, no side effects.
+// ══════════════════════════════════════════════════════════
+
+// ── Message ──
+
+function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
+  return applyUserContent(state, p.content);
+}
+
+// ── Stream ──
+
+function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {
+  return {
+    ...state,
+    messages: [
+      ...state.messages,
+      msg({ role: 'assistant', type: 'streamlined_text', content: p.text }),
+    ],
+  };
+}
+
+function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summary'>): ChannelState {
+  return {
+    ...state,
+    messages: [
+      ...state.messages,
+      msg({
+        role: 'assistant',
+        type: 'streamlined_tool_use_summary',
+        content: p.toolSummary,
+      }),
+    ],
+  };
+}
+
+// ── Session ──
 
 function onSessionStatus(state: ChannelState, p: Payload<'session:status'>): ChannelState {
   return { ...state, statusText: p.status || null };
 }
+
+function onDisconnect(state: ChannelState): ChannelState {
+  return { ...state, status: 'disconnected' };
+}
+
+// ── System ──
 
 function onCompactBoundary(state: ChannelState, _p: Payload<'system:compact_boundary'>): ChannelState {
   return {
@@ -102,12 +145,16 @@ function onRateLimit(state: ChannelState, p: Payload<'system:rate_limit'>): Chan
   };
 }
 
+// ── Error ──
+
 function onErrorMessage(state: ChannelState, p: Payload<'error:message'>): ChannelState {
   return {
     ...state,
     messages: [...state.messages, msg({ role: 'system', type: 'error', content: p.message })],
   };
 }
+
+// ── File / Plan ──
 
 function onFileUpdated(state: ChannelState, p: Payload<'file:updated'>): ChannelState {
   return {
@@ -127,33 +174,7 @@ function onPlanCommentRemoved(state: ChannelState, p: Payload<'plan:comment_remo
   return { ...state, planComments: state.planComments.filter((c) => c.id !== p.commentId) };
 }
 
-function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({ role: 'assistant', type: 'streamlined_text', content: p.text }),
-    ],
-  };
-}
-
-function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summary'>): ChannelState {
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({
-        role: 'assistant',
-        type: 'streamlined_tool_use_summary',
-        content: p.toolSummary,
-      }),
-    ],
-  };
-}
-
-function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
-  return applyUserContent(state, p.content);
-}
+// ── Notification / Raw (state part) ──
 
 function onNotificationShow(state: ChannelState, p: Payload<'notification:show'>): ChannelState {
   return {
@@ -208,10 +229,6 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
   };
 }
 
-function onDisconnect(state: ChannelState): ChannelState {
-  return { ...state, status: 'disconnected' };
-}
-
 // ── Content helper ──
 
 function applyUserContent(state: ChannelState, content: ContentBlock[]): ChannelState {
@@ -238,32 +255,39 @@ function applyUserContent(state: ChannelState, content: ContentBlock[]): Channel
   return { ...state, messages };
 }
 
-/**
- * Handler map: event name → pure function `(state, payload) → newState`.
- * No setState, no socket, no side effects, no refs.
- * Guard and on/off are handled by auto-wiring.
- */
+// ── Handler map ──
+
 export const messagesHandlers = {
+  // Message
+  'message:user': onMessageUser,
+  // Stream
+  'stream:text': onStreamText,
+  'stream:tool_summary': onStreamToolSummary,
+  // Session
   'session:status': onSessionStatus,
+  'disconnect': onDisconnect,
+  // System
   'system:compact_boundary': onCompactBoundary,
   'system:hook_started': onHookStarted,
   'system:hook_response': onHookResponse,
   'system:task_started': onTaskStarted,
   'system:api_retry': onApiRetry,
   'system:rate_limit': onRateLimit,
+  // Error
   'error:message': onErrorMessage,
+  // File / Plan
   'file:updated': onFileUpdated,
   'plan:comment_added': onPlanCommentAdded,
   'plan:comment_removed': onPlanCommentRemoved,
-  'stream:text': onStreamText,
-  'stream:tool_summary': onStreamToolSummary,
-  'message:user': onMessageUser,
+  // Notification / Raw
   'notification:show': onNotificationShow,
   'raw:event': onRawEvent,
-  'disconnect': onDisconnect,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
-// ── Effect handlers (side effects, no state change) ──
+// ══════════════════════════════════════════════════════════
+// Effect handlers: side effects only (toast, openUrl, etc.)
+// No state change — state part handled by state handlers.
+// ══════════════════════════════════════════════════════════
 
 export interface EffectDeps {
   socket: TypedSocket;
@@ -336,7 +360,9 @@ export const messagesEffects = {
   'disconnect': onDisconnectEffect,
 } satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
 
-// ── Emit actions (send) ──
+// ══════════════════════════════════════════════════════════
+// Emit actions (send): socket.emit / rpc calls
+// ══════════════════════════════════════════════════════════
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;

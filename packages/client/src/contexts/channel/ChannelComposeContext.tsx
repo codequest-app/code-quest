@@ -11,8 +11,9 @@ import {
 import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
-import { useChannelMessages } from './ChannelMessagesContext';
 import { composeHandlers } from '../handlers/channel/composeHandlers';
+import { createGuard } from '../handlers/channel/guard';
+import { useChannelMessages } from './ChannelMessagesContext';
 
 export interface ChannelComposeContextValue {
   value: string;
@@ -66,8 +67,7 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (payload: { channelId: string }) =>
-      payload.channelId === channelId || payload.channelId === '';
+    const guard = createGuard(channelId);
     const entries = Object.entries(composeHandlers) as Array<
       [string, (state: ComposeState, payload: never) => ComposeState]
     >;

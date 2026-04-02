@@ -19,7 +19,9 @@ import {
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
+import { createGuard } from '../handlers/channel/guard';
 import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from '../handlers/channel/messagesHandlers';
+import { streamingAppendOrCreate, streamingAppendToLast, streamingRemovePlaceholder } from '../handlers/channel/streamingHelpers';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
@@ -27,54 +29,6 @@ type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEv
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
-}
-
-// ── Streaming helpers (module-level, pure functions) ──
-
-function streamingRemovePlaceholder(setState: SetChannelState) {
-  setState((prev) => {
-    if (
-      prev.messages.length > 0 &&
-      prev.messages[prev.messages.length - 1].type === 'content_block_start'
-    ) {
-      return { ...prev, messages: prev.messages.slice(0, -1) };
-    }
-    return prev;
-  });
-}
-
-function streamingAppendToLast(setState: SetChannelState, content: string) {
-  setState((prev) => {
-    if (prev.messages.length === 0) return prev;
-    const msgs = [...prev.messages];
-    msgs[msgs.length - 1] = {
-      ...msgs[msgs.length - 1],
-      content: msgs[msgs.length - 1].content + content,
-    };
-    return { ...prev, messages: msgs };
-  });
-}
-
-function streamingAppendOrCreate(
-  setState: SetChannelState,
-  isTextStreaming: RefObject<boolean>,
-  removePlaceholder: () => void,
-  content: string,
-  parentToolUseId?: string,
-) {
-  removePlaceholder();
-  if (isTextStreaming.current) {
-    streamingAppendToLast(setState, content);
-  } else {
-    isTextStreaming.current = true;
-    setState((prev) => ({
-      ...prev,
-      messages: [
-        ...prev.messages,
-        msg({ role: 'assistant', type: 'text', content, parentToolUseId }),
-      ],
-    }));
-  }
 }
 
 export interface ChannelMessagesValue {
@@ -231,7 +185,7 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
 
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     const effectDeps: EffectDeps = { socket, channelId };
     const resetEvents = new Set([
       'system:compact_boundary',
@@ -270,7 +224,7 @@ export function ChannelMessagesProvider({
   // ── Special: stream:chunk (ref-based, cannot be a pure handler) ──
   useEffect(() => {
     if (!socket) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
 
     const setState = setChannelState;
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
@@ -345,7 +299,7 @@ export function ChannelMessagesProvider({
   // ── Special: stream:end (ref-only, no state change) ──
   useEffect(() => {
     if (!socket) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onStreamEnd(p: Payload<'stream:end'>) {
       if (!guard(p)) return;
       resetStreamingRefs();
@@ -357,7 +311,7 @@ export function ChannelMessagesProvider({
   // ── Special: message:assistant (depends on streaming refs) ──
   useEffect(() => {
     if (!socket) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
 
     const setState = setChannelState;
     const removePlaceholder = () => streamingRemovePlaceholder(setState);
@@ -414,7 +368,7 @@ export function ChannelMessagesProvider({
   // ── Special: message:result (dequeue + socket.emit) ──
   useEffect(() => {
     if (!socket) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
     function onMessageResult(p: Payload<'message:result'>) {
       if (!guard(p)) return;
       resetStreamingRefs();

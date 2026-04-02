@@ -1,6 +1,7 @@
 import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../SocketContext';
+import { createGuard } from '../handlers/channel/guard';
 import {
   configHandlers,
   createConfigActions,
@@ -121,7 +122,7 @@ export function ChannelConfigProvider({
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = (p: { channelId: string }) => p.channelId === channelId || p.channelId === '';
+    const guard = createGuard(channelId);
 
     const entries = Object.entries(configHandlers) as Array<
       [string, (state: ConfigState, payload: never) => ConfigState]
