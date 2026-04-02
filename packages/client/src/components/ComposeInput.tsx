@@ -57,6 +57,7 @@ export function ComposeInput() {
   }, [registerFocus]);
 
   const inputHistory = useInputHistory();
+  const mentionContainerRef = useRef<HTMLDivElement>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
   const [fileResults, setFileResults] = useState<FileSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -64,6 +65,24 @@ export function ComposeInput() {
   const scrollActiveIntoView = useCallback((el: HTMLDivElement | null) => {
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   }, []);
+
+  useEffect(() => {
+    if (!mentionOpen) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        mentionContainerRef.current &&
+        !mentionContainerRef.current.contains(e.target as Node) &&
+        textareaRef.current &&
+        !textareaRef.current.contains(e.target as Node)
+      ) {
+        setMentionOpen(false);
+        setFileResults([]);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [mentionOpen]);
+
   const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
   const mentionQuery = mentionOpen ? getMentionQuery(value, cursorPos) : null;
@@ -224,17 +243,19 @@ export function ComposeInput() {
         className="w-full bg-transparent text-text px-[14px] pt-[10px] pb-[2px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted min-h-[1.5em] max-h-[200px] overflow-y-auto"
       />
       {showMentionDropdown && (
-        <MentionDropdown
-          mentionQuery={mentionQuery ?? ''}
-          filteredSuggestions={[]}
-          fileResults={fileResults}
-          searchStatus={searchStatus}
-          selectedIndex={selectedIndex}
-          hasFileSearch={true}
-          onSelectMention={handleSelectMention}
-          onHover={setSelectedIndex}
-          activeItemRef={scrollActiveIntoView}
-        />
+        <div ref={mentionContainerRef}>
+          <MentionDropdown
+            mentionQuery={mentionQuery ?? ''}
+            filteredSuggestions={[]}
+            fileResults={fileResults}
+            searchStatus={searchStatus}
+            selectedIndex={selectedIndex}
+            hasFileSearch={true}
+            onSelectMention={handleSelectMention}
+            onHover={setSelectedIndex}
+            activeItemRef={scrollActiveIntoView}
+          />
+        </div>
       )}
     </>
   );
