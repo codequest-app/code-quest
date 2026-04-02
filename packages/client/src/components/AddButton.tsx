@@ -1,4 +1,53 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+function UploadIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M8 1.5a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 7.793V2a.5.5 0 0 1 .5-.5zM2.5 10a.5.5 0 0 1 .5.5V13h10v-2.5a.5.5 0 0 1 1 0V13.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V10.5a.5.5 0 0 1 .5-.5z"
+        fill="currentColor"
+        transform="rotate(180 8 8)"
+      />
+    </svg>
+  );
+}
+
+function AddContextIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A.5.5 0 0 0 8.914 4H13.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+      <text
+        x="8"
+        y="10.5"
+        textAnchor="middle"
+        fontSize="7"
+        fill="currentColor"
+        fontFamily="monospace"
+      >
+        @
+      </text>
+    </svg>
+  );
+}
 
 export function AddButton({
   onAttachFile,
@@ -9,37 +58,59 @@ export function AddButton({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(e.target as Node) &&
-      buttonRef.current &&
-      !buttonRef.current.contains(e.target as Node)
-    ) {
-      setOpen(false);
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+      }
     }
-  };
+
+    function handleMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [open]);
 
   if (!onAttachFile && !onMentionFile) return null;
 
-  const items: Array<{ id: string; label: string; title: string; onClick: () => void }> = [];
+  const items: Array<{
+    id: string;
+    label: string;
+    title: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+  }> = [];
+
   if (onAttachFile)
     items.push({
       id: 'upload',
       label: 'Upload from computer',
       title: 'Attach files from your computer',
+      icon: <UploadIcon />,
       onClick: () => {
         onAttachFile();
         setOpen(false);
       },
     });
+
   if (onMentionFile)
     items.push({
       id: 'files',
-      label: 'Files & Folders',
+      label: 'Add context',
       title: 'Add files or folders to the conversation',
+      icon: <AddContextIcon />,
       onClick: () => {
         onMentionFile();
         setOpen(false);
@@ -47,9 +118,8 @@ export function AddButton({
     });
 
   return (
-    <div className="relative" onMouseDown={handleMouseDown} onKeyDown={undefined} role="none">
+    <div ref={containerRef} className="relative">
       <button
-        ref={buttonRef}
         type="button"
         title="Add"
         onClick={() => setOpen((v) => !v)}
@@ -70,10 +140,7 @@ export function AddButton({
         </svg>
       </button>
       {open && (
-        <div
-          ref={containerRef}
-          className="absolute bottom-full right-0 mb-1 bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-50 min-w-[180px]"
-        >
+        <div className="absolute bottom-full left-0 mb-1 bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-50 min-w-[200px]">
           {items.map((item) => (
             <button
               key={item.id}
@@ -82,6 +149,9 @@ export function AddButton({
               onClick={item.onClick}
               className="w-full text-left px-3 py-2 text-xs text-text hover:bg-white/5 flex items-center gap-2"
             >
+              <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
+                {item.icon}
+              </span>
               {item.label}
             </button>
           ))}
