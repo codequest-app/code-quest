@@ -1,28 +1,29 @@
 import { terminalGetContentsSchema, terminalOpenClaudeSchema } from '@code-quest/shared';
+import type { Channel } from '../channel.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
-export function create(channelManager: ChannelManager): SocketHandler {
-  function handleRead(payload: unknown, callback: SocketCallback): void {
+export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
+  function handleRead(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
     try {
-      const { channelId } = terminalGetContentsSchema.parse(payload);
-      const channel = channelManager.get(channelId);
-      if (!channel || channel.terminalLines.length === 0) {
-        callback({ content: null });
+      if (ch.terminalLines.length === 0) {
+        cb?.({ content: null });
         return;
       }
-      const lines = channel.terminalLines.slice(-100);
-      callback({ content: lines.join('\n') });
+      const lines = ch.terminalLines.slice(-100);
+      cb?.({ content: lines.join('\n') });
     } catch {
-      callback({ content: null });
+      cb?.({ content: null });
     }
   }
 
   async function handleOpenClaude(
-    socket: TypedSocket,
+    _ch: Channel | null,
     payload: unknown,
-    callback: SocketCallback,
+    socket?: TypedSocket,
+    cb?: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
@@ -31,7 +32,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
 
       const newChannelId = crypto.randomUUID();
       const { channel: ch } = await channelManager.create(newChannelId, {
-        onBeforeSpawn: (c) => channelManager.addSocketToChannel(c, socket),
+        onBeforeSpawn: (c) => { if (socket) channelManager.addSocketToChannel(c, socket); },
       });
       ch.updateSessionState({ cwd: baseCwd });
 
@@ -41,16 +42,12 @@ export function create(channelManager: ChannelManager): SocketHandler {
         ch.sendMessage(prompt);
       }
 
-      callback({ success: true, channelId: newChannelId });
+      cb?.({ success: true, channelId: newChannelId });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to open claude terminal') });
+      cb?.({ success: false, error: errMsg(err, 'Failed to open claude terminal') });
     }
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('terminal:read', (p, cb) => handleRead(p, cb));
-      socket.on('terminal:open_claude', (p, cb) => handleOpenClaude(socket, p, cb));
-    },
-  };
+  emitter.on('terminal:read', withChannel(handleRead));
+  emitter.on('terminal:open_claude', handleOpenClaude);
 }

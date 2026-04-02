@@ -57,11 +57,11 @@ export class SocketServer {
     // Handlers that only use emitter.on (no register needed)
     usage.create(this.usageTracker, em);
     permission.create(em);
+    speech.create(em);
+    terminal.create(cm, em);
 
     const commonHandlers: SocketHandler[] = [
-      speech.create(cm),
       git.create(this.sessionHistory, this.rawEventStore),
-      terminal.create(cm),
       file.create(cm, em),
       mcp.create(cm, em),
       settings.create(cm, this.settingsStore, this.usageTracker, em),

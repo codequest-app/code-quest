@@ -53,11 +53,12 @@ export class ChannelEmitter {
     payload: unknown,
     socket?: TypedSocket,
     cb?: SocketCallback,
-  ): void {
+  ): unknown {
     const handlers = this.eventMap.get(event);
-    if (handlers) {
-      for (const h of handlers) h(ch, payload, socket, cb);
-    }
+    if (!handlers) return;
+    let result: unknown;
+    for (const h of handlers) result = h(ch, payload, socket, cb);
+    return result;
   }
 
   /**
@@ -150,7 +151,7 @@ export class ChannelEmitter {
         const cb = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : undefined;
         const channelId = typeof payload?.channelId === 'string' ? payload.channelId : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
-        this.dispatch(event, ch, payload, socket, cb !== payload ? cb : undefined);
+        return this.dispatch(event, ch, payload, socket, cb !== payload ? cb : undefined);
       });
     }
 
