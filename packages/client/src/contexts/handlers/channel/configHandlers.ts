@@ -1,6 +1,7 @@
 import {
   type McpAuthResult,
   type ModelInfo,
+  type UsageQuota,
   modelInfoSchema,
   type ServerToClientEvents,
 } from '@code-quest/shared';
@@ -95,12 +96,45 @@ function onAvailableModels(state: ConfigState, payload: Payload<'app:models'>): 
   return { ...state, availableModels: parseModels(payload.models) };
 }
 
+type TierKey = 'five_hour' | 'seven_day' | 'seven_day_sonnet';
+function isTierKey(v: string | undefined): v is TierKey {
+  return v === 'five_hour' || v === 'seven_day' || v === 'seven_day_sonnet';
+}
+
+function onRateLimitQuota(state: ConfigState, p: Payload<'system:rate_limit'>): ConfigState {
+  const { rateLimitType, resetsAt, utilization } = p.info;
+  if (!isTierKey(rateLimitType)) return state;
+  const currentQuota: UsageQuota = state.usageQuota ?? {};
+  return {
+    ...state,
+    usageQuota: {
+      ...currentQuota,
+      [rateLimitType]: {
+        utilization: typeof utilization === 'number' ? utilization : 0,
+        ...(resetsAt != null
+          ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() }
+          : {}),
+      },
+    },
+  };
+}
+
+function onSettingsUsage(state: ConfigState, p: Payload<'settings:usage'>): ConfigState {
+  return {
+    ...state,
+    usageQuota: p.usage,
+    ...(p.contextUsage ? { contextUsage: p.contextUsage } : {}),
+  };
+}
+
 export const configHandlers = {
   'settings:update': onSettingsUpdate,
   'session:init': onSessionInit,
   'session:status': onSessionStatus,
   'app:models': onAvailableModels,
   'app:experiment_gates': onExperimentGates,
+  'settings:usage': onSettingsUsage,
+  'system:rate_limit': onRateLimitQuota,
 } satisfies Record<string, (state: ConfigState, payload: never) => ConfigState>;
 
 // session:states needs channelId — handled specially in context
@@ -209,6 +243,10 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
     return rpc(socket, 'mcp:ask_debugger', { channelId });
   }
 
+  function requestUsageUpdate(): void {
+    socket.emit('settings:refresh_usage', { channelId } as never);
+  }
+
   return {
     setModel,
     setPermissionMode,
@@ -229,5 +267,6 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
     enableJupyterMcp,
     disableJupyterMcp,
     askDebuggerHelp,
+    requestUsageUpdate,
   };
 }

@@ -1,4 +1,4 @@
-import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents } from '@code-quest/shared';
+import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../SocketContext';
 import {
@@ -26,6 +26,8 @@ export interface ConfigState {
   providerConfig?: ProviderClientConfig;
   accountInfo: AccountInfo | null;
   experimentGates: Record<string, boolean>;
+  usageQuota: UsageQuota | null;
+  contextUsage: Record<string, unknown> | null;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -52,6 +54,7 @@ export interface ChannelConfigValue extends ConfigState {
   enableJupyterMcp: () => Promise<McpResponse>;
   disableJupyterMcp: () => Promise<McpResponse>;
   askDebuggerHelp: () => Promise<McpResponse>;
+  requestUsageUpdate: () => void;
 }
 
 const ChannelConfigContext = createContext<ChannelConfigValue | null>(null);
@@ -76,6 +79,8 @@ const INITIAL_CONFIG: ConfigState = {
   slashCommands: [],
   accountInfo: null,
   experimentGates: {},
+  usageQuota: null,
+  contextUsage: null,
 };
 
 export function ChannelConfigProvider({

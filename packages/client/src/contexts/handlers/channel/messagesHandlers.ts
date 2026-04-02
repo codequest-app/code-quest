@@ -1,4 +1,4 @@
-import type { ContentBlock, FileSearchResult, PlanCommentData, ServerToClientEvents, UsageQuota } from '@code-quest/shared';
+import type { ContentBlock, FileSearchResult, PlanCommentData, ServerToClientEvents } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import { toast } from 'sonner';
 import { showNotificationToast } from '../../../components/NotificationToast';
@@ -9,11 +9,6 @@ import { msg } from '../../../utils/message';
 import { openUrl } from '../../../utils/open-url';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
-
-type TierKey = 'five_hour' | 'seven_day' | 'seven_day_sonnet';
-function isTierKey(v: string | undefined): v is TierKey {
-  return v === 'five_hour' || v === 'seven_day' || v === 'seven_day_sonnet';
-}
 
 // ── Handlers: (state, payload) → newState ──
 
@@ -93,23 +88,8 @@ function onApiRetry(state: ChannelState, p: Payload<'system:api_retry'>): Channe
 }
 
 function onRateLimit(state: ChannelState, p: Payload<'system:rate_limit'>): ChannelState {
-  const { rateLimitType, resetsAt, utilization } = p.info;
-  const quotaUpdate: Partial<{ usageQuota: UsageQuota }> = {};
-  if (isTierKey(rateLimitType)) {
-    const currentQuota: UsageQuota = state.usageQuota ?? {};
-    quotaUpdate.usageQuota = {
-      ...currentQuota,
-      [rateLimitType]: {
-        utilization: typeof utilization === 'number' ? utilization : 0,
-        ...(resetsAt != null
-          ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() }
-          : {}),
-      },
-    };
-  }
   return {
     ...state,
-    ...quotaUpdate,
     messages: [
       ...state.messages,
       msg({
@@ -168,14 +148,6 @@ function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summar
         content: p.toolSummary,
       }),
     ],
-  };
-}
-
-function onSettingsUsage(state: ChannelState, p: Payload<'settings:usage'>): ChannelState {
-  return {
-    ...state,
-    usageQuota: p.usage,
-    ...(p.contextUsage ? { contextUsage: p.contextUsage } : {}),
   };
 }
 
@@ -285,7 +257,6 @@ export const messagesHandlers = {
   'plan:comment_removed': onPlanCommentRemoved,
   'stream:text': onStreamText,
   'stream:tool_summary': onStreamToolSummary,
-  'settings:usage': onSettingsUsage,
   'message:user': onMessageUser,
   'notification:show': onNotificationShow,
   'raw:event': onRawEvent,
@@ -438,10 +409,6 @@ export function createMessagesActions({
     return rpc(socket, 'session:raw_events', { channelId });
   }
 
-  function requestUsageUpdate() {
-    socket.emit('settings:refresh_usage', { channelId } as never);
-  }
-
   function subscribeRawEvents(cb: (evt: unknown) => void): () => void {
     const handler = (eventName: string, ...args: unknown[]) => {
       const payload = isRecord(args[0]) ? args[0] : undefined;
@@ -487,7 +454,6 @@ export function createMessagesActions({
     addPlanComment,
     clearPlanComments,
     fetchRawEvents,
-    requestUsageUpdate,
     subscribeRawEvents,
     searchFiles,
     getTerminalContents,

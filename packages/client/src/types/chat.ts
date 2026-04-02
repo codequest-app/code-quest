@@ -3,7 +3,6 @@ import type {
   ControlDiffReviewPayload,
   ControlElicitationPayload,
   PlanCommentData,
-  UsageQuota,
 } from '@code-quest/shared';
 import type { Message, SessionStatus } from './ui';
 
@@ -27,8 +26,6 @@ export interface ChannelState {
   modifiedFiles: Record<string, { oldContent?: string | null; newContent?: string | null }>;
   planComments: PlanCommentData[];
   terminalSessions: Record<string, TerminalSession>;
-  usageQuota: UsageQuota | null;
-  contextUsage: Record<string, unknown> | null;
 }
 
 export function initialChannelState(channelId: string): ChannelState {
@@ -42,8 +39,6 @@ export function initialChannelState(channelId: string): ChannelState {
     modifiedFiles: {},
     planComments: [],
     terminalSessions: {},
-    usageQuota: null,
-    contextUsage: null,
   };
 }
 

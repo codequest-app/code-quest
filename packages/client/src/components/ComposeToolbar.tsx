@@ -33,14 +33,14 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     isProcessing,
     isCancelling,
     stats,
-    contextUsage,
-    requestUsageUpdate,
     isContextCompressed,
-    usageQuota,
     abort,
   } = useChannelMessages();
   const {
     accountInfo,
+    usageQuota,
+    contextUsage,
+    requestUsageUpdate,
     permissionMode,
     model,
     availableModels,

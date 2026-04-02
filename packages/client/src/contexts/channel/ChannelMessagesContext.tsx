@@ -87,8 +87,6 @@ export interface ChannelMessagesValue {
   terminalSessions: ChannelState['terminalSessions'];
   planComments: ChannelState['planComments'];
   statusText: ChannelState['statusText'];
-  usageQuota: ChannelState['usageQuota'];
-  contextUsage: ChannelState['contextUsage'];
   isProcessing: boolean;
   isCancelling: boolean;
   setChannelState: SetChannelState;
@@ -101,7 +99,6 @@ export interface ChannelMessagesValue {
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<{ events: unknown[] }>;
-  requestUsageUpdate: () => void;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   searchFiles: (pattern: string) => Promise<{ files: FileSearchResult[] }>;
   getTerminalContents: () => Promise<{ content: string | null }>;
@@ -465,8 +462,6 @@ export function ChannelMessagesProvider({
       terminalSessions: channelState.terminalSessions,
       planComments: channelState.planComments,
       statusText: channelState.statusText,
-      usageQuota: channelState.usageQuota,
-      contextUsage: channelState.contextUsage,
       isProcessing:
         channelState.status === 'processing' ||
         channelState.status === 'busy' ||

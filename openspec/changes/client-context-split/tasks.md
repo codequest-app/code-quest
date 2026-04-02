@@ -27,11 +27,11 @@ ChannelState 目前持有 12 個欄位，其中 accountInfo, experimentGates
 
 ## 14. usageQuota/contextUsage 搬到 ChannelConfigContext
 
-- [ ] 14.1 usageQuota, contextUsage 搬到 ChannelConfigContext state
-- [ ] 14.2 settings:usage handler 從 messagesHandlers 搬到 configHandlers
-- [ ] 14.3 system:rate_limit handler 的 usageQuota 部分搬到 configHandlers（message 部分留 messagesHandlers）
-- [ ] 14.4 更新消費端 component
-- [ ] 14.5 typecheck + 615 test pass
+- [x] 14.1 usageQuota, contextUsage 搬到 ConfigState
+- [x] 14.2 settings:usage handler + requestUsageUpdate action 搬到 configHandlers
+- [x] 14.3 system:rate_limit 拆分：usageQuota 部分 → configHandlers，message 部分留 messagesHandlers
+- [x] 14.4 ComposeToolbar 改用 useChannelConfig 取 usageQuota/contextUsage/requestUsageUpdate
+- [x] 14.5 typecheck + 615 test pass
 
 ## 15. modifiedFiles/planComments 評估
 
