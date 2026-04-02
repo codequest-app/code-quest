@@ -60,7 +60,6 @@ export class SocketServer {
 
     const commonHandlers: SocketHandler[] = [
       speech.create(cm),
-      planHandler,
       git.create(this.sessionHistory, this.rawEventStore),
       terminal.create(cm),
       file.create(cm, em),

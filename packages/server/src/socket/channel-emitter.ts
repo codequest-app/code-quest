@@ -142,6 +142,18 @@ export class ChannelEmitter {
   ): void {
     this._resolveChannel = resolveChannel;
 
+    // Wire client socket events for emitter.on subscribers only
+    for (const event of this.eventMap.keys()) {
+      // biome-ignore lint/suspicious/noExplicitAny: socket.io typed emit signatures vary per event
+      socket.on(event as any, (...args: any[]) => {
+        const payload = args[0] ?? {};
+        const cb = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : undefined;
+        const channelId = typeof payload?.channelId === 'string' ? payload.channelId : undefined;
+        const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
+        this.dispatch(event, ch, payload, socket, cb !== payload ? cb : undefined);
+      });
+    }
+
     socket.on('disconnect', () => {
       this.removeSocketFromAll(socket.id);
     });

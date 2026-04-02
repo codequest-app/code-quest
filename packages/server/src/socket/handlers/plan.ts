@@ -5,15 +5,16 @@ import {
   planGetCommentsSchema,
   planRemoveCommentSchema,
 } from '@code-quest/shared';
+import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
-import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
+import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export interface PlanApi {
   consumeCommentsAsUserFeedback(channelId: string): string | undefined;
 }
 
-export function create(emitter: ChannelEmitter): SocketHandler & PlanApi {
+export function create(emitter: ChannelEmitter): PlanApi {
   const commentsMap = new Map<string, PlanCommentData[]>();
 
   function getOrCreate(channelId: string): PlanCommentData[] {
@@ -25,54 +26,54 @@ export function create(emitter: ChannelEmitter): SocketHandler & PlanApi {
     return list;
   }
 
-  function addComment(socket: TypedSocket, payload: unknown, callback: SocketCallback): void {
+  function addComment(_ch: Channel | null, payload: unknown, socket?: TypedSocket, cb?: SocketCallback): void {
     try {
       const { channelId, comment } = planCommentSchema.parse(payload);
       getOrCreate(channelId).push(comment);
-      callback({ success: true });
-      emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
+      cb?.({ success: true });
+      if (socket) emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to add comment') });
+      cb?.({ success: false, error: errMsg(err, 'Failed to add comment') });
     }
   }
 
-  function getComments(payload: unknown, callback: SocketCallback): void {
+  function getComments(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
     try {
       const { channelId } = planGetCommentsSchema.parse(payload);
-      callback({ comments: commentsMap.get(channelId) ?? [] });
+      cb?.({ comments: commentsMap.get(channelId) ?? [] });
     } catch {
-      callback({ comments: [] });
+      cb?.({ comments: [] });
     }
   }
 
-  function removeComment(socket: TypedSocket, payload: unknown, callback: SocketCallback): void {
+  function removeComment(_ch: Channel | null, payload: unknown, socket?: TypedSocket, cb?: SocketCallback): void {
     try {
       const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
       const comments = commentsMap.get(channelId);
       if (!comments) {
-        callback({ success: false, error: 'Comment not found' });
+        cb?.({ success: false, error: 'Comment not found' });
         return;
       }
       const idx = comments.findIndex((c) => c.id === commentId);
       if (idx === -1) {
-        callback({ success: false, error: 'Comment not found' });
+        cb?.({ success: false, error: 'Comment not found' });
         return;
       }
       comments.splice(idx, 1);
-      callback({ success: true });
-      emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', { channelId, commentId });
+      cb?.({ success: true });
+      if (socket) emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', { channelId, commentId });
     } catch (err) {
-      callback({ success: false, error: errMsg(err, 'Failed to remove comment') });
+      cb?.({ success: false, error: errMsg(err, 'Failed to remove comment') });
     }
   }
 
-  function closePreview(payload: unknown, callback: SocketCallback): void {
+  function closePreview(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
     try {
       const { channelId } = planClosePreviewSchema.parse(payload);
       commentsMap.delete(channelId);
-      callback({ success: true });
+      cb?.({ success: true });
     } catch {
-      callback({ success: true });
+      cb?.({ success: true });
     }
   }
 
@@ -84,13 +85,10 @@ export function create(emitter: ChannelEmitter): SocketHandler & PlanApi {
     return feedback;
   }
 
-  return {
-    register(socket: TypedSocket) {
-      socket.on('plan:comment', (p, cb) => addComment(socket, p, cb));
-      socket.on('plan:comments', (p, cb) => getComments(p, cb));
-      socket.on('plan:remove_comment', (p, cb) => removeComment(socket, p, cb));
-      socket.on('plan:close_preview', (p, cb) => closePreview(p, cb));
-    },
-    consumeCommentsAsUserFeedback,
-  };
+  emitter.on('plan:comment', addComment);
+  emitter.on('plan:comments', getComments);
+  emitter.on('plan:remove_comment', removeComment);
+  emitter.on('plan:close_preview', closePreview);
+
+  return { consumeCommentsAsUserFeedback };
 }
