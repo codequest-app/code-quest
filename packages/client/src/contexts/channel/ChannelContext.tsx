@@ -50,9 +50,9 @@ export function ChannelProvider({
           resetStreamingRefs={() => resetStreamingRefsRef.current()}
         >
           <ChannelConfigProvider channelId={channelId} initialConfig={initialState}>
-            <ChannelComposeProvider>
-            <GitProvider>{children}</GitProvider>
-          </ChannelComposeProvider>
+            <ChannelComposeProvider channelId={channelId}>
+              <GitProvider>{children}</GitProvider>
+            </ChannelComposeProvider>
           </ChannelConfigProvider>
         </ChannelControlProvider>
       </ChannelMessagesProvider>

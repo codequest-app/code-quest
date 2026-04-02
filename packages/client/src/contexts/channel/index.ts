@@ -6,4 +6,4 @@ export { ChannelProvider, useWorkspaceFolder } from './ChannelContext';
 export type { ChannelControlValue } from './ChannelControlContext';
 export { useChannelControl } from './ChannelControlContext';
 export type { ChannelMessagesValue } from './ChannelMessagesContext';
-export { useChannelMessages } from './ChannelMessagesContext';
+export { useChannelMessages, useChannelMessagesActions } from './ChannelMessagesContext';

@@ -11,7 +11,7 @@ import {
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
-import { useChannelMessages } from './ChannelMessagesContext';
+import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { createGuard, wireHandlers } from './handlers/guard';
 import { type ControlState, controlHandlers, createControlActions } from './handlers/permission';
 
@@ -63,7 +63,7 @@ export function ChannelControlProvider({
   children: ReactNode;
 }) {
   const { socket } = useSocket();
-  const { setChannelState } = useChannelMessages();
+  const { setChannelState } = useChannelMessagesActions();
 
   // ── Own pending state ──
   const [controls, setControls] = useState<PendingControl[]>([]);

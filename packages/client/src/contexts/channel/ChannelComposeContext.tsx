@@ -10,7 +10,7 @@ import {
 import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
-import { useChannelMessages } from './ChannelMessagesContext';
+import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { wireHandlers } from './handlers/guard';
 import { composeHandlers } from './handlers/speech';
 
@@ -72,8 +72,14 @@ const initialComposeState: ComposeState = {
   attachedFiles: [],
 };
 
-export function ChannelComposeProvider({ children }: { children: ReactNode }) {
-  const { channelId, sendMessage } = useChannelMessages();
+export function ChannelComposeProvider({
+  channelId,
+  children,
+}: {
+  channelId: string;
+  children: ReactNode;
+}) {
+  const { sendMessage } = useChannelMessagesActions();
   const { socket } = useSocket();
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);

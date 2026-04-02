@@ -13,7 +13,6 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -118,12 +117,38 @@ export interface ChannelMessagesValue {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-const ChannelMessagesContext = createContext<ChannelMessagesValue | null>(null);
+type MessagesStateValue = Pick<
+  ChannelMessagesValue,
+  | 'channelId'
+  | 'messages'
+  | 'status'
+  | 'stats'
+  | 'isContextCompressed'
+  | 'modifiedFiles'
+  | 'terminalSessions'
+  | 'planComments'
+  | 'statusText'
+  | 'isProcessing'
+  | 'isCancelling'
+>;
+export type MessagesActionsValue = Omit<ChannelMessagesValue, keyof MessagesStateValue>;
+
+const MessagesStateContext = createContext<MessagesStateValue | null>(null);
+const MessagesActionsContext = createContext<MessagesActionsValue | null>(null);
 
 export function useChannelMessages(): ChannelMessagesValue {
-  const ctx = useContext(ChannelMessagesContext);
-  if (!ctx) throw new Error('useChannelMessages must be used within a ChannelMessagesProvider');
-  return ctx;
+  const state = useContext(MessagesStateContext);
+  const actions = useContext(MessagesActionsContext);
+  if (!state || !actions)
+    throw new Error('useChannelMessages must be used within a ChannelMessagesProvider');
+  return { ...state, ...actions };
+}
+
+export function useChannelMessagesActions(): MessagesActionsValue {
+  const actions = useContext(MessagesActionsContext);
+  if (!actions)
+    throw new Error('useChannelMessagesActions must be used within a ChannelMessagesProvider');
+  return actions;
 }
 
 export function ChannelMessagesProvider({
@@ -497,47 +522,43 @@ export function ChannelMessagesProvider({
   });
 
   // ── Stable actions (don't depend on channelState) ──
-  const actions = useMemo(
-    () => ({
-      setChannelState,
-      ...createMessageActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
-      ...createSessionActions({ socket, channelId }),
-      ...createFileActions({ socket, channelId }),
-      ...createPlanActions({ setChannelState }),
-      clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
-      clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
-      removeModifiedFile: (path: string) =>
-        setChannelState((prev) => {
-          const { [path]: _, ...rest } = prev.modifiedFiles;
-          return { ...prev, modifiedFiles: rest };
-        }),
-    }),
-    [socket, channelId, messageQueueRef],
-  );
-
-  // ── Context value (state + stable actions) ──
-  const value = useMemo(
-    (): ChannelMessagesValue => ({
-      channelId,
-      messages: channelState.messages,
-      status: channelState.status,
-      stats: channelState.stats,
-      isContextCompressed: channelState.isContextCompressed,
-      modifiedFiles: channelState.modifiedFiles,
-      terminalSessions: channelState.terminalSessions,
-      planComments: channelState.planComments,
-      statusText: channelState.statusText,
-      isProcessing:
-        channelState.status === 'processing' ||
-        channelState.status === 'busy' ||
-        channelState.status === 'cancelling',
-      isCancelling: channelState.status === 'cancelling',
-      ...actions,
-    }),
-    [channelId, channelState, actions],
-  );
+  const [actions] = useState<MessagesActionsValue>(() => ({
+    setChannelState,
+    ...createMessageActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
+    ...createSessionActions({ socket, channelId }),
+    ...createFileActions({ socket, channelId }),
+    ...createPlanActions({ setChannelState }),
+    clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
+    clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
+    removeModifiedFile: (path: string) =>
+      setChannelState((prev) => {
+        const { [path]: _, ...rest } = prev.modifiedFiles;
+        return { ...prev, modifiedFiles: rest };
+      }),
+  }));
 
   return (
-    <ChannelMessagesContext.Provider value={value}>{children}</ChannelMessagesContext.Provider>
+    <MessagesActionsContext.Provider value={actions}>
+      <MessagesStateContext.Provider
+        value={{
+          channelId,
+          messages: channelState.messages,
+          status: channelState.status,
+          stats: channelState.stats,
+          isContextCompressed: channelState.isContextCompressed,
+          modifiedFiles: channelState.modifiedFiles,
+          terminalSessions: channelState.terminalSessions,
+          planComments: channelState.planComments,
+          statusText: channelState.statusText,
+          isProcessing:
+            channelState.status === 'processing' ||
+            channelState.status === 'busy' ||
+            channelState.status === 'cancelling',
+          isCancelling: channelState.status === 'cancelling',
+        }}
+      >
+        {children}
+      </MessagesStateContext.Provider>
+    </MessagesActionsContext.Provider>
   );
 }
