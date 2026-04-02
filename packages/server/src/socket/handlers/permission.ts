@@ -5,39 +5,31 @@ import {
 } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 
-import type { SocketHandler } from '../types.ts';
-
-export function create(emitter: ChannelEmitter): SocketHandler {
-
-  function onCancel(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+export function create(emitter: ChannelEmitter): void {
+  function onCancel(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);
     emitter.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
   }
 
-  function onPermission(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onPermission(ch: Channel, payload: unknown): void {
     const { requestId, toolName, toolUseId } = permissionPayloadSchema.parse(payload);
     ch.trackControlRequest(requestId, { subtype: 'can_use_tool', toolName, toolUseId });
   }
 
-  function onElicitation(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onElicitation(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.trackControlRequest(requestId, { subtype: 'elicitation' });
   }
 
-  function onDiffReview(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onDiffReview(ch: Channel, payload: unknown): void {
     const { toolId } = diffReviewPayloadSchema.parse(payload);
     ch.trackControlRequest(toolId, { subtype: 'open_diff' });
   }
 
-  function onForwardToClient(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onForwardToClient(ch: Channel, payload: unknown): void {
     const action = payload as ServerAction;
     if (action.action !== 'forward_to_client') return;
 
@@ -61,11 +53,9 @@ export function create(emitter: ChannelEmitter): SocketHandler {
     });
   }
 
-  emitter.on('control:cancel', onCancel);
-  emitter.on('control:permission', onPermission);
-  emitter.on('control:elicitation', onElicitation);
-  emitter.on('control:diff_review', onDiffReview);
-  emitter.on('server:action', onForwardToClient);
-
-  return { register() {} };
+  emitter.on('control:cancel', withChannel(onCancel));
+  emitter.on('control:permission', withChannel(onPermission));
+  emitter.on('control:elicitation', withChannel(onElicitation));
+  emitter.on('control:diff_review', withChannel(onDiffReview));
+  emitter.on('server:action', withChannel(onForwardToClient));
 }

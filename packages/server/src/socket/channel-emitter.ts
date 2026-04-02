@@ -9,6 +9,26 @@ export type EmitterHandler = (
   cb?: SocketCallback,
 ) => void;
 
+/** Middleware: skip if no channel. */
+export function withChannel(
+  handler: (ch: Channel, payload: unknown, socket?: TypedSocket, cb?: SocketCallback) => void,
+): EmitterHandler {
+  return (ch, payload, socket, cb) => {
+    if (!ch) return;
+    handler(ch, payload, socket, cb);
+  };
+}
+
+/** Middleware: require both channel and socket. */
+export function withSocket(
+  handler: (ch: Channel, socket: TypedSocket, payload: unknown, cb?: SocketCallback) => void,
+): EmitterHandler {
+  return (ch, payload, socket, cb) => {
+    if (!ch || !socket) return;
+    handler(ch, socket, payload, cb);
+  };
+}
+
 export class ChannelEmitter {
   private eventMap = new Map<string, EmitterHandler[]>();
 

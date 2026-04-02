@@ -10,7 +10,7 @@ import {
   mcpSetServersSchema,
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
@@ -157,8 +157,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     }
   }
 
-  function onMcpControlEvent(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onMcpControlEvent(ch: Channel, payload: unknown): void {
     const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(payload);
     const hasClient = emitter.getSocketCount(ch.id) > 0;
     const mcpId = mcpMsg?.id;
@@ -174,7 +173,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     ch.setMcpTimeout(requestId, mcpTimeout);
   }
 
-  emitter.on('control:mcp', onMcpControlEvent);
+  emitter.on('control:mcp', withChannel(onMcpControlEvent));
 
   return {
     register(socket: TypedSocket) {

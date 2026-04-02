@@ -4,7 +4,7 @@ import { join, normalize, resolve } from 'node:path';
 import { fileListSchema, fileUpdatedPayloadSchema } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
@@ -107,14 +107,12 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     }
   }
 
-  function onFileUpdated(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onFileUpdated(ch: Channel, payload: unknown): void {
     const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(payload);
     emitter.emit(ch.id, 'file:updated', { channelId: ch.id, filePath, oldContent, newContent });
   }
 
-  function onReadDiff(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onReadDiff(ch: Channel, payload: unknown): void {
     const action = payload as ServerAction;
     if (action.action !== 'read_diff') return;
     const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
@@ -133,8 +131,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     );
   }
 
-  emitter.on('system:file_updated', onFileUpdated);
-  emitter.on('server:action', onReadDiff);
+  emitter.on('system:file_updated', withChannel(onFileUpdated));
+  emitter.on('server:action', withChannel(onReadDiff));
 
   return {
     register(socket: TypedSocket) {

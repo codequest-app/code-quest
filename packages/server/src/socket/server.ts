@@ -54,9 +54,12 @@ export class SocketServer {
     const em = this.emitter;
     const planHandler = plan.create(em);
 
+    // Handlers that only use emitter.on (no register needed)
+    usage.create(this.usageTracker, em);
+    permission.create(em);
+
     const commonHandlers: SocketHandler[] = [
       speech.create(cm),
-      usage.create(this.usageTracker, em),
       planHandler,
       git.create(this.sessionHistory, this.rawEventStore),
       terminal.create(cm),
@@ -64,7 +67,6 @@ export class SocketServer {
       mcp.create(cm, em),
       settings.create(cm, this.settingsStore, this.usageTracker, em),
       message.create(cm, this.sessionStore, planHandler, em),
-      permission.create(em),
       app.create(cm, this.settingsStore),
       sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em),
       sessionCommand.create(cm, this.sessionStore),

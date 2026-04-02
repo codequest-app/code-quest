@@ -12,7 +12,7 @@ import {
 import { logger } from '../../logger.ts';
 import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
@@ -250,19 +250,17 @@ export function create(
     }
   }
 
-  function onMessageResult(ch: Channel | null, _payload: unknown): void {
-    if (!ch) return;
+  function onMessageResult(ch: Channel, _payload: unknown): void {
     ch.endProcessing();
     channelManager.broadcastSessionState(ch.id, 'idle');
   }
 
-  function onMessageResultTitle(ch: Channel | null, _payload: unknown): void {
-    if (!ch) return;
+  function onMessageResultTitle(ch: Channel, _payload: unknown): void {
     generateTitleIfNeeded(ch.id, ch);
   }
 
-  emitter.on('message:result', onMessageResult);
-  emitter.on('message:result', onMessageResultTitle);
+  emitter.on('message:result', withChannel(onMessageResult));
+  emitter.on('message:result', withChannel(onMessageResultTitle));
 
   return {
     register(socket: TypedSocket) {

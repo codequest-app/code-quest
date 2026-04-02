@@ -13,7 +13,7 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
@@ -184,8 +184,7 @@ export function create(
     });
   }
 
-  function onAutoRespond(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
+  function onAutoRespond(ch: Channel, payload: unknown): void {
     const action = payload as ServerAction;
     if (action.action !== 'auto_respond') return;
     const channelId = ch.id;
@@ -227,7 +226,7 @@ export function create(
     }
   }
 
-  emitter.on('server:action', onAutoRespond);
+  emitter.on('server:action', withChannel(onAutoRespond));
 
   return {
     register(socket: TypedSocket) {

@@ -6,7 +6,7 @@ import { logger } from '../../../logger.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { SettingsStore } from '../../../services/settings-store.ts';
 import type { Channel } from '../../channel.ts';
-import type { ChannelEmitter } from '../../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
@@ -202,8 +202,7 @@ export function create(
     }
   }
 
-  function onSessionInit(ch: Channel | null, _payload: unknown): void {
-    if (!ch) return;
+  function onSessionInit(ch: Channel, _payload: unknown): void {
     const channelId = ch.id;
     channelManager.broadcastSessionState(channelId, 'busy');
 
@@ -228,9 +227,8 @@ export function create(
     }
   }
 
-  function onChannelExit(ch: Channel | null, payload: unknown): void {
-    if (!ch) return;
-    const { code } = payload as { code: number | null };
+  function onChannelExit(ch: Channel, payload: unknown): void {
+    const { code: _code } = payload as { code: number | null };
     channelManager.broadcastSessionState(ch.id, 'exited');
     ch.resetSessionState();
     emitter.emit(ch.id, 'session:closed', {
@@ -239,8 +237,8 @@ export function create(
     });
   }
 
-  emitter.on('session:init', onSessionInit);
-  emitter.on('channel:exit', onChannelExit);
+  emitter.on('session:init', withChannel(onSessionInit));
+  emitter.on('channel:exit', withChannel(onChannelExit));
 
   return {
     register(socket: TypedSocket) {
