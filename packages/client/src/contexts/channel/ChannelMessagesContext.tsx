@@ -9,7 +9,6 @@ import {
   createContext,
   type ReactNode,
   type RefObject,
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -252,16 +251,17 @@ export function ChannelMessagesProvider({
   }, [channelState.messages]);
 
   // ── Streaming refs ──
-  const resetStreamingRefs = useCallback(() => {
+  const resetStreamingRefs = () => {
     isTextStreaming.current = false;
     isThinkingStreaming.current = false;
     wasStreamedViaDelta.current = false;
-  }, []);
+  };
   useLayoutEffect(() => {
     resetStreamingRefsRef.current = resetStreamingRefs;
   });
 
   // ── Auto-wiring: state handlers + effect handlers ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetStreamingRefs only touches refs
   useEffect(() => {
     if (!socket) return;
 
@@ -288,9 +288,10 @@ export function ChannelMessagesProvider({
       effects: notificationHandlerEffects,
       effectDeps: { socket, channelId },
     });
-  }, [channelId, socket, resetStreamingRefs]);
+  }, [channelId, socket]); // resetStreamingRefs only touches refs, stable
 
   // ── Special: streaming + message:assistant (share ref-based helpers) ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetStreamingRefs only touches refs
   useEffect(() => {
     if (!socket) return;
     const guard = createGuard(channelId);
@@ -468,9 +469,10 @@ export function ChannelMessagesProvider({
       socket.off('stream:end', onStreamEnd);
       socket.off('message:assistant', onMessageAssistant);
     };
-  }, [channelId, socket, resetStreamingRefs]);
+  }, [channelId, socket]); // resetStreamingRefs only touches refs, stable
 
   // ── Special: message:result (dequeue + socket.emit) ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetStreamingRefs only touches refs
   useEffect(() => {
     if (!socket) return;
     const guard = createGuard(channelId);
@@ -511,7 +513,7 @@ export function ChannelMessagesProvider({
     return () => {
       socket.off('message:result', onMessageResult);
     };
-  }, [channelId, socket, resetStreamingRefs]);
+  }, [channelId, socket]); // resetStreamingRefs only touches refs, stable
 
   // Side-effect events are now handled by auto-wiring via messagesEffects
 

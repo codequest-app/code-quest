@@ -1,5 +1,5 @@
 import type { SessionSummary } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
@@ -52,12 +52,17 @@ export interface SessionContextValue {
   resetAuth: () => void;
 }
 
-export const SessionContext = createContext<SessionContextValue | null>(null);
+type SessionStateValue = Pick<SessionContextValue, 'initOptions' | 'auth'>;
+type SessionActionsValue = Omit<SessionContextValue, keyof SessionStateValue>;
+
+const SessionStateContext = createContext<SessionStateValue | null>(null);
+const SessionActionsContext = createContext<SessionActionsValue | null>(null);
 
 export function useSession(): SessionContextValue {
-  const ctx = useContext(SessionContext);
-  if (!ctx) throw new Error('useSession must be used within a SessionProvider');
-  return ctx;
+  const state = useContext(SessionStateContext);
+  const actions = useContext(SessionActionsContext);
+  if (!state || !actions) throw new Error('useSession must be used within a SessionProvider');
+  return { ...state, ...actions };
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -96,65 +101,63 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [socket]);
 
-  const actions = useMemo<Omit<SessionContextValue, 'initOptions' | 'auth'>>(
-    () => ({
-      setInitOptions,
-      listSessions: (opts) => rpc(socket, 'session:list', opts ?? {}),
-      listRemoteSessions: (opts) => rpc(socket, 'session:list_remote', opts ?? {}),
-      getSession: (channelId) => rpc(socket, 'session:get', { channelId }),
-      forkSession: (forkedFromSession, resumeSessionAt) =>
-        rpc(socket, 'session:fork', {
-          forkedFromSession,
-          resumeSessionAt,
-          newSessionId: crypto.randomUUID(),
-        }),
-      teleportSession: (remoteSessionId, branch) =>
-        rpc(socket, 'session:teleport', {
-          remoteSessionId,
-          branch,
-          newSessionId: crypto.randomUUID(),
-        }),
-      renameSession: (channelId, title) => rpc(socket, 'session:rename', { channelId, title }),
-      deleteSession: (channelId) => rpc(socket, 'session:delete', { channelId }),
-      updateSessionState: (channelId, update) =>
-        rpc(socket, 'session:update_state', { channelId, ...update }),
-      closeSession: (channelId: string) => {
-        socket.emit('session:close', { channelId });
-      },
-      resumeSession: (channelId: string) => {
-        socket.emit('session:resume', { channelId });
-      },
-      login: () => {
-        setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
-        socket.emit('auth:login', { method: 'oauth' }, (res) => {
-          if (!res.success) {
-            setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
-          }
-        });
-      },
-      submitOAuthCode: (code: string, state?: string) => {
-        setAuth((prev) => ({ ...prev, status: 'waiting' }));
-        socket.emit('auth:oauth_code', { code, state }, (res) => {
-          if (res.success) {
-            setAuth({ status: 'success', authUrl: null, errorMsg: null });
-          } else {
-            setAuth((prev) => ({
-              ...prev,
-              status: 'error',
-              errorMsg: res.error ?? 'OAuth failed',
-            }));
-          }
-        });
-      },
-      resetAuth: () => setAuth({ status: 'idle', authUrl: null, errorMsg: null }),
-    }),
-    [socket],
-  );
+  const [actions] = useState<SessionActionsValue>(() => ({
+    setInitOptions,
+    listSessions: (opts) => rpc(socket, 'session:list', opts ?? {}),
+    listRemoteSessions: (opts) => rpc(socket, 'session:list_remote', opts ?? {}),
+    getSession: (channelId) => rpc(socket, 'session:get', { channelId }),
+    forkSession: (forkedFromSession, resumeSessionAt) =>
+      rpc(socket, 'session:fork', {
+        forkedFromSession,
+        resumeSessionAt,
+        newSessionId: crypto.randomUUID(),
+      }),
+    teleportSession: (remoteSessionId, branch) =>
+      rpc(socket, 'session:teleport', {
+        remoteSessionId,
+        branch,
+        newSessionId: crypto.randomUUID(),
+      }),
+    renameSession: (channelId, title) => rpc(socket, 'session:rename', { channelId, title }),
+    deleteSession: (channelId) => rpc(socket, 'session:delete', { channelId }),
+    updateSessionState: (channelId, update) =>
+      rpc(socket, 'session:update_state', { channelId, ...update }),
+    closeSession: (channelId: string) => {
+      socket.emit('session:close', { channelId });
+    },
+    resumeSession: (channelId: string) => {
+      socket.emit('session:resume', { channelId });
+    },
+    login: () => {
+      setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
+      socket.emit('auth:login', { method: 'oauth' }, (res) => {
+        if (!res.success) {
+          setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
+        }
+      });
+    },
+    submitOAuthCode: (code: string, state?: string) => {
+      setAuth((prev) => ({ ...prev, status: 'waiting' }));
+      socket.emit('auth:oauth_code', { code, state }, (res) => {
+        if (res.success) {
+          setAuth({ status: 'success', authUrl: null, errorMsg: null });
+        } else {
+          setAuth((prev) => ({
+            ...prev,
+            status: 'error',
+            errorMsg: res.error ?? 'OAuth failed',
+          }));
+        }
+      });
+    },
+    resetAuth: () => setAuth({ status: 'idle', authUrl: null, errorMsg: null }),
+  }));
 
-  const value: SessionContextValue = useMemo(
-    () => ({ initOptions, auth, ...actions }),
-    [initOptions, auth, actions],
+  return (
+    <SessionActionsContext.Provider value={actions}>
+      <SessionStateContext.Provider value={{ initOptions, auth }}>
+        {children}
+      </SessionStateContext.Provider>
+    </SessionActionsContext.Provider>
   );
-
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
