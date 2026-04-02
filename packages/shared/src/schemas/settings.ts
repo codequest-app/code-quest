@@ -143,3 +143,17 @@ export const remoteControlStateInfoSchema = z.object({
   detail: z.string().optional(),
 });
 export type RemoteControlStateInfo = z.infer<typeof remoteControlStateInfoSchema>;
+
+// ── CLI-initiated settings payloads ──
+
+/** set_model action input */
+export const serverActionModelSchema = z.looseObject({ model: z.string() });
+
+/** set_permission_mode action input */
+export const serverActionModeSchema = z.looseObject({ mode: z.string() });
+
+/** CLI-initiated settings update (settings:model_updated, settings:permission_mode_updated) */
+export const settingsUpdatedPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  input: z.unknown(),
+});

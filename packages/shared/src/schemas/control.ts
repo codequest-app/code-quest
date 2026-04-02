@@ -119,22 +119,18 @@ export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPaylo
 
 // ── Response schemas ──
 
-export const generateSessionTitleResponseSchema = z
-  .object({
-    success: z.boolean(),
-    result: z.unknown().optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const generateSessionTitleResponseSchema = z.looseObject({
+  success: z.boolean(),
+  result: z.unknown().optional(),
+  error: z.string().optional(),
+});
 export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;
 
-export const getClaudeStateResponseSchema = z
-  .object({
-    success: z.boolean(),
-    state: z.record(z.string(), z.unknown()).optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const getClaudeStateResponseSchema = z.looseObject({
+  success: z.boolean(),
+  state: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
 export type GetClaudeStateResponse = z.infer<typeof getClaudeStateResponseSchema>;
 
 // ── Hook info ──
@@ -155,3 +151,42 @@ export const hookResponseInfoSchema = z.object({
   additionalContext: z.string().optional(),
 });
 export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
+
+// ── Internal event payloads (runner → server handler) ──
+
+/** control:cancel / control:elicitation payload (requestId only) */
+export const requestIdPayloadSchema = z.looseObject({ requestId: z.string() });
+
+/** control:permission payload */
+export const permissionPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  toolName: z.string(),
+  toolUseId: z.string(),
+});
+
+/** control:diff_review payload */
+export const diffReviewPayloadSchema = z.looseObject({ toolId: z.string() });
+
+/** auto-respond payload (action:open_url, action:open_file, notification:show, mcp:auto_respond) */
+export const autoRespondPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  response: z.record(z.string(), z.unknown()),
+});
+
+/** control:forward payload (unknown control_request subtypes forwarded to client) */
+export const controlForwardPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  subtype: z.string(),
+  toolName: z.string().optional(),
+  toolUseId: z.string().optional(),
+  input: z.unknown().optional(),
+  suggestions: z.array(z.unknown()).optional(),
+  callbackId: z.string().optional(),
+});
+
+/** control:open_diff payload */
+export const controlOpenDiffPayloadSchema = z.looseObject({
+  requestId: z.string(),
+  originalPath: z.string(),
+  newPath: z.string(),
+});

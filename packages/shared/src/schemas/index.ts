@@ -12,6 +12,5 @@ export * from './plugin.ts';
 export * from './provider.ts';
 export * from './session.ts';
 export * from './settings.ts';
-export * from './socket-event-payload.ts';
 export * from './system.ts';
 export * from './terminal.ts';

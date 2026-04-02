@@ -18,11 +18,9 @@ export type FileReadPayload = z.infer<typeof fileReadPayloadSchema>;
 
 // ── Response ──
 
-export const listFilesResponseSchema = z
-  .object({
-    files: z.array(fileSearchResultSchema),
-  })
-  .passthrough();
+export const listFilesResponseSchema = z.looseObject({
+  files: z.array(fileSearchResultSchema),
+});
 export type ListFilesResponse = z.infer<typeof listFilesResponseSchema>;
 
 export const fileReadResponseSchema = z.union([

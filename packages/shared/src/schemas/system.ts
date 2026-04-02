@@ -80,6 +80,18 @@ export const systemApiRetryPayloadSchema = z.object({
 });
 export type SystemApiRetryPayload = z.infer<typeof systemApiRetryPayloadSchema>;
 
+/** system:rate_limit payload */
+export const rateLimitPayloadSchema = z.looseObject({
+  info: z.looseObject({
+    status: z.string(),
+    rateLimitType: z.string().optional(),
+    resetsAt: z.coerce.number().optional(),
+    utilization: z.number().optional(),
+    overageStatus: z.string().optional(),
+    isUsingOverage: z.boolean().optional(),
+  }),
+});
+
 export const systemExperimentGatesPayloadSchema = z.object({
   channelId: z.string(),
   gates: z.record(z.string(), z.boolean()),

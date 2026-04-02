@@ -4,7 +4,7 @@ import { channelMetaCacheSchema, sessionSummarySchema, socketEventSchema } from 
 // ── Internal schemas ──
 
 const initializeOptionsSchema = z
-  .object({
+  .looseObject({
     hooks: z
       .record(
         z.string(),
@@ -22,7 +22,6 @@ const initializeOptionsSchema = z
     jsonSchema: z.record(z.string(), z.unknown()).optional(),
     agents: z.record(z.string(), z.unknown()).optional(),
   })
-  .passthrough()
   .optional();
 
 export const launchOptionsSchema = z
@@ -145,79 +144,65 @@ export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 
 // ── Response schemas ──
 
-export const sessionLaunchResponseSchema = z
-  .object({
-    channelId: z.string(),
-    slashCommands: z.array(z.string()).optional(),
-    models: z.array(z.unknown()).optional(),
-    account: z.record(z.string(), z.unknown()).optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const sessionLaunchResponseSchema = z.looseObject({
+  channelId: z.string(),
+  slashCommands: z.array(z.string()).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
 export type SessionLaunchResponse = z.infer<typeof sessionLaunchResponseSchema>;
 
 export const sessionJoinResponseSchema = z.union([
-  z
-    .object({
-      channelId: z.string(),
-      state: z.string(),
-      meta: channelMetaCacheSchema,
-      events: z.array(socketEventSchema),
-    })
-    .passthrough(),
+  z.looseObject({
+    channelId: z.string(),
+    state: z.string(),
+    meta: channelMetaCacheSchema,
+    events: z.array(socketEventSchema),
+  }),
   z.object({ error: z.string() }),
 ]);
 export type SessionJoinResponse = z.infer<typeof sessionJoinResponseSchema>;
 
 export const getSessionResponseSchema = z.union([
-  z
-    .object({
-      session: sessionSummarySchema,
-      events: z.array(socketEventSchema),
-      meta: channelMetaCacheSchema,
-    })
-    .passthrough(),
+  z.looseObject({
+    session: sessionSummarySchema,
+    events: z.array(socketEventSchema),
+    meta: channelMetaCacheSchema,
+  }),
   z.object({ error: z.string() }),
 ]);
 export type GetSessionResponse = z.infer<typeof getSessionResponseSchema>;
 
-export const teleportSessionResponseSchema = z
-  .object({
-    success: z.boolean(),
-    channelId: z.string().optional(),
-    events: z.array(socketEventSchema).optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const teleportSessionResponseSchema = z.looseObject({
+  success: z.boolean(),
+  channelId: z.string().optional(),
+  events: z.array(socketEventSchema).optional(),
+  error: z.string().optional(),
+});
 export type TeleportSessionResponse = z.infer<typeof teleportSessionResponseSchema>;
 
-export const forkConversationResponseSchema = z
-  .object({
-    success: z.boolean(),
-    channelId: z.string().optional(),
-    parentSessionId: z.string().optional(),
-    events: z.array(socketEventSchema).optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const forkConversationResponseSchema = z.looseObject({
+  success: z.boolean(),
+  channelId: z.string().optional(),
+  parentSessionId: z.string().optional(),
+  events: z.array(socketEventSchema).optional(),
+  error: z.string().optional(),
+});
 export type ForkConversationResponse = z.infer<typeof forkConversationResponseSchema>;
 
-export const initResponseSchema = z
-  .object({
-    settings: z.record(z.string(), z.unknown()),
-    sessions: z.array(sessionStateSummarySchema),
-    activeSessionId: z.string().optional(),
-    models: z.array(z.unknown()).optional(),
-    state: z.record(z.string(), z.unknown()).optional(),
-  })
-  .passthrough();
+export const initResponseSchema = z.looseObject({
+  settings: z.record(z.string(), z.unknown()),
+  sessions: z.array(sessionStateSummarySchema),
+  activeSessionId: z.string().optional(),
+  models: z.array(z.unknown()).optional(),
+  state: z.record(z.string(), z.unknown()).optional(),
+});
 export type InitResponse = z.infer<typeof initResponseSchema>;
 
-export const rawEventsResponseSchema = z
-  .object({
-    events: z.array(z.unknown()),
-  })
-  .passthrough();
+export const rawEventsResponseSchema = z.looseObject({
+  events: z.array(z.unknown()),
+});
 export type RawEventsResponse = z.infer<typeof rawEventsResponseSchema>;
 
 // ── S2C payloads ──
@@ -268,3 +253,8 @@ export const sessionStatusPayloadSchema = z.object({
   permissionMode: z.string().optional(),
 });
 export type SessionStatusPayload = z.infer<typeof sessionStatusPayloadSchema>;
+
+/** channel:exit payload */
+export const channelExitPayloadSchema = z.looseObject({
+  code: z.number().nullable(),
+});

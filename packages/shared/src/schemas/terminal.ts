@@ -14,18 +14,14 @@ export const terminalOpenClaudeSchema = z.object({
 });
 export type TerminalOpenClaudePayload = z.infer<typeof terminalOpenClaudeSchema>;
 
-export const terminalGetContentsResponseSchema = z
-  .object({
-    content: z.string().nullable(),
-  })
-  .passthrough();
+export const terminalGetContentsResponseSchema = z.looseObject({
+  content: z.string().nullable(),
+});
 export type TerminalGetContentsResponse = z.infer<typeof terminalGetContentsResponseSchema>;
 
-export const terminalOpenClaudeResponseSchema = z
-  .object({
-    success: z.boolean(),
-    channelId: z.string().optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const terminalOpenClaudeResponseSchema = z.looseObject({
+  success: z.boolean(),
+  channelId: z.string().optional(),
+  error: z.string().optional(),
+});
 export type TerminalOpenClaudeResponse = z.infer<typeof terminalOpenClaudeResponseSchema>;

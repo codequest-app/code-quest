@@ -32,11 +32,9 @@ export type PlanClosePreviewPayload = z.infer<typeof planClosePreviewSchema>;
 
 // ── Response ──
 
-export const getPlanCommentsResponseSchema = z
-  .object({
-    comments: z.array(planCommentDataSchema),
-  })
-  .passthrough();
+export const getPlanCommentsResponseSchema = z.looseObject({
+  comments: z.array(planCommentDataSchema),
+});
 export type GetPlanCommentsResponse = z.infer<typeof getPlanCommentsResponseSchema>;
 
 // ── S2C ──

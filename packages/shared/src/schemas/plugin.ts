@@ -25,30 +25,26 @@ export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplaceSchema>
 
 // ── Info schemas ──
 
-export const pluginInfoSchema = z
-  .object({
-    id: z.string(),
-    version: z.string().optional(),
-    scope: z.string().optional(),
-    enabled: z.boolean().optional(),
-    installPath: z.string().optional(),
-    installedAt: z.string().optional(),
-    lastUpdated: z.string().optional(),
-  })
-  .passthrough();
+export const pluginInfoSchema = z.looseObject({
+  id: z.string(),
+  version: z.string().optional(),
+  scope: z.string().optional(),
+  enabled: z.boolean().optional(),
+  installPath: z.string().optional(),
+  installedAt: z.string().optional(),
+  lastUpdated: z.string().optional(),
+});
 export type PluginInfo = z.infer<typeof pluginInfoSchema>;
 
-export const availablePluginSchema = z
-  .object({
-    pluginId: z.string(),
-    name: z.string(),
-    description: z.string().optional(),
-    marketplaceName: z.string().optional(),
-    version: z.string().optional(),
-    source: z.string().optional(),
-    installCount: z.number().optional(),
-  })
-  .passthrough();
+export const availablePluginSchema = z.looseObject({
+  pluginId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  marketplaceName: z.string().optional(),
+  version: z.string().optional(),
+  source: z.string().optional(),
+  installCount: z.number().optional(),
+});
 export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
 
 export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
@@ -93,17 +89,13 @@ export type MarketplaceResult = z.infer<typeof marketplaceResultSchema>;
 export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });
 export type ListPluginsPayload = z.infer<typeof listPluginsPayloadSchema>;
 
-export const listPluginsResponseSchema = z
-  .object({
-    installed: z.array(pluginInfoSchema),
-    available: z.array(availablePluginSchema),
-  })
-  .passthrough();
+export const listPluginsResponseSchema = z.looseObject({
+  installed: z.array(pluginInfoSchema),
+  available: z.array(availablePluginSchema),
+});
 export type ListPluginsResponse = z.infer<typeof listPluginsResponseSchema>;
 
-export const listMarketplacesResponseSchema = z
-  .object({
-    marketplaces: z.array(marketplaceInfoSchema),
-  })
-  .passthrough();
+export const listMarketplacesResponseSchema = z.looseObject({
+  marketplaces: z.array(marketplaceInfoSchema),
+});
 export type ListMarketplacesResponse = z.infer<typeof listMarketplacesResponseSchema>;

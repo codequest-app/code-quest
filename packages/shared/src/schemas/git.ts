@@ -65,11 +65,9 @@ export const gitCheckoutResultSchema = z.object({
 });
 export type GitCheckoutResult = z.infer<typeof gitCheckoutResultSchema>;
 
-export const execResponseSchema = z
-  .object({
-    exitCode: z.number(),
-    stdout: z.string(),
-    stderr: z.string(),
-  })
-  .passthrough();
+export const execResponseSchema = z.looseObject({
+  exitCode: z.number(),
+  stdout: z.string(),
+  stderr: z.string(),
+});
 export type ExecResponse = z.infer<typeof execResponseSchema>;
