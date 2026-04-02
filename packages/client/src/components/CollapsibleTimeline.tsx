@@ -3,6 +3,7 @@ import type { ForkFn, RewindFn } from '../types/ui';
 import type { MessageNode } from '../utils/message-tree';
 import { ChatMessage } from './ChatMessage';
 import { SubagentChildren } from './SubagentChildren';
+import type { ToolResult } from './tools/tool-registry';
 
 function dotClass(node: MessageNode): string {
   if (
@@ -12,7 +13,7 @@ function dotClass(node: MessageNode): string {
   ) {
     return 'bg-text-muted/60';
   }
-  const result = node.message.meta?.result as { is_error?: boolean } | undefined;
+  const result = node.message.meta?.result as ToolResult | undefined;
   if (result?.is_error) return 'bg-danger';
   if (result) return 'bg-success';
   return 'bg-warning animate-pulse';
@@ -32,9 +33,7 @@ export function CollapsibleTimeline({
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }) {
   const allComplete = nodes.every((n) => n.message.meta?.result != null);
-  const hasError = nodes.some(
-    (n) => (n.message.meta?.result as { is_error?: boolean } | undefined)?.is_error,
-  );
+  const hasError = nodes.some((n) => (n.message.meta?.result as ToolResult | undefined)?.is_error);
   const toolCount = nodes.filter((n) => n.message.type === 'tool_use').length;
   const [expanded, setExpanded] = useState(true);
 

@@ -64,7 +64,7 @@ export function PluginProvider({ children }: { children: ReactNode }) {
           available: result.available,
         }));
       })
-      .catch(() => {});
+      .catch((err) => console.error('Failed to load plugins:', err));
   };
 
   const refreshMarketplaces = async () => {

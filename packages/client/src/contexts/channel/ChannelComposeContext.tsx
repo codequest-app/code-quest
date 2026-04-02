@@ -130,7 +130,7 @@ export function ChannelComposeProvider({
       setState((prev) => ({ ...prev, value: '', slashOpen: false }));
     };
 
-    const closeSlash = () => {
+    const clearSlashToken = () => {
       const { value: v, cursorPos: pos } = get();
       const token = getSlashQuery(v, pos);
       if (token) {
@@ -144,6 +144,8 @@ export function ChannelComposeProvider({
         setState((prev) => ({ ...prev, value: '', slashOpen: false }));
       }
     };
+
+    const closeSlash = clearSlashToken;
 
     const mentionFile = () => {
       const { value: v, cursorPos: pos } = get();
@@ -184,18 +186,7 @@ export function ChannelComposeProvider({
     };
 
     const executeSlashCommand = (cmd: string) => {
-      const { value: v, cursorPos: pos } = get();
-      const token = getSlashQuery(v, pos);
-      if (token) {
-        const newValue = v.slice(0, token.start) + v.slice(token.end);
-        setState((prev) => ({
-          ...prev,
-          value: newValue.trimEnd() === '' ? '' : newValue,
-          slashOpen: false,
-        }));
-      } else {
-        setState((prev) => ({ ...prev, slashOpen: false }));
-      }
+      clearSlashToken();
       sendMessage(cmd);
     };
 

@@ -1,3 +1,4 @@
+import { fileReadResponseSchema } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -94,11 +95,15 @@ export function FileViewerConnected({ filePath, emit }: FileViewerConnectedProps
   useEffect(() => {
     setState({ loading: true });
     emit('file:read', { filePath }, (res: unknown) => {
-      const r = res as { content?: string; error?: string };
-      if (r.error) {
-        setState({ error: r.error, loading: false });
+      const parsed = fileReadResponseSchema.safeParse(res);
+      if (!parsed.success) {
+        setState({ error: 'Invalid response', loading: false });
+        return;
+      }
+      if ('error' in parsed.data) {
+        setState({ error: parsed.data.error, loading: false });
       } else {
-        setState({ content: r.content, loading: false });
+        setState({ content: parsed.data.content, loading: false });
       }
     });
   }, [emit, filePath]);

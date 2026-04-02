@@ -1,3 +1,4 @@
+import { contextUsageDataSchema } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
@@ -117,7 +118,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   }, [activeDialog]);
 
   const contextPct =
-    (contextUsage as { percentage?: number } | null)?.percentage ??
+    contextUsageDataSchema.safeParse(contextUsage).data?.percentage ??
     (stats?.inputTokens != null && stats.inputTokens > 0
       ? Math.min(Math.round((stats.inputTokens / (stats.contextWindow ?? 200000)) * 100), 100)
       : null);

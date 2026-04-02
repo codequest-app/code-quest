@@ -1,4 +1,25 @@
-import type { ChatStats } from '@code-quest/shared';
+import {
+  type ChatStats,
+  type ContentBlock,
+  contentBlockSchema,
+  sessionStatsSchema,
+} from '@code-quest/shared';
+import { z } from 'zod';
+
+const historyAssistantSchema = z.object({
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+});
+
+const historyUserSchema = z.object({
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+});
+
+const historyResultSchema = z.object({
+  stats: sessionStatsSchema,
+});
+
 import type { Message } from '../types/ui';
 
 export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message => ({
@@ -12,72 +33,70 @@ interface SocketEvent {
   payload: Record<string, unknown>;
 }
 
+function messagesFromAssistantBlock(block: ContentBlock, parentToolUseId?: string): Message | null {
+  switch (block.type) {
+    case 'text':
+      return msg({ role: 'assistant', type: 'text', content: block.text, parentToolUseId });
+    case 'thinking':
+      return msg({ role: 'assistant', type: 'thinking', content: block.thinking });
+    case 'tool_use':
+      return msg({
+        role: 'assistant',
+        type: 'tool_use',
+        content: block.toolName,
+        meta: { toolId: block.toolId, input: block.input },
+        parentToolUseId,
+      });
+    default:
+      return null;
+  }
+}
+
+function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): Message | null {
+  switch (block.type) {
+    case 'tool_result':
+      return msg({
+        role: 'assistant',
+        type: 'tool_result',
+        content: String(block.content ?? ''),
+        meta: { toolId: block.toolUseId, name: block.toolName },
+        parentToolUseId,
+      });
+    case 'text':
+      return msg({ role: 'user', type: 'text', content: block.text });
+    default:
+      return null;
+  }
+}
+
 export function buildMessagesFromHistory(events: SocketEvent[]): Message[] {
   const messages: Message[] = [];
   for (const event of events) {
     if (event.name === 'message:assistant') {
-      const content = event.payload.content as Array<Record<string, unknown>>;
-      const parentToolUseId = event.payload.parentToolUseId as string | undefined;
-      for (const block of content) {
-        if (block.type === 'text') {
-          messages.push(
-            msg({
-              role: 'assistant',
-              type: 'text',
-              content: block.text as string,
-              parentToolUseId,
-            }),
-          );
-        } else if (block.type === 'thinking') {
-          messages.push(
-            msg({
-              role: 'assistant',
-              type: 'thinking',
-              content: block.thinking as string,
-            }),
-          );
-        } else if (block.type === 'tool_use') {
-          messages.push(
-            msg({
-              role: 'assistant',
-              type: 'tool_use',
-              content: block.toolName as string,
-              meta: { toolId: block.toolId as string, input: block.input },
-              parentToolUseId,
-            }),
-          );
-        }
+      const parsed = historyAssistantSchema.safeParse(event.payload);
+      if (!parsed.success) continue;
+      for (const block of parsed.data.content) {
+        const m = messagesFromAssistantBlock(block, parsed.data.parentToolUseId);
+        if (m) messages.push(m);
       }
     } else if (event.name === 'message:user') {
-      const content = event.payload.content as Array<Record<string, unknown>>;
-      const parentToolUseId = event.payload.parentToolUseId as string | undefined;
-      for (const block of content) {
-        if (block.type === 'tool_result') {
-          messages.push(
-            msg({
-              role: 'assistant',
-              type: 'tool_result',
-              content: String(block.content ?? ''),
-              meta: {
-                toolId: block.toolUseId as string,
-                name: block.toolName as string | undefined,
-              },
-              parentToolUseId,
-            }),
-          );
-        } else if (block.type === 'text') {
-          messages.push(msg({ role: 'user', type: 'text', content: block.text as string }));
-        }
+      const parsed = historyUserSchema.safeParse(event.payload);
+      if (!parsed.success) continue;
+      for (const block of parsed.data.content) {
+        const m = messagesFromUserBlock(block, parsed.data.parentToolUseId);
+        if (m) messages.push(m);
       }
     } else if (event.name === 'message:result') {
-      const eventStats = event.payload.stats as Record<string, unknown>;
+      const parsed = historyResultSchema.safeParse(event.payload);
+      if (!parsed.success) continue;
+      const s = parsed.data.stats;
       const stats: ChatStats = {
-        costUsd: eventStats.totalCostUsd as number | undefined,
-        durationMs: eventStats.durationMs as number | undefined,
-        inputTokens: eventStats.inputTokens as number | undefined,
-        outputTokens: eventStats.outputTokens as number | undefined,
-        numTurns: eventStats.numTurns as number | undefined,
-        modelUsage: eventStats.modelUsage as ChatStats['modelUsage'],
+        costUsd: s.totalCostUsd,
+        durationMs: s.durationMs,
+        inputTokens: s.inputTokens,
+        outputTokens: s.outputTokens,
+        numTurns: s.numTurns,
+        modelUsage: s.modelUsage,
       };
       messages.push(msg({ role: 'system', type: 'result', content: '', meta: { stats } }));
     }

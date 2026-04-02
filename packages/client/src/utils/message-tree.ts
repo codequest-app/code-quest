@@ -14,7 +14,7 @@ export function buildMessageTree(messages: Message[]): MessageNode[] {
 
     // 1. Register tool_use nodes for later lookup
     if (message.type === 'tool_use' && message.meta?.toolId) {
-      toolUseNodes.set(message.meta.toolId as string, node);
+      toolUseNodes.set(String(message.meta.toolId), node);
     }
 
     // 2. Merge tool_result into its parent tool_use (not a separate node)
@@ -32,7 +32,7 @@ export function buildMessageTree(messages: Message[]): MessageNode[] {
 /** Merge tool_result content into the matching tool_use node's meta.result */
 function mergeToolResult(message: Message, toolUseNodes: Map<string, MessageNode>): boolean {
   if (message.type !== 'tool_result' || !message.meta?.toolId) return false;
-  const parent = toolUseNodes.get(message.meta.toolId as string);
+  const parent = toolUseNodes.get(String(message.meta.toolId));
   if (!parent) return false;
   parent.message = {
     ...parent.message,

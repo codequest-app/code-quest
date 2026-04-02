@@ -20,10 +20,9 @@ type SpeechRecognitionInstance = {
 };
 
 function getSpeechRecognitionClass(): (new () => SpeechRecognitionInstance) | null {
-  const w = window as unknown as Record<string, unknown>;
-  return (w.SpeechRecognition || w.webkitSpeechRecognition || null) as
-    | (new () => SpeechRecognitionInstance)
-    | null;
+  if ('SpeechRecognition' in window) return window.SpeechRecognition as never;
+  if ('webkitSpeechRecognition' in window) return window.webkitSpeechRecognition as never;
+  return null;
 }
 
 export function useSpeechToText() {
@@ -66,7 +65,8 @@ export function useSpeechToText() {
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event);
       setIsListening(false);
       setInterimTranscript('');
     };

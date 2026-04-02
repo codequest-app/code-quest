@@ -1,17 +1,10 @@
-import type { ChatStats, ProviderClientConfig, UsageQuota } from '@code-quest/shared';
-
-interface ContextCategory {
-  name: string;
-  tokens: number;
-  color: string;
-}
-
-interface ContextUsageData {
-  categories?: ContextCategory[];
-  totalTokens?: number;
-  maxTokens?: number;
-  percentage?: number;
-}
+import {
+  type ChatStats,
+  contextUsageDataSchema,
+  modelUsageEntrySchema,
+  type ProviderClientConfig,
+  type UsageQuota,
+} from '@code-quest/shared';
 
 interface AccountUsageDialogProps {
   open: boolean;
@@ -123,7 +116,7 @@ export function AccountUsageDialog({
   stats,
   providerConfig,
 }: AccountUsageDialogProps) {
-  const contextUsage = rawContextUsage as ContextUsageData | undefined;
+  const contextUsage = contextUsageDataSchema.safeParse(rawContextUsage).data;
   if (!open) return null;
 
   return (
@@ -188,7 +181,7 @@ export function AccountUsageDialog({
                   <AccountRow
                     key={m}
                     label={m.split('-').slice(0, 2).join(' ')}
-                    value={`$${((u as { costUSD?: number }).costUSD ?? 0).toFixed(2)}`}
+                    value={`$${(modelUsageEntrySchema.safeParse(u).data?.costUSD ?? 0).toFixed(2)}`}
                   />
                 ))}
             </div>

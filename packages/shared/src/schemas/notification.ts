@@ -109,6 +109,20 @@ export const stateUsagePayloadSchema = z.object({
 });
 export type StateUsagePayload = z.infer<typeof stateUsagePayloadSchema>;
 
+export const contextCategorySchema = z.object({
+  name: z.string(),
+  tokens: z.number(),
+  color: z.string(),
+});
+
+export const contextUsageDataSchema = z.object({
+  categories: z.array(contextCategorySchema).optional(),
+  totalTokens: z.number().optional(),
+  maxTokens: z.number().optional(),
+  percentage: z.number().optional(),
+});
+export type ContextUsageData = z.infer<typeof contextUsageDataSchema>;
+
 // ── Speech ──
 
 export const speechToTextMessagePayloadSchema = z.object({
