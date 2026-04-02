@@ -406,7 +406,7 @@ describe('ChatHandler > settings', () => {
     });
   });
 
-  describe('auto-respond control_requests (client → server → CLI)', () => {
+  describe('settings control_request (client → server → CLI)', () => {
     it('set_model sends control_request to CLI', async () => {
       const { claude, channelId } = await setup();
 

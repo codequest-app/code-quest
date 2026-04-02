@@ -93,7 +93,7 @@ describe('Channel.bindRunner', () => {
     });
   });
 
-  describe('server_action handling', () => {
+  describe('control_request handling', () => {
     it('control_request tracked — chat:respond can resolve it', async () => {
       const { claude, channelId } = await setup();
 

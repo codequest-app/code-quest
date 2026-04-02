@@ -110,7 +110,7 @@ describe('ClaudeAdapter', () => {
       expect(output.serverActions).toHaveLength(0);
     });
 
-    it('transforms permission request without autoResponse', () => {
+    it('transforms permission request into control:permission event', () => {
       const line = s.controlRequestBash('req-3', { command: 'ls' });
       const parsed = adapter.parseLine(line);
       expect(parsed.status).toBe('ok');
