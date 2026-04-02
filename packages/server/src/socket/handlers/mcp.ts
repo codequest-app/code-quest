@@ -17,7 +17,7 @@ import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 /** Factory for simple parse → sendRequest → callback handlers. */
-function createRequestHandler<T extends z.ZodTypeAny>(
+function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(
   schema: T,
   event: string,
   errorMessage: string,
@@ -31,7 +31,7 @@ function createRequestHandler<T extends z.ZodTypeAny>(
   ): Promise<void> {
     try {
       const parsed = schema.parse(payload);
-      const requestPayload = mapParsed ? mapParsed(parsed) : (parsed as Record<string, unknown>);
+      const requestPayload = mapParsed ? mapParsed(parsed) : parsed;
       const result = await ch.sendRequest(event, requestPayload);
       cb?.(result);
     } catch (err) {
