@@ -1,14 +1,9 @@
-import {
-  type ContentBlock,
-  type ProviderClientConfig,
-  providerClientConfigSchema,
-} from '@code-quest/shared';
+import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
 import type {
   AdapterOutput,
   ControlResponseEvent,
   ParseResult,
   ProviderAdapter,
-  ServerAction,
   SocketEvent,
 } from '../types.ts';
 import type { LaunchOptions } from './launch-options.ts';
@@ -27,11 +22,59 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 interface ConvertResult {
   events: SocketEvent[];
-  serverActions: ServerAction[];
+  serverActions: never[];
   controlResponses: ControlResponseEvent[];
 }
 
 const EMPTY: ConvertResult = { events: [], serverActions: [], controlResponses: [] };
+
+interface RequestMapping {
+  subtype: string;
+  mapPayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
+}
+
+const serverNamePayload = (p: Record<string, unknown>) => {
+  const { serverName, ...rest } = p;
+  return { server_name: serverName, ...rest };
+};
+
+const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
+  // settings
+  'settings:set_model': { subtype: 'set_model' },
+  'settings:set_permission_mode': { subtype: 'set_permission_mode' },
+  'settings:set_thinking_level': { subtype: 'set_max_thinking_tokens' },
+  'settings:set_proactive': { subtype: 'set_proactive' },
+  'settings:remote_control': { subtype: 'remote_control' },
+  'settings:apply': { subtype: 'apply_flag_settings' },
+  'settings:get_context_usage': { subtype: 'get_context_usage' },
+  // message
+  'message:interrupt': { subtype: 'interrupt' },
+  'message:stop_task': { subtype: 'stop_task' },
+  'message:cancel_async': { subtype: 'cancel_async_message' },
+  'message:rewind': { subtype: 'rewind_files' },
+  // session
+  'session:generate_title': { subtype: 'generate_session_title' },
+  'session:initialize': { subtype: 'initialize' },
+  // mcp
+  'mcp:reconnect': { subtype: 'mcp_reconnect', mapPayload: serverNamePayload },
+  'mcp:toggle': { subtype: 'mcp_toggle', mapPayload: serverNamePayload },
+  'mcp:servers': { subtype: 'mcp_status' },
+  'mcp:set_servers': { subtype: 'mcp_set_servers' },
+  'mcp:message': { subtype: 'mcp_message', mapPayload: serverNamePayload },
+  'mcp:authenticate': { subtype: 'mcp_authenticate', mapPayload: serverNamePayload },
+  'mcp:clear_auth': { subtype: 'mcp_clear_auth', mapPayload: serverNamePayload },
+  // claude-specific auth
+  'auth:authenticate': { subtype: 'claude_authenticate' },
+  'auth:oauth_callback': { subtype: 'claude_oauth_callback' },
+  'auth:oauth_wait': { subtype: 'claude_oauth_wait_for_completion' },
+  'mcp:oauth_callback': {
+    subtype: 'mcp_oauth_callback_url',
+    mapPayload: (p) => {
+      const { serverName, callbackUrl, ...rest } = p;
+      return { server_name: serverName, callback_url: callbackUrl, ...rest };
+    },
+  },
+};
 
 export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
@@ -131,6 +174,16 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
     return { events, controlResponses, serverActions };
   }
 
+  formatRequest(
+    event: string,
+    payload: Record<string, unknown>,
+  ): { subtype: string; input: Record<string, unknown> } {
+    const mapping = REQUEST_MAPPINGS[event];
+    if (!mapping) throw new Error(`Unknown request event: ${event}`);
+    const input = mapping.mapPayload ? mapping.mapPayload(payload) : payload;
+    return { subtype: mapping.subtype, input };
+  }
+
   formatMessage(text: string): string {
     return this.protocol.formatUserMessage(text);
   }
@@ -196,7 +249,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
       return transformControlRequest(event as Record<string, unknown>);
     }
 
-    // All other types produce only SocketEvents, no ServerActions
+    // All other types produce only SocketEvents
     const se = this.convertOtherEvent(event);
     if (se === null) return EMPTY;
     const events = Array.isArray(se) ? se : [se];

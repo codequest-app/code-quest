@@ -5,11 +5,11 @@ import type {
   NotificationResponse,
   SocketEvent,
 } from '@code-quest/shared';
-import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
+import type { ControlResponseEvent, ProcessRunner } from '@code-quest/summoner';
 import {
   errorMessageEventSchema,
   type RequestMeta,
-  type SessionState,
+  type SessionConfig,
   sessionInitConfigSchema,
   sessionInitEventSchema,
   sessionStatusEventSchema,
@@ -19,7 +19,6 @@ import { pickDefined } from './utils/helpers.ts';
 /** Callbacks invoked by Channel when runner events occur. */
 export interface ChannelHooks {
   onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
-  onServerAction?: (channel: Channel, action: ServerAction) => void;
   onExit?: (channel: Channel, code: number | null) => void;
 }
 
@@ -33,7 +32,6 @@ interface PendingRequest {
 interface RunnerListenerRefs {
   socketEvent: (event: SocketEvent) => void;
   controlResponse: (event: ControlResponseEvent) => void;
-  serverAction: (action: ServerAction) => void;
   exit: (code: number | null) => void;
 }
 
@@ -48,11 +46,18 @@ export class Channel {
   readonly controlTimeout: number;
 
   // ── State ──
-  private _sessionState: SessionState = {};
+  private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
+  workspaceFolder: string | undefined;
   lastError: string | undefined;
   exited = false;
+
+  // ── UI / Metadata (not CLI config) ──
+  titleGenerated = false;
+  pendingTitlePrompt: string | undefined;
+  title: string | undefined;
+  parentId: string | undefined;
 
   // ── Processing ──
   private _isProcessing = false;
@@ -83,20 +88,20 @@ export class Channel {
 
   // ── State accessors ──
 
-  get sessionState(): SessionState {
-    return this._sessionState;
+  get sessionConfig(): SessionConfig {
+    return this._sessionConfig;
   }
 
   get metaCache(): ChannelMetaCache {
     return this._metaCache;
   }
 
-  updateSessionState(partial: Partial<SessionState>): void {
-    this._sessionState = { ...this._sessionState, ...partial };
+  updateSessionConfig(partial: Partial<SessionConfig>): void {
+    this._sessionConfig = { ...this._sessionConfig, ...partial };
   }
 
-  resetSessionState(): void {
-    this._sessionState = {};
+  resetSessionConfig(): void {
+    this._sessionConfig = {};
   }
 
   updateMetaCache(partial: Partial<ChannelMetaCache>): void {
@@ -202,7 +207,15 @@ export class Channel {
     });
   }
 
-  sendControlRequest(subtype: string, params?: Record<string, unknown>): Promise<ControlResponse> {
+  sendRequest(event: string, payload: Record<string, unknown> = {}): Promise<ControlResponse> {
+    const { subtype, input } = this.runner.formatRequest(event, payload);
+    return this.sendControlRequest(subtype, input);
+  }
+
+  private sendControlRequest(
+    subtype: string,
+    params?: Record<string, unknown>,
+  ): Promise<ControlResponse> {
     const requestId = crypto.randomUUID();
     return new Promise<ControlResponse>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -225,7 +238,11 @@ export class Channel {
       if (init.sessionId) {
         this.sessionId = init.sessionId;
       }
-      this.updateSessionState(sessionInitConfigSchema.parse(init.config ?? {}));
+      const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
+      if (initCwd) {
+        this.workspaceFolder = initCwd;
+      }
+      this.updateSessionConfig(initConfig);
       this.updateMetaCache(
         pickDefined({
           model: init.model,
@@ -239,7 +256,7 @@ export class Channel {
     } else if (se.name === 'session:status') {
       const status = sessionStatusEventSchema.parse(se.payload);
       if (status.permissionMode !== undefined) {
-        this.updateSessionState({ permissionMode: status.permissionMode });
+        this.updateSessionConfig({ permissionMode: status.permissionMode });
       }
     }
   }
@@ -259,10 +276,6 @@ export class Channel {
       this.resolveControlResponse(event);
     };
 
-    const onServerAction = (action: ServerAction) => {
-      hooks.onServerAction?.(this, action);
-    };
-
     const onExit = (code: number | null) => {
       this.exited = true;
 
@@ -273,20 +286,18 @@ export class Channel {
         this.pendingRequests.delete(id);
       }
 
-      // Delegate cleanup to hook (broadcastSessionState, session:closed emit)
+      // Delegate cleanup to hook (broadcastSessionConfig, session:closed emit)
       hooks.onExit?.(this, code);
     };
 
     this._runnerListeners = {
       socketEvent: onSocketEvent,
       controlResponse: onControlResponse,
-      serverAction: onServerAction,
       exit: onExit,
     };
 
     this.runner.on('socket_event', onSocketEvent);
     this.runner.on('control_response', onControlResponse);
-    this.runner.on('server_action', onServerAction);
     this.runner.on('exit', onExit);
   }
 
@@ -295,7 +306,6 @@ export class Channel {
     const l = this._runnerListeners;
     this.runner.removeListener('socket_event', l.socketEvent);
     this.runner.removeListener('control_response', l.controlResponse);
-    this.runner.removeListener('server_action', l.serverAction);
     this.runner.removeListener('exit', l.exit);
     this._runnerListeners = null;
   }
@@ -314,7 +324,7 @@ export class Channel {
     this.notificationRequests.clear();
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
-    this.resetSessionState();
+    this.resetSessionConfig();
     this.exited = true;
   }
 }

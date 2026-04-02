@@ -12,5 +12,4 @@ export type {
   ProcessProvider,
   ProviderAdapter,
   RawEntry,
-  ServerAction,
 } from './types.ts';

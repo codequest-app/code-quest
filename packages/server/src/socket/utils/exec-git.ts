@@ -15,15 +15,15 @@ export async function execGit(
 }
 
 /** Try checkout with fallback strategies: direct → fetch+checkout → track origin. */
-export async function checkoutBranch(branch: string): Promise<void> {
+export async function checkoutBranch(branch: string, cwd?: string): Promise<void> {
   try {
-    await execGit(['checkout', branch]);
+    await execGit(['checkout', branch], { cwd });
   } catch {
     try {
-      await execGit(['fetch', 'origin']);
-      await execGit(['checkout', branch]);
+      await execGit(['fetch', 'origin'], { cwd });
+      await execGit(['checkout', branch], { cwd });
     } catch {
-      await execGit(['checkout', '--track', `origin/${branch}`]);
+      await execGit(['checkout', '--track', `origin/${branch}`], { cwd });
     }
   }
 }

@@ -59,26 +59,26 @@ describe('Channel', () => {
     });
   });
 
-  describe('updateSessionState', () => {
+  describe('updateSessionConfig', () => {
     it('merges partial state', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.updateSessionState({ model: 'claude-sonnet-4-6' });
-      channel.updateSessionState({ cwd: '/home' });
-      expect(channel.sessionState).toEqual({ model: 'claude-sonnet-4-6', cwd: '/home' });
+      channel.updateSessionConfig({ model: 'claude-sonnet-4-6' });
+      channel.updateSessionConfig({ effort: 'high' });
+      expect(channel.sessionConfig).toEqual({ model: 'claude-sonnet-4-6', effort: 'high' });
     });
 
     it('replaces existing keys', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.updateSessionState({ model: 'old' });
-      channel.updateSessionState({ model: 'new' });
-      expect(channel.sessionState).toEqual({ model: 'new' });
+      channel.updateSessionConfig({ model: 'old' });
+      channel.updateSessionConfig({ model: 'new' });
+      expect(channel.sessionConfig).toEqual({ model: 'new' });
     });
 
-    it('resets state when called with empty object after resetSessionState', () => {
+    it('resets state when called with empty object after resetSessionConfig', () => {
       const channel = new Channel(fakeRunner(), 'sess-1', 'claude');
-      channel.updateSessionState({ model: 'x' });
-      channel.resetSessionState();
-      expect(channel.sessionState).toEqual({});
+      channel.updateSessionConfig({ model: 'x' });
+      channel.resetSessionConfig();
+      expect(channel.sessionConfig).toEqual({});
     });
   });
 

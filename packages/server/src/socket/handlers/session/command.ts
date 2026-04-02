@@ -8,7 +8,7 @@ import {
 } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
@@ -18,10 +18,7 @@ export function create(
   sessionStore: SessionStore,
   emitter: ChannelEmitter,
 ): void {
-  function handleClose(
-    ch: Channel,
-    payload: unknown,
-  ): void {
+  function handleClose(ch: Channel, payload: unknown): void {
     try {
       const { channelId } = chatKillSchema.parse(payload);
       ch.kill();
@@ -31,10 +28,7 @@ export function create(
     }
   }
 
-  function handleResume(
-    _ch: Channel | null,
-    payload: unknown,
-  ): void {
+  function handleResume(_ch: Channel | null, payload: unknown): void {
     try {
       const { channelId } = sessionResumePayloadSchema.parse(payload);
       emitter.broadcastAll('session:resume', { channelId });
@@ -89,7 +83,7 @@ export function create(
   ): Promise<void> {
     try {
       const { description, persist } = chatGenerateSessionTitleSchema.parse(payload);
-      const result = await ch.sendControlRequest('generate_session_title', {
+      const result = await ch.sendRequest('session:generate_title', {
         description,
         persist,
       });

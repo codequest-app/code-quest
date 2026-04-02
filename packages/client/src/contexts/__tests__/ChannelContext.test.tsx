@@ -3,19 +3,19 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeClaude } from '../../test/fake-claude';
-import { ChannelProvider, useChannelMessages } from '../channel';
+import { ChannelProvider, useChannelMessages, useWorkspaceFolder } from '../channel';
 import { PluginProvider } from '../PluginContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 import { TabProvider } from '../TabContext';
 
-function wrapper(channelId: string, claude = createFakeClaude()) {
+function wrapper(channelId: string, claude = createFakeClaude(), workspaceFolder = '/test/workspace') {
   return ({ children }: { children: ReactNode }) => (
     <SocketProvider socket={claude.socket}>
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
-            <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
+            <ChannelProvider channelId={channelId} workspaceFolder={workspaceFolder}>{children}</ChannelProvider>
           </TabProvider>
         </PluginProvider>
       </SessionProvider>
@@ -138,6 +138,36 @@ describe('ChannelContext', () => {
         }),
       );
       expect(result.current.abort).toBe(ref1);
+    });
+  });
+
+  describe('workspaceFolder', () => {
+    it('provides workspaceFolder via useWorkspaceFolder', async () => {
+      const claude = createFakeClaude();
+      const channelId = await claude.initialize(s.init('sess-1'));
+      const { result } = renderHook(() => useWorkspaceFolder(), {
+        wrapper: wrapper(channelId, claude, '/my/project'),
+      });
+      expect(result.current).toBe('/my/project');
+    });
+
+    it('defaults to ../ when not specified', async () => {
+      const claude = createFakeClaude();
+      const channelId = await claude.initialize(s.init('sess-1'));
+      const { result } = renderHook(() => useWorkspaceFolder(), {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <SocketProvider socket={claude.socket}>
+            <SessionProvider>
+              <PluginProvider>
+                <TabProvider>
+                  <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
+                </TabProvider>
+              </PluginProvider>
+            </SessionProvider>
+          </SocketProvider>
+        ),
+      });
+      expect(result.current).toBe('../');
     });
   });
 });

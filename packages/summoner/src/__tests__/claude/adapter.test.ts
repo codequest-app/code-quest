@@ -49,7 +49,7 @@ describe('ClaudeAdapter', () => {
         name: 'message:assistant',
         payload: { content: [{ type: 'text', text: 'hello world' }] },
       });
-      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
+      expect(output.serverActions).toHaveLength(0);
       expect(output.controlResponses).toHaveLength(0);
     });
 
@@ -68,7 +68,7 @@ describe('ClaudeAdapter', () => {
       });
     });
 
-    it('separates auto_respond into serverActions for open_url', () => {
+    it('open_url produces single event with requestId and response (no serverActions)', () => {
       const line = s.controlRequest('req-1', 'open_url', undefined, {
         url: 'https://example.com',
       });
@@ -81,18 +81,16 @@ describe('ClaudeAdapter', () => {
       expect(output.events).toHaveLength(1);
       expect(output.events[0]).toMatchObject({
         name: 'action:open_url',
-        payload: { url: 'https://example.com' },
+        payload: {
+          requestId: 'req-1',
+          url: 'https://example.com',
+          response: { type: 'open_url_response' },
+        },
       });
-
-      const autoResponses = output.serverActions.filter((a) => a.action === 'auto_respond');
-      expect(autoResponses).toHaveLength(1);
-      expect(autoResponses[0]).toMatchObject({
-        requestId: 'req-1',
-        subtype: 'open_url',
-      });
+      expect(output.serverActions).toHaveLength(0);
     });
 
-    it('does NOT put read_diff into auto_respond serverActions', () => {
+    it('open_diff produces control:open_diff event (no serverActions)', () => {
       const line = s.controlRequestOpenDiff('req-2', {
         originalFilePath: '/tmp/a.ts',
         newFilePath: '/tmp/b.ts',
@@ -103,11 +101,16 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
-      expect(output.events).toHaveLength(0);
+      expect(output.events).toMatchObject([
+        {
+          name: 'control:open_diff',
+          payload: { requestId: 'req-2', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
+        },
+      ]);
+      expect(output.serverActions).toHaveLength(0);
     });
 
-    it('transforms permission request without autoResponse', () => {
+    it('transforms permission request into control:permission event', () => {
       const line = s.controlRequestBash('req-3', { command: 'ls' });
       const parsed = adapter.parseLine(line);
       expect(parsed.status).toBe('ok');
@@ -117,7 +120,7 @@ describe('ClaudeAdapter', () => {
 
       expect(output.events).toHaveLength(1);
       expect(output.events[0]).toMatchObject({ name: 'control:permission' });
-      expect(output.serverActions.filter((a) => a.action === 'auto_respond')).toHaveLength(0);
+      expect(output.serverActions).toHaveLength(0);
     });
 
     it('transforms control_response into controlResponses', () => {
@@ -335,6 +338,32 @@ describe('ClaudeAdapter', () => {
       const args = adapter.buildArgs({ model: 'opus' });
       expect(args).toContain('--model');
       expect(args).toContain('opus');
+    });
+  });
+
+  describe('formatRequest', () => {
+    it('maps settings:set_model to set_model subtype', () => {
+      const result = adapter.formatRequest('settings:set_model', { model: 'haiku' });
+      expect(result).toEqual({ subtype: 'set_model', input: { model: 'haiku' } });
+    });
+
+    it('maps settings:set_permission_mode to set_permission_mode subtype', () => {
+      const result = adapter.formatRequest('settings:set_permission_mode', { mode: 'plan' });
+      expect(result).toEqual({ subtype: 'set_permission_mode', input: { mode: 'plan' } });
+    });
+
+    it('maps mcp:reconnect to mcp_reconnect subtype', () => {
+      const result = adapter.formatRequest('mcp:reconnect', { serverName: 'test' });
+      expect(result).toEqual({ subtype: 'mcp_reconnect', input: { server_name: 'test' } });
+    });
+
+    it('maps message:interrupt to interrupt subtype', () => {
+      const result = adapter.formatRequest('message:interrupt', {});
+      expect(result).toEqual({ subtype: 'interrupt', input: {} });
+    });
+
+    it('throws for unknown event name', () => {
+      expect(() => adapter.formatRequest('unknown:event', {})).toThrow();
     });
   });
 });

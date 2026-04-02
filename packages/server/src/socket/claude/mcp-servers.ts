@@ -22,14 +22,20 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
       }
       const wasDisabled = claudeState.chromeMcpState.status !== 'connected';
       claudeState.chromeMcpState = { status: 'connecting' };
-      emitter.broadcastAll('settings:update', { channelId: '', chromeMcpState: { status: 'connecting' } });
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
+        chromeMcpState: { status: 'connecting' },
+      });
 
-      await channel.sendControlRequest('mcp_set_servers', {
+      await channel.sendRequest('mcp:set_servers', {
         'claude-in-chrome': { command: 'claude', args: ['mcp', 'serve', 'chrome'] },
       });
 
       claudeState.chromeMcpState = { status: 'connected' };
-      emitter.broadcastAll('settings:update', { channelId: '', chromeMcpState: { status: 'connected' } });
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
+        chromeMcpState: { status: 'connected' },
+      });
       callback?.({
         success: true,
         response: { type: 'ensure_chrome_mcp_enabled_response', wasDisabled },
@@ -58,7 +64,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         return;
       }
       const wasEnabled = claudeState.chromeMcpState.status === 'connected';
-      await channel.sendControlRequest('mcp_set_servers', {});
+      await channel.sendRequest('mcp:set_servers', {});
       claudeState.chromeMcpState = { status: 'disconnected' };
       emitter.broadcastAll('settings:update', {
         channelId: '',
@@ -83,13 +89,19 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         callback?.({ success: false, error: 'No active session' });
         return;
       }
-      await channel.sendControlRequest('mcp_set_servers', {
+      await channel.sendRequest('mcp:set_servers', {
         'claude-jupyter': { command: 'claude', args: ['mcp', 'serve', 'jupyter'] },
       });
-      emitter.broadcastAll('settings:update', { channelId: '', jupyterMcpState: { status: 'active' } });
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
+        jupyterMcpState: { status: 'active' },
+      });
       callback?.({ success: true, response: { type: 'enable_jupyter_mcp_response' } });
     } catch (err) {
-      emitter.broadcastAll('settings:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
+        jupyterMcpState: { status: 'inactive' },
+      });
       callback?.({ success: false, error: errMsg(err, 'Failed to enable Jupyter MCP') });
     }
   }
@@ -107,8 +119,11 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         callback?.({ success: false, error: 'No active session' });
         return;
       }
-      await channel.sendControlRequest('mcp_set_servers', {});
-      emitter.broadcastAll('settings:update', { channelId: '', jupyterMcpState: { status: 'inactive' } });
+      await channel.sendRequest('mcp:set_servers', {});
+      emitter.broadcastAll('settings:update', {
+        channelId: '',
+        jupyterMcpState: { status: 'inactive' },
+      });
       callback?.({ success: true, response: { type: 'disable_jupyter_mcp_response' } });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to disable Jupyter MCP') });

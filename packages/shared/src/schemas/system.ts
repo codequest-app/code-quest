@@ -80,14 +80,6 @@ export const systemApiRetryPayloadSchema = z.object({
 });
 export type SystemApiRetryPayload = z.infer<typeof systemApiRetryPayloadSchema>;
 
-export const systemFileUpdatedPayloadSchema = z.object({
-  channelId: z.string(),
-  filePath: z.string(),
-  oldContent: z.string().nullable().optional(),
-  newContent: z.string().nullable().optional(),
-});
-export type SystemFileUpdatedPayload = z.infer<typeof systemFileUpdatedPayloadSchema>;
-
 export const systemExperimentGatesPayloadSchema = z.object({
   channelId: z.string(),
   gates: z.record(z.string(), z.boolean()),

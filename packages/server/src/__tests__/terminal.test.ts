@@ -98,7 +98,7 @@ describe('ChatHandler > terminal', () => {
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const newChannel = mgr.get(res.channelId!);
-      expect(newChannel?.sessionState?.cwd).toBe('/tmp');
+      expect(newChannel?.workspaceFolder).toBe('/tmp');
     });
   });
 });

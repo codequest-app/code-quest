@@ -1,25 +1,6 @@
-import type { FileSearchResult, ServerToClientEvents } from '@code-quest/shared';
+import type { FileSearchResult } from '@code-quest/shared';
 import type { TypedSocket } from '../../../socket/client';
 import { rpc } from '../../../socket/rpc';
-import type { ChannelState } from '../../../types/chat';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
-
-// ── On handlers ──
-
-function onFileUpdated(state: ChannelState, p: Payload<'file:updated'>): ChannelState {
-  return {
-    ...state,
-    modifiedFiles: {
-      ...state.modifiedFiles,
-      [p.filePath]: { oldContent: p.oldContent, newContent: p.newContent },
-    },
-  };
-}
-
-export const fileHandlerOn = {
-  'file:updated': onFileUpdated,
-} satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
 
 // ── Actions (emit) ──
 

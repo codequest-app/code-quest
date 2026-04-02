@@ -25,7 +25,7 @@ export function create(
         launchOptions: { resumeSessionId: forkedFromSession },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
         onBeforeSpawn: (ch) => {
-          ch.updateSessionState({ parentId: forkedFromSession });
+          ch.parentId = forkedFromSession;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });

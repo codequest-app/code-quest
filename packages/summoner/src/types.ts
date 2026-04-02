@@ -54,38 +54,8 @@ export interface ProcessProvider {
 export interface AdapterOutput {
   events: SocketEvent[];
   controlResponses: ControlResponseEvent[];
-  serverActions: ServerAction[];
+  serverActions: never[];
 }
-
-// --- ServerAction: adapter tells server what to do ---
-
-export interface AutoRespondAction {
-  action: 'auto_respond';
-  requestId: string;
-  subtype: string;
-  response: Record<string, unknown>;
-  input?: unknown;
-}
-
-export interface ReadDiffAction {
-  action: 'read_diff';
-  requestId: string;
-  originalPath: string;
-  newPath: string;
-}
-
-export interface ForwardToClientAction {
-  action: 'forward_to_client';
-  requestId: string;
-  subtype: string;
-  toolName?: string;
-  toolUseId?: string;
-  input?: unknown;
-  suggestions?: unknown[];
-  callbackId?: string;
-}
-
-export type ServerAction = AutoRespondAction | ReadDiffAction | ForwardToClientAction;
 
 // --- ParseResult: generic parse output ---
 
@@ -126,6 +96,10 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
   parseLine(line: string): ParseResult<E>;
   transform(event: E): AdapterOutput;
   formatMessage(text: string): string;
+  formatRequest(
+    event: string,
+    payload: Record<string, unknown>,
+  ): { subtype: string; input: Record<string, unknown> };
   formatControlRequest(
     subtype: string,
     input?: Record<string, unknown>,

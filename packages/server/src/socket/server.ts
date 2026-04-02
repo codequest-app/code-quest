@@ -12,6 +12,7 @@ import * as claudeAuth from './claude/auth.ts';
 import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
 import * as app from './handlers/app.ts';
+import * as autoRespond from './handlers/auto-respond.ts';
 import * as file from './handlers/file.ts';
 import * as git from './handlers/git.ts';
 import * as mcp from './handlers/mcp.ts';
@@ -53,6 +54,7 @@ export class SocketServer {
 
     // Handlers that only use emitter.on (no register needed)
     usage.create(this.usageTracker, em);
+    autoRespond.create(em);
     permission.create(em);
     speech.create(em);
     terminal.create(cm, em);

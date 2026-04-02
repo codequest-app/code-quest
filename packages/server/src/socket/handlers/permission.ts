@@ -1,9 +1,10 @@
+import { readFile } from 'node:fs/promises';
 import {
-  diffReviewPayloadSchema,
+  controlForwardPayloadSchema,
+  controlOpenDiffPayloadSchema,
   permissionPayloadSchema,
   requestIdPayloadSchema,
 } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 
@@ -24,38 +25,39 @@ export function create(emitter: ChannelEmitter): void {
     ch.trackControlRequest(requestId, { subtype: 'elicitation' });
   }
 
-  function onDiffReview(ch: Channel, payload: unknown): void {
-    const { toolId } = diffReviewPayloadSchema.parse(payload);
-    ch.trackControlRequest(toolId, { subtype: 'open_diff' });
-  }
-
   function onForwardToClient(ch: Channel, payload: unknown): void {
-    const action = payload as ServerAction;
-    if (action.action !== 'forward_to_client') return;
+    const { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId } =
+      controlForwardPayloadSchema.parse(payload);
 
-    ch.trackControlRequest(action.requestId, {
-      subtype: action.subtype,
-      toolName: action.toolName,
-      toolUseId: action.toolUseId,
-    });
+    ch.trackControlRequest(requestId, { subtype, toolName, toolUseId });
     emitter.emit(ch.id, 'raw:event', {
       channelId: ch.id,
-      rawType: `control_request/${action.subtype}`,
-      data: {
-        requestId: action.requestId,
-        subtype: action.subtype,
-        toolName: action.toolName,
-        toolUseId: action.toolUseId,
-        input: action.input,
-        suggestions: action.suggestions,
-        callbackId: action.callbackId,
-      },
+      rawType: `control_request/${subtype}`,
+      data: { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId },
     });
+  }
+
+  function onOpenDiff(ch: Channel, payload: unknown): void {
+    const { requestId, originalPath, newPath } = controlOpenDiffPayloadSchema.parse(payload);
+    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
+    void Promise.all([readFileOrEmpty(originalPath), readFileOrEmpty(newPath)])
+      .then(([oldContent, newContent]) => {
+        ch.trackControlRequest(requestId, { subtype: 'open_diff' });
+        emitter.emit(ch.id, 'control:diff_review', {
+          channelId: ch.id,
+          requestId,
+          toolId: requestId,
+          filePath: originalPath || newPath,
+          oldContent,
+          newContent,
+        });
+      })
+      .catch(() => {});
   }
 
   emitter.on('control:cancel', withChannel(onCancel));
   emitter.on('control:permission', withChannel(onPermission));
   emitter.on('control:elicitation', withChannel(onElicitation));
-  emitter.on('control:diff_review', withChannel(onDiffReview));
-  emitter.on('server:action', withChannel(onForwardToClient));
+  emitter.on('control:forward', withChannel(onForwardToClient));
+  emitter.on('control:open_diff', withChannel(onOpenDiff));
 }

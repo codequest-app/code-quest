@@ -1,20 +1,13 @@
-import type { ServerAction, SocketEvent } from '../../types.ts';
+import type { AdapterOutput, SocketEvent } from '../../types.ts';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
-interface ControlResult {
-  events: SocketEvent[];
-  serverActions: ServerAction[];
-  controlResponses: [];
-}
-
-export function transformControlRequest(event: Record<string, unknown>): ControlResult {
+export function transformControlRequest(event: Record<string, unknown>): AdapterOutput {
   const request = event.request as Record<string, unknown> | undefined;
   const requestId = event.request_id as string;
   const events: SocketEvent[] = [];
-  const serverActions: ServerAction[] = [];
 
   switch (request?.subtype) {
     case 'can_use_tool':
@@ -75,12 +68,14 @@ export function transformControlRequest(event: Record<string, unknown>): Control
 
     case 'open_diff': {
       const diffInput = isRecord(request.input) ? request.input : undefined;
-      serverActions.push({
-        action: 'read_diff',
-        requestId,
-        originalPath:
-          typeof diffInput?.originalFilePath === 'string' ? diffInput.originalFilePath : '',
-        newPath: typeof diffInput?.newFilePath === 'string' ? diffInput.newFilePath : '',
+      events.push({
+        name: 'control:open_diff',
+        payload: {
+          requestId,
+          originalPath:
+            typeof diffInput?.originalFilePath === 'string' ? diffInput.originalFilePath : '',
+          newPath: typeof diffInput?.newFilePath === 'string' ? diffInput.newFilePath : '',
+        },
       });
       break;
     }
@@ -91,11 +86,9 @@ export function transformControlRequest(event: Record<string, unknown>): Control
       const mcpMsg = isRecord(mcpInput?.message) ? mcpInput.message : (mcpInput ?? {});
 
       if (mcpMsg.id == null) {
-        serverActions.push({
-          action: 'auto_respond',
-          requestId,
-          subtype: 'mcp_notification',
-          response: { mcp_response: {} },
+        events.push({
+          name: 'mcp:auto_respond',
+          payload: { requestId, response: { mcp_response: {} } },
         });
       } else {
         events.push({
@@ -110,13 +103,11 @@ export function transformControlRequest(event: Record<string, unknown>): Control
       const urlInput = isRecord(request.input) ? request.input : undefined;
       events.push({
         name: 'action:open_url',
-        payload: { url: typeof urlInput?.url === 'string' ? urlInput.url : '' },
-      });
-      serverActions.push({
-        action: 'auto_respond',
-        requestId,
-        subtype: 'open_url',
-        response: { type: 'open_url_response' },
+        payload: {
+          requestId,
+          url: typeof urlInput?.url === 'string' ? urlInput.url : '',
+          response: { type: 'open_url_response' },
+        },
       });
       break;
     }
@@ -127,13 +118,7 @@ export function transformControlRequest(event: Record<string, unknown>): Control
       const location = isRecord(fileInput?.location) ? fileInput.location : undefined;
       events.push({
         name: 'action:open_file',
-        payload: { filePath, location },
-      });
-      serverActions.push({
-        action: 'auto_respond',
-        requestId,
-        subtype: 'open_file',
-        response: { type: 'open_file_response' },
+        payload: { requestId, filePath, location, response: { type: 'open_file_response' } },
       });
       break;
     }
@@ -144,6 +129,7 @@ export function transformControlRequest(event: Record<string, unknown>): Control
       events.push({
         name: 'notification:show',
         payload: {
+          requestId,
           message: typeof notifInput?.message === 'string' ? notifInput.message : '',
           severity: severity === 'error' || severity === 'warning' ? severity : 'info',
           buttons: Array.isArray(notifInput?.buttons) ? notifInput.buttons : undefined,
@@ -151,13 +137,8 @@ export function transformControlRequest(event: Record<string, unknown>): Control
             typeof notifInput?.onlyIfNotVisible === 'boolean'
               ? notifInput.onlyIfNotVisible
               : undefined,
+          response: { type: 'show_notification_response' },
         },
-      });
-      serverActions.push({
-        action: 'auto_respond',
-        requestId,
-        subtype: 'show_notification',
-        response: { type: 'show_notification_response' },
       });
       break;
     }
@@ -166,30 +147,41 @@ export function transformControlRequest(event: Record<string, unknown>): Control
       break;
 
     case 'get_settings':
+      events.push({
+        name: 'settings:get_settings',
+        payload: { requestId },
+      });
+      break;
+
     case 'set_model':
+      events.push({
+        name: 'settings:model_updated',
+        payload: { requestId, input: request.input },
+      });
+      break;
+
     case 'set_permission_mode':
-      serverActions.push({
-        action: 'auto_respond',
-        requestId,
-        subtype: request.subtype as string,
-        response: {},
-        input: request.input,
+      events.push({
+        name: 'settings:permission_mode_updated',
+        payload: { requestId, input: request.input },
       });
       break;
 
     default:
-      serverActions.push({
-        action: 'forward_to_client',
-        requestId,
-        subtype: (request?.subtype as string) ?? '',
-        toolName: request?.tool_name as string | undefined,
-        toolUseId: request?.tool_use_id as string | undefined,
-        input: request?.input,
-        suggestions: request?.permission_suggestions as unknown[] | undefined,
-        callbackId: request?.callback_id as string | undefined,
+      events.push({
+        name: 'control:forward',
+        payload: {
+          requestId,
+          subtype: (request?.subtype as string) ?? '',
+          toolName: request?.tool_name as string | undefined,
+          toolUseId: request?.tool_use_id as string | undefined,
+          input: request?.input,
+          suggestions: request?.permission_suggestions as unknown[] | undefined,
+          callbackId: request?.callback_id as string | undefined,
+        },
       });
       break;
   }
 
-  return { events, serverActions, controlResponses: [] };
+  return { events, serverActions: [], controlResponses: [] };
 }

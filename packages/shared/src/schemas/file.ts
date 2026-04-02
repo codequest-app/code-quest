@@ -33,14 +33,6 @@ export type FileReadResponse = z.infer<typeof fileReadResponseSchema>;
 
 // ── S2C ──
 
-export const fileUpdatedPayloadSchema = z.object({
-  channelId: z.string(),
-  filePath: z.string(),
-  oldContent: z.string().nullable().optional(),
-  newContent: z.string().nullable().optional(),
-});
-export type FileUpdatedPayload = z.infer<typeof fileUpdatedPayloadSchema>;
-
 export const closeChannelPayloadSchema = z.object({
   channelId: z.string(),
   error: z.string().optional(),

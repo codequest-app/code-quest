@@ -36,31 +36,54 @@ describe('transform — control requests', () => {
     });
   });
 
-  it('converts get_settings → auto_respond ServerAction', () => {
+  it('converts get_settings → settings:get_settings event', () => {
     const result = transformResult(s.controlRequest('gs-1', 'get_settings'));
-    expect(result.events).toHaveLength(0);
-    expect(result.serverActions).toMatchObject([
-      { action: 'auto_respond', requestId: 'gs-1', subtype: 'get_settings' },
+    expect(result.events).toMatchObject([
+      { name: 'settings:get_settings', payload: { requestId: 'gs-1' } },
     ]);
+    expect(result.serverActions).toHaveLength(0);
   });
 
-  it('converts initialize → passthrough (no auto_respond, no events)', () => {
+  it('converts set_model → settings:model_updated event with input', () => {
+    const result = transformResult(
+      s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }),
+    );
+    expect(result.events).toMatchObject([
+      { name: 'settings:model_updated', payload: { requestId: 'sm-1', input: { model: 'haiku' } } },
+    ]);
+    expect(result.serverActions).toHaveLength(0);
+  });
+
+  it('converts set_permission_mode → settings:permission_mode_updated event with input', () => {
+    const result = transformResult(
+      s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
+    );
+    expect(result.events).toMatchObject([
+      {
+        name: 'settings:permission_mode_updated',
+        payload: { requestId: 'sp-1', input: { mode: 'plan' } },
+      },
+    ]);
+    expect(result.serverActions).toHaveLength(0);
+  });
+
+  it('converts initialize → passthrough (no events)', () => {
     const result = transformResult(s.controlRequest('init-1', 'initialize'));
     expect(result.events).toHaveLength(0);
     expect(result.serverActions).toHaveLength(0);
   });
 
-  it('converts mcp_message notification → auto_respond ServerAction', () => {
+  it('converts mcp_message notification → mcp:auto_respond with requestId and response', () => {
     const result = transformResult(
       s.controlRequest('mcp-1', 'mcp_message', undefined, {
         server_name: 'test',
         message: { method: 'notifications/initialized' },
       }),
     );
-    expect(result.events).toHaveLength(0);
-    expect(result.serverActions.filter((a) => a.action === 'auto_respond')).toMatchObject([
-      { requestId: 'mcp-1', subtype: 'mcp_notification' },
+    expect(result.events).toMatchObject([
+      { name: 'mcp:auto_respond', payload: { requestId: 'mcp-1', response: { mcp_response: {} } } },
     ]);
+    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts mcp_message request (has id) → control:mcp', () => {
@@ -73,7 +96,41 @@ describe('transform — control requests', () => {
     expect(result).toMatchObject({ name: 'control:mcp', payload: { serverName: 'test' } });
   });
 
-  it('converts show_notification → notification:show + auto_respond', () => {
+  it('converts open_url → action:open_url with requestId and auto-respond payload', () => {
+    const result = transformResult(
+      s.controlRequest('ou-1', 'open_url', undefined, { url: 'https://example.com' }),
+    );
+    expect(result.events).toMatchObject([
+      {
+        name: 'action:open_url',
+        payload: {
+          requestId: 'ou-1',
+          url: 'https://example.com',
+          response: { type: 'open_url_response' },
+        },
+      },
+    ]);
+    expect(result.serverActions).toHaveLength(0);
+  });
+
+  it('converts open_file → action:open_file with requestId and auto-respond payload', () => {
+    const result = transformResult(
+      s.controlRequest('of-1', 'open_file', undefined, { file_path: '/tmp/foo.ts' }),
+    );
+    expect(result.events).toMatchObject([
+      {
+        name: 'action:open_file',
+        payload: {
+          requestId: 'of-1',
+          filePath: '/tmp/foo.ts',
+          response: { type: 'open_file_response' },
+        },
+      },
+    ]);
+    expect(result.serverActions).toHaveLength(0);
+  });
+
+  it('converts show_notification → notification:show with requestId and auto-respond payload', () => {
     const result = transformResult(
       s.controlRequestShowNotification('sn-1', {
         message: 'Task completed successfully',
@@ -86,20 +143,16 @@ describe('transform — control requests', () => {
       {
         name: 'notification:show',
         payload: {
+          requestId: 'sn-1',
           message: 'Task completed successfully',
           severity: 'info',
           buttons: ['OK', 'Details'],
           onlyIfNotVisible: true,
+          response: { type: 'show_notification_response' },
         },
       },
     ]);
-    expect(result.serverActions.filter((a) => a.action === 'auto_respond')).toMatchObject([
-      {
-        requestId: 'sn-1',
-        subtype: 'show_notification',
-        response: { type: 'show_notification_response' },
-      },
-    ]);
+    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts show_notification with severity=error', () => {
@@ -127,17 +180,32 @@ describe('transform — control requests', () => {
     ]);
   });
 
-  it('converts unknown subtype → forward_to_client ServerAction', () => {
-    const result = transformResult(s.controlRequest('gen-1', 'some_unknown', 'CustomTool'));
-    expect(result.events).toHaveLength(0);
-    expect(result.serverActions).toMatchObject([
+  it('converts open_diff → control:open_diff event', () => {
+    const result = transformResult(
+      s.controlRequestOpenDiff('od-1', { originalFilePath: '/tmp/a.ts', newFilePath: '/tmp/b.ts' }),
+    );
+    expect(result.events).toMatchObject([
       {
-        action: 'forward_to_client',
-        requestId: 'gen-1',
-        subtype: 'some_unknown',
-        toolName: 'CustomTool',
+        name: 'control:open_diff',
+        payload: { requestId: 'od-1', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
       },
     ]);
+    expect(result.serverActions).toHaveLength(0);
+  });
+
+  it('converts unknown subtype → control:forward event', () => {
+    const result = transformResult(s.controlRequest('gen-1', 'some_unknown', 'CustomTool'));
+    expect(result.events).toMatchObject([
+      {
+        name: 'control:forward',
+        payload: {
+          requestId: 'gen-1',
+          subtype: 'some_unknown',
+          toolName: 'CustomTool',
+        },
+      },
+    ]);
+    expect(result.serverActions).toHaveLength(0);
   });
 });
 

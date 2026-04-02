@@ -1,8 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { join, normalize, resolve } from 'node:path';
-import { fileListSchema, fileUpdatedPayloadSchema } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
+import { fileListSchema, fileReadPayloadSchema } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -16,8 +14,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): void {
-    const { filePath } = payload as { filePath: string };
-    const cwd = ch.sessionState.cwd ?? process.cwd();
+    const { filePath } = fileReadPayloadSchema.parse(payload);
+    const cwd = ch.workspaceFolder ?? process.cwd();
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       callback?.({ error: 'Path traversal not allowed' });
@@ -91,46 +89,25 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     return results;
   }
 
-  function handleList(payload: unknown, callback: SocketCallback): void {
+  function handleList(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
-      const cwd = process.cwd();
+      const cwd = ch.workspaceFolder ?? process.cwd();
       const pat = pattern.toLowerCase();
 
       const fileResults = rgAvailable ? listWithRg(cwd, pat) : listWithWalk(cwd, pat);
       const combined = [...fileResults, ...listTerminals(pat)].slice(0, 20);
-      callback({ files: combined });
+      callback?.({ files: combined });
     } catch {
-      callback({ files: [] });
+      callback?.({ files: [] });
     }
   }
 
-  function onFileUpdated(ch: Channel, payload: unknown): void {
-    const { filePath, oldContent, newContent } = fileUpdatedPayloadSchema.parse(payload);
-    emitter.emit(ch.id, 'file:updated', { channelId: ch.id, filePath, oldContent, newContent });
-  }
-
-  function onReadDiff(ch: Channel, payload: unknown): void {
-    const action = payload as ServerAction;
-    if (action.action !== 'read_diff') return;
-    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
-    void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
-      ([oldContent, newContent]) => {
-        ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
-        emitter.emit(ch.id, 'control:diff_review', {
-          channelId: ch.id,
-          requestId: action.requestId,
-          toolId: action.requestId,
-          filePath: action.originalPath || action.newPath,
-          oldContent,
-          newContent,
-        });
-      },
-    );
-  }
-
   emitter.on('file:read', withError(withChannel(handleRead)));
-  emitter.on('file:list', (_ch, payload, _socket, cb) => handleList(payload, cb!));
-  emitter.on('system:file_updated', withChannel(onFileUpdated));
-  emitter.on('server:action', withChannel(onReadDiff));
+  emitter.on('file:list', withChannel(handleList));
 }

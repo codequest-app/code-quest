@@ -88,7 +88,7 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → SocketEvent', () => {
     expect(results[0].payload.info).toBeDefined();
   });
 
-  it('control_request open_url → action:open_url (auto_respond separated in adapter)', () => {
+  it('control_request open_url → action:open_url with requestId and response (no serverActions)', () => {
     const adapter = new ClaudeAdapter();
     const line = s.controlRequest('req-url', 'open_url', undefined, { url: 'https://example.com' });
     const parsed = adapter.parseLine(line);
@@ -100,11 +100,9 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → SocketEvent', () => {
     expect(output.events).toHaveLength(1);
     expect(output.events[0].name).toBe('action:open_url');
     expect(output.events[0].payload.url).toBe('https://example.com');
-
-    // AutoResponse stays server-side
-    const autoResponses = output.serverActions.filter((a) => a.action === 'auto_respond');
-    expect(autoResponses).toHaveLength(1);
-    expect(autoResponses[0].subtype).toBe('open_url');
+    expect(output.events[0].payload.requestId).toBe('req-url');
+    expect(output.events[0].payload.response).toEqual({ type: 'open_url_response' });
+    expect(output.serverActions).toHaveLength(0);
   });
 
   it('message_stop → stream:end', () => {

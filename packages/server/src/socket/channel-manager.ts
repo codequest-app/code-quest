@@ -36,10 +36,8 @@ export class ChannelManager {
     private resolveSessionId: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
-      onSocketEvent: (ch, se) => emitter.dispatchRunnerEvent(ch.id, ch, se.name, se.payload),
-      onServerAction: (ch, action) => emitter.dispatch('server:action', ch, action),
+      onSocketEvent: (ch, se) => emitter.dispatchRunnerEvent(ch, se.name, se.payload),
       onExit: (ch, code) => emitter.dispatch('channel:exit', ch, { code }),
-      emitToChannel: (channelId, event, ...args) => emitter.emit(channelId, event, ...args),
     };
   }
 
@@ -108,7 +106,7 @@ export class ChannelManager {
     runner.spawn();
 
     // Initialize and wait for control_response
-    const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
+    const initResult = await channel.sendRequest('session:initialize', opts?.initOptions ?? {});
 
     return { channel, initResult };
   }
@@ -128,7 +126,7 @@ export class ChannelManager {
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
     const channel = this.setupChannel(channelId, runner);
     runner.spawn();
-    await channel.sendControlRequest('initialize', {});
+    await channel.sendRequest('session:initialize');
 
     return { channel };
   }
@@ -180,9 +178,9 @@ export class ChannelManager {
   }
 
   /** Broadcast session state + settings to all connected clients.
-   *  Key mapping (e.g. model → modelSetting) matches shared SessionStateSummary / UpdateStatePayload schemas. */
+   *  Key mapping (e.g. model → modelSetting) matches shared SessionConfigSummary / UpdateStatePayload schemas. */
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
-    const ss = this.channels.get(channelId)?.sessionState ?? {};
+    const ss = this.channels.get(channelId)?.sessionConfig ?? {};
 
     this.emitter.broadcastAll('session:states', {
       sessions: [
@@ -199,9 +197,10 @@ export class ChannelManager {
       ],
     });
 
+    const ch = this.channels.get(channelId);
     const settings = pickDefined({
       modelSetting: ss.model,
-      defaultCwd: ss.cwd,
+      defaultCwd: ch?.workspaceFolder,
       initialPermissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,
       mcpServers: ss.mcpServers,

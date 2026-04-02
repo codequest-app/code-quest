@@ -26,28 +26,22 @@ export const sessionStatusEventSchema = z.looseObject({
 
 export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
 
-const sessionStateSchema = z.object({
+const sessionConfigSchema = z.object({
   model: z.string().optional(),
   permissionMode: z.string().optional(),
-  cwd: z.string().optional(),
   effort: z.string().optional(),
   thinkingLevel: z.string().optional(),
   tools: z.array(z.string()).optional(),
   mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
-  titleGenerated: z.boolean().optional(),
-  pendingTitlePrompt: z.string().optional(),
-  title: z.string().optional(),
-  parentId: z.string().optional(),
 });
-export type SessionState = z.infer<typeof sessionStateSchema>;
+export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 
-/** Extract config fields from session:init into SessionState. */
-export const sessionInitConfigSchema = sessionStateSchema.pick({
+/** Extract config fields from session:init. cwd extracted separately to channel.workspaceFolder. */
+export const sessionInitConfigSchema = sessionConfigSchema.pick({
   model: true,
   permissionMode: true,
-  cwd: true,
   effort: true,
-});
+}).extend({ cwd: z.string().optional() });
 
 const requestMetaSchema = z.object({
   subtype: z.string(),

@@ -44,7 +44,6 @@ import type {
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
-  FileUpdatedPayload,
   ForkConversationResponse,
   GenerateSessionTitleResponse,
   GetClaudeStateResponse,
@@ -53,10 +52,12 @@ import type {
   GetSessionResponse,
   GitCheckoutPayload,
   GitCheckoutResult,
+  GitDiffPayload,
   GitDiffResult,
   GitExecPayload,
   GitLogPayload,
   GitLogResult,
+  GitStatusPayload,
   GitStatusResult,
   GitUpdateSkippedBranchPayload,
   InitResponse,
@@ -128,7 +129,6 @@ import type {
   SystemAvailableModelsPayload,
   SystemCompactBoundaryPayload,
   SystemExperimentGatesPayload,
-  SystemFileUpdatedPayload,
   SystemHookResponsePayload,
   SystemHookStartedPayload,
   SystemRateLimitPayload,
@@ -259,7 +259,7 @@ export interface ClientToServerEvents {
     payload: GitCheckoutPayload,
     callback: (result: GitCheckoutResult) => void,
   ) => void;
-  'git:status': (callback: (result: GitStatusResult) => void) => void;
+  'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: SuccessResponse) => void,
@@ -341,7 +341,7 @@ export interface ClientToServerEvents {
     callback: (response: RawEventsResponse) => void,
   ) => void;
   'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
-  'git:diff': (callback: (result: GitDiffResult) => void) => void;
+  'git:diff': (payload: GitDiffPayload, callback: (result: GitDiffResult) => void) => void;
   'app:init': (callback: (response: InitResponse) => void) => void;
   'chat:cancel_request': (payload: CancelRequestPayload) => void;
   'app:config': (
@@ -375,7 +375,6 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   // ── Per-channel broadcast events ──
   'chat:cancel_request': (payload: CancelRequestEventPayload) => void;
-  'file:updated': (payload: FileUpdatedPayload) => void;
   'plan:comment_added': (payload: PlanCommentEventPayload) => void;
   'plan:comment_removed': (payload: RemoveCommentPayload) => void;
   'speech:message': (payload: SpeechToTextMessagePayload) => void;
@@ -426,7 +425,6 @@ export interface ServerToClientEvents {
   'system:compact_boundary': (payload: SystemCompactBoundaryPayload) => void;
   'system:rate_limit': (payload: SystemRateLimitPayload) => void;
   'system:api_retry': (payload: SystemApiRetryPayload) => void;
-  'system:file_updated': (payload: SystemFileUpdatedPayload) => void;
   'app:experiment_gates': (payload: SystemExperimentGatesPayload) => void;
   'app:models': (payload: SystemAvailableModelsPayload) => void;
   'system:remote_control': (payload: SystemRemoteControlPayload) => void;

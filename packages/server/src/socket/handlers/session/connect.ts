@@ -1,5 +1,10 @@
 import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
-import { chatCreateSchema, chatJoinSchema, controlInitResponseSchema } from '@code-quest/shared';
+import {
+  channelExitPayloadSchema,
+  chatCreateSchema,
+  chatJoinSchema,
+  controlInitResponseSchema,
+} from '@code-quest/shared';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
@@ -33,7 +38,7 @@ function buildSessionInitPayload(channel: Channel): SessionInitPayload {
       mcpServers: meta.mcpServers,
       slashCommands: meta.slashCommands,
     }),
-    config: { ...channel.sessionState },
+    config: { ...channel.sessionConfig },
   };
 }
 
@@ -50,23 +55,23 @@ export function create(
   ): Promise<void> {
     if (parsed.model) {
       await channel
-        .sendControlRequest('set_model', { model: parsed.model })
+        .sendRequest('settings:set_model', { model: parsed.model })
         .catch((e) => logger.warn({ err: e }, 'Failed to set model'));
     }
     if (parsed.permissionMode) {
       await channel
-        .sendControlRequest('set_permission_mode', { mode: parsed.permissionMode })
+        .sendRequest('settings:set_permission_mode', { mode: parsed.permissionMode })
         .catch((e) => logger.warn({ err: e }, 'Failed to set permission mode'));
     }
     if (parsed.thinkingLevel) {
       await channel
-        .sendControlRequest('set_max_thinking_tokens', {
+        .sendRequest('settings:set_thinking_level', {
           tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
         })
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
     }
     if (parsed.cwd) {
-      channel.updateSessionState({ cwd: parsed.cwd });
+      channel.workspaceFolder = parsed.cwd;
     }
   }
 
@@ -216,7 +221,7 @@ export function create(
     // Persist when session:init arrives (sessionId now available)
     const channel = ch;
     if (channel.sessionId) {
-      const parentId = channel.sessionState.parentId;
+      const parentId = channel.parentId;
       sessionStore
         .persist({
           id: channelId,
@@ -235,9 +240,9 @@ export function create(
   }
 
   function onChannelExit(ch: Channel, payload: unknown): void {
-    const { code: _code } = payload as { code: number | null };
+    const { code: _code } = channelExitPayloadSchema.parse(payload);
     channelManager.broadcastSessionState(ch.id, 'exited');
-    ch.resetSessionState();
+    ch.resetSessionConfig();
     emitter.emit(ch.id, 'session:closed', {
       channelId: ch.id,
       ...(ch.lastError ? { error: ch.lastError } : {}),

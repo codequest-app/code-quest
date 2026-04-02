@@ -18,8 +18,8 @@ export function create(
     const sessions = channelManager.getAliveChannels().map(([id, ch]) => ({
       channelId: id,
       state: ch.isProcessing ? 'busy' : 'idle',
-      title: ch.sessionState?.title,
-      modelSetting: ch.sessionState?.model,
+      title: ch.title,
+      modelSetting: ch.sessionConfig?.model,
     }));
     let settings: Record<string, unknown> = {};
     try {
@@ -46,7 +46,7 @@ export function create(
 
   async function handleConfig(
     _ch: Channel | null,
-    payload: unknown,
+    _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
@@ -71,11 +71,7 @@ export function create(
     });
   }
 
-  function handleDisconnect(
-    _ch: Channel | null,
-    _payload: unknown,
-    socket?: TypedSocket,
-  ): void {
+  function handleDisconnect(_ch: Channel | null, _payload: unknown, socket?: TypedSocket): void {
     if (socket) {
       channelManager.removeSocketFromAll(socket.id);
     }

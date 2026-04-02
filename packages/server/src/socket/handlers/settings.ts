@@ -1,15 +1,15 @@
 import {
-  chatGetStateSchema,
   chatSetModelSchema,
   chatSetPermissionModeSchema,
   chatSetProactiveSchema,
   chatSetRemoteControlSchema,
   chatSetThinkingLevelSchema,
+  requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
   settingsApplySchema,
+  settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
@@ -33,7 +33,7 @@ export function create(
   ): Promise<void> {
     try {
       const { model } = chatSetModelSchema.parse(payload);
-      await ch.sendControlRequest('set_model', { model });
+      await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
     } catch (err) {
@@ -49,7 +49,7 @@ export function create(
   ): Promise<void> {
     try {
       const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
-      await ch.sendControlRequest('set_permission_mode', { mode });
+      await ch.sendRequest('settings:set_permission_mode', { mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
       callback?.({ success: true });
@@ -66,7 +66,7 @@ export function create(
   ): Promise<void> {
     try {
       const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
-      await ch.sendControlRequest('set_max_thinking_tokens', {
+      await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
@@ -80,7 +80,7 @@ export function create(
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
-      await ch.sendControlRequest('set_proactive', { enabled });
+      await ch.sendRequest('settings:set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
@@ -93,16 +93,21 @@ export function create(
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
       const { enabled } = chatSetRemoteControlSchema.parse(payload);
-      ch.sendControlRequest('remote_control', { enabled }).catch(() => {});
+      ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
     } catch {
       // ignore
     }
   }
 
-  async function handleApply(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleApply(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
-      await ch.sendControlRequest('apply_flag_settings', { settings });
+      await ch.sendRequest('settings:apply', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
         emitter.broadcastAll('settings:update', {
@@ -116,7 +121,12 @@ export function create(
     }
   }
 
-  async function handleState(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleState(
+    ch: Channel,
+    _payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const state: Record<string, unknown> = {
         ...(await settingsStore.getMany(ch.provider, [
@@ -132,7 +142,11 @@ export function create(
     }
   }
 
-  async function handleRefreshUsage(_ch: Channel | null, _payload: unknown, socket?: TypedSocket): Promise<void> {
+  async function handleRefreshUsage(
+    _ch: Channel | null,
+    _payload: unknown,
+    socket?: TypedSocket,
+  ): Promise<void> {
     if (!socket) return;
     const usageData = usageTracker.getUsage();
     let contextUsage: Record<string, unknown> | undefined;
@@ -140,7 +154,7 @@ export function create(
     const channel = channelManager.getFirstAlive();
     if (channel) {
       try {
-        const resp = await channel.sendControlRequest('get_context_usage', {});
+        const resp = await channel.sendRequest('settings:get_context_usage');
         if (resp.response) {
           const r = resp.response;
           contextUsage = {
@@ -162,49 +176,42 @@ export function create(
     });
   }
 
-  function onAutoRespond(ch: Channel, payload: unknown): void {
-    const action = payload as ServerAction;
-    if (action.action !== 'auto_respond') return;
-    const channelId = ch.id;
-
-    switch (action.subtype) {
-      case 'get_settings': {
-        const state = ch.sessionState;
-        const overrides = pickDefined({
-          model: state.model,
-          permissionMode: state.permissionMode,
-        });
-        void settingsStore
-          .getMany(ch.provider, ['model', 'permissionMode'])
-          .then((stored) => {
-            ch.respondToRequest(action.requestId, { ...stored, ...overrides });
-          })
-          .catch(() => {
-            ch.respondToRequest(action.requestId, overrides);
-          });
-        return;
-      }
-      case 'set_model': {
-        const { model } = serverActionModelSchema.parse(action.input ?? {});
-        ch.updateSessionState({ model });
-        ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionState(channelId, 'busy');
-        return;
-      }
-      case 'set_permission_mode': {
-        const { mode } = serverActionModeSchema.parse(action.input ?? {});
-        ch.updateSessionState({ permissionMode: mode });
-        ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionState(channelId, 'busy');
-        return;
-      }
-      default:
-        ch.respondToRequest(action.requestId, action.response);
-        return;
-    }
+  function onGetSettings(ch: Channel, payload: unknown): void {
+    const { requestId } = requestIdPayloadSchema.parse(payload);
+    const state = ch.sessionConfig;
+    const overrides = pickDefined({
+      model: state.model,
+      permissionMode: state.permissionMode,
+    });
+    void settingsStore
+      .getMany(ch.provider, ['model', 'permissionMode'])
+      .then((stored) => {
+        ch.respondToRequest(requestId, { ...stored, ...overrides });
+      })
+      .catch(() => {
+        ch.respondToRequest(requestId, overrides);
+      });
   }
 
-  emitter.on('server:action', withChannel(onAutoRespond));
+  function onModelUpdated(ch: Channel, payload: unknown): void {
+    const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
+    const { model } = serverActionModelSchema.parse(input ?? {});
+    ch.updateSessionConfig({ model });
+    ch.respondToRequest(requestId, { subtype: 'success' });
+    channelManager.broadcastSessionState(ch.id, 'busy');
+  }
+
+  function onPermissionModeUpdated(ch: Channel, payload: unknown): void {
+    const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
+    const { mode } = serverActionModeSchema.parse(input ?? {});
+    ch.updateSessionConfig({ permissionMode: mode });
+    ch.respondToRequest(requestId, { subtype: 'success' });
+    channelManager.broadcastSessionState(ch.id, 'busy');
+  }
+
+  emitter.on('settings:get_settings', withChannel(onGetSettings));
+  emitter.on('settings:model_updated', withChannel(onModelUpdated));
+  emitter.on('settings:permission_mode_updated', withChannel(onPermissionModeUpdated));
   emitter.on('settings:set_model', withError(withChannel(handleSetModel)));
   emitter.on('settings:set_permission_mode', withError(withChannel(handleSetPermissionMode)));
   emitter.on('settings:set_thinking_level', withError(withChannel(handleSetThinkingLevel)));
