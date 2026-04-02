@@ -12,6 +12,7 @@ export interface RenderWithChannelOptions {
   channelId?: string;
   claude?: FakeClaude;
   initSegment?: string;
+  workspaceFolder?: string;
 }
 
 export interface RenderWithChannelResult extends RenderResult {
@@ -34,7 +35,7 @@ export async function renderWithChannel(
         <SessionProvider>
           <PluginProvider>
             <TabProvider>
-              <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
+              <ChannelProvider channelId={channelId} workspaceFolder={options.workspaceFolder}>{children}</ChannelProvider>
             </TabProvider>
           </PluginProvider>
         </SessionProvider>

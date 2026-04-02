@@ -1,42 +1,28 @@
-import { segments as s } from '@code-quest/summoner/test';
-import { renderHook } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
-import { ChannelProvider } from '../channel';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { useGit } from '../GitContext';
-import { PluginProvider } from '../PluginContext';
-import { SessionProvider } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
-import { TabProvider } from '../TabContext';
 
-function setup(workspaceFolder = '/my/project') {
-  const claude = createFakeClaude();
-  // biome-ignore lint/suspicious/noExplicitAny: spy on socket.emit for client → server verification
-  const emitSpy = vi.spyOn(claude.socket as any, 'emit');
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId="test-ch" workspaceFolder={workspaceFolder}>
-              {children}
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>
-  );
-  return { claude, emitSpy, wrapper };
+/** Fake component that exposes git actions for testing */
+function GitCaller({ onReady }: { onReady: (git: ReturnType<typeof useGit>) => void }) {
+  const git = useGit();
+  onReady(git);
+  return <span data-testid="git-ready" />;
 }
 
 describe('GitContext', () => {
   it('git:status sends cwd from workspaceFolder', async () => {
-    const { claude, emitSpy, wrapper } = setup('/my/project');
-    await claude.initialize(s.init('sess-1'));
-    const { result } = renderHook(() => useGit(), { wrapper });
+    let gitActions!: ReturnType<typeof useGit>;
+    const { claude } = await renderWithChannel(
+      <GitCaller onReady={(git) => { gitActions = git; }} />,
+      { workspaceFolder: '/my/project' },
+    );
 
-    result.current.gitStatus();
+    const emitSpy = vi.spyOn(claude.socket as never, 'emit');
+
+    await act(async () => {
+      gitActions.gitStatus();
+    });
 
     expect(emitSpy).toHaveBeenCalledWith(
       'git:status',
@@ -46,11 +32,17 @@ describe('GitContext', () => {
   });
 
   it('git:checkout sends branch + cwd', async () => {
-    const { claude, emitSpy, wrapper } = setup('/workspace');
-    await claude.initialize(s.init('sess-1'));
-    const { result } = renderHook(() => useGit(), { wrapper });
+    let gitActions!: ReturnType<typeof useGit>;
+    const { claude } = await renderWithChannel(
+      <GitCaller onReady={(git) => { gitActions = git; }} />,
+      { workspaceFolder: '/workspace' },
+    );
 
-    result.current.gitCheckout('feature-x');
+    const emitSpy = vi.spyOn(claude.socket as never, 'emit');
+
+    await act(async () => {
+      gitActions.gitCheckout('feature-x');
+    });
 
     expect(emitSpy).toHaveBeenCalledWith(
       'git:checkout',
