@@ -67,7 +67,7 @@ describe('transform — control requests', () => {
     expect(result.serverActions).toHaveLength(0);
   });
 
-  it('converts initialize → passthrough (no auto_respond, no events)', () => {
+  it('converts initialize → passthrough (no events)', () => {
     const result = transformResult(s.controlRequest('init-1', 'initialize'));
     expect(result.events).toHaveLength(0);
     expect(result.serverActions).toHaveLength(0);
