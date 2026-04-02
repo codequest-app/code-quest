@@ -5,7 +5,7 @@ import type {
   NotificationResponse,
   SocketEvent,
 } from '@code-quest/shared';
-import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
+import type { ControlResponseEvent, ProcessRunner } from '@code-quest/summoner';
 import {
   errorMessageEventSchema,
   type RequestMeta,
@@ -19,7 +19,6 @@ import { pickDefined } from './utils/helpers.ts';
 /** Callbacks invoked by Channel when runner events occur. */
 export interface ChannelHooks {
   onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
-  onServerAction?: (channel: Channel, action: ServerAction) => void;
   onExit?: (channel: Channel, code: number | null) => void;
 }
 
@@ -33,7 +32,6 @@ interface PendingRequest {
 interface RunnerListenerRefs {
   socketEvent: (event: SocketEvent) => void;
   controlResponse: (event: ControlResponseEvent) => void;
-  serverAction: (action: ServerAction) => void;
   exit: (code: number | null) => void;
 }
 
@@ -270,10 +268,6 @@ export class Channel {
       this.resolveControlResponse(event);
     };
 
-    const onServerAction = (action: ServerAction) => {
-      hooks.onServerAction?.(this, action);
-    };
-
     const onExit = (code: number | null) => {
       this.exited = true;
 
@@ -291,13 +285,11 @@ export class Channel {
     this._runnerListeners = {
       socketEvent: onSocketEvent,
       controlResponse: onControlResponse,
-      serverAction: onServerAction,
       exit: onExit,
     };
 
     this.runner.on('socket_event', onSocketEvent);
     this.runner.on('control_response', onControlResponse);
-    this.runner.on('server_action', onServerAction);
     this.runner.on('exit', onExit);
   }
 
@@ -306,7 +298,6 @@ export class Channel {
     const l = this._runnerListeners;
     this.runner.removeListener('socket_event', l.socketEvent);
     this.runner.removeListener('control_response', l.controlResponse);
-    this.runner.removeListener('server_action', l.serverAction);
     this.runner.removeListener('exit', l.exit);
     this._runnerListeners = null;
   }

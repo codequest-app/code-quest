@@ -1,4 +1,3 @@
-import type { ServerAction } from '@code-quest/summoner';
 import { describe, expect, it, vi } from 'vitest';
 import type { Channel } from '../socket/channel.ts';
 import { ChannelEmitter } from '../socket/channel-emitter.ts';
@@ -42,23 +41,6 @@ describe('ChannelEmitter', () => {
 
       expect(handler1).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
       expect(handler2).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
-    });
-  });
-
-  describe('server:action dispatch', () => {
-    it('dispatches to all action handlers', () => {
-      const emitter = new ChannelEmitter();
-      const handler1 = vi.fn();
-      const handler2 = vi.fn();
-      emitter.on('server:action', handler1);
-      emitter.on('server:action', handler2);
-
-      const ch = fakeChannel();
-      const action = { action: 'test' } as unknown as ServerAction;
-      emitter.dispatch('server:action', ch, action);
-
-      expect(handler1).toHaveBeenCalledWith(ch, action, undefined, undefined);
-      expect(handler2).toHaveBeenCalledWith(ch, action, undefined, undefined);
     });
   });
 

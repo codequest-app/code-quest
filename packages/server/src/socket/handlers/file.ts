@@ -2,7 +2,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, normalize, resolve } from 'node:path';
 import { fileListSchema, fileUpdatedPayloadSchema } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -91,7 +90,12 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     return results;
   }
 
-  function handleList(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): void {
+  function handleList(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): void {
     try {
       const { pattern } = fileListSchema.parse(payload);
       const cwd = ch.workspaceFolder ?? process.cwd();
@@ -111,17 +115,20 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
   }
 
   function onReadDiff(ch: Channel, payload: unknown): void {
-    const action = payload as ServerAction;
-    if (action.action !== 'read_diff') return;
+    const { requestId, originalPath, newPath } = payload as {
+      requestId: string;
+      originalPath: string;
+      newPath: string;
+    };
     const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
-    void Promise.all([readFileOrEmpty(action.originalPath), readFileOrEmpty(action.newPath)]).then(
+    void Promise.all([readFileOrEmpty(originalPath), readFileOrEmpty(newPath)]).then(
       ([oldContent, newContent]) => {
-        ch.trackControlRequest(action.requestId, { subtype: 'open_diff' });
+        ch.trackControlRequest(requestId, { subtype: 'open_diff' });
         emitter.emit(ch.id, 'control:diff_review', {
           channelId: ch.id,
-          requestId: action.requestId,
-          toolId: action.requestId,
-          filePath: action.originalPath || action.newPath,
+          requestId,
+          toolId: requestId,
+          filePath: originalPath || newPath,
           oldContent,
           newContent,
         });
@@ -132,5 +139,5 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
   emitter.on('file:read', withError(withChannel(handleRead)));
   emitter.on('file:list', withChannel(handleList));
   emitter.on('system:file_updated', withChannel(onFileUpdated));
-  emitter.on('server:action', withChannel(onReadDiff));
+  emitter.on('control:open_diff', withChannel(onReadDiff));
 }

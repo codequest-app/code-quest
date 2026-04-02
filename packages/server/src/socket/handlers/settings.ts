@@ -9,7 +9,6 @@ import {
   serverActionModeSchema,
   settingsApplySchema,
 } from '@code-quest/shared';
-import type { ServerAction } from '@code-quest/summoner';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
@@ -99,7 +98,12 @@ export function create(
     }
   }
 
-  async function handleApply(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleApply(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
       await ch.sendControlRequest('apply_flag_settings', { settings });
@@ -116,7 +120,12 @@ export function create(
     }
   }
 
-  async function handleState(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleState(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const state: Record<string, unknown> = {
         ...(await settingsStore.getMany(ch.provider, [
@@ -132,7 +141,11 @@ export function create(
     }
   }
 
-  async function handleRefreshUsage(_ch: Channel | null, _payload: unknown, socket?: TypedSocket): Promise<void> {
+  async function handleRefreshUsage(
+    _ch: Channel | null,
+    _payload: unknown,
+    socket?: TypedSocket,
+  ): Promise<void> {
     if (!socket) return;
     const usageData = usageTracker.getUsage();
     let contextUsage: Record<string, unknown> | undefined;
@@ -162,49 +175,42 @@ export function create(
     });
   }
 
-  function onAutoRespond(ch: Channel, payload: unknown): void {
-    const action = payload as ServerAction;
-    if (action.action !== 'auto_respond') return;
-    const channelId = ch.id;
-
-    switch (action.subtype) {
-      case 'get_settings': {
-        const state = ch.sessionConfig;
-        const overrides = pickDefined({
-          model: state.model,
-          permissionMode: state.permissionMode,
-        });
-        void settingsStore
-          .getMany(ch.provider, ['model', 'permissionMode'])
-          .then((stored) => {
-            ch.respondToRequest(action.requestId, { ...stored, ...overrides });
-          })
-          .catch(() => {
-            ch.respondToRequest(action.requestId, overrides);
-          });
-        return;
-      }
-      case 'set_model': {
-        const { model } = serverActionModelSchema.parse(action.input ?? {});
-        ch.updateSessionConfig({ model });
-        ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionConfig(channelId, 'busy');
-        return;
-      }
-      case 'set_permission_mode': {
-        const { mode } = serverActionModeSchema.parse(action.input ?? {});
-        ch.updateSessionConfig({ permissionMode: mode });
-        ch.respondToRequest(action.requestId, { subtype: 'success' });
-        channelManager.broadcastSessionConfig(channelId, 'busy');
-        return;
-      }
-      default:
-        ch.respondToRequest(action.requestId, action.response);
-        return;
-    }
+  function onGetSettings(ch: Channel, payload: unknown): void {
+    const { requestId } = payload as { requestId: string };
+    const state = ch.sessionConfig;
+    const overrides = pickDefined({
+      model: state.model,
+      permissionMode: state.permissionMode,
+    });
+    void settingsStore
+      .getMany(ch.provider, ['model', 'permissionMode'])
+      .then((stored) => {
+        ch.respondToRequest(requestId, { ...stored, ...overrides });
+      })
+      .catch(() => {
+        ch.respondToRequest(requestId, overrides);
+      });
   }
 
-  emitter.on('server:action', withChannel(onAutoRespond));
+  function onCliSetModel(ch: Channel, payload: unknown): void {
+    const { requestId, input } = payload as { requestId: string; input: unknown };
+    const { model } = serverActionModelSchema.parse(input ?? {});
+    ch.updateSessionConfig({ model });
+    ch.respondToRequest(requestId, { subtype: 'success' });
+    channelManager.broadcastSessionState(ch.id, 'busy');
+  }
+
+  function onCliSetPermissionMode(ch: Channel, payload: unknown): void {
+    const { requestId, input } = payload as { requestId: string; input: unknown };
+    const { mode } = serverActionModeSchema.parse(input ?? {});
+    ch.updateSessionConfig({ permissionMode: mode });
+    ch.respondToRequest(requestId, { subtype: 'success' });
+    channelManager.broadcastSessionState(ch.id, 'busy');
+  }
+
+  emitter.on('settings:get_settings', withChannel(onGetSettings));
+  emitter.on('cli:set_model', withChannel(onCliSetModel));
+  emitter.on('cli:set_permission_mode', withChannel(onCliSetPermissionMode));
   emitter.on('settings:set_model', withError(withChannel(handleSetModel)));
   emitter.on('settings:set_permission_mode', withError(withChannel(handleSetPermissionMode)));
   emitter.on('settings:set_thinking_level', withError(withChannel(handleSetThinkingLevel)));

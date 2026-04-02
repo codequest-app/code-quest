@@ -8,7 +8,6 @@ import type {
   ControlResponseEvent,
   ParseResult,
   ProviderAdapter,
-  ServerAction,
   SocketEvent,
 } from '../types.ts';
 import type { LaunchOptions } from './launch-options.ts';
@@ -27,7 +26,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 interface ConvertResult {
   events: SocketEvent[];
-  serverActions: ServerAction[];
+  serverActions: never[];
   controlResponses: ControlResponseEvent[];
 }
 
@@ -196,7 +195,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
       return transformControlRequest(event as Record<string, unknown>);
     }
 
-    // All other types produce only SocketEvents, no ServerActions
+    // All other types produce only SocketEvents
     const se = this.convertOtherEvent(event);
     if (se === null) return EMPTY;
     const events = Array.isArray(se) ? se : [se];

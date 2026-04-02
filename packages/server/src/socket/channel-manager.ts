@@ -37,9 +37,7 @@ export class ChannelManager {
   ) {
     this.hooks = {
       onSocketEvent: (ch, se) => emitter.dispatchRunnerEvent(ch.id, ch, se.name, se.payload),
-      onServerAction: (ch, action) => emitter.dispatch('server:action', ch, action),
       onExit: (ch, code) => emitter.dispatch('channel:exit', ch, { code }),
-      emitToChannel: (channelId, event, ...args) => emitter.emit(channelId, event, ...args),
     };
   }
 
