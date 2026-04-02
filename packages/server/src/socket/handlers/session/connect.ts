@@ -216,7 +216,7 @@ export function create(
     // Persist when session:init arrives (sessionId now available)
     const channel = ch;
     if (channel.sessionId) {
-      const parentId = channel.sessionState.parentId;
+      const parentId = channel.parentId;
       sessionStore
         .persist({
           id: channelId,

@@ -33,10 +33,6 @@ const sessionStateSchema = z.object({
   thinkingLevel: z.string().optional(),
   tools: z.array(z.string()).optional(),
   mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
-  titleGenerated: z.boolean().optional(),
-  pendingTitlePrompt: z.string().optional(),
-  title: z.string().optional(),
-  parentId: z.string().optional(),
 });
 export type SessionState = z.infer<typeof sessionStateSchema>;
 

@@ -18,7 +18,7 @@ export function create(
     const sessions = channelManager.getAliveChannels().map(([id, ch]) => ({
       channelId: id,
       state: ch.isProcessing ? 'busy' : 'idle',
-      title: ch.sessionState?.title,
+      title: ch.title,
       modelSetting: ch.sessionState?.model,
     }));
     let settings: Record<string, unknown> = {};

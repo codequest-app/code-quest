@@ -55,6 +55,12 @@ export class Channel {
   lastError: string | undefined;
   exited = false;
 
+  // ── UI / Metadata (not CLI config) ──
+  titleGenerated = false;
+  pendingTitlePrompt: string | undefined;
+  title: string | undefined;
+  parentId: string | undefined;
+
   // ── Processing ──
   private _isProcessing = false;
 

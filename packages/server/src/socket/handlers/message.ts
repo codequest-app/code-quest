@@ -39,8 +39,9 @@ export function create(
         content: [{ type: 'text', text: textMessage }],
       });
 
-      if (!ch.sessionState.titleGenerated) {
-        ch.updateSessionState({ titleGenerated: true, pendingTitlePrompt: textMessage });
+      if (!ch.titleGenerated) {
+        ch.titleGenerated = true;
+        ch.pendingTitlePrompt = textMessage;
       }
     } catch (err) {
       logger.error({ err }, 'Failed to send message');
@@ -212,15 +213,16 @@ export function create(
   }
 
   async function generateTitleIfNeeded(channelId: string, ch: Channel): Promise<void> {
-    const pendingPrompt = ch.sessionState.pendingTitlePrompt;
+    const pendingPrompt = ch.pendingTitlePrompt;
     if (!pendingPrompt) return;
 
-    ch.updateSessionState({ pendingTitlePrompt: undefined });
+    ch.pendingTitlePrompt = undefined;
     try {
       const res = await ch.sendControlRequest('generate_session_title', {
         description: pendingPrompt,
       });
       const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+      ch.title = title;
       sessionStore
         .rename(channelId, title)
         .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
