@@ -1,4 +1,4 @@
-import type { ProviderClientConfig, ServerToClientEvents } from '@code-quest/shared';
+import type { AccountInfo, McpAuthResult, ModelInfo, ProviderClientConfig, ServerToClientEvents } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocket } from '../SocketContext';
 import {
@@ -13,7 +13,7 @@ type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEv
 
 export interface ConfigState {
   model: string | null;
-  availableModels: import('@code-quest/shared').ModelInfo[];
+  availableModels: ModelInfo[];
   mcpServers: Array<{ name: string; status: string; scope?: string }>;
   tools: string[];
   permissionMode: string | null;
@@ -24,6 +24,8 @@ export interface ConfigState {
   currentRepo: string | null;
   slashCommands: string[];
   providerConfig?: ProviderClientConfig;
+  accountInfo: AccountInfo | null;
+  experimentGates: Record<string, boolean>;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -42,7 +44,7 @@ export interface ChannelConfigValue extends ConfigState {
   mcpSetServers: (servers: Record<string, unknown>) => Promise<McpResponse>;
   mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<McpResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
-  mcpAuthenticate: (serverName: string) => Promise<import('@code-quest/shared').McpAuthResult>;
+  mcpAuthenticate: (serverName: string) => Promise<McpAuthResult>;
   mcpOAuthCallback: (serverName: string, callbackUrl: string) => Promise<{ success: boolean; error?: string }>;
   mcpClearAuth: (serverName: string) => Promise<{ success: boolean; error?: string }>;
   ensureChromeMcpEnabled: () => Promise<McpResponse>;
@@ -72,6 +74,8 @@ const INITIAL_CONFIG: ConfigState = {
   config: {},
   currentRepo: null,
   slashCommands: [],
+  accountInfo: null,
+  experimentGates: {},
 };
 
 export function ChannelConfigProvider({

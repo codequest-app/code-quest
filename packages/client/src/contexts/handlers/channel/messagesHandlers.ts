@@ -171,21 +171,6 @@ function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summar
   };
 }
 
-function onSettingsUpdate(state: ChannelState, p: Payload<'settings:update'>): ChannelState {
-  if (p.channelId && p.channelId !== '') return state;
-  if (p.accountInfo === undefined) return state;
-  return {
-    ...state,
-    accountInfo: state.accountInfo
-      ? { ...state.accountInfo, ...p.accountInfo }
-      : (p.accountInfo ?? null),
-  };
-}
-
-function onExperimentGates(state: ChannelState, p: Payload<'app:experiment_gates'>): ChannelState {
-  return { ...state, experimentGates: p.gates };
-}
-
 function onSettingsUsage(state: ChannelState, p: Payload<'settings:usage'>): ChannelState {
   return {
     ...state,
@@ -300,8 +285,6 @@ export const messagesHandlers = {
   'plan:comment_removed': onPlanCommentRemoved,
   'stream:text': onStreamText,
   'stream:tool_summary': onStreamToolSummary,
-  'settings:update': onSettingsUpdate,
-  'app:experiment_gates': onExperimentGates,
   'settings:usage': onSettingsUsage,
   'message:user': onMessageUser,
   'notification:show': onNotificationShow,

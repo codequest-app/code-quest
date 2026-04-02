@@ -89,8 +89,6 @@ export interface ChannelMessagesValue {
   statusText: ChannelState['statusText'];
   usageQuota: ChannelState['usageQuota'];
   contextUsage: ChannelState['contextUsage'];
-  accountInfo: ChannelState['accountInfo'];
-  experimentGates: ChannelState['experimentGates'];
   isProcessing: boolean;
   isCancelling: boolean;
   setChannelState: SetChannelState;
@@ -469,8 +467,6 @@ export function ChannelMessagesProvider({
       statusText: channelState.statusText,
       usageQuota: channelState.usageQuota,
       contextUsage: channelState.contextUsage,
-      accountInfo: channelState.accountInfo,
-      experimentGates: channelState.experimentGates,
       isProcessing:
         channelState.status === 'processing' ||
         channelState.status === 'busy' ||

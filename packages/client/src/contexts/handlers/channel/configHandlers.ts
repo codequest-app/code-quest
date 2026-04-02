@@ -41,8 +41,17 @@ function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'
   if (payload.currentRepo !== undefined) update.currentRepo = payload.currentRepo ?? null;
   if (payload.config !== undefined) update.config = payload.config;
   if (payload.mcpServers !== undefined) update.mcpServers = payload.mcpServers;
+  if (payload.accountInfo !== undefined) {
+    update.accountInfo = state.accountInfo
+      ? { ...state.accountInfo, ...payload.accountInfo }
+      : (payload.accountInfo ?? null);
+  }
   if (Object.keys(update).length === 0) return state;
   return { ...state, ...update };
+}
+
+function onExperimentGates(state: ConfigState, p: Payload<'app:experiment_gates'>): ConfigState {
+  return { ...state, experimentGates: p.gates };
 }
 
 function onSessionStates(state: ConfigState, payload: Payload<'session:states'>, channelId: string): ConfigState {
@@ -91,6 +100,7 @@ export const configHandlers = {
   'session:init': onSessionInit,
   'session:status': onSessionStatus,
   'app:models': onAvailableModels,
+  'app:experiment_gates': onExperimentGates,
 } satisfies Record<string, (state: ConfigState, payload: never) => ConfigState>;
 
 // session:states needs channelId — handled specially in context

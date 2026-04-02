@@ -1,8 +1,8 @@
-import { useChannelMessages } from '../contexts/channel';
+import { useChannelConfig } from '../contexts/channel';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
 export function ReviewUpsellBanner() {
-  const { experimentGates } = useChannelMessages();
+  const { experimentGates } = useChannelConfig();
   const { isReviewUpsellDismissed: isDismissed, dismissReviewUpsell: dismiss } =
     usePreferencesStore();
   const enabled = experimentGates.review_upsell === true;

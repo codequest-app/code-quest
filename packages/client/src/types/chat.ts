@@ -1,5 +1,4 @@
 import type {
-  AccountInfo,
   ChatStats,
   ControlDiffReviewPayload,
   ControlElicitationPayload,
@@ -30,8 +29,6 @@ export interface ChannelState {
   terminalSessions: Record<string, TerminalSession>;
   usageQuota: UsageQuota | null;
   contextUsage: Record<string, unknown> | null;
-  accountInfo: AccountInfo | null;
-  experimentGates: Record<string, boolean>;
 }
 
 export function initialChannelState(channelId: string): ChannelState {
@@ -47,8 +44,6 @@ export function initialChannelState(channelId: string): ChannelState {
     terminalSessions: {},
     usageQuota: null,
     contextUsage: null,
-    accountInfo: null,
-    experimentGates: {},
   };
 }
 
