@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChannelProvider } from '../contexts/channel';
+import { useEffect } from 'react';
+import { ChannelProvider, useChannelControl } from '../contexts/channel';
 import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
@@ -7,6 +8,14 @@ import { TabProvider } from '../contexts/TabContext';
 import { createSocket } from '../socket/client';
 import type { PendingControl } from '../types/chat';
 import { PendingActionBanner } from './PendingActionBanner';
+
+function SetControls({ controls, children }: { controls: PendingControl[]; children: React.ReactNode }) {
+  const { setPendingControls } = useChannelControl();
+  useEffect(() => {
+    setPendingControls(() => controls);
+  }, [controls, setPendingControls]);
+  return <>{children}</>;
+}
 
 function withChannel(pendingControls: PendingControl[]) {
   return (Story: () => React.ReactNode) => {
@@ -16,10 +25,12 @@ function withChannel(pendingControls: PendingControl[]) {
         <SessionProvider>
           <PluginProvider>
             <TabProvider>
-              <ChannelProvider channelId="story" initialState={{ pendingControls }}>
-                <div className="max-w-3xl bg-surface text-text p-6">
-                  <Story />
-                </div>
+              <ChannelProvider channelId="story">
+                <SetControls controls={pendingControls}>
+                  <div className="max-w-3xl bg-surface text-text p-6">
+                    <Story />
+                  </div>
+                </SetControls>
               </ChannelProvider>
             </TabProvider>
           </PluginProvider>

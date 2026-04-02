@@ -46,7 +46,6 @@ export function ChannelProvider({
       >
         <ChannelControlProvider
           channelId={channelId}
-          initialPendingControls={initialState?.pendingControls}
           resetStreamingRefs={() => resetStreamingRefsRef.current()}
         >
           <ChannelConfigProvider channelId={channelId} initialConfig={initialState}>

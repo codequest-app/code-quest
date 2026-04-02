@@ -69,8 +69,6 @@ export type ChannelInitialState = Partial<ChannelState> & {
   config?: Record<string, unknown>;
   currentRepo?: string | null;
   slashCommands?: string[];
-  // Pending controls for ActionsProvider
-  pendingControls?: PendingControl[];
 };
 
 export interface PendingControl {

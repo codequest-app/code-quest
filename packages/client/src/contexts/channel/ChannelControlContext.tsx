@@ -36,12 +36,10 @@ export function useChannelControl(): ChannelControlValue {
 
 export function ChannelControlProvider({
   channelId,
-  initialPendingControls,
   resetStreamingRefs,
   children,
 }: {
   channelId: string;
-  initialPendingControls?: PendingControl[];
   resetStreamingRefs: () => void;
   children: ReactNode;
 }) {
@@ -49,7 +47,7 @@ export function ChannelControlProvider({
   const { setChannelState } = useChannelMessages();
 
   // ── Own pending state ──
-  const [controls, setControls] = useState<PendingControl[]>(() => initialPendingControls ?? []);
+  const [controls, setControls] = useState<PendingControl[]>([]);
   const [elicitation, setElicitation] = useState<PendingElicitation | null>(null);
   const [diffReview, setDiffReview] = useState<PendingDiffReview | null>(null);
 
