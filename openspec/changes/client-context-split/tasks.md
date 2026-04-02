@@ -1,61 +1,34 @@
 ## 規則
 
 - Handler 使用 named function（不用 arrow），map 在底部集中宣告
-- Effects 也使用 named function
-- socket.on/off handler 使用 named function（不用 inline arrow）
+- Client handler 分類對齊 server handler
 - 每步 615 test pass
+- 用現有測試保護重構
 
-## 1-17. Handler 抽取 + state 拆分 + 整理（已完成）
+## 1-24. 前期重構（已完成）
 
-- [x] 全部完成，詳見 git history
+- [x] 詳見 git history
 
-## 18. 提取 auto-wiring utility
+## 25. Client handler 按 server handler 分類重組
 
-4 個 context 重複 ~15 行相同的 socket.on/off + guard + cleanup loop。
-提取到 guard.ts 或獨立 utility。
+現在 messagesHandlers.ts 混了 message/stream/system/error/file/plan/notification/raw。
+按 server handler 分類拆開，每個 handler 是一個 factory function 回傳 { on, effects?, actions? }。
 
-- [x] 18.1 wireHandlers function（支援 state handlers + effects + beforeUpdate + skipGuard）
-- [x] 18.2 ChannelMessagesContext 改用 wireHandlers（~30 行 → 8 行）
-- [x] 18.3 ChannelControlContext 留到 23 統一 full state 後再改
-- [x] 18.4 ChannelConfigContext 改用 wireHandlers（~20 行 → 3 行）
-- [x] 18.5 ChannelComposeContext 改用 wireHandlers（~15 行 → 3 行）
-- [x] 18.6 typecheck + 615 test pass
+- [x] 25.1 messageHandler.ts（on: message:user, stream:text, stream:tool_summary + actions: sendMessage, abort, kill）
+- [x] 25.2 sessionHandler.ts（on: session:status, disconnect + actions: fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage）
+- [x] 25.3 systemHandler.ts（on: compact_boundary, hook_started, hook_response, task_started, api_retry, rate_limit, error:message）
+- [x] 25.4 notificationHandler.ts（on: notification:show, raw:event + effects: toast, auth_url, open_url, open_file, show, raw:event, disconnect）
+- [x] 25.5 fileHandler.ts（on: file:updated + actions: searchFiles, getTerminalContents, openClaudeTerminal）
+- [x] 25.6 planHandler.ts（on: plan:comment_added/removed + actions: addPlanComment, clearPlanComments）
+- [x] 25.7 controlHandlers.ts → permissionHandler.ts
+- [x] 25.8 configHandlers.ts → settingsHandler.ts
+- [x] 25.9 composeHandlers.ts → speechHandler.ts
+- [x] 25.10 刪除 messagesHandlers.ts，ChannelMessagesContext 改用新 handler maps
+- [x] 25.11 actions 歸位（message/session/file/plan 各自的 createXxxActions）
+- [x] typecheck + 615 test pass
 
-## 19. 消除 stream:chunk 和 message:assistant 的重複 helper
+## 26. 最終確認
 
-兩個 useEffect 各自定義 removePlaceholder, appendOrCreateText — 完全相同。
-提到 useEffect 外面共享。
-
-- [x] 19.1-19.2 stream:chunk + stream:end + message:assistant 合成一個 useEffect，共用 streaming helpers
-- [x] 19.3 typecheck + 615 test pass
-
-## 20. ControlContext 提取 addControlAndMessage helper
-
-control:permission 和 control:hook_callback 邏輯幾乎一樣。
-提取共用 function。
-
-- [x] 20.1-20.2 addControlAndMessage helper，permission + hook_callback 合成一個 useEffect
-- [x] 20.3 typecheck + 615 test pass
-
-## 21. messagesHandlers 提取 addMessage helper
-
-- [x] 21.1 addMessage(state, msgFields) helper
-- [x] 21.2 6 個 simple handler 改用（streamText, streamToolSummary, hookStarted, taskStarted, errorMessage, notificationShow）
-- [x] 21.3 typecheck + 615 test pass
-
-## 22. configHandlers onSettingsUpdate 簡化
-
-9 個 `if (payload.X !== undefined) update.X = payload.X` 重複 pattern。
-
-- [x] 22.1 SETTINGS_KEY_MAP + loop 取代 9 個 if-check
-- [x] 22.2 typecheck + 615 test pass
-
-## 23. controlHandlers 統一回傳 full state
-
-- [x] 23.1 controlHandlers 改回傳 full ControlState（`...state` spread）
-- [x] 23.2 ChannelControlContext 改用 wireHandlers + composite setState wrapper
-- [x] 23.3 typecheck + 615 test pass
-
-## 24. 清理
-
-- [x] 24.1 615 test pass — 全部完成
+- [x] 26.1 client handler 對齊 server handler 命名
+- [ ] 26.2 確認行數
+- [ ] 26.3 biome check + typecheck + 615 test pass

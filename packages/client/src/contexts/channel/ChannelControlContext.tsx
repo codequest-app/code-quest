@@ -6,7 +6,7 @@ import type { ChannelState } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelMessages } from './ChannelMessagesContext';
-import { type ControlState, controlHandlers, createControlActions } from '../handlers/channel/controlHandlers';
+import { type ControlState, controlHandlers, createControlActions } from '../handlers/channel/permissionHandler';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 

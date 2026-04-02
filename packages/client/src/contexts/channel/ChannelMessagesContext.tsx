@@ -20,8 +20,13 @@ import { type ChannelInitialState, type ChannelState, initialChannelState } from
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { createGuard, wireHandlers } from '../handlers/channel/guard';
-import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from '../handlers/channel/messagesHandlers';
+import { fileHandlerOn, createFileActions } from '../handlers/channel/fileHandler';
+import { createMessageActions, messageHandlerOn } from '../handlers/channel/messageHandler';
+import { type EffectDeps, notificationHandlerEffects, notificationHandlerOn } from '../handlers/channel/notificationHandler';
+import { planHandlerOn, createPlanActions } from '../handlers/channel/planHandler';
+import { sessionHandlerOn, createSessionActions } from '../handlers/channel/sessionHandler';
 import { streamingAppendOrCreate, streamingAppendToLast, streamingRemovePlaceholder } from '../handlers/channel/streamingHelpers';
+import { systemHandlerOn } from '../handlers/channel/systemHandler';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
@@ -187,10 +192,19 @@ export function ChannelMessagesProvider({
 
     const resetEvents = new Set(['system:compact_boundary', 'error:message', 'stream:text', 'stream:tool_summary']);
 
-    return wireHandlers<ChannelState, EffectDeps>(socket, channelId, messagesHandlers, setChannelState, {
+    const allHandlers = {
+      ...messageHandlerOn,
+      ...sessionHandlerOn,
+      ...systemHandlerOn,
+      ...fileHandlerOn,
+      ...planHandlerOn,
+      ...notificationHandlerOn,
+    };
+
+    return wireHandlers<ChannelState, EffectDeps>(socket, channelId, allHandlers, setChannelState, {
       skipGuard: new Set(['disconnect']),
       beforeUpdate(event) { if (resetEvents.has(event)) resetStreamingRefs(); },
-      effects: messagesEffects,
+      effects: notificationHandlerEffects,
       effectDeps: { socket, channelId },
     });
   }, [channelId, socket, resetStreamingRefs]);
@@ -363,7 +377,20 @@ export function ChannelMessagesProvider({
 
   // ── Stable actions (don't depend on channelState) ──
   const actions = useMemo(
-    () => createMessagesActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
+    () => ({
+      setChannelState,
+      ...createMessageActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
+      ...createSessionActions({ socket, channelId }),
+      ...createFileActions({ socket, channelId }),
+      ...createPlanActions({ setChannelState }),
+      clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
+      clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
+      removeModifiedFile: (path: string) =>
+        setChannelState((prev) => {
+          const { [path]: _, ...rest } = prev.modifiedFiles;
+          return { ...prev, modifiedFiles: rest };
+        }),
+    }),
     [socket, channelId, messageQueueRef],
   );
 
