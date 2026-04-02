@@ -31,17 +31,26 @@ function parseModels(raw: unknown[]): ModelInfo[] {
 
 // ── On handlers: (state, payload) → newState ──
 
+/** Maps settings:update payload keys → ConfigState keys for direct assignment. */
+const SETTINGS_KEY_MAP: Array<[keyof Payload<'settings:update'>, keyof ConfigState]> = [
+  ['modelSetting', 'model'],
+  ['initialPermissionMode', 'permissionMode'],
+  ['tools', 'tools'],
+  ['thinkingLevel', 'thinkingLevel'],
+  ['fastModeState', 'fastModeState'],
+  ['config', 'config'],
+  ['mcpServers', 'mcpServers'],
+];
+
 function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'>): ConfigState {
   const update: Partial<ConfigState> = {};
-  if (payload.modelSetting !== undefined) update.model = payload.modelSetting;
-  if (payload.initialPermissionMode !== undefined) update.permissionMode = payload.initialPermissionMode;
-  if (payload.tools !== undefined) update.tools = payload.tools;
-  if (payload.thinkingLevel !== undefined) update.thinkingLevel = payload.thinkingLevel;
+  for (const [payloadKey, stateKey] of SETTINGS_KEY_MAP) {
+    if (payload[payloadKey] !== undefined) {
+      (update as Record<string, unknown>)[stateKey] = payload[payloadKey];
+    }
+  }
   if (payload.effort !== undefined) update.effort = toEffort(payload.effort);
-  if (payload.fastModeState !== undefined) update.fastModeState = payload.fastModeState;
   if (payload.currentRepo !== undefined) update.currentRepo = payload.currentRepo ?? null;
-  if (payload.config !== undefined) update.config = payload.config;
-  if (payload.mcpServers !== undefined) update.mcpServers = payload.mcpServers;
   if (payload.accountInfo !== undefined) {
     update.accountInfo = state.accountInfo
       ? { ...state.accountInfo, ...payload.accountInfo }

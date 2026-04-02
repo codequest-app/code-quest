@@ -18,10 +18,11 @@ export interface ControlState {
 }
 
 function onControlElicitation(
-  _state: ControlState,
+  state: ControlState,
   payload: Payload<'control:elicitation'>,
-): Partial<ControlState> {
+): ControlState {
   return {
+    ...state,
     elicitation: {
       requestId: payload.requestId,
       prompt: payload.prompt,
@@ -33,10 +34,11 @@ function onControlElicitation(
 }
 
 function onControlDiffReview(
-  _state: ControlState,
+  state: ControlState,
   payload: Payload<'control:diff_review'>,
-): Partial<ControlState> {
+): ControlState {
   return {
+    ...state,
     diffReview: {
       toolId: payload.toolId,
       oldContent: payload.oldContent,
@@ -49,8 +51,9 @@ function onControlDiffReview(
 function onCancelRequest(
   state: ControlState,
   payload: Payload<'chat:cancel_request'>,
-): Partial<ControlState> {
+): ControlState {
   return {
+    ...state,
     controls: state.controls.filter((c) => c.requestId !== payload.targetRequestId),
   };
 }
@@ -59,7 +62,7 @@ export const controlHandlers = {
   'control:elicitation': onControlElicitation,
   'control:diff_review': onControlDiffReview,
   'chat:cancel_request': onCancelRequest,
-} satisfies Record<string, (state: ControlState, payload: never) => Partial<ControlState>>;
+} satisfies Record<string, (state: ControlState, payload: never) => ControlState>;
 
 // ── Emit actions (send) ──
 

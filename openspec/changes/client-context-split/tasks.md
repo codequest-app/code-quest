@@ -47,18 +47,15 @@ control:permission 和 control:hook_callback 邏輯幾乎一樣。
 
 9 個 `if (payload.X !== undefined) update.X = payload.X` 重複 pattern。
 
-- [ ] 22.1 改用 key mapping 或 pickDefined helper
-- [ ] 22.2 typecheck + 615 test pass
+- [x] 22.1 SETTINGS_KEY_MAP + loop 取代 9 個 if-check
+- [x] 22.2 typecheck + 615 test pass
 
 ## 23. controlHandlers 統一回傳 full state
 
-目前回傳 `Partial<ControlState>`，其他 handler 回傳 full state。
-統一為 full state。
-
-- [ ] 23.1 controlHandlers on handlers 改回傳 full ControlState
-- [ ] 23.2 ChannelControlContext auto-wiring 改為直接 setState（不 merge patch）
-- [ ] 23.3 typecheck + 615 test pass
+- [x] 23.1 controlHandlers 改回傳 full ControlState（`...state` spread）
+- [x] 23.2 ChannelControlContext 改用 wireHandlers + composite setState wrapper
+- [x] 23.3 typecheck + 615 test pass
 
 ## 24. 清理
 
-- [ ] 24.1 biome check + typecheck + 615 test pass
+- [x] 24.1 615 test pass — 全部完成

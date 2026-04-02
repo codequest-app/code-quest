@@ -1,7 +1,7 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
-import { createGuard } from '../handlers/channel/guard';
+import { createGuard, wireHandlers } from '../handlers/channel/guard';
 import type { ChannelState } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
@@ -59,31 +59,16 @@ export function ChannelControlProvider({
   // ── Auto-wiring: handler map events (pure local state) ──
   useEffect(() => {
     if (!channelId) return;
-    const guard = createGuard(channelId);
 
-    const entries = Object.entries(controlHandlers) as Array<
-      [string, (state: ControlState, payload: never) => Partial<ControlState>]
-    >;
-    const wired = entries.map(([event, handler]) => {
-      const fn = (payload: { channelId: string }) => {
-        if (!guard(payload)) return;
-        const patch = handler(
-          { controls: controlsRef.current, elicitation, diffReview },
-          payload as never,
-        );
-        if (patch.controls !== undefined) setControls(() => patch.controls!);
-        if (patch.elicitation !== undefined) setElicitation(patch.elicitation);
-        if (patch.diffReview !== undefined) setDiffReview(patch.diffReview);
-      };
-      socket.on(event as never, fn as never);
-      return { event, fn };
-    });
+    function setControlState(fn: (prev: ControlState) => ControlState) {
+      const prev: ControlState = { controls: controlsRef.current, elicitation, diffReview };
+      const next = fn(prev);
+      if (next.controls !== prev.controls) setControls(() => next.controls);
+      if (next.elicitation !== prev.elicitation) setElicitation(next.elicitation);
+      if (next.diffReview !== prev.diffReview) setDiffReview(next.diffReview);
+    }
 
-    return () => {
-      for (const { event, fn } of wired) {
-        socket.off(event as never, fn as never);
-      }
-    };
+    return wireHandlers(socket, channelId, controlHandlers, setControlState);
   }, [channelId, socket]);
 
   // ── Special: control:permission + control:hook_callback (local state + parent state + resetRef) ──
