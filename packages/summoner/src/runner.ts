@@ -95,6 +95,13 @@ export class ProcessRunner extends EventEmitter {
     this._write(this.adapter.formatMessage(text));
   }
 
+  formatRequest(
+    event: string,
+    payload: Record<string, unknown>,
+  ): { subtype: string; input: Record<string, unknown> } {
+    return this.adapter.formatRequest(event, payload);
+  }
+
   sendControlRequest(subtype: string, input?: Record<string, unknown>, requestId?: string): void {
     this._write(this.adapter.formatControlRequest(subtype, input, requestId));
   }

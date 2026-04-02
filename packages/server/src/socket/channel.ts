@@ -207,7 +207,15 @@ export class Channel {
     });
   }
 
-  sendControlRequest(subtype: string, params?: Record<string, unknown>): Promise<ControlResponse> {
+  sendRequest(event: string, payload: Record<string, unknown> = {}): Promise<ControlResponse> {
+    const { subtype, input } = this.runner.formatRequest(event, payload);
+    return this.sendControlRequest(subtype, input);
+  }
+
+  private sendControlRequest(
+    subtype: string,
+    params?: Record<string, unknown>,
+  ): Promise<ControlResponse> {
     const requestId = crypto.randomUUID();
     return new Promise<ControlResponse>((resolve, reject) => {
       const timer = setTimeout(() => {

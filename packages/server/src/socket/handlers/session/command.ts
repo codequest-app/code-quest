@@ -83,7 +83,7 @@ export function create(
   ): Promise<void> {
     try {
       const { description, persist } = chatGenerateSessionTitleSchema.parse(payload);
-      const result = await ch.sendControlRequest('generate_session_title', {
+      const result = await ch.sendRequest('session:generate_title', {
         description,
         persist,
       });

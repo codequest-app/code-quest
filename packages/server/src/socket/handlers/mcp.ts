@@ -16,60 +16,90 @@ import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export function create(emitter: ChannelEmitter): void {
-  async function handleReconnect(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleReconnect(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName } = mcpReconnectSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_reconnect', { server_name: serverName });
+      const result = await ch.sendRequest('mcp:reconnect', { serverName });
       cb?.(result);
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to reconnect MCP server') });
     }
   }
 
-  async function handleToggle(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleToggle(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName, enabled } = mcpSetEnabledSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_toggle', { server_name: serverName, enabled });
+      const result = await ch.sendRequest('mcp:toggle', { serverName, enabled });
       cb?.(result);
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to set MCP server enabled') });
     }
   }
 
-  async function handleServers(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleServers(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       mcpGetServersSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_status', {});
+      const result = await ch.sendRequest('mcp:servers');
       cb?.(result);
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to get MCP servers') });
     }
   }
 
-  async function handleSetServers(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleSetServers(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { servers } = mcpSetServersSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_set_servers', { servers });
+      const result = await ch.sendRequest('mcp:set_servers', { servers });
       cb?.(result);
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to set MCP servers') });
     }
   }
 
-  async function handleMessage(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleMessage(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName, message } = mcpMessageSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_message', { server_name: serverName, message });
+      const result = await ch.sendRequest('mcp:message', { serverName, message });
       cb?.(result);
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Failed to send MCP message') });
     }
   }
 
-  async function handleAuthenticate(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleAuthenticate(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName } = mcpAuthenticateSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_authenticate', { server_name: serverName });
+      const result = await ch.sendRequest('mcp:authenticate', { serverName });
       if (result.success) {
         cb?.({ success: true, authUrl: String(result.response?.authUrl ?? '') || undefined });
       } else {
@@ -80,27 +110,45 @@ export function create(emitter: ChannelEmitter): void {
     }
   }
 
-  async function handleClearAuth(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleClearAuth(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName } = mcpAuthenticateSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_clear_auth', { server_name: serverName });
-      cb?.({ success: result.success, error: result.success ? undefined : (result.error ?? 'Clear auth failed') });
+      const result = await ch.sendRequest('mcp:clear_auth', { serverName });
+      cb?.({
+        success: result.success,
+        error: result.success ? undefined : (result.error ?? 'Clear auth failed'),
+      });
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
     }
   }
 
-  async function handleOAuthCallback(ch: Channel, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): Promise<void> {
+  async function handleOAuthCallback(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
     try {
       const { serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
-      const result = await ch.sendControlRequest('mcp_oauth_callback_url', { server_name: serverName, callback_url: callbackUrl });
+      const result = await ch.sendRequest('mcp:oauth_callback', { serverName, callbackUrl });
       cb?.({ success: result.success, error: result.error });
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
     }
   }
 
-  function handleAskDebugger(_ch: Channel | null, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback): void {
+  function handleAskDebugger(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): void {
     try {
       debuggerHelpSchema.parse(payload);
       cb?.({ success: true, response: { type: 'ask_debugger_help_response' } });

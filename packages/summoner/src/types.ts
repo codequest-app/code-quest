@@ -96,6 +96,10 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
   parseLine(line: string): ParseResult<E>;
   transform(event: E): AdapterOutput;
   formatMessage(text: string): string;
+  formatRequest(
+    event: string,
+    payload: Record<string, unknown>,
+  ): { subtype: string; input: Record<string, unknown> };
   formatControlRequest(
     subtype: string,
     input?: Record<string, unknown>,

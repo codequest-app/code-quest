@@ -55,7 +55,7 @@ export function create(
         ch.abort();
       } else {
         interruptedChannels.add(channelId);
-        ch.sendControlRequest('interrupt').catch(() => {});
+        ch.sendRequest('message:interrupt').catch(() => {});
       }
     } catch {
       // ignore
@@ -156,7 +156,7 @@ export function create(
   function handleStopTask(ch: Channel, payload: unknown): void {
     try {
       const { taskId } = chatStopTaskSchema.parse(payload);
-      ch.sendControlRequest('stop_task', { task_id: taskId }).catch(() => {});
+      ch.sendRequest('message:stop_task', { task_id: taskId }).catch(() => {});
     } catch {
       // ignore
     }
@@ -165,16 +165,21 @@ export function create(
   function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
       const { messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
-      ch.sendControlRequest('cancel_async_message', { message_uuid: messageUuid }).catch(() => {});
+      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch(() => {});
     } catch {
       // ignore
     }
   }
 
-  async function handleRewindCode(ch: Channel, payload: unknown, _socket?: TypedSocket, callback?: SocketCallback): Promise<void> {
+  async function handleRewindCode(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
     try {
       const { userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
-      const result = await ch.sendControlRequest('rewind_files', {
+      const result = await ch.sendRequest('message:rewind', {
         user_message_id: userMessageId ?? '',
         dry_run: dryRun ?? false,
       });
@@ -218,7 +223,7 @@ export function create(
 
     ch.pendingTitlePrompt = undefined;
     try {
-      const res = await ch.sendControlRequest('generate_session_title', {
+      const res = await ch.sendRequest('session:generate_title', {
         description: pendingPrompt,
       });
       const { title } = controlGenerateTitleResponseSchema.parse(res.response);

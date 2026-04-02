@@ -33,7 +33,7 @@ export function create(
   ): Promise<void> {
     try {
       const { model } = chatSetModelSchema.parse(payload);
-      await ch.sendControlRequest('set_model', { model });
+      await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
     } catch (err) {
@@ -49,7 +49,7 @@ export function create(
   ): Promise<void> {
     try {
       const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
-      await ch.sendControlRequest('set_permission_mode', { mode });
+      await ch.sendRequest('settings:set_permission_mode', { mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
       callback?.({ success: true });
@@ -66,7 +66,7 @@ export function create(
   ): Promise<void> {
     try {
       const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
-      await ch.sendControlRequest('set_max_thinking_tokens', {
+      await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
@@ -80,7 +80,7 @@ export function create(
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
-      await ch.sendControlRequest('set_proactive', { enabled });
+      await ch.sendRequest('settings:set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
@@ -93,7 +93,7 @@ export function create(
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
       const { enabled } = chatSetRemoteControlSchema.parse(payload);
-      ch.sendControlRequest('remote_control', { enabled }).catch(() => {});
+      ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
     } catch {
       // ignore
     }
@@ -107,7 +107,7 @@ export function create(
   ): Promise<void> {
     try {
       const { channelId, settings } = settingsApplySchema.parse(payload);
-      await ch.sendControlRequest('apply_flag_settings', { settings });
+      await ch.sendRequest('settings:apply', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
         emitter.broadcastAll('settings:update', {
@@ -154,7 +154,7 @@ export function create(
     const channel = channelManager.getFirstAlive();
     if (channel) {
       try {
-        const resp = await channel.sendControlRequest('get_context_usage', {});
+        const resp = await channel.sendRequest('settings:get_context_usage');
         if (resp.response) {
           const r = resp.response;
           contextUsage = {

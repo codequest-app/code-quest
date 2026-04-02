@@ -106,7 +106,7 @@ export class ChannelManager {
     runner.spawn();
 
     // Initialize and wait for control_response
-    const initResult = await channel.sendControlRequest('initialize', opts?.initOptions ?? {});
+    const initResult = await channel.sendRequest('session:initialize', opts?.initOptions ?? {});
 
     return { channel, initResult };
   }
@@ -126,7 +126,7 @@ export class ChannelManager {
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
     const channel = this.setupChannel(channelId, runner);
     runner.spawn();
-    await channel.sendControlRequest('initialize', {});
+    await channel.sendRequest('session:initialize');
 
     return { channel };
   }

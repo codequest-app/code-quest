@@ -55,17 +55,17 @@ export function create(
   ): Promise<void> {
     if (parsed.model) {
       await channel
-        .sendControlRequest('set_model', { model: parsed.model })
+        .sendRequest('settings:set_model', { model: parsed.model })
         .catch((e) => logger.warn({ err: e }, 'Failed to set model'));
     }
     if (parsed.permissionMode) {
       await channel
-        .sendControlRequest('set_permission_mode', { mode: parsed.permissionMode })
+        .sendRequest('settings:set_permission_mode', { mode: parsed.permissionMode })
         .catch((e) => logger.warn({ err: e }, 'Failed to set permission mode'));
     }
     if (parsed.thinkingLevel) {
       await channel
-        .sendControlRequest('set_max_thinking_tokens', {
+        .sendRequest('settings:set_thinking_level', {
           tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
         })
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));

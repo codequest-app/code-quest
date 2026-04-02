@@ -340,4 +340,30 @@ describe('ClaudeAdapter', () => {
       expect(args).toContain('opus');
     });
   });
+
+  describe('formatRequest', () => {
+    it('maps settings:set_model to set_model subtype', () => {
+      const result = adapter.formatRequest('settings:set_model', { model: 'haiku' });
+      expect(result).toEqual({ subtype: 'set_model', input: { model: 'haiku' } });
+    });
+
+    it('maps settings:set_permission_mode to set_permission_mode subtype', () => {
+      const result = adapter.formatRequest('settings:set_permission_mode', { mode: 'plan' });
+      expect(result).toEqual({ subtype: 'set_permission_mode', input: { mode: 'plan' } });
+    });
+
+    it('maps mcp:reconnect to mcp_reconnect subtype', () => {
+      const result = adapter.formatRequest('mcp:reconnect', { serverName: 'test' });
+      expect(result).toEqual({ subtype: 'mcp_reconnect', input: { server_name: 'test' } });
+    });
+
+    it('maps message:interrupt to interrupt subtype', () => {
+      const result = adapter.formatRequest('message:interrupt', {});
+      expect(result).toEqual({ subtype: 'interrupt', input: {} });
+    });
+
+    it('throws for unknown event name', () => {
+      expect(() => adapter.formatRequest('unknown:event', {})).toThrow();
+    });
+  });
 });

@@ -29,7 +29,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         return;
       }
       const { method } = payload as { method?: string };
-      const controlResp = await channel.sendControlRequest('claude_authenticate', {
+      const controlResp = await channel.sendRequest('auth:authenticate', {
         loginWithClaudeAi: method !== 'api_key',
       });
       const authData = controlAuthenticateResponseSchema.parse(controlResp.response);
@@ -59,11 +59,11 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         callback?.({ success: false, error: 'No active session' });
         return;
       }
-      await channel.sendControlRequest('claude_oauth_callback', {
+      await channel.sendRequest('auth:oauth_callback', {
         authorizationCode: code,
         state,
       });
-      await channel.sendControlRequest('claude_oauth_wait_for_completion', {});
+      await channel.sendRequest('auth:oauth_wait');
       claudeState.authState = {
         authenticated: true,
         user: { name: 'authenticated' },
