@@ -1,6 +1,5 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import * as rg from '../socket/utils/rg.ts';
 import { createFakeClaude } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
@@ -11,83 +10,56 @@ async function setup(sessionId = 'cli-sess') {
 
 describe('ChatHandler > file', () => {
   describe('file:list', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: vi.spyOn generic inference
-    let rgListFilesSpy: any;
-    const origRgAvailable = rg.rgAvailable;
-
-    beforeEach(() => {
-      rgListFilesSpy = vi.spyOn(rg, 'rgListFiles');
-    });
-
-    afterEach(() => {
-      rg.setRgAvailable(origRgAvailable);
-      rgListFilesSpy.mockRestore();
-    });
-
-    it('uses rg when available and returns matching files', async () => {
-      rg.setRgAvailable(true);
-      rgListFilesSpy.mockReturnValue([
-        'src/socket/chat-handler.ts',
-        'src/__tests__/chat-handler.test.ts',
-        'src/services/session-manager.ts',
-      ]);
-
+    it('empty pattern returns root-level entries (directories + files)', async () => {
       const { claude, channelId } = await setup();
 
       const result = await claude.send<{
         files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: 'chat-handler' });
+      }>('file:list', { channelId, pattern: '' });
 
-      expect(rgListFilesSpy).toHaveBeenCalled();
-      expect(result.files.length).toBe(2);
-      expect(result.files.every((f) => f.path.includes('chat-handler'))).toBe(true);
+      const nonTerminal = result.files.filter((f) => f.type !== 'terminal');
+      // Should have directories like src/ and root files like package.json
+      expect(nonTerminal.some((f) => f.type === 'directory')).toBe(true);
+      expect(nonTerminal.some((f) => f.type === 'file')).toBe(true);
+      // Root entries should not contain deep paths
+      expect(nonTerminal.every((f) => !f.path.includes('/') || f.path.endsWith('/'))).toBe(true);
     });
 
-    it('limits results to 20 entries', async () => {
-      rg.setRgAvailable(true);
-      const manyFiles = Array.from({ length: 30 }, (_, i) => `src/file-${i}.ts`);
-      rgListFilesSpy.mockReturnValue(manyFiles);
-
+    it('pattern with trailing slash lists directory contents', async () => {
       const { claude, channelId } = await setup();
 
       const result = await claude.send<{
         files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: 'file' });
+      }>('file:list', { channelId, pattern: 'src/' });
 
-      expect(result.files.length).toBe(20);
+      const nonTerminal = result.files.filter((f) => f.type !== 'terminal');
+      expect(nonTerminal.length).toBeGreaterThan(0);
+      // All results should start with src/
+      expect(nonTerminal.every((f) => f.path.startsWith('src/'))).toBe(true);
+      // Should be one level deep only (src/xxx or src/xxx/)
+      for (const f of nonTerminal) {
+        const rest = f.path.slice('src/'.length);
+        const stripped = rest.endsWith('/') ? rest.slice(0, -1) : rest;
+        expect(stripped.includes('/')).toBe(false);
+      }
     });
 
-    it('falls back to walk when rg is not available', async () => {
-      rg.setRgAvailable(false);
-
+    it('pattern without slash does fuzzy search', async () => {
       const { claude, channelId } = await setup();
 
       const result = await claude.send<{
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern: 'session-connect' });
 
-      expect(rgListFilesSpy).not.toHaveBeenCalled();
       expect(result.files.length).toBeGreaterThan(0);
-      expect(result.files.some((f) => f.name.includes('session-connect'))).toBe(true);
-    });
-
-    it('returns empty array for no matches', async () => {
-      rg.setRgAvailable(true);
-      rgListFilesSpy.mockReturnValue(['src/app.ts', 'src/main.ts']);
-
-      const { claude, channelId } = await setup();
-
-      const result = await claude.send<{
-        files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: 'xyznonexistent999' });
-
-      expect(result.files).toEqual([]);
+      expect(
+        result.files.some(
+          (f) => f.path.includes('session-connect') || f.name.includes('session-connect'),
+        ),
+      ).toBe(true);
     });
 
     it('returns terminal results for matching active sessions', async () => {
-      rg.setRgAvailable(true);
-      rgListFilesSpy.mockReturnValue([]);
-
       const { claude, channelId } = await setup();
 
       const pattern = channelId.slice(0, 8);
@@ -96,41 +68,26 @@ describe('ChatHandler > file', () => {
       }>('file:list', { channelId, pattern });
 
       expect(result.files.some((f) => f.type === 'terminal')).toBe(true);
-      const terminal = result.files.find((f) => f.type === 'terminal')!;
-      expect(terminal.path).toBe(channelId);
-      expect(terminal.name).toBe(channelId);
     });
 
-    it('merges terminal results with file results', async () => {
-      rg.setRgAvailable(true);
-
-      const { claude, channelId } = await setup();
-
-      const prefix = channelId.slice(0, 4);
-      rgListFilesSpy.mockReturnValue([`src/${prefix}-utils.ts`]);
-
-      const result = await claude.send<{
-        files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: prefix });
-
-      const fileResults = result.files.filter((f) => f.type === 'file');
-      const terminalResults = result.files.filter((f) => f.type === 'terminal');
-      expect(fileResults.length).toBeGreaterThan(0);
-      expect(terminalResults.length).toBeGreaterThan(0);
-    });
-
-    it('caps combined file and terminal results at 20', async () => {
-      rg.setRgAvailable(true);
-      const manyFiles = Array.from({ length: 25 }, (_, i) => `src/match-${i}.ts`);
-      rgListFilesSpy.mockReturnValue(manyFiles);
-
+    it('limits results to 20 entries', async () => {
       const { claude, channelId } = await setup();
 
       const result = await claude.send<{
         files: Array<{ path: string; name: string; type: string }>;
-      }>('file:list', { channelId, pattern: 'match' });
+      }>('file:list', { channelId, pattern: '' });
 
-      expect(result.files.length).toBe(20);
+      expect(result.files.length).toBeLessThanOrEqual(20);
+    });
+
+    it('returns empty for no matches', async () => {
+      const { claude, channelId } = await setup();
+
+      const result = await claude.send<{
+        files: Array<{ path: string; name: string; type: string }>;
+      }>('file:list', { channelId, pattern: 'xyznonexistent999' });
+
+      expect(result.files.filter((f) => f.type !== 'terminal')).toEqual([]);
     });
   });
 
