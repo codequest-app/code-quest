@@ -18,6 +18,7 @@ import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export function create(channelManager: ChannelManager): SocketHandler {
+  let emitterRef: ChannelEmitter;
   function ensureChannel(
     channelId: string,
     callback?: (res: { error: string }) => void,
@@ -160,7 +161,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
 
   function onMcpControlEvent(_channelId: string, ch: Channel, se: SocketEvent): void {
     const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(se.payload);
-    const hasClient = ch.sockets.size > 0;
+    const hasClient = emitterRef.getSocketCount(ch.id) > 0;
     const mcpId = mcpMsg?.id;
     if (!hasClient) {
       ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));
@@ -187,6 +188,7 @@ export function create(channelManager: ChannelManager): SocketHandler {
       socket.on('mcp:ask_debugger', handleAskDebugger);
     },
     subscribe(emitter: ChannelEmitter) {
+      emitterRef = emitter;
       emitter.on('control:mcp', onMcpControlEvent);
     },
   };

@@ -6,7 +6,6 @@ import type {
   SocketEvent,
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner, ServerAction } from '@code-quest/summoner';
-import { z } from 'zod';
 import {
   errorMessageEventSchema,
   type RequestMeta,
@@ -15,7 +14,6 @@ import {
   sessionInitEventSchema,
   sessionStatusEventSchema,
 } from './schemas.ts';
-import type { TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
 /** Callbacks invoked by Channel when runner events occur. */
@@ -58,9 +56,6 @@ export class Channel {
 
   // ── Processing ──
   private _isProcessing = false;
-
-  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed along with socket methods. */
-  readonly sockets = new Set<TypedSocket>();
 
   // ── Control requests ──
   private readonly _controlRequestMeta = new Map<string, RequestMeta>();
@@ -126,13 +121,6 @@ export class Channel {
     return this._runnerListeners !== null;
   }
 
-  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
-  addSocket(_socket: TypedSocket): void {}
-  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
-  removeSocket(_socket: TypedSocket): void {}
-  /** @deprecated Socket tracking moved to ChannelEmitter. Will be removed. */
-  removeSocketById(_socketId: string): boolean { return false; }
-
   // ── Control request tracking ──
 
   trackControlRequest(requestId: string, meta: RequestMeta): void {
@@ -173,22 +161,6 @@ export class Channel {
     return true;
   }
 
-  emit(event: string, ...args: unknown[]): void {
-    this.emitToSockets(null, event, ...args);
-  }
-
-  emitToOthers(exclude: TypedSocket, event: string, ...args: unknown[]): void {
-    this.emitToSockets(exclude, event, ...args);
-  }
-
-  private emitToSockets(exclude: TypedSocket | null, event: string, ...args: unknown[]): void {
-    for (const sock of this.sockets) {
-      if (!exclude || sock.id !== exclude.id) {
-        (sock.emit as (...a: unknown[]) => void)(event, ...args);
-      }
-    }
-  }
-
   // ── Runner wrappers ──
 
   sendMessage(text: string): void {
@@ -211,19 +183,9 @@ export class Channel {
     this.runner.kill();
   }
 
-  sendNotification(payload: NotificationPayload): Promise<NotificationResponse> {
-    const socket = this.sockets.size > 0 ? this.sockets.values().next().value : undefined;
-    if (!socket) return Promise.resolve({});
-    const requestId = crypto.randomUUID();
-    return new Promise<NotificationResponse>((resolve) => {
-      this.notificationRequests.set(requestId, resolve);
-      socket.emit('notification:show', {
-        channelId: this.id,
-        message: payload.message,
-        severity: z.enum(['error', 'warning', 'info']).catch('info').parse(payload.severity),
-        buttons: payload.buttons?.map((b) => b.label),
-      });
-    });
+  /** @todo Re-implement via ChannelEmitter when caller is added. */
+  sendNotification(_payload: NotificationPayload): Promise<NotificationResponse> {
+    return Promise.resolve({});
   }
 
   resolveControlResponse(event: ControlResponseEvent): void {
@@ -353,7 +315,6 @@ export class Channel {
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
     this.resetSessionState();
-    this.sockets.clear();
     this.exited = true;
   }
 }

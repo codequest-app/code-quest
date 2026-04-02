@@ -17,7 +17,6 @@ interface CreateChannelOptions {
 
 export class ChannelManager {
   private channels = new Map<string, Channel>();
-  private socketChannelsMap = new Map<string, Set<string>>();
   private hooks: ChannelHooks;
   private _cachedModels: unknown[] | undefined;
 
@@ -167,19 +166,11 @@ export class ChannelManager {
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {
     this.emitter.addSocketToChannel(channel.id, socket);
-    let channelIds = this.socketChannelsMap.get(socket.id);
-    if (!channelIds) {
-      channelIds = new Set();
-      this.socketChannelsMap.set(socket.id, channelIds);
-    }
-    channelIds.add(channel.id);
   }
 
   removeSocketFromAll(socketId: string): void {
-    const channelIds = this.socketChannelsMap.get(socketId);
+    const channelIds = this.emitter.removeSocketFromAll(socketId);
     if (!channelIds) return;
-
-    this.emitter.removeSocketFromAll(socketId);
 
     for (const channelId of channelIds) {
       const channel = this.channels.get(channelId);
@@ -189,8 +180,6 @@ export class ChannelManager {
         channel.unbindRunner();
       }
     }
-
-    this.socketChannelsMap.delete(socketId);
   }
 
   // ── Broadcasting ──
