@@ -5,59 +5,26 @@
 - socket.on/off handler 使用 named function（不用 inline arrow）
 - 每步 615 test pass
 
-## 1. ChannelMessagesContext on handlers
+## 1-11. ChannelMessages/Control/Config/Compose handler 抽取（已完成）
 
-- [x] 1.1 新建 `handlers/messagesHandlers.ts`，21 個純 state handler（named function）
-- [x] 1.7 typecheck + 615 test pass
+- [x] 全部完成，詳見 git history
 
-## 2. ChannelMessagesContext auto-wiring（state handlers）
+## 12. handlers/ 搬到 contexts/ 下 + 加入 Tab/Session handlers
 
-- [x] 2.1-2.6 auto-wiring loop + 特殊 events 個別保留
+handlers 不屬於 channel，搬到 `contexts/handlers/`。
+同時把 TabContext、SessionContext 的 socket 操作也抽出來。
 
-## 3. ChannelMessagesContext emit actions
+- [x] 12.1 `contexts/channel/handlers/` → `contexts/handlers/channel/`
+- [x] 12.2 更新所有 import 路徑
+- [x] 12.3 typecheck + 615 test pass
+- [ ] 12.4 新建 `contexts/handlers/tabHandlers.ts`：on handlers（session:created, session:dead, session:resume, connect）+ emit actions（session:launch, app:init）
+- [ ] 12.5 TabContext 改用 handler map + auto-wiring
+- [ ] 12.6 typecheck + 615 test pass
+- [ ] 12.7 新建 `contexts/handlers/sessionHandlers.ts`：on handlers（connect, connect_error, notification:auth_url）+ emit actions（session:close, session:resume, auth:login, auth:oauth_code, app:init, session:list/get/fork/teleport/rename/delete/update_state）
+- [ ] 12.8 SessionContext 改用 handler map + auto-wiring
+- [ ] 12.9 typecheck + 615 test pass
 
-- [x] 3.1-3.6 createMessagesActions（17 個 named function）
+## 13. 清理
 
-## 4. ChannelControlContext on + emit handlers
-
-- [x] 4.1-4.5 controlHandlers.ts + auto-wiring
-
-## 5. ChannelConfigContext on + emit handlers
-
-- [x] 5.1-5.5 configHandlers.ts + auto-wiring
-
-## 6. ChannelComposeContext on handler
-
-- [x] 6.1-6.3 composeHandlers.ts + auto-wiring
-
-## 7. Handler 檔案搬到 handlers/ 目錄
-
-- [x] 7.1-7.3 handlers/ 目錄 + import 更新
-
-## 8. Side-effect events 搬到 messagesEffects
-
-- [x] 8.1 messagesHandlers.ts 新增 `messagesEffects` map（7 個 named function）
-- [x] 8.2 auto-wiring loop 同時接 messagesHandlers + messagesEffects
-- [x] 8.3 移除 context 裡的 side-effect useEffect 區塊
-- [x] 8.4 guard 移到所有 useEffect 內部（解決 biome exhaustive-deps）
-- [x] 8.5 resetStreamingRefs 用 useCallback 包裝
-- [x] 8.6 MutableRefObject → RefObject
-- [x] 8.7 typecheck + 615 test pass
-
-## 9. 其他 context biome exhaustive-deps 修正
-
-- [x] 9.1 ChannelControlContext：guard 移到各 useEffect 內部
-- [x] 9.2 ChannelConfigContext：guard 移到 auto-wiring useEffect 內部
-- [x] 9.3 ChannelComposeContext：無問題（guard 已在 useEffect 內）
-- [x] 9.4 typecheck + 615 test pass
-
-## 10. 待辦：named function 整理
-
-- [x] 10.1 messagesEffects 內的 handler 確認都是 named function
-- [x] 10.2 context 裡殘留的 socket.on handler 改為 named function（Messages 5個 + Control 4個）
-- [x] 10.3 615 test pass
-
-## 11. 清理
-
-- [x] 11.1 Contexts 合計 1,801→1,123 行（-38%），handlers 911 行
-- [x] 11.2 615 test pass
+- [ ] 13.1 確認 contexts/ 下所有 socket.on/off 都走 handler map 或 auto-wiring
+- [ ] 13.2 biome check + typecheck + 615 test pass

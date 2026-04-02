@@ -9,7 +9,7 @@ import type { TypedSocket } from '../../../socket/client';
 import { channelEmit, rpc } from '../../../socket/rpc';
 import { findModel } from '../../../utils/model-utils';
 
-import type { ConfigState, McpResponse } from '../ChannelConfigContext';
+import type { ConfigState, McpResponse } from '../../channel/ChannelConfigContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 

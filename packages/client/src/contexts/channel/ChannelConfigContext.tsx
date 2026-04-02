@@ -7,7 +7,7 @@ import {
   onSessionStates,
   parseModels,
   toEffort,
-} from './handlers/configHandlers';
+} from '../handlers/channel/configHandlers';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 

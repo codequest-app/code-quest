@@ -19,7 +19,7 @@ import {
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
-import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from './handlers/messagesHandlers';
+import { type EffectDeps, createMessagesActions, messagesEffects, messagesHandlers } from '../handlers/channel/messagesHandlers';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
