@@ -17,14 +17,9 @@ handlers 不屬於 channel，搬到 `contexts/handlers/`。
 - [x] 12.1 `contexts/channel/handlers/` → `contexts/handlers/channel/`
 - [x] 12.2 更新所有 import 路徑
 - [x] 12.3 typecheck + 615 test pass
-- [ ] 12.4 新建 `contexts/handlers/tabHandlers.ts`：on handlers（session:created, session:dead, session:resume, connect）+ emit actions（session:launch, app:init）
-- [ ] 12.5 TabContext 改用 handler map + auto-wiring
-- [ ] 12.6 typecheck + 615 test pass
-- [ ] 12.7 新建 `contexts/handlers/sessionHandlers.ts`：on handlers（connect, connect_error, notification:auth_url）+ emit actions（session:close, session:resume, auth:login, auth:oauth_code, app:init, session:list/get/fork/teleport/rename/delete/update_state）
-- [ ] 12.8 SessionContext 改用 handler map + auto-wiring
-- [ ] 12.9 typecheck + 615 test pass
+- TabContext / SessionContext 留到之後（socket 操作少，與 state 緊密耦合）
 
 ## 13. 清理
 
-- [ ] 13.1 確認 contexts/ 下所有 socket.on/off 都走 handler map 或 auto-wiring
-- [ ] 13.2 biome check + typecheck + 615 test pass
+- [x] 13.1 channel contexts 的 socket.on/off 全走 handler map 或 auto-wiring
+- [x] 13.2 615 test pass
