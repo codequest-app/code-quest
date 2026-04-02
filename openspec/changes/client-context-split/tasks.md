@@ -38,20 +38,18 @@ ChannelState 目前持有 12 個欄位，其中 accountInfo, experimentGates
 modifiedFiles 和 planComments 目前在 ChannelMessagesContext。
 評估是否值得拆成獨立 context（看消費端有多少 component 只用這兩個欄位）。
 
-- [ ] 15.1 盤點 modifiedFiles/planComments 的消費端
-- [ ] 15.2 決定是否拆出（如果消費端少就留著）
-- [ ] 15.3 如果拆：建立 ChannelFilesContext + 搬 handler
-- [ ] 15.4 typecheck + 615 test pass
+- [x] 15.1 modifiedFiles 消費端：ChatInputArea（1 個），planComments 消費端：PlanReviewBanner（1 個）
+- [x] 15.2 決定：留在 ChannelMessagesContext（消費端太少，不值得拆）
 
 ## 16. messagesHandlers 內容整理
 
 handler 搬完後，messagesHandlers.ts 應該只剩真正屬於 message 的 handler。
 整理 handler 分組順序和註解。
 
-- [ ] 16.1 確認 messagesHandlers 只剩 message/stream/session domain 的 handler
-- [ ] 16.2 整理 handler 順序：message → stream → session → system（留下的）→ effects
-- [ ] 16.3 streaming helper（streamingRemovePlaceholder 等）從 ChannelMessagesContext 頂層搬到 handler 或獨立檔案
-- [ ] 16.4 guard 重複 5 次 → 提取 createGuard utility
+- [x] 16.1 messagesHandlers 剩 message/stream/session/system/file/plan/notification/raw — 合理（不拆 files/plan context）
+- [ ] 16.2 整理 handler 順序 + 分組註解
+- [ ] 16.3 streaming helper 從 ChannelMessagesContext 頂層搬到獨立檔案
+- [ ] 16.4 guard 重複 → 提取 createGuard utility
 - [ ] 16.5 typecheck + 615 test pass
 
 ## 17. 清理
