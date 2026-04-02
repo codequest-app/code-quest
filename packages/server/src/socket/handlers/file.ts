@@ -4,7 +4,7 @@ import { join, normalize, resolve } from 'node:path';
 import { fileListSchema, fileUpdatedPayloadSchema, type SocketEvent } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
-import type { ChannelEventRouter } from '../channel-event-router.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
@@ -136,9 +136,9 @@ export function create(channelManager: ChannelManager): SocketHandler {
       socket.on('file:read', (p, cb) => handleRead(p, cb));
       socket.on('file:list', (p, cb) => handleList(p, cb));
     },
-    subscribe(router: ChannelEventRouter) {
-      router.onEvent('system:file_updated', onFileUpdated);
-      router.onAction(onReadDiff);
+    subscribe(emitter: ChannelEmitter) {
+      emitter.on('system:file_updated', onFileUpdated);
+      emitter.onAction(onReadDiff);
     },
   };
 }

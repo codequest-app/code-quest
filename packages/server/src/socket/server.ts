@@ -6,7 +6,7 @@ import type { SessionStore } from '../services/session-store.ts';
 import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
 import { TYPES } from '../types.ts';
-import type { ChannelEventRouter } from './channel-event-router.ts';
+import type { ChannelEmitter } from './channel-emitter.ts';
 import type { ChannelManager } from './channel-manager.ts';
 import * as claudeAuth from './claude/auth.ts';
 import * as claudeMcpServers from './claude/mcp-servers.ts';
@@ -39,7 +39,7 @@ export class SocketServer {
     @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
     @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
-    @inject(TYPES.ChannelEventRouter) private router: ChannelEventRouter,
+    @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
@@ -78,7 +78,7 @@ export class SocketServer {
 
     this.handlers = [...commonHandlers, ...providerHandlers];
 
-    for (const h of this.handlers) h.subscribe?.(this.router);
+    for (const h of this.handlers) h.subscribe?.(this.emitter);
 
     io.on('connection', (socket) => {
       for (const h of this.handlers) h.register(socket);

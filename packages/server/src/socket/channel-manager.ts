@@ -2,7 +2,7 @@ import type { ControlResponse } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
-import type { ChannelEventRouter } from './channel-event-router.ts';
+import type { ChannelEmitter } from './channel-emitter.ts';
 import type { RawRecorder } from './raw-recorder.ts';
 import type { SessionBroadcastState } from './schemas.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
@@ -34,13 +34,13 @@ export class ChannelManager {
     private runnerFactory: RunnerFactory,
     private adapter: ProviderAdapter,
     private rawRecorder: RawRecorder,
-    router: ChannelEventRouter,
+    emitter: ChannelEmitter,
     private resolveSessionId: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
-      onSocketEvent: (ch, se) => router.dispatchEvent(ch.id, ch, se),
-      onServerAction: (ch, action) => router.dispatchAction(ch.id, ch, action),
-      onExit: (ch, code) => router.dispatchExit(ch.id, ch, code),
+      onSocketEvent: (ch, se) => emitter.dispatchEvent(ch.id, ch, se),
+      onServerAction: (ch, action) => emitter.dispatchAction(ch.id, ch, action),
+      onExit: (ch, code) => emitter.dispatchExit(ch.id, ch, code),
     };
   }
 

@@ -1,6 +1,6 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type { Server, Socket } from 'socket.io';
-import type { ChannelEventRouter } from './channel-event-router.ts';
+import type { ChannelEmitter } from './channel-emitter.ts';
 
 export type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 export type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -11,5 +11,5 @@ export type SocketCallback = (result: any) => void;
 
 export interface SocketHandler {
   register(socket: TypedSocket): void;
-  subscribe?(router: ChannelEventRouter): void;
+  subscribe?(emitter: ChannelEmitter): void;
 }

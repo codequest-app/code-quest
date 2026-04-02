@@ -18,7 +18,7 @@ import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
-import { ChannelEventRouter } from './socket/channel-event-router.ts';
+import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
@@ -68,7 +68,7 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
   const rawRecorder = new RawRecorder(rawEventStore);
-  const router = new ChannelEventRouter();
+  const emitter = new ChannelEmitter();
   // SessionHistory and ChannelManager reference each other via lazy callbacks
   // (neither is called during construction — only at runtime)
   const sessionHistory: SessionHistory = new SessionHistory(
@@ -81,12 +81,12 @@ export function createContainer(options: ContainerOptions): Container {
     runnerFactory,
     adapter,
     rawRecorder,
-    router,
+    emitter,
     (channelId) => sessionHistory.resolveSessionId(channelId),
   );
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
-  container.bind<ChannelEventRouter>(TYPES.ChannelEventRouter).toConstantValue(router);
+  container.bind<ChannelEmitter>(TYPES.ChannelEventRouter).toConstantValue(emitter);
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();

@@ -13,7 +13,7 @@ import type { ServerAction } from '@code-quest/summoner';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEventRouter } from '../channel-event-router.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
@@ -234,8 +234,8 @@ export function create(
       socket.on('settings:state', handleState);
       socket.on('settings:refresh_usage', () => handleRefreshUsage(socket));
     },
-    subscribe(router: ChannelEventRouter) {
-      router.onAction(onAutoRespond);
+    subscribe(emitter: ChannelEmitter) {
+      emitter.onAction(onAutoRespond);
     },
   };
 }

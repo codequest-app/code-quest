@@ -11,7 +11,7 @@ import {
   type SocketEvent,
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
-import type { ChannelEventRouter } from '../channel-event-router.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
@@ -186,8 +186,8 @@ export function create(channelManager: ChannelManager): SocketHandler {
       socket.on('mcp:oauth_callback', handleOAuthCallback);
       socket.on('mcp:ask_debugger', handleAskDebugger);
     },
-    subscribe(router: ChannelEventRouter) {
-      router.onEvent('control:mcp', onMcpControlEvent);
+    subscribe(emitter: ChannelEmitter) {
+      emitter.on('control:mcp', onMcpControlEvent);
     },
   };
 }

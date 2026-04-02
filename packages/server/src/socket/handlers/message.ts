@@ -13,7 +13,7 @@ import {
 import { logger } from '../../logger.ts';
 import type { SessionStore } from '../../services/session-store.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEventRouter } from '../channel-event-router.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
@@ -270,9 +270,9 @@ export function create(
       socket.on('chat:cancel_request', handleCancelRequest);
       socket.on('chat:hook_respond', handleHookRespond);
     },
-    subscribe(router: ChannelEventRouter) {
-      router.onEvent('message:result', onMessageResult);
-      router.onEvent('message:result', onMessageResultTitle);
+    subscribe(emitter: ChannelEmitter) {
+      emitter.on('message:result', onMessageResult);
+      emitter.on('message:result', onMessageResultTitle);
     },
   };
 }

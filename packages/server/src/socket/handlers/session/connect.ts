@@ -6,7 +6,7 @@ import { logger } from '../../../logger.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { SettingsStore } from '../../../services/settings-store.ts';
 import type { Channel } from '../../channel.ts';
-import type { ChannelEventRouter } from '../../channel-event-router.ts';
+import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SessionHistory } from '../../session-history.ts';
@@ -239,9 +239,9 @@ export function create(
       socket.on('session:launch', (p, cb) => handleLaunch(socket, p, cb));
       socket.on('session:join', (p, cb) => handleJoin(socket, p, cb));
     },
-    subscribe(router: ChannelEventRouter) {
-      router.onEvent('session:init', (cid) => onSessionInit(cid));
-      router.onExit((cid, ch) => onChannelExit(cid, ch));
+    subscribe(emitter: ChannelEmitter) {
+      emitter.on('session:init', (cid) => onSessionInit(cid));
+      emitter.onExit((cid, ch) => onChannelExit(cid, ch));
     },
   };
 }

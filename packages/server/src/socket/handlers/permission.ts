@@ -5,7 +5,7 @@ import {
 } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
-import type { ChannelEventRouter } from '../channel-event-router.ts';
+import type { ChannelEmitter } from '../channel-emitter.ts';
 
 import type { SocketHandler } from '../types.ts';
 
@@ -57,12 +57,12 @@ export function create(): SocketHandler {
 
   return {
     register() {},
-    subscribe(router: ChannelEventRouter) {
-      router.onEvent('control:cancel', onCancel);
-      router.onEvent('control:permission', onPermission);
-      router.onEvent('control:elicitation', onElicitation);
-      router.onEvent('control:diff_review', onDiffReview);
-      router.onAction(onForwardToClient);
+    subscribe(emitter: ChannelEmitter) {
+      emitter.on('control:cancel', onCancel);
+      emitter.on('control:permission', onPermission);
+      emitter.on('control:elicitation', onElicitation);
+      emitter.on('control:diff_review', onDiffReview);
+      emitter.onAction(onForwardToClient);
     },
   };
 }
