@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import type { PendingControl } from '../types/chat';
 import { OptionButton } from './OptionButton';
@@ -49,31 +49,33 @@ export function ToolPermissionBanner({
   ];
 
   const handleKeyRef = useRef<(e: KeyboardEvent) => void>(() => {});
-  handleKeyRef.current = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      const msg = denyMessage.trim() || 'User cancelled';
-      onRespond({ behavior: 'deny', message: msg, interrupt: false });
-      return;
-    }
-    const num = Number(e.key);
-    if (num >= 1 && num <= options.length) {
-      e.preventDefault();
-      options[num - 1].action();
-      return;
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIdx((i) => Math.min(i + 1, options.length - 1));
-    }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIdx((i) => Math.max(i - 1, 0));
-    }
-    if (e.key === 'Enter' && document.activeElement !== inputRef.current) {
-      e.preventDefault();
-      options[selectedIdx].action();
-    }
-  };
+  useLayoutEffect(() => {
+    handleKeyRef.current = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const msg = denyMessage.trim() || 'User cancelled';
+        onRespond({ behavior: 'deny', message: msg, interrupt: false });
+        return;
+      }
+      const num = Number(e.key);
+      if (num >= 1 && num <= options.length) {
+        e.preventDefault();
+        options[num - 1].action();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIdx((i) => Math.min(i + 1, options.length - 1));
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIdx((i) => Math.max(i - 1, 0));
+      }
+      if (e.key === 'Enter' && document.activeElement !== inputRef.current) {
+        e.preventDefault();
+        options[selectedIdx].action();
+      }
+    };
+  });
   useEffect(() => {
     const handler = (e: KeyboardEvent) => handleKeyRef.current(e);
     document.addEventListener('keydown', handler);

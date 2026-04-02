@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { findModel } from '../utils/model-utils';
@@ -382,11 +382,13 @@ export function CommandMenu({
   // Refs for document-level key handler (avoids dependency on close/onInsertSlashCommand)
   const flatItemsRef = useRef<MenuItem[]>([]);
   const insertSlashCommandRef = useRef(compose.insertSlashCommand);
-  insertSlashCommandRef.current = compose.insertSlashCommand;
   const executeSlashCommandRef = useRef(compose.executeSlashCommand);
-  executeSlashCommandRef.current = compose.executeSlashCommand;
   const hasTextBeforeSlashRef = useRef(compose.hasTextBeforeSlash);
-  hasTextBeforeSlashRef.current = compose.hasTextBeforeSlash;
+  useLayoutEffect(() => {
+    insertSlashCommandRef.current = compose.insertSlashCommand;
+    executeSlashCommandRef.current = compose.executeSlashCommand;
+    hasTextBeforeSlashRef.current = compose.hasTextBeforeSlash;
+  });
 
   // Auto-select is handled after flatItems is built (below)
 
@@ -405,7 +407,9 @@ export function CommandMenu({
     compose.focusTextarea();
   };
   const closeRef = useRef(close);
-  closeRef.current = close;
+  useLayoutEffect(() => {
+    closeRef.current = close;
+  });
 
   // When externally opened (typing /), handle navigation keys at document level
   useEffect(() => {
@@ -522,7 +526,9 @@ export function CommandMenu({
     ...filteredSettings,
     ...filteredSupport,
   ];
-  flatItemsRef.current = flatItems;
+  useLayoutEffect(() => {
+    flatItemsRef.current = flatItems;
+  });
 
   // Auto-select first matching item when filter changes
   const flatItemIds = flatItems.map((i) => i.id);

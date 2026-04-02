@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse, PlanCommentData } from '@code-quest/shared';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../contexts/channel';
 import type { PendingControl } from '../types/chat';
 import { pluralize } from '../utils/pluralize';
@@ -22,10 +22,12 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
   const planContentRef = useRef<HTMLDivElement>(null);
   const { planComments, addPlanComment, clearPlanComments } = useChannelMessages();
 
-  if (pending.requestId !== lastRequestId.current) {
-    lastRequestId.current = pending.requestId;
-    if (comment) setComment('');
-  }
+  useLayoutEffect(() => {
+    if (pending.requestId !== lastRequestId.current) {
+      lastRequestId.current = pending.requestId;
+      if (comment) setComment('');
+    }
+  });
 
   const handleApprove = () => {
     const userFeedback =

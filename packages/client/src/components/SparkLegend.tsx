@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 const EFFORT_ACTIVE: Record<string, number> = { low: 1, medium: 2, high: 3, max: 4 };
 const DOT_CX = [3.5, 9.5, 15.5, 21.5];
@@ -12,10 +12,12 @@ export function SparkLegend({
 }) {
   const [showLabel, setShowLabel] = useState(true);
   const prevEffortRef = useRef(effort);
-  if (prevEffortRef.current !== effort) {
-    prevEffortRef.current = effort;
-    setShowLabel(true);
-  }
+  useLayoutEffect(() => {
+    if (prevEffortRef.current !== effort) {
+      prevEffortRef.current = effort;
+      setShowLabel(true);
+    }
+  });
   useEffect(() => {
     if (!showLabel) return;
     const t = setTimeout(() => setShowLabel(false), 3000);

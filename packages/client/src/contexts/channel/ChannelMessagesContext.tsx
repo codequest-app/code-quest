@@ -12,6 +12,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -158,12 +159,13 @@ export function ChannelMessagesProvider({
   const wasStreamedViaDelta = useRef(false);
 
   const dequeueMessageRef = useRef(dequeueMessage);
-  dequeueMessageRef.current = dequeueMessage;
-
   const onStatusChangeRef = useRef(onStatusChange);
-  onStatusChangeRef.current = onStatusChange;
   const onTitleChangeRef = useRef(onTitleChange);
-  onTitleChangeRef.current = onTitleChange;
+  useLayoutEffect(() => {
+    dequeueMessageRef.current = dequeueMessage;
+    onStatusChangeRef.current = onStatusChange;
+    onTitleChangeRef.current = onTitleChange;
+  });
 
   // ── Join session + cross-window status sync ──
   useEffect(() => {
@@ -230,7 +232,9 @@ export function ChannelMessagesProvider({
     isThinkingStreaming.current = false;
     wasStreamedViaDelta.current = false;
   }, []);
-  resetStreamingRefsRef.current = resetStreamingRefs;
+  useLayoutEffect(() => {
+    resetStreamingRefsRef.current = resetStreamingRefs;
+  });
 
   // ── Auto-wiring: state handlers + effect handlers ──
   useEffect(() => {
@@ -488,7 +492,9 @@ export function ChannelMessagesProvider({
 
   // ── Ref for status used in actions ──
   const statusRef = useRef(channelState.status);
-  statusRef.current = channelState.status;
+  useLayoutEffect(() => {
+    statusRef.current = channelState.status;
+  });
 
   // ── Stable actions (don't depend on channelState) ──
   const actions = useMemo(

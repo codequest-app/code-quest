@@ -1,5 +1,13 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
 
@@ -40,7 +48,9 @@ export function PluginProvider({ children }: { children: ReactNode }) {
   });
 
   const socketRef = useRef(socket);
-  socketRef.current = socket;
+  useLayoutEffect(() => {
+    socketRef.current = socket;
+  });
 
   const refreshPlugins = async () => {
     const s = socketRef.current;
