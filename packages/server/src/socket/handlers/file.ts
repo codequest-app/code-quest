@@ -4,12 +4,12 @@ import { join, normalize, resolve } from 'node:path';
 import { fileListSchema, fileUpdatedPayloadSchema } from '@code-quest/shared';
 import type { ServerAction } from '@code-quest/summoner';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, SocketHandler, TypedSocket } from '../types.ts';
 import { rgAvailable, rgListFiles } from '../utils/rg.ts';
 
-export function create(channelManager: ChannelManager, emitter: ChannelEmitter): SocketHandler {
+export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
   function handleRead(
     payload: { channelId: string; filePath: string },
     callback: SocketCallback,
@@ -131,13 +131,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     );
   }
 
+  emitter.on('file:read', withError((_ch, payload, _socket, cb) => handleRead(payload as { channelId: string; filePath: string }, cb!)));
+  emitter.on('file:list', (_ch, payload, _socket, cb) => handleList(payload, cb!));
   emitter.on('system:file_updated', withChannel(onFileUpdated));
   emitter.on('server:action', withChannel(onReadDiff));
-
-  return {
-    register(socket: TypedSocket) {
-      socket.on('file:read', (p, cb) => handleRead(p, cb));
-      socket.on('file:list', (p, cb) => handleList(p, cb));
-    },
-  };
 }

@@ -60,10 +60,10 @@ export class SocketServer {
     speech.create(em);
     terminal.create(cm, em);
     mcp.create(em);
+    file.create(cm, em);
 
     const commonHandlers: SocketHandler[] = [
       git.create(this.sessionHistory, this.rawEventStore),
-      file.create(cm, em),
       settings.create(cm, this.settingsStore, this.usageTracker, em),
       message.create(cm, this.sessionStore, planHandler, em),
       app.create(cm, this.settingsStore),
