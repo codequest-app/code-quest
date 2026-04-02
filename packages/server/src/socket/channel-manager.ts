@@ -89,21 +89,22 @@ export class ChannelManager {
     return [...this.channels.keys()];
   }
 
+  private setupChannel(channelId: string, runner: ReturnType<RunnerFactory['create']>): Channel {
+    const channel = new Channel(runner, channelId, this.provider);
+    this.channels.set(channelId, channel);
+    channel.bindRunner(this.hooks);
+    this.rawRecorder.wire(channel);
+    return channel;
+  }
+
   async create(
     channelId: string,
     opts?: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
     const runner = this.runnerFactory.create(opts?.launchOptions);
-    const channel = new Channel(runner, channelId, this.provider);
-    this.channels.set(channelId, channel);
-
-    channel.bindRunner(this.hooks);
-
-    // Record raw I/O
-    this.rawRecorder.wire(channel);
+    const channel = this.setupChannel(channelId, runner);
 
     opts?.onBeforeSpawn?.(channel);
-
     runner.spawn();
 
     // Initialize and wait for control_response
@@ -113,23 +114,19 @@ export class ChannelManager {
   }
 
   async join(channelId: string): Promise<{ channel: Channel }> {
-    let channel = this.channels.get(channelId);
-
-    if (channel && !channel.exited) {
-      return { channel };
+    const existing = this.channels.get(channelId);
+    if (existing && !existing.exited) {
+      return { channel: existing };
     }
 
-    // Lazy resume from DB — resolve sessionId via sessionHistory
+    // Lazy resume from DB
     const sessionId = await this.resolveSessionId(channelId);
     if (sessionId === channelId) {
       throw new Error(`Session not found: ${channelId}`);
     }
 
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
-    channel = new Channel(runner, channelId, this.provider);
-    this.channels.set(channelId, channel);
-    channel.bindRunner(this.hooks);
-    this.rawRecorder.wire(channel);
+    const channel = this.setupChannel(channelId, runner);
     runner.spawn();
     await channel.sendControlRequest('initialize', {});
 

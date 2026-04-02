@@ -58,6 +58,7 @@ export class ChannelEmitter {
 
   // ── Dispatch ──
 
+  /** Dispatch event to all subscribers. Returns last handler result (supports async handlers). */
   dispatch(
     event: string,
     ch: Channel | null,
@@ -78,7 +79,8 @@ export class ChannelEmitter {
    */
   dispatchRunnerEvent(channelId: string, ch: Channel, event: string, payload: unknown): void {
     if (event !== 'session:init') {
-      this.emit(channelId, event, { channelId, ...((payload as Record<string, unknown>) ?? {}) });
+      const data = typeof payload === 'object' && payload !== null ? payload : {};
+      this.emit(channelId, event, { channelId, ...(data as Record<string, unknown>) });
     }
     this.dispatch(event, ch, payload);
   }
@@ -146,24 +148,29 @@ export class ChannelEmitter {
 
   // ── Connection handling ──
 
-  private _resolveChannel?: (channelId: string) => Channel | undefined;
-
   handleConnection(
     socket: TypedSocket,
     resolveChannel: (channelId: string) => Channel | undefined,
   ): void {
-    this._resolveChannel = resolveChannel;
-
-    // Wire client socket events for emitter.on subscribers only
+    // Wire client socket events for emitter.on subscribers only.
+    // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
       // biome-ignore lint/suspicious/noExplicitAny: socket.io typed emit signatures vary per event
       socket.on(event as any, (...args: any[]) => {
-        // Separate payload from callback: socket.io may send (payload, cb) or just (cb)
         const lastArg = args[args.length - 1];
         const hasCb = typeof lastArg === 'function';
         const cb = hasCb ? lastArg : undefined;
-        const payload = hasCb && args.length > 1 ? args[0] : (hasCb ? {} : (args[0] ?? {}));
-        const channelId = typeof payload?.channelId === 'string' ? payload.channelId : undefined;
+        let payload: unknown;
+        if (hasCb && args.length > 1) {
+          payload = args[0];
+        } else if (hasCb) {
+          payload = {};
+        } else {
+          payload = args[0] ?? {};
+        }
+        const channelId = typeof payload === 'object' && payload !== null && 'channelId' in payload
+          ? String((payload as Record<string, unknown>).channelId)
+          : undefined;
         const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
         return this.dispatch(event, ch, payload, socket, cb);
       });
@@ -172,11 +179,6 @@ export class ChannelEmitter {
     socket.on('disconnect', () => {
       this.removeSocketFromAll(socket.id);
     });
-  }
-
-  /** Resolve channelId → Channel (set by handleConnection). */
-  resolveChannel(channelId: string): Channel | undefined {
-    return this._resolveChannel?.(channelId);
   }
 
   // ── Global broadcast (via io) ──
