@@ -9,6 +9,7 @@ import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
 import type { McpServerInfo } from './MCPPanel';
 import { PermissionModePicker } from './PermissionModePicker';
+import { RewindDialog } from './RewindDialog';
 import { SpeechInputButton } from './SpeechInputButton';
 
 const AccountUsageDialog = lazy(() =>
@@ -51,7 +52,15 @@ export interface ComposeToolbarProps {
 }
 
 export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeToolbarProps) {
-  const { isProcessing, isCancelling, stats, isContextCompressed, abort } = useChannelMessages();
+  const {
+    isProcessing,
+    isCancelling,
+    stats,
+    isContextCompressed,
+    abort,
+    rewindToMessage,
+    forkSession,
+  } = useChannelMessages();
   const {
     accountInfo,
     usageQuota,
@@ -101,6 +110,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
     | 'usage'
     | 'plugins'
     | 'auth'
+    | 'rewind'
     | null;
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
@@ -210,6 +220,21 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           <AuthDialog open onClose={closeDialog} />
         </Suspense>
       )}
+      {activeDialog === 'rewind' && (
+        <RewindDialog
+          open
+          onClose={closeDialog}
+          onSelect={({ messageId, promptText }) => {
+            closeDialog();
+            rewindToMessage(messageId, false).then((result) => {
+              if (result.success) {
+                forkSession(messageId);
+                compose.updateValue(promptText);
+              }
+            });
+          }}
+        />
+      )}
       <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
           <Suspense fallback={null}>
@@ -246,6 +271,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
             )
           }
           onAttachFile={onAttachFile}
+          onRewind={() => setActiveDialog('rewind')}
         />
 
         {showContextUsage && (

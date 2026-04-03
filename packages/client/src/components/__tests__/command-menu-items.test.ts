@@ -76,4 +76,19 @@ describe('buildMenuItems', () => {
     expect(clearModifiedFiles).toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
   });
+
+  it('context section includes rewind item', () => {
+    const { context } = buildMenuItems(defaultParams());
+    expect(context.map((i) => i.id)).toContain('rewind');
+  });
+
+  it('clicking rewind calls callbacks.onRewind + close', () => {
+    const close = vi.fn();
+    const onRewind = vi.fn();
+    const { context } = buildMenuItems(defaultParams({ close, callbacks: { onRewind } }));
+    const item = context.find((i) => i.id === 'rewind');
+    item?.onClick?.();
+    expect(onRewind).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled();
+  });
 });

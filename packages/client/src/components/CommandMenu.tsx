@@ -17,6 +17,7 @@ export interface CommandMenuProps {
   onOpenHelp?: () => void;
   onResumeConversation?: () => void;
   onAttachFile?: () => void;
+  onRewind?: () => void;
 }
 
 export function CommandMenu({
@@ -30,6 +31,7 @@ export function CommandMenu({
   onSwitchAccount,
   onOpenHelp,
   onAttachFile,
+  onRewind,
 }: CommandMenuProps) {
   // Context
   const { sendMessage, clearMessages, clearModifiedFiles } = useChannelMessages();
@@ -190,6 +192,7 @@ export function CommandMenu({
     actions: { sendMessage, clearMessages, clearModifiedFiles },
     callbacks: {
       onAttachFile,
+      onRewind,
       onResumeConversation,
       onOpenModelPicker,
       onOpenAccountUsage,

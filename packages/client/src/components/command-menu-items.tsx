@@ -43,6 +43,7 @@ export interface BuildMenuItemsParams {
   };
   callbacks: {
     onAttachFile?: () => void;
+    onRewind?: () => void;
     onResumeConversation?: () => void;
     onOpenModelPicker?: () => void;
     onOpenAccountUsage?: () => void;
@@ -96,6 +97,15 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       onClick: () => {
         actions.clearMessages();
         actions.clearModifiedFiles();
+        close();
+      },
+    },
+    {
+      id: 'rewind',
+      label: 'Rewind',
+      section: 'Context',
+      onClick: () => {
+        callbacks.onRewind?.();
         close();
       },
     },
