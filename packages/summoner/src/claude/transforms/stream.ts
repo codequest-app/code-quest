@@ -1,14 +1,14 @@
 import type { ClientMessage } from '../../types.ts';
 
-export function transformStream(event: Record<string, unknown>): ClientMessage | null {
-  const se = event.event as Record<string, unknown> | undefined;
-  if (!se) return null;
+export function transformStream(raw: Record<string, unknown>): ClientMessage | null {
+  const streamData = raw.event as Record<string, unknown> | undefined;
+  if (!streamData) return null;
 
-  const parentToolUseId = (event.parent_tool_use_id as string) ?? undefined;
+  const parentToolUseId = (raw.parent_tool_use_id as string) ?? undefined;
 
-  switch (se.type) {
+  switch (streamData.type) {
     case 'content_block_delta': {
-      const delta = se.delta as Record<string, unknown> | undefined;
+      const delta = streamData.delta as Record<string, unknown> | undefined;
       if (!delta) return null;
 
       switch (delta.type) {
@@ -62,11 +62,11 @@ export function transformStream(event: Record<string, unknown>): ClientMessage |
       }
     }
     case 'content_block_start': {
-      const block = se.content_block as Record<string, unknown> | undefined;
+      const block = streamData.content_block as Record<string, unknown> | undefined;
       return {
         name: 'stream:block_start',
         payload: {
-          index: (se.index as number) ?? 0,
+          index: (streamData.index as number) ?? 0,
           blockType: (block?.type as string) ?? 'unknown',
           ...(block && Object.keys(block).length > 1 ? { contentBlock: block } : {}),
           ...(parentToolUseId ? { parentToolUseId } : {}),

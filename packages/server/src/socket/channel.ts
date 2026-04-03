@@ -5,7 +5,7 @@ import type {
   ControlResponse,
   NotificationResponse,
 } from '@code-quest/shared';
-import type { ControlResponseEvent, ProcessRunner } from '@code-quest/summoner';
+import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
 import {
   errorMessageEventSchema,
   type RequestMeta,
@@ -30,8 +30,8 @@ interface PendingRequest {
 
 /** Stored listener references for unbindRunner cleanup. */
 interface RunnerListenerRefs {
-  clientMessage: (event: ClientMessage) => void;
-  controlResponse: (event: ControlResponseEvent) => void;
+  clientMessage: (message: ClientMessage) => void;
+  controlResponse: (response: ResolvedControlResponse) => void;
   exit: (code: number | null) => void;
 }
 
@@ -251,17 +251,17 @@ export class Channel {
     this.runner.kill();
   }
 
-  resolveControlResponse(event: ControlResponseEvent): void {
-    const pending = this.pendingRequests.get(event.requestId);
+  resolveControlResponse(response: ResolvedControlResponse): void {
+    const pending = this.pendingRequests.get(response.requestId);
     if (!pending) return;
 
     clearTimeout(pending.timer);
-    this.pendingRequests.delete(event.requestId);
+    this.pendingRequests.delete(response.requestId);
 
     pending.resolve({
-      success: event.success,
-      response: event.response,
-      error: event.error,
+      success: response.success,
+      response: response.response,
+      error: response.error,
     });
   }
 
@@ -329,8 +329,8 @@ export class Channel {
       hooks.onClientMessage?.(this, message);
     };
 
-    const onControlResponse = (event: ControlResponseEvent) => {
-      this.resolveControlResponse(event);
+    const onControlResponse = (response: ResolvedControlResponse) => {
+      this.resolveControlResponse(response);
     };
 
     const onExit = (code: number | null) => {

@@ -59,7 +59,7 @@ export class ProcessRunner extends EventEmitter {
       case 'skip':
         return;
       case 'ok':
-        protocolMessage = result.event as Record<string, unknown>;
+        protocolMessage = result.message as Record<string, unknown>;
         break;
       case 'unknown':
         protocolMessage = {

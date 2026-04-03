@@ -13,9 +13,9 @@ describe('ClaudeAdapter', () => {
 
       expect(result.status).toBe('ok');
       if (result.status === 'ok') {
-        expect(result.event).toHaveProperty('type', 'system');
-        expect(result.event).toHaveProperty('subtype', 'init');
-        expect(result.event).toHaveProperty('session_id', 'test-session');
+        expect(result.message).toHaveProperty('type', 'system');
+        expect(result.message).toHaveProperty('subtype', 'init');
+        expect(result.message).toHaveProperty('session_id', 'test-session');
       }
     });
 
@@ -42,7 +42,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({
@@ -59,7 +59,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({
@@ -76,7 +76,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({
@@ -99,7 +99,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toMatchObject([
         {
@@ -116,7 +116,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({ name: 'control:permission' });
@@ -129,7 +129,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.controlResponses).toHaveLength(1);
       expect(output.controlResponses[0]).toMatchObject({ requestId: 'req-4' });
@@ -142,7 +142,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({
@@ -157,7 +157,7 @@ describe('ClaudeAdapter', () => {
       expect(parsed.status).toBe('ok');
       if (parsed.status !== 'ok') return;
 
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
 
       expect(output.messages.length).toBeGreaterThanOrEqual(1);
       expect(output.messages[0]).toMatchObject({ name: 'message:result' });

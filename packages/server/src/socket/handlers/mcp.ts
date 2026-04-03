@@ -137,7 +137,7 @@ export function create(emitter: ChannelEmitter): void {
     }
   }
 
-  function onMcpControlEvent(ch: Channel, payload: unknown): void {
+  function onMcpControl(ch: Channel, payload: unknown): void {
     const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(payload);
     const hasClient = emitter.getSocketCount(ch.id) > 0;
     const mcpId = mcpMsg?.id;
@@ -162,5 +162,5 @@ export function create(emitter: ChannelEmitter): void {
   emitter.on('mcp:clear_auth', withError(withChannel(handleClearAuth)));
   emitter.on('mcp:oauth_callback', withError(withChannel(handleOAuthCallback)));
   emitter.on('mcp:ask_debugger', handleAskDebugger);
-  emitter.on('control:mcp', withChannel(onMcpControlEvent));
+  emitter.on('control:mcp', withChannel(onMcpControl));
 }

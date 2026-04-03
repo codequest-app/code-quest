@@ -149,7 +149,7 @@ export class ClaudeProtocol {
       return { status: 'error', raw: trimmed, error: result.error };
     }
 
-    return { status: 'ok', raw: trimmed, event: result.data as ProtocolMessage };
+    return { status: 'ok', raw: trimmed, message: result.data as ProtocolMessage };
   }
 
   /**

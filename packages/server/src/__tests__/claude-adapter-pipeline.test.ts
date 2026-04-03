@@ -8,7 +8,7 @@ function pipeline(jsonLine: string) {
   const parsed = adapter.parseLine(jsonLine);
   if (parsed.status !== 'ok') return [];
 
-  const output = adapter.transform(parsed.event);
+  const output = adapter.transform(parsed.message);
   return output.messages;
 }
 
@@ -61,7 +61,7 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
   it('status → session:status', () => {
     const parsed = adapter.parseLine(s.status({ status: 'idle' }));
     if (parsed.status === 'ok') {
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0].name).toBe('session:status');
     } else {
@@ -72,7 +72,7 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
   it('hook_started → system:hook_started', () => {
     const parsed = adapter.parseLine(s.hookStarted());
     if (parsed.status === 'ok') {
-      const output = adapter.transform(parsed.event);
+      const output = adapter.transform(parsed.message);
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0].name).toBe('system:hook_started');
       expect(output.messages[0].payload.hook).toBeDefined();
@@ -95,7 +95,7 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
     expect(parsed.status).toBe('ok');
     if (parsed.status !== 'ok') return;
 
-    const output = adapter.transform(parsed.event);
+    const output = adapter.transform(parsed.message);
 
     expect(output.messages).toHaveLength(1);
     expect(output.messages[0].name).toBe('action:open_url');

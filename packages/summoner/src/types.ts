@@ -16,7 +16,7 @@ export interface RawEntry {
 
 // --- Control response ---
 
-export interface ControlResponseEvent {
+export interface ResolvedControlResponse {
   requestId: string;
   success: boolean;
   response?: Record<string, unknown>;
@@ -53,7 +53,7 @@ export interface ProcessProvider {
 
 export interface AdapterOutput {
   messages: ClientMessage[];
-  controlResponses: ControlResponseEvent[];
+  controlResponses: ResolvedControlResponse[];
   serverActions: never[];
 }
 
@@ -62,7 +62,7 @@ export interface AdapterOutput {
 export interface ParseOk<E = unknown> {
   status: 'ok';
   raw: string;
-  event: E;
+  message: E;
 }
 
 export interface ParseSkip {

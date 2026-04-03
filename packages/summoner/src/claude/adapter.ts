@@ -2,9 +2,9 @@ import { type ProviderClientConfig, providerClientConfigSchema } from '@code-que
 import type {
   AdapterOutput,
   ClientMessage,
-  ControlResponseEvent,
   ParseResult,
   ProviderAdapter,
+  ResolvedControlResponse,
 } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
@@ -20,7 +20,7 @@ import { transformUser } from './transforms/user.ts';
 interface ConvertResult {
   messages: ClientMessage[];
   serverActions: never[];
-  controlResponses: ControlResponseEvent[];
+  controlResponses: ResolvedControlResponse[];
 }
 
 const EMPTY: ConvertResult = { messages: [], serverActions: [], controlResponses: [] };

@@ -32,7 +32,7 @@ describe('ClaudeProtocol.parseLine (real fixtures)', () => {
       const result = protocol.parseLine(line);
       expect(result.status).toBe('ok');
       if (result.status === 'ok') {
-        expect(result.event).toMatchSnapshot();
+        expect(result.message).toMatchSnapshot();
       }
     });
   }
@@ -50,7 +50,7 @@ describe('ClaudeProtocol.parseLine (synthetic fixtures)', () => {
       } else {
         expect(result.status).toBe('ok');
         if (result.status === 'ok') {
-          expect(result.event).toMatchSnapshot();
+          expect(result.message).toMatchSnapshot();
         }
       }
     });

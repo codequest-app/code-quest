@@ -164,9 +164,9 @@ const HANDLERS: Record<string, (ctx: RequestContext) => ClientMessage | null> = 
   set_permission_mode: handleSetPermissionMode,
 };
 
-export function transformControlRequest(event: Record<string, unknown>): AdapterOutput {
-  const request = event.request as Record<string, unknown> | undefined;
-  const requestId = event.request_id as string;
+export function transformControlRequest(raw: Record<string, unknown>): AdapterOutput {
+  const request = raw.request as Record<string, unknown> | undefined;
+  const requestId = raw.request_id as string;
   const subtype = request?.subtype as string | undefined;
 
   const ctx: RequestContext = { requestId, request: request ?? {} };

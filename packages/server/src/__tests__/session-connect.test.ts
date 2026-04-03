@@ -325,8 +325,8 @@ describe('ChatHandler > session', () => {
       const names = result.events!.map((e) => e.name);
       expect(names).toContain('message:user');
 
-      const userEvent = result.events!.find((e) => e.name === 'message:user');
-      const { content } = messageContentSchema.parse(userEvent?.payload);
+      const userMessage = result.events!.find((e) => e.name === 'message:user');
+      const { content } = messageContentSchema.parse(userMessage?.payload);
       expect(content).toEqual([{ type: 'text', text: 'hi' }]);
     });
 

@@ -1,9 +1,9 @@
 import type { ContentBlock } from '@code-quest/shared';
 import type { ClientMessage } from '../../types.ts';
 
-export function transformAssistant(event: Record<string, unknown>): ClientMessage | null {
-  const parentToolUseId = (event.parent_tool_use_id as string) ?? undefined;
-  const message = event.message as Record<string, unknown> | undefined;
+export function transformAssistant(raw: Record<string, unknown>): ClientMessage | null {
+  const parentToolUseId = (raw.parent_tool_use_id as string) ?? undefined;
+  const message = raw.message as Record<string, unknown> | undefined;
   const content = message?.content;
   if (!Array.isArray(content)) return null;
 
@@ -27,7 +27,7 @@ export function transformAssistant(event: Record<string, unknown>): ClientMessag
     }
   }
 
-  const uuid = typeof event.uuid === 'string' ? event.uuid : undefined;
+  const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
   return {
     name: 'message:assistant',
     payload: {

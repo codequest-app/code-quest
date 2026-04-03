@@ -5,11 +5,11 @@ export { ProcessRunner } from './runner.ts';
 export { ChildProcessProvider } from './transports/child-process.ts';
 export type {
   AdapterOutput,
-  ControlResponseEvent,
   InitializeOptions,
   ParseResult,
   ProcessHandle,
   ProcessProvider,
   ProviderAdapter,
   RawEntry,
+  ResolvedControlResponse,
 } from './types.ts';
