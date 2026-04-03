@@ -6,15 +6,22 @@ import { buildMessageTree } from '../utils/message-tree';
 import { MessageNodeList } from './MessageNodeList';
 import { SpinnerVerb } from './SpinnerVerb';
 
-function smoothScroll(
+function scrollToEnd(
   scrollRef: MutableRefObject<HTMLDivElement | null>,
   programmaticScrollRef: MutableRefObject<boolean>,
+  behavior: 'smooth' | 'instant' = 'smooth',
 ) {
   programmaticScrollRef.current = true;
-  scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  setTimeout(() => {
-    programmaticScrollRef.current = false;
-  }, 500);
+  scrollRef.current?.scrollIntoView({ behavior });
+  if (behavior === 'instant') {
+    requestAnimationFrame(() => {
+      programmaticScrollRef.current = false;
+    });
+  } else {
+    setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, 500);
+  }
 }
 
 export function MessageList({
@@ -51,20 +58,24 @@ export function MessageList({
     isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
   };
 
+  const lastContentLen = messages.length > 0 ? messages[messages.length - 1].content.length : 0;
   const messageCountRef = useRef(messages.length);
-  const hasPending = messages.some((m) => m.type === 'pending_action');
+  const lastContentLenRef = useRef(lastContentLen);
   useEffect(() => {
-    const prevCount = messageCountRef.current;
+    const countChanged = messages.length !== messageCountRef.current;
+    const contentGrew = lastContentLen !== lastContentLenRef.current;
     messageCountRef.current = messages.length;
-    if (messages.length === prevCount) return;
-    if (isAtBottomRef.current || hasPending) {
-      smoothScroll(scrollRef, programmaticScrollRef);
+    lastContentLenRef.current = lastContentLen;
+    if (!countChanged && !contentGrew) return;
+    if (isAtBottomRef.current) {
+      const behavior = countChanged ? 'smooth' : 'instant';
+      scrollToEnd(scrollRef, programmaticScrollRef, behavior);
     }
-  }, [messages.length, hasPending]);
+  }, [messages.length, lastContentLen]);
 
   const scrollToBottom = () => {
     isAtBottomRef.current = true;
-    smoothScroll(scrollRef, programmaticScrollRef);
+    scrollToEnd(scrollRef, programmaticScrollRef, 'smooth');
   };
 
   const q = searchQuery.toLowerCase();

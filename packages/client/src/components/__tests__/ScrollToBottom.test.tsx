@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import {
@@ -47,6 +47,89 @@ async function renderWithMessages() {
   await claude.emit(s.result());
   return result;
 }
+
+async function renderWithChannel() {
+  const claude = createFakeClaude();
+  const channelId = crypto.randomUUID();
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <SocketProvider socket={claude.socket}>
+      <SessionProvider>
+        <PluginProvider>
+          <TabProvider>
+            <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
+          </TabProvider>
+        </PluginProvider>
+      </SessionProvider>
+    </SocketProvider>
+  );
+  const result = render(<MessageList />, { wrapper });
+  await act(async () => {
+    await claude.initialize(s.init('sess-1'), { launch: { channelId } });
+  });
+  return { claude, channelId, ...result };
+}
+
+describe('Auto-scroll behavior', () => {
+  it('does not force scroll to bottom for pending_action when user scrolled up', async () => {
+    const { claude } = await renderWithChannel();
+    await claude.emit(s.assistant('Hello'));
+    await claude.emit(s.result());
+
+    // Wait for programmatic scroll timeout to expire
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 600));
+    });
+
+    // Simulate user scrolled up: set isAtBottom to false
+    const container = screen.getByTestId('message-list');
+    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+    Object.defineProperty(container, 'scrollTop', { value: 0, configurable: true });
+    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+    fireEvent.scroll(container);
+
+    // Set spy AFTER initial messages settled, clear any prior calls
+    const scrollIntoView = vi.fn();
+    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+
+    // Emit a pending_action (permission request)
+    await claude.emit(s.controlRequestBash('req-1', { command: 'ls' }));
+
+    // Should NOT have scrolled — user was reading above
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('uses instant scroll for streaming deltas (content grew, no new message)', async () => {
+    const { claude } = await renderWithChannel();
+    await claude.emit(s.textDelta('Hello '));
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 600));
+    });
+
+    const scrollIntoView = vi.fn();
+    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+
+    // Content grows but no new message → instant scroll
+    await claude.emit(s.textDelta('world'));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
+  });
+
+  it('auto-scrolls when streaming delta grows content while user is at bottom', async () => {
+    const { claude } = await renderWithChannel();
+    // Start streaming — textDelta creates/grows a message
+    await claude.emit(s.textDelta('Hello '));
+
+    // User is at bottom (default)
+    const scrollIntoView = vi.fn();
+    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+
+    // More streaming content arrives — content grows but messages.length unchanged
+    await claude.emit(s.textDelta('world'));
+
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+});
 
 describe('Scroll to bottom button', () => {
   it('does not show button when bottom is visible', async () => {
