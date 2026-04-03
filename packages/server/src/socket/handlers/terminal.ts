@@ -1,4 +1,5 @@
 import { terminalOpenClaudeSchema } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -19,7 +20,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
       }
       const lines = ch.terminalLines.slice(-100);
       cb?.({ content: lines.join('\n') });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to read terminal');
       cb?.({ content: null });
     }
   }

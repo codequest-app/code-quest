@@ -142,19 +142,12 @@ export class ChannelManager {
     this.channels.delete(channelId);
   }
 
-  getFirstAlive(): Channel | undefined {
-    for (const [, ch] of this.channels) {
-      if (!ch.exited) return ch;
-    }
-    return undefined;
+  getAliveChannels(): Array<[string, Channel]> {
+    return [...this.channels].filter(([, ch]) => !ch.exited);
   }
 
-  getAliveChannels(): Array<[string, Channel]> {
-    const result: Array<[string, Channel]> = [];
-    for (const [id, ch] of this.channels) {
-      if (!ch.exited) result.push([id, ch]);
-    }
-    return result;
+  getFirstAlive(): Channel | undefined {
+    return this.getAliveChannels()[0]?.[1];
   }
 
   // ── Socket tracking ──

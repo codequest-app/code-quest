@@ -9,6 +9,19 @@ interface SettingsTable {
 
 import type { DrizzleDb } from './drizzle-types.ts';
 
+function hasValue(row: unknown): row is { value: string } {
+  return (
+    row != null &&
+    typeof row === 'object' &&
+    'value' in row &&
+    typeof (row as Record<string, unknown>).value === 'string'
+  );
+}
+
+function hasKeyValue(row: unknown): row is { key: string; value: string } {
+  return hasValue(row) && 'key' in row && typeof (row as Record<string, unknown>).key === 'string';
+}
+
 export class DrizzleSettingsStore implements SettingsStore {
   constructor(
     private db: DrizzleDb,
@@ -20,8 +33,8 @@ export class DrizzleSettingsStore implements SettingsStore {
       .select()
       .from(this.table)
       .where(and(eq(this.table.provider, provider), eq(this.table.key, key)));
-    const row = rows[0] as { value: string } | undefined;
-    if (!row) return undefined;
+    const row = rows[0];
+    if (!hasValue(row)) return undefined;
     try {
       return JSON.parse(row.value);
     } catch {
@@ -49,7 +62,7 @@ export class DrizzleSettingsStore implements SettingsStore {
       .from(this.table)
       .where(and(eq(this.table.provider, provider), inArray(this.table.key, keys)));
     const result: Record<string, unknown> = {};
-    for (const row of rows as Array<{ key: string; value: string }>) {
+    for (const row of rows.filter(hasKeyValue)) {
       try {
         result[row.key] = JSON.parse(row.value);
       } catch {
