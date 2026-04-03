@@ -38,6 +38,31 @@ export interface ResultMeta {
   stats: ChatStats;
 }
 
+export interface HookStartedMeta {
+  hookEvent?: string;
+}
+
+export interface HookResponseMeta {
+  output?: string;
+}
+
+export interface HookDiagnosticsMeta {
+  diagnostics?: string;
+}
+
+export interface ImageMeta {
+  source?: { type?: string; media_type?: string; data?: string };
+}
+
+export interface DocumentMeta {
+  title?: string;
+  source?: { type?: string; media_type?: string; data?: string };
+}
+
+export interface RateLimitMeta {
+  rateLimitInfo?: Record<string, unknown>;
+}
+
 // ── Message type discriminated union ──
 
 interface MessageBase {
@@ -49,7 +74,7 @@ interface MessageBase {
   attachments?: Array<{ filename: string; startLine?: number; endLine?: number }>;
 }
 
-/** Maps message types that carry typed meta to their meta shape */
+/** Maps message types that carry required typed meta to their meta shape */
 interface MetaMap {
   tool_use: ToolUseMeta;
   tool_result: ToolResultMeta;

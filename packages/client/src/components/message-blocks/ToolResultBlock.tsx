@@ -1,3 +1,4 @@
+import type { ToolResultMeta } from '../../types/ui';
 import { isDiff } from '../../utils/diff';
 import { DiffViewer } from '../DiffViewer';
 import {
@@ -14,12 +15,12 @@ export function ToolResultBlock({
   onDiffRespond,
 }: {
   content: string;
-  meta?: Record<string, unknown>;
+  meta?: ToolResultMeta;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }) {
   const label = meta?.name ? `Result: ${meta.name}` : 'Result';
   const isEditTool = meta?.name === 'Edit' || meta?.name === 'Write';
-  const toolId = meta?.toolId as string | undefined;
+  const toolId = meta?.toolId;
   const canRespond = isEditTool && !!onDiffRespond && !!toolId;
   return (
     <CollapsibleBlock icon="✓" label={label}>

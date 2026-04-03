@@ -1,12 +1,7 @@
+import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '../../types/ui';
 import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
 
-export function HookStartedContent({
-  content,
-  meta,
-}: {
-  content: string;
-  meta?: Record<string, unknown>;
-}) {
+export function HookStartedContent({ content, meta }: { content: string; meta?: HookStartedMeta }) {
   return (
     <div className="flex items-center gap-2 text-xs text-text-muted">
       <span>⚙</span>
@@ -23,9 +18,9 @@ export function HookResponseContent({
   meta,
 }: {
   content: string;
-  meta?: Record<string, unknown>;
+  meta?: HookResponseMeta;
 }) {
-  const output = meta?.output as string | undefined;
+  const output = meta?.output;
   if (!output)
     return (
       <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -45,9 +40,9 @@ export function HookDiagnosticsContent({
   meta,
 }: {
   content: string;
-  meta?: Record<string, unknown>;
+  meta?: HookDiagnosticsMeta;
 }) {
-  const diagnostics = meta?.diagnostics as string | undefined;
+  const diagnostics = meta?.diagnostics;
   return (
     <details className="border border-warning/30 rounded-lg bg-warning-bg/50">
       <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-warning px-4 py-2">

@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 export const PlainTextResult: Story = {
   args: {
     content: 'File saved successfully.\n2 files changed, 15 insertions(+), 3 deletions(-).',
-    meta: { name: 'Bash' },
+    meta: { toolId: 'tr-1', name: 'Bash' },
   },
 };
 
@@ -36,6 +36,6 @@ export const DiffResult: Story = {
 export const AnsiResult: Story = {
   args: {
     content: '\x1b[32mPASS\x1b[0m src/index.test.ts\n  \x1b[32m\u2713\x1b[0m should work (2ms)',
-    meta: { name: 'Bash' },
+    meta: { toolId: 'tr-3', name: 'Bash' },
   },
 };

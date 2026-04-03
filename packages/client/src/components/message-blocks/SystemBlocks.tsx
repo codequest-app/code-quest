@@ -1,4 +1,4 @@
-import type { ChatStats } from '@code-quest/shared';
+import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '../../types/ui';
 import { MarkdownContent } from '../MarkdownContent';
 import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
 
@@ -38,8 +38,8 @@ export function ControlResponseContent({ content }: { content: string }) {
   );
 }
 
-export function ResultContent({ meta }: { meta?: Record<string, unknown> }) {
-  const stats = meta?.stats as ChatStats | undefined;
+export function ResultContent({ meta }: { meta?: ResultMeta }) {
+  const stats = meta?.stats;
   return (
     <div className="flex items-center gap-3 py-2 text-text-muted/40 text-xs" data-type="result">
       <div className="flex-1 border-t border-text-muted/20" />
@@ -109,14 +109,8 @@ export function SlashCommandResultContent({ content }: { content: string }) {
   );
 }
 
-export function RateLimitContent({
-  content,
-  meta,
-}: {
-  content: string;
-  meta?: Record<string, unknown>;
-}) {
-  const info = meta?.rateLimitInfo as Record<string, unknown> | undefined;
+export function RateLimitContent({ content, meta }: { content: string; meta?: RateLimitMeta }) {
+  const info = meta?.rateLimitInfo;
   return (
     <div className="bg-warning-bg border-l-2 border-l-warning px-4 py-2.5 rounded-r-lg">
       <span className="text-warning text-sm font-medium">⏳ {content}</span>
@@ -177,8 +171,8 @@ export function StreamlinedToolSummaryContent({ content }: { content: string }) 
   );
 }
 
-export function ImageContent({ meta }: { meta?: Record<string, unknown> }) {
-  const source = meta?.source as { type?: string; media_type?: string; data?: string } | undefined;
+export function ImageContent({ meta }: { meta?: ImageMeta }) {
+  const source = meta?.source;
   if (!source?.data || source.type !== 'base64') return null;
   const dataUrl = `data:${source.media_type ?? 'image/png'};base64,${source.data}`;
   return (
@@ -192,15 +186,9 @@ export function ImageContent({ meta }: { meta?: Record<string, unknown> }) {
   );
 }
 
-export function DocumentContent({
-  content,
-  meta,
-}: {
-  content: string;
-  meta?: Record<string, unknown>;
-}) {
-  const title = (meta?.title as string) ?? content ?? 'Document';
-  const source = meta?.source as { type?: string; media_type?: string; data?: string } | undefined;
+export function DocumentContent({ content, meta }: { content: string; meta?: DocumentMeta }) {
+  const title = meta?.title ?? content ?? 'Document';
+  const source = meta?.source;
   const handleClick = () => {
     if (!source?.data) return;
     const dataUrl =
