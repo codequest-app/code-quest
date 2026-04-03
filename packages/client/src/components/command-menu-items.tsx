@@ -156,7 +156,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
           {
             id: 'fast-mode',
             label: 'Toggle fast mode',
-            section: 'Model' as const,
+            section: 'Model',
             trailing: <ToggleSwitch isOn={isFastMode} />,
             onClick: () => setFastMode(fastModeState === 'off' || !fastModeState),
           },

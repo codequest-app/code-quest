@@ -265,6 +265,7 @@ export function CommandMenu({
   const flatItemIds = flatItems.map((i) => i.id);
   const firstItemId = flatItemIds[0] ?? null;
   const flatItemIdKey = flatItemIds.join(',');
+  // biome-ignore lint/correctness/useExhaustiveDependencies: flatItemIdKey is stable key for flatItemIds
   useEffect(() => {
     if (!f) {
       setActiveId(null);
@@ -272,7 +273,7 @@ export function CommandMenu({
     }
     setActiveId((prev) => {
       if (!firstItemId) return null;
-      if (prev && flatItemIdKey.includes(prev)) return prev;
+      if (prev && flatItemIds.includes(prev)) return prev;
       return firstItemId;
     });
   }, [f, flatItemIdKey, firstItemId]);

@@ -11,7 +11,6 @@ interface MenuItemRowProps {
 export function MenuItemRow({ item, isActive, activeItemRef, onHover }: MenuItemRowProps) {
   return (
     <button
-      key={item.id}
       ref={isActive ? activeItemRef : null}
       type="button"
       disabled={item.disabled}
