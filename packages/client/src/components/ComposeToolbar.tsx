@@ -17,10 +17,20 @@ import { PermissionModePicker } from './PermissionModePicker';
 import { PluginsPanel } from './PluginsPanel';
 import { SpeechInputButton } from './SpeechInputButton';
 
+const MCP_STATUSES = new Set([
+  'connected',
+  'disconnected',
+  'error',
+  'failed',
+  'needs-auth',
+  'disabled',
+  'connecting',
+]);
+
 const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): McpServerInfo => ({
   name: s.name,
   enabled: true,
-  status: s.status as McpServerInfo['status'],
+  status: MCP_STATUSES.has(s.status) ? (s.status as McpServerInfo['status']) : 'disconnected',
   scope: s.scope,
 });
 
@@ -63,8 +73,9 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
   const mcpRefresh = async () => {
     const result = await mcpStatusRef.current();
-    if (result.success && result.response?.mcpServers) {
-      setEnrichedMcpServers(result.response.mcpServers as McpServerInfo[]);
+    const servers = result.success ? result.response?.mcpServers : undefined;
+    if (Array.isArray(servers)) {
+      setEnrichedMcpServers(servers.map(toMcpServerInfo));
     } else {
       setEnrichedMcpServers(null);
     }

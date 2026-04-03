@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { isRecord } from '../utils/is-record';
 import { JsonViewer } from './JsonViewer';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 
 function getEventType(evt: unknown): string | undefined {
-  const t = (evt as Record<string, unknown>).type;
-  return typeof t === 'string' ? t : undefined;
+  if (!isRecord(evt)) return undefined;
+  return typeof evt.type === 'string' ? evt.type : undefined;
 }
 
 interface RawEventPanelProps {
@@ -51,7 +52,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
 
   const search = searchText.toLowerCase();
   const filteredEvents = events
-    .filter((evt) => !filterType || (evt as Record<string, unknown>).type === filterType)
+    .filter((evt) => !filterType || getEventType(evt) === filterType)
     .filter((evt) => !search || JSON.stringify(evt).toLowerCase().includes(search));
 
   return (

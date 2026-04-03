@@ -4,7 +4,6 @@ import {
   type ReactNode,
   useContext,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -108,20 +107,20 @@ export function PluginProvider({ children }: { children: ReactNode }) {
     await refreshMarketplaces();
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: actions use socketRef (stable ref), not direct deps
-  const value = useMemo<PluginContextValue>(
-    () => ({
-      ...state,
-      refreshPlugins,
-      refreshMarketplaces,
-      install,
-      uninstall,
-      toggle,
-      addMarketplace: addMp,
-      removeMarketplace: removeMp,
-    }),
-    [state],
+  return (
+    <PluginContext.Provider
+      value={{
+        ...state,
+        refreshPlugins,
+        refreshMarketplaces,
+        install,
+        uninstall,
+        toggle,
+        addMarketplace: addMp,
+        removeMarketplace: removeMp,
+      }}
+    >
+      {children}
+    </PluginContext.Provider>
   );
-
-  return <PluginContext.Provider value={value}>{children}</PluginContext.Provider>;
 }

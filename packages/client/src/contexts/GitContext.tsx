@@ -4,7 +4,7 @@ import type {
   GitLogResult,
   GitStatusResult,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
 
@@ -26,15 +26,16 @@ export function useGit(): GitContextValue {
 export function GitProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
 
-  const value = useMemo<GitContextValue>(
-    () => ({
-      gitStatus: () => rpc(socket, 'git:status', {}),
-      gitCheckout: (branch) => rpc(socket, 'git:checkout', { branch }),
-      gitLog: (limit) => rpc(socket, 'git:log', { limit }),
-      gitDiff: () => rpc(socket, 'git:diff', {}),
-    }),
-    [socket],
+  return (
+    <GitContext.Provider
+      value={{
+        gitStatus: () => rpc(socket, 'git:status', {}),
+        gitCheckout: (branch) => rpc(socket, 'git:checkout', { branch }),
+        gitLog: (limit) => rpc(socket, 'git:log', { limit }),
+        gitDiff: () => rpc(socket, 'git:diff', {}),
+      }}
+    >
+      {children}
+    </GitContext.Provider>
   );
-
-  return <GitContext.Provider value={value}>{children}</GitContext.Provider>;
 }
