@@ -3,6 +3,7 @@ import type {
   ContentBlock,
   FileSearchResult,
   PlanCommentData,
+  RewindResult,
   ServerToClientEvents,
 } from '@code-quest/shared';
 import {
@@ -111,10 +112,7 @@ export interface ChannelMessagesValue {
   forkSession: (
     messageId: string,
   ) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
-  rewindToMessage: (
-    userMessageId: string,
-    dryRun?: boolean,
-  ) => Promise<{ success: boolean; error?: string }>;
+  rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RewindResult>;
 }
 
 type MessagesStateValue = Pick<

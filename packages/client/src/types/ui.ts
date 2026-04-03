@@ -13,7 +13,7 @@ export type SessionStatus =
 export type RewindFn = (
   messageId: string,
   dryRun: boolean,
-) => Promise<{ success: boolean; response?: Record<string, unknown>; error?: string }>;
+) => Promise<import('@code-quest/shared').RewindResult>;
 
 export type ForkFn = (
   messageId: string,

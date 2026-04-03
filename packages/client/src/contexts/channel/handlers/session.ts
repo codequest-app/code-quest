@@ -1,4 +1,4 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { RewindResult, ServerToClientEvents } from '@code-quest/shared';
 import type { TypedSocket } from '../../../socket/client';
 import { rpc } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
@@ -55,11 +55,12 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     });
   }
 
-  function rewindToMessage(
-    userMessageId: string,
-    dryRun = false,
-  ): Promise<{ success: boolean; error?: string }> {
-    return rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun });
+  function rewindToMessage(userMessageId: string, dryRun = false): Promise<RewindResult> {
+    return rpc(socket, 'chat:rewind_code', {
+      channelId,
+      userMessageId,
+      dryRun,
+    }) as unknown as Promise<RewindResult>;
   }
 
   return { fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage };

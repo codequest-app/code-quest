@@ -229,7 +229,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
             closeDialog();
             rewindToMessage(messageId, false)
               .then((result) => {
-                if (result.success) {
+                if (result.canRewind) {
                   forkSession(messageId).catch(() => toast.error('Failed to fork session'));
                   compose.updateValue(promptText);
                 } else {

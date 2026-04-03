@@ -177,6 +177,17 @@ export const streamChunkPayloadSchema = z.object({
 });
 export type StreamChunkPayload = z.infer<typeof streamChunkPayloadSchema>;
 
+// ── Rewind response ──
+
+export const rewindResultSchema = z.object({
+  canRewind: z.boolean(),
+  filesChanged: z.array(z.string()).optional(),
+  insertions: z.number().optional(),
+  deletions: z.number().optional(),
+  error: z.string().optional(),
+});
+export type RewindResult = z.infer<typeof rewindResultSchema>;
+
 export const streamEndPayloadSchema = z.object({
   channelId: z.string(),
 });

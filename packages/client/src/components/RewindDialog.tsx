@@ -1,3 +1,4 @@
+import type { RewindResult } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../contexts/channel';
 import type { Message } from '../types/ui';
@@ -20,14 +21,6 @@ function getRewindableMessages(messages: Message[]): RewindItem[] {
   return items.reverse();
 }
 
-interface DryRunResult {
-  canRewind: boolean;
-  filesChanged?: string[];
-  insertions?: number;
-  deletions?: number;
-  error?: string;
-}
-
 interface RewindDialogProps {
   open: boolean;
   onClose: () => void;
@@ -39,7 +32,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const items = getRewindableMessages(messages);
   const [focusIndex, setFocusIndex] = useState(0);
   const [selected, setSelected] = useState<RewindItem | null>(null);
-  const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
+  const [dryRunResult, setRewindResult] = useState<RewindResult | null>(null);
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +40,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
     if (open) {
       setFocusIndex(0);
       setSelected(null);
-      setDryRunResult(null);
+      setRewindResult(null);
       setTimeout(() => listRef.current?.focus(), 0);
     }
   }, [open]);
@@ -55,20 +48,13 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const handleSelect = (item: RewindItem) => {
     setSelected(item);
     setLoading(true);
-    setDryRunResult(null);
+    setRewindResult(null);
     rewindToMessage(item.message.id, true)
       .then((result) => {
-        const r = result as Record<string, unknown>;
-        setDryRunResult({
-          canRewind: r.canRewind === true || r.success === true,
-          filesChanged: Array.isArray(r.filesChanged) ? r.filesChanged : undefined,
-          insertions: typeof r.insertions === 'number' ? r.insertions : undefined,
-          deletions: typeof r.deletions === 'number' ? r.deletions : undefined,
-          error: typeof r.error === 'string' ? r.error : undefined,
-        });
+        setRewindResult(result);
       })
       .catch((err) => {
-        setDryRunResult({
+        setRewindResult({
           canRewind: false,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -83,7 +69,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
 
   const handleBack = () => {
     setSelected(null);
-    setDryRunResult(null);
+    setRewindResult(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
