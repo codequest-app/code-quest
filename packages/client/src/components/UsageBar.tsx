@@ -60,7 +60,11 @@ export function UsageBar({ usage }: UsageBarProps) {
       data-testid="usage-bar"
     >
       {usageTiers.map(({ key, label }) => {
-        const tier = (usage as Record<string, { utilization: number; resets_at?: string }>)[key];
+        const raw = (usage as Record<string, unknown>)[key];
+        const tier =
+          raw && typeof raw === 'object' && 'utilization' in raw
+            ? (raw as { utilization: number; resets_at?: string })
+            : undefined;
         if (!tier) return null;
         return (
           <TierBar

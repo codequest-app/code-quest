@@ -218,9 +218,11 @@ export function AccountUsageDialog({
                 providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
                 DEFAULT_USAGE_TIERS
               ).map(({ key, label }) => {
-                const tier = (usage as Record<string, { utilization: number; resets_at?: string }>)[
-                  key
-                ];
+                const raw = (usage as Record<string, unknown>)[key];
+                const tier =
+                  raw && typeof raw === 'object' && 'utilization' in raw
+                    ? (raw as { utilization: number; resets_at?: string })
+                    : undefined;
                 if (!tier) return null;
                 return (
                   <UsageBarRow

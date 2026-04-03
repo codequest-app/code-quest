@@ -37,8 +37,8 @@ function basename(path: string): string {
 }
 
 function lineRange(input: ToolInput): string | undefined {
-  const offset = input.offset as number | undefined;
-  const limit = input.limit as number | undefined;
+  const offset = typeof input.offset === 'number' ? input.offset : undefined;
+  const limit = typeof input.limit === 'number' ? input.limit : undefined;
   if (offset !== undefined && limit !== undefined) {
     return `(lines ${offset + 1}-${offset + limit})`;
   }

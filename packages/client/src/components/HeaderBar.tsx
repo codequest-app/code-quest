@@ -22,8 +22,7 @@ export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
   const { status, channelId } = useChannelMessages();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
-  const cfg =
-    status in statusConfig ? statusConfig[status as SessionStatus] : statusConfig.disconnected;
+  const cfg = statusConfig[status] ?? statusConfig.disconnected;
   const { label, dotClass } = cfg;
   const sessionLabel = title ?? (channelId ? `${channelId.slice(0, 8)}…` : null);
 

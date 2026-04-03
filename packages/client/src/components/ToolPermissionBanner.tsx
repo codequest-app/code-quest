@@ -16,7 +16,7 @@ export function ToolPermissionBanner({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [denyMessage, setDenyMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const input = (pending.input as Record<string, unknown>) ?? {};
+  const input = pending.input ?? {};
   const [editedInput, setEditedInput] = useState<Record<string, unknown> | null>(null);
   const updatedInput = editedInput ?? input;
 
@@ -34,7 +34,7 @@ export function ToolPermissionBanner({
               onRespond({
                 behavior: 'allow',
                 updatedInput,
-                updatedPermissions: pending.permissionSuggestions as Record<string, unknown>[],
+                updatedPermissions: pending.permissionSuggestions,
               }),
           },
         ]

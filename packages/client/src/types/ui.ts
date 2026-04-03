@@ -38,6 +38,16 @@ export interface ResultMeta {
   stats: ChatStats;
 }
 
+export interface TextMeta {
+  citations?: Array<{ url?: string; title?: string; citedText?: string }>;
+}
+
+export interface ThinkingMeta {
+  budget_tokens?: number;
+  durationMs?: number | null;
+  isStreaming?: boolean;
+}
+
 export interface HookStartedMeta {
   hookEvent?: string;
 }

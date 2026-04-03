@@ -118,7 +118,7 @@ export function RateLimitContent({ content, meta }: { content: string; meta?: Ra
         <span className="ml-2 text-xs text-text-muted">
           {info.rateLimitType ? <span className="mr-2">{String(info.rateLimitType)}</span> : null}
           {info.resetsAt ? (
-            <span>resets {new Date(info.resetsAt as number).toLocaleTimeString()}</span>
+            <span>resets {new Date(Number(info.resetsAt)).toLocaleTimeString()}</span>
           ) : null}
           {info.isUsingOverage === true && (
             <span className="ml-2 text-danger font-medium">Overage active</span>

@@ -7,13 +7,9 @@ import { PlanReviewBanner } from './PlanReviewBanner';
 import { ToolPermissionBanner } from './ToolPermissionBanner';
 
 function isAskUserQuestion(
-  input: unknown,
+  input: Record<string, unknown> | undefined,
 ): input is Record<string, unknown> & { questions: Question[] } {
-  return (
-    input != null &&
-    typeof input === 'object' &&
-    Array.isArray((input as Record<string, unknown>).questions)
-  );
+  return input != null && Array.isArray(input.questions);
 }
 
 export function PendingActionBanner() {

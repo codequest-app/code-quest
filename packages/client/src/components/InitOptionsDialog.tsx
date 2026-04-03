@@ -28,8 +28,8 @@ const HOOK_DEFS = [
 export function InitOptionsDialog({ open, onClose, onSave, initial }: InitOptionsDialogProps) {
   const [systemPrompt, setSystemPrompt] = useState(initial?.systemPrompt ?? '');
   const [appendSystemPrompt, setAppendSystemPrompt] = useState(initial?.appendSystemPrompt ?? '');
-  const [jsonSchema, setJsonSchema] = useState((initial?.jsonSchema as string) ?? '');
-  const [agents, setAgents] = useState((initial?.agents as string) ?? '');
+  const [jsonSchema, setJsonSchema] = useState(String(initial?.jsonSchema ?? ''));
+  const [agents, setAgents] = useState(String(initial?.agents ?? ''));
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hooks, setHooks] = useState<Record<string, boolean>>({
     captureBaseline: false,

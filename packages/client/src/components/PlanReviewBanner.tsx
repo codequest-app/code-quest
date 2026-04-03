@@ -14,9 +14,11 @@ interface PlanReviewBannerProps {
 }
 
 export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) {
-  const input = pending.input as Record<string, unknown> | undefined;
-  const plan = input?.plan as string | undefined;
-  const allowedPrompts = input?.allowedPrompts as Array<Record<string, unknown>> | undefined;
+  const input = pending.input;
+  const plan = typeof input?.plan === 'string' ? input.plan : undefined;
+  const allowedPrompts = Array.isArray(input?.allowedPrompts)
+    ? (input.allowedPrompts as Record<string, unknown>[])
+    : undefined;
   const [comment, setComment] = useState('');
   const lastRequestId = useRef<string | null>(null);
   const planContentRef = useRef<HTMLDivElement>(null);
@@ -35,7 +37,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
     clearPlanComments();
     onRespond({
       behavior: 'allow',
-      updatedInput: (input ?? {}) as Record<string, unknown>,
+      updatedInput: input ?? {},
       ...(userFeedback !== undefined ? { userFeedback } : {}),
     });
   };

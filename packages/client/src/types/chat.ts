@@ -75,8 +75,8 @@ export interface PendingControl {
   requestId: string;
   subtype: string;
   toolName?: string;
-  input?: unknown;
+  input?: Record<string, unknown>;
   toolUseId?: string;
-  permissionSuggestions?: unknown[];
+  permissionSuggestions?: Record<string, unknown>[];
   callbackId?: string;
 }

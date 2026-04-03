@@ -11,7 +11,7 @@ export function PermissionHeader({
     case 'Bash': {
       const command = String(input.command ?? '');
       if (!command) return <p className="text-sm font-semibold">Bash</p>;
-      const description = input.description as string | undefined;
+      const description = typeof input.description === 'string' ? input.description : undefined;
       return (
         <div className="flex flex-col gap-1.5">
           <p className="text-sm font-semibold">Allow this bash command?</p>

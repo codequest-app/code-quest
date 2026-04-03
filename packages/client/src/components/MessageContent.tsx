@@ -1,4 +1,4 @@
-import type { Message } from '../types/ui';
+import type { Message, TextMeta, ThinkingMeta } from '../types/ui';
 import { CitationsPanel } from './CitationsPanel';
 import { JsonViewer } from './JsonViewer';
 import { MarkdownContent } from './MarkdownContent';
@@ -60,32 +60,26 @@ export function renderBody(
 ): React.ReactNode {
   const { content } = message;
   switch (message.type) {
-    case 'text':
+    case 'text': {
+      const textMeta = message.meta as TextMeta | undefined;
       return (
         <>
           <MarkdownContent content={content} />
-          {message.meta?.citations && (
-            <CitationsPanel
-              citations={
-                message.meta.citations as Array<{
-                  url?: string;
-                  title?: string;
-                  citedText?: string;
-                }>
-              }
-            />
-          )}
+          {textMeta?.citations && <CitationsPanel citations={textMeta.citations} />}
         </>
       );
-    case 'thinking':
+    }
+    case 'thinking': {
+      const thinkingMeta = message.meta as ThinkingMeta | undefined;
       return (
         <ThinkingBlock
           content={content}
-          budgetTokens={message.meta?.budget_tokens as number | undefined}
-          durationMs={message.meta?.durationMs as number | null | undefined}
-          isStreaming={message.meta?.isStreaming as boolean | undefined}
+          budgetTokens={thinkingMeta?.budget_tokens}
+          durationMs={thinkingMeta?.durationMs}
+          isStreaming={thinkingMeta?.isStreaming}
         />
       );
+    }
     case 'tool_use':
       return <ToolUseBlock content={content} meta={message.meta} />;
     case 'tool_result':
