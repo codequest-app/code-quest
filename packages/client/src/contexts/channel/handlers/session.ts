@@ -56,11 +56,7 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
   }
 
   function rewindToMessage(userMessageId: string, dryRun = false): Promise<RewindResult> {
-    return rpc(socket, 'chat:rewind_code', {
-      channelId,
-      userMessageId,
-      dryRun,
-    }) as unknown as Promise<RewindResult>;
+    return rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun });
   }
 
   return { fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage };

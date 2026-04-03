@@ -64,7 +64,7 @@ export function MessageActions({
     setRewindState({ phase: 'loading' });
     const result = await onRewind(messageId, true);
     if (result.canRewind) {
-      setRewindState({ phase: 'preview', data: result as Record<string, unknown> });
+      setRewindState({ phase: 'preview', data: result as unknown as Record<string, unknown> });
     } else {
       setRewindState({ phase: 'fallback' });
     }

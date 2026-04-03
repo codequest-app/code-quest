@@ -98,6 +98,7 @@ import type {
   RefreshMarketplacePayload,
   RemoveCommentPayload,
   RemoveMarketplacePayload,
+  RewindResult,
   SessionClosedPayload,
   SessionCreatedPayload,
   SessionDeadPayload,
@@ -148,7 +149,7 @@ export interface ClientToServerEvents {
   // ── Chat Operations ──
   'chat:rewind_code': (
     payload: ChatRewindCodePayload,
-    callback: (response: ControlResponse) => void,
+    callback: (response: RewindResult) => void,
   ) => void;
 
   // ── Aligned: Settings ──
