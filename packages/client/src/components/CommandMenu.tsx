@@ -1,278 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { findModel } from '../utils/model-utils';
 import { navigateItems } from '../utils/navigate-items';
-import { EffortSwitch } from './icons/EffortSwitch';
-import { ToggleSwitch } from './ui/ToggleSwitch';
-
-const DEFAULT_EFFORT_LEVELS: string[] = ['low', 'medium', 'high', 'max'];
-
-interface MenuItem {
-  id: string;
-  label: string;
-  section: string;
-  disabled?: boolean;
-  filterOnly?: boolean;
-  trailing?: React.ReactNode;
-  onClick?: () => void;
-}
-
-interface MenuSections {
-  context: MenuItem[];
-  model: MenuItem[];
-  customize: MenuItem[];
-  tools: MenuItem[];
-  slash: MenuItem[];
-  settings: MenuItem[];
-  support: MenuItem[];
-}
-
-interface BuildMenuItemsParams {
-  slashCommands: string[];
-  effort: 'low' | 'medium' | 'high' | 'max' | null;
-  effortLevels: string[];
-  isThinkingOn: boolean;
-  isFastMode: boolean;
-  fastModeState: string | null;
-  modelLabel: string;
-  supportsFastMode: boolean;
-  onSetEffort: (effort: string) => void;
-  onSetThinkingLevel: (level: string) => void;
-  setFastMode: (enabled: boolean) => void;
-  close: () => void;
-  compose: { mentionFile: () => void; executeSlashCommand: (cmd: string) => void };
-  actions: {
-    sendMessage: (msg: string) => void;
-    clearMessages: () => void;
-    clearModifiedFiles: () => void;
-  };
-  callbacks: {
-    onAttachFile?: () => void;
-    onResumeConversation?: () => void;
-    onOpenModelPicker?: () => void;
-    onOpenAccountUsage?: () => void;
-    onMcpStatus?: () => void;
-    onToggleMcp?: () => void;
-    onManagePlugins?: () => void;
-    onOpenConfig?: () => void;
-    onSwitchAccount?: () => void;
-    onOpenHelp?: () => void;
-  };
-}
-
-function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const {
-    slashCommands,
-    effort,
-    effortLevels,
-    isThinkingOn,
-    isFastMode,
-    fastModeState,
-    supportsFastMode,
-  } = params;
-  const { onSetEffort, onSetThinkingLevel, setFastMode, close, compose, actions, callbacks } =
-    params;
-
-  const context: MenuItem[] = [
-    {
-      id: 'attach-file',
-      label: 'Attach file…',
-      section: 'Context',
-      onClick: () => {
-        callbacks.onAttachFile?.();
-        close();
-      },
-    },
-    {
-      id: 'mention-file',
-      label: 'Mention file from this project...',
-      section: 'Context',
-      onClick: () => {
-        compose.mentionFile();
-        close();
-      },
-    },
-    {
-      id: 'clear-conversation',
-      label: 'Clear conversation',
-      section: 'Context',
-      onClick: () => {
-        actions.clearMessages();
-        actions.clearModifiedFiles();
-        close();
-      },
-    },
-    {
-      id: 'new-conversation',
-      label: 'New conversation',
-      section: 'Context',
-      filterOnly: true,
-      onClick: () => {
-        actions.sendMessage('/new');
-        close();
-      },
-    },
-    {
-      id: 'resume-conversation',
-      label: 'Resume conversation',
-      section: 'Context',
-      filterOnly: true,
-      onClick: () => {
-        callbacks.onResumeConversation?.();
-        close();
-      },
-    },
-  ];
-
-  const model: MenuItem[] = [
-    {
-      id: 'effort-level',
-      label: 'Effort',
-      section: 'Model',
-      trailing: (
-        <EffortSwitch level={effort ?? undefined} levels={effortLevels} onSelect={onSetEffort} />
-      ),
-      onClick: () => {
-        if (effortLevels.length === 0) return;
-        const idx = effort ? effortLevels.indexOf(effort) : -1;
-        onSetEffort(effortLevels[(idx + 1) % effortLevels.length]);
-      },
-    },
-    {
-      id: 'toggle-thinking',
-      label: 'Thinking',
-      section: 'Model',
-      trailing: <ToggleSwitch isOn={isThinkingOn} />,
-      onClick: () => onSetThinkingLevel(isThinkingOn ? 'off' : 'default_on'),
-    },
-    {
-      id: 'account-usage',
-      label: 'Account & usage…',
-      section: 'Model',
-      onClick: () => {
-        callbacks.onOpenAccountUsage?.();
-        close();
-      },
-    },
-    ...(supportsFastMode
-      ? [
-          {
-            id: 'fast-mode',
-            label: 'Toggle fast mode',
-            section: 'Model' as const,
-            trailing: <ToggleSwitch isOn={isFastMode} />,
-            onClick: () => setFastMode(fastModeState === 'off' || !fastModeState),
-          },
-        ]
-      : []),
-  ];
-
-  const customize: MenuItem[] = [
-    {
-      id: 'mcp-status',
-      label: 'MCP status',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onMcpStatus?.();
-        close();
-      },
-    },
-    {
-      id: 'mcp-servers',
-      label: 'Manage MCP servers',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onToggleMcp?.();
-        close();
-      },
-    },
-    {
-      id: 'plugins',
-      label: 'Manage plugins',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onManagePlugins?.();
-        close();
-      },
-    },
-  ];
-
-  const tools: MenuItem[] = [
-    {
-      id: 'chrome-mcp',
-      label: 'Enable Chrome MCP',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Chrome MCP is not available in the web app');
-        close();
-      },
-    },
-    {
-      id: 'jupyter-mcp',
-      label: 'Enable Jupyter MCP',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Jupyter MCP is not available in the web app');
-        close();
-      },
-    },
-    {
-      id: 'debugger-help',
-      label: 'Debugger Help',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Debugger integration is not available in the web app');
-        close();
-      },
-    },
-  ];
-
-  const settings: MenuItem[] = [
-    {
-      id: 'general-config',
-      label: 'General config…',
-      section: 'Settings',
-      onClick: () => {
-        callbacks.onOpenConfig?.();
-        close();
-      },
-    },
-    {
-      id: 'switch-account',
-      label: 'Switch account',
-      section: 'Settings',
-      onClick: () => {
-        callbacks.onSwitchAccount?.();
-        close();
-      },
-    },
-  ];
-
-  const support: MenuItem[] = [
-    {
-      id: 'view-help',
-      label: 'View help docs',
-      section: 'Support',
-      onClick: () => {
-        callbacks.onOpenHelp?.();
-        close();
-      },
-    },
-  ];
-
-  const slash: MenuItem[] = slashCommands.map((cmd) => ({
-    id: `slash-${cmd}`,
-    label: `/${cmd}`,
-    section: 'Slash Commands',
-    onClick: () => {
-      compose.executeSlashCommand(`/${cmd}`);
-      close();
-    },
-  }));
-
-  return { context, model, customize, tools, slash, settings, support };
-}
+import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
+import { MenuItemRow, MenuSection } from './command-menu-parts';
 
 export interface CommandMenuProps {
   // Dialog callbacks — managed by parent (ComposeToolbar)
@@ -569,35 +300,6 @@ export function CommandMenu({
 
   const isActive = (id: string) => id === activeId;
 
-  const renderItem = (item: MenuItem) => {
-    const active = isActive(item.id);
-    return (
-      <button
-        key={item.id}
-        ref={active ? activeItemRef : null}
-        type="button"
-        disabled={item.disabled}
-        onClick={item.onClick}
-        onMouseEnter={() => setActiveId(item.id)}
-        className={`text-left px-2 py-1 mx-1 rounded flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed ${
-          active ? 'bg-selected text-white' : 'text-text hover:bg-white/10'
-        }`}
-      >
-        <span>{item.label}</span>
-        {item.trailing && <span>{item.trailing}</span>}
-      </button>
-    );
-  };
-
-  const renderSection = (label: string, items: MenuItem[], isFirst = false) =>
-    items.length > 0 ? (
-      <>
-        {!isFirst && <div className="h-px bg-border my-1" />}
-        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">{label}</div>
-        {items.map(renderItem)}
-      </>
-    ) : null;
-
   return (
     <div ref={menuRef}>
       <button
@@ -645,56 +347,89 @@ export function CommandMenu({
               </div>
             ) : (
               <>
-                {/* Context section */}
-                {renderSection('Context', filteredContext, true)}
+                <MenuSection
+                  label="Context"
+                  items={filteredContext}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                  isFirst
+                />
 
-                {/* Model section */}
                 {modelSectionVisible && (
                   <>
                     {filteredContext.length > 0 && <div className="h-px bg-border my-1" />}
                     <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">Model</div>
-                    {/* Switch model — opens model picker panel */}
                     {switchModelVisible && switchModelItem && (
-                      <button
-                        ref={isActive('switch-model') ? activeItemRef : null}
-                        type="button"
-                        onClick={() => {
-                          onOpenModelPicker?.();
-                          close();
+                      <MenuItemRow
+                        item={{
+                          id: 'switch-model',
+                          label: 'Switch model',
+                          section: 'Model',
+                          trailing: (
+                            <span
+                              className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
+                            >
+                              {modelLabel}
+                            </span>
+                          ),
+                          onClick: () => {
+                            onOpenModelPicker?.();
+                            close();
+                          },
                         }}
-                        onMouseEnter={() => setActiveId('switch-model')}
-                        className={`text-left px-2 py-1 mx-1 rounded flex items-center justify-between ${
-                          isActive('switch-model')
-                            ? 'bg-selected text-white'
-                            : 'text-text hover:bg-white/10'
-                        }`}
-                      >
-                        <span>Switch model</span>
-                        <span
-                          className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
-                        >
-                          {modelLabel}
-                        </span>
-                      </button>
+                        isActive={isActive('switch-model')}
+                        activeItemRef={activeItemRef}
+                        onHover={setActiveId}
+                      />
                     )}
-                    {filteredModel.map(renderItem)}
+                    {filteredModel.map((item) => (
+                      <MenuItemRow
+                        key={item.id}
+                        item={item}
+                        isActive={isActive(item.id)}
+                        activeItemRef={activeItemRef}
+                        onHover={setActiveId}
+                      />
+                    ))}
                   </>
                 )}
 
-                {/* Customize section */}
-                {renderSection('Customize', filteredCustomize)}
-
-                {/* Tools section (web stubs) */}
-                {renderSection('Tools', filteredTools)}
-
-                {/* Slash Commands section */}
-                {renderSection('Slash Commands', filteredSlash)}
-
-                {/* Settings section */}
-                {renderSection('Settings', filteredSettings)}
-
-                {/* Support section */}
-                {renderSection('Support', filteredSupport)}
+                <MenuSection
+                  label="Customize"
+                  items={filteredCustomize}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                />
+                <MenuSection
+                  label="Tools"
+                  items={filteredTools}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                />
+                <MenuSection
+                  label="Slash Commands"
+                  items={filteredSlash}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                />
+                <MenuSection
+                  label="Settings"
+                  items={filteredSettings}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                />
+                <MenuSection
+                  label="Support"
+                  items={filteredSupport}
+                  activeId={activeId}
+                  activeItemRef={activeItemRef}
+                  onHover={setActiveId}
+                />
               </>
             )}
           </div>
