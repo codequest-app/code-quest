@@ -55,7 +55,11 @@ export const ToolUseStreaming: Story = {
       ...base,
       type: 'tool_use',
       content: 'Write',
-      meta: { partialInput: '{\n  "file_path": "/src/new.ts",\n  "cont...', toolId: 'tool-2' },
+      meta: {
+        partialInput: '{\n  "file_path": "/src/new.ts",\n  "cont...',
+        toolId: 'tool-2',
+        input: {},
+      },
     },
   },
 };

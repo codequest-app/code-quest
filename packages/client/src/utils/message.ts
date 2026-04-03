@@ -22,11 +22,12 @@ const historyResultSchema = z.object({
 
 import type { Message } from '../types/ui';
 
-export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message => ({
-  id: crypto.randomUUID(),
-  timestamp: Date.now(),
-  ...fields,
-});
+export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message =>
+  ({
+    id: crypto.randomUUID(),
+    timestamp: Date.now(),
+    ...fields,
+  }) as Message;
 
 interface SocketEvent {
   name: string;

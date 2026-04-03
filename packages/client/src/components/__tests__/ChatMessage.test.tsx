@@ -223,7 +223,9 @@ describe('ChatMessage', () => {
 
   it('renders result with no stats gracefully', () => {
     const { container } = render(
-      <ChatMessage message={{ ...base, role: 'system', type: 'result', content: '' }} />,
+      <ChatMessage
+        message={{ ...base, role: 'system', type: 'result', content: '', meta: { stats: {} } }}
+      />,
     );
     expect(container.querySelector('[data-type="result"]')).toBeInTheDocument();
   });

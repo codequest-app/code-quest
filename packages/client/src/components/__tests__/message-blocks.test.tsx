@@ -13,7 +13,7 @@ describe('message-blocks', () => {
             type: 'tool_use',
             content: 'Bash',
             timestamp: Date.now(),
-            meta: { input: { command: 'ls -la' } },
+            meta: { toolId: 'tu-1', input: { command: 'ls -la' } },
           })}
         </>,
       );
@@ -29,7 +29,7 @@ describe('message-blocks', () => {
             type: 'tool_use',
             content: 'TodoRead',
             timestamp: Date.now(),
-            meta: { input: {} },
+            meta: { toolId: 'tu-2', input: {} },
           })}
         </>,
       );
@@ -47,7 +47,7 @@ describe('message-blocks', () => {
             type: 'tool_result',
             content: 'file contents here',
             timestamp: Date.now(),
-            meta: { name: 'Read' },
+            meta: { toolId: 'tu-1', name: 'Read' },
           })}
         </>,
       );

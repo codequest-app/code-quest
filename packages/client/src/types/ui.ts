@@ -1,3 +1,5 @@
+import type { ChatStats } from '@code-quest/shared';
+
 export type SessionStatus =
   | 'disconnected'
   | 'idle'
@@ -15,39 +17,79 @@ export type ForkFn = (
   messageId: string,
 ) => Promise<{ success: boolean; channelId?: string; error?: string }>;
 
-export interface Message {
+// ── Message meta types per message type ──
+
+export interface ToolUseMeta {
+  toolId: string;
+  input: Record<string, unknown>;
+  partialInput?: string;
+  result?: { content?: string; is_error?: boolean };
+  fileContent?: string;
+  fileError?: string;
+}
+
+export interface ToolResultMeta {
+  toolId: string;
+  name?: string;
+  is_error?: boolean;
+}
+
+export interface ResultMeta {
+  stats: ChatStats;
+}
+
+// ── Message type discriminated union ──
+
+interface MessageBase {
   id: string;
   role: 'user' | 'assistant' | 'system';
-  type:
-    | 'text'
-    | 'thinking'
-    | 'tool_use'
-    | 'tool_result'
-    | 'result'
-    | 'error'
-    | 'pending_action'
-    | 'action_result'
-    | 'task_started'
-    | 'compact_boundary'
-    | 'streamlined_text'
-    | 'streamlined_tool_use_summary'
-    | 'rate_limit_event'
-    | 'hook_started'
-    | 'hook_response'
-    | 'hook_diagnostics'
-    | 'unknown_delta'
-    | 'raw_event'
-    | 'unhandled'
-    | 'content_block_start'
-    | 'file:updated'
-    | 'image'
-    | 'document'
-    | 'meta'
-    | 'interrupt'
-    | 'slash_command_result';
   content: string;
-  meta?: Record<string, unknown>;
   parentToolUseId?: string;
   timestamp: number;
   attachments?: Array<{ filename: string; startLine?: number; endLine?: number }>;
 }
+
+/** Maps message types that carry typed meta to their meta shape */
+interface MetaMap {
+  tool_use: ToolUseMeta;
+  tool_result: ToolResultMeta;
+  result: ResultMeta;
+}
+
+export type MessageType =
+  | 'text'
+  | 'thinking'
+  | 'tool_use'
+  | 'tool_result'
+  | 'result'
+  | 'error'
+  | 'pending_action'
+  | 'action_result'
+  | 'task_started'
+  | 'compact_boundary'
+  | 'streamlined_text'
+  | 'streamlined_tool_use_summary'
+  | 'rate_limit_event'
+  | 'hook_started'
+  | 'hook_response'
+  | 'hook_diagnostics'
+  | 'unknown_delta'
+  | 'raw_event'
+  | 'unhandled'
+  | 'content_block_start'
+  | 'file:updated'
+  | 'image'
+  | 'document'
+  | 'meta'
+  | 'interrupt'
+  | 'slash_command_result';
+
+/** Typed message variant — meta is typed for known types, loose for others */
+export type Message = {
+  [T in MessageType]: T extends keyof MetaMap
+    ? MessageBase & { type: T; meta: MetaMap[T] & Record<string, unknown> }
+    : MessageBase & { type: T; meta?: Record<string, unknown> };
+}[MessageType];
+
+/** Helper to extract a specific message variant */
+export type MessageOf<T extends MessageType> = Extract<Message, { type: T }>;

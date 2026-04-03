@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react';
 import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
+import type { Message } from '../../types/ui';
 import { isRecord } from '../../utils/is-record';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
@@ -350,7 +351,7 @@ export function ChannelMessagesProvider({
           ...prev,
           messages: prev.messages.map((m) =>
             m.id === lastToolUse.id
-              ? { ...m, meta: { ...m.meta, partialInput: partial + content } }
+              ? ({ ...m, meta: { ...m.meta, partialInput: partial + content } } as Message)
               : m,
           ),
         };
@@ -367,7 +368,7 @@ export function ChannelMessagesProvider({
         ms[ms.length - 1] = {
           ...last,
           meta: { ...last.meta, citations: [...existing, ...citations] },
-        };
+        } as Message;
         return { ...prev, messages: ms };
       });
     }
@@ -414,7 +415,7 @@ export function ChannelMessagesProvider({
               fileContent: 'content' in res ? res.content : undefined,
               fileError: 'error' in res ? res.error : undefined,
             },
-          };
+          } as Message;
           return { ...prev, messages: ms };
         });
       });
