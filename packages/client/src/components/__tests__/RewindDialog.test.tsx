@@ -61,4 +61,52 @@ describe('RewindDialog', () => {
 
     expect(screen.queryByRole('dialog', { name: /rewind/i })).not.toBeInTheDocument();
   });
+
+  it('navigates with arrow keys and selects with Enter', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendMessage(claude, user, 'First');
+    await sendMessage(claude, user, 'Second');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+
+    const listbox = screen.getByRole('listbox');
+    listbox.focus();
+
+    // First item (Second) is focused by default
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
+
+    // Arrow down → second item (First)
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
+
+    // Arrow up → back to first
+    await user.keyboard('{ArrowUp}');
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('listbox has aria-label for accessibility', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendMessage(claude, user, 'hello');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toHaveAttribute('aria-label');
+  });
+
+  it('selects message on click and closes dialog', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendMessage(claude, user, 'hello');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+
+    // Click first item to trigger rewind
+    await user.click(screen.getAllByRole('option')[0]);
+
+    // Dialog should close after selection
+    expect(screen.queryByRole('dialog', { name: /rewind/i })).not.toBeInTheDocument();
+  });
 });

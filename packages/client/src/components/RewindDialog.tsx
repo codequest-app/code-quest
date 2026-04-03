@@ -40,6 +40,13 @@ export function RewindDialog({ open, onClose, onSelect }: RewindDialogProps) {
   }, [open]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+      return;
+    }
+    if (items.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setFocusIndex((i) => Math.min(i + 1, items.length - 1));
@@ -50,10 +57,6 @@ export function RewindDialog({ open, onClose, onSelect }: RewindDialogProps) {
       e.preventDefault();
       const item = items[focusIndex];
       if (item) onSelect({ messageId: item.message.id, promptText: item.promptText });
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      onClose();
     }
   };
 
@@ -72,6 +75,7 @@ export function RewindDialog({ open, onClose, onSelect }: RewindDialogProps) {
             <div
               ref={listRef}
               role="listbox"
+              aria-label="Messages to rewind to"
               tabIndex={0}
               onKeyDown={handleKeyDown}
               className="flex flex-col gap-0.5 outline-none max-h-[300px] overflow-y-auto"

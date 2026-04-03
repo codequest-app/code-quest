@@ -1,5 +1,6 @@
 import { contextUsageDataSchema } from '@code-quest/shared';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
@@ -226,12 +227,18 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           onClose={closeDialog}
           onSelect={({ messageId, promptText }) => {
             closeDialog();
-            rewindToMessage(messageId, false).then((result) => {
-              if (result.success) {
-                forkSession(messageId);
-                compose.updateValue(promptText);
-              }
-            });
+            rewindToMessage(messageId, false)
+              .then((result) => {
+                if (result.success) {
+                  forkSession(messageId);
+                  compose.updateValue(promptText);
+                } else {
+                  toast.error(result.error ?? 'Failed to rewind');
+                }
+              })
+              .catch(() => {
+                toast.error('Failed to rewind');
+              });
           }}
         />
       )}
