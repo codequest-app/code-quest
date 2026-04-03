@@ -29,6 +29,7 @@ export class ProcessRunner extends EventEmitter {
     const env = { ...this.parentEnv };
     delete env.CLAUDECODE;
     delete env.CLAUDE_CODE_ENTRYPOINT;
+    env.CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING = 'true';
 
     const handle = this.processProvider?.spawn(this.adapter.command, this.launchArgs, {
       env,
