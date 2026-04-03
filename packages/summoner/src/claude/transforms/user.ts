@@ -24,8 +24,13 @@ export function transformUserEvent(event: Record<string, unknown>): SocketEvent 
     }
   }
 
+  const uuid = typeof event.uuid === 'string' ? event.uuid : undefined;
   return {
     name: 'message:user',
-    payload: { content: blocks, ...(parentToolUseId ? { parentToolUseId } : {}) },
+    payload: {
+      content: blocks,
+      ...(parentToolUseId ? { parentToolUseId } : {}),
+      ...(uuid ? { uuid } : {}),
+    },
   };
 }

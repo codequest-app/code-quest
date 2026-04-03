@@ -13,15 +13,26 @@ function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): Cha
   return { ...state, messages: [...state.messages, msg(fields)] };
 }
 
-function applyUserContent(state: ChannelState, content: ContentBlock[]): ChannelState {
+function applyUserContent(
+  state: ChannelState,
+  content: ContentBlock[],
+  uuid?: string,
+): ChannelState {
   let messages = [...state.messages];
   for (const block of content) {
     if (block.type === 'text') {
-      const last = messages[messages.length - 1];
+      const lastIdx = messages.length - 1;
+      const last = messages[lastIdx];
       if (last?.role === 'user' && last?.type === 'text' && last?.content === block.text) {
+        // Dedup: CLI echoed our message back — update id to CLI uuid if available
+        if (uuid && last.id !== uuid) {
+          messages = [...messages];
+          messages[lastIdx] = { ...last, id: uuid };
+        }
         continue;
       }
-      messages = [...messages, msg({ role: 'user', type: 'text', content: block.text })];
+      const m = msg({ role: 'user', type: 'text', content: block.text });
+      messages = [...messages, uuid ? { ...m, id: uuid } : m];
     } else if (block.type === 'tool_result') {
       messages = [
         ...messages,
@@ -40,7 +51,7 @@ function applyUserContent(state: ChannelState, content: ContentBlock[]): Channel
 // ── On handlers ──
 
 function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
-  return applyUserContent(state, p.content);
+  return applyUserContent(state, p.content, p.uuid);
 }
 
 function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {

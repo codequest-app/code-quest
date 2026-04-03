@@ -149,6 +149,7 @@ export const messageAssistantPayloadSchema = z.object({
   channelId: z.string(),
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
 });
 export type MessageAssistantPayload = z.infer<typeof messageAssistantPayloadSchema>;
 
@@ -156,6 +157,7 @@ export const messageUserPayloadSchema = z.object({
   channelId: z.string(),
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
 });
 export type MessageUserPayload = z.infer<typeof messageUserPayloadSchema>;
 

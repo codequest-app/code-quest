@@ -20,4 +20,12 @@ describe('transform — user events', () => {
       },
     });
   });
+
+  it('preserves CLI uuid in payload', () => {
+    const base = JSON.parse(s.toolResult('tu-1', 'output'));
+    base.uuid = 'cli-uuid-123';
+    const result = toSocketEvent(JSON.stringify(base));
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toHaveProperty('uuid', 'cli-uuid-123');
+  });
 });

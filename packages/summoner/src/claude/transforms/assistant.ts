@@ -27,8 +27,13 @@ export function transformAssistantEvent(event: Record<string, unknown>): SocketE
     }
   }
 
+  const uuid = typeof event.uuid === 'string' ? event.uuid : undefined;
   return {
     name: 'message:assistant',
-    payload: { content: blocks, ...(parentToolUseId ? { parentToolUseId } : {}) },
+    payload: {
+      content: blocks,
+      ...(parentToolUseId ? { parentToolUseId } : {}),
+      ...(uuid ? { uuid } : {}),
+    },
   };
 }
