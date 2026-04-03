@@ -12,7 +12,7 @@ async function openUsageDialog(user: UserEvent) {
   await user.type(textarea, '/usage');
   const usageItem = await screen.findByText(/Account & usage/i);
   await user.click(usageItem);
-  return screen.getByRole('dialog', { name: /account & usage/i });
+  return screen.findByRole('dialog', { name: /account & usage/i });
 }
 
 describe('AccountUsageDialog', () => {

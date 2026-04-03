@@ -68,7 +68,7 @@ describe('MCPPanel', () => {
 
     await openMcpManageDialog(user);
 
-    expect(screen.getByRole('dialog', { name: /manage mcp servers/i })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: /manage mcp servers/i })).toBeInTheDocument();
   });
 
   it('shows empty state when no MCP servers', () => {

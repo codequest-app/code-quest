@@ -1,21 +1,32 @@
 import { contextUsageDataSchema } from '@code-quest/shared';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { openUrl } from '../utils/open-url';
-import { AccountUsageDialog } from './AccountUsageDialog';
 import { AddButton } from './AddButton';
-import { AuthDialog } from './AuthDialog';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
-import { InitOptionsDialog } from './InitOptionsDialog';
-import { ManageMcpDialog } from './ManageMcpDialog';
 import type { McpServerInfo } from './MCPPanel';
-import { ModelPickerPanel } from './ModelPickerPanel';
 import { PermissionModePicker } from './PermissionModePicker';
-import { PluginsPanel } from './PluginsPanel';
 import { SpeechInputButton } from './SpeechInputButton';
+
+const AccountUsageDialog = lazy(() =>
+  import('./AccountUsageDialog').then((m) => ({ default: m.AccountUsageDialog })),
+);
+const AuthDialog = lazy(() => import('./AuthDialog').then((m) => ({ default: m.AuthDialog })));
+const InitOptionsDialog = lazy(() =>
+  import('./InitOptionsDialog').then((m) => ({ default: m.InitOptionsDialog })),
+);
+const ManageMcpDialog = lazy(() =>
+  import('./ManageMcpDialog').then((m) => ({ default: m.ManageMcpDialog })),
+);
+const ModelPickerPanel = lazy(() =>
+  import('./ModelPickerPanel').then((m) => ({ default: m.ModelPickerPanel })),
+);
+const PluginsPanel = lazy(() =>
+  import('./PluginsPanel').then((m) => ({ default: m.PluginsPanel })),
+);
 
 const MCP_STATUSES = new Set([
   'connected',
@@ -137,59 +148,81 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
 
   return (
     <>
-      <ManageMcpDialog
-        open={activeDialog === 'manageMcp'}
-        onClose={closeDialog}
-        servers={mcpServers}
-        onToggle={async (name, enabled) => {
-          await mcpToggle(name, enabled);
-          mcpRefresh();
-        }}
-        onReconnect={async (name) => {
-          await mcpReconnect(name);
-          mcpRefresh();
-        }}
-        onRefresh={mcpRefresh}
-        onAuthenticate={mcpAuthenticate}
-        onClearAuth={mcpClearAuth}
-      />
-      <ManageMcpDialog
-        open={activeDialog === 'mcpStatus'}
-        onClose={closeDialog}
-        servers={mcpServers}
-      />
-      <InitOptionsDialog
-        open={activeDialog === 'initOptions'}
-        onClose={closeDialog}
-        onSave={(opts) => setInitOptions(opts)}
-        initial={initOptions}
-      />
-      <AccountUsageDialog
-        open={activeDialog === 'usage'}
-        onClose={closeDialog}
-        usage={usageQuota ?? undefined}
-        contextUsage={contextUsage ?? undefined}
-        stats={stats ?? undefined}
-        model={accountInfo?.model}
-        authMethod={accountInfo?.authMethod}
-        email={accountInfo?.email}
-        organization={accountInfo?.organization}
-        subscriptionType={accountInfo?.subscriptionType}
-        providerConfig={providerConfig}
-      />
-      <PluginsPanel open={activeDialog === 'plugins'} onClose={closeDialog} />
-      <AuthDialog open={activeDialog === 'auth'} onClose={closeDialog} />
+      {activeDialog === 'manageMcp' && (
+        <Suspense fallback={null}>
+          <ManageMcpDialog
+            open
+            onClose={closeDialog}
+            servers={mcpServers}
+            onToggle={async (name, enabled) => {
+              await mcpToggle(name, enabled);
+              mcpRefresh();
+            }}
+            onReconnect={async (name) => {
+              await mcpReconnect(name);
+              mcpRefresh();
+            }}
+            onRefresh={mcpRefresh}
+            onAuthenticate={mcpAuthenticate}
+            onClearAuth={mcpClearAuth}
+          />
+        </Suspense>
+      )}
+      {activeDialog === 'mcpStatus' && (
+        <Suspense fallback={null}>
+          <ManageMcpDialog open onClose={closeDialog} servers={mcpServers} />
+        </Suspense>
+      )}
+      {activeDialog === 'initOptions' && (
+        <Suspense fallback={null}>
+          <InitOptionsDialog
+            open
+            onClose={closeDialog}
+            onSave={(opts) => setInitOptions(opts)}
+            initial={initOptions}
+          />
+        </Suspense>
+      )}
+      {activeDialog === 'usage' && (
+        <Suspense fallback={null}>
+          <AccountUsageDialog
+            open
+            onClose={closeDialog}
+            usage={usageQuota ?? undefined}
+            contextUsage={contextUsage ?? undefined}
+            stats={stats ?? undefined}
+            model={accountInfo?.model}
+            authMethod={accountInfo?.authMethod}
+            email={accountInfo?.email}
+            organization={accountInfo?.organization}
+            subscriptionType={accountInfo?.subscriptionType}
+            providerConfig={providerConfig}
+          />
+        </Suspense>
+      )}
+      {activeDialog === 'plugins' && (
+        <Suspense fallback={null}>
+          <PluginsPanel open onClose={closeDialog} />
+        </Suspense>
+      )}
+      {activeDialog === 'auth' && (
+        <Suspense fallback={null}>
+          <AuthDialog open onClose={closeDialog} />
+        </Suspense>
+      )}
       <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
-          <div ref={pickerRef}>
-            <ModelPickerPanel
-              currentModel={model ?? null}
-              availableModels={availableModels}
-              onSwitch={setModel}
-              onClose={closeDialog}
-              defaultModelDescription={providerConfig?.defaultModelDescription}
-            />
-          </div>
+          <Suspense fallback={null}>
+            <div ref={pickerRef}>
+              <ModelPickerPanel
+                currentModel={model ?? null}
+                availableModels={availableModels}
+                onSwitch={setModel}
+                onClose={closeDialog}
+                defaultModelDescription={providerConfig?.defaultModelDescription}
+              />
+            </div>
+          </Suspense>
         )}
 
         <AddButton onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
