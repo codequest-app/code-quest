@@ -16,6 +16,7 @@ export class ClaudeProtocol {
     '--permission-prompt-tool',
     'stdio',
     '--include-partial-messages',
+    '--include-hook-events',
   ];
 
   buildArgs(options?: LaunchOptions): string[] {
