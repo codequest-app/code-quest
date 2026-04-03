@@ -441,7 +441,7 @@ export function getSchemaForType(type: string, subtype?: string): z.ZodType | un
 export const KNOWN_EVENT_TYPES = new Set(['system', ...Object.keys(typeRegistry)]);
 
 /** Union type inferred from all CLI event Zod schemas. */
-export type ProtocolEvent =
+export type ProtocolMessage =
   | z.infer<typeof systemInitSchema>
   | z.infer<typeof systemStatusSchema>
   | z.infer<typeof systemHookStartedSchema>

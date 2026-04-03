@@ -1,11 +1,11 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
+// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/fake-claude.ts';
-import { toSocketEvent } from '../helpers.ts';
+import { toClientMessage } from '../helpers.ts';
 
 describe('transform — system events', () => {
   it('converts system/init to session:init', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.init('sess-1', {
         model: 'opus',
         tools: ['Read'],
@@ -26,7 +26,7 @@ describe('transform — system events', () => {
   });
 
   it('converts system/status to session:status', () => {
-    const result = toSocketEvent(s.status({ status: 'processing', permissionMode: 'plan' }));
+    const result = toClientMessage(s.status({ status: 'processing', permissionMode: 'plan' }));
     expect(result).toMatchObject({
       name: 'session:status',
       payload: { status: 'processing', permissionMode: 'plan' },
@@ -34,7 +34,7 @@ describe('transform — system events', () => {
   });
 
   it('converts system/hook_started', () => {
-    const result = toSocketEvent(s.hookStarted('h1', 'pre-commit', 'commit'));
+    const result = toClientMessage(s.hookStarted('h1', 'pre-commit', 'commit'));
     expect(result).toMatchObject({
       name: 'system:hook_started',
       payload: { hook: { hookName: 'pre-commit', hookId: 'h1' } },
@@ -44,7 +44,7 @@ describe('transform — system events', () => {
   it('converts system/hook_response', () => {
     const base = JSON.parse(s.hookResponse('h1', 'pre-commit', 'commit', 'passed'));
     base.additional_context = 'lint ok';
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'system:hook_response',
       payload: {
@@ -54,7 +54,7 @@ describe('transform — system events', () => {
   });
 
   it('converts system/task_started', () => {
-    const result = toSocketEvent(s.taskStarted('tu-1', 'Running tests'));
+    const result = toClientMessage(s.taskStarted('tu-1', 'Running tests'));
     expect(result).toMatchObject({
       name: 'system:task_started',
       payload: { description: 'Running tests', taskType: 'local_agent' },
@@ -62,7 +62,7 @@ describe('transform — system events', () => {
   });
 
   it('converts system/bridge_state', () => {
-    const result = toSocketEvent(s.bridgeState('disconnected', 'connection lost'));
+    const result = toClientMessage(s.bridgeState('disconnected', 'connection lost'));
     expect(result).toMatchObject({
       name: 'system:remote_control',
       payload: { info: { state: 'disconnected', detail: 'connection lost' } },
@@ -70,11 +70,11 @@ describe('transform — system events', () => {
   });
 
   it('converts system/compact_boundary', () => {
-    expect(toSocketEvent(s.compactBoundary())).toMatchObject({ name: 'system:compact_boundary' });
+    expect(toClientMessage(s.compactBoundary())).toMatchObject({ name: 'system:compact_boundary' });
   });
 
   it('converts system/compact_boundary with preservedSegment', () => {
-    const result = toSocketEvent(s.compactBoundary({ preservedSegment: true }));
+    const result = toClientMessage(s.compactBoundary({ preservedSegment: true }));
     expect(result).toMatchObject({
       name: 'system:compact_boundary',
       payload: { preservedSegment: true },
@@ -89,7 +89,7 @@ describe('transform — system events', () => {
       session_id: 'x',
       uuid: 'u',
     });
-    expect(toSocketEvent(raw)).toBeNull();
+    expect(toClientMessage(raw)).toBeNull();
   });
 
   it('skips system/session_state_changed', () => {
@@ -100,7 +100,7 @@ describe('transform — system events', () => {
       session_id: 'x',
       uuid: 'u',
     });
-    expect(toSocketEvent(raw)).toBeNull();
+    expect(toClientMessage(raw)).toBeNull();
   });
 
   it('converts system/api_retry', () => {
@@ -115,7 +115,7 @@ describe('transform — system events', () => {
       session_id: 'x',
       uuid: 'u',
     });
-    const result = toSocketEvent(raw);
+    const result = toClientMessage(raw);
     expect(result).toMatchObject({
       name: 'system:api_retry',
       payload: {
@@ -129,12 +129,12 @@ describe('transform — system events', () => {
   });
 
   it('converts system/compact_boundary without compactMetadata', () => {
-    const result = toSocketEvent(s.compactBoundary());
+    const result = toClientMessage(s.compactBoundary());
     expect((result as any).payload.preservedSegment).toBeUndefined();
   });
 
   it('converts system/task_notification from real fixture', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.taskNotification('a6b3446e967260f60', {
         toolUseId: 'toolu_01RgfPM8fAEPgezK6JinZ2pH',
         status: 'completed',
@@ -160,7 +160,7 @@ describe('transform — system events', () => {
     delete base.output_file;
     delete base.summary;
     delete base.usage;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'system:task_notification',
       payload: { taskId: 'a6b3446e967260f60' },
@@ -170,7 +170,7 @@ describe('transform — system events', () => {
   });
 
   it('converts system/task_progress from real fixture', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.taskProgress('a6b3446e967260f60', {
         toolUseId: 'toolu_01RgfPM8fAEPgezK6JinZ2pH',
         description: 'Finding files matching pattern...',
@@ -195,7 +195,7 @@ describe('transform — system events', () => {
     delete base.description;
     delete base.last_tool_name;
     delete base.usage;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'system:task_progress',
       payload: { taskId: 'a6b3446e967260f60' },

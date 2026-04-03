@@ -1,15 +1,15 @@
 import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
 import type {
   AdapterOutput,
+  ClientMessage,
   ControlResponseEvent,
   ParseResult,
   ProviderAdapter,
-  SocketEvent,
 } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
-import type { ProtocolEvent } from './schemas.ts';
+import type { ProtocolMessage } from './schemas.ts';
 import { transformAssistantEvent } from './transforms/assistant.ts';
 import { transformControlRequest } from './transforms/control.ts';
 import { transformResultEvent } from './transforms/result.ts';
@@ -18,7 +18,7 @@ import { transformSystemEvent } from './transforms/system.ts';
 import { transformUserEvent } from './transforms/user.ts';
 
 interface ConvertResult {
-  events: SocketEvent[];
+  events: ClientMessage[];
   serverActions: never[];
   controlResponses: ControlResponseEvent[];
 }
@@ -73,7 +73,7 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   },
 };
 
-function convertRateLimitEvent(event: ProtocolEvent): SocketEvent {
+function convertRateLimitEvent(event: ProtocolMessage): ClientMessage {
   const rli = event.rate_limit_info as Record<string, unknown>;
   return {
     name: 'system:rate_limit',
@@ -90,7 +90,7 @@ function convertRateLimitEvent(event: ProtocolEvent): SocketEvent {
   };
 }
 
-function convertAuthStatus(event: ProtocolEvent): SocketEvent {
+function convertAuthStatus(event: ProtocolMessage): ClientMessage {
   return {
     name: 'notification:auth_status',
     payload: {
@@ -101,7 +101,7 @@ function convertAuthStatus(event: ProtocolEvent): SocketEvent {
   };
 }
 
-export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptions> {
+export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
 
   readonly clientConfig: ProviderClientConfig = providerClientConfigSchema.parse({
@@ -190,11 +190,11 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
     return this.protocol.buildArgs(options);
   }
 
-  parseLine(line: string): ParseResult<ProtocolEvent> {
+  parseLine(line: string): ParseResult<ProtocolMessage> {
     return this.protocol.parseLine(line);
   }
 
-  transform(event: ProtocolEvent): AdapterOutput {
+  transform(event: ProtocolMessage): AdapterOutput {
     const { events, serverActions, controlResponses } = this.convertEvent(event);
     return { events, controlResponses, serverActions };
   }
@@ -243,7 +243,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
 
   // ── Core dispatch ──
 
-  private convertEvent(event: ProtocolEvent): ConvertResult {
+  private convertEvent(event: ProtocolMessage): ConvertResult {
     if (event.type === 'keep_alive') return EMPTY;
 
     if (event.type === 'control_response') {
@@ -274,16 +274,16 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolEvent, LaunchOptio
       return transformControlRequest(event as Record<string, unknown>);
     }
 
-    // All other types produce only SocketEvents
+    // All other types produce only ClientMessages
     const se = this.convertOtherEvent(event);
     if (se === null) return EMPTY;
     const events = Array.isArray(se) ? se : [se];
     return { events, serverActions: [], controlResponses: [] };
   }
 
-  // ── Non-control events → SocketEvent ──
+  // ── Non-control events → ClientMessage ──
 
-  private convertOtherEvent(event: ProtocolEvent): SocketEvent | SocketEvent[] | null {
+  private convertOtherEvent(event: ProtocolMessage): ClientMessage | ClientMessage[] | null {
     const e = event as Record<string, unknown>;
     switch (event.type) {
       case 'system':

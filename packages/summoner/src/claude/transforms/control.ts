@@ -1,9 +1,9 @@
-import type { AdapterOutput, SocketEvent } from '../../types.ts';
+import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, isRecord } from '../../utils.ts';
 
 type RequestContext = { requestId: string; request: Record<string, unknown> };
 
-function handleCanUseTool({ requestId, request }: RequestContext): SocketEvent {
+function handleCanUseTool({ requestId, request }: RequestContext): ClientMessage {
   return {
     name: 'control:permission',
     payload: {
@@ -20,7 +20,7 @@ function handleCanUseTool({ requestId, request }: RequestContext): SocketEvent {
   };
 }
 
-function handleHookCallback({ requestId, request }: RequestContext): SocketEvent {
+function handleHookCallback({ requestId, request }: RequestContext): ClientMessage {
   return {
     name: 'control:hook_callback',
     payload: {
@@ -32,7 +32,7 @@ function handleHookCallback({ requestId, request }: RequestContext): SocketEvent
   };
 }
 
-function handleElicitation({ requestId, request }: RequestContext): SocketEvent {
+function handleElicitation({ requestId, request }: RequestContext): ClientMessage {
   const elInput = asRecord(request.input);
   const mode = typeof elInput?.mode === 'string' ? elInput.mode : undefined;
   const inputType = mode === 'url' ? 'url' : mode === 'form' ? 'select' : 'text';
@@ -55,7 +55,7 @@ function handleElicitation({ requestId, request }: RequestContext): SocketEvent 
   };
 }
 
-function handleOpenDiff({ requestId, request }: RequestContext): SocketEvent {
+function handleOpenDiff({ requestId, request }: RequestContext): ClientMessage {
   const diffInput = asRecord(request.input);
   return {
     name: 'control:open_diff',
@@ -68,7 +68,7 @@ function handleOpenDiff({ requestId, request }: RequestContext): SocketEvent {
   };
 }
 
-function handleMcpMessage({ requestId, request }: RequestContext): SocketEvent {
+function handleMcpMessage({ requestId, request }: RequestContext): ClientMessage {
   const mcpInput = asRecord(request.input);
   const serverName = String(mcpInput?.server_name ?? request.tool_name ?? '');
   const mcpMsg = isRecord(mcpInput?.message) ? mcpInput.message : (mcpInput ?? {});
@@ -79,7 +79,7 @@ function handleMcpMessage({ requestId, request }: RequestContext): SocketEvent {
   return { name: 'control:mcp', payload: { requestId, serverName, message: mcpMsg } };
 }
 
-function handleOpenUrl({ requestId, request }: RequestContext): SocketEvent {
+function handleOpenUrl({ requestId, request }: RequestContext): ClientMessage {
   const urlInput = asRecord(request.input);
   return {
     name: 'action:open_url',
@@ -91,7 +91,7 @@ function handleOpenUrl({ requestId, request }: RequestContext): SocketEvent {
   };
 }
 
-function handleOpenFile({ requestId, request }: RequestContext): SocketEvent {
+function handleOpenFile({ requestId, request }: RequestContext): ClientMessage {
   const fileInput = asRecord(request.input);
   const filePath = typeof fileInput?.file_path === 'string' ? fileInput.file_path : '';
   const location = asRecord(fileInput?.location);
@@ -101,7 +101,7 @@ function handleOpenFile({ requestId, request }: RequestContext): SocketEvent {
   };
 }
 
-function handleShowNotification({ requestId, request }: RequestContext): SocketEvent {
+function handleShowNotification({ requestId, request }: RequestContext): ClientMessage {
   const notifInput = asRecord(request.input);
   const severity = typeof notifInput?.severity === 'string' ? notifInput.severity : 'info';
   return {
@@ -118,7 +118,7 @@ function handleShowNotification({ requestId, request }: RequestContext): SocketE
   };
 }
 
-function handleForwardToClient({ requestId, request }: RequestContext): SocketEvent {
+function handleForwardToClient({ requestId, request }: RequestContext): ClientMessage {
   return {
     name: 'control:forward',
     payload: {
@@ -137,19 +137,19 @@ function handleInitialize(): null {
   return null;
 }
 
-function handleGetSettings({ requestId }: RequestContext): SocketEvent {
+function handleGetSettings({ requestId }: RequestContext): ClientMessage {
   return { name: 'settings:get_settings', payload: { requestId } };
 }
 
-function handleSetModel({ requestId, request }: RequestContext): SocketEvent {
+function handleSetModel({ requestId, request }: RequestContext): ClientMessage {
   return { name: 'settings:model_updated', payload: { requestId, input: request.input } };
 }
 
-function handleSetPermissionMode({ requestId, request }: RequestContext): SocketEvent {
+function handleSetPermissionMode({ requestId, request }: RequestContext): ClientMessage {
   return { name: 'settings:permission_mode_updated', payload: { requestId, input: request.input } };
 }
 
-const HANDLERS: Record<string, (ctx: RequestContext) => SocketEvent | null> = {
+const HANDLERS: Record<string, (ctx: RequestContext) => ClientMessage | null> = {
   can_use_tool: handleCanUseTool,
   hook_callback: handleHookCallback,
   elicitation: handleElicitation,

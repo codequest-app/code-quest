@@ -1,6 +1,8 @@
-import type { SocketEvent } from '../../types.ts';
+import type { ClientMessage } from '../../types.ts';
 
-export function transformResultEvent(event: Record<string, unknown>): SocketEvent | SocketEvent[] {
+export function transformResultEvent(
+  event: Record<string, unknown>,
+): ClientMessage | ClientMessage[] {
   const usage = event.usage as Record<string, unknown> | undefined;
   const resultPayload = {
     stats: {
@@ -18,7 +20,7 @@ export function transformResultEvent(event: Record<string, unknown>): SocketEven
     subtype: event.subtype,
   };
 
-  const resultEvent: SocketEvent = { name: 'message:result', payload: resultPayload };
+  const resultEvent: ClientMessage = { name: 'message:result', payload: resultPayload };
 
   if (event.is_error && Array.isArray(event.errors) && event.errors.length > 0) {
     const errorMessages = (event.errors as unknown[]).filter(

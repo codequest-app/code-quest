@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ClaudeAdapter } from '../claude/adapter.ts';
 import { ProcessRunner } from '../runner.ts';
 import { FakeProcessProvider, segments as s } from '../test/index.ts';
-import type { SocketEvent } from '../types.ts';
+import type { ClientMessage } from '../types.ts';
 
 function createRunner() {
   const provider = new FakeProcessProvider();
@@ -17,8 +17,8 @@ describe('ProcessRunner', () => {
   describe('spawn and event emission', () => {
     it('emits parsed events from CLI stdout', async () => {
       const { runner, provider } = createRunner();
-      const events: SocketEvent[] = [];
-      runner.on('socket_event', (e: SocketEvent) => events.push(e));
+      const events: ClientMessage[] = [];
+      runner.on('client_message', (e: ClientMessage) => events.push(e));
 
       runner.spawn();
       const handle = provider.latest;
@@ -64,10 +64,10 @@ describe('ProcessRunner', () => {
       expect(code).toBeNull();
     });
 
-    it('emits socket_event (SocketEvent) for each converted event', async () => {
+    it('emits client_message for each converted event', async () => {
       const { runner, provider } = createRunner();
-      const socketEvents: SocketEvent[] = [];
-      runner.on('socket_event', (e: SocketEvent) => socketEvents.push(e));
+      const clientMessages: ClientMessage[] = [];
+      runner.on('client_message', (e: ClientMessage) => clientMessages.push(e));
 
       runner.spawn();
       provider.latest.emit(s.init('test-sess'));
@@ -75,7 +75,7 @@ describe('ProcessRunner', () => {
       provider.latest.emit(s.result());
       await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
 
-      const types = socketEvents.map((e) => e.name);
+      const types = clientMessages.map((e) => e.name);
       expect(types).toContain('session:init');
       expect(types).toContain('message:result');
     });

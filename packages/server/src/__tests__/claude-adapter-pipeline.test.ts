@@ -12,7 +12,7 @@ function pipeline(jsonLine: string) {
   return output.events;
 }
 
-describe('End-to-end: FakeClaude → ClaudeAdapter → SocketEvent', () => {
+describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
   it('assistant text → message:assistant', () => {
     const results = pipeline(s.assistant('hello world'));
     expect(results).toHaveLength(1);

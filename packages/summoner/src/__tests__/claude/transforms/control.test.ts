@@ -1,11 +1,11 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
+// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/fake-claude.ts';
-import { toSocketEvent, transformResult } from '../helpers.ts';
+import { toClientMessage, transformResult } from '../helpers.ts';
 
 describe('transform — control requests', () => {
   it('converts can_use_tool → control:permission', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.controlRequest('cr-1', 'can_use_tool', 'Bash', { command: 'ls' }),
     );
     expect(result).toMatchObject({
@@ -19,7 +19,7 @@ describe('transform — control requests', () => {
     base.request.callback_id = 'cb-123';
     base.request.input = {};
     base.request.tool_use_id = 'tu-99';
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'control:hook_callback',
       payload: { requestId: 'hc-1', callbackId: 'cb-123', toolUseId: 'tu-99' },
@@ -27,7 +27,7 @@ describe('transform — control requests', () => {
   });
 
   it('converts elicitation → control:elicitation', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.controlRequestElicitation('el-1', { message: 'Your name?', mode: 'text' }),
     );
     expect(result).toMatchObject({
@@ -87,7 +87,7 @@ describe('transform — control requests', () => {
   });
 
   it('converts mcp_message request (has id) → control:mcp', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.controlRequest('mcp-2', 'mcp_message', undefined, {
         server_name: 'test',
         message: { method: 'tools/list', id: 42 },
@@ -218,7 +218,7 @@ describe('transform — permission_request fields', () => {
     base.request.blocked_path = '/etc/passwd';
     base.request.decision_reason = 'Dangerous command detected';
     base.request.agent_id = 'agent-42';
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'control:permission',
       payload: {
@@ -237,7 +237,7 @@ describe('transform — permission_request fields', () => {
     delete base.request.decision_reason;
     delete base.request.agent_id;
     delete base.request.permission_suggestions;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'control:permission',
       payload: { requestId: 'cr-perm-2', toolName: 'Read' },
@@ -250,7 +250,7 @@ describe('transform — permission_request fields', () => {
   it('preserves empty string blocked_path', () => {
     const base = JSON.parse(s.controlRequest('cr-perm-3', 'can_use_tool', 'Write', {}));
     base.request.blocked_path = '';
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect((result as any).payload.blockedPath).toBe('');
   });
 });
@@ -267,7 +267,7 @@ describe('transform — elicitation_request fields', () => {
     );
     base.request.elicitation_id = 'elic-99';
     base.request.mcp_server_name = 'test-server';
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'control:elicitation',
       payload: {
@@ -283,7 +283,7 @@ describe('transform — elicitation_request fields', () => {
   });
 
   it('still populates options from requested_schema.properties keys', () => {
-    const result = toSocketEvent(
+    const result = toClientMessage(
       s.controlRequestElicitation('el-ext-2', {
         message: 'Choose',
         mode: 'form',
@@ -299,7 +299,7 @@ describe('transform — elicitation_request fields', () => {
     );
     delete base.request.elicitation_id;
     delete base.request.mcp_server_name;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'control:elicitation',
       payload: { requestId: 'el-ext-3', prompt: 'Name?', inputType: 'text' },

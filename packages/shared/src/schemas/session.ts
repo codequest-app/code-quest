@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { channelMetaCacheSchema, sessionSummarySchema, socketEventSchema } from './common.ts';
+import { channelMetaCacheSchema, clientMessageSchema, sessionSummarySchema } from './common.ts';
 
 // ── Internal schemas ──
 
@@ -158,7 +158,7 @@ export const sessionJoinResponseSchema = z.union([
     channelId: z.string(),
     state: z.string(),
     meta: channelMetaCacheSchema,
-    events: z.array(socketEventSchema),
+    events: z.array(clientMessageSchema),
   }),
   z.object({ error: z.string() }),
 ]);
@@ -167,7 +167,7 @@ export type SessionJoinResponse = z.infer<typeof sessionJoinResponseSchema>;
 export const getSessionResponseSchema = z.union([
   z.looseObject({
     session: sessionSummarySchema,
-    events: z.array(socketEventSchema),
+    events: z.array(clientMessageSchema),
     meta: channelMetaCacheSchema,
   }),
   z.object({ error: z.string() }),
@@ -177,7 +177,7 @@ export type GetSessionResponse = z.infer<typeof getSessionResponseSchema>;
 export const teleportSessionResponseSchema = z.looseObject({
   success: z.boolean(),
   channelId: z.string().optional(),
-  events: z.array(socketEventSchema).optional(),
+  events: z.array(clientMessageSchema).optional(),
   error: z.string().optional(),
 });
 export type TeleportSessionResponse = z.infer<typeof teleportSessionResponseSchema>;
@@ -186,7 +186,7 @@ export const forkConversationResponseSchema = z.looseObject({
   success: z.boolean(),
   channelId: z.string().optional(),
   parentSessionId: z.string().optional(),
-  events: z.array(socketEventSchema).optional(),
+  events: z.array(clientMessageSchema).optional(),
   error: z.string().optional(),
 });
 export type ForkConversationResponse = z.infer<typeof forkConversationResponseSchema>;

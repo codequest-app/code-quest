@@ -1,4 +1,4 @@
-import type { SocketEvent } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/shared';
 import { messageContentSchema } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
@@ -298,7 +298,7 @@ describe('ChatHandler > session', () => {
       // Join same session — should get history
       const result = await claude.send<{
         channelId?: string;
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:join', { channelId });
 
@@ -317,7 +317,7 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       const result = await claude.send<{
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:join', { channelId });
 
@@ -367,7 +367,7 @@ describe('ChatHandler > session', () => {
 
       // But history should deduplicate to exactly 1
       const result = await claude.send<{
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:join', { channelId });
 
@@ -387,7 +387,7 @@ describe('ChatHandler > session', () => {
       // No sendMessage — only session_init in raw_entries
 
       const result = await claude.send<{
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:join', { channelId });
 
@@ -570,7 +570,7 @@ describe('ChatHandler > session', () => {
 
       const result = await claude.send<{
         channelId?: string;
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:join', { channelId });
 

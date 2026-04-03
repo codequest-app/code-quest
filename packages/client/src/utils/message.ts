@@ -29,7 +29,7 @@ export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message =>
     ...fields,
   }) as Message;
 
-interface SocketEvent {
+interface ClientMessage {
   name: string;
   payload: Record<string, unknown>;
 }
@@ -70,7 +70,7 @@ function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): M
   }
 }
 
-export function buildMessagesFromHistory(events: SocketEvent[]): Message[] {
+export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
   const messages: Message[] = [];
   for (const event of events) {
     if (event.name === 'message:assistant') {

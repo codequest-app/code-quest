@@ -1,7 +1,7 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
+// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { resetSeq, segments as s } from '../../test/fake-claude.ts';
-import { adapter, toSocketEvent, transformResult } from './helpers.ts';
+import { adapter, toClientMessage, transformResult } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {
   beforeEach(() => resetSeq());
@@ -36,7 +36,7 @@ describe('ClaudeAdapter', () => {
   });
 
   describe('transform', () => {
-    it('transforms assistant event to message:assistant SocketEvent', () => {
+    it('transforms assistant event to message:assistant ClientMessage', () => {
       const line = s.assistant('hello world');
       const parsed = adapter.parseLine(line);
       expect(parsed.status).toBe('ok');
@@ -53,7 +53,7 @@ describe('ClaudeAdapter', () => {
       expect(output.controlResponses).toHaveLength(0);
     });
 
-    it('transforms system/init to session:init SocketEvent', () => {
+    it('transforms system/init to session:init ClientMessage', () => {
       const line = s.init('sess-1', { model: 'opus' });
       const parsed = adapter.parseLine(line);
       expect(parsed.status).toBe('ok');
@@ -170,64 +170,64 @@ describe('ClaudeAdapter', () => {
     it('returns null for keep_alive', () => {
       const parsed = adapter.parseLine(JSON.stringify({ type: 'keep_alive' }));
       expect(parsed.status).toBe('skip');
-      expect(toSocketEvent(JSON.stringify({ type: 'keep_alive' }))).toBeNull();
+      expect(toClientMessage(JSON.stringify({ type: 'keep_alive' }))).toBeNull();
     });
 
     it('returns null for control_response', () => {
-      expect(toSocketEvent(s.controlResponse('r1'))).toBeNull();
+      expect(toClientMessage(s.controlResponse('r1'))).toBeNull();
     });
 
     it('converts error', () => {
-      expect(toSocketEvent(s.error('boom'))).toMatchObject({
+      expect(toClientMessage(s.error('boom'))).toMatchObject({
         name: 'error:message',
         payload: { message: 'boom' },
       });
     });
 
     it('converts notification', () => {
-      expect(toSocketEvent(s.notification('hello'))).toMatchObject({
+      expect(toClientMessage(s.notification('hello'))).toMatchObject({
         name: 'notification:toast',
         payload: { message: 'hello' },
       });
     });
 
     it('converts auth_url', () => {
-      expect(toSocketEvent(s.authUrl('https://auth.test', 'oauth'))).toMatchObject({
+      expect(toClientMessage(s.authUrl('https://auth.test', 'oauth'))).toMatchObject({
         name: 'notification:auth_url',
         payload: { url: 'https://auth.test' },
       });
     });
 
     it('converts streamlined_text', () => {
-      expect(toSocketEvent(s.streamlinedText('fast'))).toMatchObject({
+      expect(toClientMessage(s.streamlinedText('fast'))).toMatchObject({
         name: 'stream:text',
         payload: { text: 'fast' },
       });
     });
 
     it('converts streamlined_tool_use_summary', () => {
-      expect(toSocketEvent(s.streamlinedToolUseSummary('Read 3'))).toMatchObject({
+      expect(toClientMessage(s.streamlinedToolUseSummary('Read 3'))).toMatchObject({
         name: 'stream:tool_summary',
         payload: { toolSummary: 'Read 3' },
       });
     });
 
     it('converts unknown type to raw:event', () => {
-      expect(toSocketEvent(s.rawUnknown('some_future_thing', { data: 123 }))).toMatchObject({
+      expect(toClientMessage(s.rawUnknown('some_future_thing', { data: 123 }))).toMatchObject({
         name: 'raw:event',
         payload: { rawType: 'some_future_thing' },
       });
     });
 
     it('converts control_cancel_request', () => {
-      expect(toSocketEvent(s.controlCancelRequest('cc-1'))).toMatchObject({
+      expect(toClientMessage(s.controlCancelRequest('cc-1'))).toMatchObject({
         name: 'control:cancel',
         payload: { requestId: 'cc-1' },
       });
     });
 
-    it('converts auth_status to structured SocketEvent', () => {
-      const result = toSocketEvent(
+    it('converts auth_status to structured ClientMessage', () => {
+      const result = toClientMessage(
         JSON.stringify({
           type: 'auth_status',
           isAuthenticating: false,
@@ -246,7 +246,7 @@ describe('ClaudeAdapter', () => {
     });
 
     it('converts auth_status with isAuthenticating=true', () => {
-      const result = toSocketEvent(
+      const result = toClientMessage(
         JSON.stringify({ type: 'auth_status', isAuthenticating: true, output: [] }),
       );
       expect(result).toMatchObject({
@@ -256,7 +256,7 @@ describe('ClaudeAdapter', () => {
     });
 
     it('converts auth_status without optional fields', () => {
-      const result = toSocketEvent(
+      const result = toClientMessage(
         JSON.stringify({ type: 'auth_status', isAuthenticating: false, output: [] }),
       );
       expect(result).toMatchObject({
@@ -267,7 +267,7 @@ describe('ClaudeAdapter', () => {
     });
 
     it('converts rate_limit_event with overage fields', () => {
-      const result = toSocketEvent(
+      const result = toClientMessage(
         s.rateLimitEvent({
           status: 'rate_limited',
           rateLimitType: '5hr',
@@ -289,7 +289,7 @@ describe('ClaudeAdapter', () => {
       delete base.rate_limit_info.isUsingOverage;
       delete base.rate_limit_info.rateLimitType;
       delete base.rate_limit_info.resetsAt;
-      const result = toSocketEvent(JSON.stringify(base));
+      const result = toClientMessage(JSON.stringify(base));
       expect(result).toMatchObject({
         name: 'system:rate_limit',
         payload: { info: { status: 'ok' } },

@@ -1,6 +1,6 @@
-import type { SocketEvent } from '../../types.ts';
+import type { ClientMessage } from '../../types.ts';
 
-export function transformStreamEvent(event: Record<string, unknown>): SocketEvent | null {
+export function transformStreamEvent(event: Record<string, unknown>): ClientMessage | null {
   const se = event.event as Record<string, unknown> | undefined;
   if (!se) return null;
 

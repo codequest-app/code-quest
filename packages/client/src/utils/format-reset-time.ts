@@ -1,7 +1,7 @@
 export function formatResetTime(resetsAt: string): string | null {
   try {
     const ms = new Date(resetsAt).getTime() - Date.now();
-    if (ms <= 0) return 'soon';
+    if (!(ms > 0)) return 'soon';
     const min = Math.floor(ms / 60000);
     const hrs = Math.floor(ms / 3600000);
     const days = Math.floor(ms / 86400000);

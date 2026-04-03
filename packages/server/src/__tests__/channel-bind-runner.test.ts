@@ -62,7 +62,7 @@ describe('Channel.bindRunner', () => {
       expect(events[0].permissionMode).toBe('plan');
     });
 
-    it('invokes onSocketEvent hook after broadcasting', async () => {
+    it('invokes onClientMessage hook after broadcasting', async () => {
       const { claude, channelId } = await setup();
       const events: any[] = [];
       claude.socket.on('message:assistant', (p: any) => events.push(p));

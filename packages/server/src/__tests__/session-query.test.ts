@@ -1,4 +1,4 @@
-import type { SocketEvent } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeClaude } from '../test/index.ts';
@@ -132,7 +132,7 @@ describe('ChatHandler > session', () => {
 
       const result = await claude.send<{
         session?: Record<string, unknown>;
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:get', { channelId });
 
@@ -176,7 +176,7 @@ describe('ChatHandler > session', () => {
 
       const result = await claude.send<{
         session?: Record<string, unknown>;
-        events?: SocketEvent[];
+        events?: ClientMessage[];
         error?: string;
       }>('session:get', { channelId });
 

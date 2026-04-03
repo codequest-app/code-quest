@@ -15,11 +15,11 @@ export const controlResponseSchema = z.object({
 });
 export type ControlResponse = z.infer<typeof controlResponseSchema>;
 
-export const socketEventSchema = z.object({
+export const clientMessageSchema = z.object({
   name: z.string(),
   payload: z.record(z.string(), z.unknown()),
 });
-export type SocketEvent = z.infer<typeof socketEventSchema>;
+export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
 export const messageContentSchema = z.object({
   content: z.array(z.object({ type: z.string(), text: z.string() })),

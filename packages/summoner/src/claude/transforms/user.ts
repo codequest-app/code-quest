@@ -1,7 +1,7 @@
 import type { ContentBlock } from '@code-quest/shared';
-import type { SocketEvent } from '../../types.ts';
+import type { ClientMessage } from '../../types.ts';
 
-export function transformUserEvent(event: Record<string, unknown>): SocketEvent | null {
+export function transformUserEvent(event: Record<string, unknown>): ClientMessage | null {
   const parentToolUseId = (event.parent_tool_use_id as string) ?? undefined;
   const message = event.message as Record<string, unknown> | undefined;
   const content = message?.content;

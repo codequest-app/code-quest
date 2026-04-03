@@ -1,7 +1,7 @@
 import type { SpawnOptions } from 'node:child_process';
-import type { ProviderClientConfig, SocketEvent } from '@code-quest/shared';
+import type { ClientMessage, ProviderClientConfig } from '@code-quest/shared';
 
-export type { SocketEvent };
+export type { ClientMessage };
 
 // --- Raw entry for recording ---
 
@@ -52,7 +52,7 @@ export interface ProcessProvider {
 // --- AdapterOutput: result of transforming a protocol event ---
 
 export interface AdapterOutput {
-  events: SocketEvent[];
+  events: ClientMessage[];
   controlResponses: ControlResponseEvent[];
   serverActions: never[];
 }

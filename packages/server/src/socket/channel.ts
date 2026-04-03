@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 import type {
   ChannelMetaCache,
+  ClientMessage,
   ControlResponse,
   NotificationResponse,
-  SocketEvent,
 } from '@code-quest/shared';
 import type { ControlResponseEvent, ProcessRunner } from '@code-quest/summoner';
 import {
@@ -18,7 +18,7 @@ import { pickDefined } from './utils/helpers.ts';
 
 /** Callbacks invoked by Channel when runner events occur. */
 export interface ChannelHooks {
-  onSocketEvent?: (channel: Channel, event: SocketEvent) => void;
+  onClientMessage?: (channel: Channel, event: ClientMessage) => void;
   onExit?: (channel: Channel, code: number | null) => void;
 }
 
@@ -30,7 +30,7 @@ interface PendingRequest {
 
 /** Stored listener references for unbindRunner cleanup. */
 interface RunnerListenerRefs {
-  socketEvent: (event: SocketEvent) => void;
+  clientMessage: (event: ClientMessage) => void;
   controlResponse: (event: ControlResponseEvent) => void;
   exit: (code: number | null) => void;
 }
@@ -287,7 +287,7 @@ export class Channel {
   }
 
   /** Update channel internal state from runner events. */
-  private handleInternalEvent(se: SocketEvent): void {
+  private handleInternalEvent(se: ClientMessage): void {
     if (se.name === 'error:message') {
       const { message } = errorMessageEventSchema.parse(se.payload);
       this.lastError = message;
@@ -324,10 +324,10 @@ export class Channel {
   bindRunner(hooks: ChannelHooks = {}): void {
     if (this._runnerListeners) return; // already wired
 
-    const onSocketEvent = (se: SocketEvent) => {
+    const onClientMessage = (se: ClientMessage) => {
       this.handleInternalEvent(se);
       // Broadcasting is now handled by ChannelEmitter.dispatchEvent()
-      hooks.onSocketEvent?.(this, se);
+      hooks.onClientMessage?.(this, se);
     };
 
     const onControlResponse = (event: ControlResponseEvent) => {
@@ -349,12 +349,12 @@ export class Channel {
     };
 
     this._runnerListeners = {
-      socketEvent: onSocketEvent,
+      clientMessage: onClientMessage,
       controlResponse: onControlResponse,
       exit: onExit,
     };
 
-    this.runner.on('socket_event', onSocketEvent);
+    this.runner.on('client_message', onClientMessage);
     this.runner.on('control_response', onControlResponse);
     this.runner.on('exit', onExit);
   }
@@ -362,7 +362,7 @@ export class Channel {
   unbindRunner(): void {
     if (!this._runnerListeners) return;
     const l = this._runnerListeners;
-    this.runner.removeListener('socket_event', l.socketEvent);
+    this.runner.removeListener('client_message', l.clientMessage);
     this.runner.removeListener('control_response', l.controlResponse);
     this.runner.removeListener('exit', l.exit);
     this._runnerListeners = null;

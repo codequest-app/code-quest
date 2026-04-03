@@ -90,8 +90,8 @@ export class ProcessRunner extends EventEmitter {
     for (const cr of controlResponses) {
       this.emit('control_response', cr);
     }
-    for (const se of events) {
-      this.emit('socket_event', se);
+    for (const msg of events) {
+      this.emit('client_message', msg);
     }
   }
 

@@ -1,7 +1,7 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
+// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/fake-claude.ts';
-import { toSocketEvent, transformResult } from '../helpers.ts';
+import { toClientMessage, transformResult } from '../helpers.ts';
 
 describe('transform — result events', () => {
   it('converts result with stats', () => {
@@ -11,7 +11,7 @@ describe('transform — result events', () => {
     base.usage = { input_tokens: 100, output_tokens: 200 };
     base.num_turns = 3;
     base.errors = ['something failed'];
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'message:result',
       payload: {
@@ -46,7 +46,7 @@ describe('transform — result events', () => {
     base.is_error = true;
     base.subtype = 'error_max_turns';
     delete base.errors;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({
       name: 'message:result',
       payload: { isError: true, subtype: 'error_max_turns' },
@@ -60,7 +60,7 @@ describe('transform — result events', () => {
     base.usage = {};
     delete base.is_error;
     delete base.subtype;
-    const result = toSocketEvent(JSON.stringify(base));
+    const result = toClientMessage(JSON.stringify(base));
     expect(result).toMatchObject({ name: 'message:result' });
     expect((result as any).payload.isError).toBeUndefined();
     expect((result as any).payload.subtype).toBeUndefined();

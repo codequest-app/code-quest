@@ -75,7 +75,7 @@ export class ChannelEmitter {
   }
 
   /**
-   * Dispatch a runner socket_event.
+   * Dispatch a runner client_message.
    * Auto-broadcasts to channel sockets (except session:init).
    */
   dispatchRunnerEvent(ch: Channel, event: string, payload: unknown): void {

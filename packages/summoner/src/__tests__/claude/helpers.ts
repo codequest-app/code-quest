@@ -1,9 +1,9 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: SocketEvent payload is Record<string,unknown>, needs cast in assertions
+// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { ClaudeAdapter } from '../../claude/adapter.ts';
 
 export const adapter = new ClaudeAdapter();
 
-/** Extract the ProtocolEvent from a parseLine result */
+/** Extract the ProtocolMessage from a parseLine result */
 export function parseEvent(line: string) {
   const parsed = adapter.parseLine(line);
   if (parsed.status === 'ok') return parsed.event;
@@ -12,8 +12,8 @@ export function parseEvent(line: string) {
   return null;
 }
 
-/** Helper: parseLine + transform → extract single SocketEvent (or null / array) */
-export function toSocketEvent(line: string) {
+/** Helper: parseLine + transform → extract single ClientMessage (or null / array) */
+export function toClientMessage(line: string) {
   const event = parseEvent(line);
   if (!event) return null;
   const r = adapter.transform(event);

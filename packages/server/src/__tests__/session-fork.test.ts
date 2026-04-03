@@ -1,4 +1,4 @@
-import type { SocketEvent } from '@code-quest/shared';
+import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
 import * as execGitModule from '../socket/utils/exec-git.ts';
@@ -156,7 +156,7 @@ describe('session:teleport', () => {
     const result = await claude.send<{
       success: boolean;
       channelId?: string;
-      events?: SocketEvent[];
+      events?: ClientMessage[];
       error?: string;
     }>('session:teleport', { remoteSessionId: channelId, newSessionId: 'client-teleport-4' });
 
@@ -226,7 +226,7 @@ describe('chat:fork enhanced', () => {
       success: boolean;
       channelId?: string;
       parentSessionId?: string;
-      events?: SocketEvent[];
+      events?: ClientMessage[];
       error?: string;
     }>('session:fork', {
       forkedFromSession: channelId,

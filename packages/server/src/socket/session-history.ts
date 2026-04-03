@@ -1,4 +1,4 @@
-import type { ServerToClientEvents, SocketEvent } from '@code-quest/shared';
+import type { ClientMessage, ServerToClientEvents } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
 import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
@@ -33,9 +33,9 @@ export class SessionHistory {
     return record?.sessionId ?? channelId;
   }
 
-  async getSessionHistory(channelId: string): Promise<SocketEvent[]> {
+  async getSessionHistory(channelId: string): Promise<ClientMessage[]> {
     const sessionId = await this.resolveSessionId(channelId);
-    const all = await this.convertRawToSocketEvents(sessionId);
+    const all = await this.replaySession(sessionId);
     return all.filter((e) => HISTORY_NAMES.has(e.name));
   }
 
@@ -51,24 +51,22 @@ export class SessionHistory {
   }
 
   async getPendingReplayEvents(sessionId: string): Promise<{
-    events: SocketEvent[];
+    events: ClientMessage[];
     respondedRequestIds: Set<string>;
   }> {
     const rawEntries = await this.rawEventStore.getBySession(sessionId);
     const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
-    const events = this.convertRawEntriesToSocketEvents(rawEntries);
+    const events = this.replayEntries(rawEntries);
     return { events, respondedRequestIds };
   }
 
-  private async convertRawToSocketEvents(sessionId: string): Promise<SocketEvent[]> {
+  private async replaySession(sessionId: string): Promise<ClientMessage[]> {
     const rawEntries = await this.rawEventStore.getBySession(sessionId);
-    return this.convertRawEntriesToSocketEvents(rawEntries);
+    return this.replayEntries(rawEntries);
   }
 
-  private convertRawEntriesToSocketEvents(
-    rawEntries: Array<{ raw: string; direction: string }>,
-  ): SocketEvent[] {
-    const result: SocketEvent[] = [];
+  private replayEntries(rawEntries: Array<{ raw: string; direction: string }>): ClientMessage[] {
+    const result: ClientMessage[] = [];
 
     // Check if stdout contains any user message echoes
     const hasStdoutUserEcho = rawEntries.some((e) => {
@@ -119,7 +117,7 @@ export class SessionHistory {
   ): Promise<void> {
     const { events, respondedRequestIds } = await this.getPendingReplayEvents(sessionId);
 
-    const pendingRequests: Array<{ requestId: string; event: SocketEvent }> = [];
+    const pendingRequests: Array<{ requestId: string; event: ClientMessage }> = [];
 
     for (const event of events) {
       if (event.name === 'control:permission' || event.name === 'control:elicitation') {

@@ -1,7 +1,7 @@
-import type { SocketEvent } from '../../types.ts';
+import type { ClientMessage } from '../../types.ts';
 import { asRecord } from '../../utils.ts';
 
-export function transformSystemEvent(event: Record<string, unknown>): SocketEvent | null {
+export function transformSystemEvent(event: Record<string, unknown>): ClientMessage | null {
   const subtype = event.subtype as string | undefined;
 
   if (subtype === 'init') {

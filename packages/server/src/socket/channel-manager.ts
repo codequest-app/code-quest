@@ -36,7 +36,7 @@ export class ChannelManager {
     private resolveSessionId: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
-      onSocketEvent: (ch, se) => emitter.dispatchRunnerEvent(ch, se.name, se.payload),
+      onClientMessage: (ch, se) => emitter.dispatchRunnerEvent(ch, se.name, se.payload),
       onExit: (ch, code) => emitter.dispatch('channel:exit', ch, { code }),
     };
   }
