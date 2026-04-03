@@ -58,7 +58,11 @@ export function MessageNodeList({
                 nodes={group.node.children}
                 onStopTask={onStopTask}
                 onDiffRespond={onDiffRespond}
-                parentToolId={group.node.message.meta?.toolId as string | undefined}
+                parentToolId={
+                  group.node.message.type === 'tool_use'
+                    ? group.node.message.meta.toolId
+                    : undefined
+                }
               />
             )}
           </div>

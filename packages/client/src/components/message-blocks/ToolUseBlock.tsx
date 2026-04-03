@@ -1,4 +1,5 @@
 import Ansi from 'ansi-to-react';
+import type { ToolUseMeta } from '../../types/ui';
 import { isDiff } from '../../utils/diff';
 import { DiffViewer } from '../DiffViewer';
 import { JsonViewer } from '../JsonViewer';
@@ -135,19 +136,13 @@ function DefaultToolBody({
   );
 }
 
-export function ToolUseBlock({
-  content,
-  meta,
-}: {
-  content: string;
-  meta?: Record<string, unknown>;
-}) {
+export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUseMeta }) {
   const toolName = content;
-  const input = (meta?.input ?? {}) as Record<string, unknown>;
-  const partialInput = meta?.partialInput as string | undefined;
-  const result = meta?.result as Record<string, unknown> | undefined;
-  const resultContent = result?.content as string | undefined;
-  const resultIsError = result?.is_error as boolean | undefined;
+  const input = meta?.input ?? {};
+  const partialInput = meta?.partialInput;
+  const result = meta?.result;
+  const resultContent = result?.content;
+  const resultIsError = result?.is_error;
 
   if (isToolHidden(toolName)) return null;
 

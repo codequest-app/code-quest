@@ -58,16 +58,20 @@ export function renderBody(
   message: Message,
   onDiffRespond?: (toolId: string, accepted: boolean) => void,
 ): React.ReactNode {
-  const { content, meta } = message;
+  const { content } = message;
   switch (message.type) {
     case 'text':
       return (
         <>
           <MarkdownContent content={content} />
-          {meta?.citations && (
+          {message.meta?.citations && (
             <CitationsPanel
               citations={
-                meta.citations as Array<{ url?: string; title?: string; citedText?: string }>
+                message.meta.citations as Array<{
+                  url?: string;
+                  title?: string;
+                  citedText?: string;
+                }>
               }
             />
           )}
@@ -77,17 +81,19 @@ export function renderBody(
       return (
         <ThinkingBlock
           content={content}
-          budgetTokens={meta?.budget_tokens as number | undefined}
-          durationMs={meta?.durationMs as number | null | undefined}
-          isStreaming={meta?.isStreaming as boolean | undefined}
+          budgetTokens={message.meta?.budget_tokens as number | undefined}
+          durationMs={message.meta?.durationMs as number | null | undefined}
+          isStreaming={message.meta?.isStreaming as boolean | undefined}
         />
       );
     case 'tool_use':
-      return <ToolUseBlock content={content} meta={meta} />;
+      return <ToolUseBlock content={content} meta={message.meta} />;
     case 'tool_result':
-      return <ToolResultBlock content={content} meta={meta} onDiffRespond={onDiffRespond} />;
+      return (
+        <ToolResultBlock content={content} meta={message.meta} onDiffRespond={onDiffRespond} />
+      );
     case 'result':
-      return <ResultContent meta={meta} />;
+      return <ResultContent meta={message.meta} />;
     case 'error':
       return <ErrorContent content={content} />;
     case 'pending_action':
@@ -99,29 +105,29 @@ export function renderBody(
     case 'streamlined_tool_use_summary':
       return <StreamlinedToolSummaryContent content={content} />;
     case 'task_started':
-      return <TaskStartedContent content={content} meta={meta} />;
+      return <TaskStartedContent content={content} meta={message.meta} />;
     case 'compact_boundary':
       return <CompactBoundaryContent />;
     case 'rate_limit_event':
-      return <RateLimitContent content={content} meta={meta} />;
+      return <RateLimitContent content={content} meta={message.meta} />;
     case 'hook_started':
-      return <HookStartedContent content={content} meta={meta} />;
+      return <HookStartedContent content={content} meta={message.meta} />;
     case 'hook_response':
-      return <HookResponseContent content={content} meta={meta} />;
+      return <HookResponseContent content={content} meta={message.meta} />;
     case 'hook_diagnostics':
-      return <HookDiagnosticsContent content={content} meta={meta} />;
+      return <HookDiagnosticsContent content={content} meta={message.meta} />;
     case 'unknown_delta':
-      return <CollapsibleDataContent icon="❔" content={content} meta={meta} />;
+      return <CollapsibleDataContent icon="❔" content={content} meta={message.meta} />;
     case 'raw_event':
-      return <CollapsibleDataContent icon="📦" content={content} meta={meta} />;
+      return <CollapsibleDataContent icon="📦" content={content} meta={message.meta} />;
     case 'unhandled':
-      return <UnhandledContent content={content} meta={meta} />;
+      return <UnhandledContent content={content} meta={message.meta} />;
     case 'image':
-      return <ImageContent meta={meta} />;
+      return <ImageContent meta={message.meta} />;
     case 'document':
-      return <DocumentContent content={content} meta={meta} />;
+      return <DocumentContent content={content} meta={message.meta} />;
     case 'content_block_start':
-      return <ContentBlockStart meta={meta} />;
+      return <ContentBlockStart meta={message.meta} />;
     case 'meta':
       return <MetaContent content={content} />;
     case 'interrupt':
