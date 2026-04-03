@@ -39,6 +39,6 @@ export const Empty: Story = {
   args: {
     open: true,
     onClose: fn(),
-    onSelect: fn(),
+    onConfirm: fn(),
   },
 };

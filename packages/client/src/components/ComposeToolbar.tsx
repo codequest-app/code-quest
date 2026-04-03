@@ -225,7 +225,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
         <RewindDialog
           open
           onClose={closeDialog}
-          onSelect={({ messageId, promptText }) => {
+          onConfirm={({ messageId, promptText }) => {
             closeDialog();
             rewindToMessage(messageId, false)
               .then((result) => {

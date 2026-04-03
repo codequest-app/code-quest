@@ -96,17 +96,35 @@ describe('RewindDialog', () => {
     expect(listbox).toHaveAttribute('aria-label');
   });
 
-  it('selects message on click and closes dialog', async () => {
+  it('shows confirmation dialog after selecting a message', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);
     await screen.findByRole('dialog', { name: /rewind/i });
 
-    // Click first item to trigger rewind
+    // Click first item
     await user.click(screen.getAllByRole('option')[0]);
 
-    // Dialog should close after selection
-    expect(screen.queryByRole('dialog', { name: /rewind/i })).not.toBeInTheDocument();
+    // Should show confirmation dialog
+    const confirmDialog = await screen.findByRole('dialog', { name: /fork and rewind/i });
+    expect(confirmDialog).toBeInTheDocument();
+    expect(screen.getByText(/continue/i)).toBeInTheDocument();
+    expect(screen.getByText(/never mind/i)).toBeInTheDocument();
+  });
+
+  it('closes confirmation dialog on "Never mind"', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendMessage(claude, user, 'hello');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+    await user.click(screen.getAllByRole('option')[0]);
+
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+    await user.click(screen.getByText(/never mind/i));
+
+    // Should go back to message list (or close entirely)
+    expect(screen.queryByRole('dialog', { name: /fork and rewind/i })).not.toBeInTheDocument();
   });
 });
