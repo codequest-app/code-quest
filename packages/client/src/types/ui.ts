@@ -1,4 +1,6 @@
-import type { ChatStats } from '@code-quest/shared';
+import type { ResultMeta, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
+
+export type { ResultMeta, ToolResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
 
 export type SessionStatus =
   | 'disconnected'
@@ -17,26 +19,7 @@ export type ForkFn = (
   messageId: string,
 ) => Promise<{ success: boolean; channelId?: string; error?: string }>;
 
-// ── Message meta types per message type ──
-
-export interface ToolUseMeta {
-  toolId: string;
-  input: Record<string, unknown>;
-  partialInput?: string;
-  result?: { content?: string; is_error?: boolean };
-  fileContent?: string;
-  fileError?: string;
-}
-
-export interface ToolResultMeta {
-  toolId: string;
-  name?: string;
-  is_error?: boolean;
-}
-
-export interface ResultMeta {
-  stats: ChatStats;
-}
+// ── Client-only message meta types ──
 
 export interface TextMeta {
   citations?: Array<{ url?: string; title?: string; citedText?: string }>;

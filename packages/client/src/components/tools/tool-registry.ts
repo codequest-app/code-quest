@@ -1,12 +1,8 @@
-export interface ToolInput {
-  [key: string]: unknown;
-}
+import type { ToolResult } from '@code-quest/shared';
 
-export interface ToolResult {
-  content?: string;
-  is_error?: boolean;
-  [key: string]: unknown;
-}
+export type { ToolResult };
+
+export type ToolInput = Record<string, unknown>;
 
 /** Structured header for rendering: name bold + detail secondary + optional range */
 export interface ToolHeaderInfo {
