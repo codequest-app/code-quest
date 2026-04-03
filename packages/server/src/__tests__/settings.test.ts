@@ -50,6 +50,19 @@ describe('ChatHandler > settings', () => {
       const match = events.find((e) => e.initialPermissionMode === 'plan');
       expect(match).toBeDefined();
     });
+
+    it('updates channel.sessionConfig.permissionMode after success', async () => {
+      const { claude, channelId } = await setup();
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+        typeof ChannelManager
+      >;
+
+      await claude.send('settings:set_permission_mode', { channelId, mode: 'bypassPermissions' });
+
+      const channel = channelManager.get(channelId);
+      expect(channel?.sessionConfig.permissionMode).toBe('bypassPermissions');
+    });
   });
 
   describe('settings:set_model', () => {

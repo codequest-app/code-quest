@@ -50,6 +50,7 @@ export function create(
     try {
       const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
       await ch.sendRequest('settings:set_permission_mode', { mode });
+      ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
       callback?.({ success: true });
