@@ -1,5 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useInputHistory } from '../hooks/useInputHistory';
@@ -55,6 +55,11 @@ export function ComposeInput() {
       }
     });
   }, [registerFocus]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: value triggers autogrow recalc
+  useLayoutEffect(() => {
+    autogrow(textareaRef.current);
+  }, [value]);
 
   const inputHistory = useInputHistory();
   const mentionContainerRef = useRef<HTMLDivElement>(null);

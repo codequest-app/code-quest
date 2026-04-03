@@ -60,6 +60,30 @@ describe('ComposeInput', () => {
     expect(textarea).toHaveValue('');
   });
 
+  it('textarea height resets immediately after submit (no flash of tall empty box)', async () => {
+    await renderWithProviders();
+    const textarea = screen.getByPlaceholderText(
+      '⌘ Esc to focus or unfocus Claude',
+    ) as HTMLTextAreaElement;
+
+    // Simulate multi-line input that triggers autogrow
+    let mockScrollHeight = 150;
+    Object.defineProperty(textarea, 'scrollHeight', {
+      get: () => mockScrollHeight,
+      configurable: true,
+    });
+    await userEvent.type(textarea, 'line1\nline2\nline3');
+    expect(textarea.style.height).toBe('150px');
+
+    // After submit, scrollHeight returns to single-line size
+    mockScrollHeight = 24;
+    await userEvent.keyboard('{Enter}');
+
+    // With useLayoutEffect, height is reset before paint
+    // With useEffect, the old 150px would persist until next frame
+    expect(textarea.style.height).toBe('24px');
+  });
+
   it('renders without error when no attachments', async () => {
     await renderWithProviders();
     expect(screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude')).toBeInTheDocument();
