@@ -1,8 +1,9 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
+import { AccountUsageDialog } from '../AccountUsageDialog';
 
 async function openUsageDialog(user: UserEvent) {
   const textarea = screen.getByPlaceholderText(/Esc to focus/i);
@@ -162,5 +163,41 @@ describe('AccountUsageDialog', () => {
 
     const dialog = await openUsageDialog(user);
     expect(within(dialog).getByText(/\$1\.23/)).toBeInTheDocument();
+  });
+
+  it('shows manage link when authMethod is claudeai', () => {
+    render(
+      <AccountUsageDialog
+        open={true}
+        onClose={() => {}}
+        authMethod="claudeai"
+        usage={{ five_hour: { utilization: 0.3 } }}
+      />,
+    );
+    expect(screen.getByText('Manage usage on claude.ai')).toBeInTheDocument();
+  });
+
+  it('hides manage link when authMethod is not claudeai', () => {
+    render(
+      <AccountUsageDialog
+        open={true}
+        onClose={() => {}}
+        authMethod="api-key"
+        usage={{ five_hour: { utilization: 0.3 } }}
+      />,
+    );
+    expect(screen.queryByText('Manage usage on claude.ai')).not.toBeInTheDocument();
+  });
+
+  it('shows unavailable message for non-claudeai auth without usage data', () => {
+    render(<AccountUsageDialog open={true} onClose={() => {}} authMethod="api-key" />);
+    expect(
+      screen.getByText('Usage tracking is only available for Claude AI subscribers.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows loading when claudeai auth but no usage data yet', () => {
+    render(<AccountUsageDialog open={true} onClose={() => {}} authMethod="claudeai" />);
+    expect(screen.getByText(/Loading usage data/)).toBeInTheDocument();
   });
 });

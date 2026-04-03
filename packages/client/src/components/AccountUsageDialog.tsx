@@ -4,7 +4,9 @@ import {
   modelUsageEntrySchema,
   type ProviderClientConfig,
   type UsageQuota,
+  usageQuotaTierSchema,
 } from '@code-quest/shared';
+import { formatResetTime } from '../utils/format-reset-time';
 
 interface AccountUsageDialogProps {
   open: boolean;
@@ -37,21 +39,6 @@ function formatAuthMethod(
   return DEFAULT_AUTH_METHODS[method] ?? 'Not authenticated';
 }
 
-function formatResetTime(resetsAt: string): string | null {
-  try {
-    const ms = new Date(resetsAt).getTime() - Date.now();
-    if (ms <= 0) return 'soon';
-    const min = Math.floor(ms / 60000);
-    const hrs = Math.floor(ms / 3600000);
-    const days = Math.floor(ms / 86400000);
-    if (min < 60) return `in ${min}m`;
-    if (hrs < 24) return `in ${hrs}h`;
-    return `in ${days}d`;
-  } catch {
-    return null;
-  }
-}
-
 function AccountRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center text-[13px] py-1">
@@ -80,9 +67,9 @@ function UsageBarRow({
         <span className="text-text">{label}</span>
         <span className="text-text tabular-nums">{pct}%</span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-white/5 rounded-sm overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${isHigh ? 'bg-danger' : 'bg-accent'}`}
+          className={`h-full rounded-sm transition-all ${isHigh ? 'bg-danger' : 'bg-accent'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -117,6 +104,10 @@ export function AccountUsageDialog({
   providerConfig,
 }: AccountUsageDialogProps) {
   const contextUsage = contextUsageDataSchema.safeParse(rawContextUsage).data;
+  const manageUrl =
+    subscriptionType === 'team' || subscriptionType === 'enterprise'
+      ? 'https://claude.ai/admin-settings/usage'
+      : 'https://claude.ai/settings/usage';
   if (!open) return null;
 
   return (
@@ -213,16 +204,18 @@ export function AccountUsageDialog({
             <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
               Quota
             </h4>
-            {usage ? (
+            {authMethod && authMethod !== 'claudeai' && !usage ? (
+              <p className="text-xs text-text-muted italic">
+                Usage tracking is only available for Claude AI subscribers.
+              </p>
+            ) : usage ? (
               (
                 providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
                 DEFAULT_USAGE_TIERS
               ).map(({ key, label }) => {
-                const raw = (usage as Record<string, unknown>)[key];
-                const tier =
-                  raw && typeof raw === 'object' && 'utilization' in raw
-                    ? (raw as { utilization: number; resets_at?: string })
-                    : undefined;
+                const tier = usageQuotaTierSchema.safeParse(
+                  (usage as Record<string, unknown>)[key],
+                ).data;
                 if (!tier) return null;
                 return (
                   <UsageBarRow
@@ -235,6 +228,15 @@ export function AccountUsageDialog({
               })
             ) : (
               <p className="text-xs text-text-muted">Loading usage data…</p>
+            )}
+            {authMethod === 'claudeai' && (
+              <button
+                type="button"
+                className="text-[13px] text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
+                onClick={() => window.open(manageUrl, '_blank')}
+              >
+                Manage usage on claude.ai
+              </button>
             )}
           </div>
         </div>

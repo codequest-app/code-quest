@@ -18,19 +18,19 @@ describe('UsageBar', () => {
     expect(screen.getByText('7day')).toBeInTheDocument();
   });
 
-  it('uses green for low utilization', async () => {
+  it('uses accent for utilization below 80%', async () => {
     await renderWithChannel(<UsageBar usage={{ five_hour: { utilization: 0.3 } }} />);
     const bar = screen.getByTestId('usage-bar-5hr');
-    expect(bar.className).toContain('bg-success');
+    expect(bar.className).toContain('bg-accent');
   });
 
-  it('uses yellow for medium utilization', async () => {
+  it('uses accent for 60% utilization (below threshold)', async () => {
     await renderWithChannel(<UsageBar usage={{ five_hour: { utilization: 0.6 } }} />);
     const bar = screen.getByTestId('usage-bar-5hr');
-    expect(bar.className).toContain('bg-warning');
+    expect(bar.className).toContain('bg-accent');
   });
 
-  it('uses red for high utilization', async () => {
+  it('uses danger for utilization at or above 80%', async () => {
     await renderWithChannel(<UsageBar usage={{ five_hour: { utilization: 0.9 } }} />);
     const bar = screen.getByTestId('usage-bar-5hr');
     expect(bar.className).toContain('bg-danger');

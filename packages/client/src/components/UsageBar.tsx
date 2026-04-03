@@ -1,16 +1,13 @@
-import type { UsageQuota } from '@code-quest/shared';
+import { type UsageQuota, usageQuotaTierSchema } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
+import { formatResetTime } from '../utils/format-reset-time';
 
 interface UsageBarProps {
   usage: UsageQuota;
 }
 
-const USAGE_THRESHOLDS = { danger: 0.8, warning: 0.5 } as const;
-
 function tierColor(utilization: number): string {
-  if (utilization > USAGE_THRESHOLDS.danger) return 'bg-danger';
-  if (utilization > USAGE_THRESHOLDS.warning) return 'bg-warning';
-  return 'bg-success';
+  return utilization >= 0.8 ? 'bg-danger' : 'bg-accent';
 }
 
 function TierBar({
@@ -23,22 +20,19 @@ function TierBar({
   resetsAt?: string;
 }) {
   const pct = Math.min(100, utilization * 100);
+  const resetText = resetsAt ? formatResetTime(resetsAt) : null;
   return (
     <div className="flex items-center gap-2">
       <span className="w-16 text-right">{label}</span>
-      <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-white/5 rounded-sm overflow-hidden">
         <div
           data-testid={`usage-bar-${label.toLowerCase().replace(/\s+/g, '-')}`}
-          className={`h-full rounded-full transition-all ${tierColor(utilization)}`}
+          className={`h-full rounded-sm transition-all ${tierColor(utilization)}`}
           style={{ width: `${pct}%` }}
         />
       </div>
       <span>{pct.toFixed(0)}%</span>
-      {resetsAt && (
-        <span className="text-text-muted/40">
-          resets {new Date(resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
-      )}
+      {resetText && <span className="text-text-muted/40">resets {resetText}</span>}
     </div>
   );
 }
@@ -60,11 +54,7 @@ export function UsageBar({ usage }: UsageBarProps) {
       data-testid="usage-bar"
     >
       {usageTiers.map(({ key, label }) => {
-        const raw = (usage as Record<string, unknown>)[key];
-        const tier =
-          raw && typeof raw === 'object' && 'utilization' in raw
-            ? (raw as { utilization: number; resets_at?: string })
-            : undefined;
+        const tier = usageQuotaTierSchema.safeParse((usage as Record<string, unknown>)[key]).data;
         if (!tier) return null;
         return (
           <TierBar

@@ -142,9 +142,9 @@ describe('ClaudeProtocol.buildArgs', () => {
     expect(args[args.indexOf('--mcp-config') + 1]).toBe(JSON.stringify(config));
   });
 
-  it('adds --setting-sources comma-separated', () => {
+  it('adds --setting-sources= with comma-separated values', () => {
     const args = protocol.buildArgs({ settingSources: ['user', 'project'] });
-    expect(args[args.indexOf('--setting-sources') + 1]).toBe('user,project');
+    expect(args).toContain('--setting-sources=user,project');
   });
 
   it('adds --strict-mcp-config when true', () => {

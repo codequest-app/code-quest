@@ -67,7 +67,7 @@ export class ClaudeProtocol {
       args.push('--mcp-config', configValue);
     }
     if (options.settingSources?.length)
-      args.push('--setting-sources', options.settingSources.join(','));
+      args.push(`--setting-sources=${options.settingSources.join(',')}`);
     if (options.strictMcpConfig) args.push('--strict-mcp-config');
 
     // Permissions

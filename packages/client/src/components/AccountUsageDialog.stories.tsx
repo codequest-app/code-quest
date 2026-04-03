@@ -30,4 +30,39 @@ export const Default: Story = {
     },
   },
 };
-export const NoUsage: Story = { args: { open: true, onClose: fn() } };
+export const NoUsage: Story = { args: { open: true, onClose: fn(), authMethod: 'claudeai' } };
+
+export const WithManageLink: Story = {
+  args: {
+    open: true,
+    onClose: fn(),
+    authMethod: 'claudeai',
+    subscriptionType: 'pro',
+    usage: {
+      five_hour: { utilization: 0.6, resets_at: new Date(Date.now() + 7200000).toISOString() },
+      seven_day: { utilization: 0.85 },
+    },
+  },
+};
+
+export const TeamManageLink: Story = {
+  args: {
+    open: true,
+    onClose: fn(),
+    authMethod: 'claudeai',
+    subscriptionType: 'team',
+    organization: 'Acme Corp',
+    usage: {
+      five_hour: { utilization: 0.3 },
+    },
+  },
+};
+
+export const UnavailableUsage: Story = {
+  args: {
+    open: true,
+    onClose: fn(),
+    authMethod: 'api-key',
+    email: 'dev@company.com',
+  },
+};
