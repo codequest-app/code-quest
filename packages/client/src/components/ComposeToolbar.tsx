@@ -230,7 +230,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
             rewindToMessage(messageId, false)
               .then((result) => {
                 if (result.success) {
-                  forkSession(messageId);
+                  forkSession(messageId).catch(() => toast.error('Failed to fork session'));
                   compose.updateValue(promptText);
                 } else {
                   toast.error(result.error ?? 'Failed to rewind');
