@@ -103,3 +103,4 @@ export const mcpPayloadSchema = z.looseObject({
   requestId: z.string(),
   message: z.record(z.string(), z.unknown()).optional(),
 });
+export type McpPayload = z.infer<typeof mcpPayloadSchema>;

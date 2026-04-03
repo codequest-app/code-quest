@@ -258,3 +258,4 @@ export type SessionStatusPayload = z.infer<typeof sessionStatusPayloadSchema>;
 export const channelExitPayloadSchema = z.looseObject({
   code: z.number().nullable(),
 });
+export type ChannelExitPayload = z.infer<typeof channelExitPayloadSchema>;

@@ -156,6 +156,7 @@ export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
 
 /** control:cancel / control:elicitation payload (requestId only) */
 export const requestIdPayloadSchema = z.looseObject({ requestId: z.string() });
+export type RequestIdPayload = z.infer<typeof requestIdPayloadSchema>;
 
 /** control:permission payload */
 export const permissionPayloadSchema = z.looseObject({
@@ -163,12 +164,14 @@ export const permissionPayloadSchema = z.looseObject({
   toolName: z.string(),
   toolUseId: z.string(),
 });
+export type PermissionPayload = z.infer<typeof permissionPayloadSchema>;
 
 /** auto-respond payload (action:open_url, action:open_file, notification:show, mcp:auto_respond) */
 export const autoRespondPayloadSchema = z.looseObject({
   requestId: z.string(),
   response: z.record(z.string(), z.unknown()),
 });
+export type AutoRespondPayload = z.infer<typeof autoRespondPayloadSchema>;
 
 /** control:forward payload (unknown control_request subtypes forwarded to client) */
 export const controlForwardPayloadSchema = z.looseObject({
@@ -180,6 +183,7 @@ export const controlForwardPayloadSchema = z.looseObject({
   suggestions: z.array(z.unknown()).optional(),
   callbackId: z.string().optional(),
 });
+export type ControlForwardPayload = z.infer<typeof controlForwardPayloadSchema>;
 
 /** control:open_diff payload */
 export const controlOpenDiffPayloadSchema = z.looseObject({
@@ -187,3 +191,4 @@ export const controlOpenDiffPayloadSchema = z.looseObject({
   originalPath: z.string(),
   newPath: z.string(),
 });
+export type ControlOpenDiffPayload = z.infer<typeof controlOpenDiffPayloadSchema>;

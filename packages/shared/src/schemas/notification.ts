@@ -34,7 +34,7 @@ export type NotificationToastPayload = z.infer<typeof notificationToastPayloadSc
 export const notificationShowPayloadSchema = z.object({
   channelId: z.string(),
   message: z.string(),
-  severity: z.enum(['error', 'warning', 'info']),
+  severity: z.enum(['info', 'warning', 'error']),
   buttons: z.array(z.string()).optional(),
   onlyIfNotVisible: z.boolean().optional(),
 });
@@ -114,6 +114,7 @@ export const contextCategorySchema = z.object({
   tokens: z.number(),
   color: z.string(),
 });
+export type ContextCategory = z.infer<typeof contextCategorySchema>;
 
 export const contextUsageDataSchema = z.object({
   categories: z.array(contextCategorySchema).optional(),

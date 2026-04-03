@@ -142,12 +142,15 @@ export type RemoteControlStateInfo = z.infer<typeof remoteControlStateInfoSchema
 
 /** set_model action input */
 export const serverActionModelSchema = z.looseObject({ model: z.string() });
+export type ServerActionModel = z.infer<typeof serverActionModelSchema>;
 
 /** set_permission_mode action input */
 export const serverActionModeSchema = z.looseObject({ mode: z.string() });
+export type ServerActionMode = z.infer<typeof serverActionModeSchema>;
 
 /** CLI-initiated settings update (settings:model_updated, settings:permission_mode_updated) */
 export const settingsUpdatedPayloadSchema = z.looseObject({
   requestId: z.string(),
   input: z.unknown(),
 });
+export type SettingsUpdatedPayload = z.infer<typeof settingsUpdatedPayloadSchema>;
