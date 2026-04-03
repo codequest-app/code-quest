@@ -17,11 +17,11 @@ export function toClientMessage(line: string) {
   const event = parseEvent(line);
   if (!event) return null;
   const r = adapter.transform(event);
-  return r.events.length === 0 ? null : r.events.length === 1 ? r.events[0] : r.events;
+  return r.messages.length === 0 ? null : r.messages.length === 1 ? r.messages[0] : r.messages;
 }
 
 export function transformResult(line: string) {
   const event = parseEvent(line);
-  if (!event) return { events: [], controlResponses: [], serverActions: [] };
+  if (!event) return { messages: [], controlResponses: [], serverActions: [] };
   return adapter.transform(event);
 }

@@ -173,6 +173,6 @@ export function transformControlRequest(event: Record<string, unknown>): Adapter
   const handler = subtype ? HANDLERS[subtype] : undefined;
   const result = handler ? handler(ctx) : handleForwardToClient(ctx);
 
-  const events = result ? [result] : [];
-  return { events, serverActions: [], controlResponses: [] };
+  const messages = result ? [result] : [];
+  return { messages, serverActions: [], controlResponses: [] };
 }

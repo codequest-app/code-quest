@@ -50,14 +50,14 @@ export class SessionHistory {
     return this.rawEventStore.getBySession(sessionId);
   }
 
-  async getPendingReplayEvents(sessionId: string): Promise<{
-    events: ClientMessage[];
+  async getPendingReplayMessages(sessionId: string): Promise<{
+    messages: ClientMessage[];
     respondedRequestIds: Set<string>;
   }> {
     const rawEntries = await this.rawEventStore.getBySession(sessionId);
     const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
-    const events = this.replayEntries(rawEntries);
-    return { events, respondedRequestIds };
+    const messages = this.replayEntries(rawEntries);
+    return { messages, respondedRequestIds };
   }
 
   private async replaySession(sessionId: string): Promise<ClientMessage[]> {
@@ -90,7 +90,7 @@ export class SessionHistory {
         if (entry.direction === 'out') {
           const parsed = typedJsonObjectSchema.safeParse(raw);
           if (parsed.success) {
-            const converted = this.adapter.transform(parsed.data).events;
+            const converted = this.adapter.transform(parsed.data).messages;
             result.push(...converted);
           }
         } else if (entry.direction === 'in') {
@@ -115,27 +115,27 @@ export class SessionHistory {
     channelId: string,
     sessionId: string,
   ): Promise<void> {
-    const { events, respondedRequestIds } = await this.getPendingReplayEvents(sessionId);
+    const { messages, respondedRequestIds } = await this.getPendingReplayMessages(sessionId);
 
-    const pendingRequests: Array<{ requestId: string; event: ClientMessage }> = [];
+    const pendingRequests: Array<{ requestId: string; message: ClientMessage }> = [];
 
-    for (const event of events) {
-      if (event.name === 'control:permission' || event.name === 'control:elicitation') {
-        const { requestId } = controlRequestEventSchema.parse(event.payload);
-        pendingRequests.push({ requestId, event });
-      } else if (event.name === 'control:cancel') {
-        const { requestId } = controlRequestEventSchema.parse(event.payload);
+    for (const message of messages) {
+      if (message.name === 'control:permission' || message.name === 'control:elicitation') {
+        const { requestId } = controlRequestEventSchema.parse(message.payload);
+        pendingRequests.push({ requestId, message });
+      } else if (message.name === 'control:cancel') {
+        const { requestId } = controlRequestEventSchema.parse(message.payload);
         respondedRequestIds.add(requestId);
       }
     }
 
-    for (const { requestId, event } of pendingRequests) {
+    for (const { requestId, message } of pendingRequests) {
       if (respondedRequestIds.has(requestId)) continue;
 
-      const eventName = event.name as keyof ServerToClientEvents;
+      const eventName = message.name as keyof ServerToClientEvents;
       (socket.emit as (event: string, ...args: unknown[]) => void)(eventName, {
         channelId,
-        ...event.payload,
+        ...message.payload,
       });
     }
   }

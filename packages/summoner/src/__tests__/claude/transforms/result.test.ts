@@ -30,12 +30,12 @@ describe('transform — result events', () => {
     base.usage = { input_tokens: 100, output_tokens: 50 };
     base.errors = ['Max turns exceeded'];
     const result = transformResult(JSON.stringify(base));
-    expect(result.events).toHaveLength(2);
-    expect(result.events[0]).toMatchObject({
+    expect(result.messages).toHaveLength(2);
+    expect(result.messages[0]).toMatchObject({
       name: 'message:result',
       payload: { isError: true, subtype: 'error_max_turns' },
     });
-    expect(result.events[1]).toMatchObject({
+    expect(result.messages[1]).toMatchObject({
       name: 'error:message',
       payload: { message: 'Max turns exceeded' },
     });

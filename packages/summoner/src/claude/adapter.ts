@@ -10,20 +10,20 @@ import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
 import type { ProtocolMessage } from './schemas.ts';
-import { transformAssistantEvent } from './transforms/assistant.ts';
+import { transformAssistant } from './transforms/assistant.ts';
 import { transformControlRequest } from './transforms/control.ts';
-import { transformResultEvent } from './transforms/result.ts';
-import { transformStreamEvent } from './transforms/stream.ts';
-import { transformSystemEvent } from './transforms/system.ts';
-import { transformUserEvent } from './transforms/user.ts';
+import { transformResult } from './transforms/result.ts';
+import { transformStream } from './transforms/stream.ts';
+import { transformSystem } from './transforms/system.ts';
+import { transformUser } from './transforms/user.ts';
 
 interface ConvertResult {
-  events: ClientMessage[];
+  messages: ClientMessage[];
   serverActions: never[];
   controlResponses: ControlResponseEvent[];
 }
 
-const EMPTY: ConvertResult = { events: [], serverActions: [], controlResponses: [] };
+const EMPTY: ConvertResult = { messages: [], serverActions: [], controlResponses: [] };
 
 interface RequestMapping {
   subtype: string;
@@ -73,8 +73,8 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   },
 };
 
-function convertRateLimitEvent(event: ProtocolMessage): ClientMessage {
-  const rli = event.rate_limit_info as Record<string, unknown>;
+function convertRateLimitMessage(message: ProtocolMessage): ClientMessage {
+  const rli = message.rate_limit_info as Record<string, unknown>;
   return {
     name: 'system:rate_limit',
     payload: {
@@ -90,13 +90,13 @@ function convertRateLimitEvent(event: ProtocolMessage): ClientMessage {
   };
 }
 
-function convertAuthStatus(event: ProtocolMessage): ClientMessage {
+function convertAuthStatusMessage(message: ProtocolMessage): ClientMessage {
   return {
     name: 'notification:auth_status',
     payload: {
-      status: event.isAuthenticating ? 'authenticating' : 'authenticated',
-      output: Array.isArray(event.output) ? event.output.join('\n') : undefined,
-      account: event.account,
+      status: message.isAuthenticating ? 'authenticating' : 'authenticated',
+      output: Array.isArray(message.output) ? message.output.join('\n') : undefined,
+      account: message.account,
     },
   };
 }
@@ -194,9 +194,9 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     return this.protocol.parseLine(line);
   }
 
-  transform(event: ProtocolMessage): AdapterOutput {
-    const { events, serverActions, controlResponses } = this.convertEvent(event);
-    return { events, controlResponses, serverActions };
+  transform(message: ProtocolMessage): AdapterOutput {
+    const { messages, serverActions, controlResponses } = this.convertMessage(message);
+    return { messages, controlResponses, serverActions };
   }
 
   formatRequest(
@@ -243,13 +243,13 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
 
   // ── Core dispatch ──
 
-  private convertEvent(event: ProtocolMessage): ConvertResult {
-    if (event.type === 'keep_alive') return EMPTY;
+  private convertMessage(message: ProtocolMessage): ConvertResult {
+    if (message.type === 'keep_alive') return EMPTY;
 
-    if (event.type === 'control_response') {
-      const resp = event.response;
+    if (message.type === 'control_response') {
+      const resp = message.response;
       return {
-        events: [],
+        messages: [],
         serverActions: [],
         controlResponses: [
           {
@@ -262,74 +262,74 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
       };
     }
 
-    if (event.type === 'control_cancel_request') {
+    if (message.type === 'control_cancel_request') {
       return {
-        events: [{ name: 'control:cancel', payload: { requestId: event.request_id } }],
+        messages: [{ name: 'control:cancel', payload: { requestId: message.request_id } }],
         serverActions: [],
         controlResponses: [],
       };
     }
 
-    if (event.type === 'control_request') {
-      return transformControlRequest(event as Record<string, unknown>);
+    if (message.type === 'control_request') {
+      return transformControlRequest(message as Record<string, unknown>);
     }
 
     // All other types produce only ClientMessages
-    const se = this.convertOtherEvent(event);
-    if (se === null) return EMPTY;
-    const events = Array.isArray(se) ? se : [se];
-    return { events, serverActions: [], controlResponses: [] };
+    const result = this.convertOtherMessage(message);
+    if (result === null) return EMPTY;
+    const messages = Array.isArray(result) ? result : [result];
+    return { messages, serverActions: [], controlResponses: [] };
   }
 
-  // ── Non-control events → ClientMessage ──
+  // ── Non-control messages → ClientMessage ──
 
-  private convertOtherEvent(event: ProtocolMessage): ClientMessage | ClientMessage[] | null {
-    const e = event as Record<string, unknown>;
-    switch (event.type) {
+  private convertOtherMessage(message: ProtocolMessage): ClientMessage | ClientMessage[] | null {
+    const raw = message as Record<string, unknown>;
+    switch (message.type) {
       case 'system':
-        return transformSystemEvent(e);
+        return transformSystem(raw);
       case 'assistant':
-        return transformAssistantEvent(e);
+        return transformAssistant(raw);
       case 'user':
-        return transformUserEvent(e);
+        return transformUser(raw);
       case 'result':
-        return transformResultEvent(e);
+        return transformResult(raw);
       case 'stream_event':
-        return transformStreamEvent(e);
+        return transformStream(raw);
       case 'rate_limit_event':
-        return convertRateLimitEvent(event);
+        return convertRateLimitMessage(message);
       case 'speech_to_text_message':
         return {
           name: 'speech:message',
-          payload: { channelId: event.channelId, text: event.text, done: event.done },
+          payload: { channelId: message.channelId, text: message.text, done: message.done },
         };
       case 'streamlined_text':
-        return { name: 'stream:text', payload: { text: event.text } };
+        return { name: 'stream:text', payload: { text: message.text } };
       case 'streamlined_tool_use_summary':
-        return { name: 'stream:tool_summary', payload: { toolSummary: event.tool_summary } };
+        return { name: 'stream:tool_summary', payload: { toolSummary: message.tool_summary } };
       case 'error':
         return {
           name: 'error:message',
-          payload: { message: event.error?.message ?? 'Unknown error' },
+          payload: { message: message.error?.message ?? 'Unknown error' },
         };
       case 'experiment_gates':
-        return { name: 'app:experiment_gates', payload: { gates: event.gates } };
+        return { name: 'app:experiment_gates', payload: { gates: message.gates } };
       case 'available_models':
-        return { name: 'app:models', payload: { models: event.models } };
+        return { name: 'app:models', payload: { models: message.models } };
       case 'notification':
-        return { name: 'notification:toast', payload: { message: event.message } };
+        return { name: 'notification:toast', payload: { message: message.message } };
       case 'auth_status':
-        return convertAuthStatus(event);
+        return convertAuthStatusMessage(message);
       case 'auth_url':
         return {
           name: 'notification:auth_url',
-          payload: { url: event.url, method: event.method ?? 'oauth' },
+          payload: { url: message.url, method: message.method ?? 'oauth' },
         };
       default: {
-        if (typeof e.rawType === 'string' && isRecord(e.data)) {
-          return { name: 'raw:event', payload: { rawType: e.rawType, data: e.data } };
+        if (typeof raw.rawType === 'string' && isRecord(raw.data)) {
+          return { name: 'raw:event', payload: { rawType: raw.rawType, data: raw.data } };
         }
-        return { name: 'raw:event', payload: { rawType: event.type, data: e } };
+        return { name: 'raw:event', payload: { rawType: message.type, data: raw } };
       }
     }
   }

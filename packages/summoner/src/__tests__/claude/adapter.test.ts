@@ -36,7 +36,7 @@ describe('ClaudeAdapter', () => {
   });
 
   describe('transform', () => {
-    it('transforms assistant event to message:assistant ClientMessage', () => {
+    it('transforms assistant to message:assistant ClientMessage', () => {
       const line = s.assistant('hello world');
       const parsed = adapter.parseLine(line);
       expect(parsed.status).toBe('ok');
@@ -44,8 +44,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0]).toMatchObject({
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0]).toMatchObject({
         name: 'message:assistant',
         payload: { content: [{ type: 'text', text: 'hello world' }] },
       });
@@ -61,8 +61,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0]).toMatchObject({
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0]).toMatchObject({
         name: 'session:init',
         payload: { sessionId: 'sess-1', model: 'opus' },
       });
@@ -78,8 +78,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0]).toMatchObject({
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0]).toMatchObject({
         name: 'action:open_url',
         payload: {
           requestId: 'req-1',
@@ -101,7 +101,7 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toMatchObject([
+      expect(output.messages).toMatchObject([
         {
           name: 'control:open_diff',
           payload: { requestId: 'req-2', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
@@ -118,8 +118,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0]).toMatchObject({ name: 'control:permission' });
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0]).toMatchObject({ name: 'control:permission' });
       expect(output.serverActions).toHaveLength(0);
     });
 
@@ -133,7 +133,7 @@ describe('ClaudeAdapter', () => {
 
       expect(output.controlResponses).toHaveLength(1);
       expect(output.controlResponses[0]).toMatchObject({ requestId: 'req-4' });
-      expect(output.events).toHaveLength(0);
+      expect(output.messages).toHaveLength(0);
     });
 
     it('transforms stream text delta to stream_chunk', () => {
@@ -144,8 +144,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0]).toMatchObject({
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0]).toMatchObject({
         name: 'stream:chunk',
         payload: { chunk: { kind: 'text', content: 'hello' } },
       });
@@ -159,8 +159,8 @@ describe('ClaudeAdapter', () => {
 
       const output = adapter.transform(parsed.event);
 
-      expect(output.events.length).toBeGreaterThanOrEqual(1);
-      expect(output.events[0]).toMatchObject({ name: 'message:result' });
+      expect(output.messages.length).toBeGreaterThanOrEqual(1);
+      expect(output.messages[0]).toMatchObject({ name: 'message:result' });
     });
   });
 

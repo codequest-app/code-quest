@@ -1,8 +1,6 @@
 import type { ClientMessage } from '../../types.ts';
 
-export function transformResultEvent(
-  event: Record<string, unknown>,
-): ClientMessage | ClientMessage[] {
+export function transformResult(event: Record<string, unknown>): ClientMessage | ClientMessage[] {
   const usage = event.usage as Record<string, unknown> | undefined;
   const resultPayload = {
     stats: {

@@ -9,7 +9,7 @@ function pipeline(jsonLine: string) {
   if (parsed.status !== 'ok') return [];
 
   const output = adapter.transform(parsed.event);
-  return output.events;
+  return output.messages;
 }
 
 describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
@@ -62,8 +62,8 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
     const parsed = adapter.parseLine(s.status({ status: 'idle' }));
     if (parsed.status === 'ok') {
       const output = adapter.transform(parsed.event);
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0].name).toBe('session:status');
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0].name).toBe('session:status');
     } else {
       expect(['error', 'unknown']).toContain(parsed.status);
     }
@@ -73,9 +73,9 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
     const parsed = adapter.parseLine(s.hookStarted());
     if (parsed.status === 'ok') {
       const output = adapter.transform(parsed.event);
-      expect(output.events).toHaveLength(1);
-      expect(output.events[0].name).toBe('system:hook_started');
-      expect(output.events[0].payload.hook).toBeDefined();
+      expect(output.messages).toHaveLength(1);
+      expect(output.messages[0].name).toBe('system:hook_started');
+      expect(output.messages[0].payload.hook).toBeDefined();
     } else {
       expect(['error', 'unknown']).toContain(parsed.status);
     }
@@ -97,11 +97,11 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
 
     const output = adapter.transform(parsed.event);
 
-    expect(output.events).toHaveLength(1);
-    expect(output.events[0].name).toBe('action:open_url');
-    expect(output.events[0].payload.url).toBe('https://example.com');
-    expect(output.events[0].payload.requestId).toBe('req-url');
-    expect(output.events[0].payload.response).toEqual({ type: 'open_url_response' });
+    expect(output.messages).toHaveLength(1);
+    expect(output.messages[0].name).toBe('action:open_url');
+    expect(output.messages[0].payload.url).toBe('https://example.com');
+    expect(output.messages[0].payload.requestId).toBe('req-url');
+    expect(output.messages[0].payload.response).toEqual({ type: 'open_url_response' });
     expect(output.serverActions).toHaveLength(0);
   });
 

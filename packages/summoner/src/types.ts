@@ -49,10 +49,10 @@ export interface ProcessProvider {
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle;
 }
 
-// --- AdapterOutput: result of transforming a protocol event ---
+// --- AdapterOutput: result of transforming a protocol message ---
 
 export interface AdapterOutput {
-  events: ClientMessage[];
+  messages: ClientMessage[];
   controlResponses: ControlResponseEvent[];
   serverActions: never[];
 }
@@ -94,7 +94,7 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
 
   buildArgs(options?: L): string[];
   parseLine(line: string): ParseResult<E>;
-  transform(event: E): AdapterOutput;
+  transform(message: E): AdapterOutput;
   formatMessage(text: string): string;
   formatRequest(
     event: string,

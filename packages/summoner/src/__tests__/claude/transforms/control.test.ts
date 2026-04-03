@@ -38,7 +38,7 @@ describe('transform — control requests', () => {
 
   it('converts get_settings → settings:get_settings event', () => {
     const result = transformResult(s.controlRequest('gs-1', 'get_settings'));
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       { name: 'settings:get_settings', payload: { requestId: 'gs-1' } },
     ]);
     expect(result.serverActions).toHaveLength(0);
@@ -48,7 +48,7 @@ describe('transform — control requests', () => {
     const result = transformResult(
       s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       { name: 'settings:model_updated', payload: { requestId: 'sm-1', input: { model: 'haiku' } } },
     ]);
     expect(result.serverActions).toHaveLength(0);
@@ -58,7 +58,7 @@ describe('transform — control requests', () => {
     const result = transformResult(
       s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'settings:permission_mode_updated',
         payload: { requestId: 'sp-1', input: { mode: 'plan' } },
@@ -69,7 +69,7 @@ describe('transform — control requests', () => {
 
   it('converts initialize → passthrough (no events)', () => {
     const result = transformResult(s.controlRequest('init-1', 'initialize'));
-    expect(result.events).toHaveLength(0);
+    expect(result.messages).toHaveLength(0);
     expect(result.serverActions).toHaveLength(0);
   });
 
@@ -80,7 +80,7 @@ describe('transform — control requests', () => {
         message: { method: 'notifications/initialized' },
       }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       { name: 'mcp:auto_respond', payload: { requestId: 'mcp-1', response: { mcp_response: {} } } },
     ]);
     expect(result.serverActions).toHaveLength(0);
@@ -100,7 +100,7 @@ describe('transform — control requests', () => {
     const result = transformResult(
       s.controlRequest('ou-1', 'open_url', undefined, { url: 'https://example.com' }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'action:open_url',
         payload: {
@@ -117,7 +117,7 @@ describe('transform — control requests', () => {
     const result = transformResult(
       s.controlRequest('of-1', 'open_file', undefined, { file_path: '/tmp/foo.ts' }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'action:open_file',
         payload: {
@@ -139,7 +139,7 @@ describe('transform — control requests', () => {
         onlyIfNotVisible: true,
       }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'notification:show',
         payload: {
@@ -162,7 +162,7 @@ describe('transform — control requests', () => {
         severity: 'error',
       }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'notification:show',
         payload: { message: 'Something went wrong', severity: 'error' },
@@ -172,7 +172,7 @@ describe('transform — control requests', () => {
 
   it('converts show_notification with defaults when fields missing', () => {
     const result = transformResult(s.controlRequestShowNotification('sn-3', { message: 'Hello' }));
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'notification:show',
         payload: { message: 'Hello', severity: 'info' },
@@ -184,7 +184,7 @@ describe('transform — control requests', () => {
     const result = transformResult(
       s.controlRequestOpenDiff('od-1', { originalFilePath: '/tmp/a.ts', newFilePath: '/tmp/b.ts' }),
     );
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'control:open_diff',
         payload: { requestId: 'od-1', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
@@ -195,7 +195,7 @@ describe('transform — control requests', () => {
 
   it('converts unknown subtype → control:forward event', () => {
     const result = transformResult(s.controlRequest('gen-1', 'some_unknown', 'CustomTool'));
-    expect(result.events).toMatchObject([
+    expect(result.messages).toMatchObject([
       {
         name: 'control:forward',
         payload: {

@@ -53,16 +53,16 @@ export class ProcessRunner extends EventEmitter {
 
   private _processLine(line: string): void {
     const result = this.adapter.parseLine(line);
-    let protocolEvent: Record<string, unknown> | null = null;
+    let protocolMessage: Record<string, unknown> | null = null;
 
     switch (result.status) {
       case 'skip':
         return;
       case 'ok':
-        protocolEvent = result.event as Record<string, unknown>;
+        protocolMessage = result.event as Record<string, unknown>;
         break;
       case 'unknown':
-        protocolEvent = {
+        protocolMessage = {
           type: 'raw_event' as const,
           rawType: result.type,
           data: result.data,
@@ -75,7 +75,7 @@ export class ProcessRunner extends EventEmitter {
         } catch {
           data = { raw: result.raw };
         }
-        protocolEvent = {
+        protocolMessage = {
           type: 'raw_event' as const,
           rawType: 'parse_error',
           data,
@@ -84,14 +84,14 @@ export class ProcessRunner extends EventEmitter {
       }
     }
 
-    if (!protocolEvent) return;
+    if (!protocolMessage) return;
 
-    const { events, controlResponses } = this.adapter.transform(protocolEvent);
+    const { messages, controlResponses } = this.adapter.transform(protocolMessage);
     for (const cr of controlResponses) {
       this.emit('control_response', cr);
     }
-    for (const msg of events) {
-      this.emit('client_message', msg);
+    for (const message of messages) {
+      this.emit('client_message', message);
     }
   }
 

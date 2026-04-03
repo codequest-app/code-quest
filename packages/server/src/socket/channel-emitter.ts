@@ -78,7 +78,7 @@ export class ChannelEmitter {
    * Dispatch a runner client_message.
    * Auto-broadcasts to channel sockets (except session:init).
    */
-  dispatchRunnerEvent(ch: Channel, event: string, payload: unknown): void {
+  dispatchRunnerMessage(ch: Channel, event: string, payload: unknown): void {
     if (event !== 'session:init') {
       const data = typeof payload === 'object' && payload !== null ? payload : {};
       this.emit(ch.id, event, { channelId: ch.id, ...(data as Record<string, unknown>) });

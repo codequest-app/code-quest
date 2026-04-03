@@ -286,13 +286,13 @@ export class Channel {
     });
   }
 
-  /** Update channel internal state from runner events. */
-  private handleInternalEvent(se: ClientMessage): void {
-    if (se.name === 'error:message') {
-      const { message } = errorMessageEventSchema.parse(se.payload);
+  /** Update channel internal state from runner messages. */
+  private handleInternalMessage(clientMessage: ClientMessage): void {
+    if (clientMessage.name === 'error:message') {
+      const { message } = errorMessageEventSchema.parse(clientMessage.payload);
       this.lastError = message;
-    } else if (se.name === 'session:init') {
-      const init = sessionInitEventSchema.parse(se.payload);
+    } else if (clientMessage.name === 'session:init') {
+      const init = sessionInitEventSchema.parse(clientMessage.payload);
       if (init.sessionId) {
         this.sessionId = init.sessionId;
       }
@@ -311,8 +311,8 @@ export class Channel {
           slashCommands: init.slashCommands,
         }),
       );
-    } else if (se.name === 'session:status') {
-      const status = sessionStatusEventSchema.parse(se.payload);
+    } else if (clientMessage.name === 'session:status') {
+      const status = sessionStatusEventSchema.parse(clientMessage.payload);
       if (status.permissionMode !== undefined) {
         this.updateSessionConfig({ permissionMode: status.permissionMode });
       }
@@ -324,10 +324,9 @@ export class Channel {
   bindRunner(hooks: ChannelHooks = {}): void {
     if (this._runnerListeners) return; // already wired
 
-    const onClientMessage = (se: ClientMessage) => {
-      this.handleInternalEvent(se);
-      // Broadcasting is now handled by ChannelEmitter.dispatchEvent()
-      hooks.onClientMessage?.(this, se);
+    const onClientMessage = (message: ClientMessage) => {
+      this.handleInternalMessage(message);
+      hooks.onClientMessage?.(this, message);
     };
 
     const onControlResponse = (event: ControlResponseEvent) => {
