@@ -46,4 +46,23 @@ describe('ContentPreviewPanel', () => {
     render(<ContentPreviewPanel content="" diffs={diffs} onClose={vi.fn()} />);
     expect(screen.getByText('src/hello.ts')).toBeInTheDocument();
   });
+
+  it('renders as modal overlay with backdrop', () => {
+    render(<ContentPreviewPanel content="test" onClose={vi.fn()} />);
+    expect(screen.getByTestId('modal-backdrop')).toBeInTheDocument();
+  });
+
+  it('closes on backdrop click', async () => {
+    const onClose = vi.fn();
+    render(<ContentPreviewPanel content="test" onClose={onClose} />);
+    await userEvent.click(screen.getByTestId('modal-backdrop'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('closes on Escape key', async () => {
+    const onClose = vi.fn();
+    render(<ContentPreviewPanel content="test" onClose={onClose} />);
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalled();
+  });
 });

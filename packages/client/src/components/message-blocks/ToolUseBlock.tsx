@@ -2,14 +2,12 @@ import Ansi from 'ansi-to-react';
 import type { ToolUseMeta } from '../../types/ui';
 import { isDiff } from '../../utils/diff';
 import { DiffViewer } from '../DiffViewer';
-import { JsonViewer } from '../JsonViewer';
 import { getToolHeaderInfo, isToolHidden } from '../tools/tool-registry';
 import {
   AnsiContent,
   CODE_BLOCK_CLASS,
   CollapsibleBlock,
   hasAnsi,
-  JSON_VIEWER_CLASS,
   parseFilePathsInContent,
 } from './shared';
 
@@ -114,25 +112,31 @@ function DefaultToolBody({
   resultIsError?: boolean;
   partialInput?: string;
 }) {
+  const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
+
   return (
-    <>
+    <div className="flex flex-col gap-1.5">
       {partialInput ? (
         <pre className={`${CODE_BLOCK_CLASS} text-text-muted/80 animate-pulse`}>{partialInput}</pre>
-      ) : Object.keys(input).length > 0 ? (
-        <JsonViewer data={input} className={JSON_VIEWER_CLASS} />
+      ) : inputJson ? (
+        <ToolBodyRow label="IN" copyText={inputJson}>
+          <pre className={CODE_BLOCK_CLASS}>{inputJson}</pre>
+        </ToolBodyRow>
       ) : null}
       {resultContent != null && (
-        <div className={`mt-2 ${resultIsError ? 'text-danger' : ''}`}>
-          {isDiff(resultContent) ? (
-            <DiffViewer content={resultContent} />
-          ) : hasAnsi(resultContent) ? (
-            <AnsiContent content={resultContent} />
-          ) : (
-            <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(resultContent)}</pre>
-          )}
-        </div>
+        <ToolBodyRow label="OUT" copyText={resultContent}>
+          <div className={resultIsError ? 'text-danger' : ''}>
+            {isDiff(resultContent) ? (
+              <DiffViewer content={resultContent} />
+            ) : hasAnsi(resultContent) ? (
+              <AnsiContent content={resultContent} />
+            ) : (
+              <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(resultContent)}</pre>
+            )}
+          </div>
+        </ToolBodyRow>
       )}
-    </>
+    </div>
   );
 }
 

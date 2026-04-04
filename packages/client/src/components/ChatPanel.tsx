@@ -69,25 +69,23 @@ export function ChatPanel({ title }: { title?: string }) {
     <div className="flex h-full w-full overflow-hidden">
       <OnboardingOverlay />
       {pendingDiffReview && (
-        <div className={SIDE_PANEL}>
-          <ContentPreviewPanel
-            content=""
-            title={pendingDiffReview.filePath ?? 'Diff'}
-            diffs={[
-              {
-                filePath: pendingDiffReview.filePath,
-                oldContent: pendingDiffReview.oldContent,
-                newContent: pendingDiffReview.newContent,
-              },
-            ]}
-            pendingDiffToolId={pendingDiffReview.toolId}
-            onDiffRespond={(toolId, accepted) => {
-              diffRespond(toolId, accepted);
-              clearPendingDiffReview();
-            }}
-            onClose={() => clearPendingDiffReview()}
-          />
-        </div>
+        <ContentPreviewPanel
+          content=""
+          title={pendingDiffReview.filePath ?? 'Diff'}
+          diffs={[
+            {
+              filePath: pendingDiffReview.filePath,
+              oldContent: pendingDiffReview.oldContent,
+              newContent: pendingDiffReview.newContent,
+            },
+          ]}
+          pendingDiffToolId={pendingDiffReview.toolId}
+          onDiffRespond={(toolId, accepted) => {
+            diffRespond(toolId, accepted);
+            clearPendingDiffReview();
+          }}
+          onClose={() => clearPendingDiffReview()}
+        />
       )}
       <div className="flex flex-col flex-1 min-w-0 relative">
         <HeaderBar

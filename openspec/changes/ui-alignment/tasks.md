@@ -57,28 +57,36 @@
 - [x] 8.1 Update stories for AskUserQuestion in ToolPermissionBanner (single question, multi question)
 - [x] 8.2 Pause — user confirms UI matches extension
 
-## Phase 3: Diff Review 對齊 (後續)
+## Phase 3: Diff Review 對齊
 
-- [x] 6.1 Change ContentPreviewPanel from side panel to modal overlay
-- [x] 6.2 Tests + stories
+- [x] 9.1 確認 extension Diff Review 外觀（modal overlay vs side panel）
+- [x] 9.2 Tests (RED): modal overlay renders, close button works
+- [x] 9.3 Change ContentPreviewPanel from side panel to modal overlay
+- [x] 9.4 Tests green + stories
+- [x] 9.5 Pause — user confirms UI
 
-## Phase 4: Tool Use IN/OUT Grid (後續)
+## Phase 4: Tool Use IN/OUT Grid
 
-- [x] 7.1 Add IN/OUT label grid layout to tool use message blocks
-- [x] 7.2 Add bash-specific command styling
-- [x] 7.3 Tests + stories
+- [x] 10.1 確認 extension Tool Use Block 外觀（IN/OUT grid layout）
+- [x] 10.2 Tests (RED): IN/OUT labels visible, grid layout
+- [x] 10.3 Add IN/OUT label grid layout to tool use message blocks
+- [x] 10.4 Add bash-specific command styling
+- [x] 10.5 Tests green + stories
+- [x] 10.6 Pause — user confirms UI
 
-## Phase 5: Plugins/Marketplace (後續)
+## Phase 5: Plugins/Marketplace
 
-- [x] 8.1 Expand PluginsPanel with search, tabs, marketplace install flow
-- [x] 8.2 Tests + stories
+- [ ] 11.1 確認 extension Marketplace 外觀
+- [ ] 11.2 Expand PluginsPanel with search, tabs, marketplace install flow
+- [ ] 11.3 Tests + stories
 
-## Phase 6: Context Menu (後續)
+## Phase 6: Context Menu
 
-- [ ] 9.1 Create ContextMenu component for message right-click
-- [ ] 9.2 Tests + stories
+- [ ] 12.1 確認 extension Context Menu 外觀
+- [ ] 12.2 Create ContextMenu component for message right-click
+- [ ] 12.3 Tests + stories
 
-## Phase 7: Worktree Banner (後續)
+## Phase 7: Worktree Banner
 
-- [ ] 10.1 Add "Open worktree" action to WorktreeBanner
-- [ ] 10.2 Tests + stories
+- [ ] 13.1 Add "Open worktree" action to WorktreeBanner
+- [ ] 13.2 Tests + stories

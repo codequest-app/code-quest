@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderBody } from '../MessageContent';
 
@@ -18,6 +19,47 @@ describe('message-blocks', () => {
         </>,
       );
       expect(screen.getByText('Bash')).toBeInTheDocument();
+    });
+
+    it('renders IN label for bash tool input when expanded', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: { toolId: 'tu-1', input: { command: 'echo hello' } },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      expect(screen.getByText('IN')).toBeInTheDocument();
+    });
+
+    it('renders IN/OUT labels for default tool with input and result when expanded', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Grep',
+            timestamp: Date.now(),
+            meta: {
+              toolId: 'tu-1',
+              input: { pattern: 'foo', path: '/src' },
+              result: { content: 'found 3 matches' },
+            },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Grep'));
+      expect(screen.getByText('IN')).toBeInTheDocument();
+      expect(screen.getByText('OUT')).toBeInTheDocument();
     });
 
     it('hides tool_use for hidden tools (TodoRead)', () => {
