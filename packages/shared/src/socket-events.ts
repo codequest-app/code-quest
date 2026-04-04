@@ -143,6 +143,8 @@ import type {
   TerminalOpenClaudePayload,
   TerminalOpenClaudeResponse,
   UpdateStatePayload,
+  WorktreeInfo,
+  WorktreeListResponse,
 } from './schemas/index.ts';
 
 export interface ClientToServerEvents {
@@ -371,6 +373,17 @@ export interface ClientToServerEvents {
   ) => void;
   'settings:set_remote_control': (payload: ChatSetRemoteControlPayload) => void;
   'chat:hook_respond': (payload: ChatHookCallbackRespondPayload) => void;
+
+  // ── Worktree ──
+  'worktree:create': (
+    payload: { name?: string },
+    callback: (response: WorktreeInfo | { error: string }) => void,
+  ) => void;
+  'worktree:list': (callback: (response: WorktreeListResponse) => void) => void;
+  'worktree:delete': (
+    payload: { name: string },
+    callback: (response: SuccessResponse) => void,
+  ) => void;
 }
 
 export interface ServerToClientEvents {

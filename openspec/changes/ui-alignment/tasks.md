@@ -90,3 +90,27 @@
 
 - [x] 13.1 (依賴 feat/worktree-support merge，跳過) Add "Open worktree" action to WorktreeBanner
 - [x] 13.2 (跳過) Tests + stories
+
+## Phase 8: Content Block Types 對齊
+
+### 14. Tests (RED)
+
+- [x] 14.1 Test: image content block — base64 img tag with correct src and media_type
+- [x] 14.2 Test: document content block — downloadable pill with title
+- [x] 14.3 Test: tool_result with array content — recursively renders each block, filters out tool_reference
+- [x] 14.4 Test: tool_reference — renders `<code>` with tool_name
+- [x] 14.5 Test: redacted_thinking — renders "[Thinking redacted]" placeholder
+
+### 15. Implementation (GREEN)
+
+- [x] 15.1 Add image content block rendering (base64 → img tag)
+- [x] 15.2 Add document content block rendering (downloadable pill)
+- [x] 15.3 Add tool_result array content support (recursive rendering + filter tool_reference)
+- [x] 15.4 Add tool_reference rendering (`<code>{tool_name}</code>`)
+- [x] 15.5 Add redacted_thinking rendering
+- [x] 15.6 Run all tests green
+
+### 16. Stories + commit
+
+- [x] 16.1 Add stories for new content block types
+- [x] 16.2 Commit + push

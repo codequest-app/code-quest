@@ -55,14 +55,27 @@ function messagesFromAssistantBlock(block: ContentBlock, parentToolUseId?: strin
 
 function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): Message | null {
   switch (block.type) {
-    case 'tool_result':
+    case 'tool_result': {
+      const rawContent = block.content;
+      let textContent = '';
+      let arrayContent: unknown[] | undefined;
+      if (typeof rawContent === 'string') {
+        textContent = rawContent;
+      } else if (Array.isArray(rawContent)) {
+        arrayContent = rawContent;
+        textContent = rawContent
+          .filter((b: Record<string, unknown>) => b.type === 'text')
+          .map((b: Record<string, unknown>) => String(b.text ?? ''))
+          .join('\n');
+      }
       return msg({
         role: 'assistant',
         type: 'tool_result',
-        content: String(block.content ?? ''),
-        meta: { toolId: block.toolUseId, name: block.toolName },
+        content: textContent,
+        meta: { toolId: block.toolUseId, name: block.toolName, arrayContent },
         parentToolUseId,
       });
+    }
     case 'text':
       return msg({ role: 'user', type: 'text', content: block.text });
     default:

@@ -1,8 +1,14 @@
 import type { SessionSummary } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useChannelCompose, useChannelControl, useChannelMessages } from '../contexts/channel';
+import {
+  useChannelCompose,
+  useChannelConfig,
+  useChannelControl,
+  useChannelMessages,
+} from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
+import { useTab } from '../contexts/TabContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -12,14 +18,17 @@ import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
 import { SearchBar } from './SearchBar';
 import { SessionDropdown } from './SessionDropdown';
+import { WorktreeBanner } from './WorktreeBanner';
 
 const SIDE_PANEL = 'w-72 shrink-0';
 const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
 export function ChatPanel({ title }: { title?: string }) {
   const { channelId, subscribeRawEvents } = useChannelMessages();
+  const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
   const { listSessions, renameSession, deleteSession, resumeSession } = useSession();
+  const { createNewTab } = useTab();
   const {
     pendingDiffReview,
     diffRespond,
@@ -92,6 +101,12 @@ export function ChatPanel({ title }: { title?: string }) {
           title={title}
           onToggleRaw={() => setActiveSidePanel((v) => (v === 'raw' ? null : 'raw'))}
         />
+        {worktree && (
+          <WorktreeBanner
+            worktree={worktree}
+            onOpenInNewTab={(path) => createNewTab(undefined, { cwd: path })}
+          />
+        )}
         <SearchBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

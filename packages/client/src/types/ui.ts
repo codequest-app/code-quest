@@ -100,6 +100,7 @@ export type MessageType =
   | 'document'
   | 'meta'
   | 'interrupt'
+  | 'redacted_thinking'
   | 'slash_command_result';
 
 /** Typed message variant — meta is typed for known types, loose for others */

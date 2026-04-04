@@ -86,6 +86,8 @@ export function renderBody(
       return (
         <ToolResultBlock content={content} meta={message.meta} onDiffRespond={onDiffRespond} />
       );
+    case 'redacted_thinking':
+      return <div className="text-xs text-text-muted italic py-1">Thinking (redacted)</div>;
     case 'result':
       return <ResultContent meta={message.meta} />;
     case 'error':

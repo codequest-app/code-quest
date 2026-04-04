@@ -27,6 +27,7 @@ import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
+import * as worktree from './handlers/worktree.ts';
 import type { SessionHistory } from './session-history.ts';
 
 @injectable()
@@ -57,6 +58,7 @@ export class SocketServer {
     autoRespond.create(em);
     permission.create(em);
     speech.create(em);
+    worktree.create(em);
     terminal.create(cm, em);
     mcp.create(em);
     file.create(cm, em);
