@@ -36,6 +36,7 @@ export interface ConfigState {
   experimentGates: Record<string, boolean>;
   usageQuota: UsageQuota | null;
   contextUsage: Record<string, unknown> | null;
+  worktree: { name: string; path: string } | null;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -97,6 +98,7 @@ const INITIAL_CONFIG: ConfigState = {
   experimentGates: {},
   usageQuota: null,
   contextUsage: null,
+  worktree: null,
 };
 
 export function ChannelConfigProvider({

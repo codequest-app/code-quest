@@ -11,6 +11,8 @@ import { pickDefined } from './utils/helpers.ts';
 interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
+  cwd?: string;
+  worktree?: { name: string; path: string };
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */
   onBeforeSpawn?: (channel: Channel) => void;
 }
@@ -100,8 +102,11 @@ export class ChannelManager {
     channelId: string,
     opts?: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
-    const runner = this.runnerFactory.create(opts?.launchOptions);
+    const cwd = opts?.worktree?.path ?? opts?.cwd;
+    const runner = this.runnerFactory.create(opts?.launchOptions, cwd ? { cwd } : undefined);
     const channel = this.setupChannel(channelId, runner);
+
+    if (opts?.worktree) channel.worktree = opts.worktree;
 
     opts?.onBeforeSpawn?.(channel);
     runner.spawn();
@@ -195,6 +200,7 @@ export class ChannelManager {
     const settings = pickDefined({
       modelSetting: ss.model,
       defaultCwd: ch?.workspaceFolder,
+      worktree: ch?.worktree ?? undefined,
       initialPermissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,
       mcpServers: ss.mcpServers,

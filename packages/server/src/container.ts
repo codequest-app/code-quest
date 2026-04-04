@@ -43,11 +43,12 @@ export function createContainer(options: ContainerOptions): Container {
 
   const adapter = new ClaudeAdapter();
   const runnerFactory: RunnerFactory = {
-    create: (opts) =>
+    create: (opts, spawnOptions) =>
       new ProcessRunner({
         adapter,
         processProvider: options.processProvider,
         args: opts,
+        spawnOptions,
       }),
     command: adapter.command,
     args: adapter.buildArgs(),

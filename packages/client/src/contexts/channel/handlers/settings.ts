@@ -56,6 +56,9 @@ function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'
       ? { ...state.accountInfo, ...payload.accountInfo }
       : (payload.accountInfo ?? null);
   }
+  if ((payload as Record<string, unknown>).worktree !== undefined) {
+    update.worktree = (payload as Record<string, unknown>).worktree as ConfigState['worktree'];
+  }
   if (Object.keys(update).length === 0) return state;
   return { ...state, ...update };
 }

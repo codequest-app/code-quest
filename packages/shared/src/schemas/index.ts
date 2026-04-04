@@ -14,3 +14,4 @@ export * from './session.ts';
 export * from './settings.ts';
 export * from './system.ts';
 export * from './terminal.ts';
+export * from './worktree.ts';

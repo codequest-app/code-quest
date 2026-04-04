@@ -50,6 +50,7 @@ export class Channel {
   private _metaCache: ChannelMetaCache = {};
   private _sessionId: string | null = null;
   private _workspaceFolder: string | undefined;
+  private _worktree: { name: string; path: string } | null = null;
   private _lastError: string | undefined;
   private _exited = false;
 
@@ -86,6 +87,14 @@ export class Channel {
   }
   set workspaceFolder(v: string | undefined) {
     this._workspaceFolder = v ? resolve(v) : undefined;
+  }
+
+  get worktree(): { name: string; path: string } | null {
+    return this._worktree;
+  }
+  set worktree(v: { name: string; path: string } | null) {
+    this._worktree = v;
+    if (v) this.workspaceFolder = v.path;
   }
 
   get lastError(): string | undefined {
