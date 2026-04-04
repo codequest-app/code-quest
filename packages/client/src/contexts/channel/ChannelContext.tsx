@@ -22,6 +22,7 @@ export function ChannelProvider({
   initialState,
   onTitleChange,
   onStatusChange,
+  onWorktree,
   cwd = '../',
 }: {
   channelId: string;
@@ -29,6 +30,7 @@ export function ChannelProvider({
   initialState?: ChannelInitialState;
   onTitleChange?: (title: string) => void;
   onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
+  onWorktree?: (info: { name: string; path: string }) => void;
   cwd?: string;
 }) {
   const resetStreamingRefsRef = useRef(() => {});
@@ -49,7 +51,11 @@ export function ChannelProvider({
           channelId={channelId}
           resetStreamingRefs={() => resetStreamingRefsRef.current()}
         >
-          <ChannelConfigProvider channelId={channelId} initialConfig={initialState}>
+          <ChannelConfigProvider
+            channelId={channelId}
+            initialConfig={initialState}
+            onWorktree={onWorktree}
+          >
             <ChannelComposeProvider channelId={channelId}>
               <GitProvider>{children}</GitProvider>
             </ChannelComposeProvider>

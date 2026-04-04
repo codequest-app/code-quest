@@ -67,6 +67,7 @@ export interface ChannelConfigValue extends ConfigState {
   disableJupyterMcp: () => Promise<McpResponse>;
   askDebuggerHelp: () => Promise<McpResponse>;
   requestUsageUpdate: () => void;
+  openWorktree: (info: { name: string; path: string }) => void;
 }
 
 type ConfigStateValue = ConfigState & { isFastMode: boolean };
@@ -104,10 +105,12 @@ const INITIAL_CONFIG: ConfigState = {
 export function ChannelConfigProvider({
   channelId,
   initialConfig,
+  onWorktree,
   children,
 }: {
   channelId: string;
   initialConfig?: Partial<ConfigState>;
+  onWorktree?: (info: { name: string; path: string }) => void;
   children: ReactNode;
 }) {
   const [configState, setConfigState] = useState<ConfigState>(() => ({
@@ -155,7 +158,11 @@ export function ChannelConfigProvider({
   }, [channelId, socket]);
 
   // ── Stable actions (only re-created when socket/channelId change) ──
-  const actions = createConfigActions({ socket, channelId });
+  const baseActions = createConfigActions({ socket, channelId });
+  const actions = {
+    ...baseActions,
+    openWorktree: (info: { name: string; path: string }) => onWorktree?.(info),
+  };
 
   // ── State value ──
   const stateValue: ConfigStateValue = {

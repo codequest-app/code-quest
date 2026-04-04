@@ -1,9 +1,12 @@
+import { useChannelConfig } from '../contexts/channel';
+
 interface WorktreeBannerProps {
   worktree: { name: string; path: string };
-  onOpenInNewTab?: (path: string) => void;
 }
 
-export function WorktreeBanner({ worktree, onOpenInNewTab }: WorktreeBannerProps) {
+export function WorktreeBanner({ worktree }: WorktreeBannerProps) {
+  const { openWorktree } = useChannelConfig();
+
   return (
     <div
       data-testid="worktree-banner"
@@ -16,7 +19,7 @@ export function WorktreeBanner({ worktree, onOpenInNewTab }: WorktreeBannerProps
       <button
         type="button"
         aria-label="Open in new tab"
-        onClick={() => onOpenInNewTab?.(worktree.path)}
+        onClick={() => openWorktree(worktree)}
         className="text-accent hover:text-text text-xs cursor-pointer bg-transparent border-0 hover:underline"
       >
         Open in new tab

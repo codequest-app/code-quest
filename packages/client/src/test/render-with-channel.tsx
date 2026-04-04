@@ -13,6 +13,7 @@ export interface RenderWithChannelOptions {
   claude?: FakeClaude;
   initSegment?: string;
   cwd?: string;
+  onWorktree?: (info: { name: string; path: string }) => void;
 }
 
 export interface RenderWithChannelResult extends RenderResult {
@@ -35,7 +36,11 @@ export async function renderWithChannel(
         <SessionProvider>
           <PluginProvider>
             <TabProvider>
-              <ChannelProvider channelId={channelId} cwd={options.cwd}>
+              <ChannelProvider
+                channelId={channelId}
+                cwd={options.cwd}
+                onWorktree={options.onWorktree}
+              >
                 {children}
               </ChannelProvider>
             </TabProvider>

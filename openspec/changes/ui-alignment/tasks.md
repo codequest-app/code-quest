@@ -203,3 +203,23 @@
 - [x] 28.7 更新所有 consumer（import rename）
 - [x] 28.8 Run all tests green (summoner + server + client)
 - [x] 28.9 Commit + push
+
+## Phase 13: onWorktree callback — ChannelProvider → WorkspaceLayout
+
+### 29. Tests (RED)
+
+- [x] 29.1 Test: renderWithWorkspace — WorktreeBanner 點 "Open in new tab" 觸發 onWorktree callback
+- [x] 29.2 Test: WorkspaceLayout — onWorktree 建新 tab 帶正確 cwd
+
+### 30. Implementation (GREEN)
+
+- [x] 30.1 ChannelProvider 加 onWorktree prop
+- [x] 30.2 ChannelConfigContext 暴露 openWorktree action（呼叫 onWorktree callback）
+- [x] 30.3 WorkspaceLayout 傳 onWorktree 實作為 createNewTab
+- [x] 30.4 WorktreeBanner 改用 context action openWorktree（移除 onOpenInNewTab prop）
+- [x] 30.5 ChatPanel 移除 useTab + createNewTab（不再直接用 TabContext）
+
+### 31. Run all tests + commit
+
+- [x] 31.1 Run all tests green
+- [x] 31.2 Commit + push

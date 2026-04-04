@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { WorktreeBanner } from '../WorktreeBanner';
 
 describe('WorktreeBanner', () => {
-  it('renders worktree name', () => {
-    render(
+  it('renders worktree name', async () => {
+    await renderWithChannel(
       <WorktreeBanner
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
       />,
@@ -14,8 +15,8 @@ describe('WorktreeBanner', () => {
     expect(screen.getByText('my-feature')).toBeInTheDocument();
   });
 
-  it('shows "Open in new tab" button', () => {
-    render(
+  it('shows "Open in new tab" button', async () => {
+    await renderWithChannel(
       <WorktreeBanner
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
       />,
@@ -23,21 +24,24 @@ describe('WorktreeBanner', () => {
     expect(screen.getByRole('button', { name: /open.*tab/i })).toBeInTheDocument();
   });
 
-  it('calls onOpenInNewTab when button clicked', async () => {
-    const onOpenInNewTab = vi.fn();
+  it('calls openWorktree from context when button clicked', async () => {
+    const onWorktree = vi.fn();
     const user = userEvent.setup();
-    render(
+    await renderWithChannel(
       <WorktreeBanner
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
-        onOpenInNewTab={onOpenInNewTab}
       />,
+      { onWorktree },
     );
     await user.click(screen.getByRole('button', { name: /open.*tab/i }));
-    expect(onOpenInNewTab).toHaveBeenCalledWith('/repo/.claude/worktrees/my-feature');
+    expect(onWorktree).toHaveBeenCalledWith({
+      name: 'my-feature',
+      path: '/repo/.claude/worktrees/my-feature',
+    });
   });
 
-  it('shows "This session is in worktree" text', () => {
-    render(
+  it('shows "This session is in worktree" text', async () => {
+    await renderWithChannel(
       <WorktreeBanner
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
       />,
