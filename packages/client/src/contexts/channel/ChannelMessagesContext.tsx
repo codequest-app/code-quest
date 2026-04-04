@@ -1,10 +1,14 @@
 import type {
   ChatStats,
   ContentBlock,
-  FileSearchResult,
+  ForkConversationResponse,
+  ListFilesResponse,
   PlanCommentData,
+  RawEventsResponse,
   RewindResult,
   ServerToClientEvents,
+  SuccessResponse,
+  TerminalGetContentsResponse,
 } from '@code-quest/shared';
 import {
   createContext,
@@ -104,14 +108,12 @@ export interface ChannelMessagesValue {
   removeModifiedFile: (path: string) => void;
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
-  fetchRawEvents: () => Promise<{ events: unknown[] }>;
+  fetchRawEvents: () => Promise<RawEventsResponse>;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
-  searchFiles: (pattern: string) => Promise<{ files: FileSearchResult[] }>;
-  getTerminalContents: () => Promise<{ content: string | null }>;
-  openClaudeTerminal: () => Promise<{ success: boolean; error?: string }>;
-  forkSession: (
-    messageId: string,
-  ) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
+  searchFiles: (pattern: string) => Promise<ListFilesResponse>;
+  getTerminalContents: () => Promise<TerminalGetContentsResponse>;
+  openClaudeTerminal: () => Promise<SuccessResponse>;
+  forkSession: (messageId: string) => Promise<ForkConversationResponse>;
   rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RewindResult>;
 }
 

@@ -4,8 +4,6 @@ import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { WorktreeInfo } from '@code-quest/shared';
 
-export type { WorktreeInfo } from '@code-quest/shared';
-
 const exec = promisify(execFile);
 
 const MAX_NAME_LENGTH = 100;

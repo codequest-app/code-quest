@@ -1,8 +1,8 @@
 import type {
-  GitCheckoutResult,
   GitDiffResult,
   GitLogResult,
   GitStatusResult,
+  SuccessResponse,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext } from 'react';
 import { rpc } from '../socket/rpc';
@@ -10,7 +10,7 @@ import { useSocket } from './SocketContext';
 
 export interface GitContextValue {
   gitStatus: () => Promise<GitStatusResult>;
-  gitCheckout: (branch: string) => Promise<GitCheckoutResult>;
+  gitCheckout: (branch: string) => Promise<SuccessResponse>;
   gitLog: (limit?: number) => Promise<GitLogResult>;
   gitDiff: () => Promise<GitDiffResult>;
 }

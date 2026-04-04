@@ -1,10 +1,10 @@
 import {
-  sessionCloseSchema,
-  sessionDeleteSchema,
-  sessionGenerateTitleSchema,
-  sessionRenameSchema,
+  sessionClosePayloadSchema,
+  sessionDeletePayloadSchema,
+  sessionGenerateTitlePayloadSchema,
+  sessionRenamePayloadSchema,
   sessionResumePayloadSchema,
-  sessionUpdateStateSchema,
+  sessionUpdateStatePayloadSchema,
 } from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
@@ -20,7 +20,7 @@ export function create(
 ): void {
   function handleClose(ch: Channel, payload: unknown): void {
     try {
-      const { channelId } = sessionCloseSchema.parse(payload);
+      const { channelId } = sessionClosePayloadSchema.parse(payload);
       ch.kill();
       emitter.broadcastAll('session:dead', { channelId });
     } catch {
@@ -44,7 +44,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = sessionDeleteSchema.parse(payload);
+      const { channelId } = sessionDeletePayloadSchema.parse(payload);
       const success = await sessionStore.delete(channelId);
       if (!success) {
         callback?.({ success: false, error: 'Session not found' });
@@ -63,7 +63,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId, title } = sessionRenameSchema.parse(payload);
+      const { channelId, title } = sessionRenamePayloadSchema.parse(payload);
       const success = await sessionStore.rename(channelId, title);
       if (!success) {
         callback?.({ success: false, error: 'Session not found' });
@@ -82,7 +82,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { description, persist } = sessionGenerateTitleSchema.parse(payload);
+      const { description, persist } = sessionGenerateTitlePayloadSchema.parse(payload);
       const result = await ch.sendRequest('session:generate_title', {
         description,
         persist,
@@ -100,7 +100,7 @@ export function create(
     callback?: SocketCallback,
   ): void {
     try {
-      const { channelId, title, state } = sessionUpdateStateSchema.parse(payload);
+      const { channelId, title, state } = sessionUpdateStatePayloadSchema.parse(payload);
       channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
       callback?.({ success: true });
     } catch (err) {

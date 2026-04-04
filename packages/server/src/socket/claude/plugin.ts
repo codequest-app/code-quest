@@ -1,14 +1,14 @@
 import {
-  addMarketplaceSchema,
+  addMarketplacePayloadSchema,
   availablePluginSchema,
   listPluginsPayloadSchema,
   type MarketplaceSourceConfig,
   pluginInfoSchema,
-  pluginInstallSchema,
-  pluginToggleSchema,
-  pluginUninstallSchema,
-  refreshMarketplaceSchema,
-  removeMarketplaceSchema,
+  pluginInstallPayloadSchema,
+  pluginTogglePayloadSchema,
+  pluginUninstallPayloadSchema,
+  refreshMarketplacePayloadSchema,
+  removeMarketplacePayloadSchema,
 } from '@code-quest/shared';
 
 import type { Channel } from '../channel.ts';
@@ -107,7 +107,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { pluginId } = pluginInstallSchema.parse(payload);
+      const { pluginId } = pluginInstallPayloadSchema.parse(payload);
       const result = runPluginCommand(['install', pluginId]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to install plugin' });
@@ -130,7 +130,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { pluginId } = pluginUninstallSchema.parse(payload);
+      const { pluginId } = pluginUninstallPayloadSchema.parse(payload);
       const result = runPluginCommand(['uninstall', pluginId]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to uninstall plugin' });
@@ -153,7 +153,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { pluginId, enabled } = pluginToggleSchema.parse(payload);
+      const { pluginId, enabled } = pluginTogglePayloadSchema.parse(payload);
       const result = runPluginCommand([enabled ? 'enable' : 'disable', pluginId]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to toggle plugin' });
@@ -230,7 +230,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { source } = addMarketplaceSchema.parse(payload);
+      const { source } = addMarketplacePayloadSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'add', source]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to add marketplace' });
@@ -253,7 +253,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { marketplaceId } = removeMarketplaceSchema.parse(payload);
+      const { marketplaceId } = removeMarketplacePayloadSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'remove', marketplaceId]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to remove marketplace' });
@@ -276,7 +276,7 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): void {
     try {
-      const { marketplaceId } = refreshMarketplaceSchema.parse(payload);
+      const { marketplaceId } = refreshMarketplacePayloadSchema.parse(payload);
       const result = runPluginCommand(['marketplace', 'update', marketplaceId]);
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || 'Failed to refresh marketplace' });

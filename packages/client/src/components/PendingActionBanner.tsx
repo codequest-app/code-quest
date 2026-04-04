@@ -1,6 +1,5 @@
-import type { ControlPermissionResponse } from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
 import { useChannelControl } from '../contexts/channel';
-import type { PendingControl } from '../types/chat';
 import { HookCallbackBanner } from './HookCallbackBanner';
 import { PlanReviewBanner } from './PlanReviewBanner';
 import { ToolPermissionBanner } from './ToolPermissionBanner';

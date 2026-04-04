@@ -1,4 +1,4 @@
-import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
+import { sessionForkPayloadSchema, sessionTeleportPayloadSchema } from '@code-quest/shared';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
@@ -19,7 +19,8 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
+      const { forkedFromSession, resumeSessionAt, newSessionId } =
+        sessionForkPayloadSchema.parse(payload);
       const parentEvents = await sessionHistory.getSessionHistory(forkedFromSession);
       await channelManager.create(newSessionId, {
         launchOptions: { resumeSessionId: forkedFromSession },
@@ -48,7 +49,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const parsed = sessionTeleportSchema.parse(payload);
+      const parsed = sessionTeleportPayloadSchema.parse(payload);
       const events = await sessionHistory.getSessionHistory(parsed.remoteSessionId);
 
       let branchCheckoutFailed = false;

@@ -1,4 +1,8 @@
-import { sessionGetSchema, sessionListRemoteSchema, sessionListSchema } from '@code-quest/shared';
+import {
+  sessionGetPayloadSchema,
+  sessionListPayloadSchema,
+  sessionListRemotePayloadSchema,
+} from '@code-quest/shared';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEmitter } from '../../channel-emitter.ts';
@@ -20,7 +24,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const parsed = sessionListSchema.parse(payload);
+      const parsed = sessionListPayloadSchema.parse(payload);
       const result = await sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
@@ -52,7 +56,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const parsed = sessionListRemoteSchema.parse(payload);
+      const parsed = sessionListRemotePayloadSchema.parse(payload);
       const result = await sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
@@ -71,7 +75,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = sessionGetSchema.parse(payload);
+      const { channelId } = sessionGetPayloadSchema.parse(payload);
       const session = await sessionStore.getById(channelId);
       if (!session) {
         callback?.({ error: 'Session not found' });
@@ -92,7 +96,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = sessionGetSchema.parse(payload);
+      const { channelId } = sessionGetPayloadSchema.parse(payload);
       const entries = await sessionHistory.getRawEntries(channelId);
       const events = entries.map((e) => {
         try {

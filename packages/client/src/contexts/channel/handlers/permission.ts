@@ -1,13 +1,12 @@
-import type { ControlPermissionResponse, ServerToClientEvents } from '@code-quest/shared';
+import type {
+  ControlPermissionResponse,
+  PendingControl,
+  ServerToClientEvents,
+} from '@code-quest/shared';
 import type { MutableRefObject } from 'react';
 import type { TypedSocket } from '../../../socket/client';
 import { channelEmit } from '../../../socket/rpc';
-import type {
-  ChannelState,
-  PendingControl,
-  PendingDiffReview,
-  PendingElicitation,
-} from '../../../types/chat';
+import type { ChannelState, PendingDiffReview, PendingElicitation } from '../../../types/chat';
 import { getFeedbackLabel } from '../../../utils/feedback-label';
 import { msg } from '../../../utils/message';
 

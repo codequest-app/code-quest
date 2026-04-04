@@ -1,8 +1,6 @@
 import type { Question } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 
-export type { Question } from '@code-quest/shared';
-
 function CheckIndicator({ checked }: { checked: boolean }) {
   return (
     <div

@@ -1,8 +1,7 @@
-import type { ControlPermissionResponse } from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
-import type { PendingControl } from '../types/chat';
-import { type Question, QuestionContent } from './QuestionContent';
+import { QuestionContent } from './QuestionContent';
 
 function isAskUserQuestion(
   input: Record<string, unknown>,

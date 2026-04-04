@@ -1,29 +1,29 @@
 import { z } from 'zod';
 
-export const gitStatusSchema = z.object({});
-export type GitStatusPayload = z.infer<typeof gitStatusSchema>;
+export const gitStatusPayloadSchema = z.object({});
+export type GitStatusPayload = z.infer<typeof gitStatusPayloadSchema>;
 
-export const gitCheckoutSchema = z.object({ branch: z.string().min(1) });
-export type GitCheckoutPayload = z.infer<typeof gitCheckoutSchema>;
+export const gitCheckoutPayloadSchema = z.object({ branch: z.string().min(1) });
+export type GitCheckoutPayload = z.infer<typeof gitCheckoutPayloadSchema>;
 
-export const gitLogSchema = z.object({ limit: z.number().min(1).max(100).optional() });
-export type GitLogPayload = z.infer<typeof gitLogSchema>;
+export const gitLogPayloadSchema = z.object({ limit: z.number().min(1).max(100).optional() });
+export type GitLogPayload = z.infer<typeof gitLogPayloadSchema>;
 
-export const gitDiffSchema = z.object({});
-export type GitDiffPayload = z.infer<typeof gitDiffSchema>;
+export const gitDiffPayloadSchema = z.object({});
+export type GitDiffPayload = z.infer<typeof gitDiffPayloadSchema>;
 
-export const gitExecSchema = z.object({
+export const gitExecPayloadSchema = z.object({
   command: z.string(),
   args: z.array(z.string()).optional(),
 });
-export type GitExecPayload = z.infer<typeof gitExecSchema>;
+export type GitExecPayload = z.infer<typeof gitExecPayloadSchema>;
 
-export const gitUpdateSkippedBranchSchema = z.object({
+export const gitUpdateSkippedBranchPayloadSchema = z.object({
   channelId: z.string(),
   branch: z.string(),
   failed: z.boolean(),
 });
-export type GitUpdateSkippedBranchPayload = z.infer<typeof gitUpdateSkippedBranchSchema>;
+export type GitUpdateSkippedBranchPayload = z.infer<typeof gitUpdateSkippedBranchPayloadSchema>;
 
 export const gitFileChangeSchema = z.object({
   status: z.string(),
@@ -56,13 +56,9 @@ export const gitDiffResultSchema = z.object({
 });
 export type GitDiffResult = z.infer<typeof gitDiffResultSchema>;
 
-export type { SuccessResponse as GitCheckoutResult } from './common.ts';
-// GitCheckoutResult is identical to SuccessResponse — re-export as alias
-export { successResponseSchema as gitCheckoutResultSchema } from './common.ts';
-
-export const execResponseSchema = z.looseObject({
+export const gitExecResponseSchema = z.looseObject({
   exitCode: z.number(),
   stdout: z.string(),
   stderr: z.string(),
 });
-export type ExecResponse = z.infer<typeof execResponseSchema>;
+export type GitExecResponse = z.infer<typeof gitExecResponseSchema>;

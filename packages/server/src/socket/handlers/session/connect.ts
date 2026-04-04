@@ -2,8 +2,8 @@ import type { ControlResponse, SessionInitPayload, SessionLaunchPayload } from '
 import {
   channelExitPayloadSchema,
   controlInitResponseSchema,
-  sessionJoinSchema,
-  sessionLaunchSchema,
+  sessionJoinPayloadSchema,
+  sessionLaunchPayloadSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
@@ -107,7 +107,7 @@ export function create(
   ): Promise<void> {
     let resumeSessionId: string | undefined;
     try {
-      const parsed = sessionLaunchSchema.parse(payload);
+      const parsed = sessionLaunchPayloadSchema.parse(payload);
       resumeSessionId = parsed.resume;
       const channelId = parsed.channelId ?? crypto.randomUUID();
       const launchOpts = {
@@ -174,7 +174,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = sessionJoinSchema.parse(payload);
+      const { channelId } = sessionJoinPayloadSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
       const isAlive = existingChannel && !existingChannel.exited;
 

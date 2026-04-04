@@ -1,13 +1,13 @@
 import {
-  debuggerHelpSchema,
-  mcpAuthenticateSchema,
-  mcpGetServersSchema,
-  mcpMessageSchema,
-  mcpOAuthCallbackSchema,
+  channelIdPayloadSchema,
+  mcpAuthenticatePayloadSchema,
+  mcpGetServersPayloadSchema,
+  mcpMessagePayloadSchema,
+  mcpOAuthCallbackPayloadSchema,
   mcpPayloadSchema,
-  mcpReconnectSchema,
-  mcpSetEnabledSchema,
-  mcpSetServersSchema,
+  mcpReconnectPayloadSchema,
+  mcpSetEnabledPayloadSchema,
+  mcpSetServersPayloadSchema,
 } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { Channel } from '../channel.ts';
@@ -42,31 +42,31 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(
 
 export function create(emitter: ChannelEmitter): void {
   const handleReconnect = createRequestHandler(
-    mcpReconnectSchema,
+    mcpReconnectPayloadSchema,
     'mcp:reconnect',
     'Failed to reconnect MCP server',
   );
 
   const handleToggle = createRequestHandler(
-    mcpSetEnabledSchema,
+    mcpSetEnabledPayloadSchema,
     'mcp:toggle',
     'Failed to set MCP server enabled',
   );
 
   const handleServers = createRequestHandler(
-    mcpGetServersSchema,
+    mcpGetServersPayloadSchema,
     'mcp:servers',
     'Failed to get MCP servers',
   );
 
   const handleSetServers = createRequestHandler(
-    mcpSetServersSchema,
+    mcpSetServersPayloadSchema,
     'mcp:set_servers',
     'Failed to set MCP servers',
   );
 
   const handleMessage = createRequestHandler(
-    mcpMessageSchema,
+    mcpMessagePayloadSchema,
     'mcp:message',
     'Failed to send MCP message',
   );
@@ -78,7 +78,7 @@ export function create(emitter: ChannelEmitter): void {
     cb?: SocketCallback,
   ): Promise<void> {
     try {
-      const { serverName } = mcpAuthenticateSchema.parse(payload);
+      const { serverName } = mcpAuthenticatePayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:authenticate', { serverName });
       if (result.success) {
         cb?.({ success: true, authUrl: String(result.response?.authUrl ?? '') || undefined });
@@ -97,7 +97,7 @@ export function create(emitter: ChannelEmitter): void {
     cb?: SocketCallback,
   ): Promise<void> {
     try {
-      const { serverName } = mcpAuthenticateSchema.parse(payload);
+      const { serverName } = mcpAuthenticatePayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:clear_auth', { serverName });
       cb?.({
         success: result.success,
@@ -115,7 +115,7 @@ export function create(emitter: ChannelEmitter): void {
     cb?: SocketCallback,
   ): Promise<void> {
     try {
-      const { serverName, callbackUrl } = mcpOAuthCallbackSchema.parse(payload);
+      const { serverName, callbackUrl } = mcpOAuthCallbackPayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:oauth_callback', { serverName, callbackUrl });
       cb?.({ success: result.success, error: result.error });
     } catch (err) {
@@ -130,7 +130,7 @@ export function create(emitter: ChannelEmitter): void {
     cb?: SocketCallback,
   ): void {
     try {
-      debuggerHelpSchema.parse(payload);
+      channelIdPayloadSchema.parse(payload);
       cb?.({ success: true, response: { type: 'ask_debugger_help_response' } });
     } catch (err) {
       cb?.({ success: false, error: errMsg(err, 'Invalid payload') });

@@ -1,3 +1,4 @@
+import type { PendingControl } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { ChannelProvider, useChannelControl } from '../contexts/channel';
@@ -6,7 +7,6 @@ import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
 import { createSocket } from '../socket/client';
-import type { PendingControl } from '../types/chat';
 import { PendingActionBanner } from './PendingActionBanner';
 
 function SetControls({

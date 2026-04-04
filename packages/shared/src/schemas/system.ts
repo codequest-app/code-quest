@@ -130,12 +130,12 @@ export type SystemRemoteControlPayload = z.infer<typeof systemRemoteControlPaylo
 
 // ── Hook C2S (moved from control.ts) ──
 
-export const chatHookCallbackRespondSchema = z.object({
+export const chatHookCallbackRespondPayloadSchema = z.object({
   channelId: z.string(),
   requestId: z.string(),
   response: z.object({ continue: z.boolean() }),
 });
-export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackRespondSchema>;
+export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackRespondPayloadSchema>;
 
 // ── Hook S2C (moved from control.ts) ──
 
@@ -143,7 +143,7 @@ export const controlHookCallbackPayloadSchema = z.object({
   channelId: z.string(),
   requestId: z.string(),
   callbackId: z.string(),
-  input: z.unknown(),
+  input: z.record(z.string(), z.unknown()).optional(),
   toolUseId: z.string().optional(),
 });
 export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPayloadSchema>;

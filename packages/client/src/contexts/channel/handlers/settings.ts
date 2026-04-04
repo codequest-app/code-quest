@@ -1,4 +1,5 @@
 import {
+  type ControlResponse,
   type McpAuthResult,
   type ModelInfo,
   modelInfoSchema,
@@ -11,7 +12,7 @@ import type { TypedSocket } from '../../../socket/client';
 import { channelEmit, rpc } from '../../../socket/rpc';
 import { findModel } from '../../../utils/model-utils';
 
-import type { ConfigState, McpResponse } from '../ChannelConfigContext';
+import type { ConfigState } from '../ChannelConfigContext';
 
 type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
@@ -191,23 +192,26 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
     return rpc(socket, 'settings:apply', { channelId, settings: { effortLevel: effort } });
   }
 
-  function mcpStatus(): Promise<McpResponse> {
+  function mcpStatus(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:servers', { channelId });
   }
 
-  function mcpToggle(serverName: string, enabled: boolean): Promise<McpResponse> {
+  function mcpToggle(serverName: string, enabled: boolean): Promise<ControlResponse> {
     return rpc(socket, 'mcp:toggle', { channelId, serverName, enabled });
   }
 
-  function mcpReconnect(serverName: string): Promise<McpResponse> {
+  function mcpReconnect(serverName: string): Promise<ControlResponse> {
     return rpc(socket, 'mcp:reconnect', { channelId, serverName });
   }
 
-  function mcpSetServers(servers: Record<string, unknown>): Promise<McpResponse> {
+  function mcpSetServers(servers: Record<string, unknown>): Promise<ControlResponse> {
     return rpc(socket, 'mcp:set_servers', { channelId, servers });
   }
 
-  function mcpMessage(serverName: string, message: Record<string, unknown>): Promise<McpResponse> {
+  function mcpMessage(
+    serverName: string,
+    message: Record<string, unknown>,
+  ): Promise<ControlResponse> {
     return rpc(socket, 'mcp:message', { channelId, serverName, message });
   }
 
@@ -244,23 +248,23 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
     return rpc(socket, 'mcp:clear_auth', { channelId, serverName });
   }
 
-  function ensureChromeMcpEnabled(): Promise<McpResponse> {
+  function ensureChromeMcpEnabled(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:ensure_chrome', { channelId });
   }
 
-  function disableChromeMcp(): Promise<McpResponse> {
+  function disableChromeMcp(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:disable_chrome', { channelId });
   }
 
-  function enableJupyterMcp(): Promise<McpResponse> {
+  function enableJupyterMcp(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:enable_jupyter', { channelId });
   }
 
-  function disableJupyterMcp(): Promise<McpResponse> {
+  function disableJupyterMcp(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:disable_jupyter', { channelId });
   }
 
-  function askDebuggerHelp(): Promise<McpResponse> {
+  function askDebuggerHelp(): Promise<ControlResponse> {
     return rpc(socket, 'mcp:ask_debugger', { channelId });
   }
 

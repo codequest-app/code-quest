@@ -2,26 +2,26 @@ import { z } from 'zod';
 
 // ── C2S ──
 
-export const pluginInstallSchema = z.object({
+export const pluginInstallPayloadSchema = z.object({
   pluginId: z.string(),
   scope: z.enum(['user', 'workspace', 'project', 'local']).optional(),
 });
-export type PluginInstallPayload = z.infer<typeof pluginInstallSchema>;
+export type PluginInstallPayload = z.infer<typeof pluginInstallPayloadSchema>;
 
-export const pluginToggleSchema = z.object({ pluginId: z.string(), enabled: z.boolean() });
-export type PluginTogglePayload = z.infer<typeof pluginToggleSchema>;
+export const pluginTogglePayloadSchema = z.object({ pluginId: z.string(), enabled: z.boolean() });
+export type PluginTogglePayload = z.infer<typeof pluginTogglePayloadSchema>;
 
-export const pluginUninstallSchema = z.object({ pluginId: z.string() });
-export type PluginUninstallPayload = z.infer<typeof pluginUninstallSchema>;
+export const pluginUninstallPayloadSchema = z.object({ pluginId: z.string() });
+export type PluginUninstallPayload = z.infer<typeof pluginUninstallPayloadSchema>;
 
-export const addMarketplaceSchema = z.object({ source: z.string().min(1) });
-export type AddMarketplacePayload = z.infer<typeof addMarketplaceSchema>;
+export const addMarketplacePayloadSchema = z.object({ source: z.string().min(1) });
+export type AddMarketplacePayload = z.infer<typeof addMarketplacePayloadSchema>;
 
-export const removeMarketplaceSchema = z.object({ marketplaceId: z.string() });
-export type RemoveMarketplacePayload = z.infer<typeof removeMarketplaceSchema>;
+export const removeMarketplacePayloadSchema = z.object({ marketplaceId: z.string() });
+export type RemoveMarketplacePayload = z.infer<typeof removeMarketplacePayloadSchema>;
 
-export const refreshMarketplaceSchema = z.object({ marketplaceId: z.string() });
-export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplaceSchema>;
+export const refreshMarketplacePayloadSchema = z.object({ marketplaceId: z.string() });
+export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplacePayloadSchema>;
 
 // ── Info schemas ──
 

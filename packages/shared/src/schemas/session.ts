@@ -83,7 +83,7 @@ export const launchOptionsSchema = z
   })
   .optional();
 
-export const sessionLaunchSchema = z.object({
+export const sessionLaunchPayloadSchema = z.object({
   channelId: z.string().optional(),
   resume: z.string().optional(),
   initialPrompt: z.string().optional(),
@@ -94,72 +94,81 @@ export const sessionLaunchSchema = z.object({
   initOptions: initializeOptionsSchema,
   launchOptions: launchOptionsSchema,
 });
-export type SessionLaunchPayload = z.infer<typeof sessionLaunchSchema>;
+export type SessionLaunchPayload = z.infer<typeof sessionLaunchPayloadSchema>;
 
-export const sessionJoinSchema = z.object({
+export const sessionJoinPayloadSchema = z.object({
   channelId: z.string(),
 });
-export type SessionJoinPayload = z.infer<typeof sessionJoinSchema>;
+export type SessionJoinPayload = z.infer<typeof sessionJoinPayloadSchema>;
 
-export const sessionCloseSchema = z.object({
+export const sessionClosePayloadSchema = z.object({
   channelId: z.string(),
 });
-export type SessionClosePayload = z.infer<typeof sessionCloseSchema>;
+export type SessionClosePayload = z.infer<typeof sessionClosePayloadSchema>;
 
-export const sessionListSchema = z.object({
+export const sessionListPayloadSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
   cwd: z.string().optional(),
   hasParentId: z.boolean().optional(),
 });
-export type SessionListPayload = z.infer<typeof sessionListSchema>;
+export type SessionListPayload = z.infer<typeof sessionListPayloadSchema>;
 
-export const sessionListRemoteSchema = z.object({
+export const sessionListRemotePayloadSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
   offset: z.number().min(0).optional(),
 });
-export type SessionListRemotePayload = z.infer<typeof sessionListRemoteSchema>;
+export type SessionListRemotePayload = z.infer<typeof sessionListRemotePayloadSchema>;
 
-export const sessionGetSchema = z.object({
+export const sessionGetPayloadSchema = z.object({
   channelId: z.string(),
 });
-export type SessionGetPayload = z.infer<typeof sessionGetSchema>;
+export type SessionGetPayload = z.infer<typeof sessionGetPayloadSchema>;
 
-export const sessionRenameSchema = z.object({
+export const sessionRenamePayloadSchema = z.object({
   channelId: z.string(),
   title: z.string().min(1).max(200),
 });
-export type SessionRenamePayload = z.infer<typeof sessionRenameSchema>;
+export type SessionRenamePayload = z.infer<typeof sessionRenamePayloadSchema>;
 
-export const sessionDeleteSchema = z.object({
+export const sessionDeletePayloadSchema = z.object({
   channelId: z.string(),
 });
-export type SessionDeletePayload = z.infer<typeof sessionDeleteSchema>;
+export type SessionDeletePayload = z.infer<typeof sessionDeletePayloadSchema>;
 
-export const sessionForkSchema = z.object({
+export const sessionForkPayloadSchema = z.object({
   forkedFromSession: z.string(),
   resumeSessionAt: z.string().optional(),
   newSessionId: z.string(),
 });
-export type SessionForkPayload = z.infer<typeof sessionForkSchema>;
+export type SessionForkPayload = z.infer<typeof sessionForkPayloadSchema>;
 
-export const sessionTeleportSchema = z.object({
+export const sessionTeleportPayloadSchema = z.object({
   remoteSessionId: z.string(),
   branch: z.string().optional(),
   newSessionId: z.string(),
 });
-export type SessionTeleportPayload = z.infer<typeof sessionTeleportSchema>;
+export type SessionTeleportPayload = z.infer<typeof sessionTeleportPayloadSchema>;
 
-export const sessionUpdateStateSchema = z.object({
+export const sessionUpdateStatePayloadSchema = z.object({
   channelId: z.string(),
   title: z.string().optional(),
   state: z.enum(['busy', 'idle']).optional(),
 });
-export type SessionUpdateStatePayload = z.infer<typeof sessionUpdateStateSchema>;
+export type SessionUpdateStatePayload = z.infer<typeof sessionUpdateStatePayloadSchema>;
+
+export const sessionBroadcastStateSchema = z.enum([
+  'launching',
+  'busy',
+  'idle',
+  'exited',
+  'disconnected',
+]);
+export type SessionBroadcastState = z.infer<typeof sessionBroadcastStateSchema>;
 
 export const sessionStateSummarySchema = z.object({
   channelId: z.string(),
-  state: z.enum(['launching', 'busy', 'idle', 'exited', 'disconnected']),
+  state: sessionBroadcastStateSchema,
   title: z.string().optional(),
   modelSetting: z.string().optional(),
   permissionMode: z.string().optional(),
@@ -299,12 +308,12 @@ export type CancelRequestEventPayload = z.infer<typeof cancelRequestEventPayload
 
 // ── Session title (moved from control.ts) ──
 
-export const sessionGenerateTitleSchema = z.object({
+export const sessionGenerateTitlePayloadSchema = z.object({
   channelId: z.string(),
   description: z.string(),
   persist: z.boolean(),
 });
-export type SessionGenerateTitlePayload = z.infer<typeof sessionGenerateTitleSchema>;
+export type SessionGenerateTitlePayload = z.infer<typeof sessionGenerateTitlePayloadSchema>;
 
 export const generateSessionTitleResponseSchema = z.looseObject({
   success: z.boolean(),

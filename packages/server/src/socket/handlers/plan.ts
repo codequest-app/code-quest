@@ -1,9 +1,8 @@
 import {
+  channelIdPayloadSchema,
   type PlanCommentData,
-  planClosePreviewSchema,
-  planCommentSchema,
-  planGetCommentsSchema,
-  planRemoveCommentSchema,
+  planCommentPayloadSchema,
+  planRemoveCommentPayloadSchema,
 } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
@@ -33,7 +32,7 @@ export function create(emitter: ChannelEmitter): PlanApi {
     cb?: SocketCallback,
   ): void {
     try {
-      const { channelId, comment } = planCommentSchema.parse(payload);
+      const { channelId, comment } = planCommentPayloadSchema.parse(payload);
       getOrCreate(channelId).push(comment);
       cb?.({ success: true });
       if (socket)
@@ -50,7 +49,7 @@ export function create(emitter: ChannelEmitter): PlanApi {
     cb?: SocketCallback,
   ): void {
     try {
-      const { channelId } = planGetCommentsSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       cb?.({ comments: commentsMap.get(channelId) ?? [] });
     } catch {
       cb?.({ comments: [] });
@@ -64,7 +63,7 @@ export function create(emitter: ChannelEmitter): PlanApi {
     cb?: SocketCallback,
   ): void {
     try {
-      const { channelId, commentId } = planRemoveCommentSchema.parse(payload);
+      const { channelId, commentId } = planRemoveCommentPayloadSchema.parse(payload);
       const comments = commentsMap.get(channelId);
       if (!comments) {
         cb?.({ success: false, error: 'Comment not found' });
@@ -94,7 +93,7 @@ export function create(emitter: ChannelEmitter): PlanApi {
     cb?: SocketCallback,
   ): void {
     try {
-      const { channelId } = planClosePreviewSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       commentsMap.delete(channelId);
       cb?.({ success: true });
     } catch (err) {

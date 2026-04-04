@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { basename, normalize, resolve } from 'node:path';
-import { fileListSchema, fileReadPayloadSchema } from '@code-quest/shared';
+import { fileListPayloadSchema, fileReadPayloadSchema } from '@code-quest/shared';
 import Fuse from 'fuse.js';
 import { globSync } from 'glob';
 import type { Channel } from '../channel.ts';
@@ -156,7 +156,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): void {
     try {
-      const { pattern } = fileListSchema.parse(payload);
+      const { pattern } = fileListPayloadSchema.parse(payload);
       const cwd = ch.workspaceFolder;
 
       const allFiles = getAllFiles(cwd);

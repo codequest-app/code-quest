@@ -2,39 +2,39 @@ import { z } from 'zod';
 
 // ── C2S payloads ──
 
-export const chatSendSchema = z.object({
+export const chatSendPayloadSchema = z.object({
   channelId: z.string(),
   message: z.string().min(1),
 });
-export type ChatSendPayload = z.infer<typeof chatSendSchema>;
+export type ChatSendPayload = z.infer<typeof chatSendPayloadSchema>;
 
-export const chatRespondSchema = z.object({
+export const chatRespondPayloadSchema = z.object({
   channelId: z.string().optional(),
   requestId: z.string(),
   response: z.record(z.string(), z.unknown()),
 });
-export type ChatRespondPayload = z.infer<typeof chatRespondSchema>;
+export type ChatRespondPayload = z.infer<typeof chatRespondPayloadSchema>;
 
-export const chatCancelSchema = z.object({
+export const chatCancelPayloadSchema = z.object({
   channelId: z.string(),
 });
-export type ChatCancelPayload = z.infer<typeof chatCancelSchema>;
+export type ChatCancelPayload = z.infer<typeof chatCancelPayloadSchema>;
 
-export const chatRewindCodeSchema = z.object({
+export const chatRewindCodePayloadSchema = z.object({
   channelId: z.string(),
   userMessageId: z.string().optional(),
   dryRun: z.boolean().optional(),
 });
-export type ChatRewindCodePayload = z.infer<typeof chatRewindCodeSchema>;
+export type ChatRewindCodePayload = z.infer<typeof chatRewindCodePayloadSchema>;
 
-export const chatStopTaskSchema = z.object({ channelId: z.string(), taskId: z.string() });
-export type ChatStopTaskPayload = z.infer<typeof chatStopTaskSchema>;
+export const chatStopTaskPayloadSchema = z.object({ channelId: z.string(), taskId: z.string() });
+export type ChatStopTaskPayload = z.infer<typeof chatStopTaskPayloadSchema>;
 
-export const chatCancelAsyncMessageSchema = z.object({
+export const chatCancelAsyncMessagePayloadSchema = z.object({
   channelId: z.string(),
   messageUuid: z.string(),
 });
-export type ChatCancelAsyncMessagePayload = z.infer<typeof chatCancelAsyncMessageSchema>;
+export type ChatCancelAsyncMessagePayload = z.infer<typeof chatCancelAsyncMessagePayloadSchema>;
 
 // ── Moved to separate files ──
 // Message content blocks → ./message-blocks.ts

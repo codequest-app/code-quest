@@ -37,11 +37,13 @@ const sessionConfigSchema = z.object({
 export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 
 /** Extract config fields from session:init. cwd extracted separately to channel.workspaceFolder. */
-export const sessionInitConfigSchema = sessionConfigSchema.pick({
-  model: true,
-  permissionMode: true,
-  effort: true,
-}).extend({ cwd: z.string().optional() });
+export const sessionInitConfigSchema = sessionConfigSchema
+  .pick({
+    model: true,
+    permissionMode: true,
+    effort: true,
+  })
+  .extend({ cwd: z.string().optional() });
 
 const requestMetaSchema = z.object({
   subtype: z.string(),
@@ -52,8 +54,6 @@ export type RequestMeta = z.infer<typeof requestMetaSchema>;
 
 /** Default max thinking tokens when thinking is enabled (matches CLI default). */
 export const DEFAULT_THINKING_TOKENS = 31999;
-
-export type SessionBroadcastState = 'launching' | 'busy' | 'idle' | 'exited' | 'disconnected';
 
 /** Validates raw stdout JSON has a `type` field — gate before adapter.transform(). */
 export const typedJsonObjectSchema = z.looseObject({ type: z.string() });

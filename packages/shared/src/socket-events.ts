@@ -15,7 +15,6 @@ import type {
   ChatRewindCodePayload,
   ChatSendPayload,
   ChatStopTaskPayload,
-  ChromeMcpControlPayload,
   CloseChannelPayload,
   ControlCancelPayload,
   ControlDiffReviewPayload,
@@ -24,13 +23,11 @@ import type {
   ControlMcpPayload,
   ControlPermissionPayload,
   ControlResponse,
-  DebuggerHelpPayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
   EnableJupyterMcpResponse,
   EnsureChromeMcpResponse,
   ErrorMessagePayload,
-  ExecResponse,
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
@@ -41,17 +38,16 @@ import type {
   GetProviderConfigResponse,
   GetSessionResponse,
   GitCheckoutPayload,
-  GitCheckoutResult,
   GitDiffPayload,
   GitDiffResult,
   GitExecPayload,
+  GitExecResponse,
   GitLogPayload,
   GitLogResult,
   GitStatusPayload,
   GitStatusResult,
   GitUpdateSkippedBranchPayload,
   InitResponse,
-  JupyterMcpControlPayload,
   ListFilesResponse,
   ListMarketplacesResponse,
   ListPluginsPayload,
@@ -74,10 +70,7 @@ import type {
   NotificationShowPayload,
   NotificationToastPayload,
   OAuthCodePayload,
-  PlanClosePreviewPayload,
-  PlanCommentEventPayload,
   PlanCommentPayload,
-  PlanGetCommentsPayload,
   PlanRemoveCommentPayload,
   PluginInstallPayload,
   PluginResult,
@@ -86,7 +79,6 @@ import type {
   RawEventPayload,
   RawEventsResponse,
   RefreshMarketplacePayload,
-  RemoveCommentPayload,
   RemoveMarketplacePayload,
   RewindResult,
   SessionClosedPayload,
@@ -239,23 +231,23 @@ export interface ClientToServerEvents {
     callback: (response: ControlResponse) => void,
   ) => void;
   'mcp:ensure_chrome': (
-    payload: ChromeMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: EnsureChromeMcpResponse) => void,
   ) => void;
   'mcp:disable_chrome': (
-    payload: ChromeMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: DisableChromeMcpResponse) => void,
   ) => void;
   'mcp:enable_jupyter': (
-    payload: JupyterMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: EnableJupyterMcpResponse) => void,
   ) => void;
   'mcp:disable_jupyter': (
-    payload: JupyterMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: DisableJupyterMcpResponse) => void,
   ) => void;
   'mcp:ask_debugger': (
-    payload: DebuggerHelpPayload,
+    payload: ChannelIdPayload,
     callback: (response: AskDebuggerHelpResponse) => void,
   ) => void;
 
@@ -263,14 +255,14 @@ export interface ClientToServerEvents {
   'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
   'git:checkout': (
     payload: GitCheckoutPayload,
-    callback: (result: GitCheckoutResult) => void,
+    callback: (result: SuccessResponse) => void,
   ) => void;
   'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  'git:exec': (payload: GitExecPayload, callback: (response: ExecResponse) => void) => void;
+  'git:exec': (payload: GitExecPayload, callback: (response: GitExecResponse) => void) => void;
 
   // ── Aligned: Plugin ──
   'plugin:list': (
@@ -311,7 +303,7 @@ export interface ClientToServerEvents {
     callback: (response: SuccessResponse) => void,
   ) => void;
   'plan:comments': (
-    payload: PlanGetCommentsPayload,
+    payload: ChannelIdPayload,
     callback: (response: GetPlanCommentsResponse) => void,
   ) => void;
   'plan:remove_comment': (
@@ -319,7 +311,7 @@ export interface ClientToServerEvents {
     callback: (response: SuccessResponse) => void,
   ) => void;
   'plan:close_preview': (
-    payload: PlanClosePreviewPayload,
+    payload: ChannelIdPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
 
@@ -392,8 +384,8 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   // ── Per-channel broadcast events ──
   'chat:cancel_request': (payload: CancelRequestEventPayload) => void;
-  'plan:comment_added': (payload: PlanCommentEventPayload) => void;
-  'plan:comment_removed': (payload: RemoveCommentPayload) => void;
+  'plan:comment_added': (payload: PlanCommentPayload) => void;
+  'plan:comment_removed': (payload: PlanRemoveCommentPayload) => void;
   'speech:message': (payload: SpeechToTextMessagePayload) => void;
 
   // ── Session lifecycle ──

@@ -1,5 +1,4 @@
-import type { ControlPermissionResponse } from '@code-quest/shared';
-import type { PendingControl } from '../types/chat';
+import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
 import { OptionButton } from './OptionButton';
 
 export function HookCallbackBanner({

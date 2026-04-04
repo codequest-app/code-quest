@@ -1,5 +1,6 @@
 import type {
   AccountInfo,
+  ControlResponse,
   McpAuthResult,
   ModelInfo,
   ProviderClientConfig,
@@ -40,8 +41,6 @@ export interface ConfigState {
   worktree: WorktreeInfo | null;
 }
 
-export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
-
 export interface ChannelConfigValue extends ConfigState {
   isFastMode: boolean;
   providerConfig?: ProviderClientConfig;
@@ -50,11 +49,11 @@ export interface ChannelConfigValue extends ConfigState {
   setThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
   setEffort: (effort: string) => Promise<{ success: boolean; error?: string }>;
-  mcpStatus: () => Promise<McpResponse>;
-  mcpToggle: (serverName: string, enabled: boolean) => Promise<McpResponse>;
-  mcpReconnect: (serverName: string) => Promise<McpResponse>;
-  mcpSetServers: (servers: Record<string, unknown>) => Promise<McpResponse>;
-  mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<McpResponse>;
+  mcpStatus: () => Promise<ControlResponse>;
+  mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
+  mcpReconnect: (serverName: string) => Promise<ControlResponse>;
+  mcpSetServers: (servers: Record<string, unknown>) => Promise<ControlResponse>;
+  mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<ControlResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
   mcpAuthenticate: (serverName: string) => Promise<McpAuthResult>;
   mcpOAuthCallback: (
@@ -62,11 +61,11 @@ export interface ChannelConfigValue extends ConfigState {
     callbackUrl: string,
   ) => Promise<{ success: boolean; error?: string }>;
   mcpClearAuth: (serverName: string) => Promise<{ success: boolean; error?: string }>;
-  ensureChromeMcpEnabled: () => Promise<McpResponse>;
-  disableChromeMcp: () => Promise<McpResponse>;
-  enableJupyterMcp: () => Promise<McpResponse>;
-  disableJupyterMcp: () => Promise<McpResponse>;
-  askDebuggerHelp: () => Promise<McpResponse>;
+  ensureChromeMcpEnabled: () => Promise<ControlResponse>;
+  disableChromeMcp: () => Promise<ControlResponse>;
+  enableJupyterMcp: () => Promise<ControlResponse>;
+  disableJupyterMcp: () => Promise<ControlResponse>;
+  askDebuggerHelp: () => Promise<ControlResponse>;
   requestUsageUpdate: () => void;
   openWorktree: (info: WorktreeInfo) => void;
 }

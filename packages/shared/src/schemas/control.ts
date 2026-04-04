@@ -30,8 +30,8 @@ export const controlPermissionPayloadSchema = z.object({
   requestId: z.string(),
   toolName: z.string(),
   toolUseId: z.string().optional(),
-  input: z.unknown(),
-  suggestions: z.array(z.unknown()).optional(),
+  input: z.record(z.string(), z.unknown()).optional(),
+  suggestions: z.array(z.record(z.string(), z.unknown())).optional(),
   callbackId: z.string().optional(),
   blockedPath: z.string().optional(),
   decisionReason: z.string().optional(),
@@ -101,8 +101,25 @@ export type AutoRespondPayload = z.infer<typeof autoRespondPayloadSchema>;
 export const controlForwardPayloadSchema = z.looseObject({
   requestId: z.string(),
   subtype: z.string(),
+  toolName: z.string().optional(),
+  toolUseId: z.string().optional(),
+  input: z.unknown().optional(),
+  suggestions: z.array(z.unknown()).optional(),
+  callbackId: z.string().optional(),
 });
 export type ControlForwardPayload = z.infer<typeof controlForwardPayloadSchema>;
+
+/** Client-side pending control request state */
+export const pendingControlSchema = z.object({
+  requestId: z.string(),
+  subtype: z.string(),
+  toolName: z.string().optional(),
+  input: z.record(z.string(), z.unknown()).optional(),
+  toolUseId: z.string().optional(),
+  permissionSuggestions: z.array(z.record(z.string(), z.unknown())).optional(),
+  callbackId: z.string().optional(),
+});
+export type PendingControl = z.infer<typeof pendingControlSchema>;
 
 /** control:open_diff internal payload */
 export const controlOpenDiffPayloadSchema = z.looseObject({

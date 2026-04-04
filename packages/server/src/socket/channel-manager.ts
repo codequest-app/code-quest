@@ -1,10 +1,9 @@
-import type { ControlResponse, WorktreeInfo } from '@code-quest/shared';
+import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { SessionBroadcastState } from './schemas.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 

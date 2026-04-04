@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-export const fileListSchema = z.object({ channelId: z.string(), pattern: z.string() });
-export type FileListPayload = z.infer<typeof fileListSchema>;
+export const fileListPayloadSchema = z.object({ channelId: z.string(), pattern: z.string() });
+export type FileListPayload = z.infer<typeof fileListPayloadSchema>;
 
 export const fileSearchResultSchema = z.object({
   path: z.string(),

@@ -1,8 +1,11 @@
-import type { ControlPermissionResponse, PlanCommentData } from '@code-quest/shared';
+import type {
+  ControlPermissionResponse,
+  PendingControl,
+  PlanCommentData,
+} from '@code-quest/shared';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { useChannelMessages } from '../contexts/channel';
-import type { PendingControl } from '../types/chat';
 import { pluralize } from '../utils/pluralize';
 import { MarkdownContent } from './MarkdownContent';
 import { PlanCommentOverlay } from './PlanCommentOverlay';

@@ -4,6 +4,10 @@ import { injectable } from 'inversify';
 const KNOWN_TIERS = ['five_hour', 'seven_day', 'seven_day_sonnet'] as const;
 type TierName = (typeof KNOWN_TIERS)[number];
 
+function isTierName(value: string | undefined): value is TierName {
+  return !!value && (KNOWN_TIERS as readonly string[]).includes(value);
+}
+
 interface RateLimitInfo {
   status: string;
   rateLimitType?: string;
@@ -19,8 +23,8 @@ export class UsageTracker {
   private extraUsage?: { is_enabled: boolean; overageStatus?: string };
 
   update(info: RateLimitInfo): void {
-    const tierName = info.rateLimitType as TierName;
-    if (KNOWN_TIERS.includes(tierName)) {
+    const tierName = info.rateLimitType;
+    if (isTierName(tierName)) {
       this.tiers.set(tierName, {
         status: info.status,
         resetsAt: info.resetsAt,

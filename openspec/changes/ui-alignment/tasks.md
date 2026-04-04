@@ -277,22 +277,70 @@
 
 ### 36. control.ts 搬移到正確檔案
 
-- [ ] 36.1 settingsSetProactiveSchema + settingsSetRemoteControlSchema → settings.ts
-- [ ] 36.2 sessionGenerateTitleSchema + generateSessionTitleResponseSchema → session.ts
-- [ ] 36.3 chatCancelAsyncMessageSchema → message.ts
-- [ ] 36.4 chatHookCallbackRespondSchema + controlHookCallbackPayloadSchema + hookStartedInfoSchema + hookResponseInfoSchema → system.ts
-- [ ] 36.5 getClaudeStateResponseSchema → control-response.ts
-- [ ] 36.6 Run tests green
+- [x] 36.1 settingsSetProactiveSchema + settingsSetRemoteControlSchema → settings.ts
+- [x] 36.2 sessionGenerateTitleSchema + generateSessionTitleResponseSchema → session.ts
+- [x] 36.3 chatCancelAsyncMessageSchema → message.ts
+- [x] 36.4 chatHookCallbackRespondSchema + controlHookCallbackPayloadSchema + hookStartedInfoSchema + hookResponseInfoSchema → system.ts
+- [x] 36.5 getClaudeStateResponseSchema → control-response.ts
+- [x] 36.6 Run tests green
 
 ### 37. fileDiff + rewindResult 搬移
 
-- [ ] 37.1 fileDiffSchema + rewindResultSchema: message-payloads.ts → session.ts
-- [ ] 37.2 Run tests green
+- [x] 37.1 fileDiffSchema + rewindResultSchema: message-payloads.ts → session.ts
+- [x] 37.2 Run tests green
 
 ### 38. Cleanup + commit
 
-- [ ] 38.1 確認 control.ts 只剩 control-scoped schemas
-- [ ] 38.2 確認 message-payloads.ts 只剩 message S2C payloads
-- [ ] 38.3 確認無重複、無錯位
-- [ ] 38.4 Run all tests green
+- [x] 38.1 確認 control.ts 只剩 control-scoped schemas
+- [x] 38.2 確認 message-payloads.ts 只剩 message S2C payloads
+- [x] 38.3 確認無重複、無錯位
+- [x] 38.4 Run all tests green
 - [ ] 38.5 Commit + push
+
+## Phase 15: Schema ↔ Consumer 對齊
+
+### 39. Field mismatch 修正 (HIGH)
+
+- [ ] 39.1 controlForwardPayloadSchema 補齊 5 個 optional field (toolName, toolUseId, input, suggestions, callbackId)
+- [ ] 39.2 forkSession 回傳型別 sessionId → channelId（handlers/session.ts + ChannelMessagesContext + SessionContext）
+- [ ] 39.3 Run tests green
+
+### 39b. Inline type → zod (移到 shared)
+
+- [x] 39b.1 McpResponse → shared/schemas/mcp.ts mcpResponseSchema
+- [x] 39b.2 PendingControl → shared/schemas/control.ts pendingControlSchema
+- [x] 39b.3 client inline Promise 回傳型別 → shared response types
+- [x] 39b.4 InitOptions → 保留 client（UI props，非 socket payload）
+- [x] 39b.5 SessionBroadcastState → shared sessionBroadcastStateSchema
+- [x] 39b.6 Run tests green
+
+### 40. as cast → zod
+
+- [x] 40.1 ChannelControlContext: 改 schema input/suggestions 型別，移除 as cast
+- [x] 40.2 usage-tracker.ts: as TierName → isTierName type guard
+- [x] 40.3 Run tests green
+
+### 41. Schema 重複消除
+
+- [x] 41.1 plan.ts: planCommentEventPayloadSchema = planCommentSchema
+- [x] 41.2 plan.ts: removeCommentPayloadSchema = planRemoveCommentSchema
+- [x] 41.3 plan.ts: planGetCommentsSchema / planClosePreviewSchema → channelIdPayloadSchema
+- [x] 41.4 system.ts: rateLimitPayloadSchema 保留（internal format 不同於 S2C）
+- [x] 41.5 mcp.ts: mcpChannelServerSchema base，5 個 schema 用 .extend()
+- [x] 41.6 Run tests green
+
+### 42. C2S schema 命名統一 (fooBarSchema → fooBarPayloadSchema)
+
+- [x] 42.1 message.ts: 6 個 schema rename
+- [x] 42.2 session.ts: 12 個 schema rename
+- [x] 42.3 settings.ts: 5+2 個 schema rename
+- [x] 42.4 git.ts: 6 個 schema rename
+- [x] 42.5 mcp.ts: 7 個 schema rename
+- [x] 42.6 terminal.ts: 2 個 schema rename
+- [x] 42.7 file.ts: 1 個 schema rename
+- [x] 42.8 plugin.ts: 6 個 schema rename
+- [x] 42.9 plan.ts: 4 個 schema rename
+- [x] 42.10 system.ts: chatHookCallbackRespondSchema rename
+- [x] 42.11 更新所有 consumer imports
+- [x] 42.12 Run all tests green
+- [ ] 42.13 Commit + push

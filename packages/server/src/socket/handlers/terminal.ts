@@ -1,4 +1,4 @@
-import { terminalOpenClaudeSchema } from '@code-quest/shared';
+import { terminalOpenClaudePayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
@@ -33,7 +33,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     cb?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId, prompt, cwd } = terminalOpenClaudeSchema.parse(payload);
+      const { channelId, prompt, cwd } = terminalOpenClaudePayloadSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
       const baseCwd = cwd ?? existingChannel?.workspaceFolder;
 

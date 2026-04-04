@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import {
-  gitCheckoutSchema,
-  gitExecSchema,
-  gitLogSchema,
-  gitUpdateSkippedBranchSchema,
+  gitCheckoutPayloadSchema,
+  gitExecPayloadSchema,
+  gitLogPayloadSchema,
+  gitUpdateSkippedBranchPayloadSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
@@ -51,7 +51,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { branch } = gitCheckoutSchema.parse(payload);
+      const { branch } = gitCheckoutPayloadSchema.parse(payload);
       await checkoutBranch(branch, ch.workspaceFolder);
       callback?.({ success: true });
     } catch (err) {
@@ -66,7 +66,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { limit } = gitLogSchema.parse(payload);
+      const { limit } = gitLogPayloadSchema.parse(payload);
       const n = limit ?? 20;
       const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)], {
         cwd: ch.workspaceFolder,
@@ -106,7 +106,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
+      const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
       const entry: RawEntry = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.id),
@@ -129,7 +129,7 @@ export function create(
     callback?: SocketCallback,
   ): void {
     try {
-      const { command, args } = gitExecSchema.parse(payload);
+      const { command, args } = gitExecPayloadSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
         cwd: ch.workspaceFolder,
         timeout: 30_000,

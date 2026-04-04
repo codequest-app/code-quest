@@ -3,34 +3,36 @@ import { accountInfoSchema } from './auth.ts';
 
 // ── C2S ──
 
-export const settingsSetPermissionModeSchema = z.object({
+export const settingsSetPermissionModePayloadSchema = z.object({
   channelId: z.string(),
   mode: z.string(),
 });
-export type SettingsSetPermissionModePayload = z.infer<typeof settingsSetPermissionModeSchema>;
+export type SettingsSetPermissionModePayload = z.infer<
+  typeof settingsSetPermissionModePayloadSchema
+>;
 
-export const settingsSetModelSchema = z.object({
+export const settingsSetModelPayloadSchema = z.object({
   channelId: z.string(),
   model: z.string(),
 });
-export type SettingsSetModelPayload = z.infer<typeof settingsSetModelSchema>;
+export type SettingsSetModelPayload = z.infer<typeof settingsSetModelPayloadSchema>;
 
-export const settingsSetThinkingLevelSchema = z.object({
+export const settingsSetThinkingLevelPayloadSchema = z.object({
   channelId: z.string(),
   thinkingLevel: z.string(),
 });
-export type SettingsSetThinkingLevelPayload = z.infer<typeof settingsSetThinkingLevelSchema>;
+export type SettingsSetThinkingLevelPayload = z.infer<typeof settingsSetThinkingLevelPayloadSchema>;
 
-export const settingsApplySchema = z.object({
+export const settingsApplyPayloadSchema = z.object({
   channelId: z.string(),
   settings: z.record(z.string(), z.unknown()),
 });
-export type SettingsApplyPayload = z.infer<typeof settingsApplySchema>;
+export type SettingsApplyPayload = z.infer<typeof settingsApplyPayloadSchema>;
 
-export const settingsGetStateSchema = z.object({
+export const settingsGetStatePayloadSchema = z.object({
   channelId: z.string(),
 });
-export type SettingsGetStatePayload = z.infer<typeof settingsGetStateSchema>;
+export type SettingsGetStatePayload = z.infer<typeof settingsGetStatePayloadSchema>;
 
 // ── State types ──
 
@@ -179,14 +181,14 @@ export type ContextUsageData = z.infer<typeof contextUsageDataSchema>;
 
 // ── Settings C2S (moved from control.ts) ──
 
-export const settingsSetProactiveSchema = z.object({
+export const settingsSetProactivePayloadSchema = z.object({
   channelId: z.string(),
   enabled: z.boolean(),
 });
-export type SettingsSetProactivePayload = z.infer<typeof settingsSetProactiveSchema>;
+export type SettingsSetProactivePayload = z.infer<typeof settingsSetProactivePayloadSchema>;
 
-export const settingsSetRemoteControlSchema = z.object({
+export const settingsSetRemoteControlPayloadSchema = z.object({
   channelId: z.string(),
   enabled: z.boolean(),
 });
-export type SettingsSetRemoteControlPayload = z.infer<typeof settingsSetRemoteControlSchema>;
+export type SettingsSetRemoteControlPayload = z.infer<typeof settingsSetRemoteControlPayloadSchema>;

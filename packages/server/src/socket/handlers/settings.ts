@@ -2,12 +2,12 @@ import {
   requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
-  settingsApplySchema,
-  settingsSetModelSchema,
-  settingsSetPermissionModeSchema,
-  settingsSetProactiveSchema,
-  settingsSetRemoteControlSchema,
-  settingsSetThinkingLevelSchema,
+  settingsApplyPayloadSchema,
+  settingsSetModelPayloadSchema,
+  settingsSetPermissionModePayloadSchema,
+  settingsSetProactivePayloadSchema,
+  settingsSetRemoteControlPayloadSchema,
+  settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import type { SettingsStore } from '../../services/settings-store.ts';
@@ -32,7 +32,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { model } = settingsSetModelSchema.parse(payload);
+      const { model } = settingsSetModelPayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
@@ -48,7 +48,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, mode } = settingsSetPermissionModeSchema.parse(payload);
+      const { channelId, mode } = settingsSetPermissionModePayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_permission_mode', { mode });
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
@@ -66,7 +66,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, thinkingLevel } = settingsSetThinkingLevelSchema.parse(payload);
+      const { channelId, thinkingLevel } = settingsSetThinkingLevelPayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
@@ -80,7 +80,7 @@ export function create(
 
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
-      const { channelId, enabled } = settingsSetProactiveSchema.parse(payload);
+      const { channelId, enabled } = settingsSetProactivePayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
@@ -93,7 +93,7 @@ export function create(
 
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
-      const { enabled } = settingsSetRemoteControlSchema.parse(payload);
+      const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
       ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
     } catch {
       // ignore
@@ -107,7 +107,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId, settings } = settingsApplySchema.parse(payload);
+      const { channelId, settings } = settingsApplyPayloadSchema.parse(payload);
       await ch.sendRequest('settings:apply', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
