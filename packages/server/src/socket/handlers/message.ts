@@ -1,8 +1,8 @@
 import {
   cancelRequestPayloadSchema,
   chatCancelAsyncMessageSchema,
+  chatCancelSchema,
   chatHookCallbackRespondSchema,
-  chatInterruptSchema,
   chatRespondSchema,
   chatRewindCodeSchema,
   chatSendSchema,
@@ -50,7 +50,7 @@ export function create(
 
   function handleCancel(ch: Channel, payload: unknown): void {
     try {
-      const { channelId } = chatInterruptSchema.parse(payload);
+      const { channelId } = chatCancelSchema.parse(payload);
       if (interruptedChannels.has(channelId)) {
         ch.abort();
       } else {

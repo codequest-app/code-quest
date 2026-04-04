@@ -9,21 +9,11 @@ import type {
   CancelRequestPayload,
   ChannelIdPayload,
   ChatCancelAsyncMessagePayload,
-  ChatCreatePayload,
-  ChatGenerateSessionTitlePayload,
-  ChatGetStatePayload,
+  ChatCancelPayload,
   ChatHookCallbackRespondPayload,
-  ChatInterruptPayload,
-  ChatJoinPayload,
-  ChatKillPayload,
   ChatRespondPayload,
   ChatRewindCodePayload,
   ChatSendPayload,
-  ChatSetModelPayload,
-  ChatSetPermissionModePayload,
-  ChatSetProactivePayload,
-  ChatSetRemoteControlPayload,
-  ChatSetThinkingLevelPayload,
   ChatStopTaskPayload,
   ChromeMcpControlPayload,
   CloseChannelPayload,
@@ -100,13 +90,17 @@ import type {
   RemoveMarketplacePayload,
   RewindResult,
   SessionClosedPayload,
+  SessionClosePayload,
   SessionCreatedPayload,
   SessionDeadPayload,
   SessionDeletePayload,
   SessionForkPayload,
+  SessionGenerateTitlePayload,
   SessionGetPayload,
   SessionInitPayload,
+  SessionJoinPayload,
   SessionJoinResponse,
+  SessionLaunchPayload,
   SessionLaunchResponse,
   SessionListPayload,
   SessionListRemotePayload,
@@ -118,6 +112,12 @@ import type {
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
+  SettingsGetStatePayload,
+  SettingsSetModelPayload,
+  SettingsSetPermissionModePayload,
+  SettingsSetProactivePayload,
+  SettingsSetRemoteControlPayload,
+  SettingsSetThinkingLevelPayload,
   SpeechToTextMessagePayload,
   StateUsagePayload,
   StreamBlockStartPayload,
@@ -155,16 +155,19 @@ export interface ClientToServerEvents {
   ) => void;
 
   // ── Aligned: Settings ──
-  'settings:set_model': (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
-  'settings:set_permission_mode': (payload: ChatSetPermissionModePayload) => void;
-  'settings:set_thinking_level': (payload: ChatSetThinkingLevelPayload) => void;
+  'settings:set_model': (
+    payload: SettingsSetModelPayload,
+    cb: (res: SuccessResponse) => void,
+  ) => void;
+  'settings:set_permission_mode': (payload: SettingsSetPermissionModePayload) => void;
+  'settings:set_thinking_level': (payload: SettingsSetThinkingLevelPayload) => void;
   'settings:refresh_usage': (payload: ChannelIdPayload) => void;
   'settings:apply': (
     payload: SettingsApplyPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
   'settings:state': (
-    payload: ChatGetStatePayload,
+    payload: SettingsGetStatePayload,
     callback: (response: GetClaudeStateResponse) => void,
   ) => void;
 
@@ -325,17 +328,17 @@ export interface ClientToServerEvents {
 
   // ── Clean relay protocol: new C→S events ──
   'session:launch': (
-    payload: ChatCreatePayload,
+    payload: SessionLaunchPayload,
     callback: (response: SessionLaunchResponse) => void,
   ) => void;
-  'session:close': (payload: ChatKillPayload) => void;
+  'session:close': (payload: SessionClosePayload) => void;
   'session:resume': (payload: SessionResumePayload) => void;
   'session:join': (
-    payload: ChatJoinPayload,
+    payload: SessionJoinPayload,
     callback: (response: SessionJoinResponse) => void,
   ) => void;
   'chat:send': (payload: ChatSendPayload) => void;
-  'chat:cancel': (payload: ChatInterruptPayload) => void;
+  'chat:cancel': (payload: ChatCancelPayload) => void;
   'chat:respond': (payload: ChatRespondPayload) => void;
 
   'chat:stop_task': (payload: ChatStopTaskPayload) => void;
@@ -366,12 +369,12 @@ export interface ClientToServerEvents {
 
   // ── Protocol Alignment: new control_request subtypes ──
   'chat:cancel_async': (payload: ChatCancelAsyncMessagePayload) => void;
-  'settings:set_proactive': (payload: ChatSetProactivePayload) => void;
+  'settings:set_proactive': (payload: SettingsSetProactivePayload) => void;
   'session:generate_title': (
-    payload: ChatGenerateSessionTitlePayload,
+    payload: SessionGenerateTitlePayload,
     callback: (response: GenerateSessionTitleResponse) => void,
   ) => void;
-  'settings:set_remote_control': (payload: ChatSetRemoteControlPayload) => void;
+  'settings:set_remote_control': (payload: SettingsSetRemoteControlPayload) => void;
   'chat:hook_respond': (payload: ChatHookCallbackRespondPayload) => void;
 
   // ── Worktree ──

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { usageQuotaSchema } from './settings.ts';
 
 // ── Notification schemas ──
 
@@ -55,34 +54,10 @@ export const notificationAuthStatusPayloadSchema = z.object({
 });
 export type NotificationAuthStatusPayload = z.infer<typeof notificationAuthStatusPayloadSchema>;
 
-// ── Actions ──
-
-export const actionOpenUrlPayloadSchema = z.object({
-  channelId: z.string(),
-  url: z.string(),
-});
-export type ActionOpenUrlPayload = z.infer<typeof actionOpenUrlPayloadSchema>;
-
-export const actionOpenFilePayloadSchema = z.object({
-  channelId: z.string(),
-  filePath: z.string(),
-  location: z
-    .object({
-      startLine: z.number().optional(),
-      endLine: z.number().optional(),
-      searchText: z.string().optional(),
-    })
-    .optional(),
-});
-export type ActionOpenFilePayload = z.infer<typeof actionOpenFilePayloadSchema>;
-
-// ── Error ──
-
-export const errorMessagePayloadSchema = z.object({
-  channelId: z.string(),
-  message: z.string(),
-});
-export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
+// actionOpenUrlPayloadSchema, actionOpenFilePayloadSchema — moved to actions.ts
+// errorMessagePayloadSchema — moved to common.ts
+// stateUsagePayloadSchema, contextCategorySchema, contextUsageDataSchema — moved to settings.ts
+// speechToTextMessagePayloadSchema — moved to common.ts
 
 // ── Raw ──
 
@@ -92,36 +67,3 @@ export const rawEventPayloadSchema = z.object({
   data: z.record(z.string(), z.unknown()),
 });
 export type RawEventPayload = z.infer<typeof rawEventPayloadSchema>;
-
-// ── State ──
-
-export const stateUsagePayloadSchema = z.object({
-  channelId: z.string(),
-  usage: usageQuotaSchema,
-  contextUsage: z.record(z.string(), z.unknown()).optional(),
-});
-export type StateUsagePayload = z.infer<typeof stateUsagePayloadSchema>;
-
-export const contextCategorySchema = z.object({
-  name: z.string(),
-  tokens: z.number(),
-  color: z.string(),
-});
-export type ContextCategory = z.infer<typeof contextCategorySchema>;
-
-export const contextUsageDataSchema = z.object({
-  categories: z.array(contextCategorySchema).optional(),
-  totalTokens: z.number().optional(),
-  maxTokens: z.number().optional(),
-  percentage: z.number().optional(),
-});
-export type ContextUsageData = z.infer<typeof contextUsageDataSchema>;
-
-// ── Speech ──
-
-export const speechToTextMessagePayloadSchema = z.object({
-  channelId: z.string(),
-  text: z.string(),
-  done: z.boolean(),
-});
-export type SpeechToTextMessagePayload = z.infer<typeof speechToTextMessagePayloadSchema>;

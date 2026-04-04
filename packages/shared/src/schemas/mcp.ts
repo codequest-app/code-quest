@@ -48,14 +48,17 @@ export const mcpAuthResultSchema = z.object({
 });
 export type McpAuthResult = z.infer<typeof mcpAuthResultSchema>;
 
-export const chromeMcpControlSchema = z.object({ channelId: z.string() });
-export type ChromeMcpControlPayload = z.infer<typeof chromeMcpControlSchema>;
-
-export const jupyterMcpControlSchema = z.object({ channelId: z.string() });
-export type JupyterMcpControlPayload = z.infer<typeof jupyterMcpControlSchema>;
-
-export const debuggerHelpSchema = z.object({ channelId: z.string() });
-export type DebuggerHelpPayload = z.infer<typeof debuggerHelpSchema>;
+export type {
+  ChannelIdPayload as ChromeMcpControlPayload,
+  ChannelIdPayload as JupyterMcpControlPayload,
+  ChannelIdPayload as DebuggerHelpPayload,
+} from './common.ts';
+// These are all {channelId} — re-export channelIdPayloadSchema as aliases
+export {
+  channelIdPayloadSchema as chromeMcpControlSchema,
+  channelIdPayloadSchema as jupyterMcpControlSchema,
+  channelIdPayloadSchema as debuggerHelpSchema,
+} from './common.ts';
 
 // ── Response schemas ──
 

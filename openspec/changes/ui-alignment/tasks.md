@@ -223,3 +223,76 @@
 
 - [x] 31.1 Run all tests green
 - [x] 31.2 Commit + push
+
+## Phase 14: Shared Schemas 重構
+
+### 32. 修重複
+
+- [x] 32.1 gitCheckoutResultSchema → 用 successResponseSchema 取代
+- [x] 32.2 chromeMcpControlSchema / jupyterMcpControlSchema / debuggerHelpSchema → 用 channelIdPayloadSchema
+- [x] 32.3 rateLimitPayloadSchema (system.ts) vs rateLimitInfoSchema (settings.ts) → 統一
+- [x] 32.4 chatStatsSchema / sessionStatsSchema → sessionStats extends chatStats
+- [x] 32.5 移除冗餘 AuthStatusValue、launchOptionsSchema export
+- [x] 32.6 Run tests green + commit
+
+### 33. 搬錯位
+
+- [x] 33.1 closeChannelPayloadSchema + cancelRequestEventPayloadSchema: file.ts → session.ts
+- [x] 33.2 stateUsagePayloadSchema + contextUsageDataSchema: notification.ts → settings.ts
+- [x] 33.3 actionOpenUrlPayloadSchema + actionOpenFilePayloadSchema: notification.ts → 新 actions.ts
+- [x] 33.4 errorMessagePayloadSchema: notification.ts → common.ts
+- [x] 33.5 speechToTextMessagePayloadSchema: notification.ts → common.ts
+- [x] 33.6 sessionSummarySchema + sessionListResponseSchema: common.ts → session.ts
+- [x] 33.7 更新所有 import 路徑（socket-events.ts + consumers）
+- [x] 33.8 Run tests green + commit
+
+### 34. 拆大檔
+
+- [x] 34.1 message.ts → 拆 message-blocks.ts + message-stats.ts + message-stream.ts
+- [x] 34.2 notification.ts → 清理後只保留 notification 相關
+- [x] 34.3 更新 index.ts barrel exports
+- [x] 34.4 更新所有 import 路徑
+- [x] 34.5 Run all tests green (summoner + server + client)
+- [x] 34.6 Commit + push
+
+### 35. Schema 命名對齊 socket event
+
+- [x] 35.1 ChatCreatePayload → SessionLaunchPayload（event: session:launch）
+- [x] 35.2 chatCreateSchema → sessionLaunchSchema
+- [x] 35.3 ChatKillPayload → SessionClosePayload（event: session:close）
+- [x] 35.4 chatKillSchema → sessionCloseSchema
+- [x] 35.5 ChatJoinPayload → SessionJoinPayload（event: session:join）
+- [x] 35.6 chatJoinSchema → sessionJoinSchema
+- [x] 35.7 ChatInterruptPayload → ChatCancelPayload（event: chat:cancel）
+- [x] 35.8 chatInterruptSchema → chatCancelSchema
+- [x] 35.9 ChatSetModelPayload → SettingsSetModelPayload（event: settings:set_model）
+- [x] 35.10 chatSetModelSchema → settingsSetModelSchema
+- [x] 35.11 ChatSetPermissionModePayload → SettingsSetPermissionModePayload
+- [x] 35.12 chatSetPermissionModeSchema → settingsSetPermissionModeSchema
+- [x] 35.13 ChatSetThinkingLevelPayload → SettingsSetThinkingLevelPayload
+- [x] 35.14 chatSetThinkingLevelSchema → settingsSetThinkingLevelSchema
+- [x] 35.15 更新 socket-events.ts + 所有 consumer imports
+- [x] 35.16 Run all tests green
+- [x] 35.17 Commit + push
+
+### 36. control.ts 搬移到正確檔案
+
+- [ ] 36.1 settingsSetProactiveSchema + settingsSetRemoteControlSchema → settings.ts
+- [ ] 36.2 sessionGenerateTitleSchema + generateSessionTitleResponseSchema → session.ts
+- [ ] 36.3 chatCancelAsyncMessageSchema → message.ts
+- [ ] 36.4 chatHookCallbackRespondSchema + controlHookCallbackPayloadSchema + hookStartedInfoSchema + hookResponseInfoSchema → system.ts
+- [ ] 36.5 getClaudeStateResponseSchema → control-response.ts
+- [ ] 36.6 Run tests green
+
+### 37. fileDiff + rewindResult 搬移
+
+- [ ] 37.1 fileDiffSchema + rewindResultSchema: message-payloads.ts → session.ts
+- [ ] 37.2 Run tests green
+
+### 38. Cleanup + commit
+
+- [ ] 38.1 確認 control.ts 只剩 control-scoped schemas
+- [ ] 38.2 確認 message-payloads.ts 只剩 message S2C payloads
+- [ ] 38.3 確認無重複、無錯位
+- [ ] 38.4 Run all tests green
+- [ ] 38.5 Commit + push

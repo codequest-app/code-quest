@@ -1,3 +1,4 @@
+export * from './actions.ts';
 export * from './auth.ts';
 export * from './common.ts';
 export * from './control.ts';
@@ -6,6 +7,11 @@ export * from './file.ts';
 export * from './git.ts';
 export * from './mcp.ts';
 export * from './message.ts';
+export * from './message-blocks.ts';
+export * from './message-meta.ts';
+export * from './message-payloads.ts';
+export * from './message-stats.ts';
+export * from './message-stream.ts';
 export * from './notification.ts';
 export * from './plan.ts';
 export * from './plugin.ts';

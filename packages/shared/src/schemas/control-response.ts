@@ -30,3 +30,11 @@ export const controlGenerateTitleResponseSchema = z.looseObject({
 });
 
 export type ControlGenerateTitleResponse = z.infer<typeof controlGenerateTitleResponseSchema>;
+
+/** get_claude_state response (moved from control.ts) */
+export const getClaudeStateResponseSchema = z.looseObject({
+  success: z.boolean(),
+  state: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
+export type GetClaudeStateResponse = z.infer<typeof getClaudeStateResponseSchema>;

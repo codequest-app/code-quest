@@ -1,5 +1,30 @@
 import { z } from 'zod';
-import { channelMetaCacheSchema, clientMessageSchema, sessionSummarySchema } from './common.ts';
+import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
+
+// ── Session summary (moved from common.ts) ──
+
+export const sessionSummarySchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  command: z.string(),
+  args: z.string(),
+  cwd: z.string().optional(),
+  mode: z.string(),
+  role: z.string(),
+  parentId: z.string().optional(),
+  title: z.string().optional(),
+  createdAt: z.string(),
+  isActive: z.boolean().optional(),
+  lastAssistantMessage: z.string().optional(),
+  firstUserMessage: z.string().optional(),
+});
+export type SessionSummary = z.infer<typeof sessionSummarySchema>;
+
+export const sessionListResponseSchema = z.object({
+  sessions: z.array(sessionSummarySchema),
+  total: z.number(),
+});
+export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 // ── Internal schemas ──
 
@@ -58,7 +83,7 @@ export const launchOptionsSchema = z
   })
   .optional();
 
-export const chatCreateSchema = z.object({
+export const sessionLaunchSchema = z.object({
   channelId: z.string().optional(),
   resume: z.string().optional(),
   initialPrompt: z.string().optional(),
@@ -69,17 +94,17 @@ export const chatCreateSchema = z.object({
   initOptions: initializeOptionsSchema,
   launchOptions: launchOptionsSchema,
 });
-export type ChatCreatePayload = z.infer<typeof chatCreateSchema>;
+export type SessionLaunchPayload = z.infer<typeof sessionLaunchSchema>;
 
-export const chatJoinSchema = z.object({
+export const sessionJoinSchema = z.object({
   channelId: z.string(),
 });
-export type ChatJoinPayload = z.infer<typeof chatJoinSchema>;
+export type SessionJoinPayload = z.infer<typeof sessionJoinSchema>;
 
-export const chatKillSchema = z.object({
+export const sessionCloseSchema = z.object({
   channelId: z.string(),
 });
-export type ChatKillPayload = z.infer<typeof chatKillSchema>;
+export type SessionClosePayload = z.infer<typeof sessionCloseSchema>;
 
 export const sessionListSchema = z.object({
   limit: z.number().min(1).max(100).optional(),
@@ -259,3 +284,49 @@ export const channelExitPayloadSchema = z.looseObject({
   code: z.number().nullable(),
 });
 export type ChannelExitPayload = z.infer<typeof channelExitPayloadSchema>;
+
+export const closeChannelPayloadSchema = z.object({
+  channelId: z.string(),
+  error: z.string().optional(),
+});
+export type CloseChannelPayload = z.infer<typeof closeChannelPayloadSchema>;
+
+export const cancelRequestEventPayloadSchema = z.object({
+  channelId: z.string(),
+  targetRequestId: z.string(),
+});
+export type CancelRequestEventPayload = z.infer<typeof cancelRequestEventPayloadSchema>;
+
+// ── Session title (moved from control.ts) ──
+
+export const sessionGenerateTitleSchema = z.object({
+  channelId: z.string(),
+  description: z.string(),
+  persist: z.boolean(),
+});
+export type SessionGenerateTitlePayload = z.infer<typeof sessionGenerateTitleSchema>;
+
+export const generateSessionTitleResponseSchema = z.looseObject({
+  success: z.boolean(),
+  result: z.unknown().optional(),
+  error: z.string().optional(),
+});
+export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;
+
+// ── Rewind (moved from message-payloads.ts) ──
+
+export const fileDiffSchema = z.object({
+  oldContent: z.string().nullable(),
+  newContent: z.string().nullable(),
+});
+export type FileDiff = z.infer<typeof fileDiffSchema>;
+
+export const rewindResultSchema = z.object({
+  canRewind: z.boolean(),
+  filesChanged: z.array(z.string()).optional(),
+  fileDiffs: z.record(z.string(), fileDiffSchema).optional(),
+  insertions: z.number().optional(),
+  deletions: z.number().optional(),
+  error: z.string().optional(),
+});
+export type RewindResult = z.infer<typeof rewindResultSchema>;

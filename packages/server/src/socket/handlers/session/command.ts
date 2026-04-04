@@ -1,7 +1,7 @@
 import {
-  chatGenerateSessionTitleSchema,
-  chatKillSchema,
+  sessionCloseSchema,
   sessionDeleteSchema,
+  sessionGenerateTitleSchema,
   sessionRenameSchema,
   sessionResumePayloadSchema,
   sessionUpdateStateSchema,
@@ -20,7 +20,7 @@ export function create(
 ): void {
   function handleClose(ch: Channel, payload: unknown): void {
     try {
-      const { channelId } = chatKillSchema.parse(payload);
+      const { channelId } = sessionCloseSchema.parse(payload);
       ch.kill();
       emitter.broadcastAll('session:dead', { channelId });
     } catch {
@@ -82,7 +82,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { description, persist } = chatGenerateSessionTitleSchema.parse(payload);
+      const { description, persist } = sessionGenerateTitleSchema.parse(payload);
       const result = await ch.sendRequest('session:generate_title', {
         description,
         persist,

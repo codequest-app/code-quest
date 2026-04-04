@@ -1,9 +1,9 @@
-import type { ChatCreatePayload, ControlResponse, SessionInitPayload } from '@code-quest/shared';
+import type { ControlResponse, SessionInitPayload, SessionLaunchPayload } from '@code-quest/shared';
 import {
   channelExitPayloadSchema,
-  chatCreateSchema,
-  chatJoinSchema,
   controlInitResponseSchema,
+  sessionJoinSchema,
+  sessionLaunchSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
@@ -51,7 +51,7 @@ export function create(
 ): void {
   async function applyPerLaunchSettings(
     channel: Channel,
-    parsed: Pick<ChatCreatePayload, 'model' | 'permissionMode' | 'thinkingLevel' | 'cwd'>,
+    parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel' | 'cwd'>,
   ): Promise<void> {
     if (parsed.model) {
       await channel
@@ -107,7 +107,7 @@ export function create(
   ): Promise<void> {
     let resumeSessionId: string | undefined;
     try {
-      const parsed = chatCreateSchema.parse(payload);
+      const parsed = sessionLaunchSchema.parse(payload);
       resumeSessionId = parsed.resume;
       const channelId = parsed.channelId ?? crypto.randomUUID();
       const launchOpts = {
@@ -174,7 +174,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = chatJoinSchema.parse(payload);
+      const { channelId } = sessionJoinSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
       const isAlive = existingChannel && !existingChannel.exited;
 

@@ -1,13 +1,13 @@
 import {
-  chatSetModelSchema,
-  chatSetPermissionModeSchema,
-  chatSetProactiveSchema,
-  chatSetRemoteControlSchema,
-  chatSetThinkingLevelSchema,
   requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
   settingsApplySchema,
+  settingsSetModelSchema,
+  settingsSetPermissionModeSchema,
+  settingsSetProactiveSchema,
+  settingsSetRemoteControlSchema,
+  settingsSetThinkingLevelSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import type { SettingsStore } from '../../services/settings-store.ts';
@@ -32,7 +32,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { model } = chatSetModelSchema.parse(payload);
+      const { model } = settingsSetModelSchema.parse(payload);
       await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
@@ -48,7 +48,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
+      const { channelId, mode } = settingsSetPermissionModeSchema.parse(payload);
       await ch.sendRequest('settings:set_permission_mode', { mode });
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
@@ -66,7 +66,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
+      const { channelId, thinkingLevel } = settingsSetThinkingLevelSchema.parse(payload);
       await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
@@ -80,7 +80,7 @@ export function create(
 
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
-      const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
+      const { channelId, enabled } = settingsSetProactiveSchema.parse(payload);
       await ch.sendRequest('settings:set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
@@ -93,7 +93,7 @@ export function create(
 
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
-      const { enabled } = chatSetRemoteControlSchema.parse(payload);
+      const { enabled } = settingsSetRemoteControlSchema.parse(payload);
       ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
     } catch {
       // ignore

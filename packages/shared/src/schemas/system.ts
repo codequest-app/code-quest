@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { hookResponseInfoSchema, hookStartedInfoSchema } from './control.ts';
 import { rateLimitInfoSchema, remoteControlStateInfoSchema } from './settings.ts';
 
 // ── Model info ──
@@ -15,6 +14,25 @@ export const modelInfoSchema = z.object({
   supportsFastMode: z.boolean().optional(),
 });
 export type ModelInfo = z.infer<typeof modelInfoSchema>;
+
+// ── Hook info ──
+
+export const hookStartedInfoSchema = z.object({
+  hookName: z.string(),
+  hookId: z.string(),
+  hookEvent: z.string(),
+});
+export type HookStartedInfo = z.infer<typeof hookStartedInfoSchema>;
+
+export const hookResponseInfoSchema = z.object({
+  hookName: z.string(),
+  hookId: z.string(),
+  hookEvent: z.string(),
+  hookEventName: z.string().optional(),
+  output: z.string().optional(),
+  additionalContext: z.string().optional(),
+});
+export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
 
 // ── S2C payloads ──
 
@@ -109,3 +127,23 @@ export const systemRemoteControlPayloadSchema = z.object({
   info: remoteControlStateInfoSchema,
 });
 export type SystemRemoteControlPayload = z.infer<typeof systemRemoteControlPayloadSchema>;
+
+// ── Hook C2S (moved from control.ts) ──
+
+export const chatHookCallbackRespondSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  response: z.object({ continue: z.boolean() }),
+});
+export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackRespondSchema>;
+
+// ── Hook S2C (moved from control.ts) ──
+
+export const controlHookCallbackPayloadSchema = z.object({
+  channelId: z.string(),
+  requestId: z.string(),
+  callbackId: z.string(),
+  input: z.unknown(),
+  toolUseId: z.string().optional(),
+});
+export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPayloadSchema>;

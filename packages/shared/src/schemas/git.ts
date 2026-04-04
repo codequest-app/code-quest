@@ -56,11 +56,9 @@ export const gitDiffResultSchema = z.object({
 });
 export type GitDiffResult = z.infer<typeof gitDiffResultSchema>;
 
-export const gitCheckoutResultSchema = z.object({
-  success: z.boolean(),
-  error: z.string().optional(),
-});
-export type GitCheckoutResult = z.infer<typeof gitCheckoutResultSchema>;
+export type { SuccessResponse as GitCheckoutResult } from './common.ts';
+// GitCheckoutResult is identical to SuccessResponse — re-export as alias
+export { successResponseSchema as gitCheckoutResultSchema } from './common.ts';
 
 export const execResponseSchema = z.looseObject({
   exitCode: z.number(),
