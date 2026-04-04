@@ -1,4 +1,10 @@
-import type { ChromeMcpState, DebuggerMcpState, JupyterMcpState } from '@code-quest/shared';
+import type {
+  ChromeMcpState,
+  DebuggerMcpState,
+  JupyterMcpState,
+  McpServerInfo,
+  McpTool,
+} from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { McpServerRow } from './McpServerRow';
 
@@ -20,8 +26,6 @@ function McpStateBadge({ state, label }: { state: string; label: string }) {
     />
   );
 }
-
-import type { McpServerInfo, McpTool } from '@code-quest/shared';
 
 const CODE_INPUT =
   'bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text';

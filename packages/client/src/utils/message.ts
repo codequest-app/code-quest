@@ -5,6 +5,7 @@ import {
   sessionStatsSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
+import type { Message } from '../types/ui';
 
 const historyAssistantSchema = z.object({
   content: z.array(contentBlockSchema),
@@ -19,8 +20,6 @@ const historyUserSchema = z.object({
 const historyResultSchema = z.object({
   stats: sessionStatsSchema,
 });
-
-import type { Message } from '../types/ui';
 
 export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message =>
   ({
