@@ -8,6 +8,7 @@ import {
   useChannelMessages,
 } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
+import { useTab } from '../contexts/TabContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -27,6 +28,7 @@ export function ChatPanel({ title }: { title?: string }) {
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
   const { listSessions, renameSession, deleteSession, resumeSession } = useSession();
+  const { createNewTab } = useTab();
   const {
     pendingDiffReview,
     diffRespond,
@@ -101,7 +103,12 @@ export function ChatPanel({ title }: { title?: string }) {
           title={title}
           onToggleRaw={() => setActiveSidePanel((v) => (v === 'raw' ? null : 'raw'))}
         />
-        {worktree && <WorktreeBanner worktree={worktree} />}
+        {worktree && (
+          <WorktreeBanner
+            worktree={worktree}
+            onOpenInNewTab={(path) => createNewTab(undefined, { cwd: path })}
+          />
+        )}
         <SearchBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

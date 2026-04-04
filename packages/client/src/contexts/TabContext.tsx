@@ -19,7 +19,7 @@ export interface TabContextValue {
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
-  createNewTab: (initialPrompt?: string) => Promise<{ channelId: string }>;
+  createNewTab: (initialPrompt?: string, opts?: { cwd?: string }) => Promise<{ channelId: string }>;
   replaceActiveTab: (newChannelId: string) => void;
   syncFromServer: (sessions: Array<{ channelId: string; state: string }>) => void;
 }
@@ -90,7 +90,7 @@ export function TabProvider({
     });
   };
 
-  const createNewTab = (initialPrompt?: string) =>
+  const createNewTab = (initialPrompt?: string, opts?: { cwd?: string }) =>
     new Promise<{ channelId: string }>((resolve) => {
       const clientId = crypto.randomUUID();
       setState((prev) => ({
@@ -99,7 +99,7 @@ export function TabProvider({
       }));
       socket.emit(
         'session:launch',
-        { initialPrompt, channelId: clientId, cwd: workspaceFolder },
+        { initialPrompt, channelId: clientId, cwd: opts?.cwd ?? workspaceFolder },
         (_response: { channelId: string; slashCommands?: string[] }) => {
           resolve({ channelId: clientId });
         },
