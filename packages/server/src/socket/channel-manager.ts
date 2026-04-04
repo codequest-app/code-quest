@@ -1,4 +1,4 @@
-import type { ControlResponse } from '@code-quest/shared';
+import type { ControlResponse, WorktreeInfo } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
@@ -12,7 +12,7 @@ interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
   cwd?: string;
-  worktree?: { name: string; path: string };
+  worktree?: WorktreeInfo;
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */
   onBeforeSpawn?: (channel: Channel) => void;
 }

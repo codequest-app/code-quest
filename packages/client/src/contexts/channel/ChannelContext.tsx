@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useRef } from 'react';
 import type { ChannelInitialState } from '../../types/chat';
 import { GitProvider } from '../GitContext';
@@ -30,7 +31,7 @@ export function ChannelProvider({
   initialState?: ChannelInitialState;
   onTitleChange?: (title: string) => void;
   onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
-  onWorktree?: (info: { name: string; path: string }) => void;
+  onWorktree?: (info: WorktreeInfo) => void;
   cwd?: string;
 }) {
   const resetStreamingRefsRef = useRef(() => {});

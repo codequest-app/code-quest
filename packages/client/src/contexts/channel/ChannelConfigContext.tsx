@@ -5,6 +5,7 @@ import type {
   ProviderClientConfig,
   ServerToClientEvents,
   UsageQuota,
+  WorktreeInfo,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSocket } from '../SocketContext';
@@ -36,7 +37,7 @@ export interface ConfigState {
   experimentGates: Record<string, boolean>;
   usageQuota: UsageQuota | null;
   contextUsage: Record<string, unknown> | null;
-  worktree: { name: string; path: string } | null;
+  worktree: WorktreeInfo | null;
 }
 
 export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
@@ -67,7 +68,7 @@ export interface ChannelConfigValue extends ConfigState {
   disableJupyterMcp: () => Promise<McpResponse>;
   askDebuggerHelp: () => Promise<McpResponse>;
   requestUsageUpdate: () => void;
-  openWorktree: (info: { name: string; path: string }) => void;
+  openWorktree: (info: WorktreeInfo) => void;
 }
 
 type ConfigStateValue = ConfigState & { isFastMode: boolean };
@@ -110,7 +111,7 @@ export function ChannelConfigProvider({
 }: {
   channelId: string;
   initialConfig?: Partial<ConfigState>;
-  onWorktree?: (info: { name: string; path: string }) => void;
+  onWorktree?: (info: WorktreeInfo) => void;
   children: ReactNode;
 }) {
   const [configState, setConfigState] = useState<ConfigState>(() => ({
@@ -161,7 +162,7 @@ export function ChannelConfigProvider({
   const baseActions = createConfigActions({ socket, channelId });
   const actions = {
     ...baseActions,
-    openWorktree: (info: { name: string; path: string }) => onWorktree?.(info),
+    openWorktree: (info: WorktreeInfo) => onWorktree?.(info),
   };
 
   // ── State value ──

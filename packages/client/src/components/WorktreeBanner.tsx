@@ -1,7 +1,8 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
 
 interface WorktreeBannerProps {
-  worktree: { name: string; path: string };
+  worktree: WorktreeInfo;
 }
 
 export function WorktreeBanner({ worktree }: WorktreeBannerProps) {

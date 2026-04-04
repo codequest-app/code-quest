@@ -2,6 +2,9 @@ import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
+import type { WorktreeInfo } from '@code-quest/shared';
+
+export type { WorktreeInfo } from '@code-quest/shared';
 
 const exec = promisify(execFile);
 
@@ -35,12 +38,6 @@ function generateWorktreeName(): string {
     .toISOString()
     .replace(/[^0-9]/g, '')
     .slice(0, 14)}`;
-}
-
-export interface WorktreeInfo {
-  name: string;
-  path: string;
-  branch?: string;
 }
 
 interface ExecError extends Error {

@@ -4,6 +4,7 @@ import type {
   ClientMessage,
   ControlResponse,
   NotificationResponse,
+  WorktreeInfo,
 } from '@code-quest/shared';
 import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
 import {
@@ -50,7 +51,7 @@ export class Channel {
   private _metaCache: ChannelMetaCache = {};
   private _sessionId: string | null = null;
   private _workspaceFolder: string | undefined;
-  private _worktree: { name: string; path: string } | null = null;
+  private _worktree: WorktreeInfo | null = null;
   private _lastError: string | undefined;
   private _exited = false;
 
@@ -89,10 +90,10 @@ export class Channel {
     this._workspaceFolder = v ? resolve(v) : undefined;
   }
 
-  get worktree(): { name: string; path: string } | null {
+  get worktree(): WorktreeInfo | null {
     return this._worktree;
   }
-  set worktree(v: { name: string; path: string } | null) {
+  set worktree(v: WorktreeInfo | null) {
     this._worktree = v;
     if (v) this.workspaceFolder = v.path;
   }

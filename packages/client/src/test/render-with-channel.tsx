@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -13,7 +14,7 @@ export interface RenderWithChannelOptions {
   claude?: FakeClaude;
   initSegment?: string;
   cwd?: string;
-  onWorktree?: (info: { name: string; path: string }) => void;
+  onWorktree?: (info: WorktreeInfo) => void;
 }
 
 export interface RenderWithChannelResult extends RenderResult {
