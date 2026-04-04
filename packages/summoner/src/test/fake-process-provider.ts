@@ -67,8 +67,15 @@ export class FakeProcessHandle implements ProcessHandle {
 
 export class FakeProcessProvider implements ProcessProvider {
   private readonly handles: FakeProcessHandle[] = [];
+  private readonly _spawnCalls: Array<{ command: string; args: string[]; options?: SpawnOptions }> =
+    [];
 
-  spawn(_command: string, _args: string[], _options?: SpawnOptions): FakeProcessHandle {
+  get spawnCalls(): ReadonlyArray<{ command: string; args: string[]; options?: SpawnOptions }> {
+    return this._spawnCalls;
+  }
+
+  spawn(command: string, args: string[], options?: SpawnOptions): FakeProcessHandle {
+    this._spawnCalls.push({ command, args, options });
     const handle = new FakeProcessHandle();
     this.handles.push(handle);
     return handle;

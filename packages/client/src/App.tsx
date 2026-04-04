@@ -21,7 +21,7 @@ export function App() {
         <SocketProvider socket={socket}>
           <SessionProvider>
             <PluginProvider>
-              <TabProvider workspaceFolder={config.workspaceFolder}>
+              <TabProvider defaultCwd={config.defaultCwd}>
                 <WorkspaceLayout />
               </TabProvider>
             </PluginProvider>

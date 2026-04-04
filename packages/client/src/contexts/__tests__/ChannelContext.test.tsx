@@ -3,19 +3,21 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeClaude } from '../../test/fake-claude';
-import { ChannelProvider, useChannelMessages, useWorkspaceFolder } from '../channel';
+import { ChannelProvider, useChannelMessages, useCwd } from '../channel';
 import { PluginProvider } from '../PluginContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 import { TabProvider } from '../TabContext';
 
-function wrapper(channelId: string, claude = createFakeClaude(), workspaceFolder = '/test/workspace') {
+function wrapper(channelId: string, claude = createFakeClaude(), cwd = '/test/workspace') {
   return ({ children }: { children: ReactNode }) => (
     <SocketProvider socket={claude.socket}>
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
-            <ChannelProvider channelId={channelId} workspaceFolder={workspaceFolder}>{children}</ChannelProvider>
+            <ChannelProvider channelId={channelId} cwd={cwd}>
+              {children}
+            </ChannelProvider>
           </TabProvider>
         </PluginProvider>
       </SessionProvider>
@@ -141,11 +143,11 @@ describe('ChannelContext', () => {
     });
   });
 
-  describe('workspaceFolder', () => {
-    it('provides workspaceFolder via useWorkspaceFolder', async () => {
+  describe('cwd', () => {
+    it('provides cwd via useCwd', async () => {
       const claude = createFakeClaude();
       const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useWorkspaceFolder(), {
+      const { result } = renderHook(() => useCwd(), {
         wrapper: wrapper(channelId, claude, '/my/project'),
       });
       expect(result.current).toBe('/my/project');
@@ -154,7 +156,7 @@ describe('ChannelContext', () => {
     it('defaults to ../ when not specified', async () => {
       const claude = createFakeClaude();
       const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useWorkspaceFolder(), {
+      const { result } = renderHook(() => useCwd(), {
         wrapper: ({ children }: { children: ReactNode }) => (
           <SocketProvider socket={claude.socket}>
             <SessionProvider>

@@ -8,10 +8,10 @@ import { ChannelMessagesProvider } from './ChannelMessagesContext';
 
 // ── Workspace folder context ──
 
-const WorkspaceFolderContext = createContext<string>('../');
+const CwdContext = createContext<string>('../');
 
-export function useWorkspaceFolder(): string {
-  return useContext(WorkspaceFolderContext);
+export function useCwd(): string {
+  return useContext(CwdContext);
 }
 
 // ── ChannelProvider (orchestrator) ──
@@ -22,20 +22,20 @@ export function ChannelProvider({
   initialState,
   onTitleChange,
   onStatusChange,
-  workspaceFolder = '../',
+  cwd = '../',
 }: {
   channelId: string;
   children: ReactNode;
   initialState?: ChannelInitialState;
   onTitleChange?: (title: string) => void;
   onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
-  workspaceFolder?: string;
+  cwd?: string;
 }) {
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
 
   return (
-    <WorkspaceFolderContext.Provider value={workspaceFolder}>
+    <CwdContext.Provider value={cwd}>
       <ChannelMessagesProvider
         channelId={channelId}
         initialState={initialState}
@@ -56,6 +56,6 @@ export function ChannelProvider({
           </ChannelConfigProvider>
         </ChannelControlProvider>
       </ChannelMessagesProvider>
-    </WorkspaceFolderContext.Provider>
+    </CwdContext.Provider>
   );
 }

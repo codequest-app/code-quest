@@ -127,6 +127,7 @@ export function create(
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions: launchOpts,
         initOptions: initInput,
+        cwd: parsed.cwd,
         onBeforeSpawn: (ch) => {
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },

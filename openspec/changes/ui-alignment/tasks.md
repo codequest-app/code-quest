@@ -182,3 +182,24 @@
 
 - [x] 26.1 Run all tests green
 - [x] 26.2 Commit + push
+
+## Phase 12: cwd bug fix + 架構重構
+
+### 27. Bug fix: handleLaunch 傳 cwd 給 channelManager.create
+
+- [x] 27.1 FakeProcessProvider 加 spawnCalls 記錄（summoner test helper）
+- [x] 27.2 Test (RED): session:launch 帶 cwd 時，CLI spawn options 含正確 cwd
+- [x] 27.3 Fix handleLaunch: 加 cwd: parsed.cwd 到 channelManager.create
+- [x] 27.4 Test green
+
+### 28. 重構: workspaceFolder → cwd rename + TabMeta 存 cwd
+
+- [x] 28.1 TabMeta 加 cwd?: string
+- [x] 28.2 createNewTab 存 cwd 到 TabMeta
+- [x] 28.3 TabProvider rename workspaceFolder → defaultCwd
+- [x] 28.4 ChannelProvider rename workspaceFolder → cwd
+- [x] 28.5 WorkspaceFolderContext → CwdContext，useWorkspaceFolder → useCwd
+- [x] 28.6 WorkspaceLayout 讀 tab.cwd 傳給 ChannelProvider cwd prop
+- [x] 28.7 更新所有 consumer（import rename）
+- [x] 28.8 Run all tests green (summoner + server + client)
+- [x] 28.9 Commit + push

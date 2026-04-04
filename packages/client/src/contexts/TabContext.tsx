@@ -4,6 +4,7 @@ import { useSocket } from './SocketContext';
 export interface TabMeta {
   title?: string;
   tabStatus: 'default' | 'pending' | 'done';
+  cwd?: string;
 }
 
 interface TabState {
@@ -37,11 +38,11 @@ const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'default' };
 export function TabProvider({
   children,
   initialState,
-  workspaceFolder = '../',
+  defaultCwd = '../',
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
-  workspaceFolder?: string;
+  defaultCwd?: string;
 }) {
   const [state, setState] = useState<TabState>(() => ({
     tabs: initialState?.tabs ?? {},
@@ -93,13 +94,14 @@ export function TabProvider({
   const createNewTab = (initialPrompt?: string, opts?: { cwd?: string }) =>
     new Promise<{ channelId: string }>((resolve) => {
       const clientId = crypto.randomUUID();
+      const tabCwd = opts?.cwd ?? defaultCwd;
       setState((prev) => ({
-        tabs: { ...prev.tabs, [clientId]: DEFAULT_META },
+        tabs: { ...prev.tabs, [clientId]: { ...DEFAULT_META, cwd: tabCwd } },
         activeTabId: clientId,
       }));
       socket.emit(
         'session:launch',
-        { initialPrompt, channelId: clientId, cwd: opts?.cwd ?? workspaceFolder },
+        { initialPrompt, channelId: clientId, cwd: tabCwd },
         (_response: { channelId: string; slashCommands?: string[] }) => {
           resolve({ channelId: clientId });
         },
