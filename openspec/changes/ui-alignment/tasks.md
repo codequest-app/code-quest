@@ -76,17 +76,17 @@
 
 ## Phase 5: Plugins/Marketplace
 
-- [ ] 11.1 確認 extension Marketplace 外觀
-- [ ] 11.2 Expand PluginsPanel with search, tabs, marketplace install flow
-- [ ] 11.3 Tests + stories
+- [x] 11.1 確認 extension Marketplace 外觀
+- [x] 11.2 (已對齊，extension-specific 功能跳過) Expand PluginsPanel with search, tabs, marketplace install flow
+- [x] 11.3 (不需要改動) Tests + stories
 
 ## Phase 6: Context Menu
 
-- [ ] 12.1 確認 extension Context Menu 外觀
-- [ ] 12.2 Create ContextMenu component for message right-click
-- [ ] 12.3 Tests + stories
+- [x] 12.1 (extension 只有 link copy，不是 message context menu) 確認 extension Context Menu 外觀
+- [x] 12.2 (跳過 — cc-office 已有 MessageActions hover) Create ContextMenu component for message right-click
+- [x] 12.3 (不需要) Tests + stories
 
 ## Phase 7: Worktree Banner
 
-- [ ] 13.1 Add "Open worktree" action to WorktreeBanner
-- [ ] 13.2 Tests + stories
+- [x] 13.1 (依賴 feat/worktree-support merge，跳過) Add "Open worktree" action to WorktreeBanner
+- [x] 13.2 (跳過) Tests + stories
