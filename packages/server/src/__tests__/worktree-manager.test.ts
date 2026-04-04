@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { detectWorktree, validateWorktreeName } from '../services/worktree-service.ts';
+import { detectWorktree, validateWorktreeName } from '../services/worktree-manager.ts';
 
-describe('WorktreeService', () => {
+describe('WorktreeManager', () => {
   describe('validateWorktreeName', () => {
     it('accepts valid name with letters, numbers, hyphens', () => {
       expect(() => validateWorktreeName('my-feature-1')).not.toThrow();

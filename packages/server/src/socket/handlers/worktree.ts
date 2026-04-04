@@ -3,7 +3,7 @@ import {
   deleteWorktree,
   getRepoRoot,
   listWorktrees,
-} from '../../services/worktree-service.ts';
+} from '../../services/worktree-manager.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
