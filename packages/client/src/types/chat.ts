@@ -70,13 +70,3 @@ export type ChannelInitialState = Partial<ChannelState> & {
   currentRepo?: string | null;
   slashCommands?: string[];
 };
-
-export interface PendingControl {
-  requestId: string;
-  subtype: string;
-  toolName?: string;
-  input?: Record<string, unknown>;
-  toolUseId?: string;
-  permissionSuggestions?: Record<string, unknown>[];
-  callbackId?: string;
-}

@@ -1,16 +1,17 @@
-import type { ControlResponse } from '@code-quest/shared';
+import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { SessionBroadcastState } from './schemas.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
 interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
+  cwd?: string;
+  worktree?: WorktreeInfo;
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */
   onBeforeSpawn?: (channel: Channel) => void;
 }
@@ -100,8 +101,11 @@ export class ChannelManager {
     channelId: string,
     opts?: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
-    const runner = this.runnerFactory.create(opts?.launchOptions);
+    const cwd = opts?.worktree?.path ?? opts?.cwd;
+    const runner = this.runnerFactory.create(opts?.launchOptions, cwd ? { cwd } : undefined);
     const channel = this.setupChannel(channelId, runner);
+
+    if (opts?.worktree) channel.worktree = opts.worktree;
 
     opts?.onBeforeSpawn?.(channel);
     runner.spawn();
@@ -138,7 +142,9 @@ export class ChannelManager {
 
     try {
       channel.kill();
-    } catch {}
+    } catch {
+      // kill() may throw if process already exited — safe to ignore
+    }
     channel.destroy();
     this.channels.delete(channelId);
   }
@@ -194,7 +200,8 @@ export class ChannelManager {
 
     const settings = pickDefined({
       modelSetting: ss.model,
-      defaultCwd: ch?.workspaceFolder,
+      defaultCwd: ch?.cwd,
+      worktree: ch?.worktree ?? undefined,
       initialPermissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,
       mcpServers: ss.mcpServers,

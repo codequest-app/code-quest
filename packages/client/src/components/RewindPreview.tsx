@@ -1,13 +1,12 @@
+import { type FileDiff, fileDiffSchema, type RewindResult } from '@code-quest/shared';
 import { useState } from 'react';
+import { z } from 'zod';
 import { JsonViewer } from './JsonViewer';
 
-interface FileDiff {
-  oldContent: string | null;
-  newContent: string | null;
-}
+const fileDiffMapSchema = z.record(z.string(), fileDiffSchema);
 
 interface RewindPreviewProps {
-  data: Record<string, unknown>;
+  data: RewindResult | Record<string, unknown>;
 }
 
 function diffType(diff: FileDiff): 'added' | 'deleted' | 'modified' {
@@ -26,11 +25,8 @@ const CODE_PRE =
   'bg-code-block p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap';
 
 export function RewindPreview({ data }: RewindPreviewProps) {
-  const fileDiffs = data.fileDiffs;
-  const entries =
-    fileDiffs && typeof fileDiffs === 'object' && !Array.isArray(fileDiffs)
-      ? Object.entries(fileDiffs as Record<string, FileDiff>)
-      : [];
+  const parsed = fileDiffMapSchema.safeParse(data.fileDiffs);
+  const entries = parsed.success ? Object.entries(parsed.data) : [];
 
   if (entries.length > 0) {
     return (

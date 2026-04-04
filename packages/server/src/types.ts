@@ -1,7 +1,7 @@
 import type { LaunchOptions, ProcessRunner } from '@code-quest/summoner';
 
 export interface RunnerFactory {
-  create(opts?: LaunchOptions): ProcessRunner;
+  create(opts?: LaunchOptions, spawnOptions?: Record<string, unknown>): ProcessRunner;
   readonly command: string;
   readonly args: string[];
 }

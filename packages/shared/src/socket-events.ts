@@ -9,23 +9,12 @@ import type {
   CancelRequestPayload,
   ChannelIdPayload,
   ChatCancelAsyncMessagePayload,
-  ChatCreatePayload,
-  ChatGenerateSessionTitlePayload,
-  ChatGetStatePayload,
+  ChatCancelPayload,
   ChatHookCallbackRespondPayload,
-  ChatInterruptPayload,
-  ChatJoinPayload,
-  ChatKillPayload,
   ChatRespondPayload,
   ChatRewindCodePayload,
   ChatSendPayload,
-  ChatSetModelPayload,
-  ChatSetPermissionModePayload,
-  ChatSetProactivePayload,
-  ChatSetRemoteControlPayload,
-  ChatSetThinkingLevelPayload,
   ChatStopTaskPayload,
-  ChromeMcpControlPayload,
   CloseChannelPayload,
   ControlCancelPayload,
   ControlDiffReviewPayload,
@@ -34,13 +23,13 @@ import type {
   ControlMcpPayload,
   ControlPermissionPayload,
   ControlResponse,
-  DebuggerHelpPayload,
+  CreateWorktreePayload,
+  DeleteWorktreePayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
   EnableJupyterMcpResponse,
   EnsureChromeMcpResponse,
   ErrorMessagePayload,
-  ExecResponse,
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
@@ -51,17 +40,16 @@ import type {
   GetProviderConfigResponse,
   GetSessionResponse,
   GitCheckoutPayload,
-  GitCheckoutResult,
   GitDiffPayload,
   GitDiffResult,
   GitExecPayload,
+  GitExecResponse,
   GitLogPayload,
   GitLogResult,
   GitStatusPayload,
   GitStatusResult,
   GitUpdateSkippedBranchPayload,
   InitResponse,
-  JupyterMcpControlPayload,
   ListFilesResponse,
   ListMarketplacesResponse,
   ListPluginsPayload,
@@ -84,10 +72,7 @@ import type {
   NotificationShowPayload,
   NotificationToastPayload,
   OAuthCodePayload,
-  PlanClosePreviewPayload,
-  PlanCommentEventPayload,
   PlanCommentPayload,
-  PlanGetCommentsPayload,
   PlanRemoveCommentPayload,
   PluginInstallPayload,
   PluginResult,
@@ -96,17 +81,20 @@ import type {
   RawEventPayload,
   RawEventsResponse,
   RefreshMarketplacePayload,
-  RemoveCommentPayload,
   RemoveMarketplacePayload,
   RewindResult,
   SessionClosedPayload,
+  SessionClosePayload,
   SessionCreatedPayload,
   SessionDeadPayload,
   SessionDeletePayload,
   SessionForkPayload,
+  SessionGenerateTitlePayload,
   SessionGetPayload,
   SessionInitPayload,
+  SessionJoinPayload,
   SessionJoinResponse,
+  SessionLaunchPayload,
   SessionLaunchResponse,
   SessionListPayload,
   SessionListRemotePayload,
@@ -118,6 +106,12 @@ import type {
   SessionTeleportPayload,
   SessionUpdateStatePayload,
   SettingsApplyPayload,
+  SettingsGetStatePayload,
+  SettingsSetModelPayload,
+  SettingsSetPermissionModePayload,
+  SettingsSetProactivePayload,
+  SettingsSetRemoteControlPayload,
+  SettingsSetThinkingLevelPayload,
   SpeechToTextMessagePayload,
   StateUsagePayload,
   StreamBlockStartPayload,
@@ -143,6 +137,8 @@ import type {
   TerminalOpenClaudePayload,
   TerminalOpenClaudeResponse,
   UpdateStatePayload,
+  WorktreeInfo,
+  WorktreeListResponse,
 } from './schemas/index.ts';
 
 export interface ClientToServerEvents {
@@ -153,16 +149,19 @@ export interface ClientToServerEvents {
   ) => void;
 
   // ── Aligned: Settings ──
-  'settings:set_model': (payload: ChatSetModelPayload, cb: (res: SuccessResponse) => void) => void;
-  'settings:set_permission_mode': (payload: ChatSetPermissionModePayload) => void;
-  'settings:set_thinking_level': (payload: ChatSetThinkingLevelPayload) => void;
+  'settings:set_model': (
+    payload: SettingsSetModelPayload,
+    cb: (res: SuccessResponse) => void,
+  ) => void;
+  'settings:set_permission_mode': (payload: SettingsSetPermissionModePayload) => void;
+  'settings:set_thinking_level': (payload: SettingsSetThinkingLevelPayload) => void;
   'settings:refresh_usage': (payload: ChannelIdPayload) => void;
   'settings:apply': (
     payload: SettingsApplyPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
   'settings:state': (
-    payload: ChatGetStatePayload,
+    payload: SettingsGetStatePayload,
     callback: (response: GetClaudeStateResponse) => void,
   ) => void;
 
@@ -234,23 +233,23 @@ export interface ClientToServerEvents {
     callback: (response: ControlResponse) => void,
   ) => void;
   'mcp:ensure_chrome': (
-    payload: ChromeMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: EnsureChromeMcpResponse) => void,
   ) => void;
   'mcp:disable_chrome': (
-    payload: ChromeMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: DisableChromeMcpResponse) => void,
   ) => void;
   'mcp:enable_jupyter': (
-    payload: JupyterMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: EnableJupyterMcpResponse) => void,
   ) => void;
   'mcp:disable_jupyter': (
-    payload: JupyterMcpControlPayload,
+    payload: ChannelIdPayload,
     callback: (response: DisableJupyterMcpResponse) => void,
   ) => void;
   'mcp:ask_debugger': (
-    payload: DebuggerHelpPayload,
+    payload: ChannelIdPayload,
     callback: (response: AskDebuggerHelpResponse) => void,
   ) => void;
 
@@ -258,14 +257,14 @@ export interface ClientToServerEvents {
   'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
   'git:checkout': (
     payload: GitCheckoutPayload,
-    callback: (result: GitCheckoutResult) => void,
+    callback: (result: SuccessResponse) => void,
   ) => void;
   'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
-  'git:exec': (payload: GitExecPayload, callback: (response: ExecResponse) => void) => void;
+  'git:exec': (payload: GitExecPayload, callback: (response: GitExecResponse) => void) => void;
 
   // ── Aligned: Plugin ──
   'plugin:list': (
@@ -306,7 +305,7 @@ export interface ClientToServerEvents {
     callback: (response: SuccessResponse) => void,
   ) => void;
   'plan:comments': (
-    payload: PlanGetCommentsPayload,
+    payload: ChannelIdPayload,
     callback: (response: GetPlanCommentsResponse) => void,
   ) => void;
   'plan:remove_comment': (
@@ -314,7 +313,7 @@ export interface ClientToServerEvents {
     callback: (response: SuccessResponse) => void,
   ) => void;
   'plan:close_preview': (
-    payload: PlanClosePreviewPayload,
+    payload: ChannelIdPayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
 
@@ -323,17 +322,17 @@ export interface ClientToServerEvents {
 
   // ── Clean relay protocol: new C→S events ──
   'session:launch': (
-    payload: ChatCreatePayload,
+    payload: SessionLaunchPayload,
     callback: (response: SessionLaunchResponse) => void,
   ) => void;
-  'session:close': (payload: ChatKillPayload) => void;
+  'session:close': (payload: SessionClosePayload) => void;
   'session:resume': (payload: SessionResumePayload) => void;
   'session:join': (
-    payload: ChatJoinPayload,
+    payload: SessionJoinPayload,
     callback: (response: SessionJoinResponse) => void,
   ) => void;
   'chat:send': (payload: ChatSendPayload) => void;
-  'chat:cancel': (payload: ChatInterruptPayload) => void;
+  'chat:cancel': (payload: ChatCancelPayload) => void;
   'chat:respond': (payload: ChatRespondPayload) => void;
 
   'chat:stop_task': (payload: ChatStopTaskPayload) => void;
@@ -364,20 +363,31 @@ export interface ClientToServerEvents {
 
   // ── Protocol Alignment: new control_request subtypes ──
   'chat:cancel_async': (payload: ChatCancelAsyncMessagePayload) => void;
-  'settings:set_proactive': (payload: ChatSetProactivePayload) => void;
+  'settings:set_proactive': (payload: SettingsSetProactivePayload) => void;
   'session:generate_title': (
-    payload: ChatGenerateSessionTitlePayload,
+    payload: SessionGenerateTitlePayload,
     callback: (response: GenerateSessionTitleResponse) => void,
   ) => void;
-  'settings:set_remote_control': (payload: ChatSetRemoteControlPayload) => void;
+  'settings:set_remote_control': (payload: SettingsSetRemoteControlPayload) => void;
   'chat:hook_respond': (payload: ChatHookCallbackRespondPayload) => void;
+
+  // ── Worktree ──
+  'worktree:create': (
+    payload: CreateWorktreePayload,
+    callback: (response: WorktreeInfo | { error: string }) => void,
+  ) => void;
+  'worktree:list': (callback: (response: WorktreeListResponse) => void) => void;
+  'worktree:delete': (
+    payload: DeleteWorktreePayload,
+    callback: (response: SuccessResponse) => void,
+  ) => void;
 }
 
 export interface ServerToClientEvents {
   // ── Per-channel broadcast events ──
   'chat:cancel_request': (payload: CancelRequestEventPayload) => void;
-  'plan:comment_added': (payload: PlanCommentEventPayload) => void;
-  'plan:comment_removed': (payload: RemoveCommentPayload) => void;
+  'plan:comment_added': (payload: PlanCommentPayload) => void;
+  'plan:comment_removed': (payload: PlanRemoveCommentPayload) => void;
   'speech:message': (payload: SpeechToTextMessagePayload) => void;
 
   // ── Session lifecycle ──

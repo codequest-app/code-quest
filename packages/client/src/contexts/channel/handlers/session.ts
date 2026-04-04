@@ -1,4 +1,9 @@
-import type { RewindResult, ServerToClientEvents } from '@code-quest/shared';
+import type {
+  ForkConversationResponse,
+  RawEventsResponse,
+  RewindResult,
+  ServerToClientEvents,
+} from '@code-quest/shared';
 import type { TypedSocket } from '../../../socket/client';
 import { rpc } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
@@ -31,7 +36,7 @@ interface SessionActionsDeps {
 }
 
 export function createSessionActions({ socket, channelId }: SessionActionsDeps) {
-  function fetchRawEvents(): Promise<{ events: unknown[] }> {
+  function fetchRawEvents(): Promise<RawEventsResponse> {
     return rpc(socket, 'session:raw_events', { channelId });
   }
 
@@ -45,9 +50,7 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     return () => socket.offAny(handler);
   }
 
-  function forkSession(
-    messageId: string,
-  ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
+  function forkSession(messageId: string): Promise<ForkConversationResponse> {
     return rpc(socket, 'session:fork', {
       forkedFromSession: channelId,
       resumeSessionAt: messageId,

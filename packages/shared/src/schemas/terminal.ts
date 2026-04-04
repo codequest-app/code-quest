@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
-export const terminalGetContentsSchema = z.object({
+export const terminalGetContentsPayloadSchema = z.object({
   channelId: z.string(),
   terminalId: z.string().optional(),
 });
-export type TerminalGetContentsPayload = z.infer<typeof terminalGetContentsSchema>;
+export type TerminalGetContentsPayload = z.infer<typeof terminalGetContentsPayloadSchema>;
 
-export const terminalOpenClaudeSchema = z.object({
+export const terminalOpenClaudePayloadSchema = z.object({
   channelId: z.string(),
   prompt: z.string().optional(),
   args: z.array(z.string()).optional(),
   cwd: z.string().optional(),
 });
-export type TerminalOpenClaudePayload = z.infer<typeof terminalOpenClaudeSchema>;
+export type TerminalOpenClaudePayload = z.infer<typeof terminalOpenClaudePayloadSchema>;
 
 export const terminalGetContentsResponseSchema = z.looseObject({
   content: z.string().nullable(),

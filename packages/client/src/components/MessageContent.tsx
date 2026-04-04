@@ -1,4 +1,4 @@
-import type { Message, TextMeta, ThinkingMeta } from '../types/ui';
+import type { Message } from '../types/ui';
 import { CitationsPanel } from './CitationsPanel';
 import { JsonViewer } from './JsonViewer';
 import { MarkdownContent } from './MarkdownContent';
@@ -60,32 +60,30 @@ export function renderBody(
 ): React.ReactNode {
   const { content } = message;
   switch (message.type) {
-    case 'text': {
-      const textMeta = message.meta as TextMeta | undefined;
+    case 'text':
       return (
         <>
           <MarkdownContent content={content} />
-          {textMeta?.citations && <CitationsPanel citations={textMeta.citations} />}
+          {message.meta?.citations && <CitationsPanel citations={message.meta.citations} />}
         </>
       );
-    }
-    case 'thinking': {
-      const thinkingMeta = message.meta as ThinkingMeta | undefined;
+    case 'thinking':
       return (
         <ThinkingBlock
           content={content}
-          budgetTokens={thinkingMeta?.budget_tokens}
-          durationMs={thinkingMeta?.durationMs}
-          isStreaming={thinkingMeta?.isStreaming}
+          budgetTokens={message.meta?.budget_tokens}
+          durationMs={message.meta?.durationMs}
+          isStreaming={message.meta?.isStreaming}
         />
       );
-    }
     case 'tool_use':
       return <ToolUseBlock content={content} meta={message.meta} />;
     case 'tool_result':
       return (
         <ToolResultBlock content={content} meta={message.meta} onDiffRespond={onDiffRespond} />
       );
+    case 'redacted_thinking':
+      return <div className="text-xs text-text-muted italic py-1">Thinking (redacted)</div>;
     case 'result':
       return <ResultContent meta={message.meta} />;
     case 'error':

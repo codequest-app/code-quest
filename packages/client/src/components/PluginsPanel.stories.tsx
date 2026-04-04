@@ -1,22 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
+import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { createFakeClaude } from '../test/fake-claude';
+import { TabProvider } from '../contexts/TabContext';
+import { createSocket } from '../socket/client';
 import { PluginsPanel } from './PluginsPanel';
-
-const claude = createFakeClaude();
 
 const meta = {
   component: PluginsPanel,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <SocketProvider socket={claude.socket}>
-        <div className="bg-bg text-text min-h-[400px]">
-          <Story />
-        </div>
-      </SocketProvider>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="bg-bg text-text min-h-[400px]">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
 } satisfies Meta<typeof PluginsPanel>;
 

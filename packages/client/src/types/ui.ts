@@ -1,6 +1,12 @@
-import type { ResultMeta, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
+import type { ResultMeta, RewindResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
 
-export type { ResultMeta, ToolResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
+export type {
+  ResultMeta,
+  RewindResult,
+  ToolResult,
+  ToolResultMeta,
+  ToolUseMeta,
+} from '@code-quest/shared';
 
 export type SessionStatus =
   | 'disconnected'
@@ -10,10 +16,7 @@ export type SessionStatus =
   | 'busy'
   | 'cancelling';
 
-export type RewindFn = (
-  messageId: string,
-  dryRun: boolean,
-) => Promise<import('@code-quest/shared').RewindResult>;
+export type RewindFn = (messageId: string, dryRun: boolean) => Promise<RewindResult>;
 
 export type ForkFn = (
   messageId: string,
@@ -74,6 +77,12 @@ interface MetaMap {
   result: ResultMeta;
 }
 
+/** Maps message types with optional typed meta */
+interface OptionalMetaMap {
+  text: TextMeta;
+  thinking: ThinkingMeta;
+}
+
 export type MessageType =
   | 'text'
   | 'thinking'
@@ -100,13 +109,16 @@ export type MessageType =
   | 'document'
   | 'meta'
   | 'interrupt'
+  | 'redacted_thinking'
   | 'slash_command_result';
 
 /** Typed message variant — meta is typed for known types, loose for others */
 export type Message = {
   [T in MessageType]: T extends keyof MetaMap
     ? MessageBase & { type: T; meta: MetaMap[T] & Record<string, unknown> }
-    : MessageBase & { type: T; meta?: Record<string, unknown> };
+    : T extends keyof OptionalMetaMap
+      ? MessageBase & { type: T; meta?: OptionalMetaMap[T] & Record<string, unknown> }
+      : MessageBase & { type: T; meta?: Record<string, unknown> };
 }[MessageType];
 
 /** Helper to extract a specific message variant */

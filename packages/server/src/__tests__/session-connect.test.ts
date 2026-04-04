@@ -45,6 +45,19 @@ describe('ChatHandler > session', () => {
       expect(channelId).toBeDefined();
     });
 
+    it('session:launch with cwd passes cwd to CLI spawn options', async () => {
+      const claude = createFakeClaude();
+      claude.prepareInit(s.init('cwd-sess'));
+
+      await claude.send<{ channelId: string }>('session:launch', {
+        channelId: 'ch-cwd',
+        cwd: '/projects/my-app',
+      });
+
+      const lastSpawn = claude.provider.spawnCalls[claude.provider.spawnCalls.length - 1];
+      expect(lastSpawn.options?.cwd).toBe('/projects/my-app');
+    });
+
     it('session record is written to DB with session_id set (from system/init, not started)', async () => {
       const { claude, channelId } = await setup();
 

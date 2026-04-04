@@ -1,45 +1,41 @@
 import { z } from 'zod';
 
-export const mcpReconnectSchema = z.object({
+const mcpChannelServerSchema = z.object({
   channelId: z.string(),
   serverName: z.string(),
 });
-export type McpReconnectPayload = z.infer<typeof mcpReconnectSchema>;
 
-export const mcpSetEnabledSchema = z.object({
-  channelId: z.string(),
-  serverName: z.string(),
+export const mcpReconnectPayloadSchema = mcpChannelServerSchema;
+export type McpReconnectPayload = z.infer<typeof mcpReconnectPayloadSchema>;
+
+export const mcpSetEnabledPayloadSchema = mcpChannelServerSchema.extend({
   enabled: z.boolean(),
 });
-export type McpSetEnabledPayload = z.infer<typeof mcpSetEnabledSchema>;
+export type McpSetEnabledPayload = z.infer<typeof mcpSetEnabledPayloadSchema>;
 
-export const mcpGetServersSchema = z.object({
+export const mcpGetServersPayloadSchema = z.object({
   channelId: z.string(),
 });
-export type McpGetServersPayload = z.infer<typeof mcpGetServersSchema>;
+export type McpGetServersPayload = z.infer<typeof mcpGetServersPayloadSchema>;
 
-export const mcpSetServersSchema = z.object({
+export const mcpSetServersPayloadSchema = z.object({
   channelId: z.string(),
   servers: z.record(z.string(), z.unknown()),
 });
-export type McpSetServersPayload = z.infer<typeof mcpSetServersSchema>;
+export type McpSetServersPayload = z.infer<typeof mcpSetServersPayloadSchema>;
 
-export const mcpMessageSchema = z.object({
-  channelId: z.string(),
-  serverName: z.string(),
+export const mcpMessagePayloadSchema = mcpChannelServerSchema.extend({
   message: z.record(z.string(), z.unknown()),
 });
-export type McpMessagePayload = z.infer<typeof mcpMessageSchema>;
+export type McpMessagePayload = z.infer<typeof mcpMessagePayloadSchema>;
 
-export const mcpAuthenticateSchema = z.object({ channelId: z.string(), serverName: z.string() });
-export type McpAuthenticatePayload = z.infer<typeof mcpAuthenticateSchema>;
+export const mcpAuthenticatePayloadSchema = mcpChannelServerSchema;
+export type McpAuthenticatePayload = z.infer<typeof mcpAuthenticatePayloadSchema>;
 
-export const mcpOAuthCallbackSchema = z.object({
-  channelId: z.string(),
-  serverName: z.string(),
+export const mcpOAuthCallbackPayloadSchema = mcpChannelServerSchema.extend({
   callbackUrl: z.string().url(),
 });
-export type McpOAuthCallbackPayload = z.infer<typeof mcpOAuthCallbackSchema>;
+export type McpOAuthCallbackPayload = z.infer<typeof mcpOAuthCallbackPayloadSchema>;
 
 export const mcpAuthResultSchema = z.object({
   success: z.boolean(),
@@ -47,15 +43,6 @@ export const mcpAuthResultSchema = z.object({
   error: z.string().optional(),
 });
 export type McpAuthResult = z.infer<typeof mcpAuthResultSchema>;
-
-export const chromeMcpControlSchema = z.object({ channelId: z.string() });
-export type ChromeMcpControlPayload = z.infer<typeof chromeMcpControlSchema>;
-
-export const jupyterMcpControlSchema = z.object({ channelId: z.string() });
-export type JupyterMcpControlPayload = z.infer<typeof jupyterMcpControlSchema>;
-
-export const debuggerHelpSchema = z.object({ channelId: z.string() });
-export type DebuggerHelpPayload = z.infer<typeof debuggerHelpSchema>;
 
 // ── Response schemas ──
 
@@ -104,3 +91,27 @@ export const mcpPayloadSchema = z.looseObject({
   message: z.record(z.string(), z.unknown()).optional(),
 });
 export type McpPayload = z.infer<typeof mcpPayloadSchema>;
+
+// ── MCP server info (used by client UI) ──
+
+export const mcpToolSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
+export type McpTool = z.infer<typeof mcpToolSchema>;
+
+export const mcpServerInfoSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean(),
+  status: z.enum([
+    'connected',
+    'disconnected',
+    'error',
+    'failed',
+    'needs-auth',
+    'disabled',
+    'connecting',
+  ]),
+  scope: z.string().optional(),
+});
+export type McpServerInfo = z.infer<typeof mcpServerInfoSchema>;

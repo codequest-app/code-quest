@@ -6,6 +6,7 @@ export interface ProcessRunnerOptions {
   processProvider?: ProcessProvider;
   args?: unknown;
   parentEnv?: NodeJS.ProcessEnv;
+  spawnOptions?: Record<string, unknown>;
 }
 
 export class ProcessRunner extends EventEmitter {
@@ -13,6 +14,7 @@ export class ProcessRunner extends EventEmitter {
   private readonly processProvider?: ProcessProvider;
   private readonly launchArgs: string[];
   private readonly parentEnv: NodeJS.ProcessEnv;
+  private readonly spawnOptions: Record<string, unknown>;
   private handle: ProcessHandle | null = null;
 
   constructor(options: ProcessRunnerOptions) {
@@ -21,6 +23,7 @@ export class ProcessRunner extends EventEmitter {
     this.processProvider = options.processProvider;
     this.launchArgs = this.adapter.buildArgs(options.args);
     this.parentEnv = options.parentEnv ?? process.env;
+    this.spawnOptions = options.spawnOptions ?? {};
   }
 
   spawn(): void {
@@ -33,6 +36,7 @@ export class ProcessRunner extends EventEmitter {
 
     const handle = this.processProvider?.spawn(this.adapter.command, this.launchArgs, {
       env,
+      ...this.spawnOptions,
     });
     if (!handle) return;
     this.handle = handle;

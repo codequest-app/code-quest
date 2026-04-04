@@ -3,34 +3,36 @@ import { accountInfoSchema } from './auth.ts';
 
 // ── C2S ──
 
-export const chatSetPermissionModeSchema = z.object({
+export const settingsSetPermissionModePayloadSchema = z.object({
   channelId: z.string(),
   mode: z.string(),
 });
-export type ChatSetPermissionModePayload = z.infer<typeof chatSetPermissionModeSchema>;
+export type SettingsSetPermissionModePayload = z.infer<
+  typeof settingsSetPermissionModePayloadSchema
+>;
 
-export const chatSetModelSchema = z.object({
+export const settingsSetModelPayloadSchema = z.object({
   channelId: z.string(),
   model: z.string(),
 });
-export type ChatSetModelPayload = z.infer<typeof chatSetModelSchema>;
+export type SettingsSetModelPayload = z.infer<typeof settingsSetModelPayloadSchema>;
 
-export const chatSetThinkingLevelSchema = z.object({
+export const settingsSetThinkingLevelPayloadSchema = z.object({
   channelId: z.string(),
   thinkingLevel: z.string(),
 });
-export type ChatSetThinkingLevelPayload = z.infer<typeof chatSetThinkingLevelSchema>;
+export type SettingsSetThinkingLevelPayload = z.infer<typeof settingsSetThinkingLevelPayloadSchema>;
 
-export const settingsApplySchema = z.object({
+export const settingsApplyPayloadSchema = z.object({
   channelId: z.string(),
   settings: z.record(z.string(), z.unknown()),
 });
-export type SettingsApplyPayload = z.infer<typeof settingsApplySchema>;
+export type SettingsApplyPayload = z.infer<typeof settingsApplyPayloadSchema>;
 
-export const chatGetStateSchema = z.object({
+export const settingsGetStatePayloadSchema = z.object({
   channelId: z.string(),
 });
-export type ChatGetStatePayload = z.infer<typeof chatGetStateSchema>;
+export type SettingsGetStatePayload = z.infer<typeof settingsGetStatePayloadSchema>;
 
 // ── State types ──
 
@@ -48,8 +50,6 @@ export const jupyterMcpStateSchema = z.object({
   status: z.enum(['inactive', 'available', 'active']),
 });
 export type JupyterMcpState = z.infer<typeof jupyterMcpStateSchema>;
-
-export type AuthStatusValue = 'logged_in' | 'logged_out' | 'unknown';
 
 export const updateStatePayloadSchema = z.object({
   channelId: z.string(),
@@ -154,3 +154,41 @@ export const settingsUpdatedPayloadSchema = z.looseObject({
   input: z.unknown(),
 });
 export type SettingsUpdatedPayload = z.infer<typeof settingsUpdatedPayloadSchema>;
+
+// ── State usage (moved from notification.ts) ──
+
+export const stateUsagePayloadSchema = z.object({
+  channelId: z.string(),
+  usage: usageQuotaSchema,
+  contextUsage: z.record(z.string(), z.unknown()).optional(),
+});
+export type StateUsagePayload = z.infer<typeof stateUsagePayloadSchema>;
+
+export const contextCategorySchema = z.object({
+  name: z.string(),
+  tokens: z.number(),
+  color: z.string(),
+});
+export type ContextCategory = z.infer<typeof contextCategorySchema>;
+
+export const contextUsageDataSchema = z.object({
+  categories: z.array(contextCategorySchema).optional(),
+  totalTokens: z.number().optional(),
+  maxTokens: z.number().optional(),
+  percentage: z.number().optional(),
+});
+export type ContextUsageData = z.infer<typeof contextUsageDataSchema>;
+
+// ── Settings C2S (moved from control.ts) ──
+
+export const settingsSetProactivePayloadSchema = z.object({
+  channelId: z.string(),
+  enabled: z.boolean(),
+});
+export type SettingsSetProactivePayload = z.infer<typeof settingsSetProactivePayloadSchema>;
+
+export const settingsSetRemoteControlPayloadSchema = z.object({
+  channelId: z.string(),
+  enabled: z.boolean(),
+});
+export type SettingsSetRemoteControlPayload = z.infer<typeof settingsSetRemoteControlPayloadSchema>;

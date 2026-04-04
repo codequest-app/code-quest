@@ -1,17 +1,18 @@
 import { spawnSync } from 'node:child_process';
 import {
-  gitCheckoutSchema,
-  gitExecSchema,
-  gitLogSchema,
-  gitUpdateSkippedBranchSchema,
+  gitCheckoutPayloadSchema,
+  gitExecPayloadSchema,
+  gitLogPayloadSchema,
+  gitUpdateSkippedBranchPayloadSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
+import { logger } from '../../logger.ts';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { SessionHistory } from '../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
-import { checkoutBranch, execGit } from '../utils/exec-git.ts';
+import { checkoutWithFallback, createGit } from '../utils/git.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export function create(
@@ -19,29 +20,23 @@ export function create(
   rawEventStore: RawEventStore,
   emitter: ChannelEmitter,
 ): void {
-  function handleStatus(
+  async function handleStatus(
     ch: Channel,
     _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void {
-    const cwd = ch.workspaceFolder;
-    Promise.all([
-      execGit(['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }),
-      execGit(['status', '--porcelain'], { cwd }),
-    ])
-      .then(([branchOut, statusOut]) => {
-        const branch = branchOut.trim();
-        const lines = statusOut.trim().split('\n').filter(Boolean);
-        const changedFiles = lines.map((line) => ({
-          status: line.substring(0, 2).trim(),
-          file: line.substring(3),
-        }));
-        callback?.({ branch, isClean: changedFiles.length === 0, changedFiles });
-      })
-      .catch(() => {
-        callback?.({ branch: 'unknown', isClean: true, changedFiles: [] });
-      });
+  ): Promise<void> {
+    try {
+      const git = createGit(ch.cwd);
+      const status = await git.status();
+      const changedFiles = status.files.map((f) => ({
+        status: `${f.index}${f.working_dir}`.trim(),
+        file: f.path,
+      }));
+      callback?.({ branch: status.current ?? 'unknown', isClean: status.isClean(), changedFiles });
+    } catch {
+      callback?.({ branch: 'unknown', isClean: true, changedFiles: [] });
+    }
   }
 
   async function handleCheckout(
@@ -51,8 +46,9 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { branch } = gitCheckoutSchema.parse(payload);
-      await checkoutBranch(branch, ch.workspaceFolder);
+      const { branch } = gitCheckoutPayloadSchema.parse(payload);
+      const git = createGit(ch.cwd);
+      await checkoutWithFallback(git, branch);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to checkout') });
@@ -66,21 +62,18 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { limit } = gitLogSchema.parse(payload);
-      const n = limit ?? 20;
-      const stdout = await execGit(['log', `--format=%H|%s|%an|%ai`, `-n`, String(n)], {
-        cwd: ch.workspaceFolder,
-      });
-      const entries = stdout
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map((line) => {
-          const [hash, message, author, date] = line.split('|');
-          return { hash, message, author, date };
-        });
+      const { limit } = gitLogPayloadSchema.parse(payload);
+      const git = createGit(ch.cwd);
+      const log = await git.log({ maxCount: limit ?? 20 });
+      const entries = log.all.map((e) => ({
+        hash: e.hash,
+        message: e.message,
+        author: e.author_name,
+        date: e.date,
+      }));
       callback?.({ entries });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get git log');
       callback?.({ entries: [] });
     }
   }
@@ -92,9 +85,11 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const diff = await execGit(['diff'], { cwd: ch.workspaceFolder });
+      const git = createGit(ch.cwd);
+      const diff = await git.diff();
       callback?.({ diff });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get git diff');
       callback?.({ diff: '' });
     }
   }
@@ -106,7 +101,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { branch, failed } = gitUpdateSkippedBranchSchema.parse(payload);
+      const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
       const entry: RawEntry = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.id),
@@ -129,9 +124,9 @@ export function create(
     callback?: SocketCallback,
   ): void {
     try {
-      const { command, args } = gitExecSchema.parse(payload);
+      const { command, args } = gitExecPayloadSchema.parse(payload);
       const { stdout, stderr, status } = spawnSync(command, args ?? [], {
-        cwd: ch.workspaceFolder,
+        cwd: ch.cwd,
         timeout: 30_000,
         encoding: 'utf-8',
       });

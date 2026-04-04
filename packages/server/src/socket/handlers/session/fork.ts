@@ -1,10 +1,10 @@
-import { sessionForkSchema, sessionTeleportSchema } from '@code-quest/shared';
+import { sessionForkPayloadSchema, sessionTeleportPayloadSchema } from '@code-quest/shared';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
-import { checkoutBranch } from '../../utils/exec-git.ts';
+import { checkoutWithFallback, createGit } from '../../utils/git.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
 export function create(
@@ -19,7 +19,8 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { forkedFromSession, resumeSessionAt, newSessionId } = sessionForkSchema.parse(payload);
+      const { forkedFromSession, resumeSessionAt, newSessionId } =
+        sessionForkPayloadSchema.parse(payload);
       const parentEvents = await sessionHistory.getSessionHistory(forkedFromSession);
       await channelManager.create(newSessionId, {
         launchOptions: { resumeSessionId: forkedFromSession },
@@ -42,19 +43,19 @@ export function create(
   }
 
   async function handleTeleport(
-    _ch: Channel | null,
+    ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const parsed = sessionTeleportSchema.parse(payload);
+      const parsed = sessionTeleportPayloadSchema.parse(payload);
       const events = await sessionHistory.getSessionHistory(parsed.remoteSessionId);
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
         try {
-          await checkoutBranch(parsed.branch);
+          await checkoutWithFallback(createGit(ch?.cwd), parsed.branch);
         } catch {
           branchCheckoutFailed = true;
         }
@@ -62,8 +63,8 @@ export function create(
 
       await channelManager.create(parsed.newSessionId, {
         launchOptions: { resumeSessionId: parsed.remoteSessionId },
-        onBeforeSpawn: (ch) => {
-          if (socket) channelManager.addSocketToChannel(ch, socket);
+        onBeforeSpawn: (newCh) => {
+          if (socket) channelManager.addSocketToChannel(newCh, socket);
         },
       });
 

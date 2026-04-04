@@ -104,7 +104,9 @@ export class SessionHistory {
             });
           }
         }
-      } catch {}
+      } catch {
+        // skip malformed raw entries (invalid JSON or unexpected shape)
+      }
     }
 
     return result;

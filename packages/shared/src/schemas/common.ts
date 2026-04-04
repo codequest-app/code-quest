@@ -42,25 +42,22 @@ export const channelMetaCacheSchema = z.object({
 });
 export type ChannelMetaCache = z.infer<typeof channelMetaCacheSchema>;
 
-export const sessionSummarySchema = z.object({
-  id: z.string(),
-  provider: z.string(),
-  command: z.string(),
-  args: z.string(),
-  cwd: z.string().optional(),
-  mode: z.string(),
-  role: z.string(),
-  parentId: z.string().optional(),
-  title: z.string().optional(),
-  createdAt: z.string(),
-  isActive: z.boolean().optional(),
-  lastAssistantMessage: z.string().optional(),
-  firstUserMessage: z.string().optional(),
-});
-export type SessionSummary = z.infer<typeof sessionSummarySchema>;
+// ── Error (moved from notification.ts) ──
 
-export const sessionListResponseSchema = z.object({
-  sessions: z.array(sessionSummarySchema),
-  total: z.number(),
+export const errorMessagePayloadSchema = z.object({
+  channelId: z.string(),
+  message: z.string(),
 });
-export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
+export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
+
+// ── Speech (moved from notification.ts) ──
+
+export const speechToTextMessagePayloadSchema = z.object({
+  channelId: z.string(),
+  text: z.string(),
+  done: z.boolean(),
+});
+export type SpeechToTextMessagePayload = z.infer<typeof speechToTextMessagePayloadSchema>;
+
+// sessionSummarySchema — moved to session.ts
+// sessionListResponseSchema — moved to session.ts

@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
 import { createSocket } from '../socket/client';
 import { AuthDialog } from './AuthDialog';
-
-const socket = createSocket();
 
 const meta = {
   component: AuthDialog,
@@ -15,15 +16,24 @@ const meta = {
     onClose: fn(),
   },
   decorators: [
-    (Story) => (
-      <SocketProvider socket={socket}>
-        <SessionProvider>
-          <div className="bg-bg text-text min-h-[300px]">
-            <Story />
-          </div>
-        </SessionProvider>
-      </SocketProvider>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="bg-bg text-text min-h-[300px]">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
 } satisfies Meta<typeof AuthDialog>;
 

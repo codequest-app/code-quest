@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useRef } from 'react';
 import type { ChannelInitialState } from '../../types/chat';
 import { GitProvider } from '../GitContext';
@@ -8,10 +9,10 @@ import { ChannelMessagesProvider } from './ChannelMessagesContext';
 
 // ── Workspace folder context ──
 
-const WorkspaceFolderContext = createContext<string>('../');
+const CwdContext = createContext<string>('../');
 
-export function useWorkspaceFolder(): string {
-  return useContext(WorkspaceFolderContext);
+export function useCwd(): string {
+  return useContext(CwdContext);
 }
 
 // ── ChannelProvider (orchestrator) ──
@@ -22,20 +23,22 @@ export function ChannelProvider({
   initialState,
   onTitleChange,
   onStatusChange,
-  workspaceFolder = '../',
+  onWorktree,
+  cwd = '../',
 }: {
   channelId: string;
   children: ReactNode;
   initialState?: ChannelInitialState;
   onTitleChange?: (title: string) => void;
   onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
-  workspaceFolder?: string;
+  onWorktree?: (info: WorktreeInfo) => void;
+  cwd?: string;
 }) {
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
 
   return (
-    <WorkspaceFolderContext.Provider value={workspaceFolder}>
+    <CwdContext.Provider value={cwd}>
       <ChannelMessagesProvider
         channelId={channelId}
         initialState={initialState}
@@ -49,13 +52,17 @@ export function ChannelProvider({
           channelId={channelId}
           resetStreamingRefs={() => resetStreamingRefsRef.current()}
         >
-          <ChannelConfigProvider channelId={channelId} initialConfig={initialState}>
+          <ChannelConfigProvider
+            channelId={channelId}
+            initialConfig={initialState}
+            onWorktree={onWorktree}
+          >
             <ChannelComposeProvider channelId={channelId}>
               <GitProvider>{children}</GitProvider>
             </ChannelComposeProvider>
           </ChannelConfigProvider>
         </ChannelControlProvider>
       </ChannelMessagesProvider>
-    </WorkspaceFolderContext.Provider>
+    </CwdContext.Provider>
   );
 }

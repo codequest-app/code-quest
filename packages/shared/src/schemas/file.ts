@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-export const fileListSchema = z.object({ channelId: z.string(), pattern: z.string() });
-export type FileListPayload = z.infer<typeof fileListSchema>;
+export const fileListPayloadSchema = z.object({ channelId: z.string(), pattern: z.string() });
+export type FileListPayload = z.infer<typeof fileListPayloadSchema>;
 
 export const fileSearchResultSchema = z.object({
   path: z.string(),
@@ -28,17 +28,3 @@ export const fileReadResponseSchema = z.union([
   z.object({ error: z.string() }),
 ]);
 export type FileReadResponse = z.infer<typeof fileReadResponseSchema>;
-
-// ── S2C ──
-
-export const closeChannelPayloadSchema = z.object({
-  channelId: z.string(),
-  error: z.string().optional(),
-});
-export type CloseChannelPayload = z.infer<typeof closeChannelPayloadSchema>;
-
-export const cancelRequestEventPayloadSchema = z.object({
-  channelId: z.string(),
-  targetRequestId: z.string(),
-});
-export type CancelRequestEventPayload = z.infer<typeof cancelRequestEventPayloadSchema>;

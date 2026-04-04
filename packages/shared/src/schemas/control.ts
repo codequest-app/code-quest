@@ -23,38 +23,6 @@ export const controlPermissionResponseSchema = z.union([
 ]);
 export type ControlPermissionResponse = z.infer<typeof controlPermissionResponseSchema>;
 
-export const chatCancelAsyncMessageSchema = z.object({
-  channelId: z.string(),
-  messageUuid: z.string(),
-});
-export type ChatCancelAsyncMessagePayload = z.infer<typeof chatCancelAsyncMessageSchema>;
-
-export const chatSetProactiveSchema = z.object({
-  channelId: z.string(),
-  enabled: z.boolean(),
-});
-export type ChatSetProactivePayload = z.infer<typeof chatSetProactiveSchema>;
-
-export const chatGenerateSessionTitleSchema = z.object({
-  channelId: z.string(),
-  description: z.string(),
-  persist: z.boolean(),
-});
-export type ChatGenerateSessionTitlePayload = z.infer<typeof chatGenerateSessionTitleSchema>;
-
-export const chatSetRemoteControlSchema = z.object({
-  channelId: z.string(),
-  enabled: z.boolean(),
-});
-export type ChatSetRemoteControlPayload = z.infer<typeof chatSetRemoteControlSchema>;
-
-export const chatHookCallbackRespondSchema = z.object({
-  channelId: z.string(),
-  requestId: z.string(),
-  response: z.object({ continue: z.boolean() }),
-});
-export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackRespondSchema>;
-
 // ── S2C payloads ──
 
 export const controlPermissionPayloadSchema = z.object({
@@ -62,8 +30,8 @@ export const controlPermissionPayloadSchema = z.object({
   requestId: z.string(),
   toolName: z.string(),
   toolUseId: z.string().optional(),
-  input: z.unknown(),
-  suggestions: z.array(z.unknown()).optional(),
+  input: z.record(z.string(), z.unknown()).optional(),
+  suggestions: z.array(z.record(z.string(), z.unknown())).optional(),
   callbackId: z.string().optional(),
   blockedPath: z.string().optional(),
   decisionReason: z.string().optional(),
@@ -108,50 +76,6 @@ export const controlCancelPayloadSchema = z.object({
 });
 export type ControlCancelPayload = z.infer<typeof controlCancelPayloadSchema>;
 
-export const controlHookCallbackPayloadSchema = z.object({
-  channelId: z.string(),
-  requestId: z.string(),
-  callbackId: z.string(),
-  input: z.unknown(),
-  toolUseId: z.string().optional(),
-});
-export type ControlHookCallbackPayload = z.infer<typeof controlHookCallbackPayloadSchema>;
-
-// ── Response schemas ──
-
-export const generateSessionTitleResponseSchema = z.looseObject({
-  success: z.boolean(),
-  result: z.unknown().optional(),
-  error: z.string().optional(),
-});
-export type GenerateSessionTitleResponse = z.infer<typeof generateSessionTitleResponseSchema>;
-
-export const getClaudeStateResponseSchema = z.looseObject({
-  success: z.boolean(),
-  state: z.record(z.string(), z.unknown()).optional(),
-  error: z.string().optional(),
-});
-export type GetClaudeStateResponse = z.infer<typeof getClaudeStateResponseSchema>;
-
-// ── Hook info ──
-
-export const hookStartedInfoSchema = z.object({
-  hookName: z.string(),
-  hookId: z.string(),
-  hookEvent: z.string(),
-});
-export type HookStartedInfo = z.infer<typeof hookStartedInfoSchema>;
-
-export const hookResponseInfoSchema = z.object({
-  hookName: z.string(),
-  hookId: z.string(),
-  hookEvent: z.string(),
-  hookEventName: z.string().optional(),
-  output: z.string().optional(),
-  additionalContext: z.string().optional(),
-});
-export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
-
 // ── Internal event payloads (runner → server handler) ──
 
 /** control:cancel / control:elicitation payload (requestId only) */
@@ -185,7 +109,19 @@ export const controlForwardPayloadSchema = z.looseObject({
 });
 export type ControlForwardPayload = z.infer<typeof controlForwardPayloadSchema>;
 
-/** control:open_diff payload */
+/** Client-side pending control request state */
+export const pendingControlSchema = z.object({
+  requestId: z.string(),
+  subtype: z.string(),
+  toolName: z.string().optional(),
+  input: z.record(z.string(), z.unknown()).optional(),
+  toolUseId: z.string().optional(),
+  permissionSuggestions: z.array(z.record(z.string(), z.unknown())).optional(),
+  callbackId: z.string().optional(),
+});
+export type PendingControl = z.infer<typeof pendingControlSchema>;
+
+/** control:open_diff internal payload */
 export const controlOpenDiffPayloadSchema = z.looseObject({
   requestId: z.string(),
   originalPath: z.string(),

@@ -1,4 +1,4 @@
-import { chromeMcpControlSchema, jupyterMcpControlSchema } from '@code-quest/shared';
+import { channelIdPayloadSchema } from '@code-quest/shared';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -14,7 +14,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = chromeMcpControlSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session' });
@@ -57,7 +57,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = chromeMcpControlSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session' });
@@ -83,7 +83,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = jupyterMcpControlSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session' });
@@ -113,7 +113,7 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId } = jupyterMcpControlSchema.parse(payload);
+      const { channelId } = channelIdPayloadSchema.parse(payload);
       const channel = channelManager.get(channelId) ?? channelManager.getFirstAlive();
       if (!channel) {
         callback?.({ success: false, error: 'No active session' });

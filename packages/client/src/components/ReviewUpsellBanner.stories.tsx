@@ -1,16 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
+import { SessionProvider } from '../contexts/SessionContext';
+import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
+import { createSocket } from '../socket/client';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
 const meta = {
   component: ReviewUpsellBanner,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <div className="max-w-2xl bg-surface text-text p-4">
-        <Story />
-      </div>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="max-w-2xl bg-surface text-text p-4">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
 } satisfies Meta<typeof ReviewUpsellBanner>;
 

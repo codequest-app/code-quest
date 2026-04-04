@@ -1,4 +1,5 @@
 import { and, type Column, eq, inArray } from 'drizzle-orm';
+import type { DrizzleDb } from './drizzle-types.ts';
 import type { SettingsStore } from './settings-store.ts';
 
 interface SettingsTable {
@@ -6,8 +7,6 @@ interface SettingsTable {
   key: Column;
   value: Column;
 }
-
-import type { DrizzleDb } from './drizzle-types.ts';
 
 function hasValue(row: unknown): row is { value: string } {
   return (

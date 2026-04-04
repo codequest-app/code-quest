@@ -1,10 +1,19 @@
-import type { ControlPermissionResponse, PlanCommentData } from '@code-quest/shared';
+import type {
+  ControlPermissionResponse,
+  PendingControl,
+  PlanCommentData,
+} from '@code-quest/shared';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { z } from 'zod';
 import { useChannelMessages } from '../contexts/channel';
-import type { PendingControl } from '../types/chat';
 import { pluralize } from '../utils/pluralize';
 import { MarkdownContent } from './MarkdownContent';
 import { PlanCommentOverlay } from './PlanCommentOverlay';
+
+const planInputSchema = z.object({
+  plan: z.string().optional(),
+  allowedPrompts: z.array(z.record(z.string(), z.unknown())).optional(),
+});
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 
@@ -14,11 +23,9 @@ interface PlanReviewBannerProps {
 }
 
 export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) {
-  const input = pending.input;
-  const plan = typeof input?.plan === 'string' ? input.plan : undefined;
-  const allowedPrompts = Array.isArray(input?.allowedPrompts)
-    ? (input.allowedPrompts as Record<string, unknown>[])
-    : undefined;
+  const parsed = planInputSchema.safeParse(pending.input);
+  const plan = parsed.data?.plan;
+  const allowedPrompts = parsed.data?.allowedPrompts;
   const [comment, setComment] = useState('');
   const lastRequestId = useRef<string | null>(null);
   const planContentRef = useRef<HTMLDivElement>(null);
@@ -37,7 +44,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
     clearPlanComments();
     onRespond({
       behavior: 'allow',
-      updatedInput: input ?? {},
+      updatedInput: pending.input ?? {},
       ...(userFeedback !== undefined ? { userFeedback } : {}),
     });
   };

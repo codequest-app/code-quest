@@ -1,12 +1,12 @@
 import {
   cancelRequestPayloadSchema,
-  chatCancelAsyncMessageSchema,
-  chatHookCallbackRespondSchema,
-  chatInterruptSchema,
-  chatRespondSchema,
-  chatRewindCodeSchema,
-  chatSendSchema,
-  chatStopTaskSchema,
+  chatCancelAsyncMessagePayloadSchema,
+  chatCancelPayloadSchema,
+  chatHookCallbackRespondPayloadSchema,
+  chatRespondPayloadSchema,
+  chatRewindCodePayloadSchema,
+  chatSendPayloadSchema,
+  chatStopTaskPayloadSchema,
   controlGenerateTitleResponseSchema,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
@@ -28,7 +28,7 @@ export function create(
 
   function handleSend(ch: Channel, socket: TypedSocket, payload: unknown): void {
     try {
-      const { channelId, message: textMessage } = chatSendSchema.parse(payload);
+      const { channelId, message: textMessage } = chatSendPayloadSchema.parse(payload);
       interruptedChannels.delete(channelId);
       ch.startProcessing();
       ch.sendMessage(textMessage);
@@ -50,15 +50,15 @@ export function create(
 
   function handleCancel(ch: Channel, payload: unknown): void {
     try {
-      const { channelId } = chatInterruptSchema.parse(payload);
+      const { channelId } = chatCancelPayloadSchema.parse(payload);
       if (interruptedChannels.has(channelId)) {
         ch.abort();
       } else {
         interruptedChannels.add(channelId);
         ch.sendRequest('message:interrupt').catch(() => {});
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel');
     }
   }
 
@@ -121,7 +121,7 @@ export function create(
 
   async function handleRespond(_ch: Channel | null, payload: unknown): Promise<void> {
     try {
-      const { requestId, response } = chatRespondSchema.parse(payload);
+      const { requestId, response } = chatRespondPayloadSchema.parse(payload);
 
       const match = channelManager.findByRequestId(requestId);
       if (!match) {
@@ -155,19 +155,19 @@ export function create(
 
   function handleStopTask(ch: Channel, payload: unknown): void {
     try {
-      const { taskId } = chatStopTaskSchema.parse(payload);
+      const { taskId } = chatStopTaskPayloadSchema.parse(payload);
       ch.sendRequest('message:stop_task', { task_id: taskId }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to stop task');
     }
   }
 
   function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
-      const { messageUuid } = chatCancelAsyncMessageSchema.parse(payload);
+      const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
       ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel async message');
     }
   }
 
@@ -178,7 +178,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { userMessageId, dryRun } = chatRewindCodeSchema.parse(payload);
+      const { userMessageId, dryRun } = chatRewindCodePayloadSchema.parse(payload);
       const result = await ch.sendRequest('message:rewind', {
         user_message_id: userMessageId ?? '',
         dry_run: dryRun ?? false,
@@ -203,17 +203,17 @@ export function create(
         });
         emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel request');
     }
   }
 
   function handleHookRespond(ch: Channel, payload: unknown): void {
     try {
-      const { requestId, response } = chatHookCallbackRespondSchema.parse(payload);
+      const { requestId, response } = chatHookCallbackRespondPayloadSchema.parse(payload);
       ch.respondToRequest(requestId, response);
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to respond to hook');
     }
   }
 

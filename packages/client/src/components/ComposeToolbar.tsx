@@ -1,3 +1,4 @@
+import type { McpServerInfo } from '@code-quest/shared';
 import { contextUsageDataSchema } from '@code-quest/shared';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -8,7 +9,6 @@ import { openUrl } from '../utils/open-url';
 import { AddButton } from './AddButton';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
-import type { McpServerInfo } from './MCPPanel';
 import { PermissionModePicker } from './PermissionModePicker';
 import { RewindDialog } from './RewindDialog';
 import { SpeechInputButton } from './SpeechInputButton';

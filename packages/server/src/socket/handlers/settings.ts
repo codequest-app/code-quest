@@ -1,15 +1,16 @@
 import {
-  chatSetModelSchema,
-  chatSetPermissionModeSchema,
-  chatSetProactiveSchema,
-  chatSetRemoteControlSchema,
-  chatSetThinkingLevelSchema,
   requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
-  settingsApplySchema,
+  settingsApplyPayloadSchema,
+  settingsSetModelPayloadSchema,
+  settingsSetPermissionModePayloadSchema,
+  settingsSetProactivePayloadSchema,
+  settingsSetRemoteControlPayloadSchema,
+  settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
@@ -32,7 +33,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { model } = chatSetModelSchema.parse(payload);
+      const { model } = settingsSetModelPayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
       callback?.({ success: true });
@@ -48,7 +49,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, mode } = chatSetPermissionModeSchema.parse(payload);
+      const { channelId, mode } = settingsSetPermissionModePayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_permission_mode', { mode });
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
@@ -66,7 +67,7 @@ export function create(
     callback?: (res: { success: boolean; error?: string }) => void,
   ): Promise<void> {
     try {
-      const { channelId, thinkingLevel } = chatSetThinkingLevelSchema.parse(payload);
+      const { channelId, thinkingLevel } = settingsSetThinkingLevelPayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
@@ -80,23 +81,23 @@ export function create(
 
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
-      const { channelId, enabled } = chatSetProactiveSchema.parse(payload);
+      const { channelId, enabled } = settingsSetProactivePayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_proactive', { enabled });
       emitter.broadcastAll('settings:update', {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to set proactive mode');
     }
   }
 
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
-      const { enabled } = chatSetRemoteControlSchema.parse(payload);
+      const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
       ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to set remote control');
     }
   }
 
@@ -107,7 +108,7 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { channelId, settings } = settingsApplySchema.parse(payload);
+      const { channelId, settings } = settingsApplyPayloadSchema.parse(payload);
       await ch.sendRequest('settings:apply', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
@@ -165,8 +166,8 @@ export function create(
             percentage: r.percentage,
           };
         }
-      } catch {
-        // CLI may not support get_context_usage — ignore
+      } catch (err) {
+        logger.debug({ err }, 'CLI may not support get_context_usage');
       }
     }
 
@@ -187,7 +188,8 @@ export function create(
     try {
       const stored = await settingsStore.getMany(ch.provider, ['model', 'permissionMode']);
       ch.respondToRequest(requestId, { ...stored, ...overrides });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get stored settings');
       ch.respondToRequest(requestId, overrides);
     }
   }

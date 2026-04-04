@@ -1,7 +1,8 @@
+import type { Question } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { AskUserQuestionBannerProps, Question } from '../AskUserQuestionBanner';
+import type { AskUserQuestionBannerProps } from '../AskUserQuestionBanner';
 import { AskUserQuestionBanner } from '../AskUserQuestionBanner';
 
 const makeProps = (questions: Question[], onRespond = vi.fn()): AskUserQuestionBannerProps => ({

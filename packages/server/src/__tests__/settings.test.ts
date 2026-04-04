@@ -176,7 +176,7 @@ describe('ChatHandler > settings', () => {
       expect((thinkingReq!.request as any).tokens).toBe(31999);
     });
 
-    it('stores cwd in channel.workspaceFolder when cwd is provided', async () => {
+    it('stores cwd in channel.cwd when cwd is provided', async () => {
       const claude = createFakeClaude();
 
       const channelId = await claude.initialize({ launch: { cwd: '/some/path' } });
@@ -186,7 +186,7 @@ describe('ChatHandler > settings', () => {
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);
-      expect(channel?.workspaceFolder).toBe('/some/path');
+      expect(channel?.cwd).toBe('/some/path');
     });
 
     it('resolves relative cwd to absolute path', async () => {
@@ -199,8 +199,8 @@ describe('ChatHandler > settings', () => {
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);
-      expect(channel?.workspaceFolder).not.toBe('../');
-      expect(channel?.workspaceFolder?.startsWith('/')).toBe(true);
+      expect(channel?.cwd).not.toBe('../');
+      expect(channel?.cwd?.startsWith('/')).toBe(true);
     });
   });
 

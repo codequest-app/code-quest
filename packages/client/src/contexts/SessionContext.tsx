@@ -1,4 +1,8 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type {
+  ForkConversationResponse,
+  SessionSummary,
+  TeleportSessionResponse,
+} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
@@ -24,11 +28,8 @@ export interface SessionContextValue {
   forkSession: (
     forkedFromSession: string,
     resumeSessionAt: string,
-  ) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
-  teleportSession: (
-    remoteSessionId: string,
-    branch?: string,
-  ) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
+  ) => Promise<ForkConversationResponse>;
+  teleportSession: (remoteSessionId: string, branch?: string) => Promise<TeleportSessionResponse>;
   renameSession: (
     channelId: string,
     title: string,

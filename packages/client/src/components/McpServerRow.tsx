@@ -1,5 +1,5 @@
+import type { McpServerInfo, McpTool } from '@code-quest/shared';
 import { useState } from 'react';
-import type { McpServerInfo, McpTool } from './MCPPanel';
 
 const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-[11px] transition-colors';
 

@@ -1,17 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import type { PendingControl } from '../types/chat';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
+import { SessionProvider } from '../contexts/SessionContext';
+import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
+import { createSocket } from '../socket/client';
 import { ToolPermissionBanner } from './ToolPermissionBanner';
 
 const meta = {
   component: ToolPermissionBanner,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <div className="bg-bg text-text max-w-lg p-4">
-        <Story />
-      </div>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="max-w-lg bg-bg text-text p-4">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
   args: { onRespond: fn() },
 } satisfies Meta<typeof ToolPermissionBanner>;
@@ -19,23 +37,23 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const bashPending: PendingControl = {
-  requestId: 'req-1',
-  subtype: 'can_use_tool',
-  toolName: 'Bash',
-  input: { command: 'rm -rf /tmp/build' },
-};
-
 export const BashPermission: Story = {
-  args: { pending: bashPending },
+  args: {
+    pending: {
+      requestId: 'req-1',
+      subtype: 'can_use_tool',
+      toolName: 'Bash',
+      input: { command: 'rm -rf /tmp/build', description: 'Remove build artifacts' },
+    },
+  },
 };
 
-export const WritePermission: Story = {
+export const ReadPermission: Story = {
   args: {
     pending: {
       requestId: 'req-2',
       subtype: 'can_use_tool',
-      toolName: 'Write',
+      toolName: 'Read',
       input: { file_path: '/src/components/App.tsx' },
     },
   },
@@ -49,6 +67,31 @@ export const WithPermissionSuggestions: Story = {
       toolName: 'Bash',
       input: { command: 'npm test' },
       permissionSuggestions: [{ tool: 'Bash', rule: 'npm test' }],
+    },
+  },
+};
+
+export const EmptyInput: Story = {
+  args: {
+    pending: {
+      requestId: 'req-4',
+      subtype: 'can_use_tool',
+      toolName: 'CustomTool',
+      input: {},
+    },
+  },
+};
+
+export const WriteWithLargeInput: Story = {
+  args: {
+    pending: {
+      requestId: 'req-5',
+      subtype: 'can_use_tool',
+      toolName: 'Write',
+      input: {
+        file_path: '/src/components/VeryLongComponentName.tsx',
+        content: 'export function VeryLongComponentName() {\n  return <div>Hello</div>;\n}\n',
+      },
     },
   },
 };

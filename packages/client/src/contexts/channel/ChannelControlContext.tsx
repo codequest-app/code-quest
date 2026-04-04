@@ -1,4 +1,8 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type {
+  ControlPermissionResponse,
+  PendingControl,
+  ServerToClientEvents,
+} from '@code-quest/shared';
 import {
   createContext,
   type ReactNode,
@@ -8,7 +12,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { PendingControl, PendingDiffReview, PendingElicitation } from '../../types/chat';
+import type { PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
@@ -25,10 +29,7 @@ export interface ChannelControlValue {
   setPendingElicitation: (v: PendingElicitation | null) => void;
   setPendingDiffReview: (v: PendingDiffReview | null) => void;
   getPendingControls: () => PendingControl[];
-  respondToControl: (
-    response: import('@code-quest/shared').ControlPermissionResponse,
-    requestId?: string,
-  ) => void;
+  respondToControl: (response: ControlPermissionResponse, requestId?: string) => void;
   diffRespond: (toolId: string, accepted: boolean) => void;
   stopTask: (taskId: string) => void;
   clearPendingDiffReview: () => void;
@@ -132,8 +133,8 @@ export function ChannelControlProvider({
           subtype: 'can_use_tool',
           toolName: payload.toolName,
           toolUseId: payload.toolUseId,
-          input: payload.input as Record<string, unknown> | undefined,
-          permissionSuggestions: payload.suggestions as Record<string, unknown>[] | undefined,
+          input: payload.input,
+          permissionSuggestions: payload.suggestions,
         },
         'assistant',
         payload.toolName,
@@ -147,7 +148,7 @@ export function ChannelControlProvider({
           requestId: payload.requestId,
           subtype: 'hook_callback',
           callbackId: payload.callbackId,
-          input: payload.input as Record<string, unknown> | undefined,
+          input: payload.input,
           toolUseId: payload.toolUseId,
         },
         'system',

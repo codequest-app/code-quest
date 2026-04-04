@@ -1,10 +1,12 @@
 import type {
   AccountInfo,
+  ControlResponse,
   McpAuthResult,
   ModelInfo,
   ProviderClientConfig,
   ServerToClientEvents,
   UsageQuota,
+  WorktreeInfo,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSocket } from '../SocketContext';
@@ -36,9 +38,8 @@ export interface ConfigState {
   experimentGates: Record<string, boolean>;
   usageQuota: UsageQuota | null;
   contextUsage: Record<string, unknown> | null;
+  worktree: WorktreeInfo | null;
 }
-
-export type McpResponse = { success: boolean; response?: Record<string, unknown>; error?: string };
 
 export interface ChannelConfigValue extends ConfigState {
   isFastMode: boolean;
@@ -48,11 +49,11 @@ export interface ChannelConfigValue extends ConfigState {
   setThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
   setEffort: (effort: string) => Promise<{ success: boolean; error?: string }>;
-  mcpStatus: () => Promise<McpResponse>;
-  mcpToggle: (serverName: string, enabled: boolean) => Promise<McpResponse>;
-  mcpReconnect: (serverName: string) => Promise<McpResponse>;
-  mcpSetServers: (servers: Record<string, unknown>) => Promise<McpResponse>;
-  mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<McpResponse>;
+  mcpStatus: () => Promise<ControlResponse>;
+  mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
+  mcpReconnect: (serverName: string) => Promise<ControlResponse>;
+  mcpSetServers: (servers: Record<string, unknown>) => Promise<ControlResponse>;
+  mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<ControlResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
   mcpAuthenticate: (serverName: string) => Promise<McpAuthResult>;
   mcpOAuthCallback: (
@@ -60,12 +61,13 @@ export interface ChannelConfigValue extends ConfigState {
     callbackUrl: string,
   ) => Promise<{ success: boolean; error?: string }>;
   mcpClearAuth: (serverName: string) => Promise<{ success: boolean; error?: string }>;
-  ensureChromeMcpEnabled: () => Promise<McpResponse>;
-  disableChromeMcp: () => Promise<McpResponse>;
-  enableJupyterMcp: () => Promise<McpResponse>;
-  disableJupyterMcp: () => Promise<McpResponse>;
-  askDebuggerHelp: () => Promise<McpResponse>;
+  ensureChromeMcpEnabled: () => Promise<ControlResponse>;
+  disableChromeMcp: () => Promise<ControlResponse>;
+  enableJupyterMcp: () => Promise<ControlResponse>;
+  disableJupyterMcp: () => Promise<ControlResponse>;
+  askDebuggerHelp: () => Promise<ControlResponse>;
   requestUsageUpdate: () => void;
+  openWorktree: (info: WorktreeInfo) => void;
 }
 
 type ConfigStateValue = ConfigState & { isFastMode: boolean };
@@ -97,15 +99,18 @@ const INITIAL_CONFIG: ConfigState = {
   experimentGates: {},
   usageQuota: null,
   contextUsage: null,
+  worktree: null,
 };
 
 export function ChannelConfigProvider({
   channelId,
   initialConfig,
+  onWorktree,
   children,
 }: {
   channelId: string;
   initialConfig?: Partial<ConfigState>;
+  onWorktree?: (info: WorktreeInfo) => void;
   children: ReactNode;
 }) {
   const [configState, setConfigState] = useState<ConfigState>(() => ({
@@ -153,7 +158,11 @@ export function ChannelConfigProvider({
   }, [channelId, socket]);
 
   // ── Stable actions (only re-created when socket/channelId change) ──
-  const actions = createConfigActions({ socket, channelId });
+  const baseActions = createConfigActions({ socket, channelId });
+  const actions = {
+    ...baseActions,
+    openWorktree: (info: WorktreeInfo) => onWorktree?.(info),
+  };
 
   // ── State value ──
   const stateValue: ConfigStateValue = {

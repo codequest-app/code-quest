@@ -1,4 +1,10 @@
-import type { ChromeMcpState, DebuggerMcpState, JupyterMcpState } from '@code-quest/shared';
+import type {
+  ChromeMcpState,
+  DebuggerMcpState,
+  JupyterMcpState,
+  McpServerInfo,
+  McpTool,
+} from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { McpServerRow } from './McpServerRow';
 
@@ -19,25 +25,6 @@ function McpStateBadge({ state, label }: { state: string; label: string }) {
       title={label}
     />
   );
-}
-
-export interface McpServerInfo {
-  name: string;
-  enabled: boolean;
-  status:
-    | 'connected'
-    | 'disconnected'
-    | 'error'
-    | 'failed'
-    | 'needs-auth'
-    | 'disabled'
-    | 'connecting';
-  scope?: string;
-}
-
-export interface McpTool {
-  name: string;
-  description?: string;
 }
 
 const CODE_INPUT =

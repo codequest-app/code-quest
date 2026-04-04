@@ -1,5 +1,6 @@
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, isRecord } from '../../utils.ts';
+import type { ProtocolMessage } from '../schemas.ts';
 
 type RequestContext = { requestId: string; request: Record<string, unknown> };
 
@@ -164,7 +165,7 @@ const HANDLERS: Record<string, (ctx: RequestContext) => ClientMessage | null> = 
   set_permission_mode: handleSetPermissionMode,
 };
 
-export function transformControlRequest(raw: Record<string, unknown>): AdapterOutput {
+export function transformControlRequest(raw: ProtocolMessage): AdapterOutput {
   const request = raw.request as Record<string, unknown> | undefined;
   const requestId = raw.request_id as string;
   const subtype = request?.subtype as string | undefined;

@@ -1,3 +1,4 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -12,7 +13,8 @@ export interface RenderWithChannelOptions {
   channelId?: string;
   claude?: FakeClaude;
   initSegment?: string;
-  workspaceFolder?: string;
+  cwd?: string;
+  onWorktree?: (info: WorktreeInfo) => void;
 }
 
 export interface RenderWithChannelResult extends RenderResult {
@@ -35,7 +37,13 @@ export async function renderWithChannel(
         <SessionProvider>
           <PluginProvider>
             <TabProvider>
-              <ChannelProvider channelId={channelId} workspaceFolder={options.workspaceFolder}>{children}</ChannelProvider>
+              <ChannelProvider
+                channelId={channelId}
+                cwd={options.cwd}
+                onWorktree={options.onWorktree}
+              >
+                {children}
+              </ChannelProvider>
             </TabProvider>
           </PluginProvider>
         </SessionProvider>
