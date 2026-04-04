@@ -84,6 +84,18 @@ export const marketplaceResultSchema = z.object({
 });
 export type MarketplaceResult = z.infer<typeof marketplaceResultSchema>;
 
+/** Raw marketplace entry from CLI `marketplace list --json` */
+export const marketplaceRawItemSchema = z.object({
+  name: z.string(),
+  source: z.string(),
+  repo: z.string().optional(),
+  url: z.string().optional(),
+  path: z.string().optional(),
+  package: z.string().optional(),
+  installLocation: z.string().optional(),
+});
+export type MarketplaceRawItem = z.infer<typeof marketplaceRawItemSchema>;
+
 // ── Response schemas ──
 
 export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });

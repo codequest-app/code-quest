@@ -6,6 +6,7 @@ import {
   sessionResumePayloadSchema,
   sessionUpdateStatePayloadSchema,
 } from '@code-quest/shared';
+import { logger } from '../../../logger.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
 import { type ChannelEmitter, withChannel } from '../../channel-emitter.ts';
@@ -23,8 +24,8 @@ export function create(
       const { channelId } = sessionClosePayloadSchema.parse(payload);
       ch.kill();
       emitter.broadcastAll('session:dead', { channelId });
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to close session');
     }
   }
 
@@ -32,8 +33,8 @@ export function create(
     try {
       const { channelId } = sessionResumePayloadSchema.parse(payload);
       emitter.broadcastAll('session:resume', { channelId });
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to resume session');
     }
   }
 

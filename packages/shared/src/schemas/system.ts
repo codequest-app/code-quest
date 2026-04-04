@@ -98,8 +98,8 @@ export const systemApiRetryPayloadSchema = z.object({
 });
 export type SystemApiRetryPayload = z.infer<typeof systemApiRetryPayloadSchema>;
 
-/** system:rate_limit payload */
-export const rateLimitPayloadSchema = z.looseObject({
+/** system:rate_limit internal payload (runner → server, uses numeric resetsAt) */
+export const rateLimitInternalPayloadSchema = z.looseObject({
   info: z.looseObject({
     status: z.string(),
     rateLimitType: z.string().optional(),
@@ -109,6 +109,7 @@ export const rateLimitPayloadSchema = z.looseObject({
     isUsingOverage: z.boolean().optional(),
   }),
 });
+export type RateLimitInternalPayload = z.infer<typeof rateLimitInternalPayloadSchema>;
 
 export const systemExperimentGatesPayloadSchema = z.object({
   channelId: z.string(),

@@ -10,6 +10,7 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { UsageTracker } from '../../services/usage-tracker.ts';
 import type { Channel } from '../channel.ts';
@@ -86,8 +87,8 @@ export function create(
         channelId,
         fastModeState: enabled ? 'on' : 'off',
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to set proactive mode');
     }
   }
 
@@ -95,8 +96,8 @@ export function create(
     try {
       const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
       ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.warn({ err }, 'Failed to set remote control');
     }
   }
 
@@ -165,8 +166,8 @@ export function create(
             percentage: r.percentage,
           };
         }
-      } catch {
-        // CLI may not support get_context_usage — ignore
+      } catch (err) {
+        logger.debug({ err }, 'CLI may not support get_context_usage');
       }
     }
 
@@ -187,7 +188,8 @@ export function create(
     try {
       const stored = await settingsStore.getMany(ch.provider, ['model', 'permissionMode']);
       ch.respondToRequest(requestId, { ...stored, ...overrides });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get stored settings');
       ch.respondToRequest(requestId, overrides);
     }
   }

@@ -57,8 +57,8 @@ export function create(
         interruptedChannels.add(channelId);
         ch.sendRequest('message:interrupt').catch(() => {});
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel');
     }
   }
 
@@ -157,8 +157,8 @@ export function create(
     try {
       const { taskId } = chatStopTaskPayloadSchema.parse(payload);
       ch.sendRequest('message:stop_task', { task_id: taskId }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to stop task');
     }
   }
 
@@ -166,8 +166,8 @@ export function create(
     try {
       const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
       ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch(() => {});
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel async message');
     }
   }
 
@@ -203,8 +203,8 @@ export function create(
         });
         emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to cancel request');
     }
   }
 
@@ -212,8 +212,8 @@ export function create(
     try {
       const { requestId, response } = chatHookCallbackRespondPayloadSchema.parse(payload);
       ch.respondToRequest(requestId, response);
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.debug({ err }, 'Failed to respond to hook');
     }
   }
 

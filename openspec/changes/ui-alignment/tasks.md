@@ -343,4 +343,36 @@
 - [x] 42.10 system.ts: chatHookCallbackRespondSchema rename
 - [x] 42.11 更新所有 consumer imports
 - [x] 42.12 Run all tests green
-- [ ] 42.13 Commit + push
+- [x] 42.13 Commit + push
+
+## Phase 16: Code Review 修正
+
+### 43. 空 catch → log（~12 處）
+
+- [x] 43.1 plugin.ts 空 catch → logger.warn
+- [x] 43.2 file.ts catch 吞錯誤 → logger.warn
+- [x] 43.3 git.ts 空 catch → logger.warn
+- [x] 43.4 message.ts 空 catch → logger.debug
+- [x] 43.5 command.ts 空 catch → logger.warn
+- [x] 43.6 settings.ts 空 catch → logger.warn/debug
+- [x] 43.7 Run tests green
+
+### 44. 型別安全
+
+- [x] 44.1 plugin.ts:195 JSON.parse inline type → Record<string, unknown>
+- [x] 44.2 server settings.ts:159 → 保留（internal CLI passthrough）
+- [x] 44.3 client settings.ts:51 → 保留（dynamic key mapping pattern）
+- [x] 44.4 system.ts rateLimitPayloadSchema → rename rateLimitInternalPayloadSchema + type
+- [x] 44.5 socket-events.ts worktree inline type → CreateWorktreePayload/DeleteWorktreePayload
+- [x] 44.6 Run tests green
+
+### 45. 過長函式拆分
+
+- [x] 45.1 streaming effect 177 行 → handlers/streaming.ts wireStreamingHandlers
+- [x] 45.2 QuestionContent useEffect → notifyAnswers 在 event handler 直接呼叫
+- [x] 45.3 Run tests green
+
+### 46. Commit + push
+
+- [ ] 46.1 Run all tests green
+- [ ] 46.2 Commit + push

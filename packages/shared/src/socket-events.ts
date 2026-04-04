@@ -23,6 +23,8 @@ import type {
   ControlMcpPayload,
   ControlPermissionPayload,
   ControlResponse,
+  CreateWorktreePayload,
+  DeleteWorktreePayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
   EnableJupyterMcpResponse,
@@ -371,12 +373,12 @@ export interface ClientToServerEvents {
 
   // ── Worktree ──
   'worktree:create': (
-    payload: { name?: string },
+    payload: CreateWorktreePayload,
     callback: (response: WorktreeInfo | { error: string }) => void,
   ) => void;
   'worktree:list': (callback: (response: WorktreeListResponse) => void) => void;
   'worktree:delete': (
-    payload: { name: string },
+    payload: DeleteWorktreePayload,
     callback: (response: SuccessResponse) => void,
   ) => void;
 }

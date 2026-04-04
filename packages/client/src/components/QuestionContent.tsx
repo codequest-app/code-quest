@@ -1,5 +1,5 @@
 import type { Question } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 function CheckIndicator({ checked }: { checked: boolean }) {
   return (
@@ -86,20 +86,22 @@ export function QuestionContent({
   const [otherTexts, setOtherTexts] = useState<Record<string, string>>({});
   const otherInputRef = useRef<HTMLInputElement>(null);
 
-  // Compute answers and notify parent via effect (not inside setState updater)
-  useEffect(() => {
+  function notifyAnswers(
+    nextSelections: Record<string, Set<string>>,
+    nextOtherTexts: Record<string, string>,
+  ) {
     const allAnswered = questions.every((q) => {
-      const sel = selections[q.question];
+      const sel = nextSelections[q.question];
       if (!sel || sel.size === 0) return false;
-      if (sel.has('Other') && !(otherTexts[q.question] ?? '').trim()) return false;
+      if (sel.has('Other') && !(nextOtherTexts[q.question] ?? '').trim()) return false;
       return true;
     });
     const answers = Object.fromEntries(
       questions.map((q) => {
-        const sel = selections[q.question];
+        const sel = nextSelections[q.question];
         if (!sel || sel.size === 0) return [q.question, ''];
         if (sel.has('Other')) {
-          const other = otherTexts[q.question] ?? '';
+          const other = nextOtherTexts[q.question] ?? '';
           if (q.multiSelect) {
             const normal = [...sel].filter((s) => s !== 'Other');
             return [q.question, [...normal, other].filter(Boolean).join(', ')];
@@ -110,28 +112,30 @@ export function QuestionContent({
       }),
     );
     onAnswersChange(answers, allAnswered);
-  }, [selections, otherTexts, questions, onAnswersChange]);
+  }
 
   const handleSelect = (questionText: string, value: string, multiSelect: boolean) => {
-    setSelections((prev) => {
-      const current = prev[questionText] ?? new Set<string>();
-      const next = new Set(current);
-      if (multiSelect) {
-        if (next.has(value)) next.delete(value);
-        else next.add(value);
-      } else {
-        next.clear();
-        next.add(value);
-      }
-      if (value === 'Other') {
-        setTimeout(() => otherInputRef.current?.focus(), 0);
-      }
-      return { ...prev, [questionText]: next };
-    });
+    const current = selections[questionText] ?? new Set<string>();
+    const next = new Set(current);
+    if (multiSelect) {
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+    } else {
+      next.clear();
+      next.add(value);
+    }
+    if (value === 'Other') {
+      setTimeout(() => otherInputRef.current?.focus(), 0);
+    }
+    const nextSelections = { ...selections, [questionText]: next };
+    setSelections(nextSelections);
+    notifyAnswers(nextSelections, otherTexts);
   };
 
   const handleOtherText = (questionText: string, text: string) => {
-    setOtherTexts((prev) => ({ ...prev, [questionText]: text }));
+    const nextOtherTexts = { ...otherTexts, [questionText]: text };
+    setOtherTexts(nextOtherTexts);
+    notifyAnswers(selections, nextOtherTexts);
   };
 
   const currentQuestion = questions[activeTab];

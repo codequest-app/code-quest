@@ -2,7 +2,9 @@ import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
   listPluginsPayloadSchema,
+  type MarketplaceRawItem,
   type MarketplaceSourceConfig,
+  marketplaceRawItemSchema,
   pluginInfoSchema,
   pluginInstallPayloadSchema,
   pluginTogglePayloadSchema,
@@ -10,7 +12,9 @@ import {
   refreshMarketplacePayloadSchema,
   removeMarketplacePayloadSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 
+import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
@@ -18,13 +22,7 @@ import { errMsg } from '../utils/helpers.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 import { claudeState } from './state.ts';
 
-function buildMarketplaceSource(k: {
-  source: string;
-  repo?: string;
-  url?: string;
-  path?: string;
-  package?: string;
-}): MarketplaceSourceConfig {
+function buildMarketplaceSource(k: MarketplaceRawItem): MarketplaceSourceConfig {
   switch (k.source) {
     case 'github':
       return { source: 'github', repo: k.repo ?? '' };
@@ -66,7 +64,8 @@ export function create(emitter: ChannelEmitter): void {
       try {
         installed = JSON.parse(installedResult.stdout);
         if (!Array.isArray(installed)) installed = [];
-      } catch {
+      } catch (err) {
+        logger.warn({ err }, 'Failed to parse installed plugins JSON');
         installed = [];
       }
     }
@@ -81,8 +80,8 @@ export function create(emitter: ChannelEmitter): void {
             if (Array.isArray(data.installed)) installed = data.installed;
             if (Array.isArray(data.available)) available = data.available;
           }
-        } catch {
-          // fall back to installed-only
+        } catch (err) {
+          logger.warn({ err }, 'Failed to parse available plugins JSON');
         }
       }
     }
@@ -192,16 +191,9 @@ export function create(emitter: ChannelEmitter): void {
       return;
     }
     try {
-      const raw: Array<{
-        name: string;
-        source: string;
-        repo?: string;
-        url?: string;
-        path?: string;
-        package?: string;
-        installLocation?: string;
-      }> = JSON.parse(result.stdout);
-      const marketplaces = (Array.isArray(raw) ? raw : []).map((k) => ({
+      const parsed = JSON.parse(result.stdout);
+      const raw = z.array(marketplaceRawItemSchema).safeParse(parsed);
+      const marketplaces = (raw.success ? raw.data : []).map((k) => ({
         name: k.name,
         config: {
           source: buildMarketplaceSource(k),
@@ -218,7 +210,8 @@ export function create(emitter: ChannelEmitter): void {
         ts: existing?.ts ?? Date.now(),
       });
       callback?.({ marketplaces });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to list marketplaces');
       callback?.({ marketplaces: [] });
     }
   }

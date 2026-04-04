@@ -6,6 +6,7 @@ import {
   gitUpdateSkippedBranchPayloadSchema,
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
+import { logger } from '../../logger.ts';
 import type { RawEventStore } from '../../services/raw-event-store.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
@@ -80,7 +81,8 @@ export function create(
           return { hash, message, author, date };
         });
       callback?.({ entries });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get git log');
       callback?.({ entries: [] });
     }
   }
@@ -94,7 +96,8 @@ export function create(
     try {
       const diff = await execGit(['diff'], { cwd: ch.workspaceFolder });
       callback?.({ diff });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to get git diff');
       callback?.({ diff: '' });
     }
   }

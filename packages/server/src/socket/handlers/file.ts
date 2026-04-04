@@ -3,6 +3,7 @@ import { basename, normalize, resolve } from 'node:path';
 import { fileListPayloadSchema, fileReadPayloadSchema } from '@code-quest/shared';
 import Fuse from 'fuse.js';
 import { globSync } from 'glob';
+import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
 import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -134,7 +135,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
     try {
       const content = readFileSync(absolute, 'utf-8');
       callback?.({ content });
-    } catch {
+    } catch (err) {
+      logger.warn({ err, filePath }, 'Failed to read file');
       callback?.({ error: `File not found: ${filePath}` });
     }
   }
@@ -176,7 +178,8 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         MAX_RESULTS,
       );
       callback?.({ files: combined });
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to list files');
       callback?.({ files: [] });
     }
   }
