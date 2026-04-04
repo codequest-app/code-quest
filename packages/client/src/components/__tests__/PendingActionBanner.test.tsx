@@ -153,6 +153,100 @@ describe('PendingActionBanner', () => {
 
   it('AskUserQuestion without questions falls back to tool permission', async () => {
     await setup(s.controlRequest('r1', 'can_use_tool', 'AskUserQuestion', {}));
-    expect(screen.getByText('Yes')).toBeInTheDocument();
+    const yesBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('Yes'));
+    expect(yesBtn).toBeDefined();
+  });
+
+  describe('AskUserQuestion in permission container', () => {
+    it('renders question content inside permission container', async () => {
+      await setup(
+        s.controlRequestAskUserQuestion('r1', {
+          questions: [
+            {
+              question: 'Pick?',
+              header: 'Choice',
+              options: [{ label: 'A', description: 'desc' }],
+              multiSelect: false,
+            },
+          ],
+        }),
+      );
+      // Question visible
+      expect(screen.getByText('Pick?')).toBeInTheDocument();
+      // "Submit answers" button instead of "Yes"
+      const submitBtn = screen
+        .getAllByRole('button')
+        .find((b) => b.textContent?.includes('Submit'));
+      expect(submitBtn).toBeDefined();
+    });
+
+    it('hides No button and reject input for AskUserQuestion', async () => {
+      await setup(
+        s.controlRequestAskUserQuestion('r1', {
+          questions: [
+            {
+              question: 'Q?',
+              header: 'H',
+              options: [{ label: 'A', description: 'd' }],
+              multiSelect: false,
+            },
+          ],
+        }),
+      );
+      const noBtn = screen.getAllByRole('button').find((b) => b.textContent?.match(/No$/));
+      expect(noBtn).toBeUndefined();
+      expect(screen.queryByPlaceholderText(/Tell Claude/)).not.toBeInTheDocument();
+    });
+
+    it('shows tab navigation for multiple questions', async () => {
+      await setup(
+        s.controlRequestAskUserQuestion('r1', {
+          questions: [
+            {
+              question: 'Q1?',
+              header: 'First',
+              options: [{ label: 'A', description: 'd' }],
+              multiSelect: false,
+            },
+            {
+              question: 'Q2?',
+              header: 'Second',
+              options: [{ label: 'X', description: 'd' }],
+              multiSelect: false,
+            },
+          ],
+        }),
+      );
+      expect(screen.getByRole('tab', { name: 'First' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Second' })).toBeInTheDocument();
+      // Only first question visible
+      expect(screen.getByText('Q1?')).toBeInTheDocument();
+      expect(screen.queryByText('Q2?')).not.toBeInTheDocument();
+    });
+
+    it('clicking tab switches question', async () => {
+      const user = userEvent.setup();
+      await setup(
+        s.controlRequestAskUserQuestion('r1', {
+          questions: [
+            {
+              question: 'Q1?',
+              header: 'First',
+              options: [{ label: 'A', description: 'd' }],
+              multiSelect: false,
+            },
+            {
+              question: 'Q2?',
+              header: 'Second',
+              options: [{ label: 'X', description: 'd' }],
+              multiSelect: false,
+            },
+          ],
+        }),
+      );
+      await user.click(screen.getByRole('tab', { name: 'Second' }));
+      expect(screen.queryByText('Q1?')).not.toBeInTheDocument();
+      expect(screen.getByText('Q2?')).toBeInTheDocument();
+    });
   });
 });

@@ -1,16 +1,9 @@
 import type { ControlPermissionResponse } from '@code-quest/shared';
 import { useChannelControl } from '../contexts/channel';
 import type { PendingControl } from '../types/chat';
-import { AskUserQuestionBanner, type Question } from './AskUserQuestionBanner';
 import { HookCallbackBanner } from './HookCallbackBanner';
 import { PlanReviewBanner } from './PlanReviewBanner';
 import { ToolPermissionBanner } from './ToolPermissionBanner';
-
-function isAskUserQuestion(
-  input: Record<string, unknown> | undefined,
-): input is Record<string, unknown> & { questions: Question[] } {
-  return input != null && Array.isArray(input.questions);
-}
 
 export function PendingActionBanner() {
   const { pendingControls, respondToControl: onRespond } = useChannelControl();
@@ -38,16 +31,6 @@ function PendingActionItem({
 }) {
   if (pending.toolName === 'ExitPlanMode') {
     return <PlanReviewBanner pending={pending} onRespond={onRespond} />;
-  }
-
-  if (pending.toolName === 'AskUserQuestion' && isAskUserQuestion(pending.input)) {
-    return (
-      <AskUserQuestionBanner
-        input={pending.input}
-        questions={pending.input.questions}
-        onRespond={onRespond}
-      />
-    );
   }
 
   if (pending.subtype === 'hook_callback') {

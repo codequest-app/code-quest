@@ -26,28 +26,52 @@
 
 ---
 
-## Phase 2: Elicitation 多問題支援 (後續)
+## Phase 2: AskUserQuestion 對齊 extension
 
-- [ ] 5.1 Add tab navigation for multi-question elicitation
-- [ ] 5.2 Add radio/checkbox option rendering
-- [ ] 5.3 Add answered state markers on tabs
-- [ ] 5.4 Tests + stories
+### 5. 確認 extension 外觀
+
+- [x] 5.1 擷取 extension 的 AskUserQuestion 截圖或從程式碼確認完整 UI 結構
+- [x] 5.2 確認：AskUserQuestion 渲染在 permissionRequestContainer (F5) 內，不是獨立 banner
+- [x] 5.3 確認：buttons 變成 "① Submit answers"（沒有 No、沒有 reject input）
+- [x] 5.4 確認：多問題時 tab navigation 一次顯示一題，單問題時不顯示 tab
+
+### 6. Tests first (RED)
+
+- [x] 6.1 Write tests: AskUserQuestion renders inside ToolPermissionBanner container (not separate banner)
+- [x] 6.2 Write tests: tab navigation — tabs visible for multi-question, clicking tab switches question
+- [x] 6.3 Write tests: answered tab marker (data-answered attribute)
+- [x] 6.4 Write tests: "Submit answers" button instead of "Yes", no "No" button, no reject input
+- [x] 6.5 Write tests: single question — no tab bar, just question content
+
+### 7. Implementation (GREEN)
+
+- [x] 7.1 Refactor ToolPermissionBanner to accept content slot or detect AskUserQuestion
+- [x] 7.2 Add tab navigation component for multi-question
+- [x] 7.3 Add radio/checkbox option rendering matching extension (custom styled, not native input)
+- [x] 7.4 Add answered state markers on tabs
+- [x] 7.5 Button: "① Submit answers" only when AskUserQuestion, hide No + reject input
+- [x] 7.6 Run all tests green
+
+### 8. Stories + UI review
+
+- [x] 8.1 Update stories for AskUserQuestion in ToolPermissionBanner (single question, multi question)
+- [x] 8.2 Pause — user confirms UI matches extension
 
 ## Phase 3: Diff Review 對齊 (後續)
 
-- [ ] 6.1 Change ContentPreviewPanel from side panel to modal overlay
-- [ ] 6.2 Tests + stories
+- [x] 6.1 Change ContentPreviewPanel from side panel to modal overlay
+- [x] 6.2 Tests + stories
 
 ## Phase 4: Tool Use IN/OUT Grid (後續)
 
-- [ ] 7.1 Add IN/OUT label grid layout to tool use message blocks
-- [ ] 7.2 Add bash-specific command styling
-- [ ] 7.3 Tests + stories
+- [x] 7.1 Add IN/OUT label grid layout to tool use message blocks
+- [x] 7.2 Add bash-specific command styling
+- [x] 7.3 Tests + stories
 
 ## Phase 5: Plugins/Marketplace (後續)
 
-- [ ] 8.1 Expand PluginsPanel with search, tabs, marketplace install flow
-- [ ] 8.2 Tests + stories
+- [x] 8.1 Expand PluginsPanel with search, tabs, marketplace install flow
+- [x] 8.2 Tests + stories
 
 ## Phase 6: Context Menu (後續)
 

@@ -1,16 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
+import { SessionProvider } from '../contexts/SessionContext';
+import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
+import { createSocket } from '../socket/client';
 import { ToolPermissionBanner } from './ToolPermissionBanner';
 
 const meta = {
   component: ToolPermissionBanner,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <div className="bg-bg text-text max-w-lg p-4">
-        <Story />
-      </div>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="max-w-lg bg-bg text-text p-4">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
   args: { onRespond: fn() },
 } satisfies Meta<typeof ToolPermissionBanner>;
