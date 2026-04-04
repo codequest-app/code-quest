@@ -200,7 +200,7 @@ export class ChannelManager {
 
     const settings = pickDefined({
       modelSetting: ss.model,
-      defaultCwd: ch?.workspaceFolder,
+      defaultCwd: ch?.cwd,
       worktree: ch?.worktree ?? undefined,
       initialPermissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,

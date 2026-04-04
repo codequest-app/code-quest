@@ -71,7 +71,7 @@ export function create(
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
     }
     if (parsed.cwd) {
-      channel.workspaceFolder = parsed.cwd;
+      channel.cwd = parsed.cwd;
     }
   }
 
@@ -230,7 +230,7 @@ export function create(
           provider: channelManager.provider,
           command: channelManager.runnerCommand,
           args: JSON.stringify(channelManager.runnerArgs),
-          cwd: channel.workspaceFolder,
+          cwd: channel.cwd,
           mode: 'interactive',
           role: 'chat',
           ...(parentId ? { parentId } : {}),

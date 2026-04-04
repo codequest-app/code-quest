@@ -1,10 +1,7 @@
-import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { promisify } from 'node:util';
 import type { WorktreeInfo } from '@code-quest/shared';
-
-const exec = promisify(execFile);
+import { createGit, rawGit } from '../socket/utils/git.ts';
 
 const MAX_NAME_LENGTH = 100;
 const VALID_NAME_RE = /^[a-zA-Z0-9._-]+$/;
@@ -38,44 +35,27 @@ function generateWorktreeName(): string {
     .slice(0, 14)}`;
 }
 
-interface ExecError extends Error {
-  stdout?: string;
-  code?: number;
-}
-
-function isExecError(error: unknown): error is ExecError {
-  return error instanceof Error && 'stdout' in error;
-}
-
-async function git(args: string[], cwd: string): Promise<{ stdout: string; exitCode: number }> {
-  try {
-    const { stdout } = await exec('git', args, { cwd });
-    return { stdout, exitCode: 0 };
-  } catch (error: unknown) {
-    if (isExecError(error)) {
-      return { stdout: error.stdout ?? '', exitCode: error.code ?? 1 };
-    }
-    return { stdout: '', exitCode: 1 };
-  }
-}
-
 export async function getRepoRoot(cwd: string): Promise<string | null> {
-  const result = await git(['rev-parse', '--show-toplevel'], cwd);
-  return result.exitCode === 0 ? result.stdout.trim() : null;
+  try {
+    return (await createGit(cwd).revparse(['--show-toplevel'])).trim();
+  } catch {
+    return null;
+  }
 }
 
 export async function getDefaultBranch(repoRoot: string): Promise<string> {
-  const result = await git(['symbolic-ref', 'refs/remotes/origin/HEAD'], repoRoot);
+  const git = createGit(repoRoot);
+  const result = await rawGit(git, ['symbolic-ref', 'refs/remotes/origin/HEAD']);
   if (result.exitCode === 0) {
-    const ref = result.stdout.trim();
-    return ref.replace('refs/remotes/origin/', '');
+    return result.stdout.trim().replace('refs/remotes/origin/', '');
   }
-  // Fallback: try common names
   for (const name of ['main', 'master']) {
-    const check = await git(
-      ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${name}`],
-      repoRoot,
-    );
+    const check = await rawGit(git, [
+      'rev-parse',
+      '--verify',
+      '--quiet',
+      `refs/remotes/origin/${name}`,
+    ]);
     if (check.exitCode === 0) return name;
   }
   return 'main';
@@ -89,25 +69,22 @@ export async function createWorktree(repoRoot: string, name?: string): Promise<W
   const branchName = `worktree-${worktreeName}`;
 
   // Check if already a valid worktree
-  const check = await git(['rev-parse', '--show-toplevel'], worktreePath);
+  const check = await rawGit(createGit(worktreePath), ['rev-parse', '--show-toplevel']);
   if (check.exitCode === 0 && resolve(check.stdout.trim()) === resolve(worktreePath)) {
     return { name: worktreeName, path: worktreePath, branch: branchName };
   }
 
-  // Create directory
   await mkdir(join(repoRoot, '.claude', 'worktrees'), { recursive: true });
 
-  // Fetch and determine base
+  const git = createGit(repoRoot);
   const defaultBranch = await getDefaultBranch(repoRoot);
-  const fetchResult = await git(['fetch', 'origin', defaultBranch], repoRoot);
+  const fetchResult = await rawGit(git, ['fetch', 'origin', defaultBranch]);
   const base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
 
-  // Clean up
-  await git(['worktree', 'prune'], repoRoot);
-  await git(['branch', '-D', branchName], repoRoot);
+  await rawGit(git, ['worktree', 'prune']);
+  await rawGit(git, ['branch', '-D', branchName]);
 
-  // Create worktree
-  const result = await git(['worktree', 'add', '-b', branchName, worktreePath, base], repoRoot);
+  const result = await rawGit(git, ['worktree', 'add', '-b', branchName, worktreePath, base]);
   if (result.exitCode !== 0) {
     throw new Error(result.stdout.trim() || 'git worktree add failed');
   }
@@ -116,7 +93,7 @@ export async function createWorktree(repoRoot: string, name?: string): Promise<W
 }
 
 export async function listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
-  const result = await git(['worktree', 'list', '--porcelain'], repoRoot);
+  const result = await rawGit(createGit(repoRoot), ['worktree', 'list', '--porcelain']);
   if (result.exitCode !== 0) return [];
 
   const worktrees: WorktreeInfo[] = [];
@@ -149,9 +126,10 @@ export async function deleteWorktree(repoRoot: string, name: string): Promise<vo
   validateWorktreeName(name);
   const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
   const branchName = `worktree-${name}`;
+  const git = createGit(repoRoot);
 
-  await git(['worktree', 'remove', worktreePath], repoRoot);
-  await git(['branch', '-D', branchName], repoRoot);
+  await rawGit(git, ['worktree', 'remove', worktreePath]);
+  await rawGit(git, ['branch', '-D', branchName]);
 }
 
 export function detectWorktree(path: string): WorktreeInfo | null {

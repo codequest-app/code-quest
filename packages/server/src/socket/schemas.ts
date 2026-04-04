@@ -36,7 +36,7 @@ const sessionConfigSchema = z.object({
 });
 export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 
-/** Extract config fields from session:init. cwd extracted separately to channel.workspaceFolder. */
+/** Extract config fields from session:init. cwd extracted separately to channel.cwd. */
 export const sessionInitConfigSchema = sessionConfigSchema
   .pick({
     model: true,

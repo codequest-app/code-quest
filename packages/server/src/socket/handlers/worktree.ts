@@ -6,13 +6,13 @@ import {
   listWorktrees,
 } from '../../services/worktree-manager.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
 export function create(emitter: ChannelEmitter): void {
   async function handleCreate(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
@@ -20,7 +20,7 @@ export function create(emitter: ChannelEmitter): void {
     try {
       const parsed = createWorktreePayloadSchema.safeParse(payload);
       const name = parsed.success ? parsed.data.name : undefined;
-      const repoRoot = await getRepoRoot(process.cwd());
+      const repoRoot = await getRepoRoot(ch.cwd);
       if (!repoRoot) {
         callback?.({ error: 'Not inside a git repository' });
         return;
@@ -33,13 +33,13 @@ export function create(emitter: ChannelEmitter): void {
   }
 
   async function handleList(
-    _ch: Channel | null,
+    ch: Channel,
     _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const repoRoot = await getRepoRoot(process.cwd());
+      const repoRoot = await getRepoRoot(ch.cwd);
       if (!repoRoot) {
         callback?.({ worktrees: [] });
         return;
@@ -52,7 +52,7 @@ export function create(emitter: ChannelEmitter): void {
   }
 
   async function handleDelete(
-    _ch: Channel | null,
+    ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
@@ -63,7 +63,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: 'name is required' });
         return;
       }
-      const repoRoot = await getRepoRoot(process.cwd());
+      const repoRoot = await getRepoRoot(ch.cwd);
       if (!repoRoot) {
         callback?.({ success: false, error: 'Not inside a git repository' });
         return;
@@ -75,7 +75,7 @@ export function create(emitter: ChannelEmitter): void {
     }
   }
 
-  emitter.on('worktree:create', handleCreate);
-  emitter.on('worktree:list', handleList);
-  emitter.on('worktree:delete', handleDelete);
+  emitter.on('worktree:create', withChannel(handleCreate));
+  emitter.on('worktree:list', withChannel(handleList));
+  emitter.on('worktree:delete', withChannel(handleDelete));
 }

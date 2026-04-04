@@ -50,7 +50,7 @@ export class Channel {
   private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
   private _sessionId: string | null = null;
-  private _workspaceFolder: string | undefined;
+  private _cwd: string | undefined;
   private _worktree: WorktreeInfo | null = null;
   private _lastError: string | undefined;
   private _exited = false;
@@ -83,11 +83,11 @@ export class Channel {
     this._sessionId = v;
   }
 
-  get workspaceFolder(): string {
-    return this._workspaceFolder ?? process.cwd();
+  get cwd(): string {
+    return this._cwd ?? process.cwd();
   }
-  set workspaceFolder(v: string | undefined) {
-    this._workspaceFolder = v ? resolve(v) : undefined;
+  set cwd(v: string | undefined) {
+    this._cwd = v ? resolve(v) : undefined;
   }
 
   get worktree(): WorktreeInfo | null {
@@ -95,7 +95,7 @@ export class Channel {
   }
   set worktree(v: WorktreeInfo | null) {
     this._worktree = v;
-    if (v) this.workspaceFolder = v.path;
+    if (v) this.cwd = v.path;
   }
 
   get lastError(): string | undefined {
@@ -308,7 +308,7 @@ export class Channel {
       }
       const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
       if (initCwd) {
-        this.workspaceFolder = initCwd;
+        this.cwd = initCwd;
       }
       this.updateSessionConfig(initConfig);
       this.updateMetaCache(

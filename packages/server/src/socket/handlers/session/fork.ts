@@ -4,7 +4,7 @@ import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
 import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
-import { checkoutBranch } from '../../utils/exec-git.ts';
+import { checkoutWithFallback, createGit } from '../../utils/git.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
 export function create(
@@ -43,7 +43,7 @@ export function create(
   }
 
   async function handleTeleport(
-    _ch: Channel | null,
+    ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
     callback?: SocketCallback,
@@ -55,7 +55,7 @@ export function create(
       let branchCheckoutFailed = false;
       if (parsed.branch) {
         try {
-          await checkoutBranch(parsed.branch);
+          await checkoutWithFallback(createGit(ch?.cwd), parsed.branch);
         } catch {
           branchCheckoutFailed = true;
         }
@@ -63,8 +63,8 @@ export function create(
 
       await channelManager.create(parsed.newSessionId, {
         launchOptions: { resumeSessionId: parsed.remoteSessionId },
-        onBeforeSpawn: (ch) => {
-          if (socket) channelManager.addSocketToChannel(ch, socket);
+        onBeforeSpawn: (newCh) => {
+          if (socket) channelManager.addSocketToChannel(newCh, socket);
         },
       });
 

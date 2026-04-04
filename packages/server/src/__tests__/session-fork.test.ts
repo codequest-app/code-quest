@@ -1,7 +1,8 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import * as execGitModule from '../socket/utils/exec-git.ts';
+import { createFakeGit } from '../test/fake-git.ts';
 import { createFakeClaude } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
@@ -103,7 +104,7 @@ describe('session:teleport', () => {
   });
 
   it('should attempt git checkout if branch provided', async () => {
-    const checkoutSpy = vi.spyOn(execGitModule, 'checkoutBranch').mockResolvedValue(undefined);
+    const fakeGit = createFakeGit();
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
@@ -113,15 +114,16 @@ describe('session:teleport', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(checkoutSpy).toHaveBeenCalledWith('feature/x');
+    expect(fakeGit.instance.checkout).toHaveBeenCalledWith('feature/x');
 
-    checkoutSpy.mockRestore();
+    fakeGit.restore();
   });
 
   it('should succeed even if git checkout fails', async () => {
-    const execGitSpy = vi
-      .spyOn(execGitModule, 'checkoutBranch')
-      .mockRejectedValue(new Error('checkout failed'));
+    const fakeGit = createFakeGit({
+      checkoutError: new Error('checkout failed'),
+      fetchError: new Error('fetch failed'),
+    });
     const claude = createFakeClaude();
     await claude.initialize(s.init('cli-sess'));
 
@@ -142,7 +144,7 @@ describe('session:teleport', () => {
     expect(result.branchCheckoutFailed).toBe(true);
     expect(result.branch).toBe('feature/x');
 
-    execGitSpy.mockRestore();
+    fakeGit.restore();
   });
 
   it('should return events from parent session history', async () => {

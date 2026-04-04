@@ -48,9 +48,8 @@ export function create(emitter: ChannelEmitter): void {
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
-    const cwd = process.cwd();
     const { includeAvailable = false } = listPluginsPayloadSchema.parse(payload ?? {});
-    const cached = claudeState.pluginCache.get(cwd);
+    const cached = claudeState.pluginCache;
     if (cached && Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL) {
       if (!includeAvailable || cached.available.length > 0) {
         callback?.({ installed: cached.installed, available: cached.available });
@@ -89,13 +88,13 @@ export function create(emitter: ChannelEmitter): void {
     const validInstalled = pluginInfoSchema.array().parse(installed);
     const validAvailable = availablePluginSchema.array().parse(available);
 
-    const existing = claudeState.pluginCache.get(cwd);
-    claudeState.pluginCache.set(cwd, {
+    const existing = claudeState.pluginCache;
+    claudeState.pluginCache = {
       installed: validInstalled,
       available: validAvailable,
       marketplaces: existing?.marketplaces ?? [],
       ts: Date.now(),
-    });
+    };
     callback?.({ installed: validInstalled, available: validAvailable });
   }
 
@@ -112,7 +111,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to install plugin' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true, needsRestart: true });
     } catch (err) {
       callback?.({
@@ -135,7 +134,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to uninstall plugin' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true, needsRestart: true });
     } catch (err) {
       callback?.({
@@ -158,7 +157,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to toggle plugin' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true, needsRestart: true });
     } catch (err) {
       callback?.({
@@ -174,8 +173,7 @@ export function create(emitter: ChannelEmitter): void {
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): void {
-    const cwd = process.cwd();
-    const cached = claudeState.pluginCache.get(cwd);
+    const cached = claudeState.pluginCache;
     if (
       cached &&
       Date.now() - cached.ts < claudeState.PLUGIN_CACHE_TTL &&
@@ -202,13 +200,13 @@ export function create(emitter: ChannelEmitter): void {
         pluginCount: 0,
         installedCount: 0,
       }));
-      const existing = claudeState.pluginCache.get(cwd);
-      claudeState.pluginCache.set(cwd, {
+      const existing = claudeState.pluginCache;
+      claudeState.pluginCache = {
         installed: existing?.installed ?? [],
         available: existing?.available ?? [],
         marketplaces,
         ts: existing?.ts ?? Date.now(),
-      });
+      };
       callback?.({ marketplaces });
     } catch (err) {
       logger.warn({ err }, 'Failed to list marketplaces');
@@ -229,7 +227,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to add marketplace' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true });
     } catch (err) {
       callback?.({
@@ -252,7 +250,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to remove marketplace' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true });
     } catch (err) {
       callback?.({
@@ -275,7 +273,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: result.stderr || 'Failed to refresh marketplace' });
         return;
       }
-      claudeState.pluginCache.delete(process.cwd());
+      claudeState.pluginCache = null;
       callback?.({ success: true });
     } catch (err) {
       callback?.({
