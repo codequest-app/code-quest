@@ -4,6 +4,7 @@ import {
   modelInfoSchema,
   type ServerToClientEvents,
   type UsageQuota,
+  worktreeInfoSchema,
 } from '@code-quest/shared';
 import { toast } from 'sonner';
 import type { TypedSocket } from '../../../socket/client';
@@ -56,8 +57,8 @@ function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'
       ? { ...state.accountInfo, ...payload.accountInfo }
       : (payload.accountInfo ?? null);
   }
-  if ((payload as Record<string, unknown>).worktree !== undefined) {
-    update.worktree = (payload as Record<string, unknown>).worktree as ConfigState['worktree'];
+  if ('worktree' in payload) {
+    update.worktree = worktreeInfoSchema.safeParse(payload.worktree).data ?? null;
   }
   if (Object.keys(update).length === 0) return state;
   return { ...state, ...update };
@@ -264,7 +265,7 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
   }
 
   function requestUsageUpdate(): void {
-    socket.emit('settings:refresh_usage', { channelId } as never);
+    socket.emit('settings:refresh_usage', { channelId });
   }
 
   return {

@@ -21,24 +21,7 @@ function McpStateBadge({ state, label }: { state: string; label: string }) {
   );
 }
 
-export interface McpServerInfo {
-  name: string;
-  enabled: boolean;
-  status:
-    | 'connected'
-    | 'disconnected'
-    | 'error'
-    | 'failed'
-    | 'needs-auth'
-    | 'disabled'
-    | 'connecting';
-  scope?: string;
-}
-
-export interface McpTool {
-  name: string;
-  description?: string;
-}
+import type { McpServerInfo, McpTool } from '@code-quest/shared';
 
 const CODE_INPUT =
   'bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text';

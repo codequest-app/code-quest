@@ -1,16 +1,7 @@
+import type { Question } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 
-interface Option {
-  label: string;
-  description: string;
-}
-
-export interface Question {
-  question: string;
-  header: string;
-  options: Option[];
-  multiSelect: boolean;
-}
+export type { Question } from '@code-quest/shared';
 
 function CheckIndicator({ checked }: { checked: boolean }) {
   return (

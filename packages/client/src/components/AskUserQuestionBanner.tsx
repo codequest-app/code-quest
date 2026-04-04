@@ -1,17 +1,5 @@
-import type { ControlPermissionResponse } from '@code-quest/shared';
+import type { ControlPermissionResponse, Question } from '@code-quest/shared';
 import { useState } from 'react';
-
-interface Option {
-  label: string;
-  description: string;
-}
-
-export interface Question {
-  question: string;
-  header: string;
-  options: Option[];
-  multiSelect: boolean;
-}
 
 const OTHER_VALUE = '__other__';
 const OPTION_LABEL = 'flex items-start gap-2 text-sm cursor-pointer';

@@ -179,9 +179,16 @@ export type StreamChunkPayload = z.infer<typeof streamChunkPayloadSchema>;
 
 // ── Rewind response ──
 
+export const fileDiffSchema = z.object({
+  oldContent: z.string().nullable(),
+  newContent: z.string().nullable(),
+});
+export type FileDiff = z.infer<typeof fileDiffSchema>;
+
 export const rewindResultSchema = z.object({
   canRewind: z.boolean(),
   filesChanged: z.array(z.string()).optional(),
+  fileDiffs: z.record(z.string(), fileDiffSchema).optional(),
   insertions: z.number().optional(),
   deletions: z.number().optional(),
   error: z.string().optional(),

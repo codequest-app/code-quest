@@ -104,3 +104,27 @@ export const mcpPayloadSchema = z.looseObject({
   message: z.record(z.string(), z.unknown()).optional(),
 });
 export type McpPayload = z.infer<typeof mcpPayloadSchema>;
+
+// ── MCP server info (used by client UI) ──
+
+export const mcpToolSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
+export type McpTool = z.infer<typeof mcpToolSchema>;
+
+export const mcpServerInfoSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean(),
+  status: z.enum([
+    'connected',
+    'disconnected',
+    'error',
+    'failed',
+    'needs-auth',
+    'disabled',
+    'connecting',
+  ]),
+  scope: z.string().optional(),
+});
+export type McpServerInfo = z.infer<typeof mcpServerInfoSchema>;

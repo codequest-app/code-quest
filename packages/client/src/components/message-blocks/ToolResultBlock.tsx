@@ -31,18 +31,21 @@ export function ToolResultBlock({
   const label = meta?.name ? `Result: ${meta.name}` : 'Result';
   const isEditTool = meta?.name === 'Edit' || meta?.name === 'Write';
   const toolId = meta?.toolId;
-  const canRespond = isEditTool && !!onDiffRespond && !!toolId;
-
   const displayContent = extractTextFromArray(meta?.arrayContent) ?? content;
+
+  const acceptHandler =
+    isEditTool && onDiffRespond && toolId ? () => onDiffRespond(toolId, true) : undefined;
+  const rejectHandler =
+    isEditTool && onDiffRespond && toolId ? () => onDiffRespond(toolId, false) : undefined;
 
   return (
     <CollapsibleBlock icon="✓" label={label}>
       {isDiff(displayContent) ? (
         <DiffViewer
           content={displayContent}
-          editable={canRespond}
-          onAccept={canRespond ? () => onDiffRespond?.(toolId ?? '', true) : undefined}
-          onReject={canRespond ? () => onDiffRespond?.(toolId ?? '', false) : undefined}
+          editable={!!acceptHandler}
+          onAccept={acceptHandler}
+          onReject={rejectHandler}
         />
       ) : hasAnsi(displayContent) ? (
         <AnsiContent content={displayContent} />

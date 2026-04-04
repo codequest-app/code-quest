@@ -1,4 +1,4 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
+import type { ControlPermissionResponse, ServerToClientEvents } from '@code-quest/shared';
 import {
   createContext,
   type ReactNode,
@@ -25,10 +25,7 @@ export interface ChannelControlValue {
   setPendingElicitation: (v: PendingElicitation | null) => void;
   setPendingDiffReview: (v: PendingDiffReview | null) => void;
   getPendingControls: () => PendingControl[];
-  respondToControl: (
-    response: import('@code-quest/shared').ControlPermissionResponse,
-    requestId?: string,
-  ) => void;
+  respondToControl: (response: ControlPermissionResponse, requestId?: string) => void;
   diffRespond: (toolId: string, accepted: boolean) => void;
   stopTask: (taskId: string) => void;
   clearPendingDiffReview: () => void;

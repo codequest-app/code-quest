@@ -43,14 +43,22 @@ export interface WorktreeInfo {
   branch?: string;
 }
 
+interface ExecError extends Error {
+  stdout?: string;
+  code?: number;
+}
+
+function isExecError(error: unknown): error is ExecError {
+  return error instanceof Error && 'stdout' in error;
+}
+
 async function git(args: string[], cwd: string): Promise<{ stdout: string; exitCode: number }> {
   try {
     const { stdout } = await exec('git', args, { cwd });
     return { stdout, exitCode: 0 };
   } catch (error: unknown) {
-    if (error instanceof Error && 'stdout' in error) {
-      const e = error as Error & { stdout?: string; code?: number };
-      return { stdout: e.stdout ?? '', exitCode: e.code ?? 1 };
+    if (isExecError(error)) {
+      return { stdout: error.stdout ?? '', exitCode: error.code ?? 1 };
     }
     return { stdout: '', exitCode: 1 };
   }

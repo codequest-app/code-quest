@@ -114,3 +114,46 @@
 
 - [x] 16.1 Add stories for new content block types
 - [x] 16.2 Commit + push
+
+## Phase 9: Code Review 修正
+
+### 17. 此次 branch 改動的問題
+
+- [x] 17.1 settings.ts: worktree payload 改用 zod safeParse（不用 as cast）
+- [x] 17.2 ToolUseBlock.tsx: BashToolBody 改用 AnsiContent（統一 ANSI 渲染）
+- [x] 17.3 ToolResultBlock.tsx: 移除多餘的 toolId ?? ''
+
+### 18. 既有程式碼的問題
+
+- [x] 18.1 MessageContent.tsx: meta as TextMeta/ThinkingMeta → 用 MetaMap 的 discriminated union narrowing
+- [x] 18.2 (跳過 — React Compiler 處理 memoization) ChannelConfigContext.tsx: createConfigActions 加 useMemo
+- [x] 18.3 (跳過 — emit 已在 updater 外) TabContext.tsx: socket.emit 移出 setState updater
+- [x] 18.4 (跳過 — React Compiler) TabContext.tsx: Provider value 加 useMemo
+- [x] 18.5 channel-manager.ts: 空 catch 加 log
+- [x] 18.6 (已有 comment) runner.ts: 空 catch 加 log
+- [x] 18.7 settings.ts line 267: as never → 修 event type
+
+## Phase 10: Zod 轉換 + Inline Type 整理 + Skills
+
+### 19. 重複型別移到 shared + zod schema
+
+- [x] 19.1 Question + Option → shared/schemas/question.ts (zod schema)，QuestionContent + AskUserQuestionBanner 改 import
+- [x] 19.2 McpServerInfo + McpTool → shared/schemas/mcp.ts (zod schema)，MCPPanel + ComposeToolbar 改 import
+- [x] 19.3 FileDiff → shared (zod schema, 跟 RewindResult 整合)
+- [x] 19.4 ModifiedFile → 評估是否移 shared
+
+### 20. as cast → zod safeParse
+
+- [x] 20.1 PlanReviewBanner: allowedPrompts as Record → planInputSchema safeParse
+- [x] 20.2 RewindPreview: fileDiffs as Record<string, FileDiff> → fileDiffSchema safeParse
+- [x] 20.3 MessageActions: result as unknown as Record → rewindResultSchema safeParse
+
+### 21. Inline import → top-level import
+
+- [x] 21.1 ui.ts: import('@code-quest/shared').RewindResult → top-level import
+- [x] 21.2 ChannelControlContext.tsx: import('@code-quest/shared').ControlPermissionResponse → top-level import
+
+### 22. Run all tests + commit
+
+- [x] 22.1 Run all tests green (summoner + server + client)
+- [x] 22.2 Commit skills + code changes + push

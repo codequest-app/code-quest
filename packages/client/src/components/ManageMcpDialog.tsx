@@ -1,7 +1,6 @@
-import type { ProviderClientConfig } from '@code-quest/shared';
+import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
-import type { McpServerInfo } from './MCPPanel';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────

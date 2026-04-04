@@ -1,4 +1,3 @@
-import Ansi from 'ansi-to-react';
 import type { ToolUseMeta } from '../../types/ui';
 import { isDiff } from '../../utils/diff';
 import { DiffViewer } from '../DiffViewer';
@@ -69,13 +68,15 @@ function BashToolBody({
       </ToolBodyRow>
       {resultContent != null && (
         <ToolBodyRow label="OUT" copyText={resultContent}>
-          <pre className={`${CODE_BLOCK_CLASS} ${resultIsError ? 'text-danger' : ''}`}>
-            {hasAnsi(resultContent) ? (
-              <Ansi>{resultContent}</Ansi>
-            ) : (
-              parseFilePathsInContent(resultContent)
-            )}
-          </pre>
+          {hasAnsi(resultContent) ? (
+            <div className={resultIsError ? 'text-danger' : ''}>
+              <AnsiContent content={resultContent} />
+            </div>
+          ) : (
+            <pre className={`${CODE_BLOCK_CLASS} ${resultIsError ? 'text-danger' : ''}`}>
+              {parseFilePathsInContent(resultContent)}
+            </pre>
+          )}
         </ToolBodyRow>
       )}
     </div>

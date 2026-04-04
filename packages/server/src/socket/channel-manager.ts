@@ -143,7 +143,9 @@ export class ChannelManager {
 
     try {
       channel.kill();
-    } catch {}
+    } catch {
+      // kill() may throw if process already exited — safe to ignore
+    }
     channel.destroy();
     this.channels.delete(channelId);
   }

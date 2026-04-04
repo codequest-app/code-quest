@@ -1,3 +1,4 @@
+import type { RewindResult } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { ForkFn, RewindFn } from '../types/ui';
@@ -15,7 +16,7 @@ interface MessageActionsProps {
 type RewindState =
   | { phase: 'idle' }
   | { phase: 'loading' }
-  | { phase: 'preview'; data: Record<string, unknown> }
+  | { phase: 'preview'; data: RewindResult }
   | { phase: 'fallback' };
 
 const IDLE: RewindState = { phase: 'idle' };
@@ -64,7 +65,7 @@ export function MessageActions({
     setRewindState({ phase: 'loading' });
     const result = await onRewind(messageId, true);
     if (result.canRewind) {
-      setRewindState({ phase: 'preview', data: result as unknown as Record<string, unknown> });
+      setRewindState({ phase: 'preview', data: result });
     } else {
       setRewindState({ phase: 'fallback' });
     }
