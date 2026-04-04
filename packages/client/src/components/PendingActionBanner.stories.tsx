@@ -9,7 +9,13 @@ import { createSocket } from '../socket/client';
 import type { PendingControl } from '../types/chat';
 import { PendingActionBanner } from './PendingActionBanner';
 
-function SetControls({ controls, children }: { controls: PendingControl[]; children: React.ReactNode }) {
+function SetControls({
+  controls,
+  children,
+}: {
+  controls: PendingControl[];
+  children: React.ReactNode;
+}) {
   const { setPendingControls } = useChannelControl();
   useEffect(() => {
     setPendingControls(() => controls);
@@ -75,4 +81,66 @@ export const WithInput: Story = {
 
 export const HookCallback: Story = {
   decorators: [withChannel([{ requestId: 'r1', subtype: 'hook_callback', toolName: 'Bash' }])],
+};
+
+export const AskUserQuestionSingle: Story = {
+  decorators: [
+    withChannel([
+      {
+        requestId: 'r1',
+        subtype: 'can_use_tool',
+        toolName: 'AskUserQuestion',
+        input: {
+          questions: [
+            {
+              question: 'Which testing framework do you prefer?',
+              header: 'Testing',
+              options: [
+                { label: 'Vitest', description: 'Fast, Vite-native test runner' },
+                { label: 'Jest', description: 'Popular, feature-rich' },
+                { label: 'Mocha', description: 'Flexible, mature' },
+              ],
+              multiSelect: false,
+            },
+          ],
+        },
+      },
+    ]),
+  ],
+};
+
+export const AskUserQuestionMulti: Story = {
+  decorators: [
+    withChannel([
+      {
+        requestId: 'r1',
+        subtype: 'can_use_tool',
+        toolName: 'AskUserQuestion',
+        input: {
+          questions: [
+            {
+              question: 'Which framework?',
+              header: 'Framework',
+              options: [
+                { label: 'React', description: 'Component-based UI' },
+                { label: 'Vue', description: 'Progressive framework' },
+                { label: 'Svelte', description: 'Compiler-based' },
+              ],
+              multiSelect: false,
+            },
+            {
+              question: 'Which tools do you need?',
+              header: 'Tools',
+              options: [
+                { label: 'TypeScript', description: 'Type safety' },
+                { label: 'ESLint', description: 'Code quality' },
+                { label: 'Prettier', description: 'Code formatting' },
+              ],
+              multiSelect: true,
+            },
+          ],
+        },
+      },
+    ]),
+  ],
 };
