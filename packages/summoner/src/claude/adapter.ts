@@ -74,6 +74,7 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
 };
 
 function convertRateLimitMessage(message: ProtocolMessage): ClientMessage {
+  // rate_limit_info exists on the rateLimitEvent variant — narrowing done by caller's switch
   const rli = message.rate_limit_info as Record<string, unknown>;
   return {
     name: 'system:rate_limit',
@@ -271,7 +272,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     }
 
     if (message.type === 'control_request') {
-      return transformControlRequest(message as Record<string, unknown>);
+      return transformControlRequest(message);
     }
 
     // All other types produce only ClientMessages
@@ -284,18 +285,17 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
   // ── Non-control messages → ClientMessage ──
 
   private convertOtherMessage(message: ProtocolMessage): ClientMessage | ClientMessage[] | null {
-    const raw = message as Record<string, unknown>;
     switch (message.type) {
       case 'system':
-        return transformSystem(raw);
+        return transformSystem(message);
       case 'assistant':
-        return transformAssistant(raw);
+        return transformAssistant(message);
       case 'user':
-        return transformUser(raw);
+        return transformUser(message);
       case 'result':
-        return transformResult(raw);
+        return transformResult(message);
       case 'stream_event':
-        return transformStream(raw);
+        return transformStream(message);
       case 'rate_limit_event':
         return convertRateLimitMessage(message);
       case 'speech_to_text_message':
@@ -326,6 +326,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
           payload: { url: message.url, method: message.method ?? 'oauth' },
         };
       default: {
+        const raw = message as Record<string, unknown>;
         if (typeof raw.rawType === 'string' && isRecord(raw.data)) {
           return { name: 'raw:event', payload: { rawType: raw.rawType, data: raw.data } };
         }

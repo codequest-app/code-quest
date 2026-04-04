@@ -2,6 +2,7 @@ import type { ServerToClientEvents } from '@code-quest/shared';
 import { toast } from 'sonner';
 import { showNotificationToast } from '../../../components/NotificationToast';
 import type { TypedSocket } from '../../../socket/client';
+import { channelEmit } from '../../../socket/rpc';
 import type { ChannelState } from '../../../types/chat';
 import { msg } from '../../../utils/message';
 import { openUrl } from '../../../utils/open-url';
@@ -105,11 +106,10 @@ function onNotificationShowEffect(
   const reqId = p.requestId;
   if (p.buttons?.length && reqId) {
     showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-      deps.socket.emit('chat:respond', {
-        channelId: deps.channelId,
+      channelEmit(deps.socket, deps.channelId, 'chat:respond', {
         requestId: reqId,
         response,
-      } as never),
+      }),
     );
     return;
   }
@@ -123,11 +123,10 @@ function onRawEventEffect(deps: EffectDeps, p: Payload<'raw:event'>): void {
     toast.info('New session started');
   } else if (p.rawType === 'control_request/open_in_editor') {
     toast.info('Open in Editor is not supported in web mode');
-    deps.socket.emit('chat:respond', {
-      channelId: deps.channelId,
+    channelEmit(deps.socket, deps.channelId, 'chat:respond', {
       requestId: String(p.data.requestId),
       response: { behavior: 'allow' },
-    } as never);
+    });
   }
 }
 

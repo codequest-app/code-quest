@@ -1,6 +1,15 @@
+import { z } from 'zod';
 import type { ParseResult } from '../types.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolMessage } from './schemas.ts';
+
+const initResponseSchema = z
+  .object({
+    commands: z.array(z.object({ name: z.string() })).optional(),
+    models: z.array(z.unknown()).optional(),
+    account: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
 
 // ── ClaudeProtocol ──
 
@@ -207,17 +216,10 @@ export class ClaudeProtocol {
   } {
     if (!response) return { commands: undefined, models: undefined, account: undefined };
 
-    const commands = Array.isArray(response.commands)
-      ? (response.commands as Array<{ name: string }>).map((c) => c.name)
-      : undefined;
+    const parsed = initResponseSchema.safeParse(response);
+    if (!parsed.success) return { commands: undefined, models: undefined, account: undefined };
 
-    const models = Array.isArray(response.models) ? (response.models as unknown[]) : undefined;
-
-    const account =
-      typeof response.account === 'object' && response.account !== null
-        ? (response.account as Record<string, unknown>)
-        : undefined;
-
-    return { commands, models, account };
+    const commands = parsed.data.commands?.map((c) => c.name);
+    return { commands, models: parsed.data.models, account: parsed.data.account };
   }
 }

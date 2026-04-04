@@ -1,7 +1,8 @@
 import type { ContentBlock } from '@code-quest/shared';
 import type { ClientMessage } from '../../types.ts';
+import type { ProtocolMessage } from '../schemas.ts';
 
-export function transformAssistant(raw: Record<string, unknown>): ClientMessage | null {
+export function transformAssistant(raw: ProtocolMessage): ClientMessage | null {
   const parentToolUseId = (raw.parent_tool_use_id as string) ?? undefined;
   const message = raw.message as Record<string, unknown> | undefined;
   const content = message?.content;

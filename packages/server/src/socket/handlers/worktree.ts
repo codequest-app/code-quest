@@ -8,10 +8,7 @@ import {
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
-
-function errMsg(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback;
-}
+import { errMsg } from '../utils/helpers.ts';
 
 export function create(emitter: ChannelEmitter): void {
   async function handleCreate(

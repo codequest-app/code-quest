@@ -1,7 +1,8 @@
 import type { ClientMessage } from '../../types.ts';
 import { asRecord } from '../../utils.ts';
+import type { ProtocolMessage } from '../schemas.ts';
 
-export function transformSystem(raw: Record<string, unknown>): ClientMessage | null {
+export function transformSystem(raw: ProtocolMessage): ClientMessage | null {
   const subtype = raw.subtype as string | undefined;
 
   if (subtype === 'init') {

@@ -1,6 +1,7 @@
 import type { ClientMessage } from '../../types.ts';
+import type { ProtocolMessage } from '../schemas.ts';
 
-export function transformResult(raw: Record<string, unknown>): ClientMessage | ClientMessage[] {
+export function transformResult(raw: ProtocolMessage): ClientMessage | ClientMessage[] {
   const usage = raw.usage as Record<string, unknown> | undefined;
   const resultPayload = {
     stats: {

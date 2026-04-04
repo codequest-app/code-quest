@@ -1,6 +1,7 @@
 import type { ClientMessage } from '../../types.ts';
+import type { ProtocolMessage } from '../schemas.ts';
 
-export function transformStream(raw: Record<string, unknown>): ClientMessage | null {
+export function transformStream(raw: ProtocolMessage): ClientMessage | null {
   const streamData = raw.event as Record<string, unknown> | undefined;
   if (!streamData) return null;
 

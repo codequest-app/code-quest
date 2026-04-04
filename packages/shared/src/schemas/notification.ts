@@ -63,13 +63,6 @@ export const actionOpenUrlPayloadSchema = z.object({
 });
 export type ActionOpenUrlPayload = z.infer<typeof actionOpenUrlPayloadSchema>;
 
-export const openFileLocationSchema = z.object({
-  startLine: z.number().optional(),
-  endLine: z.number().optional(),
-  searchText: z.string().optional(),
-});
-export type OpenFileLocation = z.infer<typeof openFileLocationSchema>;
-
 export const actionOpenFilePayloadSchema = z.object({
   channelId: z.string(),
   filePath: z.string(),

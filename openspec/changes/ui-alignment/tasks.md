@@ -157,3 +157,28 @@
 
 - [x] 22.1 Run all tests green (summoner + server + client)
 - [x] 22.2 Commit skills + code changes + push
+
+## Phase 11: Final Code Review 修正
+
+### 23. 快速修
+
+- [x] 23.1 worktree.ts: 移除重複 errMsg，import from ../utils/helpers.ts
+- [x] 23.2 session-history.ts:107: 空 catch 加 comment
+- [x] 23.3 notification.ts:112,130: as never → 用 channelEmit helper
+- [x] 23.4 notification.ts: 移除未使用的 openFileLocationSchema / OpenFileLocation
+
+### 24. summoner transforms 型別修正
+
+- [x] 24.1 修改 6 個 transform function signatures: Record<string, unknown> → typed ProtocolMessage 或 union member
+- [x] 24.2 adapter.ts: 移除 message as Record 的 casts（line 274, 287）
+- [x] 24.3 adapter.ts:77: 移除 rate_limit_info as Record cast（已有 type narrowing）
+
+### 25. protocol.ts 修正
+
+- [x] 25.1 protocol.ts:152: getSchemaForType 改回傳型別，移除 as ProtocolMessage
+- [x] 25.2 protocol.ts:211: parseInitializeResponse 用 zod schema 取代 as casts
+
+### 26. Run all tests + commit
+
+- [x] 26.1 Run all tests green
+- [x] 26.2 Commit + push
