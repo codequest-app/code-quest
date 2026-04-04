@@ -1,16 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent } from 'storybook/test';
+import { ChannelProvider } from '../contexts/channel';
+import { PluginProvider } from '../contexts/PluginContext';
+import { SessionProvider } from '../contexts/SessionContext';
+import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
+import { createSocket } from '../socket/client';
 import { McpServerRow } from './McpServerRow';
 
 const meta = {
   component: McpServerRow,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <div className="w-80 bg-surface text-text border border-border rounded">
-        <Story />
-      </div>
-    ),
+    (Story) => {
+      const socket = createSocket();
+      return (
+        <SocketProvider socket={socket}>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider>
+                <ChannelProvider channelId="story">
+                  <div className="w-80 bg-surface text-text border border-border rounded">
+                    <Story />
+                  </div>
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </SocketProvider>
+      );
+    },
   ],
   args: {
     onToggle: fn(),
@@ -43,7 +62,7 @@ export const ErrorState: Story = {
 export const WithTools: Story = {
   args: {
     server: { name: 'filesystem', status: 'connected', enabled: true },
-    onListTools: fn().mockResolvedValue([
+    onListTools: fn(async () => [
       { name: 'read_file', description: 'Read a file from the filesystem' },
       { name: 'write_file', description: 'Write content to a file' },
       { name: 'list_directory', description: 'List directory contents' },
@@ -60,11 +79,11 @@ export const WithTools: Story = {
 export const WithAuth: Story = {
   args: {
     server: { name: 'github', status: 'disconnected', enabled: false },
-    onAuthenticate: fn().mockResolvedValue({
+    onAuthenticate: fn(async () => ({
       success: false,
       authUrl: 'https://github.com/login/oauth/authorize?client_id=xxx',
-    }),
-    onOAuthCallback: fn().mockResolvedValue({ success: true }),
+    })),
+    onOAuthCallback: fn(async () => ({ success: true })),
   },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByTitle(/Auth github/i));
