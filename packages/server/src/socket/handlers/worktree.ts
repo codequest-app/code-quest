@@ -1,3 +1,4 @@
+import { createWorktreePayloadSchema, deleteWorktreePayloadSchema } from '@code-quest/shared';
 import {
   createWorktree,
   deleteWorktree,
@@ -20,13 +21,14 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { name } = (payload as Record<string, unknown>) ?? {};
+      const parsed = createWorktreePayloadSchema.safeParse(payload);
+      const name = parsed.success ? parsed.data.name : undefined;
       const repoRoot = await getRepoRoot(process.cwd());
       if (!repoRoot) {
         callback?.({ error: 'Not inside a git repository' });
         return;
       }
-      const info = await createWorktree(repoRoot, typeof name === 'string' ? name : undefined);
+      const info = await createWorktree(repoRoot, name);
       callback?.(info);
     } catch (err) {
       callback?.({ error: errMsg(err, 'Failed to create worktree') });
@@ -59,8 +61,8 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { name } = (payload as Record<string, unknown>) ?? {};
-      if (typeof name !== 'string') {
+      const parsed = deleteWorktreePayloadSchema.safeParse(payload);
+      if (!parsed.success) {
         callback?.({ success: false, error: 'name is required' });
         return;
       }
@@ -69,7 +71,7 @@ export function create(emitter: ChannelEmitter): void {
         callback?.({ success: false, error: 'Not inside a git repository' });
         return;
       }
-      await deleteWorktree(repoRoot, name);
+      await deleteWorktree(repoRoot, parsed.data.name);
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to delete worktree') });

@@ -40,7 +40,6 @@ export function ContentPreviewPanel({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      onKeyDown={() => {}}
       role="none"
     >
       <div className="bg-bg border border-border rounded flex flex-col w-[calc(100vw-40px)] max-w-[1400px] h-[calc(100vh-40px)] max-h-[900px] shadow-lg overflow-hidden">

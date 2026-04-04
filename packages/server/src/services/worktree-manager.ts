@@ -48,8 +48,11 @@ async function git(args: string[], cwd: string): Promise<{ stdout: string; exitC
     const { stdout } = await exec('git', args, { cwd });
     return { stdout, exitCode: 0 };
   } catch (error: unknown) {
-    const e = error as { stdout?: string; code?: number };
-    return { stdout: e.stdout ?? '', exitCode: e.code ?? 1 };
+    if (error instanceof Error && 'stdout' in error) {
+      const e = error as Error & { stdout?: string; code?: number };
+      return { stdout: e.stdout ?? '', exitCode: e.code ?? 1 };
+    }
+    return { stdout: '', exitCode: 1 };
   }
 }
 

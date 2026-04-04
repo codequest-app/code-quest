@@ -151,7 +151,7 @@ export function ToolPermissionBanner({
                   suppressContentEditableWarning
                   spellCheck={false}
                   onInput={(e) => {
-                    const text = (e.target as HTMLDivElement).textContent ?? '';
+                    const text = e.currentTarget.textContent ?? '';
                     setEditedInput({ ...input, command: text });
                   }}
                 >

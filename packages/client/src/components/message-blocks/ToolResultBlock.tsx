@@ -9,11 +9,14 @@ import {
   parseFilePathsInContent,
 } from './shared';
 
-interface ArrayContentBlock {
-  type: string;
-  text?: string;
-  tool_name?: string;
-  [key: string]: unknown;
+function extractTextFromArray(arr: unknown): string | null {
+  if (!Array.isArray(arr)) return null;
+  const texts = arr
+    .filter((b): b is Record<string, unknown> => typeof b === 'object' && b !== null)
+    .filter((b) => b.type !== 'tool_reference')
+    .map((b) => (b.type === 'text' ? String(b.text ?? '') : ''))
+    .filter(Boolean);
+  return texts.length > 0 ? texts.join('\n') : null;
 }
 
 export function ToolResultBlock({
@@ -30,14 +33,7 @@ export function ToolResultBlock({
   const toolId = meta?.toolId;
   const canRespond = isEditTool && !!onDiffRespond && !!toolId;
 
-  const arrayContent = meta?.arrayContent as ArrayContentBlock[] | undefined;
-  const displayContent = arrayContent
-    ? arrayContent
-        .filter((b) => b.type !== 'tool_reference')
-        .map((b) => (b.type === 'text' ? String(b.text ?? '') : ''))
-        .filter(Boolean)
-        .join('\n') || content
-    : content;
+  const displayContent = extractTextFromArray(meta?.arrayContent) ?? content;
 
   return (
     <CollapsibleBlock icon="✓" label={label}>

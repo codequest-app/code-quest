@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Option {
   label: string;
@@ -10,6 +10,79 @@ export interface Question {
   header: string;
   options: Option[];
   multiSelect: boolean;
+}
+
+function CheckIndicator({ checked }: { checked: boolean }) {
+  return (
+    <div
+      className={`w-3.5 h-3.5 rounded-sm border ${checked ? 'bg-accent border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
+    >
+      {checked && (
+        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path
+            d="M2 6L5 9L10 3"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function RadioIndicator({ checked }: { checked: boolean }) {
+  return (
+    <div
+      className={`w-3.5 h-3.5 rounded-full border ${checked ? 'border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
+    >
+      {checked && <div className="w-2 h-2 rounded-full bg-accent" />}
+    </div>
+  );
+}
+
+function OptionItem({
+  label,
+  description,
+  selected,
+  multiSelect,
+  onSelect,
+  onKeySelect,
+}: {
+  label: string;
+  description?: string;
+  selected: boolean;
+  multiSelect: boolean;
+  onSelect: () => void;
+  onKeySelect: (e: React.KeyboardEvent) => void;
+}) {
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: matches extension — div with role
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: dynamic role checkbox/radio
+    <div
+      role={multiSelect ? 'checkbox' : 'radio'}
+      aria-checked={selected}
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={onKeySelect}
+      className={`flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs ${
+        selected ? 'bg-accent/10' : 'hover:bg-white/5'
+      }`}
+    >
+      <div className="mt-0.5 flex-shrink-0">
+        {multiSelect ? (
+          <CheckIndicator checked={selected} />
+        ) : (
+          <RadioIndicator checked={selected} />
+        )}
+      </div>
+      <div>
+        <div className="text-text">{label}</div>
+        {description && <div className="text-text-muted text-[11px]">{description}</div>}
+      </div>
+    </div>
+  );
 }
 
 export function QuestionContent({
@@ -24,33 +97,31 @@ export function QuestionContent({
   const [otherTexts, setOtherTexts] = useState<Record<string, string>>({});
   const otherInputRef = useRef<HTMLInputElement>(null);
 
-  const checkAllAnswered = (
-    newSelections: Record<string, Set<string>>,
-    newOtherTexts: Record<string, string>,
-  ) => {
+  // Compute answers and notify parent via effect (not inside setState updater)
+  useEffect(() => {
     const allAnswered = questions.every((q) => {
-      const sel = newSelections[q.question];
+      const sel = selections[q.question];
       if (!sel || sel.size === 0) return false;
-      if (sel.has('Other') && !(newOtherTexts[q.question] ?? '').trim()) return false;
+      if (sel.has('Other') && !(otherTexts[q.question] ?? '').trim()) return false;
       return true;
     });
     const answers = Object.fromEntries(
       questions.map((q) => {
-        const sel = newSelections[q.question];
+        const sel = selections[q.question];
         if (!sel || sel.size === 0) return [q.question, ''];
         if (sel.has('Other')) {
-          const otherText = newOtherTexts[q.question] ?? '';
+          const other = otherTexts[q.question] ?? '';
           if (q.multiSelect) {
             const normal = [...sel].filter((s) => s !== 'Other');
-            return [q.question, [...normal, otherText].filter(Boolean).join(', ')];
+            return [q.question, [...normal, other].filter(Boolean).join(', ')];
           }
-          return [q.question, otherText];
+          return [q.question, other];
         }
         return [q.question, [...sel].join(', ')];
       }),
     );
     onAnswersChange(answers, allAnswered);
-  };
+  }, [selections, otherTexts, questions, onAnswersChange]);
 
   const handleSelect = (questionText: string, value: string, multiSelect: boolean) => {
     setSelections((prev) => {
@@ -63,26 +134,28 @@ export function QuestionContent({
         next.clear();
         next.add(value);
       }
-      const updated = { ...prev, [questionText]: next };
-      checkAllAnswered(updated, otherTexts);
-
       if (value === 'Other') {
         setTimeout(() => otherInputRef.current?.focus(), 0);
       }
-      return updated;
+      return { ...prev, [questionText]: next };
     });
   };
 
   const handleOtherText = (questionText: string, text: string) => {
-    const updated = { ...otherTexts, [questionText]: text };
-    setOtherTexts(updated);
-    checkAllAnswered(selections, updated);
+    setOtherTexts((prev) => ({ ...prev, [questionText]: text }));
   };
 
   const currentQuestion = questions[activeTab];
   if (!currentQuestion) return null;
 
   const isSelected = (label: string) => selections[currentQuestion.question]?.has(label) ?? false;
+
+  const handleKeySelect = (value: string) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleSelect(currentQuestion.question, value, currentQuestion.multiSelect);
+    }
+  };
 
   return (
     <div>
@@ -101,11 +174,7 @@ export function QuestionContent({
               data-answered={isAnswered ? 'true' : undefined}
               onClick={() => setActiveTab(i)}
               className={`text-xs font-medium bg-transparent border-0 border-b-2 cursor-pointer px-0.5 py-1 min-w-0 truncate ${
-                isActive
-                  ? 'text-text border-accent'
-                  : isAnswered
-                    ? 'text-text-muted border-transparent'
-                    : 'text-text border-transparent'
+                isActive ? 'text-text border-accent' : 'text-text-muted border-transparent'
               }`}
             >
               {q.header}
@@ -120,107 +189,29 @@ export function QuestionContent({
       {/* Options */}
       <div className="flex flex-col gap-1">
         {currentQuestion.options.map((opt) => (
-          // biome-ignore lint/a11y/noStaticElementInteractions: matches extension — div with role
-          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: dynamic role checkbox/radio
-          <div
+          <OptionItem
             key={opt.label}
-            role={currentQuestion.multiSelect ? 'checkbox' : 'radio'}
-            aria-checked={isSelected(opt.label)}
-            tabIndex={0}
-            onClick={() =>
+            label={opt.label}
+            description={opt.description}
+            selected={isSelected(opt.label)}
+            multiSelect={currentQuestion.multiSelect}
+            onSelect={() =>
               handleSelect(currentQuestion.question, opt.label, currentQuestion.multiSelect)
             }
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleSelect(currentQuestion.question, opt.label, currentQuestion.multiSelect);
-              }
-            }}
-            className={`flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs ${
-              isSelected(opt.label) ? 'bg-accent/10' : 'hover:bg-white/5'
-            }`}
-          >
-            <div className="mt-0.5 flex-shrink-0">
-              {currentQuestion.multiSelect ? (
-                <div
-                  className={`w-3.5 h-3.5 rounded-sm border ${isSelected(opt.label) ? 'bg-accent border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
-                >
-                  {isSelected(opt.label) && (
-                    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-              ) : (
-                <div
-                  className={`w-3.5 h-3.5 rounded-full border ${isSelected(opt.label) ? 'border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
-                >
-                  {isSelected(opt.label) && <div className="w-2 h-2 rounded-full bg-accent" />}
-                </div>
-              )}
-            </div>
-            <div>
-              <div className="text-text">{opt.label}</div>
-              {opt.description && (
-                <div className="text-text-muted text-[11px]">{opt.description}</div>
-              )}
-            </div>
-          </div>
+            onKeySelect={handleKeySelect(opt.label)}
+          />
         ))}
 
         {/* Other option */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: matches extension */}
-        {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: dynamic role */}
-        <div
-          role={currentQuestion.multiSelect ? 'checkbox' : 'radio'}
-          aria-checked={isSelected('Other')}
-          tabIndex={0}
-          onClick={() =>
+        <OptionItem
+          label="Other"
+          selected={isSelected('Other')}
+          multiSelect={currentQuestion.multiSelect}
+          onSelect={() =>
             handleSelect(currentQuestion.question, 'Other', currentQuestion.multiSelect)
           }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleSelect(currentQuestion.question, 'Other', currentQuestion.multiSelect);
-            }
-          }}
-          className={`flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs ${
-            isSelected('Other') ? 'bg-accent/10' : 'hover:bg-white/5'
-          }`}
-        >
-          <div className="mt-0.5 flex-shrink-0">
-            {currentQuestion.multiSelect ? (
-              <div
-                className={`w-3.5 h-3.5 rounded-sm border ${isSelected('Other') ? 'bg-accent border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
-              >
-                {isSelected('Other') && (
-                  <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M2 6L5 9L10 3"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </div>
-            ) : (
-              <div
-                className={`w-3.5 h-3.5 rounded-full border ${isSelected('Other') ? 'border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
-              >
-                {isSelected('Other') && <div className="w-2 h-2 rounded-full bg-accent" />}
-              </div>
-            )}
-          </div>
-          <div className="text-text">Other</div>
-        </div>
+          onKeySelect={handleKeySelect('Other')}
+        />
 
         {isSelected('Other') && (
           <input
