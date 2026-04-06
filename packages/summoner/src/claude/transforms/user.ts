@@ -23,6 +23,7 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
           toolUseId: String(b.tool_use_id ?? ''),
           toolName: typeof b.name === 'string' ? b.name : undefined,
           content: b.content,
+          isError: b.is_error === true ? true : undefined,
         });
         break;
     }

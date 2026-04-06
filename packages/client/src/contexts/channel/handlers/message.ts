@@ -35,7 +35,7 @@ function applyUserContent(
           role: 'assistant',
           type: 'tool_result',
           content: String(block.content ?? ''),
-          meta: { toolId: block.toolUseId, name: block.toolName },
+          meta: { toolId: block.toolUseId, name: block.toolName, is_error: block.isError },
         }),
       ];
     }

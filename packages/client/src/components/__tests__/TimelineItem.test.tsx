@@ -60,7 +60,7 @@ describe('Conversation display — tool use timeline', () => {
     expect(dots.length).toBeGreaterThan(0);
   });
 
-  it.todo('failed tool shows red dot — needs is_error to flow through summoner→shared→client pipeline', async () => {
+  it('failed tool shows red dot', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'read file');
     await claude.emit(

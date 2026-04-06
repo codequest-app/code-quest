@@ -25,6 +25,7 @@ export const toolResultBlockSchema = z.object({
   toolUseId: z.string(),
   toolName: z.string().optional(),
   content: z.unknown(),
+  isError: z.boolean().optional(),
 });
 export type ToolResultBlock = z.infer<typeof toolResultBlockSchema>;
 

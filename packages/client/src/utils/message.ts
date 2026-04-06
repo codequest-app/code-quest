@@ -82,7 +82,12 @@ function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): M
         role: 'assistant',
         type: 'tool_result',
         content: textContent,
-        meta: { toolId: block.toolUseId, name: block.toolName, arrayContent },
+        meta: {
+          toolId: block.toolUseId,
+          name: block.toolName,
+          is_error: block.isError,
+          arrayContent,
+        },
         parentToolUseId,
       });
     }
