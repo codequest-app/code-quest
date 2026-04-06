@@ -58,6 +58,22 @@ describe('ChatHandler > session', () => {
       expect(lastSpawn.options?.cwd).toBe('/projects/my-app');
     });
 
+    it('session:init with worktree cwd sets channel.worktree', async () => {
+      const claude = createFakeClaude();
+      const worktreeCwd = '/repo/.claude/worktrees/my-feature';
+      claude.prepareInit(s.init('wt-sess'));
+
+      const { channelId } = await claude.send<{ channelId: string }>('session:launch', {
+        channelId: 'ch-wt',
+        cwd: worktreeCwd,
+      });
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const channel = mgr.get(channelId ?? 'ch-wt');
+      expect(channel?.worktree).toEqual({ name: 'my-feature', path: worktreeCwd });
+    });
+
     it('session record is written to DB with session_id set (from system/init, not started)', async () => {
       const { claude, channelId } = await setup();
 

@@ -6,6 +6,7 @@ import type {
   WorktreeInfo,
 } from '@code-quest/shared';
 import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
+import { detectWorktree } from '../services/worktree-manager.ts';
 import {
   errorMessageEventSchema,
   type RequestMeta,
@@ -245,6 +246,8 @@ export class Channel {
       const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
       if (initCwd) {
         this.cwd = initCwd;
+        const wt = detectWorktree(initCwd);
+        if (wt) this.worktree = wt;
       }
       this.updateSessionConfig(initConfig);
       this.updateMetaCache(
