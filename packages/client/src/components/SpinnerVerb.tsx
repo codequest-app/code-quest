@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTextScramble } from '../hooks/useTextScramble';
 
 const ICON_CYCLE_MS = 120;
 const VERB_DELAYS = [2000, 3000, 5000] as const;
@@ -94,17 +95,19 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
     };
     timer = setTimeout(tick, scheduleNextVerb());
     return () => clearTimeout(timer);
-  }, [verbs]); // scheduleNextVerb stable via React Compiler
+  }, [verbs]);
 
   const displayText = statusText ?? verb;
+  const maxLen = Math.max(...verbs.map((v) => v.length)) + 3; // +3 for "..."
+  const scrambled = useTextScramble(`${displayText}...`, maxLen);
 
   return (
     <div className="relative z-[3] flex items-center gap-1.5 h-[1.85em] mt-1 px-4">
       <span data-testid="spinner-icon" className="text-accent text-sm inline-block w-4 text-center">
         {ICON_CYCLE[iconIndex]}
       </span>
-      <span data-testid="spinner-verb" className="text-xs text-text-muted">
-        {displayText}...
+      <span data-testid="spinner-verb" className="text-xs text-text-muted font-mono whitespace-pre">
+        {scrambled}
       </span>
     </div>
   );

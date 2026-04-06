@@ -59,8 +59,9 @@ describe('SpinnerVerb', () => {
     const nextVerb = el.textContent;
     // With only 2 verbs, at least the text should still contain "..."
     expect(nextVerb).toContain('...');
-    // And it should be one of the two verbs
-    expect(['Alpha...', 'Beta...']).toContain(nextVerb);
+    // And it should contain one of the two verbs (may have trailing padding)
+    const trimmed = nextVerb?.trim();
+    expect(trimmed === 'Alpha...' || trimmed === 'Beta...').toBe(true);
 
     vi.useRealTimers();
   });

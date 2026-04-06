@@ -19,6 +19,27 @@ vi.mock('socket.io-client', () => ({
   }),
 }));
 
+// jsdom's requestAnimationFrame may not flush reliably — provide a sync-like polyfill
+{
+  let rafId = 0;
+  const pending = new Map<number, FrameRequestCallback>();
+  window.requestAnimationFrame = (cb: FrameRequestCallback) => {
+    const id = ++rafId;
+    pending.set(id, cb);
+    Promise.resolve().then(() => {
+      const fn = pending.get(id);
+      if (fn) {
+        pending.delete(id);
+        fn(performance.now());
+      }
+    });
+    return id;
+  };
+  window.cancelAnimationFrame = (id: number) => {
+    pending.delete(id);
+  };
+}
+
 // jsdom doesn't implement scrollIntoView
 if (typeof Element !== 'undefined') {
   Element.prototype.scrollIntoView = () => {};
