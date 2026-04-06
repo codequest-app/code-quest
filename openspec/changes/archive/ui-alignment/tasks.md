@@ -295,15 +295,15 @@
 - [x] 38.2 確認 message-payloads.ts 只剩 message S2C payloads
 - [x] 38.3 確認無重複、無錯位
 - [x] 38.4 Run all tests green
-- [ ] 38.5 Commit + push
+- [x] 38.5 Commit + push
 
 ## Phase 15: Schema ↔ Consumer 對齊
 
 ### 39. Field mismatch 修正 (HIGH)
 
-- [ ] 39.1 controlForwardPayloadSchema 補齊 5 個 optional field (toolName, toolUseId, input, suggestions, callbackId)
-- [ ] 39.2 forkSession 回傳型別 sessionId → channelId（handlers/session.ts + ChannelMessagesContext + SessionContext）
-- [ ] 39.3 Run tests green
+- [x] 39.1 controlForwardPayloadSchema 補齊 5 個 optional field (toolName, toolUseId, input, suggestions, callbackId)
+- [x] 39.2 forkSession 回傳型別 sessionId → channelId（handlers/session.ts + ChannelMessagesContext + SessionContext）
+- [x] 39.3 Run tests green
 
 ### 39b. Inline type → zod (移到 shared)
 
@@ -374,5 +374,5 @@
 
 ### 46. Commit + push
 
-- [ ] 46.1 Run all tests green
-- [ ] 46.2 Commit + push
+- [x] 46.1 Run all tests green
+- [x] 46.2 Commit + push

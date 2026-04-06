@@ -65,7 +65,7 @@ export const WithFork: Story = {
     messageId: 'msg-3',
     messageRole: 'user',
     onRewind: fn().mockResolvedValue({ success: false }),
-    onFork: fn().mockResolvedValue({ success: true, sessionId: 'sess-forked' }),
+    onFork: fn().mockResolvedValue({ success: true, channelId: 'sess-forked' }),
   },
   play: async ({ args, canvas, userEvent }) => {
     await userEvent.click(canvas.getByTitle(/fork from here/i));
