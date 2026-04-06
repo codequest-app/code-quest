@@ -345,6 +345,25 @@ describe('ChatHandler > session', () => {
       expect(content).toEqual([{ type: 'text', text: 'hi' }]);
     });
 
+    it('history preserves user→assistant order after join', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('chat:send', { channelId, message: 'today?' });
+      await claude.emit(s.assistant('Tuesday'));
+      await claude.emit(s.result());
+
+      const result = await claude.send<{
+        events?: ClientMessage[];
+      }>('session:join', { channelId });
+
+      const names = result.events!.map((e) => e.name);
+      const userIdx = names.indexOf('message:user');
+      const assistantIdx = names.indexOf('message:assistant');
+      expect(userIdx).toBeGreaterThanOrEqual(0);
+      expect(assistantIdx).toBeGreaterThanOrEqual(0);
+      expect(userIdx).toBeLessThan(assistantIdx);
+    });
+
     it('does not duplicate user message in history when CLI echoes it back', async () => {
       const { claude, channelId } = await setup();
 

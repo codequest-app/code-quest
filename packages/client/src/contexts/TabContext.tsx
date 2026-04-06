@@ -61,7 +61,8 @@ export function TabProvider({
   const addTab = (id: string) => {
     setState((prev) => {
       if (id in prev.tabs) return prev;
-      return { ...prev, tabs: { ...prev.tabs, [id]: DEFAULT_META } };
+      const tabs = { ...prev.tabs, [id]: DEFAULT_META };
+      return { tabs, activeTabId: prev.activeTabId ?? id };
     });
   };
 

@@ -638,6 +638,29 @@ describe('TabProvider', () => {
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
+    it('addTab activates first tab when no active tab', async () => {
+      function Test() {
+        const { tabs, activeTabId, addTab } = useTab();
+        return (
+          <>
+            <span data-testid="active">{activeTabId ?? 'null'}</span>
+            <span data-testid="count">{Object.keys(tabs).length}</span>
+            <button type="button" onClick={() => addTab('remote-ch')}>
+              add
+            </button>
+          </>
+        );
+      }
+      const { user } = renderInTab(<Test />);
+
+      expect(screen.getByTestId('active')).toHaveTextContent('null');
+
+      await user.click(screen.getByText('add'));
+
+      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      expect(screen.getByTestId('active')).toHaveTextContent('remote-ch');
+    });
+
     it('new tab creates exactly one tab, not two', async () => {
       await renderWithWorkspace();
       const tabsBefore = screen.queryAllByLabelText(/^Close /).length;

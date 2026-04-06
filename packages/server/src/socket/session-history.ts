@@ -89,10 +89,19 @@ export class SessionHistory {
   }
 
   private replayEntries(rawEntries: Array<{ raw: string; direction: string }>): ClientMessage[] {
-    const result: ClientMessage[] = [];
-    const stdinEntries: Array<Record<string, unknown>> = [];
-    let hasStdoutUserEcho = false;
+    // First pass: detect if stdout already echoes user messages
+    const hasStdoutUserEcho = rawEntries.some((e) => {
+      if (e.direction !== 'out') return false;
+      try {
+        const obj: unknown = JSON.parse(e.raw.trim());
+        return isRecord(obj) && obj.type === 'user';
+      } catch {
+        return false;
+      }
+    });
 
+    // Second pass: replay in original order
+    const result: ClientMessage[] = [];
     for (const entry of rawEntries) {
       const trimmed = entry.raw.trim();
       if (!trimmed) continue;
@@ -102,19 +111,12 @@ export class SessionHistory {
         if (!isRecord(raw)) continue;
 
         if (entry.direction === 'out') {
-          if (raw.type === 'user') hasStdoutUserEcho = true;
           this.replayStdoutEntry(raw, result);
-        } else if (entry.direction === 'in') {
-          stdinEntries.push(raw);
+        } else if (entry.direction === 'in' && !hasStdoutUserEcho) {
+          this.replayStdinEntry(raw, result);
         }
       } catch (err) {
         logger.debug(err, 'Skipping malformed raw entry during replay');
-      }
-    }
-
-    if (!hasStdoutUserEcho) {
-      for (const raw of stdinEntries) {
-        this.replayStdinEntry(raw, result);
       }
     }
 
