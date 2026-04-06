@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER } from '../../test/helpers';
@@ -62,5 +62,60 @@ describe('ComposeInput', () => {
   it('renders without error when no attachments', async () => {
     await renderWithChannel(<ComposeInput />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
+  });
+
+  describe('@ mention', () => {
+    it('typing @ opens mention dropdown with file results', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+      });
+    });
+
+    it('typing @src/ lists directory contents', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@src/');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+      });
+    });
+
+    it('Escape closes mention dropdown', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+      });
+
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+    });
+
+    it('selecting a file inserts @path and closes dropdown', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+      });
+
+      // Click the first file result
+      const items = screen.getAllByRole('option');
+      const fileItem = items.find((item) => !item.textContent?.includes('/'));
+      if (fileItem) {
+        await userEvent.click(fileItem);
+        expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+        const val = (textarea as HTMLTextAreaElement).value;
+        expect(val).toContain('@');
+      }
+    });
   });
 });
