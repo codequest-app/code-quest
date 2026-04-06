@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { WorkspaceLayout } from '../../../components/WorkspaceLayout';
-import { createFakeClaude } from '../../../test/fake-claude';
+import { WorkspaceLayout } from '@/components/WorkspaceLayout';
+import { createFakeClaude } from '@/test/fake-claude';
+import { sendUserMessage } from '@/test/helpers';
 import { PluginProvider } from '../../PluginContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
@@ -16,6 +17,12 @@ function TabTitle() {
 
 async function setup() {
   const claude = createFakeClaude();
+  claude.prepareInit();
+
+  const initReady = new Promise<void>((resolve) => {
+    claude.socket.on('session:init', () => resolve());
+  });
+
   render(
     <SocketProvider socket={claude.socket}>
       <SessionProvider>
@@ -30,16 +37,16 @@ async function setup() {
   );
   const user = userEvent.setup({ pointerEventsCheck: 0 });
   await user.click(screen.getByLabelText('New tab'));
+  await act(async () => {
+    await initReady;
+  });
   return { claude, user };
 }
 
 describe('title derived from messages', () => {
   it('sets tab title from first user message', async () => {
     const { user } = await setup();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'Fix the login bug please');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'Fix the login bug please');
 
     expect(screen.getByTestId('tab-title')).toHaveTextContent('Fix the login bug please');
   });

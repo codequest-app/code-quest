@@ -65,13 +65,13 @@ export const systemCompactBoundarySchema = z.looseObject({
   compactMetadata: z.looseObject({ preservedSegment: z.boolean().optional() }).optional(),
 });
 
-export const systemPostTurnSummarySchema = z.looseObject({
+const systemPostTurnSummarySchema = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('post_turn_summary'),
   summary: z.string().optional(),
 });
 
-export const systemSessionStateChangedSchema = z.looseObject({
+const systemSessionStateChangedSchema = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('session_state_changed'),
 });
@@ -130,7 +130,7 @@ export const systemBridgeStateSchema = z.looseObject({
 });
 
 // Fallback for unknown system subtypes
-export const systemFallbackSchema = z.looseObject({
+const systemFallbackSchema = z.looseObject({
   type: z.literal('system'),
   subtype: z.string(),
 });
@@ -216,7 +216,7 @@ export const controlRequestSchema = z.looseObject({
 
 // ── Control response ──
 
-export const controlResponseSchema = z.looseObject({
+const controlResponseSchema = z.looseObject({
   type: z.literal('control_response'),
   response: z.looseObject({
     subtype: z.string(),
@@ -228,7 +228,7 @@ export const controlResponseSchema = z.looseObject({
 
 // ── Control cancel request ──
 
-export const controlCancelRequestSchema = z.looseObject({
+const controlCancelRequestSchema = z.looseObject({
   type: z.literal('control_cancel_request'),
   request_id: z.string(),
 });
@@ -285,14 +285,14 @@ export const rateLimitEventSchema = z.looseObject({
 
 // ── Streamlined (fast mode) ──
 
-export const streamlinedTextSchema = z.looseObject({
+const streamlinedTextSchema = z.looseObject({
   type: z.literal('streamlined_text'),
   text: z.string(),
   session_id: z.string().optional(),
   uuid: z.string().optional(),
 });
 
-export const streamlinedToolUseSummarySchema = z.looseObject({
+const streamlinedToolUseSummarySchema = z.looseObject({
   type: z.literal('streamlined_tool_use_summary'),
   tool_summary: z.string(),
   session_id: z.string().optional(),
@@ -301,21 +301,21 @@ export const streamlinedToolUseSummarySchema = z.looseObject({
 
 // ── Experiment gates ──
 
-export const experimentGatesSchema = z.looseObject({
+const experimentGatesSchema = z.looseObject({
   type: z.literal('experiment_gates'),
   gates: z.record(z.string(), z.union([z.boolean(), z.string()])),
 });
 
 // ── Available models ──
 
-export const availableModelsSchema = z.looseObject({
+const availableModelsSchema = z.looseObject({
   type: z.literal('available_models'),
   models: z.array(z.string()),
 });
 
 // ── Tool use (top-level) ──
 
-export const toolUseSchema = z.looseObject({
+const toolUseSchema = z.looseObject({
   type: z.literal('tool_use'),
   id: z.string(),
   name: z.string(),
@@ -326,7 +326,7 @@ export const toolUseSchema = z.looseObject({
 
 // ── Notification ──
 
-export const notificationSchema = z.looseObject({
+const notificationSchema = z.looseObject({
   type: z.literal('notification'),
   message: z.string(),
   timestamp: z.number().optional(),
@@ -336,7 +336,7 @@ export const notificationSchema = z.looseObject({
 
 // ── New session notification ──
 
-export const newSessionNotificationSchema = z.looseObject({
+const newSessionNotificationSchema = z.looseObject({
   type: z.literal('new_session_notification'),
   session_id: z.string().optional(),
   uuid: z.string().optional(),
@@ -344,7 +344,7 @@ export const newSessionNotificationSchema = z.looseObject({
 
 // ── Error ──
 
-export const errorSchema = z.looseObject({
+const errorSchema = z.looseObject({
   type: z.literal('error'),
   error: z.looseObject({ type: z.string(), message: z.string() }),
   session_id: z.string().optional(),
@@ -352,7 +352,7 @@ export const errorSchema = z.looseObject({
 
 // ── Auth URL ──
 
-export const authUrlSchema = z.looseObject({
+const authUrlSchema = z.looseObject({
   type: z.literal('auth_url'),
   url: z.string(),
   method: z.string(),
@@ -362,13 +362,13 @@ export const authUrlSchema = z.looseObject({
 
 // ── Keep alive ──
 
-export const keepAliveSchema = z.looseObject({
+const keepAliveSchema = z.looseObject({
   type: z.literal('keep_alive'),
 });
 
 // ── Auth status ──
 
-export const authStatusSchema = z.looseObject({
+const authStatusSchema = z.looseObject({
   type: z.literal('auth_status'),
   isAuthenticating: z.boolean(),
   output: z.array(z.unknown()),
@@ -379,7 +379,7 @@ export const authStatusSchema = z.looseObject({
 
 // ── Speech ──
 
-export const speechToTextMessageSchema = z.looseObject({
+const speechToTextMessageSchema = z.looseObject({
   type: z.literal('speech_to_text_message'),
   channelId: z.string(),
   text: z.string(),
@@ -451,6 +451,8 @@ export type ProtocolMessage =
   | z.infer<typeof systemTaskNotificationSchema>
   | z.infer<typeof systemTaskProgressSchema>
   | z.infer<typeof systemBridgeStateSchema>
+  | z.infer<typeof systemPostTurnSummarySchema>
+  | z.infer<typeof systemSessionStateChangedSchema>
   | z.infer<typeof systemFallbackSchema>
   | z.infer<typeof assistantSchema>
   | z.infer<typeof userSchema>

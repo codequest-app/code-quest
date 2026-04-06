@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useClickOutside } from '../hooks/useClickOutside';
 
 function UploadIcon() {
   return (
@@ -59,28 +60,20 @@ export function AddButton({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useClickOutside([containerRef], () => setOpen(false), open);
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    }
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeyDown uses stable setOpen
   useEffect(() => {
     if (!open) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setOpen(false);
-      }
-    }
-
-    function handleMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('mousedown', handleMouseDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
   if (!onAttachFile && !onMentionFile) return null;

@@ -1,6 +1,6 @@
-import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../helpers';
 import { renderWithWorkspace } from '../render-with-workspace';
 
 describe('renderWithWorkspace', () => {
@@ -18,13 +18,9 @@ describe('renderWithWorkspace', () => {
 
   it('claude.emit flushes React without explicit act()', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'hello');
 
-    await claude.emit(s.assistant('Reply from Claude'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Reply from Claude');
 
     // getByText (not findByText) — proves flush happened synchronously after emit
     expect(screen.getByText(/Reply from Claude/)).toBeInTheDocument();
@@ -41,18 +37,13 @@ describe('renderWithWorkspace', () => {
     });
 
     // User sends a prompt
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'fix the login page');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'fix the login page');
 
     // CLI responds
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.result());
-    await new Promise<void>((r) => setTimeout(r, 100));
+    await emitAssistantTurn(claude, 'ok');
 
     // Tab title shows in UI (from first user message)
-    const tab = screen.getByRole('tab', { selected: true });
+    const tab = await screen.findByRole('tab', { selected: true });
     expect(tab).toHaveTextContent('fix the login page');
 
     // DB has CLI-generated title

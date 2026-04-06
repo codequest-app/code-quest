@@ -1,4 +1,3 @@
-import type { WorktreeInfo } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -13,8 +12,12 @@ export interface RenderWithChannelOptions {
   channelId?: string;
   claude?: FakeClaude;
   initSegment?: string;
+  /** Extra segments passed to claude.initialize (e.g. controlResponse). */
+  extraSegments?: string[];
   cwd?: string;
-  onWorktree?: (info: WorktreeInfo) => void;
+  onNewChannel?: (cwd: string) => void;
+  /** Skip claude.initialize — useful for testing launch failure. */
+  skipInit?: boolean;
 }
 
 export interface RenderWithChannelResult extends RenderResult {
@@ -40,7 +43,7 @@ export async function renderWithChannel(
               <ChannelProvider
                 channelId={channelId}
                 cwd={options.cwd}
-                onWorktree={options.onWorktree}
+                onNewChannel={options.onNewChannel}
               >
                 {children}
               </ChannelProvider>
@@ -52,9 +55,12 @@ export async function renderWithChannel(
   });
 
   // 2. Then launch — session:init arrives after listeners are registered (like production)
-  await act(async () => {
-    await claude.initialize(s.init('test-sess'), { launch: { channelId } });
-  });
+  if (!options.skipInit) {
+    const initSeg = options.initSegment ?? s.init('test-sess');
+    await act(async () => {
+      await claude.initialize(initSeg, ...(options.extraSegments ?? []), { launch: { channelId } });
+    });
+  }
 
   return { ...result, claude, channelId };
 }

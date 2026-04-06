@@ -1,15 +1,9 @@
-import { segments as s } from '@code-quest/summoner/test';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { useChannelCompose } from '../channel';
-import { ChannelProvider } from '../channel/ChannelContext';
-import { PluginProvider } from '../PluginContext';
-import { SessionProvider } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
-import { TabProvider } from '../TabContext';
 
 /** Renders a test harness that exposes compose context via UI */
 function ComposeTestUI() {
@@ -79,22 +73,7 @@ function ComposeTestUI() {
 }
 
 async function setup() {
-  const claude = createFakeClaude();
-  const channelId = await claude.initialize(s.init('sess-1'));
-  const result = render(
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>
-              <ComposeTestUI />
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>,
-  );
-  return { claude, ...result };
+  return renderWithChannel(<ComposeTestUI />);
 }
 
 describe('ChannelComposeProvider', () => {

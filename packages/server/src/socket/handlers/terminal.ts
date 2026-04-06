@@ -39,11 +39,11 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
 
       const newChannelId = crypto.randomUUID();
       const { channel: ch } = await channelManager.create(newChannelId, {
+        cwd: baseCwd,
         onBeforeSpawn: (c) => {
           if (socket) channelManager.addSocketToChannel(c, socket);
         },
       });
-      ch.cwd = baseCwd;
 
       channelManager.broadcastSessionState(newChannelId, 'idle');
 

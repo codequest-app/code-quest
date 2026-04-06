@@ -8,7 +8,7 @@ import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
-import { claudeState } from './state.ts';
+import { claudeState, setAuthState } from './state.ts';
 
 export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
   function handleStatus(
@@ -68,11 +68,11 @@ export function create(channelManager: ChannelManager, emitter: ChannelEmitter):
         state,
       });
       await channel.sendRequest('auth:oauth_wait');
-      claudeState.authState = {
+      setAuthState({
         authenticated: true,
         user: { name: 'authenticated' },
         method: 'oauth',
-      };
+      });
       callback?.({ success: true });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'OAuth failed') });

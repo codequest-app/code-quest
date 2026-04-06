@@ -1,8 +1,10 @@
+import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, isRecord } from '../../utils.ts';
-import type { ProtocolMessage } from '../schemas.ts';
+import type { controlRequestSchema } from '../schemas.ts';
 
-type RequestContext = { requestId: string; request: Record<string, unknown> };
+type ControlRequestMessage = z.infer<typeof controlRequestSchema>;
+type RequestContext = { requestId: string; request: ControlRequestMessage['request'] };
 
 function handleCanUseTool({ requestId, request }: RequestContext): ClientMessage {
   return {
@@ -26,7 +28,7 @@ function handleHookCallback({ requestId, request }: RequestContext): ClientMessa
     name: 'control:hook_callback',
     payload: {
       requestId,
-      callbackId: (request.callback_id as string) ?? '',
+      callbackId: request.callback_id ?? '',
       input: request.input,
       toolUseId: request.tool_use_id,
     },
@@ -124,12 +126,12 @@ function handleForwardToClient({ requestId, request }: RequestContext): ClientMe
     name: 'control:forward',
     payload: {
       requestId,
-      subtype: (request?.subtype as string) ?? '',
-      toolName: request?.tool_name as string | undefined,
-      toolUseId: request?.tool_use_id as string | undefined,
-      input: request?.input,
-      suggestions: request?.permission_suggestions as unknown[] | undefined,
-      callbackId: request?.callback_id as string | undefined,
+      subtype: request.subtype ?? '',
+      toolName: request.tool_name,
+      toolUseId: request.tool_use_id,
+      input: request.input,
+      suggestions: request.permission_suggestions,
+      callbackId: request.callback_id,
     },
   };
 }
@@ -165,12 +167,12 @@ const HANDLERS: Record<string, (ctx: RequestContext) => ClientMessage | null> = 
   set_permission_mode: handleSetPermissionMode,
 };
 
-export function transformControlRequest(raw: ProtocolMessage): AdapterOutput {
-  const request = raw.request as Record<string, unknown> | undefined;
-  const requestId = raw.request_id as string;
-  const subtype = request?.subtype as string | undefined;
+export function transformControlRequest(raw: ControlRequestMessage): AdapterOutput {
+  const request = raw.request;
+  const requestId = raw.request_id;
+  const subtype = request.subtype;
 
-  const ctx: RequestContext = { requestId, request: request ?? {} };
+  const ctx: RequestContext = { requestId, request };
   const handler = subtype ? HANDLERS[subtype] : undefined;
   const result = handler ? handler(ctx) : handleForwardToClient(ctx);
 

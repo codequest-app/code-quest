@@ -1,12 +1,6 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
-import type { ChannelState } from '../../../types/chat';
-import { msg } from '../../../utils/message';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
-
-function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
-  return { ...state, messages: [...state.messages, msg(fields)] };
-}
+import type { ChannelState } from '@/types/chat';
+import { msg } from '@/utils/message';
+import { addMessage, type Payload } from './guard';
 
 // ── On handlers ──
 

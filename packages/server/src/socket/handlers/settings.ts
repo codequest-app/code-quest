@@ -30,7 +30,7 @@ export function create(
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
-    callback?: (res: { success: boolean; error?: string }) => void,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { model } = settingsSetModelPayloadSchema.parse(payload);
@@ -46,7 +46,7 @@ export function create(
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
-    callback?: (res: { success: boolean; error?: string }) => void,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, mode } = settingsSetPermissionModePayloadSchema.parse(payload);
@@ -64,7 +64,7 @@ export function create(
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
-    callback?: (res: { success: boolean; error?: string }) => void,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, thinkingLevel } = settingsSetThinkingLevelPayloadSchema.parse(payload);

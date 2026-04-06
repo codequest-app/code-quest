@@ -12,6 +12,8 @@ export function channelEmit(
   payload: Record<string, unknown>,
   ...rest: unknown[]
 ): void {
+  // Cast needed: channelEmit accepts dynamic event names that can't be statically
+  // verified against Socket.IO's typed emit signature.
   (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, ...rest);
 }
 
@@ -27,6 +29,8 @@ export function rpc<E extends keyof ClientToServerEvents>(
   Parameters<ClientToServerEvents[E]> extends [...infer _P, (res: infer R) => void] ? R : never
 > {
   return new Promise((resolve) => {
+    // Cast needed: generic rpc() destructures event args at type level but Socket.IO's
+    // emit overloads can't express this pattern without an escape hatch.
     (socket.emit as (...a: unknown[]) => unknown)(event, ...args, resolve);
   });
 }

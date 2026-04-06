@@ -2,6 +2,7 @@ import type { FileSearchResult } from '@code-quest/shared';
 import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
@@ -71,22 +72,14 @@ export function ComposeInput() {
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   };
 
-  useEffect(() => {
-    if (!mentionOpen) return;
-    function handleMouseDown(e: MouseEvent) {
-      if (
-        mentionContainerRef.current &&
-        !mentionContainerRef.current.contains(e.target as Node) &&
-        textareaRef.current &&
-        !textareaRef.current.contains(e.target as Node)
-      ) {
-        setMentionOpen(false);
-        setFileResults([]);
-      }
-    }
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [mentionOpen]);
+  useClickOutside(
+    [mentionContainerRef, textareaRef],
+    () => {
+      setMentionOpen(false);
+      setFileResults([]);
+    },
+    mentionOpen,
+  );
 
   const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
@@ -152,73 +145,85 @@ export function ComposeInput() {
     if (el) setCursorPos(el.selectionStart);
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (slashOpen) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        closeSlash();
-        return;
-      }
-      if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
-        e.preventDefault();
-        return;
-      }
-    }
+  function closeMention() {
+    setMentionOpen(false);
+    setFileResults([]);
+  }
 
-    if (e.key === 'Escape' && mentionOpen) {
+  function handleSlashKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (!slashOpen) return false;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSlash();
+      return true;
+    }
+    if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      return true;
+    }
+    return false;
+  }
+
+  function handleMentionKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (!mentionOpen) return false;
+    if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
-      setMentionOpen(false);
-      setFileResults([]);
-      return;
+      closeMention();
+      return true;
     }
-
-    if (mentionOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      if (e.key === 'ArrowDown') {
-        setSelectedIndex((i) => Math.min(i + 1, fileResults.length - 1));
-      } else {
-        setSelectedIndex((i) => Math.max(i - 1, -1));
-      }
-      return;
+      setSelectedIndex((i) =>
+        e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
+      );
+      return true;
     }
+    if (e.key === 'Tab' && selectedIndex >= 0) {
+      e.preventDefault();
+      const item = fileResults[selectedIndex];
+      if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
+      return true;
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (selectedIndex >= 0) {
+        e.preventDefault();
+        const item = fileResults[selectedIndex];
+        if (item) handleSelectMention(`@${item.path}`, false);
+      } else {
+        closeMention();
+      }
+      return true;
+    }
+    return false;
+  }
 
-    if (e.key === 'ArrowUp' && !mentionOpen && !slashOpen) {
+  function handleHistoryKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (mentionOpen || slashOpen) return false;
+    if (e.key === 'ArrowUp') {
       const msg = inputHistory.cycleUp();
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
         setTimeout(() => autogrow(textareaRef.current), 0);
       }
-      return;
+      return true;
     }
-    if (e.key === 'ArrowDown' && !mentionOpen && !slashOpen) {
-      const msg = inputHistory.cycleDown();
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      updateValue(msg);
+      updateValue(inputHistory.cycleDown());
       setTimeout(() => autogrow(textareaRef.current), 0);
-      return;
+      return true;
     }
+    return false;
+  }
 
-    if (e.key === 'Tab' && mentionOpen && selectedIndex >= 0) {
-      e.preventDefault();
-      const item = fileResults[selectedIndex];
-      if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
-      return;
-    }
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (handleSlashKey(e)) return;
+    if (handleMentionKey(e)) return;
+    if (handleHistoryKey(e)) return;
 
     if (e.key === 'Enter' && !e.shiftKey) {
-      if (mentionOpen && selectedIndex >= 0) {
-        e.preventDefault();
-        const item = fileResults[selectedIndex];
-        if (item) handleSelectMention(`@${item.path}`, false);
-        return;
-      }
-      if (mentionOpen) {
-        setMentionOpen(false);
-        setFileResults([]);
-        return;
-      }
       e.preventDefault();
       const trimmed = value.trim();
       if (trimmed) {

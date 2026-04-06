@@ -47,8 +47,8 @@ export class ProcessRunner extends EventEmitter {
           this.emit('stdout', line);
           this._processLine(line);
         }
-      } catch {
-        // iteration ended (abort or process exit)
+      } catch (error) {
+        console.debug('Async iteration ended with error', error);
       }
       this.handle = null;
       this.emit('exit', null);
@@ -57,13 +57,13 @@ export class ProcessRunner extends EventEmitter {
 
   private _processLine(line: string): void {
     const result = this.adapter.parseLine(line);
-    let protocolMessage: Record<string, unknown> | null = null;
+    let protocolMessage: unknown = null;
 
     switch (result.status) {
       case 'skip':
         return;
       case 'ok':
-        protocolMessage = result.message as Record<string, unknown>;
+        protocolMessage = result.message;
         break;
       case 'unknown':
         protocolMessage = {
@@ -76,7 +76,8 @@ export class ProcessRunner extends EventEmitter {
         let data: unknown;
         try {
           data = JSON.parse(result.raw);
-        } catch {
+        } catch (error) {
+          console.debug('Failed to parse JSON', error);
           data = { raw: result.raw };
         }
         protocolMessage = {
@@ -130,7 +131,7 @@ export class ProcessRunner extends EventEmitter {
   }
 
   kill(): void {
-    this.handle?.abort();
+    this.abort();
   }
 
   abort(): void {

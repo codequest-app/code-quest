@@ -2,6 +2,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 vi.mock('sonner', () => ({
@@ -21,12 +22,8 @@ describe('SessionProvider (global config only)', () => {
 
   it('settings:update config updates are processed without crash', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await sendUserMessage(user);
+    await emitAssistantTurn(claude);
 
     expect(screen.queryAllByText(/hi/).length).toBeGreaterThan(0);
   });

@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { logger } from '../logger.ts';
 
 export interface SettingsStore {
   get(provider: string, key: string): Promise<unknown>;
@@ -18,7 +19,8 @@ export class FileSettingsStore implements SettingsStore {
   private readFile(): Record<string, Record<string, unknown>> {
     try {
       return JSON.parse(readFileSync(this.filePath, 'utf-8'));
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to read settings file');
       return {};
     }
   }

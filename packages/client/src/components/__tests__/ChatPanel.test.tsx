@@ -1,8 +1,9 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ChatPanel } from '../ChatPanel';
 
@@ -13,34 +14,31 @@ describe('ChatPanel', () => {
 
   it('renders input and message list', async () => {
     await renderWithChannel(<ChatPanel />);
-    expect(screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
     expect(screen.getByTitle('Send')).toBeInTheDocument();
   });
 
   it('sends message — message appears in UI', async () => {
     await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
-    act(() => {
-      fireEvent.change(textarea, { target: { value: 'test message' } });
-      fireEvent.click(screen.getByTitle('Send'));
-    });
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+    fireEvent.change(textarea, { target: { value: 'test message' } });
+    fireEvent.click(screen.getByTitle('Send'));
     expect(screen.getByText('test message')).toBeInTheDocument();
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
 
   it('displays messages from pipeline', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'Hello{Enter}');
-    await claude.emit(s.assistant('Hi back'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Hi back');
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText(/Hi back/)).toBeInTheDocument();
   });
 
   it('shows control request banner when pending', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls' } } }),
@@ -56,12 +54,12 @@ describe('ChatPanel', () => {
 
   it('keeps input enabled when processing', async () => {
     await renderWithChannel(<ChatPanel />);
-    expect(screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude')).toBeEnabled();
+    expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeEnabled();
   });
 
   it('shows Stop button when processing', async () => {
     await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
@@ -80,7 +78,7 @@ describe('ChatPanel', () => {
 
   it('tool_use interrupts streaming — text after tool_result still renders', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.textDelta('Before tool'));
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
@@ -90,8 +88,7 @@ describe('ChatPanel', () => {
     await userEvent.click(yesButton);
 
     await claude.emit(s.toolResult('toolu_1', 'file content'));
-    await claude.emit(s.assistant('After tool'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'After tool');
 
     expect(await screen.findByText(/Before tool/)).toBeInTheDocument();
     expect(await screen.findByText(/After tool/)).toBeInTheDocument();
@@ -99,7 +96,7 @@ describe('ChatPanel', () => {
 
   it('tool_result flows through pipeline (verified via received)', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
     await claude.emit(s.controlRequest('r1', 'can_use_tool', 'Read', {}));
@@ -108,8 +105,7 @@ describe('ChatPanel', () => {
     await userEvent.click(yesButton);
 
     await claude.emit(s.toolResult('toolu_1', 'file contents'));
-    await claude.emit(s.assistant('Done'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Done');
 
     expect(await screen.findByText(/Done/)).toBeInTheDocument();
     expect(claude.received('control_response').length).toBeGreaterThan(0);
@@ -117,7 +113,7 @@ describe('ChatPanel', () => {
 
   it('elicitation control_request renders dialog', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
 
@@ -126,7 +122,7 @@ describe('ChatPanel', () => {
 
   it('chat:cancel_request silently removes pending control banner', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
     await claude.emit(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
@@ -143,7 +139,7 @@ describe('ChatPanel', () => {
 
   it('notification error shows message in UI', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
       s.controlRequestShowNotification('notif-1', {
@@ -157,7 +153,7 @@ describe('ChatPanel', () => {
 
   it('notification warning shows message in UI', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
       s.controlRequestShowNotification('notif-2', { message: 'Be careful', severity: 'warning' }),
@@ -168,7 +164,7 @@ describe('ChatPanel', () => {
 
   it('notification with buttons shows in UI', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await claude.emit(
       s.controlRequestShowNotification('notif-3', {
@@ -183,10 +179,9 @@ describe('ChatPanel', () => {
 
   it('open_diff control_request does not crash', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude);
     await claude.emit(
       s.controlRequestOpenDiff('diff-1', {
         originalFilePath: '/tmp/old.ts',
@@ -201,19 +196,18 @@ describe('ChatPanel', () => {
 
   it('message:result transitions from Stop to Send button (processing → idle)', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
 
-    await claude.emit(s.assistant('done'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'done');
 
     expect(await screen.findByTitle('Send')).toBeInTheDocument();
   });
 
   it('message:result with error shows error message', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
 
     await claude.emit(s.resultError({ errors: ['Something failed'] }));
@@ -224,23 +218,21 @@ describe('ChatPanel', () => {
 
   it('streaming text deltas accumulate and result returns to idle', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
 
     await claude.emit(s.textDelta('Hello '));
     await claude.emit(s.textDelta('World'));
-    await claude.emit(s.assistant('Hello World'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Hello World');
 
     expect(await screen.findByTitle('Send')).toBeInTheDocument();
   });
 
   it('diffRespond with unknown toolId does not crash', async () => {
     const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText('⌘ Esc to focus or unfocus Claude');
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude);
     await claude.emit(
       s.controlRequestOpenDiff('diff-gone', { originalFilePath: '/tmp/a', newFilePath: '/tmp/b' }),
     );

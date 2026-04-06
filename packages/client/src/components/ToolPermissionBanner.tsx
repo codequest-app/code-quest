@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { QuestionContent } from './QuestionContent';
 
@@ -33,13 +33,10 @@ export function ToolPermissionBanner({
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
 
-  const handleAnswersChange = useCallback(
-    (answers: Record<string, string>, allAnswered: boolean) => {
-      setQuestionAnswers(answers);
-      setAllQuestionsAnswered(allAnswered);
-    },
-    [],
-  );
+  const handleAnswersChange = (answers: Record<string, string>, allAnswered: boolean) => {
+    setQuestionAnswers(answers);
+    setAllQuestionsAnswered(allAnswered);
+  };
 
   const options = isQuestion
     ? [

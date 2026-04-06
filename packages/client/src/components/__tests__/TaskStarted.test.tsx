@@ -1,6 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { emitAssistantTurn } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('task_started event', () => {
@@ -11,8 +12,7 @@ describe('task_started event', () => {
     await user.type(textarea, 'go');
     await user.keyboard('{Enter}');
     await claude.emit(s.taskStarted('toolu_1', 'Analyze code'));
-    await claude.emit(s.assistant('done'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'done');
 
     expect(screen.getByText(/Analyze code/)).toBeInTheDocument();
   });

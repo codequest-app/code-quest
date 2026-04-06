@@ -1,19 +1,14 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import {
   mockAllIsIntersecting,
   resetIntersectionMocking,
   setupIntersectionMocking,
 } from 'react-intersection-observer/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChannelProvider } from '../../contexts/channel';
-import { PluginProvider } from '../../contexts/PluginContext';
-import { SessionProvider } from '../../contexts/SessionContext';
-import { SocketProvider } from '../../contexts/SocketContext';
-import { TabProvider } from '../../contexts/TabContext';
-import { createFakeClaude } from '../../test/fake-claude';
+import { emitAssistantTurn } from '../../test/helpers';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { MessageList } from '../MessageList';
 
 beforeEach(() => {
@@ -25,55 +20,14 @@ afterEach(() => {
 });
 
 async function renderWithMessages() {
-  const claude = createFakeClaude();
-  const channelId = crypto.randomUUID();
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>
-  );
-  const result = render(<MessageList />, { wrapper });
-  await act(async () => {
-    await claude.initialize(s.init('sess-1'), { launch: { channelId } });
-  });
-  // Send message + reply to populate messages
-  await claude.emit(s.assistant('Hi'));
-  await claude.emit(s.result());
-  return result;
-}
-
-async function renderWithChannel() {
-  const claude = createFakeClaude();
-  const channelId = crypto.randomUUID();
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>
-  );
-  const result = render(<MessageList />, { wrapper });
-  await act(async () => {
-    await claude.initialize(s.init('sess-1'), { launch: { channelId } });
-  });
-  return { claude, channelId, ...result };
+  const { claude } = await renderWithChannel(<MessageList />);
+  await emitAssistantTurn(claude, 'Hi');
 }
 
 describe('Auto-scroll behavior', () => {
   it('does not force scroll to bottom for pending_action when user scrolled up', async () => {
-    const { claude } = await renderWithChannel();
-    await claude.emit(s.assistant('Hello'));
-    await claude.emit(s.result());
+    const { claude } = await renderWithChannel(<MessageList />);
+    await emitAssistantTurn(claude, 'Hello');
 
     // Wait for programmatic scroll timeout to expire
     await act(async () => {
@@ -99,7 +53,7 @@ describe('Auto-scroll behavior', () => {
   });
 
   it('uses instant scroll for streaming deltas (content grew, no new message)', async () => {
-    const { claude } = await renderWithChannel();
+    const { claude } = await renderWithChannel(<MessageList />);
     await claude.emit(s.textDelta('Hello '));
 
     await act(async () => {
@@ -116,7 +70,7 @@ describe('Auto-scroll behavior', () => {
   });
 
   it('auto-scrolls when streaming delta grows content while user is at bottom', async () => {
-    const { claude } = await renderWithChannel();
+    const { claude } = await renderWithChannel(<MessageList />);
     // Start streaming — textDelta creates/grows a message
     await claude.emit(s.textDelta('Hello '));
 

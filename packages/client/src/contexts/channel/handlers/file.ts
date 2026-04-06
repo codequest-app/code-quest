@@ -3,8 +3,8 @@ import type {
   SuccessResponse,
   TerminalGetContentsResponse,
 } from '@code-quest/shared';
-import type { TypedSocket } from '../../../socket/client';
-import { rpc } from '../../../socket/rpc';
+import type { TypedSocket } from '@/socket/client';
+import { rpc } from '@/socket/rpc';
 
 // ── Actions (emit) ──
 

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
+const ICON_CYCLE_MS = 120;
+const VERB_DELAYS = [2000, 3000, 5000] as const;
+const VERB_DELAY_DEFAULT = 5000;
+
 const ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
 const ICON_CYCLE = [...ICONS, ...[...ICONS].reverse()];
 
@@ -69,15 +73,14 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
   useEffect(() => {
     const id = setInterval(() => {
       setIconIndex((i) => (i + 1) % ICON_CYCLE.length);
-    }, 120);
+    }, ICON_CYCLE_MS);
     return () => clearInterval(id);
   }, []);
 
   // Change verb on schedule: 2s, 3s, 5s, then every 5s
   const scheduleNextVerb = () => {
-    const delays = [2000, 3000, 5000];
     const count = verbTimerRef.current;
-    const delay = count < delays.length ? delays[count] : 5000;
+    const delay = count < VERB_DELAYS.length ? VERB_DELAYS[count] : VERB_DELAY_DEFAULT;
     verbTimerRef.current++;
     return delay;
   };

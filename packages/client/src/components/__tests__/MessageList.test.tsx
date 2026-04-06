@@ -1,48 +1,18 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { ChannelProvider, useChannelMessages } from '../../contexts/channel';
-import { PluginProvider } from '../../contexts/PluginContext';
-import { SessionProvider } from '../../contexts/SessionContext';
-import { SocketProvider } from '../../contexts/SocketContext';
-import { TabProvider } from '../../contexts/TabContext';
-import { createFakeClaude } from '../../test/fake-claude';
+import { emitAssistantTurn, SendButton } from '../../test/helpers';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { MessageList } from '../MessageList';
 
-/** Helper to trigger sendMessage from context */
-function SendButton() {
-  const { sendMessage } = useChannelMessages();
-  return (
-    <button type="button" onClick={() => sendMessage('Hello')}>
-      TriggerSend
-    </button>
-  );
-}
-
 async function setup(props?: { searchQuery?: string; typeFilter?: string[] }) {
-  const claude = createFakeClaude();
-  const channelId = crypto.randomUUID();
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>
-              <SendButton />
-              {children}
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>
+  return renderWithChannel(
+    <>
+      <SendButton message="Hello" />
+      <MessageList {...props} />
+    </>,
   );
-  const result = render(<MessageList {...props} />, { wrapper });
-  await act(async () => {
-    await claude.initialize(s.init('sess-1'), { launch: { channelId } });
-  });
-  return { claude, channelId, ...result };
 }
 
 /** Populate basic messages: user "Hello" + assistant "Hi there" + error "Oops" */
@@ -132,8 +102,7 @@ describe('MessageList', () => {
   it('filters messages by typeFilter', async () => {
     const { claude } = await setup({ typeFilter: ['raw_event'] });
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.assistant('Reply'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Reply');
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('Reply')).toBeInTheDocument();
   });
@@ -236,8 +205,7 @@ describe('MessageList streaming', () => {
     await claude.emit(s.messageStop());
     await claude.emit(s.textDelta('Second message'));
     await claude.emit(s.messageStop());
-    await claude.emit(s.assistant('Second message'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Second message');
 
     expect(await screen.findByText(/First message/)).toBeInTheDocument();
     expect(screen.queryAllByText(/Second message/).length).toBeGreaterThan(0);
@@ -249,8 +217,7 @@ describe('MessageList streaming', () => {
     await claude.emit(s.thinkingDelta('Let me'));
     await claude.emit(s.thinkingDelta(' think...'));
     await claude.emit(s.thinking('Let me think...'));
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'ok');
 
     const thinkElements = screen.queryAllByText(/Let me think\.\.\./);
     expect(thinkElements).toHaveLength(1);

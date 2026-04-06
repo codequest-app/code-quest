@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { PluginProvider } from '../contexts/PluginContext';
@@ -23,14 +23,19 @@ export async function renderWithWorkspace(
   const claude = opts?.claude ?? createFakeClaude();
   const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-  // Ensure auto-respond is ready if not already configured
   if (!claude.hasInitSegments) {
     claude.prepareInit();
   }
 
+  // Capture channelId from session:init (fires after launch + join)
   let channelId = '';
-  claude.socket.on('session:init', (p) => {
-    channelId = p.channelId;
+  const initPromise = new Promise<string>((resolve) => {
+    claude.socket.on('session:init', (p) => {
+      if (!channelId) {
+        channelId = p.channelId;
+        resolve(p.channelId);
+      }
+    });
   });
 
   render(
@@ -46,6 +51,14 @@ export async function renderWithWorkspace(
   );
 
   await user.click(await screen.findByLabelText('New tab'));
+
+  // Wait for full launch → join → session:init cycle
+  await act(async () => {
+    channelId = await initPromise;
+  });
+
+  // Ensure channel is fully joined and UI rendered
+  await screen.findByPlaceholderText(/Esc to focus/i);
 
   return { claude, channelId, user };
 }

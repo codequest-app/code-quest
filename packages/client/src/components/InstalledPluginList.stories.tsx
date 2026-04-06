@@ -1,36 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ChannelProvider } from '../contexts/channel';
-import { PluginProvider } from '../contexts/PluginContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
+import { withStoryChannel } from '../test/story-decorator';
 import { InstalledPluginList } from './InstalledPluginList';
 
 const meta = {
   component: InstalledPluginList,
   tags: ['autodocs'],
-  decorators: [
-    (Story) => {
-      const socket = createSocket();
-      return (
-        <SocketProvider socket={socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <TabProvider>
-                <ChannelProvider channelId="story">
-                  <div className="bg-bg text-text max-w-md p-4">
-                    <Story />
-                  </div>
-                </ChannelProvider>
-              </TabProvider>
-            </PluginProvider>
-          </SessionProvider>
-        </SocketProvider>
-      );
-    },
-  ],
+  decorators: [withStoryChannel({ className: 'bg-bg text-text max-w-md p-4' })],
   args: {
     onSearchChange: fn(),
     onToggle: fn(),

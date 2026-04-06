@@ -64,7 +64,9 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-const clientDist = join(import.meta.dirname, '../../..', 'client/dist');
+/** Relative path from server bin to the monorepo root */
+const CLIENT_DIST_RELATIVE = '../../..';
+const clientDist = join(import.meta.dirname, CLIENT_DIST_RELATIVE, 'client/dist');
 if (existsSync(clientDist)) {
   app.use(express.static(clientDist));
   // SPA fallback

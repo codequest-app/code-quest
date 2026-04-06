@@ -2,24 +2,21 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { TimelineItem } from '../TimelineItem';
 
 describe('Conversation display — tool use timeline', () => {
   it('renders tool name after pipeline event', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'read the file');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'read the file');
     await claude.emit(
       s.assistant({
         toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'src/app.ts' } },
       }),
     );
     await claude.emit(s.toolResult('toolu_1', 'file content here'));
-    await claude.emit(s.assistant('Done reading'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Done reading');
 
     expect(screen.getByText('Read')).toBeInTheDocument();
     expect(screen.getByText('app.ts')).toBeInTheDocument();
@@ -27,10 +24,7 @@ describe('Conversation display — tool use timeline', () => {
 
   it('shows Bash tool name in DOM', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'list files');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'list files');
     await claude.emit(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls -la' } } }),
     );
@@ -42,13 +36,9 @@ describe('Conversation display — tool use timeline', () => {
 
   it('renders thinking message as collapsible block', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'think about this');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'think about this');
     await claude.emit(s.thinking('Let me analyze this...'));
-    await claude.emit(s.assistant('Here is my answer'));
-    await claude.emit(s.result());
+    await emitAssistantTurn(claude, 'Here is my answer');
 
     // Thinking label visible
     expect(screen.getByText('Thinking')).toBeInTheDocument();

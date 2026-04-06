@@ -1,41 +1,15 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { ChannelProvider } from '../../contexts/channel';
-import { PluginProvider } from '../../contexts/PluginContext';
-import { SessionProvider } from '../../contexts/SessionContext';
-import { SocketProvider } from '../../contexts/SocketContext';
-import { TabProvider } from '../../contexts/TabContext';
-import { createFakeClaude } from '../../test/fake-claude';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { ChatInputArea } from '../ChatInputArea';
 
 async function renderChatInputArea(initOpts?: Parameters<typeof s.init>[1]) {
-  const claude = createFakeClaude();
-  const channelId = crypto.randomUUID();
-  const result = render(
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>
-              <ChatInputArea />
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>,
-  );
-  await act(async () => {
-    await claude.initialize(
-      s.init('sess-1', initOpts),
-      s.controlResponse('init', {
-        models: [{ value: 'claude-sonnet-4-20250514' }],
-      }),
-      { launch: { channelId } },
-    );
+  return renderWithChannel(<ChatInputArea />, {
+    initSegment: s.init('sess-1', initOpts),
+    extraSegments: [s.controlResponse('init', { models: [{ value: 'claude-sonnet-4-20250514' }] })],
   });
-  return { claude, channelId, ...result };
 }
 
 describe('slash command integration', () => {

@@ -162,7 +162,16 @@ export class FakeClaude {
 
           if (!this._initSegments) return; // no auto-respond — test sends manually
 
-          h.emit(this._initSegments[0]);
+          // Inject spawn cwd into init segment so channel.cwd matches spawn's cwd
+          const lastSpawn = this.provider.spawnCalls[this.provider.spawnCalls.length - 1];
+          const spawnCwd = lastSpawn?.options?.cwd as string | undefined;
+          let initLine = this._initSegments[0];
+          if (spawnCwd) {
+            const initObj = JSON.parse(initLine);
+            initObj.cwd = spawnCwd;
+            initLine = JSON.stringify(initObj);
+          }
+          h.emit(initLine);
 
           if (this._initSegments[1]) {
             const respLine = JSON.parse(this._initSegments[1]);

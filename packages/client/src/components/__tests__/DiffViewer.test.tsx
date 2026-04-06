@@ -34,27 +34,35 @@ describe('parseDiffFileName', () => {
   });
 });
 
+function renderDiff(overrides: Partial<Parameters<typeof DiffViewer>[0]> = {}) {
+  return render(<DiffViewer content={sampleDiff} {...overrides} />);
+}
+
+function renderEditableDiff(overrides: Partial<Parameters<typeof DiffViewer>[0]> = {}) {
+  return renderDiff({ editable: true, onAccept: vi.fn(), onReject: vi.fn(), ...overrides });
+}
+
 describe('DiffViewer', () => {
   it('renders diff content with colored lines', () => {
-    const { container } = render(<DiffViewer content={sampleDiff} />);
+    const { container } = renderDiff();
     const pre = container.querySelector('pre');
     expect(pre?.querySelector('.text-success')?.textContent).toContain('+new line');
     expect(pre?.querySelector('.text-danger')?.textContent).toContain('-old line');
   });
 
   it('shows filename header', () => {
-    render(<DiffViewer content={sampleDiff} />);
+    renderDiff();
     expect(screen.getByText('file.txt')).toBeInTheDocument();
   });
 
   it('shows accept/reject buttons when editable', () => {
-    render(<DiffViewer content={sampleDiff} editable onAccept={vi.fn()} onReject={vi.fn()} />);
+    renderEditableDiff();
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
 
   it('does not show buttons when not editable', () => {
-    render(<DiffViewer content={sampleDiff} />);
+    renderDiff();
     expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
   });
@@ -62,7 +70,7 @@ describe('DiffViewer', () => {
   it('calls onAccept when accept clicked', async () => {
     const user = userEvent.setup();
     const onAccept = vi.fn();
-    render(<DiffViewer content={sampleDiff} editable onAccept={onAccept} onReject={vi.fn()} />);
+    renderEditableDiff({ onAccept });
     await user.click(screen.getByRole('button', { name: /accept/i }));
     expect(onAccept).toHaveBeenCalled();
   });
@@ -70,33 +78,25 @@ describe('DiffViewer', () => {
   it('calls onReject when reject clicked', async () => {
     const user = userEvent.setup();
     const onReject = vi.fn();
-    render(<DiffViewer content={sampleDiff} editable onAccept={vi.fn()} onReject={onReject} />);
+    renderEditableDiff({ onReject });
     await user.click(screen.getByRole('button', { name: /reject/i }));
     expect(onReject).toHaveBeenCalled();
   });
 
   it('shows accept/reject buttons even when no filename', () => {
     const diffNoFile = '@@ -1,3 +1,3 @@\n-old line\n+new line\n same line';
-    render(<DiffViewer content={diffNoFile} editable onAccept={vi.fn()} onReject={vi.fn()} />);
+    renderEditableDiff({ content: diffNoFile });
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
 
   it('shows Edit button when onAcceptEdited is provided', () => {
-    render(
-      <DiffViewer
-        content={sampleDiff}
-        editable
-        onAccept={vi.fn()}
-        onReject={vi.fn()}
-        onAcceptEdited={vi.fn()}
-      />,
-    );
+    renderEditableDiff({ onAcceptEdited: vi.fn() });
     expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
   });
 
   it('does not show Edit button when onAcceptEdited is not provided', () => {
-    render(<DiffViewer content={sampleDiff} editable onAccept={vi.fn()} onReject={vi.fn()} />);
+    renderEditableDiff();
     // Only Accept and Reject buttons exist, no Edit
     const buttons = screen.getAllByRole('button');
     expect(buttons.every((b) => !b.textContent?.includes('Edit'))).toBe(true);
@@ -104,15 +104,7 @@ describe('DiffViewer', () => {
 
   it('clicking Edit shows textarea with new content', async () => {
     const user = userEvent.setup();
-    render(
-      <DiffViewer
-        content={sampleDiff}
-        editable
-        onAccept={vi.fn()}
-        onReject={vi.fn()}
-        onAcceptEdited={vi.fn()}
-      />,
-    );
+    renderEditableDiff({ onAcceptEdited: vi.fn() });
     await user.click(screen.getByRole('button', { name: /edit/i }));
     const textarea = screen.getByRole('textbox');
     expect(textarea).toBeInTheDocument();
@@ -122,15 +114,7 @@ describe('DiffViewer', () => {
   it('clicking Apply Edit calls onAcceptEdited with edited content', async () => {
     const user = userEvent.setup();
     const onAcceptEdited = vi.fn();
-    render(
-      <DiffViewer
-        content={sampleDiff}
-        editable
-        onAccept={vi.fn()}
-        onReject={vi.fn()}
-        onAcceptEdited={onAcceptEdited}
-      />,
-    );
+    renderEditableDiff({ onAcceptEdited });
     await user.click(screen.getByRole('button', { name: /edit/i }));
     const textarea = screen.getByRole('textbox');
     await user.clear(textarea);
@@ -142,15 +126,7 @@ describe('DiffViewer', () => {
 
   it('clicking Cancel exits editing mode', async () => {
     const user = userEvent.setup();
-    render(
-      <DiffViewer
-        content={sampleDiff}
-        editable
-        onAccept={vi.fn()}
-        onReject={vi.fn()}
-        onAcceptEdited={vi.fn()}
-      />,
-    );
+    renderEditableDiff({ onAcceptEdited: vi.fn() });
     await user.click(screen.getByRole('button', { name: /edit/i }));
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /cancel/i }));

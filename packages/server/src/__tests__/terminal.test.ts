@@ -100,5 +100,18 @@ describe('ChatHandler > terminal', () => {
       const newChannel = mgr.get(res.channelId!);
       expect(newChannel?.cwd).toBe('/tmp');
     });
+
+    it('with a cwd, the spawned CLI process uses that cwd', async () => {
+      const { claude, channelId } = await setup();
+      const spawnCountBefore = claude.provider.spawnCalls.length;
+
+      await claude.send<{ success: boolean; channelId?: string }>('terminal:open_claude', {
+        channelId,
+        cwd: '/tmp',
+      });
+
+      const lastSpawn = claude.provider.spawnCalls[spawnCountBefore];
+      expect(lastSpawn.options?.cwd).toBe('/tmp');
+    });
   });
 });

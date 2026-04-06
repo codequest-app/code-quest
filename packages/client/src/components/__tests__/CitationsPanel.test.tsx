@@ -1,17 +1,14 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('CitationsPanel', () => {
   it('does not render citation links when none present', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('No citations here'));
-    await claude.emit(s.result());
+    await sendUserMessage(user);
+    await emitAssistantTurn(claude, 'No citations here');
 
     // No citation links
     expect(screen.queryByRole('link', { name: /example/i })).not.toBeInTheDocument();
@@ -19,10 +16,7 @@ describe('CitationsPanel', () => {
 
   it('renders citation links when citations_delta arrives', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user);
     await claude.emit(s.assistant('Check this'));
     await claude.emit(s.citationsDelta({ url: 'https://example.com', title: 'Example' }));
     await claude.emit(s.result());
@@ -34,10 +28,7 @@ describe('CitationsPanel', () => {
 
   it('renders plain text when citation has no url', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user);
     await claude.emit(s.assistant('See source'));
     await claude.emit(s.citationsDelta({ title: 'No Link Source' }));
     await claude.emit(s.result());

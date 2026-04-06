@@ -2,7 +2,7 @@ import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
 
 /** Unified handler signature for all events (runner + client). */
-export type EmitterHandler = (
+type EmitterHandler = (
   ch: Channel | null,
   payload: unknown,
   socket?: TypedSocket,
@@ -159,26 +159,29 @@ export class ChannelEmitter {
     // Wire client socket events for emitter.on subscribers only.
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
-      // biome-ignore lint/suspicious/noExplicitAny: socket.io typed emit signatures vary per event
-      socket.on(event as any, (...args: any[]) => {
-        const lastArg = args[args.length - 1];
-        const hasCb = typeof lastArg === 'function';
-        const cb = hasCb ? lastArg : undefined;
-        let payload: unknown;
-        if (hasCb && args.length > 1) {
-          payload = args[0];
-        } else if (hasCb) {
-          payload = {};
-        } else {
-          payload = args[0] ?? {};
-        }
-        const channelId =
-          typeof payload === 'object' && payload !== null && 'channelId' in payload
-            ? String((payload as Record<string, unknown>).channelId)
-            : undefined;
-        const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
-        return this.dispatch(event, ch, payload, socket, cb);
-      });
+      // socket.io typed emit requires a known event literal; dynamic event names need a cast
+      (socket as { on: (event: string, fn: (...args: unknown[]) => void) => void }).on(
+        event,
+        (...args: unknown[]) => {
+          const lastArg = args[args.length - 1];
+          const hasCb = typeof lastArg === 'function';
+          const cb: SocketCallback | undefined = hasCb ? (lastArg as SocketCallback) : undefined;
+          let payload: unknown;
+          if (hasCb && args.length > 1) {
+            payload = args[0];
+          } else if (hasCb) {
+            payload = {};
+          } else {
+            payload = args[0] ?? {};
+          }
+          const channelId =
+            typeof payload === 'object' && payload !== null && 'channelId' in payload
+              ? String((payload as Record<string, unknown>).channelId)
+              : undefined;
+          const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
+          return this.dispatch(event, ch, payload, socket, cb);
+        },
+      );
     }
 
     socket.on('disconnect', () => {

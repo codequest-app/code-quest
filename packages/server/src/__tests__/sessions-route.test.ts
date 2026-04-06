@@ -14,7 +14,7 @@ const sessionDefaults: Omit<SessionRecord, 'id'> = {
 };
 
 function mockSession(overrides: { id: string; title?: string }): SessionRecord {
-  return { ...sessionDefaults, ...overrides };
+  return { ...sessionDefaults, ...overrides } as SessionRecord;
 }
 
 function createMockStore(sessions: SessionRecord[] = []): SessionStore {

@@ -36,9 +36,11 @@ export function WorkspaceLayout() {
             <ChannelProvider
               channelId={id}
               cwd={tabs[id]?.cwd}
-              onTitleChange={(title) => setTabTitle(id, title)}
-              onStatusChange={(status) => setTabStatus(id, status)}
-              onWorktree={(info) => createNewTab(undefined, { cwd: info.path })}
+              onChange={(update) => {
+                if (update.title) setTabTitle(id, update.title);
+                if (update.status) setTabStatus(id, update.status);
+              }}
+              onNewChannel={(cwd) => createNewTab({ cwd })}
             >
               <ChatPanel title={tabs[id]?.title} />
             </ChannelProvider>

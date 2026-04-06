@@ -1,11 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
-import { ChannelProvider } from '../contexts/channel';
-import { PluginProvider } from '../contexts/PluginContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
+import { withStoryChannel } from '../test/story-decorator';
 import { ErrorFallback } from './ErrorFallback';
 
 const meta = {
@@ -13,24 +8,7 @@ const meta = {
   tags: ['autodocs'],
   args: { resetErrorBoundary: fn() },
   decorators: [
-    (Story) => {
-      const socket = createSocket();
-      return (
-        <SocketProvider socket={socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <TabProvider>
-                <ChannelProvider channelId="story">
-                  <div className="h-[400px] bg-bg text-text flex items-center justify-center">
-                    <Story />
-                  </div>
-                </ChannelProvider>
-              </TabProvider>
-            </PluginProvider>
-          </SessionProvider>
-        </SocketProvider>
-      );
-    },
+    withStoryChannel({ className: 'h-[400px] bg-bg text-text flex items-center justify-center' }),
   ],
 } satisfies Meta<typeof ErrorFallback>;
 

@@ -1,68 +1,78 @@
-import type { WorktreeInfo } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useRef } from 'react';
-import type { ChannelInitialState } from '../../types/chat';
+import { sessionLaunchResponseSchema } from '@code-quest/shared';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { ChannelChangeUpdate } from '../../types/chat';
 import { GitProvider } from '../GitContext';
+import { useSocket } from '../SocketContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
 import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
-
-// ── Workspace folder context ──
-
-const CwdContext = createContext<string>('../');
-
-export function useCwd(): string {
-  return useContext(CwdContext);
-}
 
 // ── ChannelProvider (orchestrator) ──
 
 export function ChannelProvider({
   channelId,
   children,
-  initialState,
-  onTitleChange,
-  onStatusChange,
-  onWorktree,
-  cwd = '../',
+  onChange,
+  onNewChannel,
+  cwd,
 }: {
   channelId: string;
   children: ReactNode;
-  initialState?: ChannelInitialState;
-  onTitleChange?: (title: string) => void;
-  onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
-  onWorktree?: (info: WorktreeInfo) => void;
+  onChange?: (update: ChannelChangeUpdate) => void;
+  onNewChannel?: (cwd: string) => void;
   cwd?: string;
 }) {
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
+  const { socket } = useSocket();
 
+  const [launched, setLaunched] = useState(!cwd);
+  useEffect(() => {
+    if (!cwd) return;
+    let cancelled = false;
+    socket.emit('session:launch', { channelId, cwd }, (raw: unknown) => {
+      if (cancelled) return;
+      const parsed = sessionLaunchResponseSchema.safeParse(raw);
+      if (!parsed.success || parsed.data.error) {
+        setLaunched(true); // proceed despite failure — avoid infinite "Connecting…"
+        return;
+      }
+      setLaunched(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [channelId, cwd, socket]);
+
+  // ── Wait for launch to complete before rendering children ──
+  if (!launched) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-text-muted text-sm">
+        Connecting…
+      </div>
+    );
+  }
+
+  // ── Full provider tree ──
   return (
-    <CwdContext.Provider value={cwd}>
-      <ChannelMessagesProvider
+    <ChannelMessagesProvider
+      channelId={channelId}
+      onChange={onChange}
+      dequeueMessage={() => messageQueueRef.current.shift()}
+      messageQueueRef={messageQueueRef}
+      resetStreamingRefsRef={resetStreamingRefsRef}
+    >
+      <ChannelControlProvider
         channelId={channelId}
-        initialState={initialState}
-        onTitleChange={onTitleChange}
-        onStatusChange={onStatusChange}
-        dequeueMessage={() => messageQueueRef.current.shift()}
-        messageQueueRef={messageQueueRef}
-        resetStreamingRefsRef={resetStreamingRefsRef}
+        resetStreamingRefs={() => resetStreamingRefsRef.current()}
       >
-        <ChannelControlProvider
-          channelId={channelId}
-          resetStreamingRefs={() => resetStreamingRefsRef.current()}
-        >
-          <ChannelConfigProvider
-            channelId={channelId}
-            initialConfig={initialState}
-            onWorktree={onWorktree}
-          >
-            <ChannelComposeProvider channelId={channelId}>
-              <GitProvider>{children}</GitProvider>
-            </ChannelComposeProvider>
-          </ChannelConfigProvider>
-        </ChannelControlProvider>
-      </ChannelMessagesProvider>
-    </CwdContext.Provider>
+        <ChannelConfigProvider channelId={channelId} onNewChannel={onNewChannel}>
+          <ChannelComposeProvider channelId={channelId}>
+            <GitProvider>{children}</GitProvider>
+          </ChannelComposeProvider>
+        </ChannelConfigProvider>
+      </ChannelControlProvider>
+    </ChannelMessagesProvider>
   );
 }

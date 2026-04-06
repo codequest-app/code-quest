@@ -1,17 +1,12 @@
-import type { ContentBlock, ServerToClientEvents } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/shared';
 import type { RefObject } from 'react';
-import type { TypedSocket } from '../../../socket/client';
-import { channelEmit } from '../../../socket/rpc';
-import type { ChannelState } from '../../../types/chat';
-import { msg } from '../../../utils/message';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
+import type { TypedSocket } from '@/socket/client';
+import { channelEmit } from '@/socket/rpc';
+import type { ChannelState } from '@/types/chat';
+import { msg } from '@/utils/message';
+import { addMessage, type Payload } from './guard';
 
 // ── Helpers ──
-
-function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
-  return { ...state, messages: [...state.messages, msg(fields)] };
-}
 
 function applyUserContent(
   state: ChannelState,

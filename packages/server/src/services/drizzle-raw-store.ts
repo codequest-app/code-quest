@@ -2,17 +2,20 @@ import type { RawEntry } from '@code-quest/summoner';
 import type { Column } from 'drizzle-orm';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
+import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
 import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
-interface RawEntryRow {
-  sessionId: string;
-  promptId: string;
-  dir: string;
-  raw: string;
-  seq: number;
-  createdAt: string;
-}
+const rawEntryRowSchema = z.object({
+  sessionId: z.string(),
+  promptId: z.string(),
+  dir: z.string(),
+  raw: z.string(),
+  seq: z.number(),
+  createdAt: z.string(),
+});
+
+type RawEntryRow = z.infer<typeof rawEntryRowSchema>;
 
 interface RawEntriesTable {
   id: Column;
@@ -52,20 +55,24 @@ export class DrizzleRawStore implements RawEventStore {
 
   // Query last 10 'out' entries — not all are assistant (init, status, etc.), so we scan a few
   async getPreview(sessionId: string): Promise<SessionPreview> {
-    const lastOutRows = (await this.db
-      .select()
-      .from(this.table)
-      .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'out')))
-      .orderBy(desc(this.table.seq))
-      .limit(10)) as RawEntryRow[];
+    const lastOutRows = z.array(rawEntryRowSchema).parse(
+      await this.db
+        .select()
+        .from(this.table)
+        .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'out')))
+        .orderBy(desc(this.table.seq))
+        .limit(10),
+    );
 
     // First 'in' entry is the first user message
-    const firstInRows = (await this.db
-      .select()
-      .from(this.table)
-      .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
-      .orderBy(asc(this.table.seq))
-      .limit(5)) as RawEntryRow[];
+    const firstInRows = z.array(rawEntryRowSchema).parse(
+      await this.db
+        .select()
+        .from(this.table)
+        .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
+        .orderBy(asc(this.table.seq))
+        .limit(5),
+    );
 
     return {
       lastAssistant: findText(lastOutRows, 'assistant'),
@@ -80,13 +87,17 @@ export class DrizzleRawStore implements RawEventStore {
       .where(eq(this.table.sessionId, sessionId))
       .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
-    return (rows as RawEntryRow[]).map((row) => ({
-      timestamp: new Date(row.createdAt).getTime(),
-      sessionId: row.sessionId,
-      promptId: row.promptId,
-      direction: row.dir as 'in' | 'out' | 'err',
-      raw: row.raw,
-      seq: row.seq,
-    }));
+    const directionSchema = z.enum(['in', 'out', 'err']);
+    return z
+      .array(rawEntryRowSchema)
+      .parse(rows)
+      .map((row) => ({
+        timestamp: new Date(row.createdAt).getTime(),
+        sessionId: row.sessionId,
+        promptId: row.promptId,
+        direction: directionSchema.parse(row.dir),
+        raw: row.raw,
+        seq: row.seq,
+      }));
   }
 }

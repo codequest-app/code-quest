@@ -1,6 +1,7 @@
 import { and, type Column, count, desc, eq, isNotNull, ne } from 'drizzle-orm';
+import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
-import type { SessionRecord, SessionStore } from './session-store.ts';
+import { type SessionRecord, type SessionStore, sessionRecordSchema } from './session-store.ts';
 
 interface SessionsTable {
   id: Column;
@@ -43,23 +44,27 @@ export class DrizzleSessionStore implements SessionStore {
     if (opts?.hasParentId) conditions.push(isNotNull(this.sessions.parentId));
     const condition = conditions.length > 1 ? and(...conditions) : conditions[0];
 
-    const rows = (await this.db
-      .select()
-      .from(this.sessions)
-      .where(condition)
-      .orderBy(desc(this.sessions.createdAt))
-      .limit(limit)
-      .offset(offset)) as SessionRecord[];
+    const rows = z
+      .array(sessionRecordSchema)
+      .parse(
+        await this.db
+          .select()
+          .from(this.sessions)
+          .where(condition)
+          .orderBy(desc(this.sessions.createdAt))
+          .limit(limit)
+          .offset(offset),
+      );
 
     const totalRows = await this.db.select({ count: count() }).from(this.sessions).where(condition);
-    const totalResult = totalRows[0] as { count: number } | undefined;
+    const totalResult = z.object({ count: z.number() }).optional().parse(totalRows[0]);
 
     return { sessions: rows, total: totalResult?.count ?? 0 };
   }
 
   async getById(id: string): Promise<SessionRecord | null> {
     const rows = await this.db.select().from(this.sessions).where(eq(this.sessions.id, id));
-    return (rows[0] as SessionRecord) ?? null;
+    return sessionRecordSchema.optional().parse(rows[0]) ?? null;
   }
 
   async rename(id: string, title: string): Promise<boolean> {

@@ -24,20 +24,17 @@ describe('WorktreeBanner', () => {
     expect(screen.getByRole('button', { name: /open.*tab/i })).toBeInTheDocument();
   });
 
-  it('calls openWorktree from context when button clicked', async () => {
-    const onWorktree = vi.fn();
+  it('calls openNewChannel with cwd when button clicked', async () => {
+    const onNewChannel = vi.fn();
     const user = userEvent.setup();
     await renderWithChannel(
       <WorktreeBanner
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
       />,
-      { onWorktree },
+      { onNewChannel },
     );
     await user.click(screen.getByRole('button', { name: /open.*tab/i }));
-    expect(onWorktree).toHaveBeenCalledWith({
-      name: 'my-feature',
-      path: '/repo/.claude/worktrees/my-feature',
-    });
+    expect(onNewChannel).toHaveBeenCalledWith('/repo/.claude/worktrees/my-feature');
   });
 
   it('shows "This session is in worktree" text', async () => {

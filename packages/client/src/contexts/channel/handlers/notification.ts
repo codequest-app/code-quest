@@ -1,13 +1,11 @@
-import type { ServerToClientEvents } from '@code-quest/shared';
 import { toast } from 'sonner';
-import { showNotificationToast } from '../../../components/NotificationToast';
-import type { TypedSocket } from '../../../socket/client';
-import { channelEmit } from '../../../socket/rpc';
-import type { ChannelState } from '../../../types/chat';
-import { msg } from '../../../utils/message';
-import { openUrl } from '../../../utils/open-url';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
+import { showNotificationToast } from '@/components/NotificationToast';
+import type { TypedSocket } from '@/socket/client';
+import { channelEmit } from '@/socket/rpc';
+import type { ChannelState } from '@/types/chat';
+import { msg } from '@/utils/message';
+import { openUrl } from '@/utils/open-url';
+import type { Payload } from './guard';
 
 // ── On handlers (state part) ──
 
@@ -19,49 +17,50 @@ function onNotificationShow(state: ChannelState, p: Payload<'notification:show'>
 }
 
 function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState {
-  if (p.rawType === 'tool_use') {
-    return {
-      ...state,
-      messages: [
-        ...state.messages,
-        msg({
-          role: 'assistant',
-          type: 'tool_use',
-          content: typeof p.data.name === 'string' ? p.data.name : '',
-          meta: { toolId: p.data.id, input: p.data.input },
-        }),
-      ],
-    };
+  switch (p.rawType) {
+    case 'tool_use':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          msg({
+            role: 'assistant',
+            type: 'tool_use',
+            content: typeof p.data.name === 'string' ? p.data.name : '',
+            meta: { toolId: p.data.id, input: p.data.input },
+          }),
+        ],
+      };
+    case 'unknown_delta':
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          msg({
+            role: 'system',
+            type: 'unknown_delta',
+            content: `Unknown delta: ${p.data.deltaType}`,
+            meta: { deltaType: p.data.deltaType, data: p.data },
+          }),
+        ],
+      };
+    case 'new_session_notification':
+    case 'control_request/open_in_editor':
+      return state;
+    default:
+      return {
+        ...state,
+        messages: [
+          ...state.messages,
+          msg({
+            role: 'system',
+            type: 'raw_event',
+            content: `Raw: ${p.rawType}`,
+            meta: { rawType: p.rawType, data: p.data },
+          }),
+        ],
+      };
   }
-  if (p.rawType === 'unknown_delta') {
-    return {
-      ...state,
-      messages: [
-        ...state.messages,
-        msg({
-          role: 'system',
-          type: 'unknown_delta',
-          content: `Unknown delta: ${p.data.deltaType}`,
-          meta: { deltaType: p.data.deltaType, data: p.data },
-        }),
-      ],
-    };
-  }
-  if (p.rawType === 'new_session_notification' || p.rawType === 'control_request/open_in_editor') {
-    return state;
-  }
-  return {
-    ...state,
-    messages: [
-      ...state.messages,
-      msg({
-        role: 'system',
-        type: 'raw_event',
-        content: `Raw: ${p.rawType}`,
-        meta: { rawType: p.rawType, data: p.data },
-      }),
-    ],
-  };
 }
 
 export const notificationHandlerOn = {

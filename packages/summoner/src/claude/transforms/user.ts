@@ -1,10 +1,13 @@
 import type { ContentBlock } from '@code-quest/shared';
+import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
-import type { ProtocolMessage } from '../schemas.ts';
+import type { userSchema } from '../schemas.ts';
 
-export function transformUser(raw: ProtocolMessage): ClientMessage | null {
-  const parentToolUseId = (raw.parent_tool_use_id as string) ?? undefined;
-  const message = raw.message as Record<string, unknown> | undefined;
+type UserMessage = z.infer<typeof userSchema>;
+
+export function transformUser(raw: UserMessage): ClientMessage | null {
+  const parentToolUseId = raw.parent_tool_use_id ?? undefined;
+  const message = raw.message;
   const content = message?.content;
   if (!Array.isArray(content)) return null;
 

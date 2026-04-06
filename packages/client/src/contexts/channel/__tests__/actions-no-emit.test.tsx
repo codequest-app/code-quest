@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { useChannelMessages } from '../../channel';
 
 function ActionsTestUI() {

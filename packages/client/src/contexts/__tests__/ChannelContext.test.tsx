@@ -1,50 +1,72 @@
-import { segments as s } from '@code-quest/summoner/test';
-import { act, renderHook } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { renderHook, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeClaude } from '../../test/fake-claude';
-import { ChannelProvider, useChannelMessages, useCwd } from '../channel';
-import { PluginProvider } from '../PluginContext';
-import { SessionProvider } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
-import { TabProvider } from '../TabContext';
+import { renderWithChannel } from '../../test/render-with-channel';
+import { renderWithWorkspace } from '../../test/render-with-workspace';
+import { useChannelMessages } from '../channel';
 
-function wrapper(channelId: string, claude = createFakeClaude(), cwd = '/test/workspace') {
-  return ({ children }: { children: ReactNode }) => (
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId} cwd={cwd}>
-              {children}
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>
+/** Test harness that exposes useChannelMessages values to the DOM */
+function ChannelTestHarness() {
+  const ctx = useChannelMessages();
+  return (
+    <div>
+      <span data-testid="channelId">{ctx.channelId}</span>
+      <span data-testid="isCancelling">{String(ctx.isCancelling)}</span>
+      <span data-testid="modifiedFiles">{JSON.stringify(ctx.modifiedFiles)}</span>
+      <span data-testid="planComments">{JSON.stringify(ctx.planComments)}</span>
+      <button type="button" data-testid="abort" onClick={ctx.abort}>
+        abort
+      </button>
+      <button type="button" data-testid="clearModifiedFiles" onClick={ctx.clearModifiedFiles}>
+        clearModifiedFiles
+      </button>
+      <button
+        type="button"
+        data-testid="removeModifiedFile"
+        onClick={() => ctx.removeModifiedFile('nonexistent.ts')}
+      >
+        removeModifiedFile
+      </button>
+      <button
+        type="button"
+        data-testid="addPlanComment"
+        onClick={() =>
+          ctx.addPlanComment({
+            id: 'c1',
+            selectedText: 'foo',
+            sectionHeading: 'Plan',
+            comment: 'bar',
+          })
+        }
+      >
+        addPlanComment
+      </button>
+      <button type="button" data-testid="clearPlanComments" onClick={ctx.clearPlanComments}>
+        clearPlanComments
+      </button>
+    </div>
   );
+}
+
+async function setup() {
+  const user = userEvent.setup();
+  const ctx = await renderWithChannel(<ChannelTestHarness />);
+  return { ...ctx, user };
 }
 
 describe('ChannelContext', () => {
   it('provides channelId via useChannelMessages', async () => {
-    const claude = createFakeClaude();
-    const channelId = await claude.initialize(s.init('sess-1'));
-    const { result } = renderHook(() => useChannelMessages(), {
-      wrapper: wrapper(channelId, claude),
-    });
-    expect(result.current.channelId).toBe(channelId);
+    const { channelId } = await setup();
+    expect(screen.getByTestId('channelId')).toHaveTextContent(channelId);
   });
 
   it('abort changes status to cancelling', async () => {
-    const claude = createFakeClaude();
-    const channelId = await claude.initialize(s.init('sess-1'));
-    const { result } = renderHook(() => useChannelMessages(), {
-      wrapper: wrapper(channelId, claude),
-    });
-
-    expect(result.current.isCancelling).toBe(false);
-    act(() => result.current.abort());
-    expect(result.current.isCancelling).toBe(true);
+    const { user } = await setup();
+    expect(screen.getByTestId('isCancelling')).toHaveTextContent('false');
+    await user.click(screen.getByTestId('abort'));
+    expect(screen.getByTestId('isCancelling')).toHaveTextContent('true');
   });
 
   it('throws when useChannelMessages is called outside provider', () => {
@@ -55,121 +77,137 @@ describe('ChannelContext', () => {
 
   describe('semantic state APIs', () => {
     it('clearModifiedFiles resets modifiedFiles to empty', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
-      act(() => result.current.clearModifiedFiles());
-      expect(result.current.modifiedFiles).toEqual({});
+      const { user } = await setup();
+      await user.click(screen.getByTestId('clearModifiedFiles'));
+      expect(screen.getByTestId('modifiedFiles')).toHaveTextContent('{}');
     });
 
     it('removeModifiedFile removes a single file', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
-      act(() => result.current.clearModifiedFiles());
-      act(() => result.current.removeModifiedFile('nonexistent.ts'));
-      expect(result.current.modifiedFiles).toEqual({});
+      const { user } = await setup();
+      await user.click(screen.getByTestId('clearModifiedFiles'));
+      await user.click(screen.getByTestId('removeModifiedFile'));
+      expect(screen.getByTestId('modifiedFiles')).toHaveTextContent('{}');
     });
 
     it('addPlanComment adds a comment', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
+      const { user } = await setup();
       const comment = { id: 'c1', selectedText: 'foo', sectionHeading: 'Plan', comment: 'bar' };
-      act(() => result.current.addPlanComment(comment));
-      expect(result.current.planComments).toEqual([comment]);
+      await user.click(screen.getByTestId('addPlanComment'));
+      expect(screen.getByTestId('planComments')).toHaveTextContent(JSON.stringify([comment]));
     });
 
     it('clearPlanComments resets to empty', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
-      act(() =>
-        result.current.addPlanComment({
-          id: 'c1',
-          selectedText: 'foo',
-          sectionHeading: 'Plan',
-          comment: 'bar',
-        }),
-      );
-      act(() => result.current.clearPlanComments());
-      expect(result.current.planComments).toEqual([]);
+      const { user } = await setup();
+      await user.click(screen.getByTestId('addPlanComment'));
+      await user.click(screen.getByTestId('clearPlanComments'));
+      expect(screen.getByTestId('planComments')).toHaveTextContent('[]');
     });
   });
 
   describe('action reference stability', () => {
-    it('addPlanComment keeps the same reference after state change', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
-      const ref1 = result.current.addPlanComment;
-      act(() =>
-        result.current.addPlanComment({
-          id: 'c1',
-          selectedText: 'x',
-          sectionHeading: '',
-          comment: 'y',
-        }),
+    function RefStabilityHarness({ actionName }: { actionName: 'addPlanComment' | 'abort' }) {
+      const ctx = useChannelMessages();
+      const action = ctx[actionName];
+      const initialRef = useRef(action);
+      const stable = action === initialRef.current;
+      return (
+        <div>
+          <span data-testid="stable">{String(stable)}</span>
+          <button
+            type="button"
+            data-testid="trigger"
+            onClick={() =>
+              ctx.addPlanComment({ id: 'c1', selectedText: 'x', sectionHeading: '', comment: 'y' })
+            }
+          >
+            trigger
+          </button>
+        </div>
       );
-      expect(result.current.addPlanComment).toBe(ref1);
+    }
+
+    it('addPlanComment keeps the same reference after state change', async () => {
+      const user = userEvent.setup();
+      await renderWithChannel(<RefStabilityHarness actionName="addPlanComment" />);
+      expect(screen.getByTestId('stable')).toHaveTextContent('true');
+      await user.click(screen.getByTestId('trigger'));
+      expect(screen.getByTestId('stable')).toHaveTextContent('true');
     });
 
     it('abort keeps the same reference after state change', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useChannelMessages(), {
-        wrapper: wrapper(channelId, claude),
-      });
-      const ref1 = result.current.abort;
-      act(() =>
-        result.current.addPlanComment({
-          id: 'c1',
-          selectedText: 'x',
-          sectionHeading: '',
-          comment: 'y',
-        }),
-      );
-      expect(result.current.abort).toBe(ref1);
+      const user = userEvent.setup();
+      await renderWithChannel(<RefStabilityHarness actionName="abort" />);
+      expect(screen.getByTestId('stable')).toHaveTextContent('true');
+      await user.click(screen.getByTestId('trigger'));
+      expect(screen.getByTestId('stable')).toHaveTextContent('true');
     });
   });
 
-  describe('cwd', () => {
-    it('provides cwd via useCwd', async () => {
-      const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useCwd(), {
-        wrapper: wrapper(channelId, claude, '/my/project'),
-      });
-      expect(result.current).toBe('/my/project');
+  describe('launch mode', () => {
+    it('launch creates session and renders channel content', async () => {
+      const { channelId } = await renderWithWorkspace();
+
+      // Session created on server (channelId returned)
+      expect(channelId).toBeTruthy();
+
+      // Channel content rendered
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
-    it('defaults to ../ when not specified', async () => {
+    it('launch failure does not freeze on Connecting screen', async () => {
       const claude = createFakeClaude();
-      const channelId = await claude.initialize(s.init('sess-1'));
-      const { result } = renderHook(() => useCwd(), {
-        wrapper: ({ children }: { children: ReactNode }) => (
-          <SocketProvider socket={claude.socket}>
-            <SessionProvider>
-              <PluginProvider>
-                <TabProvider>
-                  <ChannelProvider channelId={channelId}>{children}</ChannelProvider>
-                </TabProvider>
-              </PluginProvider>
-            </SessionProvider>
-          </SocketProvider>
-        ),
+      // Prepare an error response for session:launch
+      claude.prepareInit();
+      const origEmit = claude.socket.emit.bind(claude.socket);
+      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+        if (event === 'session:launch') {
+          const cb = args[args.length - 1];
+          if (typeof cb === 'function') cb({ error: 'CLI not found' });
+          return claude.socket;
+        }
+        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
+      }) as typeof claude.socket.emit;
+
+      await renderWithChannel(<span data-testid="content">loaded</span>, {
+        claude,
+        cwd: '/bad/path',
+        skipInit: true,
       });
-      expect(result.current).toBe('../');
+
+      // Should not stay on "Connecting…" forever — should render children
+      expect(await screen.findByTestId('content', {}, { timeout: 3000 })).toBeInTheDocument();
+    });
+
+    it('join failure still allows session:states processing', async () => {
+      const claude = createFakeClaude();
+      claude.prepareInit();
+      const channelId = crypto.randomUUID();
+
+      // Mock session:join to return error
+      const origEmit = claude.socket.emit.bind(claude.socket);
+      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+        if (event === 'session:join') {
+          const cb = args[args.length - 1];
+          if (typeof cb === 'function') cb({ error: 'Session not found' });
+          return claude.socket;
+        }
+        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
+      }) as typeof claude.socket.emit;
+
+      function StatusHarness() {
+        const { isProcessing } = useChannelMessages();
+        return <span data-testid="processing">{String(isProcessing)}</span>;
+      }
+
+      await renderWithChannel(<StatusHarness />, { claude, channelId, skipInit: true });
+
+      // Push session:states busy — should not be blocked by joinedRef
+      await claude.pushServerEvent('session:states', {
+        sessions: [{ channelId, state: 'busy' }],
+      });
+
+      // If join failure blocks onSessionStates, processing stays false
+      expect(screen.getByTestId('processing')).toHaveTextContent('true');
     });
   });
 });

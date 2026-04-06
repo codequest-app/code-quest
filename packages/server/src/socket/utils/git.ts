@@ -11,15 +11,17 @@ export async function checkoutWithFallback(git: SimpleGit, branch: string): Prom
   try {
     await git.checkout(branch);
     return;
-  } catch {
+  } catch (err) {
     // strategy 1 failed
+    logger.debug(err, 'Checkout strategy 1 failed (direct checkout)');
   }
   try {
     await git.fetch('origin');
     await git.checkout(branch);
     return;
-  } catch {
+  } catch (err) {
     // strategy 2 failed
+    logger.debug(err, 'Checkout strategy 2 failed (fetch + checkout)');
   }
   await git.checkout(['-t', `origin/${branch}`]);
 }

@@ -1,37 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { ChannelProvider } from '../contexts/channel';
-import { PluginProvider } from '../contexts/PluginContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
-import type { Message, SessionStatus } from '../types/ui';
+import { withStoryChannel } from '../test/story-decorator';
+import type { Message } from '../types/ui';
 import { MessageList } from './MessageList';
-
-function withMessages(msgs: Message[], status = 'idle' as string) {
-  return (Story: () => React.ReactNode) => {
-    const socket = createSocket();
-    return (
-      <SocketProvider socket={socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <TabProvider>
-              <ChannelProvider
-                channelId="story"
-                initialState={{ messages: msgs, status: status as SessionStatus }}
-              >
-                <div className="h-[500px] bg-bg text-text">
-                  <Story />
-                </div>
-              </ChannelProvider>
-            </TabProvider>
-          </PluginProvider>
-        </SessionProvider>
-      </SocketProvider>
-    );
-  };
-}
 
 const conversation: Message[] = [
   { id: '1', role: 'user', type: 'text', content: 'How do I list files?', timestamp: 1 },
@@ -85,16 +56,32 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = { decorators: [withMessages([])] };
+export const Empty: Story = {
+  decorators: [
+    withStoryChannel({ messages: { messages: [] }, className: 'h-[500px] bg-bg text-text' }),
+  ],
+};
 
-export const Conversation: Story = { decorators: [withMessages(conversation)] };
+export const Conversation: Story = {
+  decorators: [
+    withStoryChannel({
+      messages: { messages: conversation },
+      className: 'h-[500px] bg-bg text-text',
+    }),
+  ],
+};
 
 export const WithError: Story = {
   decorators: [
-    withMessages([
-      ...conversation,
-      { id: '8', role: 'system', type: 'error', content: 'Connection lost', timestamp: 8 },
-    ]),
+    withStoryChannel({
+      messages: {
+        messages: [
+          ...conversation,
+          { id: '8', role: 'system', type: 'error', content: 'Connection lost', timestamp: 8 },
+        ],
+      },
+      className: 'h-[500px] bg-bg text-text',
+    }),
   ],
 };
 
@@ -119,7 +106,12 @@ const withSubagent: Message[] = [
 ];
 
 export const WithSubagent: Story = {
-  decorators: [withMessages(withSubagent)],
+  decorators: [
+    withStoryChannel({
+      messages: { messages: withSubagent },
+      className: 'h-[500px] bg-bg text-text',
+    }),
+  ],
   play: async ({ canvas, userEvent }) => {
     const toggle = canvas.getByText(/subagent message/i);
     await expect(toggle).toBeInTheDocument();

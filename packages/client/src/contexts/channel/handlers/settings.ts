@@ -3,18 +3,15 @@ import {
   type McpAuthResult,
   type ModelInfo,
   modelInfoSchema,
-  type ServerToClientEvents,
   type UsageQuota,
   worktreeInfoSchema,
 } from '@code-quest/shared';
 import { toast } from 'sonner';
-import type { TypedSocket } from '../../../socket/client';
-import { channelEmit, rpc } from '../../../socket/rpc';
-import { findModel } from '../../../utils/model-utils';
-
+import type { TypedSocket } from '@/socket/client';
+import { channelEmit, rpc } from '@/socket/rpc';
+import { findModel } from '@/utils/model-utils';
 import type { ConfigState } from '../ChannelConfigContext';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
+import type { Payload } from './guard';
 
 function toEffort(value: string | undefined): ConfigState['effort'] {
   if (value === 'low' || value === 'medium' || value === 'high' || value === 'max') return value;
@@ -166,9 +163,9 @@ interface ConfigActionsDeps {
   channelId: string;
 }
 
-export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
+export function createConfigActions(deps: ConfigActionsDeps) {
   const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-    channelEmit(socket, channelId, event, payload, ...rest);
+    channelEmit(deps.socket, deps.channelId, event, payload, ...rest);
 
   function setModel(model: string) {
     emit('settings:set_model', { model }, (res: { success: boolean; error?: string }) => {
@@ -189,35 +186,38 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
   }
 
   function setEffort(effort: string): Promise<{ success: boolean; error?: string }> {
-    return rpc(socket, 'settings:apply', { channelId, settings: { effortLevel: effort } });
+    return rpc(deps.socket, 'settings:apply', {
+      channelId: deps.channelId,
+      settings: { effortLevel: effort },
+    });
   }
 
   function mcpStatus(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:servers', { channelId });
+    return rpc(deps.socket, 'mcp:servers', { channelId: deps.channelId });
   }
 
   function mcpToggle(serverName: string, enabled: boolean): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:toggle', { channelId, serverName, enabled });
+    return rpc(deps.socket, 'mcp:toggle', { channelId: deps.channelId, serverName, enabled });
   }
 
   function mcpReconnect(serverName: string): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:reconnect', { channelId, serverName });
+    return rpc(deps.socket, 'mcp:reconnect', { channelId: deps.channelId, serverName });
   }
 
   function mcpSetServers(servers: Record<string, unknown>): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:set_servers', { channelId, servers });
+    return rpc(deps.socket, 'mcp:set_servers', { channelId: deps.channelId, servers });
   }
 
   function mcpMessage(
     serverName: string,
     message: Record<string, unknown>,
   ): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:message', { channelId, serverName, message });
+    return rpc(deps.socket, 'mcp:message', { channelId: deps.channelId, serverName, message });
   }
 
   async function mcpListTools(serverName: string): Promise<unknown[]> {
-    const result = await rpc(socket, 'mcp:message', {
-      channelId,
+    const result = await rpc(deps.socket, 'mcp:message', {
+      channelId: deps.channelId,
       serverName,
       message: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: Date.now() },
     });
@@ -234,42 +234,46 @@ export function createConfigActions({ socket, channelId }: ConfigActionsDeps) {
   }
 
   function mcpAuthenticate(serverName: string): Promise<McpAuthResult> {
-    return rpc(socket, 'mcp:authenticate', { channelId, serverName });
+    return rpc(deps.socket, 'mcp:authenticate', { channelId: deps.channelId, serverName });
   }
 
   function mcpOAuthCallback(
     serverName: string,
     callbackUrl: string,
   ): Promise<{ success: boolean; error?: string }> {
-    return rpc(socket, 'mcp:oauth_callback', { channelId, serverName, callbackUrl });
+    return rpc(deps.socket, 'mcp:oauth_callback', {
+      channelId: deps.channelId,
+      serverName,
+      callbackUrl,
+    });
   }
 
   function mcpClearAuth(serverName: string): Promise<{ success: boolean; error?: string }> {
-    return rpc(socket, 'mcp:clear_auth', { channelId, serverName });
+    return rpc(deps.socket, 'mcp:clear_auth', { channelId: deps.channelId, serverName });
   }
 
   function ensureChromeMcpEnabled(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:ensure_chrome', { channelId });
+    return rpc(deps.socket, 'mcp:ensure_chrome', { channelId: deps.channelId });
   }
 
   function disableChromeMcp(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:disable_chrome', { channelId });
+    return rpc(deps.socket, 'mcp:disable_chrome', { channelId: deps.channelId });
   }
 
   function enableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:enable_jupyter', { channelId });
+    return rpc(deps.socket, 'mcp:enable_jupyter', { channelId: deps.channelId });
   }
 
   function disableJupyterMcp(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:disable_jupyter', { channelId });
+    return rpc(deps.socket, 'mcp:disable_jupyter', { channelId: deps.channelId });
   }
 
   function askDebuggerHelp(): Promise<ControlResponse> {
-    return rpc(socket, 'mcp:ask_debugger', { channelId });
+    return rpc(deps.socket, 'mcp:ask_debugger', { channelId: deps.channelId });
   }
 
   function requestUsageUpdate(): void {
-    socket.emit('settings:refresh_usage', { channelId });
+    deps.socket.emit('settings:refresh_usage', { channelId: deps.channelId });
   }
 
   return {

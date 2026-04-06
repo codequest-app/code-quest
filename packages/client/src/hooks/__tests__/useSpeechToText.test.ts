@@ -114,6 +114,7 @@ describe('useSpeechToText', () => {
   });
 
   it('stops on error', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     let instance: MockSpeechRecognition;
     win.SpeechRecognition = class extends MockSpeechRecognition {
       constructor() {
@@ -133,5 +134,6 @@ describe('useSpeechToText', () => {
     });
 
     expect(result.current.isListening).toBe(false);
+    consoleSpy.mockRestore();
   });
 });

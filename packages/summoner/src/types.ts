@@ -1,18 +1,21 @@
 import type { SpawnOptions } from 'node:child_process';
 import type { ClientMessage, ProviderClientConfig } from '@code-quest/shared';
+import { z } from 'zod';
 
 export type { ClientMessage };
 
 // --- Raw entry for recording ---
 
-export interface RawEntry {
-  timestamp: number;
-  sessionId: string;
-  promptId: string;
-  direction: 'in' | 'out' | 'err';
-  raw: string;
-  seq: number;
-}
+export const rawEntrySchema = z.object({
+  timestamp: z.number(),
+  sessionId: z.string(),
+  promptId: z.string(),
+  direction: z.enum(['in', 'out', 'err']),
+  raw: z.string(),
+  seq: z.number(),
+});
+
+export type RawEntry = z.infer<typeof rawEntrySchema>;
 
 // --- Control response ---
 

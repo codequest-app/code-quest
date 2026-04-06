@@ -1,9 +1,12 @@
-import type { McpServerInfo } from '@code-quest/shared';
+import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
 import { contextUsageDataSchema } from '@code-quest/shared';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import type { ChannelConfigValue } from '../contexts/channel/ChannelConfigContext';
+import type { ChannelMessagesValue } from '../contexts/channel/ChannelMessagesContext';
 import { useSession } from '../contexts/SessionContext';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { openUrl } from '../utils/open-url';
 import { AddButton } from './AddButton';
@@ -12,6 +15,8 @@ import { ContextPieChart } from './ContextPieChart';
 import { PermissionModePicker } from './PermissionModePicker';
 import { RewindDialog } from './RewindDialog';
 import { SpeechInputButton } from './SpeechInputButton';
+
+const DEFAULT_CONTEXT_WINDOW = 200_000;
 
 const AccountUsageDialog = lazy(() =>
   import('./AccountUsageDialog').then((m) => ({ default: m.AccountUsageDialog })),
@@ -40,123 +45,69 @@ const MCP_STATUSES = new Set([
   'connecting',
 ]);
 
+function isMcpStatus(status: string): status is McpServerInfo['status'] {
+  return MCP_STATUSES.has(status);
+}
+
 const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): McpServerInfo => ({
   name: s.name,
   enabled: true,
-  status: MCP_STATUSES.has(s.status) ? (s.status as McpServerInfo['status']) : 'disconnected',
+  status: isMcpStatus(s.status) ? s.status : 'disconnected',
   scope: s.scope,
 });
 
-export interface ComposeToolbarProps {
-  onResumeConversation?: () => void;
-  onAttachFile?: () => void;
+type ActiveDialog =
+  | 'modelPicker'
+  | 'manageMcp'
+  | 'mcpStatus'
+  | 'initOptions'
+  | 'usage'
+  | 'plugins'
+  | 'auth'
+  | 'rewind'
+  | null;
+
+interface ToolbarDialogsProps {
+  activeDialog: ActiveDialog;
+  closeDialog: () => void;
+  mcpServers: McpServerInfo[];
+  mcpToggle: ChannelConfigValue['mcpToggle'];
+  mcpReconnect: ChannelConfigValue['mcpReconnect'];
+  mcpRefresh: () => Promise<void>;
+  mcpAuthenticate: ChannelConfigValue['mcpAuthenticate'];
+  mcpClearAuth: ChannelConfigValue['mcpClearAuth'];
+  initOptions: Record<string, unknown>;
+  setInitOptions: (opts: Record<string, unknown>) => void;
+  usageQuota: ChannelConfigValue['usageQuota'];
+  contextUsage: ChannelConfigValue['contextUsage'];
+  stats: ChannelMessagesValue['stats'];
+  accountInfo: ChannelConfigValue['accountInfo'];
+  providerConfig: ProviderClientConfig | undefined;
+  rewindToMessage: ChannelMessagesValue['rewindToMessage'];
+  forkSession: ChannelMessagesValue['forkSession'];
+  updateValue: (value: string) => void;
 }
 
-export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeToolbarProps) {
-  const {
-    isProcessing,
-    isCancelling,
-    stats,
-    isContextCompressed,
-    abort,
-    rewindToMessage,
-    forkSession,
-  } = useChannelMessages();
-  const {
-    accountInfo,
-    usageQuota,
-    contextUsage,
-    requestUsageUpdate,
-    permissionMode,
-    model,
-    availableModels,
-    effort,
-    mcpServers: channelMcpServers,
-    mcpStatus,
-    mcpToggle,
-    mcpReconnect,
-    mcpAuthenticate,
-    mcpClearAuth,
-    setModel,
-    setPermissionMode,
-    setEffort,
-    providerConfig,
-  } = useChannelConfig();
-  const { initOptions, setInitOptions } = useSession();
-  const compose = useChannelCompose();
-
-  // MCP server refresh logic (inlined from ConnectedManageMcpDialog)
-  const mcpStatusRef = useRef(mcpStatus);
-  useLayoutEffect(() => {
-    mcpStatusRef.current = mcpStatus;
-  });
-  const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
-  const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
-  const mcpRefresh = async () => {
-    const result = await mcpStatusRef.current();
-    const servers = result.success ? result.response?.mcpServers : undefined;
-    if (Array.isArray(servers)) {
-      setEnrichedMcpServers(servers.map(toMcpServerInfo));
-    } else {
-      setEnrichedMcpServers(null);
-    }
-  };
-  const mcpServers = enrichedMcpServers ?? baseMcpServers;
-
-  type ActiveDialog =
-    | 'modelPicker'
-    | 'manageMcp'
-    | 'mcpStatus'
-    | 'initOptions'
-    | 'usage'
-    | 'plugins'
-    | 'auth'
-    | 'rewind'
-    | null;
-  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
-  const closeDialog = () => setActiveDialog(null);
-
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const {
-    isListening,
-    interimTranscript,
-    finalTranscript,
-    resetTranscript,
-    toggleListening,
-    isSupported,
-  } = useSpeechToText();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resetTranscript/insertSlashCommand stable via React Compiler
-  useEffect(() => {
-    if (!finalTranscript) return;
-    compose.insertSlashCommand(finalTranscript);
-    resetTranscript();
-  }, [finalTranscript]);
-
-  // Auto-refresh MCP status when dialog opens
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
-  useEffect(() => {
-    if (activeDialog === 'mcpStatus' && !enrichedMcpServers) {
-      mcpRefresh();
-    }
-  }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
-
-  useEffect(() => {
-    if (activeDialog !== 'modelPicker') return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (!pickerRef.current?.contains(e.target as Node)) setActiveDialog(null);
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [activeDialog]);
-
-  const contextPct =
-    contextUsageDataSchema.safeParse(contextUsage).data?.percentage ??
-    (stats?.inputTokens != null && stats.inputTokens > 0
-      ? Math.min(Math.round((stats.inputTokens / (stats.contextWindow ?? 200000)) * 100), 100)
-      : null);
-  const showContextUsage = isContextCompressed || contextPct !== null;
-
+function ToolbarDialogs({
+  activeDialog,
+  closeDialog,
+  mcpServers,
+  mcpToggle,
+  mcpReconnect,
+  mcpRefresh,
+  mcpAuthenticate,
+  mcpClearAuth,
+  initOptions,
+  setInitOptions,
+  usageQuota,
+  contextUsage,
+  stats,
+  accountInfo,
+  providerConfig,
+  rewindToMessage,
+  forkSession,
+  updateValue,
+}: ToolbarDialogsProps) {
   return (
     <>
       {activeDialog === 'manageMcp' && (
@@ -231,7 +182,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
               .then((result) => {
                 if (result.canRewind) {
                   forkSession(messageId).catch(() => toast.error('Failed to fork session'));
-                  compose.updateValue(promptText);
+                  updateValue(promptText);
                 } else {
                   toast.error(result.error ?? 'Failed to rewind');
                 }
@@ -242,6 +193,128 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           }}
         />
       )}
+    </>
+  );
+}
+
+export interface ComposeToolbarProps {
+  onResumeConversation?: () => void;
+  onAttachFile?: () => void;
+}
+
+export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeToolbarProps) {
+  const {
+    isProcessing,
+    isCancelling,
+    stats,
+    isContextCompressed,
+    abort,
+    rewindToMessage,
+    forkSession,
+  } = useChannelMessages();
+  const {
+    accountInfo,
+    usageQuota,
+    contextUsage,
+    requestUsageUpdate,
+    permissionMode,
+    model,
+    availableModels,
+    effort,
+    mcpServers: channelMcpServers,
+    mcpStatus,
+    mcpToggle,
+    mcpReconnect,
+    mcpAuthenticate,
+    mcpClearAuth,
+    setModel,
+    setPermissionMode,
+    setEffort,
+    providerConfig,
+  } = useChannelConfig();
+  const { initOptions, setInitOptions } = useSession();
+  const compose = useChannelCompose();
+
+  // MCP server refresh logic (inlined from ConnectedManageMcpDialog)
+  const mcpStatusRef = useRef(mcpStatus);
+  useLayoutEffect(() => {
+    mcpStatusRef.current = mcpStatus;
+  });
+  const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
+  const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
+  const mcpRefresh = async () => {
+    const result = await mcpStatusRef.current();
+    const servers = result.success ? result.response?.mcpServers : undefined;
+    if (Array.isArray(servers)) {
+      setEnrichedMcpServers(servers.map(toMcpServerInfo));
+    } else {
+      setEnrichedMcpServers(null);
+    }
+  };
+  const mcpServers = enrichedMcpServers ?? baseMcpServers;
+
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
+  const closeDialog = () => setActiveDialog(null);
+
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const {
+    isListening,
+    interimTranscript,
+    finalTranscript,
+    resetTranscript,
+    toggleListening,
+    isSupported,
+  } = useSpeechToText();
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetTranscript/insertSlashCommand stable via React Compiler
+  useEffect(() => {
+    if (!finalTranscript) return;
+    compose.insertSlashCommand(finalTranscript);
+    resetTranscript();
+  }, [finalTranscript]);
+
+  // Auto-refresh MCP status when dialog opens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
+  useEffect(() => {
+    if (activeDialog === 'mcpStatus' && !enrichedMcpServers) {
+      mcpRefresh();
+    }
+  }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
+
+  useClickOutside([pickerRef], () => setActiveDialog(null), activeDialog === 'modelPicker');
+
+  const contextPct =
+    contextUsageDataSchema.safeParse(contextUsage).data?.percentage ??
+    (stats?.inputTokens != null && stats.inputTokens > 0
+      ? Math.min(
+          Math.round((stats.inputTokens / (stats.contextWindow ?? DEFAULT_CONTEXT_WINDOW)) * 100),
+          100,
+        )
+      : null);
+  const showContextUsage = isContextCompressed || contextPct !== null;
+
+  return (
+    <>
+      <ToolbarDialogs
+        activeDialog={activeDialog}
+        closeDialog={closeDialog}
+        mcpServers={mcpServers}
+        mcpToggle={mcpToggle}
+        mcpReconnect={mcpReconnect}
+        mcpRefresh={mcpRefresh}
+        mcpAuthenticate={mcpAuthenticate}
+        mcpClearAuth={mcpClearAuth}
+        initOptions={initOptions}
+        setInitOptions={setInitOptions}
+        usageQuota={usageQuota}
+        contextUsage={contextUsage}
+        stats={stats}
+        accountInfo={accountInfo}
+        providerConfig={providerConfig}
+        rewindToMessage={rewindToMessage}
+        forkSession={forkSession}
+        updateValue={compose.updateValue}
+      />
       <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
           <Suspense fallback={null}>

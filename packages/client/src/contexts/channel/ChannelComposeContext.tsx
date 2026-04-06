@@ -1,14 +1,25 @@
 import {
   createContext,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
   useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { toBase64 } from '../../utils/file';
 import { getSlashQuery } from '../../utils/slash-query';
+
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 import { useSocket } from '../SocketContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { wireHandlers } from './handlers/guard';
@@ -65,6 +76,116 @@ interface ComposeState {
   attachedFiles: File[];
 }
 
+function createComposeActions(
+  stateRef: { current: ComposeState },
+  setState: Dispatch<SetStateAction<ComposeState>>,
+  sendMessage: (text: string) => void,
+  requestFocusRef: { current: ((pos?: number) => void) | null },
+) {
+  const get = () => stateRef.current;
+
+  const submit = () => {
+    const { value: v, attachedFiles: files } = get();
+    const trimmed = v.trim();
+    if (!trimmed) return;
+    if (files.length > 0) {
+      void Promise.all(
+        files.map(async (f) => {
+          const data = await toBase64(f);
+          return `[Attachment: ${f.name}]\n${data}`;
+        }),
+      ).then((parts) => {
+        sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
+        setState((prev) => ({ ...prev, attachedFiles: [] }));
+      });
+    } else {
+      sendMessage(trimmed);
+    }
+    setState((prev) => ({ ...prev, value: '', slashOpen: false }));
+  };
+
+  const clearSlashToken = () => {
+    const { value: v, cursorPos: pos } = get();
+    const token = getSlashQuery(v, pos);
+    if (token) {
+      const newValue = v.slice(0, token.start) + v.slice(token.end);
+      setState((prev) => ({
+        ...prev,
+        value: newValue.trimEnd() === '' ? '' : newValue,
+        slashOpen: false,
+      }));
+    } else {
+      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
+    }
+  };
+
+  const closeSlash = clearSlashToken;
+
+  const mentionFile = () => {
+    const { value: v, cursorPos: pos } = get();
+    setState((prev) => ({ ...prev, value: `${v.slice(0, pos)}@${v.slice(pos)}` }));
+    requestFocusRef.current?.(pos + 1);
+  };
+
+  const focusTextarea = () => requestFocusRef.current?.();
+
+  const updateValue = (newValue: string, newCursorPos?: number) => {
+    const pos = newCursorPos ?? newValue.length;
+    setState((prev) => ({
+      ...prev,
+      value: newValue,
+      cursorPos: pos,
+      slashOpen: getSlashQuery(newValue, pos) !== null,
+    }));
+  };
+
+  const setCursorPos = (pos: number) => {
+    setState((prev) => ({ ...prev, cursorPos: pos }));
+  };
+
+  const insertSlashCommand = (text: string) => {
+    const { value: v, cursorPos: pos } = get();
+    const token = getSlashQuery(v, pos);
+    let newValue: string;
+    let cursorAt: number;
+    if (token) {
+      newValue = v.slice(0, token.start) + text + v.slice(token.end);
+      cursorAt = token.start + text.length;
+    } else {
+      newValue = text;
+      cursorAt = text.length;
+    }
+    setState((prev) => ({ ...prev, value: newValue, slashOpen: false }));
+    requestFocusRef.current?.(cursorAt);
+  };
+
+  const executeSlashCommand = (cmd: string) => {
+    clearSlashToken();
+    sendMessage(cmd);
+  };
+
+  const addAttachments = (files: File[]) =>
+    setState((prev) => ({ ...prev, attachedFiles: [...prev.attachedFiles, ...files] }));
+  const removeAttachment = (index: number) =>
+    setState((prev) => ({
+      ...prev,
+      attachedFiles: prev.attachedFiles.filter((_, i) => i !== index),
+    }));
+
+  return {
+    submit,
+    closeSlash,
+    mentionFile,
+    focusTextarea,
+    updateValue,
+    setCursorPos,
+    insertSlashCommand,
+    executeSlashCommand,
+    addAttachments,
+    removeAttachment,
+  };
+}
+
 const initialComposeState: ComposeState = {
   value: '',
   cursorPos: 0,
@@ -107,110 +228,7 @@ export function ChannelComposeProvider({
     requestFocusRef.current = fn;
   };
 
-  const actionsBlock = (() => {
-    const get = () => stateRef.current;
-
-    const submit = () => {
-      const { value: v, attachedFiles: files } = get();
-      const trimmed = v.trim();
-      if (!trimmed) return;
-      if (files.length > 0) {
-        void Promise.all(
-          files.map(async (f) => {
-            const data = await toBase64(f);
-            return `[Attachment: ${f.name}]\n${data}`;
-          }),
-        ).then((parts) => {
-          sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
-          setState((prev) => ({ ...prev, attachedFiles: [] }));
-        });
-      } else {
-        sendMessage(trimmed);
-      }
-      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
-    };
-
-    const clearSlashToken = () => {
-      const { value: v, cursorPos: pos } = get();
-      const token = getSlashQuery(v, pos);
-      if (token) {
-        const newValue = v.slice(0, token.start) + v.slice(token.end);
-        setState((prev) => ({
-          ...prev,
-          value: newValue.trimEnd() === '' ? '' : newValue,
-          slashOpen: false,
-        }));
-      } else {
-        setState((prev) => ({ ...prev, value: '', slashOpen: false }));
-      }
-    };
-
-    const closeSlash = clearSlashToken;
-
-    const mentionFile = () => {
-      const { value: v, cursorPos: pos } = get();
-      setState((prev) => ({ ...prev, value: `${v.slice(0, pos)}@${v.slice(pos)}` }));
-      requestFocusRef.current?.(pos + 1);
-    };
-
-    const focusTextarea = () => requestFocusRef.current?.();
-
-    const updateValue = (newValue: string, newCursorPos?: number) => {
-      const pos = newCursorPos ?? newValue.length;
-      setState((prev) => ({
-        ...prev,
-        value: newValue,
-        cursorPos: pos,
-        slashOpen: getSlashQuery(newValue, pos) !== null,
-      }));
-    };
-
-    const setCursorPos = (pos: number) => {
-      setState((prev) => ({ ...prev, cursorPos: pos }));
-    };
-
-    const insertSlashCommand = (text: string) => {
-      const { value: v, cursorPos: pos } = get();
-      const token = getSlashQuery(v, pos);
-      let newValue: string;
-      let cursorAt: number;
-      if (token) {
-        newValue = v.slice(0, token.start) + text + v.slice(token.end);
-        cursorAt = token.start + text.length;
-      } else {
-        newValue = text;
-        cursorAt = text.length;
-      }
-      setState((prev) => ({ ...prev, value: newValue, slashOpen: false }));
-      requestFocusRef.current?.(cursorAt);
-    };
-
-    const executeSlashCommand = (cmd: string) => {
-      clearSlashToken();
-      sendMessage(cmd);
-    };
-
-    const addAttachments = (files: File[]) =>
-      setState((prev) => ({ ...prev, attachedFiles: [...prev.attachedFiles, ...files] }));
-    const removeAttachment = (index: number) =>
-      setState((prev) => ({
-        ...prev,
-        attachedFiles: prev.attachedFiles.filter((_, i) => i !== index),
-      }));
-
-    return {
-      submit,
-      closeSlash,
-      mentionFile,
-      focusTextarea,
-      updateValue,
-      setCursorPos,
-      insertSlashCommand,
-      executeSlashCommand,
-      addAttachments,
-      removeAttachment,
-    };
-  })();
+  const actionsBlock = createComposeActions(stateRef, setState, sendMessage, requestFocusRef);
 
   return (
     <ComposeActionsContext.Provider value={{ registerFocus, ...actionsBlock }}>

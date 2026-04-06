@@ -234,15 +234,17 @@ describe('ChatHandler > session', () => {
       expect(event.slashCommands).toEqual(['commit', 'review']);
     });
 
-    it('joins an existing session and receives state', async () => {
+    it('joins an existing session and receives state + cwd', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ channelId: string; state: string }>('session:join', {
-        channelId,
-      });
+      const result = await claude.send<{ channelId: string; state: string; cwd: string }>(
+        'session:join',
+        { channelId },
+      );
 
       expect(result.channelId).toBe(channelId);
       expect(result.state).toBe('idle');
+      expect(result.cwd).toEqual(expect.any(String));
     });
 
     it('join returns busy state when session is streaming', async () => {
@@ -432,6 +434,7 @@ describe('ChatHandler > session', () => {
 
       expect(createdEvents.length).toBeGreaterThan(0);
       expect(createdEvents[0].channelId).toBe(channelId);
+      expect(createdEvents[0].cwd).toEqual(expect.any(String));
     });
   });
 

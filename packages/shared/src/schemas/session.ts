@@ -173,6 +173,7 @@ export const sessionStateSummarySchema = z.object({
   modelSetting: z.string().optional(),
   permissionMode: z.string().optional(),
   effort: z.string().optional(),
+  cwd: z.string(),
 });
 export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 
@@ -193,6 +194,7 @@ export const sessionJoinResponseSchema = z.union([
     state: z.string(),
     meta: channelMetaCacheSchema,
     events: z.array(clientMessageSchema),
+    cwd: z.string(),
   }),
   z.object({ error: z.string() }),
 ]);
@@ -243,6 +245,7 @@ export type RawEventsResponse = z.infer<typeof rawEventsResponseSchema>;
 
 export const sessionCreatedPayloadSchema = z.object({
   channelId: z.string(),
+  cwd: z.string(),
 });
 export type SessionCreatedPayload = z.infer<typeof sessionCreatedPayloadSchema>;
 

@@ -3,6 +3,7 @@ import {
   sessionListPayloadSchema,
   sessionListRemotePayloadSchema,
 } from '@code-quest/shared';
+import { logger } from '../../../logger.ts';
 import type { SessionStore } from '../../../services/session-store.ts';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEmitter } from '../../channel-emitter.ts';
@@ -44,7 +45,8 @@ export function create(
         };
       });
       callback?.({ sessions, total: result.total });
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to list sessions');
       callback?.({ sessions: [], total: 0 });
     }
   }
@@ -63,7 +65,8 @@ export function create(
         hasParentId: true,
       });
       callback?.({ sessions: result.sessions, total: result.total });
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to list remote sessions');
       callback?.({ sessions: [], total: 0 });
     }
   }
@@ -101,12 +104,14 @@ export function create(
       const events = entries.map((e) => {
         try {
           return { direction: e.direction, seq: e.seq, ...JSON.parse(e.raw) };
-        } catch {
+        } catch (err) {
+          logger.debug(err, 'Failed to parse raw event JSON');
           return { direction: e.direction, seq: e.seq, raw: e.raw };
         }
       });
       callback?.({ events });
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to get raw events');
       callback?.({ events: [] });
     }
   }

@@ -1,8 +1,11 @@
+import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
-import type { ProtocolMessage } from '../schemas.ts';
+import type { resultSchema } from '../schemas.ts';
 
-export function transformResult(raw: ProtocolMessage): ClientMessage | ClientMessage[] {
-  const usage = raw.usage as Record<string, unknown> | undefined;
+type ResultMessage = z.infer<typeof resultSchema>;
+
+export function transformResult(raw: ResultMessage): ClientMessage | ClientMessage[] {
+  const usage = raw.usage;
   const resultPayload = {
     stats: {
       totalCostUsd: raw.total_cost_usd,
@@ -22,15 +25,7 @@ export function transformResult(raw: ProtocolMessage): ClientMessage | ClientMes
   const resultMessage: ClientMessage = { name: 'message:result', payload: resultPayload };
 
   if (raw.is_error && Array.isArray(raw.errors) && raw.errors.length > 0) {
-    const errorMessages = (raw.errors as unknown[]).filter(
-      (e): e is string => typeof e === 'string',
-    );
-    if (errorMessages.length > 0) {
-      return [
-        resultMessage,
-        { name: 'error:message', payload: { message: errorMessages.join('; ') } },
-      ];
-    }
+    return [resultMessage, { name: 'error:message', payload: { message: raw.errors.join('; ') } }];
   }
 
   return resultMessage;

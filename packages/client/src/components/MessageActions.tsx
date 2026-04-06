@@ -1,6 +1,7 @@
 import type { RewindResult } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useClickOutside } from '../hooks/useClickOutside';
 import type { ForkFn, RewindFn } from '../types/ui';
 import { RewindPreview } from './RewindPreview';
 import { Dialog, DialogContent } from './ui/Dialog';
@@ -34,20 +35,7 @@ export function MessageActions({
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  // Close menu on outside click
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        !menuRef.current?.contains(e.target as Node) &&
-        !btnRef.current?.contains(e.target as Node)
-      ) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [menuOpen]);
+  useClickOutside([menuRef, btnRef], () => setMenuOpen(false), menuOpen);
 
   // Animate in
   useEffect(() => {

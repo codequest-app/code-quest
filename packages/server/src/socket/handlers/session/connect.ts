@@ -51,7 +51,7 @@ export function create(
 ): void {
   async function applyPerLaunchSettings(
     channel: Channel,
-    parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel' | 'cwd'>,
+    parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel'>,
   ): Promise<void> {
     if (parsed.model) {
       await channel
@@ -69,9 +69,6 @@ export function create(
           tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
         })
         .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
-    }
-    if (parsed.cwd) {
-      channel.cwd = parsed.cwd;
     }
   }
 
@@ -99,6 +96,55 @@ export function create(
     return { slashCommands, models, account };
   }
 
+  function buildLaunchOpts(
+    parsed: SessionLaunchPayload,
+    resumeSessionId: string | undefined,
+  ): { launchOptions: Record<string, unknown>; initOptions: Record<string, unknown> } {
+    const launchOptions = {
+      ...parsed.launchOptions,
+      ...(resumeSessionId ? { resumeSessionId } : {}),
+      ...(config.allowDangerouslySkipPermissions ? { allowDangerouslySkipPermissions: true } : {}),
+    };
+    const clientOpts = parsed.initOptions ?? {};
+    const initOptions: Record<string, unknown> = {
+      ...clientOpts,
+      appendSystemPrompt: [clientOpts.appendSystemPrompt, config.systemPrompt]
+        .filter(Boolean)
+        .join('\n'),
+    };
+    return { launchOptions, initOptions };
+  }
+
+  async function finalizeAndNotify(
+    channel: Channel,
+    parsed: SessionLaunchPayload,
+    initResult: ControlResponse,
+    socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
+    await applyPerLaunchSettings(channel, parsed);
+    const { slashCommands, models, account } = await handleInitResponse(initResult);
+
+    channel.updateMetaCache({
+      ...(parsed.model && { model: parsed.model }),
+      ...(parsed.permissionMode && { permissionMode: parsed.permissionMode }),
+      ...(slashCommands && { slashCommands }),
+    });
+
+    const channelId = channel.id;
+    socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
+    if (channelManager.cachedModels) {
+      socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+    }
+
+    callback?.({ channelId, slashCommands, models, account });
+    emitter.broadcastAll('session:created', { channelId, cwd: channel.cwd });
+
+    if (parsed.initialPrompt) {
+      channel.sendMessage(parsed.initialPrompt);
+    }
+  }
+
   async function handleLaunch(
     _ch: Channel | null,
     payload: unknown,
@@ -110,23 +156,10 @@ export function create(
       const parsed = sessionLaunchPayloadSchema.parse(payload);
       resumeSessionId = parsed.resume;
       const channelId = parsed.channelId ?? crypto.randomUUID();
-      const launchOpts = {
-        ...parsed.launchOptions,
-        ...(resumeSessionId ? { resumeSessionId } : {}),
-        ...(config.allowDangerouslySkipPermissions
-          ? { allowDangerouslySkipPermissions: true }
-          : {}),
-      };
-      const clientOpts = parsed.initOptions ?? {};
-      const initInput: Record<string, unknown> = {
-        ...clientOpts,
-        appendSystemPrompt: [clientOpts.appendSystemPrompt, config.systemPrompt]
-          .filter(Boolean)
-          .join('\n'),
-      };
+      const { launchOptions, initOptions } = buildLaunchOpts(parsed, resumeSessionId);
       const { channel, initResult } = await channelManager.create(channelId, {
-        launchOptions: launchOpts,
-        initOptions: initInput,
+        launchOptions,
+        initOptions,
         cwd: parsed.cwd,
         onBeforeSpawn: (ch) => {
           if (socket) channelManager.addSocketToChannel(ch, socket);
@@ -135,26 +168,7 @@ export function create(
 
       // persist is deferred to onSessionInit (session:init may arrive after control_response)
 
-      await applyPerLaunchSettings(channel, parsed);
-      const { slashCommands, models, account } = await handleInitResponse(initResult);
-
-      channel.updateMetaCache({
-        ...(parsed.model && { model: parsed.model }),
-        ...(parsed.permissionMode && { permissionMode: parsed.permissionMode }),
-        ...(slashCommands && { slashCommands }),
-      });
-
-      socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
-      if (channelManager.cachedModels) {
-        socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
-      }
-
-      emitter.broadcastAll('session:created', { channelId });
-      callback?.({ channelId, slashCommands, models, account });
-
-      if (parsed.initialPrompt) {
-        channel.sendMessage(parsed.initialPrompt);
-      }
+      await finalizeAndNotify(channel, parsed, initResult, socket, callback);
     } catch (err) {
       logger.error({ err }, 'Failed to create session');
       const message = errMsg(err, 'Failed to create session');
@@ -165,6 +179,27 @@ export function create(
       }
       callback?.({ channelId: '', error: message });
     }
+  }
+
+  async function replayAndEmitState(
+    channel: Channel,
+    socket?: TypedSocket,
+  ): Promise<{ events: unknown[] }> {
+    const channelId = channel.id;
+    channelManager.ensureBound(channel);
+
+    const replaySessionId = await sessionHistory.resolveSessionId(channelId);
+    if (socket) {
+      await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
+    }
+
+    socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
+    if (channelManager.cachedModels) {
+      socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+    }
+
+    const events = await sessionHistory.getSessionHistory(channelId);
+    return { events };
   }
 
   async function handleJoin(
@@ -181,7 +216,8 @@ export function create(
       if (!isAlive) {
         try {
           await channelManager.join(channelId);
-        } catch {
+        } catch (err) {
+          logger.debug(err, 'failed to join channel during connect');
           callback?.({ error: 'Session not found' });
           return;
         }
@@ -195,21 +231,9 @@ export function create(
 
       if (socket) channelManager.addSocketToChannel(channel, socket);
 
-      channelManager.ensureBound(channel);
-
-      const replaySessionId = await sessionHistory.resolveSessionId(channelId);
-      if (socket) {
-        await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
-      }
-
-      socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
-      if (channelManager.cachedModels) {
-        socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
-      }
-
-      const events = await sessionHistory.getSessionHistory(channelId);
+      const { events } = await replayAndEmitState(channel, socket);
       const state = channel.isProcessing ? 'busy' : 'idle';
-      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events });
+      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events, cwd: channel.cwd });
     } catch (err) {
       callback?.({ error: errMsg(err, 'Failed to join session') });
     }
@@ -220,17 +244,16 @@ export function create(
     channelManager.broadcastSessionState(channelId, 'busy');
 
     // Persist when session:init arrives (sessionId now available)
-    const channel = ch;
-    if (channel.sessionId) {
-      const parentId = channel.parentId;
+    if (ch.sessionId) {
+      const parentId = ch.parentId;
       sessionStore
         .persist({
           id: channelId,
-          sessionId: channel.sessionId,
+          sessionId: ch.sessionId,
           provider: channelManager.provider,
           command: channelManager.runnerCommand,
           args: JSON.stringify(channelManager.runnerArgs),
-          cwd: channel.cwd,
+          cwd: ch.cwd,
           mode: 'interactive',
           role: 'chat',
           ...(parentId ? { parentId } : {}),

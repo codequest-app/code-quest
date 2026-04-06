@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { EffortSwitch, effortLabel } from './icons/EffortSwitch';
 import {
   AskBeforeEditsSmallIcon,
@@ -40,9 +41,6 @@ function getPermissionModes(brandName: string) {
 const DEFAULT_MODES = getPermissionModes('Claude');
 const DEFAULT_MODE = DEFAULT_MODES[0];
 
-export const PERMISSION_MODE_IDS = ['normal', 'acceptEdits', 'plan', 'bypassPermissions'] as const;
-export type PermissionModeId = (typeof PERMISSION_MODE_IDS)[number];
-
 export interface PermissionModePickerProps {
   mode: string;
   effort?: string;
@@ -71,19 +69,7 @@ export function PermissionModePicker({
   const modePickerRef = useRef<HTMLDivElement>(null);
   const modeButtonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!showModePicker) return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        !modePickerRef.current?.contains(e.target as Node) &&
-        !modeButtonRef.current?.contains(e.target as Node)
-      ) {
-        setShowModePicker(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [showModePicker]);
+  useClickOutside([modePickerRef, modeButtonRef], () => setShowModePicker(false), showModePicker);
 
   return (
     <div className="relative">
@@ -95,8 +81,9 @@ export function PermissionModePicker({
         className="permission-mode-btn text-[0.85em] bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-[4px] px-[4px] py-[2px] rounded-[2px] hover:bg-white/5"
       >
         <span className="w-5 h-5 flex-shrink-0">
-          {(PERMISSION_MODE_ICONS as Record<string, { smallIcon: React.ReactNode }>)[mode]
-            ?.smallIcon ?? <AskBeforeEditsSmallIcon />}
+          {(mode in PERMISSION_MODE_ICONS
+            ? PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS].smallIcon
+            : null) ?? <AskBeforeEditsSmallIcon />}
         </span>
         <span>{(permissionById[mode] ?? DEFAULT_MODE).label}</span>
       </button>
@@ -123,7 +110,9 @@ export function PermissionModePicker({
               className={`w-full text-left px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${m.id === mode ? 'bg-selected text-white' : 'hover:bg-white/5'}`}
             >
               <span className="w-5 h-5 flex-shrink-0 mt-0.5">
-                {(PERMISSION_MODE_ICONS as Record<string, { icon: React.ReactNode }>)[m.id]?.icon}
+                {m.id in PERMISSION_MODE_ICONS
+                  ? PERMISSION_MODE_ICONS[m.id as keyof typeof PERMISSION_MODE_ICONS].icon
+                  : undefined}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium">{m.label}</div>
@@ -159,7 +148,7 @@ export function PermissionModePicker({
                 <EffortSwitch
                   level={effort}
                   levels={['low', 'medium', 'high', 'max']}
-                  onSelect={(l) => onSetEffort(l as 'low' | 'medium' | 'high' | 'max')}
+                  onSelect={(l) => onSetEffort(l)}
                 />
               </button>
             </>

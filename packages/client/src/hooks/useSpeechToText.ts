@@ -1,5 +1,12 @@
 import { useRef, useState } from 'react';
 
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+}
+
 type SpeechRecognitionResult = {
   isFinal: boolean;
   0: { transcript: string };
@@ -20,9 +27,7 @@ type SpeechRecognitionInstance = {
 };
 
 function getSpeechRecognitionClass(): (new () => SpeechRecognitionInstance) | null {
-  if ('SpeechRecognition' in window) return window.SpeechRecognition as never;
-  if ('webkitSpeechRecognition' in window) return window.webkitSpeechRecognition as never;
-  return null;
+  return window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null;
 }
 
 export function useSpeechToText() {

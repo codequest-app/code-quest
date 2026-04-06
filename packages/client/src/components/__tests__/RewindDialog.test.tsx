@@ -1,8 +1,8 @@
-import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { FakeClaude } from '../../test/fake-claude';
+import { emitAssistantTurn } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -12,8 +12,7 @@ async function sendMessage(claude: FakeClaude, user: User, text: string) {
   await user.click(textarea);
   await user.type(textarea, text);
   await user.keyboard('{Enter}');
-  await claude.emit(s.assistant(`Reply to: ${text}`));
-  await claude.emit(s.result());
+  await emitAssistantTurn(claude, `Reply to: ${text}`);
 }
 
 async function openRewindDialog(user: User) {

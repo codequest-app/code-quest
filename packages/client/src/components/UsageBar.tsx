@@ -1,6 +1,7 @@
-import { type UsageQuota, usageQuotaTierSchema } from '@code-quest/shared';
+import type { UsageQuota } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
 import { formatResetTime } from '../utils/format-reset-time';
+import { DEFAULT_USAGE_TIERS, getTier } from '../utils/usage-tiers';
 
 interface UsageBarProps {
   usage: UsageQuota;
@@ -37,24 +38,18 @@ function TierBar({
   );
 }
 
-const DEFAULT_USAGE_TIERS = [
-  { key: 'five_hour', label: '5hr' },
-  { key: 'seven_day', label: '7day' },
-  { key: 'seven_day_sonnet', label: 'Sonnet' },
-];
-
 export function UsageBar({ usage }: UsageBarProps) {
   const { providerConfig } = useChannelConfig();
   const usageTiers =
     providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.shortLabel })) ??
-    DEFAULT_USAGE_TIERS;
+    DEFAULT_USAGE_TIERS.map((t) => ({ key: t.key, label: t.shortLabel }));
   return (
     <div
       className="flex flex-col gap-1 text-[11px] text-text-muted/60 font-mono"
       data-testid="usage-bar"
     >
       {usageTiers.map(({ key, label }) => {
-        const tier = usageQuotaTierSchema.safeParse((usage as Record<string, unknown>)[key]).data;
+        const tier = getTier(usage, key);
         if (!tier) return null;
         return (
           <TierBar

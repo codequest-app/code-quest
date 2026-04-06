@@ -1,52 +1,29 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ChannelProvider } from '../../contexts/channel';
-import { PluginProvider } from '../../contexts/PluginContext';
-import { SessionProvider } from '../../contexts/SessionContext';
-import { SocketProvider } from '../../contexts/SocketContext';
-import { TabProvider } from '../../contexts/TabContext';
-import { createFakeClaude } from '../../test/fake-claude';
+import { renderWithChannel } from '../../test/render-with-channel';
 import { HeaderBar } from '../HeaderBar';
 
-async function renderWithProviders(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {
-  const claude = createFakeClaude();
-  const channelId = crypto.randomUUID();
-  const result = render(
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <ChannelProvider channelId={channelId}>
-              <HeaderBar {...props} />
-            </ChannelProvider>
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>,
-  );
-  // Launch after mount — matches production flow (listeners registered before session:init arrives)
-  await act(async () => {
-    await claude.initialize(
-      s.init('sess-1', { model: 'claude-sonnet-4-6' }),
+async function renderHeaderBar(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {
+  return renderWithChannel(<HeaderBar {...props} />, {
+    initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
+    extraSegments: [
       s.controlResponse('init', {
         models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
       }),
-      { launch: { channelId } },
-    );
+    ],
   });
-  return { claude, channelId, ...result };
 }
 
 describe('HeaderBar (context mode)', () => {
   it('reads status from context — shows Connected when idle', async () => {
-    await renderWithProviders();
+    await renderHeaderBar();
     expect(screen.getByText(/connected/i)).toBeInTheDocument();
     expect(screen.getByText('Sonnet 4.6')).toBeInTheDocument();
   });
 
   it('reads status from context — shows Disconnected', async () => {
-    const { claude } = await renderWithProviders();
+    const { claude } = await renderHeaderBar();
     await act(async () => {
       claude.socket.disconnect();
     });
@@ -54,17 +31,17 @@ describe('HeaderBar (context mode)', () => {
   });
 
   it('title prop still works', async () => {
-    await renderWithProviders({ title: 'Fix bug' });
+    await renderHeaderBar({ title: 'Fix bug' });
     expect(screen.getByText('Fix bug')).toBeInTheDocument();
   });
 
   it('shows truncated channelId when no title', async () => {
-    const { channelId } = await renderWithProviders();
+    const { channelId } = await renderHeaderBar();
     expect(screen.getByText(`${channelId.slice(0, 8)}…`)).toBeInTheDocument();
   });
 
   it('onToggleRaw prop shows Raw button', async () => {
-    await renderWithProviders({ onToggleRaw: () => {} });
+    await renderHeaderBar({ onToggleRaw: () => {} });
     expect(screen.getByTitle('Raw Events')).toBeInTheDocument();
   });
 });

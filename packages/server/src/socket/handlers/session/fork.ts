@@ -1,4 +1,5 @@
 import { sessionForkPayloadSchema, sessionTeleportPayloadSchema } from '@code-quest/shared';
+import { logger } from '../../../logger.ts';
 import type { Channel } from '../../channel.ts';
 import type { ChannelEmitter } from '../../channel-emitter.ts';
 import type { ChannelManager } from '../../channel-manager.ts';
@@ -56,7 +57,8 @@ export function create(
       if (parsed.branch) {
         try {
           await checkoutWithFallback(createGit(ch?.cwd), parsed.branch);
-        } catch {
+        } catch (err) {
+          logger.debug(err, 'branch checkout failed during fork');
           branchCheckoutFailed = true;
         }
       }

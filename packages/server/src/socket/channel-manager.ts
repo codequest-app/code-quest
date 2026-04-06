@@ -1,5 +1,7 @@
+import { resolve } from 'node:path';
 import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
+import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
@@ -101,10 +103,12 @@ export class ChannelManager {
     channelId: string,
     opts?: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
-    const cwd = opts?.worktree?.path ?? opts?.cwd;
+    const rawCwd = opts?.worktree?.path ?? opts?.cwd;
+    const cwd = rawCwd ? resolve(rawCwd) : undefined;
     const runner = this.runnerFactory.create(opts?.launchOptions, cwd ? { cwd } : undefined);
     const channel = this.setupChannel(channelId, runner);
 
+    if (cwd) channel.cwd = cwd;
     if (opts?.worktree) channel.worktree = opts.worktree;
 
     opts?.onBeforeSpawn?.(channel);
@@ -142,8 +146,9 @@ export class ChannelManager {
 
     try {
       channel.kill();
-    } catch {
+    } catch (err) {
       // kill() may throw if process already exited — safe to ignore
+      logger.debug(err, 'kill() failed during channel removal');
     }
     channel.destroy();
     this.channels.delete(channelId);

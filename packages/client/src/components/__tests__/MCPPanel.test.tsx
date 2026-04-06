@@ -3,6 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeClaude } from '../../test/fake-claude';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { MCPPanel } from '../MCPPanel';
 
@@ -27,31 +28,28 @@ async function setupPipeline(opts?: McpSetupOptions) {
   return renderWithWorkspace({ claude });
 }
 
-async function actTick() {
-  await act(async () => {});
+async function setupWithTurn(opts?: McpSetupOptions) {
+  const ctx = await setupPipeline(opts);
+  await sendUserMessage(ctx.user, 'hello');
+  await emitAssistantTurn(ctx.claude);
+  return ctx;
 }
 
 async function openMcpManageDialog(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTitle('Show command menu (/)'));
-  await actTick();
-  await user.click(screen.getByText('Manage MCP servers'));
-  await actTick();
+  await user.click(await screen.findByText('Manage MCP servers'));
 }
 
 async function openMcpStatusDialog(user: ReturnType<typeof userEvent.setup>) {
   const textarea = screen.getAllByRole('textbox').find((el) => el.tagName === 'TEXTAREA')!;
   await user.type(textarea, '/mcp');
-  await actTick();
-  await user.click(screen.getByText('MCP status'));
-  await actTick();
+  await user.click(await screen.findByText('MCP status'));
 }
 
 async function openManageDialogViaSlash(user: ReturnType<typeof userEvent.setup>) {
   const textarea = screen.getAllByRole('textbox').find((el) => el.tagName === 'TEXTAREA')!;
   await user.type(textarea, '/mcp');
-  await actTick();
-  await user.click(screen.getByText('Manage MCP servers'));
-  await actTick();
+  await user.click(await screen.findByText('Manage MCP servers'));
 }
 
 // ── Tests ──
@@ -59,12 +57,8 @@ async function openManageDialogViaSlash(user: ReturnType<typeof userEvent.setup>
 describe('MCPPanel', () => {
   it('opens MCP dialog via action menu', async () => {
     const { claude, user } = await setupPipeline();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.result());
+    await sendUserMessage(user);
+    await emitAssistantTurn(claude, 'ok');
 
     await openMcpManageDialog(user);
 
@@ -333,15 +327,9 @@ describe('MCPPanel', () => {
   });
 
   it('shows failed badge when system/init has failed mcp server', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'failed' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpManageDialog(user);
 
     expect(screen.getByText('✗ Failed')).toBeInTheDocument();
@@ -349,18 +337,12 @@ describe('MCPPanel', () => {
   });
 
   it('shows needs-auth badge when system/init has needs-auth mcp servers', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [
         { name: 'claude.ai Google Calendar', status: 'needs-auth' },
         { name: 'claude.ai Gmail', status: 'needs-auth' },
       ],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpManageDialog(user);
 
     expect(screen.getAllByText('⚠ Needs Auth')).toHaveLength(2);
@@ -369,15 +351,9 @@ describe('MCPPanel', () => {
   });
 
   it('shows disabled badge for disabled mcp servers', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'disabled' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpManageDialog(user);
 
     expect(screen.getByText('○ Disabled')).toBeInTheDocument();
@@ -386,15 +362,9 @@ describe('MCPPanel', () => {
 
 describe('McpStatusDialog', () => {
   it('opens MCP status dialog and shows plain failed badge', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'failed' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpStatusDialog(user);
 
     expect(screen.getByRole('dialog', { name: /mcp servers/i })).toBeInTheDocument();
@@ -403,15 +373,9 @@ describe('McpStatusDialog', () => {
   });
 
   it('shows plain needs-auth badge in MCP status dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'gcal', status: 'needs-auth' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpStatusDialog(user);
 
     expect(await screen.findByText('needs-auth')).toBeInTheDocument();
@@ -419,30 +383,18 @@ describe('McpStatusDialog', () => {
   });
 
   it('shows No running MCP servers when store is empty', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpStatusDialog(user);
 
     expect(screen.getByText(/no running mcp servers/i)).toBeInTheDocument();
   });
 
   it('shows status footer with claude mcp add and Learn more link', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'connected' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openMcpStatusDialog(user);
 
     expect(screen.getByText('claude mcp add')).toBeInTheDocument();
@@ -451,19 +403,13 @@ describe('McpStatusDialog', () => {
   });
 
   it('groups servers by scope with count headers in manage dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [
         { name: 'pencil', status: 'failed', scope: 'user' },
         { name: 'claude.ai Gmail', status: 'needs-auth', scope: 'claudeai' },
         { name: 'claude.ai Google Calendar', status: 'needs-auth', scope: 'claudeai' },
       ],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openManageDialogViaSlash(user);
 
     expect(screen.getByText('User (1)')).toBeInTheDocument();
@@ -471,15 +417,9 @@ describe('McpStatusDialog', () => {
   });
 
   it('infers claude.ai scope from server name in manage dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'claude.ai Gmail', status: 'needs-auth' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openManageDialogViaSlash(user);
 
     expect(screen.getByText('claude.ai (1)')).toBeInTheDocument();
@@ -487,45 +427,27 @@ describe('McpStatusDialog', () => {
   });
 
   it('shows ✗ Failed badge in manage dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'failed' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openManageDialogViaSlash(user);
 
     expect(screen.getByText('✗ Failed')).toBeInTheDocument();
   });
 
   it('shows ⚠ Needs Auth badge in manage dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'gcal', status: 'needs-auth' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openManageDialogViaSlash(user);
 
     expect(screen.getByText('⚠ Needs Auth')).toBeInTheDocument();
   });
 
   it('shows Learn more about MCP footer link in manage dialog', async () => {
-    const { claude, user } = await setupPipeline({
+    const { user } = await setupWithTurn({
       mcpServers: [{ name: 'pencil', status: 'connected' }],
     });
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
     await openManageDialogViaSlash(user);
 
     const link = screen.getByText('Learn more about MCP');

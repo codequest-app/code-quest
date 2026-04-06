@@ -4,9 +4,9 @@ import {
   modelUsageEntrySchema,
   type ProviderClientConfig,
   type UsageQuota,
-  usageQuotaTierSchema,
 } from '@code-quest/shared';
 import { formatResetTime } from '../utils/format-reset-time';
+import { DEFAULT_USAGE_TIERS, getTier } from '../utils/usage-tiers';
 
 interface AccountUsageDialogProps {
   open: boolean;
@@ -77,12 +77,6 @@ function UsageBarRow({
     </div>
   );
 }
-
-const DEFAULT_USAGE_TIERS = [
-  { key: 'five_hour', label: 'Session (5hr)' },
-  { key: 'seven_day', label: 'Weekly (7 day)' },
-  { key: 'seven_day_sonnet', label: 'Weekly Sonnet' },
-];
 
 function formatTokens(n: number): string {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -211,11 +205,9 @@ export function AccountUsageDialog({
             ) : usage ? (
               (
                 providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
-                DEFAULT_USAGE_TIERS
+                DEFAULT_USAGE_TIERS.map((t) => ({ key: t.key, label: t.label }))
               ).map(({ key, label }) => {
-                const tier = usageQuotaTierSchema.safeParse(
-                  (usage as Record<string, unknown>)[key],
-                ).data;
+                const tier = getTier(usage, key);
                 if (!tier) return null;
                 return (
                   <UsageBarRow

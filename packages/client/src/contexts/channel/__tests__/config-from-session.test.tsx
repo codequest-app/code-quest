@@ -1,13 +1,10 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { PluginProvider } from '../../../contexts/PluginContext';
-import { SessionProvider } from '../../../contexts/SessionContext';
-import { SocketProvider } from '../../../contexts/SocketContext';
-import { TabProvider } from '../../../contexts/TabContext';
-import { createFakeClaude } from '../../../test/fake-claude';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
-import { ChannelProvider } from '../ChannelContext';
+import { createFakeClaude } from '@/test/fake-claude';
+import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
+import { renderWithChannel } from '@/test/render-with-channel';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 import { useChannelConfig } from '../index';
 
 function ProviderConfigDisplay() {
@@ -18,21 +15,7 @@ function ProviderConfigDisplay() {
 
 describe('ChannelConfigContext', () => {
   it('providerConfig available on mount via app:config', async () => {
-    const claude = createFakeClaude();
-
-    render(
-      <SocketProvider socket={claude.socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <TabProvider>
-              <ChannelProvider channelId="test-ch">
-                <ProviderConfigDisplay />
-              </ChannelProvider>
-            </TabProvider>
-          </PluginProvider>
-        </SessionProvider>
-      </SocketProvider>,
-    );
+    await renderWithChannel(<ProviderConfigDisplay />);
 
     expect(await screen.findByTestId('provider-brand')).toHaveTextContent('Claude');
   });
@@ -112,12 +95,8 @@ describe('ChannelConfigContext', () => {
 
   it('updates config when CLI sends status with permissionMode', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await sendUserMessage(user);
+    await emitAssistantTurn(claude);
 
     await claude.emit(s.status({ permissionMode: 'plan' }));
 

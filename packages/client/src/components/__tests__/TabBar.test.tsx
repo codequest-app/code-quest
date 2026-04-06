@@ -9,16 +9,28 @@ const tabs: TabInfo[] = [
   { sessionId: 'sess-3', status: 'done' },
 ];
 
+function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
+  return render(
+    <TabBar
+      tabs={tabs}
+      activeTabId="sess-1"
+      onSelectTab={vi.fn()}
+      onCloseTab={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 describe('TabBar', () => {
   it('renders all tabs', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     expect(screen.getByText('Chat 1')).toBeInTheDocument();
     expect(screen.getByText('Chat 2')).toBeInTheDocument();
     expect(screen.getByText('sess-3'.slice(0, 8))).toBeInTheDocument();
   });
 
   it('highlights active tab', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     const activeTab = screen.getByRole('tab', { selected: true });
     expect(activeTab).toHaveTextContent('Chat 1');
   });
@@ -26,7 +38,7 @@ describe('TabBar', () => {
   it('calls onSelectTab when clicking a tab', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={onSelect} onCloseTab={vi.fn()} />);
+    renderTabBar({ onSelectTab: onSelect });
     await user.click(screen.getByText('Chat 2'));
     expect(onSelect).toHaveBeenCalledWith('sess-2');
   });
@@ -34,7 +46,7 @@ describe('TabBar', () => {
   it('shows confirm dialog before closing tab', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
+    renderTabBar({ onCloseTab: onClose });
     await user.click(screen.getByLabelText('Close Chat 1'));
 
     // Dialog shown with message
@@ -51,7 +63,7 @@ describe('TabBar', () => {
   it('cancel dialog does not close tab', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={onClose} />);
+    renderTabBar({ onCloseTab: onClose });
     await user.click(screen.getByLabelText('Close Chat 1'));
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
@@ -60,61 +72,43 @@ describe('TabBar', () => {
   });
 
   it('returns null when no tabs', () => {
-    const { container } = render(
-      <TabBar tabs={[]} activeTabId={null} onSelectTab={vi.fn()} onCloseTab={vi.fn()} />,
-    );
+    const { container } = renderTabBar({ tabs: [], activeTabId: null });
     expect(container.firstChild).toBeNull();
   });
 
   it('shows status indicator dots', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     const dots = screen.getByTestId('tab-bar').querySelectorAll('.rounded-full');
     expect(dots).toHaveLength(3);
   });
 
   it('shows pulsing indicator for pending status', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     const pendingTab = screen.getByText('Chat 2').closest('[role="tab"]')!;
     const dot = pendingTab.querySelector('.rounded-full');
     expect(dot).toHaveClass('animate-pulse');
   });
 
   it('shows checkmark for done status', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     const doneTab = screen.getByText('sess-3'.slice(0, 8)).closest('[role="tab"]')!;
     expect(doneTab).toHaveTextContent('✓');
   });
 
   it('renders + button when onNewTab provided', () => {
-    render(
-      <TabBar
-        tabs={tabs}
-        activeTabId="sess-1"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-        onNewTab={vi.fn()}
-      />,
-    );
+    renderTabBar({ onNewTab: vi.fn() });
     expect(screen.getByLabelText('New tab')).toBeInTheDocument();
   });
 
   it('does not render + button when onNewTab not provided', () => {
-    render(<TabBar tabs={tabs} activeTabId="sess-1" onSelectTab={vi.fn()} onCloseTab={vi.fn()} />);
+    renderTabBar();
     expect(screen.queryByLabelText('New tab')).not.toBeInTheDocument();
   });
 
   it('calls onNewTab when + button clicked', async () => {
     const user = userEvent.setup();
     const onNewTab = vi.fn();
-    render(
-      <TabBar
-        tabs={tabs}
-        activeTabId="sess-1"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-        onNewTab={onNewTab}
-      />,
-    );
+    renderTabBar({ onNewTab });
     await user.click(screen.getByLabelText('New tab'));
     expect(onNewTab).toHaveBeenCalledOnce();
   });

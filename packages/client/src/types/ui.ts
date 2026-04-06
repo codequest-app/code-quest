@@ -24,11 +24,11 @@ export type ForkFn = (
 
 // ── Client-only message meta types ──
 
-export interface TextMeta {
+interface TextMeta {
   citations?: Array<{ url?: string; title?: string; citedText?: string }>;
 }
 
-export interface ThinkingMeta {
+interface ThinkingMeta {
   budget_tokens?: number;
   durationMs?: number | null;
   isStreaming?: boolean;
@@ -83,7 +83,7 @@ interface OptionalMetaMap {
   thinking: ThinkingMeta;
 }
 
-export type MessageType =
+type MessageType =
   | 'text'
   | 'thinking'
   | 'tool_use'
@@ -120,6 +120,3 @@ export type Message = {
       ? MessageBase & { type: T; meta?: OptionalMetaMap[T] & Record<string, unknown> }
       : MessageBase & { type: T; meta?: Record<string, unknown> };
 }[MessageType];
-
-/** Helper to extract a specific message variant */
-export type MessageOf<T extends MessageType> = Extract<Message, { type: T }>;

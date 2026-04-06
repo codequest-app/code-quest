@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ForkFn, RewindFn } from '../types/ui';
 import type { MessageNode } from '../utils/message-tree';
 import { ChatMessage } from './ChatMessage';
@@ -39,10 +39,17 @@ export function CollapsibleTimeline({
   const hasError = nodes.some((n) => getToolResult(n)?.is_error);
   const toolCount = nodes.filter((n) => n.message.type === 'tool_use').length;
   const [expanded, setExpanded] = useState(true);
+  const autoCollapsedRef = useRef(false);
+  const prevAllCompleteRef = useRef(allComplete);
 
   useEffect(() => {
-    if (allComplete && toolCount >= 5) setExpanded(false);
-    if (!allComplete) setExpanded(true);
+    const wasIncomplete = !prevAllCompleteRef.current;
+    prevAllCompleteRef.current = allComplete;
+
+    if (wasIncomplete && allComplete && toolCount >= 5 && !autoCollapsedRef.current) {
+      autoCollapsedRef.current = true;
+      setExpanded(false);
+    }
   }, [allComplete, toolCount]);
 
   if (allComplete && !expanded) {

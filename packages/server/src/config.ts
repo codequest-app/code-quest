@@ -12,6 +12,10 @@ export function envBool(key: string, defaultValue = false, raw?: string): boolea
 const VALID_RAW_STORE_DRIVERS = ['sqlite', 'mysql', 'file'] as const;
 export type RawStoreDriver = (typeof VALID_RAW_STORE_DRIVERS)[number];
 
+function isRawStoreDriver(s: string): s is RawStoreDriver {
+  return (VALID_RAW_STORE_DRIVERS as readonly string[]).includes(s);
+}
+
 export function parseRawStoreDrivers(raw: string): RawStoreDriver[] {
   const parts = raw
     .split(',')
@@ -19,8 +23,8 @@ export function parseRawStoreDrivers(raw: string): RawStoreDriver[] {
     .filter(Boolean);
   const valid: RawStoreDriver[] = [];
   for (const part of parts) {
-    if (VALID_RAW_STORE_DRIVERS.includes(part as RawStoreDriver)) {
-      valid.push(part as RawStoreDriver);
+    if (isRawStoreDriver(part)) {
+      valid.push(part);
     } else {
       console.warn(
         `Unknown RAW_STORE driver "${part}" — ignored. Valid: ${VALID_RAW_STORE_DRIVERS.join(', ')}`,

@@ -1,4 +1,5 @@
 import { and, type Column, eq, inArray } from 'drizzle-orm';
+import { logger } from '../logger.ts';
 import type { DrizzleDb } from './drizzle-types.ts';
 import type { SettingsStore } from './settings-store.ts';
 
@@ -9,16 +10,11 @@ interface SettingsTable {
 }
 
 function hasValue(row: unknown): row is { value: string } {
-  return (
-    row != null &&
-    typeof row === 'object' &&
-    'value' in row &&
-    typeof (row as Record<string, unknown>).value === 'string'
-  );
+  return row != null && typeof row === 'object' && 'value' in row && typeof row.value === 'string';
 }
 
 function hasKeyValue(row: unknown): row is { key: string; value: string } {
-  return hasValue(row) && 'key' in row && typeof (row as Record<string, unknown>).key === 'string';
+  return hasValue(row) && 'key' in row && typeof row.key === 'string';
 }
 
 export class DrizzleSettingsStore implements SettingsStore {
@@ -36,7 +32,8 @@ export class DrizzleSettingsStore implements SettingsStore {
     if (!hasValue(row)) return undefined;
     try {
       return JSON.parse(row.value);
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to parse settings value as JSON');
       return row.value;
     }
   }
@@ -64,7 +61,8 @@ export class DrizzleSettingsStore implements SettingsStore {
     for (const row of rows.filter(hasKeyValue)) {
       try {
         result[row.key] = JSON.parse(row.value);
-      } catch {
+      } catch (err) {
+        logger.debug(err, 'Failed to parse settings value as JSON in getMany');
         result[row.key] = row.value;
       }
     }

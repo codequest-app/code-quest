@@ -1,3 +1,10 @@
+import {
+  initResponseSchema,
+  type SessionStateSummary,
+  sessionCreatedPayloadSchema,
+  sessionDeadPayloadSchema,
+  sessionResumePayloadSchema,
+} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSocket } from './SocketContext';
 
@@ -20,9 +27,9 @@ export interface TabContextValue {
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
-  createNewTab: (initialPrompt?: string, opts?: { cwd?: string }) => Promise<{ channelId: string }>;
+  createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string) => void;
-  syncFromServer: (sessions: Array<{ channelId: string; state: string }>) => void;
+  syncFromServer: (sessions: SessionStateSummary[]) => void;
 }
 
 const TabContext = createContext<TabContextValue | null>(null);
@@ -91,39 +98,26 @@ export function TabProvider({
     });
   };
 
-  const createNewTab = (initialPrompt?: string, opts?: { cwd?: string }) =>
-    new Promise<{ channelId: string }>((resolve) => {
-      const clientId = crypto.randomUUID();
-      const tabCwd = opts?.cwd ?? defaultCwd;
-      setState((prev) => ({
-        tabs: { ...prev.tabs, [clientId]: { ...DEFAULT_META, cwd: tabCwd } },
-        activeTabId: clientId,
-      }));
-      socket.emit(
-        'session:launch',
-        { initialPrompt, channelId: clientId, cwd: tabCwd },
-        (_response: { channelId: string; slashCommands?: string[] }) => {
-          resolve({ channelId: clientId });
-        },
-      );
-    });
+  const createNewTab = (opts?: { cwd?: string }): { channelId: string } => {
+    const channelId = crypto.randomUUID();
+    const tabCwd = opts?.cwd ?? defaultCwd;
+    setState((prev) => ({
+      tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
+      activeTabId: channelId,
+    }));
+    return { channelId };
+  };
 
-  const syncFromServer = (sessions: Array<{ channelId: string; state: string }>) => {
-    const serverIds = new Set(sessions.map((s) => s.channelId));
+  const syncFromServer = (sessions: SessionStateSummary[]) => {
     setState((prev) => {
       const next: Record<string, TabMeta> = {};
-      for (const id of Object.keys(prev.tabs)) {
-        if (serverIds.has(id)) next[id] = prev.tabs[id];
-      }
       for (const s of sessions) {
-        if (!(s.channelId in next)) next[s.channelId] = DEFAULT_META;
+        next[s.channelId] = prev.tabs[s.channelId] ?? { ...DEFAULT_META };
       }
       const activeTabId =
-        prev.activeTabId && serverIds.has(prev.activeTabId)
+        prev.activeTabId && prev.activeTabId in next
           ? prev.activeTabId
-          : sessions.length > 0
-            ? sessions[0].channelId
-            : null;
+          : (sessions[0]?.channelId ?? null);
       return { tabs: next, activeTabId };
     });
   };
@@ -144,26 +138,30 @@ export function TabProvider({
     const onConnect = initialState
       ? undefined
       : () => {
-          socket.emit('app:init', (res) => {
-            if (res.sessions && Array.isArray(res.sessions)) {
-              syncFromServer(res.sessions);
+          socket.emit('app:init', (raw) => {
+            const parsed = initResponseSchema.safeParse(raw);
+            if (parsed.success) {
+              syncFromServer(parsed.data.sessions);
             }
           });
         };
 
-    const onCreated = ({ channelId }: { channelId: string }) => {
-      setState((prev) => ({
-        tabs: channelId in prev.tabs ? prev.tabs : { ...prev.tabs, [channelId]: DEFAULT_META },
-        activeTabId: prev.activeTabId ?? channelId,
-      }));
+    const onCreated = (raw: unknown) => {
+      const parsed = sessionCreatedPayloadSchema.safeParse(raw);
+      if (!parsed.success) return;
+      addTab(parsed.data.channelId);
     };
 
-    const onDead = ({ channelId }: { channelId: string }) => {
-      removeTab(channelId);
+    const onDead = (raw: unknown) => {
+      const parsed = sessionDeadPayloadSchema.safeParse(raw);
+      if (!parsed.success) return;
+      removeTab(parsed.data.channelId);
     };
 
-    const onResume = ({ channelId }: { channelId: string }) => {
-      replaceActiveTab(channelId);
+    const onResume = (raw: unknown) => {
+      const parsed = sessionResumePayloadSchema.safeParse(raw);
+      if (!parsed.success) return;
+      replaceActiveTab(parsed.data.channelId);
     };
 
     if (onConnect) {

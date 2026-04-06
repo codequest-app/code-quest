@@ -1,5 +1,6 @@
 import type { ClientMessage, ServerToClientEvents } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
+import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
@@ -17,6 +18,10 @@ const HISTORY_NAMES = new Set([
   'message:result',
   'session:init',
 ]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 export class SessionHistory {
   constructor(
@@ -65,47 +70,51 @@ export class SessionHistory {
     return this.replayEntries(rawEntries);
   }
 
+  private replayStdoutEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
+    const parsed = typedJsonObjectSchema.safeParse(raw);
+    if (parsed.success) {
+      const converted = this.adapter.transform(parsed.data).messages;
+      result.push(...converted);
+    }
+  }
+
+  private replayStdinEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
+    const parsed = userMessageInputSchema.safeParse(raw);
+    if (parsed.success) {
+      result.push({
+        name: 'message:user',
+        payload: { content: parsed.data.message.content },
+      });
+    }
+  }
+
   private replayEntries(rawEntries: Array<{ raw: string; direction: string }>): ClientMessage[] {
     const result: ClientMessage[] = [];
-
-    // Check if stdout contains any user message echoes
-    const hasStdoutUserEcho = rawEntries.some((e) => {
-      if (e.direction !== 'out') return false;
-      try {
-        const obj = JSON.parse(e.raw.trim());
-        return obj?.type === 'user';
-      } catch {
-        return false;
-      }
-    });
+    const stdinEntries: Array<Record<string, unknown>> = [];
+    let hasStdoutUserEcho = false;
 
     for (const entry of rawEntries) {
       const trimmed = entry.raw.trim();
       if (!trimmed) continue;
 
       try {
-        const raw = JSON.parse(trimmed);
-        if (typeof raw !== 'object' || raw === null) continue;
+        const raw: unknown = JSON.parse(trimmed);
+        if (!isRecord(raw)) continue;
 
         if (entry.direction === 'out') {
-          const parsed = typedJsonObjectSchema.safeParse(raw);
-          if (parsed.success) {
-            const converted = this.adapter.transform(parsed.data).messages;
-            result.push(...converted);
-          }
+          if (raw.type === 'user') hasStdoutUserEcho = true;
+          this.replayStdoutEntry(raw, result);
         } else if (entry.direction === 'in') {
-          // Skip stdin user messages when stdout already echoes them (avoids duplicates)
-          if (hasStdoutUserEcho) continue;
-          const parsed = userMessageInputSchema.safeParse(raw);
-          if (parsed.success) {
-            result.push({
-              name: 'message:user',
-              payload: { content: parsed.data.message.content },
-            });
-          }
+          stdinEntries.push(raw);
         }
-      } catch {
-        // skip malformed raw entries (invalid JSON or unexpected shape)
+      } catch (err) {
+        logger.debug(err, 'Skipping malformed raw entry during replay');
+      }
+    }
+
+    if (!hasStdoutUserEcho) {
+      for (const raw of stdinEntries) {
+        this.replayStdinEntry(raw, result);
       }
     }
 

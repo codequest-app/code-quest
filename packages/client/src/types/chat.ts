@@ -6,7 +6,7 @@ import type {
 } from '@code-quest/shared';
 import type { Message, SessionStatus } from './ui';
 
-export interface TerminalSession {
+interface TerminalSession {
   id: string;
   title: string;
   outputLines: string[];
@@ -56,17 +56,7 @@ export interface InitOptions {
   appendSystemPrompt?: string;
 }
 
-export type ChannelInitialState = Partial<ChannelState> & {
-  // Config fields passed through to ChannelConfigProvider
-  model?: string | null;
-  availableModels?: Array<{ value: string; label?: string; displayName?: string }>;
-  mcpServers?: Array<{ name: string; status: string; scope?: string }>;
-  tools?: string[];
-  permissionMode?: string | null;
-  thinkingLevel?: string;
-  effort?: 'low' | 'medium' | 'high' | 'max' | null;
-  fastModeState?: string | null;
-  config?: Record<string, unknown>;
-  currentRepo?: string | null;
-  slashCommands?: string[];
+export type ChannelChangeUpdate = {
+  title?: string;
+  status?: 'default' | 'pending' | 'done';
 };

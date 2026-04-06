@@ -1,15 +1,24 @@
-import type {
-  AccountInfo,
-  ControlResponse,
-  McpAuthResult,
-  ModelInfo,
-  ProviderClientConfig,
-  ServerToClientEvents,
-  UsageQuota,
-  WorktreeInfo,
+import {
+  type AccountInfo,
+  type ControlResponse,
+  getProviderConfigResponseSchema,
+  type McpAuthResult,
+  type ModelInfo,
+  type ProviderClientConfig,
+  type UsageQuota,
+  type WorktreeInfo,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useSocket } from '../SocketContext';
+import type { Payload } from './handlers/guard';
 import { wireHandlers } from './handlers/guard';
 import {
   configHandlers,
@@ -18,8 +27,6 @@ import {
   parseModels,
   toEffort,
 } from './handlers/settings';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
 export interface ConfigState {
   model: string | null;
@@ -67,7 +74,7 @@ export interface ChannelConfigValue extends ConfigState {
   disableJupyterMcp: () => Promise<ControlResponse>;
   askDebuggerHelp: () => Promise<ControlResponse>;
   requestUsageUpdate: () => void;
-  openWorktree: (info: WorktreeInfo) => void;
+  openNewChannel: (cwd: string) => void;
 }
 
 type ConfigStateValue = ConfigState & { isFastMode: boolean };
@@ -105,12 +112,12 @@ const INITIAL_CONFIG: ConfigState = {
 export function ChannelConfigProvider({
   channelId,
   initialConfig,
-  onWorktree,
+  onNewChannel,
   children,
 }: {
   channelId: string;
   initialConfig?: Partial<ConfigState>;
-  onWorktree?: (info: WorktreeInfo) => void;
+  onNewChannel?: (cwd: string) => void;
   children: ReactNode;
 }) {
   const [configState, setConfigState] = useState<ConfigState>(() => ({
@@ -120,10 +127,22 @@ export function ChannelConfigProvider({
 
   const { socket } = useSocket();
 
+  const socketRef = useRef(socket);
+  const channelIdRef = useRef(channelId);
+  const onNewChannelRef = useRef(onNewChannel);
+  useLayoutEffect(() => {
+    socketRef.current = socket;
+    channelIdRef.current = channelId;
+    onNewChannelRef.current = onNewChannel;
+  });
+
   // ── Fetch provider config on mount ──
   useEffect(() => {
     if (!channelId) return;
-    socket.emit('app:config', { channelId }, (res) => {
+    socket.emit('app:config', { channelId }, (raw) => {
+      const parsed = getProviderConfigResponseSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const res = parsed.data;
       const models =
         Array.isArray(res.models) && res.models.length > 0
           ? parseModels(res.models)
@@ -157,12 +176,19 @@ export function ChannelConfigProvider({
     };
   }, [channelId, socket]);
 
-  // ── Stable actions (only re-created when socket/channelId change) ──
-  const baseActions = createConfigActions({ socket, channelId });
-  const actions = {
-    ...baseActions,
-    openWorktree: (info: WorktreeInfo) => onWorktree?.(info),
-  };
+  // ── Stable actions (created once, read deps from refs) ──
+  const [depsProxy] = useState(() => ({
+    get socket() {
+      return socketRef.current;
+    },
+    get channelId() {
+      return channelIdRef.current;
+    },
+  }));
+  const [actions] = useState<ConfigActionsValue>(() => ({
+    ...createConfigActions(depsProxy),
+    openNewChannel: (cwd: string) => onNewChannelRef.current?.(cwd),
+  }));
 
   // ── State value ──
   const stateValue: ConfigStateValue = {

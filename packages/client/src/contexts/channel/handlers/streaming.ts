@@ -1,12 +1,13 @@
-import type { ContentBlock, ServerToClientEvents } from '@code-quest/shared';
+import type { ContentBlock } from '@code-quest/shared';
+import { fileReadResponseSchema } from '@code-quest/shared';
 import type { RefObject } from 'react';
-import type { TypedSocket } from '../../../socket/client';
-import type { ChannelState } from '../../../types/chat';
-import { isRecord } from '../../../utils/is-record';
-import { msg } from '../../../utils/message';
+import type { TypedSocket } from '@/socket/client';
+import type { ChannelState } from '@/types/chat';
+import { isRecord } from '@/utils/is-record';
+import { msg, patchMeta } from '@/utils/message';
+import type { Payload } from './guard';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 type Message = ChannelState['messages'][number];
 
 // ── Streaming helpers ──
@@ -58,7 +59,7 @@ function appendOrCreate(
 
 // ── Deps ──
 
-export interface StreamingHandlerDeps {
+interface StreamingHandlerDeps {
   socket: TypedSocket;
   channelId: string;
   setState: SetChannelState;
@@ -124,9 +125,7 @@ export function wireStreamingHandlers({
       return {
         ...prev,
         messages: prev.messages.map((m) =>
-          m.id === lastToolUse.id
-            ? ({ ...m, meta: { ...m.meta, partialInput: partial + content } } as Message)
-            : m,
+          m.id === lastToolUse.id ? patchMeta(m, { partialInput: partial + content }) : m,
         ),
       };
     });
@@ -139,10 +138,7 @@ export function wireStreamingHandlers({
       const ms = [...prev.messages];
       const last = ms[ms.length - 1];
       const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
-      ms[ms.length - 1] = {
-        ...last,
-        meta: { ...last.meta, citations: [...existing, ...citations] },
-      } as Message;
+      ms[ms.length - 1] = patchMeta(last, { citations: [...existing, ...citations] });
       return { ...prev, messages: ms };
     });
   }
@@ -177,19 +173,18 @@ export function wireStreamingHandlers({
     const inp = block.input;
     const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
     if (!filePath) return;
-    socket.emit('file:read', { channelId, filePath }, (res) => {
+    socket.emit('file:read', { channelId, filePath }, (raw) => {
+      const parsed = fileReadResponseSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const res = parsed.data;
       setState((prev) => {
         const ms = [...prev.messages];
         const idx = ms.findIndex((m) => m.id === toolMsgId);
         if (idx < 0) return prev;
-        ms[idx] = {
-          ...ms[idx],
-          meta: {
-            ...ms[idx].meta,
-            fileContent: 'content' in res ? res.content : undefined,
-            fileError: 'error' in res ? res.error : undefined,
-          },
-        } as Message;
+        ms[idx] = patchMeta(ms[idx], {
+          fileContent: 'content' in res ? res.content : undefined,
+          fileError: 'error' in res ? res.error : undefined,
+        });
         return { ...prev, messages: ms };
       });
     });

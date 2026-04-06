@@ -3,13 +3,77 @@ import type { ParseResult } from '../types.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolMessage } from './schemas.ts';
 
-const initResponseSchema = z
-  .object({
-    commands: z.array(z.object({ name: z.string() })).optional(),
-    models: z.array(z.unknown()).optional(),
-    account: z.record(z.string(), z.unknown()).optional(),
-  })
-  .passthrough();
+const initResponseSchema = z.looseObject({
+  commands: z.array(z.object({ name: z.string() })).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+
+// ── buildArgs helpers ──
+
+function pushSessionFlags(args: string[], o: LaunchOptions): void {
+  if (o.resumeSessionId) args.push('--resume', o.resumeSessionId);
+  if (o.continueSession) args.push('--continue');
+  if (o.forkSession) args.push('--fork-session');
+  if (o.sessionId) args.push('--session-id', o.sessionId);
+  if (o.resumeSessionAt) args.push('--resume-session-at', o.resumeSessionAt);
+  if (o.noSessionPersistence) args.push('--no-session-persistence');
+}
+
+function pushModelFlags(args: string[], o: LaunchOptions): void {
+  if (o.model) args.push('--model', o.model);
+  if (o.fallbackModel) args.push('--fallback-model', o.fallbackModel);
+  if (o.thinking != null) {
+    if (typeof o.thinking === 'number') {
+      args.push('--max-thinking-tokens', String(o.thinking));
+    } else {
+      args.push('--thinking', o.thinking);
+    }
+  }
+  if (o.effort) args.push('--effort', o.effort);
+  if (o.maxTurns != null) args.push('--max-turns', String(o.maxTurns));
+  if (o.maxBudgetUsd != null) args.push('--max-budget-usd', String(o.maxBudgetUsd));
+  if (o.agent) args.push('--agent', o.agent);
+}
+
+function pushToolFlags(args: string[], o: LaunchOptions): void {
+  if (o.allowedTools?.length) args.push('--allowedTools', o.allowedTools.join(','));
+  if (o.disallowedTools?.length) args.push('--disallowedTools', o.disallowedTools.join(','));
+  if (o.tools?.length) args.push('--tools', o.tools.join(','));
+}
+
+function pushMcpFlags(args: string[], o: LaunchOptions): void {
+  if (o.mcpConfig != null) {
+    const configValue = typeof o.mcpConfig === 'string' ? o.mcpConfig : JSON.stringify(o.mcpConfig);
+    args.push('--mcp-config', configValue);
+  }
+  if (o.settingSources?.length) args.push(`--setting-sources=${o.settingSources.join(',')}`);
+  if (o.strictMcpConfig) args.push('--strict-mcp-config');
+}
+
+function pushMiscFlags(args: string[], o: LaunchOptions): void {
+  if (o.allowDangerouslySkipPermissions) args.push('--allow-dangerously-skip-permissions');
+  if (o.permissionMode) args.push('--permission-mode', o.permissionMode);
+  if (o.proactive) args.push('--proactive');
+  if (o.assistant) args.push('--assistant');
+  if (o.jsonSchema) args.push('--json-schema', JSON.stringify(o.jsonSchema));
+  if (o.betas?.length) args.push('--betas', o.betas.join(','));
+  if (o.addDirs?.length) {
+    for (const dir of o.addDirs) args.push('--add-dir', dir);
+  }
+  if (o.pluginDirs?.length) {
+    for (const dir of o.pluginDirs) args.push('--plugin-dir', dir);
+  }
+  if (o.taskBudget) args.push('--task-budget', o.taskBudget.total.toString());
+  if (o.channels?.length) args.push('--channels', ...o.channels);
+  if (o.claudeInChromeMcp) args.push('--claude-in-chrome-mcp');
+}
+
+function pushDebugFlags(args: string[], o: LaunchOptions): void {
+  if (o.debug) args.push('--debug');
+  if (o.debugFile) args.push('--debug-file', o.debugFile);
+  if (o.debugToStderr) args.push('--debug-to-stderr');
+}
 
 // ── ClaudeProtocol ──
 
@@ -32,88 +96,12 @@ export class ClaudeProtocol {
     const args = [...this.baseArgs];
     if (!options) return args;
 
-    // Session control
-    if (options.resumeSessionId) args.push('--resume', options.resumeSessionId);
-    if (options.continueSession) args.push('--continue');
-    if (options.forkSession) args.push('--fork-session');
-    if (options.sessionId) args.push('--session-id', options.sessionId);
-    if (options.resumeSessionAt) args.push('--resume-session-at', options.resumeSessionAt);
-    if (options.noSessionPersistence) args.push('--no-session-persistence');
-
-    // Model
-    if (options.model) args.push('--model', options.model);
-    if (options.fallbackModel) args.push('--fallback-model', options.fallbackModel);
-
-    // Thinking & effort
-    if (options.thinking != null) {
-      if (typeof options.thinking === 'number') {
-        args.push('--max-thinking-tokens', String(options.thinking));
-      } else {
-        args.push('--thinking', options.thinking);
-      }
-    }
-    if (options.effort) args.push('--effort', options.effort);
-
-    // Limits
-    if (options.maxTurns != null) args.push('--max-turns', String(options.maxTurns));
-    if (options.maxBudgetUsd != null) args.push('--max-budget-usd', String(options.maxBudgetUsd));
-
-    // Agent
-    if (options.agent) args.push('--agent', options.agent);
-
-    // Tools
-    if (options.allowedTools?.length) args.push('--allowedTools', options.allowedTools.join(','));
-    if (options.disallowedTools?.length)
-      args.push('--disallowedTools', options.disallowedTools.join(','));
-    if (options.tools?.length) args.push('--tools', options.tools.join(','));
-
-    // MCP
-    if (options.mcpConfig != null) {
-      const configValue =
-        typeof options.mcpConfig === 'string'
-          ? options.mcpConfig
-          : JSON.stringify(options.mcpConfig);
-      args.push('--mcp-config', configValue);
-    }
-    if (options.settingSources?.length)
-      args.push(`--setting-sources=${options.settingSources.join(',')}`);
-    if (options.strictMcpConfig) args.push('--strict-mcp-config');
-
-    // Permissions
-    if (options.allowDangerouslySkipPermissions) args.push('--allow-dangerously-skip-permissions');
-
-    // Modes
-    if (options.permissionMode) args.push('--permission-mode', options.permissionMode);
-    if (options.proactive) args.push('--proactive');
-    if (options.assistant) args.push('--assistant');
-
-    // Schema
-    if (options.jsonSchema) args.push('--json-schema', JSON.stringify(options.jsonSchema));
-
-    // Betas
-    if (options.betas?.length) args.push('--betas', options.betas.join(','));
-
-    // Debug
-    if (options.debug) args.push('--debug');
-    if (options.debugFile) args.push('--debug-file', options.debugFile);
-    if (options.debugToStderr) args.push('--debug-to-stderr');
-
-    // Directories (repeatable)
-    if (options.addDirs?.length) {
-      for (const dir of options.addDirs) args.push('--add-dir', dir);
-    }
-    if (options.pluginDirs?.length) {
-      for (const dir of options.pluginDirs) args.push('--plugin-dir', dir);
-    }
-    if (options.taskBudget) {
-      args.push('--task-budget', options.taskBudget.total.toString());
-    }
-    if (options.channels?.length) {
-      args.push('--channels', ...options.channels);
-    }
-    if (options.claudeInChromeMcp) {
-      args.push('--claude-in-chrome-mcp');
-    }
+    pushSessionFlags(args, options);
+    pushModelFlags(args, options);
+    pushToolFlags(args, options);
+    pushMcpFlags(args, options);
+    pushMiscFlags(args, options);
+    pushDebugFlags(args, options);
 
     return args;
   }
@@ -137,7 +125,7 @@ export class ClaudeProtocol {
       return { status: 'skip', raw: trimmed, reason: 'no_type' };
     }
     const obj = json as Record<string, unknown>;
-    const type = obj.type as string;
+    const type = typeof obj.type === 'string' ? obj.type : '';
 
     if (type === 'keep_alive') return { status: 'skip', raw: trimmed, reason: 'keep_alive' };
 
@@ -147,7 +135,7 @@ export class ClaudeProtocol {
     }
 
     // Look up schema (system events use subtype for dispatch)
-    const subtype = type === 'system' ? (obj.subtype as string | undefined) : undefined;
+    const subtype = type === 'system' && typeof obj.subtype === 'string' ? obj.subtype : undefined;
     const schema = getSchemaForType(type, subtype);
     if (!schema) {
       return { status: 'unknown', raw: trimmed, type, data: obj };

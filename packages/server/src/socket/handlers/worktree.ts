@@ -18,6 +18,10 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): Promise<void> {
     try {
+      if (!ch.cwd) {
+        callback?.({ error: 'No working directory' });
+        return;
+      }
       const parsed = createWorktreePayloadSchema.safeParse(payload);
       const name = parsed.success ? parsed.data.name : undefined;
       const repoRoot = await getRepoRoot(ch.cwd);
@@ -39,6 +43,10 @@ export function create(emitter: ChannelEmitter): void {
     callback?: SocketCallback,
   ): Promise<void> {
     try {
+      if (!ch.cwd) {
+        callback?.({ worktrees: [] });
+        return;
+      }
       const repoRoot = await getRepoRoot(ch.cwd);
       if (!repoRoot) {
         callback?.({ worktrees: [] });
@@ -61,6 +69,10 @@ export function create(emitter: ChannelEmitter): void {
       const parsed = deleteWorktreePayloadSchema.safeParse(payload);
       if (!parsed.success) {
         callback?.({ success: false, error: 'name is required' });
+        return;
+      }
+      if (!ch.cwd) {
+        callback?.({ success: false, error: 'No working directory' });
         return;
       }
       const repoRoot = await getRepoRoot(ch.cwd);

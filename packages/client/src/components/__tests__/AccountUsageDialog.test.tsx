@@ -2,8 +2,16 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { AccountUsageDialog } from '../AccountUsageDialog';
+
+async function setupWithTurn() {
+  const ctx = await renderWithWorkspace();
+  await sendUserMessage(ctx.user, 'hello');
+  await emitAssistantTurn(ctx.claude);
+  return ctx;
+}
 
 async function openUsageDialog(user: UserEvent) {
   const textarea = screen.getByPlaceholderText(/Esc to focus/i);
@@ -20,10 +28,7 @@ describe('AccountUsageDialog', () => {
   it('renders after rate limit event', async () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'hello');
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
     await claude.emit(s.result());
@@ -33,23 +38,14 @@ describe('AccountUsageDialog', () => {
   });
 
   it('assistant message renders after init', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await setupWithTurn();
 
     expect(screen.queryAllByText(/hi/).length).toBeGreaterThan(0);
   });
 
   it('handles rate limit event when dialog is closed', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'go');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user);
     await claude.emit(s.assistant('ok'));
     await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
     await claude.emit(s.result());
@@ -58,26 +54,14 @@ describe('AccountUsageDialog', () => {
   });
 
   it('opening /usage dialog does not crash', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    const { user } = await setupWithTurn();
 
     const dialog = await openUsageDialog(user);
     expect(dialog).toBeInTheDocument();
   });
 
   it('dialog opens and shows quota section', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    const { user } = await setupWithTurn();
 
     const dialog = await openUsageDialog(user);
     expect(dialog).toBeInTheDocument();
@@ -87,10 +71,7 @@ describe('AccountUsageDialog', () => {
   it('rate_limit data appears in dialog after event', async () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'hello');
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
     await claude.emit(s.result());
@@ -101,13 +82,7 @@ describe('AccountUsageDialog', () => {
   });
 
   it('dialog closes when close button clicked', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    const { user } = await setupWithTurn();
 
     const dialog = await openUsageDialog(user);
     const closeBtn = within(dialog).getByLabelText('close');
@@ -139,25 +114,19 @@ describe('AccountUsageDialog', () => {
       return null;
     });
 
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result());
+    await sendUserMessage(user, 'hello');
+    await emitAssistantTurn(claude);
 
     const dialog = await openUsageDialog(user);
     expect(within(dialog).getByText(/System prompt/)).toBeInTheDocument();
+
     expect(within(dialog).getByText(/6\.0k/)).toBeInTheDocument();
     expect(within(dialog).getByText(/5% used/)).toBeInTheDocument();
   });
 
   it('shows session cost from result stats', async () => {
     const { claude, user } = await renderWithWorkspace();
-    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-    await user.click(textarea);
-    await user.type(textarea, 'hello');
-    await user.keyboard('{Enter}');
+    await sendUserMessage(user, 'hello');
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
 

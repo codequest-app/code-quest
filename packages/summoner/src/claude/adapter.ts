@@ -1,4 +1,5 @@
 import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
+import type { z } from 'zod';
 import type {
   AdapterOutput,
   ClientMessage,
@@ -9,7 +10,7 @@ import type {
 import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
-import type { ProtocolMessage } from './schemas.ts';
+import type { ProtocolMessage, rateLimitEventSchema } from './schemas.ts';
 import { transformAssistant } from './transforms/assistant.ts';
 import { transformControlRequest } from './transforms/control.ts';
 import { transformResult } from './transforms/result.ts';
@@ -73,9 +74,10 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   },
 };
 
-function convertRateLimitMessage(message: ProtocolMessage): ClientMessage {
-  // rate_limit_info exists on the rateLimitEvent variant — narrowing done by caller's switch
-  const rli = message.rate_limit_info as Record<string, unknown>;
+type RateLimitEvent = z.infer<typeof rateLimitEventSchema>;
+
+function convertRateLimitMessage(message: RateLimitEvent): ClientMessage {
+  const rli = message.rate_limit_info;
   return {
     name: 'system:rate_limit',
     payload: {
@@ -235,8 +237,8 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
         if (!isRecord(obj)) continue;
         const resp = isRecord(obj.response) ? obj.response : undefined;
         if (typeof resp?.request_id === 'string') ids.add(resp.request_id);
-      } catch {
-        // ignore
+      } catch (error) {
+        console.debug('Failed to parse JSON', error);
       }
     }
     return ids;
@@ -326,11 +328,12 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
           payload: { url: message.url, method: message.method ?? 'oauth' },
         };
       default: {
-        const raw = message as Record<string, unknown>;
-        if (typeof raw.rawType === 'string' && isRecord(raw.data)) {
-          return { name: 'raw:event', payload: { rawType: raw.rawType, data: raw.data } };
+        // ProtocolMessage is always a zod-parsed object; spread to Record for raw event payload
+        const data: Record<string, unknown> = { ...message };
+        if (typeof data.rawType === 'string' && isRecord(data.data)) {
+          return { name: 'raw:event', payload: { rawType: data.rawType, data: data.data } };
         }
-        return { name: 'raw:event', payload: { rawType: message.type, data: raw } };
+        return { name: 'raw:event', payload: { rawType: message.type, data } };
       }
     }
   }

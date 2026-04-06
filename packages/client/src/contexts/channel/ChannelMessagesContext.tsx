@@ -1,13 +1,13 @@
-import type {
-  ChatStats,
-  ForkConversationResponse,
-  ListFilesResponse,
-  PlanCommentData,
-  RawEventsResponse,
-  RewindResult,
-  ServerToClientEvents,
-  SuccessResponse,
-  TerminalGetContentsResponse,
+import {
+  type ChatStats,
+  type ForkConversationResponse,
+  type ListFilesResponse,
+  type PlanCommentData,
+  type RawEventsResponse,
+  type RewindResult,
+  type SuccessResponse,
+  sessionJoinResponseSchema,
+  type TerminalGetContentsResponse,
 } from '@code-quest/shared';
 import {
   createContext,
@@ -19,11 +19,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { type ChannelInitialState, type ChannelState, initialChannelState } from '../../types/chat';
+import { type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { createFileActions } from './handlers/file';
-import { createGuard, wireHandlers } from './handlers/guard';
+import { type Payload, wireHandlers } from './handlers/guard';
 import { createMessageActions, messageHandlerOn } from './handlers/message';
 import {
   type EffectDeps,
@@ -36,7 +36,6 @@ import { wireStreamingHandlers } from './handlers/streaming';
 import { systemHandlerOn } from './handlers/system';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
 export interface ChannelMessagesValue {
   channelId: string;
@@ -105,17 +104,15 @@ export function useChannelMessagesActions(): MessagesActionsValue {
 export function ChannelMessagesProvider({
   channelId,
   initialState,
-  onTitleChange,
-  onStatusChange,
+  onChange,
   dequeueMessage,
   messageQueueRef,
   resetStreamingRefsRef,
   children,
 }: {
   channelId: string;
-  initialState?: ChannelInitialState;
-  onTitleChange?: (title: string) => void;
-  onStatusChange?: (status: 'default' | 'pending' | 'done') => void;
+  initialState?: Partial<ChannelState>;
+  onChange?: (update: { title?: string; status?: 'default' | 'pending' | 'done' }) => void;
   dequeueMessage: () => string | undefined;
   messageQueueRef: RefObject<string[]>;
   resetStreamingRefsRef: RefObject<() => void>;
@@ -135,21 +132,22 @@ export function ChannelMessagesProvider({
   const wasStreamedViaDelta = useRef(false);
 
   const dequeueMessageRef = useRef(dequeueMessage);
-  const onStatusChangeRef = useRef(onStatusChange);
-  const onTitleChangeRef = useRef(onTitleChange);
+  const onChangeRef = useRef(onChange);
   useLayoutEffect(() => {
     dequeueMessageRef.current = dequeueMessage;
-    onStatusChangeRef.current = onStatusChange;
-    onTitleChangeRef.current = onTitleChange;
+    onChangeRef.current = onChange;
   });
 
-  // ── Join session + cross-window status sync ──
-  useEffect(() => {
-    if (!channelId) return;
-    let joined = false;
+  const joinedRef = useRef(false);
 
-    socket.emit('session:join', { channelId }, (snapshot) => {
-      if ('error' in snapshot) return;
+  function joinSession() {
+    socket.emit('session:join', { channelId }, (raw: unknown) => {
+      const parsed = sessionJoinResponseSchema.safeParse(raw);
+      if (!parsed.success || 'error' in parsed.data) {
+        joinedRef.current = true; // allow session:states even on join failure
+        return;
+      }
+      const snapshot = parsed.data;
       setChannelState((prev) => {
         const updated = {
           ...prev,
@@ -160,24 +158,32 @@ export function ChannelMessagesProvider({
         }
         return updated;
       });
-      joined = true;
+      joinedRef.current = true;
     });
+  }
 
-    function onSessionStates(payload: Parameters<ServerToClientEvents['session:states']>[0]) {
-      if (!joined) return;
-      const match = payload.sessions.find((s) => s.channelId === channelId);
-      if (!match) return;
-      setChannelState((prev) => {
-        if (prev.status === 'processing' || prev.status === 'cancelling') return prev;
-        const next =
-          match.state === 'busy'
-            ? ('busy' as const)
-            : match.state === 'exited'
-              ? ('disconnected' as const)
-              : ('idle' as const);
-        return prev.status === next ? prev : { ...prev, status: next };
-      });
-    }
+  function onSessionStates(payload: Payload<'session:states'>) {
+    if (!joinedRef.current) return;
+    const match = payload.sessions.find((s) => s.channelId === channelId);
+    if (!match) return;
+    setChannelState((prev) => {
+      if (prev.status === 'processing' || prev.status === 'cancelling') return prev;
+      const next =
+        match.state === 'busy'
+          ? ('busy' as const)
+          : match.state === 'exited'
+            ? ('disconnected' as const)
+            : ('idle' as const);
+      return prev.status === next ? prev : { ...prev, status: next };
+    });
+  }
+
+  // ── Join session + cross-window status sync ──
+  // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession/onSessionStates use channelId+socket which are in deps
+  useEffect(() => {
+    if (!channelId) return;
+    joinedRef.current = false;
+    joinSession();
     socket.on('session:states', onSessionStates);
     return () => {
       socket.off('session:states', onSessionStates);
@@ -187,7 +193,7 @@ export function ChannelMessagesProvider({
   // ── Status change callback ──
   useEffect(() => {
     if (channelState.status === 'idle' || channelState.status === 'connecting') {
-      onStatusChangeRef.current?.('default');
+      onChangeRef.current?.({ status: 'default' });
     }
   }, [channelState.status]);
 
@@ -198,7 +204,7 @@ export function ChannelMessagesProvider({
     const firstUserMsg = channelState.messages.find((m) => m.role === 'user' && m.type === 'text');
     if (firstUserMsg) {
       titleSetRef.current = true;
-      onTitleChangeRef.current?.(firstUserMsg.content.slice(0, 30));
+      onChangeRef.current?.({ title: firstUserMsg.content.slice(0, 30) });
     }
   }, [channelState.messages]);
 
@@ -257,49 +263,46 @@ export function ChannelMessagesProvider({
     });
   }, [channelId, socket]);
 
+  function onMessageResult(p: Payload<'message:result'>) {
+    if (p.channelId !== channelId && p.channelId !== '') return;
+    resetStreamingRefs();
+    const stats: ChatStats = {
+      costUsd: p.stats.totalCostUsd,
+      durationMs: p.stats.durationMs,
+      inputTokens: p.stats.inputTokens,
+      outputTokens: p.stats.outputTokens,
+      numTurns: p.stats.numTurns,
+      modelUsage: p.stats.modelUsage,
+    };
+    setChannelState((prev) => ({
+      ...prev,
+      status: 'idle' as const,
+      stats,
+      isContextCompressed: false,
+      statusText: null,
+      messages: p.errors?.length
+        ? [
+            ...prev.messages,
+            msg({ role: 'system', type: 'error', content: p.errors[0] }),
+            msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
+          ]
+        : [...prev.messages, msg({ role: 'system', type: 'result', content: '', meta: { stats } })],
+    }));
+    const next = dequeueMessageRef.current();
+    if (!next) return;
+    socket.emit('chat:send', { channelId, message: next });
+    setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
+  }
+
   // ── Special: message:result (dequeue + socket.emit) ──
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resetStreamingRefs only touches refs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onMessageResult uses channelId+socket which are in deps
   useEffect(() => {
     if (!socket) return;
-    const guard = createGuard(channelId);
-    function onMessageResult(p: Payload<'message:result'>) {
-      if (!guard(p)) return;
-      resetStreamingRefs();
-      const stats: ChatStats = {
-        costUsd: p.stats.totalCostUsd,
-        durationMs: p.stats.durationMs,
-        inputTokens: p.stats.inputTokens,
-        outputTokens: p.stats.outputTokens,
-        numTurns: p.stats.numTurns,
-        modelUsage: p.stats.modelUsage,
-      };
-      setChannelState((prev) => ({
-        ...prev,
-        status: 'idle' as const,
-        stats,
-        isContextCompressed: false,
-        statusText: null,
-        messages: p.errors?.length
-          ? [
-              ...prev.messages,
-              msg({ role: 'system', type: 'error', content: p.errors[0] }),
-              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
-            ]
-          : [
-              ...prev.messages,
-              msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
-            ],
-      }));
-      const next = dequeueMessageRef.current();
-      if (!next) return;
-      socket.emit('chat:send', { channelId, message: next });
-      setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
-    }
     socket.on('message:result', onMessageResult);
     return () => {
       socket.off('message:result', onMessageResult);
     };
-  }, [channelId, socket]); // resetStreamingRefs only touches refs, stable
+  }, [channelId, socket]);
 
   // Side-effect events are now handled by auto-wiring via messagesEffects
 

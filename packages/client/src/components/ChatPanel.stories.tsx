@@ -1,38 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { ChannelProvider } from '../contexts/channel';
-import { PluginProvider } from '../contexts/PluginContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
+import { withStoryChannel } from '../test/story-decorator';
 import { ChatPanel } from './ChatPanel';
-
-const socket = createSocket();
 
 const meta = {
   component: ChatPanel,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-  decorators: [
-    (Story) => {
-      return (
-        <SocketProvider socket={socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <TabProvider>
-                <ChannelProvider channelId="story-session">
-                  <div className="h-[600px] bg-bg text-text">
-                    <Story />
-                  </div>
-                </ChannelProvider>
-              </TabProvider>
-            </PluginProvider>
-          </SessionProvider>
-        </SocketProvider>
-      );
-    },
-  ],
+  decorators: [withStoryChannel({ className: 'h-[600px] bg-bg text-text' })],
 } satisfies Meta<typeof ChatPanel>;
 
 export default meta;

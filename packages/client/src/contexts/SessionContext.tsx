@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
 
-export interface AuthState {
+interface AuthState {
   status: 'idle' | 'waiting' | 'code' | 'success' | 'error';
   authUrl: string | null;
   errorMsg: string | null;

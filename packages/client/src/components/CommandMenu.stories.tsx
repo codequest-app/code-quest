@@ -1,14 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ChannelProvider } from '../contexts/channel';
-import { PluginProvider } from '../contexts/PluginContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
+import { withStoryChannel } from '../test/story-decorator';
 import { CommandMenu } from './CommandMenu';
-
-const socket = createSocket();
 
 const meta = {
   component: CommandMenu,
@@ -26,21 +19,9 @@ const meta = {
     onAttachFile: fn(),
   },
   decorators: [
-    (Story) => (
-      <SocketProvider socket={socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <TabProvider>
-              <ChannelProvider channelId="story-session">
-                <div className="relative h-[400px] bg-bg text-text flex items-end p-4">
-                  <Story />
-                </div>
-              </ChannelProvider>
-            </TabProvider>
-          </PluginProvider>
-        </SessionProvider>
-      </SocketProvider>
-    ),
+    withStoryChannel({
+      className: 'relative h-[400px] bg-bg text-text flex items-end p-4',
+    }),
   ],
 } satisfies Meta<typeof CommandMenu>;
 

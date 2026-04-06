@@ -1,7 +1,6 @@
-import type { PlanCommentData, ServerToClientEvents } from '@code-quest/shared';
-import type { ChannelState } from '../../../types/chat';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
+import type { PlanCommentData } from '@code-quest/shared';
+import type { ChannelState } from '@/types/chat';
+import type { Payload } from './guard';
 
 // ── On handlers ──
 

@@ -1,4 +1,3 @@
-import { resolve } from 'node:path';
 import type {
   ChannelMetaCache,
   ClientMessage,
@@ -49,17 +48,17 @@ export class Channel {
   // ── State ──
   private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
-  private _sessionId: string | null = null;
-  private _cwd: string | undefined;
+  sessionId: string | null = null;
+  cwd: string | undefined;
   private _worktree: WorktreeInfo | null = null;
-  private _lastError: string | undefined;
-  private _exited = false;
+  lastError: string | undefined;
+  exited = false;
 
   // ── UI / Metadata (not CLI config) ──
-  private _titleGenerated = false;
-  private _pendingTitlePrompt: string | undefined;
-  private _title: string | undefined;
-  private _parentId: string | undefined;
+  titleGenerated = false;
+  pendingTitlePrompt: string | undefined;
+  title: string | undefined;
+  parentId: string | undefined;
 
   // ── Processing ──
   private _isProcessing = false;
@@ -74,21 +73,7 @@ export class Channel {
   private readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── Meta ──
-  private _terminalLines: string[] = [];
-
-  get sessionId(): string | null {
-    return this._sessionId;
-  }
-  set sessionId(v: string | null) {
-    this._sessionId = v;
-  }
-
-  get cwd(): string {
-    return this._cwd ?? process.cwd();
-  }
-  set cwd(v: string | undefined) {
-    this._cwd = v ? resolve(v) : undefined;
-  }
+  terminalLines: string[] = [];
 
   get worktree(): WorktreeInfo | null {
     return this._worktree;
@@ -96,55 +81,6 @@ export class Channel {
   set worktree(v: WorktreeInfo | null) {
     this._worktree = v;
     if (v) this.cwd = v.path;
-  }
-
-  get lastError(): string | undefined {
-    return this._lastError;
-  }
-  set lastError(v: string | undefined) {
-    this._lastError = v;
-  }
-
-  get exited(): boolean {
-    return this._exited;
-  }
-  set exited(v: boolean) {
-    this._exited = v;
-  }
-
-  get titleGenerated(): boolean {
-    return this._titleGenerated;
-  }
-  set titleGenerated(v: boolean) {
-    this._titleGenerated = v;
-  }
-
-  get pendingTitlePrompt(): string | undefined {
-    return this._pendingTitlePrompt;
-  }
-  set pendingTitlePrompt(v: string | undefined) {
-    this._pendingTitlePrompt = v;
-  }
-
-  get title(): string | undefined {
-    return this._title;
-  }
-  set title(v: string | undefined) {
-    this._title = v;
-  }
-
-  get parentId(): string | undefined {
-    return this._parentId;
-  }
-  set parentId(v: string | undefined) {
-    this._parentId = v;
-  }
-
-  get terminalLines(): string[] {
-    return this._terminalLines;
-  }
-  set terminalLines(v: string[]) {
-    this._terminalLines = v;
   }
 
   constructor(

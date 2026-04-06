@@ -1,9 +1,86 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { findModel } from '../utils/model-utils';
-import { navigateItems } from '../utils/navigate-items';
 import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
 import { MenuItemRow, MenuSection } from './command-menu-parts';
+
+function navigateItems(
+  key: string,
+  items: MenuItem[],
+  activeId: string | null,
+): { newActiveId: string | null; shouldSelect: boolean } {
+  if (key === 'Enter' || key === 'Tab') {
+    return { newActiveId: activeId, shouldSelect: true };
+  }
+  if (key === 'ArrowDown' || key === 'ArrowUp') {
+    if (items.length === 0) return { newActiveId: activeId, shouldSelect: false };
+    const idx = items.findIndex((i) => i.id === activeId);
+    const next =
+      key === 'ArrowDown'
+        ? idx < items.length - 1
+          ? idx + 1
+          : 0
+        : idx > 0
+          ? idx - 1
+          : items.length - 1;
+    return { newActiveId: items[next]?.id ?? null, shouldSelect: false };
+  }
+  return { newActiveId: activeId, shouldSelect: false };
+}
+
+function ModelMenuSection({
+  showDivider,
+  switchModelVisible,
+  switchModelItem,
+  modelLabel,
+  filteredModel,
+  activeId,
+  activeItemRef,
+  onHover,
+}: {
+  showDivider: boolean;
+  switchModelVisible: boolean;
+  switchModelItem: MenuItem | null;
+  modelLabel: string;
+  filteredModel: MenuItem[];
+  activeId: string | null;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
+  onHover: (id: string) => void;
+}) {
+  const isActive = (id: string) => id === activeId;
+  return (
+    <>
+      {showDivider && <div className="h-px bg-border my-1" />}
+      <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">Model</div>
+      {switchModelVisible && switchModelItem && (
+        <MenuItemRow
+          item={{
+            ...switchModelItem,
+            trailing: (
+              <span
+                className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
+              >
+                {modelLabel}
+              </span>
+            ),
+          }}
+          isActive={isActive('switch-model')}
+          activeItemRef={activeItemRef}
+          onHover={onHover}
+        />
+      )}
+      {filteredModel.map((item) => (
+        <MenuItemRow
+          key={item.id}
+          item={item}
+          isActive={isActive(item.id)}
+          activeItemRef={activeItemRef}
+          onHover={onHover}
+        />
+      ))}
+    </>
+  );
+}
 
 export interface CommandMenuProps {
   // Dialog callbacks — managed by parent (ComposeToolbar)
@@ -144,7 +221,37 @@ export function CommandMenu({
     closeRef.current = close;
   });
 
+  function handleNavigateAndSelect(
+    key: string,
+    items: MenuItem[],
+    opts: {
+      insertSlash: (text: string) => void;
+      executeSlash: (label: string) => void;
+      shouldInsert: boolean;
+      close: () => void;
+    },
+  ) {
+    setActiveId((prev) => {
+      const { newActiveId, shouldSelect } = navigateItems(key, items, prev);
+      if (shouldSelect) {
+        const item = items.find((i) => i.id === newActiveId);
+        if (item?.id.startsWith('slash-')) {
+          if (key === 'Tab' || opts.shouldInsert) {
+            opts.insertSlash(`${item.label} `);
+          } else {
+            opts.executeSlash(item.label);
+          }
+          opts.close();
+        } else if (item) {
+          item.onClick?.();
+        }
+      }
+      return newActiveId;
+    });
+  }
+
   // When externally opened (typing /), handle navigation keys at document level
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleNavigateAndSelect stable via React Compiler
   useEffect(() => {
     if (!externalOpen) return;
     const handleNavKey = (e: KeyboardEvent) => {
@@ -152,22 +259,11 @@ export function CommandMenu({
       if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) return;
       if (items.length === 0) return;
       e.preventDefault();
-      setActiveId((prev) => {
-        const { newActiveId, shouldSelect } = navigateItems(e.key, items, prev);
-        if (shouldSelect) {
-          const item = items.find((i) => i.id === newActiveId);
-          if (item?.id.startsWith('slash-')) {
-            if (e.key === 'Tab' || hasTextBeforeSlashRef.current) {
-              insertSlashCommandRef.current(`${item.label} `);
-            } else {
-              executeSlashCommandRef.current(item.label);
-            }
-            closeRef.current();
-          } else if (item) {
-            item.onClick?.();
-          }
-        }
-        return newActiveId;
+      handleNavigateAndSelect(e.key, items, {
+        insertSlash: (t) => insertSlashCommandRef.current(t),
+        executeSlash: (l) => executeSlashCommandRef.current(l),
+        shouldInsert: hasTextBeforeSlashRef.current,
+        close: () => closeRef.current(),
       });
     };
     document.addEventListener('keydown', handleNavKey);
@@ -284,25 +380,13 @@ export function CommandMenu({
   const handleFilterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) return;
     e.preventDefault();
-    const { newActiveId, shouldSelect } = navigateItems(e.key, flatItems, activeId);
-    setActiveId(newActiveId);
-    if (shouldSelect) {
-      const item = flatItems.find((i) => i.id === newActiveId);
-      if (item?.id.startsWith('slash-')) {
-        if (e.key === 'Tab') {
-          compose.insertSlashCommand(`${item.label} `);
-        } else {
-          // Button-opened menu: no preceding text → execute
-          compose.executeSlashCommand(item.label);
-        }
-        close();
-      } else if (item) {
-        item.onClick?.();
-      }
-    }
+    handleNavigateAndSelect(e.key, flatItems, {
+      insertSlash: (t) => compose.insertSlashCommand(t),
+      executeSlash: (l) => compose.executeSlashCommand(l),
+      shouldInsert: false,
+      close,
+    });
   };
-
-  const isActive = (id: string) => id === activeId;
 
   return (
     <div ref={menuRef}>
@@ -361,42 +445,16 @@ export function CommandMenu({
                 />
 
                 {modelSectionVisible && (
-                  <>
-                    {filteredContext.length > 0 && <div className="h-px bg-border my-1" />}
-                    <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">Model</div>
-                    {switchModelVisible && switchModelItem && (
-                      <MenuItemRow
-                        item={{
-                          id: 'switch-model',
-                          label: 'Switch model',
-                          section: 'Model',
-                          trailing: (
-                            <span
-                              className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
-                            >
-                              {modelLabel}
-                            </span>
-                          ),
-                          onClick: () => {
-                            onOpenModelPicker?.();
-                            close();
-                          },
-                        }}
-                        isActive={isActive('switch-model')}
-                        activeItemRef={activeItemRef}
-                        onHover={setActiveId}
-                      />
-                    )}
-                    {filteredModel.map((item) => (
-                      <MenuItemRow
-                        key={item.id}
-                        item={item}
-                        isActive={isActive(item.id)}
-                        activeItemRef={activeItemRef}
-                        onHover={setActiveId}
-                      />
-                    ))}
-                  </>
+                  <ModelMenuSection
+                    showDivider={filteredContext.length > 0}
+                    switchModelVisible={switchModelVisible}
+                    switchModelItem={switchModelItem}
+                    modelLabel={modelLabel}
+                    filteredModel={filteredModel}
+                    activeId={activeId}
+                    activeItemRef={activeItemRef}
+                    onHover={setActiveId}
+                  />
                 )}
 
                 <MenuSection

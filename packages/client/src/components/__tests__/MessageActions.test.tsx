@@ -1,43 +1,31 @@
-import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
-async function sendAndReceive(
-  claude: { emit: (seg: string) => void },
-  user: {
-    click: (el: Element) => Promise<void>;
-    type: (el: Element, text: string) => Promise<void>;
-    keyboard: (key: string) => Promise<void>;
-  },
-) {
-  const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-  await user.click(textarea);
-  await user.type(textarea, 'hello');
-  await user.keyboard('{Enter}');
-  await claude.emit(s.assistant('hi'));
-  await claude.emit(s.result());
+async function setupWithTurn() {
+  const ctx = await renderWithWorkspace();
+  await sendUserMessage(ctx.user, 'hello');
+  await emitAssistantTurn(ctx.claude);
+  return ctx;
 }
 
 describe('MessageActions', () => {
   it('shows action button on user messages', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    await setupWithTurn();
 
     expect(screen.getByTitle('Message actions')).toBeInTheDocument();
   });
 
   it('action button count matches user message count', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    await setupWithTurn();
 
     const actionButtons = screen.getAllByTitle('Message actions');
     expect(actionButtons).toHaveLength(1);
   });
 
   it('popup shows rewind option', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
 
@@ -45,8 +33,7 @@ describe('MessageActions', () => {
   });
 
   it('popup shows fork option', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
 
@@ -54,8 +41,7 @@ describe('MessageActions', () => {
   });
 
   it('clicking rewind sends rewind_code to server', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
     await user.click(screen.getByText('Rewind code to here'));
@@ -65,8 +51,7 @@ describe('MessageActions', () => {
   });
 
   it('clicking fork sends fork_conversation to server', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
     await user.click(screen.getByText('Fork conversation from here'));
@@ -75,8 +60,7 @@ describe('MessageActions', () => {
   });
 
   it('closing popup hides options', async () => {
-    const { claude, user } = await renderWithWorkspace();
-    await sendAndReceive(claude, user);
+    const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
     expect(screen.getByText('Rewind code to here')).toBeInTheDocument();

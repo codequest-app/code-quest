@@ -34,7 +34,8 @@ export function create(
         file: f.path,
       }));
       callback?.({ branch: status.current ?? 'unknown', isClean: status.isClean(), changedFiles });
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'Failed to get git status');
       callback?.({ branch: 'unknown', isClean: true, changedFiles: [] });
     }
   }

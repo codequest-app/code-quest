@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { WorktreeInfo } from '@code-quest/shared';
+import { logger } from '../logger.ts';
 import { createGit, rawGit } from '../socket/utils/git.ts';
 
 const MAX_NAME_LENGTH = 100;
@@ -32,18 +33,20 @@ function generateWorktreeName(): string {
   return `claude-session-${new Date()
     .toISOString()
     .replace(/[^0-9]/g, '')
+    // 14 digits = YYYYMMDDHHmmss (ISO timestamp with non-digits stripped)
     .slice(0, 14)}`;
 }
 
 export async function getRepoRoot(cwd: string): Promise<string | null> {
   try {
     return (await createGit(cwd).revparse(['--show-toplevel'])).trim();
-  } catch {
+  } catch (err) {
+    logger.debug(err, 'failed to get repo root');
     return null;
   }
 }
 
-export async function getDefaultBranch(repoRoot: string): Promise<string> {
+async function getDefaultBranch(repoRoot: string): Promise<string> {
   const git = createGit(repoRoot);
   const result = await rawGit(git, ['symbolic-ref', 'refs/remotes/origin/HEAD']);
   if (result.exitCode === 0) {

@@ -6,10 +6,11 @@ export class ChildProcessProvider implements ProcessProvider {
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle {
     const controller = new AbortController();
 
-    const proc = spawn(command, args, {
+    const spawnOpts: SpawnOptions = {
       stdio: ['pipe', 'pipe', 'pipe'],
       ...options,
-    } as SpawnOptions);
+    };
+    const proc = spawn(command, args, spawnOpts);
 
     // When process exits naturally, abort the controller so readline ends
     proc.on('close', () => {

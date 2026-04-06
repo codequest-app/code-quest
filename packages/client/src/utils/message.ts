@@ -21,12 +21,23 @@ const historyResultSchema = z.object({
   stats: sessionStatsSchema,
 });
 
-export const msg = (fields: Omit<Message, 'id' | 'timestamp'>): Message =>
+export const msg = <T extends Message['type']>(
+  fields: Omit<Extract<Message, { type: T }>, 'id' | 'timestamp'>,
+): Extract<Message, { type: T }> =>
   ({
     id: crypto.randomUUID(),
     timestamp: Date.now(),
     ...fields,
-  }) as Message;
+  }) as Extract<Message, { type: T }>;
+
+/**
+ * Patch a message's meta without losing the discriminated union type.
+ * Cast required: TypeScript cannot verify that spreading a discriminated union
+ * member preserves the union — the result type widens to an intersection.
+ */
+export function patchMeta(m: Message, patch: Record<string, unknown>): Message {
+  return { ...m, meta: { ...m.meta, ...patch } } as Message;
+}
 
 interface ClientMessage {
   name: string;

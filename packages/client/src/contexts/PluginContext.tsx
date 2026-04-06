@@ -51,76 +51,73 @@ export function PluginProvider({ children }: { children: ReactNode }) {
     socketRef.current = socket;
   });
 
-  const refreshPlugins = async () => {
-    const s = socketRef.current;
-    const installedResult = await rpc(s, 'plugin:list', {});
-    setState((prev) => ({ ...prev, installed: installedResult.installed }));
-    rpc(s, 'plugin:list', { includeAvailable: true })
-      .then((result) => {
-        setState((prev) => ({
-          ...prev,
-          installed: result.installed.length > 0 ? result.installed : prev.installed,
-          available: result.available,
-        }));
-      })
-      .catch((err) => console.error('Failed to load plugins:', err));
-  };
+  type PluginActions = Omit<PluginContextValue, keyof PluginState>;
 
-  const refreshMarketplaces = async () => {
-    const result = await rpc(socketRef.current, 'plugin:list_marketplaces');
-    setState((prev) => ({ ...prev, marketplaces: result.marketplaces }));
-  };
+  const [actions] = useState<PluginActions>(() => {
+    const refreshPlugins = async () => {
+      const s = socketRef.current;
+      const installedResult = await rpc(s, 'plugin:list', {});
+      setState((prev) => ({ ...prev, installed: installedResult.installed }));
+      rpc(s, 'plugin:list', { includeAvailable: true })
+        .then((result) => {
+          setState((prev) => ({
+            ...prev,
+            installed: result.installed.length > 0 ? result.installed : prev.installed,
+            available: result.available,
+          }));
+        })
+        .catch((err) => console.error('Failed to load plugins:', err));
+    };
 
-  const install = async (pluginId: string, scope: 'user' | 'project' | 'local') => {
-    setState((prev) => ({ ...prev, installing: pluginId }));
-    try {
-      const result = await rpc(socketRef.current, 'plugin:install', { pluginId, scope });
+    const refreshMarketplaces = async () => {
+      const result = await rpc(socketRef.current, 'plugin:list_marketplaces');
+      setState((prev) => ({ ...prev, marketplaces: result.marketplaces }));
+    };
+
+    const install = async (pluginId: string, scope: 'user' | 'project' | 'local') => {
+      setState((prev) => ({ ...prev, installing: pluginId }));
+      try {
+        const result = await rpc(socketRef.current, 'plugin:install', { pluginId, scope });
+        if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
+      } finally {
+        await refreshPlugins();
+        setState((prev) => ({ ...prev, installing: null }));
+      }
+    };
+
+    const uninstall = async (pluginId: string) => {
+      const result = await rpc(socketRef.current, 'plugin:uninstall', { pluginId });
       if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
-    } finally {
       await refreshPlugins();
-      setState((prev) => ({ ...prev, installing: null }));
-    }
-  };
+    };
 
-  const uninstall = async (pluginId: string) => {
-    const result = await rpc(socketRef.current, 'plugin:uninstall', { pluginId });
-    if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
-    await refreshPlugins();
-  };
+    const toggle = async (pluginId: string, enabled: boolean) => {
+      const result = await rpc(socketRef.current, 'plugin:toggle', {
+        pluginId,
+        enabled: !enabled,
+      });
+      if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
+      await refreshPlugins();
+    };
 
-  const toggle = async (pluginId: string, enabled: boolean) => {
-    const result = await rpc(socketRef.current, 'plugin:toggle', {
-      pluginId,
-      enabled: !enabled,
-    });
-    if (result.needsRestart) setState((prev) => ({ ...prev, needsRestart: true }));
-    await refreshPlugins();
-  };
-
-  const addMp = async (source: string) => {
-    await rpc(socketRef.current, 'plugin:add_marketplace', { source });
-    await refreshMarketplaces();
-  };
-
-  const removeMp = async (marketplaceId: string) => {
-    await rpc(socketRef.current, 'plugin:remove_marketplace', { marketplaceId });
-    await refreshMarketplaces();
-  };
+    return {
+      refreshPlugins,
+      refreshMarketplaces,
+      install,
+      uninstall,
+      toggle,
+      addMarketplace: async (source: string) => {
+        await rpc(socketRef.current, 'plugin:add_marketplace', { source });
+        await refreshMarketplaces();
+      },
+      removeMarketplace: async (marketplaceId: string) => {
+        await rpc(socketRef.current, 'plugin:remove_marketplace', { marketplaceId });
+        await refreshMarketplaces();
+      },
+    };
+  });
 
   return (
-    <PluginContext.Provider
-      value={{
-        ...state,
-        refreshPlugins,
-        refreshMarketplaces,
-        install,
-        uninstall,
-        toggle,
-        addMarketplace: addMp,
-        removeMarketplace: removeMp,
-      }}
-    >
-      {children}
-    </PluginContext.Provider>
+    <PluginContext.Provider value={{ ...state, ...actions }}>{children}</PluginContext.Provider>
   );
 }

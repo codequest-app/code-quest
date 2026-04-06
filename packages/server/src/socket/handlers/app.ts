@@ -1,3 +1,4 @@
+import { logger } from '../../logger.ts';
 import type { SettingsStore } from '../../services/settings-store.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
@@ -20,6 +21,7 @@ export function create(
       state: ch.isProcessing ? 'busy' : 'idle',
       title: ch.title,
       modelSetting: ch.sessionConfig?.model,
+      cwd: ch.cwd,
     }));
     let settings: Record<string, unknown> = {};
     try {
@@ -29,8 +31,8 @@ export function create(
         'thinkingLevel',
         'effortLevel',
       ]);
-    } catch {
-      // Settings table may not exist yet
+    } catch (err) {
+      logger.debug({ err }, 'Settings table may not exist yet');
     }
     callback?.({
       settings,
@@ -51,18 +53,15 @@ export function create(
     callback?: SocketCallback,
   ): Promise<void> {
     let models: unknown[] | undefined = channelManager.cachedModels;
-    let effort: string | undefined;
+    let effort: unknown;
     try {
       if (!models) {
-        models = (await settingsStore.get(channelManager.provider, 'models')) as
-          | unknown[]
-          | undefined;
+        const raw = await settingsStore.get(channelManager.provider, 'models');
+        if (Array.isArray(raw)) models = raw;
       }
-      effort = (await settingsStore.get(channelManager.provider, 'effortLevel')) as
-        | string
-        | undefined;
-    } catch {
-      // Settings table may not exist yet
+      effort = await settingsStore.get(channelManager.provider, 'effortLevel');
+    } catch (err) {
+      logger.debug({ err }, 'Settings table may not exist yet');
     }
     callback?.({
       providerConfig: channelManager.providerClientConfig,

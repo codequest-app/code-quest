@@ -1,16 +1,12 @@
-import type {
-  ControlPermissionResponse,
-  PendingControl,
-  ServerToClientEvents,
-} from '@code-quest/shared';
+import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
 import type { MutableRefObject } from 'react';
-import type { TypedSocket } from '../../../socket/client';
-import { channelEmit } from '../../../socket/rpc';
-import type { ChannelState, PendingDiffReview, PendingElicitation } from '../../../types/chat';
-import { getFeedbackLabel } from '../../../utils/feedback-label';
-import { msg } from '../../../utils/message';
-
-type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
+import type { TypedSocket } from '@/socket/client';
+import { channelEmit } from '@/socket/rpc';
+import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
+import { getFeedbackLabel } from '@/utils/feedback-label';
+import { msg } from '@/utils/message';
+import type { Payload } from './guard';
+import type { EffectDeps } from './notification';
 
 // ── On handlers (pure state) ──
 
@@ -66,6 +62,25 @@ export const controlHandlers = {
   'control:diff_review': onControlDiffReview,
   'chat:cancel_request': onCancelRequest,
 } satisfies Record<string, (state: ControlState, payload: never) => ControlState>;
+
+// ── Effect handlers (side effects, no state change) ──
+
+function onControlMcpEffect(deps: EffectDeps, p: Payload<'control:mcp'>): void {
+  const mcpMsg = p.message;
+  deps.socket.emit('chat:respond', {
+    channelId: deps.channelId,
+    requestId: p.requestId,
+    response: {
+      jsonrpc: '2.0',
+      result: {},
+      id: typeof mcpMsg.id === 'string' || typeof mcpMsg.id === 'number' ? mcpMsg.id : null,
+    },
+  });
+}
+
+export const controlHandlerEffects = {
+  'control:mcp': onControlMcpEffect,
+} satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
 
 // ── Emit actions (send) ──
 

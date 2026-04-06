@@ -4,6 +4,7 @@ import {
   planCommentPayloadSchema,
   planRemoveCommentPayloadSchema,
 } from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
@@ -51,7 +52,8 @@ export function create(emitter: ChannelEmitter): PlanApi {
     try {
       const { channelId } = channelIdPayloadSchema.parse(payload);
       cb?.({ comments: commentsMap.get(channelId) ?? [] });
-    } catch {
+    } catch (err) {
+      logger.debug(err, 'failed to get plan comments');
       cb?.({ comments: [] });
     }
   }

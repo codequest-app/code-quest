@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RawEntry } from '@code-quest/summoner';
+import { type RawEntry, rawEntrySchema } from '@code-quest/summoner';
 import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
 const SAFE_SESSION_ID = /^[a-zA-Z0-9_-]+$/;
@@ -25,7 +25,7 @@ export class FileRawStore implements RawEventStore {
       return content
         .split('\n')
         .filter((line) => line.trim() !== '')
-        .map((line) => JSON.parse(line) as RawEntry);
+        .map((line) => rawEntrySchema.parse(JSON.parse(line)));
     } catch (err: unknown) {
       if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
         return [];
