@@ -77,6 +77,18 @@ describe('buildMenuItems', () => {
     expect(close).toHaveBeenCalled();
   });
 
+  it('effort item shows current level in label', () => {
+    const { model } = buildMenuItems(defaultParams({ effort: 'low' }));
+    const effortItem = model.find((i) => i.id === 'effort-level');
+    expect(effortItem?.label).toBe('Effort (Low)');
+  });
+
+  it('effort item shows just Effort when no level set', () => {
+    const { model } = buildMenuItems(defaultParams({ effort: null }));
+    const effortItem = model.find((i) => i.id === 'effort-level');
+    expect(effortItem?.label).toBe('Effort');
+  });
+
   it('context section includes rewind item', () => {
     const { context } = buildMenuItems(defaultParams());
     expect(context.map((i) => i.id)).toContain('rewind');

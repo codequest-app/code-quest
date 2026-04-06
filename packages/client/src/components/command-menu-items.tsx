@@ -134,7 +134,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const model: MenuItem[] = [
     {
       id: 'effort-level',
-      label: 'Effort',
+      label: effort ? `Effort (${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : 'Effort',
       section: 'Model',
       trailing: (
         <EffortSwitch level={effort ?? undefined} levels={effortLevels} onSelect={onSetEffort} />
