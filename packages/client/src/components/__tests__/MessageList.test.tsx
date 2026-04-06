@@ -211,6 +211,26 @@ describe('MessageList streaming', () => {
     expect(screen.queryAllByText(/Second message/).length).toBeGreaterThan(0);
   });
 
+  it('thinking_delta shows "Thinking..." while streaming', async () => {
+    const { claude } = await setup();
+    await userEvent.click(screen.getByText('TriggerSend'));
+    await claude.emit(s.thinkingDelta('Let me'));
+    await claude.emit(s.thinkingDelta(' think'));
+
+    expect(await screen.findByText('Thinking...')).toBeInTheDocument();
+  });
+
+  it('thinking shows "Thought for Xs" after result arrives', async () => {
+    const { claude } = await setup();
+    await userEvent.click(screen.getByText('TriggerSend'));
+    await claude.emit(s.thinkingDelta('Let me think'));
+    await claude.emit(s.thinking('Let me think'));
+    await claude.emit(s.assistant('answer'));
+    await claude.emit(s.result({ durationMs: 3000 }));
+
+    expect(await screen.findByText('Thought for 3s')).toBeInTheDocument();
+  });
+
   it('thinking_delta followed by thinking does not duplicate', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));

@@ -20,7 +20,7 @@ import {
   useState,
 } from 'react';
 import { type ChannelState, initialChannelState } from '../../types/chat';
-import { buildMessagesFromHistory, msg } from '../../utils/message';
+import { buildMessagesFromHistory, msg, patchMeta } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { createFileActions } from './handlers/file';
 import { type Payload, wireHandlers } from './handlers/guard';
@@ -274,20 +274,29 @@ export function ChannelMessagesProvider({
       numTurns: p.stats.numTurns,
       modelUsage: p.stats.modelUsage,
     };
-    setChannelState((prev) => ({
-      ...prev,
-      status: 'idle' as const,
-      stats,
-      isContextCompressed: false,
-      statusText: null,
-      messages: p.errors?.length
+    setChannelState((prev) => {
+      // Finalize thinking blocks: clear isStreaming, set durationMs
+      const finalized = prev.messages.map((m) =>
+        m.type === 'thinking' && m.meta?.isStreaming
+          ? patchMeta(m, { isStreaming: false, durationMs: stats.durationMs })
+          : m,
+      );
+      const base = p.errors?.length
         ? [
-            ...prev.messages,
+            ...finalized,
             msg({ role: 'system', type: 'error', content: p.errors[0] }),
             msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
           ]
-        : [...prev.messages, msg({ role: 'system', type: 'result', content: '', meta: { stats } })],
-    }));
+        : [...finalized, msg({ role: 'system', type: 'result', content: '', meta: { stats } })];
+      return {
+        ...prev,
+        status: 'idle' as const,
+        stats,
+        isContextCompressed: false,
+        statusText: null,
+        messages: base,
+      };
+    });
     const next = dequeueMessageRef.current();
     if (!next) return;
     socket.emit('chat:send', { channelId, message: next });

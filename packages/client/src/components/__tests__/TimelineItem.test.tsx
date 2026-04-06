@@ -34,6 +34,47 @@ describe('Conversation display — tool use timeline', () => {
     expect(screen.getByText('Bash')).toBeInTheDocument();
   });
 
+  it('in-progress tool shows accent pulsing dot', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendUserMessage(user, 'read file');
+    await claude.emit(
+      s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
+    );
+    // No tool result yet — in progress
+
+    const dot = document.querySelector('.rounded-full.animate-pulse');
+    expect(dot).toBeInTheDocument();
+    expect(dot).toHaveClass('bg-accent');
+  });
+
+  it('successful tool shows green dot', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendUserMessage(user, 'read file');
+    await claude.emit(
+      s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
+    );
+    await claude.emit(s.toolResult('toolu_1', 'content'));
+    await emitAssistantTurn(claude, 'done');
+
+    const dots = document.querySelectorAll('.rounded-full.bg-success');
+    expect(dots.length).toBeGreaterThan(0);
+  });
+
+  it.todo('failed tool shows red dot — needs is_error to flow through summoner→shared→client pipeline', async () => {
+    const { claude, user } = await renderWithWorkspace();
+    await sendUserMessage(user, 'read file');
+    await claude.emit(
+      s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
+    );
+    const errorResult = JSON.parse(s.toolResult('toolu_1', 'file not found'));
+    errorResult.message.content[0].is_error = true;
+    await claude.emit(JSON.stringify(errorResult));
+    await emitAssistantTurn(claude, 'failed');
+
+    const dots = document.querySelectorAll('.rounded-full.bg-danger');
+    expect(dots.length).toBeGreaterThan(0);
+  });
+
   it('renders thinking message as collapsible block', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'think about this');

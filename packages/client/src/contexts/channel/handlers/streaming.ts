@@ -105,7 +105,13 @@ export function wireStreamingHandlers({
       ...prev,
       messages: [
         ...prev.messages,
-        msg({ role: 'assistant', type: 'thinking', content, parentToolUseId }),
+        msg({
+          role: 'assistant',
+          type: 'thinking',
+          content,
+          parentToolUseId,
+          meta: { isStreaming: true },
+        }),
       ],
     }));
   }

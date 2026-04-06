@@ -19,7 +19,7 @@ function dotClass(node: MessageNode): string {
   const result = getToolResult(node);
   if (result?.is_error) return 'bg-danger';
   if (result) return 'bg-success';
-  return 'bg-warning animate-pulse';
+  return 'bg-accent animate-pulse';
 }
 
 export function CollapsibleTimeline({
