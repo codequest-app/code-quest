@@ -45,7 +45,7 @@ describe('WorkspaceLayout', () => {
 
   it('renders a ChannelProvider per tab with ChatPanel inside', () => {
     renderLayout({
-      tabs: { 'sess-a': { tabStatus: 'default' } },
+      tabs: { 'sess-a': { tabStatus: 'idle' } },
       activeTabId: 'sess-a',
     });
 
@@ -56,8 +56,8 @@ describe('WorkspaceLayout', () => {
   it('renders one ChannelProvider per tab with CSS show/hide', () => {
     renderLayout({
       tabs: {
-        'sess-a': { tabStatus: 'default' },
-        'sess-b': { tabStatus: 'default' },
+        'sess-a': { tabStatus: 'idle' },
+        'sess-b': { tabStatus: 'idle' },
       },
       activeTabId: 'sess-a',
     });
@@ -83,7 +83,7 @@ describe('WorkspaceLayout', () => {
 
   it('renders TabBar above workspace panels', () => {
     renderLayout({
-      tabs: { 'sess-a': { tabStatus: 'default' } },
+      tabs: { 'sess-a': { tabStatus: 'idle' } },
       activeTabId: 'sess-a',
     });
 
@@ -93,8 +93,8 @@ describe('WorkspaceLayout', () => {
   it('close tab removes tab from UI', async () => {
     renderLayout({
       tabs: {
-        'sess-a': { tabStatus: 'default' },
-        'sess-b': { tabStatus: 'default' },
+        'sess-a': { tabStatus: 'idle' },
+        'sess-b': { tabStatus: 'idle' },
       },
       activeTabId: 'sess-a',
     });

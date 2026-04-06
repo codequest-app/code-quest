@@ -58,5 +58,5 @@ export interface InitOptions {
 
 export type ChannelChangeUpdate = {
   title?: string;
-  status?: 'default' | 'pending' | 'done';
+  status?: SessionStatus;
 };

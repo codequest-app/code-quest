@@ -60,7 +60,7 @@ describe('TabProvider', () => {
       expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toHaveProperty('tab-1');
       expect(JSON.parse(screen.getByTestId('tabs').textContent!)['tab-1']).toEqual({
         title: undefined,
-        tabStatus: 'default',
+        tabStatus: 'connecting',
       });
     });
 
@@ -211,16 +211,16 @@ describe('TabProvider', () => {
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
-            <button type="button" onClick={() => setTabStatus('tab-1', 'pending')}>
-              pending
+            <button type="button" onClick={() => setTabStatus('tab-1', 'processing')}>
+              processing
             </button>
           </>
         );
       }
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
-      await user.click(screen.getByText('pending'));
-      expect(screen.getByTestId('status')).toHaveTextContent('pending');
+      await user.click(screen.getByText('processing'));
+      expect(screen.getByTestId('status')).toHaveTextContent('processing');
     });
 
     it('setTabTitle and setTabStatus work independently', async () => {
@@ -235,8 +235,8 @@ describe('TabProvider', () => {
             <button type="button" onClick={() => setTabTitle('tab-1', 'Hello')}>
               title
             </button>
-            <button type="button" onClick={() => setTabStatus('tab-1', 'done')}>
-              done
+            <button type="button" onClick={() => setTabStatus('tab-1', 'disconnected')}>
+              disconnected
             </button>
           </>
         );
@@ -244,10 +244,10 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('title'));
-      await user.click(screen.getByText('done'));
+      await user.click(screen.getByText('disconnected'));
       expect(JSON.parse(screen.getByTestId('tab').textContent!)).toEqual({
         title: 'Hello',
-        tabStatus: 'done',
+        tabStatus: 'disconnected',
       });
     });
 
@@ -571,7 +571,7 @@ describe('TabProvider', () => {
             onClick={() => {
               addTab('t1');
               setActiveTab('t1');
-              setTabStatus('t1', 'pending');
+              setTabStatus('t1', 'processing');
             }}
           >
             trigger
@@ -601,7 +601,7 @@ describe('TabProvider', () => {
               onClick={() => {
                 addTab('t1');
                 setActiveTab('t1');
-                setTabStatus('t1', 'pending');
+                setTabStatus('t1', 'processing');
               }}
             >
               pending
@@ -609,7 +609,7 @@ describe('TabProvider', () => {
             <button
               type="button"
               data-testid="set-default"
-              onClick={() => setTabStatus('t1', 'default')}
+              onClick={() => setTabStatus('t1', 'idle')}
             >
               default
             </button>

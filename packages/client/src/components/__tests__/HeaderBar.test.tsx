@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { HeaderBar } from '../HeaderBar';
@@ -16,18 +16,12 @@ async function renderHeaderBar(props: Partial<React.ComponentProps<typeof Header
 }
 
 describe('HeaderBar (context mode)', () => {
-  it('reads status from context — shows Connected when idle', async () => {
+  it('shows model badge but no status dot or label', async () => {
     await renderHeaderBar();
-    expect(screen.getByText(/connected/i)).toBeInTheDocument();
     expect(screen.getByText('Sonnet 4.6')).toBeInTheDocument();
-  });
-
-  it('reads status from context — shows Disconnected', async () => {
-    const { claude } = await renderHeaderBar();
-    await act(async () => {
-      claude.socket.disconnect();
-    });
-    expect(screen.getByText(/disconnected/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Connected$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Disconnected$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Processing$/i)).not.toBeInTheDocument();
   });
 
   it('title prop still works', async () => {

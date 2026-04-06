@@ -6,11 +6,12 @@ import {
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import type { SessionStatus } from '../types/ui';
 import { useSocket } from './SocketContext';
 
 export interface TabMeta {
   title?: string;
-  tabStatus: 'default' | 'pending' | 'done';
+  tabStatus: SessionStatus;
   cwd?: string;
 }
 
@@ -40,7 +41,7 @@ export function useTab(): TabContextValue {
   return ctx;
 }
 
-const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'default' };
+const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
 
 export function TabProvider({
   children,
@@ -184,7 +185,8 @@ export function TabProvider({
   // Document title side effect
   const activeMeta = state.activeTabId ? state.tabs[state.activeTabId] : undefined;
   useEffect(() => {
-    document.title = activeMeta?.tabStatus === 'pending' ? '⟳ Code Quest' : 'Code Quest';
+    const isBusy = activeMeta?.tabStatus === 'processing' || activeMeta?.tabStatus === 'busy';
+    document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
   }, [activeMeta?.tabStatus]);
 
   return (

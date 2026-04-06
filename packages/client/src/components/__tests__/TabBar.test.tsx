@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { TabBar, type TabInfo } from '../TabBar';
 
 const tabs: TabInfo[] = [
-  { sessionId: 'sess-1', title: 'Chat 1', status: 'default' },
-  { sessionId: 'sess-2', title: 'Chat 2', status: 'pending' },
-  { sessionId: 'sess-3', status: 'done' },
+  { sessionId: 'sess-1', title: 'Chat 1', status: 'idle' },
+  { sessionId: 'sess-2', title: 'Chat 2', status: 'processing' },
+  { sessionId: 'sess-3', status: 'disconnected' },
 ];
 
 function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
@@ -82,17 +82,25 @@ describe('TabBar', () => {
     expect(dots).toHaveLength(3);
   });
 
-  it('shows pulsing indicator for pending status', () => {
+  it('shows green dot for idle session', () => {
     renderTabBar();
-    const pendingTab = screen.getByText('Chat 2').closest('[role="tab"]')!;
-    const dot = pendingTab.querySelector('.rounded-full');
-    expect(dot).toHaveClass('animate-pulse');
+    const idleTab = screen.getByText('Chat 1').closest('[role="tab"]')!;
+    const dot = idleTab.querySelector('.rounded-full');
+    expect(dot).toHaveClass('bg-success');
   });
 
-  it('shows checkmark for done status', () => {
+  it('shows pulsing accent dot for processing session', () => {
     renderTabBar();
-    const doneTab = screen.getByText('sess-3'.slice(0, 8)).closest('[role="tab"]')!;
-    expect(doneTab).toHaveTextContent('✓');
+    const processingTab = screen.getByText('Chat 2').closest('[role="tab"]')!;
+    const dot = processingTab.querySelector('.rounded-full');
+    expect(dot).toHaveClass('bg-accent', 'animate-pulse');
+  });
+
+  it('shows red dot for disconnected session', () => {
+    renderTabBar();
+    const disconnectedTab = screen.getByText('sess-3'.slice(0, 8)).closest('[role="tab"]')!;
+    const dot = disconnectedTab.querySelector('.rounded-full');
+    expect(dot).toHaveClass('bg-danger');
   });
 
   it('renders + button when onNewTab provided', () => {

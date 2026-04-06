@@ -19,7 +19,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { type ChannelState, initialChannelState } from '../../types/chat';
+import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, msg, patchMeta } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { createFileActions } from './handlers/file';
@@ -112,7 +112,7 @@ export function ChannelMessagesProvider({
 }: {
   channelId: string;
   initialState?: Partial<ChannelState>;
-  onChange?: (update: { title?: string; status?: 'default' | 'pending' | 'done' }) => void;
+  onChange?: (update: ChannelChangeUpdate) => void;
   dequeueMessage: () => string | undefined;
   messageQueueRef: RefObject<string[]>;
   resetStreamingRefsRef: RefObject<() => void>;
@@ -192,9 +192,7 @@ export function ChannelMessagesProvider({
 
   // ── Status change callback ──
   useEffect(() => {
-    if (channelState.status === 'idle' || channelState.status === 'connecting') {
-      onChangeRef.current?.({ status: 'default' });
-    }
+    onChangeRef.current?.({ status: channelState.status });
   }, [channelState.status]);
 
   // ── Title from first user message ──

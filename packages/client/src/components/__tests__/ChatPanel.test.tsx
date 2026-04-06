@@ -47,9 +47,9 @@ describe('ChatPanel', () => {
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });
 
-  it('renders HeaderBar with connection status', async () => {
+  it('renders HeaderBar with model info', async () => {
     await renderWithChannel(<ChatPanel />);
-    expect(screen.getByText(/connected|disconnected/i)).toBeInTheDocument();
+    expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
   it('keeps input enabled when processing', async () => {

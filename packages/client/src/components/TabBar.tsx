@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import type { SessionStatus } from '../types/ui';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export interface TabInfo {
   sessionId: string;
   title?: string;
-  status: 'default' | 'pending' | 'done';
+  status: SessionStatus;
 }
 
 interface TabBarProps {
@@ -16,10 +17,13 @@ interface TabBarProps {
   onOpenHistory?: () => void;
 }
 
-const statusDot: Record<TabInfo['status'], string> = {
-  default: 'bg-text-muted',
-  pending: 'bg-warning',
-  done: 'bg-success',
+const statusDot: Record<SessionStatus, string> = {
+  disconnected: 'bg-danger',
+  idle: 'bg-success',
+  processing: 'bg-accent animate-pulse',
+  connecting: 'bg-accent animate-pulse',
+  busy: 'bg-accent animate-pulse',
+  cancelling: 'bg-warning animate-pulse',
 };
 
 export function TabBar({
@@ -58,17 +62,7 @@ export function TabBar({
           tabIndex={0}
           aria-selected={tab.sessionId === activeTabId}
         >
-          {tab.status === 'done' ? (
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${statusDot.done} text-[8px] leading-none flex items-center justify-center`}
-            >
-              ✓
-            </span>
-          ) : (
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${statusDot[tab.status]}${tab.status === 'pending' ? ' animate-pulse' : ''}`}
-            />
-          )}
+          <span className={`w-1.5 h-1.5 rounded-full ${statusDot[tab.status]}`} />
           <span className="truncate max-w-[120px]">{tab.title || tab.sessionId.slice(0, 8)}</span>
           <button
             type="button"

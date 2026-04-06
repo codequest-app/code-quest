@@ -33,7 +33,7 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
           <PluginProvider>
             <TabProvider
               initialState={{
-                tabs: { [channelId]: { tabStatus: 'default' } },
+                tabs: { [channelId]: { tabStatus: 'idle' } },
                 activeTabId: channelId,
               }}
             >

@@ -24,7 +24,7 @@ export const Empty: Story = {
 
 export const SingleTab: Story = {
   args: {
-    tabs: [{ sessionId: 'abc12345', title: 'Session 1', status: 'default' }],
+    tabs: [{ sessionId: 'abc12345', title: 'Session 1', status: 'idle' }],
     activeTabId: 'abc12345',
   },
 };
@@ -32,9 +32,10 @@ export const SingleTab: Story = {
 export const MultipleTabs: Story = {
   args: {
     tabs: [
-      { sessionId: 'abc12345', title: 'Fix Auth', status: 'done' },
-      { sessionId: 'def67890', title: 'Add Tests', status: 'pending' },
-      { sessionId: 'ghi11111', status: 'default' },
+      { sessionId: 'abc12345', title: 'Fix Auth', status: 'idle' },
+      { sessionId: 'def67890', title: 'Add Tests', status: 'processing' },
+      { sessionId: 'ghi11111', status: 'connecting' },
+      { sessionId: 'jkl22222', title: 'Done', status: 'disconnected' },
     ],
     activeTabId: 'abc12345',
   },
@@ -47,8 +48,8 @@ export const MultipleTabs: Story = {
 export const CloseTab: Story = {
   args: {
     tabs: [
-      { sessionId: 'abc12345', title: 'Fix Auth', status: 'done' },
-      { sessionId: 'def67890', title: 'Add Tests', status: 'pending' },
+      { sessionId: 'abc12345', title: 'Fix Auth', status: 'idle' },
+      { sessionId: 'def67890', title: 'Add Tests', status: 'processing' },
     ],
     activeTabId: 'abc12345',
   },
