@@ -1,5 +1,4 @@
 import {
-  type ChatStats,
   type ForkConversationResponse,
   type ListFilesResponse,
   type PlanCommentData,
@@ -20,7 +19,7 @@ import {
   useState,
 } from 'react';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
-import { buildMessagesFromHistory, msg, patchMeta } from '../../utils/message';
+import { buildMessagesFromHistory, mapSessionStats, msg, patchMeta } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { createFileActions } from './handlers/file';
 import { type Payload, wireHandlers } from './handlers/guard';
@@ -264,14 +263,7 @@ export function ChannelMessagesProvider({
   function onMessageResult(p: Payload<'message:result'>) {
     if (p.channelId !== channelId && p.channelId !== '') return;
     resetStreamingRefs();
-    const stats: ChatStats = {
-      costUsd: p.stats.totalCostUsd,
-      durationMs: p.stats.durationMs,
-      inputTokens: p.stats.inputTokens,
-      outputTokens: p.stats.outputTokens,
-      numTurns: p.stats.numTurns,
-      modelUsage: p.stats.modelUsage,
-    };
+    const stats = mapSessionStats(p.stats);
     setChannelState((prev) => {
       // Finalize thinking blocks: clear isStreaming, set durationMs
       const finalized = prev.messages.map((m) =>

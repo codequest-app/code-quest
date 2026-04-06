@@ -23,7 +23,11 @@ export const claudeState = {
 
 /** Type-safe setter for MCP state fields. */
 export function setMcpState(key: McpStateKey, value: { status: string }): void {
-  (claudeState as Record<McpStateKey, { status: string }>)[key] = value;
+  if (key === 'chromeMcpState') {
+    claudeState.chromeMcpState = value as { status: ChromeMcpStatus };
+  } else {
+    claudeState.jupyterMcpState = value as { status: JupyterMcpStatus };
+  }
 }
 
 /** Type-safe setter for auth state. */

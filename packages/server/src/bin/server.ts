@@ -78,11 +78,7 @@ if (existsSync(clientDist)) {
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const status =
-    err instanceof Error &&
-    'status' in err &&
-    typeof (err as Record<string, unknown>).status === 'number'
-      ? ((err as Record<string, unknown>).status as number)
-      : 500;
+    err instanceof Error && 'status' in err && typeof err.status === 'number' ? err.status : 500;
   const message = err instanceof Error ? err.message : 'Internal Server Error';
   if (status >= 500) logger.error({ err, status }, 'Unhandled request error');
   res.status(status).json({ error: message });

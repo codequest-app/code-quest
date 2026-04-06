@@ -228,7 +228,9 @@ export function ChannelComposeProvider({
     requestFocusRef.current = fn;
   };
 
-  const actionsBlock = createComposeActions(stateRef, setState, sendMessage, requestFocusRef);
+  const [actionsBlock] = useState(() =>
+    createComposeActions(stateRef, setState, sendMessage, requestFocusRef),
+  );
 
   return (
     <ComposeActionsContext.Provider value={{ registerFocus, ...actionsBlock }}>

@@ -2,10 +2,23 @@ import {
   type ChatStats,
   type ContentBlock,
   contentBlockSchema,
+  type SessionStats,
   sessionStatsSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
 import type { Message } from '../types/ui';
+
+/** Map server session stats shape to client ChatStats. */
+export function mapSessionStats(s: SessionStats): ChatStats {
+  return {
+    costUsd: s.totalCostUsd,
+    durationMs: s.durationMs,
+    inputTokens: s.inputTokens,
+    outputTokens: s.outputTokens,
+    numTurns: s.numTurns,
+    modelUsage: s.modelUsage,
+  };
+}
 
 const historyAssistantSchema = z.object({
   content: z.array(contentBlockSchema),
@@ -118,15 +131,7 @@ export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
     } else if (event.name === 'message:result') {
       const parsed = historyResultSchema.safeParse(event.payload);
       if (!parsed.success) continue;
-      const s = parsed.data.stats;
-      const stats: ChatStats = {
-        costUsd: s.totalCostUsd,
-        durationMs: s.durationMs,
-        inputTokens: s.inputTokens,
-        outputTokens: s.outputTokens,
-        numTurns: s.numTurns,
-        modelUsage: s.modelUsage,
-      };
+      const stats = mapSessionStats(parsed.data.stats);
       messages.push(msg({ role: 'system', type: 'result', content: '', meta: { stats } }));
     }
   }
