@@ -102,11 +102,17 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
   const scrambled = useTextScramble(`${displayText}...`, maxLen);
 
   return (
-    <div className="relative z-[3] flex items-center gap-1.5 h-[1.85em] mt-1 px-4">
-      <span data-testid="spinner-icon" className="text-accent text-sm inline-block w-4 text-center">
+    <div className="relative z-[3] inline-flex items-center gap-1 h-[1.85em] mt-1 px-4">
+      <span
+        data-testid="spinner-icon"
+        className="text-accent text-[1.5em] inline-block w-[1.5em] text-center font-mono"
+      >
         {ICON_CYCLE[iconIndex]}
       </span>
-      <span data-testid="spinner-verb" className="text-xs text-text-muted font-mono whitespace-pre">
+      <span
+        data-testid="spinner-verb"
+        className="text-xs text-text font-medium font-mono whitespace-pre"
+      >
         {scrambled}
       </span>
     </div>

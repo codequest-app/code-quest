@@ -38,8 +38,9 @@ export function CollapsibleTimeline({
   const allComplete = nodes.every((n) => getToolResult(n) != null);
   const hasError = nodes.some((n) => getToolResult(n)?.is_error);
   const toolCount = nodes.filter((n) => n.message.type === 'tool_use').length;
-  const [expanded, setExpanded] = useState(true);
-  const autoCollapsedRef = useRef(false);
+  const shouldAutoCollapse = allComplete && toolCount >= 5;
+  const [expanded, setExpanded] = useState(!shouldAutoCollapse);
+  const autoCollapsedRef = useRef(shouldAutoCollapse);
   const prevAllCompleteRef = useRef(allComplete);
 
   useEffect(() => {
