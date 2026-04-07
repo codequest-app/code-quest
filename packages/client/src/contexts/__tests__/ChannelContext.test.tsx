@@ -1,8 +1,9 @@
-import { renderHook, screen } from '@testing-library/react';
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
+import { act, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { useChannelMessages } from '../channel';
@@ -155,21 +156,22 @@ describe('ChannelContext', () => {
     });
 
     it('launch failure does not freeze on Connecting screen', async () => {
-      const claude = createFakeClaude();
-      // Prepare an error response for session:launch
-      claude.prepareInit();
-      const origEmit = claude.socket.emit.bind(claude.socket);
-      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
+      // Intercept session:launch to return error
+      const origEmit = summoner.socket.emit.bind(summoner.socket);
+      // @ts-expect-error — intercepting FakeSocket.emit to simulate server error
+      summoner.socket.emit = (event: string, ...args: unknown[]) => {
         if (event === 'session:launch') {
           const cb = args[args.length - 1];
           if (typeof cb === 'function') cb({ error: 'CLI not found' });
-          return claude.socket;
+          return summoner.socket;
         }
-        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
-      }) as typeof claude.socket.emit;
+        return origEmit(event, ...args);
+      };
 
       await renderWithChannel(<span data-testid="content">loaded</span>, {
-        claude,
+        summoner,
         cwd: '/bad/path',
         skipInit: true,
       });
@@ -179,31 +181,34 @@ describe('ChannelContext', () => {
     });
 
     it('join failure still allows session:states processing', async () => {
-      const claude = createFakeClaude();
-      claude.prepareInit();
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
       const channelId = crypto.randomUUID();
 
-      // Mock session:join to return error
-      const origEmit = claude.socket.emit.bind(claude.socket);
-      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+      // Intercept session:join to return error
+      const origEmit = summoner.socket.emit.bind(summoner.socket);
+      // @ts-expect-error — intercepting FakeSocket.emit to simulate server error
+      summoner.socket.emit = (event: string, ...args: unknown[]) => {
         if (event === 'session:join') {
           const cb = args[args.length - 1];
           if (typeof cb === 'function') cb({ error: 'Session not found' });
-          return claude.socket;
+          return summoner.socket;
         }
-        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
-      }) as typeof claude.socket.emit;
+        return origEmit(event, ...args);
+      };
 
       function StatusHarness() {
         const { isProcessing } = useChannelMessages();
         return <span data-testid="processing">{String(isProcessing)}</span>;
       }
 
-      await renderWithChannel(<StatusHarness />, { claude, channelId, skipInit: true });
+      await renderWithChannel(<StatusHarness />, { summoner, channelId, skipInit: true });
 
       // Push session:states busy — should not be blocked by joinedRef
-      await claude.pushServerEvent('session:states', {
-        sessions: [{ channelId, state: 'busy' }],
+      await act(async () => {
+        summoner.claude().pushServerEvent('session:states', {
+          sessions: [{ channelId, state: 'busy' }],
+        });
       });
 
       // If join failure blocks onSessionStates, processing stays false

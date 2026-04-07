@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import 'reflect-metadata';
-import type { FilesystemService, ProcessProvider } from '@code-quest/summoner';
+import type { ProcessProvider } from '@code-quest/summoner';
 import { ClaudeAdapter, LocalFilesystemService, ProcessRunner } from '@code-quest/summoner';
 import { Container } from 'inversify';
 import { config } from './config.ts';
@@ -42,12 +42,18 @@ export interface ContainerOptions {
 export function createContainer(options: ContainerOptions): Container {
   const container = new Container();
 
+  if (options.processProvider) {
+    container.bind<ProcessProvider>(TYPES.ProcessProvider).toConstantValue(options.processProvider);
+  }
+
   const adapter = new ClaudeAdapter();
   const runnerFactory: RunnerFactory = {
     create: (opts, spawnOptions) =>
       new ProcessRunner({
         adapter,
-        processProvider: options.processProvider,
+        processProvider: container.isBound(TYPES.ProcessProvider)
+          ? container.get<ProcessProvider>(TYPES.ProcessProvider)
+          : undefined,
         args: opts,
         spawnOptions,
       }),
@@ -93,7 +99,7 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
   container
-    .bind<FilesystemService>(TYPES.FilesystemService)
+    .bind(TYPES.FilesystemService)
     .toConstantValue(new LocalFilesystemService(config.explorerRoots));
 
   const settingsStore: SettingsStore = settingsStores[0];

@@ -7,7 +7,7 @@ import { SocketProvider } from '../../contexts/SocketContext';
 import type { TabMeta } from '../../contexts/TabContext';
 import { TabProvider } from '../../contexts/TabContext';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { WorkspaceLayout } from '../WorkspaceLayout';
 
 vi.mock('../../contexts/channel', () => ({
@@ -21,7 +21,7 @@ vi.mock('../ChatPanel', () => ({
 }));
 
 function renderLayout(opts?: { tabs?: Record<string, TabMeta>; activeTabId?: string | null }) {
-  const { socket } = createFakeClaude();
+  const { socket } = createFakeSummoner();
   const initialState = opts
     ? { tabs: opts.tabs ?? {}, activeTabId: opts.activeTabId ?? null }
     : undefined;

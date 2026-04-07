@@ -18,4 +18,5 @@ export const TYPES = {
   SessionHistory: Symbol.for('SessionHistory'),
   ChannelEventRouter: Symbol.for('ChannelEventRouter'),
   FilesystemService: Symbol.for('FilesystemService'),
+  ProcessProvider: Symbol.for('ProcessProvider'),
 } as const;

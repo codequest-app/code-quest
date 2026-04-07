@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
-import { createFakeClaude } from '@/test/fake-claude';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { sendUserMessage } from '@/test/helpers';
 import { PluginProvider } from '../../PluginContext';
 import { SessionProvider } from '../../SessionContext';
@@ -16,15 +16,15 @@ function TabTitle() {
 }
 
 async function setup() {
-  const claude = createFakeClaude();
-  claude.prepareInit();
+  const summoner = createFakeSummoner();
+  summoner.claude().prepareInit();
 
   const initReady = new Promise<void>((resolve) => {
-    claude.socket.on('session:init', () => resolve());
+    summoner.on('session:init', () => resolve());
   });
 
   render(
-    <SocketProvider socket={claude.socket}>
+    <SocketProvider socket={summoner.socket}>
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
@@ -40,7 +40,7 @@ async function setup() {
   await act(async () => {
     await initReady;
   });
-  return { claude, user };
+  return { user };
 }
 
 describe('title derived from messages', () => {

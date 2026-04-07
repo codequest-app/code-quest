@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { WorkspaceLayout } from '../../components/WorkspaceLayout';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { PluginProvider } from '../PluginContext';
 import { SessionProvider } from '../SessionContext';
@@ -14,14 +14,14 @@ import { TabProvider, useTabActions, useTabState } from '../TabContext';
 const idleSession = (channelId: string, cwd = '/') => ({ channelId, state: 'idle' as const, cwd });
 
 function renderInTab(ui: ReactElement) {
-  const claude = createFakeClaude();
+  const summoner = createFakeSummoner();
   const user = userEvent.setup();
   render(
-    <SocketProvider socket={claude.socket}>
+    <SocketProvider socket={summoner.socket}>
       <TabProvider>{ui}</TabProvider>
     </SocketProvider>,
   );
-  return { claude, user };
+  return { claude: summoner.claude(), user };
 }
 
 describe('TabProvider', () => {
@@ -540,7 +540,7 @@ describe('TabProvider', () => {
 
   describe('tab bar UI', () => {
     it('renders tab bar with WorkspaceLayout', () => {
-      const { socket } = createFakeClaude();
+      const { socket } = createFakeSummoner();
       render(
         <SocketProvider socket={socket}>
           <SessionProvider>
@@ -556,9 +556,9 @@ describe('TabProvider', () => {
     });
 
     it('renders new tab button that calls createNewTab', async () => {
-      const claude = createFakeClaude();
+      const summoner = createFakeSummoner();
       render(
-        <SocketProvider socket={claude.socket}>
+        <SocketProvider socket={summoner.socket}>
           <SessionProvider>
             <PluginProvider>
               <TabProvider>
@@ -569,7 +569,7 @@ describe('TabProvider', () => {
         </SocketProvider>,
       );
       await userEvent.click(screen.getByLabelText('New tab'));
-      expect(claude.provider.all.length).toBeGreaterThan(0);
+      expect(summoner.claude().provider.all.length).toBeGreaterThan(0);
     });
   });
 
@@ -577,7 +577,7 @@ describe('TabProvider', () => {
 
   describe('document title', () => {
     it('sets title to base when idle', () => {
-      const { socket } = createFakeClaude();
+      const { socket } = createFakeSummoner();
       render(
         <SocketProvider socket={socket}>
           <TabProvider>
@@ -589,7 +589,7 @@ describe('TabProvider', () => {
     });
 
     it('shows spinner prefix when active tab has pending status', async () => {
-      const { socket } = createFakeClaude();
+      const { socket } = createFakeSummoner();
       function TestComponent() {
         const { addTab, setActiveTab, setTabStatus } = useTabActions();
         return (
@@ -617,7 +617,7 @@ describe('TabProvider', () => {
     });
 
     it('returns to base title when tab status changes from pending to default', async () => {
-      const { socket } = createFakeClaude();
+      const { socket } = createFakeSummoner();
       function TestComponent() {
         const { addTab, setActiveTab, setTabStatus } = useTabActions();
         return (
@@ -718,7 +718,9 @@ describe('TabProvider', () => {
 
     it('session:dead removes tab', async () => {
       const { claude } = await renderWithWorkspace();
-      await claude.emit(s.resultError({ errors: ['No conversation found'] }));
+      await act(async () => {
+        await claude.emit(s.resultError({ errors: ['No conversation found'] }));
+      });
       await act(async () => {
         claude.handle.abort();
       });

@@ -1,6 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
-import { segments as s } from '../../../test/fake-claude.ts';
+import { segments as s } from '../../../test/segments.ts';
 import { toClientMessage } from '../helpers.ts';
 
 describe('transform — system events', () => {

@@ -4,26 +4,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
-}
-
-function collectEvents(socket: any, eventName: string) {
-  const events: any[] = [];
-  socket.on(eventName, (p: any) => events.push(p));
-  return events;
+  return { container, claude, channelId };
 }
 
 describe('ChatHandler > control', () => {
   describe('pending control_request queue', () => {
     it('forwards control_request events to client', async () => {
       const { claude, channelId } = await setup();
-      const permEvents = collectEvents(claude.socket, 'control:permission');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -31,6 +27,7 @@ describe('ChatHandler > control', () => {
       );
       await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
 
+      const permEvents = claude.events('control:permission');
       expect(permEvents.length).toBeGreaterThan(0);
       expect(permEvents[0].toolName).toBe('Bash');
       expect(permEvents[0].requestId).toBe('req-1');
@@ -39,7 +36,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('control_request tracked in channel', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -48,12 +45,12 @@ describe('ChatHandler > control', () => {
       await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', { command: 'ls' }));
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(true);
     });
 
     it('removes from pending after control_response', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -68,48 +65,48 @@ describe('ChatHandler > control', () => {
       });
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(false);
       expect(claude.received('control_response').length).toBeGreaterThan(0);
     });
 
     it('forwards hook_callback to client', async () => {
       const { claude, channelId } = await setup();
-      const hookEvents = collectEvents(claude.socket, 'control:hook_callback');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.controlRequest('hook-1', 'hook_callback'));
 
+      const hookEvents = claude.events('control:hook_callback');
       expect(hookEvents.length).toBeGreaterThan(0);
     });
 
     it('removes pending on control_cancel_request and forwards chat:cancel_request', async () => {
-      const { claude, channelId } = await setup();
-      const cancelEvents = collectEvents(claude.socket, 'chat:cancel_request');
+      const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: {} } }));
       await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Bash', {}));
       await claude.emit(s.controlCancelRequest('req-1'));
 
+      const cancelEvents = claude.events('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
       expect(cancelEvents[0].targetRequestId).toBe('req-1');
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(channelId)?.hasControlRequest('req-1')).toBe(false);
     });
 
     describe('parallel control_requests', () => {
       it('forwards multiple control_requests to client', async () => {
         const { claude, channelId } = await setup();
-        const permEvents = collectEvents(claude.socket, 'control:permission');
 
         await claude.send('chat:send', { channelId, message: 'go' });
         await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
         await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
         await claude.emit(s.controlRequest('req-2', 'can_use_tool', 'Write', {}));
 
+        const permEvents = claude.events('control:permission');
         expect(permEvents.length).toBe(2);
         expect(permEvents[0].requestId).toBe('req-1');
         expect(permEvents[1].requestId).toBe('req-2');
@@ -187,11 +184,11 @@ describe('ChatHandler > control', () => {
   describe('elicitation control_request', () => {
     it('pushes elicitation_request to client', async () => {
       const { claude, channelId } = await setup();
-      const elicitEvents = collectEvents(claude.socket, 'control:elicitation');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.controlRequestElicitation('elicit-1', { message: 'Enter URL' }));
 
+      const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0].requestId).toBe('elicit-1');
     });
@@ -226,7 +223,6 @@ describe('ChatHandler > control', () => {
 
     it('maps mode:"url" → inputType:"url"', async () => {
       const { claude, channelId } = await setup();
-      const elicitEvents = collectEvents(claude.socket, 'control:elicitation');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -237,12 +233,12 @@ describe('ChatHandler > control', () => {
         }),
       );
 
+      const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
     });
 
     it('maps mode:"form" → extracts options from schema', async () => {
       const { claude, channelId } = await setup();
-      const elicitEvents = collectEvents(claude.socket, 'control:elicitation');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -253,24 +249,25 @@ describe('ChatHandler > control', () => {
         }),
       );
 
+      const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
     });
   });
 
   describe('initialize control_request', () => {
     it('system/init pushes settings:update on launch', async () => {
-      const claude = createFakeClaude();
-      const configEvents = collectEvents(claude.socket, 'settings:update');
+      const claude = createFakeSummoner().claude();
 
       await claude.initialize();
 
+      const configEvents = claude.events('settings:update');
       expect(configEvents.length).toBeGreaterThan(0);
     });
 
     it('system/init persists session with session_id', async () => {
-      const { claude, channelId } = await setup('my-session-id');
+      const { container, claude, channelId } = await setup('my-session-id');
 
-      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getById(channelId);
       expect(record?.sessionId).toBe('my-session-id');
     });
@@ -279,7 +276,6 @@ describe('ChatHandler > control', () => {
   describe('open_diff control_request', () => {
     it('pushes diff_review_request to client', async () => {
       const { claude, channelId } = await setup();
-      const diffEvents = collectEvents(claude.socket, 'control:diff_review');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -291,6 +287,7 @@ describe('ChatHandler > control', () => {
       // open_diff triggers notification_request → sendControlRequest → auto-respond; needs extra wait
       await new Promise<void>((r) => setTimeout(r, 50));
 
+      const diffEvents = claude.events('control:diff_review');
       expect(diffEvents.length).toBeGreaterThan(0);
     });
   });
@@ -298,11 +295,11 @@ describe('ChatHandler > control', () => {
   describe('open_url / open_file control_request', () => {
     it('open_in_editor: forwards as raw:event to client', async () => {
       const { claude, channelId } = await setup();
-      const rawEvents = collectEvents(claude.socket, 'raw:event');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.controlRequestOpenInEditor('open-1'));
 
+      const rawEvents = claude.events('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
       expect(rawEvents[0].rawType).toBe('control_request/open_in_editor');
     });
@@ -310,8 +307,7 @@ describe('ChatHandler > control', () => {
 
   describe('initialize response fields', () => {
     it('initialize response includes accountInfo from controlResponse', async () => {
-      const claude = createFakeClaude();
-      const stateUpdates = collectEvents(claude.socket, 'settings:update');
+      const claude = createFakeSummoner().claude();
 
       await claude.initialize(
         s.init('sess'),
@@ -320,6 +316,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
+      const stateUpdates = claude.events('settings:update');
       const accountUpdate = stateUpdates.find((e: any) => e.accountInfo);
       expect(accountUpdate).toBeDefined();
       expect(accountUpdate.accountInfo.email).toBe('user@test.com');
@@ -329,7 +326,6 @@ describe('ChatHandler > control', () => {
   describe('elicitation modes', () => {
     it('maps mode:"form" → extracts options from requested_schema properties', async () => {
       const { claude, channelId } = await setup();
-      const elicitEvents = collectEvents(claude.socket, 'control:elicitation');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -342,13 +338,13 @@ describe('ChatHandler > control', () => {
         }),
       );
 
+      const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0].requestId).toBe('elicit-form-opts');
     });
 
     it('maps mode:"url" → inputType:"url" and forwards url field', async () => {
       const { claude, channelId } = await setup();
-      const elicitEvents = collectEvents(claude.socket, 'control:elicitation');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -359,6 +355,7 @@ describe('ChatHandler > control', () => {
         }),
       );
 
+      const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
       expect(elicitEvents[0].requestId).toBe('elicit-url-field');
     });
@@ -375,7 +372,6 @@ describe('ChatHandler > control', () => {
 
       try {
         const { claude, channelId } = await setup();
-        const diffEvents = collectEvents(claude.socket, 'control:diff_review');
 
         await claude.send('chat:send', { channelId, message: 'go' });
         await claude.emit(
@@ -386,6 +382,7 @@ describe('ChatHandler > control', () => {
         );
         await new Promise<void>((r) => setTimeout(r, 50));
 
+        const diffEvents = claude.events('control:diff_review');
         expect(diffEvents.length).toBeGreaterThan(0);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -394,7 +391,6 @@ describe('ChatHandler > control', () => {
 
     it('uses empty string when file does not exist', async () => {
       const { claude, channelId } = await setup();
-      const diffEvents = collectEvents(claude.socket, 'control:diff_review');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -405,6 +401,7 @@ describe('ChatHandler > control', () => {
       );
       await new Promise<void>((r) => setTimeout(r, 50));
 
+      const diffEvents = claude.events('control:diff_review');
       expect(diffEvents.length).toBeGreaterThan(0);
     });
   });
@@ -412,11 +409,11 @@ describe('ChatHandler > control', () => {
   describe('open_url / open_file control_request (extended)', () => {
     it('open_url: pushes request to client as raw:event', async () => {
       const { claude, channelId } = await setup();
-      const rawEvents = collectEvents(claude.socket, 'raw:event');
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.controlRequestOpenInEditor('open-url-1'));
 
+      const rawEvents = claude.events('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
       expect(rawEvents[0].rawType).toBe('control_request/open_in_editor');
     });
@@ -424,7 +421,7 @@ describe('ChatHandler > control', () => {
 
   describe('partial CR response + reconnect', () => {
     it('removes only responded CR from pending', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_p1', name: 'Read', input: {} } }));
@@ -439,7 +436,7 @@ describe('ChatHandler > control', () => {
       });
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(channelId)?.hasControlRequest('req-a')).toBe(false);
       expect(mgr.get(channelId)?.hasControlRequest('req-b')).toBe(true);
     });
@@ -447,14 +444,13 @@ describe('ChatHandler > control', () => {
 
   it('responds to control request from scene', async () => {
     const { claude, channelId } = await setup();
-    const permEvents = collectEvents(claude.socket, 'control:permission');
-    const resultEvents = collectEvents(claude.socket, 'message:result');
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Write', input: {} } }));
     await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Write', {}));
 
+    const permEvents = claude.events('control:permission');
     expect(permEvents.length).toBeGreaterThan(0);
 
     await claude.send('chat:respond', {
@@ -466,19 +462,19 @@ describe('ChatHandler > control', () => {
     await claude.emit(s.toolResult('toolu_1', 'ok'));
     await claude.emit(s.result());
 
+    const resultEvents = claude.events('message:result');
     expect(resultEvents.length).toBeGreaterThan(0);
   });
 
   it('response from client triggers respondToControlRequest', async () => {
     const { claude, channelId } = await setup();
-    const permEvents = collectEvents(claude.socket, 'control:permission');
-    const resultEvents = collectEvents(claude.socket, 'message:result');
 
     await claude.send('chat:send', { channelId, message: 'go' });
 
     await claude.emit(s.assistant({ toolUse: { id: 'toolu_3', name: 'Write', input: {} } }));
     await claude.emit(s.controlRequest('req-resp-1', 'can_use_tool', 'Write', {}));
 
+    const permEvents = claude.events('control:permission');
     expect(permEvents.length).toBeGreaterThan(0);
 
     await claude.send('chat:respond', {
@@ -490,37 +486,39 @@ describe('ChatHandler > control', () => {
     await claude.emit(s.toolResult('toolu_3', 'ok'));
     await claude.emit(s.result());
 
+    const resultEvents = claude.events('message:result');
     expect(resultEvents.length).toBeGreaterThan(0);
   });
 
   describe('reconnect / pending CR replay', () => {
     it('stores control_request in pending when session has CR', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_p', name: 'Bash', input: {} } }));
       await claude.emit(s.controlRequest('req-pending', 'can_use_tool', 'Bash', {}));
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(channelId)?.hasControlRequest('req-pending')).toBe(true);
     });
 
     it('replays pending CRs on rejoin via second socket', async () => {
-      const { claude, channelId } = await setup();
-      await claude.send('chat:send', { channelId, message: 'go' });
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_r', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-replay', 'can_use_tool', 'Read', {}));
+      const server = createFakeServer();
+      const windowA = createFakeSummoner(server);
+      const channelId = await windowA.claude().initialize(s.init('cli-sess'));
 
-      const socketB = claude.connect();
-      const bPermEvents: any[] = [];
-      socketB.on('control:permission', (p: any) => bPermEvents.push(p));
+      await windowA.send('chat:send', { channelId, message: 'go' });
+      await windowA
+        .claude()
+        .emit(s.assistant({ toolUse: { id: 'toolu_r', name: 'Read', input: {} } }));
+      await windowA.claude().emit(s.controlRequest('req-replay', 'can_use_tool', 'Read', {}));
 
-      await new Promise<void>((resolve) => {
-        socketB.emit('session:join', { channelId }, () => resolve());
-      });
+      const windowB = createFakeSummoner(server);
+      await windowB.send('session:join', { channelId });
       await new Promise<void>((r) => setTimeout(r, 50));
 
+      const bPermEvents = windowB.events('control:permission');
       expect(bPermEvents.length).toBeGreaterThan(0);
       expect(bPermEvents[0].requestId).toBe('req-replay');
     });

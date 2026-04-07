@@ -3,7 +3,7 @@ import os from 'node:os';
 import { basename, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { LocalFilesystemService } from '../filesystem/local.ts';
-import type { DirectoryEntry } from '../filesystem/service.ts';
+import type { DirectoryEntry } from '../filesystem/types.ts';
 
 let tmpDir: string;
 let service: LocalFilesystemService;

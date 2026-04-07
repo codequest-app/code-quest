@@ -6,7 +6,7 @@ export type {
   FileResult,
   FilesystemService,
   ReadFileResult,
-} from './filesystem/service.ts';
+} from './filesystem/types.ts';
 export { ProcessRunner } from './runner.ts';
 export { ChildProcessProvider } from './transports/child-process.ts';
 export type {

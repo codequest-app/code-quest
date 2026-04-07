@@ -2,7 +2,7 @@ import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join, normalize, resolve } from 'node:path';
 import Fuse from 'fuse.js';
 import { globSync } from 'glob';
-import type { DirectoryEntry, FileResult, FilesystemService, ReadFileResult } from './service.ts';
+import type { DirectoryEntry, FileResult, FilesystemService, ReadFileResult } from './types.ts';
 
 const MAX_RESULTS = 20;
 

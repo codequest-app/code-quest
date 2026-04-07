@@ -1,7 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '@/test/fake-claude';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
@@ -21,8 +21,8 @@ describe('ChannelConfigContext', () => {
   });
 
   it('receives config from session:init on launch', async () => {
-    const claude = createFakeClaude();
-    claude.prepareInit(
+    const summoner = createFakeSummoner();
+    summoner.claude().prepareInit(
       s.init('sess-1', {
         model: 'claude-sonnet-4-6',
         tools: ['Read', 'Write'],
@@ -32,17 +32,17 @@ describe('ChannelConfigContext', () => {
         mcpServers: [{ name: 'github', status: 'connected' }],
       }),
     );
-    await renderWithWorkspace({ claude });
+    await renderWithWorkspace({ summoner });
 
     expect(screen.getByText('Ask before edits')).toBeInTheDocument();
   });
 
   it('session:init model inherits supportsFastMode from defaultModels', async () => {
-    const claude = createFakeClaude();
+    const summoner = createFakeSummoner();
     // 'default' model is in adapter's defaultModels with supportsFastMode: true
     // No controlResponse with models — simulates app:models arriving later
-    claude.prepareInit(s.init('sess-fast', { model: 'default' }));
-    const { user } = await renderWithWorkspace({ claude });
+    summoner.claude().prepareInit(s.init('sess-fast', { model: 'default' }));
+    const { user } = await renderWithWorkspace({ summoner });
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -51,9 +51,9 @@ describe('ChannelConfigContext', () => {
   });
 
   it('session:init with unknown model still shows fastMode after app:models arrives', async () => {
-    const claude = createFakeClaude();
+    const summoner = createFakeSummoner();
     // 'claude-opus-4-6' not in defaultModels — relies on app:models from controlResponse
-    claude.prepareInit(
+    summoner.claude().prepareInit(
       s.init('sess-opus', { model: 'claude-opus-4-6' }),
       s.controlResponse('init', {
         models: [
@@ -62,7 +62,7 @@ describe('ChannelConfigContext', () => {
         ],
       }),
     );
-    const { user } = await renderWithWorkspace({ claude });
+    const { user } = await renderWithWorkspace({ summoner });
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -71,11 +71,11 @@ describe('ChannelConfigContext', () => {
   });
 
   it('fastMode works with real CLI model ID "claude-opus-4-6[1m]" (shorthand-only models)', async () => {
-    const claude = createFakeClaude();
+    const summoner = createFakeSummoner();
     // Real CLI: session:init has model "claude-opus-4-6[1m]"
     // But initialize response models only have "default" (shorthand), not "claude-opus-4-6"
     // CommandMenu falls back to models[0] (default) which has supportsFastMode: true
-    claude.prepareInit(
+    summoner.claude().prepareInit(
       s.init('sess-real', { model: 'claude-opus-4-6[1m]' }),
       s.controlResponse('init', {
         models: [
@@ -85,7 +85,7 @@ describe('ChannelConfigContext', () => {
         ],
       }),
     );
-    const { user } = await renderWithWorkspace({ claude });
+    const { user } = await renderWithWorkspace({ summoner });
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -98,7 +98,9 @@ describe('ChannelConfigContext', () => {
     await sendUserMessage(user);
     await emitAssistantTurn(claude);
 
-    await claude.emit(s.status({ permissionMode: 'plan' }));
+    await act(async () => {
+      await claude.emit(s.status({ permissionMode: 'plan' }));
+    });
 
     expect(screen.getByText('Plan mode')).toBeInTheDocument();
   });

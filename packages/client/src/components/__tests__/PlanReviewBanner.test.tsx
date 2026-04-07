@@ -9,7 +9,7 @@ import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { TabProvider } from '../../contexts/TabContext';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { PlanReviewBanner } from '../PlanReviewBanner';
 
 /** Helper to add planComments from within the component tree */
@@ -24,11 +24,11 @@ function PlanCommentSetter({ comments }: { comments: PlanCommentData[] }) {
 import React from 'react';
 
 async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCommentData[] }) {
-  const claude = createFakeClaude();
+  const summoner = createFakeSummoner();
   const channelId = crypto.randomUUID();
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <SocketProvider socket={claude.socket}>
+      <SocketProvider socket={summoner.socket}>
         <SessionProvider>
           <PluginProvider>
             <TabProvider
@@ -48,9 +48,9 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
     ),
   });
   await act(async () => {
-    await claude.initialize(s.init('sess-1'), { launch: { channelId } });
+    await summoner.claude().initialize(s.init('sess-1'), { launch: { channelId } });
   });
-  return { claude, channelId, ...result };
+  return { summoner, channelId, ...result };
 }
 
 describe('PlanReviewBanner comment input', () => {

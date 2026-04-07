@@ -1,48 +1,38 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '../fake-claude';
+import { createFakeSummoner } from '../fake-summoner';
 
-describe('FakeClaude', () => {
-  it('emit sends segment through pipeline, socket receives event', async () => {
-    const claude = createFakeClaude();
-    const channelId = await claude.initialize(s.init('cli-sess'), {
+describe('FakeSummoner', () => {
+  it('emit sends segment through pipeline, events() records it', async () => {
+    const summoner = createFakeSummoner();
+    const channelId = await summoner.claude().initialize(s.init('cli-sess'), {
       launch: { channelId: 'test-ch-1' },
     });
     expect(channelId).toBeTruthy();
 
-    await claude.send('chat:send', { channelId, message: 'hello' });
+    await summoner.send('chat:send', { channelId, message: 'hello' });
+    await summoner.claude().emit(s.assistant('Hello from Claude'));
 
-    const events: string[] = [];
-    claude.socket.on('message:assistant', () => {
-      events.push('message:assistant');
-    });
-
-    await claude.emit(s.assistant('Hello from Claude'));
-
-    expect(events).toContain('message:assistant');
+    const events = summoner.events('message:assistant');
+    expect(events.length).toBeGreaterThan(0);
   });
 
   it('received() returns what client sent to Claude', async () => {
-    const claude = createFakeClaude();
-    const channelId = await claude.initialize(s.init('cli-sess'), {
+    const summoner = createFakeSummoner();
+    const channelId = await summoner.claude().initialize(s.init('cli-sess'), {
       launch: { channelId: 'test-ch-2' },
     });
 
-    await claude.send('chat:send', { channelId, message: 'fix the bug' });
+    await summoner.send('chat:send', { channelId, message: 'fix the bug' });
 
-    const userMessages = claude.received('user');
+    const userMessages = summoner.claude().received('user');
     expect(userMessages.length).toBeGreaterThan(0);
     expect(userMessages[0]).toEqual(expect.objectContaining({ type: 'user' }));
   });
 
-  it('exposes socket for wiring into production Providers', () => {
-    const claude = createFakeClaude();
-    expect(claude.socket).toBeTruthy();
-    expect(claude.socket.connect).toBeDefined();
-  });
-
-  it('has no init() method', () => {
-    const claude = createFakeClaude();
-    expect((claude as unknown as Record<string, unknown>).init).toBeUndefined();
+  it('summoner exposes socket for SocketProvider', () => {
+    const summoner = createFakeSummoner();
+    expect(summoner.socket).toBeTruthy();
+    expect(summoner.socket.connect).toBeDefined();
   });
 });

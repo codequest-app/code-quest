@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetSeq, segments } from '../test/fake-claude.ts';
+import { resetSeq, segments } from '../test/segments.ts';
 
 /** Parse a segment string into an object for assertions */
 const parse = (s: string) => JSON.parse(s) as Record<string, unknown>;

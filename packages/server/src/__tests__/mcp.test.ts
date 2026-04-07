@@ -1,9 +1,9 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeSummoner } from '../test/index.ts';
 
 async function setup() {
-  const claude = createFakeClaude();
+  const claude = createFakeSummoner().claude();
   const channelId = await claude.initialize();
   return { claude, channelId };
 }
@@ -129,8 +129,6 @@ describe('ChatHandler > mcp', () => {
   describe('MCP control socket events', () => {
     it('ensure_chrome_mcp_enabled: emits connecting then connected and returns wasDisabled:true', async () => {
       const { claude } = await setup();
-      const stateUpdates: any[] = [];
-      claude.socket.on('settings:update' as any, (p: any) => stateUpdates.push(p));
 
       const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
         'mcp:ensure_chrome',
@@ -140,7 +138,8 @@ describe('ChatHandler > mcp', () => {
       expect(res.success).toBe(true);
       expect((res.response as any).wasDisabled).toBe(true);
 
-      const states = stateUpdates
+      const states = claude
+        .events('settings:update')
         .filter((p: any) => p.chromeMcpState)
         .map((p: any) => p.chromeMcpState.status);
       expect(states).toContain('connecting');
@@ -166,8 +165,7 @@ describe('ChatHandler > mcp', () => {
 
       await claude.send('mcp:ensure_chrome', { channelId: 'any' });
 
-      const stateUpdates: any[] = [];
-      claude.socket.on('settings:update' as any, (p: any) => stateUpdates.push(p));
+      const countBefore = claude.events('settings:update').length;
 
       const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
         'mcp:disable_chrome',
@@ -177,7 +175,9 @@ describe('ChatHandler > mcp', () => {
       expect(res.success).toBe(true);
       expect((res.response as any).wasEnabled).toBe(true);
 
-      const states = stateUpdates
+      const states = claude
+        .events('settings:update')
+        .slice(countBefore)
         .filter((p: any) => p.chromeMcpState)
         .map((p: any) => p.chromeMcpState.status);
       expect(states).toContain('disconnected');
@@ -185,8 +185,6 @@ describe('ChatHandler > mcp', () => {
 
     it('enable_jupyter_mcp: emits active and returns correct response', async () => {
       const { claude } = await setup();
-      const stateUpdates: any[] = [];
-      claude.socket.on('settings:update' as any, (p: any) => stateUpdates.push(p));
 
       const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
         'mcp:enable_jupyter',
@@ -196,7 +194,8 @@ describe('ChatHandler > mcp', () => {
       expect(res.success).toBe(true);
       expect((res.response as any).type).toBe('enable_jupyter_mcp_response');
 
-      const states = stateUpdates
+      const states = claude
+        .events('settings:update')
         .filter((p: any) => p.jupyterMcpState)
         .map((p: any) => p.jupyterMcpState.status);
       expect(states).toContain('active');
@@ -204,8 +203,6 @@ describe('ChatHandler > mcp', () => {
 
     it('disable_jupyter_mcp: emits inactive and returns correct response', async () => {
       const { claude } = await setup();
-      const stateUpdates: any[] = [];
-      claude.socket.on('settings:update' as any, (p: any) => stateUpdates.push(p));
 
       const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
         'mcp:disable_jupyter',
@@ -215,7 +212,8 @@ describe('ChatHandler > mcp', () => {
       expect(res.success).toBe(true);
       expect((res.response as any).type).toBe('disable_jupyter_mcp_response');
 
-      const states = stateUpdates
+      const states = claude
+        .events('settings:update')
         .filter((p: any) => p.jupyterMcpState)
         .map((p: any) => p.jupyterMcpState.status);
       expect(states).toContain('inactive');
@@ -223,8 +221,6 @@ describe('ChatHandler > mcp', () => {
 
     it('ask_debugger_help: returns ask_debugger_help_response without state mutation', async () => {
       const { claude } = await setup();
-      const stateUpdates: any[] = [];
-      claude.socket.on('settings:update' as any, (p: any) => stateUpdates.push(p));
 
       const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
         'mcp:ask_debugger',
@@ -234,7 +230,9 @@ describe('ChatHandler > mcp', () => {
       expect(res.success).toBe(true);
       expect((res.response as any).type).toBe('ask_debugger_help_response');
       // No settings:update with debugger state should have been pushed
-      const debuggerUpdates = stateUpdates.filter((p: any) => p.debuggerMcpState);
+      const debuggerUpdates = claude
+        .events('settings:update')
+        .filter((p: any) => p.debuggerMcpState);
       expect(debuggerUpdates).toHaveLength(0);
     });
 
@@ -260,8 +258,6 @@ describe('ChatHandler > mcp', () => {
   describe('mcp_message control_request', () => {
     it('forwards to client as control:mcp event', async () => {
       const { claude, channelId } = await setup();
-      const mcpEvents: any[] = [];
-      claude.socket.on('control:mcp', (p: any) => mcpEvents.push(p));
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -271,13 +267,11 @@ describe('ChatHandler > mcp', () => {
         }),
       );
 
-      expect(mcpEvents.length).toBeGreaterThan(0);
+      expect(claude.events('control:mcp').length).toBeGreaterThan(0);
     });
 
     it('mcp_message is NOT auto-responded — passthrough to client', async () => {
       const { claude, channelId } = await setup();
-      const mcpEvents: any[] = [];
-      claude.socket.on('control:mcp', (p: any) => mcpEvents.push(p));
 
       await claude.send('chat:send', { channelId, message: 'go' });
       await claude.emit(
@@ -287,6 +281,7 @@ describe('ChatHandler > mcp', () => {
         }),
       );
 
+      const mcpEvents = claude.events('control:mcp');
       expect(mcpEvents.length).toBeGreaterThan(0);
       // mcp_message should be forwarded to client, not auto-responded
       expect(mcpEvents[0].requestId).toBe('mcp-pass');

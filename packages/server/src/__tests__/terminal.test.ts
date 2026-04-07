@@ -1,12 +1,15 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
+  return { container, claude, channelId };
 }
 
 describe('ChatHandler > terminal', () => {
@@ -22,10 +25,10 @@ describe('ChatHandler > terminal', () => {
     });
 
     it('returns last 100 lines joined by \\n when session has lines', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const channel = mgr.get(channelId)!;
       channel.terminalLines = ['line1', 'line2', 'line3'];
 
@@ -37,10 +40,10 @@ describe('ChatHandler > terminal', () => {
     });
 
     it('returns only last 100 lines when there are more than 100', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const channel = mgr.get(channelId)!;
       channel.terminalLines = Array.from({ length: 150 }, (_, i) => `line${i + 1}`);
 
@@ -58,7 +61,7 @@ describe('ChatHandler > terminal', () => {
 
   describe('terminal:open_claude', () => {
     it('creates a new session and returns { success: true, channelId }', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       const res = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
         'terminal:open_claude',
@@ -69,7 +72,7 @@ describe('ChatHandler > terminal', () => {
       expect(res.channelId).toBeDefined();
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       expect(mgr.get(res.channelId!)).toBeDefined();
     });
 
@@ -86,7 +89,7 @@ describe('ChatHandler > terminal', () => {
     });
 
     it('with a cwd, the new channel uses that cwd', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       const res = await claude.send<{ success: boolean; channelId?: string }>(
         'terminal:open_claude',
@@ -96,7 +99,7 @@ describe('ChatHandler > terminal', () => {
       expect(res.success).toBe(true);
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const newChannel = mgr.get(res.channelId!);
       expect(newChannel?.cwd).toBe('/tmp');
     });

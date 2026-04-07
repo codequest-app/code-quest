@@ -29,9 +29,11 @@ describe('AccountUsageDialog', () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
+      await claude.emit(s.result());
+    });
 
     // Rate limit message rendered
     expect(screen.queryAllByText(/limit/i).length).toBeGreaterThan(0);
@@ -46,9 +48,11 @@ describe('AccountUsageDialog', () => {
   it('handles rate limit event when dialog is closed', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user);
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('ok'));
+      await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
+      await claude.emit(s.result());
+    });
 
     expect(screen.getByText('ok')).toBeInTheDocument();
   });
@@ -72,9 +76,11 @@ describe('AccountUsageDialog', () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
+      await claude.emit(s.result());
+    });
 
     const dialog = await openUsageDialog(user);
     // Should show session usage data
@@ -127,8 +133,10 @@ describe('AccountUsageDialog', () => {
   it('shows session cost from result stats', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+    });
 
     const dialog = await openUsageDialog(user);
     expect(within(dialog).getByText(/\$1\.23/)).toBeInTheDocument();

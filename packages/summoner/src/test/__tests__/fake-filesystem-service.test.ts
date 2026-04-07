@@ -1,0 +1,98 @@
+import { describe, expect, it } from 'vitest';
+import { FakeFilesystemService } from '../fake-filesystem-service.ts';
+
+describe('FakeFilesystemService', () => {
+  describe('browseDirectories', () => {
+    it('returns roots when no path', () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/projects', '/work']);
+      expect(fs.browseDirectories()).toEqual([
+        { name: 'projects', path: '/projects' },
+        { name: 'work', path: '/work' },
+      ]);
+    });
+
+    it('returns children for a path', () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/projects']);
+      fs.addDirectory('/projects', ['app', 'blog']);
+      expect(fs.browseDirectories('/projects')).toEqual([
+        { name: 'app', path: '/projects/app' },
+        { name: 'blog', path: '/projects/blog' },
+      ]);
+    });
+
+    it('returns empty for unknown path', () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/projects']);
+      expect(fs.browseDirectories('/unknown')).toEqual([]);
+    });
+
+    it('returns empty when no roots set', () => {
+      const fs = new FakeFilesystemService();
+      expect(fs.browseDirectories()).toEqual([]);
+    });
+
+    it('children are sorted alphabetically', () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/projects']);
+      fs.addDirectory('/projects', ['zebra', 'alpha', 'middle']);
+      const names = fs.browseDirectories('/projects').map((d) => d.name);
+      expect(names).toEqual(['alpha', 'middle', 'zebra']);
+    });
+  });
+
+  describe('listFiles', () => {
+    it('returns files and directories for a cwd', () => {
+      const fs = new FakeFilesystemService();
+      fs.addDirectory('/app', ['src']);
+      fs.addFile('/app/package.json', '{}');
+      const results = fs.listFiles('/app', '');
+      expect(results.some((f) => f.type === 'directory')).toBe(true);
+      expect(results.some((f) => f.type === 'file')).toBe(true);
+    });
+
+    it('filters by pattern', () => {
+      const fs = new FakeFilesystemService();
+      fs.addFile('/app/index.ts', '');
+      fs.addFile('/app/utils.ts', '');
+      const results = fs.listFiles('/app', 'index');
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('index.ts');
+    });
+
+    it('returns empty for unmatched pattern', () => {
+      const fs = new FakeFilesystemService();
+      fs.addFile('/app/index.ts', '');
+      expect(fs.listFiles('/app', 'nonexistent')).toEqual([]);
+    });
+  });
+
+  describe('readFile', () => {
+    it('reads an existing file', () => {
+      const fs = new FakeFilesystemService();
+      fs.addFile('/app/index.ts', 'export {}');
+      expect(fs.readFile('/app', 'index.ts')).toEqual({ content: 'export {}' });
+    });
+
+    it('returns error for non-existent file', () => {
+      const fs = new FakeFilesystemService();
+      expect(fs.readFile('/app', 'nope.ts')).toEqual({ error: 'File not found: nope.ts' });
+    });
+  });
+
+  describe('reset', () => {
+    it('clears all state', () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/projects']);
+      fs.addDirectory('/projects', ['app']);
+      fs.addFile('/projects/app/index.ts', '');
+      fs.reset();
+      expect(fs.browseDirectories()).toEqual([]);
+      expect(fs.browseDirectories('/projects')).toEqual([]);
+      expect(fs.readFile('/projects/app', 'index.ts')).toEqual({
+        error: 'File not found: index.ts',
+      });
+    });
+  });
+});

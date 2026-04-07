@@ -1,10 +1,10 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 
 describe('ChatHandler > connection', () => {
   it('init returns settings and sessions in one response', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
 
     const result = await claude.send<{
       settings: Record<string, unknown>;
@@ -17,7 +17,7 @@ describe('ChatHandler > connection', () => {
   });
 
   it('app:config returns providerConfig from adapter', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
 
     const result = await claude.send<{
       providerConfig: { brand: { name: string; company: string } };
@@ -29,7 +29,7 @@ describe('ChatHandler > connection', () => {
   });
 
   it('app:config returns defaultModels from providerConfig before any session launch', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
 
     const result = await claude.send<{
       providerConfig: { defaultModels: Array<{ value: string }> };
@@ -42,7 +42,7 @@ describe('ChatHandler > connection', () => {
   });
 
   it('session launch caches models and app:config returns them', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
     const models = [{ value: 'default' }, { value: 'haiku' }];
 
     // app:config before launch — no cachedModels
@@ -58,9 +58,11 @@ describe('ChatHandler > connection', () => {
   });
 
   it('app:init returns fallback when settingsStore throws', async () => {
-    const claude = createFakeClaude();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
     const { TYPES } = await import('../types.ts');
-    const settingsStore = claude.container.get<{
+    const settingsStore = container.get<{
       getMany: (...args: unknown[]) => Promise<Record<string, unknown>>;
     }>(TYPES.SettingsStore);
     settingsStore.getMany = () => Promise.reject(new Error('DB error'));
@@ -75,9 +77,11 @@ describe('ChatHandler > connection', () => {
   });
 
   it('app:config returns providerConfig when settingsStore throws', async () => {
-    const claude = createFakeClaude();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
     const { TYPES } = await import('../types.ts');
-    const settingsStore = claude.container.get<{
+    const settingsStore = container.get<{
       get: (...args: unknown[]) => Promise<unknown>;
     }>(TYPES.SettingsStore);
     settingsStore.get = () => Promise.reject(new Error('DB error'));

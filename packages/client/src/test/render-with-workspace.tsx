@@ -1,3 +1,6 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test harness */
+
+import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
@@ -5,14 +8,15 @@ import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
-import { createFakeClaude, type FakeClaude } from './fake-claude';
+import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 export interface RenderWithWorkspaceOptions {
-  claude?: FakeClaude;
+  summoner?: FakeSummoner;
 }
 
 export interface RenderWithWorkspaceResult {
   claude: FakeClaude;
+  summoner: FakeSummoner;
   channelId: string;
   user: ReturnType<typeof userEvent.setup>;
 }
@@ -20,17 +24,17 @@ export interface RenderWithWorkspaceResult {
 export async function renderWithWorkspace(
   opts?: RenderWithWorkspaceOptions,
 ): Promise<RenderWithWorkspaceResult> {
-  const claude = opts?.claude ?? createFakeClaude();
+  const summoner = opts?.summoner ?? createFakeSummoner();
+  const claude = summoner.claude() as FakeClaude;
   const user = userEvent.setup({ pointerEventsCheck: 0 });
 
   if (!claude.hasInitSegments) {
     claude.prepareInit();
   }
 
-  // Capture channelId from session:init (fires after launch + join)
   let channelId = '';
   const initPromise = new Promise<string>((resolve) => {
-    claude.socket.on('session:init', (p) => {
+    summoner.on('session:init', (p: any) => {
       if (!channelId) {
         channelId = p.channelId;
         resolve(p.channelId);
@@ -39,7 +43,7 @@ export async function renderWithWorkspace(
   });
 
   render(
-    <SocketProvider socket={claude.socket}>
+    <SocketProvider socket={summoner.socket}>
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
@@ -52,13 +56,11 @@ export async function renderWithWorkspace(
 
   await user.click(await screen.findByLabelText('New tab'));
 
-  // Wait for full launch → join → session:init cycle
   await act(async () => {
     channelId = await initPromise;
   });
 
-  // Ensure channel is fully joined and UI rendered
   await screen.findByPlaceholderText(/Esc to focus/i);
 
-  return { claude, channelId, user };
+  return { claude, summoner, channelId, user };
 }

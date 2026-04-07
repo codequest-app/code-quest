@@ -34,3 +34,17 @@ export function rpc<E extends keyof ClientToServerEvents>(
     (socket.emit as (...a: unknown[]) => unknown)(event, ...args, resolve);
   });
 }
+
+/**
+ * Promise-based rpc with channelId injected into the payload.
+ */
+export function channelRpc<T = unknown>(
+  socket: TypedSocket,
+  channelId: string,
+  event: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  return new Promise((resolve) => {
+    (socket.emit as (...a: unknown[]) => unknown)(event, { channelId, ...payload }, resolve);
+  });
+}

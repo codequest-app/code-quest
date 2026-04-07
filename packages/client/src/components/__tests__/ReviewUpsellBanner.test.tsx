@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
@@ -18,21 +18,27 @@ describe('ReviewUpsellBanner', () => {
 
   it('renders when gate is on and not dismissed', async () => {
     const { claude } = await renderWithWorkspace();
-    await claude.emit(s.experimentGates({ review_upsell: true }));
+    await act(async () => {
+      await claude.emit(s.experimentGates({ review_upsell: true }));
+    });
     expect(screen.getByText('Try the new code review feature')).toBeInTheDocument();
   });
 
   it('does not render when gate is on but dismissed', async () => {
     usePreferencesStore.setState({ isReviewUpsellDismissed: true });
     const { claude } = await renderWithWorkspace();
-    await claude.emit(s.experimentGates({ review_upsell: true }));
+    await act(async () => {
+      await claude.emit(s.experimentGates({ review_upsell: true }));
+    });
     expect(screen.queryByText('Try the new code review feature')).not.toBeInTheDocument();
   });
 
   it('dismisses when clicking Dismiss button', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const { claude } = await renderWithWorkspace();
-    await claude.emit(s.experimentGates({ review_upsell: true }));
+    await act(async () => {
+      await claude.emit(s.experimentGates({ review_upsell: true }));
+    });
     expect(screen.getByText('Try the new code review feature')).toBeInTheDocument();
 
     const dismissBtn =

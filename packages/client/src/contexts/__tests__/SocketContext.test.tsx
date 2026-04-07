@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { SocketProvider, useSocket } from '../SocketContext';
 
-function wrapper(socket = createFakeClaude().socket) {
+function wrapper(socket = createFakeSummoner().socket) {
   return ({ children }: { children: ReactNode }) => (
     <SocketProvider socket={socket}>{children}</SocketProvider>
   );
@@ -12,9 +12,9 @@ function wrapper(socket = createFakeClaude().socket) {
 
 describe('SocketContext', () => {
   it('provides socket via useSocket', () => {
-    const { socket } = createFakeClaude();
-    const { result } = renderHook(() => useSocket(), { wrapper: wrapper(socket) });
-    expect(result.current.socket).toBe(socket);
+    const summoner = createFakeSummoner();
+    const { result } = renderHook(() => useSocket(), { wrapper: wrapper(summoner.socket) });
+    expect(result.current.socket).toBe(summoner.socket);
   });
 
   it('throws when useSocket is called outside provider', () => {

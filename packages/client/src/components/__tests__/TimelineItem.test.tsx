@@ -25,11 +25,13 @@ describe('Conversation display — tool use timeline', () => {
   it('shows Bash tool name in DOM', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user, 'list files');
-    await claude.emit(
-      s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls -la' } } }),
-    );
-    await claude.emit(s.toolResult('toolu_1', 'total 42\ndrwxr-xr-x'));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'Bash', input: { command: 'ls -la' } } }),
+      );
+      await claude.emit(s.toolResult('toolu_1', 'total 42\ndrwxr-xr-x'));
+      await claude.emit(s.result());
+    });
 
     expect(screen.getByText('Bash')).toBeInTheDocument();
   });

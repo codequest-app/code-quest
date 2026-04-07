@@ -1,7 +1,7 @@
+import type { FakeClaude } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import type { FakeClaude } from '../../test/fake-claude';
 import { emitAssistantTurn } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 

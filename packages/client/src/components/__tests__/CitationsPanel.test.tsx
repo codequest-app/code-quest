@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -17,9 +17,11 @@ describe('CitationsPanel', () => {
   it('renders citation links when citations_delta arrives', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user);
-    await claude.emit(s.assistant('Check this'));
-    await claude.emit(s.citationsDelta({ url: 'https://example.com', title: 'Example' }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('Check this'));
+      await claude.emit(s.citationsDelta({ url: 'https://example.com', title: 'Example' }));
+      await claude.emit(s.result());
+    });
 
     // Citation renders as link or text with the title
     const exampleElements = screen.queryAllByText(/Example/);
@@ -29,9 +31,11 @@ describe('CitationsPanel', () => {
   it('renders plain text when citation has no url', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user);
-    await claude.emit(s.assistant('See source'));
-    await claude.emit(s.citationsDelta({ title: 'No Link Source' }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('See source'));
+      await claude.emit(s.citationsDelta({ title: 'No Link Source' }));
+      await claude.emit(s.result());
+    });
 
     expect(screen.getByText('No Link Source')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'No Link Source' })).not.toBeInTheDocument();

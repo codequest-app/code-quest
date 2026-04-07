@@ -2,10 +2,10 @@
 import { segments as s } from '@code-quest/summoner/test';
 import * as claudeCli from '../socket/claude/cli.ts';
 import { resetClaudeState } from '../socket/claude/state.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeSummoner } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const claude = createFakeSummoner().claude();
   const channelId = await claude.initialize(s.init(sessionId));
   return { claude, channelId };
 }

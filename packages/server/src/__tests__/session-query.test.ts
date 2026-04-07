@@ -1,13 +1,16 @@
 import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
+  return { container, claude, channelId };
 }
 
 describe('ChatHandler > session', () => {
@@ -44,7 +47,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session:init during processing does not wipe pendingTitlePrompt', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       claude.onControlRequest((req) => {
         if (req.subtype === 'generate_session_title') {
@@ -69,7 +72,7 @@ describe('ChatHandler > session', () => {
       expect(session?.title).toBe('Generated Title');
 
       // Verify DB persistence
-      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getById(channelId);
       expect(record).toBeDefined();
       expect(record!.title).toBe('Generated Title');

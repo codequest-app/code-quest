@@ -1,8 +1,8 @@
+import type { FakeClaude } from '@code-quest/summoner/test';
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { useChannelMessages } from '../contexts/channel';
-import type { FakeClaude } from './fake-claude';
 
 /** Placeholder regex for the compose textarea — use this instead of hardcoded strings. */
 export const COMPOSE_PLACEHOLDER = /Esc to focus/i;
@@ -17,10 +17,19 @@ export function SendButton({ message = 'test' }: { message?: string } = {}) {
   );
 }
 
-/** Emit a complete assistant turn (assistant message + result). */
+/** Emit a single segment. Wraps with act() for React state updates. */
+export async function emitSegment(claude: FakeClaude, segment: string) {
+  await act(async () => {
+    await claude.emit(segment);
+  });
+}
+
+/** Emit a complete assistant turn (assistant message + result). Wraps with act() for React. */
 export async function emitAssistantTurn(claude: FakeClaude, message = 'hi') {
-  await claude.emit(s.assistant(message));
-  await claude.emit(s.result());
+  await act(async () => {
+    await claude.emit(s.assistant(message));
+    await claude.emit(s.result());
+  });
 }
 
 /** Type a message in the compose textarea and press Enter. */

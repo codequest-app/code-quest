@@ -42,8 +42,10 @@ describe('ChannelProvider', () => {
   it('signature_delta does not create visible message', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user);
-    await claude.emit(s.signatureDelta('sig'));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.signatureDelta('sig'));
+      await claude.emit(s.result());
+    });
 
     expect(screen.queryAllByText(/unhandled|signature/i)).toHaveLength(0);
   });
@@ -51,8 +53,10 @@ describe('ChannelProvider', () => {
   it('control_response does not create visible message', async () => {
     const { claude, user } = await renderWithWorkspace();
     await sendUserMessage(user);
-    await claude.emit(s.controlResponse('req-fake'));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.controlResponse('req-fake'));
+      await claude.emit(s.result());
+    });
 
     expect(screen.queryAllByText(/unhandled|control_response/i)).toHaveLength(0);
   });
@@ -71,43 +75,55 @@ describe('ChannelProvider', () => {
 
   it('auth_url event does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.authUrl('https://auth.example.com', 'browser'));
+    await act(async () => {
+      await claude.emit(s.authUrl('https://auth.example.com', 'browser'));
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('bridge_state does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.bridgeState('ready'));
+    await act(async () => {
+      await claude.emit(s.bridgeState('ready'));
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('unknown raw event does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.rawUnknown('some_future_event', { data: 'test' }));
+    await act(async () => {
+      await claude.emit(s.rawUnknown('some_future_event', { data: 'test' }));
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('new_session_notification does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.newSessionNotification());
+    await act(async () => {
+      await claude.emit(s.newSessionNotification());
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('open_in_editor control_request does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.controlRequestOpenInEditor('oe-1'));
+    await act(async () => {
+      await claude.emit(s.controlRequestOpenInEditor('oe-1'));
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   it('speech:message does not crash', async () => {
     const { claude } = await setupWithTurn();
-    await claude.emit(s.speechToTextMessage('ch-1', 'Hello'));
-    await claude.emit(s.speechToTextMessage('ch-1', 'Hello world', true));
+    await act(async () => {
+      await claude.emit(s.speechToTextMessage('ch-1', 'Hello'));
+      await claude.emit(s.speechToTextMessage('ch-1', 'Hello world', true));
+    });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
   });
@@ -117,8 +133,10 @@ describe('ChannelProvider', () => {
   it('session:states busy shows spinner (Stop button)', async () => {
     const { claude, channelId } = await renderWithWorkspace();
 
-    await claude.pushServerEvent('session:states', {
-      sessions: [{ channelId, state: 'busy' }],
+    await act(async () => {
+      await claude.pushServerEvent('session:states', {
+        sessions: [{ channelId, state: 'busy' }],
+      });
     });
 
     expect(await screen.findByTitle('Stop')).toBeInTheDocument();
@@ -127,13 +145,17 @@ describe('ChannelProvider', () => {
   it('session:states idle hides spinner after busy', async () => {
     const { claude, channelId } = await renderWithWorkspace();
 
-    await claude.pushServerEvent('session:states', {
-      sessions: [{ channelId, state: 'busy' }],
+    await act(async () => {
+      await claude.pushServerEvent('session:states', {
+        sessions: [{ channelId, state: 'busy' }],
+      });
     });
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
 
-    await claude.pushServerEvent('session:states', {
-      sessions: [{ channelId, state: 'idle' }],
+    await act(async () => {
+      await claude.pushServerEvent('session:states', {
+        sessions: [{ channelId, state: 'idle' }],
+      });
     });
     expect(screen.getByTitle('Send')).toBeInTheDocument();
   });
@@ -162,7 +184,7 @@ describe('ChannelProvider', () => {
   it('unmount does not crash', async () => {
     const { claude } = await renderWithWorkspace();
     render(<div />);
-    expect(claude.socket.connected).toBe(true);
+    expect(claude.connected).toBe(true);
   });
 
   // ── Context Usage ──

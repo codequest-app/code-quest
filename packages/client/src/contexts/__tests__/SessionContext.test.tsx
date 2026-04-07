@@ -30,7 +30,9 @@ describe('SessionProvider (global config only)', () => {
 
   it('experiment_gates event does not crash', async () => {
     const { claude } = await renderWithWorkspace();
-    await claude.emit(s.experimentGates({ review_upsell: true }));
+    await act(async () => {
+      await claude.emit(s.experimentGates({ review_upsell: true }));
+    });
 
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
@@ -40,7 +42,7 @@ describe('SessionProvider (global config only)', () => {
     const { claude } = await renderWithWorkspace();
 
     await act(async () => {
-      claude.socket.disconnect();
+      claude.disconnect();
     });
 
     expect(mockedToast.warning).toHaveBeenCalledWith('Disconnected from server');
@@ -51,7 +53,7 @@ describe('SessionProvider (global config only)', () => {
     const { claude } = await renderWithWorkspace();
 
     // Manually invoke the connect_error listener registered by SessionContext
-    const listeners = claude.socket.listeners('connect_error');
+    const listeners = claude.listeners('connect_error');
     await act(async () => {
       for (const fn of listeners) (fn as (err: Error) => void)(new Error('Connection refused'));
     });
@@ -63,12 +65,12 @@ describe('SessionProvider (global config only)', () => {
     const { claude } = await renderWithWorkspace();
 
     await act(async () => {
-      claude.socket.disconnect();
+      claude.disconnect();
     });
     await act(async () => {
-      claude.socket.connect();
+      claude.connect();
     });
 
-    expect(claude.socket.connected).toBe(true);
+    expect(claude.connected).toBe(true);
   });
 });
