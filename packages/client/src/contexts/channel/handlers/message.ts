@@ -3,8 +3,8 @@ import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
-import { msg } from '@/utils/message';
-import { addMessage, type Payload } from './guard';
+import { addMessage, msg } from '@/utils/message';
+import type { Payload } from './guard';
 
 // ── Helpers ──
 

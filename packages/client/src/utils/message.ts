@@ -6,6 +6,7 @@ import {
   sessionStatsSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
+import type { ChannelState } from '../types/chat';
 import type { Message } from '../types/ui';
 
 /** Map server session stats shape to client ChatStats. */
@@ -42,6 +43,11 @@ export const msg = <T extends Message['type']>(
     timestamp: Date.now(),
     ...fields,
   }) as Extract<Message, { type: T }>;
+
+/** Append a message to channel state. */
+export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
+  return { ...state, messages: [...state.messages, msg(fields)] };
+}
 
 /**
  * Patch a message's meta without losing the discriminated union type.

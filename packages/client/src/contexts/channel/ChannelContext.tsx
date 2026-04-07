@@ -35,6 +35,7 @@ export function ChannelProvider({
       if (cancelled) return;
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
       if (!parsed.success || parsed.data.error) {
+        console.error('[session:launch] failed', parsed.success ? parsed.data.error : parsed.error);
         setLaunched(true); // proceed despite failure — avoid infinite "Connecting…"
         return;
       }

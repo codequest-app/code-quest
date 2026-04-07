@@ -1,15 +1,8 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
-import type { ChannelState } from '@/types/chat';
-import { msg } from '@/utils/message';
 
 /** Extract payload type from a ServerToClientEvents event. */
 export type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
-
-/** Append a message to channel state. */
-export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
-  return { ...state, messages: [...state.messages, msg(fields)] };
-}
 
 /**
  * Creates a channelId guard function for socket event filtering.
