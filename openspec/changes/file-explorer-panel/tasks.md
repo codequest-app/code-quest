@@ -11,23 +11,23 @@
 
 ## 2. Shared Schemas
 
-- [ ] 2.1 新增 `explorerBrowsePayloadSchema`（`{ path?: string }`）和 `explorerBrowseResponseSchema`（`{ directories: Array<{ name: string; path: string }> }`）到 shared package，並 export
-- [ ] 2.2 新增 `explorer:browse` 到 `ClientToServerEvents` type definition
+- [x] 2.1 新增 `explorerBrowsePayloadSchema`（`{ path?: string }`）和 `explorerBrowseResponseSchema`（`{ directories: Array<{ name: string; path: string }> }`）到 shared package，並 export
+- [x] 2.2 新增 `explorer:browse` 到 `ClientToServerEvents` type definition
 
 ## 3. Server — Config & Security
 
-- [ ] 3.1 在 `packages/server/src/config.ts` 新增 `explorerRoots` 設定：讀取 `FILE_EXPLORER_ROOTS` env var（逗號分隔），未設定時預設 `[os.homedir()]`
-- [ ] 3.2 建立 path validation utility function + 測試：接收 path + explorerRoots，回傳 resolved absolute path 或 null（path traversal / out of scope 回傳 null）
+- [x] 3.1 在 `packages/server/src/config.ts` 新增 `explorerRoots` 設定：讀取 `FILE_EXPLORER_ROOTS` env var（逗號分隔），未設定時預設 `[os.homedir()]`
+- [x] 3.2 建立 path validation utility function + 測試：接收 path + explorerRoots，回傳 resolved absolute path 或 null（path traversal / out of scope 回傳 null）
 
 ## 4. Server — Explorer Handler
 
-- [ ] 4.1 為 explorer handler 撰寫測試：roots 回傳、子目錄列表、path 安全驗證、權限錯誤處理、symlink 排除
-- [ ] 4.2 建立 `packages/server/src/socket/handlers/explorer.ts`，實作 `explorer:browse` handler（不使用 `withChannel`）
-- [ ] 4.3 handler 邏輯：無 path → 回傳 explorerRoots 列表；有 path → 讀取子目錄（`readdirSync` + `Dirent.isDirectory()`）
-- [ ] 4.4 過濾隱藏目錄（`.` 開頭）和忽略目錄（`node_modules`、`.git`、`dist`、`coverage`）
-- [ ] 4.5 使用 `lstatSync` 排除 symlink 目錄
-- [ ] 4.6 try-catch 處理權限錯誤，回傳 `{ directories: [] }`
-- [ ] 4.7 在 `server.ts` 的 `register()` 中註冊 `explorer.create(em)`（不需 channelManager）
+- [x] 4.1 為 explorer handler 撰寫測試：roots 回傳、子目錄列表、path 安全驗證、權限錯誤處理、symlink 排除
+- [x] 4.2 建立 `packages/server/src/socket/handlers/explorer.ts`，實作 `explorer:browse` handler（不使用 `withChannel`）
+- [x] 4.3 handler 邏輯：無 path → 回傳 explorerRoots 列表；有 path → 讀取子目錄（`readdirSync` + `Dirent.isDirectory()`）
+- [x] 4.4 過濾隱藏目錄（`.` 開頭）和忽略目錄（`node_modules`、`.git`、`dist`、`coverage`）
+- [x] 4.5 使用 `lstatSync` 排除 symlink 目錄
+- [x] 4.6 try-catch 處理權限錯誤，回傳 `{ directories: [] }`
+- [x] 4.7 在 `server.ts` 的 `register()` 中註冊 `explorer.create(em)`（不需 channelManager）
 
 ## 5. Client — File Explorer Panel
 

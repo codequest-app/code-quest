@@ -59,7 +59,7 @@ describe('ChatHandler > file', () => {
       ).toBe(true);
     });
 
-    it('returns terminal results for matching active sessions', async () => {
+    it('does not return terminal results (terminal mention is separate)', async () => {
       const { claude, channelId } = await setup();
 
       const pattern = channelId.slice(0, 8);
@@ -67,7 +67,7 @@ describe('ChatHandler > file', () => {
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern });
 
-      expect(result.files.some((f) => f.type === 'terminal')).toBe(true);
+      expect(result.files.every((f) => f.type !== 'terminal')).toBe(true);
     });
 
     it('limits results to 20 entries', async () => {

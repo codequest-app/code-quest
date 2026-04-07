@@ -1,4 +1,5 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
+import type { FilesystemService } from '@code-quest/summoner';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -13,6 +14,7 @@ import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
 import * as app from './handlers/app.ts';
 import * as autoRespond from './handlers/auto-respond.ts';
+import * as explorer from './handlers/explorer.ts';
 import * as file from './handlers/file.ts';
 import * as git from './handlers/git.ts';
 import * as mcp from './handlers/mcp.ts';
@@ -41,6 +43,7 @@ export class SocketServer {
     @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
     @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
     @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
+    @inject(TYPES.FilesystemService) private filesystemService: FilesystemService,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
@@ -61,7 +64,8 @@ export class SocketServer {
     worktree.create(em);
     terminal.create(cm, em);
     mcp.create(em);
-    file.create(cm, em);
+    file.create(em, this.filesystemService);
+    explorer.create(em, this.filesystemService);
 
     settings.create(cm, this.settingsStore, this.usageTracker, em);
     git.create(this.sessionHistory, this.rawEventStore, em);

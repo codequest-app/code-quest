@@ -5,7 +5,7 @@ import {
   sessionDeadPayloadSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 import { useSocket } from './SocketContext';
 
@@ -13,11 +13,6 @@ export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
-}
-
-interface TabState {
-  tabs: Record<string, TabMeta>;
-  activeTabId: string | null;
 }
 
 // ── State context (changes frequently) ──
@@ -69,7 +64,7 @@ export function TabProvider({
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
   defaultCwd?: string;
 }) {
-  const [state, setState] = useState<TabState>(() => ({
+  const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
     activeTabId: initialState?.activeTabId ?? null,
   }));
@@ -152,22 +147,18 @@ export function TabProvider({
     });
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: all actions use setState updater pattern — only defaultCwd (captured in createNewTab) can actually change
-  const actions = useMemo<TabActionsValue>(
-    () => ({
-      addTab,
-      removeTab,
-      setActiveTab,
-      setTabTitle,
-      setTabStatus,
-      createNewTab,
-      replaceActiveTab,
-      syncFromServer,
-    }),
-    [defaultCwd],
-  );
+  const actions: TabActionsValue = {
+    addTab,
+    removeTab,
+    setActiveTab,
+    setTabTitle,
+    setTabStatus,
+    createNewTab,
+    replaceActiveTab,
+    syncFromServer,
+  };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: actions stable via useMemo
+  // biome-ignore lint/correctness/useExhaustiveDependencies: actions use setState updater pattern — React Compiler stabilises references
   useEffect(() => {
     const onConnect = initialState
       ? undefined

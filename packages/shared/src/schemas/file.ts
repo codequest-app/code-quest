@@ -6,7 +6,7 @@ export type FileListPayload = z.infer<typeof fileListPayloadSchema>;
 export const fileSearchResultSchema = z.object({
   path: z.string(),
   name: z.string(),
-  type: z.enum(['file', 'directory', 'terminal']),
+  type: z.enum(['file', 'directory']),
 });
 export type FileSearchResult = z.infer<typeof fileSearchResultSchema>;
 

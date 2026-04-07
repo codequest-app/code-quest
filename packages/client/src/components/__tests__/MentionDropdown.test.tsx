@@ -39,18 +39,6 @@ describe('MentionDropdown', () => {
     expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('renders terminal item with icon + name + terminal label', () => {
-    render(
-      <MentionDropdown
-        {...baseProps}
-        fileResults={[{ path: 'session-1', name: 'session-1', type: 'terminal' }]}
-      />,
-    );
-    expect(screen.getByText('session-1')).toBeInTheDocument();
-    expect(screen.getByText('terminal')).toBeInTheDocument();
-    expect(document.querySelector('svg')).toBeInTheDocument();
-  });
-
   it('file item does not show directory path when path equals name', () => {
     render(
       <MentionDropdown

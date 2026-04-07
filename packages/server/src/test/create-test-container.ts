@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ProcessProvider } from '@code-quest/summoner';
+import type { FilesystemService, ProcessProvider } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
@@ -14,6 +14,7 @@ const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 export interface TestContainerOverrides {
   processProvider?: ProcessProvider;
+  filesystemService?: FilesystemService;
 }
 
 export function createTestContainer(overrides: TestContainerOverrides): Container {
@@ -29,6 +30,12 @@ export function createTestContainer(overrides: TestContainerOverrides): Containe
   container
     .rebindSync<SettingsStore>(TYPES.SettingsStore)
     .toConstantValue(new InMemorySettingsStore());
+
+  if (overrides.filesystemService) {
+    container
+      .rebindSync<FilesystemService>(TYPES.FilesystemService)
+      .toConstantValue(overrides.filesystemService);
+  }
 
   return container;
 }

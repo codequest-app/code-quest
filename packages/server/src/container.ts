@@ -1,8 +1,9 @@
 import { join } from 'node:path';
 import 'reflect-metadata';
-import type { ProcessProvider } from '@code-quest/summoner';
-import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
+import type { FilesystemService, ProcessProvider } from '@code-quest/summoner';
+import { ClaudeAdapter, LocalFilesystemService, ProcessRunner } from '@code-quest/summoner';
 import { Container } from 'inversify';
+import { config } from './config.ts';
 import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
@@ -91,6 +92,9 @@ export function createContainer(options: ContainerOptions): Container {
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
+  container
+    .bind<FilesystemService>(TYPES.FilesystemService)
+    .toConstantValue(new LocalFilesystemService(config.explorerRoots));
 
   const settingsStore: SettingsStore = settingsStores[0];
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
