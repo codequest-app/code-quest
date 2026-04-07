@@ -9,7 +9,7 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { PluginProvider } from '../PluginContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
-import { TabProvider, useTab } from '../TabContext';
+import { TabProvider, useTabActions, useTabState } from '../TabContext';
 
 const idleSession = (channelId: string, cwd = '/') => ({ channelId, state: 'idle' as const, cwd });
 
@@ -30,7 +30,7 @@ describe('TabProvider', () => {
   describe('state management', () => {
     it('provides initial empty state', () => {
       function Test() {
-        const { tabs, activeTabId } = useTab();
+        const { tabs, activeTabId } = useTabState();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
@@ -45,7 +45,8 @@ describe('TabProvider', () => {
 
     it('addTab adds a tab', async () => {
       function Test() {
-        const { tabs, addTab } = useTab();
+        const { tabs } = useTabState();
+        const { addTab } = useTabActions();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
@@ -66,7 +67,8 @@ describe('TabProvider', () => {
 
     it('addTab does not duplicate existing tab', async () => {
       function Test() {
-        const { tabs, addTab } = useTab();
+        const { tabs } = useTabState();
+        const { addTab } = useTabActions();
         return (
           <>
             <span data-testid="count">{Object.keys(tabs).length}</span>
@@ -84,7 +86,8 @@ describe('TabProvider', () => {
 
     it('removeTab removes a tab', async () => {
       function Test() {
-        const { tabs, addTab, removeTab } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, removeTab } = useTabActions();
         return (
           <>
             <span data-testid="has">{String('tab-1' in tabs)}</span>
@@ -105,7 +108,8 @@ describe('TabProvider', () => {
 
     it('removeTab switches activeTabId when active tab is removed', async () => {
       function Test() {
-        const { activeTabId, addTab, setActiveTab, removeTab } = useTab();
+        const { activeTabId } = useTabState();
+        const { addTab, setActiveTab, removeTab } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -133,7 +137,8 @@ describe('TabProvider', () => {
 
     it('removeTab sets activeTabId to null when last tab removed', async () => {
       function Test() {
-        const { activeTabId, addTab, setActiveTab, removeTab } = useTab();
+        const { activeTabId } = useTabState();
+        const { addTab, setActiveTab, removeTab } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -160,7 +165,8 @@ describe('TabProvider', () => {
 
     it('setActiveTab updates activeTabId', async () => {
       function Test() {
-        const { activeTabId, addTab, setActiveTab } = useTab();
+        const { activeTabId } = useTabState();
+        const { addTab, setActiveTab } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -183,7 +189,8 @@ describe('TabProvider', () => {
 
     it('setTabTitle updates tab title', async () => {
       function Test() {
-        const { tabs, addTab, setTabTitle } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, setTabTitle } = useTabActions();
         return (
           <>
             <span data-testid="title">{tabs['tab-1']?.title ?? 'none'}</span>
@@ -204,7 +211,8 @@ describe('TabProvider', () => {
 
     it('setTabStatus updates tab status', async () => {
       function Test() {
-        const { tabs, addTab, setTabStatus } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, setTabStatus } = useTabActions();
         return (
           <>
             <span data-testid="status">{tabs['tab-1']?.tabStatus ?? 'none'}</span>
@@ -225,7 +233,8 @@ describe('TabProvider', () => {
 
     it('setTabTitle and setTabStatus work independently', async () => {
       function Test() {
-        const { tabs, addTab, setTabTitle, setTabStatus } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, setTabTitle, setTabStatus } = useTabActions();
         return (
           <>
             <span data-testid="tab">{JSON.stringify(tabs['tab-1'] ?? null)}</span>
@@ -251,8 +260,16 @@ describe('TabProvider', () => {
       });
     });
 
-    it('throws when useTab is called outside provider', () => {
-      expect(() => renderHook(() => useTab())).toThrow('useTab must be used within a TabProvider');
+    it('throws when useTabState is called outside provider', () => {
+      expect(() => renderHook(() => useTabState())).toThrow(
+        'useTabState must be used within a TabProvider',
+      );
+    });
+
+    it('throws when useTabActions is called outside provider', () => {
+      expect(() => renderHook(() => useTabActions())).toThrow(
+        'useTabActions must be used within a TabProvider',
+      );
     });
   });
 
@@ -261,7 +278,8 @@ describe('TabProvider', () => {
   describe('createNewTab', () => {
     it('creates tab with cwd', async () => {
       function Test() {
-        const { tabs, activeTabId, createNewTab } = useTab();
+        const { tabs, activeTabId } = useTabState();
+        const { createNewTab } = useTabActions();
         const cwd = activeTabId ? tabs[activeTabId]?.cwd : undefined;
         return (
           <>
@@ -279,7 +297,8 @@ describe('TabProvider', () => {
 
     it('is a synchronous local operation (no server interaction)', async () => {
       function Test() {
-        const { tabs, createNewTab } = useTab();
+        const { tabs } = useTabState();
+        const { createNewTab } = useTabActions();
         return (
           <>
             <span data-testid="count">{Object.keys(tabs).length}</span>
@@ -301,7 +320,8 @@ describe('TabProvider', () => {
   describe('syncFromServer', () => {
     it('adds tabs for server sessions', async () => {
       function Test() {
-        const { tabs, syncFromServer } = useTab();
+        const { tabs } = useTabState();
+        const { syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="keys">{Object.keys(tabs).sort().join(',')}</span>
@@ -321,7 +341,8 @@ describe('TabProvider', () => {
 
     it('removes stale tabs not in server sessions', async () => {
       function Test() {
-        const { tabs, addTab, setActiveTab, syncFromServer } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, setActiveTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="has-stale">{String('stale' in tabs)}</span>
@@ -353,7 +374,8 @@ describe('TabProvider', () => {
 
     it('is idempotent — no change when tabs match sessions', async () => {
       function Test() {
-        const { tabs, addTab, syncFromServer } = useTab();
+        const { tabs } = useTabState();
+        const { addTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
@@ -375,7 +397,8 @@ describe('TabProvider', () => {
 
     it('sets activeTabId to first session when no active tab', async () => {
       function Test() {
-        const { activeTabId, syncFromServer } = useTab();
+        const { activeTabId } = useTabState();
+        const { syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -400,7 +423,8 @@ describe('TabProvider', () => {
 
     it('preserves activeTabId when it is still alive', async () => {
       function Test() {
-        const { activeTabId, addTab, setActiveTab, syncFromServer } = useTab();
+        const { activeTabId } = useTabState();
+        const { addTab, setActiveTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -435,7 +459,8 @@ describe('TabProvider', () => {
 
     it('resets activeTabId when persisted tab no longer alive', async () => {
       function Test() {
-        const { activeTabId, addTab, setActiveTab, syncFromServer } = useTab();
+        const { activeTabId } = useTabState();
+        const { addTab, setActiveTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
@@ -465,7 +490,8 @@ describe('TabProvider', () => {
 
     it('handles empty sessions', async () => {
       function Test() {
-        const { tabs, activeTabId, addTab, syncFromServer } = useTab();
+        const { tabs, activeTabId } = useTabState();
+        const { addTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
@@ -488,7 +514,8 @@ describe('TabProvider', () => {
 
     it('does not store cwd from server sessions (join does not need cwd)', async () => {
       function Test() {
-        const { tabs, syncFromServer } = useTab();
+        const { tabs } = useTabState();
+        const { syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>
@@ -564,7 +591,7 @@ describe('TabProvider', () => {
     it('shows spinner prefix when active tab has pending status', async () => {
       const { socket } = createFakeClaude();
       function TestComponent() {
-        const { addTab, setActiveTab, setTabStatus } = useTab();
+        const { addTab, setActiveTab, setTabStatus } = useTabActions();
         return (
           <button
             type="button"
@@ -592,7 +619,7 @@ describe('TabProvider', () => {
     it('returns to base title when tab status changes from pending to default', async () => {
       const { socket } = createFakeClaude();
       function TestComponent() {
-        const { addTab, setActiveTab, setTabStatus } = useTab();
+        const { addTab, setActiveTab, setTabStatus } = useTabActions();
         return (
           <>
             <button
@@ -640,7 +667,8 @@ describe('TabProvider', () => {
 
     it('addTab activates first tab when no active tab', async () => {
       function Test() {
-        const { tabs, activeTabId, addTab } = useTab();
+        const { tabs, activeTabId } = useTabState();
+        const { addTab } = useTabActions();
         return (
           <>
             <span data-testid="active">{activeTabId ?? 'null'}</span>

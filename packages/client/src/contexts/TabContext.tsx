@@ -5,7 +5,7 @@ import {
   sessionDeadPayloadSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 import { useSocket } from './SocketContext';
 
@@ -20,9 +20,24 @@ interface TabState {
   activeTabId: string | null;
 }
 
-export interface TabContextValue {
+// ── State context (changes frequently) ──
+
+export interface TabStateValue {
   tabs: Record<string, TabMeta>;
   activeTabId: string | null;
+}
+
+const TabStateContext = createContext<TabStateValue | null>(null);
+
+export function useTabState(): TabStateValue {
+  const ctx = useContext(TabStateContext);
+  if (!ctx) throw new Error('useTabState must be used within a TabProvider');
+  return ctx;
+}
+
+// ── Actions context (stable references) ──
+
+export interface TabActionsValue {
   addTab: (id: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
@@ -33,13 +48,15 @@ export interface TabContextValue {
   syncFromServer: (sessions: SessionStateSummary[]) => void;
 }
 
-const TabContext = createContext<TabContextValue | null>(null);
+const TabActionsContext = createContext<TabActionsValue | null>(null);
 
-export function useTab(): TabContextValue {
-  const ctx = useContext(TabContext);
-  if (!ctx) throw new Error('useTab must be used within a TabProvider');
+export function useTabActions(): TabActionsValue {
+  const ctx = useContext(TabActionsContext);
+  if (!ctx) throw new Error('useTabActions must be used within a TabProvider');
   return ctx;
 }
+
+// ── Provider ──
 
 const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
 
@@ -135,7 +152,22 @@ export function TabProvider({
     });
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: actions stable via React Compiler
+  // biome-ignore lint/correctness/useExhaustiveDependencies: all actions use setState updater pattern — only defaultCwd (captured in createNewTab) can actually change
+  const actions = useMemo<TabActionsValue>(
+    () => ({
+      addTab,
+      removeTab,
+      setActiveTab,
+      setTabTitle,
+      setTabStatus,
+      createNewTab,
+      replaceActiveTab,
+      syncFromServer,
+    }),
+    [defaultCwd],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: actions stable via useMemo
   useEffect(() => {
     const onConnect = initialState
       ? undefined
@@ -189,22 +221,11 @@ export function TabProvider({
     document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
   }, [activeMeta?.tabStatus]);
 
+  const stateValue: TabStateValue = { tabs: state.tabs, activeTabId: state.activeTabId };
+
   return (
-    <TabContext.Provider
-      value={{
-        tabs: state.tabs,
-        activeTabId: state.activeTabId,
-        addTab,
-        removeTab,
-        setActiveTab,
-        setTabTitle,
-        setTabStatus,
-        createNewTab,
-        replaceActiveTab,
-        syncFromServer,
-      }}
-    >
-      {children}
-    </TabContext.Provider>
+    <TabStateContext.Provider value={stateValue}>
+      <TabActionsContext.Provider value={actions}>{children}</TabActionsContext.Provider>
+    </TabStateContext.Provider>
   );
 }

@@ -6,7 +6,7 @@ describe('App', () => {
   it('renders WorkspaceLayout without hitting ErrorBoundary — all providers are present', () => {
     // This test renders the REAL App component with its actual provider hierarchy.
     // If App.tsx is missing SessionProvider or TabProvider, WorkspaceLayout will throw
-    // "useTab must be used within a TabProvider" and ErrorBoundary will render
+    // "useTabState must be used within a TabProvider" and ErrorBoundary will render
     // the ErrorFallback with "Something went wrong".
     render(<App />);
 

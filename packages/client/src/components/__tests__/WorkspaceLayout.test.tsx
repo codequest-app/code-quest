@@ -90,6 +90,45 @@ describe('WorkspaceLayout', () => {
     expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
   });
 
+  it('renders ActivityBar with explorer icon', () => {
+    renderLayout({
+      tabs: { 'sess-a': { tabStatus: 'idle' } },
+      activeTabId: 'sess-a',
+    });
+
+    expect(screen.getByTitle('Explorer')).toBeInTheDocument();
+  });
+
+  it('toggles sidebar when clicking ActivityBar icon', async () => {
+    renderLayout({
+      tabs: { 'sess-a': { tabStatus: 'idle' } },
+      activeTabId: 'sess-a',
+    });
+
+    // Sidebar not visible initially (activePanel is null)
+    expect(screen.queryByText('Explorer (placeholder)')).not.toBeInTheDocument();
+
+    // Click explorer icon → sidebar opens
+    await userEvent.click(screen.getByTitle('Explorer'));
+    expect(screen.getByText('Explorer (placeholder)')).toBeInTheDocument();
+
+    // Click again → sidebar closes
+    await userEvent.click(screen.getByTitle('Explorer'));
+    expect(screen.queryByText('Explorer (placeholder)')).not.toBeInTheDocument();
+  });
+
+  it('renders resize handle when sidebar is open', async () => {
+    renderLayout({
+      tabs: { 'sess-a': { tabStatus: 'idle' } },
+      activeTabId: 'sess-a',
+    });
+
+    expect(screen.queryByTestId('resize-handle')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTitle('Explorer'));
+    expect(screen.getByTestId('resize-handle')).toBeInTheDocument();
+  });
+
   it('close tab removes tab from UI', async () => {
     renderLayout({
       tabs: {

@@ -7,10 +7,10 @@ import { sendUserMessage } from '@/test/helpers';
 import { PluginProvider } from '../../PluginContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTab } from '../../TabContext';
+import { TabProvider, useTabState } from '../../TabContext';
 
 function TabTitle() {
-  const { tabs, activeTabId } = useTab();
+  const { tabs, activeTabId } = useTabState();
   const title = activeTabId ? tabs[activeTabId]?.title : undefined;
   return <span data-testid="tab-title">{title ?? '(none)'}</span>;
 }
