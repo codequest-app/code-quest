@@ -428,7 +428,7 @@ export function CommandMenu({
               />
             </div>
           )}
-          <div className="overflow-y-auto overflow-x-hidden scrollbar-thin pb-2 max-h-[calc(50vh-44px)] flex flex-col gap-[2px]">
+          <div className="overflow-y-auto overflow-x-hidden pb-2 max-h-[calc(50vh-44px)] flex flex-col gap-[2px]">
             {flatItems.length === 0 ? (
               <div className="px-3 py-2 text-center text-text-muted text-[0.9em]">
                 No matching commands

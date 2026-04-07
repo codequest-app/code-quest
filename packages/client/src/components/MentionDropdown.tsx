@@ -134,7 +134,7 @@ export function MentionDropdown({
       data-testid="mention-dropdown"
       className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in-fast z-50"
     >
-      <div className="max-h-[300px] overflow-y-auto scrollbar-thin py-0.5">
+      <div className="max-h-[300px] overflow-y-auto py-0.5">
         {hasFileSearch && searchStatus === 'loading' && (
           <div className="px-3 py-2 text-xs text-text-muted text-center">Searching…</div>
         )}

@@ -69,7 +69,7 @@ export function SessionHistory({
           className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
         />
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {loading && <div className="px-3 py-8 text-center text-text-muted text-sm">Loading...</div>}
         {!loading && filtered.length === 0 && (
           <div className="px-3 py-8 text-center text-text-muted text-sm">No sessions</div>

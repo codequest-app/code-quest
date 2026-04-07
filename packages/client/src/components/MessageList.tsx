@@ -89,7 +89,7 @@ export function MessageList({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="relative flex-1 overflow-y-auto scrollbar-thin"
+      className="relative flex-1 overflow-y-auto"
       data-testid="message-list"
     >
       {messages.length === 0 ? (
