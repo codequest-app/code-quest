@@ -1,6 +1,5 @@
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
-import { asRecord } from '../../utils.ts';
 import type {
   ProtocolMessage,
   systemApiRetrySchema,
@@ -147,8 +146,7 @@ function handleBridgeState(raw: SystemBridgeState): ClientMessage {
 }
 
 function handleCompactBoundary(raw: SystemCompactBoundary): ClientMessage {
-  const meta = raw.compactMetadata;
-  const preserved = asRecord(meta)?.preservedSegment;
+  const preserved = raw.compactMetadata?.preservedSegment;
   return {
     name: 'system:compact_boundary',
     payload: {

@@ -4,16 +4,16 @@ import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
-import { claudeState, setMcpState } from './state.ts';
+import { claudeState, type McpStateKey, type McpStateMap, setMcpState } from './state.ts';
 
-interface McpAction {
+interface McpAction<K extends McpStateKey = McpStateKey> {
   servers: Record<string, { command: string; args: string[] }>;
-  stateKey: 'chromeMcpState' | 'jupyterMcpState';
+  stateKey: K;
   beforeRequest?: () => Record<string, unknown>;
-  successState: { status: string };
+  successState: McpStateMap[K];
   successResponse: Record<string, unknown>;
-  errorState?: { status: string };
-  connectingState?: { status: string };
+  errorState?: McpStateMap[K];
+  connectingState?: McpStateMap[K];
   errorLabel: string;
 }
 

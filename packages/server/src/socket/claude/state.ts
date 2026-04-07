@@ -10,7 +10,12 @@ interface PluginCacheEntry {
 type ChromeMcpStatus = 'disconnected' | 'connecting' | 'connected';
 type JupyterMcpStatus = 'inactive' | 'active';
 
-type McpStateKey = 'chromeMcpState' | 'jupyterMcpState';
+export type McpStateMap = {
+  chromeMcpState: { status: ChromeMcpStatus };
+  jupyterMcpState: { status: JupyterMcpStatus };
+};
+
+export type McpStateKey = keyof McpStateMap;
 
 /** Claude-specific state. */
 export const claudeState = {
@@ -22,12 +27,8 @@ export const claudeState = {
 };
 
 /** Type-safe setter for MCP state fields. */
-export function setMcpState(key: McpStateKey, value: { status: string }): void {
-  if (key === 'chromeMcpState') {
-    claudeState.chromeMcpState = value as { status: ChromeMcpStatus };
-  } else {
-    claudeState.jupyterMcpState = value as { status: JupyterMcpStatus };
-  }
+export function setMcpState<K extends McpStateKey>(key: K, value: McpStateMap[K]): void {
+  (claudeState as McpStateMap)[key] = value;
 }
 
 /** Type-safe setter for auth state. */

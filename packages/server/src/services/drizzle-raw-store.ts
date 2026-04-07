@@ -17,6 +17,8 @@ const rawEntryRowSchema = z.object({
 
 type RawEntryRow = z.infer<typeof rawEntryRowSchema>;
 
+const directionSchema = z.enum(['in', 'out', 'err']);
+
 interface RawEntriesTable {
   id: Column;
   sessionId: Column;
@@ -87,7 +89,6 @@ export class DrizzleRawStore implements RawEventStore {
       .where(eq(this.table.sessionId, sessionId))
       .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
-    const directionSchema = z.enum(['in', 'out', 'err']);
     return z
       .array(rawEntryRowSchema)
       .parse(rows)
