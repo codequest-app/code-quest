@@ -1,5 +1,6 @@
 import { sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { SpinnerVerb } from '../../components/SpinnerVerb';
 import type { ChannelChangeUpdate } from '../../types/chat';
 import { GitProvider } from '../GitContext';
 import { useSocket } from '../SocketContext';
@@ -49,8 +50,8 @@ export function ChannelProvider({
   // ── Wait for launch to complete before rendering children ──
   if (!launched) {
     return (
-      <div className="flex flex-1 items-center justify-center text-text-muted text-sm">
-        Connecting…
+      <div className="flex flex-1 items-center justify-center">
+        <SpinnerVerb verbs={['Connecting']} />
       </div>
     );
   }
