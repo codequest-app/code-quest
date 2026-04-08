@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { createFakeSummoner } from '../../test/fake-summoner';
-import { DirectoryTree } from '../DirectoryTree';
+import { FileTree } from '../FileTree';
 
 function setup() {
   const summoner = createFakeSummoner();
@@ -19,10 +19,10 @@ function setup() {
   return { summoner, Wrapper };
 }
 
-describe('DirectoryTree', () => {
+describe('FileTree', () => {
   it('renders root directories on mount', async () => {
     const { Wrapper } = setup();
-    render(<DirectoryTree />, { wrapper: Wrapper });
+    render(<FileTree />, { wrapper: Wrapper });
 
     expect(await screen.findByRole('treeitem', { name: 'projects' })).toBeInTheDocument();
   });
@@ -43,7 +43,7 @@ describe('DirectoryTree', () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     const onSelect = vi.fn();
-    render(<DirectoryTree onSelect={onSelect} />, { wrapper: Wrapper });
+    render(<FileTree onSelect={onSelect} />, { wrapper: Wrapper });
 
     const projects = await screen.findByRole('treeitem', { name: 'projects' });
     await user.pointer({ keys: '[MouseRight]', target: projects });
@@ -55,7 +55,7 @@ describe('DirectoryTree', () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     const onSelect = vi.fn();
-    render(<DirectoryTree onSelect={onSelect} />, { wrapper: Wrapper });
+    render(<FileTree onSelect={onSelect} />, { wrapper: Wrapper });
 
     const projects = await screen.findByRole('treeitem', { name: 'projects' });
     await user.pointer({ keys: '[MouseRight]', target: projects });
@@ -69,7 +69,7 @@ describe('DirectoryTree', () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();
     const onSelect = vi.fn();
-    render(<DirectoryTree onSelect={onSelect} />, { wrapper: Wrapper });
+    render(<FileTree onSelect={onSelect} />, { wrapper: Wrapper });
 
     const projects = await screen.findByRole('treeitem', { name: 'projects' });
     await user.dblClick(projects);

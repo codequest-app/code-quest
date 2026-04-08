@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DirectoryTree } from './DirectoryTree';
+import { FileTree } from './FileTree';
 
 export function AddProjectDialog({
   open,
@@ -39,7 +39,7 @@ export function AddProjectDialog({
           </div>
         )}
         <div className="flex-1 overflow-auto p-2 min-h-[200px]">
-          <DirectoryTree
+          <FileTree
             highlightedPath={selectedPath}
             onHighlight={setSelectedPath}
             onSelect={(path) => {
