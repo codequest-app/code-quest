@@ -5,6 +5,7 @@ import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
 import { config } from './config';
 import { PluginProvider } from './contexts/PluginContext';
+import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { TabProvider } from './contexts/TabContext';
@@ -22,7 +23,9 @@ export function App() {
           <SessionProvider>
             <PluginProvider>
               <TabProvider defaultCwd={config.defaultCwd}>
-                <WorkspaceLayout />
+                <ProjectProvider>
+                  <WorkspaceLayout />
+                </ProjectProvider>
               </TabProvider>
             </PluginProvider>
           </SessionProvider>

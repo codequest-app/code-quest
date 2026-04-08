@@ -5,6 +5,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { PluginProvider } from '../contexts/PluginContext';
+import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
@@ -47,7 +48,9 @@ export async function renderWithWorkspace(
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
-            <WorkspaceLayout />
+            <ProjectProvider>
+              <WorkspaceLayout />
+            </ProjectProvider>
           </TabProvider>
         </PluginProvider>
       </SessionProvider>

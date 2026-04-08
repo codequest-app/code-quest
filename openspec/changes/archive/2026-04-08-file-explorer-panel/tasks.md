@@ -31,20 +31,26 @@
 
 ## 5. Client — File Explorer Panel
 
-- [ ] 5.1 安裝 `@headless-tree/core` + `@headless-tree/react`
-- [ ] 5.2 建立 `useExplorerBrowse` hook + 測試：透過 socket emit `explorer:browse`，回傳 `{ browse: (path?) => Promise<Directory[]> }`
-- [ ] 5.3 建立 `DirectoryTree` component + 測試：使用 `useTree` + `asyncDataLoaderFeature`，`getChildrenWithData` 對接 `useExplorerBrowse`，rendering 用 `tree.getItems()` flat list + indent by level
-- [ ] 5.4 建立 `FileExplorerPanel` component + 測試：組合 DirectoryTree，initial root loading、expand/collapse
-- [ ] 5.5 實作 double-click 目錄 → `createNewTab({ cwd })`（在 item `onDoubleClick` handler 中）
-- [ ] 5.6 實作右鍵 context menu（簡單自建 absolute div）：顯示「Open in New Tab」，點擊後開新 tab，點外面關閉
+- [x] 5.1 安裝 `@headless-tree/core` + `@headless-tree/react`
+- [x] 5.2 建立 `useExplorerBrowse` hook + 測試：透過 socket emit `explorer:browse`，回傳 `{ browse: (path?) => Promise<Directory[]> }`
+- [x] 5.3 建立 `DirectoryTree` component + 測試：使用 `useTree` + `asyncDataLoaderFeature`，`getChildrenWithData` 對接 `useExplorerBrowse`，rendering 用 `tree.getItems()` flat list + indent by level
+- [x] 5.4 建立 `FileExplorerPanel` component + 測試：組合 DirectoryTree，initial root loading、expand/collapse
+- [x] 5.5 實作 double-click 目錄 → `createNewTab({ cwd })`（在 item `onDoubleClick` handler 中）
+- [x] 5.6 實作右鍵 context menu（簡單自建 absolute div）：顯示「Open in New Tab」，點擊後開新 tab，點外面關閉
 
 ## 6. Client — Recents
 
-- [ ] 6.1 建立 `useRecentCwds` hook + 測試：讀寫 localStorage（key: `cc-office:recent-cwds`），最多 10 筆，按 lastUsed 降序、cap at 10、dedup
-- [ ] 6.2 在 FileExplorerPanel 底部渲染 Recents section：列表 + double-click / 右鍵開新 tab
-- [ ] 6.3 開新 tab 時呼叫 `addRecent(path)` 更新 recents
+- [x] 6.1 建立 `useRecentCwds` hook + 測試：讀寫 localStorage（key: `cc-office:recent-cwds`），最多 10 筆，按 lastUsed 降序、cap at 10、dedup
+- [x] 6.2 在 FileExplorerPanel 底部渲染 Recents section：列表 + double-click / 右鍵開新 tab
+- [x] 6.3 開新 tab 時呼叫 `addRecent(path)` 更新 recents
 
 ## 7. Environment & Documentation
 
-- [ ] 7.1 在 `.env.example` 新增 `FILE_EXPLORER_ROOTS` 說明
-- [ ] 7.2 在 `packages/client/src/config.ts` 確認無需新增 client env（所有設定都在 server 端）
+- [x] 7.1 在 `.env.example` 新增 `FILE_EXPLORER_ROOTS` 說明
+- [x] 7.2 在 `packages/client/src/config.ts` 確認無需新增 client env（所有設定都在 server 端）
+
+## 8. Bug fixes
+
+- [x] 8.1 修 WorkspaceLayout sidebar layout — react-resizable-panels 動態 Panel 導致寬度為 0，改用 collapsedSize + ref 控制
+- [x] 8.2 修 DirectoryTree — 移除 headless-tree（async load 不觸發 re-render），改用自建 state 管理
+- [x] 8.3 驗證：playwright 截圖確認 sidebar 正常顯示、directory tree 有內容

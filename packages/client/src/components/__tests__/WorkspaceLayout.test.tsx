@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PluginProvider } from '../../contexts/PluginContext';
+import { ProjectProvider } from '../../contexts/ProjectContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import type { TabMeta } from '../../contexts/TabContext';
@@ -30,7 +31,9 @@ function renderLayout(opts?: { tabs?: Record<string, TabMeta>; activeTabId?: str
       <SessionProvider>
         <PluginProvider>
           <TabProvider initialState={initialState}>
-            <WorkspaceLayout />
+            <ProjectProvider>
+              <WorkspaceLayout />
+            </ProjectProvider>
           </TabProvider>
         </PluginProvider>
       </SessionProvider>
@@ -96,7 +99,7 @@ describe('WorkspaceLayout', () => {
       activeTabId: 'sess-a',
     });
 
-    expect(screen.getByTitle('Explorer')).toBeInTheDocument();
+    expect(screen.getByTitle('Projects')).toBeInTheDocument();
   });
 
   it('toggles sidebar when clicking ActivityBar icon', async () => {
@@ -105,28 +108,26 @@ describe('WorkspaceLayout', () => {
       activeTabId: 'sess-a',
     });
 
-    // Sidebar not visible initially (activePanel is null)
-    expect(screen.queryByText('Explorer (placeholder)')).not.toBeInTheDocument();
+    // Sidebar starts open with Projects panel
+    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
 
-    // Click explorer icon → sidebar opens
-    await userEvent.click(screen.getByTitle('Explorer'));
-    expect(screen.getByText('Explorer (placeholder)')).toBeInTheDocument();
+    // Click Projects icon → sidebar closes
+    await userEvent.click(screen.getByTitle('Projects'));
+    expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
 
-    // Click again → sidebar closes
-    await userEvent.click(screen.getByTitle('Explorer'));
-    expect(screen.queryByText('Explorer (placeholder)')).not.toBeInTheDocument();
+    // Click again → sidebar reopens
+    await userEvent.click(screen.getByTitle('Projects'));
+    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
   });
 
-  it('renders resize handle when sidebar is open', async () => {
+  it('sidebar shows project list by default', () => {
     renderLayout({
       tabs: { 'sess-a': { tabStatus: 'idle' } },
       activeTabId: 'sess-a',
     });
 
-    expect(screen.queryByTestId('resize-handle')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByTitle('Explorer'));
-    expect(screen.getByTestId('resize-handle')).toBeInTheDocument();
+    // Sidebar starts open with project list
+    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
   });
 
   it('close tab removes tab from UI', async () => {

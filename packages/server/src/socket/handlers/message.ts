@@ -15,8 +15,6 @@ import type { Channel } from '../channel.ts';
 import { withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
-import type { PlanApi } from './plan.ts';
-
 export function create({
   channelManager,
   sessionStore,

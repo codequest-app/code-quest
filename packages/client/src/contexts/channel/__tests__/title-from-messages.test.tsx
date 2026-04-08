@@ -5,6 +5,7 @@ import { WorkspaceLayout } from '@/components/WorkspaceLayout';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { sendUserMessage } from '@/test/helpers';
 import { PluginProvider } from '../../PluginContext';
+import { ProjectProvider } from '../../ProjectContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
 import { TabProvider, useTabState } from '../../TabContext';
@@ -28,8 +29,10 @@ async function setup() {
       <SessionProvider>
         <PluginProvider>
           <TabProvider>
-            <WorkspaceLayout />
-            <TabTitle />
+            <ProjectProvider>
+              <WorkspaceLayout />
+              <TabTitle />
+            </ProjectProvider>
           </TabProvider>
         </PluginProvider>
       </SessionProvider>
