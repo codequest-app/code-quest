@@ -5,12 +5,13 @@ import {
   getRepoRoot,
   listWorktrees,
 } from '../../services/worktree-manager.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
+import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
-export function create(emitter: ChannelEmitter): void {
+export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   async function handleCreate(
     ch: Channel,
     payload: unknown,

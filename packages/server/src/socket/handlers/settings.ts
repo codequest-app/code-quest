@@ -11,21 +11,19 @@ import {
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
-import type { SettingsStore } from '../../services/settings-store.ts';
-import type { UsageTracker } from '../../services/usage-tracker.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  settingsStore: SettingsStore,
-  usageTracker: UsageTracker,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  settingsStore,
+  usageTracker,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'>): void {
   async function handleSetModel(
     ch: Channel,
     payload: unknown,

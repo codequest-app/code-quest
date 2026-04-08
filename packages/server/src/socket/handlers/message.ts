@@ -10,20 +10,19 @@ import {
   controlGenerateTitleResponseSchema,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
-import type { SessionStore } from '../../services/session-store.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError, withSocket } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
+import { withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import type { PlanApi } from './plan.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  sessionStore: SessionStore,
-  planApi: PlanApi,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  sessionStore,
+  planHandler: planApi,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'sessionStore' | 'planHandler' | 'emitter'>): void {
   const interruptedChannels = new Set<string>();
 
   function handleSend(ch: Channel, socket: TypedSocket, payload: unknown): void {

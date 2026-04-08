@@ -1,11 +1,14 @@
 import { fileListPayloadSchema, fileReadPayloadSchema } from '@code-quest/shared';
-import type { FilesystemService } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 
-export function create(emitter: ChannelEmitter, fs: FilesystemService): void {
+export function create({
+  emitter,
+  filesystemService: fs,
+}: Pick<HandlerContext, 'emitter' | 'filesystemService'>): void {
   function handleRead(
     ch: Channel,
     payload: unknown,

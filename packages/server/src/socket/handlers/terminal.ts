@@ -1,12 +1,15 @@
 import { terminalOpenClaudePayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
+import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
-export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
+export function create({
+  channelManager,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'emitter'>): void {
   function handleRead(
     ch: Channel,
     _payload: unknown,

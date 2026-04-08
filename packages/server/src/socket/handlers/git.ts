@@ -7,19 +7,18 @@ import {
 } from '@code-quest/shared';
 import type { RawEntry } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
-import type { RawEventStore } from '../../services/raw-event-store.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
-import type { SessionHistory } from '../session-history.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { checkoutWithFallback, createGit } from '../utils/git.ts';
 import { errMsg } from '../utils/helpers.ts';
 
-export function create(
-  sessionHistory: SessionHistory,
-  rawEventStore: RawEventStore,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  sessionHistory,
+  rawEventStore,
+  emitter,
+}: Pick<HandlerContext, 'sessionHistory' | 'rawEventStore' | 'emitter'>): void {
   async function handleStatus(
     ch: Channel,
     _payload: unknown,

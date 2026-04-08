@@ -5,10 +5,11 @@ import {
   permissionPayloadSchema,
   requestIdPayloadSchema,
 } from '@code-quest/shared';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel } from '../channel-emitter.ts';
+import { withChannel } from '../channel-emitter.ts';
 
-export function create(emitter: ChannelEmitter): void {
+export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   function onCancel(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);

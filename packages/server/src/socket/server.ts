@@ -6,9 +6,10 @@ import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
-import { TYPES } from '../types.ts';
+import { type HandlerContext, TYPES } from '../types.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import type { ChannelManager } from './channel-manager.ts';
+
 import * as claudeAuth from './claude/auth.ts';
 import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
@@ -54,34 +55,46 @@ export class SocketServer {
     cm.register(io);
 
     const em = this.emitter;
-    const planHandler = plan.create(em);
+    const planHandler = plan.create({ emitter: em });
+
+    const ctx: HandlerContext = {
+      emitter: em,
+      channelManager: cm,
+      sessionStore: this.sessionStore,
+      settingsStore: this.settingsStore,
+      usageTracker: this.usageTracker,
+      sessionHistory: this.sessionHistory,
+      rawEventStore: this.rawEventStore,
+      filesystemService: this.filesystemService,
+      planHandler,
+    };
 
     // Handlers that only use emitter.on (no register needed)
-    usage.create(this.usageTracker, em);
-    autoRespond.create(em);
-    permission.create(em);
-    speech.create(em);
-    worktree.create(em);
-    terminal.create(cm, em);
-    mcp.create(em);
-    file.create(em, this.filesystemService);
-    explorer.create(em, this.filesystemService);
+    usage.create(ctx);
+    autoRespond.create(ctx);
+    permission.create(ctx);
+    speech.create(ctx);
+    worktree.create(ctx);
+    terminal.create(ctx);
+    mcp.create(ctx);
+    file.create(ctx);
+    explorer.create(ctx);
 
-    settings.create(cm, this.settingsStore, this.usageTracker, em);
-    git.create(this.sessionHistory, this.rawEventStore, em);
+    settings.create(ctx);
+    git.create(ctx);
 
-    message.create(cm, this.sessionStore, planHandler, em);
+    message.create(ctx);
 
-    app.create(cm, this.settingsStore, em);
-    sessionConnect.create(cm, this.settingsStore, this.sessionStore, this.sessionHistory, em);
-    sessionCommand.create(cm, this.sessionStore, em);
-    sessionFork.create(cm, this.sessionHistory, em);
-    sessionQuery.create(cm, this.sessionStore, this.sessionHistory, em);
+    app.create(ctx);
+    sessionConnect.create(ctx);
+    sessionCommand.create(ctx);
+    sessionFork.create(ctx);
+    sessionQuery.create(ctx);
 
     if (cm.provider === 'claude') {
-      claudeAuth.create(cm, em);
-      claudeMcpServers.create(cm, em);
-      claudePlugin.create(em);
+      claudeAuth.create(ctx);
+      claudeMcpServers.create(ctx);
+      claudePlugin.create(ctx);
     }
 
     io.on('connection', (socket) => {

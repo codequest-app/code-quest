@@ -10,8 +10,9 @@ import {
   mcpSetServersPayloadSchema,
 } from '@code-quest/shared';
 import type { z } from 'zod';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
@@ -40,7 +41,7 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(
   };
 }
 
-export function create(emitter: ChannelEmitter): void {
+export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   const handleReconnect = createRequestHandler(
     mcpReconnectPayloadSchema,
     'mcp:reconnect',

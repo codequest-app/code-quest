@@ -1,10 +1,12 @@
 import { explorerBrowsePayloadSchema } from '@code-quest/shared';
-import type { FilesystemService } from '@code-quest/summoner';
 import { logger } from '../../logger.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 
-export function create(emitter: ChannelEmitter, fs: FilesystemService): void {
+export function create({
+  emitter,
+  filesystemService: fs,
+}: Pick<HandlerContext, 'emitter' | 'filesystemService'>): void {
   emitter.on(
     'explorer:browse',
     (_ch, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback) => {

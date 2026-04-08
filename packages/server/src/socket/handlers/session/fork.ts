@@ -1,18 +1,16 @@
 import { sessionForkPayloadSchema, sessionTeleportPayloadSchema } from '@code-quest/shared';
 import { logger } from '../../../logger.ts';
+import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
-import type { ChannelEmitter } from '../../channel-emitter.ts';
-import type { ChannelManager } from '../../channel-manager.ts';
-import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { checkoutWithFallback, createGit } from '../../utils/git.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  sessionHistory: SessionHistory,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  sessionHistory,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'sessionHistory' | 'emitter'>): void {
   async function handleFork(
     _ch: Channel | null,
     payload: unknown,

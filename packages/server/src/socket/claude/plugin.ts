@@ -15,8 +15,8 @@ import {
 import { z } from 'zod';
 
 import { logger } from '../../logger.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
@@ -99,7 +99,7 @@ function parseAvailablePluginJson(stdout: string): {
   return { installed: [], available: [] };
 }
 
-export function create(emitter: ChannelEmitter): void {
+export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   async function handleList(
     _ch: Channel | null,
     payload: unknown,

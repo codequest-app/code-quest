@@ -4,20 +4,17 @@ import {
   sessionListRemotePayloadSchema,
 } from '@code-quest/shared';
 import { logger } from '../../../logger.ts';
-import type { SessionStore } from '../../../services/session-store.ts';
+import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
-import type { ChannelEmitter } from '../../channel-emitter.ts';
-import type { ChannelManager } from '../../channel-manager.ts';
-import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  sessionStore: SessionStore,
-  sessionHistory: SessionHistory,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  sessionStore,
+  sessionHistory,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'sessionStore' | 'sessionHistory' | 'emitter'>): void {
   async function handleList(
     _ch: Channel | null,
     payload: unknown,
