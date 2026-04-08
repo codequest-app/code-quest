@@ -99,7 +99,7 @@ describe('ComposeInput', () => {
     });
 
     it.todo(
-      'selecting a file inserts @path and closes dropdown — needs FakeFilesystemService seeding',
+      'selecting a file inserts @path and closes dropdown — channel init hangs when cwd is passed',
     );
   });
 });

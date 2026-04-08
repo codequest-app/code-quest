@@ -70,7 +70,10 @@ export function FileTree({
               isHighlighted ? 'bg-accent/20' : 'hover:bg-white/5'
             }`}
             style={{ paddingLeft: `${item.getItemMeta().level * 16 + 4}px` }}
-            onClick={() => onHighlight?.(data.path)}
+            onClick={(e) => {
+              item.getProps().onClick?.(e);
+              onHighlight?.(data.path);
+            }}
             onDoubleClick={() => {
               if (data.path) onSelect?.(data.path);
             }}
