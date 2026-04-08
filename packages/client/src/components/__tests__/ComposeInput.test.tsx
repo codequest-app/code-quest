@@ -2,6 +2,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { COMPOSE_PLACEHOLDER } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
@@ -98,8 +99,26 @@ describe('ComposeInput', () => {
       expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
     });
 
-    it.todo(
-      'selecting a file inserts @path and closes dropdown — channel init hangs when cwd is passed',
-    );
+    it('selecting a file inserts @path and closes dropdown', async () => {
+      const summoner = createFakeSummoner();
+      await renderWithChannel(<ComposeInput />, { summoner });
+
+      // Seed files at the channel's resolved cwd (server package dir)
+      const serverCwd = '/Users/user/WebstormProjects/cc-office/packages/server';
+      summoner.filesystem().addFile(`${serverCwd}/index.ts`, '');
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@index');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+      });
+
+      const option = screen.getByRole('option');
+      await userEvent.click(option);
+
+      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect((textarea as HTMLTextAreaElement).value).toContain('@');
+    });
   });
 });
