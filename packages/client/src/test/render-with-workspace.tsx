@@ -9,7 +9,13 @@ import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
+import { useSessionSync } from '../hooks/useSessionSync';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
+
+function SessionSync({ children }: { children: React.ReactNode }) {
+  useSessionSync();
+  return children;
+}
 
 export interface RenderWithWorkspaceOptions {
   summoner?: FakeSummoner;
@@ -47,11 +53,13 @@ export async function renderWithWorkspace(
     <SocketProvider socket={summoner.socket}>
       <SessionProvider>
         <PluginProvider>
-          <TabProvider>
-            <ProjectProvider>
-              <WorkspaceLayout />
-            </ProjectProvider>
-          </TabProvider>
+          <ProjectProvider>
+            <TabProvider>
+              <SessionSync>
+                <WorkspaceLayout />
+              </SessionSync>
+            </TabProvider>
+          </ProjectProvider>
         </PluginProvider>
       </SessionProvider>
     </SocketProvider>,

@@ -30,11 +30,11 @@ function renderLayout(opts?: { tabs?: Record<string, TabMeta>; activeTabId?: str
     <SocketProvider socket={socket}>
       <SessionProvider>
         <PluginProvider>
-          <TabProvider initialState={initialState}>
-            <ProjectProvider>
+          <ProjectProvider>
+            <TabProvider initialState={initialState}>
               <WorkspaceLayout />
-            </ProjectProvider>
-          </TabProvider>
+            </TabProvider>
+          </ProjectProvider>
         </PluginProvider>
       </SessionProvider>
     </SocketProvider>,

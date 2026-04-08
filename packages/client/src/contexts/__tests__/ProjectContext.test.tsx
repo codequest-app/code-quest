@@ -3,19 +3,13 @@ import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { ProjectProvider, useProjectActions, useProjectState } from '../ProjectContext';
-import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
-import { TabProvider } from '../TabContext';
 
 function Wrapper({ children }: { children: ReactNode }) {
   const summoner = createFakeSummoner();
   return (
     <SocketProvider socket={summoner.socket}>
-      <SessionProvider>
-        <TabProvider>
-          <ProjectProvider>{children}</ProjectProvider>
-        </TabProvider>
-      </SessionProvider>
+      <ProjectProvider>{children}</ProjectProvider>
     </SocketProvider>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
@@ -9,8 +9,14 @@ import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { TabProvider } from './contexts/TabContext';
+import { useSessionSync } from './hooks/useSessionSync';
 import { createSocket } from './socket/client';
 import './App.css';
+
+function SessionSync({ children }: { children: ReactNode }) {
+  useSessionSync();
+  return children;
+}
 
 export function App() {
   const [socket] = useState(() => createSocket());
@@ -22,11 +28,13 @@ export function App() {
         <SocketProvider socket={socket}>
           <SessionProvider>
             <PluginProvider>
-              <TabProvider defaultCwd={config.defaultCwd}>
-                <ProjectProvider>
-                  <WorkspaceLayout />
-                </ProjectProvider>
-              </TabProvider>
+              <ProjectProvider>
+                <TabProvider defaultCwd={config.defaultCwd}>
+                  <SessionSync>
+                    <WorkspaceLayout />
+                  </SessionSync>
+                </TabProvider>
+              </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
         </SocketProvider>

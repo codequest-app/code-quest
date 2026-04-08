@@ -117,6 +117,16 @@ describe('ChannelManager', () => {
       const sessions = statesEvents[0].sessions;
       expect(Array.isArray(sessions)).toBe(true);
     });
+
+    it('session:states includes cwd', async () => {
+      const claude = createFakeSummoner().claude();
+
+      await claude.initialize({ launch: { channelId: 'ch-1', cwd: '/test/project' } });
+
+      const statesEvents = claude.events('session:states');
+      expect(statesEvents.length).toBeGreaterThan(0);
+      expect(statesEvents[0].sessions[0].cwd).toBe('/test/project');
+    });
   });
 
   describe('alive channels', () => {

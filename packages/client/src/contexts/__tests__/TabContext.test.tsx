@@ -376,13 +376,10 @@ describe('TabProvider', () => {
     it('is idempotent — no change when tabs match sessions', async () => {
       function Test() {
         const { tabs } = useTabState();
-        const { addTab, syncFromServer } = useTabActions();
+        const { syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
-            <button type="button" onClick={() => addTab('a')}>
-              add
-            </button>
             <button type="button" onClick={() => syncFromServer([idleSession('a')])}>
               sync
             </button>
@@ -390,7 +387,7 @@ describe('TabProvider', () => {
         );
       }
       const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('add'));
+      await user.click(screen.getByText('sync'));
       const before = screen.getByTestId('tabs').textContent;
       await user.click(screen.getByText('sync'));
       expect(screen.getByTestId('tabs')).toHaveTextContent(before!);
@@ -513,7 +510,7 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('active')).toHaveTextContent('null');
     });
 
-    it('does not store cwd from server sessions (join does not need cwd)', async () => {
+    it('stores cwd from server sessions', async () => {
       function Test() {
         const { tabs } = useTabState();
         const { syncFromServer } = useTabActions();
@@ -533,7 +530,7 @@ describe('TabProvider', () => {
       }
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('sync'));
-      expect(screen.getByTestId('cwd')).toHaveTextContent('undefined');
+      expect(screen.getByTestId('cwd')).toHaveTextContent('/projects/app');
     });
   });
 

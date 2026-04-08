@@ -1,7 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
+import { useSessionSync } from '@/hooks/useSessionSync';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { sendUserMessage } from '@/test/helpers';
 import { PluginProvider } from '../../PluginContext';
@@ -9,6 +11,11 @@ import { ProjectProvider } from '../../ProjectContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
 import { TabProvider, useTabState } from '../../TabContext';
+
+function SessionSync({ children }: { children: ReactNode }) {
+  useSessionSync();
+  return children;
+}
 
 function TabTitle() {
   const { tabs, activeTabId } = useTabState();
@@ -28,12 +35,14 @@ async function setup() {
     <SocketProvider socket={summoner.socket}>
       <SessionProvider>
         <PluginProvider>
-          <TabProvider>
-            <ProjectProvider>
-              <WorkspaceLayout />
-              <TabTitle />
-            </ProjectProvider>
-          </TabProvider>
+          <ProjectProvider>
+            <TabProvider>
+              <SessionSync>
+                <WorkspaceLayout />
+                <TabTitle />
+              </SessionSync>
+            </TabProvider>
+          </ProjectProvider>
         </PluginProvider>
       </SessionProvider>
     </SocketProvider>,

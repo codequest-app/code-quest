@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
+import { useTabActions, useTabState } from '../contexts/TabContext';
 import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
@@ -13,10 +14,23 @@ export function WorkspaceLayout() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { projects, activeProjectCwd } = useProjectState();
   const { addProject, setActiveProject } = useProjectActions();
+  const { createNewTab, setActiveTab } = useTabActions();
+  const { activeTabId } = useTabState();
+  const savedTabs = useRef<Map<string, string>>(new Map());
 
   function handleAddProject(cwd: string) {
     addProject(cwd);
+    createNewTab({ cwd });
     setDialogOpen(false);
+  }
+
+  function handleSwitchProject(cwd: string) {
+    if (activeProjectCwd && activeTabId) {
+      savedTabs.current.set(activeProjectCwd, activeTabId);
+    }
+    setActiveProject(cwd);
+    const saved = savedTabs.current.get(cwd);
+    if (saved) setActiveTab(saved);
   }
 
   return (
@@ -31,7 +45,7 @@ export function WorkspaceLayout() {
           <ProjectList
             projects={projects}
             activeProjectCwd={activeProjectCwd}
-            onSelect={setActiveProject}
+            onSelect={handleSwitchProject}
             onAdd={() => setDialogOpen(true)}
           />
         </div>

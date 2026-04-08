@@ -1,13 +1,6 @@
-import {
-  initResponseSchema,
-  type SessionStateSummary,
-  sessionCreatedPayloadSchema,
-  sessionDeadPayloadSchema,
-  sessionResumePayloadSchema,
-} from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
-import { useSocket } from './SocketContext';
 
 export interface TabMeta {
   title?: string;
@@ -69,8 +62,6 @@ export function TabProvider({
     activeTabId: initialState?.activeTabId ?? null,
   }));
 
-  const { socket } = useSocket();
-
   const addTab = (id: string) => {
     setState((prev) => {
       if (id in prev.tabs) return prev;
@@ -126,7 +117,10 @@ export function TabProvider({
     setState((prev) => {
       const next: Record<string, TabMeta> = {};
       for (const s of sessions) {
-        next[s.channelId] = prev.tabs[s.channelId] ?? { ...DEFAULT_META };
+        const existing = prev.tabs[s.channelId];
+        next[s.channelId] = existing
+          ? { ...existing, cwd: s.cwd ?? existing.cwd }
+          : { ...DEFAULT_META, cwd: s.cwd };
       }
       const activeTabId =
         prev.activeTabId && prev.activeTabId in next
@@ -157,53 +151,6 @@ export function TabProvider({
     replaceActiveTab,
     syncFromServer,
   };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: actions use setState updater pattern — React Compiler stabilises references
-  useEffect(() => {
-    const onConnect = initialState
-      ? undefined
-      : () => {
-          socket.emit('app:init', (raw) => {
-            const parsed = initResponseSchema.safeParse(raw);
-            if (parsed.success) {
-              syncFromServer(parsed.data.sessions);
-            }
-          });
-        };
-
-    const onCreated = (raw: unknown) => {
-      const parsed = sessionCreatedPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      addTab(parsed.data.channelId);
-    };
-
-    const onDead = (raw: unknown) => {
-      const parsed = sessionDeadPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      removeTab(parsed.data.channelId);
-    };
-
-    const onResume = (raw: unknown) => {
-      const parsed = sessionResumePayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      replaceActiveTab(parsed.data.channelId);
-    };
-
-    if (onConnect) {
-      socket.on('connect', onConnect);
-      if (socket.connected) onConnect();
-    }
-    socket.on('session:created', onCreated);
-    socket.on('session:dead', onDead);
-    socket.on('session:resume', onResume);
-
-    return () => {
-      if (onConnect) socket.off('connect', onConnect);
-      socket.off('session:created', onCreated);
-      socket.off('session:dead', onDead);
-      socket.off('session:resume', onResume);
-    };
-  }, [socket, initialState]);
 
   // Document title side effect
   const activeMeta = state.activeTabId ? state.tabs[state.activeTabId] : undefined;
