@@ -57,9 +57,9 @@
 - [x] 6.4 FakeSummoner.claude lazy getter
 - [x] 6.5 不需要 render — summoner 不管 React，test 用 summoner.socket
 - [x] 6.6 FakeSummoner.events() / .send() / .disconnect() / .on() / .connected
-- [ ] 6.7 FakeClaude socket 改為 private（待 client 遷移 renderWithWorkspace 後）
+- [x] 6.7 FakeClaude socket 改為 private（8.7.1 完成）
 - [x] 6.8 遷移 server tests（message, session-command, permission, session-connect）
-- [ ] 6.9 遷移 client tests（useExplorerBrowse 已用新 API，其他待遷移）
+- [x] 6.9 遷移 client tests（8.4.3 完成）
 - [x] 6.10 全套 server 433 + client 722 測試通過
 
 ## 7. 驗證
@@ -151,8 +151,8 @@ const windowB = createFakeSummoner(server);
 
 ### 8.8 FakeSummoner constructor 接受 ServerConnector
 
-- [ ] 8.8.1 summoner FakeSummoner constructor 改為 `(server: ServerConnector)`
-- [ ] 8.8.2 `createFakeSummoner` 簡化為 `new FakeSummoner(server)`
-- [ ] 8.8.3 server `createFakeSummoner` 同步更新
-- [ ] 8.8.4 client `createFakeSummoner` 同步更新
-- [ ] 8.8.5 全套測試通過
+- [x] 8.8.1 summoner FakeSummoner constructor 改為 `(server: ServerConnector)`
+- [x] 8.8.2 `createFakeSummoner` 簡化為 `new FakeSummoner(server)`
+- [x] 8.8.3 server `createFakeSummoner` 同步更新
+- [x] 8.8.4 client `createFakeSummoner` 同步更新
+- [x] 8.8.5 全套測試通過
