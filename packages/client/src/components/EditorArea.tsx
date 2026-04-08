@@ -1,5 +1,4 @@
 import { ChannelProvider } from '../contexts/channel';
-import { useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
 import { ChatPanel } from './ChatPanel';
@@ -8,7 +7,6 @@ import { TabBar } from './TabBar';
 export function EditorArea() {
   const { activeTabId, tabs } = useTabState();
   const { setActiveTab, removeTab, createNewTab, setTabTitle, setTabStatus } = useTabActions();
-  const { activeProjectCwd } = useProjectState();
   const { closeSession } = useSession();
 
   const handleCloseTab = (id: string) => {
@@ -16,13 +14,10 @@ export function EditorArea() {
     removeTab(id);
   };
 
-  // Filter tabs by active project cwd (show all if no active project)
-  const filteredEntries = Object.entries(tabs).filter(
-    ([, meta]) => !activeProjectCwd || meta.cwd === activeProjectCwd,
-  );
-  const tabIds = filteredEntries.map(([id]) => id);
+  const tabEntries = Object.entries(tabs);
+  const tabIds = tabEntries.map(([id]) => id);
 
-  const openTabs = filteredEntries.map(([id, meta]) => ({
+  const openTabs = tabEntries.map(([id, meta]) => ({
     sessionId: id,
     title: meta.title,
     status: meta.tabStatus,
@@ -35,7 +30,7 @@ export function EditorArea() {
         activeTabId={activeTabId}
         onSelectTab={setActiveTab}
         onCloseTab={handleCloseTab}
-        onNewTab={() => createNewTab(activeProjectCwd ? { cwd: activeProjectCwd } : undefined)}
+        onNewTab={() => createNewTab()}
       />
       <div className="flex flex-1 overflow-hidden relative">
         {tabIds.map((id) => (

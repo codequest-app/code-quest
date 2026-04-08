@@ -1,12 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PluginProvider } from '../../contexts/PluginContext';
-import { ProjectProvider } from '../../contexts/ProjectContext';
+import { ProjectProvider, useProjectActions } from '../../contexts/ProjectContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import type { TabMeta } from '../../contexts/TabContext';
 import { TabProvider } from '../../contexts/TabContext';
+import { useSessionSync } from '../../hooks/useSessionSync';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { WorkspaceLayout } from '../WorkspaceLayout';
@@ -143,5 +144,99 @@ describe('WorkspaceLayout', () => {
     await userEvent.click(screen.getByRole('button', { name: /close/i }));
 
     expect(screen.queryByLabelText('Close sess-b')).not.toBeInTheDocument();
+  });
+
+  describe('per-project TabProvider', () => {
+    function AddProjectButton({ cwd }: { cwd: string }) {
+      const { addProject } = useProjectActions();
+      return (
+        <button type="button" data-testid={`add-${cwd}`} onClick={() => addProject(cwd)}>
+          add {cwd}
+        </button>
+      );
+    }
+
+    function SessionSync({ children }: { children: React.ReactNode }) {
+      useSessionSync();
+      return children;
+    }
+
+    function renderWithProjects() {
+      const summoner = createFakeSummoner();
+      return {
+        ...render(
+          <SocketProvider socket={summoner.socket}>
+            <SessionProvider>
+              <PluginProvider>
+                <ProjectProvider>
+                  <TabProvider>
+                    <SessionSync>
+                      <AddProjectButton cwd="/project-a" />
+                      <AddProjectButton cwd="/project-b" />
+                      <WorkspaceLayout />
+                    </SessionSync>
+                  </TabProvider>
+                </ProjectProvider>
+              </PluginProvider>
+            </SessionProvider>
+          </SocketProvider>,
+        ),
+        summoner,
+      };
+    }
+
+    async function emitFromServer(
+      summoner: ReturnType<typeof createFakeSummoner>,
+      event: string,
+      payload: unknown,
+    ) {
+      await act(async () => {
+        summoner.socket.serverSocket.emit(event, payload);
+        // Wait for microtask (serverSocket.emit) + useEffect flush
+        await new Promise((r) => setTimeout(r, 10));
+      });
+      // Extra flush for cascading state updates (ProjectProvider → useSessionSync → TabProvider)
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 10));
+      });
+    }
+
+    it('renders per-project tabs when project has sessions', async () => {
+      const { summoner } = renderWithProjects();
+
+      await userEvent.click(screen.getByTestId('add-/project-a'));
+      await emitFromServer(summoner, 'session:created', { channelId: 'sess-a', cwd: '/project-a' });
+
+      const panel = await screen.findByTestId('chat-panel');
+      expect(panel.parentElement).toHaveAttribute('data-channel-id', 'sess-a');
+    });
+
+    it('switching project keeps both tab groups mounted', async () => {
+      const { summoner } = renderWithProjects();
+
+      await userEvent.click(screen.getByTestId('add-/project-a'));
+      await userEvent.click(screen.getByTestId('add-/project-b'));
+      await emitFromServer(summoner, 'session:created', { channelId: 'sess-a', cwd: '/project-a' });
+      await emitFromServer(summoner, 'session:created', { channelId: 'sess-b', cwd: '/project-b' });
+
+      // Wait for both per-project TabProviders to render chat panels
+      await vi.waitFor(() => {
+        expect(screen.getAllByTestId('chat-panel')).toHaveLength(2);
+      });
+
+      // Switch to project-a
+      const sidebar = screen.getByTestId('sidebar-panel');
+      await userEvent.click(within(sidebar).getByText(/project-a/));
+
+      // Both still mounted
+      expect(screen.getAllByTestId('chat-panel')).toHaveLength(2);
+
+      // project-a visible, project-b hidden
+      const panelsAfter = screen.getAllByTestId('chat-panel');
+      const sessA = panelsAfter.find(
+        (el) => el.parentElement?.getAttribute('data-channel-id') === 'sess-a',
+      );
+      expect(sessA?.closest('[data-channel-id]')?.parentElement).not.toHaveClass('hidden');
+    });
   });
 });

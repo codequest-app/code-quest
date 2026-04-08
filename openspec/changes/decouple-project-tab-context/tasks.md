@@ -28,7 +28,17 @@
 - [x] 3.8 useSessionSync 改為 incremental addTab/removeTab（不用 syncFromServer 避免 destructive replace）
 - [x] 3.9 全套 unit tests 通過（741 passed）
 
-## 4. 驗證
+## 4. Per-project TabProvider
 
-- [x] 4.1 全套 unit tests 通過（server 435 + client 741）
-- [ ] 4.2 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
+- [x] 4.1 WorkspaceLayout：有 projects 時 render per-project `<ProjectTabProvider cwd={...}><EditorArea />`，無 projects 時 render `<EditorArea />`（用外層 TabProvider）
+- [x] 4.2 useSessionSync 接受 cwd 參數過濾 sessions，per-project SessionSyncBridge 傳 cwd
+- [x] 4.3 App.tsx 外層 TabProvider + SessionSync 保留（無 project fallback + 舊測試相容）
+- [x] 4.4 ProjectProvider 只從 app:init 推導 projects，不從 session:created/states 自動建（避免 no-project 路徑被汙染）
+- [x] 4.5 WorkspaceLayout test：per-project render + switching 不 unmount
+- [x] 4.6 EditorArea 移除 cwd filter + ProjectContext 依賴（TabProvider 已隔離）
+- [x] 4.7 全套 unit tests 通過（743 passed）
+
+## 5. 驗證
+
+- [ ] 5.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
+- [ ] 5.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證

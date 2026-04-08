@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
-import { useTabActions, useTabState } from '../contexts/TabContext';
+import { TabProvider } from '../contexts/TabContext';
+import { useSessionSync } from '../hooks/useSessionSync';
 import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
@@ -9,28 +11,29 @@ import { ProjectList } from './ProjectList';
 const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
 const SIDEBAR_WIDTH = 260;
 
+function ProjectTabProvider({ cwd, children }: { cwd: string; children: ReactNode }) {
+  return (
+    <TabProvider defaultCwd={cwd}>
+      <SessionSyncBridge cwd={cwd} />
+      {children}
+    </TabProvider>
+  );
+}
+
+function SessionSyncBridge({ cwd }: { cwd?: string }) {
+  useSessionSync(cwd);
+  return null;
+}
+
 export function WorkspaceLayout() {
   const [activePanel, setActivePanel] = useState<string | null>('projects');
   const [dialogOpen, setDialogOpen] = useState(false);
   const { projects, activeProjectCwd } = useProjectState();
   const { addProject, setActiveProject } = useProjectActions();
-  const { createNewTab, setActiveTab } = useTabActions();
-  const { activeTabId } = useTabState();
-  const savedTabs = useRef<Map<string, string>>(new Map());
 
   function handleAddProject(cwd: string) {
     addProject(cwd);
-    createNewTab({ cwd });
     setDialogOpen(false);
-  }
-
-  function handleSwitchProject(cwd: string) {
-    if (activeProjectCwd && activeTabId) {
-      savedTabs.current.set(activeProjectCwd, activeTabId);
-    }
-    setActiveProject(cwd);
-    const saved = savedTabs.current.get(cwd);
-    if (saved) setActiveTab(saved);
   }
 
   return (
@@ -45,13 +48,23 @@ export function WorkspaceLayout() {
           <ProjectList
             projects={projects}
             activeProjectCwd={activeProjectCwd}
-            onSelect={handleSwitchProject}
+            onSelect={setActiveProject}
             onAdd={() => setDialogOpen(true)}
           />
         </div>
       )}
       <div className="flex-1 min-w-0 flex">
-        <EditorArea />
+        {projects.map((project) => (
+          <div
+            key={project.cwd}
+            className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
+          >
+            <ProjectTabProvider cwd={project.cwd}>
+              <EditorArea />
+            </ProjectTabProvider>
+          </div>
+        ))}
+        {projects.length === 0 && <EditorArea />}
       </div>
       <AddProjectDialog
         open={dialogOpen}

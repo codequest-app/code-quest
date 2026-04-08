@@ -26,7 +26,7 @@ export function useTabState(): TabStateValue {
 // ── Actions context (stable references) ──
 
 export interface TabActionsValue {
-  addTab: (id: string) => void;
+  addTab: (id: string, cwd?: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
@@ -62,10 +62,10 @@ export function TabProvider({
     activeTabId: initialState?.activeTabId ?? null,
   }));
 
-  const addTab = (id: string) => {
+  const addTab = (id: string, cwd?: string) => {
     setState((prev) => {
       if (id in prev.tabs) return prev;
-      const tabs = { ...prev.tabs, [id]: DEFAULT_META };
+      const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
       return { tabs, activeTabId: prev.activeTabId ?? id };
     });
   };

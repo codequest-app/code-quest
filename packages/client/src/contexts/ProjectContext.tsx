@@ -79,9 +79,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         if (prev.some((s) => s.channelId === channelId)) return prev;
         return [...prev, { channelId, state: 'launching', cwd }];
       });
-      if (cwd) {
-        setProjects((prev) => deriveProjects([{ channelId, state: 'launching', cwd }], prev));
-      }
     };
 
     const onDead = (raw: unknown) => {
@@ -105,7 +102,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         }
         return next;
       });
-      setProjects((prev) => deriveProjects(parsed.data.sessions, prev));
     };
 
     socket.on('connect', onConnect);

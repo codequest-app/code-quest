@@ -1,5 +1,5 @@
 import { sessionResumePayloadSchema } from '@code-quest/shared';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useProjectState } from '../contexts/ProjectContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useTabActions } from '../contexts/TabContext';
@@ -7,13 +7,19 @@ import { useTabActions } from '../contexts/TabContext';
 /**
  * Bridges ProjectProvider's sessions to TabContext.
  * Incrementally adds/removes tabs as sessions change.
+ * When cwd is provided, only syncs sessions matching that cwd (per-project mode).
  * Must be rendered inside SocketProvider, ProjectProvider, and TabProvider.
  */
-export function useSessionSync() {
+export function useSessionSync(cwd?: string) {
   const { socket } = useSocket();
-  const { sessions } = useProjectState();
+  const { sessions: allSessions } = useProjectState();
   const { addTab, removeTab, replaceActiveTab } = useTabActions();
   const prevSessionIds = useRef<Set<string>>(new Set());
+
+  const sessions = useMemo(
+    () => (cwd ? allSessions.filter((s) => s.cwd === cwd) : allSessions),
+    [allSessions, cwd],
+  );
 
   // Incrementally sync tabs when sessions change
   // biome-ignore lint/correctness/useExhaustiveDependencies: addTab/removeTab use setState updater — React Compiler stabilises references
@@ -21,9 +27,9 @@ export function useSessionSync() {
     const currentIds = new Set(sessions.map((s) => s.channelId));
 
     // Add tabs for new sessions
-    for (const id of currentIds) {
-      if (!prevSessionIds.current.has(id)) {
-        addTab(id);
+    for (const s of sessions) {
+      if (!prevSessionIds.current.has(s.channelId)) {
+        addTab(s.channelId, s.cwd);
       }
     }
 
