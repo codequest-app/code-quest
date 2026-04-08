@@ -53,7 +53,7 @@ export function WorkspaceLayout() {
           />
         </div>
       )}
-      <div className="flex-1 min-w-0 flex">
+      <div className="flex-1 min-w-0 flex h-full">
         {projects.map((project) => (
           <div
             key={project.cwd}
