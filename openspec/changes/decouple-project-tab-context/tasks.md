@@ -41,7 +41,7 @@
 ## 5. 清理重複/分散邏輯
 
 - [x] 5.1 `app:init` 合併：ProjectProvider emit app:init 並 forward settings 給 SessionProvider，SessionProvider 移除自己的 emit
-- [ ] 5.2 `session:resume` 從 SessionTabSync 移到 ProjectProvider（統一 socket events，deferred — resume 直接操作 tab 不經 sessions）
+- [x] 5.2 `session:resume` 移到 ProjectProvider → SessionTabSync 偵測 resume pattern（1 added + 1 removed）→ replaceActiveTab
 - [x] 5.3 消除 useSessionSync hook → 替換為 SessionTabSync component
 - [x] 5.4 消除 SessionSync/SessionSyncBridge 重複定義
 - [x] 5.5 清理 test helpers 中的 SessionSync 定義

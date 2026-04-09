@@ -3,6 +3,7 @@ import {
   initResponseSchema,
   sessionCreatedPayloadSchema,
   sessionDeadPayloadSchema,
+  sessionResumePayloadSchema,
   sessionStatesPayloadSchema,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
@@ -113,16 +114,29 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       });
     };
 
+    const onResume = (raw: unknown) => {
+      const parsed = sessionResumePayloadSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const newId = parsed.data.channelId;
+      setSessions((prev) => {
+        if (prev.length === 0) return [{ channelId: newId, state: 'idle' }];
+        // Replace the last session (the one being resumed)
+        return prev.map((s, i) => (i === prev.length - 1 ? { ...s, channelId: newId } : s));
+      });
+    };
+
     socket.on('connect', onConnect);
     if (socket.connected) onConnect();
     socket.on('session:created', onCreated);
     socket.on('session:dead', onDead);
     socket.on('session:states', onStates);
+    socket.on('session:resume', onResume);
     return () => {
       socket.off('connect', onConnect);
       socket.off('session:created', onCreated);
       socket.off('session:dead', onDead);
       socket.off('session:states', onStates);
+      socket.off('session:resume', onResume);
     };
   }, [socket]);
 
