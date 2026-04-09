@@ -9,10 +9,11 @@ describe('App', () => {
     expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
   });
 
-  it('shows EmptyState when no projects exist (no TabBar until project is created)', () => {
+  it('shows only EmptyState when no projects exist — no sidebar or tab bar', () => {
     render(<App />);
 
-    expect(screen.getByTestId('empty-new-session')).toBeInTheDocument();
+    expect(screen.getByTestId('empty-add-project')).toBeInTheDocument();
     expect(screen.queryByTestId('tab-bar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
   });
 });

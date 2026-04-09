@@ -4,7 +4,6 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { config } from '../config';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -33,6 +32,10 @@ export async function renderWithWorkspace(
     claude.prepareInit();
   }
 
+  // Set up filesystem for AddProjectDialog
+  summoner.filesystem().setRoots(['/projects']);
+  summoner.filesystem().addDirectory('/projects', ['app']);
+
   let channelId = '';
   const initPromise = new Promise<string>((resolve) => {
     summoner.on('session:init', (p: any) => {
@@ -48,15 +51,22 @@ export async function renderWithWorkspace(
       <SessionProvider>
         <PluginProvider>
           <ProjectProvider>
-            <WorkspaceLayout defaultCwd={config.defaultCwd} />
+            <WorkspaceLayout />
           </ProjectProvider>
         </PluginProvider>
       </SessionProvider>
     </SocketProvider>,
   );
 
-  // Create project via EmptyState, then create tab
-  await user.click(await screen.findByTestId('empty-new-session'));
+  // Add project via AddProjectDialog
+  await user.click(await screen.findByTestId('empty-add-project'));
+  const root = await screen.findByRole('treeitem', { name: 'projects' });
+  await user.click(root);
+  const appItem = await screen.findByRole('treeitem', { name: 'app' });
+  await user.click(appItem);
+  await user.click(screen.getByText('Open'));
+
+  // Project created → EditorArea renders → click New tab
   await user.click(await screen.findByLabelText('New tab'));
 
   await act(async () => {

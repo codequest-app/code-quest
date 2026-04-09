@@ -437,41 +437,32 @@ describe('TabProvider', () => {
   // ── Tab bar UI ──
 
   describe('tab bar UI', () => {
-    it('renders tab bar after creating project', async () => {
-      const { socket } = createFakeSummoner();
-      render(
-        <SocketProvider socket={socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <ProjectProvider>
-                <WorkspaceLayout defaultCwd="/test-cwd" />
-              </ProjectProvider>
-            </PluginProvider>
-          </SessionProvider>
-        </SocketProvider>,
-      );
-      // Create project first via EmptyState
-      await userEvent.click(screen.getByTestId('empty-new-session'));
-      expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
-    });
-
-    it('renders new tab button that triggers server launch', async () => {
+    it('renders tab bar after adding project', async () => {
       const summoner = createFakeSummoner();
+      summoner.filesystem().setRoots(['/projects']);
+      summoner.filesystem().addDirectory('/projects', ['my-app']);
       render(
         <SocketProvider socket={summoner.socket}>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <WorkspaceLayout defaultCwd="/test-cwd" />
+                <WorkspaceLayout />
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
         </SocketProvider>,
       );
-      // Create project first via EmptyState, then New tab
-      await userEvent.click(screen.getByTestId('empty-new-session'));
-      await userEvent.click(screen.getByLabelText('New tab'));
-      expect(summoner.claude().provider.all.length).toBeGreaterThan(0);
+      // Add project via dialog
+      await userEvent.click(screen.getByTestId('empty-add-project'));
+      await userEvent.click(await screen.findByRole('treeitem', { name: 'projects' }));
+      await userEvent.click(await screen.findByRole('treeitem', { name: 'my-app' }));
+      await userEvent.click(screen.getByText('Open'));
+      expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
+    });
+
+    it('renders new tab button that triggers server launch', async () => {
+      await renderWithWorkspace();
+      expect(screen.getByLabelText('New tab')).toBeInTheDocument();
     });
   });
 

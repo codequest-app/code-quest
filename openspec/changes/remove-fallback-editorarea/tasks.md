@@ -27,3 +27,20 @@
 - [x] 4.2 WorkspaceLayout 傳 `cwd={project.cwd}` 給 per-project TabProvider
 - [x] 4.3 createNewTab 用 TabProvider 的 `cwd`
 - [x] 4.4 沒 project 時沒有 TabProvider → 無法 createNewTab
+
+## 5. EmptyState 簡化為只有 Add Project
+
+- [x] 5.1 EmptyState 移除 `onNewTab` prop，只保留 `onAddProject`
+- [x] 5.2 WorkspaceLayout 的 EmptyState 改成開 AddProjectDialog
+- [x] 5.3 移除 WorkspaceLayout 的 `defaultCwd` prop
+- [x] 5.4 移除 App.tsx 傳的 `defaultCwd`
+- [x] 5.5 renderWithWorkspace 改成先點 "Add Project" → 選 cwd → 再點 "New tab"
+- [x] 5.6 TabContext.test tab bar UI — 同步更新 setup
+- [x] 5.7 App.test — expect EmptyState 有 "Add Project" 按鈕
+- [x] 5.8 確認所有 test pass
+
+## 6. 沒 project 時只顯示 EmptyState
+
+- [ ] 6.1 WorkspaceLayout 在 `projects.length === 0` 時不 render ActivityBar 和 sidebar
+- [ ] 6.2 只 render EmptyState + AddProjectDialog
+- [ ] 6.3 更新相關測試

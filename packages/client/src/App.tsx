@@ -3,7 +3,6 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
-import { config } from './config';
 import { PluginProvider } from './contexts/PluginContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
@@ -22,7 +21,7 @@ export function App() {
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <WorkspaceLayout defaultCwd={config.defaultCwd} />
+                <WorkspaceLayout />
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>

@@ -1,11 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { ProjectProvider } from '../../contexts/ProjectContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
-import { TabProvider } from '../../contexts/TabContext';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -38,9 +37,7 @@ describe('WorkspaceLayout', () => {
         <SessionProvider>
           <PluginProvider>
             <ProjectProvider>
-              <TabProvider>
-                <WorkspaceLayout />
-              </TabProvider>
+              <WorkspaceLayout />
             </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
@@ -107,18 +104,43 @@ describe('WorkspaceLayout', () => {
       expect(screen.getAllByLabelText(/^Close /).length).toBe(2);
     });
 
-    // TODO: needs multi-project test infra (multiple FakeSummoner sessions with different cwds)
-    // Original expects:
-    //   'renders per-project tabs when project has sessions':
-    //     - addProject('/project-a') + session:created { channelId: 'sess-a', cwd: '/project-a' }
-    //     - expect ChannelProvider with data-channel-id='sess-a' renders ChatPanel
-    //
-    //   'switching project keeps both tab groups mounted':
-    //     - addProject('/project-a') + addProject('/project-b')
-    //     - session:created for each with different cwd
-    //     - expect 2 ChatPanels rendered (both mounted, one hidden via CSS)
-    //     - switch to project-a → project-a visible, project-b hidden
-    it.todo('renders per-project tabs when project has sessions');
-    it.todo('switching project keeps both tab groups mounted');
+    it('renders per-project tabs when project has sessions', async () => {
+      await renderWithWorkspace();
+
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+      expect(screen.getAllByLabelText(/^Close /).length).toBe(1);
+    });
+
+    it('switching project keeps both tab groups mounted', async () => {
+      const { summoner, claude, user } = await renderWithWorkspace();
+
+      // First project created by renderWithWorkspace — set up filesystem for second
+      summoner.filesystem().setRoots(['/projects']);
+      summoner.filesystem().addDirectory('/projects', ['other-project']);
+
+      // Open AddProjectDialog via sidebar
+      const sidebar = screen.getByTestId('sidebar-panel');
+      await user.click(within(sidebar).getByText(/Add/));
+
+      // Expand root and select second project
+      const root = await screen.findByRole('treeitem', { name: 'projects' });
+      await user.click(root);
+      const otherProject = await screen.findByRole('treeitem', { name: 'other-project' });
+      await user.click(otherProject);
+      await user.click(screen.getByText('Open'));
+
+      // Second project created — switch to it in sidebar
+      await user.click(within(sidebar).getByText(/other-project/));
+      claude.prepareInit();
+      const newTabButtons = screen.getAllByLabelText('New tab');
+      // Click the visible one (active project's tab bar)
+      await user.click(newTabButtons[newTabButtons.length - 1]);
+
+      // Wait for second session to initialize
+      await screen.findAllByPlaceholderText(/Esc to focus/i);
+
+      // Both projects have ComposeInput rendered (one visible, one hidden)
+      expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBe(2);
+    });
   });
 });

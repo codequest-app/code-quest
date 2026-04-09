@@ -17,9 +17,10 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   }, [isBusy]);
   return null;
 }
+
 const SIDEBAR_WIDTH = 260;
 
-export function WorkspaceLayout({ defaultCwd }: { defaultCwd?: string }) {
+export function WorkspaceLayout() {
   const [activePanel, setActivePanel] = useState<string | null>('projects');
   const [dialogOpen, setDialogOpen] = useState(false);
   const { projects, activeProjectCwd, sessions } = useProjectState();
@@ -30,43 +31,45 @@ export function WorkspaceLayout({ defaultCwd }: { defaultCwd?: string }) {
     setDialogOpen(false);
   }
 
-  function handleNewTab() {
-    if (defaultCwd) {
-      addProject(defaultCwd);
-    }
-  }
-
   return (
     <div className="flex flex-1 overflow-hidden">
       <DocumentTitle sessions={sessions} />
-      <ActivityBar items={SIDEBAR_ITEMS} activePanel={activePanel} onToggle={setActivePanel} />
-      {activePanel && (
-        <div
-          className="h-full overflow-auto border-r border-border bg-surface shrink-0"
-          style={{ width: SIDEBAR_WIDTH }}
-          data-testid="sidebar-panel"
-        >
-          <ProjectList
-            projects={projects}
-            activeProjectCwd={activeProjectCwd}
-            onSelect={setActiveProject}
-            onAdd={() => setDialogOpen(true)}
-          />
-        </div>
-      )}
-      <div className="flex-1 min-w-0 flex h-full">
-        {projects.map((project) => (
-          <div
-            key={project.cwd}
-            className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
-          >
-            <TabProvider sessions={sessions.filter((s) => s.cwd === project.cwd)} cwd={project.cwd}>
-              <EditorArea />
-            </TabProvider>
+      {projects.length === 0 ? (
+        <EmptyState onAddProject={() => setDialogOpen(true)} />
+      ) : (
+        <>
+          <ActivityBar items={SIDEBAR_ITEMS} activePanel={activePanel} onToggle={setActivePanel} />
+          {activePanel && (
+            <div
+              className="h-full overflow-auto border-r border-border bg-surface shrink-0"
+              style={{ width: SIDEBAR_WIDTH }}
+              data-testid="sidebar-panel"
+            >
+              <ProjectList
+                projects={projects}
+                activeProjectCwd={activeProjectCwd}
+                onSelect={setActiveProject}
+                onAdd={() => setDialogOpen(true)}
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0 flex h-full">
+            {projects.map((project) => (
+              <div
+                key={project.cwd}
+                className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
+              >
+                <TabProvider
+                  sessions={sessions.filter((s) => s.cwd === project.cwd)}
+                  cwd={project.cwd}
+                >
+                  <EditorArea />
+                </TabProvider>
+              </div>
+            ))}
           </div>
-        ))}
-        {projects.length === 0 && <EmptyState onNewTab={handleNewTab} />}
-      </div>
+        </>
+      )}
       <AddProjectDialog
         open={dialogOpen}
         onSelect={handleAddProject}
