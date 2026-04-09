@@ -56,6 +56,61 @@ function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Proje
   return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
+function handleCreated(
+  raw: unknown,
+  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
+) {
+  const parsed = sessionCreatedPayloadSchema.safeParse(raw);
+  if (!parsed.success) return;
+  const { channelId, cwd } = parsed.data;
+  setSessions((prev) => {
+    if (prev.some((s) => s.channelId === channelId)) return prev;
+    return [...prev, { channelId, state: 'launching', cwd }];
+  });
+}
+
+function handleDead(
+  raw: unknown,
+  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
+) {
+  const parsed = sessionDeadPayloadSchema.safeParse(raw);
+  if (!parsed.success) return;
+  setSessions((prev) => prev.filter((s) => s.channelId !== parsed.data.channelId));
+}
+
+function handleStates(
+  raw: unknown,
+  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
+) {
+  const parsed = sessionStatesPayloadSchema.safeParse(raw);
+  if (!parsed.success) return;
+  setSessions((prev) => {
+    let next = [...prev];
+    for (const update of parsed.data.sessions) {
+      const idx = next.findIndex((s) => s.channelId === update.channelId);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...update };
+      } else {
+        next = [...next, update];
+      }
+    }
+    return next;
+  });
+}
+
+function handleResume(
+  raw: unknown,
+  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
+) {
+  const parsed = sessionResumePayloadSchema.safeParse(raw);
+  if (!parsed.success) return;
+  const newId = parsed.data.channelId;
+  setSessions((prev) => {
+    if (prev.length === 0) return [{ channelId: newId, state: 'idle' }];
+    return prev.map((s, i) => (i === prev.length - 1 ? { ...s, channelId: newId } : s));
+  });
+}
+
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
@@ -63,7 +118,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
   const { setInitOptions } = useSession();
 
-  // Listen to socket events → update sessions + derive projects
   // biome-ignore lint/correctness/useExhaustiveDependencies: setInitOptions is stable (useState initializer in SessionProvider)
   useEffect(() => {
     const onConnect = () => {
@@ -78,49 +132,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    const onCreated = (raw: unknown) => {
-      const parsed = sessionCreatedPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      const { channelId, cwd } = parsed.data;
-      setSessions((prev) => {
-        if (prev.some((s) => s.channelId === channelId)) return prev;
-        return [...prev, { channelId, state: 'launching', cwd }];
-      });
-    };
-
-    const onDead = (raw: unknown) => {
-      const parsed = sessionDeadPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      setSessions((prev) => prev.filter((s) => s.channelId !== parsed.data.channelId));
-    };
-
-    const onStates = (raw: unknown) => {
-      const parsed = sessionStatesPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      setSessions((prev) => {
-        let next = [...prev];
-        for (const update of parsed.data.sessions) {
-          const idx = next.findIndex((s) => s.channelId === update.channelId);
-          if (idx >= 0) {
-            next[idx] = { ...next[idx], ...update };
-          } else {
-            next = [...next, update];
-          }
-        }
-        return next;
-      });
-    };
-
-    const onResume = (raw: unknown) => {
-      const parsed = sessionResumePayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      const newId = parsed.data.channelId;
-      setSessions((prev) => {
-        if (prev.length === 0) return [{ channelId: newId, state: 'idle' }];
-        // Replace the last session (the one being resumed)
-        return prev.map((s, i) => (i === prev.length - 1 ? { ...s, channelId: newId } : s));
-      });
-    };
+    const onCreated = (raw: unknown) => handleCreated(raw, setSessions);
+    const onDead = (raw: unknown) => handleDead(raw, setSessions);
+    const onStates = (raw: unknown) => handleStates(raw, setSessions);
+    const onResume = (raw: unknown) => handleResume(raw, setSessions);
 
     socket.on('connect', onConnect);
     if (socket.connected) onConnect();
