@@ -176,13 +176,6 @@ export function TabProvider({
     prevSessionIds.current = currentIds;
   }, [sessions]);
 
-  // Document title side effect
-  const activeMeta = state.activeTabId ? state.tabs[state.activeTabId] : undefined;
-  useEffect(() => {
-    const isBusy = activeMeta?.tabStatus === 'processing' || activeMeta?.tabStatus === 'busy';
-    document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
-  }, [activeMeta?.tabStatus]);
-
   const stateValue: TabStateValue = { tabs: state.tabs, activeTabId: state.activeTabId };
 
   return (

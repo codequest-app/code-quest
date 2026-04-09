@@ -3,6 +3,7 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
+import { DocumentTitle } from '../../App';
 import { WorkspaceLayout } from '../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -583,7 +584,7 @@ describe('TabProvider', () => {
       render(
         <SocketProvider socket={socket}>
           <TabProvider>
-            <div />
+            <DocumentTitle />
           </TabProvider>
         </SocketProvider>,
       );
@@ -610,6 +611,7 @@ describe('TabProvider', () => {
       render(
         <SocketProvider socket={socket}>
           <TabProvider>
+            <DocumentTitle />
             <TestComponent />
           </TabProvider>
         </SocketProvider>,
@@ -648,6 +650,7 @@ describe('TabProvider', () => {
       render(
         <SocketProvider socket={socket}>
           <TabProvider>
+            <DocumentTitle />
             <TestComponent />
           </TabProvider>
         </SocketProvider>,
