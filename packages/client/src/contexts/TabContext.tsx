@@ -52,12 +52,12 @@ export function TabProvider({
   children,
   initialState,
   sessions,
-  defaultCwd = '../',
+  cwd,
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
   sessions?: SessionStateSummary[];
-  defaultCwd?: string;
+  cwd?: string;
 }) {
   const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
@@ -107,7 +107,7 @@ export function TabProvider({
 
   const createNewTab = (opts?: { cwd?: string }): { channelId: string } => {
     const channelId = crypto.randomUUID();
-    const tabCwd = opts?.cwd ?? defaultCwd;
+    const tabCwd = opts?.cwd ?? cwd;
     setState((prev) => ({
       tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
       activeTabId: channelId,

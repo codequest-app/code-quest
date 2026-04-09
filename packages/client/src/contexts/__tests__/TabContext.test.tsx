@@ -4,7 +4,6 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { DocumentTitle } from '../../App';
 import { WorkspaceLayout } from '../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -438,21 +437,21 @@ describe('TabProvider', () => {
   // ── Tab bar UI ──
 
   describe('tab bar UI', () => {
-    it('renders tab bar with WorkspaceLayout', () => {
+    it('renders tab bar after creating project', async () => {
       const { socket } = createFakeSummoner();
       render(
         <SocketProvider socket={socket}>
           <SessionProvider>
             <PluginProvider>
-              <TabProvider>
-                <ProjectProvider>
-                  <WorkspaceLayout />
-                </ProjectProvider>
-              </TabProvider>
+              <ProjectProvider>
+                <WorkspaceLayout defaultCwd="/test-cwd" />
+              </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
         </SocketProvider>,
       );
+      // Create project first via EmptyState
+      await userEvent.click(screen.getByTestId('empty-new-session'));
       expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
     });
 
@@ -463,103 +462,34 @@ describe('TabProvider', () => {
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <TabProvider>
-                  <WorkspaceLayout />
-                </TabProvider>
+                <WorkspaceLayout defaultCwd="/test-cwd" />
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
         </SocketProvider>,
       );
+      // Create project first via EmptyState, then New tab
+      await userEvent.click(screen.getByTestId('empty-new-session'));
       await userEvent.click(screen.getByLabelText('New tab'));
       expect(summoner.claude().provider.all.length).toBeGreaterThan(0);
     });
   });
 
-  // ── Document title ──
+  // ── Document title (DocumentTitle reads sessions from ProjectContext) ──
 
   describe('document title', () => {
-    it('sets title to base when idle', () => {
-      const { socket } = createFakeSummoner();
-      render(
-        <SocketProvider socket={socket}>
-          <TabProvider>
-            <DocumentTitle />
-          </TabProvider>
-        </SocketProvider>,
-      );
-      expect(document.title).toBe('Code Quest');
-    });
+    it('shows spinner prefix when session is busy and returns to base on idle', async () => {
+      const { claude, user } = await renderWithWorkspace();
+      const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+      await user.click(textarea);
+      await user.type(textarea, 'hello');
+      await user.keyboard('{Enter}');
 
-    it('shows spinner prefix when active tab has pending status', async () => {
-      const { socket } = createFakeSummoner();
-      function TestComponent() {
-        const { addTab, setActiveTab, setTabStatus } = useTabActions();
-        return (
-          <button
-            type="button"
-            onClick={() => {
-              addTab('t1');
-              setActiveTab('t1');
-              setTabStatus('t1', 'processing');
-            }}
-          >
-            trigger
-          </button>
-        );
-      }
-      render(
-        <SocketProvider socket={socket}>
-          <TabProvider>
-            <DocumentTitle />
-            <TestComponent />
-          </TabProvider>
-        </SocketProvider>,
-      );
-      await userEvent.click(screen.getByText('trigger'));
-      expect(document.title).toBe('⟳ Code Quest');
-    });
-
-    it('returns to base title when tab status changes from pending to default', async () => {
-      const { socket } = createFakeSummoner();
-      function TestComponent() {
-        const { addTab, setActiveTab, setTabStatus } = useTabActions();
-        return (
-          <>
-            <button
-              type="button"
-              data-testid="set-pending"
-              onClick={() => {
-                addTab('t1');
-                setActiveTab('t1');
-                setTabStatus('t1', 'processing');
-              }}
-            >
-              pending
-            </button>
-            <button
-              type="button"
-              data-testid="set-default"
-              onClick={() => setTabStatus('t1', 'idle')}
-            >
-              default
-            </button>
-          </>
-        );
-      }
-      render(
-        <SocketProvider socket={socket}>
-          <TabProvider>
-            <DocumentTitle />
-            <TestComponent />
-          </TabProvider>
-        </SocketProvider>,
-      );
-
-      await userEvent.click(screen.getByTestId('set-pending'));
       expect(document.title).toBe('⟳ Code Quest');
 
-      await userEvent.click(screen.getByTestId('set-default'));
+      await act(async () => {
+        await claude.emit(s.result());
+      });
       expect(document.title).toBe('Code Quest');
     });
   });
@@ -619,6 +549,17 @@ describe('TabProvider', () => {
       await waitFor(() => {
         expect(screen.queryAllByLabelText(/^Close /).length).toBe(tabsBefore + 1);
       });
+    });
+
+    it('session:created with cwd auto-creates project and tab remains visible', async () => {
+      await renderWithWorkspace();
+
+      // After renderWithWorkspace, session:created was broadcast with cwd
+      // → deriveProjects should have created a project
+      // → WorkspaceLayout should render project path with TabProvider(sessions)
+      // → Tab should be visible in project's EditorArea
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+      expect(screen.queryAllByLabelText(/^Close /).length).toBeGreaterThanOrEqual(1);
     });
 
     it('session:dead removes tab', async () => {

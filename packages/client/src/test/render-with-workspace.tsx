@@ -4,11 +4,11 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
+import { config } from '../config';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 export interface RenderWithWorkspaceOptions {
@@ -48,15 +48,15 @@ export async function renderWithWorkspace(
       <SessionProvider>
         <PluginProvider>
           <ProjectProvider>
-            <TabProvider>
-              <WorkspaceLayout />
-            </TabProvider>
+            <WorkspaceLayout defaultCwd={config.defaultCwd} />
           </ProjectProvider>
         </PluginProvider>
       </SessionProvider>
     </SocketProvider>,
   );
 
+  // Create project via EmptyState, then create tab
+  await user.click(await screen.findByTestId('empty-new-session'));
   await user.click(await screen.findByLabelText('New tab'));
 
   await act(async () => {
