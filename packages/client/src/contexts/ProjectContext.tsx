@@ -56,35 +56,28 @@ function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Proje
   return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
-function handleCreated(
-  raw: unknown,
-  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
-) {
+type SessionUpdater = (prev: SessionStateSummary[]) => SessionStateSummary[];
+
+function handleCreated(raw: unknown): SessionUpdater | null {
   const parsed = sessionCreatedPayloadSchema.safeParse(raw);
-  if (!parsed.success) return;
+  if (!parsed.success) return null;
   const { channelId, cwd } = parsed.data;
-  setSessions((prev) => {
+  return (prev) => {
     if (prev.some((s) => s.channelId === channelId)) return prev;
     return [...prev, { channelId, state: 'launching', cwd }];
-  });
+  };
 }
 
-function handleDead(
-  raw: unknown,
-  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
-) {
+function handleDead(raw: unknown): SessionUpdater | null {
   const parsed = sessionDeadPayloadSchema.safeParse(raw);
-  if (!parsed.success) return;
-  setSessions((prev) => prev.filter((s) => s.channelId !== parsed.data.channelId));
+  if (!parsed.success) return null;
+  return (prev) => prev.filter((s) => s.channelId !== parsed.data.channelId);
 }
 
-function handleStates(
-  raw: unknown,
-  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
-) {
+function handleStates(raw: unknown): SessionUpdater | null {
   const parsed = sessionStatesPayloadSchema.safeParse(raw);
-  if (!parsed.success) return;
-  setSessions((prev) => {
+  if (!parsed.success) return null;
+  return (prev) => {
     let next = [...prev];
     for (const update of parsed.data.sessions) {
       const idx = next.findIndex((s) => s.channelId === update.channelId);
@@ -95,20 +88,17 @@ function handleStates(
       }
     }
     return next;
-  });
+  };
 }
 
-function handleResume(
-  raw: unknown,
-  setSessions: React.Dispatch<React.SetStateAction<SessionStateSummary[]>>,
-) {
+function handleResume(raw: unknown): SessionUpdater | null {
   const parsed = sessionResumePayloadSchema.safeParse(raw);
-  if (!parsed.success) return;
+  if (!parsed.success) return null;
   const newId = parsed.data.channelId;
-  setSessions((prev) => {
+  return (prev) => {
     if (prev.length === 0) return [{ channelId: newId, state: 'idle' }];
     return prev.map((s, i) => (i === prev.length - 1 ? { ...s, channelId: newId } : s));
-  });
+  };
 }
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
@@ -132,10 +122,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    const onCreated = (raw: unknown) => handleCreated(raw, setSessions);
-    const onDead = (raw: unknown) => handleDead(raw, setSessions);
-    const onStates = (raw: unknown) => handleStates(raw, setSessions);
-    const onResume = (raw: unknown) => handleResume(raw, setSessions);
+    const apply = (handler: (raw: unknown) => SessionUpdater | null) => (raw: unknown) => {
+      const updater = handler(raw);
+      if (updater) setSessions(updater);
+    };
+    const onCreated = apply(handleCreated);
+    const onDead = apply(handleDead);
+    const onStates = apply(handleStates);
+    const onResume = apply(handleResume);
 
     socket.on('connect', onConnect);
     if (socket.connected) onConnect();

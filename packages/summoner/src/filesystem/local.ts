@@ -1,4 +1,4 @@
-import { lstatSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join, normalize, resolve } from 'node:path';
 import Fuse from 'fuse.js';
 import { globSync } from 'glob';
@@ -36,12 +36,7 @@ export class LocalFilesystemService implements FilesystemService {
           if (!entry.isDirectory()) return false;
           if (entry.name.startsWith('.')) return false;
           if (BROWSE_IGNORED.has(entry.name)) return false;
-          try {
-            if (lstatSync(join(validated, entry.name)).isSymbolicLink()) return false;
-          } catch {
-            // Permission denied or other fs error — skip this entry
-            return false;
-          }
+          if (entry.isSymbolicLink()) return false;
           return true;
         })
         .map((entry) => ({ name: entry.name, path: join(validated, entry.name) }))

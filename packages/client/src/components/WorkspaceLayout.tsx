@@ -59,6 +59,7 @@ export function WorkspaceLayout() {
             </ProjectTabProvider>
           </div>
         ))}
+        {/* Falls back to the outer TabProvider in App.tsx when no projects exist */}
         {projects.length === 0 && <EditorArea />}
       </div>
       <AddProjectDialog
