@@ -296,44 +296,27 @@ describe('TabProvider', () => {
     });
   });
 
-  // ── createNewTab ──
+  // ── tab creation from sessions ──
 
-  describe('createNewTab', () => {
-    it('creates tab with cwd', async () => {
+  describe('tab creation from sessions', () => {
+    it('creates tab with cwd from session', () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();
-        const { createNewTab } = useTabActions();
         const cwd = activeTabId ? tabs[activeTabId]?.cwd : undefined;
-        return (
-          <>
-            <span data-testid="cwd">{cwd ?? 'none'}</span>
-            <button type="button" onClick={() => createNewTab({ cwd: '/my/project' })}>
-              create
-            </button>
-          </>
-        );
+        return <span data-testid="cwd">{cwd ?? 'none'}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('create'));
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([{ channelId: 'ch-1', state: 'idle', cwd: '/my/project' }]);
       expect(screen.getByTestId('cwd')).toHaveTextContent('/my/project');
     });
 
-    it('is a synchronous local operation (no server interaction)', async () => {
+    it('creates tab when session appears', () => {
       function Test() {
         const { tabs } = useTabState();
-        const { createNewTab } = useTabActions();
-        return (
-          <>
-            <span data-testid="count">{Object.keys(tabs).length}</span>
-            <button type="button" onClick={() => createNewTab()}>
-              create
-            </button>
-          </>
-        );
+        return <span data-testid="count">{Object.keys(tabs).length}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('create'));
-      // Tab created immediately in local state
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([idleSession('ch-1')]);
       expect(screen.getByTestId('count')).toHaveTextContent('1');
     });
   });
@@ -457,7 +440,7 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
     });
 
-    it('renders new tab button that calls createNewTab', async () => {
+    it('renders new tab button that triggers server launch', async () => {
       const summoner = createFakeSummoner();
       render(
         <SocketProvider socket={summoner.socket}>
