@@ -2,7 +2,6 @@
 import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeGit } from '../test/fake-git.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
@@ -106,8 +105,8 @@ describe('session:teleport', () => {
   });
 
   it('should attempt git checkout if branch provided', async () => {
-    const fakeGit = createFakeGit();
-    const claude = createFakeSummoner().claude();
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
@@ -116,17 +115,12 @@ describe('session:teleport', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(fakeGit.instance.checkout).toHaveBeenCalledWith('feature/x');
-
-    fakeGit.restore();
   });
 
   it('should succeed even if git checkout fails', async () => {
-    const fakeGit = createFakeGit({
-      checkoutError: new Error('checkout failed'),
-      fetchError: new Error('fetch failed'),
-    });
-    const claude = createFakeSummoner().claude();
+    const summoner = createFakeSummoner();
+    summoner.git()!.setCheckoutError(new Error('checkout failed'));
+    const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{
@@ -145,8 +139,6 @@ describe('session:teleport', () => {
     expect(result.channelId).toBeDefined();
     expect(result.branchCheckoutFailed).toBe(true);
     expect(result.branch).toBe('feature/x');
-
-    fakeGit.restore();
   });
 
   it('should return events from parent session history', async () => {

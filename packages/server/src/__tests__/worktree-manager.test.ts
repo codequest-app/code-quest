@@ -1,5 +1,5 @@
+import { detectWorktree, validateWorktreeName } from '@code-quest/summoner';
 import { describe, expect, it } from 'vitest';
-import { detectWorktree, validateWorktreeName } from '../services/worktree-manager.ts';
 
 describe('WorktreeManager', () => {
   describe('validateWorktreeName', () => {

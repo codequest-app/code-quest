@@ -2,6 +2,7 @@
 
 import { FakeClaude } from './fake-claude.ts';
 import type { FakeFilesystemService } from './fake-filesystem-service.ts';
+import type { FakeGitService } from './fake-git-service.ts';
 import type { FakeProcessProvider } from './fake-process-provider.ts';
 import type { FakeSocket } from './fake-socket.ts';
 
@@ -15,17 +16,19 @@ export class FakeSummoner {
   private readonly _socket: FakeSocket;
   private readonly _provider: FakeProcessProvider;
   private readonly _filesystem: FakeFilesystemService;
+  private readonly _git?: FakeGitService;
   private readonly _recordedEvents: Array<{ event: string; payload: any }> = [];
   private _claude?: FakeClaude;
 
   constructor(server: ServerConnector) {
-    const { socket, provider, filesystem } = server.connect();
-    this._socket = socket;
-    this._provider = provider;
-    this._filesystem = filesystem;
+    const conn = server.connect();
+    this._socket = conn.socket;
+    this._provider = conn.provider;
+    this._filesystem = conn.filesystem;
+    if ('git' in conn) this._git = conn.git;
 
     // Auto-record all server → client events
-    const { serverSocket } = socket;
+    const { serverSocket } = this._socket;
     const origEmit = serverSocket.emit.bind(serverSocket);
     serverSocket.emit = (event: string, ...args: unknown[]) => {
       this._recordedEvents.push({ event, payload: args[0] });
@@ -36,6 +39,11 @@ export class FakeSummoner {
   /** Get the FakeFilesystemService. */
   filesystem(): FakeFilesystemService {
     return this._filesystem;
+  }
+
+  /** Get the FakeGitService (only available when connected to a server with GitService). */
+  git(): FakeGitService | undefined {
+    return this._git;
   }
 
   /** Lazy Claude — created on first call. */
@@ -87,6 +95,7 @@ export interface ServerConnector {
     socket: FakeSocket;
     provider: FakeProcessProvider;
     filesystem: FakeFilesystemService;
+    git?: FakeGitService;
   };
 }
 

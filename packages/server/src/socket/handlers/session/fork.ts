@@ -3,14 +3,14 @@ import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
-import { checkoutWithFallback, createGit } from '../../utils/git.ts';
 import { errMsg } from '../../utils/helpers.ts';
 
 export function create({
   channelManager,
   sessionHistory,
   emitter,
-}: Pick<HandlerContext, 'channelManager' | 'sessionHistory' | 'emitter'>): void {
+  gitService,
+}: Pick<HandlerContext, 'channelManager' | 'sessionHistory' | 'emitter' | 'gitService'>): void {
   async function handleFork(
     _ch: Channel | null,
     payload: unknown,
@@ -54,7 +54,7 @@ export function create({
       let branchCheckoutFailed = false;
       if (parsed.branch) {
         try {
-          await checkoutWithFallback(createGit(ch?.cwd), parsed.branch);
+          await gitService.checkout(ch?.cwd ?? process.cwd(), parsed.branch);
         } catch (err) {
           logger.debug(err, 'branch checkout failed during fork');
           branchCheckoutFailed = true;

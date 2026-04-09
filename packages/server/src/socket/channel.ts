@@ -6,7 +6,7 @@ import type {
   WorktreeInfo,
 } from '@code-quest/shared';
 import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
-import { detectWorktree } from '../services/worktree-manager.ts';
+import { detectWorktree } from '@code-quest/summoner';
 import {
   errorMessageEventSchema,
   type RequestMeta,

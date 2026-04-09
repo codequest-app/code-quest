@@ -1,7 +1,13 @@
 import { join } from 'node:path';
 import 'reflect-metadata';
 import type { ProcessProvider } from '@code-quest/summoner';
-import { ClaudeAdapter, LocalFilesystemService, ProcessRunner } from '@code-quest/summoner';
+import {
+  ClaudeAdapter,
+  type GitService,
+  LocalFilesystemService,
+  LocalGitService,
+  ProcessRunner,
+} from '@code-quest/summoner';
 import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { MysqlDatabase } from './db/mysql-client.ts';
@@ -101,6 +107,7 @@ export function createContainer(options: ContainerOptions): Container {
   container
     .bind(TYPES.FilesystemService)
     .toConstantValue(new LocalFilesystemService(config.explorerRoots));
+  container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
 
   const settingsStore: SettingsStore = settingsStores[0];
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);

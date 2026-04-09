@@ -1,8 +1,5 @@
-# filesystem-service Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change filesystem-service. Update Purpose after archive.
-## Requirements
 ### Requirement: FilesystemService interface SHALL define filesystem operations
 
 FilesystemService interface SHALL provide three async methods: `browseDirectories`, `listFiles`, `readFile`. All methods SHALL return `Promise<>`. All handlers that perform filesystem operations SHALL use this interface instead of direct fs API calls.
@@ -69,24 +66,3 @@ FilesystemService interface SHALL provide three async methods: `browseDirectorie
 #### Scenario: Non-existent file returns error
 - **WHEN** `await readFile(cwd, 'does-not-exist.ts')` is called
 - **THEN** it resolves with `{ error: 'File not found: does-not-exist.ts' }`
-
-### Requirement: FilesystemService SHALL be injectable via constructor parameter
-
-Handlers SHALL receive FilesystemService as a constructor/create parameter. Server SHALL instantiate the service and pass it to handlers during registration.
-
-#### Scenario: Server passes FilesystemService to handlers
-- **WHEN** server registers handlers in `register()` method
-- **THEN** explorer and file handlers receive a FilesystemService instance
-
-### Requirement: Socket event APIs SHALL remain unchanged
-
-All existing socket events (`explorer:browse`, `file:list`, `file:read`) SHALL maintain identical request/response formats. This is a pure internal refactoring.
-
-#### Scenario: explorer:browse response format unchanged
-- **WHEN** client sends `explorer:browse` after refactoring
-- **THEN** response format is identical to before
-
-#### Scenario: file:list response format unchanged
-- **WHEN** client sends `file:list` after refactoring
-- **THEN** response format is identical to before
-

@@ -3,6 +3,7 @@
 import {
   createFakeSocket,
   type FakeFilesystemService,
+  type FakeGitService,
   FakeProcessProvider,
   type FakeSocket,
   type FakeSummoner,
@@ -44,11 +45,12 @@ export class FakeServer {
     });
   }
 
-  /** Create a new window connection — returns socket, provider, filesystem. */
+  /** Create a new window connection — returns socket, provider, filesystem, git. */
   connect(): {
     socket: FakeSocket;
     provider: FakeProcessProvider;
     filesystem: FakeFilesystemService;
+    git: FakeGitService;
   } {
     const socket = createFakeSocket();
     this._allServerSockets.push(socket.serverSocket);
@@ -60,7 +62,8 @@ export class FakeServer {
     const filesystem = this._container.get(
       Symbol.for('FilesystemService'),
     ) as FakeFilesystemService;
-    return { socket, provider, filesystem };
+    const git = this._container.get(Symbol.for('GitService')) as FakeGitService;
+    return { socket, provider, filesystem, git };
   }
 }
 

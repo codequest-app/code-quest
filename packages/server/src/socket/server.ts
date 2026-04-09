@@ -1,5 +1,5 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
-import type { FilesystemService } from '@code-quest/summoner';
+import type { FilesystemService, GitService } from '@code-quest/summoner';
 import { inject, injectable, optional } from 'inversify';
 import type { Server } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -45,6 +45,7 @@ export class SocketServer {
     @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
     @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
     @inject(TYPES.FilesystemService) private filesystemService: FilesystemService,
+    @inject(TYPES.GitService) private gitService: GitService,
     @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
   ) {
     this.settingsStore = settingsStore ?? new InMemorySettingsStore();
@@ -66,6 +67,7 @@ export class SocketServer {
       sessionHistory: this.sessionHistory,
       rawEventStore: this.rawEventStore,
       filesystemService: this.filesystemService,
+      gitService: this.gitService,
       planHandler,
     };
 

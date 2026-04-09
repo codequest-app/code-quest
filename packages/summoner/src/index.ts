@@ -7,6 +7,8 @@ export type {
   FilesystemService,
   ReadFileResult,
 } from './filesystem/types.ts';
+export { detectWorktree, LocalGitService, validateWorktreeName } from './git/local.ts';
+export type { GitService } from './git/types.ts';
 export { ProcessRunner } from './runner.ts';
 export { ChildProcessProvider } from './transports/child-process.ts';
 export type {

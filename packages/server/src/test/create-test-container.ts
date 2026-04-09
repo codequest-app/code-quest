@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { FilesystemService, ProcessProvider } from '@code-quest/summoner';
-import { FakeFilesystemService } from '@code-quest/summoner/test';
+import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/summoner';
+import { FakeFilesystemService, FakeGitService } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
@@ -16,6 +16,7 @@ const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 export interface TestContainerOverrides {
   processProvider?: ProcessProvider;
   filesystemService?: FilesystemService;
+  gitService?: GitService;
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
@@ -35,6 +36,10 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
   container
     .rebindSync<FilesystemService>(TYPES.FilesystemService)
     .toConstantValue(overrides.filesystemService ?? new FakeFilesystemService());
+
+  container
+    .rebindSync<GitService>(TYPES.GitService)
+    .toConstantValue(overrides.gitService ?? new FakeGitService());
 
   return container;
 }
