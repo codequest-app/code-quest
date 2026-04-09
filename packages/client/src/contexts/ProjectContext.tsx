@@ -19,7 +19,6 @@ interface ProjectState {
   projects: Project[];
   activeProjectCwd: string | null;
   sessions: SessionStateSummary[];
-  initSettings: Record<string, unknown>;
 }
 
 interface ProjectActions {
@@ -61,7 +60,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
-  const [initSettings, setInitSettings] = useState<Record<string, unknown>>({});
   const { socket } = useSocket();
   const { setInitOptions } = useSession();
 
@@ -75,7 +73,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         setSessions(parsed.data.sessions);
         setProjects((prev) => deriveProjects(parsed.data.sessions, prev));
         if (parsed.data.settings && Object.keys(parsed.data.settings).length > 0) {
-          setInitSettings(parsed.data.settings);
           setInitOptions(parsed.data.settings);
         }
       });
@@ -152,7 +149,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setActiveProjectCwd(cwd);
   }
 
-  const state: ProjectState = { projects, activeProjectCwd, sessions, initSettings };
+  const state: ProjectState = { projects, activeProjectCwd, sessions };
   const actions: ProjectActions = { addProject, setActiveProject };
 
   return (

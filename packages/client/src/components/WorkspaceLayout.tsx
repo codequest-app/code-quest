@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
 import { ActivityBar } from './ActivityBar';
@@ -12,7 +12,7 @@ const SIDEBAR_WIDTH = 260;
 
 function ProjectTabProvider({ cwd, children }: { cwd: string; children: ReactNode }) {
   const { sessions } = useProjectState();
-  const projectSessions = useMemo(() => sessions.filter((s) => s.cwd === cwd), [sessions, cwd]);
+  const projectSessions = sessions.filter((s) => s.cwd === cwd);
   return (
     <TabProvider sessions={projectSessions} defaultCwd={cwd}>
       {children}

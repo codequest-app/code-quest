@@ -56,7 +56,14 @@
 - [ ] 6.5 清理 test helpers 中的 SessionTabSync import
 - [ ] 6.6 全套 unit tests 通過
 
-## 7. 驗證
+## 7. Code Review 清理
 
-- [ ] 7.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
-- [ ] 7.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證
+- [x] 7.1 移除 dead initSettings state
+- [x] 7.2 移除 useMemo（React Compiler）
+- [x] 7.3 deriveProjects 只在 app:init 呼叫 — 確認是正確設計（手動 addProject 建立 project，不從 socket events 自動推導）
+- [x] 7.4 document.title / syncFromServer / setInitOptions visibility — cosmetic，不影響正確性，deferred
+
+## 8. 驗證
+
+- [ ] 8.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
+- [ ] 8.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證
