@@ -3,7 +3,6 @@
 import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SessionTabSync } from '../components/SessionTabSync';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
@@ -50,7 +49,6 @@ export async function renderWithWorkspace(
         <PluginProvider>
           <ProjectProvider>
             <TabProvider>
-              <SessionTabSync />
               <WorkspaceLayout />
             </TabProvider>
           </ProjectProvider>

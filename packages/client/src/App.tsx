@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
-import { SessionTabSync } from './components/SessionTabSync';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
 import { config } from './config';
 import { PluginProvider } from './contexts/PluginContext';
@@ -25,7 +24,6 @@ export function App() {
             <PluginProvider>
               <ProjectProvider>
                 <TabProvider defaultCwd={config.defaultCwd}>
-                  <SessionTabSync />
                   <WorkspaceLayout />
                 </TabProvider>
               </ProjectProvider>

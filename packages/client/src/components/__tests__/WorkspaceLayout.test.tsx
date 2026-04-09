@@ -9,7 +9,6 @@ import type { TabMeta } from '../../contexts/TabContext';
 import { TabProvider } from '../../contexts/TabContext';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { createFakeSummoner } from '../../test/fake-summoner';
-import { SessionTabSync } from '../SessionTabSync';
 import { WorkspaceLayout } from '../WorkspaceLayout';
 
 vi.mock('../../contexts/channel', () => ({
@@ -165,7 +164,6 @@ describe('WorkspaceLayout', () => {
               <PluginProvider>
                 <ProjectProvider>
                   <TabProvider>
-                    <SessionTabSync />
                     <AddProjectButton cwd="/project-a" />
                     <AddProjectButton cwd="/project-b" />
                     <WorkspaceLayout />
@@ -189,7 +187,7 @@ describe('WorkspaceLayout', () => {
         // Wait for microtask (serverSocket.emit) + useEffect flush
         await new Promise((r) => setTimeout(r, 10));
       });
-      // Extra flush for cascading state updates (ProjectProvider → SessionTabSync → TabProvider)
+      // Extra flush for cascading state updates (ProjectProvider → TabProvider sessions sync)
       await act(async () => {
         await new Promise((r) => setTimeout(r, 10));
       });

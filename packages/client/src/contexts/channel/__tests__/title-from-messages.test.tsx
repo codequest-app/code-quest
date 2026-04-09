@@ -1,7 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { SessionTabSync } from '@/components/SessionTabSync';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { sendUserMessage } from '@/test/helpers';
@@ -31,7 +30,6 @@ async function setup() {
         <PluginProvider>
           <ProjectProvider>
             <TabProvider>
-              <SessionTabSync />
               <WorkspaceLayout />
               <TabTitle />
             </TabProvider>

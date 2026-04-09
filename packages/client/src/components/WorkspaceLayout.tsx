@@ -1,20 +1,20 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
 import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
 import { ProjectList } from './ProjectList';
-import { SessionTabSync } from './SessionTabSync';
 
 const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
 const SIDEBAR_WIDTH = 260;
 
 function ProjectTabProvider({ cwd, children }: { cwd: string; children: ReactNode }) {
+  const { sessions } = useProjectState();
+  const projectSessions = useMemo(() => sessions.filter((s) => s.cwd === cwd), [sessions, cwd]);
   return (
-    <TabProvider defaultCwd={cwd}>
-      <SessionTabSync cwd={cwd} />
+    <TabProvider sessions={projectSessions} defaultCwd={cwd}>
       {children}
     </TabProvider>
   );

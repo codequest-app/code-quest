@@ -1,5 +1,5 @@
 import type { SessionStateSummary } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 
 export interface TabMeta {
@@ -51,10 +51,12 @@ const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
 export function TabProvider({
   children,
   initialState,
+  sessions,
   defaultCwd = '../',
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
+  sessions?: SessionStateSummary[];
   defaultCwd?: string;
 }) {
   const [state, setState] = useState<TabStateValue>(() => ({
@@ -151,6 +153,28 @@ export function TabProvider({
     replaceActiveTab,
     syncFromServer,
   };
+
+  // Sync tabs from sessions prop (incremental diff)
+  const prevSessionIds = useRef<Set<string>>(new Set());
+  // biome-ignore lint/correctness/useExhaustiveDependencies: addTab/removeTab/replaceActiveTab use setState updater — React Compiler stabilises references
+  useEffect(() => {
+    if (!sessions) return;
+    const currentIds = new Set(sessions.map((s) => s.channelId));
+    const added = sessions.filter((s) => !prevSessionIds.current.has(s.channelId));
+    const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
+
+    if (added.length === 1 && removed.length === 1) {
+      replaceActiveTab(added[0].channelId);
+    } else {
+      for (const s of added) {
+        addTab(s.channelId, s.cwd);
+      }
+      for (const id of removed) {
+        removeTab(id);
+      }
+    }
+    prevSessionIds.current = currentIds;
+  }, [sessions]);
 
   // Document title side effect
   const activeMeta = state.activeTabId ? state.tabs[state.activeTabId] : undefined;

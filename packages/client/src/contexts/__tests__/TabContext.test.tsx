@@ -3,7 +3,6 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { SessionTabSync } from '../../components/SessionTabSync';
 import { WorkspaceLayout } from '../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -564,7 +563,6 @@ describe('TabProvider', () => {
             <PluginProvider>
               <ProjectProvider>
                 <TabProvider>
-                  <SessionTabSync />
                   <WorkspaceLayout />
                 </TabProvider>
               </ProjectProvider>

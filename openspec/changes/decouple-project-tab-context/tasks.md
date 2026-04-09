@@ -47,7 +47,16 @@
 - [x] 5.5 清理 test helpers 中的 SessionSync 定義
 - [x] 5.6 全套 unit tests 通過（746 passed）
 
-## 6. 驗證
+## 6. 消除 SessionTabSync — TabProvider 內建 sessions sync
 
-- [ ] 6.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
-- [ ] 6.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證
+- [ ] 6.1 TabProvider 加 `sessions` prop + 內部 useEffect incremental diff（addTab/removeTab/replaceActiveTab）
+- [ ] 6.2 WorkspaceLayout ProjectTabProvider 傳 sessions prop，移除 SessionTabSync
+- [ ] 6.3 App.tsx 外層 TabProvider 傳 sessions prop，移除 SessionTabSync
+- [ ] 6.4 刪除 SessionTabSync.tsx
+- [ ] 6.5 清理 test helpers 中的 SessionTabSync import
+- [ ] 6.6 全套 unit tests 通過
+
+## 7. 驗證
+
+- [ ] 7.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
+- [ ] 7.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證
