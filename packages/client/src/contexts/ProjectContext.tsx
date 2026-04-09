@@ -24,6 +24,7 @@ interface ProjectState {
 interface ProjectActions {
   addProject: (cwd: string) => void;
   setActiveProject: (cwd: string) => void;
+  launchSession: (cwd?: string) => void;
 }
 
 const ProjectStateContext = createContext<ProjectState | null>(null);
@@ -164,8 +165,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setActiveProjectCwd(cwd);
   }
 
+  function launchSession(cwd?: string) {
+    const channelId = crypto.randomUUID();
+    socket.emit('session:launch', { channelId, cwd }, () => {});
+  }
+
   const state: ProjectState = { projects, activeProjectCwd, sessions };
-  const actions: ProjectActions = { addProject, setActiveProject };
+  const actions: ProjectActions = { addProject, setActiveProject, launchSession };
 
   return (
     <ProjectStateContext.Provider value={state}>
