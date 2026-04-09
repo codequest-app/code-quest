@@ -1,3 +1,4 @@
+import type { SessionStateSummary } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -24,6 +25,26 @@ function renderInTab(ui: ReactElement) {
     </SocketProvider>,
   );
   return { claude: summoner.claude(), user };
+}
+
+function renderWithSessions(ui: ReactElement, initialSessions: SessionStateSummary[] = []) {
+  const summoner = createFakeSummoner();
+  const user = userEvent.setup();
+  let sessions = initialSessions;
+  const { rerender } = render(
+    <SocketProvider socket={summoner.socket}>
+      <TabProvider sessions={sessions}>{ui}</TabProvider>
+    </SocketProvider>,
+  );
+  function setSessions(next: SessionStateSummary[]) {
+    sessions = next;
+    rerender(
+      <SocketProvider socket={summoner.socket}>
+        <TabProvider sessions={sessions}>{ui}</TabProvider>
+      </SocketProvider>,
+    );
+  }
+  return { user, setSessions };
 }
 
 describe('TabProvider', () => {
@@ -319,218 +340,98 @@ describe('TabProvider', () => {
 
   // ── syncFromServer ──
 
-  describe('syncFromServer', () => {
-    it('adds tabs for server sessions', async () => {
+  describe('sessions prop sync', () => {
+    it('adds tabs for server sessions', () => {
       function Test() {
         const { tabs } = useTabState();
-        const { syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="keys">{Object.keys(tabs).sort().join(',')}</span>
-            <button
-              type="button"
-              onClick={() => syncFromServer([idleSession('a'), idleSession('b')])}
-            >
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="keys">{Object.keys(tabs).sort().join(',')}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([idleSession('a'), idleSession('b')]);
       expect(screen.getByTestId('keys')).toHaveTextContent('a,b');
     });
 
-    it('removes stale tabs not in server sessions', async () => {
+    it('removes stale tabs when session disappears', () => {
       function Test() {
         const { tabs } = useTabState();
-        const { addTab, setActiveTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="has-stale">{String('stale' in tabs)}</span>
             <span data-testid="has-fresh">{String('fresh' in tabs)}</span>
-            <button
-              type="button"
-              onClick={() => {
-                addTab('stale');
-                setActiveTab('stale');
-              }}
-            >
-              setup
-            </button>
-            <button
-              type="button"
-              onClick={() => syncFromServer([{ channelId: 'fresh', state: 'idle', cwd: '/' }])}
-            >
-              sync
-            </button>
           </>
         );
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('setup'));
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />, [idleSession('stale')]);
+      setSessions([idleSession('fresh')]);
       expect(screen.getByTestId('has-stale')).toHaveTextContent('false');
       expect(screen.getByTestId('has-fresh')).toHaveTextContent('true');
     });
 
-    it('is idempotent — no change when tabs match sessions', async () => {
+    it('is idempotent — no change when sessions unchanged', () => {
       function Test() {
         const { tabs } = useTabState();
-        const { syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="tabs">{JSON.stringify(tabs)}</span>
-            <button type="button" onClick={() => syncFromServer([idleSession('a')])}>
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="tabs">{JSON.stringify(tabs)}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('sync'));
+      const sessions = [idleSession('a')];
+      const { setSessions } = renderWithSessions(<Test />, sessions);
       const before = screen.getByTestId('tabs').textContent;
-      await user.click(screen.getByText('sync'));
+      setSessions(sessions);
       expect(screen.getByTestId('tabs')).toHaveTextContent(before!);
     });
 
-    it('sets activeTabId to first session when no active tab', async () => {
+    it('sets activeTabId to first session when no active tab', () => {
       function Test() {
         const { activeTabId } = useTabState();
-        const { syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
-            <button
-              type="button"
-              onClick={() =>
-                syncFromServer([
-                  { channelId: 'x', state: 'idle', cwd: '/' },
-                  { channelId: 'y', state: 'idle', cwd: '/' },
-                ])
-              }
-            >
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="active">{activeTabId ?? 'null'}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([idleSession('x'), idleSession('y')]);
       expect(screen.getByTestId('active')).toHaveTextContent('x');
     });
 
-    it('preserves activeTabId when it is still alive', async () => {
+    it('preserves activeTabId when session still exists', () => {
       function Test() {
         const { activeTabId } = useTabState();
-        const { addTab, setActiveTab, syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
-            <button
-              type="button"
-              onClick={() => {
-                addTab('keep');
-                setActiveTab('keep');
-              }}
-            >
-              setup
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                syncFromServer([
-                  { channelId: 'keep', state: 'idle', cwd: '/' },
-                  { channelId: 'other', state: 'idle', cwd: '/' },
-                ])
-              }
-            >
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="active">{activeTabId ?? 'null'}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('setup'));
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />, [idleSession('keep')]);
+      setSessions([idleSession('keep'), idleSession('other')]);
       expect(screen.getByTestId('active')).toHaveTextContent('keep');
     });
 
-    it('resets activeTabId when persisted tab no longer alive', async () => {
+    it('resets activeTabId when active session removed', () => {
       function Test() {
         const { activeTabId } = useTabState();
-        const { addTab, setActiveTab, syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
-            <button
-              type="button"
-              onClick={() => {
-                addTab('dead');
-                setActiveTab('dead');
-              }}
-            >
-              setup
-            </button>
-            <button
-              type="button"
-              onClick={() => syncFromServer([{ channelId: 'new', state: 'idle', cwd: '/' }])}
-            >
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="active">{activeTabId ?? 'null'}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('setup'));
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />, [idleSession('dead')]);
+      setSessions([idleSession('new')]);
       expect(screen.getByTestId('active')).toHaveTextContent('new');
     });
 
-    it('handles empty sessions', async () => {
+    it('handles empty sessions', () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();
-        const { addTab, syncFromServer } = useTabActions();
         return (
           <>
             <span data-testid="tabs">{JSON.stringify(tabs)}</span>
             <span data-testid="active">{activeTabId ?? 'null'}</span>
-            <button type="button" onClick={() => addTab('old')}>
-              add
-            </button>
-            <button type="button" onClick={() => syncFromServer([])}>
-              sync
-            </button>
           </>
         );
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('add'));
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />, [idleSession('old')]);
+      setSessions([]);
       expect(screen.getByTestId('tabs')).toHaveTextContent('{}');
       expect(screen.getByTestId('active')).toHaveTextContent('null');
     });
 
-    it('stores cwd from server sessions', async () => {
+    it('stores cwd from sessions', () => {
       function Test() {
         const { tabs } = useTabState();
-        const { syncFromServer } = useTabActions();
-        return (
-          <>
-            <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>
-            <button
-              type="button"
-              onClick={() =>
-                syncFromServer([{ channelId: 'a', state: 'idle', cwd: '/projects/app' }])
-              }
-            >
-              sync
-            </button>
-          </>
-        );
+        return <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>;
       }
-      const { user } = renderInTab(<Test />);
-      await user.click(screen.getByText('sync'));
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([{ channelId: 'a', state: 'idle', cwd: '/projects/app' }]);
       expect(screen.getByTestId('cwd')).toHaveTextContent('/projects/app');
     });
   });
