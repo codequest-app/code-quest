@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
@@ -10,20 +9,10 @@ import { ProjectList } from './ProjectList';
 const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
 const SIDEBAR_WIDTH = 260;
 
-function ProjectTabProvider({ cwd, children }: { cwd: string; children: ReactNode }) {
-  const { sessions } = useProjectState();
-  const projectSessions = sessions.filter((s) => s.cwd === cwd);
-  return (
-    <TabProvider sessions={projectSessions} defaultCwd={cwd}>
-      {children}
-    </TabProvider>
-  );
-}
-
 export function WorkspaceLayout() {
   const [activePanel, setActivePanel] = useState<string | null>('projects');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { projects, activeProjectCwd } = useProjectState();
+  const { projects, activeProjectCwd, sessions } = useProjectState();
   const { addProject, setActiveProject } = useProjectActions();
 
   function handleAddProject(cwd: string) {
@@ -54,9 +43,12 @@ export function WorkspaceLayout() {
             key={project.cwd}
             className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
           >
-            <ProjectTabProvider cwd={project.cwd}>
+            <TabProvider
+              sessions={sessions.filter((s) => s.cwd === project.cwd)}
+              defaultCwd={project.cwd}
+            >
               <EditorArea />
-            </ProjectTabProvider>
+            </TabProvider>
           </div>
         ))}
         {/* Falls back to the outer TabProvider in App.tsx when no projects exist */}
