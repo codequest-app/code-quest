@@ -7,19 +7,25 @@ import { renderWithWorkspace } from '../render-with-workspace';
 
 describe('renderWithWorkspace', () => {
   it('renders WorkspaceLayout with a new tab', async () => {
-    await renderWithWorkspace();
+    const { addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
   it('returns claude and user', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     expect(claude).toBeDefined();
     expect(claude.emit).toBeDefined();
     expect(user).toBeDefined();
   });
 
   it('claude.emit flushes React without explicit act()', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'hello');
 
     await emitAssistantTurn(claude, 'Reply from Claude');
@@ -32,7 +38,9 @@ describe('renderWithWorkspace', () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const summoner = createFakeSummoner(server);
-    const { claude, channelId, user } = await renderWithWorkspace({ summoner });
+    const { claude, user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    const channelId = await project.launchSession();
 
     claude.onControlRequest((req) => {
       if (req.subtype === 'generate_session_title') {

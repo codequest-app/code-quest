@@ -25,7 +25,10 @@ async function setupPipeline(opts?: McpSetupOptions) {
   summoner
     .claude()
     .prepareInit(s.init(uniqueSession(), opts?.mcpServers ? { mcpServers: opts.mcpServers } : {}));
-  return renderWithWorkspace({ summoner });
+  const result = await renderWithWorkspace({ summoner });
+  const project = await result.addProject();
+  await project.launchSession();
+  return result;
 }
 
 async function setupWithTurn(opts?: McpSetupOptions) {

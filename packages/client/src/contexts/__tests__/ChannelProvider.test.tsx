@@ -6,15 +6,19 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 /** Render workspace + complete one user→assistant turn (common setup for most tests). */
 async function setupWithTurn(userMsg = 'go', assistantReply = 'hi') {
-  const ctx = await renderWithWorkspace();
-  await sendUserMessage(ctx.user, userMsg);
-  await emitAssistantTurn(ctx.claude, assistantReply);
-  return ctx;
+  const result = await renderWithWorkspace();
+  const project = await result.addProject();
+  await project.launchSession();
+  await sendUserMessage(result.user, userMsg);
+  await emitAssistantTurn(result.claude, assistantReply);
+  return result;
 }
 
 describe('ChannelProvider', () => {
   it('renders channel content after launch', async () => {
-    await renderWithWorkspace();
+    const { addProject: addProj } = await renderWithWorkspace();
+    const proj = await addProj();
+    await proj.launchSession();
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
   });
 
@@ -25,7 +29,9 @@ describe('ChannelProvider', () => {
   });
 
   it('emits chat:send exactly once per sendMessage call', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'hello');
 
     const userMessages = claude.received('user');
@@ -33,14 +39,18 @@ describe('ChannelProvider', () => {
   });
 
   it('messages start empty before any interaction', async () => {
-    await renderWithWorkspace();
+    const { addProject: addProj } = await renderWithWorkspace();
+    const proj = await addProj();
+    await proj.launchSession();
     expect(screen.queryByText(/Hello/)).not.toBeInTheDocument();
   });
 
   // ── Silent events (must not produce visible messages) ──
 
   it('signature_delta does not create visible message', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
       await claude.emit(s.signatureDelta('sig'));
@@ -51,7 +61,9 @@ describe('ChannelProvider', () => {
   });
 
   it('control_response does not create visible message', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
       await claude.emit(s.controlResponse('req-fake'));
@@ -131,7 +143,9 @@ describe('ChannelProvider', () => {
   // ── Cross-window processing sync ──
 
   it('session:states busy shows spinner (Stop button)', async () => {
-    const { claude, channelId } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    const channelId = await project.launchSession();
 
     await act(async () => {
       await claude.pushServerEvent('session:states', {
@@ -143,7 +157,9 @@ describe('ChannelProvider', () => {
   });
 
   it('session:states idle hides spinner after busy', async () => {
-    const { claude, channelId } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    const channelId = await project.launchSession();
 
     await act(async () => {
       await claude.pushServerEvent('session:states', {
@@ -163,7 +179,9 @@ describe('ChannelProvider', () => {
   // ── Abort state ──
 
   it('abort resets on result — can abort again next turn', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     // Turn 1: send → abort → result
     await sendUserMessage(user, 'first');
     await user.click(screen.getByTitle('Stop'));
@@ -182,7 +200,9 @@ describe('ChannelProvider', () => {
   });
 
   it('unmount does not crash', async () => {
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     render(<div />);
     expect(claude.connected).toBe(true);
   });
@@ -190,7 +210,9 @@ describe('ChannelProvider', () => {
   // ── Context Usage ──
 
   it('settings:refresh_usage returns contextUsage from CLI', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
 
     claude.onControlRequest((req) => {
       if (req.subtype === 'get_context_usage') {

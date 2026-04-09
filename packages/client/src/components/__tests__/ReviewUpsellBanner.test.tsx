@@ -11,13 +11,17 @@ describe('ReviewUpsellBanner', () => {
   });
 
   it('does not render when gate is off', async () => {
-    await renderWithWorkspace();
+    const { addProject: addProj } = await renderWithWorkspace();
+    const proj = await addProj();
+    await proj.launchSession();
     // No experiment gate → banner not shown
     expect(screen.queryByText('Try the new code review feature')).not.toBeInTheDocument();
   });
 
   it('renders when gate is on and not dismissed', async () => {
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await act(async () => {
       await claude.emit(s.experimentGates({ review_upsell: true }));
     });
@@ -26,7 +30,9 @@ describe('ReviewUpsellBanner', () => {
 
   it('does not render when gate is on but dismissed', async () => {
     usePreferencesStore.setState({ isReviewUpsellDismissed: true });
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await act(async () => {
       await claude.emit(s.experimentGates({ review_upsell: true }));
     });
@@ -35,7 +41,9 @@ describe('ReviewUpsellBanner', () => {
 
   it('dismisses when clicking Dismiss button', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await act(async () => {
       await claude.emit(s.experimentGates({ review_upsell: true }));
     });

@@ -146,7 +146,9 @@ describe('ChannelContext', () => {
 
   describe('launch mode', () => {
     it('launch creates session and renders channel content', async () => {
-      const { channelId } = await renderWithWorkspace();
+      const { addProject } = await renderWithWorkspace();
+      const project = await addProject();
+      const channelId = await project.launchSession();
 
       // Session created on server (channelId returned)
       expect(channelId).toBeTruthy();

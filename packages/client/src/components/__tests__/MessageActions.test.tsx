@@ -4,10 +4,12 @@ import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 async function setupWithTurn() {
-  const ctx = await renderWithWorkspace();
-  await sendUserMessage(ctx.user, 'hello');
-  await emitAssistantTurn(ctx.claude);
-  return ctx;
+  const result = await renderWithWorkspace();
+  const project = await result.addProject();
+  await project.launchSession();
+  await sendUserMessage(result.user, 'hello');
+  await emitAssistantTurn(result.claude);
+  return result;
 }
 
 describe('MessageActions', () => {

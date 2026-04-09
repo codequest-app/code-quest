@@ -67,7 +67,9 @@ describe('SpinnerVerb', () => {
   });
 
   it('shows spinner verb after sendMessage while AI is processing', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
     await user.type(textarea, 'go');

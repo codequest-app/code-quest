@@ -32,7 +32,9 @@ describe('ChannelConfigContext', () => {
         mcpServers: [{ name: 'github', status: 'connected' }],
       }),
     );
-    await renderWithWorkspace({ summoner });
+    const { addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
 
     expect(screen.getByText('Ask before edits')).toBeInTheDocument();
   });
@@ -42,7 +44,9 @@ describe('ChannelConfigContext', () => {
     // 'default' model is in adapter's defaultModels with supportsFastMode: true
     // No controlResponse with models — simulates app:models arriving later
     summoner.claude().prepareInit(s.init('sess-fast', { model: 'default' }));
-    const { user } = await renderWithWorkspace({ summoner });
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -62,7 +66,9 @@ describe('ChannelConfigContext', () => {
         ],
       }),
     );
-    const { user } = await renderWithWorkspace({ summoner });
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -85,7 +91,9 @@ describe('ChannelConfigContext', () => {
         ],
       }),
     );
-    const { user } = await renderWithWorkspace({ summoner });
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
 
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
@@ -94,7 +102,9 @@ describe('ChannelConfigContext', () => {
   });
 
   it('updates config when CLI sends status with permissionMode', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await emitAssistantTurn(claude);
 

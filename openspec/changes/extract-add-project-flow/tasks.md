@@ -1,0 +1,25 @@
+## Tasks
+
+- [x] 1. 從 renderWithWorkspace 抽出 `addProject` 和 `launchSession` 為獨立 function
+- [x] 2. renderWithWorkspace 預設呼叫 addProject + launchSession（向下相容）
+- [x] 3. addProject 回傳 `{ launchSession }` 描述真實兩步流程
+- [ ] 4. renderWithWorkspace 不再預設 addProject — 只 render providers + WorkspaceLayout
+- [ ] 5. 逐檔遷移 caller：addProject + launchSession 移到 beforeEach 或 test 內
+  - [ ] 5.1 render-with-workspace.test.tsx
+  - [ ] 5.2 WorkspaceLayout.test.tsx
+  - [ ] 5.3 ChannelContext.test.tsx
+  - [ ] 5.4 ChannelProvider.test.tsx
+  - [ ] 5.5 TabContext.test.tsx
+  - [ ] 5.6 SessionContext.test.tsx
+  - [ ] 5.7 config-from-session.test.tsx
+  - [ ] 5.8 title-from-messages.test.tsx
+  - [ ] 5.9 ChatPanel → 不用 renderWithWorkspace（用 renderWithChannel）
+  - [ ] 5.10 ComposeToolbar.test.tsx
+  - [ ] 5.11 TaskStarted.test.tsx
+  - [ ] 5.12 TimelineItem.test.tsx
+  - [ ] 5.13 RewindDialog.test.tsx
+  - [ ] 5.14 AccountUsageDialog.test.tsx
+  - [ ] 5.15 ReviewUpsellBanner.test.tsx
+  - [ ] 5.16 CitationsPanel.test.tsx
+  - [ ] 5.17 SpinnerVerb.test.tsx
+  - [ ] 5.18 MessageActions.test.tsx

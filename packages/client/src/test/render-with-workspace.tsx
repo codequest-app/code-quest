@@ -1,7 +1,7 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness */
 
 import type { FakeClaude } from '@code-quest/summoner/test';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { PluginProvider } from '../contexts/PluginContext';
@@ -17,8 +17,73 @@ export interface RenderWithWorkspaceOptions {
 export interface RenderWithWorkspaceResult {
   claude: FakeClaude;
   summoner: FakeSummoner;
-  channelId: string;
   user: ReturnType<typeof userEvent.setup>;
+  addProject: (opts?: {
+    path?: string;
+    dirName?: string;
+  }) => Promise<{ launchSession: () => Promise<string> }>;
+}
+
+/** Launch a new session (click "New tab" → await session init). */
+async function launchSession(
+  user: ReturnType<typeof userEvent.setup>,
+  summoner: FakeSummoner,
+): Promise<string> {
+  let channelId = '';
+  const initPromise = new Promise<string>((resolve) => {
+    summoner.on('session:init', (p: any) => {
+      if (!channelId) {
+        channelId = p.channelId;
+        resolve(p.channelId);
+      }
+    });
+  });
+
+  // Multiple projects may each have a "New tab" button — click the last (active project's)
+  const newTabButtons = await screen.findAllByLabelText('New tab');
+  await user.click(newTabButtons[newTabButtons.length - 1]);
+
+  await act(async () => {
+    channelId = await initPromise;
+  });
+
+  await screen.findAllByPlaceholderText(/Esc to focus/i);
+
+  return channelId;
+}
+
+/**
+ * Add a project via AddProjectDialog UI flow.
+ * Handles both entry points: EmptyState (no projects) and sidebar "+" (has projects).
+ */
+async function addProject(
+  user: ReturnType<typeof userEvent.setup>,
+  summoner: FakeSummoner,
+  opts?: { path?: string; dirName?: string },
+): Promise<{ launchSession: () => Promise<string> }> {
+  const path = opts?.path ?? '/projects';
+  const dirName = opts?.dirName ?? 'app';
+
+  summoner.filesystem().setRoots([path]);
+  summoner.filesystem().addDirectory(path, [dirName]);
+
+  // Detect entry point: EmptyState or sidebar
+  const emptyButton = screen.queryByTestId('empty-add-project');
+  if (emptyButton) {
+    await user.click(emptyButton);
+  } else {
+    const sidebar = screen.getByTestId('sidebar-panel');
+    await user.click(within(sidebar).getByText(/Add/));
+  }
+
+  // Browse FileTree → select → Open
+  const root = await screen.findByRole('treeitem', { name: path.split('/').pop() });
+  await user.click(root);
+  const item = await screen.findByRole('treeitem', { name: dirName });
+  await user.click(item);
+  await user.click(screen.getByText('Open'));
+
+  return { launchSession: () => launchSession(user, summoner) };
 }
 
 export async function renderWithWorkspace(
@@ -32,20 +97,6 @@ export async function renderWithWorkspace(
     claude.prepareInit();
   }
 
-  // Set up filesystem for AddProjectDialog
-  summoner.filesystem().setRoots(['/projects']);
-  summoner.filesystem().addDirectory('/projects', ['app']);
-
-  let channelId = '';
-  const initPromise = new Promise<string>((resolve) => {
-    summoner.on('session:init', (p: any) => {
-      if (!channelId) {
-        channelId = p.channelId;
-        resolve(p.channelId);
-      }
-    });
-  });
-
   render(
     <SocketProvider socket={summoner.socket}>
       <SessionProvider>
@@ -58,22 +109,11 @@ export async function renderWithWorkspace(
     </SocketProvider>,
   );
 
-  // Add project via AddProjectDialog
-  await user.click(await screen.findByTestId('empty-add-project'));
-  const root = await screen.findByRole('treeitem', { name: 'projects' });
-  await user.click(root);
-  const appItem = await screen.findByRole('treeitem', { name: 'app' });
-  await user.click(appItem);
-  await user.click(screen.getByText('Open'));
-
-  // Project created → EditorArea renders → click New tab
-  await user.click(await screen.findByLabelText('New tab'));
-
-  await act(async () => {
-    channelId = await initPromise;
-  });
-
-  await screen.findByPlaceholderText(/Esc to focus/i);
-
-  return { claude, summoner, channelId, user };
+  return {
+    claude,
+    summoner,
+    user,
+    addProject: (projectOpts?: { path?: string; dirName?: string }) =>
+      addProject(user, summoner, projectOpts),
+  };
 }

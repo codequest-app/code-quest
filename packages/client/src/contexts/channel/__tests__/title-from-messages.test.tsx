@@ -5,14 +5,18 @@ import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('title derived from messages', () => {
   it('sets tab title from first user message', async () => {
-    const { user } = await renderWithWorkspace();
+    const { user, addProject: addProj } = await renderWithWorkspace();
+    const project = await addProj();
+    await project.launchSession();
     await sendUserMessage(user, 'Fix the login bug please');
 
     expect(screen.getByLabelText(/^Close /)).toHaveAccessibleName('Close Fix the login bug please');
   });
 
   it('does not update title on second message', async () => {
-    const { user } = await renderWithWorkspace();
+    const { user, addProject: addProj } = await renderWithWorkspace();
+    const project = await addProj();
+    await project.launchSession();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
 
     await user.click(textarea);

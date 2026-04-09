@@ -461,7 +461,9 @@ describe('TabProvider', () => {
     });
 
     it('renders new tab button that triggers server launch', async () => {
-      await renderWithWorkspace();
+      const { addProject: addProj } = await renderWithWorkspace();
+      const proj = await addProj();
+      await proj.launchSession();
       expect(screen.getByLabelText('New tab')).toBeInTheDocument();
     });
   });
@@ -470,7 +472,9 @@ describe('TabProvider', () => {
 
   describe('document title', () => {
     it('shows spinner prefix when session is busy and returns to base on idle', async () => {
-      const { claude, user } = await renderWithWorkspace();
+      const { claude, user, addProject } = await renderWithWorkspace();
+      const project = await addProject();
+      await project.launchSession();
       const textarea = screen.getByPlaceholderText(/Esc to focus/i);
       await user.click(textarea);
       await user.type(textarea, 'hello');
@@ -487,7 +491,9 @@ describe('TabProvider', () => {
 
   describe('socket events', () => {
     it('session:created adds a tab — UI shows content', async () => {
-      await renderWithWorkspace();
+      const { addProject: addProj } = await renderWithWorkspace();
+      const proj = await addProj();
+      await proj.launchSession();
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
@@ -516,7 +522,9 @@ describe('TabProvider', () => {
     });
 
     it('new tab creates exactly one tab, not two', async () => {
-      await renderWithWorkspace();
+      const { addProject: addProj } = await renderWithWorkspace();
+      const proj = await addProj();
+      await proj.launchSession();
       const tabsBefore = screen.queryAllByLabelText(/^Close /).length;
 
       const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -533,7 +541,9 @@ describe('TabProvider', () => {
     });
 
     it('launching second session creates second tab', async () => {
-      const { user } = await renderWithWorkspace();
+      const { user, addProject: addProj } = await renderWithWorkspace();
+      const project = await addProj();
+      await project.launchSession();
       const tabsBefore = screen.queryAllByLabelText(/^Close /).length;
       await user.click(screen.getByLabelText('New tab'));
 
@@ -543,7 +553,9 @@ describe('TabProvider', () => {
     });
 
     it('session:created with cwd auto-creates project and tab remains visible', async () => {
-      await renderWithWorkspace();
+      const { addProject: addProj } = await renderWithWorkspace();
+      const proj = await addProj();
+      await proj.launchSession();
 
       // After renderWithWorkspace, session:created was broadcast with cwd
       // → deriveProjects should have created a project
@@ -554,7 +566,9 @@ describe('TabProvider', () => {
     });
 
     it('session:dead removes tab', async () => {
-      const { claude } = await renderWithWorkspace();
+      const { claude, addProject } = await renderWithWorkspace();
+      const project = await addProject();
+      await project.launchSession();
       await act(async () => {
         await claude.emit(s.resultError({ errors: ['No conversation found'] }));
       });

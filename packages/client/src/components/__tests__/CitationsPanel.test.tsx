@@ -6,7 +6,9 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('CitationsPanel', () => {
   it('does not render citation links when none present', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await emitAssistantTurn(claude, 'No citations here');
 
@@ -15,7 +17,9 @@ describe('CitationsPanel', () => {
   });
 
   it('renders citation links when citations_delta arrives', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
       await claude.emit(s.assistant('Check this'));
@@ -29,7 +33,9 @@ describe('CitationsPanel', () => {
   });
 
   it('renders plain text when citation has no url', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await act(async () => {
       await claude.emit(s.assistant('See source'));

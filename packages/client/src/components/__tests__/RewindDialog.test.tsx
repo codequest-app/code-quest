@@ -25,7 +25,9 @@ async function openRewindDialog(user: User) {
 
 describe('RewindDialog', () => {
   it('opens from Command Menu and shows user messages', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'First question');
     await sendMessage(claude, user, 'Second question');
 
@@ -42,7 +44,9 @@ describe('RewindDialog', () => {
   });
 
   it('shows empty state when no messages', async () => {
-    const { user } = await renderWithWorkspace();
+    const { user, addProject: addProj } = await renderWithWorkspace();
+    const project = await addProj();
+    await project.launchSession();
 
     await openRewindDialog(user);
 
@@ -50,7 +54,9 @@ describe('RewindDialog', () => {
   });
 
   it('closes with Escape', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);
@@ -62,7 +68,9 @@ describe('RewindDialog', () => {
   });
 
   it('navigates with arrow keys and selects with Enter', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'First');
     await sendMessage(claude, user, 'Second');
 
@@ -85,7 +93,9 @@ describe('RewindDialog', () => {
   });
 
   it('listbox has aria-label for accessibility', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);
@@ -96,7 +106,9 @@ describe('RewindDialog', () => {
   });
 
   it('shows confirmation dialog after selecting a message', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);
@@ -113,7 +125,9 @@ describe('RewindDialog', () => {
   });
 
   it('closes confirmation dialog on "Never mind"', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);

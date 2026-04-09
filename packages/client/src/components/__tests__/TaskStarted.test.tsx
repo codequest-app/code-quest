@@ -6,7 +6,9 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('task_started event', () => {
   it('renders task description in DOM', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
     await user.click(textarea);
     await user.type(textarea, 'go');

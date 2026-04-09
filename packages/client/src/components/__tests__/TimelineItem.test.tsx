@@ -8,7 +8,9 @@ import { TimelineItem } from '../TimelineItem';
 
 describe('Conversation display — tool use timeline', () => {
   it('renders tool name after pipeline event', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'read the file');
     await claude.emit(
       s.assistant({
@@ -23,7 +25,9 @@ describe('Conversation display — tool use timeline', () => {
   });
 
   it('shows Bash tool name in DOM', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'list files');
     await act(async () => {
       await claude.emit(
@@ -37,7 +41,9 @@ describe('Conversation display — tool use timeline', () => {
   });
 
   it('in-progress tool shows accent pulsing dot', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'read file');
     await claude.emit(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
@@ -50,7 +56,9 @@ describe('Conversation display — tool use timeline', () => {
   });
 
   it('successful tool shows green dot', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'read file');
     await claude.emit(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
@@ -63,7 +71,9 @@ describe('Conversation display — tool use timeline', () => {
   });
 
   it('failed tool shows red dot', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'read file');
     await claude.emit(
       s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: { file_path: 'a.ts' } } }),
@@ -78,7 +88,9 @@ describe('Conversation display — tool use timeline', () => {
   });
 
   it('renders thinking message as collapsible block', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'think about this');
     await claude.emit(s.thinking('Let me analyze this...'));
     await emitAssistantTurn(claude, 'Here is my answer');
