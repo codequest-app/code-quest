@@ -6,7 +6,6 @@ import { ChannelProvider } from '../contexts/channel/ChannelContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 export interface RenderWithChannelOptions {
@@ -41,15 +40,13 @@ export async function renderWithChannel(
       <SocketProvider socket={summoner.socket}>
         <SessionProvider>
           <PluginProvider>
-            <TabProvider>
-              <ChannelProvider
-                channelId={channelId}
-                cwd={options.cwd}
-                onNewChannel={options.onNewChannel}
-              >
-                {children}
-              </ChannelProvider>
-            </TabProvider>
+            <ChannelProvider
+              channelId={channelId}
+              cwd={options.cwd}
+              onNewChannel={options.onNewChannel}
+            >
+              {children}
+            </ChannelProvider>
           </PluginProvider>
         </SessionProvider>
       </SocketProvider>
