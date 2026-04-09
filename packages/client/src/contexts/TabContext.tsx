@@ -33,7 +33,6 @@ export interface TabActionsValue {
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string) => void;
-  syncFromServer: (sessions: SessionStateSummary[]) => void;
 }
 
 const TabActionsContext = createContext<TabActionsValue | null>(null);
@@ -115,23 +114,6 @@ export function TabProvider({
     return { channelId };
   };
 
-  const syncFromServer = (sessions: SessionStateSummary[]) => {
-    setState((prev) => {
-      const next: Record<string, TabMeta> = {};
-      for (const s of sessions) {
-        const existing = prev.tabs[s.channelId];
-        next[s.channelId] = existing
-          ? { ...existing, cwd: s.cwd ?? existing.cwd }
-          : { ...DEFAULT_META, cwd: s.cwd };
-      }
-      const activeTabId =
-        prev.activeTabId && prev.activeTabId in next
-          ? prev.activeTabId
-          : (sessions[0]?.channelId ?? null);
-      return { tabs: next, activeTabId };
-    });
-  };
-
   const replaceActiveTab = (newChannelId: string) => {
     setState((prev) => {
       if (!prev.activeTabId) return prev;
@@ -151,7 +133,6 @@ export function TabProvider({
     setTabStatus,
     createNewTab,
     replaceActiveTab,
-    syncFromServer,
   };
 
   // Sync tabs from sessions prop (incremental diff)
