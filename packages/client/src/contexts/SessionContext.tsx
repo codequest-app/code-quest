@@ -73,21 +73,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ status: 'idle', authUrl: null, errorMsg: null });
 
   useEffect(() => {
-    const onConnect = () => {
-      socket.emit('app:init', (res) => {
-        if (res.settings && Object.keys(res.settings).length > 0) {
-          setInitOptions((prev) => ({ ...prev, ...res.settings }));
-        }
-      });
-    };
     const onConnectError = (err: Error) => {
       toast.error(`Connection error: ${err.message}`);
     };
-    socket.on('connect', onConnect);
     socket.on('connect_error', onConnectError);
     socket.connect();
     return () => {
-      socket.off('connect', onConnect);
       socket.off('connect_error', onConnectError);
     };
   }, [socket]);

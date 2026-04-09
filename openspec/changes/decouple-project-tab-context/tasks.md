@@ -40,13 +40,12 @@
 
 ## 5. 清理重複/分散邏輯
 
-- [ ] 5.1 `app:init` 合併：SessionProvider 移除 emit，改從 ProjectProvider 的 sessions 讀 settings（或反過來）
-- [ ] 5.2 `session:resume` 從 useSessionSync 移到 ProjectProvider（socket events 統一在 ProjectProvider）
-- [ ] 5.3 useSessionSync 只做 sessions→tabs 橋接（不碰 socket）
-- [ ] 5.4 消除 useSessionSync：sessions→tabs 邏輯直接放在 ProjectTabProvider 內部
-- [ ] 5.5 消除 SessionSync/SessionSyncBridge：App.tsx 和 WorkspaceLayout 不再需要
-- [ ] 5.6 清理 test helpers 中的 SessionSync 定義
-- [ ] 5.7 全套 unit tests 通過
+- [x] 5.1 `app:init` 合併：ProjectProvider emit app:init 並 forward settings 給 SessionProvider，SessionProvider 移除自己的 emit
+- [ ] 5.2 `session:resume` 從 SessionTabSync 移到 ProjectProvider（統一 socket events，deferred — resume 直接操作 tab 不經 sessions）
+- [x] 5.3 消除 useSessionSync hook → 替換為 SessionTabSync component
+- [x] 5.4 消除 SessionSync/SessionSyncBridge 重複定義
+- [x] 5.5 清理 test helpers 中的 SessionSync 定義
+- [x] 5.6 全套 unit tests 通過（746 passed）
 
 ## 6. 驗證
 

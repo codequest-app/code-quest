@@ -6,6 +6,7 @@ import {
   sessionStatesPayloadSchema,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { useSession } from './SessionContext';
 import { useSocket } from './SocketContext';
 
 export interface Project {
@@ -17,6 +18,7 @@ interface ProjectState {
   projects: Project[];
   activeProjectCwd: string | null;
   sessions: SessionStateSummary[];
+  initSettings: Record<string, unknown>;
 }
 
 interface ProjectActions {
@@ -58,9 +60,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
+  const [initSettings, setInitSettings] = useState<Record<string, unknown>>({});
   const { socket } = useSocket();
+  const { setInitOptions } = useSession();
 
   // Listen to socket events → update sessions + derive projects
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setInitOptions is stable (useState initializer in SessionProvider)
   useEffect(() => {
     const onConnect = () => {
       socket.emit('app:init', (raw) => {
@@ -68,6 +73,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         if (!parsed.success) return;
         setSessions(parsed.data.sessions);
         setProjects((prev) => deriveProjects(parsed.data.sessions, prev));
+        if (parsed.data.settings && Object.keys(parsed.data.settings).length > 0) {
+          setInitSettings(parsed.data.settings);
+          setInitOptions(parsed.data.settings);
+        }
       });
     };
 
@@ -129,7 +138,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setActiveProjectCwd(cwd);
   }
 
-  const state: ProjectState = { projects, activeProjectCwd, sessions };
+  const state: ProjectState = { projects, activeProjectCwd, sessions, initSettings };
   const actions: ProjectActions = { addProject, setActiveProject };
 
   return (
