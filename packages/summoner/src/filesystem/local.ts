@@ -1,7 +1,7 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdir, readFile } from 'node:fs/promises';
 import { basename, join, normalize, resolve } from 'node:path';
 import Fuse from 'fuse.js';
-import { globSync } from 'glob';
+import { glob } from 'glob';
 import type { DirectoryEntry, FileResult, FilesystemService, ReadFileResult } from './types.ts';
 
 const MAX_RESULTS = 20;
@@ -21,7 +21,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── browseDirectories ──
 
-  browseDirectories(path?: string): DirectoryEntry[] {
+  async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
       return this.explorerRoots.map((r) => ({ name: basename(r), path: r }));
     }
@@ -30,7 +30,7 @@ export class LocalFilesystemService implements FilesystemService {
     if (!validated) return [];
 
     try {
-      const entries = readdirSync(validated, { withFileTypes: true });
+      const entries = await readdir(validated, { withFileTypes: true });
       return entries
         .filter((entry) => {
           if (!entry.isDirectory()) return false;
@@ -49,8 +49,8 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── listFiles ──
 
-  listFiles(cwd: string, pattern: string): FileResult[] {
-    const allFiles = this.getAllFiles(cwd);
+  async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
+    const allFiles = await this.getAllFiles(cwd);
     const allDirs = this.extractDirectories(allFiles);
 
     if (!pattern) {
@@ -64,13 +64,13 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── readFile ──
 
-  readFile(cwd: string, filePath: string): ReadFileResult {
+  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
     const absolute = resolve(cwd, normalize(filePath));
     if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
       return { error: 'Path traversal not allowed' };
     }
     try {
-      const content = readFileSync(absolute, 'utf-8');
+      const content = await readFile(absolute, 'utf-8');
       return { content };
     } catch {
       return { error: `File not found: ${filePath}` };
@@ -90,8 +90,8 @@ export class LocalFilesystemService implements FilesystemService {
     return null;
   }
 
-  private getAllFiles(cwd: string): string[] {
-    return globSync('**/*', {
+  private async getAllFiles(cwd: string): Promise<string[]> {
+    return glob('**/*', {
       cwd,
       dot: true,
       ignore: GLOB_IGNORE,

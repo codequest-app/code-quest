@@ -9,30 +9,30 @@ export function create({
   emitter,
   filesystemService: fs,
 }: Pick<HandlerContext, 'emitter' | 'filesystemService'>): void {
-  function handleRead(
+  async function handleRead(
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void {
+  ): Promise<void> {
     const { filePath } = fileReadPayloadSchema.parse(payload);
     if (!ch.cwd) {
       callback?.({ error: 'No working directory' });
       return;
     }
-    const result = fs.readFile(ch.cwd, filePath);
+    const result = await fs.readFile(ch.cwd, filePath);
     if ('error' in result) {
       logger.warn({ filePath, error: result.error }, 'Failed to read file');
     }
     callback?.(result);
   }
 
-  function handleList(
+  async function handleList(
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void {
+  ): Promise<void> {
     try {
       const { pattern } = fileListPayloadSchema.parse(payload);
       if (!ch.cwd) {
@@ -40,7 +40,7 @@ export function create({
         return;
       }
 
-      const files = fs.listFiles(ch.cwd, pattern);
+      const files = await fs.listFiles(ch.cwd, pattern);
       callback?.({ files });
     } catch (err) {
       logger.warn({ err }, 'Failed to list files');

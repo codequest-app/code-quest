@@ -33,7 +33,7 @@ export class FakeFilesystemService implements FilesystemService {
 
   // ── FilesystemService interface ──
 
-  browseDirectories(path?: string): DirectoryEntry[] {
+  async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
       return this.roots.map((r) => ({ name: basename(r), path: r }));
     }
@@ -47,7 +47,7 @@ export class FakeFilesystemService implements FilesystemService {
       .map((name) => ({ name, path: join(path, name) }));
   }
 
-  listFiles(cwd: string, pattern: string): FileResult[] {
+  async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
     const results: FileResult[] = [];
 
     // Collect directories under cwd
@@ -78,7 +78,7 @@ export class FakeFilesystemService implements FilesystemService {
     return results;
   }
 
-  readFile(cwd: string, filePath: string): ReadFileResult {
+  async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
     const absolute = join(cwd, filePath);
     if (!absolute.startsWith(cwd)) {
       return { error: 'Path traversal not allowed' };

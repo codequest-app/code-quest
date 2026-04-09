@@ -9,10 +9,10 @@ export function create({
 }: Pick<HandlerContext, 'emitter' | 'filesystemService'>): void {
   emitter.on(
     'explorer:browse',
-    (_ch, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback) => {
+    async (_ch, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback) => {
       try {
         const { path } = explorerBrowsePayloadSchema.parse(payload);
-        const directories = fs.browseDirectories(path);
+        const directories = await fs.browseDirectories(path);
         cb?.({ directories });
       } catch (err) {
         logger.warn({ err }, 'Failed to browse directories');
