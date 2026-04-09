@@ -30,7 +30,9 @@ afterAll(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-describe('LocalFilesystemService', () => {
+const SKIP = !process.env.RUN_INTEGRATION;
+
+describe.skipIf(SKIP)('LocalFilesystemService', () => {
   describe('browseDirectories', () => {
     it('returns roots when no path', async () => {
       expect(await service.browseDirectories()).toEqual([{ name: basename(tmpDir), path: tmpDir }]);

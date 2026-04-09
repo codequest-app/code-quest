@@ -98,10 +98,17 @@ export class LocalGitService implements GitService {
     const worktreePath = join(repoRoot, '.claude', 'worktrees', worktreeName);
     const branchName = `worktree-${worktreeName}`;
 
-    // Check if already a valid worktree
-    const check = await this.rawGit(this.createGit(worktreePath), ['rev-parse', '--show-toplevel']);
-    if (check.exitCode === 0 && resolve(check.stdout.trim()) === resolve(worktreePath)) {
-      return { name: worktreeName, path: worktreePath, branch: branchName };
+    // Check if already a valid worktree (directory may not exist yet)
+    try {
+      const check = await this.rawGit(this.createGit(worktreePath), [
+        'rev-parse',
+        '--show-toplevel',
+      ]);
+      if (check.exitCode === 0 && resolve(check.stdout.trim()) === resolve(worktreePath)) {
+        return { name: worktreeName, path: worktreePath, branch: branchName };
+      }
+    } catch {
+      // Directory doesn't exist yet — proceed to create
     }
 
     await mkdir(join(repoRoot, '.claude', 'worktrees'), { recursive: true });
@@ -156,6 +163,14 @@ export class LocalGitService implements GitService {
       }
     }
 
+    // Flush last entry (stdout may not end with empty line when trimmed)
+    if (current.worktreePath) {
+      const match = WORKTREE_PATH_RE.exec(current.worktreePath);
+      if (match) {
+        worktrees.push({ name: match[1], path: current.worktreePath, branch: current.branch });
+      }
+    }
+
     return worktrees;
   }
 
@@ -201,7 +216,9 @@ export class LocalGitService implements GitService {
       return { stdout, exitCode: 0 };
     } catch (err) {
       console.debug('[GitService] git raw failed:', args.join(' '), (err as Error).message);
-      return { stdout: '', exitCode: 1 };
+      // simple-git throws GitError which may contain the actual output
+      const gitErr = err as { message?: string; git?: { stdout?: string } };
+      return { stdout: gitErr.git?.stdout ?? '', exitCode: 1 };
     }
   }
 

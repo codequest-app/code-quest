@@ -1,0 +1,143 @@
+import { execSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { LocalGitService } from '../git/local.ts';
+
+let tmpDir: string;
+let service: LocalGitService;
+
+function git(args: string, cwd = tmpDir) {
+  return execSync(`git ${args}`, { cwd, encoding: 'utf-8', stdio: 'pipe' }).trim();
+}
+
+beforeAll(() => {
+  tmpDir = realpathSync(mkdtempSync(join(os.tmpdir(), 'git-service-test-')));
+  git('init');
+  git('config user.email "test@test.com"');
+  git('config user.name "Test"');
+  writeFileSync(join(tmpDir, 'file.txt'), 'hello');
+  git('add .');
+  git('commit -m "initial"');
+  service = new LocalGitService();
+});
+
+afterAll(() => {
+  rmSync(tmpDir, { recursive: true, force: true });
+});
+
+const SKIP = !process.env.RUN_INTEGRATION;
+
+describe.skipIf(SKIP)('LocalGitService', () => {
+  describe('status', () => {
+    it('returns branch and clean state', async () => {
+      const result = await service.status(tmpDir);
+      expect(result.branch).toBeDefined();
+      expect(result.isClean).toBe(true);
+      expect(result.changedFiles).toEqual([]);
+    });
+
+    it('detects dirty state', async () => {
+      writeFileSync(join(tmpDir, 'dirty.txt'), 'changed');
+      const result = await service.status(tmpDir);
+      expect(result.isClean).toBe(false);
+      expect(result.changedFiles.length).toBeGreaterThan(0);
+      rmSync(join(tmpDir, 'dirty.txt'));
+    });
+
+    it('throws for non-git directory', async () => {
+      const nonGit = realpathSync(mkdtempSync(join(os.tmpdir(), 'non-git-')));
+      await expect(service.status(nonGit)).rejects.toThrow();
+      rmSync(nonGit, { recursive: true, force: true });
+    });
+  });
+
+  describe('checkout', () => {
+    it('switches to existing branch', async () => {
+      git('branch test-branch');
+      await service.checkout(tmpDir, 'test-branch');
+      const result = await service.status(tmpDir);
+      expect(result.branch).toBe('test-branch');
+      git('checkout -');
+    });
+
+    it('throws for non-existent branch', async () => {
+      await expect(service.checkout(tmpDir, 'nonexistent-xyz')).rejects.toThrow();
+    });
+  });
+
+  describe('log', () => {
+    it('returns commit entries', async () => {
+      const result = await service.log(tmpDir);
+      expect(result.entries.length).toBeGreaterThan(0);
+      expect(result.entries[0]).toMatchObject({
+        hash: expect.any(String),
+        message: expect.any(String),
+        author: expect.any(String),
+        date: expect.any(String),
+      });
+    });
+
+    it('respects limit', async () => {
+      writeFileSync(join(tmpDir, 'a.txt'), 'a');
+      git('add . && git commit -m "second"');
+      writeFileSync(join(tmpDir, 'b.txt'), 'b');
+      git('add . && git commit -m "third"');
+
+      const result = await service.log(tmpDir, 1);
+      expect(result.entries).toHaveLength(1);
+    });
+  });
+
+  describe('diff', () => {
+    it('returns empty diff for clean repo', async () => {
+      const result = await service.diff(tmpDir);
+      expect(result.diff).toBe('');
+    });
+
+    it('returns diff for modified files', async () => {
+      writeFileSync(join(tmpDir, 'file.txt'), 'modified');
+      const result = await service.diff(tmpDir);
+      expect(result.diff).toContain('modified');
+      git('checkout -- file.txt');
+    });
+  });
+
+  describe('getRepoRoot', () => {
+    it('returns root for path inside repo', async () => {
+      const sub = join(tmpDir, 'subdir');
+      mkdirSync(sub, { recursive: true });
+      const root = await service.getRepoRoot(sub);
+      expect(root).toBe(tmpDir);
+    });
+
+    it('returns null for non-repo path', async () => {
+      const nonGit = realpathSync(mkdtempSync(join(os.tmpdir(), 'non-git-')));
+      const root = await service.getRepoRoot(nonGit);
+      expect(root).toBeNull();
+      rmSync(nonGit, { recursive: true, force: true });
+    });
+  });
+
+  describe('worktree', () => {
+    it('roundtrip: create + list + delete', async () => {
+      const wt = await service.createWorktree(tmpDir, 'roundtrip-wt');
+      expect(wt.name).toBe('roundtrip-wt');
+      expect(wt.branch).toBe('worktree-roundtrip-wt');
+
+      const list = await service.listWorktrees(tmpDir);
+      expect(list.some((w) => w.name === 'roundtrip-wt')).toBe(true);
+
+      await service.deleteWorktree(tmpDir, 'roundtrip-wt');
+      const after = await service.listWorktrees(tmpDir);
+      expect(after.some((w) => w.name === 'roundtrip-wt')).toBe(false);
+    });
+
+    it('createWorktree rejects invalid name', async () => {
+      await expect(service.createWorktree(tmpDir, '../bad')).rejects.toThrow(
+        /Invalid worktree name/,
+      );
+    });
+  });
+});

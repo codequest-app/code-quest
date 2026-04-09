@@ -408,6 +408,22 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('active')).toHaveTextContent('null');
     });
 
+    it('does not re-add tab for session with exited state', () => {
+      function Test() {
+        const { tabs } = useTabState();
+        return <span data-testid="keys">{Object.keys(tabs).sort().join(',') || 'empty'}</span>;
+      }
+      const { setSessions } = renderWithSessions(<Test />, [idleSession('A')]);
+
+      // session dies — removed from sessions
+      setSessions([]);
+      expect(screen.getByTestId('keys')).toHaveTextContent('empty');
+
+      // server broadcasts session:states with exited state (race condition) — should NOT re-add tab
+      setSessions([{ channelId: 'A', state: 'exited' as const }]);
+      expect(screen.getByTestId('keys')).toHaveTextContent('empty');
+    });
+
     it('stores cwd from sessions', () => {
       function Test() {
         const { tabs } = useTabState();

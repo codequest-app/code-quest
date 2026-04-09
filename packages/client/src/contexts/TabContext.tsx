@@ -46,6 +46,7 @@ export function useTabActions(): TabActionsValue {
 // ── Provider ──
 
 const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
+const TERMINAL_STATES = new Set(['exited', 'disconnected']);
 
 export function TabProvider({
   children,
@@ -141,7 +142,9 @@ export function TabProvider({
   useEffect(() => {
     if (!sessions) return;
     const currentIds = new Set(sessions.map((s) => s.channelId));
-    const added = sessions.filter((s) => !prevSessionIds.current.has(s.channelId));
+    const added = sessions.filter(
+      (s) => !prevSessionIds.current.has(s.channelId) && !TERMINAL_STATES.has(s.state),
+    );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
 
     if (added.length === 1 && removed.length === 1) {
