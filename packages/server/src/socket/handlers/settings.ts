@@ -10,6 +10,7 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -17,6 +18,13 @@ import { withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
+
+const contextUsageSchema = z.object({
+  categories: z.unknown(),
+  totalTokens: z.number(),
+  maxTokens: z.number(),
+  percentage: z.number(),
+});
 
 export function create({
   channelManager,
@@ -155,14 +163,9 @@ export function create({
     if (channel) {
       try {
         const resp = await channel.sendRequest('settings:get_context_usage');
-        if (resp.response) {
-          const r = resp.response;
-          contextUsage = {
-            categories: r.categories,
-            totalTokens: r.totalTokens,
-            maxTokens: r.maxTokens,
-            percentage: r.percentage,
-          };
+        const parsed = contextUsageSchema.safeParse(resp.response);
+        if (parsed.success) {
+          contextUsage = parsed.data;
         }
       } catch (err) {
         logger.debug({ err }, 'CLI may not support get_context_usage');

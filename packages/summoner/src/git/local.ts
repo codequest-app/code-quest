@@ -6,7 +6,7 @@ import type {
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
-import { type SimpleGit, simpleGit } from 'simple-git';
+import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 import type { GitService } from './types.ts';
 
 const MAX_NAME_LENGTH = 100;
@@ -39,6 +39,34 @@ export function detectWorktree(path: string): WorktreeInfo | null {
   const match = WORKTREE_PATH_RE.exec(path);
   if (!match) return null;
   return { name: match[1], path };
+}
+
+function parseWorktreeList(stdout: string): WorktreeInfo[] {
+  const worktrees: WorktreeInfo[] = [];
+  let current: { worktreePath?: string; branch?: string } = {};
+
+  const flush = () => {
+    if (current.worktreePath) {
+      const match = WORKTREE_PATH_RE.exec(current.worktreePath);
+      if (match) {
+        worktrees.push({ name: match[1], path: current.worktreePath, branch: current.branch });
+      }
+    }
+    current = {};
+  };
+
+  for (const line of stdout.split('\n')) {
+    if (line.startsWith('worktree ')) {
+      current.worktreePath = line.slice('worktree '.length);
+    } else if (line.startsWith('branch ')) {
+      current.branch = line.slice('branch '.length).replace('refs/heads/', '');
+    } else if (line === '') {
+      flush();
+    }
+  }
+  flush(); // Handle trimmed output (no trailing newline)
+
+  return worktrees;
 }
 
 export class LocalGitService implements GitService {
@@ -98,80 +126,18 @@ export class LocalGitService implements GitService {
     const worktreePath = join(repoRoot, '.claude', 'worktrees', worktreeName);
     const branchName = `worktree-${worktreeName}`;
 
-    // Check if already a valid worktree (directory may not exist yet)
-    try {
-      const check = await this.rawGit(this.createGit(worktreePath), [
-        'rev-parse',
-        '--show-toplevel',
-      ]);
-      if (check.exitCode === 0 && resolve(check.stdout.trim()) === resolve(worktreePath)) {
-        return { name: worktreeName, path: worktreePath, branch: branchName };
-      }
-    } catch {
-      // Directory doesn't exist yet — proceed to create
+    if (await this.isExistingWorktree(worktreePath)) {
+      return { name: worktreeName, path: worktreePath, branch: branchName };
     }
 
-    await mkdir(join(repoRoot, '.claude', 'worktrees'), { recursive: true });
-
-    const git = this.createGit(repoRoot);
-    const defaultBranch = await this.getDefaultBranch(repoRoot);
-    const fetchResult = await this.rawGit(git, ['fetch', 'origin', defaultBranch]);
-    const base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
-
-    await this.rawGit(git, ['worktree', 'prune']);
-    await this.rawGit(git, ['branch', '-D', branchName]);
-
-    const result = await this.rawGit(git, [
-      'worktree',
-      'add',
-      '-b',
-      branchName,
-      worktreePath,
-      base,
-    ]);
-    if (result.exitCode !== 0) {
-      throw new Error(result.stdout.trim() || 'git worktree add failed');
-    }
-
+    await this.addWorktree(repoRoot, worktreePath, branchName);
     return { name: worktreeName, path: worktreePath, branch: branchName };
   }
 
   async listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
     const result = await this.rawGit(this.createGit(repoRoot), ['worktree', 'list', '--porcelain']);
     if (result.exitCode !== 0) return [];
-
-    const worktrees: WorktreeInfo[] = [];
-    let current: Partial<WorktreeInfo & { worktreePath: string }> = {};
-
-    for (const line of result.stdout.split('\n')) {
-      if (line.startsWith('worktree ')) {
-        current.worktreePath = line.slice('worktree '.length);
-      } else if (line.startsWith('branch ')) {
-        current.branch = line.slice('branch '.length).replace('refs/heads/', '');
-      } else if (line === '') {
-        if (current.worktreePath) {
-          const match = WORKTREE_PATH_RE.exec(current.worktreePath);
-          if (match) {
-            worktrees.push({
-              name: match[1],
-              path: current.worktreePath,
-              branch: current.branch,
-            });
-          }
-        }
-        current = {};
-      }
-    }
-
-    // Flush last entry (stdout may not end with empty line when trimmed)
-    if (current.worktreePath) {
-      const match = WORKTREE_PATH_RE.exec(current.worktreePath);
-      if (match) {
-        worktrees.push({ name: match[1], path: current.worktreePath, branch: current.branch });
-      }
-    }
-
-    return worktrees;
+    return parseWorktreeList(result.stdout);
   }
 
   async deleteWorktree(repoRoot: string, name: string): Promise<void> {
@@ -216,9 +182,8 @@ export class LocalGitService implements GitService {
       return { stdout, exitCode: 0 };
     } catch (err) {
       console.debug('[GitService] git raw failed:', args.join(' '), (err as Error).message);
-      // simple-git throws GitError which may contain the actual output
-      const gitErr = err as { message?: string; git?: { stdout?: string } };
-      return { stdout: gitErr.git?.stdout ?? '', exitCode: 1 };
+      const stdout = err instanceof GitResponseError ? ((err.git as string) ?? '') : '';
+      return { stdout, exitCode: 1 };
     }
   }
 
@@ -238,6 +203,46 @@ export class LocalGitService implements GitService {
       if (check.exitCode === 0) return name;
     }
     return 'main';
+  }
+
+  private async isExistingWorktree(worktreePath: string): Promise<boolean> {
+    try {
+      const check = await this.rawGit(this.createGit(worktreePath), [
+        'rev-parse',
+        '--show-toplevel',
+      ]);
+      return check.exitCode === 0 && resolve(check.stdout.trim()) === resolve(worktreePath);
+    } catch {
+      return false;
+    }
+  }
+
+  private async addWorktree(
+    repoRoot: string,
+    worktreePath: string,
+    branchName: string,
+  ): Promise<void> {
+    await mkdir(join(repoRoot, '.claude', 'worktrees'), { recursive: true });
+
+    const git = this.createGit(repoRoot);
+    const defaultBranch = await this.getDefaultBranch(repoRoot);
+    const fetchResult = await this.rawGit(git, ['fetch', 'origin', defaultBranch]);
+    const base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
+
+    await this.rawGit(git, ['worktree', 'prune']);
+    await this.rawGit(git, ['branch', '-D', branchName]);
+
+    const result = await this.rawGit(git, [
+      'worktree',
+      'add',
+      '-b',
+      branchName,
+      worktreePath,
+      base,
+    ]);
+    if (result.exitCode !== 0) {
+      throw new Error(result.stdout.trim() || 'git worktree add failed');
+    }
   }
 
   private generateWorktreeName(): string {

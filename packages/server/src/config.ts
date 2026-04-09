@@ -5,9 +5,7 @@ import 'dotenv/config';
 export function envBool(key: string, defaultValue = false, raw?: string): boolean {
   const v = raw ?? process.env[key];
   if (v === undefined) return defaultValue;
-  if (v === 'true' || v === '1') return true;
-  if (v === 'false' || v === '0') return false;
-  return false;
+  return v === 'true' || v === '1';
 }
 
 const VALID_RAW_STORE_DRIVERS = ['sqlite', 'mysql', 'file'] as const;

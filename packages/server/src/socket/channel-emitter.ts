@@ -41,6 +41,11 @@ export function withSocket(
   };
 }
 
+/** Typed socket.emit requires known event literals; dynamic event names need this helper. */
+function emitDynamic(sock: TypedSocket, event: string, ...args: unknown[]): void {
+  (sock.emit as (...a: unknown[]) => void)(event, ...args);
+}
+
 export class ChannelEmitter {
   private eventMap = new Map<string, EmitterHandler[]>();
 
@@ -102,7 +107,7 @@ export class ChannelEmitter {
     const sockets = this.channelSockets.get(channelId);
     if (!sockets) return;
     for (const sock of sockets) {
-      (sock.emit as (...a: unknown[]) => void)(event, ...args);
+      emitDynamic(sock, event, ...args);
     }
   }
 
@@ -116,7 +121,7 @@ export class ChannelEmitter {
     if (!sockets) return;
     for (const sock of sockets) {
       if (sock.id !== excludeSocketId) {
-        (sock.emit as (...a: unknown[]) => void)(event, ...args);
+        emitDynamic(sock, event, ...args);
       }
     }
   }
@@ -206,6 +211,8 @@ export class ChannelEmitter {
   }
 
   broadcastAll(event: string, ...args: unknown[]): void {
-    (this.io?.emit as ((...a: unknown[]) => void) | undefined)?.(event, ...args);
+    if (this.io) {
+      (this.io.emit as (...a: unknown[]) => void)(event, ...args);
+    }
   }
 }

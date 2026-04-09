@@ -8,10 +8,8 @@ import { EmptyState } from './EmptyState';
 import { ProjectList } from './ProjectList';
 
 const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
-const BUSY_STATES = new Set(['busy']);
-
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
-  const isBusy = sessions.some((s) => BUSY_STATES.has(s.state));
+  const isBusy = sessions.some((s) => s.state === 'busy');
   useEffect(() => {
     document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
   }, [isBusy]);

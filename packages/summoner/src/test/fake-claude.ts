@@ -125,7 +125,7 @@ export class FakeClaude {
 
       if (parsed.type === 'control_request') {
         const request = parsed.request as Record<string, unknown> | undefined;
-        const requestId = (parsed.request_id as string) ?? (request?.request_id as string);
+        const requestId = String(parsed.request_id ?? request?.request_id ?? '');
 
         if (request?.subtype === 'initialize') {
           // Always record requestId for emit(callback) usage
@@ -135,7 +135,8 @@ export class FakeClaude {
 
           // Inject spawn cwd into init segment so channel.cwd matches spawn's cwd
           const lastSpawn = this.provider.spawnCalls[this.provider.spawnCalls.length - 1];
-          const spawnCwd = lastSpawn?.options?.cwd as string | undefined;
+          const spawnCwd =
+            typeof lastSpawn?.options?.cwd === 'string' ? lastSpawn.options.cwd : undefined;
           let initLine = this._initSegments[0];
           if (spawnCwd) {
             const initObj = JSON.parse(initLine);
@@ -150,7 +151,9 @@ export class FakeClaude {
             h.emit(JSON.stringify(respLine));
           } else {
             const initData = JSON.parse(this._initSegments[0]);
-            const slashCmds = initData.slash_commands as string[] | undefined;
+            const slashCmds = Array.isArray(initData.slash_commands)
+              ? (initData.slash_commands as string[])
+              : undefined;
             const response: Record<string, unknown> = {
               subtype: 'success',
               request_id: requestId,

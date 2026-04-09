@@ -9,6 +9,7 @@ import {
   chatStopTaskPayloadSchema,
   controlGenerateTitleResponseSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -79,10 +80,17 @@ export function create({
     return { ...response };
   }
 
+  const respondResponseSchema = z.object({
+    behavior: z.string().optional(),
+    updatedInput: z.unknown().optional(),
+    updatedPermissions: z.unknown().optional(),
+    message: z.string().optional(),
+  });
+
   function buildElicitationResponse(
-    behavior: unknown,
-    updatedInput: unknown,
+    response: z.infer<typeof respondResponseSchema>,
   ): Record<string, unknown> {
+    const { behavior, updatedInput } = response;
     return behavior === 'allow'
       ? {
           action: 'accept' as const,
@@ -94,12 +102,7 @@ export function create({
   function buildToolPermissionResponse(
     channelId: string,
     meta: { toolName?: string; toolUseId?: string } | undefined,
-    response: {
-      behavior?: string;
-      updatedInput?: unknown;
-      updatedPermissions?: unknown;
-      message?: string;
-    },
+    response: z.infer<typeof respondResponseSchema>,
   ): Record<string, unknown> {
     const { behavior, updatedInput, updatedPermissions, message } = response;
     const result: Record<string, unknown> = { behavior };
@@ -135,13 +138,15 @@ export function create({
 
       const meta = channel.getControlRequestMeta(requestId);
 
+      const parsed = respondResponseSchema.parse(response);
+
       let cliResponse: Record<string, unknown>;
       if (meta?.subtype === 'mcp_message') {
         cliResponse = buildMcpResponse(channel, requestId, response);
       } else if (meta?.subtype === 'elicitation') {
-        cliResponse = buildElicitationResponse(response.behavior, response.updatedInput);
+        cliResponse = buildElicitationResponse(parsed);
       } else {
-        cliResponse = buildToolPermissionResponse(channelId, meta, response);
+        cliResponse = buildToolPermissionResponse(channelId, meta, parsed);
       }
 
       respondAndDismiss(channel, channelId, requestId, cliResponse);
@@ -223,7 +228,9 @@ export function create({
       const res = await ch.sendRequest('session:generate_title', {
         description: pendingPrompt,
       });
-      const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+      const parsed = controlGenerateTitleResponseSchema.safeParse(res.response);
+      if (!parsed.success) return;
+      const { title } = parsed.data;
       ch.title = title;
       sessionStore
         .rename(channelId, title)

@@ -1,6 +1,8 @@
 import type { FileSearchResult } from '@code-quest/shared';
 import { FileIcon, FolderIcon } from './icons/MentionIcons';
 
+const noop = () => {};
+
 function HighlightMatch({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -145,7 +147,7 @@ export function MentionDropdown({
               selectedIndex={selectedIndex}
               mentionQuery={mentionQuery}
               onSelect={onSelectMention}
-              onHover={onHover ?? (() => {})}
+              onHover={onHover ?? noop}
               itemRef={i === selectedIndex ? (activeItemRef ?? null) : null}
             />
           ))}

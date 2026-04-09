@@ -2,7 +2,6 @@ import { sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { SpinnerVerb } from '../../components/SpinnerVerb';
 import type { ChannelChangeUpdate } from '../../types/chat';
-import { GitProvider } from '../GitContext';
 import { useSocket } from '../SocketContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
 import { ChannelConfigProvider } from './ChannelConfigContext';
@@ -70,9 +69,7 @@ export function ChannelProvider({
         resetStreamingRefs={() => resetStreamingRefsRef.current()}
       >
         <ChannelConfigProvider channelId={channelId} onNewChannel={onNewChannel}>
-          <ChannelComposeProvider channelId={channelId}>
-            <GitProvider>{children}</GitProvider>
-          </ChannelComposeProvider>
+          <ChannelComposeProvider channelId={channelId}>{children}</ChannelComposeProvider>
         </ChannelConfigProvider>
       </ChannelControlProvider>
     </ChannelMessagesProvider>
