@@ -2,11 +2,11 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
-import { useSessionSync } from '../hooks/useSessionSync';
 import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
 import { ProjectList } from './ProjectList';
+import { SessionTabSync } from './SessionTabSync';
 
 const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
 const SIDEBAR_WIDTH = 260;
@@ -14,15 +14,10 @@ const SIDEBAR_WIDTH = 260;
 function ProjectTabProvider({ cwd, children }: { cwd: string; children: ReactNode }) {
   return (
     <TabProvider defaultCwd={cwd}>
-      <SessionSyncBridge cwd={cwd} />
+      <SessionTabSync cwd={cwd} />
       {children}
     </TabProvider>
   );
-}
-
-function SessionSyncBridge({ cwd }: { cwd?: string }) {
-  useSessionSync(cwd);
-  return null;
 }
 
 export function WorkspaceLayout() {

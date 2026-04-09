@@ -7,9 +7,9 @@ import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import type { TabMeta } from '../../contexts/TabContext';
 import { TabProvider } from '../../contexts/TabContext';
-import { useSessionSync } from '../../hooks/useSessionSync';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { createFakeSummoner } from '../../test/fake-summoner';
+import { SessionTabSync } from '../SessionTabSync';
 import { WorkspaceLayout } from '../WorkspaceLayout';
 
 vi.mock('../../contexts/channel', () => ({
@@ -156,11 +156,6 @@ describe('WorkspaceLayout', () => {
       );
     }
 
-    function SessionSync({ children }: { children: React.ReactNode }) {
-      useSessionSync();
-      return children;
-    }
-
     function renderWithProjects() {
       const summoner = createFakeSummoner();
       return {
@@ -170,11 +165,10 @@ describe('WorkspaceLayout', () => {
               <PluginProvider>
                 <ProjectProvider>
                   <TabProvider>
-                    <SessionSync>
-                      <AddProjectButton cwd="/project-a" />
-                      <AddProjectButton cwd="/project-b" />
-                      <WorkspaceLayout />
-                    </SessionSync>
+                    <SessionTabSync />
+                    <AddProjectButton cwd="/project-a" />
+                    <AddProjectButton cwd="/project-b" />
+                    <WorkspaceLayout />
                   </TabProvider>
                 </ProjectProvider>
               </PluginProvider>
@@ -195,7 +189,7 @@ describe('WorkspaceLayout', () => {
         // Wait for microtask (serverSocket.emit) + useEffect flush
         await new Promise((r) => setTimeout(r, 10));
       });
-      // Extra flush for cascading state updates (ProjectProvider → useSessionSync → TabProvider)
+      // Extra flush for cascading state updates (ProjectProvider → SessionTabSync → TabProvider)
       await act(async () => {
         await new Promise((r) => setTimeout(r, 10));
       });

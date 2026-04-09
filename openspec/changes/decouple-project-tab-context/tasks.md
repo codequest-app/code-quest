@@ -38,7 +38,17 @@
 - [x] 4.6 EditorArea 移除 cwd filter + ProjectContext 依賴（TabProvider 已隔離）
 - [x] 4.7 全套 unit tests 通過（743 passed）
 
-## 5. 驗證
+## 5. 清理重複/分散邏輯
 
-- [ ] 5.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
-- [ ] 5.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證
+- [ ] 5.1 `app:init` 合併：SessionProvider 移除 emit，改從 ProjectProvider 的 sessions 讀 settings（或反過來）
+- [ ] 5.2 `session:resume` 從 useSessionSync 移到 ProjectProvider（socket events 統一在 ProjectProvider）
+- [ ] 5.3 useSessionSync 只做 sessions→tabs 橋接（不碰 socket）
+- [ ] 5.4 消除 useSessionSync：sessions→tabs 邏輯直接放在 ProjectTabProvider 內部
+- [ ] 5.5 消除 SessionSync/SessionSyncBridge：App.tsx 和 WorkspaceLayout 不再需要
+- [ ] 5.6 清理 test helpers 中的 SessionSync 定義
+- [ ] 5.7 全套 unit tests 通過
+
+## 6. 驗證
+
+- [ ] 6.1 reload 後 tabs 保留 cwd、project list 正確還原（手動驗證）
+- [ ] 6.2 切 project 不 reload（ChannelProvider 持續 mounted）— 由 WorkspaceLayout test 驗證

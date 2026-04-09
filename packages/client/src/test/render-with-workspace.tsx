@@ -3,19 +3,14 @@
 import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SessionTabSync } from '../components/SessionTabSync';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
-import { useSessionSync } from '../hooks/useSessionSync';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
-
-function SessionSync({ children }: { children: React.ReactNode }) {
-  useSessionSync();
-  return children;
-}
 
 export interface RenderWithWorkspaceOptions {
   summoner?: FakeSummoner;
@@ -55,9 +50,8 @@ export async function renderWithWorkspace(
         <PluginProvider>
           <ProjectProvider>
             <TabProvider>
-              <SessionSync>
-                <WorkspaceLayout />
-              </SessionSync>
+              <SessionTabSync />
+              <WorkspaceLayout />
             </TabProvider>
           </ProjectProvider>
         </PluginProvider>

@@ -1,10 +1,10 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
+import { SessionTabSync } from '../../components/SessionTabSync';
 import { WorkspaceLayout } from '../../components/WorkspaceLayout';
-import { useSessionSync } from '../../hooks/useSessionSync';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { PluginProvider } from '../PluginContext';
@@ -12,11 +12,6 @@ import { ProjectProvider } from '../ProjectContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../TabContext';
-
-function SessionSync({ children }: { children: ReactNode }) {
-  useSessionSync();
-  return children;
-}
 
 const idleSession = (channelId: string, cwd = '/') => ({ channelId, state: 'idle' as const, cwd });
 
@@ -569,9 +564,8 @@ describe('TabProvider', () => {
             <PluginProvider>
               <ProjectProvider>
                 <TabProvider>
-                  <SessionSync>
-                    <WorkspaceLayout />
-                  </SessionSync>
+                  <SessionTabSync />
+                  <WorkspaceLayout />
                 </TabProvider>
               </ProjectProvider>
             </PluginProvider>
