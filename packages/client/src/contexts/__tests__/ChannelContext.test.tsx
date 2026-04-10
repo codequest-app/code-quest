@@ -157,7 +157,7 @@ describe('ChannelContext', () => {
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
-    it('launch failure does not freeze on Connecting screen', async () => {
+    it('launch failure shows error UI with retry button', async () => {
       const summoner = createFakeSummoner();
       summoner.claude().prepareInit();
       // Intercept session:launch to return error
@@ -178,8 +178,12 @@ describe('ChannelContext', () => {
         skipInit: true,
       });
 
-      // Should not stay on "Connecting…" forever — should render children
-      expect(await screen.findByTestId('content', {}, { timeout: 3000 })).toBeInTheDocument();
+      // Should show error, not children or spinner
+      expect(
+        await screen.findByText(/Failed to connect/, {}, { timeout: 3000 }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+      expect(screen.queryByTestId('content')).not.toBeInTheDocument();
     });
 
     it('join failure still allows session:states processing', async () => {

@@ -10,6 +10,11 @@ import { ChannelMessagesProvider } from './ChannelMessagesContext';
 
 // ── ChannelProvider (orchestrator) ──
 
+type ChannelState =
+  | { status: 'connecting' }
+  | { status: 'connected' }
+  | { status: 'error'; message: string };
+
 export function ChannelProvider({
   channelId,
   children,
@@ -27,22 +32,37 @@ export function ChannelProvider({
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
 
-  const [launched, setLaunched] = useState(!cwd);
+  const [state, setState] = useState<ChannelState>(
+    cwd ? { status: 'connecting' } : { status: 'connected' },
+  );
   const launchedRef = useRef(false);
-  useEffect(() => {
-    if (!cwd || launchedRef.current) return;
+
+  function launch() {
+    if (!cwd) return;
     launchedRef.current = true;
+    setState({ status: 'connecting' });
     socket.emit('session:launch', { channelId, cwd }, (raw: unknown) => {
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
-      if (!parsed.success || parsed.data.error) {
-        console.error('[session:launch] failed', parsed.success ? parsed.data.error : parsed.error);
+      if (!parsed.success) {
+        setState({ status: 'error', message: 'Failed to connect' });
+        return;
       }
-      setLaunched(true);
+      if (parsed.data.error) {
+        setState({ status: 'error', message: parsed.data.error });
+        return;
+      }
+      setState({ status: 'connected' });
     });
-  }, [channelId, cwd, socket]);
+  }
 
-  // ── Wait for launch to complete before rendering children ──
-  if (!launched) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable (only captures refs + setState), deps are channelId/cwd/socket
+  useEffect(() => {
+    if (!cwd || launchedRef.current) return;
+    launch();
+  }, [cwd]);
+
+  // ── Connecting ──
+  if (state.status === 'connecting') {
     return (
       <div className="flex flex-1 items-center justify-center">
         <SpinnerVerb verbs={['Connecting']} />
@@ -50,7 +70,27 @@ export function ChannelProvider({
     );
   }
 
-  // ── Full provider tree ──
+  // ── Error ──
+  if (state.status === 'error') {
+    return (
+      <div className="flex flex-col items-center justify-center flex-1 gap-3 text-text-muted">
+        <span className="text-3xl">⚠</span>
+        <p>{state.message}</p>
+        <button
+          type="button"
+          onClick={() => {
+            launchedRef.current = false;
+            launch();
+          }}
+          className="px-4 py-2 rounded bg-accent text-white hover:bg-accent/80 text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // ── Connected — full provider tree ──
   return (
     <ChannelMessagesProvider
       channelId={channelId}

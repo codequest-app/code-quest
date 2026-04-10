@@ -7,7 +7,8 @@
 - [x] 5. 逐檔遷移 caller：addProject + launchSession 移到 beforeEach 或 test 內
 - [x] 6. EditorArea 無 tab 時顯示 empty state（"No open sessions" + "New Session" button）
 - [x] 7. launchSession 偵測兩個入口：TabBar "+" 或 empty state "New Session" button
-- [ ] 8. ChannelProvider 區分 launch vs join — app:init 恢復的 session 用 join 不 launch
-  - [ ] 8.1 ChannelProvider 不帶 cwd 時跳過 session:launch，直接 setLaunched(true)
-  - [ ] 8.2 ChannelConfigContext 的 session:join 能正確載入已有 session 的 config
-  - [ ] 8.3 驗證 app:init 回來的 sessions 自動建 project + tab 並直接 join
+- [x] 8. session sync 不帶 cwd → resume 用 join 不 launch
+- [ ] 9. ChannelProvider launch/join 失敗顯示 error UI
+  - [ ] 9.1 launch 失敗 → 顯示 error message + Retry button，不渲染 children
+  - [ ] 9.2 Retry button 重新 launch
+  - [ ] 9.3 join 失敗 → 同樣顯示 error UI
