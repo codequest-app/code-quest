@@ -2,6 +2,7 @@ import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
 import { ChatPanel } from './ChatPanel';
+import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
 
 export function EditorArea() {
@@ -25,17 +26,12 @@ export function EditorArea() {
 
   if (tabIds.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center flex-1 gap-3 text-text-muted">
-        <span className="text-3xl">💬</span>
-        <p>No open sessions</p>
-        <button
-          type="button"
-          onClick={() => createNewTab()}
-          className="px-4 py-2 rounded bg-accent text-white hover:bg-accent/80 text-sm"
-        >
-          ＋ New Session
-        </button>
-      </div>
+      <EmptyState
+        icon="💬"
+        message="No open sessions"
+        actionLabel="＋ New Session"
+        onAction={() => createNewTab()}
+      />
     );
   }
 

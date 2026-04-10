@@ -1,5 +1,6 @@
 import { sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { EmptyState } from '../../components/EmptyState';
 import { SpinnerVerb } from '../../components/SpinnerVerb';
 import type { ChannelChangeUpdate } from '../../types/chat';
 import { useSocket } from '../SocketContext';
@@ -73,20 +74,15 @@ export function ChannelProvider({
   // ── Error ──
   if (state.status === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center flex-1 gap-3 text-text-muted">
-        <span className="text-3xl">⚠</span>
-        <p>{state.message}</p>
-        <button
-          type="button"
-          onClick={() => {
-            launchedRef.current = false;
-            launch();
-          }}
-          className="px-4 py-2 rounded bg-accent text-white hover:bg-accent/80 text-sm"
-        >
-          Retry
-        </button>
-      </div>
+      <EmptyState
+        icon="⚠"
+        message={state.message}
+        actionLabel="Retry"
+        onAction={() => {
+          launchedRef.current = false;
+          launch();
+        }}
+      />
     );
   }
 

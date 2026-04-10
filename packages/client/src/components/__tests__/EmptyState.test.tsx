@@ -4,16 +4,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { EmptyState } from '../EmptyState';
 
 describe('EmptyState', () => {
-  it('renders Add Project button', () => {
-    render(<EmptyState onAddProject={() => {}} />);
-    expect(screen.getByText(/Add Project/)).toBeInTheDocument();
+  it('renders message and action button', () => {
+    render(
+      <EmptyState
+        icon="📁"
+        message="No projects yet"
+        actionLabel="Add Project"
+        onAction={() => {}}
+      />,
+    );
+    expect(screen.getByText('No projects yet')).toBeInTheDocument();
+    expect(screen.getByText('Add Project')).toBeInTheDocument();
   });
 
-  it('calls onAddProject when button clicked', async () => {
+  it('calls onAction when button clicked', async () => {
     const user = userEvent.setup();
-    const onAddProject = vi.fn();
-    render(<EmptyState onAddProject={onAddProject} />);
-    await user.click(screen.getByText(/Add Project/));
-    expect(onAddProject).toHaveBeenCalled();
+    const onAction = vi.fn();
+    render(<EmptyState message="Empty" actionLabel="Do it" onAction={onAction} />);
+    await user.click(screen.getByText('Do it'));
+    expect(onAction).toHaveBeenCalled();
   });
 });

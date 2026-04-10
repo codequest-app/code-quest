@@ -33,7 +33,13 @@ export function WorkspaceLayout() {
     <div className="flex flex-1 overflow-hidden">
       <DocumentTitle sessions={sessions} />
       {projects.length === 0 ? (
-        <EmptyState onAddProject={() => setDialogOpen(true)} />
+        <EmptyState
+          icon="📁"
+          message="No projects yet"
+          actionLabel="＋ Add Project"
+          onAction={() => setDialogOpen(true)}
+          testId="empty-add-project"
+        />
       ) : (
         <>
           <ActivityBar items={SIDEBAR_ITEMS} activePanel={activePanel} onToggle={setActivePanel} />
