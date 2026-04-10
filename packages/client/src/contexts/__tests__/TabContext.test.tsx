@@ -298,7 +298,7 @@ describe('TabProvider', () => {
   // ── tab creation from sessions ──
 
   describe('tab creation from sessions', () => {
-    it('creates tab with cwd from session', () => {
+    it('creates tab without cwd from session (cwd only for new sessions via createNewTab)', () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();
         const cwd = activeTabId ? tabs[activeTabId]?.cwd : undefined;
@@ -306,7 +306,7 @@ describe('TabProvider', () => {
       }
       const { setSessions } = renderWithSessions(<Test />);
       setSessions([{ channelId: 'ch-1', state: 'idle', cwd: '/my/project' }]);
-      expect(screen.getByTestId('cwd')).toHaveTextContent('/my/project');
+      expect(screen.getByTestId('cwd')).toHaveTextContent('none');
     });
 
     it('creates tab when session appears', () => {
@@ -423,14 +423,14 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('keys')).toHaveTextContent('empty');
     });
 
-    it('stores cwd from sessions', () => {
+    it('session sync does not store cwd (cwd only for createNewTab)', () => {
       function Test() {
         const { tabs } = useTabState();
         return <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>;
       }
       const { setSessions } = renderWithSessions(<Test />);
       setSessions([{ channelId: 'a', state: 'idle', cwd: '/projects/app' }]);
-      expect(screen.getByTestId('cwd')).toHaveTextContent('/projects/app');
+      expect(screen.getByTestId('cwd')).toHaveTextContent('undefined');
     });
   });
 

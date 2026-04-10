@@ -151,7 +151,7 @@ export function TabProvider({
       replaceActiveTab(added[0].channelId);
     } else {
       for (const s of added) {
-        addTab(s.channelId, s.cwd);
+        addTab(s.channelId);
       }
       for (const id of removed) {
         removeTab(id);
