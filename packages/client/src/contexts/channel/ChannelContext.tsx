@@ -28,22 +28,17 @@ export function ChannelProvider({
   const { socket } = useSocket();
 
   const [launched, setLaunched] = useState(!cwd);
+  const launchedRef = useRef(false);
   useEffect(() => {
-    if (!cwd) return;
-    let cancelled = false;
+    if (!cwd || launchedRef.current) return;
+    launchedRef.current = true;
     socket.emit('session:launch', { channelId, cwd }, (raw: unknown) => {
-      if (cancelled) return;
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
       if (!parsed.success || parsed.data.error) {
         console.error('[session:launch] failed', parsed.success ? parsed.data.error : parsed.error);
-        setLaunched(true); // proceed despite failure — avoid infinite "Connecting…"
-        return;
       }
       setLaunched(true);
     });
-    return () => {
-      cancelled = true;
-    };
   }, [channelId, cwd, socket]);
 
   // ── Wait for launch to complete before rendering children ──
