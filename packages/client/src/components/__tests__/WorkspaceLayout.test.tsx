@@ -69,6 +69,16 @@ describe('WorkspaceLayout', () => {
 
       expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
     });
+
+    it('shows empty state after closing last tab', async () => {
+      // Close the only tab
+      await result.user.click(screen.getByLabelText(/^Close /));
+      await result.user.click(screen.getByRole('button', { name: /close/i }));
+
+      expect(screen.queryByPlaceholderText(/Esc to focus/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/No open sessions/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
+    });
   });
 
   describe('multi-project', () => {

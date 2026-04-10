@@ -39,9 +39,14 @@ async function launchSession(
     });
   });
 
-  // Multiple projects may each have a "New tab" button — click the last (active project's)
-  const newTabButtons = await screen.findAllByLabelText('New tab');
-  await user.click(newTabButtons[newTabButtons.length - 1]);
+  // Detect entry point: empty state "New Session" button or TabBar "+"
+  const emptyButton = screen.queryByRole('button', { name: /New Session/ });
+  if (emptyButton) {
+    await user.click(emptyButton);
+  } else {
+    const newTabButtons = await screen.findAllByLabelText('New tab');
+    await user.click(newTabButtons[newTabButtons.length - 1]);
+  }
 
   await act(async () => {
     channelId = await initPromise;

@@ -23,6 +23,22 @@ export function EditorArea() {
     status: meta.tabStatus,
   }));
 
+  if (tabIds.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-1 gap-3 text-text-muted">
+        <span className="text-3xl">💬</span>
+        <p>No open sessions</p>
+        <button
+          type="button"
+          onClick={() => createNewTab()}
+          className="px-4 py-2 rounded bg-accent text-white hover:bg-accent/80 text-sm"
+        >
+          ＋ New Session
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 h-full">
       <TabBar

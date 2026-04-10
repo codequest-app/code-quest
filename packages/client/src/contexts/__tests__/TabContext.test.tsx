@@ -457,7 +457,7 @@ describe('TabProvider', () => {
       await userEvent.click(await screen.findByRole('treeitem', { name: 'projects' }));
       await userEvent.click(await screen.findByRole('treeitem', { name: 'my-app' }));
       await userEvent.click(screen.getByText('Open'));
-      expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
     });
 
     it('renders new tab button that triggers server launch', async () => {
