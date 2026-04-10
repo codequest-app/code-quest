@@ -45,10 +45,12 @@ function cwdToProject(cwd: string): Project {
   return { cwd, name: cwd.split('/').pop() ?? cwd };
 }
 
+const TERMINAL_STATES = new Set(['exited', 'disconnected']);
+
 function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {
   const cwds = new Set<string>();
   for (const s of sessions) {
-    if (s.cwd) cwds.add(s.cwd);
+    if (s.cwd && !TERMINAL_STATES.has(s.state)) cwds.add(s.cwd);
   }
   if (cwds.size === 0) return prev;
   const existing = new Set(prev.map((p) => p.cwd));
