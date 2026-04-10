@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { HighlightedCode } from '../utils/shiki';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface CodeBlockProps {
   code: string;
@@ -33,11 +34,15 @@ export function CodeBlock({ code, language, className }: CodeBlockProps) {
       >
         {copied ? 'Copied!' : 'Copy'}
       </button>
-      <HighlightedCode
-        code={code}
+      <SyntaxHighlighter
+        style={vscDarkPlus}
         language={language}
-        className="[&_pre]:!m-0 [&_pre]:!rounded-none [&_pre]:text-sm"
-      />
+        PreTag="div"
+        showLineNumbers={code.split('\n').length > 5}
+        lineNumberStyle={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75em', paddingRight: 8 }}
+      >
+        {code}
+      </SyntaxHighlighter>
     </div>
   );
 }

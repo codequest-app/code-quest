@@ -1,6 +1,7 @@
 import { fileReadResponseSchema } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
-import { HighlightedCode } from '../utils/shiki';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const EXT_TO_LANG: Record<string, string> = {
   ts: 'typescript',
@@ -67,17 +68,15 @@ export function FileViewer({ filePath, content, error, loading }: FileViewerProp
         {language && <span className="text-xs text-text-muted">{language}</span>}
       </div>
       <div className="max-h-[500px] overflow-auto text-sm">
-        {language ? (
-          <HighlightedCode
-            code={content}
-            language={language}
-            className="[&_pre]:!m-0 [&_pre]:!rounded-none"
-          />
-        ) : (
-          <pre className="p-4 overflow-auto">
-            <code>{content}</code>
-          </pre>
-        )}
+        <SyntaxHighlighter
+          style={vscDarkPlus}
+          language={language ?? 'text'}
+          showLineNumbers
+          PreTag="div"
+          customStyle={{ margin: 0, borderRadius: 0 }}
+        >
+          {content}
+        </SyntaxHighlighter>
       </div>
     </div>
   );
