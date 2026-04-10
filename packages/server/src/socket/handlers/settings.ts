@@ -101,7 +101,9 @@ export function create({
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
       const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
-      ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
+      ch.sendRequest('settings:remote_control', { enabled }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.warn({ err }, 'Failed to set remote control');
     }

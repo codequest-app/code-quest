@@ -27,17 +27,17 @@ describe('FileTree', () => {
     expect(await screen.findByRole('treeitem', { name: 'projects' })).toBeInTheDocument();
   });
 
-  it('browse returns data via socket', async () => {
-    const { summoner } = setup();
-    const result = await new Promise<unknown>((resolve) => {
-      (summoner.socket.emit as (...args: unknown[]) => unknown)('explorer:browse', {}, resolve);
-    });
-    expect(result).toEqual({ directories: [{ name: 'projects', path: '/projects' }] });
-  });
+  it('expands directory on click to show children', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    render(<FileTree />, { wrapper: Wrapper });
 
-  it.todo(
-    'expands directory on click to show children — async browse in onClick needs act() investigation',
-  );
+    const projects = await screen.findByRole('treeitem', { name: 'projects' });
+    await user.click(projects);
+
+    expect(await screen.findByRole('treeitem', { name: 'app' })).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'blog' })).toBeInTheDocument();
+  });
 
   it('shows context menu on right-click with Open in New Tab', async () => {
     const user = userEvent.setup();

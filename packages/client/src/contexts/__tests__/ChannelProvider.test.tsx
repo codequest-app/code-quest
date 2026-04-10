@@ -142,37 +142,25 @@ describe('ChannelProvider', () => {
 
   // ── Cross-window processing sync ──
 
-  it('session:states busy shows spinner (Stop button)', async () => {
-    const { claude, addProject } = await renderWithWorkspace();
+  it('sending message shows Stop button (busy state)', async () => {
+    const { user, addProject } = await renderWithWorkspace();
     const project = await addProject();
-    const channelId = await project.launchSession();
+    await project.launchSession();
 
-    await act(async () => {
-      await claude.pushServerEvent('session:states', {
-        sessions: [{ channelId, state: 'busy' }],
-      });
-    });
+    await sendUserMessage(user, 'hello');
 
     expect(await screen.findByTitle('Stop')).toBeInTheDocument();
   });
 
-  it('session:states idle hides spinner after busy', async () => {
-    const { claude, addProject } = await renderWithWorkspace();
+  it('result returns to Send button (idle state)', async () => {
+    const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
-    const channelId = await project.launchSession();
+    await project.launchSession();
 
-    await act(async () => {
-      await claude.pushServerEvent('session:states', {
-        sessions: [{ channelId, state: 'busy' }],
-      });
-    });
-    expect(screen.getByTitle('Stop')).toBeInTheDocument();
+    await sendUserMessage(user, 'hello');
+    expect(await screen.findByTitle('Stop')).toBeInTheDocument();
 
-    await act(async () => {
-      await claude.pushServerEvent('session:states', {
-        sessions: [{ channelId, state: 'idle' }],
-      });
-    });
+    await emitAssistantTurn(claude, 'done');
     expect(screen.getByTitle('Send')).toBeInTheDocument();
   });
 
