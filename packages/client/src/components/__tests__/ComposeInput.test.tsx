@@ -38,26 +38,17 @@ describe('ComposeInput', () => {
     expect(textarea).toHaveValue('');
   });
 
-  it('textarea height resets immediately after submit (no flash of tall empty box)', async () => {
+  it('textarea height resets after submit (CSS grid trick auto-sizes via hidden mirror)', async () => {
     await renderWithChannel(<ComposeInput />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
 
-    // Simulate multi-line input that triggers autogrow
-    let mockScrollHeight = 150;
-    Object.defineProperty(textarea, 'scrollHeight', {
-      get: () => mockScrollHeight,
-      configurable: true,
-    });
     await userEvent.type(textarea, 'line1\nline2\nline3');
-    expect(textarea.style.height).toBe('150px');
+    expect(textarea).toHaveValue('line1\nline2\nline3');
 
-    // After submit, scrollHeight returns to single-line size
-    mockScrollHeight = 24;
     await userEvent.keyboard('{Enter}');
 
-    // With useLayoutEffect, height is reset before paint
-    // With useEffect, the old 150px would persist until next frame
-    expect(textarea.style.height).toBe('24px');
+    // After submit, value is cleared → mirror div shrinks → textarea shrinks
+    expect(textarea).toHaveValue('');
   });
 
   it('renders without error when no attachments', async () => {

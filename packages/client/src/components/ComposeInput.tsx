@@ -1,5 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -16,11 +16,8 @@ function getMentionQuery(value: string, cursorPos: number): string | null {
   return match[2];
 }
 
-function autogrow(el: HTMLTextAreaElement | null) {
-  if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
-}
+const TEXTAREA_CLASS =
+  'w-full bg-transparent text-text px-[14px] py-[10px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
@@ -57,11 +54,6 @@ export function ComposeInput() {
     });
   }, [registerFocus]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: value triggers autogrow recalc
-  useLayoutEffect(() => {
-    autogrow(textareaRef.current);
-  }, [value]);
-
   const inputHistory = useInputHistory();
   const mentionContainerRef = useRef<HTMLDivElement>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
@@ -96,7 +88,6 @@ export function ComposeInput() {
     const el = textareaRef.current;
     const pos = el?.selectionStart ?? newValue.length;
     updateValue(newValue, pos);
-    autogrow(textareaRef.current);
 
     const query = getMentionQuery(newValue, pos);
     if (query !== null) {
@@ -205,14 +196,12 @@ export function ComposeInput() {
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
-        setTimeout(() => autogrow(textareaRef.current), 0);
       }
       return true;
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       updateValue(inputHistory.cycleDown());
-      setTimeout(() => autogrow(textareaRef.current), 0);
       return true;
     }
     return false;
@@ -260,21 +249,26 @@ export function ComposeInput() {
           ))}
         </div>
       )}
-      <textarea
-        ref={textareaRef}
-        rows={1}
-        value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onSelect={syncCursorPos}
-        onClick={syncCursorPos}
-        placeholder={
-          isProcessing
-            ? 'Queue another message…'
-            : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
-        }
-        className="w-full bg-transparent text-text px-[14px] py-[10px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted max-h-[200px] overflow-y-auto"
-      />
+      <div className="grid max-h-[200px] overflow-y-auto">
+        <textarea
+          ref={textareaRef}
+          rows={1}
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onSelect={syncCursorPos}
+          onClick={syncCursorPos}
+          placeholder={
+            isProcessing
+              ? 'Queue another message…'
+              : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
+          }
+          className={TEXTAREA_CLASS}
+        />
+        <div className={`${TEXTAREA_CLASS} invisible whitespace-pre-wrap`} aria-hidden="true">
+          {value + '\n'}
+        </div>
+      </div>
       {showMentionDropdown && (
         <div ref={mentionContainerRef}>
           <MentionDropdown
