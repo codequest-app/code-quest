@@ -273,7 +273,7 @@ export function ComposeInput() {
             ? 'Queue another message…'
             : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
         }
-        className="w-full bg-transparent text-text px-[14px] pt-[10px] pb-[2px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted min-h-[1.5em] max-h-[200px] overflow-y-auto"
+        className="w-full bg-transparent text-text px-[14px] py-[10px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted max-h-[200px] overflow-y-auto"
       />
       {showMentionDropdown && (
         <div ref={mentionContainerRef}>
