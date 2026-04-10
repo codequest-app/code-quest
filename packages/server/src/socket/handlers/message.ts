@@ -53,7 +53,9 @@ export function create({
         ch.abort();
       } else {
         interruptedChannels.add(channelId);
-        ch.sendRequest('message:interrupt').catch(() => {});
+        ch.sendRequest('message:interrupt').catch((err) =>
+          logger.debug({ err }, 'sendRequest failed'),
+        );
       }
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel');
@@ -158,7 +160,9 @@ export function create({
   function handleStopTask(ch: Channel, payload: unknown): void {
     try {
       const { taskId } = chatStopTaskPayloadSchema.parse(payload);
-      ch.sendRequest('message:stop_task', { task_id: taskId }).catch(() => {});
+      ch.sendRequest('message:stop_task', { task_id: taskId }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.debug({ err }, 'Failed to stop task');
     }
@@ -167,7 +171,9 @@ export function create({
   function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
       const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
-      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch(() => {});
+      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel async message');
     }

@@ -11,6 +11,10 @@ import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
+function resolveCwd(ch: Channel): string {
+  return ch.cwd ?? process.cwd();
+}
+
 export function create({
   sessionHistory,
   rawEventStore,
@@ -24,7 +28,7 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const cwd = ch.cwd ?? process.cwd();
+      const cwd = resolveCwd(ch);
       const result = await gitService.status(cwd);
       callback?.(result);
     } catch (err) {
@@ -41,7 +45,7 @@ export function create({
   ): Promise<void> {
     try {
       const { branch } = gitCheckoutPayloadSchema.parse(payload);
-      const cwd = ch.cwd ?? process.cwd();
+      const cwd = resolveCwd(ch);
       await gitService.checkout(cwd, branch);
       callback?.({ success: true });
     } catch (err) {
@@ -57,7 +61,7 @@ export function create({
   ): Promise<void> {
     try {
       const { limit } = gitLogPayloadSchema.parse(payload);
-      const cwd = ch.cwd ?? process.cwd();
+      const cwd = resolveCwd(ch);
       const result = await gitService.log(cwd, limit);
       callback?.(result);
     } catch (err) {
@@ -73,7 +77,7 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const cwd = ch.cwd ?? process.cwd();
+      const cwd = resolveCwd(ch);
       const result = await gitService.diff(cwd);
       callback?.(result);
     } catch (err) {
