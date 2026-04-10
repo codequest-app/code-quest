@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom/vitest';
 import { createFakeSocket } from '@code-quest/summoner/test';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
+
+beforeEach(() => {
+  usePreferencesStore.setState({ isOnboardingDismissed: true });
+});
 
 afterEach(() => {
   cleanup();

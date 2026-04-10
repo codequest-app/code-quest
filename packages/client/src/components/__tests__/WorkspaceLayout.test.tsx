@@ -1,7 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import {
   type RenderWithWorkspaceResult,
   renderWithWorkspace,
@@ -11,7 +10,6 @@ describe('WorkspaceLayout', () => {
   let result: RenderWithWorkspaceResult;
 
   beforeEach(async () => {
-    usePreferencesStore.setState({ isOnboardingDismissed: true });
     result = await renderWithWorkspace();
   });
 

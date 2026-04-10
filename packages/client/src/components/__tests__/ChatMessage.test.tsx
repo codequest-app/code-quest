@@ -712,9 +712,8 @@ describe('ChatMessage', () => {
 
   it('renders file paths in tool_result as clickable buttons', async () => {
     const user = userEvent.setup();
-    const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
       configurable: true,
     });
@@ -733,6 +732,6 @@ describe('ChatMessage', () => {
     const btn = screen.getByTitle('Copy: /src/main.ts:42');
     expect(btn).toBeInTheDocument();
     await user.click(btn);
-    expect(writeText).toHaveBeenCalledWith('/src/main.ts:42');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('/src/main.ts:42');
   });
 });

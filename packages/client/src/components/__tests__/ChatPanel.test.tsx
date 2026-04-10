@@ -1,17 +1,12 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ChatPanel } from '../ChatPanel';
 
 describe('ChatPanel', () => {
-  beforeEach(() => {
-    usePreferencesStore.setState({ isOnboardingDismissed: true });
-  });
-
   it('renders input and message list', async () => {
     await renderWithChannel(<ChatPanel />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
