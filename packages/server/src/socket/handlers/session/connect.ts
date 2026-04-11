@@ -8,13 +8,10 @@ import {
 import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
-import type { SessionStore } from '../../../services/session-store.ts';
-import type { SettingsStore } from '../../../services/settings-store.ts';
+import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
-import { type ChannelEmitter, withChannel } from '../../channel-emitter.ts';
-import type { ChannelManager } from '../../channel-manager.ts';
+import { withChannel } from '../../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
-import type { SessionHistory } from '../../session-history.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
 
@@ -42,13 +39,16 @@ function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   };
 }
 
-export function create(
-  channelManager: ChannelManager,
-  settingsStore: SettingsStore,
-  sessionStore: SessionStore,
-  sessionHistory: SessionHistory,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  settingsStore,
+  sessionStore,
+  sessionHistory,
+  emitter,
+}: Pick<
+  HandlerContext,
+  'channelManager' | 'settingsStore' | 'sessionStore' | 'sessionHistory' | 'emitter'
+>): void {
   async function applyPerLaunchSettings(
     channel: Channel,
     parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel'>,

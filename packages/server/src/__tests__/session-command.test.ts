@@ -1,19 +1,11 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const claude = createFakeSummoner().claude();
   const channelId = await claude.initialize(s.init(sessionId));
   return { claude, channelId };
-}
-
-function collectEvents<T = Record<string, unknown>>(
-  socket: { on(e: string, cb: (p: T) => void): void },
-  eventName: string,
-) {
-  const events: T[] = [];
-  socket.on(eventName, (p: T) => events.push(p));
-  return events;
 }
 
 describe('ChatHandler > session', () => {
@@ -28,16 +20,14 @@ describe('ChatHandler > session', () => {
 
     it('emits chat:exit on process close', async () => {
       const { claude, channelId } = await setup();
-      const closedEvents = collectEvents(claude.socket, 'session:closed');
 
       await claude.send('chat:send', { channelId, message: 'done' });
-
       await claude.emit(s.assistant('bye'));
       await claude.emit(s.result());
-
       await claude.send('session:close', { channelId });
       await new Promise<void>((r) => queueMicrotask(r));
 
+      const closedEvents = claude.events('session:closed');
       expect(closedEvents.length).toBeGreaterThan(0);
       expect(closedEvents[0].channelId).toBe(channelId);
     });
@@ -54,8 +44,6 @@ describe('ChatHandler > session', () => {
   describe('chat:cancel_request broadcast', () => {
     it('chat:cancel_request fires when permission is responded', async () => {
       const { claude, channelId } = await setup();
-      const cancelEvents: Record<string, unknown>[] = [];
-      claude.socket.on('chat:cancel_request', (p: Record<string, unknown>) => cancelEvents.push(p));
 
       await claude.send('chat:send', { channelId, message: 'read file' });
       await claude.emit(
@@ -65,12 +53,12 @@ describe('ChatHandler > session', () => {
         s.controlRequest('req-perm', 'can_use_tool', 'Read', { file_path: '/tmp/x' }),
       );
 
-      // Respond to permission
       await claude.send('chat:respond', {
         requestId: 'req-perm',
         response: { behavior: 'allow', updatedInput: {} },
       });
 
+      const cancelEvents = claude.events('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
       expect(cancelEvents[0].targetRequestId).toBe('req-perm');
     });
@@ -93,13 +81,15 @@ describe('ChatHandler > session', () => {
 
   describe('session:resume cross-window sync', () => {
     it('session:resume broadcasts to all sockets', async () => {
-      const { claude, channelId } = await setup();
+      const server = createFakeServer();
+      const windowA = createFakeSummoner(server);
+      const windowB = createFakeSummoner(server);
 
-      const socketB = claude.connect();
-      const resumeEvents = collectEvents<{ channelId: string }>(socketB, 'session:resume');
+      const channelId = await windowA.claude().initialize();
 
-      await claude.send('session:resume', { channelId });
+      await windowA.send('session:resume', { channelId });
 
+      const resumeEvents = windowB.events('session:resume');
       expect(resumeEvents.length).toBeGreaterThan(0);
       expect(resumeEvents[0].channelId).toBe(channelId);
     });
@@ -110,34 +100,21 @@ describe('session:update_state', () => {
   it('should broadcast state change to all sockets', async () => {
     const { claude, channelId } = await setup();
 
-    const sessionUpdates: Record<string, unknown>[] = [];
-    claude.socket.on('session:states', (payload: { sessions: Record<string, unknown>[] }) => {
-      if (payload.sessions) {
-        for (const sess of payload.sessions) sessionUpdates.push(sess);
-      }
-    });
-
     const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
       channelId,
       title: 'New Title',
     });
 
     expect(result.success).toBe(true);
-    const matched = sessionUpdates.find(
-      (sc) => sc.channelId === channelId && sc.title === 'New Title',
-    );
+    const matched = claude
+      .events('session:states')
+      .flatMap((e: any) => e.sessions ?? [])
+      .find((sc: any) => sc.channelId === channelId && sc.title === 'New Title');
     expect(matched).toBeDefined();
   });
 
   it('should broadcast state and title together', async () => {
     const { claude, channelId } = await setup();
-
-    const sessionUpdates: Record<string, unknown>[] = [];
-    claude.socket.on('session:states', (payload: { sessions: Record<string, unknown>[] }) => {
-      if (payload.sessions) {
-        for (const sess of payload.sessions) sessionUpdates.push(sess);
-      }
-    });
 
     const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
       channelId,
@@ -146,14 +123,17 @@ describe('session:update_state', () => {
     });
 
     expect(result.success).toBe(true);
-    const matched = sessionUpdates.find(
-      (sc) => sc.channelId === channelId && sc.state === 'busy' && sc.title === 'Busy Tab',
-    );
+    const matched = claude
+      .events('session:states')
+      .flatMap((e: any) => e.sessions ?? [])
+      .find(
+        (sc: any) => sc.channelId === channelId && sc.state === 'busy' && sc.title === 'Busy Tab',
+      );
     expect(matched).toBeDefined();
   });
 
   it('should return error for invalid payload', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
 
     const result = await claude.send<{ success: boolean; error?: string }>(
       'session:update_state',
@@ -166,38 +146,27 @@ describe('session:update_state', () => {
 });
 
 describe('session_states_update enrichment', () => {
-  function collectSessionStates(socket: {
-    on(e: string, cb: (p: { sessions: Record<string, unknown>[] }) => void): void;
-  }) {
-    const sessions: Record<string, unknown>[] = [];
-    socket.on('session:states', (payload: { sessions: Record<string, unknown>[] }) => {
-      for (const s of payload.sessions) sessions.push(s);
-    });
-    return sessions;
-  }
-
   it('should include system.init config fields in session_states_update after init', async () => {
     const { claude, channelId } = await setup();
-    const sessions = collectSessionStates(claude.socket);
 
     await claude.send('chat:send', { channelId, message: 'hello' });
-
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result());
 
+    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
     const busyWithConfig = sessions.find(
-      (sc) => sc.channelId === channelId && sc.state === 'busy' && sc.modelSetting,
+      (sc: any) => sc.channelId === channelId && sc.state === 'busy' && sc.modelSetting,
     );
     expect(busyWithConfig).toBeDefined();
     expect(busyWithConfig!.modelSetting).toBeDefined();
   });
 
   it('should not include config fields before system.init', async () => {
-    const claude = createFakeClaude();
-    const sessions = collectSessionStates(claude.socket);
+    const claude = createFakeSummoner().claude();
 
     await claude.initialize(s.init('cli-sess'));
 
+    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
     expect(sessions.length).toBeGreaterThan(0);
     for (const sc of sessions) {
       expect(sc.channelId).toBeDefined();
@@ -207,16 +176,16 @@ describe('session_states_update enrichment', () => {
 
   it('should clear config cache on session exit', async () => {
     const { claude, channelId } = await setup();
-    const sessions = collectSessionStates(claude.socket);
 
     await claude.send('chat:send', { channelId, message: 'hello' });
-
     await claude.emit(s.result());
-
     await claude.send('session:close', { channelId });
     await new Promise<void>((r) => queueMicrotask(r));
 
-    const exitedState = sessions.find((sc) => sc.channelId === channelId && sc.state === 'exited');
+    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
+    const exitedState = sessions.find(
+      (sc: any) => sc.channelId === channelId && sc.state === 'exited',
+    );
     expect(exitedState).toBeDefined();
   });
 });

@@ -1,28 +1,21 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeGit } from '../test/fake-git.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeSummoner } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const summoner = createFakeSummoner();
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
+  return { claude, channelId, git: summoner.git()! };
 }
 
 describe('worktree handler', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('worktree:list returns worktrees from channel cwd', async () => {
-    const fakeGit = createFakeGit({
-      revparseResults: { '--show-toplevel': '/repo' },
-      rawResults: {
-        'worktree list --porcelain':
-          'worktree /repo\nbranch refs/heads/main\n\nworktree /repo/.claude/worktrees/my-feature\nbranch refs/heads/worktree-my-feature\n\n',
-      },
+    const { claude, channelId, git } = await setup();
+    git.addWorktree({
+      name: 'my-feature',
+      path: '/repo/.claude/worktrees/my-feature',
+      branch: 'worktree-my-feature',
     });
-
-    const { claude, channelId } = await setup();
 
     const result = await claude.send<{ worktrees: Array<{ name: string; path: string }> }>(
       'worktree:list',
@@ -34,34 +27,24 @@ describe('worktree handler', () => {
       name: 'my-feature',
       path: '/repo/.claude/worktrees/my-feature',
     });
-
-    fakeGit.restore();
   });
 
   it('worktree:list returns empty when not in git repo', async () => {
-    const fakeGit = createFakeGit({
-      revparseResults: {},
-    });
-    // revparse will return '' → getRepoRoot returns null
-    (fakeGit.instance.revparse as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('not a git repo'),
-    );
-
-    const { claude, channelId } = await setup();
+    const { claude, channelId, git } = await setup();
+    git.setRepoRoot(null);
 
     const result = await claude.send<{ worktrees: unknown[] }>('worktree:list', { channelId });
 
     expect(result.worktrees).toEqual([]);
-
-    fakeGit.restore();
   });
 
   it('worktree:delete returns success', async () => {
-    const fakeGit = createFakeGit({
-      revparseResults: { '--show-toplevel': '/repo' },
+    const { claude, channelId, git } = await setup();
+    git.addWorktree({
+      name: 'my-feature',
+      path: '/repo/.claude/worktrees/my-feature',
+      branch: 'worktree-my-feature',
     });
-
-    const { claude, channelId } = await setup();
 
     const result = await claude.send<{ success: boolean }>('worktree:delete', {
       channelId,
@@ -69,10 +52,7 @@ describe('worktree handler', () => {
     });
 
     expect(result.success).toBe(true);
-    // rawGit called with worktree remove + branch -D
-    expect(fakeGit.rawCalls).toContainEqual(expect.arrayContaining(['worktree', 'remove']));
-
-    fakeGit.restore();
+    expect(await git.listWorktrees('/repo')).toHaveLength(0);
   });
 
   it('worktree:delete returns error when name is missing', async () => {

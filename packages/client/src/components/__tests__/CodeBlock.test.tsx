@@ -11,7 +11,6 @@ describe('CodeBlock', () => {
 
   it('calls navigator.clipboard.writeText on copy click', async () => {
     const user = userEvent.setup();
-    // jsdom doesn't fully support clipboard; use writeText on the actual navigator
     const spy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
     render(<CodeBlock code="hello world" language="js" />);
     await user.click(screen.getByRole('button', { name: /copy/i }));
@@ -29,7 +28,6 @@ describe('CodeBlock', () => {
     await waitFor(() => {
       expect(screen.getByText('Copied!')).toBeInTheDocument();
     });
-    // After 2s timeout, button text reverts — tested via fake timers inline
     spy.mockRestore();
   });
 

@@ -1,0 +1,178 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
+import type { ExplorerBrowseResponse } from '@code-quest/shared';
+import { FakeClaude, segments as s } from '@code-quest/summoner/test';
+import { describe, expect, it } from 'vitest';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
+
+describe('FakeSummoner', () => {
+  it('summoner.claude() returns a working FakeClaude', async () => {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    const channelId = await claude.initialize();
+    expect(channelId).toBeTruthy();
+  });
+
+  it('explorer:browse uses FakeFilesystemService', async () => {
+    const summoner = createFakeSummoner();
+    summoner.filesystem().setRoots(['/projects']);
+    summoner.filesystem().addDirectory('/projects', ['app', 'blog']);
+
+    const claude = summoner.claude();
+    await claude.initialize();
+
+    const result = await claude.send<ExplorerBrowseResponse>('explorer:browse', {});
+    expect(result.directories).toEqual([{ name: 'projects', path: '/projects' }]);
+
+    const children = await claude.send<ExplorerBrowseResponse>('explorer:browse', {
+      path: '/projects',
+    });
+    expect(children.directories).toEqual([
+      { name: 'app', path: '/projects/app' },
+      { name: 'blog', path: '/projects/blog' },
+    ]);
+  });
+
+  it('explorer:browse returns empty when path not in fake fs', async () => {
+    const summoner = createFakeSummoner();
+    summoner.filesystem().setRoots(['/projects']);
+
+    const claude = summoner.claude();
+    await claude.initialize();
+
+    const result = await claude.send<ExplorerBrowseResponse>('explorer:browse', {
+      path: '/unknown',
+    });
+    expect(result.directories).toEqual([]);
+  });
+
+  it('multi-window: both clients can browse filesystem', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const windowA = createFakeSummoner(server);
+    const windowB = createFakeSummoner(server);
+
+    windowA.filesystem().setRoots(['/shared']);
+    windowA.filesystem().addDirectory('/shared', ['data']);
+
+    const claudeA = windowA.claude();
+    await claudeA.initialize();
+
+    const claudeB = windowB.claude();
+    await claudeB.initialize();
+
+    // Both see the same fake filesystem (shared via server)
+    const resultA = await claudeA.send<ExplorerBrowseResponse>('explorer:browse', {
+      path: '/shared',
+    });
+    const resultB = await claudeB.send<ExplorerBrowseResponse>('explorer:browse', {
+      path: '/shared',
+    });
+
+    expect(resultA.directories).toEqual([{ name: 'data', path: '/shared/data' }]);
+    expect(resultB.directories).toEqual([{ name: 'data', path: '/shared/data' }]);
+  });
+
+  it('events() returns all recorded events', async () => {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    await claude.initialize();
+
+    await claude.emit(s.assistant('hello'));
+
+    const all = claude.events();
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.some((e) => e.event === 'message:assistant')).toBe(true);
+  });
+
+  it('events(name) filters by event name', async () => {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    const channelId = await claude.initialize();
+
+    await claude.emit(s.assistant('hello'));
+
+    const assistantEvents = claude.events('message:assistant');
+    expect(assistantEvents.length).toBeGreaterThan(0);
+    expect(assistantEvents[0]).toHaveProperty('channelId', channelId);
+  });
+
+  it('events() records in arrival order — session:init before message:assistant', async () => {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    await claude.initialize();
+
+    await claude.emit(s.assistant('hi'));
+
+    const all = claude.events();
+    const eventNames = all.map((e) => e.event);
+    const initIdx = eventNames.indexOf('session:init');
+    const assistIdx = eventNames.indexOf('message:assistant');
+    expect(initIdx).toBeLessThan(assistIdx);
+  });
+});
+
+// ── New: FakeServer tests (target API) ──
+
+describe('FakeServer', () => {
+  it('server.connect() returns working socket/provider/filesystem', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const { socket, provider, filesystem } = server.connect();
+    expect(socket).toBeTruthy();
+    expect(provider).toBeTruthy();
+    expect(filesystem).toBeTruthy();
+  });
+
+  it('two connects share the same filesystem', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const a = server.connect();
+    const b = server.connect();
+    expect(a.filesystem).toBe(b.filesystem);
+    expect(a.socket).not.toBe(b.socket);
+  });
+
+  it('connect returns a socket that can receive server events', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const { socket } = server.connect();
+
+    // Verify socket is connected by checking it has serverSocket
+    const serverSocket = (socket as any).serverSocket;
+    expect(serverSocket).toBeTruthy();
+
+    // Verify server→client delivery works
+    const received: unknown[] = [];
+    socket.on('test-event', (data: unknown) => received.push(data));
+    serverSocket.emit('test-event', { hello: 'world' });
+
+    await new Promise<void>((r) => queueMicrotask(r));
+    expect(received).toEqual([{ hello: 'world' }]);
+  });
+
+  it('client→server emit triggers registered handler', () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const { socket } = server.connect();
+
+    let dispatched = false;
+    const serverSocket = (
+      socket as unknown as { serverSocket: { on: (e: string, fn: () => void) => void } }
+    ).serverSocket;
+    serverSocket.on('test-client-event', () => {
+      dispatched = true;
+    });
+    socket.emit('test-client-event', {});
+    expect(dispatched).toBe(true);
+  });
+
+  it('FakeClaude can initialize via FakeServer connection', async () => {
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const { socket, provider } = server.connect();
+
+    const claude = new FakeClaude({ socket, provider });
+    const channelId = await claude.initialize();
+    expect(channelId).toBeTruthy();
+  });
+});

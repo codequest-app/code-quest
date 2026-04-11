@@ -5,8 +5,8 @@ import {
   planRemoveCommentPayloadSchema,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 
@@ -14,7 +14,7 @@ export interface PlanApi {
   consumeCommentsAsUserFeedback(channelId: string): string | undefined;
 }
 
-export function create(emitter: ChannelEmitter): PlanApi {
+export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
   const commentsMap = new Map<string, PlanCommentData[]>();
 
   function getOrCreate(channelId: string): PlanCommentData[] {

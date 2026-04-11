@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom/vitest';
 import { createFakeSocket } from '@code-quest/summoner/test';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
+
+beforeEach(() => {
+  usePreferencesStore.setState({ isOnboardingDismissed: true });
+});
 
 afterEach(() => {
   cleanup();
@@ -44,6 +49,28 @@ vi.mock('socket.io-client', () => ({
 if (typeof Element !== 'undefined') {
   Element.prototype.scrollIntoView = () => {};
 }
+
+// jsdom doesn't implement ResizeObserver
+if (typeof ResizeObserver === 'undefined') {
+  global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
+// react-resizable-panels requires full DOM measurement APIs unavailable in jsdom
+vi.mock('react-resizable-panels', async () => {
+  const React = await import('react');
+  const h = React.createElement;
+  return {
+    Group: (p: { children?: React.ReactNode }) =>
+      h('div', { 'data-testid': 'panel-group' }, p.children),
+    Panel: (p: { children?: React.ReactNode; 'data-testid'?: string }) =>
+      h('div', { 'data-testid': p['data-testid'] }, p.children),
+    Separator: () => h('div', { 'data-testid': 'resize-handle' }),
+  };
+});
 
 // jsdom doesn't implement IntersectionObserver
 if (typeof IntersectionObserver === 'undefined') {

@@ -30,6 +30,8 @@ import type {
   EnableJupyterMcpResponse,
   EnsureChromeMcpResponse,
   ErrorMessagePayload,
+  ExplorerBrowsePayload,
+  ExplorerBrowseResponse,
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
@@ -251,6 +253,12 @@ export interface ClientToServerEvents {
   'mcp:ask_debugger': (
     payload: ChannelIdPayload,
     callback: (response: AskDebuggerHelpResponse) => void,
+  ) => void;
+
+  // ── Explorer (global, no channel) ──
+  'explorer:browse': (
+    payload: ExplorerBrowsePayload,
+    callback: (response: ExplorerBrowseResponse) => void,
   ) => void;
 
   // ── Aligned: File & Git ──

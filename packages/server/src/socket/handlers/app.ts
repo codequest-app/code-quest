@@ -1,15 +1,13 @@
 import { logger } from '../../logger.ts';
-import type { SettingsStore } from '../../services/settings-store.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  settingsStore: SettingsStore,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  settingsStore,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'emitter'>): void {
   async function handleInit(
     _ch: Channel | null,
     _payload: unknown,

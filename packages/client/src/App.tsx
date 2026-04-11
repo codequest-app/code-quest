@@ -3,11 +3,10 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
-import { config } from './config';
 import { PluginProvider } from './contexts/PluginContext';
+import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
-import { TabProvider } from './contexts/TabContext';
 import { createSocket } from './socket/client';
 import './App.css';
 
@@ -21,9 +20,9 @@ export function App() {
         <SocketProvider socket={socket}>
           <SessionProvider>
             <PluginProvider>
-              <TabProvider defaultCwd={config.defaultCwd}>
+              <ProjectProvider>
                 <WorkspaceLayout />
-              </TabProvider>
+              </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
         </SocketProvider>

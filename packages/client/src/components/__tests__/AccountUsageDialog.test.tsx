@@ -7,10 +7,12 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { AccountUsageDialog } from '../AccountUsageDialog';
 
 async function setupWithTurn() {
-  const ctx = await renderWithWorkspace();
-  await sendUserMessage(ctx.user, 'hello');
-  await emitAssistantTurn(ctx.claude);
-  return ctx;
+  const result = await renderWithWorkspace();
+  const project = await result.addProject();
+  await project.launchSession();
+  await sendUserMessage(result.user, 'hello');
+  await emitAssistantTurn(result.claude);
+  return result;
 }
 
 async function openUsageDialog(user: UserEvent) {
@@ -27,11 +29,15 @@ async function openUsageDialog(user: UserEvent) {
 describe('AccountUsageDialog', () => {
   it('renders after rate limit event', async () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
+      await claude.emit(s.result());
+    });
 
     // Rate limit message rendered
     expect(screen.queryAllByText(/limit/i).length).toBeGreaterThan(0);
@@ -44,11 +50,15 @@ describe('AccountUsageDialog', () => {
   });
 
   it('handles rate limit event when dialog is closed', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
-    await claude.emit(s.assistant('ok'));
-    await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('ok'));
+      await claude.emit(s.rateLimitEvent({ status: 'rate_limited' }));
+      await claude.emit(s.result());
+    });
 
     expect(screen.getByText('ok')).toBeInTheDocument();
   });
@@ -70,11 +80,15 @@ describe('AccountUsageDialog', () => {
 
   it('rate_limit data appears in dialog after event', async () => {
     const resetsAt = Math.floor(Date.now() / 1000) + 3600;
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.rateLimitEvent({ status: 'ok', rateLimitType: 'five_hour', resetsAt }));
+      await claude.emit(s.result());
+    });
 
     const dialog = await openUsageDialog(user);
     // Should show session usage data
@@ -91,12 +105,16 @@ describe('AccountUsageDialog', () => {
   });
 
   it('renders after init with account info', async () => {
-    await renderWithWorkspace();
+    const { addProject: addProj } = await renderWithWorkspace();
+    const proj = await addProj();
+    await proj.launchSession();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
   it('shows context breakdown when opening usage dialog', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
 
     claude.onControlRequest((req) => {
       if (req.subtype === 'get_context_usage') {
@@ -125,10 +143,14 @@ describe('AccountUsageDialog', () => {
   });
 
   it('shows session cost from result stats', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user, 'hello');
-    await claude.emit(s.assistant('hi'));
-    await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+    await act(async () => {
+      await claude.emit(s.assistant('hi'));
+      await claude.emit(s.result({ costUsd: 1.23, durationMs: 5000 }));
+    });
 
     const dialog = await openUsageDialog(user);
     expect(within(dialog).getByText(/\$1\.23/)).toBeInTheDocument();

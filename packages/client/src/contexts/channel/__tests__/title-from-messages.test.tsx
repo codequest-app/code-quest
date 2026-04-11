@@ -1,58 +1,22 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { WorkspaceLayout } from '@/components/WorkspaceLayout';
-import { createFakeClaude } from '@/test/fake-claude';
 import { sendUserMessage } from '@/test/helpers';
-import { PluginProvider } from '../../PluginContext';
-import { SessionProvider } from '../../SessionContext';
-import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTab } from '../../TabContext';
-
-function TabTitle() {
-  const { tabs, activeTabId } = useTab();
-  const title = activeTabId ? tabs[activeTabId]?.title : undefined;
-  return <span data-testid="tab-title">{title ?? '(none)'}</span>;
-}
-
-async function setup() {
-  const claude = createFakeClaude();
-  claude.prepareInit();
-
-  const initReady = new Promise<void>((resolve) => {
-    claude.socket.on('session:init', () => resolve());
-  });
-
-  render(
-    <SocketProvider socket={claude.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider>
-            <WorkspaceLayout />
-            <TabTitle />
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>,
-  );
-  const user = userEvent.setup({ pointerEventsCheck: 0 });
-  await user.click(screen.getByLabelText('New tab'));
-  await act(async () => {
-    await initReady;
-  });
-  return { claude, user };
-}
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('title derived from messages', () => {
   it('sets tab title from first user message', async () => {
-    const { user } = await setup();
+    const { user, addProject: addProj } = await renderWithWorkspace();
+    const project = await addProj();
+    await project.launchSession();
     await sendUserMessage(user, 'Fix the login bug please');
 
-    expect(screen.getByTestId('tab-title')).toHaveTextContent('Fix the login bug please');
+    expect(screen.getByLabelText(/^Close /)).toHaveAccessibleName('Close Fix the login bug please');
   });
 
   it('does not update title on second message', async () => {
-    const { user } = await setup();
+    const { user, addProject: addProj } = await renderWithWorkspace();
+    const project = await addProj();
+    await project.launchSession();
     const textarea = screen.getByPlaceholderText(/Esc to focus/i);
 
     await user.click(textarea);
@@ -63,6 +27,6 @@ describe('title derived from messages', () => {
     await user.type(textarea, 'Second message');
     await user.keyboard('{Enter}');
 
-    expect(screen.getByTestId('tab-title')).toHaveTextContent('First message');
+    expect(screen.getByLabelText(/^Close /)).toHaveAccessibleName('Close First message');
   });
 });

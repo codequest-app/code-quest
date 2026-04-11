@@ -1,17 +1,26 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { MessageList } from '../MessageList';
 
 async function setup(props?: { searchQuery?: string; typeFilter?: string[] }) {
+  const summoner = createFakeSummoner();
+  const claude = summoner.claude();
+  const channelId = crypto.randomUUID();
+
+  // Pre-create session on server so session:join succeeds during render
+  await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
+
   return renderWithChannel(
     <>
       <SendButton message="Hello" />
       <MessageList {...props} />
     </>,
+    { summoner, channelId, skipInit: true },
   );
 }
 
@@ -21,9 +30,10 @@ async function setupWithMessages(props?: { searchQuery?: string; typeFilter?: st
   // User message
   await userEvent.click(screen.getByText('TriggerSend'));
   // Assistant message
-  await ctx.claude.emit(s.assistant('Hi there'));
-  // Error result
-  await ctx.claude.emit(s.resultError());
+  await act(async () => {
+    await ctx.claude.emit(s.assistant('Hi there'));
+    await ctx.claude.emit(s.resultError());
+  });
   return ctx;
 }
 
@@ -56,12 +66,14 @@ describe('MessageList', () => {
 
   it('renders consecutive same-role messages without role labels', async () => {
     const { claude } = await setup();
-    await claude.emit(s.assistant('First'));
-    await claude.emit(
-      s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: { command: 'ls' } } }),
-    );
-    await claude.emit(s.assistant('Second'));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('First'));
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: { command: 'ls' } } }),
+      );
+      await claude.emit(s.assistant('Second'));
+      await claude.emit(s.result());
+    });
     expect(screen.queryByText('Assistant')).not.toBeInTheDocument();
     expect(screen.getByText('First')).toBeInTheDocument();
     expect(screen.getByText('Second')).toBeInTheDocument();
@@ -76,11 +88,13 @@ describe('MessageList', () => {
 
   it('nests child messages under their parent tool_use', async () => {
     const { claude } = await setup();
-    await claude.emit(s.assistant('Starting'));
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
-    await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
-    await claude.emit(s.assistant('Done'));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant('Starting'));
+      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
+      await claude.emit(s.assistant('Done'));
+      await claude.emit(s.result());
+    });
     expect(screen.getByText('Starting')).toBeInTheDocument();
     expect(screen.getByText('Sub output')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
@@ -115,25 +129,31 @@ describe('MessageList', () => {
 
   it('shows correct count for multiple subagent messages', async () => {
     const { claude } = await setup();
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
-    await claude.emit(s.assistant('Child 1', { parentToolUseId: 'toolu_1' }));
-    await claude.emit(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.assistant('Child 1', { parentToolUseId: 'toolu_1' }));
+      await claude.emit(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
+      await claude.emit(s.result());
+    });
     expect(screen.getByText(/2 subagent messages/)).toBeInTheDocument();
   });
 
   it('shows stop button in subagent header', async () => {
     const { claude } = await setup();
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
-    await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
+    await act(async () => {
+      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
+    });
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
 
   it('clicking stop subagent does not crash', async () => {
     const user = userEvent.setup();
     const { claude } = await setup();
-    await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
-    await claude.emit(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
+    await act(async () => {
+      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
+    });
     await user.click(screen.getByTitle('Stop subagent'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
@@ -141,14 +161,16 @@ describe('MessageList', () => {
   it('renders tool_result merged into tool_use collapsible with diff', async () => {
     const user = userEvent.setup();
     const { claude } = await setup();
-    await claude.emit(
-      s.assistant({
-        toolUse: { id: 'toolu_edit_1', name: 'Edit', input: { file_path: '/file.txt' } },
-      }),
-    );
-    await claude.emit(
-      s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
-    );
+    await act(async () => {
+      await claude.emit(
+        s.assistant({
+          toolUse: { id: 'toolu_edit_1', name: 'Edit', input: { file_path: '/file.txt' } },
+        }),
+      );
+      await claude.emit(
+        s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
+      );
+    });
     // tool_result is merged into tool_use node by buildMessageTree
     // Expand tool_use collapsible to see the diff content
     await user.click(screen.getByText('Edit'));
@@ -162,7 +184,9 @@ describe('MessageList streaming', () => {
   it('shows statusText via SpinnerVerb when processing', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.status({ status: 'Compacting' }));
+    await act(async () => {
+      await claude.emit(s.status({ status: 'Compacting' }));
+    });
     const verb = screen.getByTestId('spinner-verb');
     expect(verb.textContent).toContain('Compacting');
   });
@@ -183,8 +207,10 @@ describe('MessageList streaming', () => {
   it('text_delta accumulates and renders', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.textDelta('Hello'));
-    await claude.emit(s.textDelta(' world'));
+    await act(async () => {
+      await claude.emit(s.textDelta('Hello'));
+      await claude.emit(s.textDelta(' world'));
+    });
 
     expect(await screen.findByText(/Hello world/)).toBeInTheDocument();
   });
@@ -192,8 +218,10 @@ describe('MessageList streaming', () => {
   it('thinking_delta accumulates and renders', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.thinkingDelta('Let me'));
-    await claude.emit(s.thinkingDelta(' think about this'));
+    await act(async () => {
+      await claude.emit(s.thinkingDelta('Let me'));
+      await claude.emit(s.thinkingDelta(' think about this'));
+    });
 
     expect(await screen.findByText(/Let me think about this/)).toBeInTheDocument();
   });
@@ -201,10 +229,12 @@ describe('MessageList streaming', () => {
   it('message_end finalizes streaming, next delta starts new message', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.textDelta('First message'));
-    await claude.emit(s.messageStop());
-    await claude.emit(s.textDelta('Second message'));
-    await claude.emit(s.messageStop());
+    await act(async () => {
+      await claude.emit(s.textDelta('First message'));
+      await claude.emit(s.messageStop());
+      await claude.emit(s.textDelta('Second message'));
+      await claude.emit(s.messageStop());
+    });
     await emitAssistantTurn(claude, 'Second message');
 
     expect(await screen.findByText(/First message/)).toBeInTheDocument();
@@ -214,8 +244,10 @@ describe('MessageList streaming', () => {
   it('thinking_delta shows "Thinking..." while streaming', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.thinkingDelta('Let me'));
-    await claude.emit(s.thinkingDelta(' think'));
+    await act(async () => {
+      await claude.emit(s.thinkingDelta('Let me'));
+      await claude.emit(s.thinkingDelta(' think'));
+    });
 
     expect(await screen.findByText('Thinking...')).toBeInTheDocument();
   });
@@ -223,10 +255,12 @@ describe('MessageList streaming', () => {
   it('thinking shows "Thought for Xs" after result arrives', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.thinkingDelta('Let me think'));
-    await claude.emit(s.thinking('Let me think'));
-    await claude.emit(s.assistant('answer'));
-    await claude.emit(s.result({ durationMs: 3000 }));
+    await act(async () => {
+      await claude.emit(s.thinkingDelta('Let me think'));
+      await claude.emit(s.thinking('Let me think'));
+      await claude.emit(s.assistant('answer'));
+      await claude.emit(s.result({ durationMs: 3000 }));
+    });
 
     expect(await screen.findByText('Thought for 3s')).toBeInTheDocument();
   });
@@ -234,9 +268,11 @@ describe('MessageList streaming', () => {
   it('thinking_delta followed by thinking does not duplicate', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.thinkingDelta('Let me'));
-    await claude.emit(s.thinkingDelta(' think...'));
-    await claude.emit(s.thinking('Let me think...'));
+    await act(async () => {
+      await claude.emit(s.thinkingDelta('Let me'));
+      await claude.emit(s.thinkingDelta(' think...'));
+      await claude.emit(s.thinking('Let me think...'));
+    });
     await emitAssistantTurn(claude, 'ok');
 
     const thinkElements = screen.queryAllByText(/Let me think\.\.\./);
@@ -246,11 +282,13 @@ describe('MessageList streaming', () => {
   it('assistant replay after text_delta does not duplicate', async () => {
     const { claude } = await setup();
     await userEvent.click(screen.getByText('TriggerSend'));
-    await claude.emit(s.textDelta('hello'));
-    await claude.emit(s.textDelta(' world'));
-    await claude.emit(s.assistant('hello world'));
-    await claude.emit(s.messageStop());
-    await claude.emit(s.result());
+    await act(async () => {
+      await claude.emit(s.textDelta('hello'));
+      await claude.emit(s.textDelta(' world'));
+      await claude.emit(s.assistant('hello world'));
+      await claude.emit(s.messageStop());
+      await claude.emit(s.result());
+    });
 
     const matches = screen.queryAllByText(/hello world/);
     expect(matches).toHaveLength(1);

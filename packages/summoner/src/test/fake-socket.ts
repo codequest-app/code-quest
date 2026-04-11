@@ -16,6 +16,8 @@ export function createFakeSocket() {
 
   // Track last handler Promise for send() to await
   let _lastHandlerPromise: Promise<unknown> | null = null;
+  type AnyFn = (...args: unknown[]) => unknown;
+  const _wrapperMap = new WeakMap<AnyFn, AnyFn>();
 
   const serverSocket = {
     id: socketId,
@@ -30,14 +32,12 @@ export function createFakeSocket() {
         const result = fn(...args);
         _lastHandlerPromise = result instanceof Promise ? result : Promise.resolve(result);
       };
-      // biome-ignore lint/suspicious/noExplicitAny: attaching metadata to wrapper
-      (wrapped as any)._original = fn;
+      _wrapperMap.set(fn, wrapped);
       serverEmitter.on(event, wrapped);
       return serverSocket;
     },
     off(event: string, fn: (...args: unknown[]) => void) {
-      const listeners = serverEmitter.listeners(event);
-      const wrapped = listeners.find((l) => (l as { _original?: unknown })._original === fn);
+      const wrapped = _wrapperMap.get(fn);
       serverEmitter.off(event, (wrapped ?? fn) as (...args: unknown[]) => void);
       return serverSocket;
     },
@@ -92,3 +92,5 @@ export function createFakeSocket() {
 
   return socket;
 }
+
+export type FakeSocket = ReturnType<typeof createFakeSocket>;

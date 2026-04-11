@@ -44,6 +44,23 @@ describe('ChannelEmitter', () => {
     });
   });
 
+  describe('async handler error safety', () => {
+    it('catches errors from async handlers without unhandled rejection', async () => {
+      const emitter = new ChannelEmitter();
+      const error = new Error('async boom');
+      emitter.on('test:event', async () => {
+        throw error;
+      });
+
+      const ch = fakeChannel();
+      emitter.dispatch('test:event', ch, {});
+
+      // Give the microtask queue a tick so the promise rejection is handled
+      await new Promise((r) => setTimeout(r, 0));
+      // If we get here without unhandled rejection, the test passes
+    });
+  });
+
   describe('channel:exit dispatch', () => {
     it('dispatches to all exit handlers', () => {
       const emitter = new ChannelEmitter();

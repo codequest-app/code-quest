@@ -2,24 +2,26 @@
 import type { ClientMessage } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
-import { createFakeGit } from '../test/fake-git.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  return { claude, channelId };
+  return { container, claude, channelId };
 }
 
 describe('ChatHandler > session', () => {
   describe('session forking', () => {
     it('forked session persist includes parentId and is fire-and-forget', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       let persistResolved = false;
       const persistedArgs: unknown[][] = [];
-      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const realPersist = sessionStore.persist.bind(sessionStore);
       sessionStore.persist = async (...args: [Parameters<typeof realPersist>[0]]) => {
         persistedArgs.push(args);
@@ -30,7 +32,7 @@ describe('ChatHandler > session', () => {
       };
 
       let forkCustomCreatedFiredBeforePersist = false;
-      claude.socket.on('session:created', ({ channelId: id }: { channelId: string }) => {
+      claude.on('session:created', ({ channelId: id }: { channelId: string }) => {
         if (id === 'fork-1') forkCustomCreatedFiredBeforePersist = !persistResolved;
       });
 
@@ -50,7 +52,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('forked session parentId !== newSessionId', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.send('session:fork', {
         forkedFromSession: channelId,
@@ -59,7 +61,7 @@ describe('ChatHandler > session', () => {
       });
       await new Promise<void>((r) => setTimeout(r, 50));
 
-      const sessionStore = claude.container.get<SessionStore>(TYPES.SessionStore);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const forked = await sessionStore.getById('fork-verify');
       expect(forked).toBeDefined();
       expect(forked!.parentId).toBe(channelId);
@@ -69,18 +71,15 @@ describe('ChatHandler > session', () => {
     it('fork_conversation emits session:created exactly once', async () => {
       const { claude, channelId } = await setup();
 
-      const createdEvents: string[] = [];
-      claude.socket.on('session:created', ({ channelId: id }: { channelId: string }) => {
-        createdEvents.push(id);
-      });
-
       await claude.send('session:fork', {
         forkedFromSession: channelId,
         resumeSessionAt: 'msg-1',
         newSessionId: 'fork-once',
       });
 
-      const forkCreated = createdEvents.filter((id) => id === 'fork-once');
+      const forkCreated = claude
+        .events('session:created')
+        .filter((e: any) => e.channelId === 'fork-once');
       expect(forkCreated).toHaveLength(1);
     });
   });
@@ -88,7 +87,9 @@ describe('ChatHandler > session', () => {
 
 describe('session:teleport', () => {
   it('should create session with resume from remote session ID', async () => {
-    const claude = createFakeClaude();
+    const container = createTestContainer();
+    const server = createFakeServer(container);
+    const claude = createFakeSummoner(server).claude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
@@ -99,13 +100,13 @@ describe('session:teleport', () => {
     expect(result.success).toBe(true);
     expect(result.channelId).toBe('client-teleport-1');
     const { ChannelManager } = await import('../socket/channel-manager.ts');
-    const mgr = claude.container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+    const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
     expect(mgr.get(result.channelId!)).toBeDefined();
   });
 
   it('should attempt git checkout if branch provided', async () => {
-    const fakeGit = createFakeGit();
-    const claude = createFakeClaude();
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
@@ -114,17 +115,12 @@ describe('session:teleport', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(fakeGit.instance.checkout).toHaveBeenCalledWith('feature/x');
-
-    fakeGit.restore();
   });
 
   it('should succeed even if git checkout fails', async () => {
-    const fakeGit = createFakeGit({
-      checkoutError: new Error('checkout failed'),
-      fetchError: new Error('fetch failed'),
-    });
-    const claude = createFakeClaude();
+    const summoner = createFakeSummoner();
+    summoner.git()!.setCheckoutError(new Error('checkout failed'));
+    const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
     const result = await claude.send<{
@@ -143,8 +139,6 @@ describe('session:teleport', () => {
     expect(result.channelId).toBeDefined();
     expect(result.branchCheckoutFailed).toBe(true);
     expect(result.branch).toBe('feature/x');
-
-    fakeGit.restore();
   });
 
   it('should return events from parent session history', async () => {

@@ -2,7 +2,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { MCPPanel } from '../MCPPanel';
@@ -21,11 +21,14 @@ interface McpSetupOptions {
 }
 
 async function setupPipeline(opts?: McpSetupOptions) {
-  const claude = createFakeClaude();
-  claude.prepareInit(
-    s.init(uniqueSession(), opts?.mcpServers ? { mcpServers: opts.mcpServers } : {}),
-  );
-  return renderWithWorkspace({ claude });
+  const summoner = createFakeSummoner();
+  summoner
+    .claude()
+    .prepareInit(s.init(uniqueSession(), opts?.mcpServers ? { mcpServers: opts.mcpServers } : {}));
+  const result = await renderWithWorkspace({ summoner });
+  const project = await result.addProject();
+  await project.launchSession();
+  return result;
 }
 
 async function setupWithTurn(opts?: McpSetupOptions) {

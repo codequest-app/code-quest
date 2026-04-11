@@ -83,7 +83,9 @@ describe('ComposeToolbar', () => {
     });
 
     it('uses contextUsage percentage when available', async () => {
-      const { claude, user } = await renderWithWorkspace();
+      const { claude, user, addProject } = await renderWithWorkspace();
+      const project = await addProject();
+      await project.launchSession();
 
       claude.onControlRequest((req) => {
         if (req.subtype === 'get_context_usage') {

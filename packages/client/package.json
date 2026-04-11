@@ -19,6 +19,8 @@
   "dependencies": {
     "@code-quest/shared": "workspace:*",
     "@floating-ui/react": "^0.27.19",
+    "@headless-tree/core": "^1.6.3",
+    "@headless-tree/react": "^1.6.3",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-popover": "^1.1.15",
@@ -62,6 +64,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "babel-plugin-react-compiler": "19.1.0-rc.3",
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^1.2.1",
     "@vitest/ui": "^1.2.1",

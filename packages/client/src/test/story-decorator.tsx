@@ -8,7 +8,6 @@ import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
 import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
-import { GitProvider } from '../contexts/GitContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
@@ -94,9 +93,7 @@ function StoryProviders({
         resetStreamingRefs={() => resetStreamingRefsRef.current()}
       >
         <ChannelConfigProvider channelId={STORY_CHANNEL_ID} initialConfig={config}>
-          <ChannelComposeProvider channelId={STORY_CHANNEL_ID}>
-            <GitProvider>{children}</GitProvider>
-          </ChannelComposeProvider>
+          <ChannelComposeProvider channelId={STORY_CHANNEL_ID}>{children}</ChannelComposeProvider>
         </ChannelConfigProvider>
       </ChannelControlProvider>
     </ChannelMessagesProvider>

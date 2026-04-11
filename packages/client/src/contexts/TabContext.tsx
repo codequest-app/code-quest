@@ -1,13 +1,6 @@
-import {
-  initResponseSchema,
-  type SessionStateSummary,
-  sessionCreatedPayloadSchema,
-  sessionDeadPayloadSchema,
-  sessionResumePayloadSchema,
-} from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import type { SessionStateSummary } from '@code-quest/shared';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
-import { useSocket } from './SocketContext';
 
 export interface TabMeta {
   title?: string;
@@ -15,54 +8,66 @@ export interface TabMeta {
   cwd?: string;
 }
 
-interface TabState {
+// ── State context (changes frequently) ──
+
+export interface TabStateValue {
   tabs: Record<string, TabMeta>;
   activeTabId: string | null;
 }
 
-export interface TabContextValue {
-  tabs: Record<string, TabMeta>;
-  activeTabId: string | null;
-  addTab: (id: string) => void;
+const TabStateContext = createContext<TabStateValue | null>(null);
+
+export function useTabState(): TabStateValue {
+  const ctx = useContext(TabStateContext);
+  if (!ctx) throw new Error('useTabState must be used within a TabProvider');
+  return ctx;
+}
+
+// ── Actions context (stable references) ──
+
+export interface TabActionsValue {
+  addTab: (id: string, cwd?: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string) => void;
-  syncFromServer: (sessions: SessionStateSummary[]) => void;
 }
 
-const TabContext = createContext<TabContextValue | null>(null);
+const TabActionsContext = createContext<TabActionsValue | null>(null);
 
-export function useTab(): TabContextValue {
-  const ctx = useContext(TabContext);
-  if (!ctx) throw new Error('useTab must be used within a TabProvider');
+export function useTabActions(): TabActionsValue {
+  const ctx = useContext(TabActionsContext);
+  if (!ctx) throw new Error('useTabActions must be used within a TabProvider');
   return ctx;
 }
 
+// ── Provider ──
+
 const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
+const TERMINAL_STATES = new Set(['exited', 'disconnected']);
 
 export function TabProvider({
   children,
   initialState,
-  defaultCwd = '../',
+  sessions,
+  cwd,
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
-  defaultCwd?: string;
+  sessions?: SessionStateSummary[];
+  cwd?: string;
 }) {
-  const [state, setState] = useState<TabState>(() => ({
+  const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
     activeTabId: initialState?.activeTabId ?? null,
   }));
 
-  const { socket } = useSocket();
-
-  const addTab = (id: string) => {
+  const addTab = (id: string, cwd?: string) => {
     setState((prev) => {
       if (id in prev.tabs) return prev;
-      const tabs = { ...prev.tabs, [id]: DEFAULT_META };
+      const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
       return { tabs, activeTabId: prev.activeTabId ?? id };
     });
   };
@@ -102,26 +107,12 @@ export function TabProvider({
 
   const createNewTab = (opts?: { cwd?: string }): { channelId: string } => {
     const channelId = crypto.randomUUID();
-    const tabCwd = opts?.cwd ?? defaultCwd;
+    const tabCwd = opts?.cwd ?? cwd;
     setState((prev) => ({
       tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
       activeTabId: channelId,
     }));
     return { channelId };
-  };
-
-  const syncFromServer = (sessions: SessionStateSummary[]) => {
-    setState((prev) => {
-      const next: Record<string, TabMeta> = {};
-      for (const s of sessions) {
-        next[s.channelId] = prev.tabs[s.channelId] ?? { ...DEFAULT_META };
-      }
-      const activeTabId =
-        prev.activeTabId && prev.activeTabId in next
-          ? prev.activeTabId
-          : (sessions[0]?.channelId ?? null);
-      return { tabs: next, activeTabId };
-    });
   };
 
   const replaceActiveTab = (newChannelId: string) => {
@@ -135,76 +126,45 @@ export function TabProvider({
     });
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: actions stable via React Compiler
+  const actions: TabActionsValue = {
+    addTab,
+    removeTab,
+    setActiveTab,
+    setTabTitle,
+    setTabStatus,
+    createNewTab,
+    replaceActiveTab,
+  };
+
+  // Sync tabs from sessions prop (incremental diff)
+  const prevSessionIds = useRef<Set<string>>(new Set());
+  // biome-ignore lint/correctness/useExhaustiveDependencies: addTab/removeTab/replaceActiveTab only call setState — deps are intentionally limited to sessions to avoid re-running the diff on every render
   useEffect(() => {
-    const onConnect = initialState
-      ? undefined
-      : () => {
-          socket.emit('app:init', (raw) => {
-            const parsed = initResponseSchema.safeParse(raw);
-            if (parsed.success) {
-              syncFromServer(parsed.data.sessions);
-            }
-          });
-        };
+    if (!sessions) return;
+    const currentIds = new Set(sessions.map((s) => s.channelId));
+    const added = sessions.filter(
+      (s) => !prevSessionIds.current.has(s.channelId) && !TERMINAL_STATES.has(s.state),
+    );
+    const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
 
-    const onCreated = (raw: unknown) => {
-      const parsed = sessionCreatedPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      addTab(parsed.data.channelId);
-    };
-
-    const onDead = (raw: unknown) => {
-      const parsed = sessionDeadPayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      removeTab(parsed.data.channelId);
-    };
-
-    const onResume = (raw: unknown) => {
-      const parsed = sessionResumePayloadSchema.safeParse(raw);
-      if (!parsed.success) return;
-      replaceActiveTab(parsed.data.channelId);
-    };
-
-    if (onConnect) {
-      socket.on('connect', onConnect);
-      if (socket.connected) onConnect();
+    if (added.length === 1 && removed.length === 1) {
+      replaceActiveTab(added[0].channelId);
+    } else {
+      for (const s of added) {
+        addTab(s.channelId);
+      }
+      for (const id of removed) {
+        removeTab(id);
+      }
     }
-    socket.on('session:created', onCreated);
-    socket.on('session:dead', onDead);
-    socket.on('session:resume', onResume);
+    prevSessionIds.current = currentIds;
+  }, [sessions]);
 
-    return () => {
-      if (onConnect) socket.off('connect', onConnect);
-      socket.off('session:created', onCreated);
-      socket.off('session:dead', onDead);
-      socket.off('session:resume', onResume);
-    };
-  }, [socket, initialState]);
-
-  // Document title side effect
-  const activeMeta = state.activeTabId ? state.tabs[state.activeTabId] : undefined;
-  useEffect(() => {
-    const isBusy = activeMeta?.tabStatus === 'processing' || activeMeta?.tabStatus === 'busy';
-    document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
-  }, [activeMeta?.tabStatus]);
+  const stateValue: TabStateValue = { tabs: state.tabs, activeTabId: state.activeTabId };
 
   return (
-    <TabContext.Provider
-      value={{
-        tabs: state.tabs,
-        activeTabId: state.activeTabId,
-        addTab,
-        removeTab,
-        setActiveTab,
-        setTabTitle,
-        setTabStatus,
-        createNewTab,
-        replaceActiveTab,
-        syncFromServer,
-      }}
-    >
-      {children}
-    </TabContext.Provider>
+    <TabStateContext.Provider value={stateValue}>
+      <TabActionsContext.Provider value={actions}>{children}</TabActionsContext.Provider>
+    </TabStateContext.Provider>
   );
 }

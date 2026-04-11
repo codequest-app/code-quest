@@ -1,8 +1,10 @@
-import { renderHook, screen } from '@testing-library/react';
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
+import { act, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeClaude } from '../../test/fake-claude';
+import { MessageList } from '../../components/MessageList';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { useChannelMessages } from '../channel';
@@ -145,7 +147,9 @@ describe('ChannelContext', () => {
 
   describe('launch mode', () => {
     it('launch creates session and renders channel content', async () => {
-      const { channelId } = await renderWithWorkspace();
+      const { addProject } = await renderWithWorkspace();
+      const project = await addProject();
+      const channelId = await project.launchSession();
 
       // Session created on server (channelId returned)
       expect(channelId).toBeTruthy();
@@ -154,56 +158,73 @@ describe('ChannelContext', () => {
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
-    it('launch failure does not freeze on Connecting screen', async () => {
-      const claude = createFakeClaude();
-      // Prepare an error response for session:launch
-      claude.prepareInit();
-      const origEmit = claude.socket.emit.bind(claude.socket);
-      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+    it('launch failure shows error UI with retry button', async () => {
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
+      // Intercept session:launch to return error
+      const origEmit = summoner.socket.emit.bind(summoner.socket);
+      // @ts-expect-error — intercepting FakeSocket.emit to simulate server error
+      summoner.socket.emit = (event: string, ...args: unknown[]) => {
         if (event === 'session:launch') {
           const cb = args[args.length - 1];
           if (typeof cb === 'function') cb({ error: 'CLI not found' });
-          return claude.socket;
+          return summoner.socket;
         }
-        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
-      }) as typeof claude.socket.emit;
+        return origEmit(event, ...args);
+      };
 
       await renderWithChannel(<span data-testid="content">loaded</span>, {
-        claude,
+        summoner,
         cwd: '/bad/path',
         skipInit: true,
       });
 
-      // Should not stay on "Connecting…" forever — should render children
-      expect(await screen.findByTestId('content', {}, { timeout: 3000 })).toBeInTheDocument();
+      // Should show error, not children or spinner
+      expect(
+        await screen.findByText(/Failed to connect/, {}, { timeout: 3000 }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+      expect(screen.queryByTestId('content')).not.toBeInTheDocument();
+    });
+
+    it('join failure shows error message in message list', async () => {
+      const channelId = crypto.randomUUID();
+
+      await renderWithChannel(<MessageList />, { channelId, skipInit: true });
+
+      // FakeServer returns { error: "Session not found" } for non-existent channelId
+      expect(await screen.findByText(/Session not found/i)).toBeInTheDocument();
     });
 
     it('join failure still allows session:states processing', async () => {
-      const claude = createFakeClaude();
-      claude.prepareInit();
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
       const channelId = crypto.randomUUID();
 
-      // Mock session:join to return error
-      const origEmit = claude.socket.emit.bind(claude.socket);
-      claude.socket.emit = ((event: string, ...args: unknown[]) => {
+      // Intercept session:join to return error
+      const origEmit = summoner.socket.emit.bind(summoner.socket);
+      // @ts-expect-error — intercepting FakeSocket.emit to simulate server error
+      summoner.socket.emit = (event: string, ...args: unknown[]) => {
         if (event === 'session:join') {
           const cb = args[args.length - 1];
           if (typeof cb === 'function') cb({ error: 'Session not found' });
-          return claude.socket;
+          return summoner.socket;
         }
-        return (origEmit as (...a: unknown[]) => unknown)(event, ...args);
-      }) as typeof claude.socket.emit;
+        return origEmit(event, ...args);
+      };
 
       function StatusHarness() {
         const { isProcessing } = useChannelMessages();
         return <span data-testid="processing">{String(isProcessing)}</span>;
       }
 
-      await renderWithChannel(<StatusHarness />, { claude, channelId, skipInit: true });
+      await renderWithChannel(<StatusHarness />, { summoner, channelId, skipInit: true });
 
       // Push session:states busy — should not be blocked by joinedRef
-      await claude.pushServerEvent('session:states', {
-        sessions: [{ channelId, state: 'busy' }],
+      await act(async () => {
+        summoner.claude().pushServerEvent('session:states', {
+          sessions: [{ channelId, state: 'busy' }],
+        });
       });
 
       // If join failure blocks onSessionStates, processing stays false

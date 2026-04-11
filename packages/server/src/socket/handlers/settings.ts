@@ -10,22 +10,28 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 import { logger } from '../../logger.ts';
-import type { SettingsStore } from '../../services/settings-store.ts';
-import type { UsageTracker } from '../../services/usage-tracker.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
 
-export function create(
-  channelManager: ChannelManager,
-  settingsStore: SettingsStore,
-  usageTracker: UsageTracker,
-  emitter: ChannelEmitter,
-): void {
+const contextUsageSchema = z.object({
+  categories: z.unknown(),
+  totalTokens: z.number(),
+  maxTokens: z.number(),
+  percentage: z.number(),
+});
+
+export function create({
+  channelManager,
+  settingsStore,
+  usageTracker,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'>): void {
   async function handleSetModel(
     ch: Channel,
     payload: unknown,
@@ -95,7 +101,9 @@ export function create(
   function handleSetRemoteControl(ch: Channel, payload: unknown): void {
     try {
       const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
-      ch.sendRequest('settings:remote_control', { enabled }).catch(() => {});
+      ch.sendRequest('settings:remote_control', { enabled }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.warn({ err }, 'Failed to set remote control');
     }
@@ -157,14 +165,9 @@ export function create(
     if (channel) {
       try {
         const resp = await channel.sendRequest('settings:get_context_usage');
-        if (resp.response) {
-          const r = resp.response;
-          contextUsage = {
-            categories: r.categories,
-            totalTokens: r.totalTokens,
-            maxTokens: r.maxTokens,
-            percentage: r.percentage,
-          };
+        const parsed = contextUsageSchema.safeParse(resp.response);
+        if (parsed.success) {
+          contextUsage = parsed.data;
         }
       } catch (err) {
         logger.debug({ err }, 'CLI may not support get_context_usage');

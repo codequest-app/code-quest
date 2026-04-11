@@ -16,12 +16,16 @@ vi.mock('sonner', () => ({
 
 describe('SessionProvider (global config only)', () => {
   it('renders UI after connect and launch', async () => {
-    await renderWithWorkspace();
+    const { addProject: addProj } = await renderWithWorkspace();
+    const proj = await addProj();
+    await proj.launchSession();
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
   it('settings:update config updates are processed without crash', async () => {
-    const { claude, user } = await renderWithWorkspace();
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
     await sendUserMessage(user);
     await emitAssistantTurn(claude);
 
@@ -29,18 +33,24 @@ describe('SessionProvider (global config only)', () => {
   });
 
   it('experiment_gates event does not crash', async () => {
-    const { claude } = await renderWithWorkspace();
-    await claude.emit(s.experimentGates({ review_upsell: true }));
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+    await act(async () => {
+      await claude.emit(s.experimentGates({ review_upsell: true }));
+    });
 
     expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
   });
 
   it('disconnect shows toast warning', async () => {
     const mockedToast = vi.mocked(toast);
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
 
     await act(async () => {
-      claude.socket.disconnect();
+      claude.disconnect();
     });
 
     expect(mockedToast.warning).toHaveBeenCalledWith('Disconnected from server');
@@ -48,10 +58,12 @@ describe('SessionProvider (global config only)', () => {
 
   it('connect_error shows toast error', async () => {
     const mockedToast = vi.mocked(toast);
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
 
     // Manually invoke the connect_error listener registered by SessionContext
-    const listeners = claude.socket.listeners('connect_error');
+    const listeners = claude.listeners('connect_error');
     await act(async () => {
       for (const fn of listeners) (fn as (err: Error) => void)(new Error('Connection refused'));
     });
@@ -60,15 +72,17 @@ describe('SessionProvider (global config only)', () => {
   });
 
   it('does not crash on reconnect', async () => {
-    const { claude } = await renderWithWorkspace();
+    const { claude, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
 
     await act(async () => {
-      claude.socket.disconnect();
+      claude.disconnect();
     });
     await act(async () => {
-      claude.socket.connect();
+      claude.connect();
     });
 
-    expect(claude.socket.connected).toBe(true);
+    expect(claude.connected).toBe(true);
   });
 });

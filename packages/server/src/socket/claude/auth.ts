@@ -3,14 +3,16 @@ import {
   loginPayloadSchema,
   oauthCodePayloadSchema,
 } from '@code-quest/shared';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import type { ChannelEmitter } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { claudeState, setAuthState } from './state.ts';
 
-export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
+export function create({
+  channelManager,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'emitter'>): void {
   function handleStatus(
     _ch: Channel | null,
     _payload: unknown,

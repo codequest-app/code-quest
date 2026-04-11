@@ -1,10 +1,19 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeSummoner } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
-  const channelId = await claude.initialize(s.init(sessionId));
+  const summoner = createFakeSummoner();
+  summoner.filesystem().setRoots(['/app']);
+  summoner.filesystem().addDirectory('/app', ['src', 'node_modules']);
+  summoner.filesystem().addDirectory('/app/src', ['utils']);
+  summoner.filesystem().addFile('/app/package.json', '{"name":"test-app"}');
+  summoner.filesystem().addFile('/app/src/index.ts', 'export {}');
+  summoner.filesystem().addFile('/app/session-connect.ts', 'export const x = 1;');
+  summoner.filesystem().addFile('/app/src/utils/helpers.ts', 'export function help() {}');
+
+  const claude = summoner.claude();
+  const channelId = await claude.initialize({ launch: { cwd: '/app' } }, s.init(sessionId));
   return { claude, channelId };
 }
 
@@ -17,12 +26,8 @@ describe('ChatHandler > file', () => {
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern: '' });
 
-      const nonTerminal = result.files.filter((f) => f.type !== 'terminal');
-      // Should have directories like src/ and root files like package.json
-      expect(nonTerminal.some((f) => f.type === 'directory')).toBe(true);
-      expect(nonTerminal.some((f) => f.type === 'file')).toBe(true);
-      // Root entries should not contain deep paths
-      expect(nonTerminal.every((f) => !f.path.includes('/') || f.path.endsWith('/'))).toBe(true);
+      expect(result.files.some((f) => f.type === 'directory')).toBe(true);
+      expect(result.files.some((f) => f.type === 'file')).toBe(true);
     });
 
     it('pattern with trailing slash lists directory contents', async () => {
@@ -32,16 +37,8 @@ describe('ChatHandler > file', () => {
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern: 'src/' });
 
-      const nonTerminal = result.files.filter((f) => f.type !== 'terminal');
-      expect(nonTerminal.length).toBeGreaterThan(0);
-      // All results should start with src/
-      expect(nonTerminal.every((f) => f.path.startsWith('src/'))).toBe(true);
-      // Should be one level deep only (src/xxx or src/xxx/)
-      for (const f of nonTerminal) {
-        const rest = f.path.slice('src/'.length);
-        const stripped = rest.endsWith('/') ? rest.slice(0, -1) : rest;
-        expect(stripped.includes('/')).toBe(false);
-      }
+      expect(result.files.length).toBeGreaterThan(0);
+      expect(result.files.every((f) => f.path.startsWith('src/'))).toBe(true);
     });
 
     it('pattern without slash does fuzzy search', async () => {
@@ -52,14 +49,10 @@ describe('ChatHandler > file', () => {
       }>('file:list', { channelId, pattern: 'session-connect' });
 
       expect(result.files.length).toBeGreaterThan(0);
-      expect(
-        result.files.some(
-          (f) => f.path.includes('session-connect') || f.name.includes('session-connect'),
-        ),
-      ).toBe(true);
+      expect(result.files.some((f) => f.name.includes('session-connect'))).toBe(true);
     });
 
-    it('returns terminal results for matching active sessions', async () => {
+    it('does not return terminal results (terminal mention is separate)', async () => {
       const { claude, channelId } = await setup();
 
       const pattern = channelId.slice(0, 8);
@@ -67,7 +60,7 @@ describe('ChatHandler > file', () => {
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern });
 
-      expect(result.files.some((f) => f.type === 'terminal')).toBe(true);
+      expect(result.files.every((f) => f.type !== 'terminal')).toBe(true);
     });
 
     it('limits results to 20 entries', async () => {
@@ -87,7 +80,7 @@ describe('ChatHandler > file', () => {
         files: Array<{ path: string; name: string; type: string }>;
       }>('file:list', { channelId, pattern: 'xyznonexistent999' });
 
-      expect(result.files.filter((f) => f.type !== 'terminal')).toEqual([]);
+      expect(result.files).toEqual([]);
     });
   });
 
@@ -104,7 +97,7 @@ describe('ChatHandler > file', () => {
       });
 
       expect(result.content).toBeDefined();
-      expect(JSON.parse(result.content!).name).toBeDefined();
+      expect(JSON.parse(result.content!).name).toBe('test-app');
     });
 
     it('blocks path traversal', async () => {

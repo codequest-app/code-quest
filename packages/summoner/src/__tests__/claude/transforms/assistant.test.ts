@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { segments as s } from '../../../test/fake-claude.ts';
+import { segments as s } from '../../../test/segments.ts';
 import { toClientMessage } from '../helpers.ts';
 
 describe('transform — assistant events', () => {

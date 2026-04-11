@@ -1,52 +1,84 @@
-import { ChannelProvider } from '../contexts/channel';
-import { useSession } from '../contexts/SessionContext';
-import { useTab } from '../contexts/TabContext';
-import { ChatPanel } from './ChatPanel';
-import { TabBar } from './TabBar';
+import { useEffect, useState } from 'react';
+import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
+import { TabProvider } from '../contexts/TabContext';
+import { ActivityBar } from './ActivityBar';
+import { AddProjectDialog } from './AddProjectDialog';
+import { EditorArea } from './EditorArea';
+import { EmptyState } from './EmptyState';
+import { ProjectList } from './ProjectList';
+
+const SIDEBAR_ITEMS = [{ id: 'projects', icon: '📋', title: 'Projects' }];
+function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
+  const isBusy = sessions.some((s) => s.state === 'busy');
+  useEffect(() => {
+    document.title = isBusy ? '⟳ Code Quest' : 'Code Quest';
+  }, [isBusy]);
+  return null;
+}
+
+const SIDEBAR_WIDTH = 260;
 
 export function WorkspaceLayout() {
-  const { activeTabId, tabs, setActiveTab, removeTab, createNewTab, setTabTitle, setTabStatus } =
-    useTab();
-  const { closeSession } = useSession();
+  const [activePanel, setActivePanel] = useState<string | null>('projects');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { projects, activeProjectCwd, sessions } = useProjectState();
+  const { addProject, setActiveProject } = useProjectActions();
 
-  const handleCloseTab = (id: string) => {
-    closeSession(id);
-    removeTab(id);
-  };
-  const tabIds = Object.keys(tabs);
-
-  const openTabs = Object.entries(tabs).map(([id, meta]) => ({
-    sessionId: id,
-    title: meta.title,
-    status: meta.tabStatus,
-  }));
+  function handleAddProject(cwd: string) {
+    addProject(cwd);
+    setDialogOpen(false);
+  }
 
   return (
-    <>
-      <TabBar
-        tabs={openTabs}
-        activeTabId={activeTabId}
-        onSelectTab={setActiveTab}
-        onCloseTab={handleCloseTab}
-        onNewTab={() => createNewTab()}
-      />
-      <div className="flex flex-1 overflow-hidden relative">
-        {tabIds.map((id) => (
-          <div key={id} className={id === activeTabId ? 'flex flex-1' : 'hidden'}>
-            <ChannelProvider
-              channelId={id}
-              cwd={tabs[id]?.cwd}
-              onChange={(update) => {
-                if (update.title) setTabTitle(id, update.title);
-                if (update.status) setTabStatus(id, update.status);
-              }}
-              onNewChannel={(cwd) => createNewTab({ cwd })}
+    <div className="flex flex-1 overflow-hidden">
+      <DocumentTitle sessions={sessions} />
+      {projects.length === 0 ? (
+        <EmptyState
+          icon="📁"
+          message="No projects yet"
+          actionLabel="＋ Add Project"
+          onAction={() => setDialogOpen(true)}
+          testId="empty-add-project"
+        />
+      ) : (
+        <>
+          <ActivityBar items={SIDEBAR_ITEMS} activePanel={activePanel} onToggle={setActivePanel} />
+          {activePanel && (
+            <div
+              className="h-full overflow-auto border-r border-border bg-surface shrink-0"
+              style={{ width: SIDEBAR_WIDTH }}
+              data-testid="sidebar-panel"
             >
-              <ChatPanel title={tabs[id]?.title} />
-            </ChannelProvider>
+              <ProjectList
+                projects={projects}
+                activeProjectCwd={activeProjectCwd}
+                onSelect={setActiveProject}
+                onAdd={() => setDialogOpen(true)}
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0 flex h-full">
+            {projects.map((project) => (
+              <div
+                key={project.cwd}
+                className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
+              >
+                <TabProvider
+                  sessions={sessions.filter((s) => s.cwd === project.cwd)}
+                  cwd={project.cwd}
+                >
+                  <EditorArea />
+                </TabProvider>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </>
+        </>
+      )}
+      <AddProjectDialog
+        open={dialogOpen}
+        onSelect={handleAddProject}
+        onClose={() => setDialogOpen(false)}
+      />
+    </div>
   );
 }

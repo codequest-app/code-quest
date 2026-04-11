@@ -76,7 +76,14 @@ export {
   type GetClaudeStateResponse,
   getClaudeStateResponseSchema,
 } from './control-response.ts';
-
+export {
+  type ExplorerBrowsePayload,
+  type ExplorerBrowseResponse,
+  type ExplorerDirectory,
+  explorerBrowsePayloadSchema,
+  explorerBrowseResponseSchema,
+  explorerDirectorySchema,
+} from './explorer.ts';
 export {
   type FileListPayload,
   type FileReadPayload,

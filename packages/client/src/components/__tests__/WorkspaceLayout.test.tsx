@@ -1,107 +1,120 @@
-import { render, screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PluginProvider } from '../../contexts/PluginContext';
-import { SessionProvider } from '../../contexts/SessionContext';
-import { SocketProvider } from '../../contexts/SocketContext';
-import type { TabMeta } from '../../contexts/TabContext';
-import { TabProvider } from '../../contexts/TabContext';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
-import { createFakeClaude } from '../../test/fake-claude';
-import { WorkspaceLayout } from '../WorkspaceLayout';
-
-vi.mock('../../contexts/channel', () => ({
-  ChannelProvider: ({ channelId, children }: { channelId?: string; children: React.ReactNode }) => (
-    <div data-channel-id={channelId ?? ''}>{children}</div>
-  ),
-}));
-
-vi.mock('../ChatPanel', () => ({
-  ChatPanel: () => <div data-testid="chat-panel" />,
-}));
-
-function renderLayout(opts?: { tabs?: Record<string, TabMeta>; activeTabId?: string | null }) {
-  const { socket } = createFakeClaude();
-  const initialState = opts
-    ? { tabs: opts.tabs ?? {}, activeTabId: opts.activeTabId ?? null }
-    : undefined;
-  return render(
-    <SocketProvider socket={socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <TabProvider initialState={initialState}>
-            <WorkspaceLayout />
-          </TabProvider>
-        </PluginProvider>
-      </SessionProvider>
-    </SocketProvider>,
-  );
-}
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  type RenderWithWorkspaceResult,
+  renderWithWorkspace,
+} from '../../test/render-with-workspace';
 
 describe('WorkspaceLayout', () => {
-  beforeEach(() => {
-    usePreferencesStore.setState({ isOnboardingDismissed: true });
+  let result: RenderWithWorkspaceResult;
+
+  beforeEach(async () => {
+    result = await renderWithWorkspace();
   });
 
-  it('renders a ChannelProvider per tab with ChatPanel inside', () => {
-    renderLayout({
-      tabs: { 'sess-a': { tabStatus: 'idle' } },
-      activeTabId: 'sess-a',
+  it('shows only EmptyState when no projects exist — no sidebar or tab bar', () => {
+    expect(screen.getByTestId('empty-add-project')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Esc to focus/i)).not.toBeInTheDocument();
+  });
+
+  describe('with project', () => {
+    beforeEach(async () => {
+      const project = await result.addProject();
+      await project.launchSession();
     });
 
-    const panel = screen.getByTestId('chat-panel');
-    expect(panel.parentElement).toHaveAttribute('data-channel-id', 'sess-a');
-  });
-
-  it('renders one ChannelProvider per tab with CSS show/hide', () => {
-    renderLayout({
-      tabs: {
-        'sess-a': { tabStatus: 'idle' },
-        'sess-b': { tabStatus: 'idle' },
-      },
-      activeTabId: 'sess-a',
+    it('renders a tab with ChatPanel inside', () => {
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
     });
 
-    const providers = screen.getAllByTestId('chat-panel');
-    expect(providers).toHaveLength(2);
+    it('renders two tabs with CSS show/hide', async () => {
+      await result.user.click(screen.getByLabelText('New tab'));
 
-    const sessA = providers.find(
-      (el) => el.parentElement?.getAttribute('data-channel-id') === 'sess-a',
-    );
-    const sessB = providers.find(
-      (el) => el.parentElement?.getAttribute('data-channel-id') === 'sess-b',
-    );
-    expect(sessA?.closest('[data-channel-id]')?.parentElement).not.toHaveClass('hidden');
-    expect(sessB?.closest('[data-channel-id]')?.parentElement).toHaveClass('hidden');
-  });
-
-  it('renders no panels when there are no tabs', () => {
-    renderLayout();
-
-    expect(screen.queryByTestId('chat-panel')).not.toBeInTheDocument();
-  });
-
-  it('renders TabBar above workspace panels', () => {
-    renderLayout({
-      tabs: { 'sess-a': { tabStatus: 'idle' } },
-      activeTabId: 'sess-a',
+      const closeButtons = screen.getAllByLabelText(/^Close /);
+      expect(closeButtons).toHaveLength(2);
     });
 
-    expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
-  });
-
-  it('close tab removes tab from UI', async () => {
-    renderLayout({
-      tabs: {
-        'sess-a': { tabStatus: 'idle' },
-        'sess-b': { tabStatus: 'idle' },
-      },
-      activeTabId: 'sess-a',
+    it('renders TabBar above workspace panels', () => {
+      expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByLabelText('Close sess-b'));
-    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+    it('renders ActivityBar with explorer icon', () => {
+      expect(screen.getByTitle('Projects')).toBeInTheDocument();
+    });
 
-    expect(screen.queryByLabelText('Close sess-b')).not.toBeInTheDocument();
+    it('toggles sidebar when clicking ActivityBar icon', async () => {
+      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByTitle('Projects'));
+      expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByTitle('Projects'));
+      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+    });
+
+    it('sidebar shows project list by default', () => {
+      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+    });
+
+    it('close tab removes tab from UI', async () => {
+      // Create second tab
+      await result.user.click(screen.getByLabelText('New tab'));
+      const closeButtons = screen.getAllByLabelText(/^Close /);
+      expect(closeButtons).toHaveLength(2);
+
+      // Close second tab
+      await result.user.click(closeButtons[1]);
+      await result.user.click(screen.getByRole('button', { name: /close/i }));
+
+      expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
+    });
+
+    it('shows empty state after closing last tab', async () => {
+      // Close the only tab
+      await result.user.click(screen.getByLabelText(/^Close /));
+      await result.user.click(screen.getByRole('button', { name: /close/i }));
+
+      expect(screen.queryByPlaceholderText(/Esc to focus/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/No open sessions/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('multi-project', () => {
+    beforeEach(async () => {
+      const project = await result.addProject();
+      await project.launchSession();
+    });
+
+    it('second project creates separate tab group', async () => {
+      // First tab is already in the default project
+      expect(screen.getAllByLabelText(/^Close /).length).toBe(1);
+
+      // Create second tab in same project
+      await result.user.click(screen.getByLabelText('New tab'));
+      expect(screen.getAllByLabelText(/^Close /).length).toBe(2);
+    });
+
+    it('renders per-project tabs when project has sessions', () => {
+      expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
+      expect(screen.getAllByLabelText(/^Close /).length).toBe(1);
+    });
+
+    it('switching project keeps both tab groups mounted', async () => {
+      const { user } = result;
+
+      // Add second project via addProject helper
+      result.claude.prepareInit();
+      const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
+
+      // Second project created — switch to it in sidebar
+      const sidebar = screen.getByTestId('sidebar-panel');
+      await user.click(within(sidebar).getByText(/other-project/));
+      await project2.launchSession();
+
+      // Both projects have ComposeInput rendered (one visible, one hidden)
+      expect(screen.getAllByPlaceholderText(/Esc to focus/i).length).toBe(2);
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { channelIdPayloadSchema } from '@code-quest/shared';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
 import type { ChannelManager } from '../channel-manager.ts';
@@ -67,7 +68,10 @@ function createMcpHandler(
   };
 }
 
-export function create(channelManager: ChannelManager, emitter: ChannelEmitter): void {
+export function create({
+  channelManager,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'emitter'>): void {
   emitter.on(
     'mcp:ensure_chrome',
     createMcpHandler(channelManager, emitter, {

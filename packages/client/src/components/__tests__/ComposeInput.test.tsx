@@ -2,6 +2,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { COMPOSE_PLACEHOLDER } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
@@ -37,26 +38,17 @@ describe('ComposeInput', () => {
     expect(textarea).toHaveValue('');
   });
 
-  it('textarea height resets immediately after submit (no flash of tall empty box)', async () => {
+  it('textarea height resets after submit (CSS grid trick auto-sizes via hidden mirror)', async () => {
     await renderWithChannel(<ComposeInput />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
 
-    // Simulate multi-line input that triggers autogrow
-    let mockScrollHeight = 150;
-    Object.defineProperty(textarea, 'scrollHeight', {
-      get: () => mockScrollHeight,
-      configurable: true,
-    });
     await userEvent.type(textarea, 'line1\nline2\nline3');
-    expect(textarea.style.height).toBe('150px');
+    expect(textarea).toHaveValue('line1\nline2\nline3');
 
-    // After submit, scrollHeight returns to single-line size
-    mockScrollHeight = 24;
     await userEvent.keyboard('{Enter}');
 
-    // With useLayoutEffect, height is reset before paint
-    // With useEffect, the old 150px would persist until next frame
-    expect(textarea.style.height).toBe('24px');
+    // After submit, value is cleared → mirror div shrinks → textarea shrinks
+    expect(textarea).toHaveValue('');
   });
 
   it('renders without error when no attachments', async () => {
@@ -99,23 +91,25 @@ describe('ComposeInput', () => {
     });
 
     it('selecting a file inserts @path and closes dropdown', async () => {
-      await renderWithChannel(<ComposeInput />);
+      const summoner = createFakeSummoner();
+      await renderWithChannel(<ComposeInput />, { summoner });
+
+      // Seed files at the channel's resolved cwd (server package dir)
+      const serverCwd = '/Users/user/WebstormProjects/cc-office/packages/server';
+      summoner.filesystem().addFile(`${serverCwd}/index.ts`, '');
+
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      await userEvent.type(textarea, '@');
+      await userEvent.type(textarea, '@index');
 
       await waitFor(() => {
         expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
       });
 
-      // Click the first file result
-      const items = screen.getAllByRole('option');
-      const fileItem = items.find((item) => !item.textContent?.includes('/'));
-      if (fileItem) {
-        await userEvent.click(fileItem);
-        expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
-        const val = (textarea as HTMLTextAreaElement).value;
-        expect(val).toContain('@');
-      }
+      const option = screen.getByRole('option');
+      await userEvent.click(option);
+
+      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect((textarea as HTMLTextAreaElement).value).toContain('@');
     });
   });
 });

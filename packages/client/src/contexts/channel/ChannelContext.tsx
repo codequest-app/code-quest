@@ -1,8 +1,8 @@
 import { sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { EmptyState } from '../../components/EmptyState';
 import { SpinnerVerb } from '../../components/SpinnerVerb';
 import type { ChannelChangeUpdate } from '../../types/chat';
-import { GitProvider } from '../GitContext';
 import { useSocket } from '../SocketContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
 import { ChannelConfigProvider } from './ChannelConfigContext';
@@ -10,6 +10,11 @@ import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
 
 // ── ChannelProvider (orchestrator) ──
+
+type ChannelState =
+  | { status: 'connecting' }
+  | { status: 'connected' }
+  | { status: 'error'; message: string };
 
 export function ChannelProvider({
   channelId,
@@ -28,27 +33,37 @@ export function ChannelProvider({
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
 
-  const [launched, setLaunched] = useState(!cwd);
-  useEffect(() => {
+  const [state, setState] = useState<ChannelState>(
+    cwd ? { status: 'connecting' } : { status: 'connected' },
+  );
+  const launchedRef = useRef(false);
+
+  function launch() {
     if (!cwd) return;
-    let cancelled = false;
+    launchedRef.current = true;
+    setState({ status: 'connecting' });
     socket.emit('session:launch', { channelId, cwd }, (raw: unknown) => {
-      if (cancelled) return;
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
-      if (!parsed.success || parsed.data.error) {
-        console.error('[session:launch] failed', parsed.success ? parsed.data.error : parsed.error);
-        setLaunched(true); // proceed despite failure — avoid infinite "Connecting…"
+      if (!parsed.success) {
+        setState({ status: 'error', message: 'Failed to connect' });
         return;
       }
-      setLaunched(true);
+      if (parsed.data.error) {
+        setState({ status: 'error', message: parsed.data.error });
+        return;
+      }
+      setState({ status: 'connected' });
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [channelId, cwd, socket]);
+  }
 
-  // ── Wait for launch to complete before rendering children ──
-  if (!launched) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable (only captures refs + setState), deps are channelId/cwd/socket
+  useEffect(() => {
+    if (!cwd || launchedRef.current) return;
+    launch();
+  }, [cwd]);
+
+  // ── Connecting ──
+  if (state.status === 'connecting') {
     return (
       <div className="flex flex-1 items-center justify-center">
         <SpinnerVerb verbs={['Connecting']} />
@@ -56,7 +71,22 @@ export function ChannelProvider({
     );
   }
 
-  // ── Full provider tree ──
+  // ── Error ──
+  if (state.status === 'error') {
+    return (
+      <EmptyState
+        icon="⚠"
+        message={state.message}
+        actionLabel="Retry"
+        onAction={() => {
+          launchedRef.current = false;
+          launch();
+        }}
+      />
+    );
+  }
+
+  // ── Connected — full provider tree ──
   return (
     <ChannelMessagesProvider
       channelId={channelId}
@@ -70,9 +100,7 @@ export function ChannelProvider({
         resetStreamingRefs={() => resetStreamingRefsRef.current()}
       >
         <ChannelConfigProvider channelId={channelId} onNewChannel={onNewChannel}>
-          <ChannelComposeProvider channelId={channelId}>
-            <GitProvider>{children}</GitProvider>
-          </ChannelComposeProvider>
+          <ChannelComposeProvider channelId={channelId}>{children}</ChannelComposeProvider>
         </ChannelConfigProvider>
       </ChannelControlProvider>
     </ChannelMessagesProvider>

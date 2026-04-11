@@ -46,7 +46,9 @@ describe('Auto-scroll behavior', () => {
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // Emit a pending_action (permission request)
-    await claude.emit(s.controlRequestBash('req-1', { command: 'ls' }));
+    await act(async () => {
+      await claude.emit(s.controlRequestBash('req-1', { command: 'ls' }));
+    });
 
     // Should NOT have scrolled — user was reading above
     expect(scrollIntoView).not.toHaveBeenCalled();
@@ -54,7 +56,9 @@ describe('Auto-scroll behavior', () => {
 
   it('uses instant scroll for streaming deltas (content grew, no new message)', async () => {
     const { claude } = await renderWithChannel(<MessageList />);
-    await claude.emit(s.textDelta('Hello '));
+    await act(async () => {
+      await claude.emit(s.textDelta('Hello '));
+    });
 
     await act(async () => {
       await new Promise((r) => setTimeout(r, 600));
@@ -64,7 +68,9 @@ describe('Auto-scroll behavior', () => {
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // Content grows but no new message → instant scroll
-    await claude.emit(s.textDelta('world'));
+    await act(async () => {
+      await claude.emit(s.textDelta('world'));
+    });
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
   });
@@ -72,14 +78,18 @@ describe('Auto-scroll behavior', () => {
   it('auto-scrolls when streaming delta grows content while user is at bottom', async () => {
     const { claude } = await renderWithChannel(<MessageList />);
     // Start streaming — textDelta creates/grows a message
-    await claude.emit(s.textDelta('Hello '));
+    await act(async () => {
+      await claude.emit(s.textDelta('Hello '));
+    });
 
     // User is at bottom (default)
     const scrollIntoView = vi.fn();
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // More streaming content arrives — content grows but messages.length unchanged
-    await claude.emit(s.textDelta('world'));
+    await act(async () => {
+      await claude.emit(s.textDelta('world'));
+    });
 
     expect(scrollIntoView).toHaveBeenCalled();
   });

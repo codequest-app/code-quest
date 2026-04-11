@@ -35,6 +35,12 @@ importers:
       '@floating-ui/react':
         specifier: ^0.27.19
         version: 0.27.19(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@headless-tree/core':
+        specifier: ^1.6.3
+        version: 1.6.3
+      '@headless-tree/react':
+        specifier: ^1.6.3
+        version: 1.6.3(@headless-tree/core@1.6.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.1(react@19.2.4))
@@ -168,6 +174,9 @@ importers:
       '@vitest/ui':
         specifier: ^1.2.1
         version: 1.6.1(vitest@1.6.1)
+      babel-plugin-react-compiler:
+        specifier: 19.1.0-rc.3
+        version: 19.1.0-rc.3
       better-sqlite3:
         specifier: ^12.6.2
         version: 12.6.2
@@ -329,6 +338,15 @@ importers:
       '@code-quest/shared':
         specifier: workspace:*
         version: link:../shared
+      fuse.js:
+        specifier: ^7.1.0
+        version: 7.1.0
+      glob:
+        specifier: ^13.0.6
+        version: 13.0.6
+      simple-git:
+        specifier: ^3.33.0
+        version: 3.33.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -1139,6 +1157,16 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@headless-tree/core@1.6.3':
+    resolution: {integrity: sha512-en0EOaZfiCRF2B8DEnhGhSaUf3hVr9Bauye8G8aswPbHOKSyhJiN4bsczz1GvqF4Xb7Ga3LP0vLA6Zih7YLoyw==}
+
+  '@headless-tree/react@1.6.3':
+    resolution: {integrity: sha512-aiRwG6e2EPBSec9uLLy9GlTvAuCtSTouU30Nwcr5ZTsYjG/i7B/ouC8f8Zu4unzo/v1h5ztbemp+EH2TPTKh+g==}
+    peerDependencies:
+      '@headless-tree/core': '*'
+      react: '*'
+      react-dom: '*'
 
   '@hookform/resolvers@5.2.2':
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
@@ -2240,6 +2268,9 @@ packages:
   axe-core@4.11.1:
     resolution: {integrity: sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A==}
     engines: {node: '>=4'}
+
+  babel-plugin-react-compiler@19.1.0-rc.3:
+    resolution: {integrity: sha512-mjRn69WuTz4adL0bXGx8Rsyk1086zFJeKmes6aK0xPuK3aaXmDJdLHqwKKMrpm6KAI1MCoUK72d2VeqQbu8YIA==}
 
   bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
@@ -5141,6 +5172,14 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@headless-tree/core@1.6.3': {}
+
+  '@headless-tree/react@1.6.3(@headless-tree/core@1.6.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@headless-tree/core': 1.6.3
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   '@hookform/resolvers@5.2.2(react-hook-form@7.71.1(react@19.2.4))':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -6216,6 +6255,10 @@ snapshots:
   aws-ssl-profiles@1.1.2: {}
 
   axe-core@4.11.1: {}
+
+  babel-plugin-react-compiler@19.1.0-rc.3:
+    dependencies:
+      '@babel/types': 7.29.0
 
   bail@2.0.2: {}
 

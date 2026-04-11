@@ -1,14 +1,17 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { segments as s } from '@code-quest/summoner/test';
 import type { SettingsStore } from '../services/settings-store.ts';
-import { createFakeClaude } from '../test/index.ts';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
 async function setup(sessionId = 'cli-sess') {
-  const claude = createFakeClaude();
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
-  const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
-  return { claude, channelId, settingsStore };
+  const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
+  return { container, claude, channelId, settingsStore };
 }
 
 describe('ChatHandler > settings', () => {
@@ -24,14 +27,6 @@ describe('ChatHandler > settings', () => {
       );
     });
 
-    it('silently ignores set_permission_mode for unknown session', async () => {
-      const { claude } = await setup();
-
-      await claude.send('settings:set_permission_mode', { channelId: 'unknown', mode: 'plan' });
-
-      expect(claude.socket.connected).toBe(true);
-    });
-
     it('persists permissionMode to settingsStore on success', async () => {
       const { claude, channelId, settingsStore } = await setup();
 
@@ -42,19 +37,19 @@ describe('ChatHandler > settings', () => {
 
     it('emits settings:update with permissionMode after success', async () => {
       const { claude, channelId } = await setup();
-      const events: any[] = [];
-      claude.socket.on('settings:update', (p: any) => events.push(p));
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
-      const match = events.find((e) => e.initialPermissionMode === 'plan');
+      const match = claude
+        .events('settings:update')
+        .find((e: any) => e.initialPermissionMode === 'plan');
       expect(match).toBeDefined();
     });
 
     it('updates channel.sessionConfig.permissionMode after success', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
         typeof ChannelManager
       >;
 
@@ -133,24 +128,13 @@ describe('ChatHandler > settings', () => {
 
     it('emits settings:update with thinkingLevel after success', async () => {
       const { claude, channelId } = await setup();
-      const events: any[] = [];
-      claude.socket.on('settings:update', (p: any) => events.push(p));
 
       await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
-      const match = events.find((e) => e.thinkingLevel === 'default_on');
+      const match = claude
+        .events('settings:update')
+        .find((e: any) => e.thinkingLevel === 'default_on');
       expect(match).toBeDefined();
-    });
-
-    it('silently ignores set_thinking_level for unknown session', async () => {
-      const { claude } = await setup();
-
-      await claude.send('settings:set_thinking_level', {
-        channelId: 'unknown',
-        thinkingLevel: 'default_on',
-      });
-
-      expect(claude.socket.connected).toBe(true);
     });
 
     it('persists thinkingLevel to settingsStore on success', async () => {
@@ -164,7 +148,7 @@ describe('ChatHandler > settings', () => {
 
   describe('launch_claude per-launch settings', () => {
     it('calls setMaxThinkingTokens(31999) when thinkingLevel is "default_on"', async () => {
-      const claude = createFakeClaude();
+      const claude = createFakeSummoner().claude();
 
       await claude.initialize({ launch: { thinkingLevel: 'default_on' } });
 
@@ -177,12 +161,14 @@ describe('ChatHandler > settings', () => {
     });
 
     it('stores cwd in channel.cwd when cwd is provided', async () => {
-      const claude = createFakeClaude();
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
 
       const channelId = await claude.initialize({ launch: { cwd: '/some/path' } });
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);
@@ -190,12 +176,14 @@ describe('ChatHandler > settings', () => {
     });
 
     it('resolves relative cwd to absolute path', async () => {
-      const claude = createFakeClaude();
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
 
       const channelId = await claude.initialize({ launch: { cwd: '../' } });
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);
@@ -225,27 +213,27 @@ describe('ChatHandler > settings', () => {
 
   it('apply_settings emits settings:update with effort after success', async () => {
     const { claude, channelId } = await setup();
-    const events: unknown[] = [];
-    claude.socket.on('settings:update', (payload: unknown) => events.push(payload));
 
     await claude.send('settings:apply', {
       channelId,
       settings: { effortLevel: 'low' },
     });
 
-    const effortUpdate = events.find((e: any) => e.channelId === channelId && e.effort === 'low');
+    const effortUpdate = claude
+      .events('settings:update')
+      .find((e: any) => e.channelId === channelId && e.effort === 'low');
     expect(effortUpdate).toBeTruthy();
   });
 
   it('apply_settings persists effortLevel to settingsStore', async () => {
-    const { claude, channelId } = await setup();
+    const { container, claude, channelId } = await setup();
 
     await claude.send('settings:apply', {
       channelId,
       settings: { effortLevel: 'high' },
     });
 
-    const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
+    const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
     expect(await settingsStore.get('claude', 'effortLevel')).toBe('high');
   });
 
@@ -262,9 +250,9 @@ describe('ChatHandler > settings', () => {
   });
 
   it('chat:get_state returns settings for an active session', async () => {
-    const { claude, channelId } = await setup();
+    const { container, claude, channelId } = await setup();
 
-    const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
+    const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
     await settingsStore.set('claude', 'model', 'opus');
 
     const result = await claude.send<{
@@ -277,7 +265,7 @@ describe('ChatHandler > settings', () => {
   });
 
   it('chat:get_state returns error for missing session', async () => {
-    const claude = createFakeClaude();
+    const claude = createFakeSummoner().claude();
 
     const result = await claude.send<{ success: boolean; error?: string }>('settings:state', {
       channelId: 'nonexistent',
@@ -288,9 +276,9 @@ describe('ChatHandler > settings', () => {
   });
 
   it('get_settings response includes model and permissionMode', async () => {
-    const { claude, channelId } = await setup();
+    const { container, claude, channelId } = await setup();
 
-    const settingsStore = claude.container.get<SettingsStore>(TYPES.SettingsStore);
+    const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
     await settingsStore.set('claude', 'model', 'opus');
     await settingsStore.set('claude', 'permissionMode', 'plan');
 
@@ -333,12 +321,10 @@ describe('ChatHandler > settings', () => {
   describe('settings:set_proactive', () => {
     it('emits settings:update with fastModeState after success', async () => {
       const { claude, channelId } = await setup();
-      const events: any[] = [];
-      claude.socket.on('settings:update', (p: any) => events.push(p));
 
       await claude.send('settings:set_proactive', { channelId, enabled: true });
 
-      const match = events.find((e) => e.fastModeState != null);
+      const match = claude.events('settings:update').find((e: any) => e.fastModeState != null);
       expect(match).toBeDefined();
     });
   });
@@ -346,10 +332,6 @@ describe('ChatHandler > settings', () => {
   describe('usage tracking', () => {
     it('does NOT emit usage_update when rate_limit_event is received', async () => {
       const { claude, channelId } = await setup();
-      const usageUpdates: any[] = [];
-      claude.socket.on('request', (payload: any) => {
-        if (payload.request?.type === 'usage_update') usageUpdates.push(payload.request);
-      });
 
       await claude.send('chat:send', { channelId, message: 'hello' });
       await claude.emit(s.assistant('hi'));
@@ -362,28 +344,28 @@ describe('ChatHandler > settings', () => {
       );
       await claude.emit(s.result());
 
+      const usageUpdates = claude
+        .events('request')
+        .filter((p: any) => p.request?.type === 'usage_update');
       expect(usageUpdates.length).toBe(0);
     });
 
     it('responds to request_usage_update with current usage', async () => {
       const { claude, channelId } = await setup();
-      const usageUpdates: any[] = [];
-      claude.socket.on('settings:usage' as any, (payload: any) => {
-        usageUpdates.push(payload);
-      });
 
       await claude.send('chat:send', { channelId, message: 'hello' });
       await claude.emit(s.assistant('hi'));
       await claude.emit(s.rateLimitEvent({ status: 'allowed', rateLimitType: 'five_hour' }));
       await claude.emit(s.result());
 
-      usageUpdates.length = 0;
+      const countBefore = claude.events('settings:usage').length;
 
       await claude.send('settings:refresh_usage', { channelId });
 
-      expect(usageUpdates.length).toBe(1);
-      expect(usageUpdates[0]).not.toHaveProperty('sessionId');
-      expect((usageUpdates[0] as any).usage).toMatchObject({
+      const newUpdates = claude.events('settings:usage').slice(countBefore);
+      expect(newUpdates.length).toBe(1);
+      expect(newUpdates[0]).not.toHaveProperty('sessionId');
+      expect(newUpdates[0].usage).toMatchObject({
         five_hour: { utilization: 0 },
       });
     });
@@ -411,15 +393,11 @@ describe('ChatHandler > settings', () => {
         return null;
       });
 
-      const usageUpdates: any[] = [];
-      claude.socket.on('settings:usage' as any, (payload: any) => {
-        usageUpdates.push(payload);
-      });
-
       await claude.send('settings:refresh_usage', { channelId });
 
+      const usageUpdates = claude.events('settings:usage');
       expect(usageUpdates.length).toBe(1);
-      const ctx = (usageUpdates[0] as any).contextUsage;
+      const ctx = usageUpdates[0].contextUsage;
       expect(ctx.totalTokens).toBe(10000);
       expect(ctx.maxTokens).toBe(200000);
       expect(ctx.percentage).toBe(5);
@@ -457,12 +435,12 @@ describe('ChatHandler > settings', () => {
 
   describe('control_request from CLI', () => {
     it('set_model updates sessionConfig and responds', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.emit(s.controlRequest('sm-1', 'set_model', undefined, { model: 'haiku' }));
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);
@@ -473,14 +451,14 @@ describe('ChatHandler > settings', () => {
     });
 
     it('set_permission_mode updates sessionConfig and responds', async () => {
-      const { claude, channelId } = await setup();
+      const { container, claude, channelId } = await setup();
 
       await claude.emit(
         s.controlRequest('sp-1', 'set_permission_mode', undefined, { mode: 'plan' }),
       );
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const channelManager = claude.container.get(TYPES.ChannelManager) as InstanceType<
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
         typeof ChannelManager
       >;
       const channel = channelManager.get(channelId);

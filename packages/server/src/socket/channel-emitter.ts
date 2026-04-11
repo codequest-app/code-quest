@@ -1,3 +1,4 @@
+import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
 
@@ -7,7 +8,7 @@ type EmitterHandler = (
   payload: unknown,
   socket?: TypedSocket,
   cb?: SocketCallback,
-) => void;
+) => void | Promise<void>;
 
 /** Middleware: skip if no channel. */
 export function withChannel(
@@ -40,6 +41,11 @@ export function withSocket(
   };
 }
 
+/** Typed socket.emit requires known event literals; dynamic event names need this helper. */
+function emitDynamic(sock: TypedSocket, event: string, ...args: unknown[]): void {
+  (sock.emit as (...a: unknown[]) => void)(event, ...args);
+}
+
 export class ChannelEmitter {
   private eventMap = new Map<string, EmitterHandler[]>();
 
@@ -59,19 +65,28 @@ export class ChannelEmitter {
 
   // ── Dispatch ──
 
-  /** Dispatch event to all subscribers. Returns last handler result (supports async handlers). */
+  /** Dispatch event to all subscribers. Async handler errors are caught and logged. */
   dispatch(
     event: string,
     ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
     cb?: SocketCallback,
-  ): unknown {
+  ): Promise<void> | void {
     const handlers = this.eventMap.get(event);
     if (!handlers) return;
-    let result: unknown;
-    for (const h of handlers) result = h(ch, payload, socket, cb);
-    return result;
+    const promises: Promise<void>[] = [];
+    for (const h of handlers) {
+      const result = h(ch, payload, socket, cb);
+      if (result instanceof Promise) {
+        promises.push(
+          result.catch((err) => logger.error({ err, event }, 'Unhandled error in async handler')),
+        );
+      }
+    }
+    if (promises.length > 0) {
+      return Promise.all(promises).then(() => {});
+    }
   }
 
   /**
@@ -92,7 +107,7 @@ export class ChannelEmitter {
     const sockets = this.channelSockets.get(channelId);
     if (!sockets) return;
     for (const sock of sockets) {
-      (sock.emit as (...a: unknown[]) => void)(event, ...args);
+      emitDynamic(sock, event, ...args);
     }
   }
 
@@ -106,7 +121,7 @@ export class ChannelEmitter {
     if (!sockets) return;
     for (const sock of sockets) {
       if (sock.id !== excludeSocketId) {
-        (sock.emit as (...a: unknown[]) => void)(event, ...args);
+        emitDynamic(sock, event, ...args);
       }
     }
   }
@@ -196,6 +211,8 @@ export class ChannelEmitter {
   }
 
   broadcastAll(event: string, ...args: unknown[]): void {
-    (this.io?.emit as ((...a: unknown[]) => void) | undefined)?.(event, ...args);
+    if (this.io) {
+      (this.io.emit as (...a: unknown[]) => void)(event, ...args);
+    }
   }
 }

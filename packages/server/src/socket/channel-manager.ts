@@ -194,6 +194,7 @@ export class ChannelManager {
           channelId,
           state,
           ...pickDefined({
+            cwd: ch?.cwd,
             title,
             modelSetting: ss.model,
             permissionMode: ss.permissionMode,

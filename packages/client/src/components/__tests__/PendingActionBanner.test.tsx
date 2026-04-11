@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useChannelControl, useChannelMessages } from '../../contexts/channel';
@@ -20,9 +20,11 @@ function BannerWithState() {
 
 async function setup(...controlSegments: string[]) {
   const { claude, ...rest } = await renderWithChannel(<BannerWithState />);
-  for (const seg of controlSegments) {
-    await claude.emit(seg);
-  }
+  await act(async () => {
+    for (const seg of controlSegments) {
+      await claude.emit(seg);
+    }
+  });
   return { claude, ...rest };
 }
 

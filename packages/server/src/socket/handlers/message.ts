@@ -9,21 +9,19 @@ import {
   chatStopTaskPayloadSchema,
   controlGenerateTitleResponseSchema,
 } from '@code-quest/shared';
+import { z } from 'zod';
 import { logger } from '../../logger.ts';
-import type { SessionStore } from '../../services/session-store.ts';
+import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { type ChannelEmitter, withChannel, withError, withSocket } from '../channel-emitter.ts';
-import type { ChannelManager } from '../channel-manager.ts';
+import { withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
-import type { PlanApi } from './plan.ts';
-
-export function create(
-  channelManager: ChannelManager,
-  sessionStore: SessionStore,
-  planApi: PlanApi,
-  emitter: ChannelEmitter,
-): void {
+export function create({
+  channelManager,
+  sessionStore,
+  planHandler: planApi,
+  emitter,
+}: Pick<HandlerContext, 'channelManager' | 'sessionStore' | 'planHandler' | 'emitter'>): void {
   const interruptedChannels = new Set<string>();
 
   function handleSend(ch: Channel, socket: TypedSocket, payload: unknown): void {
@@ -55,7 +53,9 @@ export function create(
         ch.abort();
       } else {
         interruptedChannels.add(channelId);
-        ch.sendRequest('message:interrupt').catch(() => {});
+        ch.sendRequest('message:interrupt').catch((err) =>
+          logger.debug({ err }, 'sendRequest failed'),
+        );
       }
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel');
@@ -82,10 +82,17 @@ export function create(
     return { ...response };
   }
 
+  const respondResponseSchema = z.object({
+    behavior: z.string().optional(),
+    updatedInput: z.unknown().optional(),
+    updatedPermissions: z.unknown().optional(),
+    message: z.string().optional(),
+  });
+
   function buildElicitationResponse(
-    behavior: unknown,
-    updatedInput: unknown,
+    response: z.infer<typeof respondResponseSchema>,
   ): Record<string, unknown> {
+    const { behavior, updatedInput } = response;
     return behavior === 'allow'
       ? {
           action: 'accept' as const,
@@ -97,12 +104,7 @@ export function create(
   function buildToolPermissionResponse(
     channelId: string,
     meta: { toolName?: string; toolUseId?: string } | undefined,
-    response: {
-      behavior?: string;
-      updatedInput?: unknown;
-      updatedPermissions?: unknown;
-      message?: string;
-    },
+    response: z.infer<typeof respondResponseSchema>,
   ): Record<string, unknown> {
     const { behavior, updatedInput, updatedPermissions, message } = response;
     const result: Record<string, unknown> = { behavior };
@@ -138,13 +140,15 @@ export function create(
 
       const meta = channel.getControlRequestMeta(requestId);
 
+      const parsed = respondResponseSchema.parse(response);
+
       let cliResponse: Record<string, unknown>;
       if (meta?.subtype === 'mcp_message') {
         cliResponse = buildMcpResponse(channel, requestId, response);
       } else if (meta?.subtype === 'elicitation') {
-        cliResponse = buildElicitationResponse(response.behavior, response.updatedInput);
+        cliResponse = buildElicitationResponse(parsed);
       } else {
-        cliResponse = buildToolPermissionResponse(channelId, meta, response);
+        cliResponse = buildToolPermissionResponse(channelId, meta, parsed);
       }
 
       respondAndDismiss(channel, channelId, requestId, cliResponse);
@@ -156,7 +160,9 @@ export function create(
   function handleStopTask(ch: Channel, payload: unknown): void {
     try {
       const { taskId } = chatStopTaskPayloadSchema.parse(payload);
-      ch.sendRequest('message:stop_task', { task_id: taskId }).catch(() => {});
+      ch.sendRequest('message:stop_task', { task_id: taskId }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.debug({ err }, 'Failed to stop task');
     }
@@ -165,7 +171,9 @@ export function create(
   function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
       const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
-      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch(() => {});
+      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch((err) =>
+        logger.debug({ err }, 'sendRequest failed'),
+      );
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel async message');
     }
@@ -226,7 +234,9 @@ export function create(
       const res = await ch.sendRequest('session:generate_title', {
         description: pendingPrompt,
       });
-      const { title } = controlGenerateTitleResponseSchema.parse(res.response);
+      const parsed = controlGenerateTitleResponseSchema.safeParse(res.response);
+      if (!parsed.success) return;
+      const { title } = parsed.data;
       ch.title = title;
       sessionStore
         .rename(channelId, title)

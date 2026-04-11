@@ -1,5 +1,7 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { FileIcon, FolderIcon, TerminalIcon } from './icons/MentionIcons';
+import { FileIcon, FolderIcon } from './icons/MentionIcons';
+
+const noop = () => {};
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
@@ -16,12 +18,8 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
 
 function TypeIcon({ type }: { type: string }) {
   switch (type) {
-    case 'file':
-      return <FileIcon />;
     case 'directory':
       return <FolderIcon />;
-    case 'terminal':
-      return <TerminalIcon />;
     default:
       return <FileIcon />;
   }
@@ -74,13 +72,6 @@ function FileResultItem({
           {directoryPath && (
             <span className="text-xs font-mono text-text-muted truncate">{directoryPath}</span>
           )}
-        </>
-      ) : file.type === 'terminal' ? (
-        <>
-          <span className="text-xs font-mono text-text truncate">
-            <HighlightMatch text={file.name} query={mentionQuery} />
-          </span>
-          <span className="text-xs font-mono text-text-muted">terminal</span>
         </>
       ) : (
         <span className="text-xs font-mono text-text truncate">
@@ -156,7 +147,7 @@ export function MentionDropdown({
               selectedIndex={selectedIndex}
               mentionQuery={mentionQuery}
               onSelect={onSelectMention}
-              onHover={onHover ?? (() => {})}
+              onHover={onHover ?? noop}
               itemRef={i === selectedIndex ? (activeItemRef ?? null) : null}
             />
           ))}

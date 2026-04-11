@@ -173,7 +173,7 @@ export const sessionStateSummarySchema = z.object({
   modelSetting: z.string().optional(),
   permissionMode: z.string().optional(),
   effort: z.string().optional(),
-  cwd: z.string(),
+  cwd: z.string().optional(),
 });
 export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 
