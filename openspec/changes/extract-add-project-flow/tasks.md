@@ -8,7 +8,6 @@
 - [x] 6. EditorArea 無 tab 時顯示 empty state（"No open sessions" + "New Session" button）
 - [x] 7. launchSession 偵測兩個入口：TabBar "+" 或 empty state "New Session" button
 - [x] 8. session sync 不帶 cwd → resume 用 join 不 launch
-- [ ] 9. ChannelProvider launch/join 失敗顯示 error UI
-  - [ ] 9.1 launch 失敗 → 顯示 error message + Retry button，不渲染 children
-  - [ ] 9.2 Retry button 重新 launch
-  - [ ] 9.3 join 失敗 → 同樣顯示 error UI
+- [x] 9.1 launch 失敗 → 顯示 error message + Retry button
+- [x] 9.2 Retry button 重新 launch
+- [x] 9.3 session:join 失敗 → 在 message list 顯示 error message

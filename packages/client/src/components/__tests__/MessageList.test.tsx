@@ -2,16 +2,25 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { createFakeSummoner } from '../../test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { MessageList } from '../MessageList';
 
 async function setup(props?: { searchQuery?: string; typeFilter?: string[] }) {
+  const summoner = createFakeSummoner();
+  const claude = summoner.claude();
+  const channelId = crypto.randomUUID();
+
+  // Pre-create session on server so session:join succeeds during render
+  await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
+
   return renderWithChannel(
     <>
       <SendButton message="Hello" />
       <MessageList {...props} />
     </>,
+    { summoner, channelId, skipInit: true },
   );
 }
 

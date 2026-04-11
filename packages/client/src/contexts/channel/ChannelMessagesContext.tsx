@@ -144,6 +144,14 @@ export function ChannelMessagesProvider({
       const parsed = sessionJoinResponseSchema.safeParse(raw);
       if (!parsed.success || 'error' in parsed.data) {
         joinedRef.current = true; // allow session:states even on join failure
+        const errorContent = parsed.success ? String(parsed.data.error) : 'Failed to join session';
+        setChannelState((prev) => ({
+          ...prev,
+          messages: [
+            ...prev.messages,
+            msg({ role: 'system', type: 'error', content: errorContent }),
+          ],
+        }));
         return;
       }
       const snapshot = parsed.data;

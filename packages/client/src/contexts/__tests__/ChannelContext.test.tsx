@@ -3,6 +3,7 @@ import { act, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
+import { MessageList } from '../../components/MessageList';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -184,6 +185,15 @@ describe('ChannelContext', () => {
       ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
       expect(screen.queryByTestId('content')).not.toBeInTheDocument();
+    });
+
+    it('join failure shows error message in message list', async () => {
+      const channelId = crypto.randomUUID();
+
+      await renderWithChannel(<MessageList />, { channelId, skipInit: true });
+
+      // FakeServer returns { error: "Session not found" } for non-existent channelId
+      expect(await screen.findByText(/Session not found/i)).toBeInTheDocument();
     });
 
     it('join failure still allows session:states processing', async () => {
