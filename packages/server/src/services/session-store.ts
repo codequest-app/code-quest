@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const sessionRecordSchema = z.looseObject({
-  id: z.string(),
+  channelId: z.string(),
   provider: z.string(),
   command: z.string(),
   args: z.string(),
@@ -25,8 +25,8 @@ export interface SessionStore {
     cwd?: string;
     hasParentId?: boolean;
   }): Promise<{ sessions: SessionRecord[]; total: number }>;
-  getById(id: string): Promise<SessionRecord | null>;
-  rename(id: string, title: string): Promise<boolean>;
-  updateStatus(id: string, status: string): Promise<boolean>;
-  delete(id: string): Promise<boolean>;
+  getById(channelId: string): Promise<SessionRecord | null>;
+  rename(channelId: string, title: string): Promise<boolean>;
+  updateStatus(channelId: string, status: string): Promise<boolean>;
+  delete(channelId: string): Promise<boolean>;
 }

@@ -131,14 +131,13 @@ export function create({
       ...(slashCommands && { slashCommands }),
     });
 
-    const channelId = channel.channelId;
     socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
     if (channelManager.cachedModels) {
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
     }
 
-    callback?.({ channelId, slashCommands, models, account });
-    emitter.broadcastAll('session:created', { channelId, cwd: channel.cwd });
+    callback?.({ channelId: channel.channelId, slashCommands, models, account });
+    emitter.broadcastAll('session:created', { channelId: channel.channelId, cwd: channel.cwd });
 
     if (parsed.initialPrompt) {
       channel.sendMessage(parsed.initialPrompt);
@@ -185,12 +184,11 @@ export function create({
     channel: Channel,
     socket?: TypedSocket,
   ): Promise<{ events: unknown[] }> {
-    const channelId = channel.channelId;
     channelManager.ensureBound(channel);
 
-    const replaySessionId = await sessionHistory.resolveSessionId(channelId);
+    const replaySessionId = await sessionHistory.resolveSessionId(channel.channelId);
     if (socket) {
-      await sessionHistory.replayPendingControlRequests(socket, channelId, replaySessionId);
+      await sessionHistory.replayPendingControlRequests(socket, channel.channelId, replaySessionId);
     }
 
     socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
@@ -198,7 +196,7 @@ export function create({
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
     }
 
-    const events = await sessionHistory.getSessionHistory(channelId);
+    const events = await sessionHistory.getSessionHistory(channel.channelId);
     return { events };
   }
 
@@ -240,15 +238,14 @@ export function create({
   }
 
   function onSessionInit(ch: Channel, _payload: unknown): void {
-    const channelId = ch.channelId;
-    channelManager.broadcastSessionState(channelId, 'busy');
+    channelManager.broadcastSessionState(ch.channelId, 'busy');
 
     // Persist when session:init arrives (sessionId now available)
     if (ch.sessionId) {
       const parentId = ch.parentId;
       sessionStore
         .persist({
-          id: channelId,
+          channelId: ch.channelId,
           sessionId: ch.sessionId,
           provider: channelManager.provider,
           command: channelManager.runnerCommand,

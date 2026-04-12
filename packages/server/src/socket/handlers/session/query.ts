@@ -31,10 +31,10 @@ export function create({
         hasParentId: parsed.hasParentId,
       });
       const previews = await Promise.all(
-        result.sessions.map((s) => sessionHistory.getPreview(s.sessionId ?? s.id)),
+        result.sessions.map((s) => sessionHistory.getPreview(s.sessionId ?? s.channelId)),
       );
       const sessions = result.sessions.map((s, i) => {
-        const ch = channelManager.get(s.id);
+        const ch = channelManager.get(s.channelId);
         return {
           ...s,
           isActive: !!(ch && !ch.exited),

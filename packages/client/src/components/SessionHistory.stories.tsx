@@ -25,7 +25,7 @@ export const WithSessions: Story = {
   args: {
     sessions: [
       {
-        id: 'sess-abc',
+        channelId: 'sess-abc',
         provider: 'anthropic',
         command: 'claude',
         args: '',
@@ -35,7 +35,7 @@ export const WithSessions: Story = {
         createdAt: '2025-06-01T10:00:00Z',
       },
       {
-        id: 'sess-def',
+        channelId: 'sess-def',
         provider: 'anthropic',
         command: 'claude',
         args: '',
@@ -57,7 +57,7 @@ export const WithRename: Story = {
   args: {
     sessions: [
       {
-        id: 'sess-abc',
+        channelId: 'sess-abc',
         provider: 'anthropic',
         command: 'claude',
         args: '',

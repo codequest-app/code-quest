@@ -45,7 +45,7 @@ describe('ChatHandler > session', () => {
       expect(forkCustomCreatedFiredBeforePersist).toBe(true);
 
       const forkPersist = persistedArgs.find(
-        ([p]) => (p as Record<string, unknown>).id === 'fork-1',
+        ([p]) => (p as Record<string, unknown>).channelId === 'fork-1',
       );
       expect(forkPersist).toBeDefined();
       expect((forkPersist![0] as Record<string, unknown>).parentId).toBe(channelId);

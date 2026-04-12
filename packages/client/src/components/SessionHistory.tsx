@@ -21,11 +21,11 @@ export function SessionHistory({
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const visible = sessions.filter((s) => !deletedIds.has(s.id));
+  const visible = sessions.filter((s) => !deletedIds.has(s.channelId));
   const filtered = (() => {
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
-    return visible.filter((s) => (s.title ?? s.id).toLowerCase().includes(q));
+    return visible.filter((s) => (s.title ?? s.channelId).toLowerCase().includes(q));
   })();
 
   const handleDelete = async (id: string) => {
@@ -48,7 +48,7 @@ export function SessionHistory({
       case 'Enter':
         e.preventDefault();
         if (filtered[focusIndex]) {
-          onSelect(filtered[focusIndex].id);
+          onSelect(filtered[focusIndex].channelId);
         }
         break;
     }
@@ -76,7 +76,7 @@ export function SessionHistory({
         )}
         {filtered.map((s, i) => (
           <SessionRow
-            key={s.id}
+            key={s.channelId}
             session={s}
             isFocused={i === focusIndex}
             onSelect={onSelect}

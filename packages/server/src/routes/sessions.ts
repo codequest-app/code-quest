@@ -16,7 +16,7 @@ export function createSessionsRouter(
 
       if (rawEventStore) {
         const previews = await Promise.all(
-          result.sessions.map((s) => rawEventStore.getPreview(s.sessionId ?? s.id)),
+          result.sessions.map((s) => rawEventStore.getPreview(s.sessionId ?? s.channelId)),
         );
         const enriched = result.sessions.map((s, i) => ({
           ...s,

@@ -6,7 +6,7 @@ import type {
 } from './schema-columns.ts';
 
 export const sessions = mysqlTable('sessions', {
-  id: varchar('id', { length: 36 }).primaryKey(),
+  channelId: varchar('channel_id', { length: 36 }).primaryKey(),
   provider: varchar('provider', { length: 20 }).notNull(),
   command: varchar('command', { length: 255 }).notNull(),
   args: text('args').notNull(),

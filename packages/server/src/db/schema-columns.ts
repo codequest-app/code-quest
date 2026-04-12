@@ -5,7 +5,7 @@
  */
 
 export const SESSION_COLUMNS = [
-  'id',
+  'channelId',
   'provider',
   'command',
   'args',

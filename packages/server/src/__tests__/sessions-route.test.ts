@@ -4,7 +4,7 @@ import { createSessionsRouter } from '../routes/sessions.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionRecord, SessionStore } from '../services/session-store.ts';
 
-const sessionDefaults: Omit<SessionRecord, 'id'> = {
+const sessionDefaults: Omit<SessionRecord, 'channelId'> = {
   provider: 'claude',
   command: 'claude',
   args: '[]',
@@ -13,7 +13,7 @@ const sessionDefaults: Omit<SessionRecord, 'id'> = {
   createdAt: new Date().toISOString(),
 };
 
-function mockSession(overrides: { id: string; title?: string }): SessionRecord {
+function mockSession(overrides: { channelId: string; title?: string }): SessionRecord {
   return { ...sessionDefaults, ...overrides } as SessionRecord;
 }
 
@@ -38,7 +38,10 @@ function createMockEventStore(events: unknown[] = []): RawEventStore {
 
 describe('GET /api/sessions', () => {
   it('returns sessions from store', async () => {
-    const store = createMockStore([mockSession({ id: 's1' }), mockSession({ id: 's2' })]);
+    const store = createMockStore([
+      mockSession({ channelId: 's1' }),
+      mockSession({ channelId: 's2' }),
+    ]);
     const app = express();
     app.use(createSessionsRouter(store));
 
@@ -71,7 +74,7 @@ describe('GET /api/sessions', () => {
 
 describe('GET /api/sessions/:id', () => {
   it('returns session by id', async () => {
-    const session = { id: 's1', title: 'Test' };
+    const session = { channelId: 's1', title: 'Test' };
     const store = createMockStore();
     (store.getById as ReturnType<typeof vi.fn>).mockResolvedValue(session);
     const app = express();
@@ -79,7 +82,7 @@ describe('GET /api/sessions/:id', () => {
 
     const res = await request(app).get('/api/sessions/s1');
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe('s1');
+    expect(res.body.channelId).toBe('s1');
     expect(store.getById).toHaveBeenCalledWith('s1');
   });
 
@@ -146,8 +149,8 @@ describe('GET /api/sessions/:id/events', () => {
 describe('GET /api/sessions with preview', () => {
   it('returns sessions enriched with preview text', async () => {
     const store = createMockStore([
-      mockSession({ id: 's1', title: 'Session 1' }),
-      mockSession({ id: 's2', title: 'Session 2' }),
+      mockSession({ channelId: 's1', title: 'Session 1' }),
+      mockSession({ channelId: 's2', title: 'Session 2' }),
     ]);
     const eventStore = createMockEventStore();
     (eventStore.getPreview as ReturnType<typeof vi.fn>)

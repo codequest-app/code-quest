@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` RENAME COLUMN "id" TO "channel_id";

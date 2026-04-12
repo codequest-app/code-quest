@@ -6,7 +6,7 @@ import { SessionDropdown } from '../SessionDropdown';
 
 const makeSessions = (n: number): SessionSummary[] =>
   Array.from({ length: n }, (_, i) => ({
-    id: `s-${i}`,
+    channelId: `s-${i}`,
     mode: 'interactive',
     provider: 'claude',
     command: 'claude',

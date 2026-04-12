@@ -4,7 +4,7 @@ import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
 // ── Session summary (moved from common.ts) ──
 
 export const sessionSummarySchema = z.object({
-  id: z.string(),
+  channelId: z.string(),
   provider: z.string(),
   command: z.string(),
   args: z.string(),

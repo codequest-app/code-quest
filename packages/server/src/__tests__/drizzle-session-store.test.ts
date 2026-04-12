@@ -9,9 +9,9 @@ import type { SessionRecord } from '../services/session-store.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionRecord {
+function makeRecord(channelId: string, overrides?: Partial<SessionRecord>): SessionRecord {
   return {
-    id,
+    channelId,
     provider: 'claude',
     command: 'claude',
     args: '[]',
@@ -67,8 +67,8 @@ describe('DrizzleSessionStore', () => {
 
       const result = await store.list();
 
-      expect(result.sessions[0].id).toBe('new');
-      expect(result.sessions[1].id).toBe('old');
+      expect(result.sessions[0].channelId).toBe('new');
+      expect(result.sessions[1].channelId).toBe('old');
     });
   });
 
@@ -102,8 +102,8 @@ describe('DrizzleSessionStore', () => {
 
       const result = await store.list();
 
-      expect(result.sessions.map((s) => s.id)).not.toContain('dead-sess');
-      expect(result.sessions.map((s) => s.id)).toContain('active-sess');
+      expect(result.sessions.map((s) => s.channelId)).not.toContain('dead-sess');
+      expect(result.sessions.map((s) => s.channelId)).toContain('active-sess');
     });
 
     it('total count excludes dead sessions', async () => {
@@ -124,7 +124,7 @@ describe('DrizzleSessionStore', () => {
       const session = await store.getById('s1');
 
       expect(session).not.toBeNull();
-      expect(session!.id).toBe('s1');
+      expect(session!.channelId).toBe('s1');
     });
 
     it('returns null when not found', async () => {

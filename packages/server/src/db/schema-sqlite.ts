@@ -6,7 +6,7 @@ import type {
 } from './schema-columns.ts';
 
 export const sessions = sqliteTable('sessions', {
-  id: text('id').primaryKey(),
+  channelId: text('channel_id').primaryKey(),
   provider: text('provider').notNull(),
   command: text('command').notNull(),
   args: text('args').notNull(),

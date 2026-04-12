@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SessionRow } from '../SessionRow';
 
 const baseSession: SessionSummary = {
-  id: 's1',
+  channelId: 's1',
   provider: 'claude',
   command: 'claude',
   args: '--verbose',

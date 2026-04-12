@@ -56,7 +56,7 @@ export function SessionRow({
     const newTitle = renameInputRef.current.value.trim();
     setIsRenaming(false);
     if (newTitle && newTitle !== title && onRename) {
-      const result = await onRename(s.id, newTitle);
+      const result = await onRename(s.channelId, newTitle);
       if (!result.success) {
         console.warn('Rename failed:', result.error);
       }
@@ -77,7 +77,7 @@ export function SessionRow({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete?.(s.id);
+    onDelete?.(s.channelId);
   };
 
   const title = s.title || s.firstUserMessage || 'Untitled';
@@ -89,10 +89,10 @@ export function SessionRow({
       tabIndex={0}
       data-testid="session-row"
       className={`flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group ${isFocused ? 'bg-selected' : ''}`}
-      onClick={isRenaming ? undefined : () => onSelect(s.id)}
+      onClick={isRenaming ? undefined : () => onSelect(s.channelId)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          if (!isRenaming) onSelect(s.id);
+          if (!isRenaming) onSelect(s.channelId);
         }
       }}
       onMouseEnter={onMouseEnter}

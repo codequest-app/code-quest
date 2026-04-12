@@ -73,7 +73,7 @@ describe('ChatHandler > session', () => {
         {},
       );
 
-      const session = result.sessions.find((s) => s.id === channelId);
+      const session = result.sessions.find((s) => s.channelId === channelId);
       expect(session).toBeDefined();
       expect(session!.isActive).toBe(true);
     });

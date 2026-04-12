@@ -6,7 +6,7 @@ import { SessionHistory } from '../SessionHistory';
 
 const makeSessions = (n: number): SessionSummary[] =>
   Array.from({ length: n }, (_, i) => ({
-    id: `s-${i}`,
+    channelId: `s-${i}`,
     mode: 'interactive',
     provider: 'claude',
     command: 'claude',
@@ -44,7 +44,7 @@ describe('SessionHistory', () => {
     const user = userEvent.setup();
     const sessions = [
       { ...makeSessions(1)[0], title: 'Fix login bug' },
-      { ...makeSessions(1)[0], id: 's-1', title: 'Add dark mode' },
+      { ...makeSessions(1)[0], channelId: 's-1', title: 'Add dark mode' },
     ];
     render(<SessionHistory sessions={sessions} onSelect={vi.fn()} />);
 

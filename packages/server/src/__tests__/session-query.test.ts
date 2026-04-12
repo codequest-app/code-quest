@@ -39,7 +39,7 @@ describe('ChatHandler > session', () => {
         'session:list',
         {},
       );
-      const session = result.sessions.find((s) => s.id === channelId);
+      const session = result.sessions.find((s) => s.channelId === channelId);
 
       expect(session).toBeDefined();
       // Session has no explicit title, so firstUserMessage should be used
@@ -68,7 +68,7 @@ describe('ChatHandler > session', () => {
         'session:list',
         {},
       );
-      const session = result.sessions.find((sess) => sess.id === channelId);
+      const session = result.sessions.find((sess) => sess.channelId === channelId);
       expect(session?.title).toBe('Generated Title');
 
       // Verify DB persistence
@@ -140,7 +140,7 @@ describe('ChatHandler > session', () => {
       }>('session:get', { channelId });
 
       expect(result.session).toBeDefined();
-      expect(result.session!.id).toBe(channelId);
+      expect(result.session!.channelId).toBe(channelId);
       expect(result.events).toBeDefined();
       expect(result.events!.length).toBeGreaterThan(0);
       const names = result.events!.map((e) => e.name);

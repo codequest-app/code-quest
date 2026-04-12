@@ -1021,7 +1021,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
-        id: 'dead-sess',
+        channelId: 'dead-sess',
         provider: 'claude',
         command: 'claude',
         args: '[]',
@@ -1046,7 +1046,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
-        id: 'dead-sess-2',
+        channelId: 'dead-sess-2',
         provider: 'claude',
         command: 'claude',
         args: '[]',
@@ -1070,7 +1070,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
-        id: 'dead-sess-3',
+        channelId: 'dead-sess-3',
         provider: 'claude',
         command: 'claude',
         args: '[]',

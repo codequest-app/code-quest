@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { SessionRow } from './SessionRow';
 
 const baseSession = {
-  id: 'sess-abc',
+  channelId: 'sess-abc',
   provider: 'anthropic',
   command: 'claude',
   args: '',
