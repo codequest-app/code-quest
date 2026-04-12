@@ -37,16 +37,6 @@ describe('Channel.bindRunner', () => {
       expect(events[0].toolName).toBe('Read');
     });
 
-    it('updates sessionId and sessionConfig from session:init event', async () => {
-      const claude = createFakeSummoner().claude();
-
-      await claude.initialize(s.init('wire-test-session'));
-
-      const events = claude.events('session:init');
-      expect(events.length).toBeGreaterThan(0);
-      expect(events[0].sessionId).toBe('wire-test-session');
-    });
-
     it('updates permissionMode from session:status event', async () => {
       const { claude, channelId } = await setup();
 

@@ -8,4 +8,3 @@ export { useChannelControl } from './ChannelControlContext';
 export { ChannelIdProvider, useChannelId } from './ChannelIdContext';
 export type { ChannelMessagesValue } from './ChannelMessagesContext';
 export { useChannelMessages, useChannelMessagesActions } from './ChannelMessagesContext';
-export { SessionIdProvider, useSessionId } from './SessionIdContext';

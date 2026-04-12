@@ -273,7 +273,6 @@ export type SessionStatesPayload = z.infer<typeof sessionStatesPayloadSchema>;
 
 export const sessionInitPayloadSchema = z.object({
   channelId: z.string(),
-  sessionId: z.string(),
   model: z.string().optional(),
   tools: z.array(z.string()).optional(),
   permissionMode: z.string().optional(),

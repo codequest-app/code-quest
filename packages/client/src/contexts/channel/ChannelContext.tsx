@@ -9,7 +9,6 @@ import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelIdProvider } from './ChannelIdContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
-import { SessionIdProvider } from './SessionIdContext';
 
 // ── ChannelProvider (orchestrator) ──
 
@@ -91,20 +90,18 @@ export function ChannelProvider({
   // ── Connected — full provider tree ──
   return (
     <ChannelIdProvider channelId={channelId}>
-      <SessionIdProvider channelId={channelId}>
-        <ChannelMessagesProvider
-          onChange={onChange}
-          dequeueMessage={() => messageQueueRef.current.shift()}
-          messageQueueRef={messageQueueRef}
-          resetStreamingRefsRef={resetStreamingRefsRef}
-        >
-          <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
-            <ChannelConfigProvider onNewChannel={onNewChannel}>
-              <ChannelComposeProvider>{children}</ChannelComposeProvider>
-            </ChannelConfigProvider>
-          </ChannelControlProvider>
-        </ChannelMessagesProvider>
-      </SessionIdProvider>
+      <ChannelMessagesProvider
+        onChange={onChange}
+        dequeueMessage={() => messageQueueRef.current.shift()}
+        messageQueueRef={messageQueueRef}
+        resetStreamingRefsRef={resetStreamingRefsRef}
+      >
+        <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
+          <ChannelConfigProvider onNewChannel={onNewChannel}>
+            <ChannelComposeProvider>{children}</ChannelComposeProvider>
+          </ChannelConfigProvider>
+        </ChannelControlProvider>
+      </ChannelMessagesProvider>
     </ChannelIdProvider>
   );
 }

@@ -26,7 +26,6 @@ function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   const meta = channel.metaCache;
   return {
     channelId: channel.channelId,
-    sessionId: channel.sessionId ?? '',
     ...pickDefined({
       model: meta.model,
       tools: meta.tools,
