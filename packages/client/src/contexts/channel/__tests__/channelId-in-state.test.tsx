@@ -1,10 +1,10 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useChannelMessages } from '../../channel';
+import { useChannelId } from '../../channel';
 
 function ChannelIdDisplay() {
-  const { channelId } = useChannelMessages();
+  const channelId = useChannelId();
   return <span data-testid="channel-id">{channelId}</span>;
 }
 

@@ -7,6 +7,7 @@ import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContex
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
 import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext';
+import { ChannelIdProvider } from '../contexts/channel/ChannelIdContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -81,21 +82,19 @@ function StoryProviders({
   const messageQueueRef = useRef<string[]>([]);
 
   return (
-    <ChannelMessagesProvider
-      channelId={STORY_CHANNEL_ID}
-      initialState={messages}
-      dequeueMessage={() => messageQueueRef.current.shift()}
-      messageQueueRef={messageQueueRef}
-      resetStreamingRefsRef={resetStreamingRefsRef}
-    >
-      <ChannelControlProvider
-        channelId={STORY_CHANNEL_ID}
-        resetStreamingRefs={() => resetStreamingRefsRef.current()}
+    <ChannelIdProvider channelId={STORY_CHANNEL_ID}>
+      <ChannelMessagesProvider
+        initialState={messages}
+        dequeueMessage={() => messageQueueRef.current.shift()}
+        messageQueueRef={messageQueueRef}
+        resetStreamingRefsRef={resetStreamingRefsRef}
       >
-        <ChannelConfigProvider channelId={STORY_CHANNEL_ID} initialConfig={config}>
-          <ChannelComposeProvider channelId={STORY_CHANNEL_ID}>{children}</ChannelComposeProvider>
-        </ChannelConfigProvider>
-      </ChannelControlProvider>
-    </ChannelMessagesProvider>
+        <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
+          <ChannelConfigProvider initialConfig={config}>
+            <ChannelComposeProvider>{children}</ChannelComposeProvider>
+          </ChannelConfigProvider>
+        </ChannelControlProvider>
+      </ChannelMessagesProvider>
+    </ChannelIdProvider>
   );
 }

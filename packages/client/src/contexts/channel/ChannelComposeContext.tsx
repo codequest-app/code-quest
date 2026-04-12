@@ -21,6 +21,7 @@ function toBase64(file: File): Promise<string> {
 }
 
 import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { wireHandlers } from './handlers/guard';
 import { composeHandlers } from './handlers/speech';
@@ -193,13 +194,8 @@ const initialComposeState: ComposeState = {
   attachedFiles: [],
 };
 
-export function ChannelComposeProvider({
-  channelId,
-  children,
-}: {
-  channelId: string;
-  children: ReactNode;
-}) {
+export function ChannelComposeProvider({ children }: { children: ReactNode }) {
+  const channelId = useChannelId();
   const { sendMessage } = useChannelMessagesActions();
   const { socket } = useSocket();
   const [state, setState] = useState<ComposeState>(initialComposeState);

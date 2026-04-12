@@ -7,14 +7,15 @@ import { MessageList } from '../../components/MessageList';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
-import { useChannelMessages } from '../channel';
+import { useChannelId, useChannelMessages } from '../channel';
 
 /** Test harness that exposes useChannelMessages values to the DOM */
 function ChannelTestHarness() {
   const ctx = useChannelMessages();
+  const channelId = useChannelId();
   return (
     <div>
-      <span data-testid="channelId">{ctx.channelId}</span>
+      <span data-testid="channelId">{channelId}</span>
       <span data-testid="isCancelling">{String(ctx.isCancelling)}</span>
       <span data-testid="modifiedFiles">{JSON.stringify(ctx.modifiedFiles)}</span>
       <span data-testid="planComments">{JSON.stringify(ctx.planComments)}</span>

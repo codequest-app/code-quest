@@ -1,4 +1,4 @@
-import { useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 
 const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors';
@@ -9,7 +9,7 @@ export interface HeaderBarProps {
 }
 
 export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
-  const { channelId } = useChannelMessages();
+  const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
   const sessionLabel = title ?? (channelId ? `${channelId.slice(0, 8)}…` : null);

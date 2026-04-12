@@ -11,6 +11,7 @@ import {
 import type { PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { type Payload, wireHandlers } from './handlers/guard';
 import type { EffectDeps } from './handlers/notification';
@@ -55,14 +56,13 @@ export function useChannelControl(): ChannelControlValue {
 }
 
 export function ChannelControlProvider({
-  channelId,
   resetStreamingRefs,
   children,
 }: {
-  channelId: string;
   resetStreamingRefs: () => void;
   children: ReactNode;
 }) {
+  const channelId = useChannelId();
   const { socket } = useSocket();
   const { setChannelState } = useChannelMessagesActions();
 

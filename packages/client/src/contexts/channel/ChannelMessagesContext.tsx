@@ -21,6 +21,7 @@ import {
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, mapSessionStats, msg, patchMeta } from '../../utils/message';
 import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
 import { createFileActions } from './handlers/file';
 import { type Payload, wireHandlers } from './handlers/guard';
 import { createMessageActions, messageHandlerOn } from './handlers/message';
@@ -37,7 +38,6 @@ import { systemHandlerOn } from './handlers/system';
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 
 export interface ChannelMessagesValue {
-  channelId: string;
   messages: ChannelState['messages'];
   status: ChannelState['status'];
   stats: ChannelState['stats'];
@@ -68,7 +68,6 @@ export interface ChannelMessagesValue {
 
 type MessagesStateValue = Pick<
   ChannelMessagesValue,
-  | 'channelId'
   | 'messages'
   | 'status'
   | 'stats'
@@ -101,7 +100,6 @@ export function useChannelMessagesActions(): MessagesActionsValue {
 }
 
 export function ChannelMessagesProvider({
-  channelId,
   initialState,
   onChange,
   dequeueMessage,
@@ -109,7 +107,6 @@ export function ChannelMessagesProvider({
   resetStreamingRefsRef,
   children,
 }: {
-  channelId: string;
   initialState?: Partial<ChannelState>;
   onChange?: (update: ChannelChangeUpdate) => void;
   dequeueMessage: () => string | undefined;
@@ -117,6 +114,7 @@ export function ChannelMessagesProvider({
   resetStreamingRefsRef: RefObject<() => void>;
   children: ReactNode;
 }) {
+  const channelId = useChannelId();
   const { socket } = useSocket();
 
   // ── Own channelState ──
@@ -339,7 +337,6 @@ export function ChannelMessagesProvider({
     <MessagesActionsContext.Provider value={actions}>
       <MessagesStateContext.Provider
         value={{
-          channelId,
           messages: channelState.messages,
           status: channelState.status,
           stats: channelState.stats,

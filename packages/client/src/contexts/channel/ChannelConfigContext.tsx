@@ -18,6 +18,7 @@ import {
   useState,
 } from 'react';
 import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
 import type { Payload } from './handlers/guard';
 import { wireHandlers } from './handlers/guard';
 import {
@@ -110,16 +111,15 @@ const INITIAL_CONFIG: ConfigState = {
 };
 
 export function ChannelConfigProvider({
-  channelId,
   initialConfig,
   onNewChannel,
   children,
 }: {
-  channelId: string;
   initialConfig?: Partial<ConfigState>;
   onNewChannel?: (cwd: string) => void;
   children: ReactNode;
 }) {
+  const channelId = useChannelId();
   const [configState, setConfigState] = useState<ConfigState>(() => ({
     ...INITIAL_CONFIG,
     ...initialConfig,

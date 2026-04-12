@@ -5,6 +5,7 @@ import {
   useChannelCompose,
   useChannelConfig,
   useChannelControl,
+  useChannelId,
   useChannelMessages,
 } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
@@ -23,7 +24,8 @@ const SIDE_PANEL = 'w-72 shrink-0';
 const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
 export function ChatPanel({ title }: { title?: string }) {
-  const { channelId, subscribeRawEvents } = useChannelMessages();
+  const channelId = useChannelId();
+  const { subscribeRawEvents } = useChannelMessages();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
   const { listSessions, renameSession, deleteSession, resumeSession } = useSession();

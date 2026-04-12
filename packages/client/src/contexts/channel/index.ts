@@ -5,5 +5,7 @@ export { useChannelConfig } from './ChannelConfigContext';
 export { ChannelProvider } from './ChannelContext';
 export type { ChannelControlValue } from './ChannelControlContext';
 export { useChannelControl } from './ChannelControlContext';
+export { ChannelIdProvider, useChannelId } from './ChannelIdContext';
 export type { ChannelMessagesValue } from './ChannelMessagesContext';
 export { useChannelMessages, useChannelMessagesActions } from './ChannelMessagesContext';
+export { SessionIdProvider, useSessionId } from './SessionIdContext';
