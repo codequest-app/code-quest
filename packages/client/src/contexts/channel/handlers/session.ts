@@ -46,9 +46,9 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
 
   function forkSession(messageId: string): Promise<ForkConversationResponse> {
     return rpc(socket, 'session:fork', {
-      forkedFromSession: channelId,
+      forkedFromChannelId: channelId,
       resumeSessionAt: messageId,
-      newSessionId: crypto.randomUUID(),
+      newChannelId: crypto.randomUUID(),
     });
   }
 

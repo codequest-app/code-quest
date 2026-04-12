@@ -26,10 +26,10 @@ export interface SessionContextValue {
   }) => Promise<{ sessions: SessionSummary[]; total: number }>;
   getSession: (channelId: string) => Promise<{ session: SessionSummary } | { error: string }>;
   forkSession: (
-    forkedFromSession: string,
+    forkedFromChannelId: string,
     resumeSessionAt: string,
   ) => Promise<ForkConversationResponse>;
-  teleportSession: (remoteSessionId: string, branch?: string) => Promise<TeleportSessionResponse>;
+  teleportSession: (remoteChannelId: string, branch?: string) => Promise<TeleportSessionResponse>;
   renameSession: (
     channelId: string,
     title: string,
@@ -98,17 +98,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     listSessions: (opts) => rpc(socket, 'session:list', opts ?? {}),
     listRemoteSessions: (opts) => rpc(socket, 'session:list_remote', opts ?? {}),
     getSession: (channelId) => rpc(socket, 'session:get', { channelId }),
-    forkSession: (forkedFromSession, resumeSessionAt) =>
+    forkSession: (forkedFromChannelId, resumeSessionAt) =>
       rpc(socket, 'session:fork', {
-        forkedFromSession,
+        forkedFromChannelId,
         resumeSessionAt,
-        newSessionId: crypto.randomUUID(),
+        newChannelId: crypto.randomUUID(),
       }),
-    teleportSession: (remoteSessionId, branch) =>
+    teleportSession: (remoteChannelId, branch) =>
       rpc(socket, 'session:teleport', {
-        remoteSessionId,
+        remoteChannelId,
         branch,
-        newSessionId: crypto.randomUUID(),
+        newChannelId: crypto.randomUUID(),
       }),
     renameSession: (channelId, title) => rpc(socket, 'session:rename', { channelId, title }),
     deleteSession: (channelId) => rpc(socket, 'session:delete', { channelId }),

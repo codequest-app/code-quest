@@ -85,7 +85,7 @@ export const launchOptionsSchema = z
 
 export const sessionLaunchPayloadSchema = z.object({
   channelId: z.string().optional(),
-  resume: z.string().optional(),
+  resumeChannelId: z.string().optional(),
   initialPrompt: z.string().optional(),
   model: z.string().optional(),
   permissionMode: z.string().optional(),
@@ -137,16 +137,16 @@ export const sessionDeletePayloadSchema = z.object({
 export type SessionDeletePayload = z.infer<typeof sessionDeletePayloadSchema>;
 
 export const sessionForkPayloadSchema = z.object({
-  forkedFromSession: z.string(),
+  forkedFromChannelId: z.string(),
   resumeSessionAt: z.string().optional(),
-  newSessionId: z.string(),
+  newChannelId: z.string(),
 });
 export type SessionForkPayload = z.infer<typeof sessionForkPayloadSchema>;
 
 export const sessionTeleportPayloadSchema = z.object({
-  remoteSessionId: z.string(),
+  remoteChannelId: z.string(),
   branch: z.string().optional(),
-  newSessionId: z.string(),
+  newChannelId: z.string(),
 });
 export type SessionTeleportPayload = z.infer<typeof sessionTeleportPayloadSchema>;
 
@@ -221,7 +221,7 @@ export type TeleportSessionResponse = z.infer<typeof teleportSessionResponseSche
 export const forkConversationResponseSchema = z.looseObject({
   success: z.boolean(),
   channelId: z.string().optional(),
-  parentSessionId: z.string().optional(),
+  parentChannelId: z.string().optional(),
   events: z.array(clientMessageSchema).optional(),
   error: z.string().optional(),
 });
@@ -230,7 +230,7 @@ export type ForkConversationResponse = z.infer<typeof forkConversationResponseSc
 export const initResponseSchema = z.looseObject({
   settings: z.record(z.string(), z.unknown()),
   sessions: z.array(sessionStateSummarySchema),
-  activeSessionId: z.string().optional(),
+  activeChannelId: z.string().optional(),
   models: z.array(z.unknown()).optional(),
   state: z.record(z.string(), z.unknown()).optional(),
 });
@@ -267,7 +267,7 @@ export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
 
 export const sessionStatesPayloadSchema = z.object({
   sessions: z.array(sessionStateSummarySchema),
-  activeSessionId: z.string().optional(),
+  activeChannelId: z.string().optional(),
 });
 export type SessionStatesPayload = z.infer<typeof sessionStatesPayloadSchema>;
 

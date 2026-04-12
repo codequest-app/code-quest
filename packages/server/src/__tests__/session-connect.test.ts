@@ -850,7 +850,7 @@ describe('ChatHandler > session', () => {
 
       const clientId = 'resume-client-uuid';
 
-      await claude.send('session:launch', { resume: channelId, channelId: clientId });
+      await claude.send('session:launch', { resumeChannelId: channelId, channelId: clientId });
 
       // The second spawn gets its own handle
       const secondHandle = claude.provider.all[claude.provider.all.length - 1];
@@ -1030,7 +1030,7 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      void claude.send('session:launch', { resume: 'dead-sess' });
+      void claude.send('session:launch', { resumeChannelId: 'dead-sess' });
       await claude.emit(
         s.resultError({ errors: ['No conversation found with session ID: dead-sess'] }),
       );
@@ -1055,7 +1055,7 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      void claude.send('session:launch', { resume: 'dead-sess-2' });
+      void claude.send('session:launch', { resumeChannelId: 'dead-sess-2' });
 
       await claude.emit(
         s.resultError({ errors: ['No conversation found with session ID: dead-sess-2'] }),
@@ -1079,7 +1079,7 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      void claude.send('session:launch', { resume: 'dead-sess-3' });
+      void claude.send('session:launch', { resumeChannelId: 'dead-sess-3' });
       await claude.emit(
         s.resultError({ errors: ['No conversation found with session ID: dead-sess-3'] }),
       );

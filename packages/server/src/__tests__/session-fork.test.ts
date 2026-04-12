@@ -37,9 +37,9 @@ describe('ChatHandler > session', () => {
       });
 
       await claude.send('session:fork', {
-        forkedFromSession: channelId,
+        forkedFromChannelId: channelId,
         resumeSessionAt: 'msg-1',
-        newSessionId: 'fork-1',
+        newChannelId: 'fork-1',
       });
 
       expect(forkCustomCreatedFiredBeforePersist).toBe(true);
@@ -51,13 +51,13 @@ describe('ChatHandler > session', () => {
       expect((forkPersist![0] as Record<string, unknown>).parentId).toBe(channelId);
     });
 
-    it('forked session parentId !== newSessionId', async () => {
+    it('forked session parentId !== newChannelId', async () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('session:fork', {
-        forkedFromSession: channelId,
+        forkedFromChannelId: channelId,
         resumeSessionAt: 'msg-1',
-        newSessionId: 'fork-verify',
+        newChannelId: 'fork-verify',
       });
       await new Promise<void>((r) => setTimeout(r, 50));
 
@@ -72,9 +72,9 @@ describe('ChatHandler > session', () => {
       const { claude, channelId } = await setup();
 
       await claude.send('session:fork', {
-        forkedFromSession: channelId,
+        forkedFromChannelId: channelId,
         resumeSessionAt: 'msg-1',
-        newSessionId: 'fork-once',
+        newChannelId: 'fork-once',
       });
 
       const forkCreated = claude
@@ -94,7 +94,7 @@ describe('session:teleport', () => {
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
       'session:teleport',
-      { remoteSessionId: 'remote-123', newSessionId: 'client-teleport-1' },
+      { remoteChannelId: 'remote-123', newChannelId: 'client-teleport-1' },
     );
 
     expect(result.success).toBe(true);
@@ -111,7 +111,7 @@ describe('session:teleport', () => {
 
     const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
       'session:teleport',
-      { remoteSessionId: 'remote-123', branch: 'feature/x', newSessionId: 'client-teleport-2' },
+      { remoteChannelId: 'remote-123', branch: 'feature/x', newChannelId: 'client-teleport-2' },
     );
 
     expect(result.success).toBe(true);
@@ -130,9 +130,9 @@ describe('session:teleport', () => {
       branchCheckoutFailed?: boolean;
       branch?: string;
     }>('session:teleport', {
-      remoteSessionId: 'remote-123',
+      remoteChannelId: 'remote-123',
       branch: 'feature/x',
-      newSessionId: 'client-teleport-3',
+      newChannelId: 'client-teleport-3',
     });
 
     expect(result.success).toBe(true);
@@ -154,7 +154,7 @@ describe('session:teleport', () => {
       channelId?: string;
       events?: ClientMessage[];
       error?: string;
-    }>('session:teleport', { remoteSessionId: channelId, newSessionId: 'client-teleport-4' });
+    }>('session:teleport', { remoteChannelId: channelId, newChannelId: 'client-teleport-4' });
 
     expect(result.success).toBe(true);
     expect(result.events).toBeDefined();
@@ -169,12 +169,12 @@ describe('chat:fork enhanced', () => {
     const forkResult = await claude.send<{
       success: boolean;
       channelId?: string;
-      parentSessionId?: string;
+      parentChannelId?: string;
       error?: string;
     }>('session:fork', {
-      forkedFromSession: channelId,
+      forkedFromChannelId: channelId,
       resumeSessionAt: 'msg-1',
-      newSessionId: 'client-fork-1',
+      newChannelId: 'client-fork-1',
     });
     // persist is fire-and-forget in handler — wait for it
     await new Promise<void>((r) => queueMicrotask(r));
@@ -192,22 +192,22 @@ describe('chat:fork enhanced', () => {
     expect(getResult.session!.parentId).toBe(channelId);
   });
 
-  it('should include parentSessionId in fork response', async () => {
+  it('should include parentChannelId in fork response', async () => {
     const { claude, channelId } = await setup();
 
     const forkResult = await claude.send<{
       success: boolean;
       channelId?: string;
-      parentSessionId?: string;
+      parentChannelId?: string;
       error?: string;
     }>('session:fork', {
-      forkedFromSession: channelId,
+      forkedFromChannelId: channelId,
       resumeSessionAt: 'msg-1',
-      newSessionId: 'client-fork-2',
+      newChannelId: 'client-fork-2',
     });
 
     expect(forkResult.success).toBe(true);
-    expect(forkResult.parentSessionId).toBe(channelId);
+    expect(forkResult.parentChannelId).toBe(channelId);
   });
 
   it('should return parent session events in fork response', async () => {
@@ -221,13 +221,13 @@ describe('chat:fork enhanced', () => {
     const forkResult = await claude.send<{
       success: boolean;
       channelId?: string;
-      parentSessionId?: string;
+      parentChannelId?: string;
       events?: ClientMessage[];
       error?: string;
     }>('session:fork', {
-      forkedFromSession: channelId,
+      forkedFromChannelId: channelId,
       resumeSessionAt: 'msg-1',
-      newSessionId: 'client-fork-3',
+      newChannelId: 'client-fork-3',
     });
 
     expect(forkResult.success).toBe(true);

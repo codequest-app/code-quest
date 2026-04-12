@@ -9,7 +9,7 @@ describe('ChatHandler > connection', () => {
     const result = await claude.send<{
       settings: Record<string, unknown>;
       sessions: Array<{ channelId: string; state: string }>;
-      activeSessionId?: string;
+      activeChannelId?: string;
     }>('app:init');
 
     expect(result.settings).toMatchObject({});

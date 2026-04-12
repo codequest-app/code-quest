@@ -149,12 +149,12 @@ export function create({
     socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
-    let resumeSessionId: string | undefined;
+    let resumeChannelId: string | undefined;
     try {
       const parsed = sessionLaunchPayloadSchema.parse(payload);
-      resumeSessionId = parsed.resume;
+      resumeChannelId = parsed.resumeChannelId;
       const channelId = parsed.channelId ?? crypto.randomUUID();
-      const { launchOptions, initOptions } = buildLaunchOpts(parsed, resumeSessionId);
+      const { launchOptions, initOptions } = buildLaunchOpts(parsed, resumeChannelId);
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions,
         initOptions,
@@ -170,9 +170,9 @@ export function create({
     } catch (err) {
       logger.error({ err }, 'Failed to create session');
       const message = errMsg(err, 'Failed to create session');
-      if (resumeSessionId && message.includes('No conversation found')) {
-        await sessionStore.updateStatus(resumeSessionId, 'dead').catch(() => {});
-        emitter.broadcastAll('session:dead', { channelId: resumeSessionId });
+      if (resumeChannelId && message.includes('No conversation found')) {
+        await sessionStore.updateStatus(resumeChannelId, 'dead').catch(() => {});
+        emitter.broadcastAll('session:dead', { channelId: resumeChannelId });
         return;
       }
       callback?.({ channelId: '', error: message });

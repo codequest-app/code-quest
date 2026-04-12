@@ -18,22 +18,22 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { forkedFromSession, resumeSessionAt, newSessionId } =
+      const { forkedFromChannelId, resumeSessionAt, newChannelId } =
         sessionForkPayloadSchema.parse(payload);
-      const parentEvents = await sessionHistory.getSessionHistory(forkedFromSession);
-      await channelManager.create(newSessionId, {
-        launchOptions: { resumeSessionId: forkedFromSession },
+      const parentEvents = await sessionHistory.getSessionHistory(forkedFromChannelId);
+      await channelManager.create(newChannelId, {
+        launchOptions: { resumeSessionId: forkedFromChannelId },
         initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
         onBeforeSpawn: (ch) => {
-          ch.parentId = forkedFromSession;
+          ch.parentId = forkedFromChannelId;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      emitter.broadcastAll('session:created', { channelId: newSessionId });
+      emitter.broadcastAll('session:created', { channelId: newChannelId });
       callback?.({
         success: true,
-        channelId: newSessionId,
-        parentSessionId: forkedFromSession,
+        channelId: newChannelId,
+        parentChannelId: forkedFromChannelId,
         events: parentEvents,
       });
     } catch (err) {
@@ -49,7 +49,7 @@ export function create({
   ): Promise<void> {
     try {
       const parsed = sessionTeleportPayloadSchema.parse(payload);
-      const events = await sessionHistory.getSessionHistory(parsed.remoteSessionId);
+      const events = await sessionHistory.getSessionHistory(parsed.remoteChannelId);
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
@@ -61,17 +61,17 @@ export function create({
         }
       }
 
-      await channelManager.create(parsed.newSessionId, {
-        launchOptions: { resumeSessionId: parsed.remoteSessionId },
+      await channelManager.create(parsed.newChannelId, {
+        launchOptions: { resumeSessionId: parsed.remoteChannelId },
         onBeforeSpawn: (newCh) => {
           if (socket) channelManager.addSocketToChannel(newCh, socket);
         },
       });
 
-      emitter.broadcastAll('session:created', { channelId: parsed.newSessionId });
+      emitter.broadcastAll('session:created', { channelId: parsed.newChannelId });
       callback?.({
         success: true,
-        channelId: parsed.newSessionId,
+        channelId: parsed.newChannelId,
         events,
         ...(branchCheckoutFailed && { branchCheckoutFailed: true, branch: parsed.branch }),
       });
