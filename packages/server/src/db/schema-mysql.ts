@@ -9,6 +9,7 @@ export const sessions = mysqlTable(
   'sessions',
   {
     id: varchar('id', { length: 64 }).primaryKey(),
+    parentId: varchar('parent_id', { length: 36 }),
     channelId: varchar('channel_id', { length: 36 }),
     provider: varchar('provider', { length: 20 }).notNull(),
     command: varchar('command', { length: 255 }).notNull(),
@@ -16,7 +17,6 @@ export const sessions = mysqlTable(
     cwd: text('cwd'),
     mode: varchar('mode', { length: 20 }).notNull().default('print'),
     role: varchar('role', { length: 20 }).notNull().default('chat'),
-    parentId: varchar('parent_id', { length: 36 }),
     title: varchar('title', { length: 200 }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     createdAt: varchar('created_at', { length: 30 }).notNull(),

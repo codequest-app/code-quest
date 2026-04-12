@@ -6,6 +6,7 @@
 
 export const SESSION_COLUMNS = [
   'id',
+  'parentId',
   'channelId',
   'provider',
   'command',
@@ -13,7 +14,6 @@ export const SESSION_COLUMNS = [
   'cwd',
   'mode',
   'role',
-  'parentId',
   'title',
   'status',
   'createdAt',

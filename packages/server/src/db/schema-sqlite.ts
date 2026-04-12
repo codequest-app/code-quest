@@ -9,6 +9,7 @@ export const sessions = sqliteTable(
   'sessions',
   {
     id: text('id').primaryKey(),
+    parentId: text('parent_id'),
     channelId: text('channel_id'),
     provider: text('provider').notNull(),
     command: text('command').notNull(),
@@ -16,7 +17,6 @@ export const sessions = sqliteTable(
     cwd: text('cwd'),
     mode: text('mode').notNull().default('print'),
     role: text('role').notNull().default('chat'),
-    parentId: text('parent_id'),
     title: text('title'),
     status: text('status').notNull().default('active'),
     createdAt: text('created_at').notNull(),
