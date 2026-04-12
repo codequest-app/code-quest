@@ -4,6 +4,7 @@ import type { DrizzleDb } from './drizzle-types.ts';
 import { type SessionRecord, type SessionStore, sessionRecordSchema } from './session-store.ts';
 
 interface SessionsTable {
+  id: Column;
   channelId: Column;
   provider: Column;
   command: Column;
@@ -12,7 +13,6 @@ interface SessionsTable {
   mode: Column;
   role: Column;
   parentId: Column;
-  sessionId: Column;
   title: Column;
   status: Column;
   createdAt: Column;
@@ -25,8 +25,21 @@ export class DrizzleSessionStore implements SessionStore {
   ) {}
 
   async persist(record: SessionRecord): Promise<void> {
-    const existing = await this.getById(record.channelId);
-    if (existing) return;
+    const existing = await this.getById(record.id);
+    if (existing) {
+      // Same sessionId reappearing — a new Channel is wrapping the same CLI
+      // conversation (resume, or fork reusing sessionId in fakes). Point the
+      // row's channelId at the current wrapper and refresh lineage/status.
+      await this.db
+        .update(this.sessions)
+        .set({
+          channelId: record.channelId,
+          status: 'active',
+          ...(record.parentId ? { parentId: record.parentId } : {}),
+        })
+        .where(eq(this.sessions.id, record.id));
+      return;
+    }
     await this.db.insert(this.sessions).values(record);
   }
 
@@ -62,7 +75,12 @@ export class DrizzleSessionStore implements SessionStore {
     return { sessions: rows, total: totalResult?.count ?? 0 };
   }
 
-  async getById(channelId: string): Promise<SessionRecord | null> {
+  async getById(id: string): Promise<SessionRecord | null> {
+    const rows = await this.db.select().from(this.sessions).where(eq(this.sessions.id, id));
+    return sessionRecordSchema.optional().parse(rows[0]) ?? null;
+  }
+
+  async getByChannelId(channelId: string): Promise<SessionRecord | null> {
     const rows = await this.db
       .select()
       .from(this.sessions)
@@ -70,30 +88,24 @@ export class DrizzleSessionStore implements SessionStore {
     return sessionRecordSchema.optional().parse(rows[0]) ?? null;
   }
 
-  async rename(channelId: string, title: string): Promise<boolean> {
-    const existing = await this.getById(channelId);
+  async rename(id: string, title: string): Promise<boolean> {
+    const existing = await this.getById(id);
     if (!existing) return false;
-    await this.db
-      .update(this.sessions)
-      .set({ title })
-      .where(eq(this.sessions.channelId, channelId));
+    await this.db.update(this.sessions).set({ title }).where(eq(this.sessions.id, id));
     return true;
   }
 
-  async updateStatus(channelId: string, status: string): Promise<boolean> {
-    const existing = await this.getById(channelId);
+  async updateStatus(id: string, status: string): Promise<boolean> {
+    const existing = await this.getById(id);
     if (!existing) return false;
-    await this.db
-      .update(this.sessions)
-      .set({ status })
-      .where(eq(this.sessions.channelId, channelId));
+    await this.db.update(this.sessions).set({ status }).where(eq(this.sessions.id, id));
     return true;
   }
 
-  async delete(channelId: string): Promise<boolean> {
-    const existing = await this.getById(channelId);
+  async delete(id: string): Promise<boolean> {
+    const existing = await this.getById(id);
     if (!existing) return false;
-    await this.db.delete(this.sessions).where(eq(this.sessions.channelId, channelId));
+    await this.db.delete(this.sessions).where(eq(this.sessions.id, id));
     return true;
   }
 }

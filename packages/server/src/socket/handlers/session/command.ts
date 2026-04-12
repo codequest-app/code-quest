@@ -45,7 +45,8 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionDeletePayloadSchema.parse(payload);
-      const success = await sessionStore.delete(channelId);
+      const record = await sessionStore.getByChannelId(channelId);
+      const success = record ? await sessionStore.delete(record.id) : false;
       if (!success) {
         callback?.({ success: false, error: 'Session not found' });
         return;
@@ -64,7 +65,8 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId, title } = sessionRenamePayloadSchema.parse(payload);
-      const success = await sessionStore.rename(channelId, title);
+      const record = await sessionStore.getByChannelId(channelId);
+      const success = record ? await sessionStore.rename(record.id, title) : false;
       if (!success) {
         callback?.({ success: false, error: 'Session not found' });
         return;

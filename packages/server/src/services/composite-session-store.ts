@@ -17,8 +17,12 @@ export class CompositeSessionStore implements SessionStore {
     return this.stores[0].list(opts);
   }
 
-  async getById(channelId: string): Promise<SessionRecord | null> {
-    return this.stores[0].getById(channelId);
+  async getById(id: string): Promise<SessionRecord | null> {
+    return this.stores[0].getById(id);
+  }
+
+  async getByChannelId(channelId: string): Promise<SessionRecord | null> {
+    return this.stores[0].getByChannelId(channelId);
   }
 
   async persist(record: SessionRecord): Promise<void> {
@@ -37,8 +41,8 @@ export class CompositeSessionStore implements SessionStore {
     }
   }
 
-  async rename(channelId: string, title: string): Promise<boolean> {
-    const results = await Promise.allSettled(this.stores.map((s) => s.rename(channelId, title)));
+  async rename(id: string, title: string): Promise<boolean> {
+    const results = await Promise.allSettled(this.stores.map((s) => s.rename(id, title)));
     for (const r of results) {
       if (r.status === 'rejected') {
         logger.error({ err: r.reason }, 'Partial session rename failure');
@@ -47,10 +51,8 @@ export class CompositeSessionStore implements SessionStore {
     return results.some((r) => r.status === 'fulfilled' && r.value);
   }
 
-  async updateStatus(channelId: string, status: string): Promise<boolean> {
-    const results = await Promise.allSettled(
-      this.stores.map((s) => s.updateStatus(channelId, status)),
-    );
+  async updateStatus(id: string, status: string): Promise<boolean> {
+    const results = await Promise.allSettled(this.stores.map((s) => s.updateStatus(id, status)));
     for (const r of results) {
       if (r.status === 'rejected') {
         logger.error({ err: r.reason }, 'Partial session updateStatus failure');
@@ -59,8 +61,8 @@ export class CompositeSessionStore implements SessionStore {
     return results.some((r) => r.status === 'fulfilled' && r.value);
   }
 
-  async delete(channelId: string): Promise<boolean> {
-    const results = await Promise.allSettled(this.stores.map((s) => s.delete(channelId)));
+  async delete(id: string): Promise<boolean> {
+    const results = await Promise.allSettled(this.stores.map((s) => s.delete(id)));
     for (const r of results) {
       if (r.status === 'rejected') {
         logger.error({ err: r.reason }, 'Partial session delete failure');

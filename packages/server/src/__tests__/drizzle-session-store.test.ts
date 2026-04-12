@@ -9,9 +9,10 @@ import type { SessionRecord } from '../services/session-store.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-function makeRecord(channelId: string, overrides?: Partial<SessionRecord>): SessionRecord {
+function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionRecord {
   return {
-    channelId,
+    id,
+    channelId: id,
     provider: 'claude',
     command: 'claude',
     args: '[]',

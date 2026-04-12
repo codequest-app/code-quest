@@ -5,20 +5,24 @@ import type {
   SettingsColumnName,
 } from './schema-columns.ts';
 
-export const sessions = mysqlTable('sessions', {
-  channelId: varchar('channel_id', { length: 36 }).primaryKey(),
-  provider: varchar('provider', { length: 20 }).notNull(),
-  command: varchar('command', { length: 255 }).notNull(),
-  args: text('args').notNull(),
-  cwd: text('cwd'),
-  mode: varchar('mode', { length: 20 }).notNull().default('print'),
-  role: varchar('role', { length: 20 }).notNull().default('chat'),
-  parentId: varchar('parent_id', { length: 36 }),
-  sessionId: varchar('session_id', { length: 64 }),
-  title: varchar('title', { length: 200 }),
-  status: varchar('status', { length: 20 }).notNull().default('active'),
-  createdAt: varchar('created_at', { length: 30 }).notNull(),
-});
+export const sessions = mysqlTable(
+  'sessions',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    channelId: varchar('channel_id', { length: 36 }),
+    provider: varchar('provider', { length: 20 }).notNull(),
+    command: varchar('command', { length: 255 }).notNull(),
+    args: text('args').notNull(),
+    cwd: text('cwd'),
+    mode: varchar('mode', { length: 20 }).notNull().default('print'),
+    role: varchar('role', { length: 20 }).notNull().default('chat'),
+    parentId: varchar('parent_id', { length: 36 }),
+    title: varchar('title', { length: 200 }),
+    status: varchar('status', { length: 20 }).notNull().default('active'),
+    createdAt: varchar('created_at', { length: 30 }).notNull(),
+  },
+  (table) => [index('idx_sessions_channel_id').on(table.channelId)],
+);
 
 export const rawEntries = mysqlTable(
   'raw_entries',

@@ -62,7 +62,7 @@ describe('ChatHandler > session', () => {
       await new Promise<void>((r) => setTimeout(r, 50));
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const forked = await sessionStore.getById('fork-verify');
+      const forked = await sessionStore.getByChannelId('fork-verify');
       expect(forked).toBeDefined();
       expect(forked!.parentId).toBe(channelId);
       expect(forked!.parentId).not.toBe('fork-verify');

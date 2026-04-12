@@ -34,8 +34,8 @@ export class SessionHistory {
   async resolveSessionId(channelId: string): Promise<string> {
     const channel = this.getChannel(channelId);
     if (channel?.sessionId) return channel.sessionId;
-    const record = await this.sessionStore.getById(channelId);
-    return record?.sessionId ?? channelId;
+    const record = await this.sessionStore.getByChannelId(channelId);
+    return record?.id ?? channelId;
   }
 
   async getSessionHistory(channelId: string): Promise<ClientMessage[]> {

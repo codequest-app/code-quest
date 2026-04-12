@@ -239,8 +239,9 @@ export function create({
       const { title } = parsed.data;
       ch.title = title;
       sessionStore
-        .rename(channelId, title)
-        .catch((e) => logger.warn({ err: e }, 'Failed to persist session title'));
+        .getByChannelId(channelId)
+        .then((record) => (record ? sessionStore.rename(record.id, title) : undefined))
+        .catch((e: unknown) => logger.warn({ err: e }, 'Failed to persist session title'));
       channelManager.broadcastSessionState(channelId, 'idle', title);
     } catch (e) {
       logger.error({ err: e }, 'Failed to generate session title');

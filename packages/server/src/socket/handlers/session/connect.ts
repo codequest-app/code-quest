@@ -171,7 +171,10 @@ export function create({
       logger.error({ err }, 'Failed to create session');
       const message = errMsg(err, 'Failed to create session');
       if (resumeChannelId && message.includes('No conversation found')) {
-        await sessionStore.updateStatus(resumeChannelId, 'dead').catch(() => {});
+        const deadRecord = await sessionStore.getByChannelId(resumeChannelId);
+        if (deadRecord) {
+          await sessionStore.updateStatus(deadRecord.id, 'dead').catch(() => {});
+        }
         emitter.broadcastAll('session:dead', { channelId: resumeChannelId });
         return;
       }
@@ -244,8 +247,8 @@ export function create({
       const parentId = ch.parentId;
       sessionStore
         .persist({
+          id: ch.sessionId,
           channelId: ch.channelId,
-          sessionId: ch.sessionId,
           provider: channelManager.provider,
           command: channelManager.runnerCommand,
           args: JSON.stringify(channelManager.runnerArgs),

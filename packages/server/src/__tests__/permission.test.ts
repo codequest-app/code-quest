@@ -268,8 +268,8 @@ describe('ChatHandler > control', () => {
       const { container, claude, channelId } = await setup('my-session-id');
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
-      expect(record?.sessionId).toBe('my-session-id');
+      const record = await sessionStore.getByChannelId(channelId);
+      expect(record?.id).toBe('my-session-id');
     });
   });
 

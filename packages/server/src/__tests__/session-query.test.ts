@@ -73,7 +73,7 @@ describe('ChatHandler > session', () => {
 
       // Verify DB persistence
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
+      const record = await sessionStore.getByChannelId(channelId);
       expect(record).toBeDefined();
       expect(record!.title).toBe('Generated Title');
     });

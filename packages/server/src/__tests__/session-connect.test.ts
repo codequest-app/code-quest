@@ -76,9 +76,9 @@ describe('ChatHandler > session', () => {
       const { container, claude, channelId } = await setup();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
+      const record = await sessionStore.getByChannelId(channelId);
       expect(record).not.toBeNull();
-      expect(record!.sessionId).toBe('cli-sess');
+      expect(record!.id).toBe('cli-sess');
     });
 
     it('sessionStore.persist is fire-and-forget: custom:created fires without awaiting persist', async () => {
@@ -287,8 +287,8 @@ describe('ChatHandler > session', () => {
 
       // Verify session was persisted with sessionId
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
-      expect(record?.sessionId).toBe('cli-sess');
+      const record = await sessionStore.getByChannelId(channelId);
+      expect(record?.id).toBe('cli-sess');
 
       // Kill the process
       claude.handle.abort();
@@ -474,9 +474,9 @@ describe('ChatHandler > session', () => {
       await new Promise<void>((r) => setTimeout(r, 50));
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getById(channelId);
+      const record = await sessionStore.getByChannelId(channelId);
       expect(record).toBeDefined();
-      expect(record!.sessionId).toBeTruthy();
+      expect(record!.id).toBeTruthy();
     });
 
     it('session:created is NOT blocked when session:init has no sessionId', async () => {
@@ -510,9 +510,9 @@ describe('ChatHandler > session', () => {
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
       // session:init already arrived during setup() — persist should have happened
-      const record = await sessionStore.getById(channelId);
+      const record = await sessionStore.getByChannelId(channelId);
       expect(record).toBeDefined();
-      expect(record!.sessionId).toBe('cli-sess');
+      expect(record!.id).toBe('cli-sess');
     });
 
     it('session:created is broadcast to second socket after launch', async () => {
@@ -1021,6 +1021,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
+        id: 'dead-sess',
         channelId: 'dead-sess',
         provider: 'claude',
         command: 'claude',
@@ -1046,6 +1047,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
+        id: 'dead-sess-2',
         channelId: 'dead-sess-2',
         provider: 'claude',
         command: 'claude',
@@ -1070,6 +1072,7 @@ describe('ChatHandler > session', () => {
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       await sessionStore.persist({
+        id: 'dead-sess-3',
         channelId: 'dead-sess-3',
         provider: 'claude',
         command: 'claude',

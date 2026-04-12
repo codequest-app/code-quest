@@ -31,7 +31,7 @@ export function create({
         hasParentId: parsed.hasParentId,
       });
       const previews = await Promise.all(
-        result.sessions.map((s) => sessionHistory.getPreview(s.sessionId ?? s.channelId)),
+        result.sessions.map((s) => sessionHistory.getPreview(s.id)),
       );
       const sessions = result.sessions.map((s, i) => {
         const ch = channelManager.get(s.channelId);
@@ -77,7 +77,7 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionGetPayloadSchema.parse(payload);
-      const session = await sessionStore.getById(channelId);
+      const session = await sessionStore.getByChannelId(channelId);
       if (!session) {
         callback?.({ error: 'Session not found' });
         return;

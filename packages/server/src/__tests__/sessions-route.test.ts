@@ -22,6 +22,7 @@ function createMockStore(sessions: SessionRecord[] = []): SessionStore {
     persist: vi.fn(),
     list: vi.fn().mockResolvedValue({ sessions, total: sessions.length }),
     getById: vi.fn(),
+    getByChannelId: vi.fn(),
     rename: vi.fn(),
     delete: vi.fn(),
     updateStatus: vi.fn(),

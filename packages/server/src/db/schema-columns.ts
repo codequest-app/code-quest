@@ -5,6 +5,7 @@
  */
 
 export const SESSION_COLUMNS = [
+  'id',
   'channelId',
   'provider',
   'command',
@@ -13,7 +14,6 @@ export const SESSION_COLUMNS = [
   'mode',
   'role',
   'parentId',
-  'sessionId',
   'title',
   'status',
   'createdAt',

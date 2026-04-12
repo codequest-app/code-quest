@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const sessionRecordSchema = z.looseObject({
+  id: z.string(),
   channelId: z.string(),
   provider: z.string(),
   command: z.string(),
@@ -9,7 +10,6 @@ export const sessionRecordSchema = z.looseObject({
   mode: z.string(),
   role: z.string(),
   parentId: z.string().nullable().optional(),
-  sessionId: z.string().nullable().optional(),
   title: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   createdAt: z.string(),
@@ -25,8 +25,11 @@ export interface SessionStore {
     cwd?: string;
     hasParentId?: boolean;
   }): Promise<{ sessions: SessionRecord[]; total: number }>;
-  getById(channelId: string): Promise<SessionRecord | null>;
-  rename(channelId: string, title: string): Promise<boolean>;
-  updateStatus(channelId: string, status: string): Promise<boolean>;
-  delete(channelId: string): Promise<boolean>;
+  /** Lookup by primary key (sessionId). */
+  getById(id: string): Promise<SessionRecord | null>;
+  /** Bridge lookup by the indexed `channel_id` column. Callers then operate by `record.id`. */
+  getByChannelId(channelId: string): Promise<SessionRecord | null>;
+  rename(id: string, title: string): Promise<boolean>;
+  updateStatus(id: string, status: string): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
 }

@@ -61,9 +61,9 @@ describe('renderWithWorkspace', () => {
 
     // DB has CLI-generated title
     const sessionStore = container.get<{
-      getById(id: string): Promise<{ title?: string } | null>;
+      getByChannelId(channelId: string): Promise<{ title?: string } | null>;
     }>(Symbol.for('SessionStore'));
-    const record = await sessionStore.getById(channelId);
+    const record = await sessionStore.getByChannelId(channelId);
     expect(record).toBeDefined();
     expect(record!.title).toBe('Fix the login bug');
   });
