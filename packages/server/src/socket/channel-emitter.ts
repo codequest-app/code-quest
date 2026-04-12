@@ -96,7 +96,10 @@ export class ChannelEmitter {
   dispatchRunnerMessage(ch: Channel, event: string, payload: unknown): void {
     if (event !== 'session:init') {
       const data = typeof payload === 'object' && payload !== null ? payload : {};
-      this.emit(ch.id, event, { channelId: ch.id, ...(data as Record<string, unknown>) });
+      this.emit(ch.channelId, event, {
+        channelId: ch.channelId,
+        ...(data as Record<string, unknown>),
+      });
     }
     this.dispatch(event, ch, payload);
   }

@@ -96,7 +96,7 @@ export function create({
       const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
       const entry: RawEntry = {
         timestamp: Date.now(),
-        sessionId: await sessionHistory.resolveSessionId(ch.id),
+        sessionId: await sessionHistory.resolveSessionId(ch.channelId),
         promptId: '',
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),

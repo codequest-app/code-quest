@@ -13,7 +13,10 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   function onCancel(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);
-    emitter.emit(ch.id, 'chat:cancel_request', { channelId: ch.id, targetRequestId: requestId });
+    emitter.emit(ch.channelId, 'chat:cancel_request', {
+      channelId: ch.channelId,
+      targetRequestId: requestId,
+    });
   }
 
   function onPermission(ch: Channel, payload: unknown): void {
@@ -31,8 +34,8 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       controlForwardPayloadSchema.parse(payload);
 
     ch.trackControlRequest(requestId, { subtype, toolName, toolUseId });
-    emitter.emit(ch.id, 'raw:event', {
-      channelId: ch.id,
+    emitter.emit(ch.channelId, 'raw:event', {
+      channelId: ch.channelId,
       rawType: `control_request/${subtype}`,
       data: { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId },
     });
@@ -46,8 +49,8 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       readFileOrEmpty(newPath),
     ]);
     ch.trackControlRequest(requestId, { subtype: 'open_diff' });
-    emitter.emit(ch.id, 'control:diff_review', {
-      channelId: ch.id,
+    emitter.emit(ch.channelId, 'control:diff_review', {
+      channelId: ch.channelId,
       requestId,
       toolId: requestId,
       filePath: originalPath || newPath,

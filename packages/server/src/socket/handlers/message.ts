@@ -249,11 +249,11 @@ export function create({
 
   function onMessageResult(ch: Channel, _payload: unknown): void {
     ch.endProcessing();
-    channelManager.broadcastSessionState(ch.id, 'idle');
+    channelManager.broadcastSessionState(ch.channelId, 'idle');
   }
 
   function onMessageResultTitle(ch: Channel, _payload: unknown): void {
-    generateTitleIfNeeded(ch.id, ch);
+    generateTitleIfNeeded(ch.channelId, ch);
   }
 
   emitter.on('message:result', withChannel(onMessageResult));

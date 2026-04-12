@@ -165,7 +165,7 @@ export class ChannelManager {
   // ── Socket tracking ──
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {
-    this.emitter.addSocketToChannel(channel.id, socket);
+    this.emitter.addSocketToChannel(channel.channelId, socket);
   }
 
   removeSocketFromAll(socketId: string): void {

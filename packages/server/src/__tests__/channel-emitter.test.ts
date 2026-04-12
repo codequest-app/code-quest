@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Channel } from '../socket/channel.ts';
 import { ChannelEmitter } from '../socket/channel-emitter.ts';
 
-function fakeChannel(id = 'ch-1'): Channel {
-  return { id } as unknown as Channel;
+function fakeChannel(channelId = 'ch-1'): Channel {
+  return { channelId } as unknown as Channel;
 }
 
 describe('ChannelEmitter', () => {

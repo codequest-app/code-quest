@@ -41,7 +41,7 @@ const DEFAULT_CONTROL_TIMEOUT = 30_000;
 
 export class Channel {
   // ── Identity ──
-  readonly id: string;
+  readonly channelId: string;
   readonly runner: ProcessRunner;
   readonly provider: string;
   readonly controlTimeout: number;
@@ -86,11 +86,11 @@ export class Channel {
 
   constructor(
     runner: ProcessRunner,
-    id: string,
+    channelId: string,
     provider: string,
     controlTimeout = DEFAULT_CONTROL_TIMEOUT,
   ) {
-    this.id = id;
+    this.channelId = channelId;
     this.runner = runner;
     this.provider = provider;
     this.controlTimeout = controlTimeout;

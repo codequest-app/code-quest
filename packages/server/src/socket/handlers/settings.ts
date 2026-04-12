@@ -202,7 +202,7 @@ export function create({
     const { model } = serverActionModelSchema.parse(input ?? {});
     ch.updateSessionConfig({ model });
     ch.respondToRequest(requestId, { subtype: 'success' });
-    channelManager.broadcastSessionState(ch.id, 'busy');
+    channelManager.broadcastSessionState(ch.channelId, 'busy');
   }
 
   function onPermissionModeUpdated(ch: Channel, payload: unknown): void {
@@ -210,7 +210,7 @@ export function create({
     const { mode } = serverActionModeSchema.parse(input ?? {});
     ch.updateSessionConfig({ permissionMode: mode });
     ch.respondToRequest(requestId, { subtype: 'success' });
-    channelManager.broadcastSessionState(ch.id, 'busy');
+    channelManager.broadcastSessionState(ch.channelId, 'busy');
   }
 
   emitter.on('settings:get_settings', withChannel(onGetSettings));

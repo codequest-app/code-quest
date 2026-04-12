@@ -140,7 +140,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
 
   function onMcpControl(ch: Channel, payload: unknown): void {
     const { requestId, message: mcpMsg } = mcpPayloadSchema.parse(payload);
-    const hasClient = emitter.getSocketCount(ch.id) > 0;
+    const hasClient = emitter.getSocketCount(ch.channelId) > 0;
     const mcpId = mcpMsg?.id;
     if (!hasClient) {
       ch.respondToRequest(requestId, jsonRpcError(mcpId, 'no client'));

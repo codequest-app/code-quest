@@ -25,7 +25,7 @@ type InitResponseResult = z.infer<typeof initResponseResultSchema>;
 function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   const meta = channel.metaCache;
   return {
-    channelId: channel.id,
+    channelId: channel.channelId,
     sessionId: channel.sessionId ?? '',
     ...pickDefined({
       model: meta.model,
@@ -131,7 +131,7 @@ export function create({
       ...(slashCommands && { slashCommands }),
     });
 
-    const channelId = channel.id;
+    const channelId = channel.channelId;
     socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
     if (channelManager.cachedModels) {
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
@@ -185,7 +185,7 @@ export function create({
     channel: Channel,
     socket?: TypedSocket,
   ): Promise<{ events: unknown[] }> {
-    const channelId = channel.id;
+    const channelId = channel.channelId;
     channelManager.ensureBound(channel);
 
     const replaySessionId = await sessionHistory.resolveSessionId(channelId);
@@ -240,7 +240,7 @@ export function create({
   }
 
   function onSessionInit(ch: Channel, _payload: unknown): void {
-    const channelId = ch.id;
+    const channelId = ch.channelId;
     channelManager.broadcastSessionState(channelId, 'busy');
 
     // Persist when session:init arrives (sessionId now available)
@@ -265,10 +265,10 @@ export function create({
 
   function onChannelExit(ch: Channel, payload: unknown): void {
     const { code: _code } = channelExitPayloadSchema.parse(payload);
-    channelManager.broadcastSessionState(ch.id, 'exited');
+    channelManager.broadcastSessionState(ch.channelId, 'exited');
     ch.resetSessionConfig();
-    emitter.emit(ch.id, 'session:closed', {
-      channelId: ch.id,
+    emitter.emit(ch.channelId, 'session:closed', {
+      channelId: ch.channelId,
       ...(ch.lastError ? { error: ch.lastError } : {}),
     });
   }
