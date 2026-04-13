@@ -162,6 +162,17 @@ export class ChannelManager {
     return this.getAliveChannels()[0]?.[1];
   }
 
+  aliveChannels(): Channel[] {
+    return [...this.channels.values()].filter((ch) => !ch.exited);
+  }
+
+  findAliveBySessionId(sessionId: string): Channel | undefined {
+    for (const ch of this.channels.values()) {
+      if (!ch.exited && ch.sessionId === sessionId) return ch;
+    }
+    return undefined;
+  }
+
   // ── Socket tracking ──
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {

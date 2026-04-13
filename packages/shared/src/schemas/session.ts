@@ -4,6 +4,8 @@ import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
 // ── Session summary (moved from common.ts) ──
 
 export const sessionSummarySchema = z.object({
+  /** The durable sessionId (DB row PK). Use this when calling useResume(). */
+  id: z.string(),
   channelId: z.string(),
   provider: z.string(),
   command: z.string(),
@@ -111,8 +113,21 @@ export const sessionListPayloadSchema = z.object({
   offset: z.number().min(0).optional(),
   cwd: z.string().optional(),
   hasParentId: z.boolean().optional(),
+  /** When true, omit sessions whose sessionId currently has an alive Channel. */
+  excludeLive: z.boolean().optional(),
 });
 export type SessionListPayload = z.infer<typeof sessionListPayloadSchema>;
+
+export const sessionResumePayloadSchema = z.object({
+  sessionId: z.string(),
+});
+export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
+
+export const sessionResumeResponseSchema = z.object({
+  channelId: z.string().optional(),
+  error: z.string().optional(),
+});
+export type SessionResumeResponse = z.infer<typeof sessionResumeResponseSchema>;
 
 export const sessionListRemotePayloadSchema = z.object({
   limit: z.number().min(1).max(100).optional(),

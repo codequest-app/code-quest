@@ -26,6 +26,8 @@ export interface SessionStore {
     offset?: number;
     cwd?: string;
     hasParentId?: boolean;
+    /** Omit rows whose `id` (sessionId) is in the array. Empty array = no filter. */
+    excludeSessionIds?: string[];
   }): Promise<{ sessions: SessionRecord[]; total: number }>;
   /** Lookup by primary key (sessionId). */
   getById(id: string): Promise<SessionRecord | null>;

@@ -105,6 +105,84 @@ describe('ChatHandler > session', () => {
       expect(noMatchResult.total).toBe(0);
     });
 
+    it('excludeLive omits sessions whose sessionId has an alive channel', async () => {
+      const { container, claude } = await setup('alive-sess');
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      // Persist a second session NOT backed by an alive channel
+      await sessionStore.upsert({
+        id: 'historical-sess',
+        channelId: 'ch-historical',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        createdAt: new Date().toISOString(),
+      });
+
+      const result = await claude.send<{ sessions: { id: string }[]; total: number }>(
+        'session:list',
+        { excludeLive: true },
+      );
+
+      const ids = result.sessions.map((s) => s.id);
+      expect(ids).toContain('historical-sess');
+      expect(ids).not.toContain('alive-sess');
+      expect(result.total).toBe(1);
+    });
+
+    it('excludeLive: false returns alive sessions too', async () => {
+      const { container, claude } = await setup('alive-sess-2');
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'historical-sess-2',
+        channelId: 'ch-h2',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        createdAt: new Date().toISOString(),
+      });
+
+      const result = await claude.send<{ sessions: { id: string }[]; total: number }>(
+        'session:list',
+        { excludeLive: false },
+      );
+
+      const ids = result.sessions.map((s) => s.id);
+      expect(ids).toContain('alive-sess-2');
+      expect(ids).toContain('historical-sess-2');
+    });
+
+    it('excludeLive: true with no alive sessionIds returns all rows', async () => {
+      // No setup() -> no alive channel with a sessionId
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'only-historical',
+        channelId: 'ch-only',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        createdAt: new Date().toISOString(),
+      });
+
+      // Spawn an unrelated socket to send session:list
+      const claude = summoner.claude();
+      // Don't initialize — no alive channel for any sessionId
+      const result = await claude.send<{ sessions: { id: string }[]; total: number }>(
+        'session:list',
+        { excludeLive: true },
+      );
+
+      expect(result.sessions.map((s) => s.id)).toContain('only-historical');
+    });
+
     it('session:list with hasParentId only returns sessions with parentId', async () => {
       const { claude } = await setup();
 

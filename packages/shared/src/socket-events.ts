@@ -102,6 +102,8 @@ import type {
   SessionListRemotePayload,
   SessionListResponse,
   SessionRenamePayload,
+  SessionResumePayload,
+  SessionResumeResponse,
   SessionStatesPayload,
   SessionStatusPayload,
   SessionTeleportPayload,
@@ -333,6 +335,10 @@ export interface ClientToServerEvents {
     callback: (response: SessionLaunchResponse) => void,
   ) => void;
   'session:close': (payload: SessionClosePayload) => void;
+  'session:resume': (
+    payload: SessionResumePayload,
+    callback: (response: SessionResumeResponse) => void,
+  ) => void;
   'session:join': (
     payload: SessionJoinPayload,
     callback: (response: SessionJoinResponse) => void,

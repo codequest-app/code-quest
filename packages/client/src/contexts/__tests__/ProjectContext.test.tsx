@@ -75,4 +75,43 @@ describe('ProjectContext', () => {
 
     expect(result.current.state.activeProjectCwd).toBe('/path/to/DQ');
   });
+
+  describe('pendingActivateChannel', () => {
+    it('starts as null', () => {
+      const { result } = renderHook(() => useProjectState(), { wrapper: Wrapper });
+      expect(result.current.pendingActivateChannel).toBeNull();
+    });
+
+    it('requestActivateChannel sets pendingActivateChannel', () => {
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: Wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+
+      expect(result.current.state.pendingActivateChannel).toEqual({
+        cwd: '/proj',
+        channelId: 'ch-1',
+      });
+    });
+
+    it('clearPendingActivate resets to null', () => {
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: Wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+      act(() => {
+        result.current.actions.clearPendingActivate();
+      });
+
+      expect(result.current.state.pendingActivateChannel).toBeNull();
+    });
+  });
 });

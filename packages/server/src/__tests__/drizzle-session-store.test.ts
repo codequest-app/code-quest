@@ -181,6 +181,30 @@ describe('DrizzleSessionStore', () => {
     });
   });
 
+  describe('list excludeSessionIds', () => {
+    it('omits rows whose id is in excludeSessionIds; total reflects filter', async () => {
+      await store.upsert(makeRecord('a'));
+      await store.upsert(makeRecord('b'));
+      await store.upsert(makeRecord('c'));
+
+      const result = await store.list({ excludeSessionIds: ['a'] });
+
+      const ids = result.sessions.map((s) => s.id).sort();
+      expect(ids).toEqual(['b', 'c']);
+      expect(result.total).toBe(2);
+    });
+
+    it('empty excludeSessionIds returns all rows (no NOT IN () SQL hazard)', async () => {
+      await store.upsert(makeRecord('a'));
+      await store.upsert(makeRecord('b'));
+
+      const result = await store.list({ excludeSessionIds: [] });
+
+      expect(result.sessions).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+  });
+
   describe('updateStatusByChannelId', () => {
     it('updates status and returns true when channelId matches', async () => {
       await store.upsert(makeRecord('sess-1', { channelId: 'ch-A' }));

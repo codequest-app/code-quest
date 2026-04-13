@@ -1,6 +1,11 @@
 import type { SessionStateSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
+// Intentional dependency — Decision 10: ProjectContext mediates the
+// "activate this channel for cwd X" intent across the sidebar/editor split.
+// Soft-bound: TabProvider may be mounted standalone in tests, so we read
+// the contexts directly and treat absence as "no pending intent".
+import { ProjectActionsContext, ProjectStateContext } from './ProjectContext';
 
 export interface TabMeta {
   title?: string;
@@ -159,6 +164,24 @@ export function TabProvider({
     }
     prevSessionIds.current = currentIds;
   }, [sessions]);
+
+  // Decision 10: consume pendingActivateChannel intent from ProjectContext.
+  // Fires only when (a) the cwd matches our own AND (b) the channel is
+  // already in our tabs. Otherwise we wait — the sessions-prop effect above
+  // may add the channel later, and this effect will re-run via the tabs dep.
+  // Dep array MUST include both pendingActivateChannel AND state.tabs,
+  // otherwise a pending intent that lands before auto-addTab is silently lost.
+  const projectState = useContext(ProjectStateContext);
+  const projectActions = useContext(ProjectActionsContext);
+  const pendingActivateChannel = projectState?.pendingActivateChannel ?? null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab/clearPendingActivate are stable refs
+  useEffect(() => {
+    if (!pendingActivateChannel || !projectActions) return;
+    if (pendingActivateChannel.cwd !== cwd) return;
+    if (!(pendingActivateChannel.channelId in state.tabs)) return;
+    setActiveTab(pendingActivateChannel.channelId);
+    projectActions.clearPendingActivate();
+  }, [pendingActivateChannel, state.tabs, cwd]);
 
   const stateValue: TabStateValue = { tabs: state.tabs, activeTabId: state.activeTabId };
 

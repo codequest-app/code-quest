@@ -19,6 +19,8 @@ export interface SessionContextValue {
   listSessions: (opts?: {
     limit?: number;
     offset?: number;
+    cwd?: string;
+    excludeLive?: boolean;
   }) => Promise<{ sessions: SessionSummary[]; total: number }>;
   listRemoteSessions: (opts?: {
     limit?: number;

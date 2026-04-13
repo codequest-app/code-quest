@@ -129,6 +129,68 @@ describe('ChannelManager', () => {
     });
   });
 
+  describe('aliveChannels (Channel[] flat)', () => {
+    it('returns only non-exited channels as Channel[]', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const aliveClaude = summoner.claude();
+      await aliveClaude.initialize({ launch: { channelId: 'ch-alive' } });
+      const exitedClaude = summoner.claude();
+      const exitedId = await exitedClaude.initialize({ launch: { channelId: 'ch-exit' } });
+      exitedClaude.handle.abort();
+      await new Promise<void>((r) => queueMicrotask(r));
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const alive = mgr.aliveChannels();
+
+      expect(Array.isArray(alive)).toBe(true);
+      const ids = alive.map((c) => c.channelId);
+      expect(ids).toContain('ch-alive');
+      expect(ids).not.toContain(exitedId);
+    });
+  });
+
+  describe('findAliveBySessionId', () => {
+    it('returns the alive channel whose sessionId matches', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      await claude.initialize(s.init('sess-target'));
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      const found = mgr.findAliveBySessionId('sess-target');
+
+      expect(found).toBeDefined();
+      expect(found?.sessionId).toBe('sess-target');
+    });
+
+    it('returns undefined when no alive channel matches', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      await createFakeSummoner(server).claude().initialize(s.init('sess-other'));
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      expect(mgr.findAliveBySessionId('sess-missing')).toBeUndefined();
+    });
+
+    it('ignores exited channels', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      await claude.initialize(s.init('sess-zombie'));
+      claude.handle.abort();
+      await new Promise<void>((r) => queueMicrotask(r));
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
+      expect(mgr.findAliveBySessionId('sess-zombie')).toBeUndefined();
+    });
+  });
+
   describe('alive channels', () => {
     it('getAliveChannels includes launched channels', async () => {
       const container = createTestContainer();

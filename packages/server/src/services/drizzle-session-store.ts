@@ -1,4 +1,4 @@
-import { and, type Column, count, desc, eq, isNotNull, ne } from 'drizzle-orm';
+import { and, type Column, count, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
 import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
 import { type SessionRecord, type SessionStore, sessionRecordSchema } from './session-store.ts';
@@ -48,6 +48,7 @@ export class DrizzleSessionStore implements SessionStore {
     offset?: number;
     cwd?: string;
     hasParentId?: boolean;
+    excludeSessionIds?: string[];
   }): Promise<{ sessions: SessionRecord[]; total: number }> {
     const limit = opts?.limit ?? 50;
     const offset = opts?.offset ?? 0;
@@ -55,6 +56,9 @@ export class DrizzleSessionStore implements SessionStore {
     const conditions = [ne(this.sessions.status, 'dead')];
     if (opts?.cwd) conditions.push(eq(this.sessions.cwd, opts.cwd));
     if (opts?.hasParentId) conditions.push(isNotNull(this.sessions.parentId));
+    if (opts?.excludeSessionIds?.length) {
+      conditions.push(notInArray(this.sessions.id, opts.excludeSessionIds));
+    }
     const condition = conditions.length > 1 ? and(...conditions) : conditions[0];
 
     const rows = z

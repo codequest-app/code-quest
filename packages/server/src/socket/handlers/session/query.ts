@@ -24,11 +24,15 @@ export function create({
   ): Promise<void> {
     try {
       const parsed = sessionListPayloadSchema.parse(payload);
+      const excludeSessionIds = parsed.excludeLive
+        ? channelManager.aliveChannels().flatMap((c) => (c.sessionId ? [c.sessionId] : []))
+        : undefined;
       const result = await sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
         cwd: parsed.cwd,
         hasParentId: parsed.hasParentId,
+        excludeSessionIds,
       });
       const previews = await Promise.all(
         result.sessions.map((s) => sessionHistory.getPreview(s.id)),

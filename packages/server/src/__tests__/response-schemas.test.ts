@@ -53,6 +53,7 @@ describe('shared response schemas', () => {
       const input = {
         sessions: [
           {
+            id: 'sess-1',
             channelId: 's1',
             provider: 'claude',
             command: 'claude',

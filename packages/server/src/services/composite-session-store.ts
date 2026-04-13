@@ -13,6 +13,7 @@ export class CompositeSessionStore implements SessionStore {
     offset?: number;
     cwd?: string;
     hasParentId?: boolean;
+    excludeSessionIds?: string[];
   }): Promise<{ sessions: SessionRecord[]; total: number }> {
     return this.stores[0].list(opts);
   }

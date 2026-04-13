@@ -4,6 +4,7 @@ import {
   controlInitResponseSchema,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
+  sessionResumePayloadSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
 import { config } from '../../../config.ts';
@@ -272,8 +273,55 @@ export function create({
     });
   }
 
+  async function handleResume(
+    _ch: Channel | null,
+    payload: unknown,
+    socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
+    let sessionId: string | undefined;
+    try {
+      const parsed = sessionResumePayloadSchema.parse(payload);
+      sessionId = parsed.sessionId;
+      const reused = channelManager.findAliveBySessionId(sessionId);
+      if (reused) {
+        callback?.({ channelId: reused.channelId });
+        return;
+      }
+
+      const newChannelId = crypto.randomUUID();
+      const launchOptions = {
+        resumeSessionId: sessionId,
+        ...(config.allowDangerouslySkipPermissions
+          ? { allowDangerouslySkipPermissions: true }
+          : {}),
+      };
+      const { channel } = await channelManager.create(newChannelId, {
+        launchOptions,
+        onBeforeSpawn: (ch) => {
+          if (socket) channelManager.addSocketToChannel(ch, socket);
+        },
+      });
+
+      emitter.broadcastAll('session:created', {
+        channelId: channel.channelId,
+        cwd: channel.cwd,
+      });
+      callback?.({ channelId: channel.channelId });
+    } catch (err) {
+      const message = errMsg(err, 'Failed to resume session');
+      if (sessionId && message.includes('No conversation found')) {
+        await sessionStore
+          .updateStatus(sessionId, 'dead')
+          .catch((e) => logger.warn({ err: e }, 'Failed to mark session dead'));
+      }
+      callback?.({ error: message });
+    }
+  }
+
   emitter.on('session:init', withChannel(onSessionInit));
   emitter.on('channel:exit', withChannel(onChannelExit));
   emitter.on('session:launch', handleLaunch);
   emitter.on('session:join', handleJoin);
+  emitter.on('session:resume', handleResume);
 }

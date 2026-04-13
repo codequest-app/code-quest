@@ -20,6 +20,7 @@ export function ProjectList({
           <ProjectCard
             key={p.cwd}
             name={p.name}
+            cwd={p.cwd}
             active={p.cwd === activeProjectCwd}
             onSelect={() => onSelect(p.cwd)}
           />

@@ -8,7 +8,7 @@ import { WorkspaceLayout } from '../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 import { PluginProvider } from '../PluginContext';
-import { ProjectProvider } from '../ProjectContext';
+import { ProjectProvider, useProjectActions, useProjectState } from '../ProjectContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../TabContext';
@@ -46,8 +46,126 @@ function renderWithSessions(ui: ReactElement, initialSessions: SessionStateSumma
   return { user, setSessions };
 }
 
+function renderWithProjectAndSessions(
+  ui: ReactElement,
+  initial: { cwd: string; sessions?: SessionStateSummary[] },
+) {
+  const summoner = createFakeSummoner();
+  let sessions = initial.sessions ?? [];
+  const tree = (
+    <SocketProvider socket={summoner.socket}>
+      <SessionProvider>
+        <ProjectProvider>
+          <TabProvider cwd={initial.cwd} sessions={sessions}>
+            {ui}
+          </TabProvider>
+        </ProjectProvider>
+      </SessionProvider>
+    </SocketProvider>
+  );
+  const { rerender } = render(tree);
+  function setSessions(next: SessionStateSummary[]) {
+    sessions = next;
+    rerender(
+      <SocketProvider socket={summoner.socket}>
+        <SessionProvider>
+          <ProjectProvider>
+            <TabProvider cwd={initial.cwd} sessions={sessions}>
+              {ui}
+            </TabProvider>
+          </ProjectProvider>
+        </SessionProvider>
+      </SocketProvider>,
+    );
+  }
+  return { setSessions };
+}
+
 describe('TabProvider', () => {
   // ── Unit tests (no pipeline) ──
+
+  describe('pendingActivateChannel intent (Decision 10)', () => {
+    function ProbeAndTrigger({ trigger }: { trigger: { cwd: string; channelId: string } }) {
+      const { activeTabId } = useTabState();
+      const { pendingActivateChannel } = useProjectState();
+      const { requestActivateChannel } = useProjectActions();
+      return (
+        <>
+          <span data-testid="active">{activeTabId ?? 'null'}</span>
+          <span data-testid="pending">{JSON.stringify(pendingActivateChannel)}</span>
+          <button
+            type="button"
+            onClick={() => requestActivateChannel(trigger.cwd, trigger.channelId)}
+          >
+            request
+          </button>
+        </>
+      );
+    }
+
+    it('matching cwd + channel already in tabs → setActiveTab + clearPendingActivate', async () => {
+      renderWithProjectAndSessions(
+        <ProbeAndTrigger trigger={{ cwd: '/proj', channelId: 'ch-1' }} />,
+        {
+          cwd: '/proj',
+          sessions: [{ channelId: 'ch-1', state: 'idle', cwd: '/proj' }],
+        },
+      );
+
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByText('request'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active')).toHaveTextContent('ch-1');
+        expect(screen.getByTestId('pending')).toHaveTextContent('null');
+      });
+    });
+
+    it('matching cwd + channel NOT yet in tabs → wait (no clear), activate when channel appears', async () => {
+      const { setSessions } = renderWithProjectAndSessions(
+        <ProbeAndTrigger trigger={{ cwd: '/proj', channelId: 'ch-late' }} />,
+        { cwd: '/proj', sessions: [] },
+      );
+
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByText('request'));
+
+      // Pending stays set; no active tab yet
+      expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-late"');
+      expect(screen.getByTestId('active')).toHaveTextContent('null');
+
+      // Channel appears via sessions prop
+      setSessions([{ channelId: 'ch-late', state: 'idle', cwd: '/proj' }]);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active')).toHaveTextContent('ch-late');
+        expect(screen.getByTestId('pending')).toHaveTextContent('null');
+      });
+    });
+
+    it('cwd does NOT match own cwd → pending stays uncleared', async () => {
+      // Two tabs: 'ch-a' (added first, becomes active) and 'ch-target'.
+      // Request targets a different cwd → must not steal activation, must not clear.
+      renderWithProjectAndSessions(
+        <ProbeAndTrigger trigger={{ cwd: '/other', channelId: 'ch-target' }} />,
+        {
+          cwd: '/proj',
+          sessions: [
+            { channelId: 'ch-a', state: 'idle', cwd: '/proj' },
+            { channelId: 'ch-target', state: 'idle', cwd: '/proj' },
+          ],
+        },
+      );
+
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      await user.click(screen.getByText('request'));
+
+      await new Promise((r) => setTimeout(r, 30));
+
+      expect(screen.getByTestId('active')).toHaveTextContent('ch-a');
+      expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-target"');
+    });
+  });
 
   describe('state management', () => {
     it('provides initial empty state', () => {

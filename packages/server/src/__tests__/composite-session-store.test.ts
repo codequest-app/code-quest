@@ -23,8 +23,10 @@ class FakeStore implements SessionStore {
     if (this.failures.has('upsert')) throw new Error('upsert failed');
     this.rows.set(r.id, r);
   }
-  async list() {
-    return { sessions: [...this.rows.values()], total: this.rows.size };
+  async list(opts?: { excludeSessionIds?: string[] }) {
+    const exclude = new Set(opts?.excludeSessionIds ?? []);
+    const sessions = [...this.rows.values()].filter((r) => !exclude.has(r.id));
+    return { sessions, total: sessions.length };
   }
   async getById(id: string) {
     return this.rows.get(id) ?? null;
@@ -126,6 +128,18 @@ describe('CompositeSessionStore', () => {
       b.failures.add('rename');
       expect(await composite.rename('s1', 'New')).toBe(true);
       expect(a.rows.get('s1')!.title).toBe('New');
+    });
+  });
+
+  describe('list excludeSessionIds pass-through', () => {
+    it('forwards excludeSessionIds to inner store', async () => {
+      await composite.upsert(makeRecord('s1'));
+      await composite.upsert(makeRecord('s2'));
+
+      const result = await composite.list({ excludeSessionIds: ['s1'] });
+
+      expect(result.sessions.map((s) => s.id)).toEqual(['s2']);
+      expect(result.total).toBe(1);
     });
   });
 

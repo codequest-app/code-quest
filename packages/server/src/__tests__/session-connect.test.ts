@@ -1094,4 +1094,93 @@ describe('ChatHandler > session', () => {
       expect(deadEvents[0].channelId).toBe('dead-sess-3');
     });
   });
+
+  describe('session:resume reuse path', () => {
+    it('returns existing channelId without spawning when sessionId has alive channel', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      const aliveChannelId = await claude.initialize(s.init('sess-target'));
+
+      const result = await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+        sessionId: 'sess-target',
+      });
+
+      expect(result.error).toBeUndefined();
+      expect(result.channelId).toBe(aliveChannelId);
+    });
+  });
+
+  describe('session:resume dead path', () => {
+    it('marks row dead and returns error when spawn fails with No conversation found', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      // No prepareInit — initialize will not auto-respond, simulating spawn failure
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'dead-resume-sess',
+        channelId: 'ch-old',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        createdAt: new Date().toISOString(),
+      });
+
+      const ackPromise = summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+        sessionId: 'dead-resume-sess',
+      });
+
+      await new Promise<void>((r) => setTimeout(r, 30));
+      await claude.emit(
+        s.resultError({ errors: ['No conversation found with session ID: dead-resume-sess'] }),
+      );
+      claude.handle.abort();
+
+      const result = await ackPromise;
+      expect(result.error).toBeDefined();
+      expect(result.channelId).toBeUndefined();
+
+      await new Promise<void>((r) => setTimeout(r, 30));
+      const record = await sessionStore.getById('dead-resume-sess');
+      expect(record?.status).toBe('dead');
+    });
+  });
+
+  describe('session:resume spawn path', () => {
+    it('spawns runner with --resume <sessionId>, persists row, returns new channelId', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      claude.prepareInit(s.init('sess-fresh'));
+
+      const result = await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+        sessionId: 'sess-fresh',
+      });
+
+      expect(result.error).toBeUndefined();
+      expect(result.channelId).toBeTruthy();
+      expect(result.channelId).not.toBe('sess-fresh');
+
+      const lastSpawn = claude.provider.spawnCalls.at(-1);
+      expect(lastSpawn).toBeDefined();
+      const args = lastSpawn?.args ?? [];
+      const resumeIdx = args.indexOf('--resume');
+      expect(resumeIdx).toBeGreaterThanOrEqual(0);
+      expect(args[resumeIdx + 1]).toBe('sess-fresh');
+
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      const row = await sessionStore.getById('sess-fresh');
+      expect(row).toBeDefined();
+      expect(row!.channelId).toBe(result.channelId);
+    });
+  });
 });

@@ -18,15 +18,19 @@ interface ProjectState {
   projects: Project[];
   activeProjectCwd: string | null;
   sessions: SessionStateSummary[];
+  /** When set, a TabProvider whose cwd matches will activate the channelId once it appears in tabs. */
+  pendingActivateChannel: { cwd: string; channelId: string } | null;
 }
 
 interface ProjectActions {
   addProject: (cwd: string) => void;
   setActiveProject: (cwd: string) => void;
+  requestActivateChannel: (cwd: string, channelId: string) => void;
+  clearPendingActivate: () => void;
 }
 
-const ProjectStateContext = createContext<ProjectState | null>(null);
-const ProjectActionsContext = createContext<ProjectActions | null>(null);
+export const ProjectStateContext = createContext<ProjectState | null>(null);
+export const ProjectActionsContext = createContext<ProjectActions | null>(null);
 
 export function useProjectState(): ProjectState {
   const ctx = useContext(ProjectStateContext);
@@ -96,6 +100,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
+  const [pendingActivateChannel, setPendingActivateChannel] = useState<{
+    cwd: string;
+    channelId: string;
+  } | null>(null);
   const { socket } = useSocket();
   const { setInitOptions } = useSession();
 
@@ -146,8 +154,26 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setActiveProjectCwd(cwd);
   }
 
-  const state: ProjectState = { projects, activeProjectCwd, sessions };
-  const actions: ProjectActions = { addProject, setActiveProject };
+  function requestActivateChannel(cwd: string, channelId: string) {
+    setPendingActivateChannel({ cwd, channelId });
+  }
+
+  function clearPendingActivate() {
+    setPendingActivateChannel(null);
+  }
+
+  const state: ProjectState = {
+    projects,
+    activeProjectCwd,
+    sessions,
+    pendingActivateChannel,
+  };
+  const actions: ProjectActions = {
+    addProject,
+    setActiveProject,
+    requestActivateChannel,
+    clearPendingActivate,
+  };
 
   return (
     <ProjectStateContext.Provider value={state}>
