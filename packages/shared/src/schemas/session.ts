@@ -87,7 +87,6 @@ export const launchOptionsSchema = z
 
 export const sessionLaunchPayloadSchema = z.object({
   channelId: z.string().optional(),
-  resumeChannelId: z.string().optional(),
   initialPrompt: z.string().optional(),
   model: z.string().optional(),
   permissionMode: z.string().optional(),
@@ -123,10 +122,10 @@ export const sessionResumePayloadSchema = z.object({
 });
 export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
 
-export const sessionResumeResponseSchema = z.object({
-  channelId: z.string().optional(),
-  error: z.string().optional(),
-});
+export const sessionResumeResponseSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), channelId: z.string() }),
+  z.object({ ok: z.literal(false), error: z.string() }),
+]);
 export type SessionResumeResponse = z.infer<typeof sessionResumeResponseSchema>;
 
 export const sessionListRemotePayloadSchema = z.object({

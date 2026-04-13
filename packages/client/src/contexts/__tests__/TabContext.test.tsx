@@ -167,6 +167,51 @@ describe('TabProvider', () => {
     });
   });
 
+  describe('replaceTab(oldId, newId)', () => {
+    function Harness({ trigger }: { trigger: { oldId: string; newId: string } }) {
+      const { tabs, activeTabId } = useTabState();
+      const { addTab, setActiveTab, replaceTab } = useTabActions();
+      return (
+        <>
+          <span data-testid="tabs">{JSON.stringify(Object.keys(tabs))}</span>
+          <span data-testid="active">{activeTabId ?? 'null'}</span>
+          <button type="button" onClick={() => addTab('old', '/proj')}>
+            seed-old
+          </button>
+          <button type="button" onClick={() => addTab('other')}>
+            seed-other
+          </button>
+          <button type="button" onClick={() => setActiveTab('old')}>
+            activate-old
+          </button>
+          <button type="button" onClick={() => replaceTab(trigger.oldId, trigger.newId)}>
+            replace
+          </button>
+        </>
+      );
+    }
+
+    it('replaces the entry keyed oldId with newId; activeTabId follows if it was oldId', async () => {
+      const { user } = renderInTab(<Harness trigger={{ oldId: 'old', newId: 'new' }} />);
+
+      await user.click(screen.getByText('seed-old'));
+      await user.click(screen.getByText('replace'));
+
+      expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toEqual(['new']);
+      expect(screen.getByTestId('active')).toHaveTextContent('new');
+    });
+
+    it('is a no-op when oldId is not in tabs', async () => {
+      const { user } = renderInTab(<Harness trigger={{ oldId: 'missing', newId: 'new' }} />);
+
+      await user.click(screen.getByText('seed-old'));
+      await user.click(screen.getByText('replace'));
+
+      expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toEqual(['old']);
+      expect(screen.getByTestId('active')).toHaveTextContent('old');
+    });
+  });
+
   describe('state management', () => {
     it('provides initial empty state', () => {
       function Test() {

@@ -840,30 +840,6 @@ describe('ChatHandler > session', () => {
       expect(events.some((e: any) => e.content?.[0]?.text === 'got it')).toBe(true);
     });
 
-    it('chat:create with resumeSessionId + channelId uses channelId as externalId', async () => {
-      const { claude, channelId } = await setup();
-
-      await claude.send('chat:send', { channelId, message: 'hello' });
-
-      await claude.emit(s.assistant('first'));
-      await claude.emit(s.result());
-
-      const clientId = 'resume-client-uuid';
-
-      await claude.send('session:launch', { resumeChannelId: channelId, channelId: clientId });
-
-      // The second spawn gets its own handle
-      const secondHandle = claude.provider.all[claude.provider.all.length - 1];
-      secondHandle.emit(s.assistant('resumed'));
-      secondHandle.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(r));
-      await new Promise<void>((r) => queueMicrotask(r));
-
-      const events = claude.events('message:assistant');
-      const clientEvents = events.filter((e: any) => e.channelId === clientId);
-      expect(clientEvents.length).toBeGreaterThan(0);
-    });
-
     it('chat:create with no params creates a new session (backward compat)', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);
@@ -1006,95 +982,6 @@ describe('ChatHandler > session', () => {
     });
   });
 
-  describe('chat:create resume failure', () => {
-    /** Setup a FakeClaude that does NOT auto-respond to initialize — simulates failed resume */
-    function setupNoAutoInit() {
-      const container = createTestContainer();
-      const server = createFakeServer(container);
-      const claude = createFakeSummoner(server).claude();
-
-      return { container, claude };
-    }
-
-    it('marks session as dead when --resume fails with No conversation found', async () => {
-      const { container, claude } = setupNoAutoInit();
-
-      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.upsert({
-        id: 'dead-sess',
-        channelId: 'dead-sess',
-        provider: 'claude',
-        command: 'claude',
-        args: '[]',
-        mode: 'interactive',
-        role: 'chat',
-        createdAt: new Date().toISOString(),
-      });
-
-      void claude.send('session:launch', { resumeChannelId: 'dead-sess' });
-      await claude.emit(
-        s.resultError({ errors: ['No conversation found with session ID: dead-sess'] }),
-      );
-      claude.handle.abort();
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const record = await sessionStore.getById('dead-sess');
-      expect(record?.status).toBe('dead');
-    });
-
-    it('does NOT emit any error event when --resume fails with result.errors (errors surfaced via close_channel)', async () => {
-      const { container, claude } = setupNoAutoInit();
-
-      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.upsert({
-        id: 'dead-sess-2',
-        channelId: 'dead-sess-2',
-        provider: 'claude',
-        command: 'claude',
-        args: '[]',
-        mode: 'interactive',
-        role: 'chat',
-        createdAt: new Date().toISOString(),
-      });
-
-      void claude.send('session:launch', { resumeChannelId: 'dead-sess-2' });
-
-      await claude.emit(
-        s.resultError({ errors: ['No conversation found with session ID: dead-sess-2'] }),
-      );
-      claude.handle.abort();
-
-      // No error event emitted — test passes if we reach here
-    });
-
-    it('emits chat:session_dead when --resume fails with No conversation found', async () => {
-      const { container, claude } = setupNoAutoInit();
-
-      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.upsert({
-        id: 'dead-sess-3',
-        channelId: 'dead-sess-3',
-        provider: 'claude',
-        command: 'claude',
-        args: '[]',
-        mode: 'interactive',
-        role: 'chat',
-        createdAt: new Date().toISOString(),
-      });
-
-      void claude.send('session:launch', { resumeChannelId: 'dead-sess-3' });
-      await claude.emit(
-        s.resultError({ errors: ['No conversation found with session ID: dead-sess-3'] }),
-      );
-      claude.handle.abort();
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const deadEvents = claude.events('session:dead');
-      expect(deadEvents).toHaveLength(1);
-      expect(deadEvents[0].channelId).toBe('dead-sess-3');
-    });
-  });
-
   describe('session:resume reuse path', () => {
     it('returns existing channelId without spawning when sessionId has alive channel', async () => {
       const container = createTestContainer();
@@ -1181,6 +1068,34 @@ describe('ChatHandler > session', () => {
       const row = await sessionStore.getById('sess-fresh');
       expect(row).toBeDefined();
       expect(row!.channelId).toBe(result.channelId);
+    });
+
+    it('spawns child process with the historical row cwd (CLI JSONL lookup)', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      claude.prepareInit(s.init('sess-with-cwd'));
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'sess-with-cwd',
+        channelId: 'ch-orig',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        cwd: '/tmp/some-project',
+        createdAt: new Date().toISOString(),
+      });
+
+      await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+        sessionId: 'sess-with-cwd',
+      });
+
+      const lastSpawn = claude.provider.spawnCalls.at(-1);
+      expect(lastSpawn?.options?.cwd).toBe('/tmp/some-project');
     });
   });
 });

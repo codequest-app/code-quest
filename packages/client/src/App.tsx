@@ -5,7 +5,6 @@ import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
 import { PluginProvider } from './contexts/PluginContext';
 import { ProjectProvider } from './contexts/ProjectContext';
-import { ResumeProvider } from './contexts/ResumeContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { createSocket } from './socket/client';
@@ -20,13 +19,11 @@ export function App() {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <SocketProvider socket={socket}>
           <SessionProvider>
-            <ResumeProvider>
-              <PluginProvider>
-                <ProjectProvider>
-                  <WorkspaceLayout />
-                </ProjectProvider>
-              </PluginProvider>
-            </ResumeProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <WorkspaceLayout />
+              </ProjectProvider>
+            </PluginProvider>
           </SessionProvider>
         </SocketProvider>
       </ErrorBoundary>

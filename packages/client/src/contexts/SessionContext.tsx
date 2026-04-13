@@ -3,6 +3,7 @@ import type {
   SessionSummary,
   TeleportSessionResponse,
 } from '@code-quest/shared';
+import { sessionResumeResponseSchema } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
@@ -43,6 +44,9 @@ export interface SessionContextValue {
   ) => Promise<{ success: boolean; error?: string }>;
 
   closeSession: (channelId: string) => void;
+  /** Resume a historical session by its sessionId. Server reuses a live
+   *  channel if one already wraps this sessionId; otherwise spawns. */
+  resume: (sessionId: string) => Promise<{ channelId: string }>;
 
   initOptions: Record<string, unknown>;
   setInitOptions: (opts: Record<string, unknown>) => void;
@@ -118,6 +122,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     closeSession: (channelId: string) => {
       socket.emit('session:close', { channelId });
     },
+    resume: (sessionId: string) =>
+      new Promise<{ channelId: string }>((resolve, reject) => {
+        socket.emit('session:resume', { sessionId }, (raw: unknown) => {
+          const parsed = sessionResumeResponseSchema.safeParse(raw);
+          if (!parsed.success) {
+            reject(new Error('Invalid response'));
+            return;
+          }
+          if (!parsed.data.ok) {
+            reject(new Error(parsed.data.error));
+            return;
+          }
+          resolve({ channelId: parsed.data.channelId });
+        });
+      }),
     login: () => {
       setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
       socket.emit('auth:login', { method: 'oauth' }, (res) => {

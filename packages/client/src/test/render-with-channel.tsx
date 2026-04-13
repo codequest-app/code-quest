@@ -4,8 +4,10 @@ import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { ChannelProvider } from '../contexts/channel/ChannelContext';
 import { PluginProvider } from '../contexts/PluginContext';
+import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
+import { TabProvider } from '../contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 export interface RenderWithChannelOptions {
@@ -40,13 +42,17 @@ export async function renderWithChannel(
       <SocketProvider socket={summoner.socket}>
         <SessionProvider>
           <PluginProvider>
-            <ChannelProvider
-              channelId={channelId}
-              cwd={options.cwd}
-              onNewChannel={options.onNewChannel}
-            >
-              {children}
-            </ChannelProvider>
+            <ProjectProvider>
+              <TabProvider cwd={options.cwd}>
+                <ChannelProvider
+                  channelId={channelId}
+                  cwd={options.cwd}
+                  onNewChannel={options.onNewChannel}
+                >
+                  {children}
+                </ChannelProvider>
+              </TabProvider>
+            </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
       </SocketProvider>

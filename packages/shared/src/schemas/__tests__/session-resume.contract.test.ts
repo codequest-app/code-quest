@@ -1,7 +1,7 @@
 /**
  * Contract test: schemas added for project-menu-resume.
  *   - sessionResumePayloadSchema     C2S RPC payload
- *   - sessionResumeResponseSchema    server ack shape
+ *   - sessionResumeResponseSchema    server ack shape (discriminated union on `ok`)
  *   - sessionListPayloadSchema       gains optional excludeLive flag
  */
 import { describe, expect, it } from 'vitest';
@@ -23,20 +23,30 @@ describe('sessionResumePayloadSchema', () => {
   });
 });
 
-describe('sessionResumeResponseSchema', () => {
-  it('accepts { channelId }', () => {
-    const result = sessionResumeResponseSchema.safeParse({ channelId: 'ch-1' });
+describe('sessionResumeResponseSchema (discriminated union)', () => {
+  it('accepts success { ok: true, channelId }', () => {
+    const result = sessionResumeResponseSchema.safeParse({ ok: true, channelId: 'ch-1' });
     expect(result.success).toBe(true);
   });
 
-  it('accepts { error }', () => {
-    const result = sessionResumeResponseSchema.safeParse({ error: 'boom' });
+  it('accepts failure { ok: false, error }', () => {
+    const result = sessionResumeResponseSchema.safeParse({ ok: false, error: 'boom' });
     expect(result.success).toBe(true);
   });
 
-  it('accepts {} (server may emit empty for transient states)', () => {
+  it('rejects empty object {} (must carry ok)', () => {
     const result = sessionResumeResponseSchema.safeParse({});
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects success without channelId', () => {
+    const result = sessionResumeResponseSchema.safeParse({ ok: true });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects failure without error', () => {
+    const result = sessionResumeResponseSchema.safeParse({ ok: false });
+    expect(result.success).toBe(false);
   });
 });
 

@@ -16,6 +16,11 @@ import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
 
+/** Substring the Claude CLI emits on stderr when `--resume <sid>` cannot
+ *  find the JSONL (session died / was deleted / wrong cwd). Matched as a
+ *  substring because the full message also includes the sessionId. */
+const CLI_RESUME_MISSING_MARKER = 'No conversation found';
+
 const initResponseResultSchema = z.object({
   slashCommands: z.array(z.string()).optional(),
   models: z.array(z.unknown()).optional(),
@@ -96,13 +101,12 @@ export function create({
     return { slashCommands, models, account };
   }
 
-  function buildLaunchOpts(
-    parsed: SessionLaunchPayload,
-    resumeSessionId: string | undefined,
-  ): { launchOptions: Record<string, unknown>; initOptions: Record<string, unknown> } {
+  function buildLaunchOpts(parsed: SessionLaunchPayload): {
+    launchOptions: Record<string, unknown>;
+    initOptions: Record<string, unknown>;
+  } {
     const launchOptions = {
       ...parsed.launchOptions,
-      ...(resumeSessionId ? { resumeSessionId } : {}),
       ...(config.allowDangerouslySkipPermissions ? { allowDangerouslySkipPermissions: true } : {}),
     };
     const clientOpts = parsed.initOptions ?? {};
@@ -150,12 +154,10 @@ export function create({
     socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
-    let resumeChannelId: string | undefined;
     try {
       const parsed = sessionLaunchPayloadSchema.parse(payload);
-      resumeChannelId = parsed.resumeChannelId;
       const channelId = parsed.channelId ?? crypto.randomUUID();
-      const { launchOptions, initOptions } = buildLaunchOpts(parsed, resumeChannelId);
+      const { launchOptions, initOptions } = buildLaunchOpts(parsed);
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions,
         initOptions,
@@ -170,16 +172,7 @@ export function create({
       await finalizeAndNotify(channel, parsed, initResult, socket, callback);
     } catch (err) {
       logger.error({ err }, 'Failed to create session');
-      const message = errMsg(err, 'Failed to create session');
-      if (resumeChannelId && message.includes('No conversation found')) {
-        const deadRecord = await sessionStore.getByChannelId(resumeChannelId);
-        if (deadRecord) {
-          await sessionStore.updateStatus(deadRecord.id, 'dead').catch(() => {});
-        }
-        emitter.broadcastAll('session:dead', { channelId: resumeChannelId });
-        return;
-      }
-      callback?.({ channelId: '', error: message });
+      callback?.({ channelId: '', error: errMsg(err, 'Failed to create session') });
     }
   }
 
@@ -285,9 +278,15 @@ export function create({
       sessionId = parsed.sessionId;
       const reused = channelManager.findAliveBySessionId(sessionId);
       if (reused) {
-        callback?.({ channelId: reused.channelId });
+        callback?.({ ok: true, channelId: reused.channelId });
         return;
       }
+
+      // Pull the historical row to recover its cwd — CLI looks up the JSONL
+      // at ~/.claude/projects/<encoded-cwd-of-process>/<sid>.jsonl, so the
+      // child must spawn with the same cwd or "No conversation found" fires.
+      const row = await sessionStore.getById(sessionId);
+      const cwd = row?.cwd ?? undefined;
 
       const newChannelId = crypto.randomUUID();
       const launchOptions = {
@@ -298,7 +297,13 @@ export function create({
       };
       const { channel } = await channelManager.create(newChannelId, {
         launchOptions,
+        cwd,
         onBeforeSpawn: (ch) => {
+          // We already know the sessionId — it IS the resume target.
+          // Setting it here lets a subsequent session:join correctly
+          // resolve the sessionId for history replay without waiting
+          // for the CLI's system:init to round-trip.
+          if (sessionId) ch.sessionId = sessionId;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
@@ -307,15 +312,15 @@ export function create({
         channelId: channel.channelId,
         cwd: channel.cwd,
       });
-      callback?.({ channelId: channel.channelId });
+      callback?.({ ok: true, channelId: channel.channelId });
     } catch (err) {
       const message = errMsg(err, 'Failed to resume session');
-      if (sessionId && message.includes('No conversation found')) {
+      if (sessionId && message.includes(CLI_RESUME_MISSING_MARKER)) {
         await sessionStore
           .updateStatus(sessionId, 'dead')
           .catch((e) => logger.warn({ err: e }, 'Failed to mark session dead'));
       }
-      callback?.({ error: message });
+      callback?.({ ok: false, error: message });
     }
   }
 

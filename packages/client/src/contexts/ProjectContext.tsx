@@ -142,25 +142,23 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     };
   }, [socket]);
 
-  function addProject(cwd: string) {
-    setProjects((prev) => {
-      if (prev.some((p) => p.cwd === cwd)) return prev;
-      return [...prev, cwdToProject(cwd)];
-    });
-    setActiveProjectCwd(cwd);
-  }
-
-  function setActiveProject(cwd: string) {
-    setActiveProjectCwd(cwd);
-  }
-
-  function requestActivateChannel(cwd: string, channelId: string) {
-    setPendingActivateChannel({ cwd, channelId });
-  }
-
-  function clearPendingActivate() {
-    setPendingActivateChannel(null);
-  }
+  // Actions close only over stable setState refs — keep the same object
+  // identity across renders so consumers (esp. TabProvider's
+  // pendingActivateChannel effect) can safely include `projectActions` in
+  // their dep arrays without re-firing on every ProjectProvider render.
+  const [actions] = useState<ProjectActions>(() => ({
+    addProject: (cwd: string) => {
+      setProjects((prev) => {
+        if (prev.some((p) => p.cwd === cwd)) return prev;
+        return [...prev, cwdToProject(cwd)];
+      });
+      setActiveProjectCwd(cwd);
+    },
+    setActiveProject: (cwd: string) => setActiveProjectCwd(cwd),
+    requestActivateChannel: (cwd: string, channelId: string) =>
+      setPendingActivateChannel({ cwd, channelId }),
+    clearPendingActivate: () => setPendingActivateChannel(null),
+  }));
 
   const state: ProjectState = {
     projects,
@@ -168,13 +166,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     sessions,
     pendingActivateChannel,
   };
-  const actions: ProjectActions = {
-    addProject,
-    setActiveProject,
-    requestActivateChannel,
-    clearPendingActivate,
-  };
-
   return (
     <ProjectStateContext.Provider value={state}>
       <ProjectActionsContext.Provider value={actions}>{children}</ProjectActionsContext.Provider>

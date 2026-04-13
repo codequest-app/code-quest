@@ -162,8 +162,11 @@ export class ChannelManager {
     return this.getAliveChannels()[0]?.[1];
   }
 
-  aliveChannels(): Channel[] {
-    return [...this.channels.values()].filter((ch) => !ch.exited);
+  /** sessionIds of alive channels that have already received `system:init`.
+   *  Callers needing this (e.g. `session:list excludeLive`) shouldn't have
+   *  to reach into `Channel[]` and re-filter. */
+  getAliveSessionIds(): string[] {
+    return this.getAliveChannels().flatMap(([, ch]) => (ch.sessionId ? [ch.sessionId] : []));
   }
 
   findAliveBySessionId(sessionId: string): Channel | undefined {

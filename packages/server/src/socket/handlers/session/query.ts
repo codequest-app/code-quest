@@ -25,7 +25,7 @@ export function create({
     try {
       const parsed = sessionListPayloadSchema.parse(payload);
       const excludeSessionIds = parsed.excludeLive
-        ? channelManager.aliveChannels().flatMap((c) => (c.sessionId ? [c.sessionId] : []))
+        ? channelManager.getAliveSessionIds()
         : undefined;
       const result = await sessionStore.list({
         limit: parsed.limit,

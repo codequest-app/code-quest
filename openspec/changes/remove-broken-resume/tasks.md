@@ -45,17 +45,10 @@
 
 - [ ] 5.1 Single commit. Body lists the 5 file groups touched and notes "follow-up: project-menu-resume reintroduces resume via session:launch { resumeSessionId }".
 
-## 6. Known leftovers (deferred to a later change — DO NOT FORGET)
+## 6. Known leftovers — RESOLVED in Step 3 (chatpanel-resume-via-picker)
 
-These were intentionally NOT removed in this change because Step 3 (chatpanel-resume reintroduction) was still being designed. After this commit they are dead-but-typed scaffolding, currently undefined-only. Track them so they're cleaned up when chat /resume comes back.
-
-- [ ] 6.1 **`onResumeConversation` callback prop chain** — 12+ lines across 5 files, currently always undefined (no caller sets it, no menu item triggers it):
-  - `packages/client/src/components/command-menu-items.tsx:47` — type only
-  - `packages/client/src/components/ChatInputArea.tsx:10/12/52` — pass-through
-  - `packages/client/src/components/ComposeToolbar.tsx:44/48/186` — pass-through
-  - `packages/client/src/components/CommandMenu.tsx:95/101/292` — accepts + threads into callbacks
-  - `packages/client/src/components/CommandMenu.stories.tsx:18/43` — story fixture sets `fn()`
-
-  When chat /resume returns: either rewire (CommandMenu callback → ChatPanel opens dialog) OR delete entirely if Dialog ownership lives elsewhere (ResumeProvider self-mounted, etc).
-
-- [ ] 6.2 **`OnboardingOverlay.tsx:21` copy** — currently says "Click the History button in the header to browse and resume previous sessions". This refers to the deleted /resume flow. After Step 2 lands (ProjectCard right-click), update copy to mention the new entry point. After Step 3 (chat /resume back), update again.
+- [x] 6.1 **`onResumeConversation` callback prop chain** — rewired in Step 3:
+      ChatPanel passes `() => setResumeOpen(true)`; command-menu-items
+      re-added "Resume conversation" item that fires the callback.
+- [x] 6.2 **`OnboardingOverlay.tsx:21` copy** — updated in Step 3 to point
+      users at right-click on a project + chat command menu.

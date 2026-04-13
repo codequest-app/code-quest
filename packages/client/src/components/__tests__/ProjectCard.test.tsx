@@ -9,7 +9,6 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ProjectProvider, useProjectState } from '../../contexts/ProjectContext';
-import { ResumeProvider } from '../../contexts/ResumeContext';
 import { SessionProvider } from '../../contexts/SessionContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { createFakeSummoner } from '../../test/fake-summoner';
@@ -65,12 +64,10 @@ describe('ProjectCard', () => {
         return (
           <SocketProvider socket={summoner.socket}>
             <SessionProvider>
-              <ResumeProvider>
-                <ProjectProvider>
-                  {children}
-                  <Probe />
-                </ProjectProvider>
-              </ResumeProvider>
+              <ProjectProvider>
+                {children}
+                <Probe />
+              </ProjectProvider>
             </SessionProvider>
           </SocketProvider>
         );
@@ -139,15 +136,14 @@ describe('ProjectCard', () => {
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(await screen.findByRole('menuitem', { name: /resume session/i }));
 
-      // Dialog open — empty picker shows the empty state for project
-      await screen.findByText(/No resumable sessions for this project/i);
+      // Dialog open — SessionHistory shows its search bar
+      const searchInput = await screen.findByPlaceholderText(/Search sessions/i);
+      expect(searchInput).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
 
       await waitFor(() => {
-        expect(
-          screen.queryByText(/No resumable sessions for this project/i),
-        ).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText(/Search sessions/i)).not.toBeInTheDocument();
       });
     });
   });

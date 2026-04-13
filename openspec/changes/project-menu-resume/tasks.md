@@ -108,3 +108,10 @@
 - [ ] 14.2 Run all workspace tests; confirm no prior `expect()` edited.
 - [ ] 14.3 Manual smoke: right-click a project → picker shows, live sessions absent, picking dead session spawns with `--resume`, picking alive sessionId reuses existing channel, resumed channel becomes the active tab in the target project.
 - [ ] 14.4 Confirm `session:dead` broadcast still removes the row from the sidebar as before.
+
+## 15. Follow-up refactors (post-impl code review)
+
+- [x] 15.1 **TabContext effect dep array audit** — confirmed RED via ProjectContext test (`actions object identity stable`). Fixed by wrapping ProjectActions in `useState(() => (...))` initializer. TabContext biome-ignore comment rewritten. Commit `7e7a87e7`.
+- [x] 15.2 **`sessionResumeResponseSchema` → discriminated union.** Replaced with `z.discriminatedUnion('ok', ...)`. Contract tests pin both shapes + reject `{}`. Server handleResume emits tagged shape; ResumeContext's three reject branches collapsed. Commit `9c9f4f1b`.
+- [x] 15.3 **Extract CLI error marker constant** — `CLI_RESUME_MISSING_MARKER` defined in connect.ts. Commit `08f061c1`.
+- [x] 15.4 **Dedupe `aliveChannels()` vs `getAliveChannels()`** — dropped `aliveChannels()`, exposed `getAliveSessionIds()` that does filter+map inline. Tests updated. Commit `08f061c1`.

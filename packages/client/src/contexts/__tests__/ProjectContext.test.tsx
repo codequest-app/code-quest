@@ -98,6 +98,22 @@ describe('ProjectContext', () => {
       });
     });
 
+    it('actions object keeps stable identity across state updates (TabProvider dep-array relies on this)', () => {
+      const { result, rerender } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: Wrapper },
+      );
+
+      const firstActions = result.current.actions;
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+      rerender();
+
+      expect(result.current.actions).toBe(firstActions);
+    });
+
     it('clearPendingActivate resets to null', () => {
       const { result } = renderHook(
         () => ({ state: useProjectState(), actions: useProjectActions() }),

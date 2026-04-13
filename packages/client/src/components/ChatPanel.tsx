@@ -1,5 +1,7 @@
+import type { SessionSummary } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { toast } from 'sonner';
 import {
   useChannelCompose,
   useChannelConfig,
@@ -7,6 +9,9 @@ import {
   useChannelId,
   useChannelMessages,
 } from '../contexts/channel';
+import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
+import { useSession } from '../contexts/SessionContext';
+import { useTabActions } from '../contexts/TabContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -14,7 +19,9 @@ import { HeaderBar } from './HeaderBar';
 import { MessageList } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
+import { resumeRoute } from './resume-route';
 import { SearchBar } from './SearchBar';
+import { SessionDropdown } from './SessionDropdown';
 import { WorktreeBanner } from './WorktreeBanner';
 
 const SIDE_PANEL = 'w-72 shrink-0';
@@ -22,9 +29,13 @@ const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
 export function ChatPanel({ title }: { title?: string }) {
   const channelId = useChannelId();
-  const { subscribeRawEvents } = useChannelMessages();
+  const { messages, subscribeRawEvents } = useChannelMessages();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
+  const { listSessions, renameSession, deleteSession, resume } = useSession();
+  const { setActiveProject, requestActivateChannel } = useProjectActions();
+  const { activeProjectCwd } = useProjectState();
+  const { replaceTab } = useTabActions();
   const {
     pendingDiffReview,
     diffRespond,
@@ -37,8 +48,52 @@ export function ChatPanel({ title }: { title?: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
+  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
+  const [resumeSessions, setResumeSessions] = useState<{
+    sessions: SessionSummary[];
+    total: number;
+  }>({ sessions: [], total: 0 });
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const searchBarRef = useRef<HTMLInputElement>(null);
+
+  const openResumeOverlay = () => {
+    setShowResumeOverlay(true);
+    setResumeLoading(true);
+    // Chat /resume is project-scoped: only show sessions for this project.
+    // Global cross-project resume goes through the sidebar right-click menu.
+    listSessions({
+      limit: 50,
+      excludeLive: true,
+      ...(activeProjectCwd ? { cwd: activeProjectCwd } : {}),
+    })
+      .then(setResumeSessions)
+      .finally(() => setResumeLoading(false));
+  };
+
+  const handleResumeSelect = async (selectedChannelId: string) => {
+    const picked = resumeSessions.sessions.find((s) => s.channelId === selectedChannelId);
+    if (!picked) return;
+    setShowResumeOverlay(false);
+    try {
+      const { channelId: spawnedId } = await resume(picked.id);
+      const route = resumeRoute({
+        isEmpty: messages.length === 0,
+        currentCwd: activeProjectCwd,
+        currentChannelId: channelId,
+        picked,
+        spawnedChannelId: spawnedId,
+      });
+      if (route.type === 'replace') {
+        replaceTab(route.oldChannelId, route.newChannelId);
+      } else if (route.type === 'activate') {
+        setActiveProject(route.cwd);
+        requestActivateChannel(route.cwd, route.channelId);
+      }
+    } catch (err) {
+      toast.error(`Resume failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   useHotkeys('/', () => focusTextarea(), NO_FORM);
   useHotkeys('mod+k', () => searchBarRef.current?.focus(), NO_FORM);
@@ -87,9 +142,19 @@ export function ChatPanel({ title }: { title?: string }) {
           inputRef={searchBarRef}
         />
         <MessageList searchQuery={searchQuery} typeFilter={typeFilter} />
+        {showResumeOverlay && (
+          <SessionDropdown
+            sessions={resumeSessions.sessions}
+            loading={resumeLoading}
+            onSelect={handleResumeSelect}
+            onClose={() => setShowResumeOverlay(false)}
+            onRename={renameSession}
+            onDelete={deleteSession}
+          />
+        )}
         <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
-            <ChatInputArea />
+            <ChatInputArea onResumeConversation={openResumeOverlay} />
           </div>
         </div>
       </div>

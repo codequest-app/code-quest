@@ -17,8 +17,9 @@ function getSteps(brandName: string) {
       description: `Press Enter or click Send to submit your message. ${brandName} will stream a response in real time.`,
     },
     {
-      title: 'History',
-      description: 'Click the History button in the header to browse and resume previous sessions.',
+      title: 'Resume',
+      description:
+        'Right-click a project in the sidebar to pick from past sessions, or use the command menu inside chat.',
     },
   ];
 }

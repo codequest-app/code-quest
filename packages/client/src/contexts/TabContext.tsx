@@ -38,6 +38,7 @@ export interface TabActionsValue {
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string) => void;
+  replaceTab: (oldChannelId: string, newChannelId: string) => void;
 }
 
 const TabActionsContext = createContext<TabActionsValue | null>(null);
@@ -131,6 +132,17 @@ export function TabProvider({
     });
   };
 
+  const replaceTab = (oldChannelId: string, newChannelId: string) => {
+    setState((prev) => {
+      if (!(oldChannelId in prev.tabs)) return prev;
+      const { [oldChannelId]: old, ...rest } = prev.tabs;
+      return {
+        tabs: { ...rest, [newChannelId]: { ...old } },
+        activeTabId: prev.activeTabId === oldChannelId ? newChannelId : prev.activeTabId,
+      };
+    });
+  };
+
   const actions: TabActionsValue = {
     addTab,
     removeTab,
@@ -139,6 +151,7 @@ export function TabProvider({
     setTabStatus,
     createNewTab,
     replaceActiveTab,
+    replaceTab,
   };
 
   // Sync tabs from sessions prop (incremental diff)
@@ -174,7 +187,7 @@ export function TabProvider({
   const projectState = useContext(ProjectStateContext);
   const projectActions = useContext(ProjectActionsContext);
   const pendingActivateChannel = projectState?.pendingActivateChannel ?? null;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab/clearPendingActivate are stable refs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab is a local closure that only calls setState; projectActions identity is preserved by ProjectProvider's useState initializer (see ProjectContext.tsx)
   useEffect(() => {
     if (!pendingActivateChannel || !projectActions) return;
     if (pendingActivateChannel.cwd !== cwd) return;
