@@ -16,7 +16,7 @@ pre-commit:
       run: pnpm --filter @code-quest/summoner exec tsc --noEmit
 
 pre-push:
-  parallel: true
+  parallel: false
   commands:
     test-server:
       run: pnpm --filter server exec vitest run
