@@ -22,8 +22,8 @@ describe('ChatHandler > session', () => {
       let persistResolved = false;
       const persistedArgs: unknown[][] = [];
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const realPersist = sessionStore.persist.bind(sessionStore);
-      sessionStore.persist = async (...args: [Parameters<typeof realPersist>[0]]) => {
+      const realPersist = sessionStore.upsert.bind(sessionStore);
+      sessionStore.upsert = async (...args: [Parameters<typeof realPersist>[0]]) => {
         persistedArgs.push(args);
 
         const result = await realPersist(...args);

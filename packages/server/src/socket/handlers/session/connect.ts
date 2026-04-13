@@ -246,7 +246,7 @@ export function create({
     if (ch.sessionId) {
       const parentId = ch.parentId;
       sessionStore
-        .persist({
+        .upsert({
           id: ch.sessionId,
           channelId: ch.channelId,
           provider: channelManager.provider,

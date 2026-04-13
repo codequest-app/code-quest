@@ -24,7 +24,7 @@ export class DrizzleSessionStore implements SessionStore {
     private sessions: SessionsTable,
   ) {}
 
-  async persist(record: SessionRecord): Promise<void> {
+  async upsert(record: SessionRecord): Promise<void> {
     const existing = await this.getById(record.id);
     if (existing) {
       // Same sessionId reappearing — a new Channel is wrapping the same CLI
@@ -107,5 +107,20 @@ export class DrizzleSessionStore implements SessionStore {
     if (!existing) return false;
     await this.db.delete(this.sessions).where(eq(this.sessions.id, id));
     return true;
+  }
+
+  async renameByChannelId(channelId: string, title: string): Promise<boolean> {
+    const r = await this.getByChannelId(channelId);
+    return r ? this.rename(r.id, title) : false;
+  }
+
+  async updateStatusByChannelId(channelId: string, status: string): Promise<boolean> {
+    const r = await this.getByChannelId(channelId);
+    return r ? this.updateStatus(r.id, status) : false;
+  }
+
+  async deleteByChannelId(channelId: string): Promise<boolean> {
+    const r = await this.getByChannelId(channelId);
+    return r ? this.delete(r.id) : false;
   }
 }

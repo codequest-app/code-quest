@@ -39,7 +39,7 @@ async function setupApp(
   eventStore?: RawEventStore,
 ): Promise<express.Express> {
   const { store } = createInMemoryStore();
-  for (const record of seed) await store.persist(record);
+  for (const record of seed) await store.upsert(record);
   const app = express();
   app.use(createSessionsRouter(store, eventStore));
   return app;

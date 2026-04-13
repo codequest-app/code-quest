@@ -81,15 +81,15 @@ describe('ChatHandler > session', () => {
       expect(record!.id).toBe('cli-sess');
     });
 
-    it('sessionStore.persist is fire-and-forget: custom:created fires without awaiting persist', async () => {
+    it('sessionStore.upsert is fire-and-forget: custom:created fires without awaiting persist', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);
       const claude = createFakeSummoner(server).claude();
 
       let persistResolved = false;
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const realPersist = sessionStore.persist.bind(sessionStore);
-      sessionStore.persist = async (...args: [Parameters<typeof realPersist>[0]]) => {
+      const realPersist = sessionStore.upsert.bind(sessionStore);
+      sessionStore.upsert = async (...args: [Parameters<typeof realPersist>[0]]) => {
         const result = await realPersist(...args);
         persistResolved = true;
         return result;
@@ -1020,7 +1020,7 @@ describe('ChatHandler > session', () => {
       const { container, claude } = setupNoAutoInit();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.persist({
+      await sessionStore.upsert({
         id: 'dead-sess',
         channelId: 'dead-sess',
         provider: 'claude',
@@ -1046,7 +1046,7 @@ describe('ChatHandler > session', () => {
       const { container, claude } = setupNoAutoInit();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.persist({
+      await sessionStore.upsert({
         id: 'dead-sess-2',
         channelId: 'dead-sess-2',
         provider: 'claude',
@@ -1071,7 +1071,7 @@ describe('ChatHandler > session', () => {
       const { container, claude } = setupNoAutoInit();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      await sessionStore.persist({
+      await sessionStore.upsert({
         id: 'dead-sess-3',
         channelId: 'dead-sess-3',
         provider: 'claude',

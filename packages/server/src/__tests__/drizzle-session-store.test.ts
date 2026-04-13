@@ -35,8 +35,8 @@ describe('DrizzleSessionStore', () => {
 
   describe('list', () => {
     it('returns sessions and total count', async () => {
-      await store.persist(makeRecord('s1'));
-      await store.persist(makeRecord('s2'));
+      await store.upsert(makeRecord('s1'));
+      await store.upsert(makeRecord('s2'));
 
       const result = await store.list({ limit: 10, offset: 0 });
 
@@ -53,7 +53,7 @@ describe('DrizzleSessionStore', () => {
 
     it('respects limit and offset', async () => {
       for (let i = 0; i < 5; i++) {
-        await store.persist(makeRecord(`s${i}`, { createdAt: `2026-01-0${i + 1}T00:00:00Z` }));
+        await store.upsert(makeRecord(`s${i}`, { createdAt: `2026-01-0${i + 1}T00:00:00Z` }));
       }
 
       const result = await store.list({ limit: 2, offset: 1 });
@@ -63,8 +63,8 @@ describe('DrizzleSessionStore', () => {
     });
 
     it('orders by createdAt descending', async () => {
-      await store.persist(makeRecord('old', { createdAt: '2026-01-01T00:00:00Z' }));
-      await store.persist(makeRecord('new', { createdAt: '2026-01-02T00:00:00Z' }));
+      await store.upsert(makeRecord('old', { createdAt: '2026-01-01T00:00:00Z' }));
+      await store.upsert(makeRecord('new', { createdAt: '2026-01-02T00:00:00Z' }));
 
       const result = await store.list();
 
@@ -75,7 +75,7 @@ describe('DrizzleSessionStore', () => {
 
   describe('updateStatus', () => {
     it('marks session as dead', async () => {
-      await store.persist(makeRecord('s1'));
+      await store.upsert(makeRecord('s1'));
 
       await store.updateStatus('s1', 'dead');
 
@@ -89,7 +89,7 @@ describe('DrizzleSessionStore', () => {
     });
 
     it('returns true when updated', async () => {
-      await store.persist(makeRecord('s1'));
+      await store.upsert(makeRecord('s1'));
       const result = await store.updateStatus('s1', 'dead');
       expect(result).toBe(true);
     });
@@ -97,8 +97,8 @@ describe('DrizzleSessionStore', () => {
 
   describe('list', () => {
     it('excludes dead sessions by default', async () => {
-      await store.persist(makeRecord('active-sess'));
-      await store.persist(makeRecord('dead-sess'));
+      await store.upsert(makeRecord('active-sess'));
+      await store.upsert(makeRecord('dead-sess'));
       await store.updateStatus('dead-sess', 'dead');
 
       const result = await store.list();
@@ -108,8 +108,8 @@ describe('DrizzleSessionStore', () => {
     });
 
     it('total count excludes dead sessions', async () => {
-      await store.persist(makeRecord('s1'));
-      await store.persist(makeRecord('s2'));
+      await store.upsert(makeRecord('s1'));
+      await store.upsert(makeRecord('s2'));
       await store.updateStatus('s2', 'dead');
 
       const result = await store.list();
@@ -120,7 +120,7 @@ describe('DrizzleSessionStore', () => {
 
   describe('getById', () => {
     it('returns session when found', async () => {
-      await store.persist(makeRecord('s1'));
+      await store.upsert(makeRecord('s1'));
 
       const session = await store.getById('s1');
 
@@ -132,6 +132,69 @@ describe('DrizzleSessionStore', () => {
       const session = await store.getById('nonexistent');
 
       expect(session).toBeNull();
+    });
+  });
+
+  describe('upsert', () => {
+    it('rebinds channelId and resets status on duplicate id', async () => {
+      await store.upsert(makeRecord('s1', { channelId: 'ch-old' }));
+      await store.updateStatus('s1', 'dead');
+
+      await store.upsert(makeRecord('s1', { channelId: 'ch-new', status: 'dead' }));
+
+      const row = await store.getById('s1');
+      expect(row!.channelId).toBe('ch-new');
+      expect(row!.status).toBe('active');
+    });
+  });
+
+  describe('deleteByChannelId', () => {
+    it('removes the row and returns true when channelId matches', async () => {
+      await store.upsert(makeRecord('sess-1', { channelId: 'ch-A' }));
+
+      const result = await store.deleteByChannelId('ch-A');
+
+      expect(result).toBe(true);
+      expect(await store.getById('sess-1')).toBeNull();
+    });
+
+    it('returns false when no row matches the channelId', async () => {
+      const result = await store.deleteByChannelId('ch-missing');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('renameByChannelId', () => {
+    it('updates title and returns true when channelId matches', async () => {
+      await store.upsert(makeRecord('sess-1', { channelId: 'ch-A' }));
+
+      const result = await store.renameByChannelId('ch-A', 'New Title');
+
+      expect(result).toBe(true);
+      const row = await store.getById('sess-1');
+      expect(row!.title).toBe('New Title');
+    });
+
+    it('returns false when no row matches the channelId', async () => {
+      const result = await store.renameByChannelId('ch-missing', 'x');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateStatusByChannelId', () => {
+    it('updates status and returns true when channelId matches', async () => {
+      await store.upsert(makeRecord('sess-1', { channelId: 'ch-A' }));
+
+      const result = await store.updateStatusByChannelId('ch-A', 'dead');
+
+      expect(result).toBe(true);
+      const row = await store.getById('sess-1');
+      expect(row!.status).toBe('dead');
+    });
+
+    it('returns false when no row matches the channelId', async () => {
+      const result = await store.updateStatusByChannelId('ch-missing', 'dead');
+      expect(result).toBe(false);
     });
   });
 });

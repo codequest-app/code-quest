@@ -18,7 +18,9 @@ export const sessionRecordSchema = z.looseObject({
 export type SessionRecord = z.infer<typeof sessionRecordSchema>;
 
 export interface SessionStore {
-  persist(record: SessionRecord): Promise<void>;
+  /** Insert a new row, or on duplicate `id`: rebind `channelId`, reset `status='active'`,
+   *  and overwrite `parentId` when the new record carries one. */
+  upsert(record: SessionRecord): Promise<void>;
   list(opts?: {
     limit?: number;
     offset?: number;
@@ -32,4 +34,7 @@ export interface SessionStore {
   rename(id: string, title: string): Promise<boolean>;
   updateStatus(id: string, status: string): Promise<boolean>;
   delete(id: string): Promise<boolean>;
+  renameByChannelId(channelId: string, title: string): Promise<boolean>;
+  updateStatusByChannelId(channelId: string, status: string): Promise<boolean>;
+  deleteByChannelId(channelId: string): Promise<boolean>;
 }
