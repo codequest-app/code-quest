@@ -1,4 +1,3 @@
-import type { SessionSummary } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import {
@@ -8,7 +7,6 @@ import {
   useChannelId,
   useChannelMessages,
 } from '../contexts/channel';
-import { useSession } from '../contexts/SessionContext';
 import { ChatInputArea } from './ChatInputArea';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
@@ -17,7 +15,6 @@ import { MessageList } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
 import { SearchBar } from './SearchBar';
-import { SessionDropdown } from './SessionDropdown';
 import { WorktreeBanner } from './WorktreeBanner';
 
 const SIDE_PANEL = 'w-72 shrink-0';
@@ -28,7 +25,6 @@ export function ChatPanel({ title }: { title?: string }) {
   const { subscribeRawEvents } = useChannelMessages();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
-  const { listSessions, renameSession, deleteSession, resumeSession } = useSession();
   const {
     pendingDiffReview,
     diffRespond,
@@ -41,27 +37,8 @@ export function ChatPanel({ title }: { title?: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
-  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
-  const [resumeSessions, setResumeSessions] = useState<{
-    sessions: SessionSummary[];
-    total: number;
-  }>({ sessions: [], total: 0 });
-  const [resumeLoading, setResumeLoading] = useState(false);
 
   const searchBarRef = useRef<HTMLInputElement>(null);
-
-  const openResumeOverlay = () => {
-    setShowResumeOverlay(true);
-    setResumeLoading(true);
-    listSessions({ limit: 50 })
-      .then(setResumeSessions)
-      .finally(() => setResumeLoading(false));
-  };
-
-  const handleResumeSelect = (sessionId: string) => {
-    resumeSession(sessionId);
-    setShowResumeOverlay(false);
-  };
 
   useHotkeys('/', () => focusTextarea(), NO_FORM);
   useHotkeys('mod+k', () => searchBarRef.current?.focus(), NO_FORM);
@@ -110,19 +87,9 @@ export function ChatPanel({ title }: { title?: string }) {
           inputRef={searchBarRef}
         />
         <MessageList searchQuery={searchQuery} typeFilter={typeFilter} />
-        {showResumeOverlay && (
-          <SessionDropdown
-            sessions={resumeSessions.sessions}
-            loading={resumeLoading}
-            onSelect={handleResumeSelect}
-            onClose={() => setShowResumeOverlay(false)}
-            onRename={renameSession}
-            onDelete={deleteSession}
-          />
-        )}
         <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
-            <ChatInputArea onResumeConversation={openResumeOverlay} />
+            <ChatInputArea />
           </div>
         </div>
       </div>

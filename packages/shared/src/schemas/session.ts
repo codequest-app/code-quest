@@ -260,11 +260,6 @@ export const sessionDeadPayloadSchema = z.object({
 });
 export type SessionDeadPayload = z.infer<typeof sessionDeadPayloadSchema>;
 
-export const sessionResumePayloadSchema = z.object({
-  channelId: z.string(),
-});
-export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
-
 export const sessionStatesPayloadSchema = z.object({
   sessions: z.array(sessionStateSummarySchema),
   activeChannelId: z.string().optional(),

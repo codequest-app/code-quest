@@ -3,7 +3,6 @@ import {
   sessionDeletePayloadSchema,
   sessionGenerateTitlePayloadSchema,
   sessionRenamePayloadSchema,
-  sessionResumePayloadSchema,
   sessionUpdateStatePayloadSchema,
 } from '@code-quest/shared';
 import { logger } from '../../../logger.ts';
@@ -25,15 +24,6 @@ export function create({
       emitter.broadcastAll('session:dead', { channelId });
     } catch (err) {
       logger.warn({ err }, 'Failed to close session');
-    }
-  }
-
-  function handleResume(_ch: Channel | null, payload: unknown): void {
-    try {
-      const { channelId } = sessionResumePayloadSchema.parse(payload);
-      emitter.broadcastAll('session:resume', { channelId });
-    } catch (err) {
-      logger.warn({ err }, 'Failed to resume session');
     }
   }
 
@@ -109,7 +99,6 @@ export function create({
   }
 
   emitter.on('session:close', withChannel(handleClose));
-  emitter.on('session:resume', handleResume);
   emitter.on('session:delete', handleDelete);
   emitter.on('session:rename', handleRename);
   emitter.on('session:generate_title', withChannel(handleGenerateTitle));

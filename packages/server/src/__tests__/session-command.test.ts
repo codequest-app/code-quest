@@ -78,22 +78,6 @@ describe('ChatHandler > session', () => {
       expect(session!.isActive).toBe(true);
     });
   });
-
-  describe('session:resume cross-window sync', () => {
-    it('session:resume broadcasts to all sockets', async () => {
-      const server = createFakeServer();
-      const windowA = createFakeSummoner(server);
-      const windowB = createFakeSummoner(server);
-
-      const channelId = await windowA.claude().initialize();
-
-      await windowA.send('session:resume', { channelId });
-
-      const resumeEvents = windowB.events('session:resume');
-      expect(resumeEvents.length).toBeGreaterThan(0);
-      expect(resumeEvents[0].channelId).toBe(channelId);
-    });
-  });
 });
 
 describe('session:update_state', () => {

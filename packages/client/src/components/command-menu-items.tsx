@@ -119,16 +119,6 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
         close();
       },
     },
-    {
-      id: 'resume-conversation',
-      label: 'Resume conversation',
-      section: 'Context',
-      filterOnly: true,
-      onClick: () => {
-        callbacks.onResumeConversation?.();
-        close();
-      },
-    },
   ];
 
   const model: MenuItem[] = [
