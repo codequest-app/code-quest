@@ -55,6 +55,16 @@ export function create({
   HandlerContext,
   'channelManager' | 'settingsStore' | 'sessionStore' | 'sessionHistory' | 'emitter' | 'gitService'
 >): void {
+  /** Push the session:init payload + cached models list to a single socket.
+   *  Used by both launch finalization and session:join history replay. */
+  function emitInitState(channel: Channel, socket: TypedSocket | undefined): void {
+    if (!socket) return;
+    socket.emit('session:init', buildSessionInitPayload(channel));
+    if (channelManager.cachedModels) {
+      socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+    }
+  }
+
   async function applyPerLaunchSettings(
     channel: Channel,
     parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel'>,
@@ -138,10 +148,7 @@ export function create({
       ...(slashCommands && { slashCommands }),
     });
 
-    socket?.emit('session:init', buildSessionInitPayload(channel));
-    if (channelManager.cachedModels) {
-      socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
-    }
+    emitInitState(channel, socket);
 
     callback?.(ok({ channelId: channel.channelId, slashCommands, models, account }));
     emitter.broadcastAll('session:created', {
@@ -200,10 +207,7 @@ export function create({
       await sessionHistory.replayPendingControlRequests(socket, channel.channelId, replaySessionId);
     }
 
-    socket?.emit('session:init', buildSessionInitPayload(channel));
-    if (channelManager.cachedModels) {
-      socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
-    }
+    emitInitState(channel, socket);
 
     const events = await sessionHistory.getSessionHistory(channel.channelId);
     return { events };
@@ -217,23 +221,18 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionJoinPayloadSchema.parse(payload);
-      const existingChannel = channelManager.get(channelId);
-      const isAlive = existingChannel && !existingChannel.exited;
-
-      if (!isAlive) {
+      const existing = channelManager.get(channelId);
+      let channel: Channel;
+      if (existing && !existing.exited) {
+        channel = existing;
+      } else {
         try {
-          await channelManager.join(channelId);
+          ({ channel } = await channelManager.join(channelId));
         } catch (e) {
           logger.debug(e, 'failed to join channel during connect');
           callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
           return;
         }
-      }
-
-      const channel = channelManager.get(channelId);
-      if (!channel) {
-        callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
-        return;
       }
 
       if (socket) channelManager.addSocketToChannel(channel, socket);

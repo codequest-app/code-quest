@@ -48,6 +48,10 @@ export function create({
       const newSessionId = crypto.randomUUID();
       await rawEventStore.cloneEvents(parentSessionId, newSessionId);
 
+      // Resolve projectRoot upfront so onBeforeSpawn can set it before any
+      // broadcastSessionState emits (matches launch/resume symmetry).
+      const projectRoot =
+        parentRow.projectRoot ?? (await resolveProjectRoot(gitService, parentRow.cwd));
       await channelManager.create(newChannelId, {
         cwd: parentRow.cwd,
         launchOptions: {
@@ -59,13 +63,10 @@ export function create({
         onBeforeSpawn: (ch) => {
           ch.parentId = forkedFromChannelId;
           ch.sessionId = newSessionId;
+          ch.projectRoot = projectRoot;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      const projectRoot =
-        parentRow.projectRoot ?? (await resolveProjectRoot(gitService, parentRow.cwd));
-      const newCh = channelManager.get(newChannelId);
-      if (newCh) newCh.projectRoot = projectRoot;
       emitter.broadcastAll('session:created', {
         channelId: newChannelId,
         cwd: parentRow.cwd,

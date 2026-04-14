@@ -66,7 +66,7 @@ export function create({
     }
     callback?.({
       providerConfig: channelManager.providerClientConfig,
-      ...(Array.isArray(models) ? { models } : {}),
+      ...(models ? { models } : {}),
       ...(typeof effort === 'string' ? { effort } : {}),
     });
   }
