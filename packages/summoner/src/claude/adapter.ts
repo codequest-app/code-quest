@@ -85,7 +85,7 @@ function convertRateLimitMessage(message: RateLimitEvent): ClientMessage {
         status: rli.status ?? '',
         rateLimitType: rli.rateLimitType,
         resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
-        utilization: rli.utilization != null ? rli.utilization : undefined,
+        utilization: typeof rli.utilization === 'number' ? rli.utilization : undefined,
         overageStatus: rli.overageStatus,
         isUsingOverage: rli.isUsingOverage,
       },
@@ -99,7 +99,7 @@ function convertAuthStatusMessage(message: ProtocolMessage): ClientMessage {
     payload: {
       status: message.isAuthenticating ? 'authenticating' : 'authenticated',
       output: Array.isArray(message.output) ? message.output.join('\n') : undefined,
-      account: message.account,
+      account: isRecord(message.account) ? message.account : undefined,
     },
   };
 }
@@ -303,7 +303,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
       case 'speech_to_text_message':
         return {
           name: 'speech:message',
-          payload: { channelId: message.channelId, text: message.text, done: message.done },
+          payload: { text: message.text, done: message.done },
         };
       case 'streamlined_text':
         return { name: 'stream:text', payload: { text: message.text } };
@@ -314,8 +314,13 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
           name: 'error:message',
           payload: { message: message.error?.message ?? 'Unknown error' },
         };
-      case 'experiment_gates':
-        return { name: 'app:experiment_gates', payload: { gates: message.gates } };
+      case 'experiment_gates': {
+        const gates: Record<string, boolean> = {};
+        for (const [k, v] of Object.entries(message.gates)) {
+          gates[k] = Boolean(v);
+        }
+        return { name: 'app:experiment_gates', payload: { gates } };
+      }
       case 'available_models':
         return { name: 'app:models', payload: { models: message.models } };
       case 'notification':

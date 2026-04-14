@@ -20,7 +20,7 @@ export {
   type CancelRequestPayload,
   type ChannelIdPayload,
   type ChannelMetaCache,
-  type ClientMessage,
+  type ClientMessageWire,
   type ControlResponse,
   cancelRequestPayloadSchema,
   channelIdPayloadSchema,

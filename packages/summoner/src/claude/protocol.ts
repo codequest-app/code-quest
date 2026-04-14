@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ParseResult } from '../types.ts';
+import { isRecord } from '../utils.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { getSchemaForType, KNOWN_EVENT_TYPES, type ProtocolMessage } from './schemas.ts';
 
@@ -124,10 +125,10 @@ export class ClaudeProtocol {
       return { status: 'skip', raw: line, reason: 'invalid_json' };
     }
 
-    if (typeof json !== 'object' || json === null || !('type' in json)) {
+    if (!isRecord(json) || !('type' in json)) {
       return { status: 'skip', raw: trimmed, reason: 'no_type' };
     }
-    const obj = json as Record<string, unknown>;
+    const obj = json;
     const type = typeof obj.type === 'string' ? obj.type : '';
 
     if (type === 'keep_alive') return { status: 'skip', raw: trimmed, reason: 'keep_alive' };

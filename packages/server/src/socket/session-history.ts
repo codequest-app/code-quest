@@ -1,4 +1,8 @@
-import type { ClientMessage, ServerToClientEvents } from '@code-quest/shared';
+import {
+  type ClientMessage,
+  contentBlockSchema,
+  type ServerToClientEvents,
+} from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
@@ -81,9 +85,13 @@ export class SessionHistory {
   private replayStdinEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
     const parsed = userMessageInputSchema.safeParse(raw);
     if (parsed.success) {
+      const blocks = parsed.data.message.content.flatMap((b) => {
+        const parsedBlock = contentBlockSchema.safeParse(b);
+        return parsedBlock.success ? [parsedBlock.data] : [];
+      });
       result.push({
         name: 'message:user',
-        payload: { content: parsed.data.message.content },
+        payload: { content: blocks },
       });
     }
   }

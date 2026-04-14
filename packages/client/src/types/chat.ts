@@ -50,11 +50,15 @@ export interface FileSnapshot {
   timestamp: number;
 }
 
-export interface InitOptions {
-  [key: string]: unknown;
-  systemPrompt?: string;
-  appendSystemPrompt?: string;
-}
+import { z } from 'zod';
+
+export const initOptionsSchema = z
+  .object({
+    systemPrompt: z.string().optional(),
+    appendSystemPrompt: z.string().optional(),
+  })
+  .catchall(z.unknown());
+export type InitOptions = z.infer<typeof initOptionsSchema>;
 
 export type ChannelChangeUpdate = {
   title?: string;

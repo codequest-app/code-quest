@@ -30,23 +30,47 @@ function parseModels(raw: unknown[]): ModelInfo[] {
 
 // ── On handlers: (state, payload) → newState ──
 
-/** Maps settings:update payload keys → ConfigState keys for direct assignment. */
-const SETTINGS_KEY_MAP: Array<[keyof Payload<'settings:update'>, keyof ConfigState]> = [
-  ['modelSetting', 'model'],
-  ['initialPermissionMode', 'permissionMode'],
-  ['tools', 'tools'],
-  ['thinkingLevel', 'thinkingLevel'],
-  ['fastModeState', 'fastModeState'],
-  ['config', 'config'],
-  ['mcpServers', 'mcpServers'],
-];
+/**
+ * Per-payload-key copier into ConfigState. Keys map to differently-typed state
+ * fields, so each entry is a closure with concrete in/out types — no dynamic
+ * key indexing means no `as Record<>` cast needed.
+ */
+type Copier<P> = (update: Partial<ConfigState>, value: Exclude<P, undefined>) => void;
+type CopierMap = {
+  [K in keyof Payload<'settings:update'>]?: Copier<Payload<'settings:update'>[K]>;
+};
+
+const SETTINGS_COPIERS: CopierMap = {
+  modelSetting: (u, v) => {
+    u.model = v;
+  },
+  initialPermissionMode: (u, v) => {
+    u.permissionMode = v;
+  },
+  tools: (u, v) => {
+    u.tools = v;
+  },
+  thinkingLevel: (u, v) => {
+    u.thinkingLevel = v;
+  },
+  fastModeState: (u, v) => {
+    u.fastModeState = v;
+  },
+  config: (u, v) => {
+    u.config = v;
+  },
+  mcpServers: (u, v) => {
+    u.mcpServers = v;
+  },
+};
 
 function onSettingsUpdate(state: ConfigState, payload: Payload<'settings:update'>): ConfigState {
   const update: Partial<ConfigState> = {};
-  for (const [payloadKey, stateKey] of SETTINGS_KEY_MAP) {
-    if (payload[payloadKey] !== undefined) {
-      (update as Record<string, unknown>)[stateKey] = payload[payloadKey];
-    }
+  for (const [key, copier] of Object.entries(SETTINGS_COPIERS) as Array<
+    [keyof Payload<'settings:update'>, Copier<unknown>]
+  >) {
+    const value = payload[key];
+    if (value !== undefined) copier(update, value);
   }
   if (payload.effort !== undefined) update.effort = toEffort(payload.effort);
   if (payload.currentRepo !== undefined) update.currentRepo = payload.currentRepo ?? null;

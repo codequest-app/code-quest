@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
-
 import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SettingsStore } from '../services/settings-store.ts';
@@ -29,9 +27,7 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'set_permission_mode')).toBe(
-        true,
-      );
+      expect(received.some((r) => r.request.subtype === 'set_permission_mode')).toBe(true);
     });
 
     it('persists permissionMode to settingsStore on success', async () => {
@@ -49,7 +45,7 @@ describe('ChatHandler > settings', () => {
 
       const match = claude
         .events('settings:update')
-        .find((e: any) => e.initialPermissionMode === 'plan');
+        .find((e) => e.initialPermissionMode === 'plan');
       expect(match).toBeDefined();
     });
 
@@ -74,7 +70,7 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_model', { channelId, model: 'claude-sonnet-4-6' });
 
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'set_model')).toBe(true);
+      expect(received.some((r) => r.request.subtype === 'set_model')).toBe(true);
     });
 
     it('returns error via callback for unknown session', async () => {
@@ -113,9 +109,7 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'set_max_thinking_tokens')).toBe(
-        true,
-      );
+      expect(received.some((r) => r.request.subtype === 'set_max_thinking_tokens')).toBe(true);
     });
 
     it('sends set_max_thinking_tokens(0) for "off"', async () => {
@@ -127,8 +121,8 @@ describe('ChatHandler > settings', () => {
       expect(
         received.some(
           (r) =>
-            (r.request as any)?.subtype === 'set_max_thinking_tokens' &&
-            (r.request as any)?.tokens === 0,
+            r.request.subtype === 'set_max_thinking_tokens' &&
+            (r.request as { tokens?: number }).tokens === 0,
         ),
       ).toBe(true);
     });
@@ -138,9 +132,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
 
-      const match = claude
-        .events('settings:update')
-        .find((e: any) => e.thinkingLevel === 'default_on');
+      const match = claude.events('settings:update').find((e) => e.thinkingLevel === 'default_on');
       expect(match).toBeDefined();
     });
 
@@ -160,11 +152,9 @@ describe('ChatHandler > settings', () => {
       await claude.initialize({ launch: { thinkingLevel: 'default_on' } });
 
       const received = claude.received('control_request');
-      const thinkingReq = received.find(
-        (r) => (r.request as any)?.subtype === 'set_max_thinking_tokens',
-      );
+      const thinkingReq = received.find((r) => r.request.subtype === 'set_max_thinking_tokens');
       expect(thinkingReq).toBeDefined();
-      expect((thinkingReq!.request as any).tokens).toBe(31999);
+      expect((thinkingReq!.request as { tokens?: number }).tokens).toBe(31999);
     });
 
     it('stores cwd in channel.cwd when cwd is provided', async () => {
@@ -211,7 +201,7 @@ describe('ChatHandler > settings', () => {
     const received = claude.received();
     expect(
       received.some(
-        (r: any) =>
+        (r) =>
           JSON.stringify(r).includes('"apply_flag_settings"') &&
           JSON.stringify(r).includes('"effortLevel"'),
       ),
@@ -228,7 +218,7 @@ describe('ChatHandler > settings', () => {
 
     const effortUpdate = claude
       .events('settings:update')
-      .find((e: any) => e.channelId === channelId && e.effort === 'low');
+      .find((e) => e.channelId === channelId && e.effort === 'low');
     expect(effortUpdate).toBeTruthy();
   });
 
@@ -307,7 +297,7 @@ describe('ChatHandler > settings', () => {
       });
 
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'rewind_files')).toBe(true);
+      expect(received.some((r) => r.request.subtype === 'rewind_files')).toBe(true);
       expect(result).toMatchObject({ ok: true });
     });
 
@@ -329,7 +319,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_proactive', { channelId, enabled: true });
 
-      const match = claude.events('settings:update').find((e: any) => e.fastModeState != null);
+      const match = claude.events('settings:update').find((e) => e.fastModeState != null);
       expect(match).toBeDefined();
     });
   });
@@ -351,7 +341,7 @@ describe('ChatHandler > settings', () => {
 
       const usageUpdates = claude
         .events('request')
-        .filter((p: any) => p.request?.type === 'usage_update');
+        .filter((p) => (p as { request?: { type?: string } }).request?.type === 'usage_update');
       expect(usageUpdates.length).toBe(0);
     });
 
@@ -402,7 +392,18 @@ describe('ChatHandler > settings', () => {
 
       const usageUpdates = claude.events('settings:usage');
       expect(usageUpdates.length).toBe(1);
-      const ctx = usageUpdates[0].contextUsage;
+      // contextUsage in settings:usage payload is z.record(string, unknown);
+      // the strict ContextUsageData shape isn't carried through. Cast once.
+      const ctx = usageUpdates[0].contextUsage as {
+        totalTokens?: number;
+        maxTokens?: number;
+        percentage?: number;
+        categories: Array<{ name: string }>;
+        gridRows?: unknown;
+        apiUsage?: unknown;
+        mcpTools?: unknown;
+        rawMaxTokens?: unknown;
+      };
       expect(ctx.totalTokens).toBe(10000);
       expect(ctx.maxTokens).toBe(200000);
       expect(ctx.percentage).toBe(5);
@@ -423,7 +424,7 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_model', { channelId, model: 'haiku' });
 
       const received = claude.received('control_request');
-      expect(received.some((r: any) => (r.request as any)?.subtype === 'set_model')).toBe(true);
+      expect(received.some((r) => r.request.subtype === 'set_model')).toBe(true);
     });
 
     it('set_permission_mode sends control_request to CLI', async () => {
@@ -432,9 +433,7 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
       const received = claude.received('control_request');
-      expect(received.some((r: any) => (r.request as any)?.subtype === 'set_permission_mode')).toBe(
-        true,
-      );
+      expect(received.some((r) => r.request.subtype === 'set_permission_mode')).toBe(true);
     });
   });
 
@@ -451,7 +450,7 @@ describe('ChatHandler > settings', () => {
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.model).toBe('haiku');
       expect(
-        claude.received('control_response').some((r: any) => r.response?.request_id === 'sm-1'),
+        claude.received('control_response').some((r) => r.response?.request_id === 'sm-1'),
       ).toBe(true);
     });
 
@@ -469,7 +468,7 @@ describe('ChatHandler > settings', () => {
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.permissionMode).toBe('plan');
       expect(
-        claude.received('control_response').some((r: any) => r.response?.request_id === 'sp-1'),
+        claude.received('control_response').some((r) => r.response?.request_id === 'sp-1'),
       ).toBe(true);
     });
 
@@ -480,7 +479,7 @@ describe('ChatHandler > settings', () => {
       await claude.emit(s.controlRequest('gs-1', 'get_settings'));
 
       expect(
-        claude.received('control_response').some((r: any) => r.response?.request_id === 'gs-1'),
+        claude.received('control_response').some((r) => r.response?.request_id === 'gs-1'),
       ).toBe(true);
     });
   });

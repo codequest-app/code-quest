@@ -62,6 +62,12 @@ export function channelRpc<T = unknown>(
   });
 }
 
+/** Extract the success-data type T when the event's ack is RpcResult<T>. */
+type CallData<E extends keyof ClientToServerEvents> =
+  Parameters<ClientToServerEvents[E]> extends [...unknown[], (res: RpcResult<infer T>) => void]
+    ? T
+    : never;
+
 /**
  * Higher-level rpc wrapper: unwraps an RpcResult<T> ack.
  * Returns the success data, throws RpcError on failure.
@@ -72,14 +78,12 @@ export async function call<E extends keyof ClientToServerEvents>(
   socket: TypedSocket,
   event: E,
   ...args: Parameters<ClientToServerEvents[E]> extends [...infer P, infer _Cb] ? P : never
-): Promise<
-  Parameters<ClientToServerEvents[E]> extends [...infer _P, (res: RpcResult<infer T>) => void]
-    ? T
-    : never
-> {
-  const result = (await rpc(socket, event, ...(args as never))) as RpcResult<unknown>;
+): Promise<CallData<E>> {
+  const result = await new Promise<RpcResult<CallData<E>>>((resolve) => {
+    emitDynamic(socket, event, ...args, resolve);
+  });
   if (!result.ok) {
     throw new RpcError(result.error, result.code);
   }
-  return result.data as never;
+  return result.data;
 }

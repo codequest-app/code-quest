@@ -1,4 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import type {
   ForkConversationResponse,
   GetSessionResponse,
@@ -88,7 +87,7 @@ describe('ChatHandler > session', () => {
 
       const forkCreated = claude
         .events('session:created')
-        .filter((e: any) => e.channelId === 'fork-once');
+        .filter((e) => e.channelId === 'fork-once');
       expect(forkCreated).toHaveLength(1);
     });
 
@@ -120,7 +119,7 @@ describe('ChatHandler > session', () => {
 
       const events = forkClaude
         .events('session:created')
-        .filter((e: any) => e.channelId === 'ch-fork-broadcast');
+        .filter((e) => e.channelId === 'ch-fork-broadcast');
       expect(events).toHaveLength(1);
       expect(events[0].cwd).toBe('/tmp/parent-with-cwd');
     });

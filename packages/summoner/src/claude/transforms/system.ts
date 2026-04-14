@@ -74,7 +74,8 @@ function handleHookResponse(raw: SystemHookResponse): ClientMessage {
         hookEvent: raw.hook_event,
         hookEventName: raw.hook_event_name,
         output: raw.output,
-        additionalContext: raw.additional_context,
+        additionalContext:
+          typeof raw.additional_context === 'string' ? raw.additional_context : undefined,
       },
     },
   };
@@ -83,7 +84,7 @@ function handleHookResponse(raw: SystemHookResponse): ClientMessage {
 function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
   return {
     name: 'system:task_started',
-    payload: { description: raw.description, taskType: raw.task_type },
+    payload: { description: raw.description ?? '', taskType: raw.task_type },
   };
 }
 

@@ -1,5 +1,6 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
+import type { SessionJoinResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
+import type { RawEventStore } from '../services/raw-event-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
@@ -35,18 +36,25 @@ describe('ChannelManager', () => {
     it('returns channel and events for existing channel', async () => {
       const { claude, channelId } = await setup();
 
-      const joinResult = await claude.send('session:join', { channelId });
+      const joinResult = await claude.send<SessionJoinResponse>('session:join', { channelId });
 
-      expect((joinResult as any).data.channelId).toBe(channelId);
-      expect((joinResult as any).ok).toBe(true);
+      expect(joinResult.ok).toBe(true);
+      if (joinResult.ok) {
+        expect(joinResult.data.channelId).toBe(channelId);
+      }
     });
 
     it('returns error for unknown channel', async () => {
       const { claude } = await setup();
 
-      const joinResult = await claude.send('session:join', { channelId: 'nonexistent' });
+      const joinResult = await claude.send<SessionJoinResponse>('session:join', {
+        channelId: 'nonexistent',
+      });
 
-      expect((joinResult as any).error).toBeDefined();
+      expect(joinResult.ok).toBe(false);
+      if (!joinResult.ok) {
+        expect(joinResult.error).toBeDefined();
+      }
     });
   });
 
@@ -231,7 +239,7 @@ describe('ChannelManager', () => {
       await claude.emit(s.assistant('reply'));
       await claude.emit(s.result());
 
-      const rawEventStore = container.get(TYPES.RawEventStore) as any;
+      const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
       const entries = await rawEventStore.getBySession('test-session-001');
       expect(entries.length).toBeGreaterThan(0);
     });

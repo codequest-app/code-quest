@@ -95,7 +95,7 @@ describe('session:update_state', () => {
     expect(result.ok).toBe(true);
     const matched = claude
       .events('session:states')
-      .flatMap((e: any) => e.sessions ?? [])
+      .flatMap((e) => e.sessions ?? [])
       .find((sc: any) => sc.channelId === channelId && sc.title === 'New Title');
     expect(matched).toBeDefined();
   });
@@ -112,7 +112,7 @@ describe('session:update_state', () => {
     expect(result.ok).toBe(true);
     const matched = claude
       .events('session:states')
-      .flatMap((e: any) => e.sessions ?? [])
+      .flatMap((e) => e.sessions ?? [])
       .find(
         (sc: any) => sc.channelId === channelId && sc.state === 'busy' && sc.title === 'Busy Tab',
       );
@@ -137,7 +137,7 @@ describe('session_states_update enrichment', () => {
     await claude.emit(s.assistant('hi'));
     await claude.emit(s.result());
 
-    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
+    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
     const busyWithConfig = sessions.find(
       (sc: any) => sc.channelId === channelId && sc.state === 'busy' && sc.modelSetting,
     );
@@ -150,7 +150,7 @@ describe('session_states_update enrichment', () => {
 
     await claude.initialize(s.init('cli-sess'));
 
-    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
+    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
     expect(sessions.length).toBeGreaterThan(0);
     for (const sc of sessions) {
       expect(sc.channelId).toBeDefined();
@@ -166,7 +166,7 @@ describe('session_states_update enrichment', () => {
     await claude.send('session:close', { channelId });
     await new Promise<void>((r) => queueMicrotask(r));
 
-    const sessions = claude.events('session:states').flatMap((e: any) => e.sessions ?? []);
+    const sessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
     const exitedState = sessions.find(
       (sc: any) => sc.channelId === channelId && sc.state === 'exited',
     );

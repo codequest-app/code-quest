@@ -1,8 +1,16 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { FakeProcessHandle, FakeProcessProvider } from './fake-process-provider.ts';
+import type { ServerToClientEvents } from '@code-quest/shared';
+import type {
+  FakeProcessHandle,
+  FakeProcessProvider,
+  ReceivedMessageMap,
+} from './fake-process-provider.ts';
 import type { FakeSocket } from './fake-socket.ts';
 import { segments as s } from './segments.ts';
+
+/** Extract the payload type for a given server-to-client event. */
+type PayloadOf<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
 export interface FakeClaudeOptions {
   socket: FakeSocket;
@@ -223,16 +231,20 @@ export class FakeClaude {
     return callbackResult as T;
   }
 
-  received(): Record<string, unknown>[];
-  received(type: string): Record<string, unknown>[];
-  received(type?: string): Record<string, unknown>[] {
-    return type ? this.provider.latest.received(type) : this.provider.latest.received();
+  received(): Array<Record<string, unknown>>;
+  received<T extends keyof ReceivedMessageMap>(type: T): Array<ReceivedMessageMap[T]>;
+  received(type: string): Array<Record<string, unknown>>;
+  received(type?: string): Array<Record<string, unknown>> {
+    return type
+      ? this.provider.latest.received(type as keyof ReceivedMessageMap)
+      : this.provider.latest.received();
   }
 
   /** Query recorded server-pushed events. All events are auto-recorded. */
-  events(): Array<{ event: string; payload: any }>;
-  events(eventName: string): any[];
-  events(eventName?: string): any {
+  events(): Array<{ event: string; payload: unknown }>;
+  events<E extends keyof ServerToClientEvents>(eventName: E): Array<PayloadOf<E>>;
+  events(eventName: string): unknown[];
+  events(eventName?: string): unknown {
     if (!eventName) return this._recordedEvents;
     return this._recordedEvents.filter((e) => e.event === eventName).map((e) => e.payload);
   }

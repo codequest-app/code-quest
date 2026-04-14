@@ -1,7 +1,6 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { resetSeq, segments as s } from '../../test/segments.ts';
-import { adapter, toClientMessage, transformResult } from './helpers.ts';
+import { adapter, expectName, toClientMessage, transformResult } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {
   beforeEach(() => resetSeq());
@@ -259,11 +258,9 @@ describe('ClaudeAdapter', () => {
       const result = toClientMessage(
         JSON.stringify({ type: 'auth_status', isAuthenticating: false, output: [] }),
       );
-      expect(result).toMatchObject({
-        name: 'notification:auth_status',
-        payload: { status: 'authenticated' },
-      });
-      expect((result as any).payload.account).toBeUndefined();
+      const msg = expectName(result, 'notification:auth_status');
+      expect(msg.payload.status).toBe('authenticated');
+      expect(msg.payload.account).toBeUndefined();
     });
 
     it('converts rate_limit_event with overage fields', () => {
@@ -290,12 +287,10 @@ describe('ClaudeAdapter', () => {
       delete base.rate_limit_info.rateLimitType;
       delete base.rate_limit_info.resetsAt;
       const result = toClientMessage(JSON.stringify(base));
-      expect(result).toMatchObject({
-        name: 'system:rate_limit',
-        payload: { info: { status: 'ok' } },
-      });
-      expect((result as any).payload.info.overageStatus).toBeUndefined();
-      expect((result as any).payload.info.isUsingOverage).toBeUndefined();
+      const msg = expectName(result, 'system:rate_limit');
+      expect(msg.payload.info.status).toBe('ok');
+      expect(msg.payload.info.overageStatus).toBeUndefined();
+      expect(msg.payload.info.isUsingOverage).toBeUndefined();
     });
   });
 

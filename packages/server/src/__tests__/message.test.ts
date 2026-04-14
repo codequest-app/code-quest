@@ -44,7 +44,9 @@ describe('ChatHandler > message', () => {
 
     // Sender should NOT receive message:user from emitToOthers
     expect(
-      windowA.events('message:user').filter((e: any) => e.content?.[0]?.text === 'hello from A')
+      windowA
+        .events('message:user')
+        .filter((e) => (e.content?.[0] as { text?: string } | undefined)?.text === 'hello from A')
         .length,
     ).toBe(0);
   });
@@ -86,7 +88,7 @@ describe('ChatHandler > message', () => {
     expect(claude.events('message:user').length).toBeGreaterThan(0);
     const texts = claude
       .events('message:assistant')
-      .map((e: any) => e.content?.[0]?.text)
+      .map((e) => (e.content?.[0] as { text?: string } | undefined)?.text)
       .filter(Boolean);
     expect(texts).toContain('Done');
     expect(claude.events('message:result').length).toBeGreaterThan(0);
@@ -131,9 +133,7 @@ describe('ChatHandler > message', () => {
       await claude.send('chat:stop_task', { channelId, taskId: 'task-1' });
 
       expect(
-        claude
-          .received('control_request')
-          .some((r: any) => (r.request as any)?.subtype === 'stop_task'),
+        claude.received('control_request').some((r) => r.request.subtype === 'stop_task'),
       ).toBe(true);
     });
   });
@@ -155,9 +155,7 @@ describe('ChatHandler > message', () => {
     // First cancel → interrupt (sends interrupt JSON via stdin)
     await claude.send('chat:cancel', { channelId });
 
-    const afterFirst = claude
-      .received()
-      .filter((r: any) => JSON.stringify(r).includes('"interrupt"'));
+    const afterFirst = claude.received().filter((r) => JSON.stringify(r).includes('"interrupt"'));
     expect(afterFirst.length).toBeGreaterThan(0);
 
     // Second cancel → abort
@@ -189,7 +187,7 @@ describe('ChatHandler > message', () => {
     await claude.send('chat:cancel', { channelId });
 
     const received = claude.received();
-    expect(received.some((r: any) => JSON.stringify(r).includes('"interrupt"'))).toBe(true);
+    expect(received.some((r) => JSON.stringify(r).includes('"interrupt"'))).toBe(true);
   });
 
   it('cancel_request C→S calls respondToControlRequest with deny to unblock CLI', async () => {
@@ -209,7 +207,7 @@ describe('ChatHandler > message', () => {
     const received = claude.received();
     expect(
       received.some(
-        (r: any) =>
+        (r) =>
           JSON.stringify(r).includes('req-cancel-test') && JSON.stringify(r).includes('"deny"'),
       ),
     ).toBe(true);

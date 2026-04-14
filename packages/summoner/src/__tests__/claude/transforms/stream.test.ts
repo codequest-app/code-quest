@@ -1,7 +1,6 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/segments.ts';
-import { toClientMessage } from '../helpers.ts';
+import { expectName, toClientMessage } from '../helpers.ts';
 
 describe('transform — stream events', () => {
   it('converts content_block_start to stream:block_start', () => {
@@ -9,11 +8,10 @@ describe('transform — stream events', () => {
     base.event.content_block = { type: 'thinking', thinking: '', signature: '' };
     base.parent_tool_use_id = null;
     const result = toClientMessage(JSON.stringify(base));
-    expect(result).toMatchObject({
-      name: 'stream:block_start',
-      payload: { index: 0, blockType: 'thinking' },
-    });
-    expect((result as any).payload.parentToolUseId).toBeUndefined();
+    const msg = expectName(result, 'stream:block_start');
+    expect(msg.payload.index).toBe(0);
+    expect(msg.payload.blockType).toBe('thinking');
+    expect(msg.payload.parentToolUseId).toBeUndefined();
   });
 
   it('converts content_block_start with parentToolUseId', () => {

@@ -1,7 +1,6 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/segments.ts';
-import { toClientMessage } from '../helpers.ts';
+import { expectName, toClientMessage } from '../helpers.ts';
 
 describe('transform — system events', () => {
   it('converts system/init to session:init', () => {
@@ -130,7 +129,8 @@ describe('transform — system events', () => {
 
   it('converts system/compact_boundary without compactMetadata', () => {
     const result = toClientMessage(s.compactBoundary());
-    expect((result as any).payload.preservedSegment).toBeUndefined();
+    const msg = expectName(result, 'system:compact_boundary');
+    expect(msg.payload.preservedSegment).toBeUndefined();
   });
 
   it('converts system/task_notification from real fixture', () => {
@@ -161,12 +161,10 @@ describe('transform — system events', () => {
     delete base.summary;
     delete base.usage;
     const result = toClientMessage(JSON.stringify(base));
-    expect(result).toMatchObject({
-      name: 'system:task_notification',
-      payload: { taskId: 'a6b3446e967260f60' },
-    });
-    expect((result as any).payload.toolUseId).toBeUndefined();
-    expect((result as any).payload.status).toBeUndefined();
+    const msg = expectName(result, 'system:task_notification');
+    expect(msg.payload.taskId).toBe('a6b3446e967260f60');
+    expect(msg.payload.toolUseId).toBeUndefined();
+    expect(msg.payload.status).toBeUndefined();
   });
 
   it('converts system/task_progress from real fixture', () => {
@@ -196,11 +194,9 @@ describe('transform — system events', () => {
     delete base.last_tool_name;
     delete base.usage;
     const result = toClientMessage(JSON.stringify(base));
-    expect(result).toMatchObject({
-      name: 'system:task_progress',
-      payload: { taskId: 'a6b3446e967260f60' },
-    });
-    expect((result as any).payload.description).toBeUndefined();
-    expect((result as any).payload.lastToolName).toBeUndefined();
+    const msg = expectName(result, 'system:task_progress');
+    expect(msg.payload.taskId).toBe('a6b3446e967260f60');
+    expect(msg.payload.description).toBeUndefined();
+    expect(msg.payload.lastToolName).toBeUndefined();
   });
 });

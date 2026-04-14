@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
-
 import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
@@ -48,7 +46,7 @@ describe('ChatHandler > mcp', () => {
 
       expect(result.ok).toBe(true);
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'mcp_authenticate')).toBe(true);
+      expect(received.some((r) => r.request.subtype === 'mcp_authenticate')).toBe(true);
     });
 
     it('mcp:authenticate returns error when no active session', async () => {
@@ -73,7 +71,7 @@ describe('ChatHandler > mcp', () => {
 
       expect(result.ok).toBe(true);
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'mcp_clear_auth')).toBe(true);
+      expect(received.some((r) => r.request.subtype === 'mcp_clear_auth')).toBe(true);
     });
 
     it('mcp:clear_auth returns error when no active session', async () => {
@@ -101,9 +99,7 @@ describe('ChatHandler > mcp', () => {
 
       expect(result.ok).toBe(true);
       const received = claude.received('control_request');
-      expect(received.some((r) => (r.request as any)?.subtype === 'mcp_oauth_callback_url')).toBe(
-        true,
-      );
+      expect(received.some((r) => r.request.subtype === 'mcp_oauth_callback_url')).toBe(true);
     });
 
     it('returns error when session not found', async () => {
@@ -143,12 +139,12 @@ describe('ChatHandler > mcp', () => {
       );
 
       expect(res.success).toBe(true);
-      expect((res.response as any).wasDisabled).toBe(true);
+      expect((res.response as { wasDisabled: boolean }).wasDisabled).toBe(true);
 
       const states = claude
         .events('settings:update')
-        .filter((p: any) => p.chromeMcpState)
-        .map((p: any) => p.chromeMcpState.status);
+        .filter((p) => p.chromeMcpState)
+        .map((p) => p.chromeMcpState?.status);
       expect(states).toContain('connecting');
       expect(states).toContain('connected');
     });
@@ -164,7 +160,7 @@ describe('ChatHandler > mcp', () => {
       );
 
       expect(res.success).toBe(true);
-      expect((res.response as any).wasDisabled).toBe(false);
+      expect((res.response as { wasDisabled: boolean }).wasDisabled).toBe(false);
     });
 
     it('disable_chrome_mcp: emits disconnected and returns wasEnabled:true', async () => {
@@ -180,13 +176,13 @@ describe('ChatHandler > mcp', () => {
       );
 
       expect(res.success).toBe(true);
-      expect((res.response as any).wasEnabled).toBe(true);
+      expect((res.response as { wasEnabled: boolean }).wasEnabled).toBe(true);
 
       const states = claude
         .events('settings:update')
         .slice(countBefore)
-        .filter((p: any) => p.chromeMcpState)
-        .map((p: any) => p.chromeMcpState.status);
+        .filter((p) => p.chromeMcpState)
+        .map((p) => p.chromeMcpState?.status);
       expect(states).toContain('disconnected');
     });
 
@@ -199,12 +195,12 @@ describe('ChatHandler > mcp', () => {
       );
 
       expect(res.success).toBe(true);
-      expect((res.response as any).type).toBe('enable_jupyter_mcp_response');
+      expect((res.response as { type: string }).type).toBe('enable_jupyter_mcp_response');
 
       const states = claude
         .events('settings:update')
-        .filter((p: any) => p.jupyterMcpState)
-        .map((p: any) => p.jupyterMcpState.status);
+        .filter((p) => p.jupyterMcpState)
+        .map((p) => p.jupyterMcpState?.status);
       expect(states).toContain('active');
     });
 
@@ -217,12 +213,12 @@ describe('ChatHandler > mcp', () => {
       );
 
       expect(res.success).toBe(true);
-      expect((res.response as any).type).toBe('disable_jupyter_mcp_response');
+      expect((res.response as { type: string }).type).toBe('disable_jupyter_mcp_response');
 
       const states = claude
         .events('settings:update')
-        .filter((p: any) => p.jupyterMcpState)
-        .map((p: any) => p.jupyterMcpState.status);
+        .filter((p) => p.jupyterMcpState)
+        .map((p) => p.jupyterMcpState?.status);
       expect(states).toContain('inactive');
     });
 
@@ -236,30 +232,35 @@ describe('ChatHandler > mcp', () => {
       expect(res.ok).toBe(true);
       expect(res.data.response.type).toBe('ask_debugger_help_response');
       // No settings:update with debugger state should have been pushed
-      const debuggerUpdates = claude
-        .events('settings:update')
-        .filter((p: any) => p.debuggerMcpState);
+      const debuggerUpdates = claude.events('settings:update').filter((p) => p.debuggerMcpState);
       expect(debuggerUpdates).toHaveLength(0);
     });
 
     it('all handlers return error when channelId is missing', async () => {
       const { claude } = await setup();
 
-      const events = [
-        'mcp:ensure_chrome',
-        'mcp:disable_chrome',
-        'mcp:enable_jupyter',
-        'mcp:disable_jupyter',
-        'mcp:ask_debugger',
-      ] as const;
+      type ControlResp = { success: boolean; error?: string };
+      type RpcResp = { ok: boolean; error?: string };
 
-      for (const event of events) {
-        const res = await claude.send<any>(event, {});
-        // ask_debugger uses RpcResult (ok field); others use CLI ControlResponse (success field)
-        const isFailure = event === 'mcp:ask_debugger' ? res.ok === false : res.success === false;
-        expect(isFailure).toBe(true);
-        expect(res.error).toBeDefined();
-      }
+      const chrome = await claude.send<ControlResp>('mcp:ensure_chrome', {});
+      expect(chrome.success).toBe(false);
+      expect(chrome.error).toBeDefined();
+
+      const disableChrome = await claude.send<ControlResp>('mcp:disable_chrome', {});
+      expect(disableChrome.success).toBe(false);
+      expect(disableChrome.error).toBeDefined();
+
+      const enableJ = await claude.send<ControlResp>('mcp:enable_jupyter', {});
+      expect(enableJ.success).toBe(false);
+      expect(enableJ.error).toBeDefined();
+
+      const disableJ = await claude.send<ControlResp>('mcp:disable_jupyter', {});
+      expect(disableJ.success).toBe(false);
+      expect(disableJ.error).toBeDefined();
+
+      const askDbg = await claude.send<RpcResp>('mcp:ask_debugger', {});
+      expect(askDbg.ok).toBe(false);
+      expect(askDbg.error).toBeDefined();
     });
   });
 

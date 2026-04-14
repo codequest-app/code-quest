@@ -13,7 +13,7 @@ function handleCanUseTool({ requestId, request }: RequestContext): ClientMessage
       requestId,
       toolName: request.tool_name ?? '',
       toolUseId: request.tool_use_id,
-      input: request.input,
+      input: asRecord(request.input),
       suggestions: request.permission_suggestions,
       callbackId: request.callback_id,
       blockedPath: request.blocked_path ?? undefined,
@@ -29,7 +29,7 @@ function handleHookCallback({ requestId, request }: RequestContext): ClientMessa
     payload: {
       requestId,
       callbackId: request.callback_id ?? '',
-      input: request.input,
+      input: asRecord(request.input),
       toolUseId: request.tool_use_id,
     },
   };
@@ -142,11 +142,17 @@ function handleGetSettings({ requestId }: RequestContext): ClientMessage {
 }
 
 function handleSetModel({ requestId, request }: RequestContext): ClientMessage {
-  return { name: 'settings:model_updated', payload: { requestId, input: request.input } };
+  return {
+    name: 'settings:model_updated',
+    payload: { requestId, input: asRecord(request.input) },
+  };
 }
 
 function handleSetPermissionMode({ requestId, request }: RequestContext): ClientMessage {
-  return { name: 'settings:permission_mode_updated', payload: { requestId, input: request.input } };
+  return {
+    name: 'settings:permission_mode_updated',
+    payload: { requestId, input: asRecord(request.input) },
+  };
 }
 
 const HANDLERS: Record<string, (ctx: RequestContext) => ClientMessage | null> = {

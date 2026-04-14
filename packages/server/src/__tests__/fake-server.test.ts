@@ -1,4 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file */
 import type { ExplorerBrowseResponse } from '@code-quest/shared';
 import { FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';
@@ -138,7 +137,7 @@ describe('FakeServer', () => {
     const { socket } = server.connect();
 
     // Verify socket is connected by checking it has serverSocket
-    const serverSocket = (socket as any).serverSocket;
+    const serverSocket = socket.serverSocket;
     expect(serverSocket).toBeTruthy();
 
     // Verify server→client delivery works
@@ -156,10 +155,7 @@ describe('FakeServer', () => {
     const { socket } = server.connect();
 
     let dispatched = false;
-    const serverSocket = (
-      socket as unknown as { serverSocket: { on: (e: string, fn: () => void) => void } }
-    ).serverSocket;
-    serverSocket.on('test-client-event', () => {
+    socket.serverSocket.on('test-client-event', () => {
       dispatched = true;
     });
     socket.emit('test-client-event', {});

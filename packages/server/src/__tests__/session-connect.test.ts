@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
-
 import type {
   ClientMessage,
   SessionJoinResponse,
@@ -336,7 +334,7 @@ describe('ChatHandler > session', () => {
       expect(result.ok).toBe(true);
       expect(result.data.events).toBeDefined();
       expect(result.data.events!.length).toBeGreaterThan(0);
-      const names = result.data.events!.map((e: ClientMessage) => e.name);
+      const names = result.data.events!.map((e) => e.name);
       expect(names).toContain('message:assistant');
     });
 
@@ -350,10 +348,10 @@ describe('ChatHandler > session', () => {
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
       expect(result.ok).toBe(true);
-      const names = result.data.events!.map((e: ClientMessage) => e.name);
+      const names = result.data.events!.map((e) => e.name);
       expect(names).toContain('message:user');
 
-      const userMessage = result.data.events!.find((e: ClientMessage) => e.name === 'message:user');
+      const userMessage = result.data.events!.find((e) => e.name === 'message:user');
       const { content } = messageContentSchema.parse(userMessage?.payload);
       expect(content).toEqual([{ type: 'text', text: 'hi' }]);
     });
@@ -367,7 +365,7 @@ describe('ChatHandler > session', () => {
 
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      const names = result.data.events!.map((e: ClientMessage) => e.name);
+      const names = result.data.events!.map((e) => e.name);
       const userIdx = names.indexOf('message:user');
       const assistantIdx = names.indexOf('message:assistant');
       expect(userIdx).toBeGreaterThanOrEqual(0);
@@ -414,7 +412,7 @@ describe('ChatHandler > session', () => {
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
       expect(result.ok).toBe(true);
-      const userTextEvents = result.data.events!.filter((e: ClientMessage) => {
+      const userTextEvents = result.data.events!.filter((e) => {
         if (e.name !== 'message:user') return false;
         const parsed = messageContentSchema.safeParse(e.payload);
         return (
@@ -432,7 +430,7 @@ describe('ChatHandler > session', () => {
 
       expect(result.ok).toBe(true);
       expect(result.data.events).toBeDefined();
-      expect(result.data.events!.every((e: ClientMessage) => e.name === 'session:init')).toBe(true);
+      expect(result.data.events!.every((e) => e.name === 'session:init')).toBe(true);
     });
 
     it('chat:join callback returns the provided channelId (not internal CLI ID)', async () => {
@@ -614,7 +612,7 @@ describe('ChatHandler > session', () => {
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
       expect(result.ok).toBe(true);
-      const names = result.data.events!.map((e: ClientMessage) => e.name);
+      const names = result.data.events!.map((e) => e.name);
       expect(names).toContain('message:user');
     });
   });
@@ -656,22 +654,16 @@ describe('ChatHandler > session', () => {
       const allBEvents = [
         ...windowB
           .events('chat:cancel_request')
-          .map((p: any) => ({ event: 'chat:cancel_request', payload: p })),
-        ...windowB
-          .events('control:cancel')
-          .map((p: any) => ({ event: 'control:cancel', payload: p })),
+          .map((p) => ({ event: 'chat:cancel_request', payload: p })),
+        ...windowB.events('control:cancel').map((p) => ({ event: 'control:cancel', payload: p })),
         ...windowB
           .events('control:permission')
-          .map((p: any) => ({ event: 'control:permission', payload: p })),
+          .map((p) => ({ event: 'control:permission', payload: p })),
         ...windowB
           .events('message:assistant')
-          .map((p: any) => ({ event: 'message:assistant', payload: p })),
-        ...windowB
-          .events('session:states')
-          .map((p: any) => ({ event: 'session:states', payload: p })),
-        ...windowB
-          .events('session:closed')
-          .map((p: any) => ({ event: 'session:closed', payload: p })),
+          .map((p) => ({ event: 'message:assistant', payload: p })),
+        ...windowB.events('session:states').map((p) => ({ event: 'session:states', payload: p })),
+        ...windowB.events('session:closed').map((p) => ({ event: 'session:closed', payload: p })),
       ];
 
       const cancelEvents = allBEvents.filter(
@@ -797,7 +789,7 @@ describe('ChatHandler > session', () => {
 
       const events = claude.events('message:assistant');
       expect(events.length).toBeGreaterThanOrEqual(1);
-      expect(events.every((e: any) => e.channelId === clientId)).toBe(true);
+      expect(events.every((e) => e.channelId === clientId)).toBe(true);
     });
 
     it('chat:create with channelId emits chat:created with clientId', async () => {
@@ -826,7 +818,9 @@ describe('ChatHandler > session', () => {
 
       const events = claude.events('message:assistant');
       expect(events.length).toBeGreaterThanOrEqual(1);
-      expect(events.some((e: any) => e.content?.[0]?.text === 'got it')).toBe(true);
+      expect(
+        events.some((e) => (e.content?.[0] as { text?: string } | undefined)?.text === 'got it'),
+      ).toBe(true);
     });
 
     it('chat:create with no params creates a new session (backward compat)', async () => {
@@ -858,7 +852,7 @@ describe('ChatHandler > session', () => {
 
       const events = claude.events('message:assistant');
       expect(events.length).toBeGreaterThan(0);
-      expect(events.every((e: any) => e.channelId === clientId)).toBe(true);
+      expect(events.every((e) => e.channelId === clientId)).toBe(true);
     });
 
     it('chat:create callback returns the same clientId', async () => {

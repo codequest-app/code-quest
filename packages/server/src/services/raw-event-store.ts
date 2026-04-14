@@ -2,10 +2,11 @@ import type { RawEntry } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 
-export interface SessionPreview {
-  lastAssistant?: string;
-  firstUser?: string;
-}
+export const sessionPreviewSchema = z.object({
+  lastAssistant: z.string().optional(),
+  firstUser: z.string().optional(),
+});
+export type SessionPreview = z.infer<typeof sessionPreviewSchema>;
 
 const rawTextMessageSchema = z.object({
   type: z.string(),

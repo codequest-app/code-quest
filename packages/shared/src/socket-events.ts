@@ -396,6 +396,110 @@ export interface ClientToServerEvents {
   ) => void;
 }
 
+// ── ClientMessage discriminated union ──
+// Producer-side (summoner transform → server Channel) message envelope.
+// Each variant binds a precise payload; runtime validation lives in the
+// corresponding wire schema (or internal-only schema) exported from ./schemas.
+
+/** Strip channelId — Channel layer injects it post-emit. */
+type WireBase<K extends keyof ServerToClientEvents> = Omit<
+  Parameters<ServerToClientEvents[K]>[0],
+  'channelId'
+>;
+
+/** Names emitted by transforms but never sent on the wire directly — they
+ * are handled by Channel/auto-respond server handlers, NOT by clients. */
+interface InternalOnlyMessageMap {
+  'control:open_diff': {
+    requestId: string;
+    originalPath: string;
+    newPath: string;
+  };
+  'control:forward': {
+    requestId: string;
+    subtype: string;
+    toolName?: string;
+    toolUseId?: string;
+    input?: unknown;
+    suggestions?: unknown[];
+    callbackId?: string;
+  };
+  'mcp:auto_respond': {
+    requestId: string;
+    response: { mcp_response: Record<string, unknown> };
+  };
+  'settings:get_settings': { requestId: string };
+  'settings:model_updated': { requestId: string; input?: Record<string, unknown> };
+  'settings:permission_mode_updated': { requestId: string; input?: Record<string, unknown> };
+}
+
+/** Wire events whose producer payload differs from the wire payload
+ * (extra scaffolding fields consumed server-side before socket emit). */
+interface ProducerOverrideMap {
+  // sessionId carried for Channel.handleInternalMessage
+  'session:init': Omit<WireBase<'session:init'>, 'config'> & {
+    sessionId?: string;
+    config?: Record<string, unknown>;
+  };
+  // Producer adds requestId + response scaffolding for auto-respond handler
+  'notification:show': Omit<WireBase<'notification:show'>, 'severity' | 'buttons'> & {
+    requestId: string;
+    severity: 'info' | 'warning' | 'error';
+    buttons?: unknown[];
+    response: { type: 'show_notification_response' };
+  };
+  'action:open_url': WireBase<'action:open_url'> & {
+    requestId: string;
+    response: { type: 'open_url_response' };
+  };
+  'action:open_file': WireBase<'action:open_file'> & {
+    requestId: string;
+    response: { type: 'open_file_response' };
+  };
+  // Producer uses numeric utilization; wire RateLimitInfo has Record<string,unknown>.
+  // Kept as producer-side shape here — server-side normalization converts before wire emit.
+  'system:rate_limit': {
+    info: {
+      status: string;
+      rateLimitType?: string;
+      resetsAt?: string;
+      utilization?: number;
+      overageStatus?: string;
+      isUsingOverage?: boolean;
+    };
+  };
+}
+
+/** Server-only events never produced by a transform — excluded from the union. */
+type TransformOmittedWireEvents =
+  | 'chat:cancel_request'
+  | 'plan:comment_added'
+  | 'plan:comment_removed'
+  | 'session:close_channel'
+  | 'session:created'
+  | 'session:closed'
+  | 'session:dead'
+  | 'session:states'
+  | 'control:diff_review'
+  | 'settings:update'
+  | 'settings:usage';
+
+type StraightWireMap = {
+  [K in Exclude<
+    keyof ServerToClientEvents,
+    keyof ProducerOverrideMap | TransformOmittedWireEvents
+  >]: WireBase<K>;
+};
+
+export interface MessagePayloadMap
+  extends InternalOnlyMessageMap,
+    ProducerOverrideMap,
+    StraightWireMap {}
+
+export type ClientMessage = {
+  [K in keyof MessagePayloadMap]: { name: K; payload: MessagePayloadMap[K] };
+}[keyof MessagePayloadMap];
+
 export interface ServerToClientEvents {
   // ── Per-channel broadcast events ──
   'chat:cancel_request': (payload: CancelRequestEventPayload) => void;

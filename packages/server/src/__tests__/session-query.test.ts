@@ -228,7 +228,7 @@ describe('ChatHandler > session', () => {
       expect(result.data.session.channelId).toBe(channelId);
       expect(result.data.events).toBeDefined();
       expect(result.data.events.length).toBeGreaterThan(0);
-      const names = result.data.events.map((e: ClientMessage) => e.name);
+      const names = result.data.events.map((e) => e.name);
       expect(names).toContain('message:assistant');
     });
 
@@ -271,7 +271,7 @@ describe('ChatHandler > session', () => {
       expect(result.data.session).toBeDefined();
       expect(result.data.events).toBeDefined();
       expect(result.data.events.length).toBeGreaterThan(0);
-      const names = result.data.events.map((e: ClientMessage) => e.name);
+      const names = result.data.events.map((e) => e.name);
       expect(names).toContain('message:assistant');
       expect(names.some((n: string) => n.startsWith('stream:'))).toBe(false);
       expect(names).not.toContain('control:permission');

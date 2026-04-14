@@ -31,7 +31,7 @@ export {
   type ChatStats,
   type ChatStopTaskPayload,
   type ChromeMcpState,
-  type ClientMessage,
+  type ClientMessageWire,
   type CloseChannelPayload,
   type ContentBlock,
   type ContextCategory,
@@ -422,4 +422,9 @@ export {
   worktreeListResponseSchema,
 } from './schemas/index.ts';
 export { type RpcErr, type RpcOk, type RpcResult, rpcResult } from './schemas/rpc.ts';
-export type { ClientToServerEvents, ServerToClientEvents } from './socket-events.ts';
+export type {
+  ClientMessage,
+  ClientToServerEvents,
+  MessagePayloadMap,
+  ServerToClientEvents,
+} from './socket-events.ts';

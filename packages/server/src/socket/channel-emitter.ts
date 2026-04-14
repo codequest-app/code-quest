@@ -2,6 +2,10 @@ import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
+}
+
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (
   ch: Channel | null,
@@ -95,11 +99,8 @@ export class ChannelEmitter {
    */
   dispatchRunnerMessage(ch: Channel, event: string, payload: unknown): void {
     if (event !== 'session:init') {
-      const data = typeof payload === 'object' && payload !== null ? payload : {};
-      this.emit(ch.channelId, event, {
-        channelId: ch.channelId,
-        ...(data as Record<string, unknown>),
-      });
+      const data: Record<string, unknown> = isRecord(payload) ? payload : {};
+      this.emit(ch.channelId, event, { channelId: ch.channelId, ...data });
     }
     this.dispatch(event, ch, payload);
   }
@@ -177,29 +178,27 @@ export class ChannelEmitter {
     // Wire client socket events for emitter.on subscribers only.
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
-      // socket.io typed emit requires a known event literal; dynamic event names need a cast
-      (socket as { on: (event: string, fn: (...args: unknown[]) => void) => void }).on(
-        event,
-        (...args: unknown[]) => {
-          const lastArg = args[args.length - 1];
-          const hasCb = typeof lastArg === 'function';
-          const cb: SocketCallback | undefined = hasCb ? (lastArg as SocketCallback) : undefined;
-          let payload: unknown;
-          if (hasCb && args.length > 1) {
-            payload = args[0];
-          } else if (hasCb) {
-            payload = {};
-          } else {
-            payload = args[0] ?? {};
-          }
-          const channelId =
-            typeof payload === 'object' && payload !== null && 'channelId' in payload
-              ? String((payload as Record<string, unknown>).channelId)
-              : undefined;
-          const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
-          return this.dispatch(event, ch, payload, socket, cb);
-        },
-      );
+      // socket.io's typed `on(event, ...)` requires `event` to be a known literal
+      // from ClientToServerEvents; this loop registers handlers by dynamic string,
+      // so we view the socket through an untyped `on` signature for this call.
+      type DynamicOn = { on: (event: string, fn: (...args: unknown[]) => void) => void };
+      (socket as unknown as DynamicOn).on(event, (...args: unknown[]) => {
+        const lastArg = args[args.length - 1];
+        const hasCb = typeof lastArg === 'function';
+        const cb: SocketCallback | undefined = hasCb ? (lastArg as SocketCallback) : undefined;
+        let payload: unknown;
+        if (hasCb && args.length > 1) {
+          payload = args[0];
+        } else if (hasCb) {
+          payload = {};
+        } else {
+          payload = args[0] ?? {};
+        }
+        const channelId =
+          isRecord(payload) && 'channelId' in payload ? String(payload.channelId) : undefined;
+        const ch = channelId ? (resolveChannel(channelId) ?? null) : null;
+        return this.dispatch(event, ch, payload, socket, cb);
+      });
     }
 
     socket.on('disconnect', () => {

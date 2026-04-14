@@ -1,7 +1,6 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: ClientMessage payload is Record<string,unknown>, needs cast in assertions
 import { describe, expect, it } from 'vitest';
 import { segments as s } from '../../../test/segments.ts';
-import { toClientMessage, transformResult } from '../helpers.ts';
+import { expectName, toClientMessage, transformResult } from '../helpers.ts';
 
 describe('transform — control requests', () => {
   it('converts can_use_tool → control:permission', () => {
@@ -238,20 +237,20 @@ describe('transform — permission_request fields', () => {
     delete base.request.agent_id;
     delete base.request.permission_suggestions;
     const result = toClientMessage(JSON.stringify(base));
-    expect(result).toMatchObject({
-      name: 'control:permission',
-      payload: { requestId: 'cr-perm-2', toolName: 'Read' },
-    });
-    expect((result as any).payload.blockedPath).toBeUndefined();
-    expect((result as any).payload.decisionReason).toBeUndefined();
-    expect((result as any).payload.agentId).toBeUndefined();
+    const msg = expectName(result, 'control:permission');
+    expect(msg.payload.requestId).toBe('cr-perm-2');
+    expect(msg.payload.toolName).toBe('Read');
+    expect(msg.payload.blockedPath).toBeUndefined();
+    expect(msg.payload.decisionReason).toBeUndefined();
+    expect(msg.payload.agentId).toBeUndefined();
   });
 
   it('preserves empty string blocked_path', () => {
     const base = JSON.parse(s.controlRequest('cr-perm-3', 'can_use_tool', 'Write', {}));
     base.request.blocked_path = '';
     const result = toClientMessage(JSON.stringify(base));
-    expect((result as any).payload.blockedPath).toBe('');
+    const msg = expectName(result, 'control:permission');
+    expect(msg.payload.blockedPath).toBe('');
   });
 });
 
@@ -290,7 +289,8 @@ describe('transform — elicitation_request fields', () => {
         requestedSchema: { properties: { a: {}, b: {}, c: {} } },
       }),
     );
-    expect((result as any).payload.options).toEqual(['a', 'b', 'c']);
+    const msg = expectName(result, 'control:elicitation');
+    expect(msg.payload.options).toEqual(['a', 'b', 'c']);
   });
 
   it('handles elicitation without new fields (backward compat)', () => {
@@ -300,12 +300,12 @@ describe('transform — elicitation_request fields', () => {
     delete base.request.elicitation_id;
     delete base.request.mcp_server_name;
     const result = toClientMessage(JSON.stringify(base));
-    expect(result).toMatchObject({
-      name: 'control:elicitation',
-      payload: { requestId: 'el-ext-3', prompt: 'Name?', inputType: 'text' },
-    });
-    expect((result as any).payload.elicitationId).toBeUndefined();
-    expect((result as any).payload.mcpServerName).toBeUndefined();
-    expect((result as any).payload.requestedSchema).toBeUndefined();
+    const msg = expectName(result, 'control:elicitation');
+    expect(msg.payload.requestId).toBe('el-ext-3');
+    expect(msg.payload.prompt).toBe('Name?');
+    expect(msg.payload.inputType).toBe('text');
+    expect(msg.payload.elicitationId).toBeUndefined();
+    expect(msg.payload.mcpServerName).toBeUndefined();
+    expect(msg.payload.requestedSchema).toBeUndefined();
   });
 });

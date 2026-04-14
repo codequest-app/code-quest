@@ -48,9 +48,14 @@ export function wireHandlers<S, D = never>(
     function onEvent(payload: { channelId: string }) {
       if (!skipGuard?.has(event) && !guard(payload)) return;
       beforeUpdate?.(event, payload);
+      // Socket.IO event-map limitation: handlers index by string but the
+      // typed map's value union resists cross-event dispatch. `as never` is
+      // the documented escape hatch for dynamic-event-name dispatch.
       if (stateHandler) setState((prev) => stateHandler(prev, payload as never));
       if (effectHandler && effectDeps !== undefined) effectHandler(effectDeps, payload as never);
     }
+    // socket.io's typed on()/off() require the event literal to match its
+    // map key; here we wire by dynamic string, so cast to never.
     socket.on(event as never, onEvent as never);
     return { event, fn: onEvent };
   });

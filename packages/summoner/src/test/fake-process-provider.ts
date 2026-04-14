@@ -1,5 +1,20 @@
 import type { SpawnOptions } from 'node:child_process';
+import type { z } from 'zod';
+import type { controlRequestSchema, userSchema } from '../claude/schemas.ts';
 import type { ProcessHandle, ProcessProvider } from '../types.ts';
+
+/** Type map for messages tests inspect via `received(type)`. Each is a CLI
+ *  stdin message the server sends to the runner. */
+export interface ReceivedMessageMap {
+  control_request: z.infer<typeof controlRequestSchema>;
+  control_response: {
+    type: 'control_response';
+    response: { request_id: string; subtype?: string; [k: string]: unknown };
+  };
+  user: z.infer<typeof userSchema>;
+  start_speech_to_text: { type: 'start_speech_to_text'; channelId: string };
+  stop_speech_to_text: { type: 'stop_speech_to_text'; channelId: string };
+}
 
 export class FakeProcessHandle implements ProcessHandle {
   private readonly controller = new AbortController();
@@ -29,10 +44,11 @@ export class FakeProcessHandle implements ProcessHandle {
     this.onSend?.(raw, this);
   }
 
-  /** Test reads what client sent to Claude */
-  received(): Record<string, unknown>[];
-  received(type: string): Record<string, unknown>[];
-  received(type?: string): Record<string, unknown>[] {
+  /** Test reads what client sent to Claude (the CLI runner's stdin). */
+  received(): Array<Record<string, unknown>>;
+  received<T extends keyof ReceivedMessageMap>(type: T): Array<ReceivedMessageMap[T]>;
+  received(type: string): Array<Record<string, unknown>>;
+  received(type?: string): Array<Record<string, unknown>> {
     const parsed = this.receivedLines.map((r) => JSON.parse(r) as Record<string, unknown>);
     if (!type) return parsed;
     return parsed.filter((l) => l.type === type);

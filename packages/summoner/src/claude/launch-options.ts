@@ -1,36 +1,40 @@
+import { z } from 'zod';
+
 /** Claude CLI launch parameters — all fields map to CLI flags. */
-export interface LaunchOptions {
-  resumeSessionId?: string;
-  continueSession?: boolean;
-  forkSession?: boolean;
-  sessionId?: string;
-  resumeSessionAt?: string;
-  noSessionPersistence?: boolean;
-  model?: string;
-  fallbackModel?: string;
-  thinking?: 'adaptive' | 'disabled' | number;
-  effort?: 'high' | 'medium' | 'low' | 'max';
-  maxTurns?: number;
-  maxBudgetUsd?: number;
-  agent?: string;
-  allowedTools?: string[];
-  disallowedTools?: string[];
-  tools?: string[];
-  mcpConfig?: string | Record<string, unknown>;
-  settingSources?: string[];
-  strictMcpConfig?: boolean;
-  allowDangerouslySkipPermissions?: boolean;
-  permissionMode?: string;
-  proactive?: boolean;
-  assistant?: boolean;
-  jsonSchema?: Record<string, unknown>;
-  betas?: string[];
-  debug?: boolean;
-  debugFile?: string;
-  debugToStderr?: boolean;
-  addDirs?: string[];
-  pluginDirs?: string[];
-  taskBudget?: { total: number };
-  channels?: string[];
-  claudeInChromeMcp?: boolean;
-}
+export const launchOptionsSchema = z.object({
+  resumeSessionId: z.string().optional(),
+  continueSession: z.boolean().optional(),
+  forkSession: z.boolean().optional(),
+  sessionId: z.string().optional(),
+  resumeSessionAt: z.string().optional(),
+  noSessionPersistence: z.boolean().optional(),
+  model: z.string().optional(),
+  fallbackModel: z.string().optional(),
+  thinking: z.union([z.enum(['adaptive', 'disabled']), z.number()]).optional(),
+  effort: z.enum(['high', 'medium', 'low', 'max']).optional(),
+  maxTurns: z.number().optional(),
+  maxBudgetUsd: z.number().optional(),
+  agent: z.string().optional(),
+  allowedTools: z.array(z.string()).optional(),
+  disallowedTools: z.array(z.string()).optional(),
+  tools: z.array(z.string()).optional(),
+  mcpConfig: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+  settingSources: z.array(z.string()).optional(),
+  strictMcpConfig: z.boolean().optional(),
+  allowDangerouslySkipPermissions: z.boolean().optional(),
+  permissionMode: z.string().optional(),
+  proactive: z.boolean().optional(),
+  assistant: z.boolean().optional(),
+  jsonSchema: z.record(z.string(), z.unknown()).optional(),
+  betas: z.array(z.string()).optional(),
+  debug: z.boolean().optional(),
+  debugFile: z.string().optional(),
+  debugToStderr: z.boolean().optional(),
+  addDirs: z.array(z.string()).optional(),
+  pluginDirs: z.array(z.string()).optional(),
+  taskBudget: z.object({ total: z.number() }).optional(),
+  channels: z.array(z.string()).optional(),
+  claudeInChromeMcp: z.boolean().optional(),
+});
+
+export type LaunchOptions = z.infer<typeof launchOptionsSchema>;

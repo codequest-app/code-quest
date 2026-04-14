@@ -1,4 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -317,9 +316,9 @@ describe('ChatHandler > control', () => {
       );
 
       const stateUpdates = claude.events('settings:update');
-      const accountUpdate = stateUpdates.find((e: any) => e.accountInfo);
+      const accountUpdate = stateUpdates.find((e) => e.accountInfo);
       expect(accountUpdate).toBeDefined();
-      expect(accountUpdate.accountInfo.email).toBe('user@test.com');
+      expect(accountUpdate!.accountInfo!.email).toBe('user@test.com');
     });
   });
 

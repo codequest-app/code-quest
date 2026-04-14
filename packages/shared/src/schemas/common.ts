@@ -19,7 +19,10 @@ export const clientMessageSchema = z.object({
   name: z.string(),
   payload: z.record(z.string(), z.unknown()),
 });
-export type ClientMessage = z.infer<typeof clientMessageSchema>;
+/** Loose runtime-validation shape — the typed discriminated union `ClientMessage`
+ * lives in ../socket-events.ts. Keep this for places that only need to validate
+ * the envelope shape without narrowing on name. */
+export type ClientMessageWire = z.infer<typeof clientMessageSchema>;
 
 export const messageContentSchema = z.object({
   content: z.array(z.object({ type: z.string(), text: z.string() })),

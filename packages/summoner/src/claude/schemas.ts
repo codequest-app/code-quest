@@ -137,6 +137,16 @@ const systemFallbackSchema = z.looseObject({
 
 // ── Assistant ──
 
+// Shared usage shape — Claude API guarantees these are numbers when present.
+const apiUsageSchema = z
+  .looseObject({
+    input_tokens: z.number().optional(),
+    output_tokens: z.number().optional(),
+    cache_read_input_tokens: z.number().optional(),
+    cache_creation_input_tokens: z.number().optional(),
+  })
+  .optional();
+
 export const assistantSchema = z.looseObject({
   type: z.literal('assistant'),
   message: z.looseObject({
@@ -145,7 +155,7 @@ export const assistantSchema = z.looseObject({
     role: z.string().optional(),
     content: z.array(z.record(z.string(), z.unknown())).optional(),
     stop_reason: z.string().nullable().optional(),
-    usage: z.record(z.string(), z.unknown()).optional(),
+    usage: apiUsageSchema,
   }),
   parent_tool_use_id: z.string().nullable().optional(),
   session_id: z.string().optional(),
@@ -179,14 +189,7 @@ export const resultSchema = z.looseObject({
   stop_reason: z.string().nullable().optional(),
   session_id: z.string().optional(),
   total_cost_usd: z.number().optional(),
-  usage: z
-    .looseObject({
-      input_tokens: z.number().optional(),
-      output_tokens: z.number().optional(),
-      cache_read_input_tokens: z.number().optional(),
-      cache_creation_input_tokens: z.number().optional(),
-    })
-    .optional(),
+  usage: apiUsageSchema,
   modelUsage: z.record(z.string(), z.unknown()).optional(),
   errors: z.array(z.string()).optional(),
   uuid: z.string().optional(),
@@ -203,7 +206,7 @@ export const controlRequestSchema = z.looseObject({
     subtype: z.string(),
     tool_name: z.string().optional(),
     input: z.unknown().optional(),
-    permission_suggestions: z.array(z.unknown()).optional(),
+    permission_suggestions: z.array(z.record(z.string(), z.unknown())).optional(),
     decision_reason: z.string().optional(),
     tool_use_id: z.string().optional(),
     callback_id: z.string().optional(),
