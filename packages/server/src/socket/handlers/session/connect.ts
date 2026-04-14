@@ -156,12 +156,16 @@ export function create({
   ): Promise<void> {
     try {
       const parsed = sessionLaunchPayloadSchema.parse(payload);
+      // Payload cwd is optional at protocol layer; UI always supplies it via
+      // project context. Fallback to process.cwd() for scripts / direct API
+      // callers so Channel.cwd's string invariant is always satisfied.
+      const cwd = parsed.cwd ?? process.cwd();
       const channelId = parsed.channelId ?? crypto.randomUUID();
       const { launchOptions, initOptions } = buildLaunchOpts(parsed);
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions,
         initOptions,
-        cwd: parsed.cwd,
+        cwd,
         onBeforeSpawn: (ch) => {
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
@@ -286,7 +290,11 @@ export function create({
       // at ~/.claude/projects/<encoded-cwd-of-process>/<sid>.jsonl, so the
       // child must spawn with the same cwd or "No conversation found" fires.
       const row = await sessionStore.getById(sessionId);
-      const cwd = row?.cwd ?? undefined;
+      if (!row?.cwd) {
+        callback?.({ ok: false, error: 'session row has no cwd; cannot resume' });
+        return;
+      }
+      const cwd = row.cwd;
 
       const newChannelId = crypto.randomUUID();
       const launchOptions = {

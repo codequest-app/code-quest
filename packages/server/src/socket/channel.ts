@@ -50,7 +50,7 @@ export class Channel {
   private _sessionConfig: SessionConfig = {};
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
-  cwd: string | undefined;
+  cwd: string;
   private _worktree: WorktreeInfo | null = null;
   lastError: string | undefined;
   exited = false;
@@ -88,11 +88,13 @@ export class Channel {
     runner: ProcessRunner,
     channelId: string,
     provider: string,
+    cwd: string,
     controlTimeout = DEFAULT_CONTROL_TIMEOUT,
   ) {
     this.channelId = channelId;
     this.runner = runner;
     this.provider = provider;
+    this.cwd = cwd;
     this.controlTimeout = controlTimeout;
   }
 

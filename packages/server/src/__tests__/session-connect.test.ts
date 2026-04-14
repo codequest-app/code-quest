@@ -1016,6 +1016,7 @@ describe('ChatHandler > session', () => {
         args: '[]',
         mode: 'interactive',
         role: 'chat',
+        cwd: '/tmp/dead-resume',
         createdAt: new Date().toISOString(),
       });
 
@@ -1047,6 +1048,19 @@ describe('ChatHandler > session', () => {
       const claude = summoner.claude();
       claude.prepareInit(s.init('sess-fresh'));
 
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'sess-fresh',
+        channelId: 'ch-prev',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        mode: 'interactive',
+        role: 'chat',
+        cwd: '/tmp/sess-fresh',
+        createdAt: new Date().toISOString(),
+      });
+
       const result = await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
         sessionId: 'sess-fresh',
       });
@@ -1064,7 +1078,6 @@ describe('ChatHandler > session', () => {
 
       await new Promise<void>((r) => setTimeout(r, 50));
 
-      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const row = await sessionStore.getById('sess-fresh');
       expect(row).toBeDefined();
       expect(row!.channelId).toBe(result.channelId);

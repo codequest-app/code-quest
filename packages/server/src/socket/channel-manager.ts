@@ -12,7 +12,7 @@ import { pickDefined } from './utils/helpers.ts';
 interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
-  cwd?: string;
+  cwd: string;
   worktree?: WorktreeInfo;
   /** Called after wiring but before spawn — use to add sockets so they receive init events. */
   onBeforeSpawn?: (channel: Channel) => void;
@@ -37,6 +37,7 @@ export class ChannelManager {
     private rawRecorder: RawRecorder,
     private emitter: ChannelEmitter,
     private resolveSessionId: (channelId: string) => Promise<string>,
+    private resolveCwd: (channelId: string) => Promise<string>,
   ) {
     this.hooks = {
       onClientMessage: (ch, message) =>
@@ -91,8 +92,12 @@ export class ChannelManager {
     return [...this.channels.keys()];
   }
 
-  private setupChannel(channelId: string, runner: ReturnType<RunnerFactory['create']>): Channel {
-    const channel = new Channel(runner, channelId, this.provider);
+  private setupChannel(
+    channelId: string,
+    runner: ReturnType<RunnerFactory['create']>,
+    cwd: string,
+  ): Channel {
+    const channel = new Channel(runner, channelId, this.provider, cwd);
     this.channels.set(channelId, channel);
     channel.bindRunner(this.hooks);
     this.rawRecorder.wire(channel);
@@ -101,21 +106,20 @@ export class ChannelManager {
 
   async create(
     channelId: string,
-    opts?: CreateChannelOptions,
+    opts: CreateChannelOptions,
   ): Promise<{ channel: Channel; initResult: ControlResponse }> {
-    const rawCwd = opts?.worktree?.path ?? opts?.cwd;
-    const cwd = rawCwd ? resolve(rawCwd) : undefined;
-    const runner = this.runnerFactory.create(opts?.launchOptions, cwd ? { cwd } : undefined);
-    const channel = this.setupChannel(channelId, runner);
+    const rawCwd = opts.worktree?.path ?? opts.cwd;
+    const cwd = resolve(rawCwd);
+    const runner = this.runnerFactory.create(opts.launchOptions, { cwd });
+    const channel = this.setupChannel(channelId, runner, cwd);
 
-    if (cwd) channel.cwd = cwd;
-    if (opts?.worktree) channel.worktree = opts.worktree;
+    if (opts.worktree) channel.worktree = opts.worktree;
 
-    opts?.onBeforeSpawn?.(channel);
+    opts.onBeforeSpawn?.(channel);
     runner.spawn();
 
     // Initialize and wait for control_response
-    const initResult = await channel.sendRequest('session:initialize', opts?.initOptions ?? {});
+    const initResult = await channel.sendRequest('session:initialize', opts.initOptions ?? {});
 
     return { channel, initResult };
   }
@@ -132,8 +136,10 @@ export class ChannelManager {
       throw new Error(`Session not found: ${channelId}`);
     }
 
-    const runner = this.runnerFactory.create({ resumeSessionId: sessionId });
-    const channel = this.setupChannel(channelId, runner);
+    const cwd = await this.resolveCwd(channelId);
+
+    const runner = this.runnerFactory.create({ resumeSessionId: sessionId }, { cwd });
+    const channel = this.setupChannel(channelId, runner, cwd);
     runner.spawn();
     await channel.sendRequest('session:initialize');
 

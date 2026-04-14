@@ -19,7 +19,6 @@ import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
-import { FileRawStore } from './services/file-raw-store.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
@@ -97,6 +96,16 @@ export function createContainer(options: ContainerOptions): Container {
     rawRecorder,
     emitter,
     (channelId) => sessionHistory.resolveSessionId(channelId),
+    async (channelId) => {
+      const sessionId = await sessionHistory.resolveSessionId(channelId);
+      const row = await sessionStore.getById(sessionId);
+      if (!row?.cwd) {
+        // L2 territory: legacy rows with null cwd exist until the DB
+        // migration runs. This throw surfaces the bad state clearly.
+        throw new Error(`Channel ${channelId} has no recorded cwd`);
+      }
+      return row.cwd;
+    },
   );
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
@@ -140,7 +149,6 @@ function buildStores(
   }
 
   if (config?.file) {
-    eventStores.push(new FileRawStore(config.file.dir));
     settingsStores.push(new FileSettingsStore(join(config.file.dir, 'settings.json')));
   }
 

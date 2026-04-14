@@ -39,6 +39,10 @@ export function create({
       const { channelId, prompt, cwd } = terminalOpenClaudePayloadSchema.parse(payload);
       const existingChannel = channelManager.get(channelId);
       const baseCwd = cwd ?? existingChannel?.cwd;
+      if (!baseCwd) {
+        cb?.({ success: false, error: 'no cwd available for terminal:open_claude' });
+        return;
+      }
 
       const newChannelId = crypto.randomUUID();
       const { channel: ch } = await channelManager.create(newChannelId, {

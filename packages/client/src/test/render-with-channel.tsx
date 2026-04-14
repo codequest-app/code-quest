@@ -28,6 +28,8 @@ export interface RenderWithChannelResult extends RenderResult {
   channelId: string;
 }
 
+const DEFAULT_TEST_CWD = '/test/cwd';
+
 export async function renderWithChannel(
   ui: ReactElement,
   options: RenderWithChannelOptions = {},
@@ -35,6 +37,9 @@ export async function renderWithChannel(
   const summoner = options.summoner ?? createFakeSummoner();
   const claude = summoner.claude() as FakeClaude;
   const channelId = options.channelId ?? crypto.randomUUID();
+  // Used only for the launch-payload default. ChannelProvider keeps
+  // options.cwd (undefined skips the React-side session:launch).
+  const launchCwd = options.cwd ?? DEFAULT_TEST_CWD;
 
   // 1. Render first — mount providers, register socket listeners (like production)
   const result = render(ui, {
@@ -46,7 +51,10 @@ export async function renderWithChannel(
               <TabProvider cwd={options.cwd}>
                 <ChannelProvider
                   channelId={channelId}
-                  cwd={options.cwd}
+                  // skipInit tests want ChannelProvider to drive the launch.
+                  // Otherwise claude.initialize below handles it; setting cwd
+                  // here would fire a duplicate session:launch and conflict.
+                  cwd={options.skipInit ? options.cwd : undefined}
                   onNewChannel={options.onNewChannel}
                 >
                   {children}
@@ -64,7 +72,7 @@ export async function renderWithChannel(
     const initSeg = options.initSegment ?? s.init('cli-session');
     const extraSegs = options.extraSegments ?? [];
     await act(async () => {
-      await claude.initialize({ launch: { channelId, cwd: options.cwd } }, initSeg, ...extraSegs);
+      await claude.initialize({ launch: { channelId, cwd: launchCwd } }, initSeg, ...extraSegs);
     });
   }
 

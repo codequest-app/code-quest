@@ -92,11 +92,11 @@ describe('ComposeInput', () => {
 
     it('selecting a file inserts @path and closes dropdown', async () => {
       const summoner = createFakeSummoner();
-      await renderWithChannel(<ComposeInput />, { summoner });
+      const cwd = '/test/project';
+      await renderWithChannel(<ComposeInput />, { summoner, cwd });
 
-      // Seed files at the channel's resolved cwd (server package dir)
-      const serverCwd = '/Users/user/WebstormProjects/cc-office/packages/server';
-      summoner.filesystem().addFile(`${serverCwd}/index.ts`, '');
+      // Seed files at the channel's resolved cwd
+      summoner.filesystem().addFile(`${cwd}/index.ts`, '');
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@index');
