@@ -31,4 +31,5 @@ export interface RawEventStore {
   append(entry: RawEntry): Promise<void>;
   getBySession(sessionId: string): Promise<RawEntry[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
+  cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>;
 }

@@ -50,6 +50,7 @@ function createStubEventStore(overrides?: Partial<RawEventStore>): RawEventStore
     append: vi.fn(),
     getBySession: vi.fn().mockResolvedValue([]),
     getPreview: vi.fn().mockResolvedValue({}),
+    cloneEvents: vi.fn(),
     ...overrides,
   };
 }

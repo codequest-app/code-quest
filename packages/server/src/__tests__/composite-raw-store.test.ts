@@ -1,6 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { RawEntry } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
@@ -8,32 +6,27 @@ import { rawEntries } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawStore } from '../services/composite-raw-store.ts';
 import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
-import { FileRawStore } from '../services/file-raw-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 describe('CompositeRawStore', () => {
-  let db: ReturnType<typeof createDatabase>;
-  let drizzleStore: DrizzleRawStore;
-  let fileStore: FileRawStore;
-  let tmpDir: string;
+  let storeA: DrizzleRawStore;
+  let storeB: DrizzleRawStore;
 
   beforeEach(() => {
-    db = createDatabase(':memory:');
-    migrate(db, { migrationsFolder });
-    drizzleStore = new DrizzleRawStore(db, rawEntries);
-    tmpDir = mkdtempSync(join(tmpdir(), 'composite-raw-'));
-    fileStore = new FileRawStore(tmpDir);
-  });
+    const dbA = createDatabase(':memory:');
+    migrate(dbA, { migrationsFolder });
+    storeA = new DrizzleRawStore(dbA, rawEntries);
 
-  afterEach(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+    const dbB = createDatabase(':memory:');
+    migrate(dbB, { migrationsFolder });
+    storeB = new DrizzleRawStore(dbB, rawEntries);
   });
 
   it('appends to all stores', async () => {
-    const composite = new CompositeRawStore([drizzleStore, fileStore]);
+    const composite = new CompositeRawStore([storeA, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -46,14 +39,12 @@ describe('CompositeRawStore', () => {
 
     await composite.append(entry);
 
-    const drizzleResults = await drizzleStore.getBySession('sess-1');
-    const fileResults = await fileStore.getBySession('sess-1');
-    expect(drizzleResults).toHaveLength(1);
-    expect(fileResults).toHaveLength(1);
+    expect(await storeA.getBySession('sess-1')).toHaveLength(1);
+    expect(await storeB.getBySession('sess-1')).toHaveLength(1);
   });
 
   it('reads from the first store', async () => {
-    const composite = new CompositeRawStore([drizzleStore, fileStore]);
+    const composite = new CompositeRawStore([storeA, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -85,6 +76,7 @@ describe('CompositeRawStore', () => {
       async getPreview() {
         return {};
       },
+      async cloneEvents() {},
     };
     const failStore2: RawEventStore = {
       async append() {
@@ -96,6 +88,7 @@ describe('CompositeRawStore', () => {
       async getPreview() {
         return {};
       },
+      async cloneEvents() {},
     };
     const composite = new CompositeRawStore([failStore1, failStore2]);
 
@@ -122,8 +115,9 @@ describe('CompositeRawStore', () => {
       async getPreview() {
         return {};
       },
+      async cloneEvents() {},
     };
-    const composite = new CompositeRawStore([failStore, fileStore]);
+    const composite = new CompositeRawStore([failStore, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -135,7 +129,7 @@ describe('CompositeRawStore', () => {
     };
 
     await composite.append(entry);
-    const results = await fileStore.getBySession('sess-1');
+    const results = await storeB.getBySession('sess-1');
     expect(results).toHaveLength(1);
   });
 });

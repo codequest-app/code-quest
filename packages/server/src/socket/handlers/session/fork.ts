@@ -8,9 +8,14 @@ import { errMsg } from '../../utils/helpers.ts';
 export function create({
   channelManager,
   sessionHistory,
+  sessionStore,
+  rawEventStore,
   emitter,
   gitService,
-}: Pick<HandlerContext, 'channelManager' | 'sessionHistory' | 'emitter' | 'gitService'>): void {
+}: Pick<
+  HandlerContext,
+  'channelManager' | 'sessionHistory' | 'sessionStore' | 'rawEventStore' | 'emitter' | 'gitService'
+>): void {
   async function handleFork(
     _ch: Channel | null,
     payload: unknown,
@@ -20,21 +25,43 @@ export function create({
     try {
       const { forkedFromChannelId, resumeSessionAt, newChannelId } =
         sessionForkPayloadSchema.parse(payload);
-      const parentEvents = await sessionHistory.getSessionHistory(forkedFromChannelId);
+
+      const parentSessionId = await sessionHistory.resolveSessionId(forkedFromChannelId);
+      const parentRow = await sessionStore.getById(parentSessionId);
+      if (!parentRow) {
+        callback?.({ success: false, error: 'parent session not found' });
+        return;
+      }
+      if (!parentRow.cwd) {
+        callback?.({ success: false, error: 'parent session has no cwd; cannot fork' });
+        return;
+      }
+
+      const newSessionId = crypto.randomUUID();
+      await rawEventStore.cloneEvents(parentSessionId, newSessionId);
+
       await channelManager.create(newChannelId, {
-        launchOptions: { resumeSessionId: forkedFromChannelId },
-        initOptions: resumeSessionAt ? { resumeSessionAt } : undefined,
+        cwd: parentRow.cwd,
+        launchOptions: {
+          resumeSessionId: parentSessionId,
+          forkSession: true,
+          sessionId: newSessionId,
+          ...(resumeSessionAt ? { resumeSessionAt } : {}),
+        },
         onBeforeSpawn: (ch) => {
           ch.parentId = forkedFromChannelId;
+          ch.sessionId = newSessionId;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      emitter.broadcastAll('session:created', { channelId: newChannelId });
+      emitter.broadcastAll('session:created', {
+        channelId: newChannelId,
+        cwd: parentRow.cwd,
+      });
       callback?.({
         success: true,
         channelId: newChannelId,
         parentChannelId: forkedFromChannelId,
-        events: parentEvents,
       });
     } catch (err) {
       callback?.({ success: false, error: errMsg(err, 'Failed to fork session') });
@@ -49,12 +76,17 @@ export function create({
   ): Promise<void> {
     try {
       const parsed = sessionTeleportPayloadSchema.parse(payload);
+      // L3-pending shim: teleport payload has no cwd field and `ch` can be
+      // null (teleport is invoked from SessionContext, not from a channel
+      // context). Falling back to process.cwd() preserves the prior behavior
+      // until teleport gets its own cwd field.
+      const cwd = ch?.cwd ?? process.cwd();
       const events = await sessionHistory.getSessionHistory(parsed.remoteChannelId);
 
       let branchCheckoutFailed = false;
       if (parsed.branch) {
         try {
-          await gitService.checkout(ch?.cwd ?? process.cwd(), parsed.branch);
+          await gitService.checkout(cwd, parsed.branch);
         } catch (err) {
           logger.debug(err, 'branch checkout failed during fork');
           branchCheckoutFailed = true;
@@ -62,13 +94,17 @@ export function create({
       }
 
       await channelManager.create(parsed.newChannelId, {
+        cwd,
         launchOptions: { resumeSessionId: parsed.remoteChannelId },
         onBeforeSpawn: (newCh) => {
           if (socket) channelManager.addSocketToChannel(newCh, socket);
         },
       });
 
-      emitter.broadcastAll('session:created', { channelId: parsed.newChannelId });
+      emitter.broadcastAll('session:created', {
+        channelId: parsed.newChannelId,
+        cwd,
+      });
       callback?.({
         success: true,
         channelId: parsed.newChannelId,

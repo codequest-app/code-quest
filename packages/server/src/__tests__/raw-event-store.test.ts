@@ -138,4 +138,40 @@ describe('DrizzleRawStore', () => {
     const results = await store.getBySession('sess-4');
     expect(results.map((r) => r.raw)).toEqual(['a', 'b', 'c']);
   });
+
+  describe('cloneEvents', () => {
+    it('copies rows under a new sessionId with re-sequenced seq', async () => {
+      const now = Date.now();
+      for (let i = 0; i < 3; i++) {
+        await store.append({
+          timestamp: now + i,
+          sessionId: 'sess-parent',
+          promptId: `p-${i}`,
+          direction: i === 0 ? 'in' : 'out',
+          raw: `raw-${i}`,
+          seq: i,
+        });
+      }
+
+      await store.cloneEvents('sess-parent', 'sess-new');
+      const cloned = await store.getBySession('sess-new');
+
+      expect(cloned).toHaveLength(3);
+      expect(cloned.map((r) => r.sessionId)).toEqual(['sess-new', 'sess-new', 'sess-new']);
+      expect(cloned.map((r) => r.raw)).toEqual(['raw-0', 'raw-1', 'raw-2']);
+      expect(cloned.map((r) => r.promptId)).toEqual(['p-0', 'p-1', 'p-2']);
+      expect(cloned.map((r) => r.direction)).toEqual(['in', 'out', 'out']);
+      expect(cloned.map((r) => r.seq)).toEqual([1, 2, 3]);
+    });
+
+    it('is a no-op when source has zero rows', async () => {
+      await store.cloneEvents('sess-empty', 'sess-dest');
+      const rows = await store.getBySession('sess-dest');
+      expect(rows).toEqual([]);
+    });
+
+    it('rejects cloning to the same sessionId', async () => {
+      await expect(store.cloneEvents('sess-x', 'sess-x')).rejects.toThrow();
+    });
+  });
 });

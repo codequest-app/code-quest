@@ -82,6 +82,26 @@ export class DrizzleRawStore implements RawEventStore {
     };
   }
 
+  async cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
+    if (fromSessionId === toSessionId) {
+      throw new Error('cloneEvents: source and destination sessionId must differ');
+    }
+    const rows = await this.getBySession(fromSessionId);
+    if (rows.length === 0) return;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      await this.db.insert(this.table).values({
+        id: uuidv7(),
+        sessionId: toSessionId,
+        promptId: row.promptId,
+        dir: row.direction,
+        raw: row.raw,
+        seq: i + 1,
+        createdAt: new Date(row.timestamp).toISOString(),
+      });
+    }
+  }
+
   async getBySession(sessionId: string): Promise<RawEntry[]> {
     const rows = await this.db
       .select()
