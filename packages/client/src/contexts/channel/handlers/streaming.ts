@@ -4,7 +4,7 @@ import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';
 import { isRecord } from '@/utils/is-record';
-import { msg, patchMeta } from '@/utils/message';
+import { msg, patchMeta, updateLastMessage } from '@/utils/message';
 import type { Payload } from './guard';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
@@ -25,15 +25,7 @@ function removePlaceholder(setState: SetChannelState): void {
 }
 
 function appendToLast(setState: SetChannelState, content: string): void {
-  setState((prev) => {
-    if (prev.messages.length === 0) return prev;
-    const msgs = [...prev.messages];
-    msgs[msgs.length - 1] = {
-      ...msgs[msgs.length - 1],
-      content: msgs[msgs.length - 1].content + content,
-    };
-    return { ...prev, messages: msgs };
-  });
+  updateLastMessage(setState, (last) => ({ ...last, content: last.content + content }));
 }
 
 function appendOrCreate(
@@ -134,15 +126,11 @@ export function wireStreamingHandlers({
 
   function handleCitationsChunk(citations: unknown[] | undefined) {
     if (!citations?.length) return;
-    setState((prev) => {
-      if (prev.messages.length === 0) return prev;
-      const ms = [...prev.messages];
-      const last = ms[ms.length - 1];
+    updateLastMessage(setState, (last) => {
       // TextMeta is the only meta shape with citations (text content blocks).
       const textMeta = last.type === 'text' ? last.meta : undefined;
       const existing = textMeta?.citations ?? [];
-      ms[ms.length - 1] = patchMeta(last, { citations: [...existing, ...citations] });
-      return { ...prev, messages: ms };
+      return patchMeta(last, { citations: [...existing, ...citations] });
     });
   }
 
@@ -193,40 +181,57 @@ export function wireStreamingHandlers({
     });
   }
 
+  function applyTextBlock(
+    block: Extract<ContentBlock, { type: 'text' }>,
+    parentToolUseId?: string,
+  ) {
+    isThinkingStreaming.current = false;
+    if (!wasStreamedViaDelta.current) {
+      appendOrCreate(setState, isTextStreaming, block.text, parentToolUseId);
+    }
+  }
+
+  function applyThinkingBlock(
+    block: Extract<ContentBlock, { type: 'thinking' }>,
+    parentToolUseId?: string,
+  ) {
+    if (isThinkingStreaming.current) return;
+    isThinkingStreaming.current = true;
+    setState((prev) => ({
+      ...prev,
+      messages: [
+        ...prev.messages,
+        msg({
+          role: 'assistant',
+          type: 'thinking',
+          content: block.thinking,
+          parentToolUseId,
+        }),
+      ],
+    }));
+  }
+
+  function applyToolUseBlock(
+    block: Extract<ContentBlock, { type: 'tool_use' }>,
+    parentToolUseId?: string,
+  ) {
+    resetStreamingRefs();
+    const toolMsg = msg({
+      role: 'assistant',
+      type: 'tool_use',
+      content: block.toolName,
+      meta: { toolId: block.toolId, input: block.input },
+      parentToolUseId,
+    });
+    setState((prev) => ({ ...prev, messages: [...prev.messages, toolMsg] }));
+    fetchFileContentIfNeeded(block, toolMsg.id);
+  }
+
   function handleAssistantContent(content: ContentBlock[], parentToolUseId?: string) {
     for (const block of content) {
-      if (block.type === 'text') {
-        isThinkingStreaming.current = false;
-        if (!wasStreamedViaDelta.current)
-          appendOrCreate(setState, isTextStreaming, block.text, parentToolUseId);
-      } else if (block.type === 'thinking') {
-        if (!isThinkingStreaming.current) {
-          isThinkingStreaming.current = true;
-          setState((prev) => ({
-            ...prev,
-            messages: [
-              ...prev.messages,
-              msg({
-                role: 'assistant',
-                type: 'thinking',
-                content: block.thinking,
-                parentToolUseId,
-              }),
-            ],
-          }));
-        }
-      } else if (block.type === 'tool_use') {
-        resetStreamingRefs();
-        const toolMsg = msg({
-          role: 'assistant',
-          type: 'tool_use',
-          content: block.toolName,
-          meta: { toolId: block.toolId, input: block.input },
-          parentToolUseId,
-        });
-        setState((prev) => ({ ...prev, messages: [...prev.messages, toolMsg] }));
-        fetchFileContentIfNeeded(block, toolMsg.id);
-      }
+      if (block.type === 'text') applyTextBlock(block, parentToolUseId);
+      else if (block.type === 'thinking') applyThinkingBlock(block, parentToolUseId);
+      else if (block.type === 'tool_use') applyToolUseBlock(block, parentToolUseId);
     }
     resetStreamingRefs();
   }

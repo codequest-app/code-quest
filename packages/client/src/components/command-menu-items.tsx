@@ -12,7 +12,7 @@ export interface MenuItem {
   onClick?: () => void;
 }
 
-export interface MenuSections {
+interface MenuSections {
   context: MenuItem[];
   model: MenuItem[];
   customize: MenuItem[];

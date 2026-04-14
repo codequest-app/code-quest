@@ -1,4 +1,5 @@
 import {
+  ERROR_CODES,
   sessionClosePayloadSchema,
   sessionDeletePayloadSchema,
   sessionGenerateTitlePayloadSchema,
@@ -38,7 +39,7 @@ export function create({
       const { channelId } = sessionDeletePayloadSchema.parse(payload);
       const success = await sessionStore.deleteByChannelId(channelId);
       if (!success) {
-        callback?.(err('Session not found', 'session_not_found'));
+        callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
         return;
       }
       callback?.(ok({}));
@@ -57,7 +58,7 @@ export function create({
       const { channelId, title } = sessionRenamePayloadSchema.parse(payload);
       const success = await sessionStore.renameByChannelId(channelId, title);
       if (!success) {
-        callback?.(err('Session not found', 'session_not_found'));
+        callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
         return;
       }
       callback?.(ok({}));

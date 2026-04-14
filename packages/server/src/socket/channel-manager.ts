@@ -219,17 +219,8 @@ export class ChannelManager {
       ],
     });
 
-    const settings = pickDefined({
-      modelSetting: ss.model,
-      defaultCwd: ch?.cwd,
-      worktree: ch?.worktree ?? undefined,
-      initialPermissionMode: ss.permissionMode,
-      thinkingLevel: ss.thinkingLevel,
-      mcpServers: ss.mcpServers,
-      tools: ss.tools,
-      effort: ss.effort,
-    });
-    if (Object.keys(settings).length > 0) {
+    const settings = ch?.toSettingsUpdatePayload();
+    if (settings) {
       this.emitter.broadcastAll('settings:update', { channelId, ...settings });
     }
   }

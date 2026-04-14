@@ -1,6 +1,6 @@
 import type { SessionSummary } from '@code-quest/shared';
 
-export type ResumeRoute =
+type ResumeRoute =
   | { type: 'replace'; oldChannelId: string; newChannelId: string }
   | { type: 'activate'; cwd: string; channelId: string }
   | { type: 'noop' };

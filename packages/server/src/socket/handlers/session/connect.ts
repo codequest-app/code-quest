@@ -7,6 +7,7 @@ import type {
 import {
   channelExitPayloadSchema,
   controlInitResponseSchema,
+  ERROR_CODES,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
@@ -75,7 +76,9 @@ export function create({
     }
   }
 
-  async function handleInitResponse(initResult: ControlResponse): Promise<InitResponseResult> {
+  async function applyInitResponseAndBroadcast(
+    initResult: ControlResponse,
+  ): Promise<InitResponseResult> {
     const initResponse = controlInitResponseSchema.parse(initResult.response ?? {});
     const { commands, models, account } = initResponse;
     const slashCommands = Array.isArray(commands)
@@ -125,7 +128,7 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     await applyPerLaunchSettings(channel, parsed);
-    const { slashCommands, models, account } = await handleInitResponse(initResult);
+    const { slashCommands, models, account } = await applyInitResponseAndBroadcast(initResult);
 
     channel.updateMetaCache({
       ...(parsed.model && { model: parsed.model }),
@@ -214,14 +217,14 @@ export function create({
           await channelManager.join(channelId);
         } catch (e) {
           logger.debug(e, 'failed to join channel during connect');
-          callback?.(err('Session not found', 'session_not_found'));
+          callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
           return;
         }
       }
 
       const channel = channelManager.get(channelId);
       if (!channel) {
-        callback?.(err('Session not found', 'session_not_found'));
+        callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
         return;
       }
 

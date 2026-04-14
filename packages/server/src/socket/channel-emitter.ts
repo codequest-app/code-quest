@@ -1,10 +1,7 @@
+import { ERROR_CODES, isRecord } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
-}
 
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (
@@ -28,7 +25,7 @@ export function withChannel(
 export function withError(handler: EmitterHandler): EmitterHandler {
   return (ch, payload, socket, cb) => {
     if (!ch) {
-      cb?.({ ok: false, error: 'Session not found', code: 'session_not_found' });
+      cb?.({ ok: false, error: 'Session not found', code: ERROR_CODES.SESSION_NOT_FOUND });
       return;
     }
     return handler(ch, payload, socket, cb);

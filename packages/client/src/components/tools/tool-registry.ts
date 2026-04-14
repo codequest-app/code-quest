@@ -1,11 +1,7 @@
-import type { ToolResult } from '@code-quest/shared';
-
-export type { ToolResult };
-
-export type ToolInput = Record<string, unknown>;
+type ToolInput = Record<string, unknown>;
 
 /** Structured header for rendering: name bold + detail secondary + optional range */
-export interface ToolHeaderInfo {
+interface ToolHeaderInfo {
   /** Tool name shown in bold */
   name: string;
   /** Secondary detail (file basename, command excerpt, etc.) */

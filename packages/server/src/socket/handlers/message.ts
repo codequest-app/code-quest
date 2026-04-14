@@ -163,14 +163,12 @@ export function create({
 
       const parsed = controlRespondPayloadSchema.parse(response);
 
-      let cliResponse: Record<string, unknown>;
-      if (meta?.subtype === 'mcp_message') {
-        cliResponse = buildMcpResponse(channel, requestId, response);
-      } else if (meta?.subtype === 'elicitation') {
-        cliResponse = buildElicitationResponse(parsed);
-      } else {
-        cliResponse = buildToolPermissionResponse(channelId, meta, parsed);
-      }
+      const subtypeBuilders: Record<string, () => Record<string, unknown>> = {
+        mcp_message: () => buildMcpResponse(channel, requestId, response),
+        elicitation: () => buildElicitationResponse(parsed),
+      };
+      const build = (meta?.subtype && subtypeBuilders[meta.subtype]) || null;
+      const cliResponse = build ? build() : buildToolPermissionResponse(channelId, meta, parsed);
 
       respondAndDismiss(channel, channelId, requestId, cliResponse);
     } catch (err) {
@@ -274,9 +272,6 @@ export function create({
   function onMessageResult(ch: Channel, _payload: unknown): void {
     ch.endProcessing();
     channelManager.broadcastSessionState(ch.channelId, 'idle');
-  }
-
-  function onMessageResultTitle(ch: Channel, _payload: unknown): void {
     generateTitleIfNeeded(ch.channelId, ch);
   }
 
@@ -285,7 +280,6 @@ export function create({
   }
 
   emitter.on('message:result', withChannel(onMessageResult));
-  emitter.on('message:result', withChannel(onMessageResultTitle));
   emitter.on('channel:exit', withChannel(onChannelExit));
   emitter.on('chat:send', withSocket(handleSend));
   emitter.on('chat:cancel', withChannel(handleCancel));

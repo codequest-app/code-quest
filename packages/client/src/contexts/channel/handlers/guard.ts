@@ -5,13 +5,19 @@ import type { TypedSocket } from '@/socket/client';
 export type Payload<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];
 
 /**
+ * Check whether a broadcast payload targets the expected channel.
+ * Matches exact channelId or the empty string (broadcast-to-all).
+ */
+export function matchesChannel(expected: string, payload: { channelId: string }): boolean {
+  return payload.channelId === expected || payload.channelId === '';
+}
+
+/**
  * Creates a channelId guard function for socket event filtering.
  * Events with matching channelId or empty channelId (broadcast) pass through.
  */
 function createGuard(channelId: string) {
-  return function guard(payload: { channelId: string }): boolean {
-    return payload.channelId === channelId || payload.channelId === '';
-  };
+  return (payload: { channelId: string }): boolean => matchesChannel(channelId, payload);
 }
 
 /**

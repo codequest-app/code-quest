@@ -36,6 +36,22 @@ export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0
 }
 
 /**
+ * Transform the last message in channel state via `mapper`. No-op when empty.
+ * Used by streaming handlers that incrementally update the latest message.
+ */
+export function updateLastMessage(
+  setState: (fn: (prev: ChannelState) => ChannelState) => void,
+  mapper: (last: Message) => Message,
+): void {
+  setState((prev) => {
+    if (prev.messages.length === 0) return prev;
+    const msgs = [...prev.messages];
+    msgs[msgs.length - 1] = mapper(msgs[msgs.length - 1]);
+    return { ...prev, messages: msgs };
+  });
+}
+
+/**
  * Patch a message's meta without losing the discriminated union type.
  * Cast required: TypeScript cannot verify that spreading a discriminated union
  * member preserves the union — the result type widens to an intersection.

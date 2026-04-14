@@ -13,7 +13,7 @@ import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { type Payload, wireHandlers } from './handlers/guard';
+import { matchesChannel, type Payload, wireHandlers } from './handlers/guard';
 import type { EffectDeps } from './handlers/notification';
 import {
   type ControlState,
@@ -114,7 +114,7 @@ export function ChannelControlProvider({
   }
 
   function onControlPermission(payload: Payload<'control:permission'>) {
-    if (payload.channelId !== channelId && payload.channelId !== '') return;
+    if (!matchesChannel(channelId, payload)) return;
     addControlAndMessage(
       {
         requestId: payload.requestId,
@@ -130,7 +130,7 @@ export function ChannelControlProvider({
   }
 
   function onControlHookCallback(payload: Payload<'control:hook_callback'>) {
-    if (payload.channelId !== channelId && payload.channelId !== '') return;
+    if (!matchesChannel(channelId, payload)) return;
     addControlAndMessage(
       {
         requestId: payload.requestId,
@@ -145,7 +145,7 @@ export function ChannelControlProvider({
   }
 
   function onSessionClosed(payload: Payload<'session:closed'>) {
-    if (payload.channelId !== channelId && payload.channelId !== '') return;
+    if (!matchesChannel(channelId, payload)) return;
     resetStreamingRefs();
     setControls([]);
     setChannelState((prev) => ({

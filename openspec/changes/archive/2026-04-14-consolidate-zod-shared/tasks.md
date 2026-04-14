@@ -102,21 +102,21 @@ The `Message` type in `client/src/types/ui.ts:108` is the UI-projection form (af
 ### 9b. Add typed meta for the remaining MessageTypes (medium risk)
 
 Extend `MetaMap` with known meta shapes for:
-- [ ] 9b.1 `hook_started` → `HookStartedMeta` (already in shared)
-- [ ] 9b.2 `hook_response` → `HookResponseMeta` (already in shared)
-- [ ] 9b.3 `hook_diagnostics` → `HookDiagnosticsMeta` (already in shared)
-- [ ] 9b.4 `rate_limit_event` → `RateLimitMeta` (already in shared)
-- [ ] 9b.5 `image` → `ImageMeta` (already in shared)
-- [ ] 9b.6 `document` → `DocumentMeta` (already in shared)
-- [ ] 9b.7 Audit remaining 16 types (error, pending_action, action_result, task_started, compact_boundary, streamlined_text, streamlined_tool_use_summary, unknown_delta, raw_event, unhandled, content_block_start, file:updated, meta, interrupt, redacted_thinking, slash_command_result). Add shared meta schemas for the ones that client actually reads typed fields from.
+- [x] 9b.1 `hook_started` → `HookStartedMeta` (already in shared)
+- [x] 9b.2 `hook_response` → `HookResponseMeta` (already in shared)
+- [x] 9b.3 `hook_diagnostics` → `HookDiagnosticsMeta` (already in shared)
+- [x] 9b.4 `rate_limit_event` → `RateLimitMeta` (already in shared)
+- [x] 9b.5 `image` → `ImageMeta` (already in shared)
+- [x] 9b.6 `document` → `DocumentMeta` (already in shared)
+- [x] 9b.7 Audit remaining 16 types (error, pending_action, action_result, task_started, compact_boundary, streamlined_text, streamlined_tool_use_summary, unknown_delta, raw_event, unhandled, content_block_start, file:updated, meta, interrupt, redacted_thinking, slash_command_result). Add shared meta schemas for the ones that client actually reads typed fields from.
 
 ### 9c. Align MessageType with shared wire names (high risk)
 
-- [ ] 9c.1 Inventory which MessageType names overlap `ServerToClientEvents` / `ClientMessage` names.
-- [ ] 9c.2 For overlapping names, import the canonical string literal union from shared and compose the UI `MessageType` from shared + UI-only additions (`pending_action`, `action_result` etc. that are pure UI).
-- [ ] 9c.3 Tests green.
+- [x] 9c.1 Inventory which MessageType names overlap `ServerToClientEvents` / `ClientMessage` names.
+- [x] 9c.2 For overlapping names, import the canonical string literal union from shared and compose the UI `MessageType` from shared + UI-only additions (`pending_action`, `action_result` etc. that are pure UI).
+- [x] 9c.3 Tests green.
 
 ### 9d. Validation
 
-- [ ] 9d.1 `grep -rE "meta\.[a-z_]+" packages/client/src | wc -l` — verify typed accesses all compile without cast.
-- [ ] 9d.2 Full test suite: shared 41, summoner 305, server 464, client 773.
+- [x] 9d.1 `grep -rE "meta\.[a-z_]+" packages/client/src | wc -l` — verify typed accesses all compile without cast.
+- [x] 9d.2 Full test suite: shared 41, summoner 305, server 464, client 773.

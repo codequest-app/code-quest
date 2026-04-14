@@ -1,4 +1,4 @@
-import { type ProviderClientConfig, providerClientConfigSchema } from '@code-quest/shared';
+import type { ProviderClientConfig } from '@code-quest/shared';
 import type { z } from 'zod';
 import type {
   AdapterOutput,
@@ -8,6 +8,7 @@ import type {
   ResolvedControlResponse,
 } from '../types.ts';
 import { isRecord } from '../utils.ts';
+import { claudeClientConfig } from './client-config.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
 import type { ProtocolMessage, rateLimitEventSchema } from './schemas.ts';
@@ -107,83 +108,7 @@ function convertAuthStatusMessage(message: ProtocolMessage): ClientMessage {
 export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
 
-  readonly clientConfig: ProviderClientConfig = providerClientConfigSchema.parse({
-    brand: {
-      name: 'Claude',
-      company: 'Anthropic',
-      docsUrl: 'https://docs.anthropic.com/en/docs/claude-code/overview',
-      placeholder: '⌘ Esc to focus or unfocus Claude',
-      loginTitle: 'Login to Claude',
-    },
-    permissionModes: [
-      {
-        id: 'normal',
-        label: 'Ask before edits',
-        description: 'Claude will ask for approval before making each edit',
-      },
-      {
-        id: 'acceptEdits',
-        label: 'Edit automatically',
-        description: 'Claude will edit your selected text or the whole file',
-      },
-      {
-        id: 'plan',
-        label: 'Plan mode',
-        description: 'Claude will explore the code and present a plan before editing',
-      },
-      {
-        id: 'bypassPermissions',
-        label: 'Bypass permissions',
-        description:
-          'Claude will not ask for approval before running potentially dangerous commands',
-      },
-    ],
-    authMethods: [
-      { id: 'claudeai', label: 'Claude AI' },
-      { id: 'console', label: 'Anthropic Console' },
-      { id: 'api-key', label: 'API Key' },
-      { id: '3p', label: 'Third Party' },
-      { id: 'not-specified', label: 'Not Specified' },
-    ],
-    mcpScopes: [
-      { id: 'project', label: 'Project' },
-      { id: 'local', label: 'Local' },
-      { id: 'user', label: 'User' },
-      { id: 'claudeai', label: 'claude.ai', prefix: 'claude.ai ' },
-      { id: 'managed', label: 'Managed' },
-      { id: 'enterprise', label: 'Enterprise' },
-    ],
-    usageTiers: [
-      { key: 'five_hour', label: 'Session (5hr)', shortLabel: '5hr' },
-      { key: 'seven_day', label: 'Weekly (7 day)', shortLabel: '7day' },
-      { key: 'seven_day_sonnet', label: 'Weekly Sonnet', shortLabel: 'Sonnet' },
-    ],
-    defaultModels: [
-      {
-        value: 'default',
-        displayName: 'Default (recommended)',
-        description: 'Opus 4.6 · Most capable for complex work',
-        supportsEffort: true,
-        supportedEffortLevels: ['low', 'medium', 'high', 'max'],
-        supportsAdaptiveThinking: true,
-        supportsFastMode: true,
-      },
-      {
-        value: 'sonnet',
-        displayName: 'Sonnet',
-        description: 'Sonnet 4.6 · Best for everyday tasks',
-        supportsEffort: true,
-        supportedEffortLevels: ['low', 'medium', 'high', 'max'],
-        supportsAdaptiveThinking: true,
-      },
-      {
-        value: 'haiku',
-        displayName: 'Haiku',
-        description: 'Haiku 4.5 · Fastest for quick answers',
-      },
-    ],
-    defaultModelDescription: 'Most capable for complex work',
-  });
+  readonly clientConfig: ProviderClientConfig = claudeClientConfig;
 
   get command(): string {
     return this.protocol.command;
@@ -238,6 +163,8 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
         const resp = isRecord(obj.response) ? obj.response : undefined;
         if (typeof resp?.request_id === 'string') ids.add(resp.request_id);
       } catch (error) {
+        // summoner is a standalone package with no pino dependency; keep console.debug
+        // for best-effort diagnostics while scanning possibly-malformed raw entries.
         console.debug('Failed to parse JSON', error);
       }
     }
@@ -287,58 +214,69 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
   // ── Non-control messages → ClientMessage ──
 
   private convertOtherMessage(message: ProtocolMessage): ClientMessage | ClientMessage[] | null {
-    switch (message.type) {
-      case 'system':
-        return transformSystem(message);
-      case 'assistant':
-        return transformAssistant(message);
-      case 'user':
-        return transformUser(message);
-      case 'result':
-        return transformResult(message);
-      case 'stream_event':
-        return transformStream(message);
-      case 'rate_limit_event':
-        return convertRateLimitMessage(message);
-      case 'speech_to_text_message':
-        return {
-          name: 'speech:message',
-          payload: { text: message.text, done: message.done },
-        };
-      case 'streamlined_text':
-        return { name: 'stream:text', payload: { text: message.text } };
-      case 'streamlined_tool_use_summary':
-        return { name: 'stream:tool_summary', payload: { toolSummary: message.tool_summary } };
-      case 'error':
-        return {
-          name: 'error:message',
-          payload: { message: message.error?.message ?? 'Unknown error' },
-        };
-      case 'experiment_gates': {
-        const gates: Record<string, boolean> = {};
-        for (const [k, v] of Object.entries(message.gates)) {
-          gates[k] = Boolean(v);
-        }
-        return { name: 'app:experiment_gates', payload: { gates } };
-      }
-      case 'available_models':
-        return { name: 'app:models', payload: { models: message.models } };
-      case 'notification':
-        return { name: 'notification:toast', payload: { message: message.message } };
-      case 'auth_status':
-        return convertAuthStatusMessage(message);
-      case 'auth_url':
-        return {
-          name: 'notification:auth_url',
-          payload: { url: message.url, method: message.method ?? 'oauth' },
-        };
-      case 'raw_event':
-        return { name: 'raw:event', payload: { rawType: message.rawType, data: message.data } };
-      default: {
-        // Any other unknown ProtocolMessage variant — spread to raw payload.
-        const data: Record<string, unknown> = { ...message };
-        return { name: 'raw:event', payload: { rawType: message.type, data } };
-      }
-    }
+    const transformer = OTHER_MESSAGE_TRANSFORMERS[message.type];
+    if (transformer) return transformer(message);
+    // Any other unknown ProtocolMessage variant — spread to raw payload.
+    const data: Record<string, unknown> = { ...message };
+    return { name: 'raw:event', payload: { rawType: message.type, data } };
   }
 }
+
+type OtherTransformer = (m: ProtocolMessage) => ClientMessage | ClientMessage[] | null;
+
+const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = {
+  system: (m) => transformSystem(m as Extract<ProtocolMessage, { type: 'system' }>),
+  assistant: (m) => transformAssistant(m as Extract<ProtocolMessage, { type: 'assistant' }>),
+  user: (m) => transformUser(m as Extract<ProtocolMessage, { type: 'user' }>),
+  result: (m) => transformResult(m as Extract<ProtocolMessage, { type: 'result' }>),
+  stream_event: (m) => transformStream(m as Extract<ProtocolMessage, { type: 'stream_event' }>),
+  rate_limit_event: (m) =>
+    convertRateLimitMessage(m as Extract<ProtocolMessage, { type: 'rate_limit_event' }>),
+  speech_to_text_message: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'speech_to_text_message' }>;
+    return { name: 'speech:message', payload: { text: msg.text, done: msg.done } };
+  },
+  streamlined_text: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'streamlined_text' }>;
+    return { name: 'stream:text', payload: { text: msg.text } };
+  },
+  streamlined_tool_use_summary: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'streamlined_tool_use_summary' }>;
+    return { name: 'stream:tool_summary', payload: { toolSummary: msg.tool_summary } };
+  },
+  error: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'error' }>;
+    return {
+      name: 'error:message',
+      payload: { message: msg.error?.message ?? 'Unknown error' },
+    };
+  },
+  experiment_gates: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'experiment_gates' }>;
+    const gates: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(msg.gates)) {
+      gates[k] = Boolean(v);
+    }
+    return { name: 'app:experiment_gates', payload: { gates } };
+  },
+  available_models: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'available_models' }>;
+    return { name: 'app:models', payload: { models: msg.models } };
+  },
+  notification: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'notification' }>;
+    return { name: 'notification:toast', payload: { message: msg.message } };
+  },
+  auth_status: (m) => convertAuthStatusMessage(m),
+  auth_url: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'auth_url' }>;
+    return {
+      name: 'notification:auth_url',
+      payload: { url: msg.url, method: msg.method ?? 'oauth' },
+    };
+  },
+  raw_event: (m) => {
+    const msg = m as Extract<ProtocolMessage, { type: 'raw_event' }>;
+    return { name: 'raw:event', payload: { rawType: msg.rawType, data: msg.data } };
+  },
+};

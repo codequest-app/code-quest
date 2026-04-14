@@ -120,6 +120,26 @@ export class Channel {
     this._metaCache = { ...this._metaCache, ...partial };
   }
 
+  /**
+   * Build the `settings:update` payload derived from sessionConfig, cwd, and worktree.
+   * Returns undefined when no non-empty fields are present (so callers can skip emit).
+   * `title` isn't stored on Channel; pass through if the caller has one.
+   */
+  toSettingsUpdatePayload(): Record<string, unknown> | undefined {
+    const ss = this._sessionConfig;
+    const settings = pickDefined({
+      modelSetting: ss.model,
+      defaultCwd: this.cwd,
+      worktree: this._worktree ?? undefined,
+      initialPermissionMode: ss.permissionMode,
+      thinkingLevel: ss.thinkingLevel,
+      mcpServers: ss.mcpServers,
+      tools: ss.tools,
+      effort: ss.effort,
+    });
+    return Object.keys(settings).length > 0 ? settings : undefined;
+  }
+
   // ── Processing ──
 
   get isProcessing(): boolean {
@@ -235,38 +255,54 @@ export class Channel {
     });
   }
 
+  private applyErrorMessage(payload: unknown): void {
+    const { message } = errorMessageEventSchema.parse(payload);
+    this.lastError = message;
+  }
+
+  private applySessionInit(payload: unknown): void {
+    const init = sessionInitEventSchema.parse(payload);
+    if (init.sessionId) {
+      this.sessionId = init.sessionId;
+    }
+    const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
+    if (initCwd) {
+      this.cwd = initCwd;
+      const wt = detectWorktree(initCwd);
+      if (wt) this.worktree = wt;
+    }
+    this.updateSessionConfig(initConfig);
+    this.updateMetaCache(
+      pickDefined({
+        model: init.model,
+        tools: init.tools,
+        permissionMode: init.permissionMode,
+        fastModeState: init.fastModeState,
+        mcpServers: init.mcpServers,
+        slashCommands: init.slashCommands,
+      }),
+    );
+  }
+
+  private applySessionStatus(payload: unknown): void {
+    const status = sessionStatusEventSchema.parse(payload);
+    if (status.permissionMode !== undefined) {
+      this.updateSessionConfig({ permissionMode: status.permissionMode });
+    }
+  }
+
   /** Update channel internal state from runner messages. */
   private handleInternalMessage(clientMessage: ClientMessage): void {
-    if (clientMessage.name === 'error:message') {
-      const { message } = errorMessageEventSchema.parse(clientMessage.payload);
-      this.lastError = message;
-    } else if (clientMessage.name === 'session:init') {
-      const init = sessionInitEventSchema.parse(clientMessage.payload);
-      if (init.sessionId) {
-        this.sessionId = init.sessionId;
-      }
-      const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
-      if (initCwd) {
-        this.cwd = initCwd;
-        const wt = detectWorktree(initCwd);
-        if (wt) this.worktree = wt;
-      }
-      this.updateSessionConfig(initConfig);
-      this.updateMetaCache(
-        pickDefined({
-          model: init.model,
-          tools: init.tools,
-          permissionMode: init.permissionMode,
-          fastModeState: init.fastModeState,
-          mcpServers: init.mcpServers,
-          slashCommands: init.slashCommands,
-        }),
-      );
-    } else if (clientMessage.name === 'session:status') {
-      const status = sessionStatusEventSchema.parse(clientMessage.payload);
-      if (status.permissionMode !== undefined) {
-        this.updateSessionConfig({ permissionMode: status.permissionMode });
-      }
+    switch (clientMessage.name) {
+      case 'error:message':
+        this.applyErrorMessage(clientMessage.payload);
+        break;
+      case 'session:init':
+        this.applySessionInit(clientMessage.payload);
+        break;
+      case 'session:status':
+        this.applySessionStatus(clientMessage.payload);
+        break;
     }
   }
 

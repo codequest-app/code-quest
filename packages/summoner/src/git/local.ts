@@ -1,17 +1,14 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import type {
-  GitDiffResult,
-  GitLogResult,
-  GitStatusResult,
-  WorktreeInfo,
+import {
+  errMsg,
+  type GitDiffResult,
+  type GitLogResult,
+  type GitStatusResult,
+  type WorktreeInfo,
 } from '@code-quest/shared';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 import type { GitService } from './types.ts';
-
-function errMsg(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
 
 const MAX_NAME_LENGTH = 100;
 const VALID_NAME_RE = /^[a-zA-Z0-9._-]+$/;

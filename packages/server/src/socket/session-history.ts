@@ -2,6 +2,7 @@ import {
   type ClientMessage,
   contentBlockSchema,
   controlRequestEventSchema,
+  isRecord,
   type ServerToClientEvents,
 } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
@@ -19,10 +20,6 @@ const HISTORY_NAMES = new Set([
   'message:result',
   'session:init',
 ]);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 export class SessionHistory {
   constructor(

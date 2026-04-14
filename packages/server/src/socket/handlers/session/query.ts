@@ -1,4 +1,5 @@
 import {
+  ERROR_CODES,
   sessionGetPayloadSchema,
   sessionListPayloadSchema,
   sessionListRemotePayloadSchema,
@@ -84,7 +85,7 @@ export function create({
       const { channelId } = sessionGetPayloadSchema.parse(payload);
       const session = await sessionStore.getByChannelId(channelId);
       if (!session) {
-        callback?.(err('Session not found', 'session_not_found'));
+        callback?.(err('Session not found', ERROR_CODES.SESSION_NOT_FOUND));
         return;
       }
       const events = await sessionHistory.getSessionHistory(channelId);
