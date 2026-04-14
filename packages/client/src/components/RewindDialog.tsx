@@ -14,6 +14,7 @@ function getRewindableMessages(messages: Message[]): RewindItem[] {
   const items: RewindItem[] = [];
   for (const msg of messages) {
     if (msg.type !== 'text' || msg.role !== 'user' || msg.parentToolUseId) continue;
+    if (!msg.cliUuid) continue;
     const text = msg.content.trim();
     if (!text) continue;
     items.push({ message: msg, promptText: text });
@@ -63,8 +64,8 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   };
 
   const handleConfirm = () => {
-    if (!selected) return;
-    onConfirm({ messageId: selected.message.id, promptText: selected.promptText });
+    if (!selected || !selected.message.cliUuid) return;
+    onConfirm({ messageId: selected.message.cliUuid, promptText: selected.promptText });
   };
 
   const handleBack = () => {

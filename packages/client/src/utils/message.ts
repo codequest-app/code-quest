@@ -24,11 +24,13 @@ export function mapSessionStats(s: SessionStats): ChatStats {
 const historyAssistantSchema = z.object({
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
 });
 
 const historyUserSchema = z.object({
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
 });
 
 const historyResultSchema = z.object({
@@ -82,7 +84,11 @@ function messagesFromAssistantBlock(block: ContentBlock, parentToolUseId?: strin
   }
 }
 
-function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): Message | null {
+function messagesFromUserBlock(
+  block: ContentBlock,
+  parentToolUseId?: string,
+  uuid?: string,
+): Message | null {
   switch (block.type) {
     case 'tool_result': {
       const rawContent = block.content;
@@ -110,8 +116,10 @@ function messagesFromUserBlock(block: ContentBlock, parentToolUseId?: string): M
         parentToolUseId,
       });
     }
-    case 'text':
-      return msg({ role: 'user', type: 'text', content: block.text });
+    case 'text': {
+      const m = msg({ role: 'user', type: 'text', content: block.text });
+      return uuid ? { ...m, cliUuid: uuid } : m;
+    }
     default:
       return null;
   }
@@ -131,7 +139,7 @@ export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
       const parsed = historyUserSchema.safeParse(event.payload);
       if (!parsed.success) continue;
       for (const block of parsed.data.content) {
-        const m = messagesFromUserBlock(block, parsed.data.parentToolUseId);
+        const m = messagesFromUserBlock(block, parsed.data.parentToolUseId, parsed.data.uuid);
         if (m) messages.push(m);
       }
     } else if (event.name === 'message:result') {

@@ -87,6 +87,21 @@ describe('buildMessagesFromHistory', () => {
     expect(msgs[0].content).toBe('User message');
   });
 
+  it('plumbs uuid from history payload to cliUuid (fix-fork-message-uuid)', () => {
+    const events = [
+      {
+        name: 'message:user',
+        payload: {
+          content: [{ type: 'text', text: 'historical msg' }],
+          uuid: 'cli-uuid-from-history',
+        },
+      },
+    ];
+    const msgs = buildMessagesFromHistory(events);
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].cliUuid).toBe('cli-uuid-from-history');
+  });
+
   it('converts message:result with stats', () => {
     const events = [
       {

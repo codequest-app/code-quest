@@ -90,6 +90,9 @@ export class ClaudeProtocol {
     'stdio',
     '--include-partial-messages',
     '--include-hook-events',
+    // CLI echoes each user msg back via stdout with its JSONL uuid; required
+    // for the client to learn the uuid for fork / rewind operations.
+    '--replay-user-messages',
   ];
 
   buildArgs(options?: LaunchOptions): string[] {

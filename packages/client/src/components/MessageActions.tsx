@@ -7,7 +7,8 @@ import { RewindPreview } from './RewindPreview';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 interface MessageActionsProps {
-  messageId: string;
+  /** CLI/JSONL uuid; required for fork & rewind RPCs that go through the CLI. */
+  cliUuid?: string;
   messageRole: string;
   messageContent?: string;
   onRewind: RewindFn;
@@ -23,7 +24,7 @@ type RewindState =
 const IDLE: RewindState = { phase: 'idle' };
 
 export function MessageActions({
-  messageId,
+  cliUuid,
   messageRole,
   messageContent,
   onRewind,
@@ -51,7 +52,8 @@ export function MessageActions({
   const handleRewind = async () => {
     setMenuOpen(false);
     setRewindState({ phase: 'loading' });
-    const result = await onRewind(messageId, true);
+    if (!cliUuid) return;
+    const result = await onRewind(cliUuid, true);
     if (result.canRewind) {
       setRewindState({ phase: 'preview', data: result });
     } else {
@@ -61,13 +63,14 @@ export function MessageActions({
 
   const handleConfirmRewind = async () => {
     setRewindState(IDLE);
-    await onRewind(messageId, false);
+    if (!cliUuid) return;
+    await onRewind(cliUuid, false);
   };
 
   const handleFork = async () => {
     setMenuOpen(false);
-    if (!onFork) return;
-    const result = await onFork(messageId);
+    if (!onFork || !cliUuid) return;
+    const result = await onFork(cliUuid);
     if (result.success && result.channelId) {
       toast.success(`Forked to new session: ${result.channelId}`);
     } else {
@@ -77,10 +80,10 @@ export function MessageActions({
 
   const handleForkAndRewind = async () => {
     setMenuOpen(false);
-    if (!onFork) return;
-    const forkResult = await onFork(messageId);
+    if (!onFork || !cliUuid) return;
+    const forkResult = await onFork(cliUuid);
     if (forkResult.success) {
-      await onRewind(messageId, false);
+      await onRewind(cliUuid, false);
       toast.success('Forked and rewound');
     }
   };
@@ -126,11 +129,16 @@ export function MessageActions({
             className={`absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[200px] py-1 transition-opacity ${menuVisible ? 'opacity-100' : 'opacity-0'}`}
           >
             {messageContent && <PopupOption onClick={handleCopy}>Copy message</PopupOption>}
-            {onFork && <PopupOption onClick={handleFork}>Fork conversation from here</PopupOption>}
-            <PopupOption onClick={handleRewind} disabled={rewindState.phase === 'loading'}>
+            {onFork && cliUuid && (
+              <PopupOption onClick={handleFork}>Fork conversation from here</PopupOption>
+            )}
+            <PopupOption
+              onClick={handleRewind}
+              disabled={rewindState.phase === 'loading' || !cliUuid}
+            >
               {rewindState.phase === 'loading' ? 'Loading...' : 'Rewind code to here'}
             </PopupOption>
-            {onFork && (
+            {onFork && cliUuid && (
               <PopupOption onClick={handleForkAndRewind}>Fork and rewind code</PopupOption>
             )}
           </div>

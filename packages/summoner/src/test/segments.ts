@@ -24,6 +24,7 @@ const TEMPLATES = {
   CONTROL_RESPONSE_ERROR: load(REAL, 'control-response-error.jsonl'),
   CONTROL_CANCEL_REQUEST: load(REAL, 'control-cancel-request.jsonl'),
   TOOL_RESULT: load(REAL, 'tool-result.jsonl'),
+  USER_TEXT: load(REAL, 'user-text.jsonl'),
   RESULT_SUCCESS: load(REAL, 'result-success.jsonl'),
   RESULT_ERROR: load(REAL, 'result-error.jsonl'),
   RESULT_RESUME_NOT_FOUND: load(SYNTHETIC, 'result-resume-not-found.jsonl'),
@@ -113,6 +114,14 @@ export const segments = {
     if (opts?.slashCommands) line.slash_commands = opts.slashCommands;
     if (opts?.currentRepo)
       line.current_repo = { branch: opts.currentRepo.branch, is_clean: opts.currentRepo.isClean };
+    return JSON.stringify(line);
+  },
+
+  /** Real CLI user-echo segment (text). Override uuid via opts to use a known id (for fork tests). */
+  user(text: string, opts?: { uuid?: string }): string {
+    const line = JSON.parse(TEMPLATES.USER_TEXT);
+    line.message.content[0].text = text;
+    line.uuid = opts?.uuid ?? `fake-user-${++_seq}`;
     return JSON.stringify(line);
   },
 

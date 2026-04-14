@@ -63,6 +63,8 @@ export interface RateLimitMeta {
 
 interface MessageBase {
   id: string;
+  /** JSONL-canonical uuid assigned by CLI/server. Absent until CLI echoes the message. */
+  cliUuid?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   parentToolUseId?: string;

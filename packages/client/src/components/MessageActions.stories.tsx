@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 
 export const UserMessage: Story = {
   args: {
-    messageId: 'msg-1',
+    cliUuid: 'cli-msg-1',
     messageRole: 'user',
     onRewind: fn().mockResolvedValue({ success: false }),
   },
@@ -27,7 +27,7 @@ export const UserMessage: Story = {
 
 export const AssistantMessage: Story = {
   args: {
-    messageId: 'msg-2',
+    cliUuid: 'cli-msg-2',
     messageRole: 'assistant',
     onRewind: fn().mockResolvedValue({ success: false }),
   },
@@ -35,7 +35,7 @@ export const AssistantMessage: Story = {
 
 export const RewindFallback: Story = {
   args: {
-    messageId: 'msg-1',
+    cliUuid: 'cli-msg-1',
     messageRole: 'user',
     onRewind: fn().mockResolvedValue({ success: false }),
   },
@@ -48,7 +48,7 @@ export const RewindFallback: Story = {
 
 export const RewindConfirm: Story = {
   args: {
-    messageId: 'msg-1',
+    cliUuid: 'cli-msg-1',
     messageRole: 'user',
     onRewind: fn().mockResolvedValue({ success: false }),
   },
@@ -62,7 +62,7 @@ export const RewindConfirm: Story = {
 
 export const WithFork: Story = {
   args: {
-    messageId: 'msg-3',
+    cliUuid: 'cli-msg-3',
     messageRole: 'user',
     onRewind: fn().mockResolvedValue({ success: false }),
     onFork: fn().mockResolvedValue({ success: true, channelId: 'sess-forked' }),

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
+import { emitAssistantTurn, emitUserEcho, sendUserMessage } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 async function setupWithTurn() {
@@ -8,6 +8,7 @@ async function setupWithTurn() {
   const project = await result.addProject();
   await project.launchSession();
   await sendUserMessage(result.user, 'hello');
+  await emitUserEcho(result.claude, 'hello');
   await emitAssistantTurn(result.claude);
   return result;
 }
@@ -59,6 +60,20 @@ describe('MessageActions', () => {
     await user.click(screen.getByText('Fork conversation from here'));
 
     expect(screen.queryByText('Fork conversation from here')).not.toBeInTheDocument();
+  });
+
+  it('hides Fork option when message has no cliUuid (echo not received)', async () => {
+    const result = await renderWithWorkspace();
+    const project = await result.addProject();
+    await project.launchSession();
+    await sendUserMessage(result.user, 'hello');
+    // NOTE: no emitUserEcho — message has no cliUuid
+    await emitAssistantTurn(result.claude);
+
+    await result.user.click(screen.getByTitle('Message actions'));
+
+    expect(screen.queryByText('Fork conversation from here')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fork and rewind code')).not.toBeInTheDocument();
   });
 
   it('closing popup hides options', async () => {

@@ -2,7 +2,7 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { emitAssistantTurn } from '../../test/helpers';
+import { emitAssistantTurn, emitUserEcho } from '../../test/helpers';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -12,6 +12,7 @@ async function sendMessage(claude: FakeClaude, user: User, text: string) {
   await user.click(textarea);
   await user.type(textarea, text);
   await user.keyboard('{Enter}');
+  await emitUserEcho(claude, text);
   await emitAssistantTurn(claude, `Reply to: ${text}`);
 }
 
@@ -122,6 +123,29 @@ describe('RewindDialog', () => {
     expect(confirmDialog).toBeInTheDocument();
     expect(screen.getByText(/continue/i)).toBeInTheDocument();
     expect(screen.getByText(/never mind/i)).toBeInTheDocument();
+  });
+
+  it('excludes user messages without cliUuid (echo not yet received)', async () => {
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+
+    // First message — full echo path (gets cliUuid)
+    await sendMessage(claude, user, 'echoed-q');
+
+    // Second message — typed and assistant replies, but no user echo emitted (no cliUuid)
+    const textarea = screen.getByPlaceholderText(/Esc to focus/i);
+    await user.click(textarea);
+    await user.type(textarea, 'pending-q');
+    await user.keyboard('{Enter}');
+    await emitAssistantTurn(claude, 'Reply to pending');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+
+    const items = screen.getAllByRole('option');
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent('echoed-q');
   });
 
   it('closes confirmation dialog on "Never mind"', async () => {

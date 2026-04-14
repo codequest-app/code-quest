@@ -16,18 +16,30 @@ function applyUserContent(
   let messages = [...state.messages];
   for (const block of content) {
     if (block.type === 'text') {
-      const lastIdx = messages.length - 1;
-      const last = messages[lastIdx];
-      if (last?.role === 'user' && last?.type === 'text' && last?.content === block.text) {
-        // Dedup: CLI echoed our message back — update id to CLI uuid if available
-        if (uuid && last.id !== uuid) {
-          messages = [...messages];
-          messages[lastIdx] = { ...last, id: uuid };
+      // Search from the end for the most recent matching local user msg.
+      // Streaming events (assistant placeholder, etc.) often land between
+      // sendMessage and the CLI's user-replay echo, so the matching msg is
+      // not always last. Scan back to find it.
+      let matched = false;
+      if (uuid) {
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const m = messages[i];
+          if (m.cliUuid === uuid) {
+            // Same uuid already attached — idempotent no-op.
+            matched = true;
+            break;
+          }
+          if (m.role === 'user' && m.type === 'text' && m.content === block.text && !m.cliUuid) {
+            messages = [...messages];
+            messages[i] = { ...m, cliUuid: uuid };
+            matched = true;
+            break;
+          }
         }
-        continue;
       }
+      if (matched) continue;
       const m = msg({ role: 'user', type: 'text', content: block.text });
-      messages = [...messages, uuid ? { ...m, id: uuid } : m];
+      messages = [...messages, uuid ? { ...m, cliUuid: uuid } : m];
     } else if (block.type === 'tool_result') {
       messages = [
         ...messages,

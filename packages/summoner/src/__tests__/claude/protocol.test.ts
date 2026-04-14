@@ -185,6 +185,11 @@ describe('ClaudeProtocol.buildArgs', () => {
     expect(args).not.toContain('--resume');
   });
 
+  it('base args include --replay-user-messages so CLI echoes user msgs with uuid', () => {
+    const args = protocol.buildArgs();
+    expect(args).toContain('--replay-user-messages');
+  });
+
   it('includes --resume when resumeSessionId provided', () => {
     const args = protocol.buildArgs({ resumeSessionId: 'abc-123' });
     const idx = args.indexOf('--resume');

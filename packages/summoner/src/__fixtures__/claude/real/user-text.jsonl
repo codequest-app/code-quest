@@ -1,0 +1,1 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"inspect-me"}]},"session_id":"647ff52c-4ebc-4442-92a3-1108d282f672","parent_tool_use_id":null,"uuid":"8c168790-24ea-445c-9832-7450fb3fe418","timestamp":"2026-04-13T20:35:45.148Z","isReplay":true}

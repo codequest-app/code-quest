@@ -32,6 +32,15 @@ export async function emitAssistantTurn(claude: FakeClaude, message = 'hi') {
   });
 }
 
+/** Emit a real CLI user-echo segment (loaded from REAL fixture in summoner). Returns the uuid emitted. */
+export async function emitUserEcho(claude: FakeClaude, text: string, uuid?: string) {
+  const segment = s.user(text, uuid ? { uuid } : undefined);
+  await act(async () => {
+    await claude.emit(segment);
+  });
+  return JSON.parse(segment).uuid as string;
+}
+
 /** Type a message in the compose textarea and press Enter. */
 export async function sendUserMessage(user: ReturnType<typeof userEvent.setup>, text = 'go') {
   const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);

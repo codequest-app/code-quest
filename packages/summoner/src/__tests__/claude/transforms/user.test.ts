@@ -28,4 +28,15 @@ describe('transform — user events', () => {
     const event = Array.isArray(result) ? result[0] : result;
     expect(event?.payload).toHaveProperty('uuid', 'cli-uuid-123');
   });
+
+  it('text user echo (--replay-user-messages) carries uuid through transform', () => {
+    const segment = s.user('hello-from-user', { uuid: 'real-cli-echo-uuid' });
+    const result = toClientMessage(segment);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.name).toBe('message:user');
+    expect(event?.payload).toMatchObject({
+      content: [{ type: 'text', text: 'hello-from-user' }],
+      uuid: 'real-cli-echo-uuid',
+    });
+  });
 });

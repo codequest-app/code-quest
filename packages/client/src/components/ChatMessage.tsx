@@ -75,7 +75,7 @@ export function ChatMessage({
         )}
         {showAvatar && onRewind && (
           <MessageActions
-            messageId={message.id}
+            cliUuid={message.cliUuid}
             messageRole={message.role}
             messageContent={message.content}
             onRewind={onRewind}

@@ -3348,6 +3348,26 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses tool-use.jsonl:1 1`] 
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses user-text.jsonl:1 1`] = `
+{
+  "isReplay": true,
+  "message": {
+    "content": [
+      {
+        "text": "inspect-me",
+        "type": "text",
+      },
+    ],
+    "role": "user",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "647ff52c-4ebc-4442-92a3-1108d282f672",
+  "timestamp": "2026-04-13T20:35:45.148Z",
+  "type": "user",
+  "uuid": "8c168790-24ea-445c-9832-7450fb3fe418",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses auth-status.jsonl:1 1`] = `
 {
   "account": {
@@ -3515,32 +3535,6 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-o
 {
   "response": {
     "request_id": "oauth-wait-1",
-    "subtype": "success",
-  },
-  "type": "control_response",
-}
-`;
-
-exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-get-context-usage.jsonl:1 1`] = `
-{
-  "request": {
-    "subtype": "get_context_usage",
-  },
-  "request_id": "ctx-usage-1",
-  "type": "control_request",
-}
-`;
-
-exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-get-context-usage.jsonl:2 1`] = `
-{
-  "response": {
-    "request_id": "ctx-usage-1",
-    "response": {
-      "cache_read_input_tokens": 10000,
-      "context_window": 200000,
-      "input_tokens": 15000,
-      "output_tokens": 3000,
-    },
     "subtype": "success",
   },
   "type": "control_response",
