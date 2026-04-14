@@ -1,4 +1,9 @@
-import type { ControlResponse, SessionInitPayload, SessionLaunchPayload } from '@code-quest/shared';
+import type {
+  ControlResponse,
+  InitResponseResult,
+  SessionInitPayload,
+  SessionLaunchPayload,
+} from '@code-quest/shared';
 import {
   channelExitPayloadSchema,
   controlInitResponseSchema,
@@ -6,7 +11,6 @@ import {
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
 } from '@code-quest/shared';
-import { z } from 'zod';
 import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
@@ -21,13 +25,6 @@ import { err, ok } from '../../utils/rpc.ts';
  *  find the JSONL (session died / was deleted / wrong cwd). Matched as a
  *  substring because the full message also includes the sessionId. */
 const CLI_RESUME_MISSING_MARKER = 'No conversation found';
-
-const initResponseResultSchema = z.object({
-  slashCommands: z.array(z.string()).optional(),
-  models: z.array(z.unknown()).optional(),
-  account: z.record(z.string(), z.unknown()).optional(),
-});
-type InitResponseResult = z.infer<typeof initResponseResultSchema>;
 
 function buildSessionInitPayload(channel: Channel): SessionInitPayload {
   const meta = channel.metaCache;

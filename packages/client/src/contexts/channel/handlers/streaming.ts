@@ -118,16 +118,11 @@ export function wireStreamingHandlers({
 
   function handleInputJsonChunk(content: string) {
     setState((prev) => {
-      let lastToolUse: Message | undefined;
-      for (let i = prev.messages.length - 1; i >= 0; i--) {
-        if (prev.messages[i].type === 'tool_use') {
-          lastToolUse = prev.messages[i];
-          break;
-        }
-      }
+      const lastToolUse = [...prev.messages]
+        .reverse()
+        .find((m): m is Extract<Message, { type: 'tool_use' }> => m.type === 'tool_use');
       if (!lastToolUse) return prev;
-      const partial =
-        typeof lastToolUse.meta?.partialInput === 'string' ? lastToolUse.meta.partialInput : '';
+      const partial = lastToolUse.meta?.partialInput ?? '';
       return {
         ...prev,
         messages: prev.messages.map((m) =>
@@ -143,7 +138,9 @@ export function wireStreamingHandlers({
       if (prev.messages.length === 0) return prev;
       const ms = [...prev.messages];
       const last = ms[ms.length - 1];
-      const existing = Array.isArray(last.meta?.citations) ? last.meta.citations : [];
+      // TextMeta is the only meta shape with citations (text content blocks).
+      const textMeta = last.type === 'text' ? last.meta : undefined;
+      const existing = textMeta?.citations ?? [];
       ms[ms.length - 1] = patchMeta(last, { citations: [...existing, ...citations] });
       return { ...prev, messages: ms };
     });

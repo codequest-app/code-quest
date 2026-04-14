@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import type { Message } from '../types/ui';
+import type { MessageBase } from '../types/ui';
 import { ChatMessage } from './ChatMessage';
 
 // Use ChatMessage as a wrapper so we get the full rendering context
@@ -20,7 +20,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const base: Omit<Message, 'type' | 'content'> = {
+const base: Omit<MessageBase, 'content'> = {
   id: 'msg-1',
   role: 'assistant',
   timestamp: Date.now(),

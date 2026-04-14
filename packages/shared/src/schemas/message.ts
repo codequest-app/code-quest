@@ -1,4 +1,27 @@
 import { z } from 'zod';
+import { contentBlockSchema } from './message-blocks.ts';
+import { sessionStatsSchema } from './message-stats.ts';
+
+// ── History replay (client) ──
+
+export const historyAssistantSchema = z.object({
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
+});
+export type HistoryAssistant = z.infer<typeof historyAssistantSchema>;
+
+export const historyUserSchema = z.object({
+  content: z.array(contentBlockSchema),
+  parentToolUseId: z.string().optional(),
+  uuid: z.string().optional(),
+});
+export type HistoryUser = z.infer<typeof historyUserSchema>;
+
+export const historyResultSchema = z.object({
+  stats: sessionStatsSchema,
+});
+export type HistoryResult = z.infer<typeof historyResultSchema>;
 
 // ── C2S payloads ──
 

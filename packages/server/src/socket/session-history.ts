@@ -1,6 +1,7 @@
 import {
   type ClientMessage,
   contentBlockSchema,
+  controlRequestEventSchema,
   type ServerToClientEvents,
 } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
@@ -8,11 +9,7 @@ import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
-import {
-  controlRequestEventSchema,
-  typedJsonObjectSchema,
-  userMessageInputSchema,
-} from './schemas.ts';
+import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
 import type { TypedSocket } from './types.ts';
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */

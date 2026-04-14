@@ -1,5 +1,7 @@
 import type {
   ForkConversationResponse,
+  MessageAttachment,
+  MessageRole,
   ResultMeta,
   RewindResult,
   RpcResult,
@@ -39,12 +41,19 @@ interface ThinkingMeta {
   isStreaming?: boolean;
 }
 
+// ── UI-layer meta shapes (React prop types) ──
+
 export interface HookStartedMeta {
   hookEvent?: string;
+  hookId?: string;
+  hookName?: string;
 }
 
 export interface HookResponseMeta {
   output?: string;
+  hookEvent?: string;
+  hookId?: string;
+  hookName?: string;
 }
 
 export interface HookDiagnosticsMeta {
@@ -66,15 +75,17 @@ export interface RateLimitMeta {
 
 // ── Message type discriminated union ──
 
-interface MessageBase {
+/** UI-layer message base — after adapter projection. id/timestamp are
+ *  UI-assigned; attachments are UI concepts (file mentions). */
+export interface MessageBase {
   id: string;
   /** JSONL-canonical uuid assigned by CLI/server. Absent until CLI echoes the message. */
   cliUuid?: string;
-  role: 'user' | 'assistant' | 'system';
+  role: MessageRole;
   content: string;
   parentToolUseId?: string;
   timestamp: number;
-  attachments?: Array<{ filename: string; startLine?: number; endLine?: number }>;
+  attachments?: MessageAttachment[];
 }
 
 /** Maps message types that carry required typed meta to their meta shape */
@@ -122,8 +133,8 @@ type MessageType =
 /** Typed message variant — meta is typed for known types, loose for others */
 export type Message = {
   [T in MessageType]: T extends keyof MetaMap
-    ? MessageBase & { type: T; meta: MetaMap[T] & Record<string, unknown> }
+    ? MessageBase & { type: T; meta: MetaMap[T] }
     : T extends keyof OptionalMetaMap
-      ? MessageBase & { type: T; meta?: OptionalMetaMap[T] & Record<string, unknown> }
+      ? MessageBase & { type: T; meta?: OptionalMetaMap[T] }
       : MessageBase & { type: T; meta?: Record<string, unknown> };
 }[MessageType];

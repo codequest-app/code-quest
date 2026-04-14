@@ -3,17 +3,12 @@ import type {
   PendingControl,
   PlanCommentData,
 } from '@code-quest/shared';
+import { planInputSchema } from '@code-quest/shared';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { z } from 'zod';
 import { useChannelMessages } from '../contexts/channel';
 import { pluralize } from '../utils/pluralize';
 import { MarkdownContent } from './MarkdownContent';
 import { PlanCommentOverlay } from './PlanCommentOverlay';
-
-const planInputSchema = z.object({
-  plan: z.string().optional(),
-  allowedPrompts: z.array(z.record(z.string(), z.unknown())).optional(),
-});
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 

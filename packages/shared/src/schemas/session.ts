@@ -33,26 +33,26 @@ export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 // ── Internal schemas ──
 
-const initializeOptionsSchema = z
-  .looseObject({
-    hooks: z
-      .record(
-        z.string(),
-        z.array(
-          z.object({
-            matcher: z.string(),
-            hookCallbackIds: z.array(z.string()),
-            timeout: z.number().optional(),
-          }),
-        ),
-      )
-      .optional(),
-    systemPrompt: z.string().optional(),
-    appendSystemPrompt: z.string().optional(),
-    jsonSchema: z.record(z.string(), z.unknown()).optional(),
-    agents: z.record(z.string(), z.unknown()).optional(),
-  })
-  .optional();
+export const initializeOptionsSchema = z.looseObject({
+  hooks: z
+    .record(
+      z.string(),
+      z.array(
+        z.object({
+          matcher: z.string(),
+          hookCallbackIds: z.array(z.string()),
+          timeout: z.number().optional(),
+        }),
+      ),
+    )
+    .optional(),
+  systemPrompt: z.string().optional(),
+  appendSystemPrompt: z.string().optional(),
+  jsonSchema: z.record(z.string(), z.unknown()).optional(),
+  agents: z.record(z.string(), z.unknown()).optional(),
+  resumeSessionAt: z.string().optional(),
+});
+export type InitializeOptions = z.infer<typeof initializeOptionsSchema>;
 
 export const launchOptionsSchema = z
   .object({
@@ -95,7 +95,7 @@ export const sessionLaunchPayloadSchema = z.object({
   permissionMode: z.string().optional(),
   thinkingLevel: z.string().optional(),
   cwd: z.string().optional(),
-  initOptions: initializeOptionsSchema,
+  initOptions: initializeOptionsSchema.optional(),
   launchOptions: launchOptionsSchema,
 });
 export type SessionLaunchPayload = z.infer<typeof sessionLaunchPayloadSchema>;
@@ -340,6 +340,60 @@ export const fileDiffSchema = z.object({
   newContent: z.string().nullable(),
 });
 export type FileDiff = z.infer<typeof fileDiffSchema>;
+
+// ── Internal stdout events (server) ──
+
+export const errorMessageEventSchema = z.looseObject({ message: z.string() });
+export type ErrorMessageEvent = z.infer<typeof errorMessageEventSchema>;
+
+export const sessionInitEventSchema = z.looseObject({
+  sessionId: z.string().optional(),
+  config: z.record(z.string(), z.unknown()).nullable().optional(),
+  model: z.string().optional(),
+  permissionMode: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  fastModeState: z.unknown().optional(),
+  mcpServers: z.array(z.looseObject({ name: z.string(), status: z.string() })).optional(),
+  slashCommands: z.array(z.string()).optional(),
+});
+export type SessionInitEvent = z.infer<typeof sessionInitEventSchema>;
+
+export const sessionStatusEventSchema = z.looseObject({
+  permissionMode: z.string().optional(),
+});
+export type SessionStatusEvent = z.infer<typeof sessionStatusEventSchema>;
+
+export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
+export type ControlRequestEvent = z.infer<typeof controlRequestEventSchema>;
+
+export const sessionConfigSchema = z.object({
+  model: z.string().optional(),
+  permissionMode: z.string().optional(),
+  effort: z.string().optional(),
+  thinkingLevel: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
+});
+export type SessionConfig = z.infer<typeof sessionConfigSchema>;
+
+/** Extract config fields from session:init. cwd extracted separately to channel.cwd. */
+export const sessionInitConfigSchema = sessionConfigSchema
+  .pick({
+    model: true,
+    permissionMode: true,
+    effort: true,
+  })
+  .extend({ cwd: z.string().optional() });
+export type SessionInitConfig = z.infer<typeof sessionInitConfigSchema>;
+
+// ── Init response result (server connect handler) ──
+
+export const initResponseResultSchema = z.object({
+  slashCommands: z.array(z.string()).optional(),
+  models: z.array(z.unknown()).optional(),
+  account: z.record(z.string(), z.unknown()).optional(),
+});
+export type InitResponseResult = z.infer<typeof initResponseResultSchema>;
 
 export const rewindResultSchema = z.object({
   canRewind: z.boolean(),

@@ -1,4 +1,5 @@
 import {
+  contextUsageDataSchema,
   requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
@@ -10,7 +11,6 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
-import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -19,13 +19,6 @@ import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
-
-const contextUsageSchema = z.object({
-  categories: z.unknown(),
-  totalTokens: z.number(),
-  maxTokens: z.number(),
-  percentage: z.number(),
-});
 
 export function create({
   channelManager,
@@ -166,7 +159,7 @@ export function create({
     if (channel) {
       try {
         const resp = await channel.sendRequest('settings:get_context_usage');
-        const parsed = contextUsageSchema.safeParse(resp.response);
+        const parsed = contextUsageDataSchema.safeParse(resp.response);
         if (parsed.success) {
           contextUsage = parsed.data;
         }

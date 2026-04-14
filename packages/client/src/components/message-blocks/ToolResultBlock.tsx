@@ -25,7 +25,7 @@ export function ToolResultBlock({
   onDiffRespond,
 }: {
   content: string;
-  meta?: ToolResultMeta & { arrayContent?: unknown[] };
+  meta?: ToolResultMeta;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }) {
   const label = meta?.name ? `Result: ${meta.name}` : 'Result';

@@ -128,3 +128,21 @@ export const controlOpenDiffPayloadSchema = z.looseObject({
   newPath: z.string(),
 });
 export type ControlOpenDiffPayload = z.infer<typeof controlOpenDiffPayloadSchema>;
+
+/** chat:respond response payload (server parses user response to control_request). */
+export const controlRespondPayloadSchema = z.object({
+  behavior: z.string().optional(),
+  updatedInput: z.unknown().optional(),
+  updatedPermissions: z.unknown().optional(),
+  message: z.string().optional(),
+});
+export type ControlRespondPayload = z.infer<typeof controlRespondPayloadSchema>;
+
+/** Resolved control_response shape (CLI → server, after transform). */
+export const resolvedControlResponseSchema = z.object({
+  requestId: z.string(),
+  success: z.boolean(),
+  response: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+});
+export type ResolvedControlResponse = z.infer<typeof resolvedControlResponseSchema>;

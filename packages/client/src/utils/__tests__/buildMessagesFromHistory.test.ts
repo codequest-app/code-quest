@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Message } from '../../types/ui';
 import { buildMessagesFromHistory } from '../message';
 
 describe('buildMessagesFromHistory', () => {
@@ -120,7 +121,8 @@ describe('buildMessagesFromHistory', () => {
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
     expect(msgs[0].type).toBe('result');
-    expect(msgs[0].meta?.stats).toMatchObject({
+    const resultMsg = msgs[0] as Extract<Message, { type: 'result' }>;
+    expect(resultMsg.meta?.stats).toMatchObject({
       costUsd: 0.05,
       durationMs: 3000,
       inputTokens: 1000,

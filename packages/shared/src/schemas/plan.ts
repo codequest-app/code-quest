@@ -26,3 +26,11 @@ export const getPlanCommentsResponseSchema = z.looseObject({
   comments: z.array(planCommentDataSchema),
 });
 export type GetPlanCommentsResponse = z.infer<typeof getPlanCommentsResponseSchema>;
+
+// ── Plan review input (client) ──
+
+export const planInputSchema = z.object({
+  plan: z.string().optional(),
+  allowedPrompts: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+export type PlanInput = z.infer<typeof planInputSchema>;

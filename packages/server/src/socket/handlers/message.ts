@@ -1,4 +1,5 @@
 import {
+  type ControlRespondPayload,
   cancelRequestPayloadSchema,
   chatCancelAsyncMessagePayloadSchema,
   chatCancelPayloadSchema,
@@ -8,8 +9,8 @@ import {
   chatSendPayloadSchema,
   chatStopTaskPayloadSchema,
   controlGenerateTitleResponseSchema,
+  controlRespondPayloadSchema,
 } from '@code-quest/shared';
-import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -87,16 +88,7 @@ export function create({
     return { ...response };
   }
 
-  const respondResponseSchema = z.object({
-    behavior: z.string().optional(),
-    updatedInput: z.unknown().optional(),
-    updatedPermissions: z.unknown().optional(),
-    message: z.string().optional(),
-  });
-
-  function buildElicitationResponse(
-    response: z.infer<typeof respondResponseSchema>,
-  ): Record<string, unknown> {
+  function buildElicitationResponse(response: ControlRespondPayload): Record<string, unknown> {
     const { behavior, updatedInput } = response;
     return behavior === 'allow'
       ? {
@@ -109,7 +101,7 @@ export function create({
   function buildToolPermissionResponse(
     channelId: string,
     meta: { toolName?: string; toolUseId?: string } | undefined,
-    response: z.infer<typeof respondResponseSchema>,
+    response: ControlRespondPayload,
   ): Record<string, unknown> {
     const { behavior, updatedInput, updatedPermissions, message } = response;
     const result: Record<string, unknown> = { behavior };
@@ -145,7 +137,7 @@ export function create({
 
       const meta = channel.getControlRequestMeta(requestId);
 
-      const parsed = respondResponseSchema.parse(response);
+      const parsed = controlRespondPayloadSchema.parse(response);
 
       let cliResponse: Record<string, unknown>;
       if (meta?.subtype === 'mcp_message') {

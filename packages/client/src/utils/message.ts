@@ -1,11 +1,11 @@
 import {
   type ChatStats,
   type ContentBlock,
-  contentBlockSchema,
+  historyAssistantSchema,
+  historyResultSchema,
+  historyUserSchema,
   type SessionStats,
-  sessionStatsSchema,
 } from '@code-quest/shared';
-import { z } from 'zod';
 import type { ChannelState } from '../types/chat';
 import type { Message } from '../types/ui';
 
@@ -20,22 +20,6 @@ export function mapSessionStats(s: SessionStats): ChatStats {
     modelUsage: s.modelUsage,
   };
 }
-
-const historyAssistantSchema = z.object({
-  content: z.array(contentBlockSchema),
-  parentToolUseId: z.string().optional(),
-  uuid: z.string().optional(),
-});
-
-const historyUserSchema = z.object({
-  content: z.array(contentBlockSchema),
-  parentToolUseId: z.string().optional(),
-  uuid: z.string().optional(),
-});
-
-const historyResultSchema = z.object({
-  stats: sessionStatsSchema,
-});
 
 export const msg = <T extends Message['type']>(
   fields: Omit<Extract<Message, { type: T }>, 'id' | 'timestamp'>,

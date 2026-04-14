@@ -7,44 +7,6 @@ export function jsonRpcError(id: unknown, message: string): Record<string, unkno
   return { jsonrpc: '2.0', error: { code: -32603, message }, id: id ?? null };
 }
 
-export const errorMessageEventSchema = z.looseObject({ message: z.string() });
-
-export const sessionInitEventSchema = z.looseObject({
-  sessionId: z.string().optional(),
-  config: z.record(z.string(), z.unknown()).nullable().optional(),
-  model: z.string().optional(),
-  permissionMode: z.string().optional(),
-  tools: z.array(z.string()).optional(),
-  fastModeState: z.unknown().optional(),
-  mcpServers: z.array(z.looseObject({ name: z.string(), status: z.string() })).optional(),
-  slashCommands: z.array(z.string()).optional(),
-});
-
-export const sessionStatusEventSchema = z.looseObject({
-  permissionMode: z.string().optional(),
-});
-
-export const controlRequestEventSchema = z.looseObject({ requestId: z.string() });
-
-const sessionConfigSchema = z.object({
-  model: z.string().optional(),
-  permissionMode: z.string().optional(),
-  effort: z.string().optional(),
-  thinkingLevel: z.string().optional(),
-  tools: z.array(z.string()).optional(),
-  mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),
-});
-export type SessionConfig = z.infer<typeof sessionConfigSchema>;
-
-/** Extract config fields from session:init. cwd extracted separately to channel.cwd. */
-export const sessionInitConfigSchema = sessionConfigSchema
-  .pick({
-    model: true,
-    permissionMode: true,
-    effort: true,
-  })
-  .extend({ cwd: z.string().optional() });
-
 const requestMetaSchema = z.object({
   subtype: z.string(),
   toolName: z.string().optional(),

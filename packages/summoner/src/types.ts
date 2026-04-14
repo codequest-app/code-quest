@@ -1,8 +1,13 @@
 import type { SpawnOptions } from 'node:child_process';
-import type { ClientMessage, ProviderClientConfig } from '@code-quest/shared';
+import type {
+  ClientMessage,
+  InitializeOptions,
+  ProviderClientConfig,
+  ResolvedControlResponse,
+} from '@code-quest/shared';
 import { z } from 'zod';
 
-export type { ClientMessage };
+export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 
 // --- Raw entry for recording ---
 
@@ -16,24 +21,6 @@ export const rawEntrySchema = z.object({
 });
 
 export type RawEntry = z.infer<typeof rawEntrySchema>;
-
-// --- Control response ---
-
-export interface ResolvedControlResponse {
-  requestId: string;
-  success: boolean;
-  response?: Record<string, unknown>;
-  error?: string;
-}
-
-export interface InitializeOptions {
-  hooks?: Record<string, Array<{ matcher: string; hookCallbackIds: string[]; timeout?: number }>>;
-  systemPrompt?: string;
-  appendSystemPrompt?: string;
-  jsonSchema?: Record<string, unknown>;
-  agents?: Record<string, unknown>;
-  resumeSessionAt?: string;
-}
 
 // --- ProcessHandle / ProcessProvider ---
 
