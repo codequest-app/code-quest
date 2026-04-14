@@ -1,23 +1,16 @@
-import {
-  gitCheckoutPayloadSchema,
-  gitLogPayloadSchema,
-  gitUpdateSkippedBranchPayloadSchema,
-} from '@code-quest/shared';
-import type { RawEntry } from '@code-quest/summoner';
+import { gitCheckoutPayloadSchema, gitLogPayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { withChannel, withError } from '../channel-emitter.ts';
+import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 
 export function create({
-  sessionHistory,
-  rawEventStore,
   emitter,
   gitService,
-}: Pick<HandlerContext, 'sessionHistory' | 'rawEventStore' | 'emitter' | 'gitService'>): void {
+}: Pick<HandlerContext, 'emitter' | 'gitService'>): void {
   async function handleStatus(
     ch: Channel,
     _payload: unknown,
@@ -83,32 +76,8 @@ export function create({
     }
   }
 
-  async function handleUpdateSkippedBranch(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
-      const entry: RawEntry = {
-        timestamp: Date.now(),
-        sessionId: await sessionHistory.resolveSessionId(ch.channelId),
-        promptId: '',
-        direction: 'out',
-        raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
-        seq: 0,
-      };
-      await rawEventStore.append(entry);
-      callback?.(ok({}));
-    } catch (e) {
-      callback?.(err(errMsg(e, 'Failed to update skipped branch')));
-    }
-  }
-
   emitter.on('git:status', withChannel(handleStatus));
   emitter.on('git:checkout', withChannel(handleCheckout));
   emitter.on('git:log', withChannel(handleLog));
   emitter.on('git:diff', withChannel(handleDiff));
-  emitter.on('git:update_skipped_branch', withError(withChannel(handleUpdateSkippedBranch)));
 }

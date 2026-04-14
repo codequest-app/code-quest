@@ -9,6 +9,10 @@ import type {
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 import type { GitService } from './types.ts';
 
+function errMsg(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 const MAX_NAME_LENGTH = 100;
 const VALID_NAME_RE = /^[a-zA-Z0-9._-]+$/;
 const PATH_TRAVERSAL_RE = /\.\./;
@@ -114,7 +118,7 @@ export class LocalGitService implements GitService {
     try {
       return (await this.createGit(cwd).revparse(['--show-toplevel'])).trim();
     } catch (err) {
-      console.debug('[GitService] getRepoRoot failed:', (err as Error).message);
+      console.debug('[GitService] getRepoRoot failed:', errMsg(err));
       return null;
     }
   }
@@ -161,14 +165,14 @@ export class LocalGitService implements GitService {
       await git.checkout(branch);
       return;
     } catch (err) {
-      console.debug('[GitService] checkout strategy 1 failed:', (err as Error).message);
+      console.debug('[GitService] checkout strategy 1 failed:', errMsg(err));
     }
     try {
       await git.fetch('origin');
       await git.checkout(branch);
       return;
     } catch (err) {
-      console.debug('[GitService] checkout strategy 2 failed:', (err as Error).message);
+      console.debug('[GitService] checkout strategy 2 failed:', errMsg(err));
     }
     await git.checkout(['-t', `origin/${branch}`]);
   }
@@ -181,7 +185,7 @@ export class LocalGitService implements GitService {
       const stdout = await git.raw(args);
       return { stdout, exitCode: 0 };
     } catch (err) {
-      console.debug('[GitService] git raw failed:', args.join(' '), (err as Error).message);
+      console.debug('[GitService] git raw failed:', args.join(' '), errMsg(err));
       const stdout = err instanceof GitResponseError ? ((err.git as string) ?? '') : '';
       return { stdout, exitCode: 1 };
     }

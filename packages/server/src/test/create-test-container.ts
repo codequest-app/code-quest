@@ -7,8 +7,9 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
 import type { DrizzleDatabase } from '../db/sqlite-client.ts';
-import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
+import type { SettingsStore } from '../services/settings-store.ts';
 import { TYPES } from '../types.ts';
+import { InMemorySettingsStore } from './in-memory-settings-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');

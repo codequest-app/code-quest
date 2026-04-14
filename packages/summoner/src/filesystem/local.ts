@@ -65,8 +65,9 @@ export class LocalFilesystemService implements FilesystemService {
   // ── readFile ──
 
   async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
-    const absolute = resolve(cwd, normalize(filePath));
-    if (!absolute.startsWith(`${cwd}/`) && absolute !== cwd) {
+    const resolvedCwd = resolve(cwd);
+    const absolute = resolve(resolvedCwd, normalize(filePath));
+    if (!absolute.startsWith(`${resolvedCwd}/`) && absolute !== resolvedCwd) {
       return { error: 'Path traversal not allowed' };
     }
     try {

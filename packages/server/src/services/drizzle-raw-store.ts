@@ -88,18 +88,18 @@ export class DrizzleRawStore implements RawEventStore {
     }
     const rows = await this.getBySession(fromSessionId);
     if (rows.length === 0) return;
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      await this.db.insert(this.table).values({
-        id: uuidv7(),
-        sessionId: toSessionId,
-        promptId: row.promptId,
-        dir: row.direction,
-        raw: row.raw,
-        seq: i + 1,
-        createdAt: new Date(row.timestamp).toISOString(),
-      });
-    }
+    // Batch insert preserves insertion order (drizzle emits a single INSERT
+    // ... VALUES (...), (...) and we assign seq explicitly).
+    const values = rows.map((row, i) => ({
+      id: uuidv7(),
+      sessionId: toSessionId,
+      promptId: row.promptId,
+      dir: row.direction,
+      raw: row.raw,
+      seq: i + 1,
+      createdAt: new Date(row.timestamp).toISOString(),
+    }));
+    await this.db.insert(this.table).values(values);
   }
 
   async getBySession(sessionId: string): Promise<RawEntry[]> {

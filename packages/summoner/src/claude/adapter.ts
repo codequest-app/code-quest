@@ -332,12 +332,11 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
           name: 'notification:auth_url',
           payload: { url: message.url, method: message.method ?? 'oauth' },
         };
+      case 'raw_event':
+        return { name: 'raw:event', payload: { rawType: message.rawType, data: message.data } };
       default: {
-        // ProtocolMessage is always a zod-parsed object; spread to Record for raw event payload
+        // Any other unknown ProtocolMessage variant — spread to raw payload.
         const data: Record<string, unknown> = { ...message };
-        if (typeof data.rawType === 'string' && isRecord(data.data)) {
-          return { name: 'raw:event', payload: { rawType: data.rawType, data: data.data } };
-        }
         return { name: 'raw:event', payload: { rawType: message.type, data } };
       }
     }

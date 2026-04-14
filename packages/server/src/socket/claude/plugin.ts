@@ -70,11 +70,18 @@ function createPluginCommandHandler<T>(action: PluginCommandAction<T>) {
   };
 }
 
+// Plugin list JSON is CLI-private (shape is an opaque array); keep these
+// schemas local rather than leak them into @code-quest/shared.
+const pluginListArraySchema = z.array(z.unknown());
+const availablePluginListSchema = z.object({
+  installed: z.array(z.unknown()).default([]),
+  available: z.array(z.unknown()).default([]),
+});
+
 function parsePluginJson(stdout: string, label: string): unknown[] {
   try {
-    const data = JSON.parse(stdout);
-    if (Array.isArray(data)) return data;
-    return [];
+    const parsed = pluginListArraySchema.safeParse(JSON.parse(stdout));
+    return parsed.success ? parsed.data : [];
   } catch (err) {
     logger.warn({ err }, `Failed to parse ${label} plugins JSON`);
     return [];
@@ -86,13 +93,8 @@ function parseAvailablePluginJson(stdout: string): {
   available: unknown[];
 } {
   try {
-    const data = JSON.parse(stdout);
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      return {
-        installed: Array.isArray(data.installed) ? data.installed : [],
-        available: Array.isArray(data.available) ? data.available : [],
-      };
-    }
+    const parsed = availablePluginListSchema.safeParse(JSON.parse(stdout));
+    if (parsed.success) return parsed.data;
   } catch (err) {
     logger.warn({ err }, 'Failed to parse available plugins JSON');
   }

@@ -26,58 +26,59 @@ export function create({
   usageTracker,
   emitter,
 }: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'>): void {
-  async function handleSetModel(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { model } = settingsSetModelPayloadSchema.parse(payload);
-      await ch.sendRequest('settings:set_model', { model });
-      await settingsStore.set(ch.provider, 'model', model);
-      callback?.(ok({}));
-    } catch (e) {
-      callback?.(err(errMsg(e, 'Failed to set model')));
-    }
+  type SettingHandler<T> = {
+    schema: { parse(p: unknown): T };
+    run: (ch: Channel, parsed: T) => void | Promise<void>;
+    errorMsg: string;
+  };
+  function createSettingHandler<T>({ schema, run, errorMsg }: SettingHandler<T>) {
+    return async (
+      ch: Channel,
+      payload: unknown,
+      _socket?: TypedSocket,
+      callback?: SocketCallback,
+    ): Promise<void> => {
+      try {
+        const parsed = schema.parse(payload);
+        await run(ch, parsed);
+        callback?.(ok({}));
+      } catch (e) {
+        callback?.(err(errMsg(e, errorMsg)));
+      }
+    };
   }
 
-  async function handleSetPermissionMode(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { channelId, mode } = settingsSetPermissionModePayloadSchema.parse(payload);
+  const handleSetModel = createSettingHandler({
+    schema: settingsSetModelPayloadSchema,
+    errorMsg: 'Failed to set model',
+    run: async (ch, { model }) => {
+      await ch.sendRequest('settings:set_model', { model });
+      await settingsStore.set(ch.provider, 'model', model);
+    },
+  });
+
+  const handleSetPermissionMode = createSettingHandler({
+    schema: settingsSetPermissionModePayloadSchema,
+    errorMsg: 'Failed to set permission mode',
+    run: async (ch, { channelId, mode }) => {
       await ch.sendRequest('settings:set_permission_mode', { mode });
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
-      callback?.(ok({}));
-    } catch (e) {
-      callback?.(err(errMsg(e, 'Failed to set permission mode')));
-    }
-  }
+    },
+  });
 
-  async function handleSetThinkingLevel(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { channelId, thinkingLevel } = settingsSetThinkingLevelPayloadSchema.parse(payload);
+  const handleSetThinkingLevel = createSettingHandler({
+    schema: settingsSetThinkingLevelPayloadSchema,
+    errorMsg: 'Failed to set thinking level',
+    run: async (ch, { channelId, thinkingLevel }) => {
       await ch.sendRequest('settings:set_thinking_level', {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
       emitter.broadcastAll('settings:update', { channelId, thinkingLevel });
-      callback?.(ok({}));
-    } catch (e) {
-      callback?.(err(errMsg(e, 'Failed to set thinking level')));
-    }
-  }
+    },
+  });
 
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
@@ -103,14 +104,10 @@ export function create({
     }
   }
 
-  async function handleApply(
-    ch: Channel,
-    payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      const { channelId, settings } = settingsApplyPayloadSchema.parse(payload);
+  const handleApply = createSettingHandler({
+    schema: settingsApplyPayloadSchema,
+    errorMsg: 'Invalid payload',
+    run: async (ch, { channelId, settings }) => {
       await ch.sendRequest('settings:apply', { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
@@ -119,11 +116,8 @@ export function create({
           effort: String(settings.effortLevel),
         });
       }
-      callback?.(ok({}));
-    } catch (e) {
-      callback?.(err(errMsg(e, 'Invalid payload')));
-    }
-  }
+    },
+  });
 
   async function handleState(
     ch: Channel,

@@ -203,18 +203,6 @@ describe('ChannelManager', () => {
   });
 
   describe('alive channels', () => {
-    it('getAliveChannels includes launched channels', async () => {
-      const container = createTestContainer();
-      const server = createFakeServer(container);
-      const claude = createFakeSummoner(server).claude();
-      await claude.initialize({ launch: { channelId: 'ch-alive' } });
-
-      const { ChannelManager } = await import('../socket/channel-manager.ts');
-      const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
-      const alive = mgr.getAllChannelIds();
-      expect(alive).toContain('ch-alive');
-    });
-
     it('excludes exited channels from alive list', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);

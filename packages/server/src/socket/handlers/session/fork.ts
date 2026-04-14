@@ -1,7 +1,13 @@
-import { sessionForkPayloadSchema, sessionTeleportPayloadSchema } from '@code-quest/shared';
+import {
+  gitUpdateSkippedBranchPayloadSchema,
+  sessionForkPayloadSchema,
+  sessionTeleportPayloadSchema,
+} from '@code-quest/shared';
+import type { RawEntry } from '@code-quest/summoner';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
+import { withChannel, withError } from '../../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 import { err, ok } from '../../utils/rpc.ts';
@@ -114,6 +120,30 @@ export function create({
     }
   }
 
+  async function handleUpdateSkippedBranch(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
+    try {
+      const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
+      const entry: RawEntry = {
+        timestamp: Date.now(),
+        sessionId: await sessionHistory.resolveSessionId(ch.channelId),
+        promptId: '',
+        direction: 'out',
+        raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
+        seq: 0,
+      };
+      await rawEventStore.append(entry);
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to update skipped branch')));
+    }
+  }
+
   emitter.on('session:fork', handleFork);
   emitter.on('session:teleport', handleTeleport);
+  emitter.on('git:update_skipped_branch', withError(withChannel(handleUpdateSkippedBranch)));
 }

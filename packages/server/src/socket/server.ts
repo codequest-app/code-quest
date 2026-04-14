@@ -1,10 +1,10 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type { FilesystemService, GitService } from '@code-quest/summoner';
-import { inject, injectable, optional } from 'inversify';
+import { inject, injectable } from 'inversify';
 import type { Server } from 'socket.io';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
-import { InMemorySettingsStore, type SettingsStore } from '../services/settings-store.ts';
+import type { SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
 import { type HandlerContext, TYPES } from '../types.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
@@ -35,8 +35,6 @@ import type { SessionHistory } from './session-history.ts';
 
 @injectable()
 export class SocketServer {
-  settingsStore: SettingsStore;
-
   constructor(
     @inject(TYPES.RawEventStore) private rawEventStore: RawEventStore,
     @inject(TYPES.SessionStore) private sessionStore: SessionStore,
@@ -46,10 +44,8 @@ export class SocketServer {
     @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
     @inject(TYPES.FilesystemService) private filesystemService: FilesystemService,
     @inject(TYPES.GitService) private gitService: GitService,
-    @inject(TYPES.SettingsStore) @optional() settingsStore?: SettingsStore,
-  ) {
-    this.settingsStore = settingsStore ?? new InMemorySettingsStore();
-  }
+    @inject(TYPES.SettingsStore) private settingsStore: SettingsStore,
+  ) {}
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     const cm = this.channelManager;

@@ -201,6 +201,7 @@ export function wireStreamingHandlers({
           appendOrCreate(setState, isTextStreaming, block.text, parentToolUseId);
       } else if (block.type === 'thinking') {
         if (!isThinkingStreaming.current) {
+          isThinkingStreaming.current = true;
           setState((prev) => ({
             ...prev,
             messages: [

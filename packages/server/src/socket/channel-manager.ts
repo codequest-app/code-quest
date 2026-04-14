@@ -87,11 +87,6 @@ export class ChannelManager {
     return undefined;
   }
 
-  /** Get all channel IDs (including exited). */
-  getAllChannelIds(): string[] {
-    return [...this.channels.keys()];
-  }
-
   private setupChannel(
     channelId: string,
     runner: ReturnType<RunnerFactory['create']>,

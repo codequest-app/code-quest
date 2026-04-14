@@ -380,6 +380,14 @@ const authStatusSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
+// ── Raw event (synthesized by runner for unknown/parse-error lines) ──
+
+export const rawEventSchema = z.looseObject({
+  type: z.literal('raw_event'),
+  rawType: z.string(),
+  data: z.record(z.string(), z.unknown()),
+});
+
 // ── Speech ──
 
 const speechToTextMessageSchema = z.looseObject({
@@ -476,4 +484,5 @@ export type ProtocolMessage =
   | z.infer<typeof authUrlSchema>
   | z.infer<typeof authStatusSchema>
   | z.infer<typeof keepAliveSchema>
+  | z.infer<typeof rawEventSchema>
   | z.infer<typeof speechToTextMessageSchema>;

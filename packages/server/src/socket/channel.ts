@@ -200,7 +200,7 @@ export class Channel {
     this.runner.kill();
   }
 
-  resolveControlResponse(response: ResolvedControlResponse): void {
+  private resolveControlResponse(response: ResolvedControlResponse): void {
     const pending = this.pendingRequests.get(response.requestId);
     if (!pending) return;
 

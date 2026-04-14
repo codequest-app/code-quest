@@ -2,6 +2,7 @@ import type { ContentBlock } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
 import type { assistantSchema } from '../schemas.ts';
+import { buildMessagePayload } from './helpers.ts';
 
 type AssistantMessage = z.infer<typeof assistantSchema>;
 
@@ -34,10 +35,6 @@ export function transformAssistant(raw: AssistantMessage): ClientMessage | null 
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
   return {
     name: 'message:assistant',
-    payload: {
-      content: blocks,
-      ...(parentToolUseId ? { parentToolUseId } : {}),
-      ...(uuid ? { uuid } : {}),
-    },
+    payload: buildMessagePayload(blocks, parentToolUseId, uuid),
   };
 }

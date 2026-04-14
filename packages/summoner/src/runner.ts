@@ -1,5 +1,28 @@
 import { EventEmitter } from 'node:events';
-import type { ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
+import type { ParseResult, ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
+
+/** Synthesize a raw_event fallback for unknown/error parse results so the
+ *  adapter only ever sees typed messages. Returns null for skip. */
+function toProtocolMessage(result: ParseResult): Record<string, unknown> | null {
+  switch (result.status) {
+    case 'skip':
+      return null;
+    case 'ok':
+      return result.message as Record<string, unknown>;
+    case 'unknown':
+      return { type: 'raw_event', rawType: result.type, data: result.data };
+    case 'error': {
+      let data: unknown;
+      try {
+        data = JSON.parse(result.raw);
+      } catch (err) {
+        console.debug('Failed to parse JSON', err);
+        data = { raw: result.raw };
+      }
+      return { type: 'raw_event', rawType: 'parse_error', data };
+    }
+  }
+}
 
 interface ProcessRunnerOptions {
   adapter: ProviderAdapter;
@@ -57,38 +80,7 @@ export class ProcessRunner extends EventEmitter {
 
   private _processLine(line: string): void {
     const result = this.adapter.parseLine(line);
-    let protocolMessage: unknown = null;
-
-    switch (result.status) {
-      case 'skip':
-        return;
-      case 'ok':
-        protocolMessage = result.message;
-        break;
-      case 'unknown':
-        protocolMessage = {
-          type: 'raw_event' as const,
-          rawType: result.type,
-          data: result.data,
-        };
-        break;
-      case 'error': {
-        let data: unknown;
-        try {
-          data = JSON.parse(result.raw);
-        } catch (error) {
-          console.debug('Failed to parse JSON', error);
-          data = { raw: result.raw };
-        }
-        protocolMessage = {
-          type: 'raw_event' as const,
-          rawType: 'parse_error',
-          data,
-        };
-        break;
-      }
-    }
-
+    const protocolMessage = toProtocolMessage(result);
     if (!protocolMessage) return;
 
     const { messages, controlResponses } = this.adapter.transform(protocolMessage);

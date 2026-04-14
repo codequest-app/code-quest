@@ -58,15 +58,12 @@ export function PluginProvider({ children }: { children: ReactNode }) {
       const s = socketRef.current;
       const installedResult = await rpc(s, 'plugin:list', {});
       setState((prev) => ({ ...prev, installed: installedResult.installed }));
-      rpc(s, 'plugin:list', { includeAvailable: true })
-        .then((result) => {
-          setState((prev) => ({
-            ...prev,
-            installed: result.installed.length > 0 ? result.installed : prev.installed,
-            available: result.available,
-          }));
-        })
-        .catch((err) => console.error('Failed to load plugins:', err));
+      const result = await rpc(s, 'plugin:list', { includeAvailable: true });
+      setState((prev) => ({
+        ...prev,
+        installed: result.installed.length > 0 ? result.installed : prev.installed,
+        available: result.available,
+      }));
     };
 
     const refreshMarketplaces = async () => {

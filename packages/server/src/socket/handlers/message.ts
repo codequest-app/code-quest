@@ -24,6 +24,24 @@ function fireSendRequest(ch: Channel, event: string, payload?: Record<string, un
   ch.sendRequest(event, payload).catch((err) => logger.debug({ err }, 'sendRequest failed'));
 }
 
+/**
+ * Parse payload with schema; invoke fn on success; log on failure.
+ * @param level 'debug' for recoverable payload issues, 'error' for unexpected failures.
+ */
+function safeParseAndLog<T>(
+  level: 'debug' | 'error',
+  msg: string,
+  schema: { parse(p: unknown): T },
+  payload: unknown,
+  fn: (parsed: T) => void,
+): void {
+  try {
+    fn(schema.parse(payload));
+  } catch (err) {
+    logger[level]({ err }, msg);
+  }
+}
+
 export function create({
   channelManager,
   sessionStore,
@@ -33,39 +51,45 @@ export function create({
   const interruptedChannels = new Set<string>();
 
   function handleSend(ch: Channel, socket: TypedSocket, payload: unknown): void {
-    try {
-      const { channelId, message: textMessage } = chatSendPayloadSchema.parse(payload);
-      interruptedChannels.delete(channelId);
-      ch.startProcessing();
-      ch.sendMessage(textMessage);
-      channelManager.broadcastSessionState(channelId, 'busy');
+    safeParseAndLog(
+      'error',
+      'Failed to send message',
+      chatSendPayloadSchema,
+      payload,
+      ({ channelId, message: textMessage }) => {
+        interruptedChannels.delete(channelId);
+        ch.startProcessing();
+        ch.sendMessage(textMessage);
+        channelManager.broadcastSessionState(channelId, 'busy');
 
-      emitter.emitToOthers(channelId, socket.id, 'message:user', {
-        channelId,
-        content: [{ type: 'text', text: textMessage }],
-      });
+        emitter.emitToOthers(channelId, socket.id, 'message:user', {
+          channelId,
+          content: [{ type: 'text', text: textMessage }],
+        });
 
-      if (!ch.titleGenerated) {
-        ch.titleGenerated = true;
-        ch.pendingTitlePrompt = textMessage;
-      }
-    } catch (err) {
-      logger.error({ err }, 'Failed to send message');
-    }
+        if (!ch.titleGenerated) {
+          ch.titleGenerated = true;
+          ch.pendingTitlePrompt = textMessage;
+        }
+      },
+    );
   }
 
   function handleCancel(ch: Channel, payload: unknown): void {
-    try {
-      const { channelId } = chatCancelPayloadSchema.parse(payload);
-      if (interruptedChannels.has(channelId)) {
-        ch.abort();
-      } else {
-        interruptedChannels.add(channelId);
-        fireSendRequest(ch, 'message:interrupt');
-      }
-    } catch (err) {
-      logger.debug({ err }, 'Failed to cancel');
-    }
+    safeParseAndLog(
+      'debug',
+      'Failed to cancel',
+      chatCancelPayloadSchema,
+      payload,
+      ({ channelId }) => {
+        if (interruptedChannels.has(channelId)) {
+          ch.abort();
+        } else {
+          interruptedChannels.add(channelId);
+          fireSendRequest(ch, 'message:interrupt');
+        }
+      },
+    );
   }
 
   function respondAndDismiss(
@@ -155,21 +179,24 @@ export function create({
   }
 
   function handleStopTask(ch: Channel, payload: unknown): void {
-    try {
-      const { taskId } = chatStopTaskPayloadSchema.parse(payload);
-      fireSendRequest(ch, 'message:stop_task', { task_id: taskId });
-    } catch (err) {
-      logger.debug({ err }, 'Failed to stop task');
-    }
+    safeParseAndLog(
+      'debug',
+      'Failed to stop task',
+      chatStopTaskPayloadSchema,
+      payload,
+      ({ taskId }) => fireSendRequest(ch, 'message:stop_task', { task_id: taskId }),
+    );
   }
 
   function handleCancelAsync(ch: Channel, payload: unknown): void {
-    try {
-      const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
-      fireSendRequest(ch, 'message:cancel_async', { message_uuid: messageUuid });
-    } catch (err) {
-      logger.debug({ err }, 'Failed to cancel async message');
-    }
+    safeParseAndLog(
+      'debug',
+      'Failed to cancel async message',
+      chatCancelAsyncMessagePayloadSchema,
+      payload,
+      ({ messageUuid }) =>
+        fireSendRequest(ch, 'message:cancel_async', { message_uuid: messageUuid }),
+    );
   }
 
   async function handleRewindCode(
@@ -191,31 +218,35 @@ export function create({
   }
 
   function handleCancelRequest(_ch: Channel | null, payload: unknown): void {
-    try {
-      const { targetRequestId } = cancelRequestPayloadSchema.parse(payload);
-      const cancelMatch = channelManager.findByRequestId(targetRequestId);
-      if (cancelMatch) {
-        const [channelId, channel] = cancelMatch;
-        channel.removeControlRequest(targetRequestId);
-        channel.respondToRequest(targetRequestId, {
-          behavior: 'deny',
-          message: 'User cancelled',
-          interrupt: false,
-        });
-        emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
-      }
-    } catch (err) {
-      logger.debug({ err }, 'Failed to cancel request');
-    }
+    safeParseAndLog(
+      'debug',
+      'Failed to cancel request',
+      cancelRequestPayloadSchema,
+      payload,
+      ({ targetRequestId }) => {
+        const cancelMatch = channelManager.findByRequestId(targetRequestId);
+        if (cancelMatch) {
+          const [channelId, channel] = cancelMatch;
+          channel.removeControlRequest(targetRequestId);
+          channel.respondToRequest(targetRequestId, {
+            behavior: 'deny',
+            message: 'User cancelled',
+            interrupt: false,
+          });
+          emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
+        }
+      },
+    );
   }
 
   function handleHookRespond(ch: Channel, payload: unknown): void {
-    try {
-      const { requestId, response } = chatHookCallbackRespondPayloadSchema.parse(payload);
-      ch.respondToRequest(requestId, response);
-    } catch (err) {
-      logger.debug({ err }, 'Failed to respond to hook');
-    }
+    safeParseAndLog(
+      'debug',
+      'Failed to respond to hook',
+      chatHookCallbackRespondPayloadSchema,
+      payload,
+      ({ requestId, response }) => ch.respondToRequest(requestId, response),
+    );
   }
 
   async function generateTitleIfNeeded(channelId: string, ch: Channel): Promise<void> {
@@ -249,8 +280,13 @@ export function create({
     generateTitleIfNeeded(ch.channelId, ch);
   }
 
+  function onChannelExit(ch: Channel): void {
+    interruptedChannels.delete(ch.channelId);
+  }
+
   emitter.on('message:result', withChannel(onMessageResult));
   emitter.on('message:result', withChannel(onMessageResultTitle));
+  emitter.on('channel:exit', withChannel(onChannelExit));
   emitter.on('chat:send', withSocket(handleSend));
   emitter.on('chat:cancel', withChannel(handleCancel));
   emitter.on('chat:respond', handleRespond);

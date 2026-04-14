@@ -2,6 +2,7 @@ import type { ContentBlock } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
 import type { userSchema } from '../schemas.ts';
+import { buildMessagePayload } from './helpers.ts';
 
 type UserMessage = z.infer<typeof userSchema>;
 
@@ -32,10 +33,6 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
   return {
     name: 'message:user',
-    payload: {
-      content: blocks,
-      ...(parentToolUseId ? { parentToolUseId } : {}),
-      ...(uuid ? { uuid } : {}),
-    },
+    payload: buildMessagePayload(blocks, parentToolUseId, uuid),
   };
 }
