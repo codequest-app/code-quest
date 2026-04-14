@@ -10,6 +10,7 @@ import type { Channel } from '../../channel.ts';
 import { withChannel, withError } from '../../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
+import { resolveProjectRoot } from '../../utils/project-root.ts';
 import { err, ok } from '../../utils/rpc.ts';
 
 export function create({
@@ -61,9 +62,18 @@ export function create({
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
+      if (!parentRow.cwd) {
+        callback?.(err('parent session has no cwd — cannot fork'));
+        return;
+      }
+      const projectRoot =
+        parentRow.projectRoot ?? (await resolveProjectRoot(gitService, parentRow.cwd));
+      const newCh = channelManager.get(newChannelId);
+      if (newCh) newCh.projectRoot = projectRoot;
       emitter.broadcastAll('session:created', {
         channelId: newChannelId,
         cwd: parentRow.cwd,
+        projectRoot,
       });
       callback?.(ok({ channelId: newChannelId, parentChannelId: forkedFromChannelId }));
     } catch (e) {
@@ -104,9 +114,13 @@ export function create({
         },
       });
 
+      const projectRoot = await resolveProjectRoot(gitService, cwd);
+      const newCh = channelManager.get(parsed.newChannelId);
+      if (newCh) newCh.projectRoot = projectRoot;
       emitter.broadcastAll('session:created', {
         channelId: parsed.newChannelId,
         cwd,
+        projectRoot,
       });
       callback?.(
         ok({

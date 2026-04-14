@@ -1,13 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
+import { ProjectStateContext } from '../contexts/ProjectContext';
 
 interface ProjectContextMenuProps {
   x: number;
   y: number;
   onSelectResume: () => void;
+  onSelectCreateWorktree?: () => void;
   onClose: () => void;
 }
 
-export function ProjectContextMenu({ x, y, onSelectResume, onClose }: ProjectContextMenuProps) {
+export function ProjectContextMenu({
+  x,
+  y,
+  onSelectResume,
+  onSelectCreateWorktree,
+  onClose,
+}: ProjectContextMenuProps) {
+  const capabilities = useContext(ProjectStateContext)?.capabilities ?? { worktree: false };
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,6 +49,16 @@ export function ProjectContextMenu({ x, y, onSelectResume, onClose }: ProjectCon
       >
         Resume session…
       </button>
+      {capabilities.worktree && onSelectCreateWorktree ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={onSelectCreateWorktree}
+          className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5"
+        >
+          Create Worktree…
+        </button>
+      ) : null}
     </div>
   );
 }

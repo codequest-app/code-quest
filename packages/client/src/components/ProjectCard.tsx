@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 import { ProjectContextMenu } from './ProjectContextMenu';
 import { ResumeSessionsDialog } from './ResumeSessionsDialog';
 
@@ -15,6 +16,7 @@ export function ProjectCard({
 }) {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
 
   function handleContextMenu(e: React.MouseEvent) {
     if (!cwd) return;
@@ -44,11 +46,22 @@ export function ProjectCard({
             setMenuPos(null);
             setDialogOpen(true);
           }}
+          onSelectCreateWorktree={() => {
+            setMenuPos(null);
+            setWorktreeDialogOpen(true);
+          }}
           onClose={() => setMenuPos(null)}
         />
       )}
       {cwd && dialogOpen && (
         <ResumeSessionsDialog cwd={cwd} open={dialogOpen} onOpenChange={setDialogOpen} />
+      )}
+      {cwd && worktreeDialogOpen && (
+        <CreateWorktreeDialog
+          open={worktreeDialogOpen}
+          cwd={cwd}
+          onClose={() => setWorktreeDialogOpen(false)}
+        />
       )}
     </>
   );

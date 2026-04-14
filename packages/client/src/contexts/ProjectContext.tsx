@@ -1,13 +1,6 @@
 import type { SessionStateSummary } from '@code-quest/shared';
-import {
-  initResponseSchema,
-  sessionCreatedPayloadSchema,
-  sessionDeadPayloadSchema,
-  sessionStatesPayloadSchema,
-} from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSession } from './SessionContext';
-import { useSocket } from './SocketContext';
 
 export interface Project {
   cwd: string;
@@ -18,6 +11,8 @@ interface ProjectState {
   projects: Project[];
   activeProjectCwd: string | null;
   sessions: SessionStateSummary[];
+  /** Server capabilities from app:init. Consumed by WorktreeProvider etc. */
+  capabilities: { worktree: boolean };
   /** When set, a TabProvider whose cwd matches will activate the channelId once it appears in tabs. */
   pendingActivateChannel: { cwd: string; channelId: string } | null;
 }
@@ -50,97 +45,31 @@ function cwdToProject(cwd: string): Project {
 
 const TERMINAL_STATES = new Set(['exited', 'disconnected']);
 
-function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {
-  const cwds = new Set<string>();
+/** Project identity = projectRoot (server guarantees non-null: git root or cwd fallback). */
+export function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {
+  const keys = new Set<string>();
   for (const s of sessions) {
-    if (s.cwd && !TERMINAL_STATES.has(s.state)) cwds.add(s.cwd);
+    if (!TERMINAL_STATES.has(s.state)) keys.add(s.projectRoot);
   }
-  if (cwds.size === 0) return prev;
+  if (keys.size === 0) return prev;
   const existing = new Set(prev.map((p) => p.cwd));
-  const newProjects = [...cwds].filter((c) => !existing.has(c)).map(cwdToProject);
+  const newProjects = [...keys].filter((k) => !existing.has(k)).map(cwdToProject);
   return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
-type SessionUpdater = (prev: SessionStateSummary[]) => SessionStateSummary[];
-
-function handleCreated(raw: unknown): SessionUpdater | null {
-  const parsed = sessionCreatedPayloadSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  const { channelId, cwd } = parsed.data;
-  return (prev) => {
-    if (prev.some((s) => s.channelId === channelId)) return prev;
-    return [...prev, { channelId, state: 'launching', cwd }];
-  };
-}
-
-function handleDead(raw: unknown): SessionUpdater | null {
-  const parsed = sessionDeadPayloadSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  return (prev) => prev.filter((s) => s.channelId !== parsed.data.channelId);
-}
-
-function handleStates(raw: unknown): SessionUpdater | null {
-  const parsed = sessionStatesPayloadSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  return (prev) => {
-    let next = [...prev];
-    for (const update of parsed.data.sessions) {
-      const idx = next.findIndex((s) => s.channelId === update.channelId);
-      if (idx >= 0) {
-        next[idx] = { ...next[idx], ...update };
-      } else {
-        next = [...next, update];
-      }
-    }
-    return next;
-  };
-}
-
 export function ProjectProvider({ children }: { children: ReactNode }) {
+  const { sessions, capabilities } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
   const [pendingActivateChannel, setPendingActivateChannel] = useState<{
     cwd: string;
     channelId: string;
   } | null>(null);
-  const { socket } = useSocket();
-  const { setInitOptions } = useSession();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setInitOptions is stable (useState initializer in SessionProvider)
+  // Sync derived projects whenever the session list changes.
   useEffect(() => {
-    const onConnect = () => {
-      socket.emit('app:init', (raw) => {
-        const parsed = initResponseSchema.safeParse(raw);
-        if (!parsed.success) return;
-        setSessions(parsed.data.sessions);
-        setProjects((prev) => deriveProjects(parsed.data.sessions, prev));
-        if (parsed.data.settings && Object.keys(parsed.data.settings).length > 0) {
-          setInitOptions(parsed.data.settings);
-        }
-      });
-    };
-
-    const apply = (handler: (raw: unknown) => SessionUpdater | null) => (raw: unknown) => {
-      const updater = handler(raw);
-      if (updater) setSessions(updater);
-    };
-    const onCreated = apply(handleCreated);
-    const onDead = apply(handleDead);
-    const onStates = apply(handleStates);
-
-    socket.on('connect', onConnect);
-    if (socket.connected) onConnect();
-    socket.on('session:created', onCreated);
-    socket.on('session:dead', onDead);
-    socket.on('session:states', onStates);
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('session:created', onCreated);
-      socket.off('session:dead', onDead);
-      socket.off('session:states', onStates);
-    };
-  }, [socket]);
+    setProjects((prev) => deriveProjects(sessions, prev));
+  }, [sessions]);
 
   // Actions close only over stable setState refs — keep the same object
   // identity across renders so consumers (esp. TabProvider's
@@ -164,6 +93,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     projects,
     activeProjectCwd,
     sessions,
+    capabilities,
     pendingActivateChannel,
   };
   return (

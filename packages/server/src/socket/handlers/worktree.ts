@@ -1,92 +1,128 @@
-import { createWorktreePayloadSchema, deleteWorktreePayloadSchema } from '@code-quest/shared';
+import {
+  createWorktreePayloadSchema,
+  deleteWorktreePayloadSchema,
+  listWorktreesPayloadSchema,
+} from '@code-quest/shared';
+import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
-import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { err, ok } from '../utils/rpc.ts';
 
 export function create({
   emitter,
+  channelManager,
   gitService,
-}: Pick<HandlerContext, 'emitter' | 'gitService'>): void {
+}: Pick<HandlerContext, 'emitter' | 'channelManager' | 'gitService'>): void {
   async function handleCreate(
-    ch: Channel,
+    _ch: Channel | null,
     payload: unknown,
-    _socket?: TypedSocket,
+    socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
+    const parsed = createWorktreePayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      callback?.(err(parsed.error.message));
+      return;
+    }
+    const { cwd, name } = parsed.data;
+
+    // Use getProjectRoot (main repo), NOT getRepoRoot, to avoid creating
+    // a nested worktree when invoked from inside an existing worktree.
+    const projectRoot = await gitService.getProjectRoot(cwd).catch(() => null);
+    if (!projectRoot) {
+      callback?.(err('Not inside a git repository'));
+      return;
+    }
+
+    let info: Awaited<ReturnType<typeof gitService.createWorktree>> | null = null;
     try {
-      if (!ch.cwd) {
-        callback?.({ error: 'No working directory' });
-        return;
+      info = await gitService.createWorktree(projectRoot, name);
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to create worktree')));
+      return;
+    }
+
+    const newChannelId = crypto.randomUUID();
+    try {
+      await channelManager.create(newChannelId, {
+        cwd: info.path,
+        onBeforeSpawn: (ch) => {
+          // Must set before spawn so early broadcastSessionState emits include these.
+          ch.projectRoot = projectRoot;
+          ch.worktree = { name: info.name, path: info.path, branch: info.branch };
+          if (socket) channelManager.addSocketToChannel(ch, socket);
+        },
+      });
+
+      emitter.broadcastAll('session:created', {
+        channelId: newChannelId,
+        cwd: info.path,
+        projectRoot,
+      });
+
+      callback?.(ok({ channelId: newChannelId, worktreePath: info.path }));
+    } catch (e) {
+      // Rollback the worktree filesystem state on spawn failure.
+      try {
+        await gitService.deleteWorktree(projectRoot, info.name);
+      } catch (rbErr) {
+        logger.error({ rbErr }, 'Worktree rollback failed after spawn error');
       }
-      const parsed = createWorktreePayloadSchema.safeParse(payload);
-      const name = parsed.success ? parsed.data.name : undefined;
-      const repoRoot = await gitService.getRepoRoot(ch.cwd);
-      if (!repoRoot) {
-        callback?.({ error: 'Not inside a git repository' });
-        return;
-      }
-      const info = await gitService.createWorktree(repoRoot, name);
-      callback?.(info);
-    } catch (err) {
-      callback?.({ error: errMsg(err, 'Failed to create worktree') });
+      callback?.(err(errMsg(e, 'Failed to spawn channel in new worktree')));
     }
   }
 
   async function handleList(
-    ch: Channel,
-    _payload: unknown,
-    _socket?: TypedSocket,
-    callback?: SocketCallback,
-  ): Promise<void> {
-    try {
-      if (!ch.cwd) {
-        callback?.({ worktrees: [] });
-        return;
-      }
-      const repoRoot = await gitService.getRepoRoot(ch.cwd);
-      if (!repoRoot) {
-        callback?.({ worktrees: [] });
-        return;
-      }
-      const worktrees = await gitService.listWorktrees(repoRoot);
-      callback?.({ worktrees });
-    } catch (err) {
-      callback?.({ worktrees: [], error: errMsg(err, 'Failed to list worktrees') });
-    }
-  }
-
-  async function handleDelete(
-    ch: Channel,
+    _ch: Channel | null,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
   ): Promise<void> {
+    const parsed = listWorktreesPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      callback?.(err(parsed.error.message));
+      return;
+    }
     try {
-      const parsed = deleteWorktreePayloadSchema.safeParse(payload);
-      if (!parsed.success) {
-        callback?.(err('name is required'));
+      const projectRoot = await gitService.getProjectRoot(parsed.data.cwd);
+      if (!projectRoot) {
+        callback?.(ok({ worktrees: [] }));
         return;
       }
-      if (!ch.cwd) {
-        callback?.(err('No working directory'));
-        return;
-      }
-      const repoRoot = await gitService.getRepoRoot(ch.cwd);
-      if (!repoRoot) {
+      const worktrees = await gitService.listWorktrees(projectRoot);
+      callback?.(ok({ worktrees }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to list worktrees')));
+    }
+  }
+
+  async function handleDelete(
+    _ch: Channel | null,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
+    const parsed = deleteWorktreePayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      callback?.(err(parsed.error.message));
+      return;
+    }
+    try {
+      const projectRoot = await gitService.getProjectRoot(parsed.data.cwd);
+      if (!projectRoot) {
         callback?.(err('Not inside a git repository'));
         return;
       }
-      await gitService.deleteWorktree(repoRoot, parsed.data.name);
+      await gitService.deleteWorktree(projectRoot, parsed.data.name);
       callback?.(ok({}));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to delete worktree')));
     }
   }
 
-  emitter.on('worktree:create', withChannel(handleCreate));
-  emitter.on('worktree:list', withChannel(handleList));
-  emitter.on('worktree:delete', withChannel(handleDelete));
+  emitter.on('worktree:create', handleCreate);
+  emitter.on('worktree:list', handleList);
+  emitter.on('worktree:delete', handleDelete);
 }

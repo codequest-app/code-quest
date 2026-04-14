@@ -7,6 +7,7 @@ import { SessionRow } from '../SessionRow';
 const baseSession: SessionSummary = {
   id: 's1',
   channelId: 's1',
+  projectRoot: '/test/project',
   provider: 'claude',
   command: 'claude',
   args: '--verbose',

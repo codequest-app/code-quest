@@ -27,6 +27,7 @@ export const WithSessions: Story = {
       {
         id: 'sess-abc',
         channelId: 'sess-abc',
+        projectRoot: '/test/project',
         provider: 'anthropic',
         command: 'claude',
         args: '',
@@ -38,6 +39,7 @@ export const WithSessions: Story = {
       {
         id: 'sess-def',
         channelId: 'sess-def',
+        projectRoot: '/test/project',
         provider: 'anthropic',
         command: 'claude',
         args: '',
@@ -61,6 +63,7 @@ export const WithRename: Story = {
       {
         id: 'sess-abc',
         channelId: 'sess-abc',
+        projectRoot: '/test/project',
         provider: 'anthropic',
         command: 'claude',
         args: '',

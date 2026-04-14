@@ -10,6 +10,7 @@ interface SessionsTable {
   command: Column;
   args: Column;
   cwd: Column;
+  projectRoot: Column;
   mode: Column;
   role: Column;
   parentId: Column;

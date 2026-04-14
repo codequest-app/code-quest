@@ -16,11 +16,11 @@ describe('WorktreeManager', () => {
     });
 
     it('rejects name with slashes', () => {
-      expect(() => validateWorktreeName('path/to/thing')).toThrow(/only letters/);
+      expect(() => validateWorktreeName('path/to/thing')).toThrow(/letters, numbers/i);
     });
 
     it('rejects name with spaces', () => {
-      expect(() => validateWorktreeName('my feature')).toThrow(/only letters/);
+      expect(() => validateWorktreeName('my feature')).toThrow(/letters, numbers/i);
     });
 
     it('rejects name with path traversal', () => {

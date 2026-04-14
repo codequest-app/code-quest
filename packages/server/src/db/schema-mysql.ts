@@ -15,6 +15,7 @@ export const sessions = mysqlTable(
     command: varchar('command', { length: 255 }).notNull(),
     args: text('args').notNull(),
     cwd: text('cwd'),
+    projectRoot: text('project_root').notNull(),
     mode: varchar('mode', { length: 20 }).notNull().default('print'),
     role: varchar('role', { length: 20 }).notNull().default('chat'),
     title: varchar('title', { length: 200 }),

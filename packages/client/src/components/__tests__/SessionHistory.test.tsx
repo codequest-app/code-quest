@@ -15,6 +15,7 @@ const makeSessions = (n: number): SessionSummary[] =>
     role: 'user',
     createdAt: new Date(Date.now() - i * 86400_000).toISOString(),
     cwd: '/test',
+    projectRoot: '/test',
     title: `Session ${i}`,
   }));
 

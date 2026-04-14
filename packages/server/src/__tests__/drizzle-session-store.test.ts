@@ -16,6 +16,7 @@ function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionReco
     provider: 'claude',
     command: 'claude',
     args: '[]',
+    projectRoot: overrides?.cwd ?? '/default/project',
     mode: 'print',
     role: 'chat',
     createdAt: new Date().toISOString(),
@@ -31,6 +32,24 @@ describe('DrizzleSessionStore', () => {
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
     store = new DrizzleSessionStore(db, sessions);
+  });
+
+  describe('projectRoot', () => {
+    it('persists projectRoot on upsert + returns it via getById', async () => {
+      await store.upsert(
+        makeRecord('pr-1', { cwd: '/repo/.claude/worktrees/feat-a', projectRoot: '/repo' }),
+      );
+
+      const fetched = await store.getById('pr-1');
+      expect(fetched?.projectRoot).toBe('/repo');
+    });
+
+    it('projectRoot is required (non-null) and round-trips verbatim', async () => {
+      await store.upsert(makeRecord('pr-2', { cwd: '/tmp/scratch', projectRoot: '/tmp/scratch' }));
+
+      const fetched = await store.getById('pr-2');
+      expect(fetched?.projectRoot).toBe('/tmp/scratch');
+    });
   });
 
   describe('list', () => {

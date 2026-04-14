@@ -6,6 +6,7 @@ function picked(overrides: Partial<SessionSummary>): SessionSummary {
   return {
     id: 'sess-1',
     channelId: 'ch-historical',
+    projectRoot: '/test/project',
     provider: 'claude',
     command: 'claude',
     args: '[]',

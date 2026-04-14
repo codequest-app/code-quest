@@ -12,6 +12,7 @@ export const sessionSummarySchema = z.object({
   command: z.string(),
   args: z.string(),
   cwd: z.string().optional(),
+  projectRoot: z.string(),
   mode: z.string(),
   role: z.string(),
   parentId: z.string().optional(),
@@ -188,6 +189,7 @@ export const sessionStateSummarySchema = z.object({
   permissionMode: z.string().optional(),
   effort: z.string().optional(),
   cwd: z.string().optional(),
+  projectRoot: z.string(),
 });
 export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 
@@ -247,6 +249,7 @@ export const initResponseSchema = z.looseObject({
   activeChannelId: z.string().optional(),
   models: z.array(z.unknown()).optional(),
   state: z.record(z.string(), z.unknown()).optional(),
+  capabilities: z.object({ worktree: z.boolean() }).optional(),
 });
 export type InitResponse = z.infer<typeof initResponseSchema>;
 
@@ -260,6 +263,7 @@ export type RawEventsResponse = z.infer<typeof rawEventsResponseSchema>;
 export const sessionCreatedPayloadSchema = z.object({
   channelId: z.string(),
   cwd: z.string(),
+  projectRoot: z.string(),
 });
 export type SessionCreatedPayload = z.infer<typeof sessionCreatedPayloadSchema>;
 

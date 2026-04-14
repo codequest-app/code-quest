@@ -22,6 +22,7 @@ import type {
   ControlPermissionPayload,
   ControlResponse,
   CreateWorktreePayload,
+  CreateWorktreeResponse,
   DeleteWorktreePayload,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
@@ -53,6 +54,7 @@ import type {
   ListMarketplacesResponse,
   ListPluginsPayload,
   ListPluginsResponse,
+  ListWorktreesPayload,
   LoginPayload,
   MarketplaceResult,
   McpAuthenticatePayload,
@@ -135,7 +137,6 @@ import type {
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
   UpdateStatePayload,
-  WorktreeInfo,
   WorktreeListResponse,
 } from './schemas/index.ts';
 
@@ -387,9 +388,12 @@ export interface ClientToServerEvents {
   // ── Worktree ──
   'worktree:create': (
     payload: CreateWorktreePayload,
-    callback: (response: WorktreeInfo | { error: string }) => void,
+    callback: (response: CreateWorktreeResponse) => void,
   ) => void;
-  'worktree:list': (callback: (response: WorktreeListResponse) => void) => void;
+  'worktree:list': (
+    payload: ListWorktreesPayload,
+    callback: (response: WorktreeListResponse) => void,
+  ) => void;
   'worktree:delete': (
     payload: DeleteWorktreePayload,
     callback: (response: RpcResult<Record<string, never>>) => void,

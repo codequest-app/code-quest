@@ -7,12 +7,15 @@ import type {
 import type { GitService } from '../git/types.ts';
 
 export class FakeGitService implements GitService {
+  readonly capabilities = { worktree: true } as const;
+
   private _branch = 'main';
   private _clean = true;
   private _changedFiles: GitStatusResult['changedFiles'] = [];
   private _logEntries: GitLogResult['entries'] = [];
   private _diff = '';
   private _repoRoot: string | null = '/repo';
+  private _projectRoot: string | null = null;
   private _worktrees: WorktreeInfo[] = [];
   private _checkoutError: Error | null = null;
 
@@ -57,6 +60,7 @@ export class FakeGitService implements GitService {
     this._logEntries = [];
     this._diff = '';
     this._repoRoot = '/repo';
+    this._projectRoot = null;
     this._worktrees = [];
     this._checkoutError = null;
   }
@@ -82,6 +86,14 @@ export class FakeGitService implements GitService {
 
   async diff(_cwd: string): Promise<GitDiffResult> {
     return { diff: this._diff };
+  }
+
+  setProjectRoot(root: string | null): void {
+    this._projectRoot = root;
+  }
+
+  async getProjectRoot(_cwd: string): Promise<string | null> {
+    return this._projectRoot;
   }
 
   async getRepoRoot(_cwd: string): Promise<string | null> {

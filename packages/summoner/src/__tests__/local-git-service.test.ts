@@ -120,6 +120,44 @@ describe.skipIf(SKIP)('LocalGitService', () => {
     });
   });
 
+  describe('getProjectRoot', () => {
+    it('returns main repo path for main working tree', async () => {
+      const root = await service.getProjectRoot(tmpDir);
+      expect(root).toBe(tmpDir);
+    });
+
+    it('returns main repo path for subdirectory of main working tree', async () => {
+      const sub = join(tmpDir, 'subdir-for-project-root');
+      mkdirSync(sub, { recursive: true });
+      const root = await service.getProjectRoot(sub);
+      expect(root).toBe(tmpDir);
+    });
+
+    it('returns main repo path (not worktree path) when called from a worktree', async () => {
+      // Create a worktree, then verify getProjectRoot from inside it returns the main repo
+      const wt = await service.createWorktree(tmpDir, 'project-root-wt');
+      try {
+        const root = await service.getProjectRoot(wt.path);
+        expect(root).toBe(tmpDir);
+      } finally {
+        await service.deleteWorktree(tmpDir, 'project-root-wt');
+      }
+    });
+
+    it('returns null for non-git path', async () => {
+      const nonGit = realpathSync(mkdtempSync(join(os.tmpdir(), 'non-git-proj-')));
+      const root = await service.getProjectRoot(nonGit);
+      expect(root).toBeNull();
+      rmSync(nonGit, { recursive: true, force: true });
+    });
+  });
+
+  describe('capabilities', () => {
+    it('declares worktree support', () => {
+      expect(service.capabilities.worktree).toBe(true);
+    });
+  });
+
   describe('worktree', () => {
     it('roundtrip: create + list + delete', async () => {
       const wt = await service.createWorktree(tmpDir, 'roundtrip-wt');

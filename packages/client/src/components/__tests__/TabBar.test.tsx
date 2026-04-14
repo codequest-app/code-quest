@@ -21,6 +21,47 @@ function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
   );
 }
 
+describe('TabBar worktree grouping', () => {
+  it('renders a worktree badge for tabs with a worktree', () => {
+    render(
+      <TabBar
+        tabs={[
+          {
+            sessionId: 'wt-sess',
+            title: 'Feature A',
+            status: 'idle',
+            worktree: { name: 'feat-a', path: '/repo/.claude/worktrees/feat-a' },
+          },
+        ]}
+        activeTabId="wt-sess"
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('tab-worktree-badge')).toHaveTextContent('feat-a');
+  });
+
+  it('renders a divider between main-tree tabs and worktree tabs', () => {
+    render(
+      <TabBar
+        tabs={[
+          { sessionId: 'main', title: 'main', status: 'idle' },
+          {
+            sessionId: 'wt',
+            title: 'feat',
+            status: 'idle',
+            worktree: { name: 'feat', path: '/repo/.claude/worktrees/feat' },
+          },
+        ]}
+        activeTabId="main"
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByTestId('tab-divider')).toHaveLength(1);
+  });
+});
+
 describe('TabBar', () => {
   it('renders all tabs', () => {
     renderTabBar();

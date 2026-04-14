@@ -210,6 +210,7 @@ export class ChannelManager {
           state,
           ...pickDefined({
             cwd: ch?.cwd,
+            projectRoot: ch?.projectRoot ?? undefined,
             title,
             modelSetting: ss.model,
             permissionMode: ss.permissionMode,

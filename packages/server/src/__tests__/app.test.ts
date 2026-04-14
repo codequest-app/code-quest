@@ -16,6 +16,17 @@ describe('ChatHandler > connection', () => {
     expect(result.sessions).toEqual(expect.any(Array));
   });
 
+  it('init includes capabilities.worktree from GitService', async () => {
+    const claude = createFakeSummoner().claude();
+
+    const result = await claude.send<{
+      capabilities?: { worktree: boolean };
+    }>('app:init');
+
+    // FakeGitService.capabilities.worktree === true
+    expect(result.capabilities?.worktree).toBe(true);
+  });
+
   it('app:config returns providerConfig from adapter', async () => {
     const claude = createFakeSummoner().claude();
 

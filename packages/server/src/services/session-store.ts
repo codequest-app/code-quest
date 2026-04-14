@@ -7,6 +7,7 @@ export const sessionRecordSchema = z.looseObject({
   command: z.string(),
   args: z.string(),
   cwd: z.string().nullable().optional(),
+  projectRoot: z.string(),
   mode: z.string(),
   role: z.string(),
   parentId: z.string().nullable().optional(),

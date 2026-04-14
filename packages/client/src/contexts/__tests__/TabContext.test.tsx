@@ -13,7 +13,12 @@ import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../TabContext';
 
-const idleSession = (channelId: string, cwd = '/') => ({ channelId, state: 'idle' as const, cwd });
+const idleSession = (channelId: string, cwd = '/') => ({
+  channelId,
+  state: 'idle' as const,
+  cwd,
+  projectRoot: cwd,
+});
 
 function renderInTab(ui: ReactElement) {
   const summoner = createFakeSummoner();
@@ -108,7 +113,7 @@ describe('TabProvider', () => {
         <ProbeAndTrigger trigger={{ cwd: '/proj', channelId: 'ch-1' }} />,
         {
           cwd: '/proj',
-          sessions: [{ channelId: 'ch-1', state: 'idle', cwd: '/proj' }],
+          sessions: [{ channelId: 'ch-1', state: 'idle', cwd: '/proj', projectRoot: '/proj' }],
         },
       );
 
@@ -135,7 +140,7 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('active')).toHaveTextContent('null');
 
       // Channel appears via sessions prop
-      setSessions([{ channelId: 'ch-late', state: 'idle', cwd: '/proj' }]);
+      setSessions([{ channelId: 'ch-late', state: 'idle', cwd: '/proj', projectRoot: '/proj' }]);
 
       await waitFor(() => {
         expect(screen.getByTestId('active')).toHaveTextContent('ch-late');
@@ -151,8 +156,8 @@ describe('TabProvider', () => {
         {
           cwd: '/proj',
           sessions: [
-            { channelId: 'ch-a', state: 'idle', cwd: '/proj' },
-            { channelId: 'ch-target', state: 'idle', cwd: '/proj' },
+            { channelId: 'ch-a', state: 'idle', cwd: '/proj', projectRoot: '/proj' },
+            { channelId: 'ch-target', state: 'idle', cwd: '/proj', projectRoot: '/proj' },
           ],
         },
       );
@@ -468,7 +473,9 @@ describe('TabProvider', () => {
         return <span data-testid="cwd">{cwd ?? 'none'}</span>;
       }
       const { setSessions } = renderWithSessions(<Test />);
-      setSessions([{ channelId: 'ch-1', state: 'idle', cwd: '/my/project' }]);
+      setSessions([
+        { channelId: 'ch-1', state: 'idle', cwd: '/my/project', projectRoot: '/my/project' },
+      ]);
       expect(screen.getByTestId('cwd')).toHaveTextContent('none');
     });
 
@@ -582,7 +589,7 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('keys')).toHaveTextContent('empty');
 
       // server broadcasts session:states with exited state (race condition) — should NOT re-add tab
-      setSessions([{ channelId: 'A', state: 'exited' as const }]);
+      setSessions([{ channelId: 'A', state: 'exited' as const, projectRoot: '/test/project' }]);
       expect(screen.getByTestId('keys')).toHaveTextContent('empty');
     });
 
@@ -592,7 +599,9 @@ describe('TabProvider', () => {
         return <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>;
       }
       const { setSessions } = renderWithSessions(<Test />);
-      setSessions([{ channelId: 'a', state: 'idle', cwd: '/projects/app' }]);
+      setSessions([
+        { channelId: 'a', state: 'idle', cwd: '/projects/app', projectRoot: '/projects/app' },
+      ]);
       expect(screen.getByTestId('cwd')).toHaveTextContent('undefined');
     });
   });

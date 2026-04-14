@@ -64,7 +64,7 @@ export function WorkspaceLayout() {
                 className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
               >
                 <TabProvider
-                  sessions={sessions.filter((s) => s.cwd === project.cwd)}
+                  sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
                   cwd={project.cwd}
                 >
                   <EditorArea />

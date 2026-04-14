@@ -5,34 +5,19 @@ import {
   type GitDiffResult,
   type GitLogResult,
   type GitStatusResult,
+  validateWorktreeName as validateWorktreeNameShared,
   type WorktreeInfo,
 } from '@code-quest/shared';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
 import type { GitService } from './types.ts';
 
-const MAX_NAME_LENGTH = 100;
-const VALID_NAME_RE = /^[a-zA-Z0-9._-]+$/;
-const PATH_TRAVERSAL_RE = /\.\./;
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
 
+/** Throwing wrapper around the shared validator — used at git boundaries
+ *  where an invalid name must abort the operation. */
 export function validateWorktreeName(name: string): void {
-  if (!name) {
-    throw new Error('Invalid worktree name: name is required');
-  }
-  if (!VALID_NAME_RE.test(name)) {
-    throw new Error('Invalid worktree name: only letters, numbers, dots, hyphens, and underscores');
-  }
-  if (name.length > MAX_NAME_LENGTH) {
-    throw new Error(
-      `Invalid worktree name: must be ${MAX_NAME_LENGTH} characters or fewer (got ${name.length})`,
-    );
-  }
-  if (PATH_TRAVERSAL_RE.test(name)) {
-    throw new Error('Invalid worktree name: must not contain ".." path segments');
-  }
-  if (name.endsWith('.') || name.endsWith('.lock')) {
-    throw new Error('Invalid worktree name: must not end with "." or ".lock"');
-  }
+  const err = validateWorktreeNameShared(name);
+  if (err) throw new Error(`Invalid worktree name: ${err}`);
 }
 
 /** Detect if a path is inside a managed worktree. */
@@ -71,6 +56,8 @@ function parseWorktreeList(stdout: string): WorktreeInfo[] {
 }
 
 export class LocalGitService implements GitService {
+  readonly capabilities = { worktree: true } as const;
+
   // ── Git operations ──
 
   async status(cwd: string): Promise<GitStatusResult> {
@@ -116,6 +103,22 @@ export class LocalGitService implements GitService {
       return (await this.createGit(cwd).revparse(['--show-toplevel'])).trim();
     } catch (err) {
       console.debug('[GitService] getRepoRoot failed:', errMsg(err));
+      return null;
+    }
+  }
+
+  async getProjectRoot(cwd: string): Promise<string | null> {
+    try {
+      const git = this.createGit(cwd);
+      const commonDir = (await git.revparse(['--git-common-dir'])).trim();
+      // commonDir is either an absolute path or a path relative to cwd.
+      const absolute = commonDir.startsWith('/') ? commonDir : resolve(cwd, commonDir);
+      // Strip the trailing `.git` (main repo) or `.git/worktrees/<name>` (linked worktree).
+      const dotGitIdx = absolute.lastIndexOf('/.git');
+      if (dotGitIdx === -1) return absolute;
+      return absolute.slice(0, dotGitIdx);
+    } catch (err) {
+      console.debug('[GitService] getProjectRoot failed:', errMsg(err));
       return null;
     }
   }

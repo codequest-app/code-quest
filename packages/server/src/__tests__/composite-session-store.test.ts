@@ -8,6 +8,7 @@ function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionReco
     provider: 'claude',
     command: 'claude',
     args: '[]',
+    projectRoot: '/test/project',
     mode: 'print',
     role: 'chat',
     createdAt: new Date().toISOString(),

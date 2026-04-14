@@ -86,6 +86,7 @@ describe('ProjectCard', () => {
         mode: 'interactive',
         role: 'chat',
         cwd: '/proj',
+        projectRoot: '/proj',
         title: 'Pick me',
         createdAt: new Date().toISOString(),
       });

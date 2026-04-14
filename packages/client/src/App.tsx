@@ -7,6 +7,7 @@ import { PluginProvider } from './contexts/PluginContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
+import { WorktreeProvider } from './contexts/WorktreeContext';
 import { createSocket } from './socket/client';
 import './App.css';
 
@@ -21,7 +22,9 @@ export function App() {
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <WorkspaceLayout />
+                <WorktreeProvider>
+                  <WorkspaceLayout />
+                </WorktreeProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>

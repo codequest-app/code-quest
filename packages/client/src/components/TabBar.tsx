@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
@@ -6,6 +6,22 @@ export interface TabInfo {
   sessionId: string;
   title?: string;
   status: SessionStatus;
+  worktree?: { name: string; path: string };
+}
+
+/** Group key: null for main-tree tabs, worktree name for worktree tabs.
+ *  Main-tree sorts first because null < any string via the compare below. */
+function tabGroupKey(tab: TabInfo): string | null {
+  return tab.worktree?.name ?? null;
+}
+
+function compareGroup(a: TabInfo, b: TabInfo): number {
+  const ka = tabGroupKey(a);
+  const kb = tabGroupKey(b);
+  if (ka === kb) return 0;
+  if (ka === null) return -1;
+  if (kb === null) return 1;
+  return ka.localeCompare(kb);
 }
 
 interface TabBarProps {
@@ -38,45 +54,66 @@ export function TabBar({
 
   if (tabs.length === 0 && !onNewTab) return null;
 
+  const sortedTabs = [...tabs].sort(compareGroup);
+
   return (
     <div
       className="flex items-center gap-1 px-4 py-1 border-b border-border overflow-x-auto"
       data-testid="tab-bar"
     >
-      {tabs.map((tab) => (
-        <div
-          key={tab.sessionId}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs cursor-pointer shrink-0 ${
-            tab.sessionId === activeTabId
-              ? 'text-text border-b-2 border-border-focus'
-              : 'text-text-muted hover:text-text hover:bg-white/5'
-          }`}
-          onClick={() => onSelectTab(tab.sessionId)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onSelectTab(tab.sessionId);
-            }
-          }}
-          role="tab"
-          tabIndex={0}
-          aria-selected={tab.sessionId === activeTabId}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${statusDot[tab.status]}`} />
-          <span className="truncate max-w-[120px]">{tab.title || tab.sessionId.slice(0, 8)}</span>
-          <button
-            type="button"
-            className="ml-1 text-text-muted hover:text-text text-[10px]"
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmingId(tab.sessionId);
-            }}
-            aria-label={`Close ${tab.title || tab.sessionId}`}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
+      {sortedTabs.map((tab, i) => {
+        const prev = i > 0 ? sortedTabs[i - 1] : null;
+        const showDivider = prev !== null && tabGroupKey(prev) !== tabGroupKey(tab);
+        return (
+          <Fragment key={tab.sessionId}>
+            {showDivider ? (
+              <span data-testid="tab-divider" className="h-5 border-l border-border mx-1" />
+            ) : null}
+            <span
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs cursor-pointer shrink-0 ${
+                tab.sessionId === activeTabId
+                  ? 'text-text border-b-2 border-border-focus'
+                  : 'text-text-muted hover:text-text hover:bg-white/5'
+              }`}
+              onClick={() => onSelectTab(tab.sessionId)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectTab(tab.sessionId);
+                }
+              }}
+              role="tab"
+              tabIndex={0}
+              aria-selected={tab.sessionId === activeTabId}
+              title={tab.worktree?.path}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${statusDot[tab.status]}`} />
+              <span className="truncate max-w-[120px]">
+                {tab.title || tab.sessionId.slice(0, 8)}
+              </span>
+              {tab.worktree ? (
+                <span
+                  data-testid="tab-worktree-badge"
+                  className="text-[10px] text-text-muted/70 px-1 rounded bg-white/5"
+                >
+                  {tab.worktree.name}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="ml-1 text-text-muted hover:text-text text-[10px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmingId(tab.sessionId);
+                }}
+                aria-label={`Close ${tab.title || tab.sessionId}`}
+              >
+                ✕
+              </button>
+            </span>
+          </Fragment>
+        );
+      })}
       {onNewTab && (
         <button
           type="button"

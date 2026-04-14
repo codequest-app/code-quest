@@ -12,6 +12,7 @@ export const SESSION_COLUMNS = [
   'command',
   'args',
   'cwd',
+  'projectRoot',
   'mode',
   'role',
   'title',

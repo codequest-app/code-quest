@@ -8,6 +8,7 @@ import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
+import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 interface RenderWithWorkspaceOptions {
@@ -107,7 +108,9 @@ export async function renderWithWorkspace(
       <SessionProvider>
         <PluginProvider>
           <ProjectProvider>
-            <WorkspaceLayout />
+            <WorktreeProvider>
+              <WorkspaceLayout />
+            </WorktreeProvider>
           </ProjectProvider>
         </PluginProvider>
       </SessionProvider>

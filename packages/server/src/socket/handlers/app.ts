@@ -7,7 +7,8 @@ export function create({
   channelManager,
   settingsStore,
   emitter,
-}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'emitter'>): void {
+  gitService,
+}: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'emitter' | 'gitService'>): void {
   async function handleInit(
     _ch: Channel | null,
     _payload: unknown,
@@ -20,6 +21,7 @@ export function create({
       title: ch.title,
       modelSetting: ch.sessionConfig?.model,
       cwd: ch.cwd,
+      ...(ch.projectRoot ? { projectRoot: ch.projectRoot } : {}),
     }));
     let settings: Record<string, unknown> = {};
     try {
@@ -41,6 +43,7 @@ export function create({
         speechToTextEnabled: false,
         browserIntegrationSupported: false,
       },
+      capabilities: { worktree: gitService.capabilities.worktree },
     });
   }
 

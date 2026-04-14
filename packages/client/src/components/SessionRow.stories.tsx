@@ -5,6 +5,7 @@ import { SessionRow } from './SessionRow';
 const baseSession = {
   id: 'sess-abc',
   channelId: 'sess-abc',
+  projectRoot: '/test/project',
   provider: 'anthropic',
   command: 'claude',
   args: '',

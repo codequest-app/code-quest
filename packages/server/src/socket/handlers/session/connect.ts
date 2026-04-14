@@ -20,6 +20,7 @@ import { withChannel } from '../../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
+import { resolveProjectRoot } from '../../utils/project-root.ts';
 import { err, ok } from '../../utils/rpc.ts';
 
 /** Substring the Claude CLI emits on stderr when `--resume <sid>` cannot
@@ -49,9 +50,10 @@ export function create({
   sessionStore,
   sessionHistory,
   emitter,
+  gitService,
 }: Pick<
   HandlerContext,
-  'channelManager' | 'settingsStore' | 'sessionStore' | 'sessionHistory' | 'emitter'
+  'channelManager' | 'settingsStore' | 'sessionStore' | 'sessionHistory' | 'emitter' | 'gitService'
 >): void {
   async function applyPerLaunchSettings(
     channel: Channel,
@@ -142,7 +144,11 @@ export function create({
     }
 
     callback?.(ok({ channelId: channel.channelId, slashCommands, models, account }));
-    emitter.broadcastAll('session:created', { channelId: channel.channelId, cwd: channel.cwd });
+    emitter.broadcastAll('session:created', {
+      channelId: channel.channelId,
+      cwd: channel.cwd,
+      projectRoot: channel.projectRoot ?? channel.cwd,
+    });
 
     if (parsed.initialPrompt) {
       channel.sendMessage(parsed.initialPrompt);
@@ -163,11 +169,13 @@ export function create({
       const cwd = parsed.cwd ?? process.cwd();
       const channelId = parsed.channelId ?? crypto.randomUUID();
       const { launchOptions, initOptions } = buildLaunchOpts(parsed);
+      const projectRoot = await resolveProjectRoot(gitService, cwd);
       const { channel, initResult } = await channelManager.create(channelId, {
         launchOptions,
         initOptions,
         cwd,
         onBeforeSpawn: (ch) => {
+          ch.projectRoot = projectRoot;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
@@ -241,9 +249,10 @@ export function create({
   function onSessionInit(ch: Channel, _payload: unknown): void {
     channelManager.broadcastSessionState(ch.channelId, 'busy');
 
-    // Persist when session:init arrives (sessionId now available)
+    // Persist when session:init arrives (sessionId now available).
+    // All channel-creation paths set ch.projectRoot before spawn.
     if (ch.sessionId) {
-      const parentId = ch.parentId;
+      const projectRoot = ch.projectRoot ?? ch.cwd;
       sessionStore
         .upsert({
           id: ch.sessionId,
@@ -252,9 +261,10 @@ export function create({
           command: channelManager.runnerCommand,
           args: JSON.stringify(channelManager.runnerArgs),
           cwd: ch.cwd,
+          projectRoot,
           mode: 'interactive',
           role: 'chat',
-          ...(parentId ? { parentId } : {}),
+          ...(ch.parentId ? { parentId: ch.parentId } : {}),
           createdAt: new Date().toISOString(),
         })
         .catch((err) => logger.error({ err }, 'Failed to persist session'));
@@ -304,6 +314,7 @@ export function create({
           ? { allowDangerouslySkipPermissions: true }
           : {}),
       };
+      const projectRoot = row.projectRoot ?? (await resolveProjectRoot(gitService, cwd));
       const { channel } = await channelManager.create(newChannelId, {
         launchOptions,
         cwd,
@@ -313,6 +324,7 @@ export function create({
           // resolve the sessionId for history replay without waiting
           // for the CLI's system:init to round-trip.
           if (sessionId) ch.sessionId = sessionId;
+          ch.projectRoot = projectRoot;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
@@ -320,6 +332,7 @@ export function create({
       emitter.broadcastAll('session:created', {
         channelId: channel.channelId,
         cwd: channel.cwd,
+        projectRoot: channel.projectRoot ?? channel.cwd,
       });
       callback?.(ok({ channelId: channel.channelId }));
     } catch (e) {

@@ -15,6 +15,7 @@ export const sessions = sqliteTable(
     command: text('command').notNull(),
     args: text('args').notNull(),
     cwd: text('cwd'),
+    projectRoot: text('project_root').notNull(),
     mode: text('mode').notNull().default('print'),
     role: text('role').notNull().default('chat'),
     title: text('title'),

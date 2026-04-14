@@ -2,7 +2,12 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../test/fake-summoner';
-import { ProjectProvider, useProjectActions, useProjectState } from '../ProjectContext';
+import {
+  deriveProjects,
+  ProjectProvider,
+  useProjectActions,
+  useProjectState,
+} from '../ProjectContext';
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 
@@ -74,6 +79,22 @@ describe('ProjectContext', () => {
     });
 
     expect(result.current.state.activeProjectCwd).toBe('/path/to/DQ');
+  });
+
+  describe('deriveProjects (groups by projectRoot)', () => {
+    it('groups sessions with same projectRoot but different cwd under one Project', () => {
+      const sessions = [
+        { channelId: 'a', state: 'idle' as const, cwd: '/repo', projectRoot: '/repo' },
+        {
+          channelId: 'b',
+          state: 'idle' as const,
+          cwd: '/repo/.claude/worktrees/feat',
+          projectRoot: '/repo',
+        },
+      ];
+      const result = deriveProjects(sessions, []);
+      expect(result).toEqual([{ cwd: '/repo', name: 'repo' }]);
+    });
   });
 
   describe('pendingActivateChannel', () => {

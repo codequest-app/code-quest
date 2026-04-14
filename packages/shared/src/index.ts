@@ -13,3 +13,6 @@ export type {
 // Utils
 export { errMsg } from './utils/err-msg.ts';
 export { isRecord } from './utils/is-record.ts';
+
+// Validators
+export { validateWorktreeName } from './validators/worktree-name.ts';

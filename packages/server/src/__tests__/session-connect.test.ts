@@ -91,6 +91,23 @@ describe('ChatHandler > session', () => {
       expect(record!.id).toBe('cli-sess');
     });
 
+    it('persists projectRoot on session record (from gitService.getProjectRoot)', async () => {
+      const { FakeGitService } = await import('@code-quest/summoner/test');
+      const fakeGit = new FakeGitService();
+      fakeGit.setProjectRoot('/repo');
+      const container = createTestContainer({ gitService: fakeGit });
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      const channelId = await claude.initialize(
+        { launch: { cwd: '/repo/.claude/worktrees/feat-a' } },
+        s.init('pr-sess'),
+      );
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      const record = await sessionStore.getByChannelId(channelId);
+      expect(record?.projectRoot).toBe('/repo');
+    });
+
     it('sessionStore.upsert is fire-and-forget: custom:created fires without awaiting persist', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);
@@ -996,6 +1013,7 @@ describe('ChatHandler > session', () => {
         provider: 'claude',
         command: 'claude',
         args: '[]',
+        projectRoot: '/test/project',
         mode: 'interactive',
         role: 'chat',
         cwd: '/tmp/dead-resume',
@@ -1037,6 +1055,7 @@ describe('ChatHandler > session', () => {
         provider: 'claude',
         command: 'claude',
         args: '[]',
+        projectRoot: '/test/project',
         mode: 'interactive',
         role: 'chat',
         cwd: '/tmp/sess-fresh',
@@ -1079,6 +1098,7 @@ describe('ChatHandler > session', () => {
         provider: 'claude',
         command: 'claude',
         args: '[]',
+        projectRoot: '/test/project',
         mode: 'interactive',
         role: 'chat',
         cwd: '/tmp/some-project',

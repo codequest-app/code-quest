@@ -62,6 +62,7 @@ describe('shared response schemas', () => {
               provider: 'claude',
               command: 'claude',
               args: '[]',
+              projectRoot: '/repo',
               mode: 'interactive',
               role: 'chat',
               createdAt: '2025-01-01',

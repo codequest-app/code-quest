@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Dialog, DialogContent } from './ui/Dialog';
 
 interface ElicitationDialogProps {
   requestId: string;
@@ -27,48 +28,43 @@ export function ElicitationDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-surface border border-border rounded-lg shadow-2xl w-full max-w-md mx-4">
-        <form onSubmit={handleSubmit}>
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-text">Input Required</h2>
-          </div>
-          <div className="px-4 py-4 space-y-3">
-            <p className="text-sm text-text">{prompt}</p>
-            {inputType === 'url' && url && (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-xs text-accent underline truncate"
-              >
-                {url}
-              </a>
-            )}
-            {inputType === 'select' && options.length > 0 ? (
-              <select
-                className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              >
-                <option value="">Select an option…</option>
-                {options.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type={inputType === 'url' ? 'url' : 'text'}
-                className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
-                placeholder={inputType === 'url' ? 'https://' : 'Enter value…'}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-            )}
-          </div>
-          <div className="flex gap-2 justify-end px-4 pb-4">
+    <Dialog open>
+      <DialogContent title="Input Required" mandatory className="w-full max-w-md">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <p className="text-sm text-text">{prompt}</p>
+          {inputType === 'url' && url && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-xs text-accent underline truncate"
+            >
+              {url}
+            </a>
+          )}
+          {inputType === 'select' && options.length > 0 ? (
+            <select
+              className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            >
+              <option value="">Select an option…</option>
+              {options.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={inputType === 'url' ? 'url' : 'text'}
+              className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
+              placeholder={inputType === 'url' ? 'https://' : 'Enter value…'}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          )}
+          <div className="flex gap-2 justify-end pt-1">
             <button
               type="button"
               onClick={() => onCancel(requestId)}
@@ -85,7 +81,7 @@ export function ElicitationDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

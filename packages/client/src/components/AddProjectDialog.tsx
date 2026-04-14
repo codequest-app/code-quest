@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FileTree } from './FileTree';
+import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export function AddProjectDialog({
   open,
@@ -12,8 +13,6 @@ export function AddProjectDialog({
 }) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
-  if (!open) return null;
-
   function handleOpen() {
     if (selectedPath) {
       onSelect(selectedPath);
@@ -22,23 +21,25 @@ export function AddProjectDialog({
     }
   }
 
-  function handleClose() {
-    setSelectedPath(null);
-    onClose();
+  function handleOpenChange(next: boolean) {
+    if (!next) {
+      setSelectedPath(null);
+      onClose();
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/60">
-      <div className="bg-surface border border-border rounded-lg shadow-xl w-[480px] max-h-[70vh] flex flex-col">
-        <div className="px-4 py-3 border-b border-border font-semibold text-sm">
-          Select Project Directory
-        </div>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        title="Select Project Directory"
+        className="w-[480px] max-h-[70vh] flex flex-col"
+      >
         {selectedPath && (
-          <div className="px-4 py-1.5 text-xs text-text-muted truncate border-b border-border bg-bg/30">
+          <div className="-mx-4 px-4 py-1.5 text-xs text-text-muted truncate border-b border-border bg-bg/30 mb-2">
             {selectedPath}
           </div>
         )}
-        <div className="flex-1 overflow-auto p-2 min-h-[200px]">
+        <div className="flex-1 overflow-auto min-h-[200px]">
           <FileTree
             highlightedPath={selectedPath}
             onHighlight={setSelectedPath}
@@ -49,14 +50,15 @@ export function AddProjectDialog({
             }}
           />
         </div>
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
-          <button
-            type="button"
-            className="px-4 py-1.5 text-sm rounded border border-border hover:bg-white/5"
-            onClick={handleClose}
-          >
-            Cancel
-          </button>
+        <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-3">
+          <DialogClose asChild>
+            <button
+              type="button"
+              className="px-4 py-1.5 text-sm rounded border border-border hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </DialogClose>
           <button
             type="button"
             className="px-4 py-1.5 text-sm rounded bg-accent text-white disabled:opacity-40"
@@ -66,7 +68,7 @@ export function AddProjectDialog({
             Open
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

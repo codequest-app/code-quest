@@ -51,6 +51,9 @@ export class Channel {
   private _metaCache: ChannelMetaCache = {};
   sessionId: string | null = null;
   cwd: string;
+  /** Main repo path (git common-dir parent). Shared across worktrees of the
+   *  same repo. Populated once per Channel from gitService.getProjectRoot. */
+  projectRoot: string | null = null;
   private _worktree: WorktreeInfo | null = null;
   lastError: string | undefined;
   exited = false;

@@ -59,3 +59,24 @@ export const CloseTab: Story = {
     await expect(args.onCloseTab).toHaveBeenCalledWith('abc12345');
   },
 };
+
+export const WithWorktrees: Story = {
+  args: {
+    tabs: [
+      { sessionId: 'main-1', title: 'main', status: 'idle' },
+      {
+        sessionId: 'wt-1',
+        title: 'Feature A',
+        status: 'idle',
+        worktree: { name: 'feat-a', path: '/repo/.claude/worktrees/feat-a' },
+      },
+      {
+        sessionId: 'wt-2',
+        title: 'Bugfix',
+        status: 'processing',
+        worktree: { name: 'fix-bug', path: '/repo/.claude/worktrees/fix-bug' },
+      },
+    ],
+    activeTabId: 'main-1',
+  },
+};

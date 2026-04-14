@@ -44,4 +44,20 @@ describe('AddProjectDialog', () => {
     });
     expect(screen.queryByText('Select Project Directory')).not.toBeInTheDocument();
   });
+
+  it('Escape key closes dialog', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    const onClose = vi.fn();
+    render(<AddProjectDialog open onSelect={() => {}} onClose={onClose} />, { wrapper: Wrapper });
+
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('has an accessible dialog role with title', () => {
+    const { Wrapper } = setup();
+    render(<AddProjectDialog open onSelect={() => {}} onClose={() => {}} />, { wrapper: Wrapper });
+    expect(screen.getByRole('dialog', { name: /Select Project Directory/i })).toBeInTheDocument();
+  });
 });
