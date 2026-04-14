@@ -16,6 +16,7 @@ import { withChannel, withError } from '../channel-emitter.ts';
 import { jsonRpcError, MCP_MESSAGE_TIMEOUT } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 /** Factory for simple parse → sendRequest → callback handlers. */
 function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(
@@ -35,8 +36,8 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(
       const requestPayload = mapParsed ? mapParsed(parsed) : parsed;
       const result = await ch.sendRequest(event, requestPayload);
       cb?.(result);
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, errorMessage) });
+    } catch (e) {
+      cb?.({ success: false, error: errMsg(e, errorMessage) });
     }
   };
 }
@@ -82,12 +83,12 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       const { serverName } = mcpAuthenticatePayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:authenticate', { serverName });
       if (result.success) {
-        cb?.({ success: true, authUrl: String(result.response?.authUrl ?? '') || undefined });
+        cb?.(ok({ authUrl: String(result.response?.authUrl ?? '') || undefined }));
       } else {
-        cb?.({ success: false, error: result.error ?? 'Authentication failed' });
+        cb?.(err(result.error ?? 'Authentication failed'));
       }
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 
@@ -100,12 +101,13 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     try {
       const { serverName } = mcpAuthenticatePayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:clear_auth', { serverName });
-      cb?.({
-        success: result.success,
-        error: result.success ? undefined : (result.error ?? 'Clear auth failed'),
-      });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
+      if (result.success) {
+        cb?.(ok({}));
+      } else {
+        cb?.(err(result.error ?? 'Clear auth failed'));
+      }
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 
@@ -118,9 +120,13 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     try {
       const { serverName, callbackUrl } = mcpOAuthCallbackPayloadSchema.parse(payload);
       const result = await ch.sendRequest('mcp:oauth_callback', { serverName, callbackUrl });
-      cb?.({ success: result.success, error: result.error });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
+      if (result.success) {
+        cb?.(ok({}));
+      } else {
+        cb?.(err(result.error ?? 'OAuth callback failed'));
+      }
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 
@@ -132,9 +138,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   ): void {
     try {
       channelIdPayloadSchema.parse(payload);
-      cb?.({ success: true, response: { type: 'ask_debugger_help_response' } });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Invalid payload') });
+      cb?.(ok({ response: { type: 'ask_debugger_help_response' as const } }));
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 

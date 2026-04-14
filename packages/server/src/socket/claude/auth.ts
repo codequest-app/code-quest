@@ -7,6 +7,7 @@ import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 import { claudeState, setAuthState } from './state.ts';
 
 export function create({
@@ -31,7 +32,7 @@ export function create({
     try {
       const channel = channelManager.getFirstAlive();
       if (!channel) {
-        callback?.({ success: false, error: 'No active session. Please open a tab first.' });
+        callback?.(err('No active session. Please open a tab first.'));
         return;
       }
       const { method } = loginPayloadSchema.parse(payload);
@@ -46,9 +47,9 @@ export function create({
           method: 'browser',
         });
       }
-      callback?.({ success: true, auth: authData });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Login failed') });
+      callback?.(ok({ auth: authData }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Login failed')));
     }
   }
 
@@ -62,7 +63,7 @@ export function create({
       const { code, state } = oauthCodePayloadSchema.parse(payload);
       const channel = channelManager.getFirstAlive();
       if (!channel) {
-        callback?.({ success: false, error: 'No active session' });
+        callback?.(err('No active session'));
         return;
       }
       await channel.sendRequest('auth:oauth_callback', {
@@ -75,9 +76,9 @@ export function create({
         user: { name: 'authenticated' },
         method: 'oauth',
       });
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'OAuth failed') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'OAuth failed')));
     }
   }
 

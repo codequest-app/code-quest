@@ -1,4 +1,4 @@
-import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
+import type { McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
@@ -125,10 +125,8 @@ interface ManageMcpDialogProps {
   // Management callbacks — omit for read-only (So0) mode
   onReconnect?: (name: string) => Promise<void>;
   onToggle?: (name: string, enabled: boolean) => Promise<void>;
-  onAuthenticate?: (
-    name: string,
-  ) => Promise<{ success: boolean; authUrl?: string; error?: string }>;
-  onClearAuth?: (name: string) => Promise<{ success: boolean; error?: string }>;
+  onAuthenticate?: (name: string) => Promise<RpcResult<{ authUrl?: string }>>;
+  onClearAuth?: (name: string) => Promise<RpcResult<Record<string, never>>>;
   onRefresh?: () => void;
 }
 
@@ -345,8 +343,9 @@ export function ManageMcpDialog({
                   onClick={() =>
                     act('authenticate', async () => {
                       const res = await onAuthenticate(detail.name);
-                      if (res.error) setFeedback({ msg: res.error, ok: false });
-                      else if (res.authUrl) setFeedback({ msg: `Open: ${res.authUrl}`, ok: true });
+                      if (!res.ok) setFeedback({ msg: res.error, ok: false });
+                      else if (res.data.authUrl)
+                        setFeedback({ msg: `Open: ${res.data.authUrl}`, ok: true });
                     })
                   }
                   className="text-xs px-3 py-1.5 rounded border border-border bg-accent text-white hover:bg-accent/80 disabled:opacity-50"
@@ -362,7 +361,7 @@ export function ManageMcpDialog({
                   onClick={() =>
                     act('clearAuth', async () => {
                       const res = await onClearAuth(detail.name);
-                      if (res.error) setFeedback({ msg: res.error, ok: false });
+                      if (!res.ok) setFeedback({ msg: res.error, ok: false });
                       else setFeedback({ msg: 'Auth cleared', ok: true });
                     })
                   }

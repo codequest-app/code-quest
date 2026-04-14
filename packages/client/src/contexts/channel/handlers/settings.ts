@@ -1,8 +1,8 @@
 import {
   type ControlResponse,
-  type McpAuthResult,
   type ModelInfo,
   modelInfoSchema,
+  type RpcResult,
   type UsageQuota,
   worktreeInfoSchema,
 } from '@code-quest/shared';
@@ -185,7 +185,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     emit('settings:set_proactive', { enabled });
   }
 
-  function setEffort(effort: string): Promise<{ success: boolean; error?: string }> {
+  function setEffort(effort: string): Promise<RpcResult<Record<string, never>>> {
     return rpc(deps.socket, 'settings:apply', {
       channelId: deps.channelId,
       settings: { effortLevel: effort },
@@ -233,14 +233,14 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     return [];
   }
 
-  function mcpAuthenticate(serverName: string): Promise<McpAuthResult> {
+  function mcpAuthenticate(serverName: string): Promise<RpcResult<{ authUrl?: string }>> {
     return rpc(deps.socket, 'mcp:authenticate', { channelId: deps.channelId, serverName });
   }
 
   function mcpOAuthCallback(
     serverName: string,
     callbackUrl: string,
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<RpcResult<Record<string, never>>> {
     return rpc(deps.socket, 'mcp:oauth_callback', {
       channelId: deps.channelId,
       serverName,
@@ -248,7 +248,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     });
   }
 
-  function mcpClearAuth(serverName: string): Promise<{ success: boolean; error?: string }> {
+  function mcpClearAuth(serverName: string): Promise<RpcResult<Record<string, never>>> {
     return rpc(deps.socket, 'mcp:clear_auth', { channelId: deps.channelId, serverName });
   }
 
@@ -268,7 +268,9 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     return rpc(deps.socket, 'mcp:disable_jupyter', { channelId: deps.channelId });
   }
 
-  function askDebuggerHelp(): Promise<ControlResponse> {
+  function askDebuggerHelp(): Promise<
+    RpcResult<{ response: { type: 'ask_debugger_help_response' } }>
+  > {
     return rpc(deps.socket, 'mcp:ask_debugger', { channelId: deps.channelId });
   }
 

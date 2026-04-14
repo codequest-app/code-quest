@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { RpcResult, SessionSummary } from '@code-quest/shared';
 import { useState } from 'react';
 import { SessionRow } from './SessionRow';
 
@@ -6,8 +6,8 @@ interface SessionHistoryProps {
   sessions: SessionSummary[];
   loading?: boolean;
   onSelect: (id: string) => void;
-  onRename?: (id: string, title: string) => Promise<{ success: boolean; error?: string }>;
-  onDelete?: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onRename?: (id: string, title: string) => Promise<RpcResult<Record<string, never>>>;
+  onDelete?: (id: string) => Promise<RpcResult<Record<string, never>>>;
 }
 
 export function SessionHistory({
@@ -29,9 +29,9 @@ export function SessionHistory({
   })();
 
   const handleDelete = async (id: string) => {
-    if (!onDelete) return { success: false };
+    if (!onDelete) return { ok: false as const, error: 'no handler' };
     const result = await onDelete(id);
-    if (result.success) setDeletedIds((prev) => new Set(prev).add(id));
+    if (result.ok) setDeletedIds((prev) => new Set(prev).add(id));
     return result;
   };
 

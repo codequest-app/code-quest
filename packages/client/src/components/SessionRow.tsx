@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@code-quest/shared';
+import type { RpcResult, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { formatRelativeDate } from '../utils/format-relative-date';
 
@@ -7,8 +7,8 @@ interface SessionRowProps {
   isFocused?: boolean;
   onSelect: (id: string) => void;
   onMouseEnter?: () => void;
-  onRename?: (id: string, title: string) => Promise<{ success: boolean; error?: string }>;
-  onDelete?: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onRename?: (id: string, title: string) => Promise<RpcResult<Record<string, never>>>;
+  onDelete?: (id: string) => Promise<RpcResult<Record<string, never>>>;
   searchQuery?: string;
 }
 
@@ -57,7 +57,7 @@ export function SessionRow({
     setIsRenaming(false);
     if (newTitle && newTitle !== title && onRename) {
       const result = await onRename(s.channelId, newTitle);
-      if (!result.success) {
+      if (!result.ok) {
         console.warn('Rename failed:', result.error);
       }
     }

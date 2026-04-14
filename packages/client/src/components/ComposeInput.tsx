@@ -79,8 +79,8 @@ export function ComposeInput() {
 
   const debouncedSearch = useDebouncedCallback(async (query: string) => {
     setSearchStatus('loading');
-    const { files } = await searchFiles(query);
-    setFileResults(files);
+    const result = await searchFiles(query);
+    setFileResults(result.ok ? result.data.files : []);
     setSearchStatus('done');
   }, 200);
 

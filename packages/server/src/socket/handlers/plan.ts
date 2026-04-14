@@ -9,6 +9,7 @@ import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 export interface PlanApi {
   consumeCommentsAsUserFeedback(channelId: string): string | undefined;
@@ -35,11 +36,11 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     try {
       const { channelId, comment } = planCommentPayloadSchema.parse(payload);
       getOrCreate(channelId).push(comment);
-      cb?.({ success: true });
+      cb?.(ok({}));
       if (socket)
         emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to add comment') });
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Failed to add comment')));
     }
   }
 
@@ -68,23 +69,23 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
       const { channelId, commentId } = planRemoveCommentPayloadSchema.parse(payload);
       const comments = commentsMap.get(channelId);
       if (!comments) {
-        cb?.({ success: false, error: 'Comment not found' });
+        cb?.(err('Comment not found'));
         return;
       }
       const idx = comments.findIndex((c) => c.id === commentId);
       if (idx === -1) {
-        cb?.({ success: false, error: 'Comment not found' });
+        cb?.(err('Comment not found'));
         return;
       }
       comments.splice(idx, 1);
-      cb?.({ success: true });
+      cb?.(ok({}));
       if (socket)
         emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', {
           channelId,
           commentId,
         });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to remove comment') });
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Failed to remove comment')));
     }
   }
 
@@ -97,9 +98,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     try {
       const { channelId } = channelIdPayloadSchema.parse(payload);
       commentsMap.delete(channelId);
-      cb?.({ success: true });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to close preview') });
+      cb?.(ok({}));
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Failed to close preview')));
     }
   }
 

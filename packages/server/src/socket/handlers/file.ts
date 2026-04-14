@@ -4,6 +4,7 @@ import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
+import { ok } from '../utils/rpc.ts';
 
 export function create({
   emitter,
@@ -36,15 +37,15 @@ export function create({
     try {
       const { pattern } = fileListPayloadSchema.parse(payload);
       if (!ch.cwd) {
-        callback?.({ files: [] });
+        callback?.(ok({ files: [] }));
         return;
       }
 
       const files = await fs.listFiles(ch.cwd, pattern);
-      callback?.({ files });
+      callback?.(ok({ files }));
     } catch (err) {
       logger.warn({ err }, 'Failed to list files');
-      callback?.({ files: [] });
+      callback?.(ok({ files: [] }));
     }
   }
 

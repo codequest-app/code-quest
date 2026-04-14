@@ -18,6 +18,7 @@ import { withChannel, withError } from '../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg, pickDefined } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 const contextUsageSchema = z.object({
   categories: z.unknown(),
@@ -42,9 +43,9 @@ export function create({
       const { model } = settingsSetModelPayloadSchema.parse(payload);
       await ch.sendRequest('settings:set_model', { model });
       await settingsStore.set(ch.provider, 'model', model);
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to set model') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to set model')));
     }
   }
 
@@ -60,9 +61,9 @@ export function create({
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
       emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to set permission mode') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to set permission mode')));
     }
   }
 
@@ -79,9 +80,9 @@ export function create({
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
       emitter.broadcastAll('settings:update', { channelId, thinkingLevel });
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to set thinking level') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to set thinking level')));
     }
   }
 
@@ -125,9 +126,9 @@ export function create({
           effort: String(settings.effortLevel),
         });
       }
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Invalid payload') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 
@@ -146,9 +147,9 @@ export function create({
           'effortLevel',
         ])),
       };
-      callback?.({ success: true, state });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to get state') });
+      callback?.(ok({ state }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to get state')));
     }
   }
 

@@ -97,8 +97,13 @@ export class FakeClaude {
       ...opts.launch,
     };
     const channelId = await new Promise<string>((resolve) => {
-      this._socket.emit('session:launch', launchPayload, (res: { channelId: string }) =>
-        resolve(res.channelId),
+      this._socket.emit(
+        'session:launch',
+        launchPayload,
+        (res: { ok: true; data: { channelId: string } } | { ok: false; error: string }) => {
+          if (!res.ok) throw new Error(res.error);
+          resolve(res.data.channelId);
+        },
       );
     });
 

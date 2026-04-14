@@ -4,6 +4,7 @@ import type {
   JupyterMcpState,
   McpServerInfo,
   McpTool,
+  RpcResult,
 } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { McpServerRow } from './McpServerRow';
@@ -38,14 +39,12 @@ interface MCPPanelProps {
   onSendMessage?: (serverName: string, message: Record<string, unknown>) => Promise<unknown>;
   onSetServers?: (servers: Record<string, unknown>) => Promise<unknown>;
   onListTools?: (serverName: string) => Promise<McpTool[]>;
-  onAuthenticate?: (
-    serverName: string,
-  ) => Promise<{ success: boolean; authUrl?: string; error?: string }>;
+  onAuthenticate?: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
   onOAuthCallback?: (
     serverName: string,
     callbackUrl: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  onClearAuth?: (serverName: string) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<RpcResult<Record<string, never>>>;
+  onClearAuth?: (serverName: string) => Promise<RpcResult<Record<string, never>>>;
   chromeMcpState?: ChromeMcpState;
   debuggerMcpState?: DebuggerMcpState;
   jupyterMcpState?: JupyterMcpState;

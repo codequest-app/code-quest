@@ -52,7 +52,11 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
     setRewindResult(null);
     rewindToMessage(item.message.id, true)
       .then((result) => {
-        setRewindResult(result);
+        if (result.ok) {
+          setRewindResult(result.data);
+        } else {
+          setRewindResult({ canRewind: false, error: result.error });
+        }
       })
       .catch((err) => {
         setRewindResult({

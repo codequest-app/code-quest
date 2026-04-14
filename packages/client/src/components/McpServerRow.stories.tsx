@@ -58,10 +58,10 @@ export const WithAuth: Story = {
   args: {
     server: { name: 'github', status: 'disconnected', enabled: false },
     onAuthenticate: fn(async () => ({
-      success: false,
-      authUrl: 'https://github.com/login/oauth/authorize?client_id=xxx',
+      ok: true as const,
+      data: { authUrl: 'https://github.com/login/oauth/authorize?client_id=xxx' },
     })),
-    onOAuthCallback: fn(async () => ({ success: true })),
+    onOAuthCallback: fn(async () => ({ ok: true as const, data: {} })),
   },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByTitle(/Auth github/i));

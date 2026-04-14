@@ -11,6 +11,7 @@ import type { Channel } from '../../channel.ts';
 import { withChannel } from '../../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
+import { err, ok } from '../../utils/rpc.ts';
 
 export function create({
   channelManager,
@@ -37,12 +38,12 @@ export function create({
       const { channelId } = sessionDeletePayloadSchema.parse(payload);
       const success = await sessionStore.deleteByChannelId(channelId);
       if (!success) {
-        callback?.({ success: false, error: 'Session not found' });
+        callback?.(err('Session not found', 'session_not_found'));
         return;
       }
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to delete session') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to delete session')));
     }
   }
 
@@ -56,12 +57,12 @@ export function create({
       const { channelId, title } = sessionRenamePayloadSchema.parse(payload);
       const success = await sessionStore.renameByChannelId(channelId, title);
       if (!success) {
-        callback?.({ success: false, error: 'Session not found' });
+        callback?.(err('Session not found', 'session_not_found'));
         return;
       }
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to rename session') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to rename session')));
     }
   }
 
@@ -77,9 +78,9 @@ export function create({
         description,
         persist,
       });
-      callback?.({ success: true, result });
-    } catch (err) {
-      callback?.({ success: false, error: String(err) });
+      callback?.(ok({ result }));
+    } catch (e) {
+      callback?.(err(String(e)));
     }
   }
 
@@ -92,9 +93,9 @@ export function create({
     try {
       const { channelId, title, state } = sessionUpdateStatePayloadSchema.parse(payload);
       channelManager.broadcastSessionState(channelId, state ?? 'idle', title);
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to update session state') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to update session state')));
     }
   }
 

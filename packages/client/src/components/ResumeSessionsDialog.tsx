@@ -26,7 +26,7 @@ export function ResumeSessionsDialog({ cwd, open, onOpenChange }: ResumeSessions
     setLoading(true);
     listSessions({ cwd, limit: 50, excludeLive: true })
       .then((res) => {
-        if (!cancelled) setSessions(res.sessions);
+        if (!cancelled && res.ok) setSessions(res.data.sessions);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

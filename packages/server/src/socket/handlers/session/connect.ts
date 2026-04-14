@@ -15,6 +15,7 @@ import { withChannel } from '../../channel-emitter.ts';
 import { DEFAULT_THINKING_TOKENS } from '../../schemas.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg, pickDefined } from '../../utils/helpers.ts';
+import { err, ok } from '../../utils/rpc.ts';
 
 /** Substring the Claude CLI emits on stderr when `--resume <sid>` cannot
  *  find the JSONL (session died / was deleted / wrong cwd). Matched as a
@@ -140,7 +141,7 @@ export function create({
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
     }
 
-    callback?.({ channelId: channel.channelId, slashCommands, models, account });
+    callback?.(ok({ channelId: channel.channelId, slashCommands, models, account }));
     emitter.broadcastAll('session:created', { channelId: channel.channelId, cwd: channel.cwd });
 
     if (parsed.initialPrompt) {
@@ -174,9 +175,9 @@ export function create({
       // persist is deferred to onSessionInit (session:init may arrive after control_response)
 
       await finalizeAndNotify(channel, parsed, initResult, socket, callback);
-    } catch (err) {
-      logger.error({ err }, 'Failed to create session');
-      callback?.({ channelId: '', error: errMsg(err, 'Failed to create session') });
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to create session');
+      callback?.(err(errMsg(e, 'Failed to create session')));
     }
   }
 
@@ -214,16 +215,16 @@ export function create({
       if (!isAlive) {
         try {
           await channelManager.join(channelId);
-        } catch (err) {
-          logger.debug(err, 'failed to join channel during connect');
-          callback?.({ error: 'Session not found' });
+        } catch (e) {
+          logger.debug(e, 'failed to join channel during connect');
+          callback?.(err('Session not found', 'session_not_found'));
           return;
         }
       }
 
       const channel = channelManager.get(channelId);
       if (!channel) {
-        callback?.({ error: 'Session not found' });
+        callback?.(err('Session not found', 'session_not_found'));
         return;
       }
 
@@ -231,9 +232,9 @@ export function create({
 
       const { events } = await replayAndEmitState(channel, socket);
       const state = channel.isProcessing ? 'busy' : 'idle';
-      callback?.({ channelId, state, meta: channel.metaCache ?? {}, events, cwd: channel.cwd });
-    } catch (err) {
-      callback?.({ error: errMsg(err, 'Failed to join session') });
+      callback?.(ok({ channelId, state, meta: channel.metaCache ?? {}, events, cwd: channel.cwd }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to join session')));
     }
   }
 
@@ -282,7 +283,7 @@ export function create({
       sessionId = parsed.sessionId;
       const reused = channelManager.findAliveBySessionId(sessionId);
       if (reused) {
-        callback?.({ ok: true, channelId: reused.channelId });
+        callback?.(ok({ channelId: reused.channelId }));
         return;
       }
 
@@ -291,7 +292,7 @@ export function create({
       // child must spawn with the same cwd or "No conversation found" fires.
       const row = await sessionStore.getById(sessionId);
       if (!row?.cwd) {
-        callback?.({ ok: false, error: 'session row has no cwd; cannot resume' });
+        callback?.(err('session row has no cwd; cannot resume', 'no_cwd'));
         return;
       }
       const cwd = row.cwd;
@@ -320,15 +321,15 @@ export function create({
         channelId: channel.channelId,
         cwd: channel.cwd,
       });
-      callback?.({ ok: true, channelId: channel.channelId });
-    } catch (err) {
-      const message = errMsg(err, 'Failed to resume session');
+      callback?.(ok({ channelId: channel.channelId }));
+    } catch (e) {
+      const message = errMsg(e, 'Failed to resume session');
       if (sessionId && message.includes(CLI_RESUME_MISSING_MARKER)) {
         await sessionStore
           .updateStatus(sessionId, 'dead')
-          .catch((e) => logger.warn({ err: e }, 'Failed to mark session dead'));
+          .catch((e2) => logger.warn({ err: e2 }, 'Failed to mark session dead'));
       }
-      callback?.({ ok: false, error: message });
+      callback?.(err(message));
     }
   }
 

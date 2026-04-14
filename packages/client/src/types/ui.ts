@@ -1,4 +1,11 @@
-import type { ResultMeta, RewindResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
+import type {
+  ForkConversationResponse,
+  ResultMeta,
+  RewindResult,
+  RpcResult,
+  ToolResultMeta,
+  ToolUseMeta,
+} from '@code-quest/shared';
 
 export type {
   ResultMeta,
@@ -16,11 +23,9 @@ export type SessionStatus =
   | 'busy'
   | 'cancelling';
 
-export type RewindFn = (messageId: string, dryRun: boolean) => Promise<RewindResult>;
+export type RewindFn = (messageId: string, dryRun: boolean) => Promise<RpcResult<RewindResult>>;
 
-export type ForkFn = (
-  messageId: string,
-) => Promise<{ success: boolean; channelId?: string; error?: string }>;
+export type ForkFn = (messageId: string) => Promise<ForkConversationResponse>;
 
 // ── Client-only message meta types ──
 

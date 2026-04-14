@@ -2,8 +2,6 @@ import type {
   ActionOpenFilePayload,
   ActionOpenUrlPayload,
   AddMarketplacePayload,
-  AskDebuggerHelpResponse,
-  AuthResult,
   AuthStatus,
   CancelRequestEventPayload,
   CancelRequestPayload,
@@ -37,7 +35,6 @@ import type {
   FileReadResponse,
   ForkConversationResponse,
   GenerateSessionTitleResponse,
-  GetClaudeStateResponse,
   GetPlanCommentsResponse,
   GetProviderConfigResponse,
   GetSessionResponse,
@@ -59,7 +56,6 @@ import type {
   LoginPayload,
   MarketplaceResult,
   McpAuthenticatePayload,
-  McpAuthResult,
   McpGetServersPayload,
   McpMessagePayload,
   McpOAuthCallbackPayload,
@@ -85,6 +81,7 @@ import type {
   RefreshMarketplacePayload,
   RemoveMarketplacePayload,
   RewindResult,
+  RpcResult,
   SessionClosedPayload,
   SessionClosePayload,
   SessionCreatedPayload,
@@ -122,7 +119,6 @@ import type {
   StreamEndPayload,
   StreamTextPayload,
   StreamToolSummaryPayload,
-  SuccessResponse,
   SystemApiRetryPayload,
   SystemAvailableModelsPayload,
   SystemCompactBoundaryPayload,
@@ -138,7 +134,6 @@ import type {
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
-  TerminalOpenClaudeResponse,
   UpdateStatePayload,
   WorktreeInfo,
   WorktreeListResponse,
@@ -148,24 +143,24 @@ export interface ClientToServerEvents {
   // ── Chat Operations ──
   'chat:rewind_code': (
     payload: ChatRewindCodePayload,
-    callback: (response: RewindResult) => void,
+    callback: (response: RpcResult<RewindResult>) => void,
   ) => void;
 
   // ── Aligned: Settings ──
   'settings:set_model': (
     payload: SettingsSetModelPayload,
-    cb: (res: SuccessResponse) => void,
+    cb: (res: RpcResult<Record<string, never>>) => void,
   ) => void;
   'settings:set_permission_mode': (payload: SettingsSetPermissionModePayload) => void;
   'settings:set_thinking_level': (payload: SettingsSetThinkingLevelPayload) => void;
   'settings:refresh_usage': (payload: ChannelIdPayload) => void;
   'settings:apply': (
     payload: SettingsApplyPayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'settings:state': (
     payload: SettingsGetStatePayload,
-    callback: (response: GetClaudeStateResponse) => void,
+    callback: (response: RpcResult<{ state: Record<string, unknown> }>) => void,
   ) => void;
 
   // ── Aligned: Session Management ──
@@ -191,15 +186,15 @@ export interface ClientToServerEvents {
   ) => void;
   'session:rename': (
     payload: SessionRenamePayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'session:delete': (
     payload: SessionDeletePayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'session:update_state': (
     payload: SessionUpdateStatePayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
 
   // ── Aligned: MCP ──
@@ -217,15 +212,15 @@ export interface ClientToServerEvents {
   ) => void;
   'mcp:authenticate': (
     payload: McpAuthenticatePayload,
-    callback: (result: McpAuthResult) => void,
+    callback: (result: RpcResult<{ authUrl?: string }>) => void,
   ) => void;
   'mcp:clear_auth': (
     payload: McpAuthenticatePayload,
-    callback: (result: SuccessResponse) => void,
+    callback: (result: RpcResult<Record<string, never>>) => void,
   ) => void;
   'mcp:oauth_callback': (
     payload: McpOAuthCallbackPayload,
-    callback: (result: SuccessResponse) => void,
+    callback: (result: RpcResult<Record<string, never>>) => void,
   ) => void;
   'mcp:set_servers': (
     payload: McpSetServersPayload,
@@ -253,7 +248,7 @@ export interface ClientToServerEvents {
   ) => void;
   'mcp:ask_debugger': (
     payload: ChannelIdPayload,
-    callback: (response: AskDebuggerHelpResponse) => void,
+    callback: (response: RpcResult<{ response: { type: 'ask_debugger_help_response' } }>) => void,
   ) => void;
 
   // ── Explorer (global, no channel) ──
@@ -266,12 +261,12 @@ export interface ClientToServerEvents {
   'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
   'git:checkout': (
     payload: GitCheckoutPayload,
-    callback: (result: SuccessResponse) => void,
+    callback: (result: RpcResult<Record<string, never>>) => void,
   ) => void;
   'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'git:exec': (payload: GitExecPayload, callback: (response: GitExecResponse) => void) => void;
 
@@ -305,13 +300,19 @@ export interface ClientToServerEvents {
 
   // ── Aligned: Auth ──
   'auth:status': (callback: (result: AuthStatus) => void) => void;
-  'auth:login': (payload: LoginPayload, callback: (result: AuthResult) => void) => void;
-  'auth:oauth_code': (payload: OAuthCodePayload, callback: (result: AuthResult) => void) => void;
+  'auth:login': (
+    payload: LoginPayload,
+    callback: (result: RpcResult<{ auth?: unknown }>) => void,
+  ) => void;
+  'auth:oauth_code': (
+    payload: OAuthCodePayload,
+    callback: (result: RpcResult<Record<string, never>>) => void,
+  ) => void;
 
   // ── Aligned: Plan ──
   'plan:comment': (
     payload: PlanCommentPayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'plan:comments': (
     payload: ChannelIdPayload,
@@ -319,11 +320,11 @@ export interface ClientToServerEvents {
   ) => void;
   'plan:remove_comment': (
     payload: PlanRemoveCommentPayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
   'plan:close_preview': (
     payload: ChannelIdPayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
 
   // ── File Operations ──
@@ -366,7 +367,7 @@ export interface ClientToServerEvents {
   ) => void;
   'terminal:open_claude': (
     payload: TerminalOpenClaudePayload,
-    callback: (response: TerminalOpenClaudeResponse) => void,
+    callback: (response: RpcResult<{ channelId: string }>) => void,
   ) => void;
 
   // ── Aligned: Speech-to-Text ──
@@ -391,7 +392,7 @@ export interface ClientToServerEvents {
   'worktree:list': (callback: (response: WorktreeListResponse) => void) => void;
   'worktree:delete': (
     payload: DeleteWorktreePayload,
-    callback: (response: SuccessResponse) => void,
+    callback: (response: RpcResult<Record<string, never>>) => void,
   ) => void;
 }
 

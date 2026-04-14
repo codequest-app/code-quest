@@ -37,8 +37,8 @@ describe('ChannelManager', () => {
 
       const joinResult = await claude.send('session:join', { channelId });
 
-      expect((joinResult as any).channelId).toBe(channelId);
-      expect((joinResult as any).error).toBeUndefined();
+      expect((joinResult as any).data.channelId).toBe(channelId);
+      expect((joinResult as any).ok).toBe(true);
     });
 
     it('returns error for unknown channel', async () => {

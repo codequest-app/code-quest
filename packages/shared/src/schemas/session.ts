@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
+import { rpcResult } from './rpc.ts';
 
 // ── Session summary (moved from common.ts) ──
 
@@ -22,10 +23,12 @@ export const sessionSummarySchema = z.object({
 });
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 
-export const sessionListResponseSchema = z.object({
-  sessions: z.array(sessionSummarySchema),
-  total: z.number(),
-});
+export const sessionListResponseSchema = rpcResult(
+  z.object({
+    sessions: z.array(sessionSummarySchema),
+    total: z.number(),
+  }),
+);
 export type SessionListResponse = z.infer<typeof sessionListResponseSchema>;
 
 // ── Internal schemas ──
@@ -122,10 +125,7 @@ export const sessionResumePayloadSchema = z.object({
 });
 export type SessionResumePayload = z.infer<typeof sessionResumePayloadSchema>;
 
-export const sessionResumeResponseSchema = z.discriminatedUnion('ok', [
-  z.object({ ok: z.literal(true), channelId: z.string() }),
-  z.object({ ok: z.literal(false), error: z.string() }),
-]);
+export const sessionResumeResponseSchema = rpcResult(z.object({ channelId: z.string() }));
 export type SessionResumeResponse = z.infer<typeof sessionResumeResponseSchema>;
 
 export const sessionListRemotePayloadSchema = z.object({
@@ -193,52 +193,52 @@ export type SessionStateSummary = z.infer<typeof sessionStateSummarySchema>;
 
 // ── Response schemas ──
 
-export const sessionLaunchResponseSchema = z.looseObject({
-  channelId: z.string(),
-  slashCommands: z.array(z.string()).optional(),
-  models: z.array(z.unknown()).optional(),
-  account: z.record(z.string(), z.unknown()).optional(),
-  error: z.string().optional(),
-});
+export const sessionLaunchResponseSchema = rpcResult(
+  z.object({
+    channelId: z.string(),
+    slashCommands: z.array(z.string()).optional(),
+    models: z.array(z.unknown()).optional(),
+    account: z.record(z.string(), z.unknown()).optional(),
+  }),
+);
 export type SessionLaunchResponse = z.infer<typeof sessionLaunchResponseSchema>;
 
-export const sessionJoinResponseSchema = z.union([
-  z.looseObject({
+export const sessionJoinResponseSchema = rpcResult(
+  z.object({
     channelId: z.string(),
     state: z.string(),
     meta: channelMetaCacheSchema,
     events: z.array(clientMessageSchema),
     cwd: z.string(),
   }),
-  z.object({ error: z.string() }),
-]);
+);
 export type SessionJoinResponse = z.infer<typeof sessionJoinResponseSchema>;
 
-export const getSessionResponseSchema = z.union([
-  z.looseObject({
+export const getSessionResponseSchema = rpcResult(
+  z.object({
     session: sessionSummarySchema,
     events: z.array(clientMessageSchema),
     meta: channelMetaCacheSchema,
   }),
-  z.object({ error: z.string() }),
-]);
+);
 export type GetSessionResponse = z.infer<typeof getSessionResponseSchema>;
 
-export const teleportSessionResponseSchema = z.looseObject({
-  success: z.boolean(),
-  channelId: z.string().optional(),
-  events: z.array(clientMessageSchema).optional(),
-  error: z.string().optional(),
-});
+export const teleportSessionResponseSchema = rpcResult(
+  z.object({
+    channelId: z.string(),
+    events: z.array(clientMessageSchema),
+    branchCheckoutFailed: z.boolean().optional(),
+    branch: z.string().optional(),
+  }),
+);
 export type TeleportSessionResponse = z.infer<typeof teleportSessionResponseSchema>;
 
-export const forkConversationResponseSchema = z.looseObject({
-  success: z.boolean(),
-  channelId: z.string().optional(),
-  parentChannelId: z.string().optional(),
-  events: z.array(clientMessageSchema).optional(),
-  error: z.string().optional(),
-});
+export const forkConversationResponseSchema = rpcResult(
+  z.object({
+    channelId: z.string(),
+    parentChannelId: z.string(),
+  }),
+);
 export type ForkConversationResponse = z.infer<typeof forkConversationResponseSchema>;
 
 export const initResponseSchema = z.looseObject({

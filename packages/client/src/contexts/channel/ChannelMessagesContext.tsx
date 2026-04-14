@@ -4,7 +4,7 @@ import {
   type PlanCommentData,
   type RawEventsResponse,
   type RewindResult,
-  type SuccessResponse,
+  type RpcResult,
   sessionJoinResponseSchema,
   type TerminalGetContentsResponse,
 } from '@code-quest/shared';
@@ -61,9 +61,9 @@ export interface ChannelMessagesValue {
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
   searchFiles: (pattern: string) => Promise<ListFilesResponse>;
   getTerminalContents: () => Promise<TerminalGetContentsResponse>;
-  openClaudeTerminal: () => Promise<SuccessResponse>;
+  openClaudeTerminal: () => Promise<RpcResult<{ channelId: string }>>;
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
-  rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RewindResult>;
+  rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RpcResult<RewindResult>>;
 }
 
 type MessagesStateValue = Pick<
@@ -140,9 +140,10 @@ export function ChannelMessagesProvider({
   function joinSession() {
     socket.emit('session:join', { channelId }, (raw: unknown) => {
       const parsed = sessionJoinResponseSchema.safeParse(raw);
-      if (!parsed.success || 'error' in parsed.data) {
+      if (!parsed.success || !parsed.data.ok) {
         joinedRef.current = true; // allow session:states even on join failure
-        const errorContent = parsed.success ? String(parsed.data.error) : 'Failed to join session';
+        const errorContent =
+          parsed.success && !parsed.data.ok ? parsed.data.error : 'Failed to join session';
         setChannelState((prev) => ({
           ...prev,
           messages: [
@@ -152,7 +153,7 @@ export function ChannelMessagesProvider({
         }));
         return;
       }
-      const snapshot = parsed.data;
+      const snapshot = parsed.data.data;
       setChannelState((prev) => {
         const updated = {
           ...prev,

@@ -49,7 +49,7 @@ export function ChannelProvider({
         setState({ status: 'error', message: 'Failed to connect' });
         return;
       }
-      if (parsed.data.error) {
+      if (!parsed.data.ok) {
         setState({ status: 'error', message: parsed.data.error });
         return;
       }

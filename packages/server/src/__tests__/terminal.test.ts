@@ -1,7 +1,10 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
+
+type TerminalOpenClaudeRpc = RpcResult<{ channelId: string }>;
+type TerminalOpenClaudeOk = Extract<TerminalOpenClaudeRpc, { ok: true }>;
 
 async function setup(sessionId = 'cli-sess') {
   const container = createTestContainer();
@@ -63,44 +66,43 @@ describe('ChatHandler > terminal', () => {
     it('creates a new session and returns { success: true, channelId }', async () => {
       const { container, claude, channelId } = await setup();
 
-      const res = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
-        'terminal:open_claude',
-        { channelId },
-      );
+      const res = (await claude.send<TerminalOpenClaudeRpc>('terminal:open_claude', {
+        channelId,
+      })) as TerminalOpenClaudeOk;
 
-      expect(res.success).toBe(true);
-      expect(res.channelId).toBeDefined();
+      expect(res.ok).toBe(true);
+      expect(res.data.channelId).toBeDefined();
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
-      expect(mgr.get(res.channelId!)).toBeDefined();
+      expect(mgr.get(res.data.channelId)).toBeDefined();
     });
 
     it('with a prompt, sends message to the spawned session', async () => {
       const { claude, channelId } = await setup();
 
-      const res = await claude.send<{ success: boolean; channelId?: string }>(
-        'terminal:open_claude',
-        { channelId, prompt: 'hello' },
-      );
+      const res = (await claude.send<TerminalOpenClaudeRpc>('terminal:open_claude', {
+        channelId,
+        prompt: 'hello',
+      })) as TerminalOpenClaudeOk;
 
-      expect(res.success).toBe(true);
-      expect(res.channelId).toBeDefined();
+      expect(res.ok).toBe(true);
+      expect(res.data.channelId).toBeDefined();
     });
 
     it('with a cwd, the new channel uses that cwd', async () => {
       const { container, claude, channelId } = await setup();
 
-      const res = await claude.send<{ success: boolean; channelId?: string }>(
-        'terminal:open_claude',
-        { channelId, cwd: '/tmp' },
-      );
+      const res = (await claude.send<TerminalOpenClaudeRpc>('terminal:open_claude', {
+        channelId,
+        cwd: '/tmp',
+      })) as TerminalOpenClaudeOk;
 
-      expect(res.success).toBe(true);
+      expect(res.ok).toBe(true);
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
-      const newChannel = mgr.get(res.channelId!);
+      const newChannel = mgr.get(res.data.channelId);
       expect(newChannel?.cwd).toBe('/tmp');
     });
 
@@ -108,7 +110,7 @@ describe('ChatHandler > terminal', () => {
       const { claude, channelId } = await setup();
       const spawnCountBefore = claude.provider.spawnCalls.length;
 
-      await claude.send<{ success: boolean; channelId?: string }>('terminal:open_claude', {
+      await claude.send<TerminalOpenClaudeRpc>('terminal:open_claude', {
         channelId,
         cwd: '/tmp',
       });

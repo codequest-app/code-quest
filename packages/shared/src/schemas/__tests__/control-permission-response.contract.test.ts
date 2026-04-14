@@ -9,7 +9,7 @@
  * If the CLI changes its expected format, update the schema AND these tests together.
  */
 import { describe, expect, it } from 'vitest';
-import { controlPermissionResponseSchema } from '../chat.ts';
+import { controlPermissionResponseSchema } from '../control.ts';
 
 describe('controlPermissionResponseSchema (contract)', () => {
   describe('tool permission — allow', () => {

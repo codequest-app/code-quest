@@ -143,11 +143,12 @@ export function ToolbarDialogs({
             closeDialog();
             rewindToMessage(messageId, false)
               .then((result) => {
-                if (result.canRewind) {
+                if (result.ok && result.data.canRewind) {
                   forkSession(messageId).catch(() => toast.error('Failed to fork session'));
                   updateValue(promptText);
                 } else {
-                  toast.error(result.error ?? 'Failed to rewind');
+                  const errMessage = result.ok ? result.data.error : result.error;
+                  toast.error(errMessage ?? 'Failed to rewind');
                 }
               })
               .catch(() => {

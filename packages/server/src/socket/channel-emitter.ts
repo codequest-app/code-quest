@@ -24,7 +24,7 @@ export function withChannel(
 export function withError(handler: EmitterHandler): EmitterHandler {
   return (ch, payload, socket, cb) => {
     if (!ch) {
-      cb?.({ success: false, error: 'Session not found' });
+      cb?.({ ok: false, error: 'Session not found', code: 'session_not_found' });
       return;
     }
     return handler(ch, payload, socket, cb);

@@ -5,6 +5,7 @@ import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 export function create({
   channelManager,
@@ -40,7 +41,7 @@ export function create({
       const existingChannel = channelManager.get(channelId);
       const baseCwd = cwd ?? existingChannel?.cwd;
       if (!baseCwd) {
-        cb?.({ success: false, error: 'no cwd available for terminal:open_claude' });
+        cb?.(err('no cwd available for terminal:open_claude'));
         return;
       }
 
@@ -58,9 +59,9 @@ export function create({
         ch.sendMessage(prompt);
       }
 
-      cb?.({ success: true, channelId: newChannelId });
-    } catch (err) {
-      cb?.({ success: false, error: errMsg(err, 'Failed to open claude terminal') });
+      cb?.(ok({ channelId: newChannelId }));
+    } catch (e) {
+      cb?.(err(errMsg(e, 'Failed to open claude terminal')));
     }
   }
 

@@ -1,10 +1,18 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
-import type { ClientMessage } from '@code-quest/shared';
+import type {
+  ForkConversationResponse,
+  GetSessionResponse,
+  TeleportSessionResponse,
+} from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
+
+type TeleportOk = Extract<TeleportSessionResponse, { ok: true }>;
+type ForkOk = Extract<ForkConversationResponse, { ok: true }>;
+type GetSessionOk = Extract<GetSessionResponse, { ok: true }>;
 
 async function setup(sessionId = 'cli-sess') {
   const container = createTestContainer();
@@ -126,16 +134,16 @@ describe('session:teleport', () => {
     const claude = createFakeSummoner(server).claude();
     await claude.initialize(s.init('cli-sess'));
 
-    const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
-      'session:teleport',
-      { remoteChannelId: 'remote-123', newChannelId: 'client-teleport-1' },
-    );
+    const result = (await claude.send<TeleportSessionResponse>('session:teleport', {
+      remoteChannelId: 'remote-123',
+      newChannelId: 'client-teleport-1',
+    })) as TeleportOk;
 
-    expect(result.success).toBe(true);
-    expect(result.channelId).toBe('client-teleport-1');
+    expect(result.ok).toBe(true);
+    expect(result.data.channelId).toBe('client-teleport-1');
     const { ChannelManager } = await import('../socket/channel-manager.ts');
     const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
-    expect(mgr.get(result.channelId!)).toBeDefined();
+    expect(mgr.get(result.data.channelId)).toBeDefined();
   });
 
   it('should attempt git checkout if branch provided', async () => {
@@ -143,12 +151,13 @@ describe('session:teleport', () => {
     const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
-    const result = await claude.send<{ success: boolean; channelId?: string; error?: string }>(
-      'session:teleport',
-      { remoteChannelId: 'remote-123', branch: 'feature/x', newChannelId: 'client-teleport-2' },
-    );
+    const result = await claude.send<TeleportSessionResponse>('session:teleport', {
+      remoteChannelId: 'remote-123',
+      branch: 'feature/x',
+      newChannelId: 'client-teleport-2',
+    });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
   it('should succeed even if git checkout fails', async () => {
@@ -157,22 +166,16 @@ describe('session:teleport', () => {
     const claude = summoner.claude();
     await claude.initialize(s.init('cli-sess'));
 
-    const result = await claude.send<{
-      success: boolean;
-      channelId?: string;
-      error?: string;
-      branchCheckoutFailed?: boolean;
-      branch?: string;
-    }>('session:teleport', {
+    const result = (await claude.send<TeleportSessionResponse>('session:teleport', {
       remoteChannelId: 'remote-123',
       branch: 'feature/x',
       newChannelId: 'client-teleport-3',
-    });
+    })) as TeleportOk;
 
-    expect(result.success).toBe(true);
-    expect(result.channelId).toBeDefined();
-    expect(result.branchCheckoutFailed).toBe(true);
-    expect(result.branch).toBe('feature/x');
+    expect(result.ok).toBe(true);
+    expect(result.data.channelId).toBeDefined();
+    expect(result.data.branchCheckoutFailed).toBe(true);
+    expect(result.data.branch).toBe('feature/x');
   });
 
   it('should return events from parent session history', async () => {
@@ -183,16 +186,14 @@ describe('session:teleport', () => {
     await claude.emit(s.assistant('original'));
     await claude.emit(s.result());
 
-    const result = await claude.send<{
-      success: boolean;
-      channelId?: string;
-      events?: ClientMessage[];
-      error?: string;
-    }>('session:teleport', { remoteChannelId: channelId, newChannelId: 'client-teleport-4' });
+    const result = (await claude.send<TeleportSessionResponse>('session:teleport', {
+      remoteChannelId: channelId,
+      newChannelId: 'client-teleport-4',
+    })) as TeleportOk;
 
-    expect(result.success).toBe(true);
-    expect(result.events).toBeDefined();
-    expect(result.events!.length).toBeGreaterThan(0);
+    expect(result.ok).toBe(true);
+    expect(result.data.events).toBeDefined();
+    expect(result.data.events.length).toBeGreaterThan(0);
   });
 });
 
@@ -207,7 +208,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     const forkClaude = summoner.claude();
     forkClaude.prepareInit(s.init('__unused__'));
 
-    await summoner.send<{ success: boolean; channelId?: string; error?: string }>('session:fork', {
+    await summoner.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: parentChannelId,
       newChannelId: 'ch-fork-1',
     });
@@ -376,13 +377,13 @@ describe('session:fork pass-through + reject + ack (fix-fork-resume-sessionid)',
     forkClaude.prepareInit(s.init('__never_used__'));
     const beforeSpawnCount = forkClaude.provider.spawnCalls.length;
 
-    const result = await summoner.send<{ success: boolean; error?: string }>('session:fork', {
+    const result = await summoner.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: parentChannelId,
       newChannelId: 'ch-fork-norow',
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error).toMatch(/parent session not found/i);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/parent session not found/i);
     expect(forkClaude.provider.spawnCalls.length).toBe(beforeSpawnCount);
   });
 
@@ -395,13 +396,13 @@ describe('session:fork pass-through + reject + ack (fix-fork-resume-sessionid)',
     claudeForSpy.prepareInit(s.init('__never_used__'));
     const beforeSpawnCount = claudeForSpy.provider.spawnCalls.length;
 
-    const result = await summoner.send<{ success: boolean; error?: string }>('session:fork', {
+    const result = await summoner.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: 'ch-missing',
       newChannelId: 'ch-fork-missing',
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error).toMatch(/parent session not found/i);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/parent session not found/i);
     expect(claudeForSpy.provider.spawnCalls.length).toBe(beforeSpawnCount);
   });
 
@@ -426,20 +427,15 @@ describe('session:fork pass-through + reject + ack (fix-fork-resume-sessionid)',
     const forkClaude = summoner.claude();
     forkClaude.prepareInit(s.init('__unused__'));
 
-    const result = await summoner.send<{
-      success: boolean;
-      channelId?: string;
-      parentChannelId?: string;
-      events?: ClientMessage[];
-    }>('session:fork', {
+    const result = (await summoner.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: 'ch-ack-parent',
       newChannelId: 'ch-fork-ack',
-    });
+    })) as ForkOk;
 
-    expect(result.success).toBe(true);
-    expect(result.channelId).toBe('ch-fork-ack');
-    expect(result.parentChannelId).toBe('ch-ack-parent');
-    expect(result.events).toBeUndefined();
+    expect(result.ok).toBe(true);
+    expect(result.data.channelId).toBe('ch-fork-ack');
+    expect(result.data.parentChannelId).toBe('ch-ack-parent');
+    expect((result.data as Record<string, unknown>).events).toBeUndefined();
   });
 });
 
@@ -447,47 +443,37 @@ describe('chat:fork enhanced', () => {
   it('should store parentId on forked session in session store', async () => {
     const { claude, channelId } = await setup();
 
-    const forkResult = await claude.send<{
-      success: boolean;
-      channelId?: string;
-      parentChannelId?: string;
-      error?: string;
-    }>('session:fork', {
+    const forkResult = (await claude.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: channelId,
       resumeSessionAt: 'msg-1',
       newChannelId: 'client-fork-1',
-    });
+    })) as ForkOk;
     // persist is fire-and-forget in handler — wait for it
     await new Promise<void>((r) => queueMicrotask(r));
 
-    expect(forkResult.error).toBeUndefined();
-    expect(forkResult.success).toBe(true);
-    expect(forkResult.channelId).toBe('client-fork-1');
+    expect((forkResult as { error?: unknown }).error).toBeUndefined();
+    expect(forkResult.ok).toBe(true);
+    expect(forkResult.data.channelId).toBe('client-fork-1');
 
-    const getResult = await claude.send<{ session?: { parentId?: string }; error?: string }>(
-      'session:get',
-      { channelId: forkResult.channelId! },
-    );
+    const getResult = (await claude.send<GetSessionResponse>('session:get', {
+      channelId: forkResult.data.channelId,
+    })) as GetSessionOk;
 
-    expect(getResult.session).toBeDefined();
-    expect(getResult.session!.parentId).toBe(channelId);
+    expect(getResult.ok).toBe(true);
+    expect(getResult.data.session).toBeDefined();
+    expect(getResult.data.session.parentId).toBe(channelId);
   });
 
   it('should include parentChannelId in fork response', async () => {
     const { claude, channelId } = await setup();
 
-    const forkResult = await claude.send<{
-      success: boolean;
-      channelId?: string;
-      parentChannelId?: string;
-      error?: string;
-    }>('session:fork', {
+    const forkResult = (await claude.send<ForkConversationResponse>('session:fork', {
       forkedFromChannelId: channelId,
       resumeSessionAt: 'msg-1',
       newChannelId: 'client-fork-2',
-    });
+    })) as ForkOk;
 
-    expect(forkResult.success).toBe(true);
-    expect(forkResult.parentChannelId).toBe(channelId);
+    expect(forkResult.ok).toBe(true);
+    expect(forkResult.data.parentChannelId).toBe(channelId);
   });
 });

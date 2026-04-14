@@ -1,5 +1,6 @@
 import type {
   ForkConversationResponse,
+  RpcResult,
   SessionSummary,
   TeleportSessionResponse,
 } from '@code-quest/shared';
@@ -22,26 +23,23 @@ export interface SessionContextValue {
     offset?: number;
     cwd?: string;
     excludeLive?: boolean;
-  }) => Promise<{ sessions: SessionSummary[]; total: number }>;
+  }) => Promise<RpcResult<{ sessions: SessionSummary[]; total: number }>>;
   listRemoteSessions: (opts?: {
     limit?: number;
     offset?: number;
-  }) => Promise<{ sessions: SessionSummary[]; total: number }>;
-  getSession: (channelId: string) => Promise<{ session: SessionSummary } | { error: string }>;
+  }) => Promise<RpcResult<{ sessions: SessionSummary[]; total: number }>>;
+  getSession: (channelId: string) => Promise<RpcResult<{ session: SessionSummary }>>;
   forkSession: (
     forkedFromChannelId: string,
     resumeSessionAt: string,
   ) => Promise<ForkConversationResponse>;
   teleportSession: (remoteChannelId: string, branch?: string) => Promise<TeleportSessionResponse>;
-  renameSession: (
-    channelId: string,
-    title: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  deleteSession: (channelId: string) => Promise<{ success: boolean; error?: string }>;
+  renameSession: (channelId: string, title: string) => Promise<RpcResult<Record<string, never>>>;
+  deleteSession: (channelId: string) => Promise<RpcResult<Record<string, never>>>;
   updateSessionState: (
     channelId: string,
     update: { title?: string; state?: 'busy' | 'idle' },
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<RpcResult<Record<string, never>>>;
 
   closeSession: (channelId: string) => void;
   /** Resume a historical session by its sessionId. Server reuses a live
@@ -134,13 +132,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             reject(new Error(parsed.data.error));
             return;
           }
-          resolve({ channelId: parsed.data.channelId });
+          resolve({ channelId: parsed.data.data.channelId });
         });
       }),
     login: () => {
       setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
       socket.emit('auth:login', { method: 'oauth' }, (res) => {
-        if (!res.success) {
+        if (!res.ok) {
           setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
         }
       });
@@ -148,7 +146,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     submitOAuthCode: (code: string, state?: string) => {
       setAuth((prev) => ({ ...prev, status: 'waiting' }));
       socket.emit('auth:oauth_code', { code, state }, (res) => {
-        if (res.success) {
+        if (res.ok) {
           setAuth({ status: 'success', authUrl: null, errorMsg: null });
         } else {
           setAuth((prev) => ({

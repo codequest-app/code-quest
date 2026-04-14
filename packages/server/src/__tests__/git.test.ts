@@ -1,6 +1,10 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
+
+type GitEmptyResp = RpcResult<Record<string, never>>;
 
 async function setup(sessionId = 'cli-sess') {
   const summoner = createFakeSummoner();
@@ -13,13 +17,13 @@ describe('ChatHandler > git', () => {
   it('git:update_skipped_branch records entry and returns success', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean }>('git:update_skipped_branch', {
+    const result = await claude.send<GitEmptyResp>('git:update_skipped_branch', {
       channelId,
       branch: 'feature/x',
       failed: true,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
   describe('git:log and git:diff', () => {
@@ -81,25 +85,25 @@ describe('ChatHandler > git', () => {
     it('should succeed when checkout works', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+      const result = await claude.send<GitEmptyResp>('git:checkout', {
         channelId,
         branch: 'feature/test',
       });
 
-      expect(result.success).toBe(true);
+      expect(result.ok).toBe(true);
     });
 
     it('should return error when checkout fails', async () => {
       const { claude, channelId, git } = await setup();
       git.setCheckoutError(new Error('fatal: no such branch'));
 
-      const result = await claude.send<{ success: boolean; error?: string }>('git:checkout', {
+      const result = await claude.send<GitEmptyResp>('git:checkout', {
         channelId,
         branch: 'nonexistent',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBeDefined();
     });
   });
 });

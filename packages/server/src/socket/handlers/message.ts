@@ -16,6 +16,7 @@ import type { Channel } from '../channel.ts';
 import { withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 /** Fire-and-forget sendRequest: log debug on failure, never throw. */
 function fireSendRequest(ch: Channel, event: string, payload?: Record<string, unknown>): void {
@@ -191,9 +192,9 @@ export function create({
         user_message_id: userMessageId ?? '',
         dry_run: dryRun ?? false,
       });
-      callback?.(result);
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to rewind code') });
+      callback?.(ok(result));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to rewind code')));
     }
   }
 

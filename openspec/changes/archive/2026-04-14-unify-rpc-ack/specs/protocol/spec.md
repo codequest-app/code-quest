@@ -1,27 +1,6 @@
-# protocol Specification
+# Spec Delta: protocol (unify-rpc-ack)
 
-## Purpose
-
-定義 client ↔ server 之間所有 Socket.IO 事件的 TypeScript 型別與 Zod 驗證 schema。
-
-**核心模組**
-
-`socket-events.ts` 定義兩個 interface：
-
-- **ClientToServerEvents**：session:launch / join / close、chat:send / cancel / respond / stop_task / set_fast_mode、settings:set_model / set_permission_mode / set_thinking_level、rewind_code / cancel_request / hook_callback_respond、mcp:*、plugin:*、file:read / git:* / plan:* 等。
-- **ServerToClientEvents**：session:created / closed / dead / init / status、message:assistant / user / result、stream:chunk / end / text / block_start、control:permission / elicitation / diff_review / cancel / hook_callback、system:hook_started / hook_response / task_started / compact_boundary / rate_limit / available_models、notification:toast / show / auth_url、state:update / usage 等。
-
-`event-types.ts` 定義 `ContentBlock`（TextBlock | ThinkingBlock | ToolUseBlock | ToolResultBlock）、`SessionStats`、`UpdateStatePayload`、`ModelInfo`、`AccountInfo`。
-
-`schemas/` 下 60+ Zod schemas 覆蓋所有 payload，分為 session / message / control / settings / mcp / plugin 等檔案。
-
-**Action / 錯誤事件**：`action:open_url`、`action:open_file`、`error:message`、`raw:event` (catch-all)。
-
-**MCP 特殊型別**：`ChromeMcpState`、`DebuggerMcpState`、`JupyterMcpState`、`EnsureChromeMcpEnabledRequest/Response`、`EnableJupyterMcpRequest/Response`、`AskDebuggerHelpRequest/Response`。
-
-**測試覆蓋**：`control-permission-response.contract.test.ts`（Permission response 格式驗證）、`launch-options.contract.test.ts`（啟動選項 schema 驗證）。
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: All RPC ack responses SHALL follow the RpcResult discriminated union
 

@@ -1,5 +1,10 @@
+/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
+
+type WorktreeDeleteResp = RpcResult<Record<string, never>>;
 
 async function setup(sessionId = 'cli-sess') {
   const summoner = createFakeSummoner();
@@ -46,23 +51,23 @@ describe('worktree handler', () => {
       branch: 'worktree-my-feature',
     });
 
-    const result = await claude.send<{ success: boolean }>('worktree:delete', {
+    const result = await claude.send<WorktreeDeleteResp>('worktree:delete', {
       channelId,
       name: 'my-feature',
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
     expect(await git.listWorktrees('/repo')).toHaveLength(0);
   });
 
   it('worktree:delete returns error when name is missing', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('worktree:delete', {
+    const result = await claude.send<WorktreeDeleteResp>('worktree:delete', {
       channelId,
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('name is required');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe('name is required');
   });
 });

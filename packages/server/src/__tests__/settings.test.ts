@@ -1,6 +1,13 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SettingsStore } from '../services/settings-store.ts';
+
+type SettingsApplyResp = RpcResult<Record<string, never>>;
+type SettingsStateResp = RpcResult<{ state: Record<string, unknown> }>;
+type SettingsStateOk = Extract<SettingsStateResp, { ok: true }>;
+
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
@@ -77,7 +84,7 @@ describe('ChatHandler > settings', () => {
         channelId: 'unknown',
         model: 'claude-sonnet-4-6',
       });
-      expect(result).toEqual({ success: false, error: 'Session not found' });
+      expect(result).toEqual({ ok: false, error: 'Session not found', code: 'session_not_found' });
     });
 
     it('returns success via callback', async () => {
@@ -87,7 +94,7 @@ describe('ChatHandler > settings', () => {
         channelId,
         model: 'claude-sonnet-4-6',
       });
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ ok: true, data: {} });
     });
 
     it('persists model to settingsStore on success', async () => {
@@ -195,12 +202,12 @@ describe('ChatHandler > settings', () => {
   it('apply_settings forwards settings to CLI session', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('settings:apply', {
+    const result = await claude.send<SettingsApplyResp>('settings:apply', {
       channelId,
       settings: { effortLevel: 'high' },
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
     const received = claude.received();
     expect(
       received.some(
@@ -255,24 +262,23 @@ describe('ChatHandler > settings', () => {
     const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
     await settingsStore.set('claude', 'model', 'opus');
 
-    const result = await claude.send<{
-      success: boolean;
-      state?: Record<string, unknown>;
-    }>('settings:state', { channelId });
+    const result = (await claude.send<SettingsStateResp>('settings:state', {
+      channelId,
+    })) as SettingsStateOk;
 
-    expect(result.success).toBe(true);
-    expect(result.state).toMatchObject({ model: 'opus' });
+    expect(result.ok).toBe(true);
+    expect(result.data.state).toMatchObject({ model: 'opus' });
   });
 
   it('chat:get_state returns error for missing session', async () => {
     const claude = createFakeSummoner().claude();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('settings:state', {
+    const result = await claude.send<SettingsStateResp>('settings:state', {
       channelId: 'nonexistent',
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Session not found');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe('Session not found');
   });
 
   it('get_settings response includes model and permissionMode', async () => {
@@ -282,13 +288,12 @@ describe('ChatHandler > settings', () => {
     await settingsStore.set('claude', 'model', 'opus');
     await settingsStore.set('claude', 'permissionMode', 'plan');
 
-    const result = await claude.send<{ success: boolean; state?: Record<string, unknown> }>(
-      'settings:state',
-      { channelId },
-    );
+    const result = (await claude.send<SettingsStateResp>('settings:state', {
+      channelId,
+    })) as SettingsStateOk;
 
-    expect(result.success).toBe(true);
-    expect(result.state).toMatchObject({ model: 'opus', permissionMode: 'plan' });
+    expect(result.ok).toBe(true);
+    expect(result.data.state).toMatchObject({ model: 'opus', permissionMode: 'plan' });
   });
 
   describe('chat:rewind_code', () => {
@@ -303,7 +308,7 @@ describe('ChatHandler > settings', () => {
 
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'rewind_files')).toBe(true);
-      expect(result).toMatchObject({ success: true });
+      expect(result).toMatchObject({ ok: true });
     });
 
     it('returns error via callback for unknown session', async () => {
@@ -314,7 +319,7 @@ describe('ChatHandler > settings', () => {
         userMessageId: 'msg-1',
         dryRun: false,
       });
-      expect(result).toMatchObject({ error: 'Session not found' });
+      expect(result).toMatchObject({ ok: false, error: 'Session not found' });
     });
   });
 

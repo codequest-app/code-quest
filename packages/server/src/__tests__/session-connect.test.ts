@@ -1,7 +1,17 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { ClientMessage } from '@code-quest/shared';
+import type {
+  ClientMessage,
+  SessionJoinResponse,
+  SessionLaunchResponse,
+  SessionResumeResponse,
+} from '@code-quest/shared';
 import { messageContentSchema } from '@code-quest/shared';
+
+type LaunchOk = Extract<SessionLaunchResponse, { ok: true }>;
+type JoinOk = Extract<SessionJoinResponse, { ok: true }>;
+type ResumeOk = Extract<SessionResumeResponse, { ok: true }>;
+
 import { segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
@@ -34,9 +44,10 @@ describe('ChatHandler > session', () => {
       claude.prepareInit(s.init('prep-sess'));
 
       // External launch (simulates UI "New tab" click)
-      const channelId = await claude.send<{ channelId: string }>('session:launch', {
+      const launchResult = await claude.send<LaunchOk>('session:launch', {
         channelId: 'ch-prep',
       });
+      const channelId = launchResult.data.channelId;
 
       expect(channelId).toBeDefined();
     });
@@ -45,7 +56,7 @@ describe('ChatHandler > session', () => {
       const claude = createFakeSummoner().claude();
       claude.prepareInit(s.init('cwd-sess'));
 
-      await claude.send<{ channelId: string }>('session:launch', {
+      await claude.send<LaunchOk>('session:launch', {
         channelId: 'ch-cwd',
         cwd: '/projects/my-app',
       });
@@ -61,10 +72,11 @@ describe('ChatHandler > session', () => {
       const worktreeCwd = '/repo/.claude/worktrees/my-feature';
       claude.prepareInit(s.init('wt-sess'));
 
-      const { channelId } = await claude.send<{ channelId: string }>('session:launch', {
+      const result = await claude.send<LaunchOk>('session:launch', {
         channelId: 'ch-wt',
         cwd: worktreeCwd,
       });
+      const channelId = result.data.channelId;
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
@@ -149,13 +161,12 @@ describe('ChatHandler > session', () => {
       const claude = createFakeSummoner().claude();
       claude.initialize(s.init('cli-sess', { slashCommands: ['commit', 'review', 'debug'] }));
 
-      const result = await claude.send<{ channelId: string; slashCommands?: string[] }>(
-        'session:launch',
-        { channelId: 'test-slash-cmds' },
-      );
+      const result = await claude.send<LaunchOk>('session:launch', {
+        channelId: 'test-slash-cmds',
+      });
 
-      expect(result.channelId).toBeDefined();
-      expect(result.slashCommands).toEqual(['commit', 'review', 'debug']);
+      expect(result.data.channelId).toBeDefined();
+      expect(result.data.slashCommands).toEqual(['commit', 'review', 'debug']);
     });
 
     it('chat:create callback includes models and account from initialize response', async () => {
@@ -172,14 +183,12 @@ describe('ChatHandler > session', () => {
       const claude = createFakeSummoner().claude();
       claude.initialize(s.init('cli-sess'), s.controlResponse('init', { models, account }));
 
-      const result = await claude.send<{
-        channelId: string;
-        models?: unknown[];
-        account?: unknown;
-      }>('session:launch', { channelId: 'test-models-acct' });
+      const result = await claude.send<LaunchOk>('session:launch', {
+        channelId: 'test-models-acct',
+      });
 
-      expect(result.models).toEqual(models);
-      expect(result.account).toEqual(account);
+      expect(result.data.models).toEqual(models);
+      expect(result.data.account).toEqual(account);
     });
 
     it('session:launch emits app:models when initialize response has models', async () => {
@@ -249,14 +258,11 @@ describe('ChatHandler > session', () => {
     it('joins an existing session and receives state + cwd', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ channelId: string; state: string; cwd: string }>(
-        'session:join',
-        { channelId },
-      );
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.channelId).toBe(channelId);
-      expect(result.state).toBe('idle');
-      expect(result.cwd).toEqual(expect.any(String));
+      expect(result.data.channelId).toBe(channelId);
+      expect(result.data.state).toBe('idle');
+      expect(result.data.cwd).toEqual(expect.any(String));
     });
 
     it('join returns busy state when session is streaming', async () => {
@@ -265,21 +271,22 @@ describe('ChatHandler > session', () => {
       // Send a message to make session busy (no result yet = still streaming)
       await claude.send('chat:send', { channelId, message: 'hello' });
 
-      const result = await claude.send<{ channelId: string; state: string }>('session:join', {
+      const result = await claude.send<JoinOk>('session:join', {
         channelId,
       });
 
-      expect(result.state).toBe('busy');
+      expect(result.data.state).toBe('busy');
     });
 
     it('returns error for non-existent session', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ error: string }>('session:join', {
+      const result = await claude.send<SessionJoinResponse>('session:join', {
         channelId: 'nonexistent',
       });
 
-      expect(result.error).toBe('Session not found');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe('Session not found');
     });
 
     it('resumes CLI with stored session_id when no live process exists', async () => {
@@ -295,23 +302,24 @@ describe('ChatHandler > session', () => {
       await new Promise<void>((r) => queueMicrotask(r));
 
       // Rejoin — should resume with stored sessionId
-      const result = await claude.send<{ channelId?: string; error?: string }>('session:join', {
+      const result = await claude.send<JoinOk>('session:join', {
         channelId,
       });
 
-      expect(result.error).toBeUndefined();
-      expect(result.channelId).toBe(channelId);
+      expect(result.ok).toBe(true);
+      expect(result.data.channelId).toBe(channelId);
     });
 
     it('falls back to error when no live process and no DB record', async () => {
       const { claude } = await setup();
 
       const unknownChannelId = crypto.randomUUID();
-      const result = await claude.send<{ error?: string }>('session:join', {
+      const result = await claude.send<SessionJoinResponse>('session:join', {
         channelId: unknownChannelId,
       });
 
-      expect(result.error).toBe('Session not found');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe('Session not found');
     });
 
     it('returns stored messages in callback after join', async () => {
@@ -323,16 +331,12 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       // Join same session — should get history
-      const result = await claude.send<{
-        channelId?: string;
-        events?: ClientMessage[];
-        error?: string;
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.error).toBeUndefined();
-      expect(result.events).toBeDefined();
-      expect(result.events!.length).toBeGreaterThan(0);
-      const names = result.events!.map((e) => e.name);
+      expect(result.ok).toBe(true);
+      expect(result.data.events).toBeDefined();
+      expect(result.data.events!.length).toBeGreaterThan(0);
+      const names = result.data.events!.map((e: ClientMessage) => e.name);
       expect(names).toContain('message:assistant');
     });
 
@@ -343,16 +347,13 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.assistant('hello world'));
       await claude.emit(s.result());
 
-      const result = await claude.send<{
-        events?: ClientMessage[];
-        error?: string;
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.error).toBeUndefined();
-      const names = result.events!.map((e) => e.name);
+      expect(result.ok).toBe(true);
+      const names = result.data.events!.map((e: ClientMessage) => e.name);
       expect(names).toContain('message:user');
 
-      const userMessage = result.events!.find((e) => e.name === 'message:user');
+      const userMessage = result.data.events!.find((e: ClientMessage) => e.name === 'message:user');
       const { content } = messageContentSchema.parse(userMessage?.payload);
       expect(content).toEqual([{ type: 'text', text: 'hi' }]);
     });
@@ -364,11 +365,9 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.assistant('Tuesday'));
       await claude.emit(s.result());
 
-      const result = await claude.send<{
-        events?: ClientMessage[];
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      const names = result.events!.map((e) => e.name);
+      const names = result.data.events!.map((e: ClientMessage) => e.name);
       const userIdx = names.indexOf('message:user');
       const assistantIdx = names.indexOf('message:assistant');
       expect(userIdx).toBeGreaterThanOrEqual(0);
@@ -412,13 +411,10 @@ describe('ChatHandler > session', () => {
       expect(userRawEntries.map((e) => e.direction).sort()).toEqual(['in', 'out']);
 
       // But history should deduplicate to exactly 1
-      const result = await claude.send<{
-        events?: ClientMessage[];
-        error?: string;
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.error).toBeUndefined();
-      const userTextEvents = result.events!.filter((e) => {
+      expect(result.ok).toBe(true);
+      const userTextEvents = result.data.events!.filter((e: ClientMessage) => {
         if (e.name !== 'message:user') return false;
         const parsed = messageContentSchema.safeParse(e.payload);
         return (
@@ -432,14 +428,11 @@ describe('ChatHandler > session', () => {
       const { claude, channelId } = await setup();
       // No sendMessage — only session_init in raw_entries
 
-      const result = await claude.send<{
-        events?: ClientMessage[];
-        error?: string;
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.error).toBeUndefined();
-      expect(result.events).toBeDefined();
-      expect(result.events!.every((e) => e.name === 'session:init')).toBe(true);
+      expect(result.ok).toBe(true);
+      expect(result.data.events).toBeDefined();
+      expect(result.data.events!.every((e: ClientMessage) => e.name === 'session:init')).toBe(true);
     });
 
     it('chat:join callback returns the provided channelId (not internal CLI ID)', async () => {
@@ -447,11 +440,11 @@ describe('ChatHandler > session', () => {
       const clientId = 'client-join-uuid';
       await claude.initialize(s.init('cli-sess'), { launch: { channelId: clientId } });
 
-      const joinResult = await claude.send<{ channelId: string; state: string }>('session:join', {
+      const joinResult = await claude.send<JoinOk>('session:join', {
         channelId: clientId,
       });
 
-      expect(joinResult.channelId).toBe(clientId);
+      expect(joinResult.data.channelId).toBe(clientId);
     });
   });
 
@@ -618,14 +611,10 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.assistant('reply'));
       await claude.emit(s.result());
 
-      const result = await claude.send<{
-        channelId?: string;
-        events?: ClientMessage[];
-        error?: string;
-      }>('session:join', { channelId });
+      const result = await claude.send<JoinOk>('session:join', { channelId });
 
-      expect(result.error).toBeUndefined();
-      const names = result.events!.map((e) => e.name);
+      expect(result.ok).toBe(true);
+      const names = result.data.events!.map((e: ClientMessage) => e.name);
       expect(names).toContain('message:user');
     });
   });
@@ -946,12 +935,11 @@ describe('ChatHandler > session', () => {
       const claude = createFakeSummoner().claude();
       claude.initialize(s.init('fake-sess', { slashCommands: ['/help', '/clear'] }));
 
-      const result = await claude.send<{ channelId: string; slashCommands?: string[] }>(
-        'session:launch',
-        { channelId: crypto.randomUUID() },
-      );
+      const result = await claude.send<LaunchOk>('session:launch', {
+        channelId: crypto.randomUUID(),
+      });
 
-      expect(result.slashCommands).toEqual(['/help', '/clear']);
+      expect(result.data.slashCommands).toEqual(['/help', '/clear']);
     });
 
     it('creates a new session and returns channelId', async () => {
@@ -990,12 +978,12 @@ describe('ChatHandler > session', () => {
       const claude = summoner.claude();
       const aliveChannelId = await claude.initialize(s.init('sess-target'));
 
-      const result = await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+      const result = await summoner.send<ResumeOk>('session:resume', {
         sessionId: 'sess-target',
       });
 
-      expect(result.error).toBeUndefined();
-      expect(result.channelId).toBe(aliveChannelId);
+      expect(result.ok).toBe(true);
+      expect(result.data.channelId).toBe(aliveChannelId);
     });
   });
 
@@ -1020,7 +1008,7 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      const ackPromise = summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+      const ackPromise = summoner.send<SessionResumeResponse>('session:resume', {
         sessionId: 'dead-resume-sess',
       });
 
@@ -1031,8 +1019,8 @@ describe('ChatHandler > session', () => {
       claude.handle.abort();
 
       const result = await ackPromise;
-      expect(result.error).toBeDefined();
-      expect(result.channelId).toBeUndefined();
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBeDefined();
 
       await new Promise<void>((r) => setTimeout(r, 30));
       const record = await sessionStore.getById('dead-resume-sess');
@@ -1061,13 +1049,13 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      const result = await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+      const result = await summoner.send<ResumeOk>('session:resume', {
         sessionId: 'sess-fresh',
       });
 
-      expect(result.error).toBeUndefined();
-      expect(result.channelId).toBeTruthy();
-      expect(result.channelId).not.toBe('sess-fresh');
+      expect(result.ok).toBe(true);
+      expect(result.data.channelId).toBeTruthy();
+      expect(result.data.channelId).not.toBe('sess-fresh');
 
       const lastSpawn = claude.provider.spawnCalls.at(-1);
       expect(lastSpawn).toBeDefined();
@@ -1080,7 +1068,7 @@ describe('ChatHandler > session', () => {
 
       const row = await sessionStore.getById('sess-fresh');
       expect(row).toBeDefined();
-      expect(row!.channelId).toBe(result.channelId);
+      expect(row!.channelId).toBe(result.data.channelId);
     });
 
     it('spawns child process with the historical row cwd (CLI JSONL lookup)', async () => {
@@ -1103,7 +1091,7 @@ describe('ChatHandler > session', () => {
         createdAt: new Date().toISOString(),
       });
 
-      await summoner.send<{ channelId?: string; error?: string }>('session:resume', {
+      await summoner.send<ResumeOk>('session:resume', {
         sessionId: 'sess-with-cwd',
       });
 

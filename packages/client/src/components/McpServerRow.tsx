@@ -1,4 +1,4 @@
-import type { McpServerInfo, McpTool } from '@code-quest/shared';
+import type { McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 
 const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-[11px] transition-colors';
@@ -19,14 +19,12 @@ interface McpServerRowProps {
   onToggle: (serverName: string, enabled: boolean) => void | Promise<void>;
   onReconnect: (serverName: string) => void | Promise<void>;
   onListTools?: (serverName: string) => Promise<McpTool[]>;
-  onAuthenticate?: (
-    serverName: string,
-  ) => Promise<{ success: boolean; authUrl?: string; error?: string }>;
+  onAuthenticate?: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
   onOAuthCallback?: (
     serverName: string,
     callbackUrl: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  onClearAuth?: (serverName: string) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<RpcResult<Record<string, never>>>;
+  onClearAuth?: (serverName: string) => Promise<RpcResult<Record<string, never>>>;
   showFeedback: (message: string, type: 'success' | 'error') => void;
 }
 
@@ -117,7 +115,7 @@ export function McpServerRow({
             onClick={async () => {
               try {
                 const result = await onClearAuth(s.name);
-                if (result.success) {
+                if (result.ok) {
                   showFeedback(`${s.name} auth cleared`, 'success');
                 } else {
                   showFeedback(result.error || 'Clear auth failed', 'error');
@@ -138,10 +136,10 @@ export function McpServerRow({
             onClick={async () => {
               try {
                 const result = await onAuthenticate(s.name);
-                if (result.authUrl) {
-                  setAuthUrl(result.authUrl);
+                if (result.ok && result.data.authUrl) {
+                  setAuthUrl(result.data.authUrl);
                   showFeedback(`Auth URL received for ${s.name}`, 'success');
-                } else if (result.success) {
+                } else if (result.ok) {
                   showFeedback(`${s.name} authenticated`, 'success');
                 } else {
                   showFeedback(result.error || 'Auth failed', 'error');
@@ -182,7 +180,7 @@ export function McpServerRow({
                   if (!url) return;
                   try {
                     const result = await onOAuthCallback(s.name, url);
-                    if (result.success) {
+                    if (result.ok) {
                       showFeedback(`OAuth callback sent for ${s.name}`, 'success');
                       setCallbackInput('');
                       setAuthUrl('');

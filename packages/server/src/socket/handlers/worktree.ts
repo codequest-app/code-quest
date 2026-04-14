@@ -4,6 +4,7 @@ import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 export function create({
   emitter,
@@ -66,22 +67,22 @@ export function create({
     try {
       const parsed = deleteWorktreePayloadSchema.safeParse(payload);
       if (!parsed.success) {
-        callback?.({ success: false, error: 'name is required' });
+        callback?.(err('name is required'));
         return;
       }
       if (!ch.cwd) {
-        callback?.({ success: false, error: 'No working directory' });
+        callback?.(err('No working directory'));
         return;
       }
       const repoRoot = await gitService.getRepoRoot(ch.cwd);
       if (!repoRoot) {
-        callback?.({ success: false, error: 'Not inside a git repository' });
+        callback?.(err('Not inside a git repository'));
         return;
       }
       await gitService.deleteWorktree(repoRoot, parsed.data.name);
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to delete worktree') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to delete worktree')));
     }
   }
 

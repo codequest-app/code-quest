@@ -4,7 +4,6 @@ export {
   actionOpenFilePayloadSchema,
   actionOpenUrlPayloadSchema,
 } from './actions.ts';
-
 export {
   type AccountInfo,
   type AuthResult,
@@ -17,7 +16,6 @@ export {
   type OAuthCodePayload,
   oauthCodePayloadSchema,
 } from './auth.ts';
-
 export {
   type CancelRequestPayload,
   type ChannelIdPayload,
@@ -38,7 +36,6 @@ export {
   speechToTextMessagePayloadSchema,
   successResponseSchema,
 } from './common.ts';
-
 export {
   type AutoRespondPayload,
   autoRespondPayloadSchema,
@@ -65,7 +62,6 @@ export {
   type RequestIdPayload,
   requestIdPayloadSchema,
 } from './control.ts';
-
 export {
   type ControlAuthenticateResponse,
   type ControlGenerateTitleResponse,
@@ -96,7 +92,6 @@ export {
   type ListFilesResponse,
   listFilesResponseSchema,
 } from './file.ts';
-
 export {
   type GitCheckoutPayload,
   type GitDiffPayload,
@@ -123,7 +118,6 @@ export {
   gitStatusResultSchema,
   gitUpdateSkippedBranchPayloadSchema,
 } from './git.ts';
-
 export {
   type AskDebuggerHelpResponse,
   askDebuggerHelpResponseSchema,
@@ -158,7 +152,6 @@ export {
   mcpSetServersPayloadSchema,
   mcpToolSchema,
 } from './mcp.ts';
-
 export {
   type ChatCancelAsyncMessagePayload,
   type ChatCancelPayload,
@@ -173,7 +166,6 @@ export {
   chatSendPayloadSchema,
   chatStopTaskPayloadSchema,
 } from './message.ts';
-
 export {
   type ContentBlock,
   contentBlockSchema,
@@ -186,7 +178,6 @@ export {
   toolResultBlockSchema,
   toolUseBlockSchema,
 } from './message-blocks.ts';
-
 export {
   type ResultMeta,
   resultMetaSchema,
@@ -197,7 +188,6 @@ export {
   toolResultSchema,
   toolUseMetaSchema,
 } from './message-meta.ts';
-
 export {
   type MessageAssistantPayload,
   type MessageResultPayload,
@@ -206,7 +196,6 @@ export {
   messageResultPayloadSchema,
   messageUserPayloadSchema,
 } from './message-payloads.ts';
-
 export {
   type ChatStats,
   chatStatsSchema,
@@ -215,7 +204,6 @@ export {
   type SessionStats,
   sessionStatsSchema,
 } from './message-stats.ts';
-
 export {
   type StreamBlockStartPayload,
   type StreamChunk,
@@ -230,7 +218,6 @@ export {
   streamTextPayloadSchema,
   streamToolSummaryPayloadSchema,
 } from './message-stream.ts';
-
 export {
   type NotificationAuthStatusPayload,
   type NotificationAuthUrlPayload,
@@ -249,7 +236,6 @@ export {
   type RawEventPayload,
   rawEventPayloadSchema,
 } from './notification.ts';
-
 export {
   type GetPlanCommentsResponse,
   getPlanCommentsResponseSchema,
@@ -260,7 +246,6 @@ export {
   planCommentPayloadSchema,
   planRemoveCommentPayloadSchema,
 } from './plan.ts';
-
 export {
   type AddMarketplacePayload,
   type AvailablePlugin,
@@ -295,20 +280,19 @@ export {
   refreshMarketplacePayloadSchema,
   removeMarketplacePayloadSchema,
 } from './plugin.ts';
-
 export {
   type GetProviderConfigResponse,
   getProviderConfigResponseSchema,
   type ProviderClientConfig,
   providerClientConfigSchema,
 } from './provider.ts';
-
 export {
   type Question,
   type QuestionOption,
   questionOptionSchema,
   questionSchema,
 } from './question.ts';
+export { type RpcResult, rpcResult } from './rpc.ts';
 
 export {
   type CancelRequestEventPayload,

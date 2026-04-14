@@ -67,7 +67,9 @@ export function ChatPanel({ title }: { title?: string }) {
       excludeLive: true,
       ...(activeProjectCwd ? { cwd: activeProjectCwd } : {}),
     })
-      .then(setResumeSessions)
+      .then((res) => {
+        if (res.ok) setResumeSessions(res.data);
+      })
       .finally(() => setResumeLoading(false));
   };
 

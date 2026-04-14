@@ -1,6 +1,9 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
+
+type AuthLoginResponse = RpcResult<{ auth?: unknown }>;
+type AuthOauthCodeResponse = RpcResult<Record<string, never>>;
 
 async function setup(sessionId = 'cli-sess') {
   const claude = createFakeSummoner().claude();
@@ -42,32 +45,29 @@ describe('ChatHandler > auth', () => {
       return null;
     });
 
-    const result = await claude.send<{
-      success: boolean;
-      auth?: { response?: { manualUrl?: string } };
-    }>('auth:login', { method: 'oauth' });
-    expect(result.success).toBe(true);
+    const result = await claude.send<AuthLoginResponse>('auth:login', { method: 'oauth' });
+    expect(result.ok).toBe(true);
   });
 
   it('auth:login fails when no active session', async () => {
     const claude = createFakeSummoner().claude();
     // Don't initialize — no active channel
 
-    const result = await claude.send<{ success: boolean; error?: string }>('auth:login', {
+    const result = await claude.send<AuthLoginResponse>('auth:login', {
       method: 'oauth',
     });
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('No active session');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain('No active session');
   });
 
   it('auth:oauth_code sends claude_oauth_callback to CLI', async () => {
     const { claude } = await setup();
 
-    const result = await claude.send<{ success: boolean }>('auth:oauth_code', {
+    const result = await claude.send<AuthOauthCodeResponse>('auth:oauth_code', {
       code: 'test-code',
       state: 'test-state',
     });
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
 
     const status = await claude.send<{
       authenticated: boolean;

@@ -421,4 +421,5 @@ export {
   worktreeInfoSchema,
   worktreeListResponseSchema,
 } from './schemas/index.ts';
+export { type RpcErr, type RpcOk, type RpcResult, rpcResult } from './schemas/rpc.ts';
 export type { ClientToServerEvents, ServerToClientEvents } from './socket-events.ts';

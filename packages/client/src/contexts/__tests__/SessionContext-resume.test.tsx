@@ -32,7 +32,7 @@ function wrap(socket: TypedSocket) {
 
 describe('SessionContext.resume', () => {
   it('emits session:resume and resolves with channelId on success', async () => {
-    const socket = makeStubSocket(() => ({ ok: true, channelId: 'ch-1' }));
+    const socket = makeStubSocket(() => ({ ok: true, data: { channelId: 'ch-1' } }));
     const { result } = renderHook(() => useSession(), { wrapper: wrap(socket) });
 
     const out = await result.current.resume('sid-X');

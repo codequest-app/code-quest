@@ -1,8 +1,4 @@
-import type {
-  ListFilesResponse,
-  SuccessResponse,
-  TerminalGetContentsResponse,
-} from '@code-quest/shared';
+import type { ListFilesResponse, RpcResult, TerminalGetContentsResponse } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 
@@ -22,7 +18,7 @@ export function createFileActions({ socket, channelId }: FileActionsDeps) {
     return rpc(socket, 'terminal:read', { channelId });
   }
 
-  function openClaudeTerminal(): Promise<SuccessResponse> {
+  function openClaudeTerminal(): Promise<RpcResult<{ channelId: string }>> {
     return rpc(socket, 'terminal:open_claude', { channelId });
   }
 

@@ -10,6 +10,7 @@ import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+import { err, ok } from '../utils/rpc.ts';
 
 export function create({
   sessionHistory,
@@ -43,9 +44,9 @@ export function create({
       const { branch } = gitCheckoutPayloadSchema.parse(payload);
       const cwd = ch.cwd;
       await gitService.checkout(cwd, branch);
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to checkout') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to checkout')));
     }
   }
 
@@ -99,9 +100,9 @@ export function create({
         seq: 0,
       };
       await rawEventStore.append(entry);
-      callback?.({ success: true });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to update skipped branch') });
+      callback?.(ok({}));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to update skipped branch')));
     }
   }
 

@@ -1,6 +1,11 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { RpcResult, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import { createFakeServer, createFakeSummoner } from '../test/index.ts';
+import { createFakeSummoner } from '../test/index.ts';
+
+type UpdateStateResp = RpcResult<Record<string, never>>;
+type SessionListOk = Extract<SessionListResponse, { ok: true }>;
 
 async function setup(sessionId = 'cli-sess') {
   const claude = createFakeSummoner().claude();
@@ -68,12 +73,10 @@ describe('ChatHandler > session', () => {
     it('session:list returns isActive=true for sessions with live process', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ sessions: Record<string, unknown>[]; total: number }>(
-        'session:list',
-        {},
-      );
+      const result = (await claude.send<SessionListResponse>('session:list', {})) as SessionListOk;
 
-      const session = result.sessions.find((s) => s.channelId === channelId);
+      expect(result.ok).toBe(true);
+      const session = result.data.sessions.find((s: any) => s.channelId === channelId);
       expect(session).toBeDefined();
       expect(session!.isActive).toBe(true);
     });
@@ -84,12 +87,12 @@ describe('session:update_state', () => {
   it('should broadcast state change to all sockets', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
+    const result = await claude.send<UpdateStateResp>('session:update_state', {
       channelId,
       title: 'New Title',
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
     const matched = claude
       .events('session:states')
       .flatMap((e: any) => e.sessions ?? [])
@@ -100,13 +103,13 @@ describe('session:update_state', () => {
   it('should broadcast state and title together', async () => {
     const { claude, channelId } = await setup();
 
-    const result = await claude.send<{ success: boolean; error?: string }>('session:update_state', {
+    const result = await claude.send<UpdateStateResp>('session:update_state', {
       channelId,
       title: 'Busy Tab',
       state: 'busy',
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
     const matched = claude
       .events('session:states')
       .flatMap((e: any) => e.sessions ?? [])
@@ -119,13 +122,10 @@ describe('session:update_state', () => {
   it('should return error for invalid payload', async () => {
     const claude = createFakeSummoner().claude();
 
-    const result = await claude.send<{ success: boolean; error?: string }>(
-      'session:update_state',
-      {},
-    );
+    const result = await claude.send<UpdateStateResp>('session:update_state', {});
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBeDefined();
   });
 });
 

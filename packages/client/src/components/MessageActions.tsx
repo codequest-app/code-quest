@@ -54,8 +54,8 @@ export function MessageActions({
     setRewindState({ phase: 'loading' });
     if (!cliUuid) return;
     const result = await onRewind(cliUuid, true);
-    if (result.canRewind) {
-      setRewindState({ phase: 'preview', data: result });
+    if (result.ok && result.data.canRewind) {
+      setRewindState({ phase: 'preview', data: result.data });
     } else {
       setRewindState({ phase: 'fallback' });
     }
@@ -71,8 +71,8 @@ export function MessageActions({
     setMenuOpen(false);
     if (!onFork || !cliUuid) return;
     const result = await onFork(cliUuid);
-    if (result.success && result.channelId) {
-      toast.success(`Forked to new session: ${result.channelId}`);
+    if (result.ok) {
+      toast.success(`Forked to new session: ${result.data.channelId}`);
     } else {
       toast.error(result.error ?? 'Failed to fork session');
     }
@@ -82,7 +82,7 @@ export function MessageActions({
     setMenuOpen(false);
     if (!onFork || !cliUuid) return;
     const forkResult = await onFork(cliUuid);
-    if (forkResult.success) {
+    if (forkResult.ok) {
       await onRewind(cliUuid, false);
       toast.success('Forked and rewound');
     }

@@ -24,7 +24,7 @@ describe('McpServerRow', () => {
         onToggle={noop}
         onReconnect={noop}
         showFeedback={noop}
-        onClearAuth={vi.fn().mockResolvedValue({ success: true })}
+        onClearAuth={vi.fn().mockResolvedValue({ ok: true, data: {} })}
       />,
     );
     expect(screen.getByTitle('Clear Auth my-mcp')).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('McpServerRow', () => {
 
   it('calls onClearAuth with server name and shows success feedback', async () => {
     const user = userEvent.setup();
-    const onClearAuth = vi.fn().mockResolvedValue({ success: true });
+    const onClearAuth = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const showFeedback = vi.fn();
     render(
       <McpServerRow
@@ -50,7 +50,7 @@ describe('McpServerRow', () => {
 
   it('shows error feedback when onClearAuth fails', async () => {
     const user = userEvent.setup();
-    const onClearAuth = vi.fn().mockResolvedValue({ success: false, error: 'Token not found' });
+    const onClearAuth = vi.fn().mockResolvedValue({ ok: false, error: 'Token not found' });
     const showFeedback = vi.fn();
     render(
       <McpServerRow

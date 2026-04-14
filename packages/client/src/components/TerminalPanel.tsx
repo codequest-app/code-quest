@@ -75,7 +75,7 @@ export function TerminalPanel() {
 
   const handleOpenClaude = async () => {
     const res = await openClaudeTerminal();
-    if (res.success) {
+    if (res.ok) {
       toast.success(`New ${brandName} terminal opened`);
     } else {
       toast.error(res.error ?? `Failed to open ${brandName} terminal`);

@@ -261,8 +261,8 @@ describe('MCPPanel', () => {
   it('calls onAuthenticate and shows auth URL', async () => {
     const user = userEvent.setup();
     const onAuth = createSocketCallback('authenticate_mcp_server', {
-      success: true,
-      authUrl: 'https://auth.example.com',
+      ok: true as const,
+      data: { authUrl: 'https://auth.example.com' },
     });
     render(
       <MCPPanel
@@ -284,11 +284,12 @@ describe('MCPPanel', () => {
   it('shows callback URL input after auth returns authUrl and submits it', async () => {
     const user = userEvent.setup();
     const onAuth = createSocketCallback('authenticate_mcp_server', {
-      success: true,
-      authUrl: 'https://auth.example.com',
+      ok: true as const,
+      data: { authUrl: 'https://auth.example.com' },
     });
     const onOAuthCallback = createSocketCallback('submit_mcp_oauth_callback_url', {
-      success: true,
+      ok: true as const,
+      data: {},
     });
     render(
       <MCPPanel
@@ -307,13 +308,13 @@ describe('MCPPanel', () => {
     await user.type(callbackInput, 'https://example.com/callback?code=abc');
     await user.click(screen.getByText('Submit'));
     const result = await onOAuthCallback('test-server', 'https://example.com/callback?code=abc');
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ ok: true, data: {} });
   });
 
   it('shows error when auth fails', async () => {
     const user = userEvent.setup();
     const onAuth = createSocketCallback('authenticate_mcp_server', {
-      success: false,
+      ok: false as const,
       error: 'Auth denied',
     });
     render(

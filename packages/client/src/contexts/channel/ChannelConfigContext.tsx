@@ -2,9 +2,9 @@ import {
   type AccountInfo,
   type ControlResponse,
   getProviderConfigResponseSchema,
-  type McpAuthResult,
   type ModelInfo,
   type ProviderClientConfig,
+  type RpcResult,
   type UsageQuota,
   type WorktreeInfo,
 } from '@code-quest/shared';
@@ -56,24 +56,24 @@ export interface ChannelConfigValue extends ConfigState {
   setPermissionMode: (mode: string) => void;
   setThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
-  setEffort: (effort: string) => Promise<{ success: boolean; error?: string }>;
+  setEffort: (effort: string) => Promise<RpcResult<Record<string, never>>>;
   mcpStatus: () => Promise<ControlResponse>;
   mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
   mcpReconnect: (serverName: string) => Promise<ControlResponse>;
   mcpSetServers: (servers: Record<string, unknown>) => Promise<ControlResponse>;
   mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<ControlResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
-  mcpAuthenticate: (serverName: string) => Promise<McpAuthResult>;
+  mcpAuthenticate: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
   mcpOAuthCallback: (
     serverName: string,
     callbackUrl: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  mcpClearAuth: (serverName: string) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<RpcResult<Record<string, never>>>;
+  mcpClearAuth: (serverName: string) => Promise<RpcResult<Record<string, never>>>;
   ensureChromeMcpEnabled: () => Promise<ControlResponse>;
   disableChromeMcp: () => Promise<ControlResponse>;
   enableJupyterMcp: () => Promise<ControlResponse>;
   disableJupyterMcp: () => Promise<ControlResponse>;
-  askDebuggerHelp: () => Promise<ControlResponse>;
+  askDebuggerHelp: () => Promise<RpcResult<{ response: { type: 'ask_debugger_help_response' } }>>;
   requestUsageUpdate: () => void;
   openNewChannel: (cwd: string) => void;
 }

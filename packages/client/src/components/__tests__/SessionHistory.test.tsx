@@ -82,7 +82,7 @@ describe('SessionHistory', () => {
 
   it('removes session after successful delete', async () => {
     const user = userEvent.setup();
-    const onDelete = vi.fn().mockResolvedValue({ success: true });
+    const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
     render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} onDelete={onDelete} />);
 
     await user.click(screen.getAllByTitle('Delete')[0]);

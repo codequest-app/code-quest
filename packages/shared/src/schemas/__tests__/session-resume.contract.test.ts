@@ -24,8 +24,11 @@ describe('sessionResumePayloadSchema', () => {
 });
 
 describe('sessionResumeResponseSchema (discriminated union)', () => {
-  it('accepts success { ok: true, channelId }', () => {
-    const result = sessionResumeResponseSchema.safeParse({ ok: true, channelId: 'ch-1' });
+  it('accepts success { ok: true, data: { channelId } }', () => {
+    const result = sessionResumeResponseSchema.safeParse({
+      ok: true,
+      data: { channelId: 'ch-1' },
+    });
     expect(result.success).toBe(true);
   });
 

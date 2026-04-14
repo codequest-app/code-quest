@@ -1,6 +1,13 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
+
+import type { RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
+
+type McpAuthResp = RpcResult<{ authUrl?: string }>;
+type McpEmptyResp = RpcResult<Record<string, never>>;
+type McpAskDebuggerResp = RpcResult<{ response: { type: 'ask_debugger_help_response' } }>;
+type McpAskDebuggerOk = Extract<McpAskDebuggerResp, { ok: true }>;
 
 async function setup() {
   const claude = createFakeSummoner().claude();
@@ -34,12 +41,12 @@ describe('ChatHandler > mcp', () => {
     it('mcp:authenticate sends control_request and returns success', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ success: boolean; authUrl?: string; error?: string }>(
-        'mcp:authenticate',
-        { channelId, serverName: 'test-server' },
-      );
+      const result = await claude.send<McpAuthResp>('mcp:authenticate', {
+        channelId,
+        serverName: 'test-server',
+      });
 
-      expect(result.success).toBe(true);
+      expect(result.ok).toBe(true);
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'mcp_authenticate')).toBe(true);
     });
@@ -47,24 +54,24 @@ describe('ChatHandler > mcp', () => {
     it('mcp:authenticate returns error when no active session', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:authenticate', {
+      const result = await claude.send<McpAuthResp>('mcp:authenticate', {
         channelId: 'nonexistent',
         serverName: 'test',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Session not found');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe('Session not found');
     });
 
     it('mcp:clear_auth sends control_request and returns success', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:clear_auth', {
+      const result = await claude.send<McpEmptyResp>('mcp:clear_auth', {
         channelId,
         serverName: 'test-server',
       });
 
-      expect(result.success).toBe(true);
+      expect(result.ok).toBe(true);
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'mcp_clear_auth')).toBe(true);
     });
@@ -72,13 +79,13 @@ describe('ChatHandler > mcp', () => {
     it('mcp:clear_auth returns error when no active session', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:clear_auth', {
+      const result = await claude.send<McpEmptyResp>('mcp:clear_auth', {
         channelId: 'nonexistent',
         serverName: 'test',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Session not found');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe('Session not found');
     });
   });
 
@@ -86,13 +93,13 @@ describe('ChatHandler > mcp', () => {
     it('sends mcp_oauth_callback_url control_request', async () => {
       const { claude, channelId } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:oauth_callback', {
+      const result = await claude.send<McpEmptyResp>('mcp:oauth_callback', {
         channelId,
         serverName: 'test-server',
         callbackUrl: 'https://example.com/callback?code=abc',
       });
 
-      expect(result.success).toBe(true);
+      expect(result.ok).toBe(true);
       const received = claude.received('control_request');
       expect(received.some((r) => (r.request as any)?.subtype === 'mcp_oauth_callback_url')).toBe(
         true,
@@ -102,27 +109,27 @@ describe('ChatHandler > mcp', () => {
     it('returns error when session not found', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:oauth_callback', {
+      const result = await claude.send<McpEmptyResp>('mcp:oauth_callback', {
         channelId: 'nonexistent',
         serverName: 'test',
         callbackUrl: 'https://example.com/cb',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Session not found');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe('Session not found');
     });
 
     it('returns error for invalid callbackUrl', async () => {
       const { claude } = await setup();
 
-      const result = await claude.send<{ success: boolean; error?: string }>('mcp:oauth_callback', {
+      const result = await claude.send<McpEmptyResp>('mcp:oauth_callback', {
         channelId: 'any',
         serverName: 'test',
         callbackUrl: 'not-a-url',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBeDefined();
     });
   });
 
@@ -222,13 +229,12 @@ describe('ChatHandler > mcp', () => {
     it('ask_debugger_help: returns ask_debugger_help_response without state mutation', async () => {
       const { claude } = await setup();
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:ask_debugger',
-        { channelId: 'any' },
-      );
+      const res = (await claude.send<McpAskDebuggerResp>('mcp:ask_debugger', {
+        channelId: 'any',
+      })) as McpAskDebuggerOk;
 
-      expect(res.success).toBe(true);
-      expect((res.response as any).type).toBe('ask_debugger_help_response');
+      expect(res.ok).toBe(true);
+      expect(res.data.response.type).toBe('ask_debugger_help_response');
       // No settings:update with debugger state should have been pushed
       const debuggerUpdates = claude
         .events('settings:update')
@@ -248,8 +254,10 @@ describe('ChatHandler > mcp', () => {
       ] as const;
 
       for (const event of events) {
-        const res = await claude.send<{ success: boolean; error?: string }>(event, {});
-        expect(res.success).toBe(false);
+        const res = await claude.send<any>(event, {});
+        // ask_debugger uses RpcResult (ok field); others use CLI ControlResponse (success field)
+        const isFailure = event === 'mcp:ask_debugger' ? res.ok === false : res.success === false;
+        expect(isFailure).toBe(true);
         expect(res.error).toBeDefined();
       }
     });

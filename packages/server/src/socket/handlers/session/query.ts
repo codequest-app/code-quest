@@ -9,6 +9,7 @@ import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
+import { err, ok } from '../../utils/rpc.ts';
 
 export function create({
   channelManager,
@@ -46,10 +47,10 @@ export function create({
           firstUserMessage: previews[i].firstUser,
         };
       });
-      callback?.({ sessions, total: result.total });
-    } catch (err) {
-      logger.debug(err, 'Failed to list sessions');
-      callback?.({ sessions: [], total: 0 });
+      callback?.(ok({ sessions, total: result.total }));
+    } catch (e) {
+      logger.debug(e, 'Failed to list sessions');
+      callback?.(ok({ sessions: [], total: 0 }));
     }
   }
 
@@ -66,10 +67,10 @@ export function create({
         offset: parsed.offset,
         hasParentId: true,
       });
-      callback?.({ sessions: result.sessions, total: result.total });
-    } catch (err) {
-      logger.debug(err, 'Failed to list remote sessions');
-      callback?.({ sessions: [], total: 0 });
+      callback?.(ok({ sessions: result.sessions, total: result.total }));
+    } catch (e) {
+      logger.debug(e, 'Failed to list remote sessions');
+      callback?.(ok({ sessions: [], total: 0 }));
     }
   }
 
@@ -83,14 +84,14 @@ export function create({
       const { channelId } = sessionGetPayloadSchema.parse(payload);
       const session = await sessionStore.getByChannelId(channelId);
       if (!session) {
-        callback?.({ error: 'Session not found' });
+        callback?.(err('Session not found', 'session_not_found'));
         return;
       }
       const events = await sessionHistory.getSessionHistory(channelId);
       const channel = channelManager.get(channelId);
-      callback?.({ session, events, meta: channel?.metaCache ?? {} });
-    } catch (err) {
-      callback?.({ error: errMsg(err, 'Failed to get session') });
+      callback?.(ok({ session, events, meta: channel?.metaCache ?? {} }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to get session')));
     }
   }
 

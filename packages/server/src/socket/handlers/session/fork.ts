@@ -4,6 +4,7 @@ import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
 import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
+import { err, ok } from '../../utils/rpc.ts';
 
 export function create({
   channelManager,
@@ -29,11 +30,11 @@ export function create({
       const parentSessionId = await sessionHistory.resolveSessionId(forkedFromChannelId);
       const parentRow = await sessionStore.getById(parentSessionId);
       if (!parentRow) {
-        callback?.({ success: false, error: 'parent session not found' });
+        callback?.(err('parent session not found', 'parent_not_found'));
         return;
       }
       if (!parentRow.cwd) {
-        callback?.({ success: false, error: 'parent session has no cwd; cannot fork' });
+        callback?.(err('parent session has no cwd; cannot fork', 'parent_no_cwd'));
         return;
       }
 
@@ -58,13 +59,9 @@ export function create({
         channelId: newChannelId,
         cwd: parentRow.cwd,
       });
-      callback?.({
-        success: true,
-        channelId: newChannelId,
-        parentChannelId: forkedFromChannelId,
-      });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to fork session') });
+      callback?.(ok({ channelId: newChannelId, parentChannelId: forkedFromChannelId }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to fork session')));
     }
   }
 
@@ -105,14 +102,15 @@ export function create({
         channelId: parsed.newChannelId,
         cwd,
       });
-      callback?.({
-        success: true,
-        channelId: parsed.newChannelId,
-        events,
-        ...(branchCheckoutFailed && { branchCheckoutFailed: true, branch: parsed.branch }),
-      });
-    } catch (err) {
-      callback?.({ success: false, error: errMsg(err, 'Failed to teleport session') });
+      callback?.(
+        ok({
+          channelId: parsed.newChannelId,
+          events,
+          ...(branchCheckoutFailed && { branchCheckoutFailed: true, branch: parsed.branch }),
+        }),
+      );
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to teleport session')));
     }
   }
 

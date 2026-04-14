@@ -42,36 +42,42 @@ describe('shared response schemas', () => {
   });
 
   describe('sessionListResponseSchema', () => {
-    it('accepts { sessions: [], total: 0 }', () => {
-      expect(sessionListResponseSchema.parse({ sessions: [], total: 0 })).toEqual({
-        sessions: [],
-        total: 0,
+    it('accepts { ok: true, data: { sessions: [], total: 0 } }', () => {
+      expect(
+        sessionListResponseSchema.parse({ ok: true, data: { sessions: [], total: 0 } }),
+      ).toEqual({
+        ok: true,
+        data: { sessions: [], total: 0 },
       });
     });
 
     it('accepts sessions with summary objects', () => {
       const input = {
-        sessions: [
-          {
-            id: 'sess-1',
-            channelId: 's1',
-            provider: 'claude',
-            command: 'claude',
-            args: '[]',
-            mode: 'interactive',
-            role: 'chat',
-            createdAt: '2025-01-01',
-          },
-        ],
-        total: 1,
-      };
+        ok: true,
+        data: {
+          sessions: [
+            {
+              id: 'sess-1',
+              channelId: 's1',
+              provider: 'claude',
+              command: 'claude',
+              args: '[]',
+              mode: 'interactive',
+              role: 'chat',
+              createdAt: '2025-01-01',
+            },
+          ],
+          total: 1,
+        },
+      } as const;
       const result = sessionListResponseSchema.parse(input);
-      expect(result.sessions).toHaveLength(1);
-      expect(result.total).toBe(1);
+      if (!result.ok) throw new Error('expected ok');
+      expect(result.data.sessions).toHaveLength(1);
+      expect(result.data.total).toBe(1);
     });
 
     it('rejects missing total', () => {
-      expect(() => sessionListResponseSchema.parse({ sessions: [] })).toThrow();
+      expect(() => sessionListResponseSchema.parse({ ok: true, data: { sessions: [] } })).toThrow();
     });
   });
 });
