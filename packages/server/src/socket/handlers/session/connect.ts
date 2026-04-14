@@ -138,7 +138,7 @@ export function create({
       ...(slashCommands && { slashCommands }),
     });
 
-    socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
+    socket?.emit('session:init', buildSessionInitPayload(channel));
     if (channelManager.cachedModels) {
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
     }
@@ -200,7 +200,7 @@ export function create({
       await sessionHistory.replayPendingControlRequests(socket, channel.channelId, replaySessionId);
     }
 
-    socket?.emit('session:init', { ...buildSessionInitPayload(channel) });
+    socket?.emit('session:init', buildSessionInitPayload(channel));
     if (channelManager.cachedModels) {
       socket?.emit('app:models', { channelId: '', models: channelManager.cachedModels });
     }

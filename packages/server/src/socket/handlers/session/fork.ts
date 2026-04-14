@@ -62,10 +62,6 @@ export function create({
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      if (!parentRow.cwd) {
-        callback?.(err('parent session has no cwd — cannot fork'));
-        return;
-      }
       const projectRoot =
         parentRow.projectRoot ?? (await resolveProjectRoot(gitService, parentRow.cwd));
       const newCh = channelManager.get(newChannelId);
