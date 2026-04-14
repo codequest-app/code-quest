@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
-import { asRecord, isRecord } from '../../utils.ts';
+import { asRecord, asString, isRecord } from '../../utils.ts';
 import type { controlRequestSchema } from '../schemas.ts';
 
 type ControlRequestMessage = z.infer<typeof controlRequestSchema>;
@@ -37,7 +37,7 @@ function handleHookCallback({ requestId, request }: RequestContext): ClientMessa
 
 function handleElicitation({ requestId, request }: RequestContext): ClientMessage {
   const elInput = asRecord(request.input);
-  const mode = typeof elInput?.mode === 'string' ? elInput.mode : undefined;
+  const mode = asString(elInput?.mode, undefined);
   const inputType = mode === 'url' ? 'url' : mode === 'form' ? 'select' : 'text';
   const reqSchema = asRecord(elInput?.requested_schema);
   const options = mode === 'form' ? Object.keys(asRecord(reqSchema?.properties) ?? {}) : undefined;
@@ -45,14 +45,12 @@ function handleElicitation({ requestId, request }: RequestContext): ClientMessag
     name: 'control:elicitation',
     payload: {
       requestId,
-      prompt: typeof elInput?.message === 'string' ? elInput.message : '',
+      prompt: asString(elInput?.message, ''),
       inputType,
       options,
-      url: mode === 'url' && typeof elInput?.url === 'string' ? elInput.url : undefined,
+      url: mode === 'url' ? asString(elInput?.url, undefined) : undefined,
       elicitationId: request.elicitation_id,
-      mcpServerName:
-        (typeof elInput?.mcp_server_name === 'string' ? elInput.mcp_server_name : undefined) ??
-        request.mcp_server_name,
+      mcpServerName: asString(elInput?.mcp_server_name, undefined) ?? request.mcp_server_name,
       requestedSchema: reqSchema,
     },
   };
@@ -64,9 +62,8 @@ function handleOpenDiff({ requestId, request }: RequestContext): ClientMessage {
     name: 'control:open_diff',
     payload: {
       requestId,
-      originalPath:
-        typeof diffInput?.originalFilePath === 'string' ? diffInput.originalFilePath : '',
-      newPath: typeof diffInput?.newFilePath === 'string' ? diffInput.newFilePath : '',
+      originalPath: asString(diffInput?.originalFilePath, ''),
+      newPath: asString(diffInput?.newFilePath, ''),
     },
   };
 }
@@ -88,7 +85,7 @@ function handleOpenUrl({ requestId, request }: RequestContext): ClientMessage {
     name: 'action:open_url',
     payload: {
       requestId,
-      url: typeof urlInput?.url === 'string' ? urlInput.url : '',
+      url: asString(urlInput?.url, ''),
       response: { type: 'open_url_response' },
     },
   };
@@ -96,7 +93,7 @@ function handleOpenUrl({ requestId, request }: RequestContext): ClientMessage {
 
 function handleOpenFile({ requestId, request }: RequestContext): ClientMessage {
   const fileInput = asRecord(request.input);
-  const filePath = typeof fileInput?.file_path === 'string' ? fileInput.file_path : '';
+  const filePath = asString(fileInput?.file_path, '');
   const location = asRecord(fileInput?.location);
   return {
     name: 'action:open_file',
@@ -106,12 +103,12 @@ function handleOpenFile({ requestId, request }: RequestContext): ClientMessage {
 
 function handleShowNotification({ requestId, request }: RequestContext): ClientMessage {
   const notifInput = asRecord(request.input);
-  const severity = typeof notifInput?.severity === 'string' ? notifInput.severity : 'info';
+  const severity = asString(notifInput?.severity, 'info');
   return {
     name: 'notification:show',
     payload: {
       requestId,
-      message: typeof notifInput?.message === 'string' ? notifInput.message : '',
+      message: asString(notifInput?.message, ''),
       severity: severity === 'error' || severity === 'warning' ? severity : 'info',
       buttons: Array.isArray(notifInput?.buttons) ? notifInput.buttons : undefined,
       onlyIfNotVisible:

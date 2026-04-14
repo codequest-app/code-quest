@@ -16,6 +16,12 @@ import type { Channel } from '../channel.ts';
 import { withChannel, withError, withSocket } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
+
+/** Fire-and-forget sendRequest: log debug on failure, never throw. */
+function fireSendRequest(ch: Channel, event: string, payload?: Record<string, unknown>): void {
+  ch.sendRequest(event, payload).catch((err) => logger.debug({ err }, 'sendRequest failed'));
+}
+
 export function create({
   channelManager,
   sessionStore,
@@ -53,9 +59,7 @@ export function create({
         ch.abort();
       } else {
         interruptedChannels.add(channelId);
-        ch.sendRequest('message:interrupt').catch((err) =>
-          logger.debug({ err }, 'sendRequest failed'),
-        );
+        fireSendRequest(ch, 'message:interrupt');
       }
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel');
@@ -160,9 +164,7 @@ export function create({
   function handleStopTask(ch: Channel, payload: unknown): void {
     try {
       const { taskId } = chatStopTaskPayloadSchema.parse(payload);
-      ch.sendRequest('message:stop_task', { task_id: taskId }).catch((err) =>
-        logger.debug({ err }, 'sendRequest failed'),
-      );
+      fireSendRequest(ch, 'message:stop_task', { task_id: taskId });
     } catch (err) {
       logger.debug({ err }, 'Failed to stop task');
     }
@@ -171,9 +173,7 @@ export function create({
   function handleCancelAsync(ch: Channel, payload: unknown): void {
     try {
       const { messageUuid } = chatCancelAsyncMessagePayloadSchema.parse(payload);
-      ch.sendRequest('message:cancel_async', { message_uuid: messageUuid }).catch((err) =>
-        logger.debug({ err }, 'sendRequest failed'),
-      );
+      fireSendRequest(ch, 'message:cancel_async', { message_uuid: messageUuid });
     } catch (err) {
       logger.debug({ err }, 'Failed to cancel async message');
     }
