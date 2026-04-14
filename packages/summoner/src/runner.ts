@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import type { ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
 
-export interface ProcessRunnerOptions {
+interface ProcessRunnerOptions {
   adapter: ProviderAdapter;
   processProvider?: ProcessProvider;
   args?: unknown;

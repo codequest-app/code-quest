@@ -16,7 +16,7 @@ interface AuthState {
   errorMsg: string | null;
 }
 
-export interface SessionContextValue {
+interface SessionContextValue {
   // ── Session actions ──
   listSessions: (opts?: {
     limit?: number;

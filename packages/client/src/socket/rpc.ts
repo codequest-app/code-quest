@@ -1,15 +1,5 @@
-import type { ClientToServerEvents, RpcResult } from '@code-quest/shared';
+import type { ClientToServerEvents } from '@code-quest/shared';
 import type { TypedSocket } from './client';
-
-/** Thrown by `call()` when server acks with `{ ok: false, ... }`. */
-export class RpcError extends Error {
-  readonly code?: string;
-  constructor(message: string, code?: string) {
-    super(message);
-    this.name = 'RpcError';
-    this.code = code;
-  }
-}
 
 /** Typed socket.emit requires known event literals; dynamic event names need this helper. */
 function emitDynamic(socket: TypedSocket, ...args: unknown[]): void {
@@ -46,44 +36,4 @@ export function rpc<E extends keyof ClientToServerEvents>(
     // emit overloads can't express this pattern without an escape hatch.
     emitDynamic(socket, event, ...args, resolve);
   });
-}
-
-/**
- * Promise-based rpc with channelId injected into the payload.
- */
-export function channelRpc<T = unknown>(
-  socket: TypedSocket,
-  channelId: string,
-  event: string,
-  payload: Record<string, unknown>,
-): Promise<T> {
-  return new Promise((resolve) => {
-    emitDynamic(socket, event, { channelId, ...payload }, resolve);
-  });
-}
-
-/** Extract the success-data type T when the event's ack is RpcResult<T>. */
-type CallData<E extends keyof ClientToServerEvents> =
-  Parameters<ClientToServerEvents[E]> extends [...unknown[], (res: RpcResult<infer T>) => void]
-    ? T
-    : never;
-
-/**
- * Higher-level rpc wrapper: unwraps an RpcResult<T> ack.
- * Returns the success data, throws RpcError on failure.
- *
- * Prefer this over raw `rpc()` unless you need to branch on failure manually.
- */
-export async function call<E extends keyof ClientToServerEvents>(
-  socket: TypedSocket,
-  event: E,
-  ...args: Parameters<ClientToServerEvents[E]> extends [...infer P, infer _Cb] ? P : never
-): Promise<CallData<E>> {
-  const result = await new Promise<RpcResult<CallData<E>>>((resolve) => {
-    emitDynamic(socket, event, ...args, resolve);
-  });
-  if (!result.ok) {
-    throw new RpcError(result.error, result.code);
-  }
-  return result.data;
 }

@@ -26,7 +26,7 @@ import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { wireHandlers } from './handlers/guard';
 import { composeHandlers } from './handlers/speech';
 
-export interface ChannelComposeContextValue {
+interface ChannelComposeContextValue {
   value: string;
   hasText: boolean;
   cursorPos: number;

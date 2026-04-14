@@ -1,4 +1,4 @@
-export interface SlashToken {
+interface SlashToken {
   query: string;
   start: number;
   end: number;

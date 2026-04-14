@@ -7,7 +7,7 @@ import type { SessionStatus } from '../types/ui';
 // the contexts directly and treat absence as "no pending intent".
 import { ProjectActionsContext, ProjectStateContext } from './ProjectContext';
 
-export interface TabMeta {
+interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
@@ -15,7 +15,7 @@ export interface TabMeta {
 
 // ── State context (changes frequently) ──
 
-export interface TabStateValue {
+interface TabStateValue {
   tabs: Record<string, TabMeta>;
   activeTabId: string | null;
 }
@@ -30,7 +30,7 @@ export function useTabState(): TabStateValue {
 
 // ── Actions context (stable references) ──
 
-export interface TabActionsValue {
+interface TabActionsValue {
   addTab: (id: string, cwd?: string) => void;
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;

@@ -16,6 +16,5 @@ export {
   StreamlinedToolSummaryContent,
   TaskStartedContent,
 } from './SystemBlocks';
-export { CollapsibleBlock } from './shared';
 export { ToolResultBlock } from './ToolResultBlock';
 export { ToolUseBlock } from './ToolUseBlock';

@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
-export const ChannelIdContext = createContext<string | null>(null);
+const ChannelIdContext = createContext<string | null>(null);
 
 export function useChannelId(): string {
   const channelId = useContext(ChannelIdContext);

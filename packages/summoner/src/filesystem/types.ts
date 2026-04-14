@@ -13,11 +13,6 @@ export const fileResultSchema = z.object({
 });
 export type FileResult = z.infer<typeof fileResultSchema>;
 
-export const readFileResultSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('ok'), content: z.string() }),
-  z.object({ kind: z.literal('err'), error: z.string() }),
-]);
-
 /** Legacy tagless variant — consumers narrow by `'error' in result`. */
 export type ReadFileResult = { content: string } | { error: string };
 

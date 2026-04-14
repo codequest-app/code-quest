@@ -79,7 +79,7 @@ type MessagesStateValue = Pick<
   | 'isProcessing'
   | 'isCancelling'
 >;
-export type MessagesActionsValue = Omit<ChannelMessagesValue, keyof MessagesStateValue>;
+type MessagesActionsValue = Omit<ChannelMessagesValue, keyof MessagesStateValue>;
 
 const MessagesStateContext = createContext<MessagesStateValue | null>(null);
 const MessagesActionsContext = createContext<MessagesActionsValue | null>(null);

@@ -7,7 +7,7 @@ export const adapter = new ClaudeAdapter();
 
 /** Extract the ProtocolMessage from a parseLine result. Generic so callers get
  *  a narrowed type for fallback (`unknown`/`error`) branches without casting. */
-export function parseMessage<T = ProtocolMessage>(line: string): T | null {
+function parseMessage<T = ProtocolMessage>(line: string): T | null {
   const parsed = adapter.parseLine(line);
   if (parsed.status === 'ok') return parsed.message as T;
   if (parsed.status === 'unknown') return parsed.data as T;

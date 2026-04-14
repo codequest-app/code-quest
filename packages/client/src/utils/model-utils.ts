@@ -1,6 +1,6 @@
 import type { ModelInfo } from '@code-quest/shared';
 
-export interface ModelDisplayInfo {
+interface ModelDisplayInfo {
   displayName: string;
   subLabel: string;
 }

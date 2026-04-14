@@ -18,7 +18,7 @@ interface PluginState {
   installing: string | null;
 }
 
-export interface PluginContextValue extends PluginState {
+interface PluginContextValue extends PluginState {
   refreshPlugins: () => Promise<void>;
   refreshMarketplaces: () => Promise<void>;
   install: (pluginId: string, scope: 'user' | 'project' | 'local') => Promise<void>;

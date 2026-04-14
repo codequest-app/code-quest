@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export type TimelineStatus = 'success' | 'error' | 'warning' | 'in-progress';
+type TimelineStatus = 'success' | 'error' | 'warning' | 'in-progress';
 
 const statusStyles: Record<TimelineStatus, { dot: string; cls: string }> = {
   success: { dot: '●', cls: 'text-success' },

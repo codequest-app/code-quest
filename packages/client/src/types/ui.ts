@@ -9,13 +9,7 @@ import type {
   ToolUseMeta,
 } from '@code-quest/shared';
 
-export type {
-  ResultMeta,
-  RewindResult,
-  ToolResult,
-  ToolResultMeta,
-  ToolUseMeta,
-} from '@code-quest/shared';
+export type { ResultMeta, RewindResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
 
 export type SessionStatus =
   | 'disconnected'

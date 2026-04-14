@@ -22,7 +22,7 @@ import {
   createControlActions,
 } from './handlers/permission';
 
-export interface ChannelControlValue {
+interface ChannelControlValue {
   pendingControls: PendingControl[];
   pendingElicitation: PendingElicitation | null;
   pendingDiffReview: PendingDiffReview | null;

@@ -13,7 +13,7 @@ import { TYPES } from '../types.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-export interface TestContainerOverrides {
+interface TestContainerOverrides {
   processProvider?: ProcessProvider;
   filesystemService?: FilesystemService;
   gitService?: GitService;

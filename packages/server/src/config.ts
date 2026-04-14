@@ -9,7 +9,7 @@ export function envBool(key: string, defaultValue = false, raw?: string): boolea
 }
 
 const VALID_RAW_STORE_DRIVERS = ['sqlite', 'mysql', 'file'] as const;
-export type RawStoreDriver = (typeof VALID_RAW_STORE_DRIVERS)[number];
+type RawStoreDriver = (typeof VALID_RAW_STORE_DRIVERS)[number];
 
 function isRawStoreDriver(s: string): s is RawStoreDriver {
   return (VALID_RAW_STORE_DRIVERS as readonly string[]).includes(s);

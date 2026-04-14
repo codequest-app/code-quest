@@ -21,7 +21,7 @@ let _seq = 0;
 
 const DEFAULT_SESSION_ID = () => `fake-session-${++_seq}`;
 
-export interface InitializeOptions {
+interface InitializeOptions {
   /** Launch options forwarded to session:launch (channelId, thinkingLevel, cwd, etc.) */
   launch?: Record<string, unknown>;
 }

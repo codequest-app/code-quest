@@ -3,7 +3,7 @@ import type { MessageNode } from './message-tree';
 /** Assistant message types that get timeline dots */
 const TIMELINE_TYPES = new Set(['text', 'thinking', 'tool_use', 'streamlined_text']);
 
-export type RenderGroup =
+type RenderGroup =
   | { kind: 'timeline'; nodes: MessageNode[]; prevRole: string | null }
   | { kind: 'single'; node: MessageNode; prevRole: string | null };
 

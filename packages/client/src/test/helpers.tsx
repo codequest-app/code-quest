@@ -17,13 +17,6 @@ export function SendButton({ message = 'test' }: { message?: string } = {}) {
   );
 }
 
-/** Emit a single segment. Wraps with act() for React state updates. */
-export async function emitSegment(claude: FakeClaude, segment: string) {
-  await act(async () => {
-    await claude.emit(segment);
-  });
-}
-
 /** Emit a complete assistant turn (assistant message + result). Wraps with act() for React. */
 export async function emitAssistantTurn(claude: FakeClaude, message = 'hi') {
   await act(async () => {

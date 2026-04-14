@@ -10,7 +10,7 @@ import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
-export interface RenderWithWorkspaceOptions {
+interface RenderWithWorkspaceOptions {
   summoner?: FakeSummoner;
 }
 

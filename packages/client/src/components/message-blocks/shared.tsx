@@ -4,9 +4,6 @@ import { useState } from 'react';
 export const CODE_BLOCK_CLASS =
   'bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] font-mono border border-border';
 
-export const JSON_VIEWER_CLASS =
-  'bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] border border-border';
-
 export function CollapsibleBlock({
   icon,
   label,

@@ -18,7 +18,7 @@ import type { ChannelState } from '../types/chat';
 
 const STORY_CHANNEL_ID = 'story';
 
-export interface StoryChannelOptions {
+interface StoryChannelOptions {
   /** Override ChannelConfigProvider initial config (model, tools, permissionMode, etc.) */
   config?: Partial<ConfigState>;
   /** Override ChannelMessagesProvider initial state (messages, status, etc.) */

@@ -10,7 +10,7 @@ import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
-export interface RenderWithChannelOptions {
+interface RenderWithChannelOptions {
   channelId?: string;
   summoner?: FakeSummoner;
   initSegment?: string;
@@ -22,7 +22,7 @@ export interface RenderWithChannelOptions {
   skipInit?: boolean;
 }
 
-export interface RenderWithChannelResult extends RenderResult {
+interface RenderWithChannelResult extends RenderResult {
   claude: FakeClaude;
   summoner: FakeSummoner;
   channelId: string;
