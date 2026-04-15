@@ -56,6 +56,50 @@ describe('ChannelManager', () => {
         expect(joinResult.error).toBeDefined();
       }
     });
+
+    it('session:init emitted to joining socket contains model when channel is already alive', async () => {
+      // Most common case: same server, second window joins an alive channel.
+      // The session:init sent to the socket must include the model.
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner1 = createFakeSummoner(server);
+      const claude1 = summoner1.claude();
+      const channelId = await claude1.initialize(
+        s.init('sess-alive-model', { model: 'claude-opus-4-6' }),
+      );
+
+      const summoner2 = createFakeSummoner(server);
+      await summoner2.send<SessionJoinResponse>('session:join', { channelId });
+
+      const initEvents = summoner2.events('session:init');
+      expect(initEvents.length).toBeGreaterThan(0);
+      expect(initEvents[0].model).toBe('claude-opus-4-6');
+    });
+
+    it('session:init emitted to joining socket contains model when channel has exited', async () => {
+      // Server restart scenario: channel not in memory, must restore from DB.
+      // The session:init emitted to the new socket must still carry the correct model.
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner1 = createFakeSummoner(server);
+      const claude1 = summoner1.claude();
+      const channelId = await claude1.initialize(
+        s.init('sess-exited-model', { model: 'claude-opus-4-6' }),
+      );
+
+      // Simulate channel exit
+      claude1.handle.abort();
+      await new Promise<void>((r) => queueMicrotask(r));
+
+      // New summoner joins — channel must be lazily resumed from DB
+      const summoner2 = createFakeSummoner(server);
+      await summoner2.send<SessionJoinResponse>('session:join', { channelId });
+      await new Promise<void>((r) => queueMicrotask(r));
+
+      const initEvents = summoner2.events('session:init');
+      expect(initEvents.length).toBeGreaterThan(0);
+      expect(initEvents[0].model).toBe('claude-opus-4-6');
+    });
   });
 
   describe('destroy', () => {

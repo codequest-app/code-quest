@@ -185,6 +185,8 @@ export { onSessionStates, parseModels, toEffort };
 interface ConfigActionsDeps {
   socket: TypedSocket;
   channelId: string;
+  setState?: (updater: (prev: ConfigState) => ConfigState) => void;
+  addSystemMessage?: (type: string, content: string) => void;
 }
 
 export function createConfigActions(deps: ConfigActionsDeps) {
@@ -192,12 +194,14 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     channelEmit(deps.socket, deps.channelId, event, payload, ...rest);
 
   function setModel(model: string) {
-    emit('settings:set_model', { model }, (res: { success: boolean; error?: string }) => {
-      if (!res?.success) toast.error(res?.error ?? 'Failed to switch model');
+    deps.addSystemMessage?.('slash_command_result', `Set model to ${model}`);
+    emit('settings:set_model', { model }, (res: { ok: boolean; error?: string }) => {
+      if (!res?.ok) toast.error(res?.error ?? 'Failed to switch model');
     });
   }
 
   function setPermissionMode(mode: string) {
+    deps.setState?.((prev) => ({ ...prev, permissionMode: mode }));
     emit('settings:set_permission_mode', { mode });
   }
 

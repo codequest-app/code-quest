@@ -55,6 +55,7 @@ export interface ChannelMessagesValue {
   clearMessages: () => void;
   clearModifiedFiles: () => void;
   removeModifiedFile: (path: string) => void;
+  addSystemMessage: (type: string, content: string) => void;
   addPlanComment: (comment: PlanCommentData) => void;
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<RawEventsResponse>;
@@ -325,6 +326,11 @@ export function ChannelMessagesProvider({
     ...createSessionActions({ socket, channelId }),
     ...createFileActions({ socket, channelId }),
     ...createPlanActions({ setChannelState }),
+    addSystemMessage: (type: string, content: string) =>
+      setChannelState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, msg({ role: 'system', type: type as never, content })],
+      })),
     clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
     clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
     removeModifiedFile: (path: string) =>

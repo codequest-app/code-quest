@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
+import { useChannelMessagesActions } from './ChannelMessagesContext';
 import type { Payload } from './handlers/guard';
 import { wireHandlers } from './handlers/guard';
 import {
@@ -120,6 +121,7 @@ export function ChannelConfigProvider({
   children: ReactNode;
 }) {
   const channelId = useChannelId();
+  const { addSystemMessage } = useChannelMessagesActions();
   const [configState, setConfigState] = useState<ConfigState>(() => ({
     ...INITIAL_CONFIG,
     ...initialConfig,
@@ -177,12 +179,26 @@ export function ChannelConfigProvider({
   }, [channelId, socket]);
 
   // ── Stable actions (created once, read deps from refs) ──
+  const setConfigStateRef = useRef(setConfigState);
+  useLayoutEffect(() => {
+    setConfigStateRef.current = setConfigState;
+  });
+  const addSystemMessageRef = useRef(addSystemMessage);
+  useLayoutEffect(() => {
+    addSystemMessageRef.current = addSystemMessage;
+  });
   const [depsProxy] = useState(() => ({
     get socket() {
       return socketRef.current;
     },
     get channelId() {
       return channelIdRef.current;
+    },
+    get setState() {
+      return setConfigStateRef.current;
+    },
+    get addSystemMessage() {
+      return addSystemMessageRef.current;
     },
   }));
   const [actions] = useState<ConfigActionsValue>(() => ({
