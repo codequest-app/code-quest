@@ -78,9 +78,9 @@ export function PermissionModePicker({
         type="button"
         title={(permissionById[mode] ?? DEFAULT_MODE).title}
         onClick={() => setShowModePicker((v) => !v)}
-        className="permission-mode-btn text-[0.85em] text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-[4px] px-[4px] py-[2px] rounded-[2px] hover:bg-white/5"
+        className="permission-mode-btn text-[0.92em] text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-[2px] px-[4px] py-[2px] rounded-[2px] hover:bg-white/5"
       >
-        <span className="w-5 h-5 flex-shrink-0">
+        <span className="w-[24px] h-[24px] flex-shrink-0">
           {(mode in PERMISSION_MODE_ICONS
             ? PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS].smallIcon
             : null) ?? <AskBeforeEditsSmallIcon />}
