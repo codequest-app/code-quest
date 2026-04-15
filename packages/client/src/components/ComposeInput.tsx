@@ -25,6 +25,9 @@ export function ComposeInput() {
     registerFocus,
     registerMentionTrigger,
     slashOpen,
+    mentionOpen,
+    openMention,
+    closeMention,
     dismissSlash,
     submit,
     attachedFiles,
@@ -46,7 +49,6 @@ export function ComposeInput() {
 
   const inputHistory = useInputHistory();
   const mentionContainerRef = useRef<HTMLDivElement>(null);
-  const [mentionOpen, setMentionOpen] = useState(false);
   const [fileResults, setFileResults] = useState<FileSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -57,7 +59,7 @@ export function ComposeInput() {
   useClickOutside(
     [mentionContainerRef, textareaRef],
     () => {
-      setMentionOpen(false);
+      handleCloseMention();
       setFileResults([]);
     },
     mentionOpen,
@@ -79,7 +81,6 @@ export function ComposeInput() {
     registerMentionTrigger((value: string, pos: number) => {
       const query = getMentionQuery(value, pos);
       if (query !== null) {
-        setMentionOpen(true);
         setSelectedIndex(-1);
         setSearchStatus('loading');
         debouncedSearch(query);
@@ -94,11 +95,11 @@ export function ComposeInput() {
 
     const query = getMentionQuery(newValue, pos);
     if (query !== null) {
-      setMentionOpen(true);
+      openMention();
       setSelectedIndex(-1);
       debouncedSearch(query);
     } else {
-      setMentionOpen(false);
+      handleCloseMention();
       setFileResults([]);
     }
   };
@@ -126,7 +127,7 @@ export function ComposeInput() {
 
     const newValue = `${value.slice(0, start)}${suggestion} ${value.slice(pos)}`;
     updateValue(newValue);
-    setMentionOpen(false);
+    handleCloseMention();
     setFileResults([]);
     setSearchStatus('idle');
     textareaRef.current?.focus();
@@ -137,8 +138,8 @@ export function ComposeInput() {
     if (el) setCursorPos(el.selectionStart);
   };
 
-  function closeMention() {
-    setMentionOpen(false);
+  function handleCloseMention() {
+    closeMention();
     setFileResults([]);
   }
 
@@ -172,7 +173,7 @@ export function ComposeInput() {
     if (mentionOpen) {
       if (e.key === 'Escape') {
         e.preventDefault();
-        closeMention();
+        handleCloseMention();
         return;
       }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -194,7 +195,7 @@ export function ComposeInput() {
           const item = fileResults[selectedIndex];
           if (item) handleSelectMention(`@${item.path}`, false);
         } else {
-          closeMention();
+          handleCloseMention();
         }
         return;
       }

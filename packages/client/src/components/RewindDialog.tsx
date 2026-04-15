@@ -67,33 +67,40 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const [rewindCheck, setRewindCheck] = useState<RewindResult | null>(null);
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const rewindCheckCache = useRef<Map<string, RewindResult>>(new Map());
 
   useEffect(() => {
     if (open) {
       setFocusIndex(0);
       setSelected(null);
       setRewindCheck(null);
+      rewindCheckCache.current.clear();
       setTimeout(() => listRef.current?.focus(), 0);
     }
   }, [open]);
 
   const handleSelect = (item: RewindItem) => {
     setSelected(item);
+    const cached = rewindCheckCache.current.get(item.message.id);
+    if (cached) {
+      setRewindCheck(cached);
+      return;
+    }
     setLoading(true);
     setRewindCheck(null);
     rewindToMessage(item.message.id, true)
       .then((result) => {
-        if (result.ok) {
-          setRewindCheck(result.data);
-        } else {
-          setRewindCheck({ canRewind: false, error: result.error });
-        }
+        const check = result.ok ? result.data : { canRewind: false as const, error: result.error };
+        rewindCheckCache.current.set(item.message.id, check);
+        setRewindCheck(check);
       })
       .catch((err) => {
-        setRewindCheck({
-          canRewind: false,
+        const check = {
+          canRewind: false as const,
           error: err instanceof Error ? err.message : String(err),
-        });
+        };
+        rewindCheckCache.current.set(item.message.id, check);
+        setRewindCheck(check);
       })
       .finally(() => setLoading(false));
   };

@@ -10,6 +10,11 @@ import {
   useState,
 } from 'react';
 import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
+import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
+import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { wireHandlers } from './handlers/guard';
+import { composeHandlers } from './handlers/speech';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -20,12 +25,6 @@ function toBase64(file: File): Promise<string> {
   });
 }
 
-import { useSocket } from '../SocketContext';
-import { useChannelId } from './ChannelIdContext';
-import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { wireHandlers } from './handlers/guard';
-import { composeHandlers } from './handlers/speech';
-
 interface ChannelComposeContextValue {
   value: string;
   hasText: boolean;
@@ -34,12 +33,15 @@ interface ChannelComposeContextValue {
   registerFocus: (fn: (pos?: number) => void) => void;
   focusTextarea: () => void;
   slashOpen: boolean;
+  mentionOpen: boolean;
   updateValue: (newValue: string, cursorPos?: number) => void;
   submit: () => void;
   slashFilter: string | null;
   hasTextBeforeSlash: boolean;
   closeSlash: () => void;
   dismissSlash: () => void;
+  closeMention: () => void;
+  openMention: () => void;
   insertSlashCommand: (text: string) => void;
   executeSlashCommand: (cmd: string) => void;
   mentionFile: () => void;
@@ -55,6 +57,7 @@ type ComposeStateValue = Pick<
   | 'hasText'
   | 'cursorPos'
   | 'slashOpen'
+  | 'mentionOpen'
   | 'slashFilter'
   | 'hasTextBeforeSlash'
   | 'attachedFiles'
@@ -76,6 +79,7 @@ interface ComposeState {
   value: string;
   cursorPos: number;
   slashOpen: boolean;
+  mentionOpen: boolean;
   attachedFiles: File[];
 }
 
@@ -123,14 +127,18 @@ function createComposeActions(
     setState((prev) => ({ ...prev, slashOpen: false }));
   };
 
+  const openMention = () => setState((prev) => ({ ...prev, mentionOpen: true }));
+  const closeMention = () => setState((prev) => ({ ...prev, mentionOpen: false }));
+
   const mentionFile = () => {
     const snap = get();
     const snapToken = getSlashQuery(snap.value, snap.cursorPos);
 
-    // If cursor is already inside a mention (@…), just trigger file search without inserting a duplicate @
+    // If cursor is already inside a mention (@…), just open without inserting a duplicate @
     if (!snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null) {
       requestFocusRef.current?.(snap.cursorPos);
       mentionTriggerRef.current?.(snap.value, snap.cursorPos);
+      setState((prev) => ({ ...prev, mentionOpen: true }));
       return;
     }
 
@@ -142,14 +150,14 @@ function createComposeActions(
       const token = getSlashQuery(prev.value, prev.cursorPos);
       if (token) {
         const newValue = `${prev.value.slice(0, token.start)}@${prev.value.slice(token.end)}`;
-        return { ...prev, value: newValue, slashOpen: false };
+        return { ...prev, value: newValue, slashOpen: false, mentionOpen: true };
       }
       // Defensive: if already in a mention context, skip to avoid duplicate @
       if (getMentionQuery(prev.value, prev.cursorPos) !== null) {
-        return { ...prev, slashOpen: false };
+        return { ...prev, slashOpen: false, mentionOpen: true };
       }
       const newValue = `${prev.value.slice(0, prev.cursorPos)}@${prev.value.slice(prev.cursorPos)}`;
-      return { ...prev, value: newValue };
+      return { ...prev, value: newValue, mentionOpen: true };
     });
     requestFocusRef.current?.(focusAt);
     mentionTriggerRef.current?.(triggeredValue, focusAt);
@@ -204,6 +212,8 @@ function createComposeActions(
     submit,
     closeSlash,
     dismissSlash,
+    openMention,
+    closeMention,
     mentionFile,
     focusTextarea,
     updateValue,
@@ -219,6 +229,7 @@ const initialComposeState: ComposeState = {
   value: '',
   cursorPos: 0,
   slashOpen: false,
+  mentionOpen: false,
   attachedFiles: [],
 };
 
@@ -234,10 +245,10 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    return wireHandlers(socket, channelId, composeHandlers, setState);
+    return wireHandlers(socket, channelId, composeHandlers, (fn) => setState(fn));
   }, [channelId, socket]);
 
-  const { value, cursorPos, slashOpen, attachedFiles } = state;
+  const { value, cursorPos, slashOpen, mentionOpen, attachedFiles } = state;
 
   const slashToken = slashOpen ? getSlashQuery(value, cursorPos) : null;
 
@@ -271,6 +282,7 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
           hasText,
           cursorPos,
           slashOpen,
+          mentionOpen,
           slashFilter,
           hasTextBeforeSlash,
           attachedFiles,

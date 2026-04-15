@@ -4,6 +4,20 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { SessionHistory } from '../SessionHistory';
 
+// Helper: render with mutable sessions prop
+function renderWithSessions(initialSessions: SessionSummary[], onDelete: ReturnType<typeof vi.fn>) {
+  let currentSessions = initialSessions;
+  const { rerender } = render(
+    <SessionHistory sessions={currentSessions} onSelect={vi.fn()} onDelete={onDelete} />,
+  );
+  return {
+    rerender: (sessions: SessionSummary[]) => {
+      currentSessions = sessions;
+      rerender(<SessionHistory sessions={sessions} onSelect={vi.fn()} onDelete={onDelete} />);
+    },
+  };
+}
+
 const makeSessions = (n: number): SessionSummary[] =>
   Array.from({ length: n }, (_, i) => ({
     id: `s-${i}`,
@@ -94,14 +108,31 @@ describe('SessionHistory', () => {
     });
   });
 
-  it('removes session after successful delete', async () => {
+  it('removes session after successful delete — parent updates sessions prop', async () => {
+    const user = userEvent.setup();
+    const sessions = makeSessions(2);
+    const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const { rerender } = renderWithSessions(sessions, onDelete);
+
+    await user.click(screen.getAllByTitle('Delete')[0]);
+
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith('s-0'));
+    // Parent re-renders with updated sessions (s-0 removed)
+    rerender([sessions[1]]);
+
+    await waitFor(() => expect(screen.queryByText('Session 0')).not.toBeInTheDocument());
+    expect(screen.getByText('Session 1')).toBeInTheDocument();
+  });
+
+  it('does not hide session via local state — deletion is parent-driven', async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
     render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} onDelete={onDelete} />);
 
     await user.click(screen.getAllByTitle('Delete')[0]);
 
-    await waitFor(() => expect(screen.queryByText('Session 0')).not.toBeInTheDocument());
-    expect(screen.getByText('Session 1')).toBeInTheDocument();
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith('s-0'));
+    // Without parent rerender, session stays visible (no local deletedIds)
+    expect(screen.getByText('Session 0')).toBeInTheDocument();
   });
 });

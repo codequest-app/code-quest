@@ -38,6 +38,7 @@ function ComposeTestUI() {
       />
       <span data-testid="hasText">{String(compose.hasText)}</span>
       <span data-testid="slashFilter">{compose.slashFilter ?? 'null'}</span>
+      <span data-testid="mentionOpen">{String(compose.mentionOpen)}</span>
       <span data-testid="hasTextBeforeSlash">{String(compose.hasTextBeforeSlash)}</span>
       <button type="button" onClick={compose.submit}>
         Submit
@@ -47,6 +48,9 @@ function ComposeTestUI() {
       </button>
       <button type="button" onClick={compose.mentionFile}>
         Mention
+      </button>
+      <button type="button" onClick={compose.closeMention}>
+        CloseMention
       </button>
       <button type="button" onClick={() => compose.addAttachments([new File([''], 'test.txt')])}>
         Attach
@@ -111,6 +115,23 @@ describe('ChannelComposeProvider', () => {
     await setup();
     await userEvent.click(screen.getByText('Focus'));
     expect(screen.getByPlaceholderText('compose')).toHaveFocus();
+  });
+
+  it('mentionFile sets mentionOpen to true in context', async () => {
+    await setup();
+    await userEvent.type(screen.getByPlaceholderText('compose'), 'hello ');
+    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('false');
+    await userEvent.click(screen.getByText('Mention'));
+    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('true');
+  });
+
+  it('closeMention in context sets mentionOpen to false', async () => {
+    await setup();
+    await userEvent.type(screen.getByPlaceholderText('compose'), 'hello ');
+    await userEvent.click(screen.getByText('Mention'));
+    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('true');
+    await userEvent.click(screen.getByText('CloseMention'));
+    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('false');
   });
 
   it('mentionFile inserts @ at cursor position', async () => {

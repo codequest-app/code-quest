@@ -18,22 +18,12 @@ export function SessionHistory({
   onDelete,
 }: SessionHistoryProps) {
   const [search, setSearch] = useState('');
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const visible = sessions.filter((s) => !deletedIds.has(s.channelId));
-  const filtered = (() => {
-    if (!search.trim()) return visible;
-    const q = search.toLowerCase();
-    return visible.filter((s) => (s.title ?? s.channelId).toLowerCase().includes(q));
-  })();
-
-  const handleDelete = async (id: string) => {
-    if (!onDelete) return { ok: false as const, error: 'no handler' };
-    const result = await onDelete(id);
-    if (result.ok) setDeletedIds((prev) => new Set(prev).add(id));
-    return result;
-  };
+  const query = search.trim().toLowerCase();
+  const filtered = query
+    ? sessions.filter((s) => (s.title ?? s.channelId).toLowerCase().includes(query))
+    : sessions;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
@@ -88,7 +78,7 @@ export function SessionHistory({
             onSelect={onSelect}
             onMouseEnter={() => setFocusIndex(i)}
             onRename={onRename}
-            onDelete={onDelete ? handleDelete : undefined}
+            onDelete={onDelete}
             searchQuery={search || undefined}
           />
         ))}

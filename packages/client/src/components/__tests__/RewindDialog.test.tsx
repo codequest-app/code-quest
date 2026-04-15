@@ -187,6 +187,38 @@ describe('RewindDialog', () => {
     expect(await screen.findByText(/cannot rewind/i)).toBeInTheDocument();
   });
 
+  it('does not re-call rewindToMessage when same message selected again after back', async () => {
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+    await sendMessage(claude, user, 'hello');
+
+    let callCount = 0;
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'rewind_files') {
+        callCount++;
+        return { canRewind: true, filesChanged: [], deletions: 0, insertions: 0 };
+      }
+      return null;
+    });
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+
+    // Select the message → triggers dry-run (call 1)
+    await user.click(screen.getAllByRole('option')[0]);
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+
+    // Go back
+    await user.click(screen.getByText(/never mind/i));
+
+    // Select same message again → should use cache, no second call
+    await user.click(screen.getAllByRole('option')[0]);
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+
+    expect(callCount).toBe(1);
+  });
+
   it('closes confirmation dialog on "Never mind"', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
