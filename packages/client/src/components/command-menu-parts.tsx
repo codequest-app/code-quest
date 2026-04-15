@@ -13,10 +13,11 @@ export function MenuItemRow({ item, isActive, activeItemRef, onHover }: MenuItem
     <button
       ref={isActive ? activeItemRef : null}
       type="button"
+      role="menuitem"
       disabled={item.disabled}
       onClick={item.onClick}
       onMouseEnter={() => onHover(item.id)}
-      className={`text-left px-2 py-1 mx-1 rounded flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed ${
+      className={`text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed ${
         isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10'
       }`}
     >
@@ -47,16 +48,21 @@ export function MenuSection({
   return (
     <>
       {!isFirst && <div className="h-px bg-border my-1" />}
-      <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">{label}</div>
-      {items.map((item) => (
-        <MenuItemRow
-          key={item.id}
-          item={item}
-          isActive={item.id === activeId}
-          activeItemRef={activeItemRef}
-          onHover={onHover}
-        />
-      ))}
+      {/* biome-ignore lint/a11y/useSemanticElements: role=group on div is correct; fieldset has unwanted browser styling */}
+      <div role="group" aria-label={label}>
+        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
+          {label}
+        </div>
+        {items.map((item) => (
+          <MenuItemRow
+            key={item.id}
+            item={item}
+            isActive={item.id === activeId}
+            activeItemRef={activeItemRef}
+            onHover={onHover}
+          />
+        ))}
+      </div>
     </>
   );
 }

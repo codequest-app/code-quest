@@ -81,6 +81,19 @@ describe('SessionHistory', () => {
     expect(onSelect).toHaveBeenCalledWith('s-2');
   });
 
+  describe('semantic HTML / a11y roles', () => {
+    it('session list container has role="listbox"', () => {
+      render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} />);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+    });
+
+    it('each session row has role="option"', () => {
+      render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} />);
+      const options = screen.getAllByRole('option');
+      expect(options).toHaveLength(2);
+    });
+  });
+
   it('removes session after successful delete', async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });

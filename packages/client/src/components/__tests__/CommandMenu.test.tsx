@@ -50,4 +50,38 @@ describe('CommandMenu', () => {
     await renderCommandMenu({}, { slashCommands: ['test'] });
     // No error — context provides the data
   });
+
+  describe('filter input visibility', () => {
+    it('shows filter input when opened via button', async () => {
+      await renderCommandMenu();
+      await userEvent.click(screen.getByTitle('Show command menu (/)'));
+      expect(screen.getByPlaceholderText('Filter actions...')).toBeInTheDocument();
+    });
+  });
+
+  describe('semantic HTML / a11y roles', () => {
+    it('popup container has role="menu"', async () => {
+      await renderCommandMenu();
+      await userEvent.click(screen.getByTitle('Show command menu (/)'));
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
+
+    it('each action button has role="menuitem"', async () => {
+      await renderCommandMenu();
+      await userEvent.click(screen.getByTitle('Show command menu (/)'));
+      const items = screen.getAllByRole('menuitem');
+      expect(items.length).toBeGreaterThan(0);
+    });
+
+    it('each section is a role="group" with aria-label', async () => {
+      await renderCommandMenu({}, { slashCommands: ['compact'] });
+      await userEvent.click(screen.getByTitle('Show command menu (/)'));
+      // At least one group should exist (e.g. "Slash commands" section)
+      const groups = screen.getAllByRole('group');
+      expect(groups.length).toBeGreaterThan(0);
+      for (const g of groups) {
+        expect(g).toHaveAttribute('aria-label');
+      }
+    });
+  });
 });

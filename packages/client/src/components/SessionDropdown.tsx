@@ -45,6 +45,8 @@ export function SessionDropdown({
       />
       <div
         ref={panelRef}
+        role="dialog"
+        aria-label="Session list"
         data-testid="session-dropdown-panel"
         className="fixed z-[1000] right-4 top-12 bg-[var(--color-surface,#1e1e1e)] border border-border rounded-xl flex flex-col shadow-lg overflow-hidden"
         style={{

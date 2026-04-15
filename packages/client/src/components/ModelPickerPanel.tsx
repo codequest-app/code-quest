@@ -68,7 +68,6 @@ export function ModelPickerPanel({
   const isActive = (index: number) => index === activeIndex;
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: listbox with keyboard nav requires div
     <div
       ref={containerRef}
       role="listbox"

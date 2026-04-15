@@ -15,6 +15,7 @@ function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItem
     onSetThinkingLevel: vi.fn(),
     setFastMode: vi.fn(),
     close: vi.fn(),
+    closeSilent: vi.fn(),
     compose: { mentionFile: vi.fn(), executeSlashCommand: vi.fn() },
     actions: { sendMessage: vi.fn(), clearMessages: vi.fn(), clearModifiedFiles: vi.fn() },
     callbacks: {},

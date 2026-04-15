@@ -47,6 +47,20 @@ describe('SessionDropdown', () => {
     expect(screen.getByPlaceholderText('Search sessions...')).toBeInTheDocument();
   });
 
+  describe('semantic HTML / a11y roles', () => {
+    it('panel has role="dialog" with aria-label', () => {
+      render(<SessionDropdown sessions={makeSessions(1)} onSelect={vi.fn()} onClose={vi.fn()} />);
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toBeInTheDocument();
+      expect(dialog).toHaveAttribute('aria-label');
+    });
+  });
+
+  it('auto-focuses search input on open so ArrowDown works immediately', async () => {
+    render(<SessionDropdown sessions={makeSessions(3)} onSelect={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByPlaceholderText('Search sessions...')).toHaveFocus();
+  });
+
   it('calls onSelect when session clicked', async () => {
     const onSelect = vi.fn();
     render(<SessionDropdown sessions={makeSessions(1)} onSelect={onSelect} onClose={vi.fn()} />);

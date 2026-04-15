@@ -51,33 +51,38 @@ function ModelMenuSection({
   return (
     <>
       {showDivider && <div className="h-px bg-border my-1" />}
-      <div className="px-3 py-1 text-[0.9em] opacity-50 text-text">Model</div>
-      {switchModelVisible && switchModelItem && (
-        <MenuItemRow
-          item={{
-            ...switchModelItem,
-            trailing: (
-              <span
-                className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
-              >
-                {modelLabel}
-              </span>
-            ),
-          }}
-          isActive={isActive('switch-model')}
-          activeItemRef={activeItemRef}
-          onHover={onHover}
-        />
-      )}
-      {filteredModel.map((item) => (
-        <MenuItemRow
-          key={item.id}
-          item={item}
-          isActive={isActive(item.id)}
-          activeItemRef={activeItemRef}
-          onHover={onHover}
-        />
-      ))}
+      {/* biome-ignore lint/a11y/useSemanticElements: role=group on div is correct; fieldset has unwanted browser styling */}
+      <div role="group" aria-label="Model">
+        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
+          Model
+        </div>
+        {switchModelVisible && switchModelItem && (
+          <MenuItemRow
+            item={{
+              ...switchModelItem,
+              trailing: (
+                <span
+                  className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
+                >
+                  {modelLabel}
+                </span>
+              ),
+            }}
+            isActive={isActive('switch-model')}
+            activeItemRef={activeItemRef}
+            onHover={onHover}
+          />
+        )}
+        {filteredModel.map((item) => (
+          <MenuItemRow
+            key={item.id}
+            item={item}
+            isActive={isActive(item.id)}
+            activeItemRef={activeItemRef}
+            onHover={onHover}
+          />
+        ))}
+      </div>
     </>
   );
 }
@@ -162,25 +167,12 @@ export function CommandMenu({
       if (!menuRef.current?.contains(e.target as Node)) {
         setButtonOpen(false);
         setFilter('');
-        compose.closeSlash();
+        compose.dismissSlash();
       }
     };
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
-  }, [open, compose.closeSlash]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setButtonOpen(false);
-        setFilter('');
-        compose.closeSlash();
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [open, compose.closeSlash]);
+  }, [open, compose.dismissSlash]);
 
   useEffect(() => {
     // Only focus the filter input when opened via button click
@@ -209,11 +201,14 @@ export function CommandMenu({
     }
   }, [activeId]);
 
-  const close = () => {
+  const closeSilent = () => {
     setButtonOpen(false);
     setFilter('');
     setActiveId(null);
     compose.closeSlash();
+  };
+  const close = () => {
+    closeSilent();
     compose.focusTextarea();
   };
   const closeRef = useRef(close);
@@ -237,11 +232,13 @@ export function CommandMenu({
         const item = items.find((i) => i.id === newActiveId);
         if (item?.id.startsWith('slash-')) {
           if (key === 'Tab' || opts.shouldInsert) {
+            // insertSlashCommand already sets slashOpen=false; calling close() would
+            // invoke clearSlashToken() again with stale state and wipe the inserted value.
             opts.insertSlash(`${item.label} `);
           } else {
             opts.executeSlash(item.label);
+            opts.close();
           }
-          opts.close();
         } else if (item) {
           item.onClick?.();
         }
@@ -284,6 +281,7 @@ export function CommandMenu({
     onSetThinkingLevel,
     setFastMode,
     close,
+    closeSilent,
     compose: { mentionFile: compose.mentionFile, executeSlashCommand: compose.executeSlashCommand },
     actions: { sendMessage, clearMessages, clearModifiedFiles },
     callbacks: {
@@ -345,6 +343,15 @@ export function CommandMenu({
       }
     : null;
 
+  // Compute whether each section has any preceding visible sections (for divider logic)
+  const contextVisible = filteredContext.length > 0;
+  const modelHasPrev = contextVisible;
+  const customizeHasPrev = contextVisible || modelSectionVisible;
+  const toolsHasPrev = customizeHasPrev || filteredCustomize.length > 0;
+  const slashHasPrev = toolsHasPrev || filteredTools.length > 0;
+  const settingsHasPrev = slashHasPrev || filteredSlash.length > 0;
+  const supportHasPrev = settingsHasPrev || filteredSettings.length > 0;
+
   const flatItems: MenuItem[] = [
     ...filteredContext,
     ...(modelSectionVisible
@@ -378,6 +385,15 @@ export function CommandMenu({
   }, [f, flatItemIdKey, firstItemId]);
 
   const handleFilterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setButtonOpen(false);
+      setFilter('');
+      setActiveId(null);
+      compose.dismissSlash();
+      compose.focusTextarea();
+      return;
+    }
     if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) return;
     e.preventDefault();
     handleNavigateAndSelect(e.key, flatItems, {
@@ -412,12 +428,13 @@ export function CommandMenu({
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-50 text-[13px] max-h-[50vh] overflow-hidden animate-slide-up">
+        <div
+          role="menu"
+          className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-50 text-[13px] max-h-[50vh] overflow-hidden animate-slide-up"
+        >
           {/* Filter input — hidden when externally opened (typing / in textarea acts as filter) */}
-          {externalOpen ? (
-            <div className="h-1" />
-          ) : (
-            <div className="p-1">
+          <div className={externalOpen ? 'pt-1' : 'p-1'}>
+            {!externalOpen && (
               <input
                 ref={filterRef}
                 value={filter}
@@ -426,8 +443,8 @@ export function CommandMenu({
                 placeholder="Filter actions..."
                 className="w-full bg-input text-text placeholder:text-text-muted outline-none rounded px-3 py-2 text-[0.9em]"
               />
-            </div>
-          )}
+            )}
+          </div>
           <div className="overflow-y-auto overflow-x-hidden pb-2 max-h-[calc(50vh-44px)] flex flex-col gap-[2px]">
             {flatItems.length === 0 ? (
               <div className="px-3 py-2 text-center text-text-muted text-[0.9em]">
@@ -446,7 +463,7 @@ export function CommandMenu({
 
                 {modelSectionVisible && (
                   <ModelMenuSection
-                    showDivider={filteredContext.length > 0}
+                    showDivider={modelHasPrev}
                     switchModelVisible={switchModelVisible}
                     switchModelItem={switchModelItem}
                     modelLabel={modelLabel}
@@ -463,6 +480,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
+                  isFirst={!customizeHasPrev}
                 />
                 <MenuSection
                   label="Tools"
@@ -470,6 +488,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
+                  isFirst={!toolsHasPrev}
                 />
                 <MenuSection
                   label="Slash Commands"
@@ -477,6 +496,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
+                  isFirst={!slashHasPrev}
                 />
                 <MenuSection
                   label="Settings"
@@ -484,6 +504,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
+                  isFirst={!settingsHasPrev}
                 />
                 <MenuSection
                   label="Support"
@@ -491,6 +512,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
+                  isFirst={!supportHasPrev}
                 />
               </>
             )}

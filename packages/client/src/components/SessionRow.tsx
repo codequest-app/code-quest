@@ -83,9 +83,9 @@ export function SessionRow({
   const title = s.title || s.firstUserMessage || 'Untitled';
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: div+role=button avoids nested button violation
     <div
-      role="button"
+      role="option"
+      aria-selected={isFocused ?? false}
       tabIndex={0}
       data-testid="session-row"
       className={`flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group ${isFocused ? 'bg-selected' : ''}`}
