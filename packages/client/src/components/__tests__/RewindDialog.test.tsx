@@ -148,6 +148,45 @@ describe('RewindDialog', () => {
     expect(items[0]).toHaveTextContent('echoed-q');
   });
 
+  it('shows keyboard shortcut separately from button label in Phase 2', async () => {
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+    await sendMessage(claude, user, 'hello');
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+    await user.click(screen.getAllByRole('option')[0]);
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+
+    // Shortcut "1" should be a separate element, not part of button label text
+    const continueBtn = screen.getByRole('button', { name: 'Continue' });
+    expect(continueBtn).toBeInTheDocument();
+    const neverMindBtn = screen.getByRole('button', { name: 'Never mind' });
+    expect(neverMindBtn).toBeInTheDocument();
+  });
+
+  it('shows canRewind=false message when dryRun says cannot rewind', async () => {
+    const { claude, user, addProject } = await renderWithWorkspace();
+    const project = await addProject();
+    await project.launchSession();
+    await sendMessage(claude, user, 'hello');
+
+    claude.onControlRequest((req) => {
+      if (req.subtype === 'rewind_files') {
+        return { canRewind: false };
+      }
+      return null;
+    });
+
+    await openRewindDialog(user);
+    await screen.findByRole('dialog', { name: /rewind/i });
+    await user.click(screen.getAllByRole('option')[0]);
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+
+    expect(await screen.findByText(/cannot rewind/i)).toBeInTheDocument();
+  });
+
   it('closes confirmation dialog on "Never mind"', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();

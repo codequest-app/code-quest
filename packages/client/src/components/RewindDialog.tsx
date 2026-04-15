@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../contexts/channel';
 import type { Message } from '../types/ui';
 import { formatRelativeDate } from '../utils/format-relative-date';
+import { pluralize } from '../utils/pluralize';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 interface RewindItem {
@@ -22,6 +23,36 @@ function getRewindableMessages(messages: Message[]): RewindItem[] {
   return items.reverse();
 }
 
+interface RewindOptionProps {
+  item: RewindItem;
+  index: number;
+  focusIndex: number;
+  now: Date;
+  onSelect: (item: RewindItem) => void;
+  onFocus: (index: number) => void;
+}
+
+function RewindOption({ item, index, focusIndex, now, onSelect, onFocus }: RewindOptionProps) {
+  return (
+    <button
+      type="button"
+      key={item.message.id}
+      role="option"
+      aria-selected={index === focusIndex}
+      onClick={() => onSelect(item)}
+      onMouseEnter={() => onFocus(index)}
+      className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer text-sm text-left ${
+        index === focusIndex ? 'bg-selected text-white' : 'text-text hover:bg-white/5'
+      }`}
+    >
+      <span className="truncate mr-3">{item.promptText}</span>
+      <span className="text-xs text-text-muted whitespace-nowrap">
+        {formatRelativeDate(new Date(item.message.timestamp), now)}
+      </span>
+    </button>
+  );
+}
+
 interface RewindDialogProps {
   open: boolean;
   onClose: () => void;
@@ -33,7 +64,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const items = getRewindableMessages(messages);
   const [focusIndex, setFocusIndex] = useState(0);
   const [selected, setSelected] = useState<RewindItem | null>(null);
-  const [dryRunResult, setRewindResult] = useState<RewindResult | null>(null);
+  const [rewindCheck, setRewindCheck] = useState<RewindResult | null>(null);
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +72,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
     if (open) {
       setFocusIndex(0);
       setSelected(null);
-      setRewindResult(null);
+      setRewindCheck(null);
       setTimeout(() => listRef.current?.focus(), 0);
     }
   }, [open]);
@@ -49,17 +80,17 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const handleSelect = (item: RewindItem) => {
     setSelected(item);
     setLoading(true);
-    setRewindResult(null);
+    setRewindCheck(null);
     rewindToMessage(item.message.id, true)
       .then((result) => {
         if (result.ok) {
-          setRewindResult(result.data);
+          setRewindCheck(result.data);
         } else {
-          setRewindResult({ canRewind: false, error: result.error });
+          setRewindCheck({ canRewind: false, error: result.error });
         }
       })
       .catch((err) => {
-        setRewindResult({
+        setRewindCheck({
           canRewind: false,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -74,7 +105,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
 
   const handleBack = () => {
     setSelected(null);
-    setRewindResult(null);
+    setRewindCheck(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -98,12 +129,9 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
     }
   };
 
-  const now = new Date();
-
-  // Phase 2: Confirmation
   if (selected) {
-    const hasChanges = dryRunResult?.filesChanged && dryRunResult.filesChanged.length > 0;
-    const canConfirm = dryRunResult?.canRewind && !loading;
+    const hasChanges = rewindCheck?.filesChanged && rewindCheck.filesChanged.length > 0;
+    const canConfirm = rewindCheck?.canRewind && !loading;
 
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -114,27 +142,29 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
 
           {loading && <p className="text-sm text-text-muted py-2">Checking code changes…</p>}
 
-          {!loading && dryRunResult?.error && (
-            <p className="text-sm text-danger py-2">{dryRunResult.error}</p>
+          {!loading && rewindCheck?.error && (
+            <p className="text-sm text-danger py-2">{rewindCheck.error}</p>
+          )}
+          {!loading && rewindCheck && !rewindCheck.canRewind && !rewindCheck.error && (
+            <p className="text-sm text-text-muted py-2">Cannot rewind from this message.</p>
           )}
 
-          {!loading && dryRunResult?.canRewind && (
+          {!loading && rewindCheck?.canRewind && (
             <>
               {hasChanges ? (
                 <>
                   <p className="text-sm mb-2">
                     <span className="text-danger">
-                      {dryRunResult.deletions ?? 0} line{dryRunResult.deletions !== 1 ? 's' : ''}
+                      {pluralize(rewindCheck.deletions ?? 0, 'line')}
                     </span>{' '}
                     will be removed and{' '}
                     <span className="text-success">
-                      {dryRunResult.insertions ?? 0} line{dryRunResult.insertions !== 1 ? 's' : ''}
+                      {pluralize(rewindCheck.insertions ?? 0, 'line')}
                     </span>{' '}
-                    will be added across {dryRunResult.filesChanged?.length ?? 0} file
-                    {(dryRunResult.filesChanged?.length ?? 0) !== 1 ? 's' : ''}:
+                    will be added across {pluralize(rewindCheck.filesChanged?.length ?? 0, 'file')}:
                   </p>
                   <ul className="text-xs text-text-muted font-mono mb-2 max-h-[150px] overflow-y-auto">
-                    {dryRunResult.filesChanged?.map((f) => (
+                    {rewindCheck.filesChanged?.map((f) => (
                       <li key={f} className="py-0.5">
                         {f}
                       </li>
@@ -159,14 +189,14 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
               onClick={handleConfirm}
               className="flex-1 px-3 py-1.5 rounded text-sm font-medium bg-accent text-white hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              1 Continue
+              <span aria-hidden="true">1</span> Continue
             </button>
             <button
               type="button"
               onClick={handleBack}
               className="flex-1 px-3 py-1.5 rounded text-sm text-text hover:bg-white/10"
             >
-              2 Never mind
+              <span aria-hidden="true">2</span> Never mind
             </button>
           </div>
         </DialogContent>
@@ -174,7 +204,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
     );
   }
 
-  // Phase 1: Message picker
+  const now = new Date();
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent title="Rewind to…" className="w-[520px] max-w-[90vw]">
@@ -194,22 +224,15 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
               className="flex flex-col gap-0.5 outline-none max-h-[300px] overflow-y-auto"
             >
               {items.map((item, i) => (
-                <button
-                  type="button"
+                <RewindOption
                   key={item.message.id}
-                  role="option"
-                  aria-selected={i === focusIndex}
-                  onClick={() => handleSelect(item)}
-                  onMouseEnter={() => setFocusIndex(i)}
-                  className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer text-sm text-left ${
-                    i === focusIndex ? 'bg-selected text-white' : 'text-text hover:bg-white/5'
-                  }`}
-                >
-                  <span className="truncate mr-3">{item.promptText}</span>
-                  <span className="text-xs text-text-muted whitespace-nowrap">
-                    {formatRelativeDate(new Date(item.message.timestamp), now)}
-                  </span>
-                </button>
+                  item={item}
+                  index={i}
+                  focusIndex={focusIndex}
+                  now={now}
+                  onSelect={handleSelect}
+                  onFocus={setFocusIndex}
+                />
               ))}
             </div>
             <p className="text-xs text-text-muted mt-3">
