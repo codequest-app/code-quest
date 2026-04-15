@@ -154,7 +154,7 @@ export function ComposeToolbar({
         forkSession={forkSession}
         updateValue={compose.updateValue}
       />
-      <div className="flex items-center gap-[6px] px-[8px] py-[5px] text-[13px]">
+      <div className="flex items-center gap-[2px] px-[8px] py-[5px] text-[13px]">
         {activeDialog === 'modelPicker' && (
           <Suspense fallback={null}>
             <div ref={pickerRef}>
