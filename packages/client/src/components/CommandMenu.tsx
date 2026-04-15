@@ -420,8 +420,8 @@ export function CommandMenu({
         className="w-[26px] h-[26px] flex items-center justify-center rounded text-text-bright hover:bg-white/5 transition-colors"
       >
         <svg
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 20 20"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
