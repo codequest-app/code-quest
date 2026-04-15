@@ -1,5 +1,8 @@
-import type { McpServerInfo } from '@code-quest/shared';
-import { contextUsageDataSchema } from '@code-quest/shared';
+import {
+  contextUsageDataSchema,
+  type McpServerInfo,
+  mcpServerInfoSchema,
+} from '@code-quest/shared';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
@@ -19,24 +22,12 @@ const ModelPickerPanel = lazy(() =>
   import('./ModelPickerPanel').then((m) => ({ default: m.ModelPickerPanel })),
 );
 
-const MCP_STATUSES = new Set([
-  'connected',
-  'disconnected',
-  'error',
-  'failed',
-  'needs-auth',
-  'disabled',
-  'connecting',
-]);
-
-function isMcpStatus(status: string): status is McpServerInfo['status'] {
-  return MCP_STATUSES.has(status);
-}
+const mcpStatusSchema = mcpServerInfoSchema.shape.status;
 
 const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): McpServerInfo => ({
   name: s.name,
   enabled: true,
-  status: isMcpStatus(s.status) ? s.status : 'disconnected',
+  status: mcpStatusSchema.safeParse(s.status).data ?? 'disconnected',
   scope: s.scope,
 });
 

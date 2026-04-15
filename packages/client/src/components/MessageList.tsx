@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import { useEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useChannelControl, useChannelMessages } from '../contexts/channel';
@@ -7,8 +7,8 @@ import { MessageNodeList } from './MessageNodeList';
 import { SpinnerVerb } from './SpinnerVerb';
 
 function scrollToEnd(
-  scrollRef: MutableRefObject<HTMLDivElement | null>,
-  programmaticScrollRef: MutableRefObject<boolean>,
+  scrollRef: RefObject<HTMLDivElement | null>,
+  programmaticScrollRef: RefObject<boolean>,
   behavior: 'smooth' | 'instant' = 'smooth',
 ) {
   programmaticScrollRef.current = true;

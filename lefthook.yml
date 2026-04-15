@@ -14,6 +14,15 @@ pre-commit:
     typecheck-summoner:
       glob: "packages/summoner/**/*.ts"
       run: pnpm --filter @code-quest/summoner exec tsc --noEmit
+    deprecated-client:
+      glob: "packages/client/**/*.{ts,tsx}"
+      run: node scripts/check-deprecated.mjs packages/client/tsconfig.json {staged_files}
+    deprecated-server:
+      glob: "packages/server/**/*.ts"
+      run: node scripts/check-deprecated.mjs packages/server/tsconfig.json {staged_files}
+    deprecated-summoner:
+      glob: "packages/summoner/**/*.ts"
+      run: node scripts/check-deprecated.mjs packages/summoner/tsconfig.json {staged_files}
 
 pre-push:
   parallel: false

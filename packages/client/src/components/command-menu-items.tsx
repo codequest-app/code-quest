@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { EffortSwitch } from './icons/EffortSwitch';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
@@ -27,8 +27,8 @@ interface MenuSections {
 export interface BuildMenuItemsParams {
   slashCommands: string[];
   slashFilter: string | null;
-  effort: 'low' | 'medium' | 'high' | 'max' | null;
-  effortLevels: string[];
+  effort: EffortLevel | null;
+  effortLevels: EffortLevel[];
   isThinkingOn: boolean;
   isFastMode: boolean;
   fastModeState: string | null;
@@ -61,7 +61,9 @@ export interface BuildMenuItemsParams {
   };
 }
 
-export const DEFAULT_EFFORT_LEVELS: string[] = ['low', 'medium', 'high', 'max'];
+export const DEFAULT_EFFORT_LEVELS: EffortLevel[] = effortLevelSchema.options;
+
+const EMPTY_TOOLS: MenuItem[] = [];
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const {
@@ -218,35 +220,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     },
   ];
 
-  const tools: MenuItem[] = [
-    {
-      id: 'chrome-mcp',
-      label: 'Enable Chrome MCP',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Chrome MCP is not available in the web app');
-        close();
-      },
-    },
-    {
-      id: 'jupyter-mcp',
-      label: 'Enable Jupyter MCP',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Jupyter MCP is not available in the web app');
-        close();
-      },
-    },
-    {
-      id: 'debugger-help',
-      label: 'Debugger Help',
-      section: 'Tools',
-      onClick: () => {
-        toast.info('Debugger integration is not available in the web app');
-        close();
-      },
-    },
-  ];
+  const tools = EMPTY_TOOLS;
 
   const settings: MenuItem[] = [
     {

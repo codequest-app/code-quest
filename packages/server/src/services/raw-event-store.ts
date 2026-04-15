@@ -11,7 +11,7 @@ export type SessionPreview = z.infer<typeof sessionPreviewSchema>;
 const rawTextMessageSchema = z.object({
   type: z.string(),
   message: z.object({
-    content: z.array(z.object({ type: z.string(), text: z.string().optional() }).passthrough()),
+    content: z.array(z.looseObject({ type: z.string(), text: z.string().optional() })),
   }),
 });
 

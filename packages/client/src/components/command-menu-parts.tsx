@@ -1,10 +1,10 @@
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import type { MenuItem } from './command-menu-items';
 
 interface MenuItemRowProps {
   item: MenuItem;
   isActive: boolean;
-  activeItemRef: MutableRefObject<HTMLButtonElement | null>;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
   onHover: (id: string) => void;
 }
 
@@ -31,7 +31,7 @@ interface MenuSectionProps {
   label: string;
   items: MenuItem[];
   activeId: string | null;
-  activeItemRef: MutableRefObject<HTMLButtonElement | null>;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
   onHover: (id: string) => void;
   isFirst?: boolean;
 }

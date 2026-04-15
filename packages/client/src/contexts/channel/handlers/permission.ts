@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
@@ -87,7 +87,7 @@ export const controlHandlerEffects = {
 interface ControlActionsDeps {
   socket: TypedSocket;
   channelId: string;
-  controlsRef: MutableRefObject<PendingControl[]>;
+  controlsRef: RefObject<PendingControl[]>;
   setControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
   setElicitation: (v: PendingElicitation | null) => void;
   setDiffReview: (v: PendingDiffReview | null) => void;

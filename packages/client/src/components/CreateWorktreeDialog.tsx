@@ -19,7 +19,7 @@ export function CreateWorktreeDialog({
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     const validationError = validateWorktreeName(name);
     if (validationError) {

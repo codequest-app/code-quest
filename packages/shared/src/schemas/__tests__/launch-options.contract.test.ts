@@ -5,9 +5,16 @@
 import { describe, expect, it } from 'vitest';
 import { pluginInstallPayloadSchema } from '../plugin.ts';
 import { launchOptionsSchema } from '../session.ts';
+import { effortLevelSchema } from '../settings.ts';
+
+describe('effortLevelSchema', () => {
+  it('exports exactly low, medium, high, max', () => {
+    expect(effortLevelSchema.options.toSorted()).toEqual(['high', 'low', 'max', 'medium']);
+  });
+});
 
 describe('launchOptionsSchema effort (contract)', () => {
-  for (const effort of ['low', 'medium', 'high', 'max'] as const) {
+  for (const effort of effortLevelSchema.options) {
     it(`accepts effort: '${effort}'`, () => {
       const result = launchOptionsSchema.safeParse({ effort });
       expect(result.success).toBe(true);

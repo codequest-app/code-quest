@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 // Intentional dependency — Decision 10: ProjectContext mediates the
@@ -52,7 +52,9 @@ export function useTabActions(): TabActionsValue {
 // ── Provider ──
 
 const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
-const TERMINAL_STATES = new Set(['exited', 'disconnected']);
+const TERMINAL_STATES = new Set<string>(
+  sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
+);
 
 export function TabProvider({
   children,

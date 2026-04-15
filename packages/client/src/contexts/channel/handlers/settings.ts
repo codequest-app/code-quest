@@ -1,9 +1,11 @@
 import {
   type ControlResponse,
+  effortLevelSchema,
   type ModelInfo,
   modelInfoSchema,
   type RpcResult,
   type UsageQuota,
+  usageQuotaSchema,
   worktreeInfoSchema,
 } from '@code-quest/shared';
 import { toast } from 'sonner';
@@ -14,8 +16,7 @@ import type { ConfigState } from '../ChannelConfigContext';
 import type { Payload } from './guard';
 
 function toEffort(value: string | undefined): ConfigState['effort'] {
-  if (value === 'low' || value === 'medium' || value === 'high' || value === 'max') return value;
-  return null;
+  return effortLevelSchema.safeParse(value).data ?? null;
 }
 
 function parseModels(raw: unknown[]): ModelInfo[] {
@@ -138,20 +139,18 @@ function onAvailableModels(state: ConfigState, payload: Payload<'app:models'>): 
   return { ...state, availableModels: parseModels(payload.models) };
 }
 
-type TierKey = 'five_hour' | 'seven_day' | 'seven_day_sonnet';
-function isTierKey(v: string | undefined): v is TierKey {
-  return v === 'five_hour' || v === 'seven_day' || v === 'seven_day_sonnet';
-}
+type TierKey = keyof typeof usageQuotaSchema.shape;
 
 function onRateLimitQuota(state: ConfigState, p: Payload<'system:rate_limit'>): ConfigState {
   const { rateLimitType, resetsAt, utilization } = p.info;
-  if (!isTierKey(rateLimitType)) return state;
+  if (!rateLimitType || !(rateLimitType in usageQuotaSchema.shape)) return state;
+  const tierKey = rateLimitType as TierKey;
   const currentQuota: UsageQuota = state.usageQuota ?? {};
   return {
     ...state,
     usageQuota: {
       ...currentQuota,
-      [rateLimitType]: {
+      [tierKey]: {
         utilization: typeof utilization === 'number' ? utilization : 0,
         ...(resetsAt != null ? { resets_at: new Date(Number(resetsAt) * 1000).toISOString() } : {}),
       },

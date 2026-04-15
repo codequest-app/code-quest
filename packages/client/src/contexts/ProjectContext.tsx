@@ -1,4 +1,4 @@
-import type { SessionStateSummary } from '@code-quest/shared';
+import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSession } from './SessionContext';
 
@@ -43,7 +43,9 @@ function cwdToProject(cwd: string): Project {
   return { cwd, name: cwd.split('/').pop() ?? cwd };
 }
 
-const TERMINAL_STATES = new Set(['exited', 'disconnected']);
+const TERMINAL_STATES = new Set<string>(
+  sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
+);
 
 /** Project identity = projectRoot (server guarantees non-null: git root or cwd fallback). */
 export function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {

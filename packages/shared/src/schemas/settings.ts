@@ -36,6 +36,9 @@ export type SettingsGetStatePayload = z.infer<typeof settingsGetStatePayloadSche
 
 // ── State types ──
 
+export const effortLevelSchema = z.enum(['low', 'medium', 'high', 'max']);
+export type EffortLevel = z.infer<typeof effortLevelSchema>;
+
 export const chromeMcpStateSchema = z.object({
   status: z.enum(['disconnected', 'connecting', 'connected', 'error']),
 });
@@ -89,7 +92,7 @@ export const updateStatePayloadSchema = z.object({
   mcpServers: z
     .array(z.object({ name: z.string(), status: z.string(), scope: z.string().optional() }))
     .optional(),
-  effort: z.string().optional(),
+  effort: effortLevelSchema.optional(),
   fastModeState: z.string().optional(),
 });
 export type UpdateStatePayload = z.infer<typeof updateStatePayloadSchema>;

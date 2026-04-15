@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
 import { rpcResult } from './rpc.ts';
+import { effortLevelSchema } from './settings.ts';
 
 // ── Session summary (moved from common.ts) ──
 
@@ -66,7 +67,7 @@ export const launchOptionsSchema = z
     model: z.string().optional(),
     fallbackModel: z.string().optional(),
     thinking: z.union([z.literal('adaptive'), z.literal('disabled'), z.number()]).optional(),
-    effort: z.enum(['high', 'medium', 'low', 'max']).optional(),
+    effort: effortLevelSchema.optional(),
     maxTurns: z.number().optional(),
     maxBudgetUsd: z.number().optional(),
     agent: z.string().optional(),
@@ -187,7 +188,7 @@ export const sessionStateSummarySchema = z.object({
   title: z.string().optional(),
   modelSetting: z.string().optional(),
   permissionMode: z.string().optional(),
-  effort: z.string().optional(),
+  effort: effortLevelSchema.optional(),
   cwd: z.string().optional(),
   projectRoot: z.string(),
 });
@@ -373,7 +374,7 @@ export type ControlRequestEvent = z.infer<typeof controlRequestEventSchema>;
 export const sessionConfigSchema = z.object({
   model: z.string().optional(),
   permissionMode: z.string().optional(),
-  effort: z.string().optional(),
+  effort: effortLevelSchema.optional(),
   thinkingLevel: z.string().optional(),
   tools: z.array(z.string()).optional(),
   mcpServers: z.array(z.object({ name: z.string(), status: z.string() })).optional(),

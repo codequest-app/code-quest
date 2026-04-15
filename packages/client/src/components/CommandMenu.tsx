@@ -1,3 +1,4 @@
+import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { findModel } from '../utils/model-utils';
@@ -138,8 +139,9 @@ export function CommandMenu({
   const modelLabel = modelEntry?.label ?? modelEntry?.displayName ?? currentModel ?? 'Default';
 
   const supportsFastMode = modelEntry?.supportsFastMode ?? false;
-  const effortLevels =
-    modelEntry?.supportedEffortLevels ?? (modelEntry?.supportsEffort ? DEFAULT_EFFORT_LEVELS : []);
+  const effortLevels: EffortLevel[] = (
+    modelEntry?.supportedEffortLevels ?? (modelEntry?.supportsEffort ? DEFAULT_EFFORT_LEVELS : [])
+  ).filter((v): v is EffortLevel => effortLevelSchema.safeParse(v).success);
 
   // Compose bindings
   const externalOpen = compose.slashFilter != null;
