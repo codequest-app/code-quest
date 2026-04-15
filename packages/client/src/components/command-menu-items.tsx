@@ -35,6 +35,7 @@ export interface BuildMenuItemsParams {
   onSetThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
   close: () => void;
+  closeSilent: () => void;
   compose: { mentionFile: () => void; executeSlashCommand: (cmd: string) => void };
   actions: {
     sendMessage: (msg: string) => void;
@@ -68,8 +69,16 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     fastModeState,
     supportsFastMode,
   } = params;
-  const { onSetEffort, onSetThinkingLevel, setFastMode, close, compose, actions, callbacks } =
-    params;
+  const {
+    onSetEffort,
+    onSetThinkingLevel,
+    setFastMode,
+    close,
+    closeSilent,
+    compose,
+    actions,
+    callbacks,
+  } = params;
 
   const context: MenuItem[] = [
     {
@@ -78,7 +87,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Context',
       onClick: () => {
         callbacks.onAttachFile?.();
-        close();
+        closeSilent();
       },
     },
     {
@@ -126,7 +135,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       filterOnly: true,
       onClick: () => {
         callbacks.onResumeConversation?.();
-        close();
+        closeSilent();
       },
     },
   ];
@@ -158,7 +167,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Model',
       onClick: () => {
         callbacks.onOpenAccountUsage?.();
-        close();
+        closeSilent();
       },
     },
     ...(supportsFastMode
@@ -181,7 +190,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Customize',
       onClick: () => {
         callbacks.onMcpStatus?.();
-        close();
+        closeSilent();
       },
     },
     {
@@ -190,7 +199,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Customize',
       onClick: () => {
         callbacks.onToggleMcp?.();
-        close();
+        closeSilent();
       },
     },
     {
@@ -199,7 +208,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Customize',
       onClick: () => {
         callbacks.onManagePlugins?.();
-        close();
+        closeSilent();
       },
     },
   ];
@@ -241,7 +250,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Settings',
       onClick: () => {
         callbacks.onOpenConfig?.();
-        close();
+        closeSilent();
       },
     },
     {
@@ -250,7 +259,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Settings',
       onClick: () => {
         callbacks.onSwitchAccount?.();
-        close();
+        closeSilent();
       },
     },
   ];
@@ -262,7 +271,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       section: 'Support',
       onClick: () => {
         callbacks.onOpenHelp?.();
-        close();
+        closeSilent();
       },
     },
   ];

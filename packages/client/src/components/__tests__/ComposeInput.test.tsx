@@ -90,6 +90,25 @@ describe('ComposeInput', () => {
       expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
     });
 
+    it('active file result item uses bg-selected class', async () => {
+      const summoner = createFakeSummoner();
+      const cwd = '/test/project';
+      await renderWithChannel(<ComposeInput />, { summoner, cwd });
+      summoner.filesystem().addFile(`${cwd}/index.ts`, '');
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@index');
+
+      await waitFor(() => {
+        expect(screen.getByRole('option')).toBeInTheDocument();
+      });
+
+      await userEvent.keyboard('{ArrowDown}');
+
+      const option = screen.getByRole('option');
+      expect(option.className).toContain('bg-selected');
+    });
+
     it('selecting a file inserts @path and closes dropdown', async () => {
       const summoner = createFakeSummoner();
       const cwd = '/test/project';

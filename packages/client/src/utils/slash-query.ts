@@ -1,3 +1,11 @@
+export const MENTION_REGEX = /(^|[\s])@([^\s]*)$/;
+
+export function getMentionQuery(value: string, cursorPos: number): string | null {
+  const before = value.slice(0, cursorPos);
+  const match = before.match(MENTION_REGEX);
+  return match ? match[2] : null;
+}
+
 interface SlashToken {
   query: string;
   start: number;

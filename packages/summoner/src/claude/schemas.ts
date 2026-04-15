@@ -168,7 +168,8 @@ export const userSchema = z.looseObject({
   type: z.literal('user'),
   message: z.looseObject({
     role: z.string().optional(),
-    content: z.array(z.record(z.string(), z.unknown())).optional(),
+    // content can be an array (normal messages) or a string (slash command stdout echo)
+    content: z.union([z.array(z.record(z.string(), z.unknown())), z.string()]).optional(),
   }),
   parent_tool_use_id: z.string().nullable().optional(),
   session_id: z.string().optional(),

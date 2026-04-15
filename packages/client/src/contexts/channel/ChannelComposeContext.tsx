@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getSlashQuery } from '../../utils/slash-query';
+import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -39,9 +39,11 @@ interface ChannelComposeContextValue {
   slashFilter: string | null;
   hasTextBeforeSlash: boolean;
   closeSlash: () => void;
+  dismissSlash: () => void;
   insertSlashCommand: (text: string) => void;
   executeSlashCommand: (cmd: string) => void;
   mentionFile: () => void;
+  registerMentionTrigger: (fn: (value: string, pos: number) => void) => void;
   attachedFiles: File[];
   addAttachments: (files: File[]) => void;
   removeAttachment: (index: number) => void;
@@ -82,6 +84,7 @@ function createComposeActions(
   setState: Dispatch<SetStateAction<ComposeState>>,
   sendMessage: (text: string) => void,
   requestFocusRef: { current: ((pos?: number) => void) | null },
+  mentionTriggerRef: { current: ((value: string, pos: number) => void) | null },
 ) {
   const get = () => stateRef.current;
 
@@ -106,26 +109,50 @@ function createComposeActions(
   };
 
   const clearSlashToken = () => {
-    const { value: v, cursorPos: pos } = get();
-    const token = getSlashQuery(v, pos);
-    if (token) {
-      const newValue = v.slice(0, token.start) + v.slice(token.end);
-      setState((prev) => ({
-        ...prev,
-        value: newValue.trimEnd() === '' ? '' : newValue,
-        slashOpen: false,
-      }));
-    } else {
-      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
-    }
+    setState((prev) => {
+      const token = getSlashQuery(prev.value, prev.cursorPos);
+      if (!token) return { ...prev, slashOpen: false };
+      const newValue = prev.value.slice(0, token.start) + prev.value.slice(token.end);
+      return { ...prev, value: newValue.trimEnd() === '' ? '' : newValue, slashOpen: false };
+    });
   };
 
   const closeSlash = clearSlashToken;
 
+  const dismissSlash = () => {
+    setState((prev) => ({ ...prev, slashOpen: false }));
+  };
+
   const mentionFile = () => {
-    const { value: v, cursorPos: pos } = get();
-    setState((prev) => ({ ...prev, value: `${v.slice(0, pos)}@${v.slice(pos)}` }));
-    requestFocusRef.current?.(pos + 1);
+    const snap = get();
+    const snapToken = getSlashQuery(snap.value, snap.cursorPos);
+
+    // If cursor is already inside a mention (@…), just trigger file search without inserting a duplicate @
+    if (!snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null) {
+      requestFocusRef.current?.(snap.cursorPos);
+      mentionTriggerRef.current?.(snap.value, snap.cursorPos);
+      return;
+    }
+
+    const focusAt = snapToken ? snapToken.start + 1 : snap.cursorPos + 1;
+    const triggeredValue = snapToken
+      ? `${snap.value.slice(0, snapToken.start)}@${snap.value.slice(snapToken.end)}`
+      : `${snap.value.slice(0, snap.cursorPos)}@${snap.value.slice(snap.cursorPos)}`;
+    setState((prev) => {
+      const token = getSlashQuery(prev.value, prev.cursorPos);
+      if (token) {
+        const newValue = `${prev.value.slice(0, token.start)}@${prev.value.slice(token.end)}`;
+        return { ...prev, value: newValue, slashOpen: false };
+      }
+      // Defensive: if already in a mention context, skip to avoid duplicate @
+      if (getMentionQuery(prev.value, prev.cursorPos) !== null) {
+        return { ...prev, slashOpen: false };
+      }
+      const newValue = `${prev.value.slice(0, prev.cursorPos)}@${prev.value.slice(prev.cursorPos)}`;
+      return { ...prev, value: newValue };
+    });
+    requestFocusRef.current?.(focusAt);
+    mentionTriggerRef.current?.(triggeredValue, focusAt);
   };
 
   const focusTextarea = () => requestFocusRef.current?.();
@@ -176,6 +203,7 @@ function createComposeActions(
   return {
     submit,
     closeSlash,
+    dismissSlash,
     mentionFile,
     focusTextarea,
     updateValue,
@@ -224,12 +252,19 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
     requestFocusRef.current = fn;
   };
 
+  const mentionTriggerRef = useRef<((value: string, pos: number) => void) | null>(null);
+  const registerMentionTrigger = (fn: (value: string, pos: number) => void) => {
+    mentionTriggerRef.current = fn;
+  };
+
   const [actionsBlock] = useState(() =>
-    createComposeActions(stateRef, setState, sendMessage, requestFocusRef),
+    createComposeActions(stateRef, setState, sendMessage, requestFocusRef, mentionTriggerRef),
   );
 
   return (
-    <ComposeActionsContext.Provider value={{ registerFocus, ...actionsBlock }}>
+    <ComposeActionsContext.Provider
+      value={{ registerFocus, registerMentionTrigger, ...actionsBlock }}
+    >
       <ComposeStateContext.Provider
         value={{
           value,

@@ -119,4 +119,20 @@ describe('ChannelComposeProvider', () => {
     await userEvent.click(screen.getByText('Mention'));
     expect(screen.getByPlaceholderText('compose')).toHaveValue('hello @');
   });
+
+  it('mentionFile does not insert duplicate @ when cursor is already after @', async () => {
+    await setup();
+    await userEvent.type(screen.getByPlaceholderText('compose'), '@');
+    await userEvent.click(screen.getByText('Mention'));
+    expect(screen.getByPlaceholderText('compose')).toHaveValue('@');
+  });
+
+  it('mentionFile called twice on / does not produce @@', async () => {
+    await setup();
+    await userEvent.type(screen.getByPlaceholderText('compose'), '/');
+    // Simulate being called twice (e.g. StrictMode double-invoke side effect)
+    await userEvent.click(screen.getByText('Mention'));
+    await userEvent.click(screen.getByText('Mention'));
+    expect(screen.getByPlaceholderText('compose')).toHaveValue('@');
+  });
 });

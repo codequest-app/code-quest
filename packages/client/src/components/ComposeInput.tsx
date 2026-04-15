@@ -4,24 +4,17 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
+import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
-
-const MENTION_REGEX = /(^|[\s])@([^\s]*)$/;
-
-function getMentionQuery(value: string, cursorPos: number): string | null {
-  const before = value.slice(0, cursorPos);
-  const match = before.match(MENTION_REGEX);
-  if (!match) return null;
-  return match[2];
-}
 
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-[14px] py-[10px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
-  const { effort, isFastMode, providerConfig } = useChannelConfig();
+  const { effort, isFastMode, providerConfig, permissionMode, setPermissionMode } =
+    useChannelConfig();
   const compose = useChannelCompose();
 
   const {
@@ -30,8 +23,9 @@ export function ComposeInput() {
     cursorPos,
     setCursorPos,
     registerFocus,
+    registerMentionTrigger,
     slashOpen,
-    closeSlash,
+    dismissSlash,
     submit,
     attachedFiles,
     removeAttachment,
@@ -43,14 +37,10 @@ export function ComposeInput() {
     registerFocus((pos?: number) => {
       const el = textareaRef.current;
       if (!el) return;
-      if (pos !== undefined) {
-        setTimeout(() => {
-          el.focus();
-          el.setSelectionRange(pos, pos);
-        }, 0);
-      } else {
+      setTimeout(() => {
         el.focus();
-      }
+        if (pos !== undefined) el.setSelectionRange(pos, pos);
+      }, 0);
     });
   }, [registerFocus]);
 
@@ -84,6 +74,19 @@ export function ComposeInput() {
     setSearchStatus('done');
   }, 200);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debouncedSearch is stable (useDebouncedCallback)
+  useEffect(() => {
+    registerMentionTrigger((value: string, pos: number) => {
+      const query = getMentionQuery(value, pos);
+      if (query !== null) {
+        setMentionOpen(true);
+        setSelectedIndex(-1);
+        setSearchStatus('loading');
+        debouncedSearch(query);
+      }
+    });
+  }, [registerMentionTrigger]);
+
   const handleChange = (newValue: string) => {
     const el = textareaRef.current;
     const pos = el?.selectionStart ?? newValue.length;
@@ -109,7 +112,6 @@ export function ComposeInput() {
     const start = before.length - match[0].length + (match[1] ? 1 : 0);
 
     if (navigateInto) {
-      // Navigate into directory — update query and trigger new search
       const newValue = `${value.slice(0, start)}${suggestion}${value.slice(pos)}`;
       const newCursorPos = start + suggestion.length;
       updateValue(newValue, newCursorPos);
@@ -122,7 +124,6 @@ export function ComposeInput() {
       return;
     }
 
-    // Select — insert and close
     const newValue = `${value.slice(0, start)}${suggestion} ${value.slice(pos)}`;
     updateValue(newValue);
     setMentionOpen(false);
@@ -141,76 +142,78 @@ export function ComposeInput() {
     setFileResults([]);
   }
 
-  function handleSlashKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
-    if (!slashOpen) return false;
-    if (e.key === 'Escape') {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab' && e.shiftKey && !slashOpen && !mentionOpen) {
       e.preventDefault();
-      closeSlash();
-      return true;
+      const configModes = providerConfig?.permissionModes;
+      const modeIds = configModes?.length
+        ? configModes.map((m) => m.id)
+        : ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
+      const currentIndex = modeIds.indexOf(permissionMode ?? 'normal');
+      const nextMode = modeIds[(currentIndex + 1) % modeIds.length];
+      setPermissionMode(nextMode);
+      return;
     }
-    if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
-      e.preventDefault();
-      return true;
-    }
-    return false;
-  }
 
-  function handleMentionKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
-    if (!mentionOpen) return false;
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      closeMention();
-      return true;
+    if (slashOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        dismissSlash();
+        // textarea already has focus — no focusTextarea() needed
+        return;
+      }
+      if (['Tab', 'ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
+        e.preventDefault();
+        // CommandMenu document listener handles the actual navigation
+        return;
+      }
     }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((i) =>
-        e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
-      );
-      return true;
-    }
-    if (e.key === 'Tab' && selectedIndex >= 0) {
-      e.preventDefault();
-      const item = fileResults[selectedIndex];
-      if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
-      return true;
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      if (selectedIndex >= 0) {
+
+    if (mentionOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMention();
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((i) =>
+          e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
+        );
+        return;
+      }
+      if (e.key === 'Tab' && selectedIndex >= 0) {
         e.preventDefault();
         const item = fileResults[selectedIndex];
-        if (item) handleSelectMention(`@${item.path}`, false);
-      } else {
-        closeMention();
+        if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
+        return;
       }
-      return true;
+      if (e.key === 'Enter' && !e.shiftKey) {
+        if (selectedIndex >= 0) {
+          e.preventDefault();
+          const item = fileResults[selectedIndex];
+          if (item) handleSelectMention(`@${item.path}`, false);
+        } else {
+          closeMention();
+        }
+        return;
+      }
     }
-    return false;
-  }
 
-  function handleHistoryKey(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
-    if (mentionOpen || slashOpen) return false;
+    // Input history (only when no dropdown is open)
     if (e.key === 'ArrowUp') {
       const msg = inputHistory.cycleUp();
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
       }
-      return true;
+      return;
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       updateValue(inputHistory.cycleDown());
-      return true;
+      return;
     }
-    return false;
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (handleSlashKey(e)) return;
-    if (handleMentionKey(e)) return;
-    if (handleHistoryKey(e)) return;
 
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -266,7 +269,7 @@ export function ComposeInput() {
           className={TEXTAREA_CLASS}
         />
         <div className={`${TEXTAREA_CLASS} invisible whitespace-pre-wrap`} aria-hidden="true">
-          {value + '\n'}
+          {`${value}\n`}
         </div>
       </div>
       {showMentionDropdown && (
