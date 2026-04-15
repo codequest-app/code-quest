@@ -6,6 +6,7 @@ import type {
   CancelRequestEventPayload,
   CancelRequestPayload,
   ChannelIdPayload,
+  ChatAskSideQuestionPayload,
   ChatCancelAsyncMessagePayload,
   ChatCancelPayload,
   ChatHookCallbackRespondPayload,
@@ -114,6 +115,7 @@ import type {
   SettingsSetProactivePayload,
   SettingsSetRemoteControlPayload,
   SettingsSetThinkingLevelPayload,
+  SideQuestionResult,
   SpeechToTextMessagePayload,
   StateUsagePayload,
   StreamBlockStartPayload,
@@ -145,6 +147,10 @@ export interface ClientToServerEvents {
   'chat:rewind_code': (
     payload: ChatRewindCodePayload,
     callback: (response: RpcResult<RewindResult>) => void,
+  ) => void;
+  'chat:ask_side_question': (
+    payload: ChatAskSideQuestionPayload,
+    callback: (response: RpcResult<SideQuestionResult>) => void,
   ) => void;
 
   // ── Aligned: Settings ──

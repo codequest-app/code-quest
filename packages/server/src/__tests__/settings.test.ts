@@ -313,6 +313,55 @@ describe('ChatHandler > settings', () => {
     });
   });
 
+  describe('chat:ask_side_question', () => {
+    it('sends side_question control_request and returns answer via callback', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'side_question') {
+          return { response: 'The answer is 42', synthetic: false };
+        }
+        return null;
+      });
+
+      const result = await claude.send('chat:ask_side_question', {
+        channelId,
+        question: 'What is the answer?',
+      });
+
+      expect(result).toMatchObject({ ok: true, data: { answer: 'The answer is 42' } });
+    });
+
+    it('returns error when Claude returns null response', async () => {
+      const { claude, channelId } = await setup();
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'side_question') {
+          return { response: null, synthetic: false };
+        }
+        return null;
+      });
+
+      const result = await claude.send('chat:ask_side_question', {
+        channelId,
+        question: 'What is the answer?',
+      });
+
+      expect(result).toMatchObject({ ok: false, error: 'No answer returned' });
+    });
+
+    it('returns error for unknown channel', async () => {
+      const { claude } = await setup();
+
+      const result = await claude.send('chat:ask_side_question', {
+        channelId: 'unknown',
+        question: 'hello',
+      });
+
+      expect(result).toMatchObject({ ok: false });
+    });
+  });
+
   describe('settings:set_proactive', () => {
     it('emits settings:update with fastModeState after success', async () => {
       const { claude, channelId } = await setup();

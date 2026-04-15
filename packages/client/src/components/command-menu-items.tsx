@@ -8,6 +8,8 @@ export interface MenuItem {
   section: string;
   disabled?: boolean;
   filterOnly?: boolean;
+  /** Match only the first word of the filter text (e.g. "/btw <question>" → match on "btw") */
+  matchFirstToken?: boolean;
   trailing?: React.ReactNode;
   onClick?: () => void;
 }
@@ -24,6 +26,7 @@ interface MenuSections {
 
 export interface BuildMenuItemsParams {
   slashCommands: string[];
+  slashFilter: string | null;
   effort: 'low' | 'medium' | 'high' | 'max' | null;
   effortLevels: string[];
   isThinkingOn: boolean;
@@ -54,6 +57,7 @@ export interface BuildMenuItemsParams {
     onOpenConfig?: () => void;
     onSwitchAccount?: () => void;
     onOpenHelp?: () => void;
+    onAskSideQuestion?: (question: string) => void;
   };
 }
 
@@ -62,6 +66,7 @@ export const DEFAULT_EFFORT_LEVELS: string[] = ['low', 'medium', 'high', 'max'];
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const {
     slashCommands,
+    slashFilter,
     effort,
     effortLevels,
     isThinkingOn,
@@ -276,15 +281,33 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     },
   ];
 
-  const slash: MenuItem[] = slashCommands.map((cmd) => ({
-    id: `slash-${cmd}`,
-    label: `/${cmd}`,
+  const btwQuestion = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
+  const btwItem: MenuItem = {
+    id: 'btw',
+    label: '/btw',
     section: 'Slash Commands',
+    disabled: !btwQuestion,
+    matchFirstToken: true,
     onClick: () => {
-      compose.executeSlashCommand(`/${cmd}`);
-      close();
+      if (btwQuestion) {
+        callbacks.onAskSideQuestion?.(btwQuestion);
+        closeSilent();
+      }
     },
-  }));
+  };
+
+  const slash: MenuItem[] = [
+    btwItem,
+    ...slashCommands.map((cmd) => ({
+      id: `slash-${cmd}`,
+      label: `/${cmd}`,
+      section: 'Slash Commands',
+      onClick: () => {
+        compose.executeSlashCommand(`/${cmd}`);
+        close();
+      },
+    })),
+  ];
 
   return { context, model, customize, tools, slash, settings, support };
 }

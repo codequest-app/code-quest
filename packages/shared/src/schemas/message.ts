@@ -50,6 +50,15 @@ export const chatRewindCodePayloadSchema = z.object({
 });
 export type ChatRewindCodePayload = z.infer<typeof chatRewindCodePayloadSchema>;
 
+export const chatAskSideQuestionPayloadSchema = z.object({
+  channelId: z.string(),
+  question: z.string(),
+});
+export type ChatAskSideQuestionPayload = z.infer<typeof chatAskSideQuestionPayloadSchema>;
+
+export const sideQuestionResultSchema = z.object({ answer: z.string() });
+export type SideQuestionResult = z.infer<typeof sideQuestionResultSchema>;
+
 export const chatStopTaskPayloadSchema = z.object({ channelId: z.string(), taskId: z.string() });
 export type ChatStopTaskPayload = z.infer<typeof chatStopTaskPayloadSchema>;
 

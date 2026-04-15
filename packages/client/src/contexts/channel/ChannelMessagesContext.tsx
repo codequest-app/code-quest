@@ -5,6 +5,7 @@ import {
   type RawEventsResponse,
   type RewindResult,
   type RpcResult,
+  type SideQuestionResult,
   sessionJoinResponseSchema,
   type TerminalGetContentsResponse,
 } from '@code-quest/shared';
@@ -65,6 +66,7 @@ export interface ChannelMessagesValue {
   openClaudeTerminal: () => Promise<RpcResult<{ channelId: string }>>;
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
   rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RpcResult<RewindResult>>;
+  askSideQuestion: (question: string) => Promise<RpcResult<SideQuestionResult>>;
 }
 
 type MessagesStateValue = Pick<

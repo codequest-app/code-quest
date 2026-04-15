@@ -3,6 +3,7 @@ import type {
   RawEventsResponse,
   RewindResult,
   RpcResult,
+  SideQuestionResult,
 } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
@@ -64,5 +65,9 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     return rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun });
   }
 
-  return { fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage };
+  function askSideQuestion(question: string): Promise<RpcResult<SideQuestionResult>> {
+    return rpc(socket, 'chat:ask_side_question', { channelId, question });
+  }
+
+  return { fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage, askSideQuestion };
 }

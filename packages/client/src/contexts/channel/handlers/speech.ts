@@ -4,6 +4,7 @@ interface ComposeState {
   value: string;
   cursorPos: number;
   slashOpen: boolean;
+  mentionOpen: boolean;
   attachedFiles: File[];
 }
 

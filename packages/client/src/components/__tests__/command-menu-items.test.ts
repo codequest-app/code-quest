@@ -4,6 +4,7 @@ import { type BuildMenuItemsParams, buildMenuItems } from '../command-menu-items
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
   return {
     slashCommands: [],
+    slashFilter: null,
     effort: null,
     effortLevels: ['low', 'medium', 'high', 'max'],
     isThinkingOn: false,
@@ -44,11 +45,13 @@ describe('buildMenuItems', () => {
     expect(context.map((i) => i.id)).toContain('clear-conversation');
   });
 
-  it('slash section maps slashCommands to menu items', () => {
+  it('slash section maps slashCommands to menu items (after /btw)', () => {
     const { slash } = buildMenuItems(defaultParams({ slashCommands: ['help', 'review'] }));
-    expect(slash).toHaveLength(2);
-    expect(slash[0].label).toBe('/help');
-    expect(slash[1].label).toBe('/review');
+    // /btw is always first, then slashCommands
+    expect(slash).toHaveLength(3);
+    expect(slash[0].id).toBe('btw');
+    expect(slash[1].label).toBe('/help');
+    expect(slash[2].label).toBe('/review');
   });
 
   it('model section includes fast-mode when supportsFastMode is true', () => {
@@ -93,6 +96,51 @@ describe('buildMenuItems', () => {
   it('context section includes rewind item', () => {
     const { context } = buildMenuItems(defaultParams());
     expect(context.map((i) => i.id)).toContain('rewind');
+  });
+
+  describe('/btw item', () => {
+    it('is always present in slash section', () => {
+      const { slash } = buildMenuItems(defaultParams());
+      expect(slash.some((i) => i.id === 'btw')).toBe(true);
+    });
+
+    it('is disabled when slashFilter has no question text', () => {
+      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw' }));
+      const btw = slash.find((i) => i.id === 'btw');
+      expect(btw?.disabled).toBe(true);
+    });
+
+    it('is enabled when slashFilter is "btw <question>"', () => {
+      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw hello world' }));
+      const btw = slash.find((i) => i.id === 'btw');
+      expect(btw?.disabled).toBe(false);
+    });
+
+    it('calls onAskSideQuestion with question text when clicked', () => {
+      const closeSilent = vi.fn();
+      const onAskSideQuestion = vi.fn();
+      const { slash } = buildMenuItems(
+        defaultParams({
+          slashFilter: 'btw what is 2+2?',
+          closeSilent,
+          callbacks: { onAskSideQuestion },
+        }),
+      );
+      const btw = slash.find((i) => i.id === 'btw');
+      btw?.onClick?.();
+      expect(onAskSideQuestion).toHaveBeenCalledWith('what is 2+2?');
+      expect(closeSilent).toHaveBeenCalled();
+    });
+
+    it('does not call onAskSideQuestion when question is empty', () => {
+      const onAskSideQuestion = vi.fn();
+      const { slash } = buildMenuItems(
+        defaultParams({ slashFilter: 'btw', callbacks: { onAskSideQuestion } }),
+      );
+      const btw = slash.find((i) => i.id === 'btw');
+      btw?.onClick?.();
+      expect(onAskSideQuestion).not.toHaveBeenCalled();
+    });
   });
 
   it('clicking rewind calls callbacks.onRewind + close', () => {

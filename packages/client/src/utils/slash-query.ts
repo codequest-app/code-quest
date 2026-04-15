@@ -13,7 +13,7 @@ interface SlashToken {
 }
 
 export function getSlashQuery(value: string, cursorPos: number): SlashToken | null {
-  const regex = /(?:^|(?<=\s))\/([^\s/]*)/g;
+  const regex = /(?:^|(?<=\s))\/([^/]*)/g;
   for (const match of value.matchAll(regex)) {
     const start = match.index;
     const end = start + match[0].length;

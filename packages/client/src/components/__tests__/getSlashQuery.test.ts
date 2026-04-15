@@ -34,4 +34,20 @@ describe('getSlashQuery', () => {
   it('detects when cursor is at start of token', () => {
     expect(getSlashQuery('hello /com', 6)).toEqual({ query: 'com', start: 6, end: 10 });
   });
+
+  it('captures multi-word slash token: /btw hello with cursor at end', () => {
+    expect(getSlashQuery('/btw hello', 10)).toEqual({ query: 'btw hello', start: 0, end: 10 });
+  });
+
+  it('captures multi-word slash token: cursor in the middle of the question', () => {
+    expect(getSlashQuery('/btw hello world', 9)).toEqual({
+      query: 'btw hello world',
+      start: 0,
+      end: 16,
+    });
+  });
+
+  it('returns null when cursor is before the slash token in multi-word input', () => {
+    expect(getSlashQuery('text /btw hello', 3)).toBeNull();
+  });
 });

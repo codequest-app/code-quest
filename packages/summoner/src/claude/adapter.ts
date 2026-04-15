@@ -51,6 +51,7 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   'message:stop_task': { subtype: 'stop_task' },
   'message:cancel_async': { subtype: 'cancel_async_message' },
   'message:rewind': { subtype: 'rewind_files' },
+  'message:side_question': { subtype: 'side_question' },
   // session
   'session:generate_title': { subtype: 'generate_session_title' },
   'session:initialize': { subtype: 'initialize' },

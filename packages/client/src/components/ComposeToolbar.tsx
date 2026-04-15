@@ -43,9 +43,14 @@ const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): M
 export interface ComposeToolbarProps {
   onResumeConversation?: () => void;
   onAttachFile?: () => void;
+  onAskSideQuestion?: (question: string) => void;
 }
 
-export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeToolbarProps) {
+export function ComposeToolbar({
+  onResumeConversation,
+  onAttachFile,
+  onAskSideQuestion,
+}: ComposeToolbarProps) {
   const {
     isProcessing,
     isCancelling,
@@ -195,6 +200,7 @@ export function ComposeToolbar({ onResumeConversation, onAttachFile }: ComposeTo
           }
           onAttachFile={onAttachFile}
           onRewind={() => setActiveDialog('rewind')}
+          onAskSideQuestion={onAskSideQuestion}
         />
 
         {showContextUsage && (

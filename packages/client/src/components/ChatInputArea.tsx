@@ -8,8 +8,10 @@ import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
 export function ChatInputArea({
   onResumeConversation,
+  onAskSideQuestion,
 }: {
   onResumeConversation?: () => void;
+  onAskSideQuestion?: (question: string) => void;
 } = {}) {
   const { permissionMode, isFastMode } = useChannelConfig();
   const { focusTextarea, addAttachments } = useChannelCompose();
@@ -49,7 +51,11 @@ export function ChatInputArea({
         role="none"
       >
         <ComposeInput />
-        <ComposeToolbar onResumeConversation={onResumeConversation} onAttachFile={openFilePicker} />
+        <ComposeToolbar
+          onResumeConversation={onResumeConversation}
+          onAttachFile={openFilePicker}
+          onAskSideQuestion={onAskSideQuestion}
+        />
       </div>
       {modifiedFileEntries.length > 0 && (
         <ModifiedFilesPanel files={modifiedFileList} onAccept={removeModifiedFile} />

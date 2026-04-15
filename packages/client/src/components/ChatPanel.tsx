@@ -22,6 +22,7 @@ import { RawEventPanel } from './RawEventPanel';
 import { resumeRoute } from './resume-route';
 import { SearchBar } from './SearchBar';
 import { SessionDropdown } from './SessionDropdown';
+import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
 const SIDE_PANEL = 'w-72 shrink-0';
@@ -29,7 +30,7 @@ const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
 export function ChatPanel({ title }: { title?: string }) {
   const channelId = useChannelId();
-  const { messages, subscribeRawEvents } = useChannelMessages();
+  const { messages, subscribeRawEvents, askSideQuestion } = useChannelMessages();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
   const { listSessions, renameSession, deleteSession, resume } = useSession();
@@ -45,6 +46,33 @@ export function ChatPanel({ title }: { title?: string }) {
     cancelElicitation,
   } = useChannelControl();
 
+  const [sideQuestion, setSideQuestion] = useState<{
+    open: boolean;
+    question: string;
+    answer: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({ open: false, question: '', answer: null, loading: false, error: null });
+
+  const handleAskSideQuestion = (question: string) => {
+    setSideQuestion({ open: true, question, answer: null, loading: true, error: null });
+    askSideQuestion(question)
+      .then((result) => {
+        if (result.ok) {
+          setSideQuestion((prev) => ({ ...prev, loading: false, answer: result.data.answer }));
+        } else {
+          setSideQuestion((prev) => ({ ...prev, loading: false, error: result.error }));
+        }
+      })
+      .catch((e) => {
+        setSideQuestion((prev) => ({
+          ...prev,
+          loading: false,
+          error: e instanceof Error ? e.message : String(e),
+        }));
+      });
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
@@ -57,20 +85,25 @@ export function ChatPanel({ title }: { title?: string }) {
 
   const searchBarRef = useRef<HTMLInputElement>(null);
 
-  const openResumeOverlay = () => {
-    setShowResumeOverlay(true);
-    setResumeLoading(true);
-    // Chat /resume is project-scoped: only show sessions for this project.
-    // Global cross-project resume goes through the sidebar right-click menu.
+  const fetchResumeSessions = () =>
     listSessions({
       limit: 50,
       excludeLive: true,
       ...(activeProjectCwd ? { cwd: activeProjectCwd } : {}),
-    })
-      .then((res) => {
-        if (res.ok) setResumeSessions(res.data);
-      })
-      .finally(() => setResumeLoading(false));
+    }).then((res) => {
+      if (res.ok) setResumeSessions(res.data);
+    });
+
+  const openResumeOverlay = () => {
+    setShowResumeOverlay(true);
+    setResumeLoading(true);
+    fetchResumeSessions().finally(() => setResumeLoading(false));
+  };
+
+  const handleDelete = async (id: string) => {
+    const result = await deleteSession(id);
+    if (result.ok) void fetchResumeSessions();
+    return result;
   };
 
   const handleResumeSelect = async (selectedChannelId: string) => {
@@ -151,12 +184,23 @@ export function ChatPanel({ title }: { title?: string }) {
             onSelect={handleResumeSelect}
             onClose={() => setShowResumeOverlay(false)}
             onRename={renameSession}
-            onDelete={deleteSession}
+            onDelete={handleDelete}
           />
         )}
+        <SideQuestionDialog
+          open={sideQuestion.open}
+          question={sideQuestion.question}
+          answer={sideQuestion.answer}
+          loading={sideQuestion.loading}
+          error={sideQuestion.error}
+          onClose={() => setSideQuestion((prev) => ({ ...prev, open: false }))}
+        />
         <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
-            <ChatInputArea onResumeConversation={openResumeOverlay} />
+            <ChatInputArea
+              onResumeConversation={openResumeOverlay}
+              onAskSideQuestion={handleAskSideQuestion}
+            />
           </div>
         </div>
       </div>

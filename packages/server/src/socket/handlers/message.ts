@@ -1,6 +1,7 @@
 import {
   type ControlRespondPayload,
   cancelRequestPayloadSchema,
+  chatAskSideQuestionPayloadSchema,
   chatCancelAsyncMessagePayloadSchema,
   chatCancelPayloadSchema,
   chatHookCallbackRespondPayloadSchema,
@@ -215,6 +216,26 @@ export function create({
     }
   }
 
+  async function handleAskSideQuestion(
+    ch: Channel,
+    payload: unknown,
+    _socket?: TypedSocket,
+    callback?: SocketCallback,
+  ): Promise<void> {
+    try {
+      const { question } = chatAskSideQuestionPayloadSchema.parse(payload);
+      const result = await ch.sendRequest('message:side_question', { question });
+      const answer = result.response?.response;
+      if (answer === null || answer === undefined) {
+        callback?.(err('No answer returned'));
+        return;
+      }
+      callback?.(ok({ answer: String(answer) }));
+    } catch (e) {
+      callback?.(err(errMsg(e, 'Failed to ask side question')));
+    }
+  }
+
   function handleCancelRequest(_ch: Channel | null, payload: unknown): void {
     safeParseAndLog(
       'debug',
@@ -287,6 +308,7 @@ export function create({
   emitter.on('chat:stop_task', withChannel(handleStopTask));
   emitter.on('chat:cancel_async', withChannel(handleCancelAsync));
   emitter.on('chat:rewind_code', withError(withChannel(handleRewindCode)));
+  emitter.on('chat:ask_side_question', withError(withChannel(handleAskSideQuestion)));
   emitter.on('chat:cancel_request', handleCancelRequest);
   emitter.on('chat:hook_respond', withChannel(handleHookRespond));
 }

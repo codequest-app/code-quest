@@ -15,14 +15,12 @@ function navigateItems(
   if (key === 'ArrowDown' || key === 'ArrowUp') {
     if (items.length === 0) return { newActiveId: activeId, shouldSelect: false };
     const idx = items.findIndex((i) => i.id === activeId);
-    const next =
-      key === 'ArrowDown'
-        ? idx < items.length - 1
-          ? idx + 1
-          : 0
-        : idx > 0
-          ? idx - 1
-          : items.length - 1;
+    let next: number;
+    if (key === 'ArrowDown') {
+      next = idx < items.length - 1 ? idx + 1 : 0;
+    } else {
+      next = idx > 0 ? idx - 1 : items.length - 1;
+    }
     return { newActiveId: items[next]?.id ?? null, shouldSelect: false };
   }
   return { newActiveId: activeId, shouldSelect: false };
@@ -100,6 +98,7 @@ export interface CommandMenuProps {
   onResumeConversation?: () => void;
   onAttachFile?: () => void;
   onRewind?: () => void;
+  onAskSideQuestion?: (question: string) => void;
 }
 
 export function CommandMenu({
@@ -114,6 +113,7 @@ export function CommandMenu({
   onOpenHelp,
   onAttachFile,
   onRewind,
+  onAskSideQuestion,
 }: CommandMenuProps) {
   // Context
   const { sendMessage, clearMessages, clearModifiedFiles } = useChannelMessages();
@@ -270,6 +270,7 @@ export function CommandMenu({
   // Build menu items (pure function, no deps on component state)
   const sections = buildMenuItems({
     slashCommands,
+    slashFilter: compose.slashFilter,
     effort,
     effortLevels,
     isThinkingOn,
@@ -296,6 +297,7 @@ export function CommandMenu({
       onOpenConfig,
       onSwitchAccount,
       onOpenHelp,
+      onAskSideQuestion,
     },
   });
   const {
@@ -313,7 +315,10 @@ export function CommandMenu({
   const filterItems = (items: MenuItem[]) => {
     return items.filter((i) => {
       if (i.filterOnly && !f) return false;
-      if (f) return i.label.toLowerCase().includes(f);
+      if (f) {
+        const matchText = i.matchFirstToken ? f.split(' ')[0] : f;
+        return i.label.toLowerCase().includes(matchText);
+      }
       return true;
     });
   };
