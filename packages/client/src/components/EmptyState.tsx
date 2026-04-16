@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
+
 interface EmptyStateProps {
-  icon?: string;
+  icon?: ReactNode;
   message: string;
   actionLabel: string;
   onAction: () => void;
@@ -9,7 +11,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon, message, actionLabel, onAction, testId }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-4 text-text-muted">
-      {icon && <span className="text-4xl">{icon}</span>}
+      {icon && <span className="text-text-muted/50">{icon}</span>}
       <p>{message}</p>
       <button
         type="button"

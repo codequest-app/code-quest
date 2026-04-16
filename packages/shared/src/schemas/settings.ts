@@ -93,7 +93,7 @@ export const updateStatePayloadSchema = z.object({
     .array(z.object({ name: z.string(), status: z.string(), scope: z.string().optional() }))
     .optional(),
   effort: effortLevelSchema.optional(),
-  fastModeState: z.string().optional(),
+  fastModeState: z.enum(['on', 'off']).nullable().optional(),
 });
 export type UpdateStatePayload = z.infer<typeof updateStatePayloadSchema>;
 

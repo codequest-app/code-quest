@@ -20,13 +20,13 @@ describe('CodeBlock', () => {
     spy.mockRestore();
   });
 
-  it('shows "Copied!" temporarily after clicking copy', async () => {
+  it('shows check icon (title="Copied!") after clicking copy, not text', async () => {
     const spy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<CodeBlock code="test" language="js" />);
     await user.click(screen.getByRole('button', { name: /copy/i }));
     await waitFor(() => {
-      expect(screen.getByText('Copied!')).toBeInTheDocument();
+      expect(screen.getByTitle('Copied!')).toBeInTheDocument();
     });
     spy.mockRestore();
   });

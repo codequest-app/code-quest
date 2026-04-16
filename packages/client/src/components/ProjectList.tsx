@@ -1,3 +1,4 @@
+import { PlusIcon } from '@heroicons/react/24/outline';
 import type { Project } from '../contexts/ProjectContext';
 import { ProjectCard } from './ProjectCard';
 
@@ -31,7 +32,8 @@ export function ProjectList({
         className="mx-2 my-2 px-3 py-2 text-sm rounded border border-dashed border-border hover:bg-white/5 text-text-muted"
         onClick={onAdd}
       >
-        ＋ Add
+        <PlusIcon className="w-4 h-4 inline-block mr-1 align-text-bottom" />
+        Add
       </button>
     </div>
   );

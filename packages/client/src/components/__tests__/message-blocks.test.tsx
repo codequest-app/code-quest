@@ -21,6 +21,116 @@ describe('message-blocks', () => {
       expect(screen.getByText('Bash')).toBeInTheDocument();
     });
 
+    it('Bash IN/OUT are in a single combined block (one bg-code-block container)', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: {
+              toolId: 'tu-1',
+              input: { command: 'ls' },
+              result: { content: 'file.txt' },
+            },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      const blocks = container.querySelectorAll('.bg-code-block');
+      expect(blocks).toHaveLength(1);
+    });
+
+    it('copy icon is solid (title="Copy"), changes to check after click, reverts after timeout', async () => {
+      const user = userEvent.setup({ delay: null });
+      render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      const copyBtn = screen.getByTitle('Copy');
+      expect(copyBtn).toBeInTheDocument();
+
+      await user.click(copyBtn);
+      expect(screen.getByTitle('Copied!')).toBeInTheDocument();
+      expect(screen.queryByTitle('Copy')).not.toBeInTheDocument();
+    });
+
+    it('copy button uses heroicons svg, not emoji', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      const copyBtn = screen.getByTitle('Copy');
+      expect(copyBtn.querySelector('svg')).toBeInTheDocument();
+      expect(copyBtn.textContent).not.toContain('📋');
+    });
+
+    it('Bash content does not wrap (whitespace-pre, not whitespace-pre-wrap)', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: {
+              toolId: 'tu-1',
+              input: { command: 'echo hi' },
+              result: { content: 'hello world' },
+            },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      const pres = container.querySelectorAll('pre');
+      for (const pre of pres) {
+        expect(pre.className).not.toContain('whitespace-pre-wrap');
+      }
+    });
+
+    it('copy button is a grid cell (NOT absolute positioned) in IN row', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Bash',
+            timestamp: Date.now(),
+            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Bash'));
+      const copyBtn = screen.getByTitle('Copy');
+      expect(copyBtn.className).not.toContain('absolute');
+    });
+
     it('renders IN label for bash tool input when expanded', async () => {
       const user = userEvent.setup();
       render(
@@ -60,6 +170,34 @@ describe('message-blocks', () => {
       await user.click(screen.getByText('Grep'));
       expect(screen.getByText('IN')).toBeInTheDocument();
       expect(screen.getByText('OUT')).toBeInTheDocument();
+    });
+
+    it('default tool (Grep) IN/OUT share one bordered box, labels are inside', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Grep',
+            timestamp: Date.now(),
+            meta: {
+              toolId: 'tu-1',
+              input: { pattern: 'foo', path: '/src' },
+              result: { content: 'found 3 matches' },
+            },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Grep'));
+      // Only ONE outer border box (not two separate bordered rows)
+      const boxes = container.querySelectorAll('.border.border-border.bg-code-block');
+      expect(boxes).toHaveLength(1);
+      // IN/OUT labels are INSIDE the single box
+      const box = boxes[0];
+      expect(box).toContainElement(screen.getByText('IN'));
+      expect(box).toContainElement(screen.getByText('OUT'));
     });
 
     it('Read tool result renders with syntax highlighting (no plain pre.bg-code-block)', async () => {

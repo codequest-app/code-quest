@@ -1,5 +1,6 @@
 import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react/react-compiler';
+import { FolderIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { useExplorerBrowse } from '../hooks/useExplorerBrowse';
 import { cn } from '../utils/cn';
@@ -84,8 +85,12 @@ export function FileTree({
               if (data.path) setContextMenu({ path: data.path, x: e.clientX, y: e.clientY });
             }}
           >
-            <span className="mr-1">
-              {item.isLoading() ? '⏳' : item.isExpanded() ? '📂' : '📁'}
+            <span className="mr-1 inline-flex items-center">
+              {item.isExpanded() ? (
+                <FolderOpenIcon className="w-4 h-4" />
+              ) : (
+                <FolderIcon className="w-4 h-4" />
+              )}
             </span>
             {item.getItemName()}
           </div>

@@ -98,7 +98,7 @@ describe('ProjectCard', () => {
       );
 
       // Right-click → context menu appears
-      fireEvent.contextMenu(screen.getByText('📁 proj'));
+      fireEvent.contextMenu(screen.getByRole('button', { name: /proj/i }));
       const menuItem = await screen.findByRole('menuitem', { name: /resume session/i });
 
       // Click menu item → dialog opens with picker, listing the session
@@ -133,7 +133,7 @@ describe('ProjectCard', () => {
         </Wrapper>,
       );
 
-      fireEvent.contextMenu(screen.getByText('📁 proj'));
+      fireEvent.contextMenu(screen.getByRole('button', { name: /proj/i }));
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(await screen.findByRole('menuitem', { name: /resume session/i }));
 

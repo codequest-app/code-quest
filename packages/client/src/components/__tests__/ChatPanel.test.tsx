@@ -71,6 +71,19 @@ describe('ChatPanel', () => {
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
+  it('shows Session history button in HeaderBar', async () => {
+    await renderWithChannel(<ChatPanel />);
+    expect(screen.getByTitle('Session history')).toBeInTheDocument();
+  });
+
+  it('clicking Session history button opens resume overlay', async () => {
+    const user = userEvent.setup();
+    await renderWithChannel(<ChatPanel />);
+    await user.click(screen.getByTitle('Session history'));
+    // SessionDropdown renders when overlay is open
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
   // ── Control flow pipeline ──
 
   it('tool_use interrupts streaming — text after tool_result still renders', async () => {

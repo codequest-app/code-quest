@@ -1,7 +1,8 @@
 import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '../../types/ui';
 import { cn } from '../../utils/cn';
 import { MarkdownContent } from '../MarkdownContent';
-import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
+import { AlertBanner } from './AlertBanner';
+import { CenterDivider, CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './shared';
 
 const CONTROL_RESPONSE_STYLES = [
   {
@@ -21,9 +22,9 @@ const CONTROL_RESPONSE_DEFAULT = {
 
 export function PendingActionContent({ content }: { content: string }) {
   return (
-    <div className="bg-warning-bg border-l-2 border-l-warning px-4 py-2.5 rounded-r-lg">
+    <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
       <strong className="text-warning text-sm">⚠ Tool Approval: {content}</strong>
-    </div>
+    </AlertBanner>
   );
 }
 
@@ -31,19 +32,18 @@ export function ControlResponseContent({ content }: { content: string }) {
   const { icon, colorClass } =
     CONTROL_RESPONSE_STYLES.find((s) => content.startsWith(s.prefix)) ?? CONTROL_RESPONSE_DEFAULT;
   return (
-    <div className={cn('border-l-2 px-4 py-2 rounded-r-lg', colorClass)}>
+    <AlertBanner className={cn('px-4 py-2.5', colorClass)}>
       <span className="text-sm font-medium">
         {icon} {content}
       </span>
-    </div>
+    </AlertBanner>
   );
 }
 
 export function ResultContent({ meta }: { meta?: ResultMeta }) {
   const stats = meta?.stats;
   return (
-    <div className="flex items-center gap-3 py-2 text-text-muted/40 text-xs" data-type="result">
-      <div className="flex-1 border-t border-text-muted/20" />
+    <CenterDivider data-type="result">
       {stats && (
         <div className="flex gap-3 font-mono text-[11px] text-text-muted/50">
           {stats.costUsd != null && <span>${stats.costUsd.toFixed(4)}</span>}
@@ -53,38 +53,31 @@ export function ResultContent({ meta }: { meta?: ResultMeta }) {
           {stats.numTurns != null && <span>{stats.numTurns} turns</span>}
         </div>
       )}
-      <div className="flex-1 border-t border-text-muted/20" />
-    </div>
+    </CenterDivider>
   );
 }
 
 export function ErrorContent({ content }: { content: string }) {
   return (
-    <div
-      className="text-danger bg-danger-bg rounded-lg px-4 py-3 border border-danger/20"
-      data-type="error"
-    >
+    <AlertBanner className="bg-danger-bg border-l-danger px-4 py-3 text-danger" data-type="error">
       {content}
-    </div>
+    </AlertBanner>
   );
 }
 
 export function CompactBoundaryContent() {
   return (
-    <div className="flex items-center gap-3 py-2 text-text-muted/40 text-xs">
-      <div className="flex-1 border-t border-text-muted/20" />
+    <CenterDivider>
       <span>Context was compressed</span>
-      <div className="flex-1 border-t border-text-muted/20" />
-    </div>
+    </CenterDivider>
   );
 }
 
 export function InterruptContent() {
   return (
-    <div className="flex items-center gap-2 text-xs text-warning py-1">
-      <span>⚠</span>
+    <StatusLine icon="⚠" className="text-warning py-1">
       <span className="italic">Interrupted by user</span>
-    </div>
+    </StatusLine>
   );
 }
 
@@ -113,7 +106,7 @@ export function SlashCommandResultContent({ content }: { content: string }) {
 export function RateLimitContent({ content, meta }: { content: string; meta?: RateLimitMeta }) {
   const info = meta?.rateLimitInfo;
   return (
-    <div className="bg-warning-bg border-l-2 border-l-warning px-4 py-2.5 rounded-r-lg">
+    <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
       <span className="text-warning text-sm font-medium">⏳ {content}</span>
       {info && (
         <span className="ml-2 text-xs text-text-muted">
@@ -129,7 +122,7 @@ export function RateLimitContent({ content, meta }: { content: string; meta?: Ra
           ) : null}
         </span>
       )}
-    </div>
+    </AlertBanner>
   );
 }
 
@@ -141,15 +134,14 @@ export function TaskStartedContent({
   meta?: Record<string, unknown>;
 }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-text-muted">
-      <span>🚀</span>
+    <StatusLine icon="🚀" className="text-text-muted">
       <span>{content}</span>
       {meta?.taskType != null && (
         <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-[10px] font-mono">
           {String(meta.taskType)}
         </span>
       )}
-    </div>
+    </StatusLine>
   );
 }
 

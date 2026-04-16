@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useClickOutside } from '../hooks/useClickOutside';
 import type { ForkFn, RewindFn } from '../types/ui';
+import { copyToClipboard } from '../utils/clipboard';
 import { cn } from '../utils/cn';
 import { RewindPreview } from './RewindPreview';
 import { Dialog, DialogContent } from './ui/Dialog';
@@ -92,7 +93,7 @@ export function MessageActions({
   const handleCopy = () => {
     setMenuOpen(false);
     if (messageContent) {
-      navigator.clipboard.writeText(messageContent);
+      copyToClipboard(messageContent);
       toast.success('Copied to clipboard');
     }
   };

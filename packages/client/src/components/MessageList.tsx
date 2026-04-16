@@ -6,6 +6,8 @@ import { buildMessageTree } from '../utils/message-tree';
 import { MessageNodeList } from './MessageNodeList';
 import { SpinnerVerb } from './SpinnerVerb';
 
+const SCROLL_THRESHOLD_PX = 50;
+
 export interface MessageListHandle {
   scrollToMessage: (id: string) => void;
 }
@@ -41,28 +43,27 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     const { enabledTypes, registerUnknownType, unknownTypes } = useMessageVisibility();
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const isAtBottomRef = useRef(true);
     const programmaticScrollRef = useRef(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const registeredCountRef = useRef(0);
 
-    const handleScroll = () => {
+    const handleScroll = (e?: React.UIEvent<HTMLElement>) => {
       if (programmaticScrollRef.current) return;
-      const el = containerRef.current;
+      const el = (e?.currentTarget ?? scrollContainerRef.current) as HTMLElement | null;
       if (!el) return;
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD_PX;
       isAtBottomRef.current = atBottom;
       if (showScrollButton === atBottom) setShowScrollButton(!atBottom);
     };
 
     const lastContentLen = messages.length > 0 ? messages[messages.length - 1].content.length : 0;
-    const messageCountRef = useRef(messages.length);
-    const lastContentLenRef = useRef(lastContentLen);
+    const prevScrollRef = useRef({ count: messages.length, contentLen: lastContentLen });
     useEffect(() => {
-      const countChanged = messages.length !== messageCountRef.current;
-      const contentGrew = lastContentLen !== lastContentLenRef.current;
-      messageCountRef.current = messages.length;
-      lastContentLenRef.current = lastContentLen;
+      const countChanged = messages.length !== prevScrollRef.current.count;
+      const contentGrew = lastContentLen !== prevScrollRef.current.contentLen;
+      prevScrollRef.current = { count: messages.length, contentLen: lastContentLen };
       if (!countChanged && !contentGrew) return;
       if (isAtBottomRef.current) {
         const behavior = countChanged ? 'smooth' : 'instant';
@@ -77,7 +78,7 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
 
     useImperativeHandle(ref, () => ({
       scrollToMessage(id: string) {
-        const container = containerRef.current;
+        const container = scrollContainerRef.current;
         if (!container) return;
 
         // If the message is inside a collapsed timeline, expand it first
@@ -126,35 +127,42 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     return (
       <div
         ref={containerRef}
-        onScroll={handleScroll}
-        className="relative flex-1 overflow-y-auto"
+        className="relative flex-1 overflow-hidden"
         data-testid="message-list"
+        onScroll={handleScroll}
       >
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-[30px]">
-            <span className="text-4xl text-assistant">✦</span>
-            <span className="text-lg font-medium text-text-bright">CC Office</span>
-            <span className="text-sm text-text-muted">How can I help you today?</span>
-          </div>
-        ) : (
-          <div className="relative px-5 pt-5 pb-[160px]">
-            <MessageNodeList
-              nodes={tree}
-              prevRole={null}
-              onRewind={onRewind}
-              onFork={onFork}
-              onStopTask={onStopTask}
-              onDiffRespond={onDiffRespond}
-            />
-            {isProcessing && <SpinnerVerb statusText={statusText} />}
-            <div ref={scrollRef} data-testid="message-list-bottom" />
-            <div className="absolute bottom-0 left-0 right-0 h-[150px] bg-gradient-to-b from-transparent to-bg pointer-events-none z-[2]" />
-          </div>
-        )}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+          data-testid="message-list-scroll"
+        >
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-[30px]">
+              <span className="text-4xl text-assistant">✦</span>
+              <span className="text-lg font-medium text-text-bright">CC Office</span>
+              <span className="text-sm text-text-muted">How can I help you today?</span>
+            </div>
+          ) : (
+            <div data-testid="message-content-wrapper" className="px-5 pt-5 pb-32">
+              <MessageNodeList
+                nodes={tree}
+                prevRole={null}
+                onRewind={onRewind}
+                onFork={onFork}
+                onStopTask={onStopTask}
+                onDiffRespond={onDiffRespond}
+              />
+              {isProcessing && <SpinnerVerb statusText={statusText} />}
+              <div ref={scrollRef} data-testid="message-list-bottom" />
+            </div>
+          )}
+        </div>
         {showScrollButton && (
           <button
             type="button"
             aria-label="Scroll to bottom"
+            data-testid="scroll-to-bottom"
             onClick={scrollToBottom}
             className="absolute bottom-4 right-4 z-30 w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           >

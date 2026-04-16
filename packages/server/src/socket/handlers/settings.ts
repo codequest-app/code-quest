@@ -53,7 +53,9 @@ export function create({
     errorMsg: 'Failed to set model',
     run: async (ch, { model }) => {
       await ch.sendRequest('settings:set_model', { model });
-      await settingsStore.set(ch.provider, 'model', model);
+      await settingsStore
+        .set(ch.provider, 'model', model)
+        .catch((e) => logger.warn({ err: e }, 'Failed to persist model to settings store'));
     },
   });
 

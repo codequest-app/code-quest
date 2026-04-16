@@ -3,6 +3,7 @@ import type { ForkFn, RewindFn } from '../types/ui';
 import { cn } from '../utils/cn';
 import type { MessageNode } from '../utils/message-tree';
 import { ChatMessage } from './ChatMessage';
+import { RotatableChevron } from './message-blocks/shared';
 import { SubagentChildren } from './SubagentChildren';
 
 function getToolResult(node: MessageNode) {
@@ -69,7 +70,7 @@ export function CollapsibleTimeline({
           <span className={cn('w-[7px] h-[7px] rounded-full', dot)} />
           <span className="font-medium">Explored</span>
           <span className="bg-white/10 rounded-full px-1.5 py-0.5 text-[10px]">{nodes.length}</span>
-          <span className="text-[10px] opacity-50">▶</span>
+          <RotatableChevron className="text-[10px] opacity-50" />
         </button>
       </div>
     );
@@ -83,7 +84,7 @@ export function CollapsibleTimeline({
           onClick={() => setExpanded(false)}
           className="flex items-center gap-2 pl-[30px] py-1 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
         >
-          <span className="text-[10px] opacity-50 rotate-90">▶</span>
+          <RotatableChevron open className="text-[10px] opacity-50" />
           <span>Collapse</span>
         </button>
       )}

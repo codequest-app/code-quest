@@ -1,56 +1,22 @@
 import type { ToolUseMeta } from '../../types/ui';
 import { cn } from '../../utils/cn';
-import { isDiff } from '../../utils/diff';
 import { langFromPath } from '../../utils/syntax';
 import { CodeBlock } from '../CodeBlock';
-import { DiffViewer } from '../DiffViewer';
 import { getToolHeaderInfo } from '../tools/tool-registry';
-import {
-  AnsiContent,
-  CODE_BLOCK_CLASS,
-  CollapsibleBlock,
-  hasAnsi,
-  parseFilePathsInContent,
-} from './shared';
+import { AlertBanner } from './AlertBanner';
+import { ContentRenderer } from './ContentRenderer';
+import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './shared';
+import { ToolBlock, ToolBlockRow } from './ToolBlock';
 
-function CopyButton({ text }: { text: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => navigator.clipboard.writeText(text)}
-      className="text-[10px] text-text-muted hover:text-text opacity-0 group-hover/tool:opacity-100 transition-opacity ml-auto flex-shrink-0"
-      title="Copy"
-    >
-      📋
-    </button>
-  );
-}
-
-function ToolBodyRow({
-  label,
-  children,
-  copyText,
-}: {
-  label: string;
-  children: React.ReactNode;
-  copyText?: string;
-}) {
-  return (
-    <div className="flex gap-2 items-start">
-      <span className="text-[10px] font-mono text-text-muted/60 w-6 flex-shrink-0 pt-0.5 select-none">
-        {label}
-      </span>
-      <div className="flex-1 min-w-0 overflow-x-auto">{children}</div>
-      {copyText && <CopyButton text={copyText} />}
-    </div>
-  );
+function PartialInputPlaceholder({ content }: { content: string }) {
+  return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>{content}</pre>;
 }
 
 function ToolErrorBanner({ message }: { message: string }) {
   return (
-    <div className="bg-danger/10 border-l-2 border-danger px-3 py-1.5 rounded-r text-xs text-danger mb-1">
+    <AlertBanner className="bg-danger/10 border-danger px-3 py-1.5 text-xs text-danger mb-1">
       {message}
-    </div>
+    </AlertBanner>
   );
 }
 
@@ -65,25 +31,30 @@ function BashToolBody({
 }) {
   const command = String(input.command ?? '');
   return (
-    <div className="flex flex-col gap-1.5">
-      <ToolBodyRow label="IN" copyText={command}>
-        <pre className={CODE_BLOCK_CLASS}>{command}</pre>
-      </ToolBodyRow>
+    <ToolBlock>
+      <ToolBlockRow label="IN" copyText={command} divider={resultContent != null}>
+        <pre className="whitespace-pre">{command}</pre>
+      </ToolBlockRow>
       {resultContent != null && (
-        <ToolBodyRow label="OUT" copyText={resultContent}>
-          {hasAnsi(resultContent) ? (
-            <div className={cn(resultIsError && 'text-danger')}>
-              <AnsiContent content={resultContent} />
-            </div>
-          ) : (
-            <pre className={cn(CODE_BLOCK_CLASS, resultIsError && 'text-danger')}>
-              {parseFilePathsInContent(resultContent)}
-            </pre>
-          )}
-        </ToolBodyRow>
+        <ToolBlockRow label="OUT">
+          <OutputContent content={resultContent} isError={resultIsError} />
+        </ToolBlockRow>
       )}
-    </div>
+    </ToolBlock>
   );
+}
+
+function ReadToolBody({
+  input,
+  resultContent,
+}: {
+  input: Record<string, unknown>;
+  resultContent?: string;
+}) {
+  if (!resultContent) return null;
+  const filePath = String(input.file_path ?? '');
+  const lang = langFromPath(filePath);
+  return <CodeBlock code={resultContent} language={lang} />;
 }
 
 function FileToolBody({
@@ -96,11 +67,7 @@ function FileToolBody({
   if (!resultContent) return null;
   return (
     <div className={cn(resultIsError && 'text-danger')}>
-      {isDiff(resultContent) ? (
-        <DiffViewer content={resultContent} />
-      ) : (
-        <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(resultContent)}</pre>
-      )}
+      <ContentRenderer content={resultContent} />
     </div>
   );
 }
@@ -118,31 +85,25 @@ function DefaultToolBody({
 }) {
   const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
 
+  if (partialInput) {
+    return <PartialInputPlaceholder content={partialInput} />;
+  }
+
+  if (!inputJson && resultContent == null) return null;
+
   return (
-    <div className="flex flex-col gap-1.5">
-      {partialInput ? (
-        <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>
-          {partialInput}
-        </pre>
-      ) : inputJson ? (
-        <ToolBodyRow label="IN" copyText={inputJson}>
-          <pre className={CODE_BLOCK_CLASS}>{inputJson}</pre>
-        </ToolBodyRow>
-      ) : null}
-      {resultContent != null && (
-        <ToolBodyRow label="OUT" copyText={resultContent}>
-          <div className={cn(resultIsError && 'text-danger')}>
-            {isDiff(resultContent) ? (
-              <DiffViewer content={resultContent} />
-            ) : hasAnsi(resultContent) ? (
-              <AnsiContent content={resultContent} />
-            ) : (
-              <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(resultContent)}</pre>
-            )}
-          </div>
-        </ToolBodyRow>
+    <ToolBlock>
+      {inputJson && (
+        <ToolBlockRow label="IN" copyText={inputJson} divider={resultContent != null}>
+          <pre className="whitespace-pre">{inputJson}</pre>
+        </ToolBlockRow>
       )}
-    </div>
+      {resultContent != null && (
+        <ToolBlockRow label="OUT">
+          <OutputContent content={resultContent} isError={resultIsError} />
+        </ToolBlockRow>
+      )}
+    </ToolBlock>
   );
 }
 
@@ -161,21 +122,12 @@ export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUs
         return (
           <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
         );
-      case 'Read': {
-        if (!resultContent) return null;
-        const filePath = String(input.file_path ?? '');
-        const lang = langFromPath(filePath);
-        return <CodeBlock code={resultContent} language={lang} />;
-      }
+      case 'Read':
+        return <ReadToolBody input={input} resultContent={resultContent} />;
       case 'Write':
       case 'Edit':
       case 'MultiEdit':
-        if (partialInput)
-          return (
-            <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>
-              {partialInput}
-            </pre>
-          );
+        if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
         return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
       default:
         return (

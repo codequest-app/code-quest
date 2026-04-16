@@ -56,3 +56,33 @@ describe('HeaderBar actions', () => {
     expect(screen.queryByTitle('Search messages')).not.toBeInTheDocument();
   });
 });
+
+describe('HeaderBar layout', () => {
+  it('title is left-aligned (flex-1, no text-center)', async () => {
+    await renderHeaderBar({ title: 'My Session' });
+    const titleEl = screen.getByText('My Session');
+    expect(titleEl.className).toMatch(/flex-1/);
+    expect(titleEl.className).not.toMatch(/text-center/);
+    expect(titleEl.className).not.toMatch(/text-right/);
+  });
+});
+
+describe('HeaderBar resume button', () => {
+  it('shows clock/history button', async () => {
+    await renderHeaderBar({ onOpenResume: vi.fn() });
+    expect(screen.getByTitle('Session history')).toBeInTheDocument();
+  });
+
+  it('calls onOpenResume when clock button clicked', async () => {
+    const onOpenResume = vi.fn();
+    const user = userEvent.setup();
+    await renderHeaderBar({ onOpenResume });
+    await user.click(screen.getByTitle('Session history'));
+    expect(onOpenResume).toHaveBeenCalledOnce();
+  });
+
+  it('does not show clock button when onOpenResume is not provided', async () => {
+    await renderHeaderBar();
+    expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
+  });
+});

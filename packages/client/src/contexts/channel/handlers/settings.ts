@@ -124,7 +124,10 @@ function onSessionInit(state: ConfigState, payload: Payload<'session:init'>): Co
     mcpServers: payload.mcpServers ?? state.mcpServers,
     tools: payload.tools ?? [],
     permissionMode: state.permissionMode ?? payload.permissionMode ?? null,
-    fastModeState: typeof payload.fastModeState === 'string' ? payload.fastModeState : null,
+    fastModeState:
+      payload.fastModeState === 'on' || payload.fastModeState === 'off'
+        ? payload.fastModeState
+        : null,
     slashCommands: [...new Set([...(payload.slashCommands ?? []), 'usage'])],
   };
 }

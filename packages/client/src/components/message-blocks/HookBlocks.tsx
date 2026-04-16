@@ -1,16 +1,15 @@
 import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '../../types/ui';
 import { cn } from '../../utils/cn';
-import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
+import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './shared';
 
 export function HookStartedContent({ content, meta }: { content: string; meta?: HookStartedMeta }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-text-muted">
-      <span>⚙</span>
+    <StatusLine icon="⚙" className="text-text-muted">
       <span>Running hook: {content}</span>
       {meta?.hookEvent ? (
         <span className="text-text-muted/50">({String(meta.hookEvent)})</span>
       ) : null}
-    </div>
+    </StatusLine>
   );
 }
 
@@ -24,10 +23,9 @@ export function HookResponseContent({
   const output = meta?.output;
   if (!output)
     return (
-      <div className="flex items-center gap-2 text-xs text-text-muted">
-        <span>🔗</span>
+      <StatusLine icon="🔗" className="text-text-muted">
         <span>Hook done: {content}</span>
-      </div>
+      </StatusLine>
     );
   return (
     <CollapsibleBlock icon="🔗" label={`Hook done: ${content}`}>
@@ -51,7 +49,7 @@ export function HookDiagnosticsContent({
         <span>Hook Diagnostics: {content}</span>
       </summary>
       <div className="px-4 py-2 border-t border-warning/20">
-        <pre className="text-xs text-text-muted whitespace-pre-wrap">{diagnostics ?? content}</pre>
+        <pre className={cn(CODE_BLOCK_CLASS, 'whitespace-pre-wrap')}>{diagnostics ?? content}</pre>
       </div>
     </details>
   );
