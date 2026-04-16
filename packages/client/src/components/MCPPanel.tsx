@@ -7,6 +7,7 @@ import type {
   RpcResult,
 } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 import { McpServerRow } from './McpServerRow';
 
 function McpStateBadge({ state, label }: { state: string; label: string }) {
@@ -21,7 +22,7 @@ function McpStateBadge({ state, label }: { state: string; label: string }) {
   return (
     <span
       role="img"
-      className={`inline-block w-2 h-2 rounded-full ${color} shrink-0`}
+      className={cn('inline-block w-2 h-2 rounded-full shrink-0', color)}
       aria-label={label}
       title={label}
     />
@@ -153,7 +154,10 @@ export function MCPPanel({
       </div>
       {feedback && (
         <output
-          className={`block px-4 py-2 text-[11px] ${feedback.type === 'success' ? 'text-success' : 'text-danger'}`}
+          className={cn(
+            'block px-4 py-2 text-[11px]',
+            feedback.type === 'success' ? 'text-success' : 'text-danger',
+          )}
         >
           {feedback.message}
         </output>

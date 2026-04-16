@@ -1,7 +1,10 @@
 import type { ToolUseMeta } from '../../types/ui';
+import { cn } from '../../utils/cn';
 import { isDiff } from '../../utils/diff';
+import { langFromPath } from '../../utils/syntax';
+import { CodeBlock } from '../CodeBlock';
 import { DiffViewer } from '../DiffViewer';
-import { getToolHeaderInfo, isToolHidden } from '../tools/tool-registry';
+import { getToolHeaderInfo } from '../tools/tool-registry';
 import {
   AnsiContent,
   CODE_BLOCK_CLASS,
@@ -69,11 +72,11 @@ function BashToolBody({
       {resultContent != null && (
         <ToolBodyRow label="OUT" copyText={resultContent}>
           {hasAnsi(resultContent) ? (
-            <div className={resultIsError ? 'text-danger' : ''}>
+            <div className={cn(resultIsError && 'text-danger')}>
               <AnsiContent content={resultContent} />
             </div>
           ) : (
-            <pre className={`${CODE_BLOCK_CLASS} ${resultIsError ? 'text-danger' : ''}`}>
+            <pre className={cn(CODE_BLOCK_CLASS, resultIsError && 'text-danger')}>
               {parseFilePathsInContent(resultContent)}
             </pre>
           )}
@@ -92,7 +95,7 @@ function FileToolBody({
 }) {
   if (!resultContent) return null;
   return (
-    <div className={resultIsError ? 'text-danger' : ''}>
+    <div className={cn(resultIsError && 'text-danger')}>
       {isDiff(resultContent) ? (
         <DiffViewer content={resultContent} />
       ) : (
@@ -118,7 +121,9 @@ function DefaultToolBody({
   return (
     <div className="flex flex-col gap-1.5">
       {partialInput ? (
-        <pre className={`${CODE_BLOCK_CLASS} text-text-muted/80 animate-pulse`}>{partialInput}</pre>
+        <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>
+          {partialInput}
+        </pre>
       ) : inputJson ? (
         <ToolBodyRow label="IN" copyText={inputJson}>
           <pre className={CODE_BLOCK_CLASS}>{inputJson}</pre>
@@ -126,7 +131,7 @@ function DefaultToolBody({
       ) : null}
       {resultContent != null && (
         <ToolBodyRow label="OUT" copyText={resultContent}>
-          <div className={resultIsError ? 'text-danger' : ''}>
+          <div className={cn(resultIsError && 'text-danger')}>
             {isDiff(resultContent) ? (
               <DiffViewer content={resultContent} />
             ) : hasAnsi(resultContent) ? (
@@ -149,8 +154,6 @@ export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUs
   const resultContent = result?.content;
   const resultIsError = result?.is_error;
 
-  if (isToolHidden(toolName)) return null;
-
   const headerInfo = getToolHeaderInfo(toolName, input);
   const renderBody = () => {
     switch (toolName) {
@@ -158,16 +161,18 @@ export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUs
         return (
           <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
         );
-      case 'Read':
-        return resultContent ? (
-          <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(resultContent)}</pre>
-        ) : null;
+      case 'Read': {
+        if (!resultContent) return null;
+        const filePath = String(input.file_path ?? '');
+        const lang = langFromPath(filePath);
+        return <CodeBlock code={resultContent} language={lang} />;
+      }
       case 'Write':
       case 'Edit':
       case 'MultiEdit':
         if (partialInput)
           return (
-            <pre className={`${CODE_BLOCK_CLASS} text-text-muted/80 animate-pulse`}>
+            <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>
               {partialInput}
             </pre>
           );

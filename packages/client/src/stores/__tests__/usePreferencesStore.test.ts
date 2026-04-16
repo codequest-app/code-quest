@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePreferencesStore } from '../usePreferencesStore';
 
-const STORAGE_KEY = 'code-quest-preferences';
+const STORAGE_KEY = 'code-quest:preferences';
 
 describe('usePreferencesStore', () => {
   beforeEach(() => {

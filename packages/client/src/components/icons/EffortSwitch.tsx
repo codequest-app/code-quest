@@ -44,7 +44,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
   const content = (
     <>
       <div
-        className={`absolute top-0 left-0 h-full rounded-[9px] bg-toggle transition-[width] duration-150`}
+        className="absolute top-0 left-0 h-full rounded-[9px] bg-toggle transition-[width] duration-150"
         style={{ width: fillWidth }}
       />
       {levels.map((_, i) =>

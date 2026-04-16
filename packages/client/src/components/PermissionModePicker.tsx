@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { cn } from '../utils/cn';
 import { EffortSwitch, effortLabel } from './icons/EffortSwitch';
 import {
   AskBeforeEditsSmallIcon,
@@ -107,7 +108,10 @@ export function PermissionModePicker({
                 onSetPermissionMode?.(m.id);
                 setShowModePicker(false);
               }}
-              className={`w-full text-left px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${m.id === mode ? 'bg-selected text-white' : 'hover:bg-white/5'}`}
+              className={cn(
+                'w-full text-left px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors',
+                m.id === mode ? 'bg-selected text-white' : 'hover:bg-white/5',
+              )}
             >
               <span className="w-5 h-5 flex-shrink-0 mt-0.5">
                 {m.id in PERMISSION_MODE_ICONS

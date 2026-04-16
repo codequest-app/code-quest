@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
+import { cn } from '../utils/cn';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export interface TabInfo {
@@ -70,11 +71,12 @@ export function TabBar({
               <span data-testid="tab-divider" className="h-5 border-l border-border mx-1" />
             ) : null}
             <span
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs cursor-pointer shrink-0 ${
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 text-xs cursor-pointer shrink-0',
                 tab.sessionId === activeTabId
                   ? 'text-text border-b-2 border-border-focus'
-                  : 'text-text-muted hover:text-text hover:bg-white/5'
-              }`}
+                  : 'text-text-muted hover:text-text hover:bg-white/5',
+              )}
               onClick={() => onSelectTab(tab.sessionId)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -87,7 +89,7 @@ export function TabBar({
               aria-selected={tab.sessionId === activeTabId}
               title={tab.worktree?.path}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${statusDot[tab.status]}`} />
+              <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
               <span className="truncate max-w-[120px]">
                 {tab.title || tab.sessionId.slice(0, 8)}
               </span>

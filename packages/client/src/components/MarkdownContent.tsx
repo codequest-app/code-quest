@@ -48,8 +48,10 @@ const components: Components = {
 
 export function MarkdownContent({ content }: { content: string }) {
   return (
-    <Markdown remarkPlugins={[remarkGfm]} components={components}>
-      {content}
-    </Markdown>
+    <div className="prose prose-invert prose-sm max-w-none">
+      <Markdown remarkPlugins={[remarkGfm]} components={components}>
+        {content}
+      </Markdown>
+    </div>
   );
 }

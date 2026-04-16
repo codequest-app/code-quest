@@ -1,9 +1,12 @@
 import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { findModel } from '../utils/model-utils';
 import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
 import { MenuItemRow, MenuSection } from './command-menu-parts';
+
+const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 
 function navigateItems(
   key: string,
@@ -61,7 +64,10 @@ function ModelMenuSection({
               ...switchModelItem,
               trailing: (
                 <span
-                  className={`font-mono text-[11px] ${isActive('switch-model') ? 'text-white/70' : 'text-text-muted'}`}
+                  className={cn(
+                    'font-mono text-[11px]',
+                    isActive('switch-model') ? 'text-white/70' : 'text-text-muted',
+                  )}
                 >
                   {modelLabel}
                 </span>
@@ -255,7 +261,7 @@ export function CommandMenu({
     if (!externalOpen) return;
     const handleNavKey = (e: KeyboardEvent) => {
       const items = flatItemsRef.current;
-      if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) return;
+      if (!NAV_KEYS.includes(e.key as (typeof NAV_KEYS)[number])) return;
       if (items.length === 0) return;
       e.preventDefault();
       handleNavigateAndSelect(e.key, items, {
@@ -401,7 +407,7 @@ export function CommandMenu({
       compose.focusTextarea();
       return;
     }
-    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(e.key)) return;
+    if (!NAV_KEYS.includes(e.key as (typeof NAV_KEYS)[number])) return;
     e.preventDefault();
     handleNavigateAndSelect(e.key, flatItems, {
       insertSlash: (t) => compose.insertSlashCommand(t),
@@ -420,8 +426,8 @@ export function CommandMenu({
         className="w-[26px] h-[26px] flex items-center justify-center rounded text-text-bright hover:bg-white/5 transition-colors"
       >
         <svg
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 20 20"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -440,7 +446,7 @@ export function CommandMenu({
           className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-50 text-[13px] max-h-[50vh] overflow-hidden animate-slide-up"
         >
           {/* Filter input — hidden when externally opened (typing / in textarea acts as filter) */}
-          <div className={externalOpen ? 'pt-1' : 'p-1'}>
+          <div className={cn(externalOpen ? 'pt-1' : 'p-1')}>
             {!externalOpen && (
               <input
                 ref={filterRef}

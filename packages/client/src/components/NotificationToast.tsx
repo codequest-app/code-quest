@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { cn } from '../utils/cn';
 
 interface NotificationButton {
   label: string;
@@ -65,7 +66,14 @@ export function NotificationToast({
   return (
     <div
       role="alert"
-      className={`bg-surface border rounded-md px-4 py-3 shadow-lg ${severity === 'error' ? 'border-danger' : severity === 'warning' ? 'border-warning' : 'border-accent'}`}
+      className={cn(
+        'bg-surface border rounded-md px-4 py-3 shadow-lg',
+        severity === 'error'
+          ? 'border-danger'
+          : severity === 'warning'
+            ? 'border-warning'
+            : 'border-accent',
+      )}
     >
       <div className="text-sm text-text mb-3">{message}</div>
       <div className="flex flex-wrap gap-2">
@@ -74,7 +82,7 @@ export function NotificationToast({
             key={btn.value}
             type="button"
             onClick={() => onButton(btn.value)}
-            className={`${TOAST_BTN} bg-accent text-white hover:bg-accent/80`}
+            className={cn(TOAST_BTN, 'bg-accent text-white hover:bg-accent/80')}
           >
             {btn.label}
           </button>
@@ -82,7 +90,7 @@ export function NotificationToast({
         <button
           type="button"
           onClick={onDismiss}
-          className={`${TOAST_BTN} bg-white/10 text-text-muted hover:bg-white/20`}
+          className={cn(TOAST_BTN, 'bg-white/10 text-text-muted hover:bg-white/20')}
         >
           Dismiss
         </button>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 
 interface TruncatedContentProps {
   children: React.ReactNode;
@@ -21,7 +22,7 @@ export function TruncatedContent({ children, maxHeight = 500 }: TruncatedContent
       <div
         ref={ref}
         data-testid="truncated-inner"
-        className={expanded ? '' : 'relative overflow-hidden'}
+        className={cn(!expanded && 'relative overflow-hidden')}
         style={expanded ? undefined : { maxHeight }}
       >
         {children}

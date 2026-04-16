@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 import { isRecord } from '../utils/is-record';
 import { JsonViewer } from './JsonViewer';
+import { RawEventFilterBar } from './RawEventFilterBar';
+import { SearchBar } from './SearchBar';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 
@@ -22,7 +25,7 @@ interface RawEventPanelProps {
 export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelProps) {
   const [events, setEvents] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(() => new Set());
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set());
   const [searchText, setSearchText] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const seenTypesRef = useRef<Set<string>>(new Set());
@@ -31,24 +34,25 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
   const userScrolledRef = useRef(false);
 
   function trackNewTypes(evts: unknown[]) {
-    const newHidden = new Set<string>();
+    const toAdd: string[] = [];
     for (const evt of evts) {
       const t = getEventType(evt);
       if (t && !seenTypesRef.current.has(t)) {
         seenTypesRef.current.add(t);
-        if (isDeltaType(t)) newHidden.add(t);
+        toAdd.push(t);
       }
     }
-    if (newHidden.size > 0) {
-      setHiddenTypes((prev) => {
+    if (toAdd.length > 0) {
+      setVisibleTypes((prev) => {
         const next = new Set(prev);
-        for (const t of newHidden) next.add(t);
+        for (const t of toAdd) {
+          if (!isDeltaType(t)) next.add(t);
+        }
         return next;
       });
     }
   }
 
-  // Streaming: subscribe to real-time events
   const autoScrollRef = useRef(autoScroll);
   autoScrollRef.current = autoScroll;
 
@@ -83,6 +87,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     try {
       const result = await onFetch();
       seenTypesRef.current = new Set();
+      setVisibleTypes(new Set());
       trackNewTypes(result.events);
       setEvents(result.events);
     } finally {
@@ -90,28 +95,21 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     }
   };
 
-  // Compute type counts
+  // Compute type counts sorted by count desc
   const typeCounts = new Map<string, number>();
   for (const evt of events) {
     const t = getEventType(evt);
     if (t) typeCounts.set(t, (typeCounts.get(t) ?? 0) + 1);
   }
-  const sortedTypes = Array.from(typeCounts.keys()).sort();
-
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const selected = new Set(Array.from(e.target.selectedOptions, (o) => o.value));
-    const nextHidden = new Set<string>();
-    for (const t of sortedTypes) {
-      if (!selected.has(t)) nextHidden.add(t);
-    }
-    setHiddenTypes(nextHidden);
-  }
+  const filterEntries = Array.from(typeCounts.entries())
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
 
   const search = searchText.toLowerCase();
   const filteredEvents = events
     .filter((evt) => {
       const t = getEventType(evt);
-      return !t || !hiddenTypes.has(t);
+      return !t || visibleTypes.has(t);
     })
     .filter((evt) => !search || JSON.stringify(evt).toLowerCase().includes(search));
 
@@ -129,7 +127,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
                 userScrolledRef.current = false;
                 bottomRef.current?.scrollIntoView({ behavior: 'instant' });
               }}
-              className={`${ICON_BTN} ${autoScroll ? 'text-accent' : ''}`}
+              className={cn(ICON_BTN, autoScroll && 'text-accent')}
             >
               ⤓
             </button>
@@ -146,7 +144,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
               onClick={() => {
                 setEvents([]);
                 seenTypesRef.current = new Set();
-                setHiddenTypes(new Set());
+                setVisibleTypes(new Set());
               }}
               className={ICON_BTN}
             >
@@ -158,30 +156,17 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
           </button>
         </div>
       </div>
-      {events.length > 0 && (
-        <div className="flex gap-2 px-4 py-2 border-b border-border">
-          <select
-            multiple
-            data-testid="type-filter"
-            value={sortedTypes.filter((t) => !hiddenTypes.has(t))}
-            onChange={handleSelectChange}
-            className="text-xs bg-surface border border-border rounded px-1 py-1 text-text min-w-[140px]"
-            size={Math.min(sortedTypes.length, 6)}
-          >
-            {sortedTypes.map((t) => (
-              <option key={t} value={t}>
-                {t} ({typeCounts.get(t)})
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="text-sm bg-surface border border-border rounded px-2 py-1 text-text flex-1"
-          />
-        </div>
+      <SearchBar
+        searchQuery={searchText}
+        setSearchQuery={setSearchText}
+        placeholder="Search events..."
+      />
+      {filterEntries.length > 0 && (
+        <RawEventFilterBar
+          entries={filterEntries}
+          selected={visibleTypes}
+          onChange={setVisibleTypes}
+        />
       )}
       <div ref={listRef} onScroll={handleScroll} className="flex-1 overflow-y-auto">
         {loading && <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>}

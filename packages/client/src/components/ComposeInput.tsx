@@ -4,6 +4,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
+import { cn } from '../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
@@ -269,7 +270,7 @@ export function ComposeInput() {
           }
           className={TEXTAREA_CLASS}
         />
-        <div className={`${TEXTAREA_CLASS} invisible whitespace-pre-wrap`} aria-hidden="true">
+        <div className={cn(TEXTAREA_CLASS, 'invisible whitespace-pre-wrap')} aria-hidden="true">
           {`${value}\n`}
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { QuestionContent } from './QuestionContent';
 
 function isAskUserQuestion(
@@ -197,20 +198,18 @@ export function ToolPermissionBanner({
         {options.map((opt, i) => {
           const isLast = i === options.length - 1;
           return (
-            <div
-              key={opt.label}
-              className={isLast && !isQuestion ? 'flex flex-col gap-2' : undefined}
-            >
+            <div key={opt.label} className={cn(isLast && !isQuestion && 'flex flex-col gap-2')}>
               <button
                 type="button"
                 onClick={opt.action}
                 disabled={'disabled' in opt ? opt.disabled : false}
                 onMouseEnter={() => setFocusedIdx(i)}
-                className={`w-full text-left text-xs px-2 py-1.5 rounded border-0 cursor-pointer font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={cn(
+                  'w-full text-left text-xs px-2 py-1.5 rounded border-0 cursor-pointer font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                   i === focusedIdx
                     ? 'bg-accent text-white font-bold'
-                    : 'bg-transparent text-text shadow-[inset_0_0_0_1px_var(--color-border)]'
-                }`}
+                    : 'bg-transparent text-text shadow-[inset_0_0_0_1px_var(--color-border)]',
+                )}
               >
                 <span className="opacity-60 pr-1">{circledNumbers[i]}</span> {opt.label}
               </button>
@@ -233,11 +232,12 @@ export function ToolPermissionBanner({
                       });
                     }
                   }}
-                  className={`w-full text-xs bg-transparent rounded px-2 py-1.5 text-text placeholder:text-text-muted/50 focus:outline-none ${
+                  className={cn(
+                    'w-full text-xs bg-transparent rounded px-2 py-1.5 text-text placeholder:text-text-muted/50 focus:outline-none',
                     focusedIdx === options.length
                       ? 'border border-accent/50'
-                      : 'border border-transparent shadow-[inset_0_0_0_1px_var(--color-border)]'
-                  }`}
+                      : 'border border-transparent shadow-[inset_0_0_0_1px_var(--color-border)]',
+                  )}
                 />
               )}
             </div>

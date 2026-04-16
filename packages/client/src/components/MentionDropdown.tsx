@@ -1,4 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
+import { cn } from '../utils/cn';
 import { FileIcon, FolderIcon } from './icons/MentionIcons';
 
 const noop = () => {};
@@ -59,7 +60,10 @@ function FileResultItem({
       role="option"
       aria-selected={isActive}
       tabIndex={-1}
-      className={`flex items-center gap-1.5 px-3 py-1.5 cursor-pointer rounded ${isActive ? 'bg-selected' : 'hover:bg-white/5'}`}
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-1.5 cursor-pointer rounded',
+        isActive ? 'bg-selected' : 'hover:bg-white/5',
+      )}
     >
       <div className="w-5 h-5 flex items-center justify-center text-text-muted opacity-60 flex-shrink-0">
         <TypeIcon type={file.type} />

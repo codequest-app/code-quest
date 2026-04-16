@@ -1,6 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { HeaderBar } from '../HeaderBar';
 
@@ -34,8 +35,24 @@ describe('HeaderBar (context mode)', () => {
     expect(screen.getByText(`${channelId.slice(0, 8)}…`)).toBeInTheDocument();
   });
 
-  it('onToggleRaw prop shows Raw button', async () => {
-    await renderHeaderBar({ onToggleRaw: () => {} });
-    expect(screen.getByTitle('Raw Events')).toBeInTheDocument();
+  it('shows ⌘K button by default (no props needed)', async () => {
+    await renderHeaderBar();
+    expect(screen.getByTitle('Command Palette (⌘K)')).toBeInTheDocument();
+  });
+});
+
+describe('HeaderBar actions', () => {
+  it('calls onOpenCommandPalette when ⌘K button clicked', async () => {
+    const onOpenCommandPalette = vi.fn();
+    const user = userEvent.setup();
+    await renderHeaderBar({ onOpenCommandPalette });
+    await user.click(screen.getByTitle('Command Palette (⌘K)'));
+    expect(onOpenCommandPalette).toHaveBeenCalledOnce();
+  });
+
+  it('does not show Raw or Search buttons', async () => {
+    await renderHeaderBar();
+    expect(screen.queryByTitle('Raw Events')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Search messages')).not.toBeInTheDocument();
   });
 });

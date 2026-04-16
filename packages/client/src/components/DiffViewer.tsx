@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 import { extractNewContent, parseDiffFileName, parseHunkStart } from '../utils/diff';
 
 interface DiffViewerProps {
@@ -200,7 +201,10 @@ export function DiffViewer({
         )
       )}
       <pre
-        className={`bg-code-block p-3 overflow-x-auto text-[13px] font-mono border border-border ${fileName ? 'rounded-b-lg' : 'rounded-lg'}`}
+        className={cn(
+          'bg-code-block p-3 overflow-x-auto text-[13px] font-mono border border-border',
+          fileName ? 'rounded-b-lg' : 'rounded-lg',
+        )}
       >
         {annotated.map(({ cls, gutter, text }, i) => (
           <div key={`${i}-${gutter ?? ''}`} className={cls}>

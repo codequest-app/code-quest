@@ -1,5 +1,6 @@
 import type { ModelInfo } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../utils/model-utils';
 
 interface ModelPickerPanelProps {
@@ -92,7 +93,10 @@ export function ModelPickerPanel({
               role="option"
               aria-selected={isSelected}
               onClick={() => handleSelect('')}
-              className={`w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px] ${isActive(index) ? 'bg-selected' : 'hover:bg-white/10'}`}
+              className={cn(
+                'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px]',
+                isActive(index) ? 'bg-selected' : 'hover:bg-white/10',
+              )}
             >
               <div>
                 <div className="text-text font-medium">{displayName}</div>
@@ -117,7 +121,10 @@ export function ModelPickerPanel({
             role="option"
             aria-selected={isSelected}
             onClick={() => handleSelect(item.value)}
-            className={`w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px] ${isActive(index) ? 'bg-selected' : 'hover:bg-white/10'}`}
+            className={cn(
+              'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px]',
+              isActive(index) ? 'bg-selected' : 'hover:bg-white/10',
+            )}
           >
             <div>
               <div className="text-text font-medium">{displayName}</div>

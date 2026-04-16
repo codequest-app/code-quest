@@ -1,4 +1,5 @@
 import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '../../types/ui';
+import { cn } from '../../utils/cn';
 import { MarkdownContent } from '../MarkdownContent';
 import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
 
@@ -30,7 +31,7 @@ export function ControlResponseContent({ content }: { content: string }) {
   const { icon, colorClass } =
     CONTROL_RESPONSE_STYLES.find((s) => content.startsWith(s.prefix)) ?? CONTROL_RESPONSE_DEFAULT;
   return (
-    <div className={`border-l-2 px-4 py-2 rounded-r-lg ${colorClass}`}>
+    <div className={cn('border-l-2 px-4 py-2 rounded-r-lg', colorClass)}>
       <span className="text-sm font-medium">
         {icon} {content}
       </span>

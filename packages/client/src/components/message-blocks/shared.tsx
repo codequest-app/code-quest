@@ -1,5 +1,6 @@
 import Ansi from 'ansi-to-react';
 import { useState } from 'react';
+import { cn } from '../../utils/cn';
 
 export const CODE_BLOCK_CLASS =
   'bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] font-mono border border-border';
@@ -29,7 +30,7 @@ export function CollapsibleBlock({
         <span className="font-semibold text-text-bright">{label}</span>
         {labelDetail && <span className="opacity-70 truncate max-w-[300px]">{labelDetail}</span>}
         {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
-        <span className={`text-xs opacity-50 transition-transform ${open ? 'rotate-90' : ''}`}>
+        <span className={cn('text-xs opacity-50 transition-transform', open && 'rotate-90')}>
           ▶
         </span>
       </button>

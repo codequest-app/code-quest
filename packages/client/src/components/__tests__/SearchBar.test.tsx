@@ -12,6 +12,26 @@ describe('SearchBar', () => {
     expect(setSearchQuery).toHaveBeenCalledWith('h');
   });
 
+  it('uses default placeholder when placeholder prop not provided', () => {
+    render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} />);
+    expect(screen.getByPlaceholderText('Search messages...')).toBeInTheDocument();
+  });
+
+  it('uses custom placeholder when placeholder prop is provided', () => {
+    render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} placeholder="Search events..." />);
+    expect(screen.getByPlaceholderText('Search events...')).toBeInTheDocument();
+  });
+
+  it('shows clear button when searchQuery is non-empty', () => {
+    render(<SearchBar searchQuery="test" setSearchQuery={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
+  });
+
+  it('hides clear button when searchQuery is empty', () => {
+    render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /clear/i })).not.toBeInTheDocument();
+  });
+
   it('clears search on clear button click', async () => {
     const setSearchQuery = vi.fn();
     const user = userEvent.setup();
@@ -20,50 +40,35 @@ describe('SearchBar', () => {
     expect(setSearchQuery).toHaveBeenCalledWith('');
   });
 
-  it('toggles type filter dropdown on button click', async () => {
-    const user = userEvent.setup();
-    render(
-      <SearchBar searchQuery="" setSearchQuery={vi.fn()} typeFilter={[]} setTypeFilter={vi.fn()} />,
-    );
-    expect(screen.queryByTestId('type-filter-dropdown')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /toggle type filter/i }));
-    expect(screen.getByTestId('type-filter-dropdown')).toBeInTheDocument();
-  });
-
-  it('calls setTypeFilter when checking a type', async () => {
-    const setTypeFilter = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <SearchBar
-        searchQuery=""
-        setSearchQuery={vi.fn()}
-        typeFilter={[]}
-        setTypeFilter={setTypeFilter}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: /toggle type filter/i }));
-    await user.click(screen.getByLabelText('raw_event'));
-    expect(setTypeFilter).toHaveBeenCalledWith(['raw_event']);
-  });
-
-  it('calls setTypeFilter to remove when unchecking a type', async () => {
-    const setTypeFilter = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <SearchBar
-        searchQuery=""
-        setSearchQuery={vi.fn()}
-        typeFilter={['raw_event']}
-        setTypeFilter={setTypeFilter}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: /toggle type filter/i }));
-    await user.click(screen.getByLabelText('raw_event'));
-    expect(setTypeFilter).toHaveBeenCalledWith([]);
-  });
-
-  it('does not show filter button when setTypeFilter not provided', () => {
+  it('does not show Raw button when onToggleRaw not provided', () => {
     render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: /toggle type filter/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /raw/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Raw button when onToggleRaw is provided', () => {
+    render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} onToggleRaw={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /raw/i })).toBeInTheDocument();
+  });
+
+  it('calls onToggleRaw when Raw button is clicked', async () => {
+    const onToggleRaw = vi.fn();
+    const user = userEvent.setup();
+    render(<SearchBar searchQuery="" setSearchQuery={vi.fn()} onToggleRaw={onToggleRaw} />);
+    await user.click(screen.getByRole('button', { name: /raw/i }));
+    expect(onToggleRaw).toHaveBeenCalledOnce();
+  });
+
+  it('Raw button has active style when rawActive is true', () => {
+    render(
+      <SearchBar searchQuery="" setSearchQuery={vi.fn()} onToggleRaw={vi.fn()} rawActive={true} />,
+    );
+    expect(screen.getByRole('button', { name: /raw/i })).toHaveAttribute('data-active', 'true');
+  });
+
+  it('Raw button has no active style when rawActive is false', () => {
+    render(
+      <SearchBar searchQuery="" setSearchQuery={vi.fn()} onToggleRaw={vi.fn()} rawActive={false} />,
+    );
+    expect(screen.getByRole('button', { name: /raw/i })).toHaveAttribute('data-active', 'false');
   });
 });

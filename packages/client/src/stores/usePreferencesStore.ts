@@ -16,6 +16,6 @@ export const usePreferencesStore = create<PreferencesState>()(
       dismissOnboarding: () => set({ isOnboardingDismissed: true }),
       dismissReviewUpsell: () => set({ isReviewUpsellDismissed: true }),
     }),
-    { name: 'code-quest-preferences' },
+    { name: 'code-quest:preferences' },
   ),
 );

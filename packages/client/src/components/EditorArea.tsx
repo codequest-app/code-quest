@@ -1,6 +1,7 @@
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
+import { cn } from '../utils/cn';
 import { ChatPanel } from './ChatPanel';
 import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
@@ -46,7 +47,7 @@ export function EditorArea() {
       />
       <div className="flex flex-1 overflow-hidden relative">
         {tabIds.map((id) => (
-          <div key={id} className={id === activeTabId ? 'flex flex-1' : 'hidden'}>
+          <div key={id} className={cn(id === activeTabId ? 'flex flex-1' : 'hidden')}>
             <ChannelProvider
               channelId={id}
               cwd={tabs[id]?.cwd}

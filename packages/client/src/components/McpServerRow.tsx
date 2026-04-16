@@ -1,5 +1,6 @@
 import type { McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 
 const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-[11px] transition-colors';
 
@@ -47,7 +48,10 @@ export function McpServerRow({
     <div className="border-b border-border">
       <div className="flex items-center gap-3 px-4 py-3">
         <span
-          className={`text-[11px] px-1.5 py-0.5 rounded font-mono shrink-0 ${MCP_STATUS_BADGE[s.status] ?? MCP_STATUS_BADGE._default}`}
+          className={cn(
+            'text-[11px] px-1.5 py-0.5 rounded font-mono shrink-0',
+            MCP_STATUS_BADGE[s.status] ?? MCP_STATUS_BADGE._default,
+          )}
         >
           {s.status}
         </span>
@@ -85,11 +89,12 @@ export function McpServerRow({
               showFeedback(`Failed to toggle ${s.name}`, 'error');
             }
           }}
-          className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+          className={cn(
+            'text-[11px] px-2 py-0.5 rounded border transition-colors',
             s.enabled
               ? 'border-success/30 text-success hover:bg-success/10'
-              : 'border-border text-text-muted hover:bg-white/5'
-          }`}
+              : 'border-border text-text-muted hover:bg-white/5',
+          )}
         >
           {s.enabled ? 'On' : 'Off'}
         </button>

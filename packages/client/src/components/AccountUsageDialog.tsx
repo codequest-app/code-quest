@@ -5,6 +5,7 @@ import {
   type ProviderClientConfig,
   type UsageQuota,
 } from '@code-quest/shared';
+import { cn } from '../utils/cn';
 import { formatResetTime } from '../utils/format-reset-time';
 import { DEFAULT_USAGE_TIERS, getTier } from '../utils/usage-tiers';
 
@@ -69,7 +70,7 @@ function UsageBarRow({
       </div>
       <div className="h-1.5 bg-white/5 rounded-sm overflow-hidden">
         <div
-          className={`h-full rounded-sm transition-all ${isHigh ? 'bg-danger' : 'bg-accent'}`}
+          className={cn('h-full rounded-sm transition-all', isHigh ? 'bg-danger' : 'bg-accent')}
           style={{ width: `${pct}%` }}
         />
       </div>

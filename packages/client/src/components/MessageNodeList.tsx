@@ -1,4 +1,5 @@
 import type { ForkFn, RewindFn } from '../types/ui';
+import { cn } from '../utils/cn';
 import { groupForTimeline } from '../utils/group-for-timeline';
 import type { MessageNode } from '../utils/message-tree';
 import { ChatMessage } from './ChatMessage';
@@ -44,7 +45,8 @@ export function MessageNodeList({
         return (
           <div
             key={group.node.message.id}
-            className={`animate-fade-in py-2${gi !== 0 ? ' mt-1' : ''}`}
+            data-message-id={group.node.message.id}
+            className={cn('animate-fade-in py-2', gi !== 0 && 'mt-1')}
           >
             <ChatMessage
               message={group.node.message}

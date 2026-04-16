@@ -1,5 +1,6 @@
 import type { UsageQuota } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { formatResetTime } from '../utils/format-reset-time';
 import { DEFAULT_USAGE_TIERS, getTier } from '../utils/usage-tiers';
 
@@ -28,7 +29,7 @@ function TierBar({
       <div className="flex-1 h-1.5 bg-white/5 rounded-sm overflow-hidden">
         <div
           data-testid={`usage-bar-${label.toLowerCase().replace(/\s+/g, '-')}`}
-          className={`h-full rounded-sm transition-all ${tierColor(utilization)}`}
+          className={cn('h-full rounded-sm transition-all', tierColor(utilization))}
           style={{ width: `${pct}%` }}
         />
       </div>

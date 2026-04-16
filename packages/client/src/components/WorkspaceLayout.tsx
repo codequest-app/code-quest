@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
+import { cn } from '../utils/cn';
 import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
@@ -61,7 +62,7 @@ export function WorkspaceLayout() {
             {projects.map((project) => (
               <div
                 key={project.cwd}
-                className={project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden'}
+                className={cn(project.cwd === activeProjectCwd ? 'flex flex-1' : 'hidden')}
               >
                 <TabProvider
                   sessions={sessions.filter((s) => s.projectRoot === project.cwd)}

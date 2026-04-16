@@ -1,3 +1,5 @@
+import { cn } from '../../utils/cn';
+
 export function TrashIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -49,7 +51,12 @@ export function IconButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`p-1.5 rounded border border-border transition-colors disabled:opacity-40 ${danger ? 'text-text-muted hover:text-danger hover:border-danger' : 'text-text/70 hover:text-text'}`}
+      className={cn(
+        'p-1.5 rounded border border-border transition-colors disabled:opacity-40',
+        danger
+          ? 'text-text-muted hover:text-danger hover:border-danger'
+          : 'text-text/70 hover:text-text',
+      )}
     >
       {children}
     </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 import { MarkdownContent } from './MarkdownContent';
 
 interface ThinkingBlockProps {
@@ -41,7 +42,7 @@ export function ThinkingBlock({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform flex-shrink-0 ${open ? 'rotate-90' : ''}`}
+          className={cn('transition-transform flex-shrink-0', open && 'rotate-90')}
         >
           <path
             d="M4 2L8 6L4 10"

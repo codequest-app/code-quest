@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { cn } from '../utils/cn';
 import type { MenuItem } from './command-menu-items';
 
 interface MenuItemRowProps {
@@ -17,9 +18,10 @@ export function MenuItemRow({ item, isActive, activeItemRef, onHover }: MenuItem
       disabled={item.disabled}
       onClick={item.onClick}
       onMouseEnter={() => onHover(item.id)}
-      className={`text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed ${
-        isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10'
-      }`}
+      className={cn(
+        'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
+        isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10',
+      )}
     >
       <span>{item.label}</span>
       {item.trailing && <span>{item.trailing}</span>}

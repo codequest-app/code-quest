@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FileSnapshot } from '../types/chat';
+import { cn } from '../utils/cn';
 import { generateUnifiedDiff } from '../utils/diff';
 import { pluralize } from '../utils/pluralize';
 import { DiffViewer } from './DiffViewer';
@@ -48,7 +49,10 @@ function ModifiedFileItem({
       >
         <span
           data-testid={`status-${file.path}`}
-          className={`inline-block w-2 h-2 rounded-full ${statusColor[file.status] ?? 'bg-text-muted'}`}
+          className={cn(
+            'inline-block w-2 h-2 rounded-full',
+            statusColor[file.status] ?? 'bg-text-muted',
+          )}
         />
         {file.path}
         {versionCount > 1 && (

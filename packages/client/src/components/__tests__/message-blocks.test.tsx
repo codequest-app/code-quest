@@ -62,7 +62,33 @@ describe('message-blocks', () => {
       expect(screen.getByText('OUT')).toBeInTheDocument();
     });
 
-    it('hides tool_use for hidden tools (TodoRead)', () => {
+    it('Read tool result renders with syntax highlighting (no plain pre.bg-code-block)', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <>
+          {renderBody({
+            id: '1',
+            role: 'assistant',
+            type: 'tool_use',
+            content: 'Read',
+            timestamp: Date.now(),
+            meta: {
+              toolId: 'tu-1',
+              input: { file_path: '/src/Foo.tsx' },
+              result: { content: 'import React from "react";\nexport function Foo() {}' },
+            },
+          })}
+        </>,
+      );
+      await user.click(screen.getByText('Read'));
+      // SyntaxHighlighter splits tokens into spans — check full textContent
+      expect(container.textContent).toContain('import');
+      expect(container.textContent).toContain('React');
+      // plain <pre class="bg-code-block..."> should NOT be used for Read result
+      expect(container.querySelector('pre.bg-code-block')).not.toBeInTheDocument();
+    });
+
+    it('renders TodoRead tool_use (visibility controlled by MessageVisibilityContext, not ToolUseBlock)', () => {
       const { container } = render(
         <>
           {renderBody({
@@ -75,7 +101,9 @@ describe('message-blocks', () => {
           })}
         </>,
       );
-      expect(container.innerHTML).toBe('');
+      // ToolUseBlock no longer hides TodoRead — filtering is done at MessageList level
+      expect(container.innerHTML).not.toBe('');
+      expect(container.textContent).toContain('TodoRead');
     });
   });
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 import type { MessageNode } from '../utils/message-tree';
 import { pluralize } from '../utils/pluralize';
 import { MessageNodeList } from './MessageNodeList';
@@ -24,7 +25,7 @@ export function SubagentChildren({
           onClick={() => setExpanded((v) => !v)}
           className="text-xs text-text-muted/50 hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
         >
-          <span className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>▶</span>
+          <span className={cn('transition-transform', expanded && 'rotate-90')}>▶</span>
           <span>{pluralize(nodes.length, 'subagent message')}</span>
         </button>
         {onStopTask && parentToolId && (

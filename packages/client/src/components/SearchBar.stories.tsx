@@ -5,7 +5,7 @@ import { SearchBar } from './SearchBar';
 const meta = {
   component: SearchBar,
   tags: ['autodocs'],
-  args: { setSearchQuery: fn(), setTypeFilter: fn() },
+  args: { setSearchQuery: fn() },
   decorators: [
     (Story) => (
       <div className="max-w-3xl bg-bg text-text">
@@ -30,19 +30,10 @@ export const WithQuery: Story = {
   },
 };
 
-export const WithTypeFilter: Story = {
-  args: { searchQuery: '', typeFilter: [] },
-};
-
-export const WithActiveFilter: Story = {
+export const WithRawToggle: Story = {
   args: {
     searchQuery: '',
-    typeFilter: ['raw_event', 'hook_started'],
-  },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByLabelText(/toggle type filter/i));
-    const checkbox = await canvas.findByLabelText('raw_event');
-    await userEvent.click(checkbox);
-    await expect(args.setTypeFilter).toHaveBeenCalledWith(['hook_started']);
+    onToggleRaw: fn(),
+    rawActive: false,
   },
 };

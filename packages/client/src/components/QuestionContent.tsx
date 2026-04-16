@@ -1,10 +1,14 @@
 import type { Question } from '@code-quest/shared';
 import { useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 
 function CheckIndicator({ checked }: { checked: boolean }) {
   return (
     <div
-      className={`w-3.5 h-3.5 rounded-sm border ${checked ? 'bg-accent border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
+      className={cn(
+        'w-3.5 h-3.5 rounded-sm border flex items-center justify-center',
+        checked ? 'bg-accent border-accent' : 'border-text-muted/40',
+      )}
     >
       {checked && (
         <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none">
@@ -24,7 +28,10 @@ function CheckIndicator({ checked }: { checked: boolean }) {
 function RadioIndicator({ checked }: { checked: boolean }) {
   return (
     <div
-      className={`w-3.5 h-3.5 rounded-full border ${checked ? 'border-accent' : 'border-text-muted/40'} flex items-center justify-center`}
+      className={cn(
+        'w-3.5 h-3.5 rounded-full border flex items-center justify-center',
+        checked ? 'border-accent' : 'border-text-muted/40',
+      )}
     >
       {checked && <div className="w-2 h-2 rounded-full bg-accent" />}
     </div>
@@ -55,9 +62,10 @@ function OptionItem({
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={onKeySelect}
-      className={`flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs ${
-        selected ? 'bg-accent/10' : 'hover:bg-white/5'
-      }`}
+      className={cn(
+        'flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer text-xs',
+        selected ? 'bg-accent/10' : 'hover:bg-white/5',
+      )}
     >
       <div className="mt-0.5 flex-shrink-0">
         {multiSelect ? (
@@ -166,9 +174,10 @@ export function QuestionContent({
               aria-selected={isActive}
               data-answered={isAnswered ? 'true' : undefined}
               onClick={() => setActiveTab(i)}
-              className={`text-xs font-medium bg-transparent border-0 border-b-2 cursor-pointer px-0.5 py-1 min-w-0 truncate ${
-                isActive ? 'text-text border-accent' : 'text-text-muted border-transparent'
-              }`}
+              className={cn(
+                'text-xs font-medium bg-transparent border-0 border-b-2 cursor-pointer px-0.5 py-1 min-w-0 truncate',
+                isActive ? 'text-text border-accent' : 'text-text-muted border-transparent',
+              )}
             >
               {q.header}
             </button>

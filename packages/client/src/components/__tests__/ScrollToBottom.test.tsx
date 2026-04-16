@@ -1,27 +1,37 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  mockAllIsIntersecting,
-  resetIntersectionMocking,
-  setupIntersectionMocking,
-} from 'react-intersection-observer/test-utils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { MessageList } from '../MessageList';
 
-beforeEach(() => {
-  setupIntersectionMocking(vi.fn);
-});
-
-afterEach(() => {
-  resetIntersectionMocking();
-});
-
 async function renderWithMessages() {
   const { claude } = await renderWithChannel(<MessageList />);
   await emitAssistantTurn(claude, 'Hi');
+}
+
+/** Wait for programmatic scroll lock to expire (500ms timeout in scrollToEnd) */
+async function waitForScrollUnlock() {
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 600));
+  });
+}
+
+/** Simulate scrolling up (not at bottom) */
+function simulateScrolledUp(container: HTMLElement) {
+  Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+  Object.defineProperty(container, 'scrollTop', { value: 0, configurable: true });
+  Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+  fireEvent.scroll(container);
+}
+
+/** Simulate scrolled to bottom */
+function simulateScrolledToBottom(container: HTMLElement) {
+  Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+  Object.defineProperty(container, 'scrollTop', { value: 600, configurable: true });
+  Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+  fireEvent.scroll(container);
 }
 
 describe('Auto-scroll behavior', () => {
@@ -34,12 +44,8 @@ describe('Auto-scroll behavior', () => {
       await new Promise((r) => setTimeout(r, 600));
     });
 
-    // Simulate user scrolled up: set isAtBottom to false
     const container = screen.getByTestId('message-list');
-    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
-    Object.defineProperty(container, 'scrollTop', { value: 0, configurable: true });
-    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
-    fireEvent.scroll(container);
+    simulateScrolledUp(container);
 
     // Set spy AFTER initial messages settled, clear any prior calls
     const scrollIntoView = vi.fn();
@@ -96,34 +102,47 @@ describe('Auto-scroll behavior', () => {
 });
 
 describe('Scroll to bottom button', () => {
-  it('does not show button when bottom is visible', async () => {
+  it('does not show button when at bottom (initial state)', async () => {
     await renderWithMessages();
-    act(() => mockAllIsIntersecting(true));
     expect(screen.queryByRole('button', { name: /scroll to bottom/i })).not.toBeInTheDocument();
   });
 
-  it('shows button when bottom is not visible', async () => {
+  it('shows button when scrolled up', async () => {
     await renderWithMessages();
-    act(() => mockAllIsIntersecting(false));
+    await waitForScrollUnlock();
+    const container = screen.getByTestId('message-list');
+    act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
   });
 
   it('calls scrollIntoView when button is clicked', async () => {
     const user = userEvent.setup();
     await renderWithMessages();
-    act(() => mockAllIsIntersecting(false));
+    await waitForScrollUnlock();
+    const container = screen.getByTestId('message-list');
+    act(() => simulateScrolledUp(container));
     const scrollIntoView = vi.fn();
-    const bottomEl = screen.getByTestId('message-list-bottom');
-    bottomEl.scrollIntoView = scrollIntoView;
+    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
     await user.click(screen.getByRole('button', { name: /scroll to bottom/i }));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
   });
 
   it('hides button when scrolled back to bottom', async () => {
     await renderWithMessages();
-    act(() => mockAllIsIntersecting(false));
+    await waitForScrollUnlock();
+    const container = screen.getByTestId('message-list');
+    act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
-    act(() => mockAllIsIntersecting(true));
+    act(() => simulateScrolledToBottom(container));
     expect(screen.queryByRole('button', { name: /scroll to bottom/i })).not.toBeInTheDocument();
+  });
+
+  it('scroll button has z-30 so it appears above the chat input overlay', async () => {
+    await renderWithMessages();
+    await waitForScrollUnlock();
+    const container = screen.getByTestId('message-list');
+    act(() => simulateScrolledUp(container));
+    const btn = screen.getByRole('button', { name: /scroll to bottom/i });
+    expect(btn.className).toMatch(/\bz-30\b/);
   });
 });

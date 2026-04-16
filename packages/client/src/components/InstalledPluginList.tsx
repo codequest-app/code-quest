@@ -1,6 +1,7 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { IconButton, TrashIcon } from './ui/Icons';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
@@ -16,7 +17,10 @@ function formatInstallCount(n: number): string {
 function StatusDot({ enabled }: { enabled: boolean }) {
   return (
     <span
-      className={`inline-block w-2 h-2 rounded-full flex-shrink-0 mr-2 ${enabled ? 'bg-success' : 'bg-text/30'}`}
+      className={cn(
+        'inline-block w-2 h-2 rounded-full flex-shrink-0 mr-2',
+        enabled ? 'bg-success' : 'bg-text/30',
+      )}
     />
   );
 }

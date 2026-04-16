@@ -2,34 +2,7 @@ import { fileReadResponseSchema } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-const EXT_TO_LANG: Record<string, string> = {
-  ts: 'typescript',
-  tsx: 'tsx',
-  js: 'javascript',
-  jsx: 'jsx',
-  json: 'json',
-  md: 'markdown',
-  py: 'python',
-  rs: 'rust',
-  go: 'go',
-  rb: 'ruby',
-  java: 'java',
-  css: 'css',
-  html: 'html',
-  yml: 'yaml',
-  yaml: 'yaml',
-  sh: 'bash',
-  bash: 'bash',
-  sql: 'sql',
-  xml: 'xml',
-  toml: 'toml',
-};
-
-function detectLanguage(filePath: string): string | undefined {
-  const ext = filePath.split('.').pop()?.toLowerCase();
-  return ext ? EXT_TO_LANG[ext] : undefined;
-}
+import { langFromPath } from '../utils/syntax';
 
 interface FileViewerProps {
   filePath: string;
@@ -40,7 +13,7 @@ interface FileViewerProps {
 
 export function FileViewer({ filePath, content, error, loading }: FileViewerProps) {
   const fileName = filePath.split('/').pop() ?? filePath;
-  const language = detectLanguage(filePath);
+  const language = langFromPath(filePath);
 
   if (loading) {
     return (

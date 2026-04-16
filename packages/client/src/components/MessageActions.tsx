@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useClickOutside } from '../hooks/useClickOutside';
 import type { ForkFn, RewindFn } from '../types/ui';
+import { cn } from '../utils/cn';
 import { RewindPreview } from './RewindPreview';
 import { Dialog, DialogContent } from './ui/Dialog';
 
@@ -126,7 +127,10 @@ export function MessageActions({
         {menuOpen && (
           <div
             ref={menuRef}
-            className={`absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[200px] py-1 transition-opacity ${menuVisible ? 'opacity-100' : 'opacity-0'}`}
+            className={cn(
+              'absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[200px] py-1 transition-opacity',
+              menuVisible ? 'opacity-100' : 'opacity-0',
+            )}
           >
             {messageContent && <PopupOption onClick={handleCopy}>Copy message</PopupOption>}
             {onFork && cliUuid && (

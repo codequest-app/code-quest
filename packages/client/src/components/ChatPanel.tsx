@@ -13,14 +13,14 @@ import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
 import { ChatInputArea } from './ChatInputArea';
+import { CommandPalette } from './CommandPalette';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
 import { ElicitationDialog } from './ElicitationDialog';
 import { HeaderBar } from './HeaderBar';
-import { MessageList } from './MessageList';
+import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
 import { resumeRoute } from './resume-route';
-import { SearchBar } from './SearchBar';
 import { SessionDropdown } from './SessionDropdown';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
@@ -73,8 +73,8 @@ export function ChatPanel({ title }: { title?: string }) {
       });
   };
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
   const [showResumeOverlay, setShowResumeOverlay] = useState(false);
   const [resumeSessions, setResumeSessions] = useState<{
@@ -83,7 +83,7 @@ export function ChatPanel({ title }: { title?: string }) {
   }>({ sessions: [], total: 0 });
   const [resumeLoading, setResumeLoading] = useState(false);
 
-  const searchBarRef = useRef<HTMLInputElement>(null);
+  const messageListRef = useRef<MessageListHandle>(null);
 
   const fetchResumeSessions = () =>
     listSessions({
@@ -131,7 +131,8 @@ export function ChatPanel({ title }: { title?: string }) {
   };
 
   useHotkeys('/', () => focusTextarea(), NO_FORM);
-  useHotkeys('mod+k', () => searchBarRef.current?.focus(), NO_FORM);
+  useHotkeys('mod+k', () => setCommandPaletteOpen(true), NO_FORM);
+  useHotkeys('mod+f', () => setCommandPaletteOpen(true), NO_FORM);
 
   if (!channelId) {
     return (
@@ -164,19 +165,16 @@ export function ChatPanel({ title }: { title?: string }) {
         />
       )}
       <div className="flex flex-col flex-1 min-w-0 relative">
-        <HeaderBar
-          title={title}
-          onToggleRaw={() => setActiveSidePanel((v) => (v === 'raw' ? null : 'raw'))}
-        />
+        <HeaderBar title={title} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
         {worktree && <WorktreeBanner worktree={worktree} />}
-        <SearchBar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          typeFilter={typeFilter}
-          setTypeFilter={setTypeFilter}
-          inputRef={searchBarRef}
+        <CommandPalette
+          open={commandPaletteOpen}
+          onClose={() => setCommandPaletteOpen(false)}
+          onJumpTo={(id) => messageListRef.current?.scrollToMessage(id)}
+          onToggleRawPanel={() => setActiveSidePanel((v) => (v === 'raw' ? null : 'raw'))}
+          rawPanelActive={activeSidePanel === 'raw'}
         />
-        <MessageList searchQuery={searchQuery} typeFilter={typeFilter} />
+        <MessageList ref={messageListRef} />
         {showResumeOverlay && (
           <SessionDropdown
             sessions={resumeSessions.sessions}

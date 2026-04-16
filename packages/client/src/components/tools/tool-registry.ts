@@ -10,9 +10,6 @@ interface ToolHeaderInfo {
   range?: string;
 }
 
-/** Hidden tools that should not be shown in the message list */
-const HIDDEN_TOOLS = new Set(['TodoRead', 'TodoWrite']);
-
 /** Check if a tool name is an MCP tool (prefixed with mcp__) */
 export function isMcpTool(name: string): boolean {
   return name.startsWith('mcp__');
@@ -80,18 +77,4 @@ export function getToolHeaderInfo(toolName: string, input: ToolInput): ToolHeade
       }
       return { name: toolName };
   }
-}
-
-/** Get a plain-text display header (backward compat) */
-export function getToolHeader(toolName: string, input: ToolInput): string {
-  const info = getToolHeaderInfo(toolName, input);
-  const parts = [info.name];
-  if (info.detail) parts.push(info.detail);
-  if (info.range) parts.push(info.range);
-  return parts.join(' ');
-}
-
-/** Check if a tool should be hidden (not rendered) */
-export function isToolHidden(toolName: string): boolean {
-  return HIDDEN_TOOLS.has(toolName);
 }

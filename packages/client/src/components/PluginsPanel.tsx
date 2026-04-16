@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { usePlugins } from '../contexts/PluginContext';
+import { cn } from '../utils/cn';
 import { InstalledPluginList } from './InstalledPluginList';
 import { MarketplaceSection } from './MarketplaceSection';
 import { XIcon } from './ui/Icons';
@@ -104,7 +105,12 @@ export function PluginsPanel({ open, onClose }: PluginsPanelProps) {
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
-              className={`px-3 py-2 text-[0.9em] border-b-2 mb-[-1px] transition-colors ${activeTab === id ? 'border-accent text-text font-medium' : 'border-transparent text-text-muted hover:text-text'}`}
+              className={cn(
+                'px-3 py-2 text-[0.9em] border-b-2 mb-[-1px] transition-colors',
+                activeTab === id
+                  ? 'border-accent text-text font-medium'
+                  : 'border-transparent text-text-muted hover:text-text',
+              )}
             >
               {label}
               {count > 0 && (

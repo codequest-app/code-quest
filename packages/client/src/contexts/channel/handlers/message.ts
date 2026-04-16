@@ -6,6 +6,11 @@ import type { ChannelState } from '@/types/chat';
 import { addMessage, msg } from '@/utils/message';
 import type { Payload } from './guard';
 
+type TextChunk = { type?: string; text?: string };
+function isTextChunk(b: unknown): b is TextChunk {
+  return typeof b === 'object' && b !== null;
+}
+
 // ── Helpers ──
 
 function applyUserContent(
@@ -41,12 +46,20 @@ function applyUserContent(
       const m = msg({ role: 'user', type: 'text', content: block.text });
       messages = [...messages, uuid ? { ...m, cliUuid: uuid } : m];
     } else if (block.type === 'tool_result') {
+      const rawContent = block.content;
+      const textContent = Array.isArray(rawContent)
+        ? rawContent
+            .filter(isTextChunk)
+            .filter((b) => b.type === 'text')
+            .map((b) => b.text ?? '')
+            .join('\n')
+        : String(rawContent ?? '');
       messages = [
         ...messages,
         msg({
           role: 'assistant',
           type: 'tool_result',
-          content: String(block.content ?? ''),
+          content: textContent,
           meta: { toolId: block.toolUseId, name: block.toolName, is_error: block.isError },
         }),
       ];
@@ -98,14 +111,11 @@ export function createMessageActions({
   statusRef,
   messageQueueRef,
 }: MessageActionsDeps) {
-  const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
-    channelEmit(socket, channelId, event, payload, ...rest);
-
   function sendMessage(message: string) {
     if (statusRef.current === 'processing') {
       if (messageQueueRef.current.length < 10) messageQueueRef.current.push(message);
     } else {
-      emit('chat:send', { message });
+      channelEmit(socket, channelId, 'chat:send', { message });
     }
     setChannelState((s) => ({
       ...s,
@@ -115,12 +125,12 @@ export function createMessageActions({
   }
 
   function abort() {
-    emit('chat:cancel', {});
+    channelEmit(socket, channelId, 'chat:cancel', {});
     setChannelState((prev) => ({ ...prev, status: 'cancelling' as const }));
   }
 
   function kill() {
-    emit('session:close', {});
+    channelEmit(socket, channelId, 'session:close', {});
   }
 
   return { sendMessage, abort, kill };

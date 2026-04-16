@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '../utils/cn';
 
 export interface ActivityBarItem {
   id: string;
@@ -22,9 +23,10 @@ export function ActivityBar({ items, activePanel, onToggle }: ActivityBarProps) 
           title={item.title}
           data-active={String(activePanel === item.id)}
           onClick={() => onToggle(activePanel === item.id ? null : item.id)}
-          className={`flex items-center justify-center w-10 h-10 text-sm hover:bg-white/10 ${
-            activePanel === item.id ? 'border-l-2 border-accent text-text' : 'text-text-muted'
-          }`}
+          className={cn(
+            'flex items-center justify-center w-10 h-10 text-sm hover:bg-white/10',
+            activePanel === item.id ? 'border-l-2 border-accent text-text' : 'text-text-muted',
+          )}
         >
           {item.icon}
         </button>

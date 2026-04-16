@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ForkFn, RewindFn } from '../types/ui';
+import { cn } from '../utils/cn';
 import type { MessageNode } from '../utils/message-tree';
 import { ChatMessage } from './ChatMessage';
 import { SubagentChildren } from './SubagentChildren';
@@ -56,13 +57,16 @@ export function CollapsibleTimeline({
   if (allComplete && !expanded) {
     const dot = hasError ? 'bg-danger' : 'bg-success';
     return (
-      <div className="animate-fade-in mt-1">
+      <div
+        className="animate-fade-in mt-1"
+        data-collapsed-ids={nodes.map((n) => n.message.id).join(',')}
+      >
         <button
           type="button"
           onClick={() => setExpanded(true)}
           className="flex items-center gap-2 pl-[30px] py-2 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
         >
-          <span className={`w-[7px] h-[7px] rounded-full ${dot}`} />
+          <span className={cn('w-[7px] h-[7px] rounded-full', dot)} />
           <span className="font-medium">Explored</span>
           <span className="bg-white/10 rounded-full px-1.5 py-0.5 text-[10px]">{nodes.length}</span>
           <span className="text-[10px] opacity-50">▶</span>
@@ -92,11 +96,18 @@ export function CollapsibleTimeline({
             ? 'top-0 h-[18px]'
             : 'top-0 bottom-0';
         return (
-          <div key={node.message.id} className="relative pl-[30px] py-2">
+          <div
+            key={node.message.id}
+            data-message-id={node.message.id}
+            className="relative pl-[30px] py-2"
+          >
             <span
-              className={`absolute left-[9px] top-[15px] w-[7px] h-[7px] rounded-full z-10 ${dotClass(node)}`}
+              className={cn(
+                'absolute left-[9px] top-[15px] w-[7px] h-[7px] rounded-full z-10',
+                dotClass(node),
+              )}
             />
-            <span className={`absolute left-[12px] w-px bg-border ${lineClass}`} />
+            <span className={cn('absolute left-[12px] w-px bg-border', lineClass)} />
             <ChatMessage
               message={node.message}
               showAvatar={false}

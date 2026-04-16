@@ -2,6 +2,7 @@ import type { RewindResult } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../contexts/channel';
 import type { Message } from '../types/ui';
+import { cn } from '../utils/cn';
 import { formatRelativeDate } from '../utils/format-relative-date';
 import { pluralize } from '../utils/pluralize';
 import { Dialog, DialogContent } from './ui/Dialog';
@@ -41,9 +42,10 @@ function RewindOption({ item, index, focusIndex, now, onSelect, onFocus }: Rewin
       aria-selected={index === focusIndex}
       onClick={() => onSelect(item)}
       onMouseEnter={() => onFocus(index)}
-      className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer text-sm text-left ${
-        index === focusIndex ? 'bg-selected text-white' : 'text-text hover:bg-white/5'
-      }`}
+      className={cn(
+        'flex items-center justify-between px-3 py-2 rounded cursor-pointer text-sm text-left',
+        index === focusIndex ? 'bg-selected text-white' : 'text-text hover:bg-white/5',
+      )}
     >
       <span className="truncate mr-3">{item.promptText}</span>
       <span className="text-xs text-text-muted whitespace-nowrap">

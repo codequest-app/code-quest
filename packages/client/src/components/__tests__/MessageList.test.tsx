@@ -1,13 +1,25 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
+import { useMessageVisibility } from '../../contexts/channel/MessageVisibilityContext';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
-import { MessageList } from '../MessageList';
+import { MessageList, type MessageListHandle } from '../MessageList';
 
-async function setup(props?: { searchQuery?: string; typeFilter?: string[] }) {
+// Helper: toggle a group via the context from inside a rendered component
+function ToggleGroup({ group }: { group: string }) {
+  const { toggleGroup } = useMessageVisibility();
+  return (
+    <button type="button" onClick={() => toggleGroup(group as never)}>
+      toggle-{group}
+    </button>
+  );
+}
+
+async function setup(props?: { searchQuery?: string }) {
   const summoner = createFakeSummoner();
   const claude = summoner.claude();
   const channelId = crypto.randomUUID();
@@ -25,7 +37,7 @@ async function setup(props?: { searchQuery?: string; typeFilter?: string[] }) {
 }
 
 /** Populate basic messages: user "Hello" + assistant "Hi there" + error "Oops" */
-async function setupWithMessages(props?: { searchQuery?: string; typeFilter?: string[] }) {
+async function setupWithMessages(props?: { searchQuery?: string }) {
   const ctx = await setup(props);
   // User message
   await userEvent.click(screen.getByText('TriggerSend'));
@@ -37,8 +49,8 @@ async function setupWithMessages(props?: { searchQuery?: string; typeFilter?: st
   return ctx;
 }
 
-describe('scroll button visibility via useInView', () => {
-  it('hides scroll button when bottom sentinel is in view', async () => {
+describe('scroll button visibility', () => {
+  it('hides scroll button when not scrolled up', async () => {
     await setupWithMessages();
     expect(screen.queryByTestId('scroll-to-bottom')).not.toBeInTheDocument();
   });
@@ -49,6 +61,37 @@ describe('MessageList', () => {
     await setupWithMessages();
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText(/Hi there/)).toBeInTheDocument();
+  });
+
+  it('renders unknown type messages (registers type so message passes visibility filter)', async () => {
+    const { useChannelMessagesActions } = await import(
+      '../../contexts/channel/ChannelMessagesContext'
+    );
+    function AddUnknown() {
+      const { addSystemMessage } = useChannelMessagesActions();
+      return (
+        <button
+          type="button"
+          onClick={() => addSystemMessage('future_event_xyz', 'custom content')}
+        >
+          add-unknown
+        </button>
+      );
+    }
+    const summoner = (await import('../../test/fake-summoner')).createFakeSummoner();
+    const claude = summoner.claude();
+    const channelId = crypto.randomUUID();
+    const { renderWithChannel: rwc } = await import('../../test/render-with-channel');
+    await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
+    await rwc(
+      <>
+        <AddUnknown />
+        <MessageList />
+      </>,
+      { summoner, channelId, skipInit: true },
+    );
+    await userEvent.click(screen.getByText('add-unknown'));
+    expect(screen.getByText('custom content')).toBeInTheDocument();
   });
 
   it('renders empty state with welcome text when no messages', async () => {
@@ -113,20 +156,6 @@ describe('MessageList', () => {
     expect(screen.queryByText(/Hi there/)).not.toBeInTheDocument();
   });
 
-  it('filters messages by typeFilter', async () => {
-    const { claude } = await setup({ typeFilter: ['raw_event'] });
-    await userEvent.click(screen.getByText('TriggerSend'));
-    await emitAssistantTurn(claude, 'Reply');
-    expect(screen.getByText('Hello')).toBeInTheDocument();
-    expect(screen.getByText('Reply')).toBeInTheDocument();
-  });
-
-  it('shows all messages when typeFilter is empty', async () => {
-    await setupWithMessages({ typeFilter: [] });
-    expect(screen.getByText('Hello')).toBeInTheDocument();
-    expect(screen.getByText(/Hi there/)).toBeInTheDocument();
-  });
-
   it('shows correct count for multiple subagent messages', async () => {
     const { claude } = await setup();
     await act(async () => {
@@ -156,6 +185,42 @@ describe('MessageList', () => {
     });
     await user.click(screen.getByTitle('Stop subagent'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
+  });
+
+  it('renders Read tool_result array content as code (not "[object Object]")', async () => {
+    const user = userEvent.setup();
+    const { claude } = await setup();
+    // Build a raw tool_result segment with array content (as real extension sends)
+    const arrayToolResult = JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'toolu_read_1',
+            content: [
+              { type: 'text', text: 'import React from "react";\nexport function Foo() {}' },
+            ],
+          },
+        ],
+      },
+      parent_tool_use_id: null,
+      uuid: 'fake-read-result-1',
+    });
+    await act(async () => {
+      await claude.emit(
+        s.assistant({
+          toolUse: { id: 'toolu_read_1', name: 'Read', input: { file_path: '/Foo.tsx' } },
+        }),
+      );
+      await claude.emit(arrayToolResult);
+    });
+    await user.click(screen.getByText('Read'));
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
+    // SyntaxHighlighter splits tokens — check via container textContent
+    expect(document.body.textContent).toContain('import');
+    expect(document.body.textContent).toContain('React');
   });
 
   it('renders tool_result merged into tool_use collapsible with diff', async () => {
@@ -292,5 +357,137 @@ describe('MessageList streaming', () => {
 
     const matches = screen.queryAllByText(/hello world/);
     expect(matches).toHaveLength(1);
+  });
+});
+
+describe('MessageList scrollToMessage highlight', () => {
+  async function setupWithRef() {
+    const summoner = createFakeSummoner();
+    const claude = summoner.claude();
+    const channelId = crypto.randomUUID();
+    await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
+    const ref = createRef<MessageListHandle>();
+    const ctx = await renderWithChannel(<MessageList ref={ref} />, {
+      summoner,
+      channelId,
+      skipInit: true,
+    });
+    await act(async () => {
+      await claude.emit(s.assistant('Target message'));
+      await claude.emit(s.result());
+    });
+    return { ...ctx, ref };
+  }
+
+  it('adds spotlight-highlight on [data-type] element (not the outer wrapper)', async () => {
+    const { ref } = await setupWithRef();
+    const wrapper = document.querySelector('[data-message-id]') as HTMLElement;
+    const messageEl = wrapper?.querySelector('[data-type]') as HTMLElement;
+    expect(wrapper).toBeTruthy();
+    expect(messageEl).toBeTruthy();
+
+    act(() => {
+      ref.current?.scrollToMessage(wrapper.dataset.messageId!);
+    });
+
+    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
+    expect(wrapper.classList.contains('spotlight-highlight')).toBe(false);
+  });
+
+  it('removes spotlight-highlight after animationend fires', async () => {
+    const { ref } = await setupWithRef();
+    const wrapper = document.querySelector('[data-message-id]') as HTMLElement;
+    const messageEl = wrapper?.querySelector('[data-type]') as HTMLElement;
+
+    act(() => {
+      ref.current?.scrollToMessage(wrapper.dataset.messageId!);
+    });
+    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
+
+    act(() => {
+      messageEl.dispatchEvent(new Event('animationend', { bubbles: false }));
+    });
+    expect(messageEl.classList.contains('spotlight-highlight')).toBe(false);
+  });
+
+  it('re-triggers animation when called twice on the same message', async () => {
+    const { ref } = await setupWithRef();
+    const wrapper = document.querySelector('[data-message-id]') as HTMLElement;
+    const messageEl = wrapper?.querySelector('[data-type]') as HTMLElement;
+
+    act(() => {
+      ref.current?.scrollToMessage(wrapper.dataset.messageId!);
+    });
+    act(() => {
+      messageEl.dispatchEvent(new Event('animationend', { bubbles: false }));
+    });
+    // class removed; call again
+    act(() => {
+      ref.current?.scrollToMessage(wrapper.dataset.messageId!);
+    });
+    expect(messageEl.classList.contains('spotlight-highlight')).toBe(true);
+  });
+});
+
+describe('MessageList visibility filtering', () => {
+  it('hides messages in hidden groups (hooks off by default)', async () => {
+    const { claude } = await renderWithChannel(<MessageList />);
+    await act(async () => {
+      await claude.emit(s.hookStarted('hook-1', 'my-hook', 'pre_tool_use'));
+      await claude.emit(s.result());
+    });
+    // hook_started is in Hooks group which is off by default
+    expect(screen.queryByText(/hook-1/i)).not.toBeInTheDocument();
+  });
+
+  it('shows messages in visible groups (conversation on by default)', async () => {
+    const { claude } = await renderWithChannel(<MessageList />);
+    await act(async () => {
+      await claude.emit(s.assistant('Hello from assistant'));
+      await claude.emit(s.result());
+    });
+    expect(screen.getByText(/Hello from assistant/)).toBeInTheDocument();
+  });
+
+  it('toggleGroup off hides messages of that group', async () => {
+    const user = userEvent.setup();
+    const { claude } = await renderWithChannel(
+      <>
+        <ToggleGroup group="conversation" />
+        <MessageList />
+      </>,
+    );
+    await act(async () => {
+      await claude.emit(s.assistant('Visible text'));
+      await claude.emit(s.result());
+    });
+    expect(screen.getByText(/Visible text/)).toBeInTheDocument();
+
+    await user.click(screen.getByText('toggle-conversation'));
+    expect(screen.queryByText(/Visible text/)).not.toBeInTheDocument();
+  });
+
+  it('toggleGroup on shows previously hidden messages', async () => {
+    const user = userEvent.setup();
+    const { claude } = await renderWithChannel(
+      <>
+        <ToggleGroup group="hooks" />
+        <MessageList />
+      </>,
+    );
+    await act(async () => {
+      await claude.emit(s.hookStarted('hook-id-2', 'my-hook', 'pre_tool_use'));
+      await claude.emit(s.result());
+    });
+    // hooks off by default — hook message count should be 0 in rendered list
+    const listBefore = screen.getByTestId('message-list');
+    const hookBefore = listBefore.querySelectorAll('[data-type="hook_started"]');
+    expect(hookBefore).toHaveLength(0);
+
+    // turn hooks on
+    await user.click(screen.getByText('toggle-hooks'));
+    const listAfter = screen.getByTestId('message-list');
+    const hookAfter = listAfter.querySelectorAll('[data-type="hook_started"]');
+    expect(hookAfter.length).toBeGreaterThan(0);
   });
 });

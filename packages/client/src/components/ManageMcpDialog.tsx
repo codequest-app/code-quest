@@ -1,6 +1,7 @@
 import type { McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────
@@ -103,7 +104,7 @@ function statusBadgeCls(status: string): string {
 // ── So0: plain status badge (no icon, raw status string) ────────────────────
 function PlainStatusBadge({ status }: { status: string }) {
   return (
-    <span className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${statusBadgeCls(status)}`}>
+    <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', statusBadgeCls(status))}>
       {status}
     </span>
   );
@@ -112,7 +113,7 @@ function PlainStatusBadge({ status }: { status: string }) {
 // ── mo0: icon + label badge ───────────────────────────────────────────────────
 function RichStatusBadge({ status }: { status: string }) {
   return (
-    <span className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${statusBadgeCls(status)}`}>
+    <span className={cn('shrink-0 rounded px-2 py-1 text-xs font-medium', statusBadgeCls(status))}>
       {statusIcon(status)} {statusLabel(status)}
     </span>
   );
@@ -213,7 +214,10 @@ export function ManageMcpDialog({
                 {servers.map((s) => (
                   <li
                     key={s.name}
-                    className={`flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 ${s.status === 'disabled' ? 'opacity-60' : ''}`}
+                    className={cn(
+                      'flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0',
+                      s.status === 'disabled' && 'opacity-60',
+                    )}
                   >
                     <span className="font-mono text-[13px] font-medium text-text truncate">
                       {s.name}
@@ -261,7 +265,10 @@ export function ManageMcpDialog({
                           setFeedback(null);
                           setSelectedServer(s.name);
                         }}
-                        className={`w-full flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-bg-secondary/60 ${s.status === 'disabled' ? 'opacity-60' : ''}`}
+                        className={cn(
+                          'w-full flex items-center justify-between gap-3 bg-bg-secondary border border-border rounded p-3 mb-2 last:mb-0 cursor-pointer hover:bg-bg-secondary/60',
+                          s.status === 'disabled' && 'opacity-60',
+                        )}
                       >
                         <span className="font-mono text-[13px] font-medium text-text truncate">
                           {s.name}
@@ -296,7 +303,7 @@ export function ManageMcpDialog({
             </div>
 
             {feedback && (
-              <p className={`text-xs ${feedback.ok ? 'text-success' : 'text-danger'}`}>
+              <p className={cn('text-xs', feedback.ok ? 'text-success' : 'text-danger')}>
                 {feedback.msg}
               </p>
             )}

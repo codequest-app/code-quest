@@ -1,5 +1,6 @@
 import type { RpcResult, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '../utils/cn';
 import { formatRelativeDate } from '../utils/format-relative-date';
 
 interface SessionRowProps {
@@ -88,7 +89,10 @@ export function SessionRow({
       aria-selected={isFocused ?? false}
       tabIndex={0}
       data-testid="session-row"
-      className={`flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group ${isFocused ? 'bg-selected' : ''}`}
+      className={cn(
+        'flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group',
+        isFocused && 'bg-selected',
+      )}
       onClick={isRenaming ? undefined : () => onSelect(s.channelId)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 import { ProjectContextMenu } from './ProjectContextMenu';
 import { ResumeSessionsDialog } from './ResumeSessionsDialog';
@@ -28,11 +29,12 @@ export function ProjectCard({
     <>
       <button
         type="button"
-        className={`mx-2 my-1 px-3 py-2 rounded cursor-pointer text-sm text-left w-[calc(100%-16px)] ${
+        className={cn(
+          'mx-2 my-1 px-3 py-2 rounded cursor-pointer text-sm text-left w-[calc(100%-16px)]',
           active
             ? 'border border-accent bg-accent/10 text-text'
-            : 'border border-transparent hover:bg-white/5 text-text-muted'
-        }`}
+            : 'border border-transparent hover:bg-white/5 text-text-muted',
+        )}
         onClick={onSelect}
         onContextMenu={handleContextMenu}
       >

@@ -1,14 +1,15 @@
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 
-const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors';
+const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors cursor-pointer';
 
 export interface HeaderBarProps {
   title?: string | null;
-  onToggleRaw?: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
-export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
+export function HeaderBar({ title, onOpenCommandPalette }: HeaderBarProps) {
   const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
@@ -32,11 +33,16 @@ export function HeaderBar({ title, onToggleRaw }: HeaderBarProps) {
         </span>
       )}
       {!sessionLabel && <div className="flex-1" />}
-      {onToggleRaw && (
-        <button type="button" title="Raw Events" onClick={onToggleRaw} className={HDR_BTN}>
-          Raw
-        </button>
-      )}
+
+      <button
+        type="button"
+        title="Command Palette (⌘K)"
+        aria-label="Command Palette (⌘K)"
+        onClick={onOpenCommandPalette}
+        className={HDR_BTN}
+      >
+        <MagnifyingGlassIcon className="w-4 h-4" aria-hidden="true" />
+      </button>
     </header>
   );
 }

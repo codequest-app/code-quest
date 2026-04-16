@@ -9,6 +9,7 @@ import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelIdProvider } from './ChannelIdContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
+import { MessageVisibilityProvider } from './MessageVisibilityContext';
 
 // ── ChannelProvider (orchestrator) ──
 
@@ -98,7 +99,9 @@ export function ChannelProvider({
       >
         <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
           <ChannelConfigProvider onNewChannel={onNewChannel}>
-            <ChannelComposeProvider>{children}</ChannelComposeProvider>
+            <MessageVisibilityProvider>
+              <ChannelComposeProvider>{children}</ChannelComposeProvider>
+            </MessageVisibilityProvider>
           </ChannelConfigProvider>
         </ChannelControlProvider>
       </ChannelMessagesProvider>

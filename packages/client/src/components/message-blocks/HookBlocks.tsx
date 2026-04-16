@@ -1,4 +1,5 @@
 import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '../../types/ui';
+import { cn } from '../../utils/cn';
 import { CODE_BLOCK_CLASS, CollapsibleBlock } from './shared';
 
 export function HookStartedContent({ content, meta }: { content: string; meta?: HookStartedMeta }) {
@@ -30,7 +31,7 @@ export function HookResponseContent({
     );
   return (
     <CollapsibleBlock icon="🔗" label={`Hook done: ${content}`}>
-      <pre className={`${CODE_BLOCK_CLASS} text-text-muted/80`}>{output}</pre>
+      <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80')}>{output}</pre>
     </CollapsibleBlock>
   );
 }

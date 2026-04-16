@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getToolHeader,
-  getToolHeaderInfo,
-  isMcpTool,
-  isToolHidden,
-  parseMcpToolName,
-} from '../tool-registry';
+import { getToolHeaderInfo, isMcpTool, parseMcpToolName } from '../tool-registry';
 
 describe('tool-registry', () => {
   describe('getToolHeaderInfo', () => {
@@ -86,28 +80,6 @@ describe('tool-registry', () => {
     it('unknown: just name', () => {
       expect(getToolHeaderInfo('CustomTool', {})).toEqual({ name: 'CustomTool' });
     });
-  });
-
-  describe('getToolHeader (plain text)', () => {
-    it('Bash with description', () => {
-      expect(getToolHeader('Bash', { description: 'List files' })).toBe('Bash List files');
-    });
-
-    it('Read with range', () => {
-      expect(getToolHeader('Read', { file_path: '/src/index.ts', offset: 0, limit: 5 })).toBe(
-        'Read index.ts (lines 1-5)',
-      );
-    });
-
-    it('unknown tool', () => {
-      expect(getToolHeader('CustomTool', {})).toBe('CustomTool');
-    });
-  });
-
-  describe('isToolHidden', () => {
-    it('hides TodoRead', () => expect(isToolHidden('TodoRead')).toBe(true));
-    it('hides TodoWrite', () => expect(isToolHidden('TodoWrite')).toBe(true));
-    it('does not hide Bash', () => expect(isToolHidden('Bash')).toBe(false));
   });
 
   describe('isMcpTool', () => {

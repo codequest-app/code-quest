@@ -34,13 +34,7 @@ export function CodeBlock({ code, language, className }: CodeBlockProps) {
       >
         {copied ? 'Copied!' : 'Copy'}
       </button>
-      <SyntaxHighlighter
-        style={vscDarkPlus}
-        language={language}
-        PreTag="div"
-        showLineNumbers={code.split('\n').length > 5}
-        lineNumberStyle={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75em', paddingRight: 8 }}
-      >
+      <SyntaxHighlighter style={vscDarkPlus} language={language} PreTag="div">
         {code}
       </SyntaxHighlighter>
     </div>

@@ -2,6 +2,7 @@ import { asyncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react/react-compiler';
 import { useEffect, useState } from 'react';
 import { useExplorerBrowse } from '../hooks/useExplorerBrowse';
+import { cn } from '../utils/cn';
 
 interface DirectoryItem {
   name: string;
@@ -66,9 +67,10 @@ export function FileTree({
           <div
             key={item.getId()}
             {...item.getProps()}
-            className={`flex items-center px-1 py-0.5 cursor-pointer text-sm select-none ${
-              isHighlighted ? 'bg-accent/20' : 'hover:bg-white/5'
-            }`}
+            className={cn(
+              'flex items-center px-1 py-0.5 cursor-pointer text-sm select-none',
+              isHighlighted ? 'bg-accent/20' : 'hover:bg-white/5',
+            )}
             style={{ paddingLeft: `${item.getItemMeta().level * 16 + 4}px` }}
             onClick={(e) => {
               item.getProps().onClick?.(e);
