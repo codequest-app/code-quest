@@ -12,7 +12,7 @@ class MockSpeechRecognition {
   continuous = false;
   interimResults = false;
   onresult: ((event: SpeechResult) => void) | null = null;
-  onerror: ((event: Event) => void) | null = null;
+  onerror: ((event: Event & { error?: string }) => void) | null = null;
   onend: (() => void) | null = null;
   start = vi.fn();
   stop = vi.fn(() => {

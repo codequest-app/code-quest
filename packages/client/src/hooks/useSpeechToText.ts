@@ -16,12 +16,13 @@ type SpeechRecognitionResultList = {
   length: number;
   [i: number]: SpeechRecognitionResult;
 };
+type SpeechRecognitionErrorEvent = Event & { error?: string };
 type SpeechRecognitionInstance = {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
   onresult: ((event: { resultIndex: number; results: SpeechRecognitionResultList }) => void) | null;
-  onerror: ((event: Event) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
@@ -71,8 +72,8 @@ export function useSpeechToText() {
       }
     };
 
-    recognition.onerror = (event: Event) => {
-      const error = (event as Event & { error?: string }).error ?? 'unknown';
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      const error = event.error ?? 'unknown';
       toast.error(`Speech recognition error: ${error}`);
       setIsListening(false);
       setInterimTranscript('');
