@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSpeechToText } from '../useSpeechToText';
 
@@ -11,7 +12,7 @@ class MockSpeechRecognition {
   continuous = false;
   interimResults = false;
   onresult: ((event: SpeechResult) => void) | null = null;
-  onerror: ((event: { error: string }) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
   onend: (() => void) | null = null;
   start = vi.fn();
   stop = vi.fn(() => {
@@ -113,8 +114,8 @@ describe('useSpeechToText', () => {
     expect(result.current.finalTranscript).toBe('');
   });
 
-  it('stops on error', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('shows toast.error and stops on speech recognition error', () => {
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
     let instance: MockSpeechRecognition;
     win.SpeechRecognition = class extends MockSpeechRecognition {
       constructor() {
@@ -124,16 +125,16 @@ describe('useSpeechToText', () => {
     };
 
     const { result } = renderHook(() => useSpeechToText());
-
     act(() => result.current.start());
     expect(result.current.isListening).toBe(true);
 
     act(() => {
-      instance.onerror?.({ error: 'network' });
+      instance.onerror?.(Object.assign(new Event('error'), { error: 'network' }));
       instance.onend?.();
     });
 
+    expect(toastErrorSpy).toHaveBeenCalledWith('Speech recognition error: network');
     expect(result.current.isListening).toBe(false);
-    consoleSpy.mockRestore();
+    toastErrorSpy.mockRestore();
   });
 });

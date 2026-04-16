@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 declare global {
   interface Window {
@@ -70,8 +71,9 @@ export function useSpeechToText() {
       }
     };
 
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event);
+    recognition.onerror = (event: Event) => {
+      const error = (event as Event & { error?: string }).error ?? 'unknown';
+      toast.error(`Speech recognition error: ${error}`);
       setIsListening(false);
       setInterimTranscript('');
     };

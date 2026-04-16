@@ -1,6 +1,7 @@
 import type { SessionSummary } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
 import { SessionRow } from '../SessionRow';
 
@@ -85,6 +86,27 @@ describe('SessionRow', () => {
     );
     const mark = screen.getByText('login');
     expect(mark.tagName).toBe('MARK');
+  });
+
+  it('shows toast.error when rename fails', async () => {
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => 'toast-id');
+    const onRename = vi.fn().mockResolvedValue({ ok: false, error: 'Network error' });
+
+    render(
+      <SessionRow
+        session={{ ...baseSession, title: 'My Session' }}
+        onSelect={noop}
+        onRename={onRename}
+      />,
+    );
+
+    await userEvent.click(screen.getByTitle('Rename'));
+    await userEvent.clear(screen.getByRole('textbox'));
+    await userEvent.type(screen.getByRole('textbox'), 'New Title');
+    await userEvent.keyboard('{Enter}');
+
+    expect(toastErrorSpy).toHaveBeenCalledWith('Rename failed: Network error');
+    toastErrorSpy.mockRestore();
   });
 
   it('shows date alongside action buttons (not replaced)', () => {

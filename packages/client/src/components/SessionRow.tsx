@@ -1,5 +1,6 @@
 import type { RpcResult, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { cn } from '../utils/cn';
 import { formatRelativeDate } from '../utils/format-relative-date';
 
@@ -59,7 +60,7 @@ export function SessionRow({
     if (newTitle && newTitle !== title && onRename) {
       const result = await onRename(s.channelId, newTitle);
       if (!result.ok) {
-        console.warn('Rename failed:', result.error);
+        toast.error(`Rename failed: ${result.error ?? 'Failed to rename'}`);
       }
     }
   };
