@@ -38,7 +38,7 @@ export interface ConfigState {
   permissionMode: string | null;
   thinkingLevel: string;
   effort: 'low' | 'medium' | 'high' | 'max' | null;
-  fastModeState: string | null;
+  fastModeState: 'on' | 'off' | null;
   config: Record<string, unknown>;
   currentRepo: string | null;
   slashCommands: string[];

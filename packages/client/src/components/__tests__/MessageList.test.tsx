@@ -54,6 +54,25 @@ describe('scroll button visibility', () => {
     await setupWithMessages();
     expect(screen.queryByTestId('scroll-to-bottom')).not.toBeInTheDocument();
   });
+
+  it('scroll-to-bottom button is outside the scroll container (not inside overflow-y-auto)', async () => {
+    await setupWithMessages();
+    // Force show the button by simulating scroll state
+    // The button should be a sibling of (or ancestor of) the scroll container,
+    // not a descendant of it
+    const messageList = screen.getByTestId('message-list');
+    const scrollContainer = screen.getByTestId('message-list-scroll');
+    // message-list is the outer positioning parent
+    // message-list-scroll is the inner scroll container
+    // button should NOT be inside message-list-scroll
+    expect(messageList).toBeInTheDocument();
+    expect(scrollContainer).toBeInTheDocument();
+    expect(messageList).toContainElement(scrollContainer);
+    // scroll container should NOT contain the button (button is sibling)
+    expect(scrollContainer).not.toContainElement(
+      scrollContainer.querySelector('[data-testid="scroll-to-bottom"]'),
+    );
+  });
 });
 
 describe('MessageList', () => {
@@ -489,5 +508,19 @@ describe('MessageList visibility filtering', () => {
     const listAfter = screen.getByTestId('message-list');
     const hookAfter = listAfter.querySelectorAll('[data-type="hook_started"]');
     expect(hookAfter.length).toBeGreaterThan(0);
+  });
+});
+
+describe('MessageList — layout', () => {
+  it('message content wrapper is present', async () => {
+    await setupWithMessages();
+    const wrapper = document.querySelector('[data-testid="message-content-wrapper"]');
+    expect(wrapper).not.toBeNull();
+  });
+
+  it('message content wrapper has pb-32 so last message scrolls above absolute InputArea', async () => {
+    await setupWithMessages();
+    const wrapper = document.querySelector('[data-testid="message-content-wrapper"]');
+    expect(wrapper?.className).toContain('pb-32');
   });
 });

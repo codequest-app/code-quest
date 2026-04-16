@@ -12,6 +12,7 @@ import {
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
+import { cn } from '../utils/cn';
 import { ChatInputArea } from './ChatInputArea';
 import { CommandPalette } from './CommandPalette';
 import { ContentPreviewPanel } from './ContentPreviewPanel';
@@ -143,7 +144,7 @@ export function ChatPanel({ title }: { title?: string }) {
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex flex-1 overflow-hidden min-w-0">
       <OnboardingOverlay />
       {pendingDiffReview && (
         <ContentPreviewPanel
@@ -164,8 +165,12 @@ export function ChatPanel({ title }: { title?: string }) {
           onClose={() => clearPendingDiffReview()}
         />
       )}
-      <div className="flex flex-col flex-1 min-w-0 relative">
-        <HeaderBar title={title} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
+      <div className="relative flex flex-col flex-1 min-w-0">
+        <HeaderBar
+          title={title}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          onOpenResume={openResumeOverlay}
+        />
         {worktree && <WorktreeBanner worktree={worktree} />}
         <CommandPalette
           open={commandPaletteOpen}
@@ -193,7 +198,7 @@ export function ChatPanel({ title }: { title?: string }) {
           error={sideQuestion.error}
           onClose={() => setSideQuestion((prev) => ({ ...prev, open: false }))}
         />
-        <div className="absolute bottom-4 left-4 right-4 z-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-bg from-20% to-transparent px-4 pb-4 pt-1">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
             <ChatInputArea
               onResumeConversation={openResumeOverlay}
@@ -203,7 +208,7 @@ export function ChatPanel({ title }: { title?: string }) {
         </div>
       </div>
       {activeSidePanel === 'raw' && (
-        <div className={SIDE_PANEL}>
+        <div className={cn('fixed inset-0 z-50', SIDE_PANEL, 'md:static md:inset-auto')}>
           <RawEventPanel
             onSubscribe={subscribeRawEvents}
             onClose={() => setActiveSidePanel(null)}

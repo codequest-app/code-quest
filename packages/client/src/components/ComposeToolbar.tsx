@@ -82,11 +82,15 @@ export function ComposeToolbar({
   const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
   const mcpRefresh = async () => {
-    const result = await mcpStatusRef.current();
-    const servers = result.success ? result.response?.mcpServers : undefined;
-    if (Array.isArray(servers)) {
-      setEnrichedMcpServers(servers.map(toMcpServerInfo));
-    } else {
+    try {
+      const result = await mcpStatusRef.current();
+      const servers = result.success ? result.response?.mcpServers : undefined;
+      if (Array.isArray(servers)) {
+        setEnrichedMcpServers(servers.map(toMcpServerInfo));
+      } else {
+        setEnrichedMcpServers(null);
+      }
+    } catch {
       setEnrichedMcpServers(null);
     }
   };

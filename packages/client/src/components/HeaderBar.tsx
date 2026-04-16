@@ -1,4 +1,4 @@
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 
@@ -7,9 +7,10 @@ const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors c
 export interface HeaderBarProps {
   title?: string | null;
   onOpenCommandPalette?: () => void;
+  onOpenResume?: () => void;
 }
 
-export function HeaderBar({ title, onOpenCommandPalette }: HeaderBarProps) {
+export function HeaderBar({ title, onOpenCommandPalette, onOpenResume }: HeaderBarProps) {
   const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
@@ -28,12 +29,23 @@ export function HeaderBar({ title, onOpenCommandPalette }: HeaderBarProps) {
         </span>
       )}
       {sessionLabel && (
-        <span className="flex-1 text-center text-text-muted/70 text-[11px] truncate px-2">
+        <span className="text-text-muted/70 text-[11px] truncate flex-1 min-w-0">
           {sessionLabel}
         </span>
       )}
       {!sessionLabel && <div className="flex-1" />}
 
+      {onOpenResume && (
+        <button
+          type="button"
+          title="Session history"
+          aria-label="Session history"
+          onClick={onOpenResume}
+          className={HDR_BTN}
+        >
+          <ClockIcon className="w-4 h-4" aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         title="Command Palette (⌘K)"

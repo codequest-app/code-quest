@@ -100,6 +100,29 @@ describe('ChatHandler > settings', () => {
 
       expect(await settingsStore.get('claude', 'model')).toBe('claude-sonnet-4-6');
     });
+
+    it('still returns success when settingsStore.set fails (CLI already received update)', async () => {
+      const failingStore = {
+        get: async () => undefined,
+        getMany: async () => ({}),
+        set: async (): Promise<void> => {
+          throw new Error('disk full');
+        },
+      };
+      const container = createTestContainer();
+      container.rebindSync(TYPES.SettingsStore).toConstantValue(failingStore);
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      const channelId = await claude.initialize(s.init('cli-sess-fail'));
+
+      const result = await claude.send('settings:set_model', {
+        channelId,
+        model: 'claude-sonnet-4-6',
+      });
+
+      expect(result).toEqual({ ok: true, data: {} });
+    });
   });
 
   describe('settings:set_thinking_level', () => {

@@ -1,3 +1,4 @@
+import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
@@ -28,16 +29,16 @@ export function EditorArea() {
   if (tabIds.length === 0) {
     return (
       <EmptyState
-        icon="💬"
+        icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
         message="No open sessions"
-        actionLabel="＋ New Session"
+        actionLabel="New Session"
         onAction={() => createNewTab()}
       />
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 h-full">
+    <div className="flex flex-col flex-1 min-w-0" data-testid="editor-area">
       <TabBar
         tabs={openTabs}
         activeTabId={activeTabId}
@@ -45,9 +46,13 @@ export function EditorArea() {
         onCloseTab={handleCloseTab}
         onNewTab={() => createNewTab()}
       />
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden">
         {tabIds.map((id) => (
-          <div key={id} className={cn(id === activeTabId ? 'flex flex-1' : 'hidden')}>
+          <div
+            key={id}
+            data-testid={id === activeTabId ? 'tab-container' : undefined}
+            className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : 'hidden')}
+          >
             <ChannelProvider
               channelId={id}
               cwd={tabs[id]?.cwd}

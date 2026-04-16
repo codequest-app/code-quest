@@ -1,3 +1,4 @@
+import { FolderIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
@@ -38,7 +39,8 @@ export function ProjectCard({
         onClick={onSelect}
         onContextMenu={handleContextMenu}
       >
-        📁 {name}
+        <FolderIcon className="w-4 h-4 shrink-0 inline-block mr-1.5 align-text-bottom" />
+        {name}
       </button>
       {menuPos && (
         <ProjectContextMenu

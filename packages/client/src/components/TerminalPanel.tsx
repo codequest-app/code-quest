@@ -3,6 +3,7 @@ import { Terminal } from '@xterm/xterm';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { copyToClipboard } from '../utils/clipboard';
 
 function XtermView({ lines }: { lines: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,7 +55,7 @@ export function TerminalPanel() {
   const handleCopy = async () => {
     if (!activeSession) return;
     const text = activeSession.outputLines.slice(clearedLines).join('\n');
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     toast.success('Terminal output copied');
   };
 

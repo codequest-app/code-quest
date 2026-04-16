@@ -108,9 +108,7 @@ export function createControlActions({
 
   function respondToControl(response: ControlPermissionResponse, requestId?: string) {
     const ctrls = controlsRef.current;
-    const target = requestId
-      ? (ctrls.find((c) => c.requestId === requestId) ?? ctrls[0])
-      : ctrls[0];
+    const target = requestId ? ctrls.find((c) => c.requestId === requestId) : ctrls[0];
     if (!target) return;
     emit('chat:respond', { requestId: target.requestId, response });
     const controlLabel = target.toolName ?? target.subtype;

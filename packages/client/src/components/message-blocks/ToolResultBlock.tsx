@@ -1,13 +1,6 @@
 import type { ToolResultMeta } from '../../types/ui';
-import { isDiff } from '../../utils/diff';
-import { DiffViewer } from '../DiffViewer';
-import {
-  AnsiContent,
-  CODE_BLOCK_CLASS,
-  CollapsibleBlock,
-  hasAnsi,
-  parseFilePathsInContent,
-} from './shared';
+import { ContentRenderer } from './ContentRenderer';
+import { CollapsibleBlock } from './shared';
 
 function extractTextFromArray(arr: unknown): string | null {
   if (!Array.isArray(arr)) return null;
@@ -40,18 +33,12 @@ export function ToolResultBlock({
 
   return (
     <CollapsibleBlock icon="✓" label={label}>
-      {isDiff(displayContent) ? (
-        <DiffViewer
-          content={displayContent}
-          editable={!!acceptHandler}
-          onAccept={acceptHandler}
-          onReject={rejectHandler}
-        />
-      ) : hasAnsi(displayContent) ? (
-        <AnsiContent content={displayContent} />
-      ) : (
-        <pre className={CODE_BLOCK_CLASS}>{parseFilePathsInContent(displayContent)}</pre>
-      )}
+      <ContentRenderer
+        content={displayContent}
+        editable={!!acceptHandler}
+        onAccept={acceptHandler}
+        onReject={rejectHandler}
+      />
     </CollapsibleBlock>
   );
 }

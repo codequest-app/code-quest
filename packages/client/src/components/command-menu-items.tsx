@@ -31,7 +31,7 @@ export interface BuildMenuItemsParams {
   effortLevels: EffortLevel[];
   isThinkingOn: boolean;
   isFastMode: boolean;
-  fastModeState: string | null;
+  fastModeState: 'on' | 'off' | null;
   modelLabel: string;
   supportsFastMode: boolean;
   onSetEffort: (effort: string) => void;

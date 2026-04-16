@@ -57,6 +57,15 @@
   animation: slideUp 0.15s ease-out;
 }
 
+@utility animate-slide-in-from-left {
+  animation: slideInFromLeft 0.2s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

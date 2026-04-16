@@ -72,6 +72,18 @@ vi.mock('react-resizable-panels', async () => {
   };
 });
 
+// jsdom doesn't implement matchMedia — default to desktop (≥1024px)
+if (typeof window.matchMedia === 'undefined') {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: query === '(min-width: 1024px)' || query === '(min-width: 768px)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+}
+
 // jsdom doesn't implement IntersectionObserver
 if (typeof IntersectionObserver === 'undefined') {
   global.IntersectionObserver = class IntersectionObserver {
