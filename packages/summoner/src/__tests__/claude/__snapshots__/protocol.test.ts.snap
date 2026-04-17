@@ -3541,6 +3541,33 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-claude-o
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-reload-plugins.jsonl:1 1`] = `
+{
+  "response": {
+    "request_id": "rp-1",
+    "response": {
+      "agents": [],
+      "commands": [
+        {
+          "argumentHint": "",
+          "description": "Review changed code for reuse, quality, and efficiency, then fix any issues found.",
+          "name": "simplify",
+        },
+        {
+          "argumentHint": "",
+          "description": "TDD best practices guide.",
+          "name": "tdd",
+        },
+      ],
+      "mcpServers": [],
+      "plugins": [],
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-request-elicitation.jsonl:1 1`] = `
 {
   "request": {
@@ -3661,6 +3688,19 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-side-que
     "request_id": "sq-1",
     "response": {
       "response": "This function parses JSON input and returns a typed object.",
+    },
+    "subtype": "success",
+  },
+  "type": "control_response",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses control-ultrareview-launch.jsonl:1 1`] = `
+{
+  "response": {
+    "request_id": "ur-1",
+    "response": {
+      "launched": true,
     },
     "subtype": "success",
   },
@@ -3799,6 +3839,19 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses streamlined-tool
   "tool_summary": "Read 2 files, wrote 1 file",
   "type": "streamlined_tool_use_summary",
   "uuid": "fake-uuid-streamlined-summary-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses system-mirror-error.jsonl:1 1`] = `
+{
+  "error": "Failed to write transcript",
+  "key": {
+    "sessionId": "sess-abc",
+  },
+  "session_id": "sess-abc",
+  "subtype": "mirror_error",
+  "type": "system",
+  "uuid": "uuid-mirror-1",
 }
 `;
 

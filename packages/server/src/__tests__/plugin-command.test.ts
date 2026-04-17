@@ -1,4 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { availablePluginSchema, pluginInfoSchema } from '@code-quest/shared';
 import { runPluginCommand } from '../socket/claude/cli.ts';
 
 vi.mock('node:child_process', async (importOriginal) => {
@@ -68,5 +71,23 @@ describe('runPluginCommand', () => {
     const result = runPluginCommand(['list']);
 
     expect(result).toEqual({ ok: true, stdout: '', stderr: '' });
+  });
+});
+
+describe('plugin schemas against real CLI fixture', () => {
+  const fixture = JSON.parse(
+    readFileSync(join(import.meta.dirname, 'fixtures/plugin-list-available.json'), 'utf-8'),
+  );
+
+  it('parses all installed plugins from fixture', () => {
+    const results = fixture.installed.map((item: unknown) => pluginInfoSchema.safeParse(item));
+    const failed = results.filter((r: { success: boolean }) => !r.success);
+    expect(failed).toHaveLength(0);
+  });
+
+  it('parses all available plugins from fixture', () => {
+    const results = fixture.available.map((item: unknown) => availablePluginSchema.safeParse(item));
+    const failed = results.filter((r: { success: boolean }) => !r.success);
+    expect(failed).toHaveLength(0);
   });
 });

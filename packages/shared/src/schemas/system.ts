@@ -12,6 +12,7 @@ export const modelInfoSchema = z.object({
   supportedEffortLevels: z.array(z.string()).optional(),
   supportsAdaptiveThinking: z.boolean().optional(),
   supportsFastMode: z.boolean().optional(),
+  supportsAutoMode: z.boolean().optional(),
 });
 export type ModelInfo = z.infer<typeof modelInfoSchema>;
 
@@ -128,6 +129,13 @@ export const systemRemoteControlPayloadSchema = z.object({
   info: remoteControlStateInfoSchema,
 });
 export type SystemRemoteControlPayload = z.infer<typeof systemRemoteControlPayloadSchema>;
+
+export const systemMirrorErrorPayloadSchema = z.object({
+  channelId: z.string(),
+  error: z.string(),
+  sessionId: z.string().optional(),
+});
+export type SystemMirrorErrorPayload = z.infer<typeof systemMirrorErrorPayloadSchema>;
 
 // ── Hook C2S (moved from control.ts) ──
 

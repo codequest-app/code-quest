@@ -129,6 +129,15 @@ export const systemBridgeStateSchema = z.looseObject({
   detail: z.string().optional(),
 });
 
+export const systemMirrorErrorSchema = z.looseObject({
+  type: z.literal('system'),
+  subtype: z.literal('mirror_error'),
+  error: z.string(),
+  key: z.unknown().optional(),
+  uuid: z.string().optional(),
+  session_id: z.string().optional(),
+});
+
 // Fallback for unknown system subtypes
 const systemFallbackSchema = z.looseObject({
   type: z.literal('system'),
@@ -413,6 +422,7 @@ const systemSubtypeRegistry: Record<string, z.ZodType> = {
   task_notification: systemTaskNotificationSchema,
   task_progress: systemTaskProgressSchema,
   bridge_state: systemBridgeStateSchema,
+  mirror_error: systemMirrorErrorSchema,
 };
 
 const typeRegistry: Record<string, z.ZodType> = {
@@ -463,6 +473,7 @@ export type ProtocolMessage =
   | z.infer<typeof systemTaskNotificationSchema>
   | z.infer<typeof systemTaskProgressSchema>
   | z.infer<typeof systemBridgeStateSchema>
+  | z.infer<typeof systemMirrorErrorSchema>
   | z.infer<typeof systemPostTurnSummarySchema>
   | z.infer<typeof systemSessionStateChangedSchema>
   | z.infer<typeof systemFallbackSchema>

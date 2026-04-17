@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
+import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
 import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
@@ -242,4 +243,31 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       errorLabel: 'Failed to refresh marketplace',
     }),
   );
+
+  async function handleReload(
+    ch: Channel,
+    _payload: unknown,
+    _socket?: TypedSocket,
+    cb?: SocketCallback,
+  ): Promise<void> {
+    try {
+      const result = await ch.sendRequest('plugin:reload', {});
+      const mapped = result.response ? ch.runner.mapResponse('plugin:reload', result.response) : {};
+      cb?.({
+        success: result.success,
+        ...mapped,
+        ...(result.error ? { error: result.error } : {}),
+      });
+      if (result.success && result.response) {
+        emitter.emit(ch.channelId, 'plugin:reloaded', {
+          channelId: ch.channelId,
+          ...result.response,
+        });
+      }
+    } catch (e) {
+      cb?.({ success: false, error: errMsg(e, 'Failed to reload plugins') });
+    }
+  }
+
+  emitter.on('plugin:reload', withError(withChannel(handleReload)));
 }

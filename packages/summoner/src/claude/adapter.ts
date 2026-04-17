@@ -30,6 +30,7 @@ const EMPTY: ConvertResult = { messages: [], serverActions: [], controlResponses
 interface RequestMapping {
   subtype: string;
   mapPayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
+  mapResponse?: (response: Record<string, unknown>) => Record<string, unknown>;
 }
 
 const serverNamePayload = (p: Record<string, unknown>) => {
@@ -63,6 +64,14 @@ const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
   'mcp:message': { subtype: 'mcp_message', mapPayload: serverNamePayload },
   'mcp:authenticate': { subtype: 'mcp_authenticate', mapPayload: serverNamePayload },
   'mcp:clear_auth': { subtype: 'mcp_clear_auth', mapPayload: serverNamePayload },
+  // transcript
+  'transcript:seed_read_state': { subtype: 'seed_read_state' },
+  // mcp channel
+  'mcp:channel_enable': { subtype: 'channel_enable', mapPayload: serverNamePayload },
+  // plugin
+  'plugin:reload': { subtype: 'reload_plugins', mapResponse: (r) => ({ data: r }) },
+  // ultrareview
+  'ultrareview:launch': { subtype: 'ultrareview_launch' },
   // claude-specific auth
   'auth:authenticate': { subtype: 'claude_authenticate' },
   'auth:oauth_callback': { subtype: 'claude_oauth_callback' },
@@ -136,6 +145,11 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     if (!mapping) throw new Error(`Unknown request event: ${event}`);
     const input = mapping.mapPayload ? mapping.mapPayload(payload) : payload;
     return { subtype: mapping.subtype, input };
+  }
+
+  mapResponse(event: string, response: Record<string, unknown>): Record<string, unknown> {
+    const mapping = REQUEST_MAPPINGS[event];
+    return mapping?.mapResponse ? mapping.mapResponse(response) : {};
   }
 
   formatMessage(text: string): string {

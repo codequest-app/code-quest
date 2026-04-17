@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resetSeq, segments as s } from '../../test/segments.ts';
-import { adapter, expectName, toClientMessage, transformResult } from './helpers.ts';
+import { adapter, expectName, toClientMessage } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {
   beforeEach(() => resetSeq());
@@ -357,8 +357,63 @@ describe('ClaudeAdapter', () => {
       expect(result).toEqual({ subtype: 'interrupt', input: {} });
     });
 
+    it('maps transcript:seed_read_state to seed_read_state subtype', () => {
+      const result = adapter.formatRequest('transcript:seed_read_state', {
+        path: '/src/main.ts',
+        mtime: 1711612800000,
+      });
+      expect(result).toEqual({
+        subtype: 'seed_read_state',
+        input: { path: '/src/main.ts', mtime: 1711612800000 },
+      });
+    });
+
+    it('maps mcp:channel_enable to channel_enable subtype with server_name', () => {
+      const result = adapter.formatRequest('mcp:channel_enable', { serverName: 'slack-mcp' });
+      expect(result).toEqual({ subtype: 'channel_enable', input: { server_name: 'slack-mcp' } });
+    });
+
+    it('maps plugin:reload to reload_plugins subtype', () => {
+      const result = adapter.formatRequest('plugin:reload', {});
+      expect(result).toEqual({ subtype: 'reload_plugins', input: {} });
+    });
+
+    it('maps ultrareview:launch to ultrareview_launch subtype', () => {
+      const result = adapter.formatRequest('ultrareview:launch', { args: [], confirm: false });
+      expect(result).toEqual({
+        subtype: 'ultrareview_launch',
+        input: { args: [], confirm: false },
+      });
+    });
+
     it('throws for unknown event name', () => {
       expect(() => adapter.formatRequest('unknown:event', {})).toThrow();
+    });
+  });
+
+  describe('mapResponse', () => {
+    it('plugin:reload maps response to { data: { commands, agents, plugins, mcpServers } }', () => {
+      const response = {
+        commands: [{ name: 'simplify', description: 'Review code', argumentHint: '' }],
+        agents: [{ name: 'general-purpose', description: 'General agent' }],
+        plugins: [{ id: 'p1', name: 'Plugin 1', enabled: true }],
+        mcpServers: [{ name: 'github', status: 'connected' }],
+      };
+
+      const result = adapter.mapResponse('plugin:reload', response);
+
+      expect(result).toEqual({ data: response });
+    });
+
+    it('plugin:reload with partial response still maps correctly', () => {
+      const response = { commands: [{ name: 'simplify' }] };
+      const result = adapter.mapResponse('plugin:reload', response);
+      expect(result).toEqual({ data: { commands: [{ name: 'simplify' }] } });
+    });
+
+    it('returns empty object for events without mapResponse', () => {
+      const result = adapter.mapResponse('settings:set_model', { model: 'opus' });
+      expect(result).toEqual({});
     });
   });
 });

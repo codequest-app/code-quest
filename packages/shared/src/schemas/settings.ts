@@ -36,7 +36,7 @@ export type SettingsGetStatePayload = z.infer<typeof settingsGetStatePayloadSche
 
 // ── State types ──
 
-export const effortLevelSchema = z.enum(['low', 'medium', 'high', 'max']);
+export const effortLevelSchema = z.enum(['low', 'medium', 'high', 'xhigh', 'max']);
 export type EffortLevel = z.infer<typeof effortLevelSchema>;
 
 export const chromeMcpStateSchema = z.object({

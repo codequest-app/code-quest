@@ -36,27 +36,34 @@ export const pluginInfoSchema = z.looseObject({
 });
 export type PluginInfo = z.infer<typeof pluginInfoSchema>;
 
-export const availablePluginSchema = z.looseObject({
-  pluginId: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  marketplaceName: z.string().optional(),
-  version: z.string().optional(),
-  source: z.string().optional(),
-  installCount: z.number().optional(),
-});
-export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
-
 export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
   z.object({ source: z.literal('npm'), package: z.string() }),
   z.object({ source: z.literal('github'), repo: z.string() }),
   z.object({ source: z.literal('git'), url: z.string() }),
+  z.object({
+    source: z.literal('git-subdir'),
+    url: z.string(),
+    path: z.string(),
+    ref: z.string().optional(),
+    sha: z.string().optional(),
+  }),
   z.object({ source: z.literal('url'), url: z.string() }),
   z.object({ source: z.literal('directory'), path: z.string() }),
   z.object({ source: z.literal('file'), path: z.string() }),
   z.object({ source: z.literal('local'), path: z.string() }),
 ]);
 export type MarketplaceSourceConfig = z.infer<typeof marketplaceSourceConfigSchema>;
+
+export const availablePluginSchema = z.looseObject({
+  pluginId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  marketplaceName: z.string().optional(),
+  version: z.string().optional(),
+  source: z.union([marketplaceSourceConfigSchema, z.string()]).optional(),
+  installCount: z.number().optional(),
+});
+export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
 
 export const marketplaceInfoSchema = z.object({
   name: z.string(),
@@ -97,6 +104,34 @@ export const marketplaceRawItemSchema = z.object({
 export type MarketplaceRawItem = z.infer<typeof marketplaceRawItemSchema>;
 
 // ── Response schemas ──
+
+export const pluginReloadRequestPayloadSchema = z.object({ channelId: z.string() });
+export type PluginReloadRequestPayload = z.infer<typeof pluginReloadRequestPayloadSchema>;
+
+export const pluginReloadPayloadSchema = z.object({
+  commands: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        argumentHint: z.string().optional(),
+      }),
+    )
+    .optional(),
+  agents: z.array(z.unknown()).optional(),
+  plugins: z.array(z.unknown()).optional(),
+  mcpServers: z
+    .array(z.object({ name: z.string(), status: z.string(), scope: z.string().optional() }))
+    .optional(),
+});
+export type PluginReloadPayload = z.infer<typeof pluginReloadPayloadSchema>;
+
+export const pluginReloadResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+  data: pluginReloadPayloadSchema.optional(),
+});
+export type PluginReloadResult = z.infer<typeof pluginReloadResultSchema>;
 
 export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });
 export type ListPluginsPayload = z.infer<typeof listPluginsPayloadSchema>;

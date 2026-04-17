@@ -29,6 +29,11 @@ export const claudeClientConfig: ProviderClientConfig = providerClientConfigSche
       description: 'Claude will explore the code and present a plan before editing',
     },
     {
+      id: 'auto',
+      label: 'Auto mode',
+      description: 'Claude will automatically choose the best permission mode for each task',
+    },
+    {
       id: 'bypassPermissions',
       label: 'Bypass permissions',
       description: 'Claude will not ask for approval before running potentially dangerous commands',
@@ -60,7 +65,7 @@ export const claudeClientConfig: ProviderClientConfig = providerClientConfigSche
       displayName: 'Default (recommended)',
       description: 'Opus 4.6 · Most capable for complex work',
       supportsEffort: true,
-      supportedEffortLevels: ['low', 'medium', 'high', 'max'],
+      supportedEffortLevels: ['low', 'medium', 'high', 'xhigh', 'max'],
       supportsAdaptiveThinking: true,
       supportsFastMode: true,
     },
@@ -69,7 +74,7 @@ export const claudeClientConfig: ProviderClientConfig = providerClientConfigSche
       displayName: 'Sonnet',
       description: 'Sonnet 4.6 · Best for everyday tasks',
       supportsEffort: true,
-      supportedEffortLevels: ['low', 'medium', 'high', 'max'],
+      supportedEffortLevels: ['low', 'medium', 'high', 'xhigh', 'max'],
       supportsAdaptiveThinking: true,
     },
     {

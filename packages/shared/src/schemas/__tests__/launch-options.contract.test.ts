@@ -9,7 +9,7 @@ import { effortLevelSchema } from '../settings.ts';
 
 describe('effortLevelSchema', () => {
   it('exports exactly low, medium, high, max', () => {
-    expect(effortLevelSchema.options.toSorted()).toEqual(['high', 'low', 'max', 'medium']);
+    expect(effortLevelSchema.options.toSorted()).toEqual(['high', 'low', 'max', 'medium', 'xhigh']);
   });
 });
 

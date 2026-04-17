@@ -8,6 +8,7 @@ import type {
   systemHookResponseSchema,
   systemHookStartedSchema,
   systemInitSchema,
+  systemMirrorErrorSchema,
   systemStatusSchema,
   systemTaskNotificationSchema,
   systemTaskProgressSchema,
@@ -24,6 +25,7 @@ type SystemTaskProgress = z.infer<typeof systemTaskProgressSchema>;
 type SystemApiRetry = z.infer<typeof systemApiRetrySchema>;
 type SystemBridgeState = z.infer<typeof systemBridgeStateSchema>;
 type SystemCompactBoundary = z.infer<typeof systemCompactBoundarySchema>;
+type SystemMirrorError = z.infer<typeof systemMirrorErrorSchema>;
 
 function handleInit(raw: SystemInit): ClientMessage {
   return {
@@ -146,6 +148,16 @@ function handleBridgeState(raw: SystemBridgeState): ClientMessage {
   };
 }
 
+function handleMirrorError(raw: SystemMirrorError): ClientMessage {
+  return {
+    name: 'system:mirror_error',
+    payload: {
+      error: raw.error,
+      sessionId: raw.session_id,
+    },
+  };
+}
+
 function handleCompactBoundary(raw: SystemCompactBoundary): ClientMessage {
   const preserved = raw.compactMetadata?.preservedSegment;
   return {
@@ -180,6 +192,7 @@ const HANDLERS: Record<string, SystemHandler> = {
   api_retry: handler(handleApiRetry),
   bridge_state: handler(handleBridgeState),
   compact_boundary: handler(handleCompactBoundary),
+  mirror_error: handler(handleMirrorError),
 };
 
 export function transformSystem(raw: ProtocolMessage): ClientMessage | null {

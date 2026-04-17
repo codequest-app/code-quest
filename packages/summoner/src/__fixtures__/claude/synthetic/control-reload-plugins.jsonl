@@ -1,0 +1,1 @@
+{"type":"control_response","response":{"subtype":"success","request_id":"rp-1","response":{"commands":[{"name":"simplify","description":"Review changed code for reuse, quality, and efficiency, then fix any issues found.","argumentHint":""},{"name":"tdd","description":"TDD best practices guide.","argumentHint":""}],"agents":[],"plugins":[],"mcpServers":[]}}}

@@ -96,5 +96,6 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
     requestId?: string,
   ): string;
   formatControlResponse(requestId: string, response: Record<string, unknown>): string;
+  mapResponse(event: string, response: Record<string, unknown>): Record<string, unknown>;
   extractRespondedRequestIds(rawEntries: Array<{ direction: string; raw: string }>): Set<string>;
 }

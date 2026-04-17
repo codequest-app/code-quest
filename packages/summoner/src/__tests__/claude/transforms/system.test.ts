@@ -199,4 +199,15 @@ describe('transform — system events', () => {
     expect(msg.payload.description).toBeUndefined();
     expect(msg.payload.lastToolName).toBeUndefined();
   });
+
+  it('converts system/mirror_error to system:mirror_error', () => {
+    const result = toClientMessage(s.mirrorError('Failed to write transcript', 'sess-abc'));
+    expect(result).toMatchObject({
+      name: 'system:mirror_error',
+      payload: {
+        error: 'Failed to write transcript',
+        sessionId: 'sess-abc',
+      },
+    });
+  });
 });

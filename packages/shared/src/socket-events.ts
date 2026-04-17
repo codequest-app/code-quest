@@ -76,6 +76,9 @@ import type {
   PlanCommentPayload,
   PlanRemoveCommentPayload,
   PluginInstallPayload,
+  PluginReloadPayload,
+  PluginReloadRequestPayload,
+  PluginReloadResult,
   PluginResult,
   PluginTogglePayload,
   PluginUninstallPayload,
@@ -129,6 +132,7 @@ import type {
   SystemExperimentGatesPayload,
   SystemHookResponsePayload,
   SystemHookStartedPayload,
+  SystemMirrorErrorPayload,
   SystemRateLimitPayload,
   SystemRemoteControlPayload,
   SystemTaskNotificationPayload,
@@ -303,6 +307,10 @@ export interface ClientToServerEvents {
   'plugin:refresh_marketplace': (
     payload: RefreshMarketplacePayload,
     callback: (result: MarketplaceResult) => void,
+  ) => void;
+  'plugin:reload': (
+    payload: PluginReloadRequestPayload,
+    callback: (result: PluginReloadResult) => void,
   ) => void;
 
   // ── Aligned: Auth ──
@@ -565,6 +573,8 @@ export interface ServerToClientEvents {
   'app:experiment_gates': (payload: SystemExperimentGatesPayload) => void;
   'app:models': (payload: SystemAvailableModelsPayload) => void;
   'system:remote_control': (payload: SystemRemoteControlPayload) => void;
+  'system:mirror_error': (payload: SystemMirrorErrorPayload) => void;
+  'plugin:reloaded': (payload: PluginReloadPayload) => void;
 
   // ── Notifications ──
   'notification:toast': (payload: NotificationToastPayload) => void;

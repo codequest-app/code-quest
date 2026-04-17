@@ -17,10 +17,16 @@ describe('ClaudeAdapter.clientConfig', () => {
     expect(adapter.clientConfig.brand.name).toBe('Claude');
   });
 
-  it('has 4 permission modes', () => {
+  it('has 5 permission modes including auto', () => {
     const modes = adapter.clientConfig.permissionModes;
-    expect(modes).toHaveLength(4);
-    expect(modes.map((m) => m.id)).toEqual(['normal', 'acceptEdits', 'plan', 'bypassPermissions']);
+    expect(modes).toHaveLength(5);
+    expect(modes.map((m) => m.id)).toEqual([
+      'normal',
+      'acceptEdits',
+      'plan',
+      'auto',
+      'bypassPermissions',
+    ]);
   });
 
   it('has usage tiers including sonnet', () => {

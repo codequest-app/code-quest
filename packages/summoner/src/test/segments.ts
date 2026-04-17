@@ -73,6 +73,10 @@ const TEMPLATES = {
   AUTH_URL: load(SYNTHETIC, 'auth-url.jsonl'),
   // TODO: replace with real DB fixture when an unknown event type is captured
   UNKNOWN_EVENT: load(SYNTHETIC, 'unknown-event.jsonl'),
+  // TODO: replace with real DB fixture when mirror_error is captured
+  SYSTEM_MIRROR_ERROR: load(SYNTHETIC, 'system-mirror-error.jsonl'),
+  CONTROL_SEED_READ_STATE: load(SYNTHETIC, 'control-seed-read-state.jsonl'),
+  CONTROL_CHANNEL_ENABLE: load(SYNTHETIC, 'control-channel-enable.jsonl'),
 } as const;
 
 // ── Segment builders ──
@@ -495,6 +499,30 @@ export const segments = {
     line.state = state;
     if (detail !== undefined) line.detail = detail;
     line.uuid = `fake-bridge-state-${++_seq}`;
+    return JSON.stringify(line);
+  },
+
+  mirrorError(error: string, sessionId: string): string {
+    const line = JSON.parse(TEMPLATES.SYSTEM_MIRROR_ERROR);
+    line.error = error;
+    line.session_id = sessionId;
+    line.key = { sessionId };
+    line.uuid = `fake-mirror-error-${++_seq}`;
+    return JSON.stringify(line);
+  },
+
+  seedReadState(path: string, mtime: number): string {
+    const line = JSON.parse(TEMPLATES.CONTROL_SEED_READ_STATE);
+    line.request.path = path;
+    line.request.mtime = mtime;
+    line.request_id = `seed-read-${++_seq}`;
+    return JSON.stringify(line);
+  },
+
+  channelEnable(serverName: string): string {
+    const line = JSON.parse(TEMPLATES.CONTROL_CHANNEL_ENABLE);
+    line.request.serverName = serverName;
+    line.request_id = `channel-enable-${++_seq}`;
     return JSON.stringify(line);
   },
 

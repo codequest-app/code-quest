@@ -205,4 +205,44 @@ describe('ChatHandler > plugin', () => {
       expect(result).toEqual({ success: true });
     });
   });
+
+  describe('plugin:reload', () => {
+    it('returns success with commands/agents/plugins/mcpServers from CLI response', async () => {
+      const { claude, channelId } = await setup();
+
+      const reloadResponse = {
+        commands: [{ name: 'simplify', description: 'Review code', argumentHint: '' }],
+        agents: [{ name: 'general-purpose', description: 'General agent' }],
+        plugins: [{ id: 'p1', name: 'Plugin 1', enabled: true }],
+        mcpServers: [{ name: 'github', status: 'connected' }],
+      };
+
+      claude.onControlRequest((req) => {
+        if (req.subtype === 'reload_plugins') {
+          return reloadResponse;
+        }
+        return null;
+      });
+
+      const result = await claude.send<{
+        success: boolean;
+        data?: typeof reloadResponse;
+      }>('plugin:reload', { channelId });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(reloadResponse);
+    });
+
+    it('returns success:true with no data when CLI responds without response body', async () => {
+      const { claude, channelId } = await setup();
+      // onControlRequest returns null → FakeClaude auto-responds with success but no response body
+
+      const result = await claude.send<{ success: boolean; data?: unknown }>('plugin:reload', {
+        channelId,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeUndefined();
+    });
+  });
 });
