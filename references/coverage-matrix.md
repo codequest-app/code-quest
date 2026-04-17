@@ -1,6 +1,6 @@
-# Protocol Coverage Matrix — Extension 2.1.86 vs cc-office
+# Protocol Coverage Matrix — Extension 2.1.111 vs cc-office
 
-> Updated: 2026-03-29
+> Updated: 2026-04-17
 > 所有 CLI 支援的功能 web 都能用（不存在「VS Code 專屬」）
 
 ## Event Types (CLI stdout → cc-office)
@@ -38,6 +38,7 @@
 | `error` | — | ✅ | ✅ | ✅ |
 | `auth_url` | — | ✅ | ✅ | ✅ |
 | `auth_status` | — | ✅ | ✅ | ✅ |
+| `system` (mirror_error) | ✅ | ✅ | ✅ | ✅ |
 
 ## Stream Delta Types
 
@@ -99,6 +100,7 @@
 | `claude_authenticate` | ✅ | ✅ handler | ✅ |
 | `claude_oauth_callback` | ✅ | ✅ handler | ✅ |
 | `claude_oauth_wait_for_completion` | ✅ | ✅ handler | ✅ |
+| `ultrareview_launch` | ✅ | ✅ | ✅ |
 
 ## CLI Spawn Flags
 
@@ -148,9 +150,9 @@
 
 | Category | Total | ✅ | Coverage |
 |---|---|---|---|
-| Event Types | 31 | 31 | **100%** |
+| Event Types | 32 | 32 | **100%** |
 | Stream Deltas | 6 | 6 | **100%** |
 | Control Received | 12 | 12 | **100%** |
-| Control Sent | 27 | 27 | **100%** |
+| Control Sent | 28 | 28 | **100%** |
 | CLI Flags | 39 | 39 | **100%** |
-| **Total** | **115** | **115** | **100%** |
+| **Total** | **117** | **117** | **100%** |
