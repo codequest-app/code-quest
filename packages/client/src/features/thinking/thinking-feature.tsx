@@ -1,7 +1,7 @@
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import type { MenuItemFeature } from '../../lib/feature';
 
-export interface ThinkingFeatureDeps {
+interface ThinkingFeatureDeps {
   isThinkingOn: boolean;
   onSetThinkingLevel: (level: string) => void;
 }

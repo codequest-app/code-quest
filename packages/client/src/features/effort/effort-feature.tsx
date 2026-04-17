@@ -2,7 +2,7 @@ import type { EffortLevel } from '@code-quest/shared';
 import { EffortSwitch } from '../../components/icons/EffortSwitch';
 import type { MenuItemFeature } from '../../lib/feature';
 
-export interface EffortFeatureDeps {
+interface EffortFeatureDeps {
   effort: EffortLevel | null;
   effortLevels: EffortLevel[];
   onSetEffort: (effort: string) => void;

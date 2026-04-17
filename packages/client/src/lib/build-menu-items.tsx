@@ -1,5 +1,5 @@
-import { type ChannelFeature, isMenuItemFeature, isSlashCommandFeature } from '../lib/feature';
-import type { FeatureRegistry } from '../lib/feature-registry';
+import { type ChannelFeature, isMenuItemFeature, isSlashCommandFeature } from './feature';
+import type { FeatureRegistry } from './feature-registry';
 
 export interface MenuItem {
   id: string;
@@ -18,7 +18,6 @@ interface MenuSections {
   context: MenuItem[];
   model: MenuItem[];
   customize: MenuItem[];
-  tools: MenuItem[];
   slash: MenuItem[];
   settings: MenuItem[];
   support: MenuItem[];
@@ -35,6 +34,9 @@ export interface BuildMenuItemsParams {
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
+const byOrder = (a: { menuItem: { order?: number } }, b: { menuItem: { order?: number } }) =>
+  (a.menuItem.order ?? Number.POSITIVE_INFINITY) - (b.menuItem.order ?? Number.POSITIVE_INFINITY);
+
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const { slashCommands, slashFilter, modelLabel, registry } = params;
   const { close, closeSilent, compose } = params;
@@ -50,11 +52,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   function buildSection(section: string): MenuItem[] {
     return menuFeatures
       .filter((f) => f.menuItem.section === section)
-      .sort(
-        (a, b) =>
-          (a.menuItem.order ?? Number.POSITIVE_INFINITY) -
-          (b.menuItem.order ?? Number.POSITIVE_INFINITY),
-      )
+      .sort(byOrder)
       .map((f) => ({
         id: f.id,
         label: f.menuItem.label,
@@ -91,17 +89,9 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   }
 
   const modelFeatures = menuFeatures.filter((f) => f.menuItem.section === 'Model');
-  const model: MenuItem[] = modelFeatures
-    .sort(
-      (a, b) =>
-        (a.menuItem.order ?? Number.POSITIVE_INFINITY) -
-        (b.menuItem.order ?? Number.POSITIVE_INFINITY),
-    )
-    .map(toModelItem);
+  const model: MenuItem[] = modelFeatures.sort(byOrder).map(toModelItem);
 
   const customize: MenuItem[] = buildSection('Customize');
-
-  const tools: MenuItem[] = [];
 
   const settings: MenuItem[] = buildSection('Settings');
 
@@ -150,5 +140,5 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     a.label.localeCompare(b.label),
   );
 
-  return { context, model, customize, tools, slash, settings, support };
+  return { context, model, customize, slash, settings, support };
 }

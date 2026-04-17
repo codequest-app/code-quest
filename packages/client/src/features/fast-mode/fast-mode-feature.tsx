@@ -1,7 +1,7 @@
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import type { MenuItemFeature } from '../../lib/feature';
 
-export interface FastModeFeatureDeps {
+interface FastModeFeatureDeps {
   fastModeState: 'on' | 'off' | null;
   setFastMode: (enabled: boolean) => void;
 }

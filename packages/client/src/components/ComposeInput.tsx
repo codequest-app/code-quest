@@ -1,12 +1,11 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
-import { findModel } from '../utils/model-utils';
+import { findModel, getEffortLevels } from '../utils/model-utils';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
@@ -28,10 +27,7 @@ export function ComposeInput() {
   const compose = useChannelCompose();
 
   const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
-  const effortLevels: EffortLevel[] = (
-    modelEntry?.supportedEffortLevels ??
-    (modelEntry?.supportsEffort ? effortLevelSchema.options : [])
-  ).filter((v: unknown): v is EffortLevel => effortLevelSchema.safeParse(v).success);
+  const effortLevels = getEffortLevels(modelEntry);
 
   const {
     value,

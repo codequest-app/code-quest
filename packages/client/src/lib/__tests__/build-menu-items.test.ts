@@ -9,10 +9,9 @@ import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-
 import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
 import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
 import { createThinkingFeature } from '../../features/thinking/thinking-feature';
-
-import type { MenuItemFeature, SlashCommandFeature } from '../../lib/feature';
-import { createFeatureRegistry } from '../../lib/feature-registry';
-import { type BuildMenuItemsParams, buildMenuItems } from '../command-menu-items';
+import { type BuildMenuItemsParams, buildMenuItems } from '../build-menu-items';
+import type { MenuItemFeature, SlashCommandFeature } from '../feature';
+import { createFeatureRegistry } from '../feature-registry';
 
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
   return {
@@ -31,13 +30,12 @@ describe('buildMenuItems', () => {
   afterEach(() => {
     btwSignal.setState({ open: false, question: '', answer: null, loading: false, error: null });
   });
-  it('returns all 7 sections', () => {
+  it('returns all 6 sections', () => {
     const sections = buildMenuItems(defaultParams());
     expect(Object.keys(sections)).toEqual([
       'context',
       'model',
       'customize',
-      'tools',
       'slash',
       'settings',
       'support',
@@ -157,34 +155,6 @@ describe('buildMenuItems', () => {
     expect(clearMessages).toHaveBeenCalled();
     expect(clearModifiedFiles).toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
-  });
-
-  it('effort item label is Effort and description shows level', () => {
-    const localFeatures = [
-      createEffortFeature({
-        effort: 'low',
-        effortLevels: ['low', 'medium', 'high', 'max'],
-        onSetEffort: vi.fn(),
-      }),
-    ];
-    const { model } = buildMenuItems(defaultParams({ localFeatures }));
-    const effortItem = model.find((i) => i.id === 'effort-level');
-    expect(effortItem?.label).toBe('Effort');
-    expect(effortItem?.description).toBe('(Low)');
-  });
-
-  it('effort item has no description when no level set', () => {
-    const localFeatures = [
-      createEffortFeature({
-        effort: null,
-        effortLevels: ['low', 'medium', 'high', 'max'],
-        onSetEffort: vi.fn(),
-      }),
-    ];
-    const { model } = buildMenuItems(defaultParams({ localFeatures }));
-    const effortItem = model.find((i) => i.id === 'effort-level');
-    expect(effortItem?.label).toBe('Effort');
-    expect(effortItem?.description).toBeUndefined();
   });
 
   it('context section includes rewind item from registry MenuItemFeature', () => {

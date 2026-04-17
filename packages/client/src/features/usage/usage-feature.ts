@@ -3,11 +3,11 @@ import { createOpenSignal } from '../../lib/open-signal';
 
 export const usageOpenSignal = createOpenSignal();
 
-export interface UsageFeatureDeps {
+interface UsageFeatureDeps {
   emitRefreshUsage: () => void;
 }
 
-export type UsageFeature = SlashCommandFeature & MenuItemFeature;
+type UsageFeature = SlashCommandFeature & MenuItemFeature;
 
 export function createUsageFeature({ emitRefreshUsage }: UsageFeatureDeps): UsageFeature {
   return {

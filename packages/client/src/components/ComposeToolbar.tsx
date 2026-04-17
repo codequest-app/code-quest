@@ -1,6 +1,5 @@
 import {
   contextUsageDataSchema,
-  effortLevelSchema,
   type McpServerInfo,
   mcpServerInfoSchema,
 } from '@code-quest/shared';
@@ -18,7 +17,7 @@ import { useSession } from '../contexts/SessionContext';
 import { modelOpenSignal } from '../features/model/model-feature';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useSpeechToText } from '../hooks/useSpeechToText';
-import { findModel } from '../utils/model-utils';
+import { findModel, getEffortLevels } from '../utils/model-utils';
 import { AddButton } from './AddButton';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
@@ -136,7 +135,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
 
   const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
   const supportsAutoMode = modelEntry?.supportsAutoMode ?? false;
-  const effortLevels = modelEntry?.supportedEffortLevels ?? effortLevelSchema.options;
+  const effortLevels = getEffortLevels(modelEntry);
 
   const contextPct =
     contextUsageDataSchema.safeParse(contextUsage).data?.percentage ??

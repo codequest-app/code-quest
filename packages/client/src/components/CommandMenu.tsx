@@ -1,4 +1,3 @@
-import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig } from '../contexts/channel';
 import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
@@ -12,11 +11,83 @@ import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-featur
 import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
 import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
+import { buildMenuItems, type MenuItem } from '../lib/build-menu-items';
 import { cn } from '../utils/cn';
-import { findModel } from '../utils/model-utils';
+import { findModel, getEffortLevels } from '../utils/model-utils';
 import { openUrl } from '../utils/open-url';
-import { buildMenuItems, type MenuItem } from './command-menu-items';
-import { MenuItemRow, MenuSection } from './command-menu-parts';
+
+function MenuItemRow({
+  item,
+  isActive,
+  activeItemRef,
+  onHover,
+}: {
+  item: MenuItem;
+  isActive: boolean;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
+  onHover: (id: string) => void;
+}) {
+  return (
+    <button
+      ref={isActive ? activeItemRef : null}
+      type="button"
+      role="menuitem"
+      disabled={item.disabled}
+      onClick={item.onClick}
+      onMouseEnter={() => onHover(item.id)}
+      className={cn(
+        'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
+        isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10',
+      )}
+    >
+      <span className="flex items-center gap-1.5">
+        {item.label}
+        {item.description && (
+          <span className="font-mono text-[11px] text-text-muted">{item.description}</span>
+        )}
+      </span>
+      {item.trailing && <span>{item.trailing}</span>}
+    </button>
+  );
+}
+
+function MenuSection({
+  label,
+  items,
+  activeId,
+  activeItemRef,
+  onHover,
+  isFirst = false,
+}: {
+  label: string;
+  items: MenuItem[];
+  activeId: string | null;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
+  onHover: (id: string) => void;
+  isFirst?: boolean;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <>
+      {!isFirst && <div className="h-px bg-border my-1" />}
+      {/* biome-ignore lint/a11y/useSemanticElements: role=group on div is correct; fieldset has unwanted browser styling */}
+      <div role="group" aria-label={label}>
+        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
+          {label}
+        </div>
+        {items.map((item) => (
+          <MenuItemRow
+            key={item.id}
+            item={item}
+            isActive={item.id === activeId}
+            activeItemRef={activeItemRef}
+            onHover={onHover}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 
@@ -116,10 +187,7 @@ export function CommandMenu({
   const modelLabel = modelEntry?.label ?? modelEntry?.displayName ?? currentModel ?? 'Default';
 
   const supportsFastMode = modelEntry?.supportsFastMode ?? false;
-  const effortLevels: EffortLevel[] = (
-    modelEntry?.supportedEffortLevels ??
-    (modelEntry?.supportsEffort ? effortLevelSchema.options : [])
-  ).filter((v: unknown): v is EffortLevel => effortLevelSchema.safeParse(v).success);
+  const effortLevels = getEffortLevels(modelEntry);
 
   const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
 
@@ -274,7 +342,6 @@ export function CommandMenu({
     context: contextItems,
     model: modelItems,
     customize: customizeItems,
-    tools: toolsItems,
     slash: slashItems,
     settings: settingsItems,
     support: supportItems,
@@ -296,7 +363,6 @@ export function CommandMenu({
   const filteredContext = filterItems(contextItems);
   const filteredModel = filterItems(modelItems);
   const filteredCustomize = filterItems(customizeItems);
-  const filteredTools = filterItems(toolsItems);
   const filteredSlash = filterItems(slashItems);
   const filteredSettings = filterItems(settingsItems);
   const filteredSupport = filterItems(supportItems);
@@ -307,8 +373,7 @@ export function CommandMenu({
   const contextVisible = filteredContext.length > 0;
   const modelHasPrev = contextVisible;
   const customizeHasPrev = contextVisible || modelSectionVisible;
-  const toolsHasPrev = customizeHasPrev || filteredCustomize.length > 0;
-  const slashHasPrev = toolsHasPrev || filteredTools.length > 0;
+  const slashHasPrev = customizeHasPrev || filteredCustomize.length > 0;
   const settingsHasPrev = slashHasPrev || filteredSlash.length > 0;
   const supportHasPrev = settingsHasPrev || filteredSettings.length > 0;
 
@@ -316,7 +381,6 @@ export function CommandMenu({
     ...filteredContext,
     ...(modelSectionVisible ? filteredModel : []),
     ...filteredCustomize,
-    ...filteredTools,
     ...filteredSlash,
     ...filteredSettings,
     ...filteredSupport,
@@ -435,14 +499,6 @@ export function CommandMenu({
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
                   isFirst={!customizeHasPrev}
-                />
-                <MenuSection
-                  label="Tools"
-                  items={filteredTools}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!toolsHasPrev}
                 />
                 <MenuSection
                   label="Slash Commands"
