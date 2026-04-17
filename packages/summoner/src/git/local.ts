@@ -186,7 +186,7 @@ export class LocalGitService implements GitService {
       return { stdout, exitCode: 0 };
     } catch (err) {
       console.debug('[GitService] git raw failed:', args.join(' '), errMsg(err));
-      const stdout = err instanceof GitResponseError ? ((err.git as string) ?? '') : '';
+      const stdout = err instanceof GitResponseError && typeof err.git === 'string' ? err.git : '';
       return { stdout, exitCode: 1 };
     }
   }
