@@ -86,8 +86,10 @@ export function renderBody(
       return <div className="text-xs text-text-muted italic py-1">Thinking (redacted)</div>;
     case 'result':
       return <ResultContent meta={message.meta} />;
-    case 'error':
-      return <ErrorContent content={content} />;
+    case 'error': {
+      const detail = (message.meta as { detail?: string } | undefined)?.detail;
+      return <ErrorContent content={detail ?? content} />;
+    }
     case 'pending_action':
       return <PendingActionContent content={content} />;
     case 'action_result':

@@ -74,6 +74,8 @@ export const VISIBILITY_GROUPS: Group[] = [
     types: [
       'tool_use:TodoRead',
       'tool_use:TodoWrite',
+      'error:aborted',
+      'error:ede_diagnostic',
       'raw_event',
       'unhandled',
       'unknown_delta',

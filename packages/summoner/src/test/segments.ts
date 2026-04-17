@@ -327,7 +327,12 @@ export const segments = {
     return JSON.stringify(line);
   },
 
-  resultError(opts?: { durationMs?: number; costUsd?: number; errors?: string[] }): string {
+  resultError(opts?: {
+    durationMs?: number;
+    costUsd?: number;
+    errors?: string[];
+    terminalReason?: string;
+  }): string {
     const line = JSON.parse(
       opts?.errors ? TEMPLATES.RESULT_RESUME_NOT_FOUND : TEMPLATES.RESULT_ERROR,
     );
@@ -337,6 +342,7 @@ export const segments = {
     }
     if (opts?.costUsd != null) line.total_cost_usd = opts.costUsd;
     if (opts?.errors != null) line.errors = opts.errors;
+    if (opts?.terminalReason != null) line.terminal_reason = opts.terminalReason;
     line.uuid = `fake-result-err-${++_seq}`;
     return JSON.stringify(line);
   },

@@ -31,8 +31,19 @@ export function transformResult(raw: ResultMessage): ClientMessage | ClientMessa
   const resultMessage: ClientMessage = { name: 'message:result', payload: resultPayload };
 
   if (raw.is_error && Array.isArray(raw.errors) && raw.errors.length > 0) {
-    return [resultMessage, { name: 'error:message', payload: { message: raw.errors.join('; ') } }];
+    const isAborted = raw.terminal_reason === 'aborted_streaming';
+    const errorMessages: ClientMessage[] = raw.errors.map((message) => ({
+      name: 'error:message',
+      payload: { message, kind: classifyErrorKind(message, isAborted) },
+    }));
+    return [resultMessage, ...errorMessages];
   }
 
   return resultMessage;
+}
+
+function classifyErrorKind(message: string, isAborted: boolean): string | undefined {
+  if (message.startsWith('[ede_diagnostic]')) return 'ede_diagnostic';
+  if (isAborted) return 'aborted';
+  return undefined;
 }

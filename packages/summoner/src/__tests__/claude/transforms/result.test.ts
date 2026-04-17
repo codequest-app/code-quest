@@ -52,6 +52,43 @@ describe('transform — result events', () => {
     });
   });
 
+  it('classifies aborted_streaming errors as kind="aborted"', () => {
+    const base = JSON.parse(s.result());
+    base.is_error = true;
+    base.subtype = 'error_during_execution';
+    base.terminal_reason = 'aborted_streaming';
+    base.errors = [
+      '[ede_diagnostic] result_type=user last_content_type=n/a stop_reason=null',
+      'Error: Request was aborted.\n    at makeRequest',
+    ];
+    const result = transformResult(JSON.stringify(base));
+    const errorMsgs = result.messages.filter((m) => m.name === 'error:message');
+    expect(errorMsgs).toHaveLength(2);
+    expect(errorMsgs[0]).toMatchObject({
+      name: 'error:message',
+      payload: {
+        kind: 'ede_diagnostic',
+        message: '[ede_diagnostic] result_type=user last_content_type=n/a stop_reason=null',
+      },
+    });
+    expect(errorMsgs[1]).toMatchObject({
+      name: 'error:message',
+      payload: { kind: 'aborted', message: expect.stringContaining('Request was aborted') },
+    });
+  });
+
+  it('non-aborted errors have no kind (plain error)', () => {
+    const base = JSON.parse(s.result());
+    base.is_error = true;
+    base.subtype = 'error_max_turns';
+    base.errors = ['Max turns exceeded'];
+    const result = transformResult(JSON.stringify(base));
+    const errorMsgs = result.messages.filter((m) => m.name === 'error:message');
+    expect(errorMsgs).toHaveLength(1);
+    expect(errorMsgs[0].payload.kind).toBeUndefined();
+    expect(errorMsgs[0].payload.message).toBe('Max turns exceeded');
+  });
+
   it('handles result without is_error/subtype (backward compat)', () => {
     const base = JSON.parse(s.result());
     base.total_cost_usd = 0.05;

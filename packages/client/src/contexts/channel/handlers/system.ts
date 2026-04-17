@@ -76,7 +76,12 @@ function onRateLimit(state: ChannelState, p: Payload<'system:rate_limit'>): Chan
 }
 
 function onErrorMessage(state: ChannelState, p: Payload<'error:message'>): ChannelState {
-  return addMessage(state, { role: 'system', type: 'error', content: p.message });
+  return addMessage(state, {
+    role: 'system',
+    type: 'error',
+    content: p.kind ?? p.message,
+    ...(p.kind ? { meta: { detail: p.message } } : {}),
+  });
 }
 
 // ── Handler map ──

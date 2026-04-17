@@ -298,13 +298,10 @@ export function ChannelMessagesProvider({
           ? patchMeta(m, { isStreaming: false, durationMs: stats.durationMs })
           : m,
       );
-      const base = p.errors?.length
-        ? [
-            ...finalized,
-            msg({ role: 'system', type: 'error', content: p.errors[0] }),
-            msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
-          ]
-        : [...finalized, msg({ role: 'system', type: 'result', content: '', meta: { stats } })];
+      const base = [
+        ...finalized,
+        msg({ role: 'system', type: 'result', content: '', meta: { stats } }),
+      ];
       return {
         ...prev,
         status: 'idle' as const,

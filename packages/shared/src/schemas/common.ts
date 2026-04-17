@@ -43,6 +43,7 @@ export type ChannelMetaCache = z.infer<typeof channelMetaCacheSchema>;
 export const errorMessagePayloadSchema = z.object({
   channelId: z.string(),
   message: z.string(),
+  kind: z.string().optional(),
 });
 export type ErrorMessagePayload = z.infer<typeof errorMessagePayloadSchema>;
 

@@ -205,6 +205,7 @@ export const resultSchema = z.looseObject({
   uuid: z.string().optional(),
   fast_mode_state: z.string().optional(),
   permission_denials: z.array(z.unknown()).optional(),
+  terminal_reason: z.string().optional(),
 });
 
 // ── Control request ──
