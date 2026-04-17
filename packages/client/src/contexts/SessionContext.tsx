@@ -2,6 +2,7 @@ import type {
   ForkConversationResponse,
   RpcResult,
   SessionStateSummary,
+  SessionStatesPayload,
   SessionSummary,
   TeleportSessionResponse,
 } from '@code-quest/shared';
@@ -12,7 +13,7 @@ import {
   sessionResumeResponseSchema,
   sessionStatesPayloadSchema,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
@@ -65,6 +66,13 @@ interface SessionContextValue {
   login: () => void;
   submitOAuthCode: (code: string, state?: string) => void;
   resetAuth: () => void;
+
+  /** Register a listener that fires synchronously when a `session:states`
+   * broadcast arrives, before React batches the `sessions` state update.
+   * Use this when subscribers need the same sync timing as a direct
+   * `socket.on('session:states', ...)` (e.g., a joinedRef gate that must
+   * reflect pre-join vs post-join distinction). */
+  subscribeSessionStates: (cb: (payload: SessionStatesPayload) => void) => () => void;
 }
 
 type SessionStateValue = Pick<
@@ -126,6 +134,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
   const [capabilities, setCapabilities] = useState<{ worktree: boolean }>({ worktree: false });
 
+  const sessionStatesListenersRef = useRef<Set<(p: SessionStatesPayload) => void>>(new Set());
+
   useEffect(() => {
     const onConnectError = (err: Error) => {
       toast.error(`Connection error: ${err.message}`);
@@ -167,7 +177,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
     const onCreated = apply(handleCreated);
     const onDead = apply(handleDead);
-    const onStates = apply(handleStates);
+    const onStates = (raw: unknown) => {
+      const parsed = sessionStatesPayloadSchema.safeParse(raw);
+      if (parsed.success) setSessions(handleStates(raw) ?? ((prev) => prev));
+      // Sync fan-out: listeners see the event at the socket.on tick (before
+      // React batches setSessions), preserving a joinedRef-style gate that
+      // distinguishes pre-join vs post-join events.
+      const payload = parsed.success ? parsed.data : (raw as SessionStatesPayload);
+      for (const listener of sessionStatesListenersRef.current) listener(payload);
+    };
 
     socket.on('connect', onConnect);
     if (socket.connected) onConnect();
@@ -244,6 +262,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     },
     resetAuth: () => setAuth({ status: 'idle', authUrl: null, errorMsg: null }),
+    subscribeSessionStates: (cb) => {
+      sessionStatesListenersRef.current.add(cb);
+      return () => {
+        sessionStatesListenersRef.current.delete(cb);
+      };
+    },
   }));
 
   return (

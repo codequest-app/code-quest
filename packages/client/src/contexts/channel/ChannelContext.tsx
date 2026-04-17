@@ -9,6 +9,7 @@ import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelIdProvider } from './ChannelIdContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
+import { ChannelSocketRouterProvider } from './ChannelSocketRouterContext';
 import { MessageVisibilityProvider } from './MessageVisibilityContext';
 
 // ── ChannelProvider (orchestrator) ──
@@ -91,20 +92,22 @@ export function ChannelProvider({
   // ── Connected — full provider tree ──
   return (
     <ChannelIdProvider channelId={channelId}>
-      <ChannelMessagesProvider
-        onChange={onChange}
-        dequeueMessage={() => messageQueueRef.current.shift()}
-        messageQueueRef={messageQueueRef}
-        resetStreamingRefsRef={resetStreamingRefsRef}
-      >
-        <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
-          <ChannelConfigProvider onNewChannel={onNewChannel}>
-            <MessageVisibilityProvider>
-              <ChannelComposeProvider>{children}</ChannelComposeProvider>
-            </MessageVisibilityProvider>
-          </ChannelConfigProvider>
-        </ChannelControlProvider>
-      </ChannelMessagesProvider>
+      <ChannelSocketRouterProvider>
+        <ChannelMessagesProvider
+          onChange={onChange}
+          dequeueMessage={() => messageQueueRef.current.shift()}
+          messageQueueRef={messageQueueRef}
+          resetStreamingRefsRef={resetStreamingRefsRef}
+        >
+          <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
+            <ChannelConfigProvider onNewChannel={onNewChannel}>
+              <MessageVisibilityProvider>
+                <ChannelComposeProvider>{children}</ChannelComposeProvider>
+              </MessageVisibilityProvider>
+            </ChannelConfigProvider>
+          </ChannelControlProvider>
+        </ChannelMessagesProvider>
+      </ChannelSocketRouterProvider>
     </ChannelIdProvider>
   );
 }

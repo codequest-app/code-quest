@@ -13,7 +13,8 @@ import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { matchesChannel, type Payload, wireHandlers } from './handlers/guard';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext';
+import type { Payload } from './handlers/guard';
 import type { EffectDeps } from './handlers/notification';
 import {
   type ControlState,
@@ -114,7 +115,6 @@ export function ChannelControlProvider({
   }
 
   function onControlPermission(payload: Payload<'control:permission'>) {
-    if (!matchesChannel(channelId, payload)) return;
     addControlAndMessage(
       {
         requestId: payload.requestId,
@@ -130,7 +130,6 @@ export function ChannelControlProvider({
   }
 
   function onControlHookCallback(payload: Payload<'control:hook_callback'>) {
-    if (!matchesChannel(channelId, payload)) return;
     addControlAndMessage(
       {
         requestId: payload.requestId,
@@ -145,7 +144,6 @@ export function ChannelControlProvider({
   }
 
   function onSessionClosed(payload: Payload<'session:closed'>) {
-    if (!matchesChannel(channelId, payload)) return;
     resetStreamingRefs();
     setControls([]);
     setChannelState((prev) => ({
@@ -159,40 +157,30 @@ export function ChannelControlProvider({
     }));
   }
 
+  const router = useChannelSocketRouter();
+
   // ── Auto-wiring: handler map events (pure local state) + control:mcp effect ──
   // biome-ignore lint/correctness/useExhaustiveDependencies: setControlState uses refs which are stable
   useEffect(() => {
     if (!channelId) return;
-    return wireHandlers<ControlState, EffectDeps>(
-      socket,
-      channelId,
-      controlHandlers,
-      setControlState,
-      { effects: controlHandlerEffects, effectDeps: { socket, channelId } },
-    );
-  }, [channelId, socket]);
+    return router.register<ControlState, EffectDeps>(controlHandlers, setControlState, {
+      effects: controlHandlerEffects,
+      effectDeps: { socket, channelId },
+    });
+  }, [channelId, socket, router]);
 
-  // ── Special: control:permission + control:hook_callback ──
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handlers use channelId+socket from deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handlers use channelId which is stable for effect
   useEffect(() => {
     if (!channelId) return;
-    socket.on('control:permission', onControlPermission);
-    socket.on('control:hook_callback', onControlHookCallback);
+    const off1 = router.on('control:permission', onControlPermission);
+    const off2 = router.on('control:hook_callback', onControlHookCallback);
+    const off3 = router.on('session:closed', onSessionClosed);
     return () => {
-      socket.off('control:permission', onControlPermission);
-      socket.off('control:hook_callback', onControlHookCallback);
+      off1();
+      off2();
+      off3();
     };
-  }, [channelId, socket]);
-
-  // ── Special: session:closed ──
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handler uses channelId+socket from deps
-  useEffect(() => {
-    if (!channelId) return;
-    socket.on('session:closed', onSessionClosed);
-    return () => {
-      socket.off('session:closed', onSessionClosed);
-    };
-  }, [channelId, socket]);
+  }, [channelId, router]);
 
   // ── Stable actions ──
   const actions = createControlActions({

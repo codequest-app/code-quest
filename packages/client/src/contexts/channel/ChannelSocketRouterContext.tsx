@@ -1,0 +1,25 @@
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import { useSocket } from '../SocketContext';
+import { useChannelId } from './ChannelIdContext';
+import { ChannelSocketRouter } from './socket-router';
+
+const Context = createContext<ChannelSocketRouter | null>(null);
+
+export function ChannelSocketRouterProvider({ children }: { children: ReactNode }) {
+  const { socket } = useSocket();
+  const channelId = useChannelId();
+
+  const router = useMemo(() => new ChannelSocketRouter(socket, channelId), [socket, channelId]);
+
+  useEffect(() => () => router.dispose(), [router]);
+
+  return <Context.Provider value={router}>{children}</Context.Provider>;
+}
+
+export function useChannelSocketRouter(): ChannelSocketRouter {
+  const router = useContext(Context);
+  if (!router) {
+    throw new Error('useChannelSocketRouter must be used within ChannelSocketRouterProvider');
+  }
+  return router;
+}

@@ -31,11 +31,13 @@ import { createUsageFeature } from '../../features/usage/usage-feature';
 import { createFeatureRegistry } from '../../lib/feature-registry';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, mapSessionStats, msg, patchMeta } from '../../utils/message';
+import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import { FeatureRegistryContext } from './FeatureRegistryContext';
 import { createFileActions } from './handlers/file';
-import { type Payload, wireHandlers } from './handlers/guard';
+import type { Payload } from './handlers/guard';
 import { createMessageActions, messageHandlerOn } from './handlers/message';
 import {
   type EffectDeps,
@@ -203,17 +205,17 @@ export function ChannelMessagesProvider({
     });
   }
 
+  const router = useChannelSocketRouter();
+  const { subscribeSessionStates } = useSession();
+
   // ── Join session + cross-window status sync ──
   // biome-ignore lint/correctness/useExhaustiveDependencies: joinSession/onSessionStates use channelId+socket which are in deps
   useEffect(() => {
     if (!channelId) return;
     joinedRef.current = false;
     joinSession();
-    socket.on('session:states', onSessionStates);
-    return () => {
-      socket.off('session:states', onSessionStates);
-    };
-  }, [channelId, socket]);
+    return subscribeSessionStates(onSessionStates);
+  }, [channelId, socket, subscribeSessionStates]);
 
   // ── Status change callback ──
   useEffect(() => {
@@ -261,7 +263,7 @@ export function ChannelMessagesProvider({
       ...notificationHandlerOn,
     };
 
-    return wireHandlers<ChannelState, EffectDeps>(socket, channelId, allHandlers, setChannelState, {
+    return router.register<ChannelState, EffectDeps>(allHandlers, setChannelState, {
       skipGuard: new Set(['disconnect']),
       beforeUpdate(event) {
         if (resetEvents.has(event)) resetStreamingRefs();
@@ -269,7 +271,7 @@ export function ChannelMessagesProvider({
       effects: notificationHandlerEffects,
       effectDeps: { socket, channelId },
     });
-  }, [channelId, socket]); // resetStreamingRefs only touches refs, stable
+  }, [channelId, socket, router]); // resetStreamingRefs only touches refs, stable
 
   // ── Special: streaming + message:assistant ──
   // biome-ignore lint/correctness/useExhaustiveDependencies: resetStreamingRefs only touches refs
@@ -287,7 +289,6 @@ export function ChannelMessagesProvider({
   }, [channelId, socket]);
 
   function onMessageResult(p: Payload<'message:result'>) {
-    if (p.channelId !== channelId && p.channelId !== '') return;
     resetStreamingRefs();
     const stats = mapSessionStats(p.stats);
     setChannelState((prev) => {
@@ -323,11 +324,8 @@ export function ChannelMessagesProvider({
   // biome-ignore lint/correctness/useExhaustiveDependencies: onMessageResult uses channelId+socket which are in deps
   useEffect(() => {
     if (!socket) return;
-    socket.on('message:result', onMessageResult);
-    return () => {
-      socket.off('message:result', onMessageResult);
-    };
-  }, [channelId, socket]);
+    return router.on('message:result', onMessageResult);
+  }, [channelId, socket, router]);
 
   // Side-effect events are now handled by auto-wiring via messagesEffects
 

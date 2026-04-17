@@ -91,22 +91,6 @@ function onExperimentGates(state: ConfigState, p: Payload<'app:experiment_gates'
   return { ...state, experimentGates: p.gates };
 }
 
-function onSessionStates(
-  state: ConfigState,
-  payload: Payload<'session:states'>,
-  channelId: string,
-): ConfigState {
-  for (const summary of payload.sessions) {
-    if (summary.channelId !== channelId) continue;
-    const update: Partial<ConfigState> = {};
-    if (summary.modelSetting) update.model = summary.modelSetting;
-    if (summary.permissionMode) update.permissionMode = summary.permissionMode;
-    if (summary.effort) update.effort = toEffort(summary.effort);
-    if (Object.keys(update).length > 0) return { ...state, ...update };
-  }
-  return state;
-}
-
 function buildSlashCommands(names: string[]): string[] {
   return [...new Set([...names, 'usage'])];
 }
@@ -202,8 +186,7 @@ export const configHandlers = {
   'plugin:reloaded': onPluginReloaded,
 } satisfies Record<string, (state: ConfigState, payload: never) => ConfigState>;
 
-// session:states needs channelId — handled specially in context
-export { onSessionStates, parseModels, toEffort };
+export { parseModels, toEffort };
 
 // ── Emit actions (send) ──
 

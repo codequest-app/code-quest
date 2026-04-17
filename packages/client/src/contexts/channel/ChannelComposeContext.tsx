@@ -12,11 +12,10 @@ import {
 import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
-import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import { useFeatureRegistry } from './FeatureRegistryContext';
-import { wireHandlers } from './handlers/guard';
 import { composeHandlers } from './handlers/speech';
 
 function toBase64(file: File): Promise<string> {
@@ -247,18 +246,19 @@ const initialComposeState: ComposeState = {
 export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   const channelId = useChannelId();
   const { sendMessage } = useChannelMessagesActions();
-  const { socket } = useSocket();
   const registry = useFeatureRegistry();
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);
   useLayoutEffect(() => {
     stateRef.current = state;
   });
+  const router = useChannelSocketRouter();
+
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    return wireHandlers(socket, channelId, composeHandlers, (fn) => setState(fn));
-  }, [channelId, socket]);
+    return router.register(composeHandlers, (fn) => setState(fn));
+  }, [channelId, router]);
 
   const { value, cursorPos, slashOpen, mentionOpen, attachedFiles } = state;
 

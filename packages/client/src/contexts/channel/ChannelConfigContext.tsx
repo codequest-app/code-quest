@@ -18,18 +18,12 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
-import type { Payload } from './handlers/guard';
-import { wireHandlers } from './handlers/guard';
-import {
-  configHandlers,
-  createConfigActions,
-  onSessionStates,
-  parseModels,
-  toEffort,
-} from './handlers/settings';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext';
+import { configHandlers, createConfigActions, parseModels, toEffort } from './handlers/settings';
 
 export interface ConfigState {
   model: string | null;
@@ -161,23 +155,42 @@ export function ChannelConfigProvider({
     });
   }, [channelId, socket]);
 
+  const router = useChannelSocketRouter();
+
   // ── Auto-wiring: handler map events ──
   useEffect(() => {
     if (!channelId) return;
-    return wireHandlers(socket, channelId, configHandlers, setConfigState);
-  }, [channelId, socket]);
+    return router.register(configHandlers, setConfigState);
+  }, [channelId, router]);
 
-  // ── Special: session:states (needs channelId for matching) ──
+  // ── Derive model/permissionMode/effort from SessionContext.sessions ──
+  // Every session:states broadcast reseats `sessions` globally, firing this
+  // effect for every channel's ConfigContext. Bail by value (===) so
+  // unrelated channels don't churn setConfigState.
+  const { sessions } = useSession();
   useEffect(() => {
     if (!channelId) return;
-    const fn = (payload: Payload<'session:states'>) => {
-      setConfigState((prev) => onSessionStates(prev, payload, channelId));
-    };
-    socket.on('session:states', fn);
-    return () => {
-      socket.off('session:states', fn);
-    };
-  }, [channelId, socket]);
+    const summary = sessions.find((s) => s.channelId === channelId);
+    if (!summary) return;
+    setConfigState((prev) => {
+      const nextModel = summary.modelSetting ?? prev.model;
+      const nextPermissionMode = summary.permissionMode ?? prev.permissionMode;
+      const nextEffort = summary.effort ? toEffort(summary.effort) : prev.effort;
+      if (
+        prev.model === nextModel &&
+        prev.permissionMode === nextPermissionMode &&
+        prev.effort === nextEffort
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        model: nextModel,
+        permissionMode: nextPermissionMode,
+        effort: nextEffort,
+      };
+    });
+  }, [channelId, sessions]);
 
   // ── Stable actions (created once, read deps from refs) ──
   const setConfigStateRef = useRef(setConfigState);
