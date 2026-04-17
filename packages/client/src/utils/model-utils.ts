@@ -1,4 +1,4 @@
-import type { ModelInfo } from '@code-quest/shared';
+import { type EffortLevel, effortLevelSchema, type ModelInfo } from '@code-quest/shared';
 
 interface ModelDisplayInfo {
   displayName: string;
@@ -44,6 +44,14 @@ export function getModelDisplayInfo(
     return { displayName: entry.displayName, subLabel: entry.description ?? id };
   }
   return { displayName: id, subLabel: id };
+}
+
+/** Effort levels supported by a model entry, validated against the schema. */
+export function getEffortLevels(modelEntry: ModelInfo | undefined): EffortLevel[] {
+  const raw =
+    modelEntry?.supportedEffortLevels ??
+    (modelEntry?.supportsEffort ? effortLevelSchema.options : []);
+  return raw.filter((v: unknown): v is EffortLevel => effortLevelSchema.safeParse(v).success);
 }
 
 /** Display info from ModelInfo (CLI data). Falls back to availableModels lookup, then raw ID. */

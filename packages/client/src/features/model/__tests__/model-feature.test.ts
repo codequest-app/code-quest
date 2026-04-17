@@ -7,18 +7,28 @@ afterEach(() => {
 
 describe('createModelFeature', () => {
   it('has id model', () => {
-    const feature = createModelFeature();
+    const feature = createModelFeature({ modelLabel: 'Opus' });
     expect(feature.id).toBe('model');
   });
 
   it('menuItem is in Model section with label Switch model', () => {
-    const feature = createModelFeature();
+    const feature = createModelFeature({ modelLabel: 'Opus' });
     expect(feature.menuItem.label).toBe('Switch model');
     expect(feature.menuItem.section).toBe('Model');
   });
 
+  it('menuItem has closeSilent true', () => {
+    const feature = createModelFeature({ modelLabel: 'Opus' });
+    expect(feature.menuItem.closeSilent).toBe(true);
+  });
+
+  it('menuItem trailing shows modelLabel', () => {
+    const feature = createModelFeature({ modelLabel: 'Opus 4' });
+    expect(feature.menuItem.trailing).toBeTruthy();
+  });
+
   it('execute sets signal open to true', () => {
-    const feature = createModelFeature();
+    const feature = createModelFeature({ modelLabel: 'Opus' });
     expect(modelOpenSignal.isOpen).toBe(false);
     feature.execute();
     expect(modelOpenSignal.isOpen).toBe(true);
@@ -27,7 +37,7 @@ describe('createModelFeature', () => {
   it('signal notifies subscriber on open', () => {
     const cb = vi.fn();
     const unsub = modelOpenSignal.subscribe(cb);
-    createModelFeature().execute();
+    createModelFeature({ modelLabel: 'Opus' }).execute();
     expect(cb).toHaveBeenCalledTimes(1);
     unsub();
   });

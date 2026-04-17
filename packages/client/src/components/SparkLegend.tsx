@@ -1,14 +1,21 @@
 import type { EffortLevel } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const EFFORT_ACTIVE: Record<string, number> = { low: 1, medium: 2, high: 3, xhigh: 4, max: 5 };
-const DOT_CX = [3.5, 9.5, 15.5, 21.5];
+const DOT_SPACING = 6;
+const DOT_R = 2.5;
+const DOT_CY = 6;
+
+function buildDotCx(count: number): number[] {
+  return Array.from({ length: count }, (_, i) => DOT_R + i * DOT_SPACING);
+}
 
 export function SparkLegend({
   effort,
+  effortLevels,
   isFastMode,
 }: {
   effort?: EffortLevel;
+  effortLevels?: EffortLevel[];
   isFastMode?: boolean;
 }) {
   const [showLabel, setShowLabel] = useState(true);
@@ -29,26 +36,29 @@ export function SparkLegend({
   const hasSpark = !!isFastMode;
   if (!hasEffort && !hasSpark) return null;
 
-  const active = effort ? (EFFORT_ACTIVE[effort] ?? 0) : 0;
+  const levels = effortLevels ?? [];
+  const active = effort ? levels.indexOf(effort) + 1 : 0;
+  const dotCx = buildDotCx(levels.length);
+  const svgWidth = levels.length > 0 ? dotCx[dotCx.length - 1] + DOT_R : 0;
 
   return (
     <div className="absolute top-[-7px] right-3 z-10 flex items-center gap-2 h-3 px-1 pointer-events-none">
       <div className="absolute inset-x-0 top-[5px] h-[3px] bg-bg -z-10" />
-      {hasEffort && (
+      {hasEffort && levels.length > 0 && (
         <span className="flex items-center gap-1 text-text-muted">
           <svg
             aria-hidden="true"
-            width="24"
+            width={svgWidth}
             height="12"
-            viewBox="0 0 24 12"
+            viewBox={`0 0 ${svgWidth} 12`}
             style={{ display: 'block' }}
           >
-            {DOT_CX.map((cx, i) => (
+            {dotCx.map((cx, i) => (
               <circle
                 key={cx}
                 cx={cx}
-                cy="6"
-                r="2.5"
+                cy={DOT_CY}
+                r={DOT_R}
                 fill="currentColor"
                 opacity={i < active ? 1 : 0.15}
               />

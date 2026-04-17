@@ -1,19 +1,95 @@
-import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig } from '../contexts/channel';
 import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
 import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
+import { createBtwLocalFeature } from '../features/btw/btw-feature';
+import { createEffortFeature } from '../features/effort/effort-feature';
+import { createFastModeFeature } from '../features/fast-mode/fast-mode-feature';
 import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
 import { createManagePluginsFeature } from '../features/manage-plugins/manage-plugins-feature';
 import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
+import { createModelFeature } from '../features/model/model-feature';
 import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
+import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
+import { buildMenuItems, type MenuItem } from '../lib/build-menu-items';
 import { cn } from '../utils/cn';
-import { findModel } from '../utils/model-utils';
+import { findModel, getEffortLevels } from '../utils/model-utils';
 import { openUrl } from '../utils/open-url';
-import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
-import { MenuItemRow, MenuSection } from './command-menu-parts';
+
+function MenuItemRow({
+  item,
+  isActive,
+  activeItemRef,
+  onHover,
+}: {
+  item: MenuItem;
+  isActive: boolean;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
+  onHover: (id: string) => void;
+}) {
+  return (
+    <button
+      ref={isActive ? activeItemRef : null}
+      type="button"
+      role="menuitem"
+      disabled={item.disabled}
+      onClick={item.onClick}
+      onMouseEnter={() => onHover(item.id)}
+      className={cn(
+        'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
+        isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10',
+      )}
+    >
+      <span className="flex items-center gap-1.5">
+        {item.label}
+        {item.description && (
+          <span className="font-mono text-[11px] text-text-muted">{item.description}</span>
+        )}
+      </span>
+      {item.trailing && <span>{item.trailing}</span>}
+    </button>
+  );
+}
+
+function MenuSection({
+  label,
+  items,
+  activeId,
+  activeItemRef,
+  onHover,
+  isFirst = false,
+}: {
+  label: string;
+  items: MenuItem[];
+  activeId: string | null;
+  activeItemRef: RefObject<HTMLButtonElement | null>;
+  onHover: (id: string) => void;
+  isFirst?: boolean;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <>
+      {!isFirst && <div className="h-px bg-border my-1" />}
+      {/* biome-ignore lint/a11y/useSemanticElements: role=group on div is correct; fieldset has unwanted browser styling */}
+      <div role="group" aria-label={label}>
+        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
+          {label}
+        </div>
+        {items.map((item) => (
+          <MenuItemRow
+            key={item.id}
+            item={item}
+            isActive={item.id === activeId}
+            activeItemRef={activeItemRef}
+            onHover={onHover}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 
@@ -97,7 +173,6 @@ export function CommandMenu({
     availableModels,
     effort,
     thinkingLevel,
-    isFastMode,
     fastModeState,
     slashCommands,
     setEffort: onSetEffort,
@@ -106,15 +181,6 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
   const registry = useFeatureRegistry();
-  const localFeatures = [
-    createAttachFileFeature({ onAttachFile }),
-    createMcpStatusFeature({ onMcpStatus }),
-    createMcpServersFeature({ onToggleMcp }),
-    createManagePluginsFeature({ onManagePlugins }),
-    createGeneralConfigFeature(),
-    createSwitchAccountFeature(),
-    createViewHelpFeature({ openUrl, docsUrl }),
-  ];
 
   // Compute modelLabel
   const models = availableModels ?? [];
@@ -123,9 +189,27 @@ export function CommandMenu({
   const modelLabel = modelEntry?.label ?? modelEntry?.displayName ?? currentModel ?? 'Default';
 
   const supportsFastMode = modelEntry?.supportsFastMode ?? false;
-  const effortLevels: EffortLevel[] = (
-    modelEntry?.supportedEffortLevels ?? (modelEntry?.supportsEffort ? DEFAULT_EFFORT_LEVELS : [])
-  ).filter((v): v is EffortLevel => effortLevelSchema.safeParse(v).success);
+  const effortLevels = getEffortLevels(modelEntry);
+
+  const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
+
+  const btwSlashFeature = registry.getSlashCommand('/btw');
+  const localFeatures = [
+    createModelFeature({ modelLabel }),
+    createAttachFileFeature({ onAttachFile }),
+    createMcpStatusFeature({ onMcpStatus }),
+    createMcpServersFeature({ onToggleMcp }),
+    createManagePluginsFeature({ onManagePlugins }),
+    createGeneralConfigFeature(),
+    createSwitchAccountFeature(),
+    createViewHelpFeature({ openUrl, docsUrl }),
+    createEffortFeature({ effort, effortLevels, onSetEffort }),
+    createThinkingFeature({ isThinkingOn, onSetThinkingLevel }),
+    ...(supportsFastMode ? [createFastModeFeature({ fastModeState, setFastMode })] : []),
+    ...(btwSlashFeature
+      ? [createBtwLocalFeature({ slashFilter: compose.slashFilter, btwSlashFeature })]
+      : []),
+  ];
 
   // Compose bindings
   const externalOpen = compose.slashFilter != null;
@@ -144,8 +228,6 @@ export function CommandMenu({
 
   // Effective filter text: from textarea (external) or from filter input (button-click)
   const effectiveFilter = externalOpen ? (externalFilter ?? '') : filter;
-
-  const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
 
   useEffect(() => {
     if (!open) return;
@@ -255,19 +337,8 @@ export function CommandMenu({
   // Build menu items (pure function, no deps on component state)
   const sections = buildMenuItems({
     slashCommands,
-    slashFilter: compose.slashFilter,
-    effort,
-    effortLevels,
-    isThinkingOn,
-    isFastMode,
-    fastModeState,
-    modelLabel,
-    supportsFastMode,
     registry,
     localFeatures,
-    onSetEffort,
-    onSetThinkingLevel,
-    setFastMode,
     close,
     closeSilent,
     compose: { executeSlashCommand: compose.executeSlashCommand },
@@ -276,7 +347,6 @@ export function CommandMenu({
     context: contextItems,
     model: modelItems,
     customize: customizeItems,
-    tools: toolsItems,
     slash: slashItems,
     settings: settingsItems,
     support: supportItems,
@@ -298,7 +368,6 @@ export function CommandMenu({
   const filteredContext = filterItems(contextItems);
   const filteredModel = filterItems(modelItems);
   const filteredCustomize = filterItems(customizeItems);
-  const filteredTools = filterItems(toolsItems);
   const filteredSlash = filterItems(slashItems);
   const filteredSettings = filterItems(settingsItems);
   const filteredSupport = filterItems(supportItems);
@@ -309,8 +378,7 @@ export function CommandMenu({
   const contextVisible = filteredContext.length > 0;
   const modelHasPrev = contextVisible;
   const customizeHasPrev = contextVisible || modelSectionVisible;
-  const toolsHasPrev = customizeHasPrev || filteredCustomize.length > 0;
-  const slashHasPrev = toolsHasPrev || filteredTools.length > 0;
+  const slashHasPrev = customizeHasPrev || filteredCustomize.length > 0;
   const settingsHasPrev = slashHasPrev || filteredSlash.length > 0;
   const supportHasPrev = settingsHasPrev || filteredSettings.length > 0;
 
@@ -318,7 +386,6 @@ export function CommandMenu({
     ...filteredContext,
     ...(modelSectionVisible ? filteredModel : []),
     ...filteredCustomize,
-    ...filteredTools,
     ...filteredSlash,
     ...filteredSettings,
     ...filteredSupport,
@@ -437,14 +504,6 @@ export function CommandMenu({
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
                   isFirst={!customizeHasPrev}
-                />
-                <MenuSection
-                  label="Tools"
-                  items={filteredTools}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!toolsHasPrev}
                 />
                 <MenuSection
                   label="Slash Commands"
