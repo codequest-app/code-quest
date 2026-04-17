@@ -1,10 +1,14 @@
 import { createContext, useContext } from 'react';
-import { createFeatureRegistry, type FeatureRegistry } from '../../lib/feature-registry';
+import type { FeatureRegistry } from '../../lib/feature-registry';
 
-const FeatureRegistryContext = createContext<FeatureRegistry>(createFeatureRegistry());
+const FeatureRegistryContext = createContext<FeatureRegistry | null>(null);
 
 export function useFeatureRegistry(): FeatureRegistry {
-  return useContext(FeatureRegistryContext);
+  const registry = useContext(FeatureRegistryContext);
+  if (!registry) {
+    throw new Error('useFeatureRegistry must be used within a ChannelMessagesProvider');
+  }
+  return registry;
 }
 
 export { FeatureRegistryContext };
