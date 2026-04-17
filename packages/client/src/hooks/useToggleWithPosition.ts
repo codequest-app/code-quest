@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useState } from 'react';
+import { type RefObject, useState } from 'react';
 
 type Position = 'above' | 'below';
 
@@ -9,7 +9,7 @@ export function useToggleWithPosition(anchorRef: RefObject<HTMLElement | null>) 
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<Position>('above');
 
-  const toggle = useCallback(() => {
+  const toggle = () => {
     setOpen((prev) => {
       if (!prev && anchorRef.current) {
         const rect = anchorRef.current.getBoundingClientRect();
@@ -17,9 +17,9 @@ export function useToggleWithPosition(anchorRef: RefObject<HTMLElement | null>) 
       }
       return !prev;
     });
-  }, [anchorRef]);
+  };
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = () => setOpen(false);
 
   return { open, toggle, close, position };
 }
