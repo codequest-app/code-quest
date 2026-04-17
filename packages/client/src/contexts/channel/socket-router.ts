@@ -11,23 +11,47 @@ interface RegisterOptions<D> {
 
 type SocketListener = (payload: { channelId: string }) => void;
 
+/**
+ * Thin subscription surface that `ChannelSocketRouter` talks to. Decouples
+ * the router from socket.io's typed-event API, isolates the required
+ * `as never` casts in one place (`createSocketAdapter`), and lets tests
+ * plug in a fake adapter without mocking the full `TypedSocket` surface.
+ */
+export interface SubscriptionAdapter {
+  on(event: string, fn: SocketListener): void;
+  off(event: string, fn: SocketListener): void;
+}
+
+/**
+ * Wrap a `TypedSocket` into the `SubscriptionAdapter` shape. The two
+ * `as never` casts exist because socket.io's typed `on`/`off` reject
+ * `string` in favor of literal event keys — we bridge dynamic dispatch
+ * here so the router class body stays cast-free.
+ */
+export function createSocketAdapter(socket: TypedSocket): SubscriptionAdapter {
+  return {
+    on: (event, fn) => socket.on(event as never, fn as never),
+    off: (event, fn) => socket.off(event as never, fn as never),
+  };
+}
+
 interface EventRegistration {
   /** Consumer-registered listeners that fan out from the shared `bound`. */
   listeners: Set<SocketListener>;
-  /** The single function attached via `socket.on(event, bound)`. */
+  /** The single function attached via `adapter.on(event, bound)`. */
   bound: SocketListener;
 }
 
 /**
- * Per-channel socket event router. Deduplicates `socket.on` subscriptions so
- * multiple contexts registering the same event share one underlying listener.
- * Owns channelId-guard and state/effect fan-out.
+ * Per-channel socket event router. Deduplicates `adapter.on` subscriptions
+ * so multiple contexts registering the same event share one underlying
+ * listener. Owns channelId-guard and state/effect fan-out.
  */
 export class ChannelSocketRouter {
   private events = new Map<string, EventRegistration>();
 
   constructor(
-    private socket: TypedSocket,
+    private adapter: SubscriptionAdapter,
     private channelId: string,
   ) {}
 
@@ -42,15 +66,12 @@ export class ChannelSocketRouter {
     const offs = [...events].map((event) => {
       const stateHandler = handlers[event];
       const effectHandler = effects?.[event];
-      const guarded = !skipGuard?.has(event);
-      const wrapped: SocketListener = (payload) => {
-        if (guarded && !matchesChannel(this.channelId, payload)) return;
+      const handleEvent: SocketListener = (payload) => {
         beforeUpdate?.(event, payload);
         if (stateHandler) setState((prev) => stateHandler(prev, payload as never));
         if (effectHandler && effectDeps !== undefined) effectHandler(effectDeps, payload as never);
       };
-      this.addListener(event, wrapped);
-      return () => this.removeListener(event, wrapped);
+      return this.subscribe(event, handleEvent, !skipGuard?.has(event));
     });
 
     return () => {
@@ -68,17 +89,25 @@ export class ChannelSocketRouter {
     event: E,
     listener: (payload: Payload<E>) => void,
   ): () => void {
-    const wrapped: SocketListener = (payload) => {
-      if (!matchesChannel(this.channelId, payload)) return;
-      listener(payload as Payload<E>);
-    };
-    this.addListener(event as string, wrapped);
-    return () => this.removeListener(event as string, wrapped);
+    return this.subscribe(event as string, (payload) => listener(payload as Payload<E>));
+  }
+
+  // Single guard-wrap site for both `on` and `register`. `guarded: false`
+  // exists for handler-map events (e.g., 'disconnect') whose payload lacks a
+  // channelId.
+  private subscribe(event: string, listener: SocketListener, guarded = true): () => void {
+    const wrapped: SocketListener = guarded
+      ? (payload) => {
+          if (matchesChannel(this.channelId, payload)) listener(payload);
+        }
+      : listener;
+    this.addListener(event, wrapped);
+    return () => this.removeListener(event, wrapped);
   }
 
   dispose() {
     for (const [event, entry] of this.events) {
-      this.socket.off(event as never, entry.bound as never);
+      this.adapter.off(event, entry.bound);
     }
     this.events.clear();
   }
@@ -92,7 +121,7 @@ export class ChannelSocketRouter {
       };
       entry = { listeners, bound };
       this.events.set(event, entry);
-      this.socket.on(event as never, bound as never);
+      this.adapter.on(event, bound);
     }
     entry.listeners.add(listener);
   }
@@ -102,7 +131,7 @@ export class ChannelSocketRouter {
     if (!entry) return;
     entry.listeners.delete(listener);
     if (entry.listeners.size === 0) {
-      this.socket.off(event as never, entry.bound as never);
+      this.adapter.off(event, entry.bound);
       this.events.delete(event);
     }
   }
