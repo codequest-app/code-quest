@@ -6,8 +6,15 @@ type SettingsApplyResp = RpcResult<Record<string, never>>;
 type SettingsStateResp = RpcResult<{ state: Record<string, unknown> }>;
 type SettingsStateOk = Extract<SettingsStateResp, { ok: true }>;
 
+import { afterEach, vi } from 'vitest';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
+
+const configMock = vi.hoisted(() => ({ autoMode: true }));
+vi.mock('../config.ts', () => ({ config: configMock }));
+afterEach(() => {
+  configMock.autoMode = true;
+});
 
 async function setup(sessionId = 'cli-sess') {
   const container = createTestContainer();
@@ -99,6 +106,41 @@ describe('ChatHandler > settings', () => {
       await claude.send('settings:set_model', { channelId, model: 'claude-sonnet-4-6' });
 
       expect(await settingsStore.get('claude', 'model')).toBe('claude-sonnet-4-6');
+    });
+
+    it('re-broadcasts app:models after set_model with supportsAutoMode unchanged from CLI', async () => {
+      const models = [{ value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true }];
+      const claude = createFakeSummoner().claude();
+      const channelId = await claude.initialize(
+        s.init('cli-sess'),
+        s.controlResponse('init', { models }),
+      );
+
+      await claude.send('settings:set_model', { channelId, model: 'claude-haiku-4-5' });
+
+      const events = claude.events('app:models');
+      const last = events.at(-1);
+      expect(last?.models).toEqual([
+        { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true },
+      ]);
+    });
+
+    it('re-broadcasts app:models with supportsAutoMode false when config.autoMode is false', async () => {
+      configMock.autoMode = false;
+      const models = [{ value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true }];
+      const claude = createFakeSummoner().claude();
+      const channelId = await claude.initialize(
+        s.init('cli-sess'),
+        s.controlResponse('init', { models }),
+      );
+
+      await claude.send('settings:set_model', { channelId, model: 'claude-haiku-4-5' });
+
+      const events = claude.events('app:models');
+      const last = events.at(-1);
+      expect(last?.models).toEqual([
+        { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: false },
+      ]);
     });
 
     it('still returns success when settingsStore.set fails (CLI already received update)', async () => {
@@ -255,6 +297,23 @@ describe('ChatHandler > settings', () => {
 
     const settingsStore = container.get<SettingsStore>(TYPES.SettingsStore);
     expect(await settingsStore.get('claude', 'effortLevel')).toBe('high');
+  });
+
+  it('apply_settings re-broadcasts app:models with supportsAutoMode unchanged from CLI', async () => {
+    const models = [{ value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true }];
+    const claude = createFakeSummoner().claude();
+    const channelId = await claude.initialize(
+      s.init('cli-sess'),
+      s.controlResponse('init', { models }),
+    );
+
+    await claude.send('settings:apply', { channelId, settings: { effortLevel: 'high' } });
+
+    const events = claude.events('app:models');
+    const last = events.at(-1);
+    expect(last?.models).toEqual([
+      { value: 'claude-opus-4-6', displayName: 'Opus', supportsAutoMode: true },
+    ]);
   });
 
   it('app:config returns persisted effort after settings:apply', async () => {

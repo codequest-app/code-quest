@@ -151,7 +151,13 @@ function onSessionStatus(state: ConfigState, payload: Payload<'session:status'>)
 
 function onAvailableModels(state: ConfigState, payload: Payload<'app:models'>): ConfigState {
   if (!Array.isArray(payload.models)) return state;
-  return { ...state, availableModels: parseModels(payload.models) };
+  const existing = state.availableModels;
+  const defaults = state.providerConfig?.defaultModels ?? [];
+  const models = parseModels(payload.models).map((m) => {
+    if (Object.keys(m).length > 1) return m;
+    return findModel(m.value, existing) ?? findModel(m.value, defaults) ?? m;
+  });
+  return { ...state, availableModels: models };
 }
 
 type TierKey = keyof typeof usageQuotaSchema.shape;
@@ -210,6 +216,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
 
   function setModel(model: string) {
     deps.addSystemMessage?.('slash_command_result', `Set model to ${model}`);
+    deps.setState?.((prev) => ({ ...prev, model }));
     emit('settings:set_model', { model }, (res: { ok: boolean; error?: string }) => {
       if (!res?.ok) toast.error(res?.error ?? 'Failed to switch model');
     });

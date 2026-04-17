@@ -1,5 +1,6 @@
 import {
   contextUsageDataSchema,
+  modelInfoSchema,
   requestIdPayloadSchema,
   serverActionModelSchema,
   serverActionModeSchema,
@@ -11,6 +12,7 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import { config } from '../../config.ts';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -26,6 +28,19 @@ export function create({
   usageTracker,
   emitter,
 }: Pick<HandlerContext, 'channelManager' | 'settingsStore' | 'usageTracker' | 'emitter'>): void {
+  function broadcastModels(): void {
+    const raw = channelManager.cachedModels;
+    if (!raw) return;
+    const models = config.autoMode
+      ? raw
+      : raw.flatMap((m) => {
+          const parsed = modelInfoSchema.safeParse(m);
+          if (!parsed.success) return [];
+          if (!parsed.data.supportsAutoMode) return [m];
+          return [{ ...parsed.data, supportsAutoMode: false }];
+        });
+    emitter.broadcastAll('app:models', { channelId: '', models });
+  }
   type SettingHandler<T> = {
     schema: { parse(p: unknown): T };
     run: (ch: Channel, parsed: T) => void | Promise<void>;
@@ -56,6 +71,7 @@ export function create({
       await settingsStore
         .set(ch.provider, 'model', model)
         .catch((e) => logger.warn({ err: e }, 'Failed to persist model to settings store'));
+      broadcastModels();
     },
   });
 
@@ -117,6 +133,7 @@ export function create({
           channelId,
           effort: String(settings.effortLevel),
         });
+        broadcastModels();
       }
     },
   });

@@ -53,4 +53,5 @@ export const config = {
   systemPrompt: process.env.SYSTEM_PROMPT ?? '',
   allowDangerouslySkipPermissions: envBool('ALLOW_DANGEROUSLY_SKIP_PERMISSIONS', true),
   explorerRoots: parseExplorerRoots(process.env.FILE_EXPLORER_ROOTS),
+  autoMode: envBool('AUTO_MODE', true),
 } as const;
