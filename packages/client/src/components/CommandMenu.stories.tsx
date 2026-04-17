@@ -7,15 +7,9 @@ const meta = {
   component: CommandMenu,
   tags: ['autodocs'],
   args: {
-    onOpenModelPicker: fn(),
-    onOpenAccountUsage: fn(),
     onMcpStatus: fn(),
     onToggleMcp: fn(),
     onManagePlugins: fn(),
-    onOpenConfig: fn(),
-    onSwitchAccount: fn(),
-    onOpenHelp: fn(),
-    onResumeConversation: fn(),
     onAttachFile: fn(),
   },
   decorators: [
@@ -32,15 +26,9 @@ export const Default: Story = {};
 
 export const WithAllCallbacks: Story = {
   args: {
-    onOpenModelPicker: fn(),
-    onOpenAccountUsage: fn(),
     onMcpStatus: fn(),
     onToggleMcp: fn(),
     onManagePlugins: fn(),
-    onOpenConfig: fn(),
-    onSwitchAccount: fn(),
-    onOpenHelp: fn(),
-    onResumeConversation: fn(),
     onAttachFile: fn(),
   },
 };

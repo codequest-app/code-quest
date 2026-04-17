@@ -101,6 +101,138 @@ describe('ChannelConfigContext', () => {
     expect(await screen.findByText('Toggle fast mode')).toBeInTheDocument();
   });
 
+  describe('reload plugins hot reload', () => {
+    function ReloadDisplay() {
+      const { slashCommands, mcpServers } = useChannelConfig();
+      return (
+        <div>
+          <div data-testid="slash-commands">{slashCommands.join(',')}</div>
+          <div data-testid="mcp-servers">{mcpServers.map((m) => m.name).join(',')}</div>
+        </div>
+      );
+    }
+
+    it('updates slashCommands and mcpServers when server pushes plugin:reloaded', async () => {
+      const summoner = createFakeSummoner();
+      const { claude, channelId } = await renderWithChannel(<ReloadDisplay />, {
+        summoner,
+        initSegment: s.init('sess-reload', {
+          slashCommands: ['old-skill'],
+          mcpServers: [{ name: 'old-server', status: 'connected' }],
+        }),
+      });
+
+      expect(screen.getByTestId('slash-commands')).toHaveTextContent('old-skill');
+
+      await act(async () => {
+        claude.pushServerEvent('plugin:reloaded', {
+          channelId,
+          commands: [{ name: 'new-skill', description: 'A new skill', argumentHint: '' }],
+          mcpServers: [{ name: 'new-server', status: 'connected' }],
+        });
+      });
+
+      expect(screen.getByTestId('slash-commands')).toHaveTextContent('new-skill');
+      expect(screen.getByTestId('mcp-servers')).toHaveTextContent('new-server');
+    });
+  });
+
+  it('clicking Plan mode in PermissionModePicker sends set_permission_mode to CLI', async () => {
+    const summoner = createFakeSummoner();
+    summoner.claude().prepareInit(s.init('sess-1', { permissionMode: 'normal' }));
+    const { claude, user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+    await user.click(await screen.findByText('Plan mode'));
+
+    expect(claude.received('control_request').at(-1)).toMatchObject({
+      request: { subtype: 'set_permission_mode', mode: 'plan' },
+    });
+  });
+
+  it('clicking Auto mode in PermissionModePicker sends set_permission_mode auto to CLI', async () => {
+    const MODEL_ID = 'claude-sonnet-4-6';
+    const summoner = createFakeSummoner();
+    summoner.claude().prepareInit(
+      s.init('sess-1', { model: MODEL_ID, permissionMode: 'normal' }),
+      s.controlResponse('init', {
+        models: [{ value: MODEL_ID, displayName: 'Sonnet 4.6', supportsAutoMode: true }],
+      }),
+    );
+    const { claude, user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+    await user.click(await screen.findByText('Auto mode'));
+
+    expect(claude.received('control_request').at(-1)).toMatchObject({
+      request: { subtype: 'set_permission_mode', mode: 'auto' },
+    });
+  });
+
+  describe('auto mode visibility based on supportsAutoMode', () => {
+    const MODEL_ID = 'claude-sonnet-4-6';
+
+    async function setupWithAutoMode(supportsAutoMode: boolean) {
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit(
+        s.init('sess-1', { model: MODEL_ID, permissionMode: 'normal' }),
+        s.controlResponse('init', {
+          models: [{ value: MODEL_ID, displayName: 'Sonnet 4.6', supportsAutoMode }],
+        }),
+      );
+      const { user, addProject } = await renderWithWorkspace({ summoner });
+      const project = await addProject();
+      await project.launchSession();
+      return { user };
+    }
+
+    it('shows Auto mode in dropdown when model supports it', async () => {
+      const { user } = await setupWithAutoMode(true);
+      await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+      expect(await screen.findByText('Auto mode')).toBeInTheDocument();
+    });
+
+    it('hides Auto mode in dropdown when model does not support it', async () => {
+      const { user } = await setupWithAutoMode(false);
+      await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+      expect(screen.queryByText('Auto mode')).not.toBeInTheDocument();
+    });
+  });
+
+  it('PermissionModePicker effort cycles through xhigh when model supports it', async () => {
+    const MODEL_ID = 'claude-sonnet-4-6';
+    const summoner = createFakeSummoner();
+    summoner.claude().prepareInit(
+      s.init('sess-1', { model: MODEL_ID, permissionMode: 'normal' }),
+      s.controlResponse('init', {
+        models: [
+          {
+            value: MODEL_ID,
+            displayName: 'Sonnet 4.6',
+            supportsEffort: true,
+            supportedEffortLevels: ['low', 'medium', 'high', 'xhigh', 'max'],
+          },
+        ],
+      }),
+    );
+    const { user, addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    await user.click(screen.getByRole('button', { name: /ask before edits/i }));
+    const effortButton = await screen.findByTitle('Click to cycle effort level');
+    // cycle from max (default) → low → medium → high → xhigh
+    await user.click(effortButton); // → low
+    await user.click(effortButton); // → medium
+    await user.click(effortButton); // → high
+    await user.click(effortButton); // → xhigh
+    expect(screen.getByText(/extra high/i)).toBeInTheDocument();
+  });
+
   it('updates config when CLI sends status with permissionMode', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();

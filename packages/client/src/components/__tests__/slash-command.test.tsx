@@ -120,18 +120,19 @@ describe('slash command integration', () => {
   describe('Tab on highlighted item', () => {
     it('Tab on highlighted slash command autocompletes with space', async () => {
       const user = userEvent.setup();
-      await renderChatInputArea({ slashCommands: ['compact', 'cost'] });
+      // /compact is registry-managed; use /cost (CLI-only) for autocomplete test
+      await renderChatInputArea({ slashCommands: ['cost'] });
       const textarea = screen.getByRole('textbox');
 
-      await user.type(textarea, '/compact');
-      // /compact is auto-highlighted (only match)
-      const item = screen.getByRole('menuitem', { name: '/compact' });
+      await user.type(textarea, '/cost');
+      // /cost is auto-highlighted (only match)
+      const item = screen.getByRole('menuitem', { name: '/cost' });
       expect(item?.className).toContain('bg-selected');
 
       await user.keyboard('{Tab}');
 
-      // Autocomplete: textarea gets '/compact ' and menu closes
-      expect(textarea).toHaveValue('/compact ');
+      // Autocomplete: textarea gets '/cost ' and menu closes
+      expect(textarea).toHaveValue('/cost ');
       expect(screen.queryByText('Slash Commands')).not.toBeInTheDocument();
     });
 
@@ -376,12 +377,13 @@ describe('slash command integration', () => {
 
     it('shows all sections when opened via button click', async () => {
       const user = userEvent.setup();
+      // /compact is registry-managed → not in CLI list; /cost and /scu-template are CLI-only
       await renderChatInputArea({ slashCommands: ['compact', 'cost', 'scu-template'] });
 
       await user.click(screen.getByTitle('Show command menu (/)'));
 
       expect(screen.getByText('Slash Commands')).toBeInTheDocument();
-      expect(screen.getByText('/compact')).toBeInTheDocument();
+      expect(screen.queryByText('/compact')).not.toBeInTheDocument();
       expect(screen.getByText('/cost')).toBeInTheDocument();
       expect(screen.getByText('/scu-template')).toBeInTheDocument();
     });

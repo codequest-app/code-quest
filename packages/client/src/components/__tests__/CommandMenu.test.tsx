@@ -1,7 +1,11 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { generalConfigSignal } from '../../features/general-config/general-config-signal';
+import { modelOpenSignal } from '../../features/model/model-feature';
+import { resumeOpenSignal } from '../../features/resume/resume-feature';
+import { switchAccountSignal } from '../../features/switch-account/switch-account-signal';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { CommandMenu } from '../CommandMenu';
 
@@ -19,16 +23,27 @@ async function renderCommandMenu(
   });
 }
 
+async function openMenu() {
+  await userEvent.click(screen.getByTitle('Show command menu (/)'));
+}
+
 describe('CommandMenu', () => {
+  afterEach(() => {
+    modelOpenSignal.setOpen(false);
+    resumeOpenSignal.setOpen(false);
+    switchAccountSignal.setOpen(false);
+    generalConfigSignal.setOpen(false);
+  });
   it('renders / command menu button', async () => {
     await renderCommandMenu();
     expect(screen.getByTitle('Show command menu (/)')).toBeInTheDocument();
   });
 
   it('reads slashCommands from context and shows them in menu', async () => {
+    // /compact is registry-managed → filtered from CLI list; /cost is CLI-only → shown
     await renderCommandMenu({}, { slashCommands: ['compact', 'cost'] });
-    await userEvent.click(screen.getByTitle('Show command menu (/)'));
-    expect(screen.getByText('/compact')).toBeInTheDocument();
+    await openMenu();
+    expect(screen.queryByText('/compact')).not.toBeInTheDocument();
     expect(screen.getByText('/cost')).toBeInTheDocument();
   });
 
@@ -38,12 +53,11 @@ describe('CommandMenu', () => {
     expect(screen.getByText('Effort')).toBeInTheDocument();
   });
 
-  it('calls onOpenModelPicker prop when Switch model clicked', async () => {
-    const onOpenModelPicker = vi.fn();
-    await renderCommandMenu({ onOpenModelPicker });
+  it('sets modelOpenSignal when Switch model clicked', async () => {
+    await renderCommandMenu();
     await userEvent.click(screen.getByTitle('Show command menu (/)'));
     await userEvent.click(screen.getByText('Switch model'));
-    expect(onOpenModelPicker).toHaveBeenCalled();
+    expect(modelOpenSignal.isOpen).toBe(true);
   });
 
   it('only accepts dialog callback props — no modelLabel/effort/slashCommands props', async () => {
@@ -56,6 +70,64 @@ describe('CommandMenu', () => {
       await renderCommandMenu();
       await userEvent.click(screen.getByTitle('Show command menu (/)'));
       expect(screen.getByPlaceholderText('Filter actions...')).toBeInTheDocument();
+    });
+  });
+
+  describe('feature signals and callbacks', () => {
+    it('clicking "Clear conversation" sends /clear to CLI', async () => {
+      const { claude } = await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Clear conversation'));
+      expect(claude.received('user').at(-1)).toMatchObject({
+        message: { content: [{ text: '/clear' }] },
+      });
+    });
+
+    it('filtering "new" reveals "New conversation" and clicking sends /new to CLI', async () => {
+      const { claude } = await renderCommandMenu();
+      await openMenu();
+      await userEvent.type(screen.getByPlaceholderText('Filter actions...'), 'new');
+      await userEvent.click(await screen.findByText('New conversation'));
+      expect(claude.received('user').at(-1)).toMatchObject({
+        message: { content: [{ text: '/new' }] },
+      });
+    });
+
+    it('clicking "Attach file…" triggers onAttachFile callback', async () => {
+      const onAttachFile = vi.fn();
+      await renderCommandMenu({ onAttachFile });
+      await openMenu();
+      await userEvent.click(await screen.findByText('Attach file…'));
+      expect(onAttachFile).toHaveBeenCalledOnce();
+    });
+
+    it('clicking "Manage plugins" triggers onManagePlugins callback', async () => {
+      const onManagePlugins = vi.fn();
+      await renderCommandMenu({ onManagePlugins });
+      await openMenu();
+      await userEvent.click(await screen.findByText('Manage plugins'));
+      expect(onManagePlugins).toHaveBeenCalledOnce();
+    });
+
+    it('clicking "Resume conversation…" sets resumeOpenSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Resume conversation…'));
+      expect(resumeOpenSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "Switch account" sets switchAccountSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Switch account'));
+      expect(switchAccountSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "General config…" sets generalConfigSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('General config…'));
+      expect(generalConfigSignal.isOpen).toBe(true);
     });
   });
 

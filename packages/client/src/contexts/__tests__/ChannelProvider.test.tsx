@@ -200,22 +200,23 @@ describe('ChannelProvider', () => {
   it('settings:refresh_usage returns contextUsage from CLI', async () => {
     const { claude, user, addProject } = await renderWithWorkspace();
     const project = await addProject();
-    await project.launchSession();
+    const channelId = await project.launchSession();
 
-    claude.onControlRequest((req) => {
-      if (req.subtype === 'get_context_usage') {
-        return {
+    await sendUserMessage(user);
+    await emitAssistantTurn(claude, 'done');
+
+    await act(async () => {
+      claude.pushServerEvent('settings:usage', {
+        channelId,
+        contextUsage: {
           categories: [{ name: 'System prompt', tokens: 6000, color: 'promptBorder' }],
           totalTokens: 10000,
           maxTokens: 200000,
           percentage: 5,
-        };
-      }
-      return null;
+        },
+        usage: {},
+      });
     });
-
-    await sendUserMessage(user);
-    await emitAssistantTurn(claude, 'done');
 
     // Trigger settings:refresh_usage via UI — open /usage dialog
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);

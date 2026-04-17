@@ -1,3 +1,4 @@
+import { effortLevelSchema } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -31,6 +32,12 @@ function getPermissionModes(brandName: string) {
       description: `${brandName} will explore the code and present a plan before editing`,
     },
     {
+      id: 'auto',
+      label: 'Auto mode',
+      title: `${brandName} will automatically choose the best permission mode for each task. Click, or press Shift+Tab, to switch modes.`,
+      description: `${brandName} will automatically choose the best permission mode for each task`,
+    },
+    {
       id: 'bypassPermissions',
       label: 'Bypass permissions',
       title: `${brandName} Code will not ask for your approval before running potentially dangerous commands.`,
@@ -45,6 +52,8 @@ const DEFAULT_MODE = DEFAULT_MODES[0];
 export interface PermissionModePickerProps {
   mode: string;
   effort?: string;
+  effortLevels?: string[];
+  supportsAutoMode?: boolean;
   onSetPermissionMode?: (mode: string) => void;
   onSetEffort?: (effort: string) => void;
 }
@@ -52,18 +61,21 @@ export interface PermissionModePickerProps {
 export function PermissionModePicker({
   mode,
   effort = 'max',
+  effortLevels = effortLevelSchema.options,
+  supportsAutoMode = false,
   onSetPermissionMode,
   onSetEffort,
 }: PermissionModePickerProps) {
   const { providerConfig } = useChannelConfig();
   const brandName = providerConfig?.brand.name ?? 'Claude';
   const configModes = providerConfig?.permissionModes;
-  const permissionModes = configModes?.length
+  const allModes = configModes?.length
     ? configModes.map((m) => ({
         ...m,
         title: `${m.description}. Click, or press Shift+Tab, to switch modes.`,
       }))
     : getPermissionModes(brandName);
+  const permissionModes = allModes.filter((m) => m.id !== 'auto' || supportsAutoMode);
   const permissionById = Object.fromEntries(permissionModes.map((m) => [m.id, m]));
 
   const [showModePicker, setShowModePicker] = useState(false);
@@ -136,9 +148,8 @@ export function PermissionModePicker({
                 type="button"
                 className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:bg-white/5 cursor-pointer"
                 onClick={() => {
-                  const levels = ['low', 'medium', 'high', 'max'];
-                  const idx = effort ? levels.indexOf(effort) : -1;
-                  onSetEffort?.(levels[(idx + 1) % levels.length]);
+                  const idx = effort ? effortLevels.indexOf(effort) : -1;
+                  onSetEffort?.(effortLevels[(idx + 1) % effortLevels.length]);
                 }}
                 title="Click to cycle effort level"
               >
@@ -149,11 +160,7 @@ export function PermissionModePicker({
                   Effort
                   <span className="opacity-70">({effortLabel(effort)})</span>
                 </span>
-                <EffortSwitch
-                  level={effort}
-                  levels={['low', 'medium', 'high', 'max']}
-                  onSelect={(l) => onSetEffort(l)}
-                />
+                <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
               </button>
             </>
           )}

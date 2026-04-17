@@ -1,12 +1,16 @@
 import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import type { ChannelConfigValue } from '../contexts/channel/ChannelConfigContext';
 import type { ChannelMessagesValue } from '../contexts/channel/ChannelMessagesContext';
-import { RewindDialog } from './RewindDialog';
+import { generalConfigSignal } from '../features/general-config/general-config-signal';
+import { RewindDialog } from '../features/rewind/RewindDialog';
+import { rewindOpenSignal } from '../features/rewind/rewind-feature';
+import { switchAccountSignal } from '../features/switch-account/switch-account-signal';
+import { usageOpenSignal } from '../features/usage/usage-feature';
 
 const AccountUsageDialog = lazy(() =>
-  import('./AccountUsageDialog').then((m) => ({ default: m.AccountUsageDialog })),
+  import('../features/usage/AccountUsageDialog').then((m) => ({ default: m.AccountUsageDialog })),
 );
 const AuthDialog = lazy(() => import('./AuthDialog').then((m) => ({ default: m.AuthDialog })));
 const InitOptionsDialog = lazy(() =>
@@ -19,16 +23,7 @@ const PluginsPanel = lazy(() =>
   import('./PluginsPanel').then((m) => ({ default: m.PluginsPanel })),
 );
 
-export type ActiveDialog =
-  | 'modelPicker'
-  | 'manageMcp'
-  | 'mcpStatus'
-  | 'initOptions'
-  | 'usage'
-  | 'plugins'
-  | 'auth'
-  | 'rewind'
-  | null;
+export type ActiveDialog = 'modelPicker' | 'manageMcp' | 'mcpStatus' | 'plugins' | null;
 
 export interface ToolbarDialogsProps {
   activeDialog: ActiveDialog;
@@ -71,6 +66,22 @@ export function ToolbarDialogs({
   forkSession,
   updateValue,
 }: ToolbarDialogsProps) {
+  const isUsageOpen = useSyncExternalStore(
+    (cb) => usageOpenSignal.subscribe(cb),
+    () => usageOpenSignal.isOpen,
+  );
+  const isRewindOpen = useSyncExternalStore(
+    (cb) => rewindOpenSignal.subscribe(cb),
+    () => rewindOpenSignal.isOpen,
+  );
+  const isGeneralConfigOpen = useSyncExternalStore(
+    (cb) => generalConfigSignal.subscribe(cb),
+    () => generalConfigSignal.isOpen,
+  );
+  const isSwitchAccountOpen = useSyncExternalStore(
+    (cb) => switchAccountSignal.subscribe(cb),
+    () => switchAccountSignal.isOpen,
+  );
   return (
     <>
       {activeDialog === 'manageMcp' && (
@@ -98,21 +109,21 @@ export function ToolbarDialogs({
           <ManageMcpDialog open onClose={closeDialog} servers={mcpServers} />
         </Suspense>
       )}
-      {activeDialog === 'initOptions' && (
+      {isGeneralConfigOpen && (
         <Suspense fallback={null}>
           <InitOptionsDialog
             open
-            onClose={closeDialog}
+            onClose={() => generalConfigSignal.setOpen(false)}
             onSave={(opts) => setInitOptions(opts)}
             initial={initOptions}
           />
         </Suspense>
       )}
-      {activeDialog === 'usage' && (
+      {isUsageOpen && (
         <Suspense fallback={null}>
           <AccountUsageDialog
             open
-            onClose={closeDialog}
+            onClose={() => usageOpenSignal.setOpen(false)}
             usage={usageQuota ?? undefined}
             contextUsage={contextUsage ?? undefined}
             stats={stats ?? undefined}
@@ -130,28 +141,32 @@ export function ToolbarDialogs({
           <PluginsPanel open onClose={closeDialog} />
         </Suspense>
       )}
-      {activeDialog === 'auth' && (
+      {isSwitchAccountOpen && (
         <Suspense fallback={null}>
-          <AuthDialog open onClose={closeDialog} />
+          <AuthDialog open onClose={() => switchAccountSignal.setOpen(false)} />
         </Suspense>
       )}
-      {activeDialog === 'rewind' && (
+      {isRewindOpen && (
         <RewindDialog
           open
-          onClose={closeDialog}
+          onClose={() => rewindOpenSignal.setOpen(false)}
           onConfirm={({ messageId, promptText }) => {
-            closeDialog();
+            rewindOpenSignal.setOpen(false);
             rewindToMessage(messageId, false)
               .then((result) => {
                 if (result.ok && result.data.canRewind) {
-                  forkSession(messageId).catch(() => toast.error('Failed to fork session'));
+                  forkSession(messageId).catch((err) => {
+                    console.error('Fork session failed:', err);
+                    toast.error('Failed to fork session');
+                  });
                   updateValue(promptText);
                 } else {
                   const errMessage = result.ok ? result.data.error : result.error;
                   toast.error(errMessage ?? 'Failed to rewind');
                 }
               })
-              .catch(() => {
+              .catch((err) => {
+                console.error('Rewind failed:', err);
                 toast.error('Failed to rewind');
               });
           }}

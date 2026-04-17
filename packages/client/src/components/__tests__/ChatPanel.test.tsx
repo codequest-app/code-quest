@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
@@ -280,5 +280,51 @@ describe('ChatPanel', () => {
     });
 
     expect(screen.getByText('hi')).toBeInTheDocument();
+  });
+
+  describe('/compact slash command', () => {
+    it('sends /compact to CLI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      fireEvent.change(textarea, { target: { value: '/compact' } });
+      fireEvent.click(screen.getByTitle('Send'));
+
+      expect(claude.received('user')).toHaveLength(1);
+      expect(claude.received('user')[0]).toMatchObject({
+        message: { content: [{ text: '/compact' }] },
+      });
+    });
+
+    it('sends /compact with argument to CLI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      fireEvent.change(textarea, { target: { value: '/compact 50' } });
+      fireEvent.click(screen.getByTitle('Send'));
+
+      expect(claude.received('user')).toHaveLength(1);
+      expect(claude.received('user')[0]).toMatchObject({
+        message: { content: [{ text: '/compact 50' }] },
+      });
+    });
+  });
+
+  describe('/reload-plugins slash command', () => {
+    it('selecting /reload-plugins from slash menu does not send chat message to CLI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />, {
+        initSegment: s.init('sess', { slashCommands: ['reload-plugins'] }),
+      });
+
+      // Open slash menu by typing / then select /reload-plugins
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.click(textarea);
+      await userEvent.keyboard('/');
+      const slashSection = await screen.findByRole('group', { name: 'Slash Commands' });
+      const reloadItem = within(slashSection).getByText('/reload-plugins');
+      await userEvent.click(reloadItem);
+
+      expect(claude.received('user')).toHaveLength(0);
+    });
   });
 });

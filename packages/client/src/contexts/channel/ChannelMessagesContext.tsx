@@ -2,6 +2,7 @@ import {
   type ForkConversationResponse,
   type ListFilesResponse,
   type PlanCommentData,
+  type PluginReloadResult,
   type RawEventsResponse,
   type RewindResult,
   type RpcResult,
@@ -19,10 +20,21 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createBtwFeature } from '../../features/btw/btw-feature';
+import { createClearFeature } from '../../features/clear/clear-feature';
+import { createCompactFeature } from '../../features/compact/compact-feature';
+import { createModelFeature } from '../../features/model/model-feature';
+import { createNewConversationFeature } from '../../features/new-conversation/new-conversation-feature';
+import { createReloadPluginsFeature } from '../../features/reload-plugins/reload-plugins-feature';
+import { createResumeFeature } from '../../features/resume/resume-feature';
+import { createRewindFeature } from '../../features/rewind/rewind-feature';
+import { createUsageFeature } from '../../features/usage/usage-feature';
+import { createFeatureRegistry } from '../../lib/feature-registry';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import { buildMessagesFromHistory, mapSessionStats, msg, patchMeta } from '../../utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
+import { FeatureRegistryContext } from './FeatureRegistryContext';
 import { createFileActions } from './handlers/file';
 import { type Payload, wireHandlers } from './handlers/guard';
 import { createMessageActions, messageHandlerOn } from './handlers/message';
@@ -67,6 +79,7 @@ export interface ChannelMessagesValue {
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
   rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RpcResult<RewindResult>>;
   askSideQuestion: (question: string) => Promise<RpcResult<SideQuestionResult>>;
+  reloadPlugins: () => Promise<PluginReloadResult>;
 }
 
 type MessagesStateValue = Pick<
@@ -119,6 +132,10 @@ export function ChannelMessagesProvider({
 }) {
   const channelId = useChannelId();
   const { socket } = useSocket();
+
+  // ── Feature registry ──
+  const registryRef = useRef(createFeatureRegistry());
+  const registry = registryRef.current;
 
   // ── Own channelState ──
   const [channelState, setChannelState] = useState<ChannelState>(() => ({
@@ -322,47 +339,91 @@ export function ChannelMessagesProvider({
   });
 
   // ── Stable actions (don't depend on channelState) ──
-  const [actions] = useState<MessagesActionsValue>(() => ({
-    setChannelState,
-    ...createMessageActions({ socket, channelId, setChannelState, statusRef, messageQueueRef }),
-    ...createSessionActions({ socket, channelId }),
-    ...createFileActions({ socket, channelId }),
-    ...createPlanActions({ setChannelState }),
-    addSystemMessage: (type: string, content: string) =>
-      setChannelState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, msg({ role: 'system', type: type as never, content })],
-      })),
-    clearMessages: () => setChannelState((prev) => ({ ...prev, messages: [] })),
-    clearModifiedFiles: () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} })),
-    removeModifiedFile: (path: string) =>
-      setChannelState((prev) => {
-        const { [path]: _, ...rest } = prev.modifiedFiles;
-        return { ...prev, modifiedFiles: rest };
+  const [actions] = useState<MessagesActionsValue>(() => {
+    const sessionActions = createSessionActions({ socket, channelId });
+    const messageActions = createMessageActions({
+      socket,
+      channelId,
+      setChannelState,
+      statusRef,
+      messageQueueRef,
+    });
+    registry.register(createBtwFeature({ askSideQuestion: sessionActions.askSideQuestion }));
+    registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
+    registry.register(
+      createUsageFeature({
+        emitRefreshUsage: () => socket.emit('settings:refresh_usage', { channelId }),
       }),
-  }));
+    );
+    registry.register(createRewindFeature());
+    const clearMessages = () => setChannelState((prev) => ({ ...prev, messages: [] }));
+    const clearModifiedFiles = () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} }));
+    registry.register(
+      createClearFeature({
+        clearMessages,
+        clearModifiedFiles,
+        sendMessage: (msg) => messageActions.sendMessage(msg),
+      }),
+    );
+    registry.register(
+      createNewConversationFeature({ sendMessage: (msg) => messageActions.sendMessage(msg) }),
+    );
+    registry.register(createModelFeature());
+    registry.register(createResumeFeature());
+    registry.register(createCompactFeature((msg) => messageActions.sendMessage(msg)));
+    const sendMessage = (message: string) => {
+      const feature = registry.findSlashCommand(message);
+      if (feature) {
+        feature.invoke(message);
+        return;
+      }
+      messageActions.sendMessage(message);
+    };
+    return {
+      setChannelState,
+      ...messageActions,
+      sendMessage,
+      ...sessionActions,
+      ...createFileActions({ socket, channelId }),
+      ...createPlanActions({ setChannelState }),
+      addSystemMessage: (type: string, content: string) =>
+        setChannelState((prev) => ({
+          ...prev,
+          messages: [...prev.messages, msg({ role: 'system', type: type as never, content })],
+        })),
+      clearMessages,
+      clearModifiedFiles,
+      removeModifiedFile: (path: string) =>
+        setChannelState((prev) => {
+          const { [path]: _, ...rest } = prev.modifiedFiles;
+          return { ...prev, modifiedFiles: rest };
+        }),
+    };
+  });
 
   return (
-    <MessagesActionsContext.Provider value={actions}>
-      <MessagesStateContext.Provider
-        value={{
-          messages: channelState.messages,
-          status: channelState.status,
-          stats: channelState.stats,
-          isContextCompressed: channelState.isContextCompressed,
-          modifiedFiles: channelState.modifiedFiles,
-          terminalSessions: channelState.terminalSessions,
-          planComments: channelState.planComments,
-          statusText: channelState.statusText,
-          isProcessing:
-            channelState.status === 'processing' ||
-            channelState.status === 'busy' ||
-            channelState.status === 'cancelling',
-          isCancelling: channelState.status === 'cancelling',
-        }}
-      >
-        {children}
-      </MessagesStateContext.Provider>
-    </MessagesActionsContext.Provider>
+    <FeatureRegistryContext.Provider value={registry}>
+      <MessagesActionsContext.Provider value={actions}>
+        <MessagesStateContext.Provider
+          value={{
+            messages: channelState.messages,
+            status: channelState.status,
+            stats: channelState.stats,
+            isContextCompressed: channelState.isContextCompressed,
+            modifiedFiles: channelState.modifiedFiles,
+            terminalSessions: channelState.terminalSessions,
+            planComments: channelState.planComments,
+            statusText: channelState.statusText,
+            isProcessing:
+              channelState.status === 'processing' ||
+              channelState.status === 'busy' ||
+              channelState.status === 'cancelling',
+            isCancelling: channelState.status === 'cancelling',
+          }}
+        >
+          {children}
+        </MessagesStateContext.Provider>
+      </MessagesActionsContext.Provider>
+    </FeatureRegistryContext.Provider>
   );
 }

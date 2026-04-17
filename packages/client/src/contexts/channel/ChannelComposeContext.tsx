@@ -9,10 +9,13 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
+import type { FeatureRegistry } from '../../lib/feature-registry';
 import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { useFeatureRegistry } from './FeatureRegistryContext';
 import { wireHandlers } from './handlers/guard';
 import { composeHandlers } from './handlers/speech';
 
@@ -89,6 +92,7 @@ function createComposeActions(
   sendMessage: (text: string) => void,
   requestFocusRef: { current: ((pos?: number) => void) | null },
   mentionTriggerRef: { current: ((value: string, pos: number) => void) | null },
+  registry: FeatureRegistry,
 ) {
   const get = () => stateRef.current;
 
@@ -163,6 +167,8 @@ function createComposeActions(
     mentionTriggerRef.current?.(triggeredValue, focusAt);
   };
 
+  registry.register(createMentionFileFeature({ mentionFile }));
+
   const focusTextarea = () => requestFocusRef.current?.();
 
   const updateValue = (newValue: string, newCursorPos?: number) => {
@@ -197,7 +203,12 @@ function createComposeActions(
 
   const executeSlashCommand = (cmd: string) => {
     clearSlashToken();
-    sendMessage(cmd);
+    const feature = registry.findSlashCommand(cmd);
+    if (feature?.execute) {
+      feature.execute();
+    } else {
+      sendMessage(cmd);
+    }
   };
 
   const addAttachments = (files: File[]) =>
@@ -237,6 +248,7 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   const channelId = useChannelId();
   const { sendMessage } = useChannelMessagesActions();
   const { socket } = useSocket();
+  const registry = useFeatureRegistry();
   const [state, setState] = useState<ComposeState>(initialComposeState);
   const stateRef = useRef(state);
   useLayoutEffect(() => {
@@ -269,7 +281,14 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
   };
 
   const [actionsBlock] = useState(() =>
-    createComposeActions(stateRef, setState, sendMessage, requestFocusRef, mentionTriggerRef),
+    createComposeActions(
+      stateRef,
+      setState,
+      sendMessage,
+      requestFocusRef,
+      mentionTriggerRef,
+      registry,
+    ),
   );
 
   return (

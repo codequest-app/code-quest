@@ -132,6 +132,18 @@ function onSessionInit(state: ConfigState, payload: Payload<'session:init'>): Co
   };
 }
 
+function onPluginReloaded(state: ConfigState, payload: Payload<'plugin:reloaded'>): ConfigState {
+  const update: Partial<ConfigState> = {};
+  if (payload.commands) {
+    update.slashCommands = [...new Set([...payload.commands.map((c) => c.name), 'usage'])];
+  }
+  if (payload.mcpServers) {
+    update.mcpServers = payload.mcpServers;
+  }
+  if (Object.keys(update).length === 0) return state;
+  return { ...state, ...update };
+}
+
 function onSessionStatus(state: ConfigState, payload: Payload<'session:status'>): ConfigState {
   if (payload.permissionMode === undefined) return state;
   return { ...state, permissionMode: payload.permissionMode ?? null };
@@ -177,6 +189,7 @@ export const configHandlers = {
   'app:experiment_gates': onExperimentGates,
   'settings:usage': onSettingsUsage,
   'system:rate_limit': onRateLimitQuota,
+  'plugin:reloaded': onPluginReloaded,
 } satisfies Record<string, (state: ConfigState, payload: never) => ConfigState>;
 
 // session:states needs channelId — handled specially in context

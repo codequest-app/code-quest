@@ -1,13 +1,14 @@
+import type { EffortLevel } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const EFFORT_ACTIVE: Record<string, number> = { low: 1, medium: 2, high: 3, max: 4 };
+const EFFORT_ACTIVE: Record<string, number> = { low: 1, medium: 2, high: 3, xhigh: 4, max: 5 };
 const DOT_CX = [3.5, 9.5, 15.5, 21.5];
 
 export function SparkLegend({
   effort,
   isFastMode,
 }: {
-  effort?: 'low' | 'medium' | 'high' | 'max';
+  effort?: EffortLevel;
   isFastMode?: boolean;
 }) {
   const [showLabel, setShowLabel] = useState(true);

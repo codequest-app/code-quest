@@ -1,14 +1,24 @@
 import {
   contextUsageDataSchema,
+  effortLevelSchema,
   type McpServerInfo,
   mcpServerInfoSchema,
 } from '@code-quest/shared';
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
+import { modelOpenSignal } from '../features/model/model-feature';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useSpeechToText } from '../hooks/useSpeechToText';
-import { openUrl } from '../utils/open-url';
+import { findModel } from '../utils/model-utils';
 import { AddButton } from './AddButton';
 import { CommandMenu } from './CommandMenu';
 import { ContextPieChart } from './ContextPieChart';
@@ -32,16 +42,10 @@ const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): M
 });
 
 export interface ComposeToolbarProps {
-  onResumeConversation?: () => void;
   onAttachFile?: () => void;
-  onAskSideQuestion?: (question: string) => void;
 }
 
-export function ComposeToolbar({
-  onResumeConversation,
-  onAttachFile,
-  onAskSideQuestion,
-}: ComposeToolbarProps) {
+export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
   const {
     isProcessing,
     isCancelling,
@@ -55,7 +59,6 @@ export function ComposeToolbar({
     accountInfo,
     usageQuota,
     contextUsage,
-    requestUsageUpdate,
     permissionMode,
     model,
     availableModels,
@@ -90,7 +93,8 @@ export function ComposeToolbar({
       } else {
         setEnrichedMcpServers(null);
       }
-    } catch {
+    } catch (e) {
+      console.error('MCP refresh failed:', e);
       setEnrichedMcpServers(null);
     }
   };
@@ -124,7 +128,15 @@ export function ComposeToolbar({
     }
   }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
 
-  useClickOutside([pickerRef], () => setActiveDialog(null), activeDialog === 'modelPicker');
+  const isModelPickerOpen = useSyncExternalStore(
+    (cb) => modelOpenSignal.subscribe(cb),
+    () => modelOpenSignal.isOpen,
+  );
+  useClickOutside([pickerRef], () => modelOpenSignal.setOpen(false), isModelPickerOpen);
+
+  const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
+  const supportsAutoMode = modelEntry?.supportsAutoMode ?? false;
+  const effortLevels = modelEntry?.supportedEffortLevels ?? effortLevelSchema.options;
 
   const contextPct =
     contextUsageDataSchema.safeParse(contextUsage).data?.percentage ??
@@ -159,14 +171,14 @@ export function ComposeToolbar({
         updateValue={compose.updateValue}
       />
       <div className="flex items-center gap-[2px] px-[8px] py-[5px] text-[13px]">
-        {activeDialog === 'modelPicker' && (
+        {isModelPickerOpen && (
           <Suspense fallback={null}>
             <div ref={pickerRef}>
               <ModelPickerPanel
                 currentModel={model ?? null}
                 availableModels={availableModels}
                 onSwitch={setModel}
-                onClose={closeDialog}
+                onClose={() => modelOpenSignal.setOpen(false)}
                 defaultModelDescription={providerConfig?.defaultModelDescription}
               />
             </div>
@@ -176,26 +188,11 @@ export function ComposeToolbar({
         <AddButton onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
 
         <CommandMenu
-          onOpenModelPicker={() => setActiveDialog('modelPicker')}
-          onOpenAccountUsage={() => {
-            setActiveDialog('usage');
-            requestUsageUpdate();
-          }}
           onToggleMcp={() => setActiveDialog('manageMcp')}
           onMcpStatus={() => setActiveDialog('mcpStatus')}
-          onResumeConversation={onResumeConversation}
           onManagePlugins={() => setActiveDialog('plugins')}
-          onOpenConfig={() => setActiveDialog('initOptions')}
-          onSwitchAccount={() => setActiveDialog('auth')}
-          onOpenHelp={() =>
-            openUrl(
-              providerConfig?.brand.docsUrl ??
-                'https://docs.anthropic.com/en/docs/claude-code/overview',
-            )
-          }
           onAttachFile={onAttachFile}
-          onRewind={() => setActiveDialog('rewind')}
-          onAskSideQuestion={onAskSideQuestion}
+          docsUrl={providerConfig?.brand.docsUrl}
         />
 
         {showContextUsage && (
@@ -216,6 +213,8 @@ export function ComposeToolbar({
         <PermissionModePicker
           mode={permissionMode ?? 'normal'}
           effort={effort ?? undefined}
+          effortLevels={effortLevels}
+          supportsAutoMode={supportsAutoMode}
           onSetPermissionMode={setPermissionMode}
           onSetEffort={setEffort}
         />

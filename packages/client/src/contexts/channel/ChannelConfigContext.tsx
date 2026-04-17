@@ -1,6 +1,7 @@
 import {
   type AccountInfo,
   type ControlResponse,
+  type EffortLevel,
   getProviderConfigResponseSchema,
   type ModelInfo,
   type ProviderClientConfig,
@@ -37,7 +38,7 @@ export interface ConfigState {
   tools: string[];
   permissionMode: string | null;
   thinkingLevel: string;
-  effort: 'low' | 'medium' | 'high' | 'max' | null;
+  effort: EffortLevel | null;
   fastModeState: 'on' | 'off' | null;
   config: Record<string, unknown>;
   currentRepo: string | null;

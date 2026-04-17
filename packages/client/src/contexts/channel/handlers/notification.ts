@@ -129,6 +129,10 @@ function onRawEventEffect(deps: EffectDeps, p: Payload<'raw:event'>): void {
   }
 }
 
+function onMirrorError(_deps: EffectDeps, p: Payload<'system:mirror_error'>): void {
+  toast.warning(`Mirror sync error: ${p.error}`);
+}
+
 function onDisconnectEffect(): void {
   toast.warning('Disconnected from server');
 }
@@ -140,5 +144,6 @@ export const notificationHandlerEffects = {
   'action:open_file': onActionOpenFile,
   'notification:show': onNotificationShowEffect,
   'raw:event': onRawEventEffect,
+  'system:mirror_error': onMirrorError,
   disconnect: onDisconnectEffect,
 } satisfies Record<string, (deps: EffectDeps, payload: never) => void>;

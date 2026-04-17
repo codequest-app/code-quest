@@ -1,5 +1,5 @@
 import type { SessionSummary } from '@code-quest/shared';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import {
@@ -12,6 +12,9 @@ import {
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
+import { btwSignal } from '../features/btw/btw-feature';
+import { useBtwState } from '../features/btw/use-btw-state';
+import { resumeOpenSignal } from '../features/resume/resume-feature';
 import { cn } from '../utils/cn';
 import { ChatInputArea } from './ChatInputArea';
 import { CommandPalette } from './CommandPalette';
@@ -31,7 +34,8 @@ const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
 export function ChatPanel({ title }: { title?: string }) {
   const channelId = useChannelId();
-  const { messages, subscribeRawEvents, askSideQuestion } = useChannelMessages();
+  const { messages, subscribeRawEvents } = useChannelMessages();
+  const sideQuestion = useBtwState();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelCompose();
   const { listSessions, renameSession, deleteSession, resume } = useSession();
@@ -47,33 +51,10 @@ export function ChatPanel({ title }: { title?: string }) {
     cancelElicitation,
   } = useChannelControl();
 
-  const [sideQuestion, setSideQuestion] = useState<{
-    open: boolean;
-    question: string;
-    answer: string | null;
-    loading: boolean;
-    error: string | null;
-  }>({ open: false, question: '', answer: null, loading: false, error: null });
-
-  const handleAskSideQuestion = (question: string) => {
-    setSideQuestion({ open: true, question, answer: null, loading: true, error: null });
-    askSideQuestion(question)
-      .then((result) => {
-        if (result.ok) {
-          setSideQuestion((prev) => ({ ...prev, loading: false, answer: result.data.answer }));
-        } else {
-          setSideQuestion((prev) => ({ ...prev, loading: false, error: result.error }));
-        }
-      })
-      .catch((e) => {
-        setSideQuestion((prev) => ({
-          ...prev,
-          loading: false,
-          error: e instanceof Error ? e.message : String(e),
-        }));
-      });
-  };
-
+  const resumeIsOpen = useSyncExternalStore(
+    (cb) => resumeOpenSignal.subscribe(cb),
+    () => resumeOpenSignal.isOpen,
+  );
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
@@ -131,6 +112,11 @@ export function ChatPanel({ title }: { title?: string }) {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: openResumeOverlay stable via React Compiler
+  useEffect(() => {
+    if (resumeIsOpen) openResumeOverlay();
+  }, [resumeIsOpen]);
+
   useHotkeys('/', () => focusTextarea(), NO_FORM);
   useHotkeys('mod+k', () => setCommandPaletteOpen(true), NO_FORM);
   useHotkeys('mod+f', () => setCommandPaletteOpen(true), NO_FORM);
@@ -185,7 +171,10 @@ export function ChatPanel({ title }: { title?: string }) {
             sessions={resumeSessions.sessions}
             loading={resumeLoading}
             onSelect={handleResumeSelect}
-            onClose={() => setShowResumeOverlay(false)}
+            onClose={() => {
+              setShowResumeOverlay(false);
+              resumeOpenSignal.setOpen(false);
+            }}
             onRename={renameSession}
             onDelete={handleDelete}
           />
@@ -196,14 +185,11 @@ export function ChatPanel({ title }: { title?: string }) {
           answer={sideQuestion.answer}
           loading={sideQuestion.loading}
           error={sideQuestion.error}
-          onClose={() => setSideQuestion((prev) => ({ ...prev, open: false }))}
+          onClose={() => btwSignal.setState({ open: false })}
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-bg from-20% to-transparent px-4 pb-4 pt-1">
           <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
-            <ChatInputArea
-              onResumeConversation={openResumeOverlay}
-              onAskSideQuestion={handleAskSideQuestion}
-            />
+            <ChatInputArea />
           </div>
         </div>
       </div>

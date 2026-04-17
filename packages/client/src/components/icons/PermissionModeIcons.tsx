@@ -130,6 +130,29 @@ export function BypassSmallIcon() {
   );
 }
 
+// ── Auto mode (lightning bolt) ────────────────────────────────────────────────
+
+const AUTO_MODE_PATH =
+  'M9.3488 5.39354C9.95664 4.5744 11.25025 5.17788 11.01325 6.16991L10.39619 8.74991H13.133C13.90325 8.74991 14.34494 9.62726 13.88619 10.24587L10.65131 14.60631C10.0435 15.42569 8.74959 14.82212 8.98686 13.82994L9.60393 11.24994H6.86709C6.09684 11.24994 5.65504 10.37256 6.11391 9.75395L9.3488 5.39354ZM10.40531 6.02465C10.48425 5.69407 10.05313 5.49296 9.85052 5.76586L6.61562 10.12625C6.46281 10.3325 6.61039 10.62494 6.86709 10.62494H10.00006C10.09569 10.62494 10.18613 10.66894 10.24544 10.74394C10.30456 10.819 10.32613 10.91712 10.304 11.01006L9.59478 13.97519C9.51565 14.30594 9.94697 14.50713 10.14956 14.234L13.3845 9.87358C13.53712 9.66738 13.38969 9.37492 13.133 9.37492H10.00006C9.90439 9.37491 9.81395 9.33101 9.75469 9.2559C9.69557 9.18083 9.67389 9.08272 9.69609 8.98978L10.40531 6.02465Z';
+
+export function AutoModeIcon() {
+  return (
+    <svg {...svgBase}>
+      <title>icon</title>
+      <path fill="currentColor" d={AUTO_MODE_PATH} />
+    </svg>
+  );
+}
+
+export function AutoModeSmallIcon() {
+  return (
+    <svg {...svgBase}>
+      <title>icon</title>
+      <path fill="currentColor" d={AUTO_MODE_PATH} />
+    </svg>
+  );
+}
+
 // ── Effort icon (signal bars, 256×256 viewBox) ───────────────────────────────
 
 export function EffortIcon() {
@@ -179,5 +202,6 @@ export const PERMISSION_MODE_ICONS = {
   normal: { icon: <AskBeforeEditsIcon />, smallIcon: <AskBeforeEditsSmallIcon /> },
   acceptEdits: { icon: <EditAutoIcon />, smallIcon: <EditAutoSmallIcon /> },
   plan: { icon: <PlanModeIcon />, smallIcon: <PlanModeSmallIcon /> },
+  auto: { icon: <AutoModeIcon />, smallIcon: <AutoModeSmallIcon /> },
   bypassPermissions: { icon: <BypassIcon />, smallIcon: <BypassSmallIcon /> },
 } as const;

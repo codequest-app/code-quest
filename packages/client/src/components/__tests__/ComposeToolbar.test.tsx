@@ -27,15 +27,8 @@ async function openMcpStatusDialog(user: ReturnType<typeof userEvent.setup>) {
 
 describe('ComposeToolbar mcpRefresh', () => {
   it('shows refreshed server list from mcpStatus response', async () => {
-    const { user, claude } = await setup();
+    const { user } = await setup();
     await sendUserMessage(user, 'hello');
-
-    claude.onControlRequest((req) => {
-      if (req.subtype === 'mcp_servers') {
-        return { mcpServers: [{ name: 'github', status: 'connected', scope: 'global' }] };
-      }
-      return null;
-    });
 
     await openMcpStatusDialog(user);
 
@@ -43,15 +36,8 @@ describe('ComposeToolbar mcpRefresh', () => {
   });
 
   it('falls back to base servers when mcpStatus returns no server list', async () => {
-    const { user, claude } = await setup();
+    const { user } = await setup();
     await sendUserMessage(user, 'hello');
-
-    claude.onControlRequest((req) => {
-      if (req.subtype === 'mcp_servers') {
-        return {}; // no mcpServers key
-      }
-      return null;
-    });
 
     await openMcpStatusDialog(user);
     await act(async () => {});

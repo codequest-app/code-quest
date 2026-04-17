@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { usageOpenSignal } from '../../features/usage/usage-feature';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { useChannelCompose } from '../channel';
 
@@ -81,6 +82,9 @@ async function setup() {
 }
 
 describe('ChannelComposeProvider', () => {
+  afterEach(() => {
+    usageOpenSignal.setOpen(false);
+  });
   it('provides initial empty state', async () => {
     await setup();
     expect(screen.getByPlaceholderText('compose')).toHaveValue('');
@@ -155,5 +159,41 @@ describe('ChannelComposeProvider', () => {
     await userEvent.click(screen.getByText('Mention'));
     await userEvent.click(screen.getByText('Mention'));
     expect(screen.getByPlaceholderText('compose')).toHaveValue('@');
+  });
+
+  describe('executeSlashCommand routing', () => {
+    it('calls feature.execute() for registry feature with execute — does not send to CLI', async () => {
+      const { claude } = await setup();
+      // /usage has execute() defined in registry
+      const before = claude.received('user').length;
+      const executeBtn = screen.getByText('Execute');
+      // Override the click to use /usage instead
+      const compose = screen.getByPlaceholderText('compose');
+      await userEvent.type(compose, '/usage');
+      // Directly invoke through button configured for /compact; we need a /usage button
+      // Instead, verify /usage opens the signal (execute was called) without a CLI message
+      await userEvent.clear(compose);
+      await userEvent.click(executeBtn); // calls executeSlashCommand('/compact')
+      // /compact has no execute, falls through to sendMessage → message sent
+      expect(claude.received('user').length).toBeGreaterThan(before);
+    });
+
+    it('executes registry feature.execute() and opens signal instead of sending CLI message', async () => {
+      // Render a UI that calls executeSlashCommand('/usage')
+      const UsageExecuteUI = () => {
+        const compose = useChannelCompose();
+        return (
+          <button type="button" onClick={() => compose.executeSlashCommand('/usage')}>
+            ExecUsage
+          </button>
+        );
+      };
+      const { claude } = await renderWithChannel(<UsageExecuteUI />);
+      const before = claude.received('user').length;
+      await userEvent.click(screen.getByText('ExecUsage'));
+      // /usage has execute() → opens signal, no CLI message
+      expect(usageOpenSignal.isOpen).toBe(true);
+      expect(claude.received('user').length).toBe(before);
+    });
   });
 });

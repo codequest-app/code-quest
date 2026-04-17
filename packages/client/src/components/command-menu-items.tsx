@@ -1,4 +1,5 @@
 import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
+import type { FeatureRegistry } from '../lib/feature-registry';
 import { EffortSwitch } from './icons/EffortSwitch';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
@@ -34,36 +35,16 @@ export interface BuildMenuItemsParams {
   fastModeState: 'on' | 'off' | null;
   modelLabel: string;
   supportsFastMode: boolean;
+  registry: FeatureRegistry;
   onSetEffort: (effort: string) => void;
   onSetThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
   close: () => void;
   closeSilent: () => void;
-  compose: { mentionFile: () => void; executeSlashCommand: (cmd: string) => void };
-  actions: {
-    sendMessage: (msg: string) => void;
-    clearMessages: () => void;
-    clearModifiedFiles: () => void;
-  };
-  callbacks: {
-    onAttachFile?: () => void;
-    onRewind?: () => void;
-    onResumeConversation?: () => void;
-    onOpenModelPicker?: () => void;
-    onOpenAccountUsage?: () => void;
-    onMcpStatus?: () => void;
-    onToggleMcp?: () => void;
-    onManagePlugins?: () => void;
-    onOpenConfig?: () => void;
-    onSwitchAccount?: () => void;
-    onOpenHelp?: () => void;
-    onAskSideQuestion?: (question: string) => void;
-  };
+  compose: { executeSlashCommand: (cmd: string) => void };
 }
 
 export const DEFAULT_EFFORT_LEVELS: EffortLevel[] = effortLevelSchema.options;
-
-const EMPTY_TOOLS: MenuItem[] = [];
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const {
@@ -74,80 +55,67 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     isThinkingOn,
     isFastMode,
     fastModeState,
+    modelLabel,
     supportsFastMode,
+    registry,
   } = params;
-  const {
-    onSetEffort,
-    onSetThinkingLevel,
-    setFastMode,
-    close,
-    closeSilent,
-    compose,
-    actions,
-    callbacks,
-  } = params;
+  const { onSetEffort, onSetThinkingLevel, setFastMode, close, closeSilent, compose } = params;
 
-  const context: MenuItem[] = [
-    {
-      id: 'attach-file',
-      label: 'Attach file…',
-      section: 'Context',
+  const menuFeatures = registry.getMenuItemFeatures();
+  const menuFeatureIds = new Set(menuFeatures.map((f) => f.id));
+  const slashFeatures = registry
+    .getSlashCommandFeatures()
+    .filter((f) => f.execute && !menuFeatureIds.has(f.id));
+
+  function buildSection(section: string): MenuItem[] {
+    return menuFeatures
+      .filter((f) => f.menuItem.section === section)
+      .sort(
+        (a, b) =>
+          (a.menuItem.order ?? Number.POSITIVE_INFINITY) -
+          (b.menuItem.order ?? Number.POSITIVE_INFINITY),
+      )
+      .map((f) => ({
+        id: f.id,
+        label: f.menuItem.label,
+        section,
+        filterOnly: f.menuItem.filterOnly,
+        onClick: () => {
+          f.execute();
+          f.menuItem.closeSilent ? closeSilent() : close();
+        },
+      }));
+  }
+
+  const context: MenuItem[] = buildSection('Context');
+
+  function toModelItem(f: (typeof menuFeatures)[number]): MenuItem {
+    return {
+      id: f.id,
+      label: f.menuItem.label,
+      section: 'Model',
+      trailing:
+        f.id === 'model' ? (
+          <span className="font-mono text-[11px] text-text-muted">{modelLabel}</span>
+        ) : undefined,
       onClick: () => {
-        callbacks.onAttachFile?.();
+        f.execute();
         closeSilent();
       },
-    },
-    {
-      id: 'mention-file',
-      label: 'Mention file from this project...',
-      section: 'Context',
-      onClick: () => {
-        compose.mentionFile();
-        close();
-      },
-    },
-    {
-      id: 'clear-conversation',
-      label: 'Clear conversation',
-      section: 'Context',
-      onClick: () => {
-        actions.clearMessages();
-        actions.clearModifiedFiles();
-        close();
-      },
-    },
-    {
-      id: 'rewind',
-      label: 'Rewind',
-      section: 'Context',
-      onClick: () => {
-        callbacks.onRewind?.();
-        close();
-      },
-    },
-    {
-      id: 'new-conversation',
-      label: 'New conversation',
-      section: 'Context',
-      filterOnly: true,
-      onClick: () => {
-        actions.sendMessage('/new');
-        close();
-      },
-    },
-    {
-      id: 'resume-conversation',
-      label: 'Resume conversation',
-      section: 'Context',
-      filterOnly: true,
-      onClick: () => {
-        callbacks.onResumeConversation?.();
-        closeSilent();
-      },
-    },
-  ];
+    };
+  }
+
+  const modelRegistryFeatures = menuFeatures.filter((f) => f.menuItem.section === 'Model');
+  const modelFeaturesAbove = modelRegistryFeatures
+    .filter((f) => (f.menuItem.order ?? Number.POSITIVE_INFINITY) < 50)
+    .sort((a, b) => (a.menuItem.order ?? 0) - (b.menuItem.order ?? 0))
+    .map(toModelItem);
+  const modelFeaturesBelow = modelRegistryFeatures
+    .filter((f) => (f.menuItem.order ?? Number.POSITIVE_INFINITY) >= 50)
+    .map(toModelItem);
 
   const model: MenuItem[] = [
+    ...modelFeaturesAbove,
     {
       id: 'effort-level',
       label: effort ? `Effort (${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : 'Effort',
@@ -168,15 +136,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       trailing: <ToggleSwitch isOn={isThinkingOn} />,
       onClick: () => onSetThinkingLevel(isThinkingOn ? 'off' : 'default_on'),
     },
-    {
-      id: 'account-usage',
-      label: 'Account & usage…',
-      section: 'Model',
-      onClick: () => {
-        callbacks.onOpenAccountUsage?.();
-        closeSilent();
-      },
-    },
+    ...modelFeaturesBelow,
     ...(supportsFastMode
       ? [
           {
@@ -190,72 +150,16 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       : []),
   ];
 
-  const customize: MenuItem[] = [
-    {
-      id: 'mcp-status',
-      label: 'MCP status',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onMcpStatus?.();
-        closeSilent();
-      },
-    },
-    {
-      id: 'mcp-servers',
-      label: 'Manage MCP servers',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onToggleMcp?.();
-        closeSilent();
-      },
-    },
-    {
-      id: 'plugins',
-      label: 'Manage plugins',
-      section: 'Customize',
-      onClick: () => {
-        callbacks.onManagePlugins?.();
-        closeSilent();
-      },
-    },
-  ];
+  const customize: MenuItem[] = buildSection('Customize');
 
-  const tools = EMPTY_TOOLS;
+  const tools: MenuItem[] = [];
 
-  const settings: MenuItem[] = [
-    {
-      id: 'general-config',
-      label: 'General config…',
-      section: 'Settings',
-      onClick: () => {
-        callbacks.onOpenConfig?.();
-        closeSilent();
-      },
-    },
-    {
-      id: 'switch-account',
-      label: 'Switch account',
-      section: 'Settings',
-      onClick: () => {
-        callbacks.onSwitchAccount?.();
-        closeSilent();
-      },
-    },
-  ];
+  const settings: MenuItem[] = buildSection('Settings');
 
-  const support: MenuItem[] = [
-    {
-      id: 'view-help',
-      label: 'View help docs',
-      section: 'Support',
-      onClick: () => {
-        callbacks.onOpenHelp?.();
-        closeSilent();
-      },
-    },
-  ];
+  const support: MenuItem[] = buildSection('Support');
 
   const btwQuestion = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
+  const btwFeature = registry.getSlashCommand('/btw');
   const btwItem: MenuItem = {
     id: 'btw',
     label: '/btw',
@@ -264,24 +168,38 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     matchFirstToken: true,
     onClick: () => {
       if (btwQuestion) {
-        callbacks.onAskSideQuestion?.(btwQuestion);
-        closeSilent();
+        btwFeature?.invoke(`/btw ${btwQuestion}`);
+        close();
       }
     },
   };
 
-  const slash: MenuItem[] = [
-    btwItem,
-    ...slashCommands.map((cmd) => ({
-      id: `slash-${cmd}`,
-      label: `/${cmd}`,
-      section: 'Slash Commands',
-      onClick: () => {
-        compose.executeSlashCommand(`/${cmd}`);
-        close();
-      },
-    })),
-  ];
+  const allRegistryCommandIds = new Set(registry.getSlashCommandFeatures().map((f) => f.command));
+  const filteredCliCommands = slashCommands.filter((cmd) => !allRegistryCommandIds.has(`/${cmd}`));
+
+  const registrySlashItems: MenuItem[] = slashFeatures.map((f) => ({
+    id: f.id,
+    label: f.command,
+    section: 'Slash Commands',
+    onClick: () => {
+      f.execute?.();
+      close();
+    },
+  }));
+
+  const cliSlashItems: MenuItem[] = filteredCliCommands.map((cmd) => ({
+    id: `slash-${cmd}`,
+    label: `/${cmd}`,
+    section: 'Slash Commands',
+    onClick: () => {
+      compose.executeSlashCommand(`/${cmd}`);
+      close();
+    },
+  }));
+
+  const slash: MenuItem[] = [...registrySlashItems, btwItem, ...cliSlashItems].sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
 
   return { context, model, customize, tools, slash, settings, support };
 }

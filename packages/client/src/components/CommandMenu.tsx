@@ -1,8 +1,17 @@
 import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { useChannelCompose, useChannelConfig } from '../contexts/channel';
+import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
+import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
+import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
+import { createManagePluginsFeature } from '../features/manage-plugins/manage-plugins-feature';
+import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
+import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
+import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
+import { createViewHelpFeature } from '../features/view-help/view-help-feature';
 import { cn } from '../utils/cn';
 import { findModel } from '../utils/model-utils';
+import { openUrl } from '../utils/open-url';
 import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
 import { MenuItemRow, MenuSection } from './command-menu-parts';
 
@@ -32,18 +41,12 @@ function navigateItems(
 
 function ModelMenuSection({
   showDivider,
-  switchModelVisible,
-  switchModelItem,
-  modelLabel,
   filteredModel,
   activeId,
   activeItemRef,
   onHover,
 }: {
   showDivider: boolean;
-  switchModelVisible: boolean;
-  switchModelItem: MenuItem | null;
-  modelLabel: string;
   filteredModel: MenuItem[];
   activeId: string | null;
   activeItemRef: RefObject<HTMLButtonElement | null>;
@@ -58,26 +61,6 @@ function ModelMenuSection({
         <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
           Model
         </div>
-        {switchModelVisible && switchModelItem && (
-          <MenuItemRow
-            item={{
-              ...switchModelItem,
-              trailing: (
-                <span
-                  className={cn(
-                    'font-mono text-[11px]',
-                    isActive('switch-model') ? 'text-white/70' : 'text-text-muted',
-                  )}
-                >
-                  {modelLabel}
-                </span>
-              ),
-            }}
-            isActive={isActive('switch-model')}
-            activeItemRef={activeItemRef}
-            onHover={onHover}
-          />
-        )}
         {filteredModel.map((item) => (
           <MenuItemRow
             key={item.id}
@@ -94,36 +77,21 @@ function ModelMenuSection({
 
 export interface CommandMenuProps {
   // Dialog callbacks — managed by parent (ComposeToolbar)
-  onOpenModelPicker?: () => void;
-  onOpenAccountUsage?: () => void;
   onMcpStatus?: () => void;
   onToggleMcp?: () => void;
   onManagePlugins?: () => void;
-  onOpenConfig?: () => void;
-  onSwitchAccount?: () => void;
-  onOpenHelp?: () => void;
-  onResumeConversation?: () => void;
   onAttachFile?: () => void;
-  onRewind?: () => void;
-  onAskSideQuestion?: (question: string) => void;
+  docsUrl?: string;
 }
 
 export function CommandMenu({
-  onResumeConversation,
-  onOpenModelPicker,
-  onOpenAccountUsage,
   onMcpStatus,
   onToggleMcp,
   onManagePlugins,
-  onOpenConfig,
-  onSwitchAccount,
-  onOpenHelp,
   onAttachFile,
-  onRewind,
-  onAskSideQuestion,
+  docsUrl,
 }: CommandMenuProps) {
   // Context
-  const { sendMessage, clearMessages, clearModifiedFiles } = useChannelMessages();
   const {
     model,
     availableModels,
@@ -137,6 +105,14 @@ export function CommandMenu({
     setFastMode,
   } = useChannelConfig();
   const compose = useChannelCompose();
+  const registry = useFeatureRegistry();
+  registry.register(createAttachFileFeature({ onAttachFile }));
+  registry.register(createMcpStatusFeature({ onMcpStatus }));
+  registry.register(createMcpServersFeature({ onToggleMcp }));
+  registry.register(createManagePluginsFeature({ onManagePlugins }));
+  registry.register(createGeneralConfigFeature());
+  registry.register(createSwitchAccountFeature());
+  registry.register(createViewHelpFeature({ openUrl, docsUrl }));
 
   // Compute modelLabel
   const models = availableModels ?? [];
@@ -183,7 +159,6 @@ export function CommandMenu({
   }, [open, compose.dismissSlash]);
 
   useEffect(() => {
-    // Only focus the filter input when opened via button click
     if (buttonOpen && !externalOpen) {
       setTimeout(() => filterRef.current?.focus(), 0);
     }
@@ -286,27 +261,13 @@ export function CommandMenu({
     fastModeState,
     modelLabel,
     supportsFastMode,
+    registry,
     onSetEffort,
     onSetThinkingLevel,
     setFastMode,
     close,
     closeSilent,
-    compose: { mentionFile: compose.mentionFile, executeSlashCommand: compose.executeSlashCommand },
-    actions: { sendMessage, clearMessages, clearModifiedFiles },
-    callbacks: {
-      onAttachFile,
-      onRewind,
-      onResumeConversation,
-      onOpenModelPicker,
-      onOpenAccountUsage,
-      onMcpStatus,
-      onToggleMcp,
-      onManagePlugins,
-      onOpenConfig,
-      onSwitchAccount,
-      onOpenHelp,
-      onAskSideQuestion,
-    },
+    compose: { executeSlashCommand: compose.executeSlashCommand },
   });
   const {
     context: contextItems,
@@ -339,22 +300,7 @@ export function CommandMenu({
   const filteredSettings = filterItems(settingsItems);
   const filteredSupport = filterItems(supportItems);
 
-  // Include "Switch model" in model section filter check
-  const switchModelVisible = (!f || 'switch model'.includes(f)) && !!onOpenModelPicker;
-  const modelSectionVisible = !f || switchModelVisible || filteredModel.length > 0;
-
-  // Build flat navigable item list (matches render order)
-  const switchModelItem: MenuItem | null = switchModelVisible
-    ? {
-        id: 'switch-model',
-        label: 'Switch model',
-        section: 'Model',
-        onClick: () => {
-          onOpenModelPicker?.();
-          close();
-        },
-      }
-    : null;
+  const modelSectionVisible = !f || filteredModel.length > 0;
 
   // Compute whether each section has any preceding visible sections (for divider logic)
   const contextVisible = filteredContext.length > 0;
@@ -367,9 +313,7 @@ export function CommandMenu({
 
   const flatItems: MenuItem[] = [
     ...filteredContext,
-    ...(modelSectionVisible
-      ? [...(switchModelItem ? [switchModelItem] : []), ...filteredModel]
-      : []),
+    ...(modelSectionVisible ? filteredModel : []),
     ...filteredCustomize,
     ...filteredTools,
     ...filteredSlash,
@@ -445,7 +389,6 @@ export function CommandMenu({
           role="menu"
           className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-50 text-[13px] max-h-[50vh] overflow-hidden animate-slide-up"
         >
-          {/* Filter input — hidden when externally opened (typing / in textarea acts as filter) */}
           <div className={cn(externalOpen ? 'pt-1' : 'p-1')}>
             {!externalOpen && (
               <input
@@ -477,9 +420,6 @@ export function CommandMenu({
                 {modelSectionVisible && (
                   <ModelMenuSection
                     showDivider={modelHasPrev}
-                    switchModelVisible={switchModelVisible}
-                    switchModelItem={switchModelItem}
-                    modelLabel={modelLabel}
                     filteredModel={filteredModel}
                     activeId={activeId}
                     activeItemRef={activeItemRef}

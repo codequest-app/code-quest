@@ -1,5 +1,6 @@
 import type {
   ForkConversationResponse,
+  PluginReloadResult,
   RawEventsResponse,
   RewindResult,
   RpcResult,
@@ -69,5 +70,16 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     return rpc(socket, 'chat:ask_side_question', { channelId, question });
   }
 
-  return { fetchRawEvents, subscribeRawEvents, forkSession, rewindToMessage, askSideQuestion };
+  function reloadPlugins(): Promise<PluginReloadResult> {
+    return rpc(socket, 'plugin:reload', { channelId });
+  }
+
+  return {
+    fetchRawEvents,
+    subscribeRawEvents,
+    forkSession,
+    rewindToMessage,
+    askSideQuestion,
+    reloadPlugins,
+  };
 }

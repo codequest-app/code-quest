@@ -1,4 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
+import { btwSignal, createBtwFeature } from '../../features/btw/btw-feature';
+import { createClearFeature } from '../../features/clear/clear-feature';
+import { createManagePluginsFeature } from '../../features/manage-plugins/manage-plugins-feature';
+import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
+import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
+import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
+import type { MenuItemFeature, SlashCommandFeature } from '../../lib/feature';
+import { createFeatureRegistry } from '../../lib/feature-registry';
 import { type BuildMenuItemsParams, buildMenuItems } from '../command-menu-items';
 
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
@@ -12,19 +21,21 @@ function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItem
     fastModeState: null,
     modelLabel: 'Opus',
     supportsFastMode: false,
+    registry: createFeatureRegistry(),
     onSetEffort: vi.fn(),
     onSetThinkingLevel: vi.fn(),
     setFastMode: vi.fn(),
     close: vi.fn(),
     closeSilent: vi.fn(),
-    compose: { mentionFile: vi.fn(), executeSlashCommand: vi.fn() },
-    actions: { sendMessage: vi.fn(), clearMessages: vi.fn(), clearModifiedFiles: vi.fn() },
-    callbacks: {},
+    compose: { executeSlashCommand: vi.fn() },
     ...overrides,
   };
 }
 
 describe('buildMenuItems', () => {
+  afterEach(() => {
+    btwSignal.setState({ open: false, question: '', answer: null, loading: false, error: null });
+  });
   it('returns all 7 sections', () => {
     const sections = buildMenuItems(defaultParams());
     expect(Object.keys(sections)).toEqual([
@@ -38,16 +49,59 @@ describe('buildMenuItems', () => {
     ]);
   });
 
-  it('context section has attach-file, mention-file, clear-conversation', () => {
-    const { context } = buildMenuItems(defaultParams());
+  it('context section includes attach-file from registry MenuItemFeature', () => {
+    const registry = createFeatureRegistry();
+    const onAttachFile = vi.fn();
+    registry.register(createAttachFileFeature({ onAttachFile }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
     expect(context.map((i) => i.id)).toContain('attach-file');
-    expect(context.map((i) => i.id)).toContain('mention-file');
-    expect(context.map((i) => i.id)).toContain('clear-conversation');
   });
 
-  it('slash section maps slashCommands to menu items (after /btw)', () => {
+  it('clicking attach-file calls onAttachFile + closeSilent', () => {
+    const closeSilent = vi.fn();
+    const onAttachFile = vi.fn();
+    const registry = createFeatureRegistry();
+    registry.register(createAttachFileFeature({ onAttachFile }));
+    const { context } = buildMenuItems(defaultParams({ closeSilent, registry }));
+    const item = context.find((i) => i.id === 'attach-file');
+    item?.onClick?.();
+    expect(onAttachFile).toHaveBeenCalled();
+    expect(closeSilent).toHaveBeenCalled();
+  });
+
+  it('context section includes mention-file from registry MenuItemFeature', () => {
+    const registry = createFeatureRegistry();
+    const mentionFile = vi.fn();
+    registry.register(createMentionFileFeature({ mentionFile }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
+    expect(context.map((i) => i.id)).toContain('mention-file');
+  });
+
+  it('clicking mention-file calls mentionFile + close', () => {
+    const close = vi.fn();
+    const mentionFile = vi.fn();
+    const registry = createFeatureRegistry();
+    registry.register(createMentionFileFeature({ mentionFile }));
+    const { context } = buildMenuItems(defaultParams({ close, registry }));
+    const item = context.find((i) => i.id === 'mention-file');
+    item?.onClick?.();
+    expect(mentionFile).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('context section includes clear item from registry MenuItemFeature', () => {
+    const registry = createFeatureRegistry();
+    const clearMessages = vi.fn();
+    const clearModifiedFiles = vi.fn();
+    registry.register(
+      createClearFeature({ clearMessages, clearModifiedFiles, sendMessage: vi.fn() }),
+    );
+    const { context } = buildMenuItems(defaultParams({ registry }));
+    expect(context.map((i) => i.id)).toContain('clear');
+  });
+
+  it('slash section maps slashCommands to menu items sorted by label', () => {
     const { slash } = buildMenuItems(defaultParams({ slashCommands: ['help', 'review'] }));
-    // /btw is always first, then slashCommands
     expect(slash).toHaveLength(3);
     expect(slash[0].id).toBe('btw');
     expect(slash[1].label).toBe('/help');
@@ -64,17 +118,16 @@ describe('buildMenuItems', () => {
     expect(model.map((i) => i.id)).not.toContain('fast-mode');
   });
 
-  it('clicking clear-conversation calls clearMessages + clearModifiedFiles + close', () => {
+  it('clicking clear item calls clearMessages + clearModifiedFiles + close', () => {
     const close = vi.fn();
     const clearMessages = vi.fn();
     const clearModifiedFiles = vi.fn();
-    const { context } = buildMenuItems(
-      defaultParams({
-        close,
-        actions: { sendMessage: vi.fn(), clearMessages, clearModifiedFiles },
-      }),
+    const registry = createFeatureRegistry();
+    registry.register(
+      createClearFeature({ clearMessages, clearModifiedFiles, sendMessage: vi.fn() }),
     );
-    const item = context.find((i) => i.id === 'clear-conversation');
+    const { context } = buildMenuItems(defaultParams({ close, registry }));
+    const item = context.find((i) => i.id === 'clear');
     item?.onClick?.();
     expect(clearMessages).toHaveBeenCalled();
     expect(clearModifiedFiles).toHaveBeenCalled();
@@ -93,8 +146,15 @@ describe('buildMenuItems', () => {
     expect(effortItem?.label).toBe('Effort');
   });
 
-  it('context section includes rewind item', () => {
-    const { context } = buildMenuItems(defaultParams());
+  it('context section includes rewind item from registry MenuItemFeature', () => {
+    const registry = createFeatureRegistry();
+    const rewindFeature: MenuItemFeature = {
+      id: 'rewind',
+      menuItem: { label: 'Rewind', section: 'Context' },
+      execute: vi.fn(),
+    };
+    registry.register(rewindFeature);
+    const { context } = buildMenuItems(defaultParams({ registry }));
     expect(context.map((i) => i.id)).toContain('rewind');
   });
 
@@ -116,40 +176,98 @@ describe('buildMenuItems', () => {
       expect(btw?.disabled).toBe(false);
     });
 
-    it('calls onAskSideQuestion with question text when clicked', () => {
-      const closeSilent = vi.fn();
-      const onAskSideQuestion = vi.fn();
+    it('invokes btw feature with question when clicked', () => {
+      const close = vi.fn();
+      const askSideQuestion = vi.fn().mockResolvedValue({ ok: true, data: { answer: '4' } });
+      const registry = createFeatureRegistry();
+      registry.register(createBtwFeature({ askSideQuestion }));
       const { slash } = buildMenuItems(
-        defaultParams({
-          slashFilter: 'btw what is 2+2?',
-          closeSilent,
-          callbacks: { onAskSideQuestion },
-        }),
+        defaultParams({ slashFilter: 'btw what is 2+2?', close, registry }),
       );
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();
-      expect(onAskSideQuestion).toHaveBeenCalledWith('what is 2+2?');
-      expect(closeSilent).toHaveBeenCalled();
+      expect(askSideQuestion).toHaveBeenCalledWith('what is 2+2?');
+      expect(close).toHaveBeenCalled();
     });
 
-    it('does not call onAskSideQuestion when question is empty', () => {
-      const onAskSideQuestion = vi.fn();
-      const { slash } = buildMenuItems(
-        defaultParams({ slashFilter: 'btw', callbacks: { onAskSideQuestion } }),
-      );
+    it('does not invoke btw feature when question is empty', () => {
+      const askSideQuestion = vi.fn();
+      const registry = createFeatureRegistry();
+      registry.register(createBtwFeature({ askSideQuestion }));
+      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw', registry }));
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();
-      expect(onAskSideQuestion).not.toHaveBeenCalled();
+      expect(askSideQuestion).not.toHaveBeenCalled();
     });
   });
 
-  it('clicking rewind calls callbacks.onRewind + close', () => {
+  it('customize section includes mcp-status, mcp-servers, plugins from registry', () => {
+    const registry = createFeatureRegistry();
+    registry.register(createMcpStatusFeature({ onMcpStatus: vi.fn() }));
+    registry.register(createMcpServersFeature({ onToggleMcp: vi.fn() }));
+    registry.register(createManagePluginsFeature({ onManagePlugins: vi.fn() }));
+    const { customize } = buildMenuItems(defaultParams({ registry }));
+    expect(customize.map((i) => i.id)).toContain('mcp-status');
+    expect(customize.map((i) => i.id)).toContain('mcp-servers');
+    expect(customize.map((i) => i.id)).toContain('plugins');
+  });
+
+  it('clicking mcp-status calls onMcpStatus + closeSilent', () => {
+    const closeSilent = vi.fn();
+    const onMcpStatus = vi.fn();
+    const registry = createFeatureRegistry();
+    registry.register(createMcpStatusFeature({ onMcpStatus }));
+    const { customize } = buildMenuItems(defaultParams({ closeSilent, registry }));
+    customize.find((i) => i.id === 'mcp-status')?.onClick?.();
+    expect(onMcpStatus).toHaveBeenCalled();
+    expect(closeSilent).toHaveBeenCalled();
+  });
+
+  it('slash section includes registry SlashCommandFeature with execute', () => {
+    const registry = createFeatureRegistry();
+    const feature: SlashCommandFeature = {
+      id: 'reload-plugins',
+      command: '/reload-plugins',
+      invoke: vi.fn(),
+      execute: vi.fn(),
+    };
+    registry.register(feature);
+    const { slash } = buildMenuItems(defaultParams({ registry }));
+    expect(slash.map((i) => i.id)).toContain('reload-plugins');
+  });
+
+  it('clicking registry slash feature calls feature.execute + close', () => {
     const close = vi.fn();
-    const onRewind = vi.fn();
-    const { context } = buildMenuItems(defaultParams({ close, callbacks: { onRewind } }));
+    const execute = vi.fn();
+    const registry = createFeatureRegistry();
+    const feature: SlashCommandFeature = {
+      id: 'reload-plugins',
+      command: '/reload-plugins',
+      invoke: vi.fn(),
+      execute,
+    };
+    registry.register(feature);
+    const { slash } = buildMenuItems(defaultParams({ registry, close }));
+    const item = slash.find((i) => i.id === 'reload-plugins');
+    item?.onClick?.();
+    expect(execute).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('clicking registry rewind feature calls feature.execute + close', () => {
+    const close = vi.fn();
+    const execute = vi.fn();
+    const registry = createFeatureRegistry();
+    const feature: MenuItemFeature = {
+      id: 'rewind',
+      menuItem: { label: 'Rewind', section: 'Context' },
+      execute,
+    };
+    registry.register(feature);
+    const { context } = buildMenuItems(defaultParams({ registry, close }));
     const item = context.find((i) => i.id === 'rewind');
     item?.onClick?.();
-    expect(onRewind).toHaveBeenCalled();
+    expect(execute).toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
   });
 });
