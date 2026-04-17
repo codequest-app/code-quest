@@ -2,10 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
 import { btwSignal, createBtwFeature } from '../../features/btw/btw-feature';
 import { createClearFeature } from '../../features/clear/clear-feature';
+import { createEffortFeature } from '../../features/effort/effort-feature';
+import { createFastModeFeature } from '../../features/fast-mode/fast-mode-feature';
 import { createManagePluginsFeature } from '../../features/manage-plugins/manage-plugins-feature';
 import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
 import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
+import { createThinkingFeature } from '../../features/thinking/thinking-feature';
+
 import type { MenuItemFeature, SlashCommandFeature } from '../../lib/feature';
 import { createFeatureRegistry } from '../../lib/feature-registry';
 import { type BuildMenuItemsParams, buildMenuItems } from '../command-menu-items';
@@ -14,17 +18,8 @@ function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItem
   return {
     slashCommands: [],
     slashFilter: null,
-    effort: null,
-    effortLevels: ['low', 'medium', 'high', 'max'],
-    isThinkingOn: false,
-    isFastMode: false,
-    fastModeState: null,
     modelLabel: 'Opus',
-    supportsFastMode: false,
     registry: createFeatureRegistry(),
-    onSetEffort: vi.fn(),
-    onSetThinkingLevel: vi.fn(),
-    setFastMode: vi.fn(),
     close: vi.fn(),
     closeSilent: vi.fn(),
     compose: { executeSlashCommand: vi.fn() },
@@ -109,13 +104,43 @@ describe('buildMenuItems', () => {
   });
 
   it('model section includes fast-mode when supportsFastMode is true', () => {
-    const { model } = buildMenuItems(defaultParams({ supportsFastMode: true }));
+    const localFeatures = [createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() })];
+    const { model } = buildMenuItems(defaultParams({ localFeatures }));
     expect(model.map((i) => i.id)).toContain('fast-mode');
   });
 
   it('model section excludes fast-mode when supportsFastMode is false', () => {
-    const { model } = buildMenuItems(defaultParams({ supportsFastMode: false }));
+    const { model } = buildMenuItems(defaultParams());
     expect(model.map((i) => i.id)).not.toContain('fast-mode');
+  });
+
+  it('model section order: switch model → effort → thinking → fast-mode → account & usage', () => {
+    const registry = createFeatureRegistry();
+    const modelFeature: MenuItemFeature = {
+      id: 'model',
+      menuItem: { label: 'Switch model', section: 'Model', order: 0 },
+      execute: vi.fn(),
+    };
+    const usageFeature: MenuItemFeature = {
+      id: 'usage',
+      menuItem: { label: 'Account & usage', section: 'Model' },
+      execute: vi.fn(),
+    };
+    registry.register(modelFeature);
+    registry.register(usageFeature);
+    const localFeatures = [
+      createEffortFeature({ effort: null, effortLevels: ['low', 'max'], onSetEffort: vi.fn() }),
+      createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() }),
+      createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() }),
+    ];
+    const { model } = buildMenuItems(defaultParams({ registry, localFeatures }));
+    expect(model.map((i) => i.id)).toEqual([
+      'model',
+      'effort-level',
+      'toggle-thinking',
+      'fast-mode',
+      'usage',
+    ]);
   });
 
   it('clicking clear item calls clearMessages + clearModifiedFiles + close', () => {
@@ -134,16 +159,32 @@ describe('buildMenuItems', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('effort item shows current level in label', () => {
-    const { model } = buildMenuItems(defaultParams({ effort: 'low' }));
-    const effortItem = model.find((i) => i.id === 'effort-level');
-    expect(effortItem?.label).toBe('Effort (Low)');
-  });
-
-  it('effort item shows just Effort when no level set', () => {
-    const { model } = buildMenuItems(defaultParams({ effort: null }));
+  it('effort item label is Effort and description shows level', () => {
+    const localFeatures = [
+      createEffortFeature({
+        effort: 'low',
+        effortLevels: ['low', 'medium', 'high', 'max'],
+        onSetEffort: vi.fn(),
+      }),
+    ];
+    const { model } = buildMenuItems(defaultParams({ localFeatures }));
     const effortItem = model.find((i) => i.id === 'effort-level');
     expect(effortItem?.label).toBe('Effort');
+    expect(effortItem?.description).toBe('(Low)');
+  });
+
+  it('effort item has no description when no level set', () => {
+    const localFeatures = [
+      createEffortFeature({
+        effort: null,
+        effortLevels: ['low', 'medium', 'high', 'max'],
+        onSetEffort: vi.fn(),
+      }),
+    ];
+    const { model } = buildMenuItems(defaultParams({ localFeatures }));
+    const effortItem = model.find((i) => i.id === 'effort-level');
+    expect(effortItem?.label).toBe('Effort');
+    expect(effortItem?.description).toBeUndefined();
   });
 
   it('context section includes rewind item from registry MenuItemFeature', () => {

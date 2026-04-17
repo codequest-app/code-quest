@@ -3,16 +3,19 @@ import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 're
 import { useChannelCompose, useChannelConfig } from '../contexts/channel';
 import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
 import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
+import { createEffortFeature } from '../features/effort/effort-feature';
+import { createFastModeFeature } from '../features/fast-mode/fast-mode-feature';
 import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
 import { createManagePluginsFeature } from '../features/manage-plugins/manage-plugins-feature';
 import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
 import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
+import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
 import { cn } from '../utils/cn';
 import { findModel } from '../utils/model-utils';
 import { openUrl } from '../utils/open-url';
-import { buildMenuItems, DEFAULT_EFFORT_LEVELS, type MenuItem } from './command-menu-items';
+import { buildMenuItems, type MenuItem } from './command-menu-items';
 import { MenuItemRow, MenuSection } from './command-menu-parts';
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
@@ -97,7 +100,6 @@ export function CommandMenu({
     availableModels,
     effort,
     thinkingLevel,
-    isFastMode,
     fastModeState,
     slashCommands,
     setEffort: onSetEffort,
@@ -106,15 +108,6 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
   const registry = useFeatureRegistry();
-  const localFeatures = [
-    createAttachFileFeature({ onAttachFile }),
-    createMcpStatusFeature({ onMcpStatus }),
-    createMcpServersFeature({ onToggleMcp }),
-    createManagePluginsFeature({ onManagePlugins }),
-    createGeneralConfigFeature(),
-    createSwitchAccountFeature(),
-    createViewHelpFeature({ openUrl, docsUrl }),
-  ];
 
   // Compute modelLabel
   const models = availableModels ?? [];
@@ -124,8 +117,24 @@ export function CommandMenu({
 
   const supportsFastMode = modelEntry?.supportsFastMode ?? false;
   const effortLevels: EffortLevel[] = (
-    modelEntry?.supportedEffortLevels ?? (modelEntry?.supportsEffort ? DEFAULT_EFFORT_LEVELS : [])
-  ).filter((v): v is EffortLevel => effortLevelSchema.safeParse(v).success);
+    modelEntry?.supportedEffortLevels ??
+    (modelEntry?.supportsEffort ? effortLevelSchema.options : [])
+  ).filter((v: unknown): v is EffortLevel => effortLevelSchema.safeParse(v).success);
+
+  const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
+
+  const localFeatures = [
+    createAttachFileFeature({ onAttachFile }),
+    createMcpStatusFeature({ onMcpStatus }),
+    createMcpServersFeature({ onToggleMcp }),
+    createManagePluginsFeature({ onManagePlugins }),
+    createGeneralConfigFeature(),
+    createSwitchAccountFeature(),
+    createViewHelpFeature({ openUrl, docsUrl }),
+    createEffortFeature({ effort, effortLevels, onSetEffort }),
+    createThinkingFeature({ isThinkingOn, onSetThinkingLevel }),
+    ...(supportsFastMode ? [createFastModeFeature({ fastModeState, setFastMode })] : []),
+  ];
 
   // Compose bindings
   const externalOpen = compose.slashFilter != null;
@@ -144,8 +153,6 @@ export function CommandMenu({
 
   // Effective filter text: from textarea (external) or from filter input (button-click)
   const effectiveFilter = externalOpen ? (externalFilter ?? '') : filter;
-
-  const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
 
   useEffect(() => {
     if (!open) return;
@@ -256,18 +263,9 @@ export function CommandMenu({
   const sections = buildMenuItems({
     slashCommands,
     slashFilter: compose.slashFilter,
-    effort,
-    effortLevels,
-    isThinkingOn,
-    isFastMode,
-    fastModeState,
     modelLabel,
-    supportsFastMode,
     registry,
     localFeatures,
-    onSetEffort,
-    onSetThinkingLevel,
-    setFastMode,
     close,
     closeSilent,
     compose: { executeSlashCommand: compose.executeSlashCommand },

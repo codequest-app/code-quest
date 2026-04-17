@@ -23,7 +23,12 @@ export function MenuItemRow({ item, isActive, activeItemRef, onHover }: MenuItem
         isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10',
       )}
     >
-      <span>{item.label}</span>
+      <span className="flex items-center gap-1.5">
+        {item.label}
+        {item.description && (
+          <span className="font-mono text-[11px] text-text-muted">{item.description}</span>
+        )}
+      </span>
       {item.trailing && <span>{item.trailing}</span>}
     </button>
   );

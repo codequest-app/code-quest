@@ -13,7 +13,7 @@ export function createUsageFeature({ emitRefreshUsage }: UsageFeatureDeps): Usag
   return {
     id: 'usage',
     command: '/usage',
-    menuItem: { label: 'Account & usage…', section: 'Model' },
+    menuItem: { label: 'Account & usage…', section: 'Model', order: 40 },
     invoke() {
       this.execute();
     },

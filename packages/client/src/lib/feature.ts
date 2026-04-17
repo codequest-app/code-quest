@@ -19,6 +19,8 @@ export interface MenuItemFeature extends ChannelFeature {
     closeSilent?: boolean;
     /** Show only when filtering, not in the default open menu */
     filterOnly?: boolean;
+    description?: string;
+    trailing?: React.ReactNode;
   };
   execute(): void;
 }

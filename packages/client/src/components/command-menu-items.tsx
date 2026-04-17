@@ -1,12 +1,10 @@
-import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
 import { type ChannelFeature, isMenuItemFeature, isSlashCommandFeature } from '../lib/feature';
 import type { FeatureRegistry } from '../lib/feature-registry';
-import { EffortSwitch } from './icons/EffortSwitch';
-import { ToggleSwitch } from './ui/ToggleSwitch';
 
 export interface MenuItem {
   id: string;
   label: string;
+  description?: string;
   section: string;
   disabled?: boolean;
   filterOnly?: boolean;
@@ -29,39 +27,17 @@ interface MenuSections {
 export interface BuildMenuItemsParams {
   slashCommands: string[];
   slashFilter: string | null;
-  effort: EffortLevel | null;
-  effortLevels: EffortLevel[];
-  isThinkingOn: boolean;
-  isFastMode: boolean;
-  fastModeState: 'on' | 'off' | null;
   modelLabel: string;
-  supportsFastMode: boolean;
   registry: FeatureRegistry;
   localFeatures?: ChannelFeature[];
-  onSetEffort: (effort: string) => void;
-  onSetThinkingLevel: (level: string) => void;
-  setFastMode: (enabled: boolean) => void;
   close: () => void;
   closeSilent: () => void;
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
-export const DEFAULT_EFFORT_LEVELS: EffortLevel[] = effortLevelSchema.options;
-
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const {
-    slashCommands,
-    slashFilter,
-    effort,
-    effortLevels,
-    isThinkingOn,
-    isFastMode,
-    fastModeState,
-    modelLabel,
-    supportsFastMode,
-    registry,
-  } = params;
-  const { onSetEffort, onSetThinkingLevel, setFastMode, close, closeSilent, compose } = params;
+  const { slashCommands, slashFilter, modelLabel, registry } = params;
+  const { close, closeSilent, compose } = params;
 
   const local = params.localFeatures ?? [];
   const menuFeatures = [...registry.getMenuItemFeatures(), ...local.filter(isMenuItemFeature)];
@@ -82,8 +58,10 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       .map((f) => ({
         id: f.id,
         label: f.menuItem.label,
+        description: f.menuItem.description,
         section,
         filterOnly: f.menuItem.filterOnly,
+        trailing: f.menuItem.trailing,
         onClick: () => {
           f.execute();
           f.menuItem.closeSilent ? closeSilent() : close();
@@ -97,11 +75,14 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     return {
       id: f.id,
       label: f.menuItem.label,
+      description: f.menuItem.description,
       section: 'Model',
       trailing:
         f.id === 'model' ? (
           <span className="font-mono text-[11px] text-text-muted">{modelLabel}</span>
-        ) : undefined,
+        ) : (
+          f.menuItem.trailing
+        ),
       onClick: () => {
         f.execute();
         closeSilent();
@@ -109,50 +90,14 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     };
   }
 
-  const modelRegistryFeatures = menuFeatures.filter((f) => f.menuItem.section === 'Model');
-  const modelFeaturesAbove = modelRegistryFeatures
-    .filter((f) => (f.menuItem.order ?? Number.POSITIVE_INFINITY) < 50)
-    .sort((a, b) => (a.menuItem.order ?? 0) - (b.menuItem.order ?? 0))
+  const modelFeatures = menuFeatures.filter((f) => f.menuItem.section === 'Model');
+  const model: MenuItem[] = modelFeatures
+    .sort(
+      (a, b) =>
+        (a.menuItem.order ?? Number.POSITIVE_INFINITY) -
+        (b.menuItem.order ?? Number.POSITIVE_INFINITY),
+    )
     .map(toModelItem);
-  const modelFeaturesBelow = modelRegistryFeatures
-    .filter((f) => (f.menuItem.order ?? Number.POSITIVE_INFINITY) >= 50)
-    .map(toModelItem);
-
-  const model: MenuItem[] = [
-    ...modelFeaturesAbove,
-    {
-      id: 'effort-level',
-      label: effort ? `Effort (${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : 'Effort',
-      section: 'Model',
-      trailing: (
-        <EffortSwitch level={effort ?? undefined} levels={effortLevels} onSelect={onSetEffort} />
-      ),
-      onClick: () => {
-        if (effortLevels.length === 0) return;
-        const idx = effort ? effortLevels.indexOf(effort) : -1;
-        onSetEffort(effortLevels[(idx + 1) % effortLevels.length]);
-      },
-    },
-    {
-      id: 'toggle-thinking',
-      label: 'Thinking',
-      section: 'Model',
-      trailing: <ToggleSwitch isOn={isThinkingOn} />,
-      onClick: () => onSetThinkingLevel(isThinkingOn ? 'off' : 'default_on'),
-    },
-    ...modelFeaturesBelow,
-    ...(supportsFastMode
-      ? [
-          {
-            id: 'fast-mode',
-            label: 'Toggle fast mode',
-            section: 'Model',
-            trailing: <ToggleSwitch isOn={isFastMode} />,
-            onClick: () => setFastMode(fastModeState === 'off' || !fastModeState),
-          },
-        ]
-      : []),
-  ];
 
   const customize: MenuItem[] = buildSection('Customize');
 
