@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generalConfigSignal } from '../../features/general-config/general-config-signal';
@@ -16,10 +16,11 @@ const defaultControlResponse = s.controlResponse('init', {
 async function renderCommandMenu(
   props: Partial<React.ComponentProps<typeof CommandMenu>> = {},
   initOpts?: Parameters<typeof s.init>[1],
+  extraSegments?: string[],
 ) {
   return renderWithChannel(<CommandMenu {...props} />, {
     initSegment: s.init('sess-1', initOpts),
-    extraSegments: [defaultControlResponse],
+    extraSegments: extraSegments ?? [defaultControlResponse],
   });
 }
 
@@ -128,6 +129,63 @@ describe('CommandMenu', () => {
       await openMenu();
       await userEvent.click(await screen.findByText('General config…'));
       expect(generalConfigSignal.isOpen).toBe(true);
+    });
+  });
+
+  describe('model feature interactions', () => {
+    it('clicking Effort item cycles effort level and server emits settings:update', async () => {
+      const effortModel = s.controlResponse('init', {
+        models: [
+          {
+            value: 'claude-sonnet-4-6',
+            displayName: 'Sonnet',
+            supportsEffort: true,
+            supportedEffortLevels: ['low', 'medium', 'high', 'max'],
+          },
+        ],
+      });
+      const { summoner, claude, channelId } = await renderCommandMenu({}, undefined, [effortModel]);
+      // Set effort to 'low' via server push so context has a known starting state
+      await act(async () => {
+        claude.pushServerEvent('settings:update', { channelId, effort: 'low' });
+      });
+      await openMenu();
+      await userEvent.click(screen.getByText(/^Effort/));
+      await new Promise((r) => setTimeout(r, 50));
+      const updates = summoner.events('settings:update');
+      expect(updates.some((u) => u.effort === 'medium')).toBe(true);
+    });
+
+    it('clicking Thinking item toggles thinking level and server emits settings:update', async () => {
+      const { summoner, claude, channelId } = await renderCommandMenu();
+      await act(async () => {
+        claude.pushServerEvent('settings:update', { channelId, thinkingLevel: 'off' });
+      });
+      await openMenu();
+      await userEvent.click(screen.getByText('Thinking'));
+      const updates = summoner.events('settings:update');
+      expect(updates.some((u) => u.thinkingLevel === 'default_on')).toBe(true);
+    });
+
+    it('clicking fast mode item toggles fast mode and server emits settings:update', async () => {
+      const { summoner } = await renderWithChannel(<CommandMenu />, {
+        initSegment: s.init('sess-1', { fastModeState: 'off' }),
+        extraSegments: [
+          s.controlResponse('init', {
+            models: [
+              {
+                value: 'claude-sonnet-4-6',
+                displayName: 'Sonnet',
+                supportsFastMode: true,
+              },
+            ],
+          }),
+        ],
+      });
+      await openMenu();
+      await userEvent.click(screen.getByText('Toggle fast mode'));
+      const updates = summoner.events('settings:update');
+      expect(updates.some((u) => u.fastModeState === 'on')).toBe(true);
     });
   });
 
