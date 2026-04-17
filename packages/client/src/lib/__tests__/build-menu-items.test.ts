@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
-import { btwSignal, createBtwFeature } from '../../features/btw/btw-feature';
+import { btwSignal, createBtwFeature, createBtwLocalFeature } from '../../features/btw/btw-feature';
 import { createClearFeature } from '../../features/clear/clear-feature';
 import { createEffortFeature } from '../../features/effort/effort-feature';
 import { createFastModeFeature } from '../../features/fast-mode/fast-mode-feature';
@@ -8,6 +8,7 @@ import { createManagePluginsFeature } from '../../features/manage-plugins/manage
 import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
 import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
+import { createModelFeature } from '../../features/model/model-feature';
 import { createThinkingFeature } from '../../features/thinking/thinking-feature';
 import { type BuildMenuItemsParams, buildMenuItems } from '../build-menu-items';
 import type { MenuItemFeature, SlashCommandFeature } from '../feature';
@@ -16,8 +17,6 @@ import { createFeatureRegistry } from '../feature-registry';
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
   return {
     slashCommands: [],
-    slashFilter: null,
-    modelLabel: 'Opus',
     registry: createFeatureRegistry(),
     close: vi.fn(),
     closeSilent: vi.fn(),
@@ -94,7 +93,13 @@ describe('buildMenuItems', () => {
   });
 
   it('slash section maps slashCommands to menu items sorted by label', () => {
-    const { slash } = buildMenuItems(defaultParams({ slashCommands: ['help', 'review'] }));
+    const btwLocalFeature = createBtwLocalFeature({
+      slashFilter: null,
+      btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+    });
+    const { slash } = buildMenuItems(
+      defaultParams({ slashCommands: ['help', 'review'], localFeatures: [btwLocalFeature] }),
+    );
     expect(slash).toHaveLength(3);
     expect(slash[0].id).toBe('btw');
     expect(slash[1].label).toBe('/help');
@@ -114,19 +119,14 @@ describe('buildMenuItems', () => {
 
   it('model section order: switch model → effort → thinking → fast-mode → account & usage', () => {
     const registry = createFeatureRegistry();
-    const modelFeature: MenuItemFeature = {
-      id: 'model',
-      menuItem: { label: 'Switch model', section: 'Model', order: 0 },
-      execute: vi.fn(),
-    };
     const usageFeature: MenuItemFeature = {
       id: 'usage',
       menuItem: { label: 'Account & usage', section: 'Model' },
       execute: vi.fn(),
     };
-    registry.register(modelFeature);
     registry.register(usageFeature);
     const localFeatures = [
+      createModelFeature({ modelLabel: 'Opus' }),
       createEffortFeature({ effort: null, effortLevels: ['low', 'max'], onSetEffort: vi.fn() }),
       createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() }),
       createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() }),
@@ -139,6 +139,24 @@ describe('buildMenuItems', () => {
       'fast-mode',
       'usage',
     ]);
+  });
+
+  it('clicking model item with closeSilent calls closeSilent not close', () => {
+    const close = vi.fn();
+    const closeSilent = vi.fn();
+    const execute = vi.fn();
+    const registry = createFeatureRegistry();
+    const modelFeature: MenuItemFeature = {
+      id: 'model',
+      menuItem: { label: 'Switch model', section: 'Model', order: 0, closeSilent: true },
+      execute,
+    };
+    registry.register(modelFeature);
+    const { model } = buildMenuItems(defaultParams({ registry, close, closeSilent }));
+    model.find((i) => i.id === 'model')?.onClick?.();
+    expect(execute).toHaveBeenCalled();
+    expect(closeSilent).toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
   });
 
   it('clicking clear item calls clearMessages + clearModifiedFiles + close', () => {
@@ -171,18 +189,36 @@ describe('buildMenuItems', () => {
 
   describe('/btw item', () => {
     it('is always present in slash section', () => {
-      const { slash } = buildMenuItems(defaultParams());
+      const localFeatures = [
+        createBtwLocalFeature({
+          slashFilter: null,
+          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+        }),
+      ];
+      const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       expect(slash.some((i) => i.id === 'btw')).toBe(true);
     });
 
     it('is disabled when slashFilter has no question text', () => {
-      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw' }));
+      const localFeatures = [
+        createBtwLocalFeature({
+          slashFilter: 'btw',
+          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+        }),
+      ];
+      const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       expect(btw?.disabled).toBe(true);
     });
 
     it('is enabled when slashFilter is "btw <question>"', () => {
-      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw hello world' }));
+      const localFeatures = [
+        createBtwLocalFeature({
+          slashFilter: 'btw hello world',
+          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+        }),
+      ];
+      const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       expect(btw?.disabled).toBe(false);
     });
@@ -190,11 +226,11 @@ describe('buildMenuItems', () => {
     it('invokes btw feature with question when clicked', () => {
       const close = vi.fn();
       const askSideQuestion = vi.fn().mockResolvedValue({ ok: true, data: { answer: '4' } });
-      const registry = createFeatureRegistry();
-      registry.register(createBtwFeature({ askSideQuestion }));
-      const { slash } = buildMenuItems(
-        defaultParams({ slashFilter: 'btw what is 2+2?', close, registry }),
-      );
+      const btwSlashFeature = createBtwFeature({ askSideQuestion });
+      const localFeatures = [
+        createBtwLocalFeature({ slashFilter: 'btw what is 2+2?', btwSlashFeature }),
+      ];
+      const { slash } = buildMenuItems(defaultParams({ close, localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();
       expect(askSideQuestion).toHaveBeenCalledWith('what is 2+2?');
@@ -203,9 +239,9 @@ describe('buildMenuItems', () => {
 
     it('does not invoke btw feature when question is empty', () => {
       const askSideQuestion = vi.fn();
-      const registry = createFeatureRegistry();
-      registry.register(createBtwFeature({ askSideQuestion }));
-      const { slash } = buildMenuItems(defaultParams({ slashFilter: 'btw', registry }));
+      const btwSlashFeature = createBtwFeature({ askSideQuestion });
+      const localFeatures = [createBtwLocalFeature({ slashFilter: 'btw', btwSlashFeature })];
+      const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();
       expect(askSideQuestion).not.toHaveBeenCalled();

@@ -20,6 +20,7 @@ export function createEffortFeature({
       description: effort ? `(${effort.charAt(0).toUpperCase()}${effort.slice(1)})` : undefined,
       section: 'Model',
       order: 10,
+      closeSilent: true,
       trailing: (
         <EffortSwitch level={effort ?? undefined} levels={effortLevels} onSelect={onSetEffort} />
       ),

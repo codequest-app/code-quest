@@ -23,7 +23,6 @@ import {
 import { createBtwFeature } from '../../features/btw/btw-feature';
 import { createClearFeature } from '../../features/clear/clear-feature';
 import { createCompactFeature } from '../../features/compact/compact-feature';
-import { createModelFeature } from '../../features/model/model-feature';
 import { createNewConversationFeature } from '../../features/new-conversation/new-conversation-feature';
 import { createReloadPluginsFeature } from '../../features/reload-plugins/reload-plugins-feature';
 import { createResumeFeature } from '../../features/resume/resume-feature';
@@ -368,7 +367,6 @@ export function ChannelMessagesProvider({
     registry.register(
       createNewConversationFeature({ sendMessage: (msg) => messageActions.sendMessage(msg) }),
     );
-    registry.register(createModelFeature());
     registry.register(createResumeFeature());
     registry.register(createCompactFeature((msg) => messageActions.sendMessage(msg)));
     const sendMessage = (message: string) => {

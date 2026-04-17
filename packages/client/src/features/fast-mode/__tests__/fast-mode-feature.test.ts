@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFastModeFeature } from '../fast-mode-feature';
 
 describe('createFastModeFeature', () => {
+  it('menuItem has closeSilent true', () => {
+    const feature = createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() });
+    expect(feature.menuItem.closeSilent).toBe(true);
+  });
+
   it('returns a MenuItemFeature with id fast-mode and section Model', () => {
     const feature = createFastModeFeature({
       fastModeState: null,

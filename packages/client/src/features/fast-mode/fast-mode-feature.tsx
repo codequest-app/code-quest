@@ -16,10 +16,11 @@ export function createFastModeFeature({
       label: 'Toggle fast mode',
       section: 'Model',
       order: 30,
+      closeSilent: true,
       trailing: <ToggleSwitch isOn={fastModeState === 'on'} />,
     },
     execute() {
-      setFastMode(fastModeState === 'off' || !fastModeState);
+      setFastMode(fastModeState !== 'on');
     },
   };
 }

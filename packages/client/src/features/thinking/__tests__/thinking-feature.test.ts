@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { createThinkingFeature } from '../thinking-feature';
 
 describe('createThinkingFeature', () => {
+  it('menuItem has closeSilent true', () => {
+    const feature = createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() });
+    expect(feature.menuItem.closeSilent).toBe(true);
+  });
+
   it('returns a MenuItemFeature with id toggle-thinking and section Model', () => {
     const feature = createThinkingFeature({
       isThinkingOn: false,

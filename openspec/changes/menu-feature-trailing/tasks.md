@@ -48,3 +48,8 @@
 
 - [ ] 9.1 全部測試通過
 - [ ] 9.2 UI 手動確認 effort/thinking/fast-mode 行為不變
+
+## 10. Code review 修正（round 3）
+
+- [x] 10.1 `build-menu-items.tsx`：btw section — 只用一次，不抽（over-engineering），保持 inline
+- [x] 10.2 `build-menu-items.tsx`：`registrySlashItems` / `cliSlashItems` map arrow → named functions（對齊 `toModelItem` pattern）

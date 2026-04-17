@@ -21,6 +21,8 @@ export interface MenuItemFeature extends ChannelFeature {
     filterOnly?: boolean;
     description?: string;
     trailing?: React.ReactNode;
+    disabled?: boolean;
+    matchFirstToken?: boolean;
   };
   execute(): void;
 }

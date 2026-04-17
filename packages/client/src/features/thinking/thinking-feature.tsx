@@ -16,6 +16,7 @@ export function createThinkingFeature({
       label: 'Thinking',
       section: 'Model',
       order: 20,
+      closeSilent: true,
       trailing: <ToggleSwitch isOn={isThinkingOn} />,
     },
     execute() {

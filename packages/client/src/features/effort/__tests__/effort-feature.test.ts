@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { createEffortFeature } from '../effort-feature';
 
 describe('createEffortFeature', () => {
+  it('menuItem has closeSilent true', () => {
+    const feature = createEffortFeature({ effort: null, effortLevels: [], onSetEffort: vi.fn() });
+    expect(feature.menuItem.closeSilent).toBe(true);
+  });
+
   it('returns a MenuItemFeature with id effort-level and section Model', () => {
     const feature = createEffortFeature({
       effort: null,

@@ -1,5 +1,5 @@
 import type { RpcResult } from '@code-quest/shared';
-import type { SlashCommandFeature } from '../../lib/feature';
+import type { MenuItemFeature, SlashCommandFeature } from '../../lib/feature';
 
 type Subscriber = () => void;
 
@@ -44,6 +44,32 @@ export const btwSignal = createBtwSignal();
 
 export interface BtwFeatureDeps {
   askSideQuestion: (question: string) => Promise<RpcResult<{ answer: string }>>;
+}
+
+interface BtwLocalFeatureDeps {
+  slashFilter: string | null;
+  btwSlashFeature: SlashCommandFeature;
+}
+
+export function createBtwLocalFeature({
+  slashFilter,
+  btwSlashFeature,
+}: BtwLocalFeatureDeps): MenuItemFeature {
+  const question = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
+  return {
+    id: 'btw',
+    menuItem: {
+      label: '/btw',
+      section: 'Slash Commands',
+      disabled: !question,
+      matchFirstToken: true,
+    },
+    execute() {
+      if (question) {
+        btwSlashFeature.invoke(`/btw ${question}`);
+      }
+    },
+  };
 }
 
 export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): SlashCommandFeature {

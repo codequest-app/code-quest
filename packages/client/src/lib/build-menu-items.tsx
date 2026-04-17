@@ -25,8 +25,6 @@ interface MenuSections {
 
 export interface BuildMenuItemsParams {
   slashCommands: string[];
-  slashFilter: string | null;
-  modelLabel: string;
   registry: FeatureRegistry;
   localFeatures?: ChannelFeature[];
   close: () => void;
@@ -38,7 +36,7 @@ const byOrder = (a: { menuItem: { order?: number } }, b: { menuItem: { order?: n
   (a.menuItem.order ?? Number.POSITIVE_INFINITY) - (b.menuItem.order ?? Number.POSITIVE_INFINITY);
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const { slashCommands, slashFilter, modelLabel, registry } = params;
+  const { slashCommands, registry } = params;
   const { close, closeSilent, compose } = params;
 
   const local = params.localFeatures ?? [];
@@ -58,7 +56,9 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
         label: f.menuItem.label,
         description: f.menuItem.description,
         section,
+        disabled: f.menuItem.disabled,
         filterOnly: f.menuItem.filterOnly,
+        matchFirstToken: f.menuItem.matchFirstToken,
         trailing: f.menuItem.trailing,
         onClick: () => {
           f.execute();
@@ -69,27 +69,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
 
   const context: MenuItem[] = buildSection('Context');
 
-  function toModelItem(f: (typeof menuFeatures)[number]): MenuItem {
-    return {
-      id: f.id,
-      label: f.menuItem.label,
-      description: f.menuItem.description,
-      section: 'Model',
-      trailing:
-        f.id === 'model' ? (
-          <span className="font-mono text-[11px] text-text-muted">{modelLabel}</span>
-        ) : (
-          f.menuItem.trailing
-        ),
-      onClick: () => {
-        f.execute();
-        closeSilent();
-      },
-    };
-  }
-
-  const modelFeatures = menuFeatures.filter((f) => f.menuItem.section === 'Model');
-  const model: MenuItem[] = modelFeatures.sort(byOrder).map(toModelItem);
+  const model: MenuItem[] = buildSection('Model');
 
   const customize: MenuItem[] = buildSection('Customize');
 
@@ -97,48 +77,41 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
 
   const support: MenuItem[] = buildSection('Support');
 
-  const btwQuestion = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
-  const btwFeature = registry.getSlashCommand('/btw');
-  const btwItem: MenuItem = {
-    id: 'btw',
-    label: '/btw',
-    section: 'Slash Commands',
-    disabled: !btwQuestion,
-    matchFirstToken: true,
-    onClick: () => {
-      if (btwQuestion) {
-        btwFeature?.invoke(`/btw ${btwQuestion}`);
-        close();
-      }
-    },
-  };
-
   const allRegistryCommandIds = new Set(registry.getSlashCommandFeatures().map((f) => f.command));
   const filteredCliCommands = slashCommands.filter((cmd) => !allRegistryCommandIds.has(`/${cmd}`));
 
-  const registrySlashItems: MenuItem[] = slashFeatures.map((f) => ({
-    id: f.id,
-    label: f.command,
-    section: 'Slash Commands',
-    onClick: () => {
-      f.execute?.();
-      close();
-    },
-  }));
+  function toRegistrySlashItem(f: (typeof slashFeatures)[number]): MenuItem {
+    return {
+      id: f.id,
+      label: f.command,
+      section: 'Slash Commands',
+      onClick: () => {
+        f.execute?.();
+        close();
+      },
+    };
+  }
 
-  const cliSlashItems: MenuItem[] = filteredCliCommands.map((cmd) => ({
-    id: `slash-${cmd}`,
-    label: `/${cmd}`,
-    section: 'Slash Commands',
-    onClick: () => {
-      compose.executeSlashCommand(`/${cmd}`);
-      close();
-    },
-  }));
+  function toCliSlashItem(cmd: string): MenuItem {
+    return {
+      id: `slash-${cmd}`,
+      label: `/${cmd}`,
+      section: 'Slash Commands',
+      onClick: () => {
+        compose.executeSlashCommand(`/${cmd}`);
+        close();
+      },
+    };
+  }
 
-  const slash: MenuItem[] = [...registrySlashItems, btwItem, ...cliSlashItems].sort((a, b) =>
-    a.label.localeCompare(b.label),
-  );
+  const registrySlashItems: MenuItem[] = slashFeatures.map(toRegistrySlashItem);
+  const cliSlashItems: MenuItem[] = filteredCliCommands.map(toCliSlashItem);
+
+  const slash: MenuItem[] = [
+    ...buildSection('Slash Commands'),
+    ...registrySlashItems,
+    ...cliSlashItems,
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   return { context, model, customize, slash, settings, support };
 }

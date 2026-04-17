@@ -2,12 +2,14 @@ import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 're
 import { useChannelCompose, useChannelConfig } from '../contexts/channel';
 import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
 import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
+import { createBtwLocalFeature } from '../features/btw/btw-feature';
 import { createEffortFeature } from '../features/effort/effort-feature';
 import { createFastModeFeature } from '../features/fast-mode/fast-mode-feature';
 import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
 import { createManagePluginsFeature } from '../features/manage-plugins/manage-plugins-feature';
 import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
+import { createModelFeature } from '../features/model/model-feature';
 import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
 import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
@@ -191,7 +193,9 @@ export function CommandMenu({
 
   const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
 
+  const btwSlashFeature = registry.getSlashCommand('/btw');
   const localFeatures = [
+    createModelFeature({ modelLabel }),
     createAttachFileFeature({ onAttachFile }),
     createMcpStatusFeature({ onMcpStatus }),
     createMcpServersFeature({ onToggleMcp }),
@@ -202,6 +206,9 @@ export function CommandMenu({
     createEffortFeature({ effort, effortLevels, onSetEffort }),
     createThinkingFeature({ isThinkingOn, onSetThinkingLevel }),
     ...(supportsFastMode ? [createFastModeFeature({ fastModeState, setFastMode })] : []),
+    ...(btwSlashFeature
+      ? [createBtwLocalFeature({ slashFilter: compose.slashFilter, btwSlashFeature })]
+      : []),
   ];
 
   // Compose bindings
@@ -330,8 +337,6 @@ export function CommandMenu({
   // Build menu items (pure function, no deps on component state)
   const sections = buildMenuItems({
     slashCommands,
-    slashFilter: compose.slashFilter,
-    modelLabel,
     registry,
     localFeatures,
     close,
