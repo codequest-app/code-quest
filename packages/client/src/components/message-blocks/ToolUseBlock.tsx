@@ -1,8 +1,8 @@
 import type { ToolUseMeta } from '../../types/ui';
 import { cn } from '../../utils/cn';
 import { langFromPath } from '../../utils/syntax';
+import { getToolHeaderInfo } from '../../utils/tool-registry';
 import { CodeBlock } from '../CodeBlock';
-import { getToolHeaderInfo } from '../tools/tool-registry';
 import { AlertBanner } from './AlertBanner';
 import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './shared';

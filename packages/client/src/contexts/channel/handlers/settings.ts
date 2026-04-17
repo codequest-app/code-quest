@@ -107,6 +107,10 @@ function onSessionStates(
   return state;
 }
 
+function buildSlashCommands(names: string[]): string[] {
+  return [...new Set([...names, 'usage'])];
+}
+
 function onSessionInit(state: ConfigState, payload: Payload<'session:init'>): ConfigState {
   const availableModels = [...state.availableModels];
   if (payload.model && !findModel(payload.model, availableModels)) {
@@ -128,14 +132,14 @@ function onSessionInit(state: ConfigState, payload: Payload<'session:init'>): Co
       payload.fastModeState === 'on' || payload.fastModeState === 'off'
         ? payload.fastModeState
         : null,
-    slashCommands: [...new Set([...(payload.slashCommands ?? []), 'usage'])],
+    slashCommands: buildSlashCommands(payload.slashCommands ?? []),
   };
 }
 
 function onPluginReloaded(state: ConfigState, payload: Payload<'plugin:reloaded'>): ConfigState {
   const update: Partial<ConfigState> = {};
   if (payload.commands) {
-    update.slashCommands = [...new Set([...payload.commands.map((c) => c.name), 'usage'])];
+    update.slashCommands = buildSlashCommands(payload.commands.map((c) => c.name));
   }
   if (payload.mcpServers) {
     update.mcpServers = payload.mcpServers;

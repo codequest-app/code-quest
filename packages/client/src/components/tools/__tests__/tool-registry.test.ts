@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getToolHeaderInfo, isMcpTool, parseMcpToolName } from '../tool-registry';
+import { getToolHeaderInfo, isMcpTool, parseMcpToolName } from '../../../utils/tool-registry';
 
 describe('tool-registry', () => {
   describe('getToolHeaderInfo', () => {
