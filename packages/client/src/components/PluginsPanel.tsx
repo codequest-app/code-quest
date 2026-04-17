@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { usePlugins } from '../contexts/PluginContext';
 import { cn } from '../utils/cn';
@@ -33,16 +33,12 @@ export function PluginsPanel({ open, onClose }: PluginsPanelProps) {
   const [newMarketplaceSource, setNewMarketplaceSource] = useState('');
   const [adding, setAdding] = useState(false);
 
-  // Refresh data when dialog opens
-  const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) {
-    setLastOpen(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refresh fns are stable RPC wrappers
+  useEffect(() => {
+    if (!open) return;
     refreshPlugins();
     refreshMarketplaces();
-  }
-  if (!open && lastOpen) {
-    setLastOpen(false);
-  }
+  }, [open]);
 
   const handleAddMarketplace = async () => {
     if (!newMarketplaceSource.trim()) return;

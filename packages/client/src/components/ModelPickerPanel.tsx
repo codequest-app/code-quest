@@ -11,6 +11,45 @@ interface ModelPickerPanelProps {
   defaultModelDescription?: string;
 }
 
+function DefaultModelOption({
+  availableModels,
+  defaultModelDescription,
+  isSelected,
+  isActive,
+  onSelect,
+}: {
+  availableModels: ModelInfo[];
+  defaultModelDescription?: string;
+  isSelected: boolean;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const { displayName, subLabel } = getModelDisplayInfo(
+    '',
+    availableModels,
+    defaultModelDescription,
+  );
+  return (
+    <button
+      key="__default__"
+      type="button"
+      role="option"
+      aria-selected={isSelected}
+      onClick={onSelect}
+      className={cn(
+        'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px]',
+        isActive ? 'bg-selected' : 'hover:bg-white/10',
+      )}
+    >
+      <div>
+        <div className="text-text font-medium">{displayName}</div>
+        <div className="text-text-muted text-[10px] mt-0.5 opacity-70">{subLabel}</div>
+      </div>
+      {isSelected && <span className="text-text-muted shrink-0 ml-3">✓</span>}
+    </button>
+  );
+}
+
 export function ModelPickerPanel({
   currentModel,
   availableModels,
@@ -77,35 +116,15 @@ export function ModelPickerPanel({
       onKeyDown={handleKeyDown}
     >
       {/* Default (recommended) sentinel — only when server doesn't provide one */}
-      {!hasDefaultEntry &&
-        (() => {
-          const { displayName, subLabel } = getModelDisplayInfo(
-            '',
-            availableModels,
-            defaultModelDescription,
-          );
-          const index = 0;
-          const isSelected = currentModel === defaultModelValue;
-          return (
-            <button
-              key="__default__"
-              type="button"
-              role="option"
-              aria-selected={isSelected}
-              onClick={() => handleSelect('')}
-              className={cn(
-                'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-[3px]',
-                isActive(index) ? 'bg-selected' : 'hover:bg-white/10',
-              )}
-            >
-              <div>
-                <div className="text-text font-medium">{displayName}</div>
-                <div className="text-text-muted text-[10px] mt-0.5 opacity-70">{subLabel}</div>
-              </div>
-              {isSelected && <span className="text-text-muted shrink-0 ml-3">✓</span>}
-            </button>
-          );
-        })()}
+      {!hasDefaultEntry && (
+        <DefaultModelOption
+          availableModels={availableModels}
+          defaultModelDescription={defaultModelDescription}
+          isSelected={currentModel === defaultModelValue}
+          isActive={isActive(0)}
+          onSelect={() => handleSelect('')}
+        />
+      )}
       {availableModels.map((item, i) => {
         const index = hasDefaultEntry ? i : i + 1;
         const { displayName, subLabel } = getModelInfoDisplayName(

@@ -155,89 +155,98 @@ export function ComposeInput() {
     setFileResults([]);
   }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab' && e.shiftKey && !slashOpen && !mentionOpen) {
+  function handlePermissionCycleShortcut(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (e.key !== 'Tab' || !e.shiftKey || slashOpen || mentionOpen) return false;
+    e.preventDefault();
+    const configModes = providerConfig?.permissionModes;
+    const modeIds = configModes?.length
+      ? configModes.map((m) => m.id)
+      : ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
+    const currentIndex = modeIds.indexOf(permissionMode ?? 'normal');
+    setPermissionMode(modeIds[(currentIndex + 1) % modeIds.length]);
+    return true;
+  }
+
+  function handleSlashKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (e.key === 'Escape') {
       e.preventDefault();
-      const configModes = providerConfig?.permissionModes;
-      const modeIds = configModes?.length
-        ? configModes.map((m) => m.id)
-        : ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
-      const currentIndex = modeIds.indexOf(permissionMode ?? 'normal');
-      const nextMode = modeIds[(currentIndex + 1) % modeIds.length];
-      setPermissionMode(nextMode);
-      return;
+      dismissSlash();
+      return true;
     }
-
-    if (slashOpen) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        dismissSlash();
-        // textarea already has focus — no focusTextarea() needed
-        return;
-      }
-      if (['Tab', 'ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
-        e.preventDefault();
-        // CommandMenu document listener handles the actual navigation
-        return;
-      }
+    if (['Tab', 'ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
+      e.preventDefault();
+      // CommandMenu document listener handles the actual navigation
+      return true;
     }
+    return false;
+  }
 
-    if (mentionOpen) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCloseMention();
-        return;
-      }
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex((i) =>
-          e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
-        );
-        return;
-      }
-      if (e.key === 'Tab' && selectedIndex >= 0) {
+  function handleMentionKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCloseMention();
+      return true;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((i) =>
+        e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
+      );
+      return true;
+    }
+    if (e.key === 'Tab' && selectedIndex >= 0) {
+      e.preventDefault();
+      const item = fileResults[selectedIndex];
+      if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
+      return true;
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (selectedIndex >= 0) {
         e.preventDefault();
         const item = fileResults[selectedIndex];
-        if (item) handleSelectMention(`@${item.path}`, item.type === 'directory');
-        return;
+        if (item) handleSelectMention(`@${item.path}`, false);
+      } else {
+        handleCloseMention();
       }
-      if (e.key === 'Enter' && !e.shiftKey) {
-        if (selectedIndex >= 0) {
-          e.preventDefault();
-          const item = fileResults[selectedIndex];
-          if (item) handleSelectMention(`@${item.path}`, false);
-        } else {
-          handleCloseMention();
-        }
-        return;
-      }
+      return true;
     }
+    return false;
+  }
 
-    // Input history (only when no dropdown is open)
+  function handleHistoryKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
     if (e.key === 'ArrowUp') {
       const msg = inputHistory.cycleUp();
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
       }
-      return;
+      return true;
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       updateValue(inputHistory.cycleDown());
-      return;
+      return true;
     }
+    return false;
+  }
 
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      const trimmed = value.trim();
-      if (trimmed) {
-        inputHistory.push(trimmed);
-        submit();
-        inputHistory.reset();
-      }
-    }
-  };
+  function handleSubmitKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): void {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    inputHistory.push(trimmed);
+    submit();
+    inputHistory.reset();
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): void {
+    if (handlePermissionCycleShortcut(e)) return;
+    if (slashOpen && handleSlashKeyDown(e)) return;
+    if (mentionOpen && handleMentionKeyDown(e)) return;
+    if (handleHistoryKeyDown(e)) return;
+    handleSubmitKeyDown(e);
+  }
 
   const hasFileResults = fileResults.length > 0 || searchStatus !== 'idle';
   const showMentionDropdown = mentionOpen && hasFileResults;

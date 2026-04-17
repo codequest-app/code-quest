@@ -25,6 +25,35 @@ const HOOK_DEFS = [
   },
 ] as const;
 
+function buildEnabledHooks(
+  hooks: Record<string, boolean>,
+): Record<string, Array<{ matcher: string; hookCallbackIds: string[] }>> {
+  const enabled: Record<string, Array<{ matcher: string; hookCallbackIds: string[] }>> = {};
+  for (const def of HOOK_DEFS) {
+    if (!hooks[def.key]) continue;
+    if (!enabled[def.category]) enabled[def.category] = [];
+    enabled[def.category].push({ matcher: def.key, hookCallbackIds: [def.key] });
+  }
+  return enabled;
+}
+
+function buildInitOptions(state: {
+  systemPrompt: string;
+  appendSystemPrompt: string;
+  jsonSchema: string;
+  agents: string;
+  hooks: Record<string, boolean>;
+}): InitOptions {
+  const opts: InitOptions = {};
+  if (state.systemPrompt) opts.systemPrompt = state.systemPrompt;
+  if (state.appendSystemPrompt) opts.appendSystemPrompt = state.appendSystemPrompt;
+  if (state.jsonSchema) opts.jsonSchema = state.jsonSchema;
+  if (state.agents) opts.agents = state.agents;
+  const enabledHooks = buildEnabledHooks(state.hooks);
+  if (Object.keys(enabledHooks).length > 0) opts.hooks = enabledHooks;
+  return opts;
+}
+
 export function InitOptionsDialog({ open, onClose, onSave, initial }: InitOptionsDialogProps) {
   const [systemPrompt, setSystemPrompt] = useState(initial?.systemPrompt ?? '');
   const [appendSystemPrompt, setAppendSystemPrompt] = useState(initial?.appendSystemPrompt ?? '');
@@ -38,22 +67,7 @@ export function InitOptionsDialog({ open, onClose, onSave, initial }: InitOption
   });
 
   const handleSave = () => {
-    const opts: InitOptions = {};
-    if (systemPrompt) opts.systemPrompt = systemPrompt;
-    if (appendSystemPrompt) opts.appendSystemPrompt = appendSystemPrompt;
-    if (jsonSchema) opts.jsonSchema = jsonSchema;
-    if (agents) opts.agents = agents;
-
-    const enabledHooks: Record<string, Array<{ matcher: string; hookCallbackIds: string[] }>> = {};
-    for (const def of HOOK_DEFS) {
-      if (hooks[def.key]) {
-        if (!enabledHooks[def.category]) enabledHooks[def.category] = [];
-        enabledHooks[def.category].push({ matcher: def.key, hookCallbackIds: [def.key] });
-      }
-    }
-    if (Object.keys(enabledHooks).length > 0) opts.hooks = enabledHooks;
-
-    onSave(opts);
+    onSave(buildInitOptions({ systemPrompt, appendSystemPrompt, jsonSchema, agents, hooks }));
     onClose();
   };
 
