@@ -1,4 +1,5 @@
 import { type EffortLevel, effortLevelSchema } from '@code-quest/shared';
+import { type ChannelFeature, isMenuItemFeature, isSlashCommandFeature } from '../lib/feature';
 import type { FeatureRegistry } from '../lib/feature-registry';
 import { EffortSwitch } from './icons/EffortSwitch';
 import { ToggleSwitch } from './ui/ToggleSwitch';
@@ -36,6 +37,7 @@ export interface BuildMenuItemsParams {
   modelLabel: string;
   supportsFastMode: boolean;
   registry: FeatureRegistry;
+  localFeatures?: ChannelFeature[];
   onSetEffort: (effort: string) => void;
   onSetThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
@@ -61,11 +63,13 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   } = params;
   const { onSetEffort, onSetThinkingLevel, setFastMode, close, closeSilent, compose } = params;
 
-  const menuFeatures = registry.getMenuItemFeatures();
+  const local = params.localFeatures ?? [];
+  const menuFeatures = [...registry.getMenuItemFeatures(), ...local.filter(isMenuItemFeature)];
   const menuFeatureIds = new Set(menuFeatures.map((f) => f.id));
-  const slashFeatures = registry
-    .getSlashCommandFeatures()
-    .filter((f) => f.execute && !menuFeatureIds.has(f.id));
+  const slashFeatures = [
+    ...registry.getSlashCommandFeatures(),
+    ...local.filter(isSlashCommandFeature),
+  ].filter((f) => f.execute && !menuFeatureIds.has(f.id));
 
   function buildSection(section: string): MenuItem[] {
     return menuFeatures

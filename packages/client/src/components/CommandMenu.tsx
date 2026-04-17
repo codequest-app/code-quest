@@ -106,13 +106,15 @@ export function CommandMenu({
   } = useChannelConfig();
   const compose = useChannelCompose();
   const registry = useFeatureRegistry();
-  registry.register(createAttachFileFeature({ onAttachFile }));
-  registry.register(createMcpStatusFeature({ onMcpStatus }));
-  registry.register(createMcpServersFeature({ onToggleMcp }));
-  registry.register(createManagePluginsFeature({ onManagePlugins }));
-  registry.register(createGeneralConfigFeature());
-  registry.register(createSwitchAccountFeature());
-  registry.register(createViewHelpFeature({ openUrl, docsUrl }));
+  const localFeatures = [
+    createAttachFileFeature({ onAttachFile }),
+    createMcpStatusFeature({ onMcpStatus }),
+    createMcpServersFeature({ onToggleMcp }),
+    createManagePluginsFeature({ onManagePlugins }),
+    createGeneralConfigFeature(),
+    createSwitchAccountFeature(),
+    createViewHelpFeature({ openUrl, docsUrl }),
+  ];
 
   // Compute modelLabel
   const models = availableModels ?? [];
@@ -262,6 +264,7 @@ export function CommandMenu({
     modelLabel,
     supportsFastMode,
     registry,
+    localFeatures,
     onSetEffort,
     onSetThinkingLevel,
     setFastMode,
