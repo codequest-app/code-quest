@@ -115,42 +115,6 @@ function navigateItems(
   return { newActiveId: activeId, shouldSelect: false };
 }
 
-function ModelMenuSection({
-  showDivider,
-  filteredModel,
-  activeId,
-  activeItemRef,
-  onHover,
-}: {
-  showDivider: boolean;
-  filteredModel: MenuItem[];
-  activeId: string | null;
-  activeItemRef: RefObject<HTMLButtonElement | null>;
-  onHover: (id: string) => void;
-}) {
-  const isActive = (id: string) => id === activeId;
-  return (
-    <>
-      {showDivider && <div className="h-px bg-border my-1" />}
-      {/* biome-ignore lint/a11y/useSemanticElements: role=group on div is correct; fieldset has unwanted browser styling */}
-      <div role="group" aria-label="Model">
-        <div className="px-3 py-1 text-[0.9em] opacity-50 text-text" aria-hidden="true">
-          Model
-        </div>
-        {filteredModel.map((item) => (
-          <MenuItemRow
-            key={item.id}
-            item={item}
-            isActive={isActive(item.id)}
-            activeItemRef={activeItemRef}
-            onHover={onHover}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
 export interface CommandMenuProps {
   // Dialog callbacks — managed by parent (ComposeToolbar)
   onMcpStatus?: () => void;
@@ -488,12 +452,13 @@ export function CommandMenu({
                 />
 
                 {modelSectionVisible && (
-                  <ModelMenuSection
-                    showDivider={modelHasPrev}
-                    filteredModel={filteredModel}
+                  <MenuSection
+                    label="Model"
+                    items={filteredModel}
                     activeId={activeId}
                     activeItemRef={activeItemRef}
                     onHover={setActiveId}
+                    isFirst={!modelHasPrev}
                   />
                 )}
 
