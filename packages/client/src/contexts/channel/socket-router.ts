@@ -11,14 +11,20 @@ interface RegisterOptions<D> {
 
 type SocketListener = (payload: { channelId: string }) => void;
 
+interface EventRegistration {
+  /** Consumer-registered listeners that fan out from the shared `bound`. */
+  listeners: Set<SocketListener>;
+  /** The single function attached via `socket.on(event, bound)`. */
+  bound: SocketListener;
+}
+
 /**
  * Per-channel socket event router. Deduplicates `socket.on` subscriptions so
  * multiple contexts registering the same event share one underlying listener.
  * Owns channelId-guard and state/effect fan-out.
  */
 export class ChannelSocketRouter {
-  private listeners = new Map<string, Set<SocketListener>>();
-  private socketBound = new Map<string, SocketListener>();
+  private events = new Map<string, EventRegistration>();
 
   constructor(
     private socket: TypedSocket,
@@ -71,37 +77,33 @@ export class ChannelSocketRouter {
   }
 
   dispose() {
-    for (const [event, bound] of this.socketBound) {
-      this.socket.off(event as never, bound as never);
+    for (const [event, entry] of this.events) {
+      this.socket.off(event as never, entry.bound as never);
     }
-    this.listeners.clear();
-    this.socketBound.clear();
+    this.events.clear();
   }
 
   private addListener(event: string, listener: SocketListener) {
-    let set = this.listeners.get(event);
-    if (!set) {
-      const newSet = new Set<SocketListener>();
-      set = newSet;
-      this.listeners.set(event, newSet);
+    let entry = this.events.get(event);
+    if (!entry) {
+      const listeners = new Set<SocketListener>();
       const bound: SocketListener = (payload) => {
-        for (const fn of newSet) fn(payload);
+        for (const fn of listeners) fn(payload);
       };
-      this.socketBound.set(event, bound);
+      entry = { listeners, bound };
+      this.events.set(event, entry);
       this.socket.on(event as never, bound as never);
     }
-    set.add(listener);
+    entry.listeners.add(listener);
   }
 
   private removeListener(event: string, listener: SocketListener) {
-    const set = this.listeners.get(event);
-    if (!set) return;
-    set.delete(listener);
-    if (set.size === 0) {
-      const bound = this.socketBound.get(event);
-      if (bound) this.socket.off(event as never, bound as never);
-      this.listeners.delete(event);
-      this.socketBound.delete(event);
+    const entry = this.events.get(event);
+    if (!entry) return;
+    entry.listeners.delete(listener);
+    if (entry.listeners.size === 0) {
+      this.socket.off(event as never, entry.bound as never);
+      this.events.delete(event);
     }
   }
 }
