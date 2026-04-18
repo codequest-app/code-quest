@@ -1,12 +1,14 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 import { createOpenSignal } from '../../lib/open-signal';
 
 export const rewindOpenSignal = createOpenSignal();
 
-export function createRewindFeature(): MenuItemFeature {
+export function createRewindFeature(): Feature {
   return {
     id: 'rewind',
-    menuItem: { label: 'Rewind', section: 'Context', order: 1 },
+    label: 'Rewind',
+    category: 'Context',
+    order: 1,
     execute() {
       rewindOpenSignal.setOpen(true);
     },
