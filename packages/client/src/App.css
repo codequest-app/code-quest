@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/*
+ * Theme tokens registered here so Tailwind v4 emits utilities (bg-bg, text-text, …).
+ * Default values = dark palette so `data-theme` unset matches `data-theme="dark"`.
+ * Overrides per-axis live in :root[data-*] blocks below.
+ */
 @theme {
   --font-sans: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -42,6 +47,40 @@
   --color-claude-clay-orange: #c6613f;
   --color-claude-orange: #d97757;
 }
+
+/* Color theme axis — explicit dark block re-declares @theme defaults so the
+   selector wins once a light theme lands. Values MUST stay in sync with @theme. */
+:root[data-theme="dark"] {
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-border: #3e3e42;
+  --color-text: #cccccc;
+  --color-text-muted: #9d9d9d;
+  --color-text-bright: #e8e8e8;
+  --color-accent: #d97757;
+  --color-success: #81b88b;
+  --color-warning: #e1c08d;
+  --color-danger: #f48771;
+  --color-assistant: #d97757;
+  --color-code: #252526;
+  --color-code-block: #1e1e1e;
+  --color-input-bg: #3c3c3c;
+  --color-success-bg: #1a1f1a;
+  --color-warning-bg: #201f1a;
+  --color-danger-bg: #201a1a;
+  --color-selected: #094771;
+  --color-toggle: #0e639c;
+  --color-button: #0078d4;
+  --color-claude-clay-orange: #c6613f;
+  /* --color-tool-bg and --color-claude-orange stay @theme-only — currently unused,
+     Tailwind tree-shakes from :root; re-add here when a consumer class lands. */
+}
+
+/* Font-size axis — html font-size drives rem cascade. md = browser default (16px). */
+:root[data-font="sm"] { font-size: 14px; }
+:root[data-font="md"] { font-size: 16px; }
+:root[data-font="lg"] { font-size: 18px; }
 
 /* --- Custom utilities --- */
 

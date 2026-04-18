@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
@@ -9,10 +9,21 @@ import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { WorktreeProvider } from './contexts/WorktreeContext';
 import { createSocket } from './socket/client';
+import { usePreferencesStore } from './stores/usePreferencesStore';
 import './App.css';
 
 export function App() {
   const [socket] = useState(() => createSocket());
+  const colorTheme = usePreferencesStore((s) => s.colorTheme);
+  const fontSize = usePreferencesStore((s) => s.fontSize);
+  const density = usePreferencesStore((s) => s.density);
+
+  useEffect(() => {
+    const ds = document.documentElement.dataset;
+    ds.theme = colorTheme;
+    ds.font = fontSize;
+    ds.density = density;
+  }, [colorTheme, fontSize, density]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">
