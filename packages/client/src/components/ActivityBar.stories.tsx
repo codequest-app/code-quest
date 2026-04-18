@@ -28,3 +28,6 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = { args: { activePanel: null } };
 export const ProjectsActive: Story = { args: { activePanel: 'projects' } };
 export const PluginsActive: Story = { args: { activePanel: 'plugins' } };
+export const WithSettingsGear: Story = {
+  args: { activePanel: null, onOpenSettings: fn() },
+};

@@ -1,8 +1,9 @@
 import { Bars3Icon, FolderOpenIcon, RectangleStackIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
 import { WorkspaceActionsProvider } from '../contexts/WorkspaceActionsContext';
+import { openSettingsSignal } from '../features/open-settings/open-settings-signal';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
 import { ActivityBar } from './ActivityBar';
@@ -10,6 +11,7 @@ import { AddProjectDialog } from './AddProjectDialog';
 import { EditorArea } from './EditorArea';
 import { EmptyState } from './EmptyState';
 import { ProjectList } from './ProjectList';
+import { SettingsDialog } from './SettingsDialog';
 
 const SIDEBAR_ITEMS = [
   {
@@ -33,6 +35,14 @@ export function WorkspaceLayout() {
   const [activePanel, setActivePanel] = useState<string | null>('projects');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const signalOpen = useSyncExternalStore(
+    (cb) => openSettingsSignal.subscribe(cb),
+    () => openSettingsSignal.isOpen,
+  );
+  useEffect(() => {
+    if (signalOpen) setSettingsOpen(true);
+  }, [signalOpen]);
   const { projects, activeProjectCwd, sessions } = useProjectState();
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
@@ -89,6 +99,7 @@ export function WorkspaceLayout() {
                   items={SIDEBAR_ITEMS}
                   activePanel={isDesktop ? activePanel : drawerOpen ? 'projects' : null}
                   onToggle={handleActivityBarToggle}
+                  onOpenSettings={() => setSettingsOpen(true)}
                 />
               )}
               {sidebarVisible && (
@@ -147,6 +158,13 @@ export function WorkspaceLayout() {
           open={dialogOpen}
           onSelect={handleAddProject}
           onClose={() => setDialogOpen(false)}
+        />
+        <SettingsDialog
+          open={settingsOpen}
+          onClose={() => {
+            setSettingsOpen(false);
+            openSettingsSignal.setOpen(false);
+          }}
         />
       </div>
     </WorkspaceActionsProvider>
