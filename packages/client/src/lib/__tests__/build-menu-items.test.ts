@@ -11,7 +11,7 @@ import { createMentionFileFeature } from '../../features/mention-file/mention-fi
 import { createModelFeature } from '../../features/model/model-feature';
 import { createThinkingFeature } from '../../features/thinking/thinking-feature';
 import { type BuildMenuItemsParams, buildMenuItems } from '../build-menu-items';
-import type { MenuItemFeature, SlashCommandFeature } from '../feature';
+import type { Feature } from '../feature';
 import { createFeatureRegistry } from '../feature-registry';
 
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
@@ -119,12 +119,12 @@ describe('buildMenuItems', () => {
 
   it('model section order: switch model → effort → thinking → fast-mode → account & usage', () => {
     const registry = createFeatureRegistry();
-    const usageFeature: MenuItemFeature = {
+    registry.register({
       id: 'usage',
-      menuItem: { label: 'Account & usage', section: 'Model' },
+      label: 'Account & usage',
+      category: 'Model',
       execute: vi.fn(),
-    };
-    registry.register(usageFeature);
+    });
     const localFeatures = [
       createModelFeature({ modelLabel: 'Opus' }),
       createEffortFeature({ effort: null, effortLevels: ['low', 'max'], onSetEffort: vi.fn() }),
@@ -146,12 +146,14 @@ describe('buildMenuItems', () => {
     const closeSilent = vi.fn();
     const execute = vi.fn();
     const registry = createFeatureRegistry();
-    const modelFeature: MenuItemFeature = {
+    registry.register({
       id: 'model',
-      menuItem: { label: 'Switch model', section: 'Model', order: 0, closeSilent: true },
+      label: 'Switch model',
+      category: 'Model',
+      order: 0,
+      ui: { closeSilent: true },
       execute,
-    };
-    registry.register(modelFeature);
+    });
     const { model } = buildMenuItems(defaultParams({ registry, close, closeSilent }));
     model.find((i) => i.id === 'model')?.onClick?.();
     expect(execute).toHaveBeenCalled();
@@ -177,12 +179,12 @@ describe('buildMenuItems', () => {
 
   it('context section includes rewind item from registry MenuItemFeature', () => {
     const registry = createFeatureRegistry();
-    const rewindFeature: MenuItemFeature = {
+    registry.register({
       id: 'rewind',
-      menuItem: { label: 'Rewind', section: 'Context' },
+      label: 'Rewind',
+      category: 'Context',
       execute: vi.fn(),
-    };
-    registry.register(rewindFeature);
+    });
     const { context } = buildMenuItems(defaultParams({ registry }));
     expect(context.map((i) => i.id)).toContain('rewind');
   });
@@ -274,13 +276,13 @@ describe('buildMenuItems', () => {
 
   it('slash section includes registry SlashCommandFeature with execute', () => {
     const registry = createFeatureRegistry();
-    const feature: SlashCommandFeature = {
+    registry.register({
       id: 'reload-plugins',
-      command: '/reload-plugins',
-      invoke: vi.fn(),
+      label: '/reload-plugins',
+      category: 'Slash Commands',
       execute: vi.fn(),
-    };
-    registry.register(feature);
+      slash: { command: '/reload-plugins', invoke: vi.fn() },
+    });
     const { slash } = buildMenuItems(defaultParams({ registry }));
     expect(slash.map((i) => i.id)).toContain('reload-plugins');
   });
@@ -289,13 +291,13 @@ describe('buildMenuItems', () => {
     const close = vi.fn();
     const execute = vi.fn();
     const registry = createFeatureRegistry();
-    const feature: SlashCommandFeature = {
+    registry.register({
       id: 'reload-plugins',
-      command: '/reload-plugins',
-      invoke: vi.fn(),
+      label: '/reload-plugins',
+      category: 'Slash Commands',
       execute,
-    };
-    registry.register(feature);
+      slash: { command: '/reload-plugins', invoke: vi.fn() },
+    });
     const { slash } = buildMenuItems(defaultParams({ registry, close }));
     const item = slash.find((i) => i.id === 'reload-plugins');
     item?.onClick?.();
@@ -307,9 +309,10 @@ describe('buildMenuItems', () => {
     const close = vi.fn();
     const execute = vi.fn();
     const registry = createFeatureRegistry();
-    const feature: MenuItemFeature = {
+    const feature: Feature = {
       id: 'rewind',
-      menuItem: { label: 'Rewind', section: 'Context' },
+      label: 'Rewind',
+      category: 'Context',
       execute,
     };
     registry.register(feature);

@@ -27,14 +27,6 @@ export interface MenuItemFeature extends ChannelFeature {
   execute(): void;
 }
 
-export function isSlashCommandFeature(f: ChannelFeature): f is SlashCommandFeature {
-  return 'command' in f && 'invoke' in f;
-}
-
-export function isMenuItemFeature(f: unknown): f is MenuItemFeature {
-  return typeof f === 'object' && f !== null && 'menuItem' in f && 'execute' in f;
-}
-
 /** New unified feature shape — capability as pure data, adapted per UI surface. */
 export interface Feature extends ChannelFeature {
   label: string;
@@ -62,15 +54,3 @@ export type FeatureState =
   | { kind: 'toggle'; active: boolean }
   | { kind: 'tri-state'; state: 'all' | 'partial' | 'none'; onPartial?: () => void }
   | { kind: 'select'; currentValue: string };
-
-export function isFeature(f: unknown): f is Feature {
-  return (
-    typeof f === 'object' &&
-    f !== null &&
-    'id' in f &&
-    'label' in f &&
-    'category' in f &&
-    'execute' in f &&
-    !('menuItem' in f)
-  );
-}

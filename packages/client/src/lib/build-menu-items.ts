@@ -1,14 +1,6 @@
 import { toMenuItem } from './adapters/to-menu-item';
 import { toSlashCommand } from './adapters/to-slash-command';
-import {
-  type ChannelFeature,
-  type Feature,
-  isFeature,
-  isMenuItemFeature,
-  isSlashCommandFeature,
-  type MenuItemFeature,
-  type SlashCommandFeature,
-} from './feature';
+import type { Feature, MenuItemFeature, SlashCommandFeature } from './feature';
 import type { FeatureRegistry } from './feature-registry';
 
 export interface MenuItem {
@@ -36,30 +28,21 @@ interface MenuSections {
 export interface BuildMenuItemsParams {
   slashCommands: string[];
   registry: FeatureRegistry;
-  localFeatures?: Array<ChannelFeature | Feature>;
+  localFeatures?: Feature[];
   close: () => void;
   closeSilent: () => void;
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
-function adaptLocalMenuItems(local: Array<ChannelFeature | Feature>): MenuItemFeature[] {
-  const out: MenuItemFeature[] = [];
-  for (const f of local) {
-    if (isFeature(f)) out.push(toMenuItem(f));
-    else if (isMenuItemFeature(f)) out.push(f);
-  }
-  return out;
+function adaptLocalMenuItems(local: Feature[]): MenuItemFeature[] {
+  return local.map(toMenuItem);
 }
 
-function adaptLocalSlashCommands(local: Array<ChannelFeature | Feature>): SlashCommandFeature[] {
+function adaptLocalSlashCommands(local: Feature[]): SlashCommandFeature[] {
   const out: SlashCommandFeature[] = [];
   for (const f of local) {
-    if (isFeature(f)) {
-      const slash = toSlashCommand(f);
-      if (slash) out.push(slash);
-    } else if (isSlashCommandFeature(f)) {
-      out.push(f);
-    }
+    const slash = toSlashCommand(f);
+    if (slash) out.push(slash);
   }
   return out;
 }
