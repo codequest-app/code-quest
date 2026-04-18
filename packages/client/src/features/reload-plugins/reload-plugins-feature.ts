@@ -1,10 +1,10 @@
 import type { PluginReloadResult } from '@code-quest/shared';
 import { toast } from 'sonner';
-import type { SlashCommandFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export function createReloadPluginsFeature(
   reloadPlugins: () => Promise<PluginReloadResult>,
-): SlashCommandFeature {
+): Feature {
   function run() {
     reloadPlugins()
       .then((result) => {
@@ -21,12 +21,12 @@ export function createReloadPluginsFeature(
 
   return {
     id: 'reload-plugins',
-    command: '/reload-plugins',
-    invoke() {
-      run();
-    },
-    execute() {
-      run();
+    label: '/reload-plugins',
+    category: 'Slash Commands',
+    execute: run,
+    slash: {
+      command: '/reload-plugins',
+      invoke: run,
     },
   };
 }

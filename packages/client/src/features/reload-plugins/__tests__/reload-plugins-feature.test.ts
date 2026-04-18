@@ -8,13 +8,13 @@ describe('createReloadPluginsFeature', () => {
     reloadPlugins = vi.fn().mockResolvedValue({ success: true });
   });
 
-  it('invoke calls reloadPlugins', () => {
-    createReloadPluginsFeature(reloadPlugins).invoke('/reload-plugins');
+  it('slash invoke calls reloadPlugins', () => {
+    createReloadPluginsFeature(reloadPlugins).slash?.invoke('/reload-plugins');
     expect(reloadPlugins).toHaveBeenCalledOnce();
   });
 
   it('execute calls reloadPlugins', () => {
-    createReloadPluginsFeature(reloadPlugins).execute?.();
+    createReloadPluginsFeature(reloadPlugins).execute();
     expect(reloadPlugins).toHaveBeenCalledOnce();
   });
 });
