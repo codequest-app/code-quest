@@ -7,11 +7,11 @@ describe('createNewConversationFeature', () => {
     expect(feature.id).toBe('new-conversation');
   });
 
-  it('menuItem is in Context section with filterOnly true', () => {
+  it('is in Context category with filterOnly true', () => {
     const feature = createNewConversationFeature({ sendMessage: vi.fn() });
-    expect(feature.menuItem.label).toBe('New conversation');
-    expect(feature.menuItem.section).toBe('Context');
-    expect(feature.menuItem.filterOnly).toBe(true);
+    expect(feature.label).toBe('New conversation');
+    expect(feature.category).toBe('Context');
+    expect(feature.ui?.filterOnly).toBe(true);
   });
 
   it('execute sends /new to CLI and closes menu', () => {

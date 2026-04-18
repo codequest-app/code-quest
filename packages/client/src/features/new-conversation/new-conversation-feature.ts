@@ -1,13 +1,15 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export function createNewConversationFeature({
   sendMessage,
 }: {
   sendMessage: (msg: string) => void;
-}): MenuItemFeature {
+}): Feature {
   return {
     id: 'new-conversation',
-    menuItem: { label: 'New conversation', section: 'Context', filterOnly: true },
+    label: 'New conversation',
+    category: 'Context',
+    ui: { filterOnly: true },
     execute() {
       sendMessage('/new');
     },
