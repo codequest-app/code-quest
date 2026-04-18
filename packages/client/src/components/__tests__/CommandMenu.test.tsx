@@ -4,8 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generalConfigSignal } from '../../features/general-config/general-config-signal';
 import { modelOpenSignal } from '../../features/model/model-feature';
+import { openSettingsSignal } from '../../features/open-settings/open-settings-signal';
 import { resumeOpenSignal } from '../../features/resume/resume-feature';
+import { rewindOpenSignal } from '../../features/rewind/rewind-feature';
 import { switchAccountSignal } from '../../features/switch-account/switch-account-signal';
+import { usageOpenSignal } from '../../features/usage/usage-feature';
+import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { CommandMenu } from '../CommandMenu';
 
@@ -34,6 +38,10 @@ describe('CommandMenu', () => {
     resumeOpenSignal.setOpen(false);
     switchAccountSignal.setOpen(false);
     generalConfigSignal.setOpen(false);
+    rewindOpenSignal.setOpen(false);
+    usageOpenSignal.setOpen(false);
+    openSettingsSignal.setOpen(false);
+    usePreferencesStore.setState({ colorTheme: 'dark', density: 'comfortable' });
   });
   it('renders / command menu button', async () => {
     await renderCommandMenu();
@@ -129,6 +137,59 @@ describe('CommandMenu', () => {
       await openMenu();
       await userEvent.click(await screen.findByText('General config…'));
       expect(generalConfigSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "Rewind" sets rewindOpenSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Rewind'));
+      expect(rewindOpenSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "Account & usage…" sets usageOpenSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Account & usage…'));
+      expect(usageOpenSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "Open preferences" sets openSettingsSignal', async () => {
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Open preferences'));
+      expect(openSettingsSignal.isOpen).toBe(true);
+    });
+
+    it('clicking "Manage MCP servers" triggers onToggleMcp callback', async () => {
+      const onToggleMcp = vi.fn();
+      await renderCommandMenu({ onToggleMcp });
+      await openMenu();
+      await userEvent.click(await screen.findByText('Manage MCP servers'));
+      expect(onToggleMcp).toHaveBeenCalledOnce();
+    });
+
+    it('clicking "MCP status" triggers onMcpStatus callback', async () => {
+      const onMcpStatus = vi.fn();
+      await renderCommandMenu({ onMcpStatus });
+      await openMenu();
+      await userEvent.click(await screen.findByText('MCP status'));
+      expect(onMcpStatus).toHaveBeenCalledOnce();
+    });
+
+    it('clicking "Switch theme" toggles colorTheme in preferences store', async () => {
+      usePreferencesStore.setState({ colorTheme: 'dark' });
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Switch theme'));
+      expect(usePreferencesStore.getState().colorTheme).toBe('light');
+    });
+
+    it('clicking "Toggle density" toggles density in preferences store', async () => {
+      usePreferencesStore.setState({ density: 'comfortable' });
+      await renderCommandMenu();
+      await openMenu();
+      await userEvent.click(await screen.findByText('Toggle density'));
+      expect(usePreferencesStore.getState().density).toBe('compact');
     });
   });
 
