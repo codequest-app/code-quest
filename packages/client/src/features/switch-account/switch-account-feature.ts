@@ -1,10 +1,12 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 import { switchAccountSignal } from './switch-account-signal';
 
-export function createSwitchAccountFeature(): MenuItemFeature {
+export function createSwitchAccountFeature(): Feature {
   return {
     id: 'switch-account',
-    menuItem: { label: 'Switch account', section: 'Settings', closeSilent: true },
+    label: 'Switch account',
+    category: 'Settings',
+    ui: { closeSilent: true },
     execute() {
       switchAccountSignal.setOpen(true);
     },
