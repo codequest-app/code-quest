@@ -1,11 +1,9 @@
 ## 1. Pre-refactor Audit（必做，**任何實作前**）
 
-- [ ] 1.1 跑 `pnpm -C packages/client test` 取得 baseline（tests PASS 數）
-- [ ] 1.2 列出所有使用 `FakeSummoner` 的測試檔案 → 存 `audit/fake-summoner-tests.txt`
-- [ ] 1.3 對每個即將遷移的 factory，檢查其 UI 行為（trailing、execute、closeSilent）是否有 non-FakeSummoner 覆蓋：
-  - 若已有覆蓋 → 記錄在 `audit/coverage-map.md`（factory → test file）
-  - 若無覆蓋 → **先補 non-FakeSummoner unit test**（TDD：RED 先於補測試目的的 red，驗證當前 `MenuItemFeature` 行為）
-- [ ] 1.4 audit 完成後打 commit `audit: feature factory coverage baseline`（只含新增的測試 + audit 文件）
+- [x] 1.1 Baseline：158 test files / 1211 tests（含 2 個 flaky under parallel；單檔跑 PASS）。記錄於 `audit/baseline.md`
+- [x] 1.2 27 個 FakeSummoner-based 測試列於 `audit/fake-summoner-tests.txt`
+- [x] 1.3 Coverage audit：18 個 factory 已有 test；**補 5 個**（compact, manage-plugins, mcp-servers, rewind, usage）共 14 新 tests，全綠。map 於 `audit/coverage-map.md`
+- [ ] 1.4 commit audit baseline
 
 ## 2. Phase 1 — Adapter 基礎（TDD）
 
