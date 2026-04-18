@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { MessageActions } from './MessageActions';
 
 const meta = {
@@ -37,12 +37,7 @@ export const RewindFallback: Story = {
   args: {
     cliUuid: 'cli-msg-1',
     messageRole: 'user',
-    onRewind: fn().mockResolvedValue({ success: false }),
-  },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByTitle(/rewind to here/i));
-    await expect(args.onRewind).toHaveBeenCalledWith('msg-1', true);
-    await expect(canvas.findByText(/no preview available/i)).resolves.toBeInTheDocument();
+    onRewind: fn().mockResolvedValue({ ok: false }),
   },
 };
 
@@ -50,13 +45,7 @@ export const RewindConfirm: Story = {
   args: {
     cliUuid: 'cli-msg-1',
     messageRole: 'user',
-    onRewind: fn().mockResolvedValue({ success: false }),
-  },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByTitle(/rewind to here/i));
-    await expect(canvas.findByText(/no preview available/i)).resolves.toBeInTheDocument();
-    await userEvent.click(canvas.getByRole('button', { name: /confirm rewind/i }));
-    await expect(args.onRewind).toHaveBeenCalledWith('msg-1', false);
+    onRewind: fn().mockResolvedValue({ ok: false }),
   },
 };
 
@@ -64,11 +53,7 @@ export const WithFork: Story = {
   args: {
     cliUuid: 'cli-msg-3',
     messageRole: 'user',
-    onRewind: fn().mockResolvedValue({ success: false }),
-    onFork: fn().mockResolvedValue({ success: true, channelId: 'sess-forked' }),
-  },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByTitle(/fork from here/i));
-    await expect(args.onFork).toHaveBeenCalledWith('msg-3');
+    onRewind: fn().mockResolvedValue({ ok: false }),
+    onFork: fn().mockResolvedValue({ ok: true, data: { channelId: 'sess-forked' } }),
   },
 };

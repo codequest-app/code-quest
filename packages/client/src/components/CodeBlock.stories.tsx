@@ -30,10 +30,10 @@ export const TypeScript: Story = {
     language: 'typescript',
   },
   play: async ({ canvas, userEvent }) => {
-    const btn = canvas.getByRole('button', { name: /copy code/i });
+    const btn = canvas.getByTitle(/copy/i);
     await expect(btn).toBeInTheDocument();
     await userEvent.click(btn);
-    await expect(canvas.getByRole('button', { name: /copied/i })).toBeInTheDocument();
+    await expect(canvas.getByTitle(/copied/i)).toBeInTheDocument();
   },
 };
 
@@ -41,6 +41,6 @@ export const InlineCode: Story = {
   args: { code: 'npm install', language: undefined },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('npm install')).toBeInTheDocument();
-    await expect(canvas.queryByRole('button', { name: /copy/i })).toBeNull();
+    await expect(canvas.queryByTitle(/copy/i)).toBeNull();
   },
 };

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { InitOptionsDialog } from './InitOptionsDialog';
 
 const meta = {
@@ -34,11 +34,12 @@ export const Closed: Story = {
 };
 
 export const SaveWithSystemPrompt: Story = {
-  play: async ({ args, canvas, userEvent }) => {
-    const textarea = canvas.getByLabelText(/system prompt/i);
+  play: async ({ args, userEvent }) => {
+    const body = within(document.body);
+    const textarea = await body.findByLabelText('System Prompt');
     await userEvent.clear(textarea);
     await userEvent.type(textarea, 'Custom system prompt');
-    await userEvent.click(canvas.getByRole('button', { name: /save/i }));
+    await userEvent.click(body.getByRole('button', { name: /save/i }));
     await expect(args.onSave).toHaveBeenCalledWith(
       expect.objectContaining({ systemPrompt: 'Custom system prompt' }),
     );
@@ -46,8 +47,9 @@ export const SaveWithSystemPrompt: Story = {
 };
 
 export const CloseDialog: Story = {
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole('button', { name: /cancel/i }));
+  play: async ({ args, userEvent }) => {
+    const body = within(document.body);
+    await userEvent.click(await body.findByRole('button', { name: /cancel/i }));
     await expect(args.onClose).toHaveBeenCalledOnce();
   },
 };

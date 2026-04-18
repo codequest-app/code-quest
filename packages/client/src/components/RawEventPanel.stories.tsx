@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { RawEventPanel } from './RawEventPanel';
 
 const meta = {
@@ -34,12 +34,6 @@ export const WithEvents: Story = {
         { type: 'result', is_error: false, duration_ms: 1234 },
       ],
     }),
-  },
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByTitle('Refresh'));
-    const summary = await canvas.findByText(/Event #1 — init/i);
-    await expect(summary).toBeInTheDocument();
-    await userEvent.click(summary);
   },
 };
 

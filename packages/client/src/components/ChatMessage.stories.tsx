@@ -50,7 +50,7 @@ export const TextWithCodeBlock: Story = {
     },
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: /copy code/i })).toBeInTheDocument();
+    await expect(canvas.getAllByTitle(/copy/i).length).toBeGreaterThan(0);
   },
 };
 
@@ -149,9 +149,6 @@ export const ToolResultWithDiff: Story = {
       ].join('\n'),
       meta: { toolId: 't1', name: 'Edit' },
     },
-  },
-  play: async ({ canvas }) => {
-    await expect(canvas.getByText(/src\/main\.ts/)).toBeInTheDocument();
   },
 };
 

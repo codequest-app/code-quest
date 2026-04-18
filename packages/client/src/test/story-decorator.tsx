@@ -9,10 +9,14 @@ import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext'
 import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext';
 import { ChannelIdProvider } from '../contexts/channel/ChannelIdContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
+import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext';
+import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext';
 import { PluginProvider } from '../contexts/PluginContext';
+import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
+import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createSocket } from '../socket/client';
 import type { ChannelState } from '../types/chat';
 
@@ -35,11 +39,15 @@ export function withStoryApp(options?: { className?: string }) {
       <SocketProvider socket={socket}>
         <SessionProvider>
           <PluginProvider>
-            <TabProvider>
-              <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
-                <Story />
-              </div>
-            </TabProvider>
+            <ProjectProvider>
+              <WorktreeProvider>
+                <TabProvider>
+                  <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
+                    <Story />
+                  </div>
+                </TabProvider>
+              </WorktreeProvider>
+            </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
       </SocketProvider>
@@ -55,18 +63,57 @@ export function withStoryChannel(options?: StoryChannelOptions) {
       <SocketProvider socket={socket}>
         <SessionProvider>
           <PluginProvider>
-            <TabProvider>
-              <StoryProviders config={options?.config} messages={options?.messages}>
-                <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
-                  <Story />
-                </div>
-              </StoryProviders>
-            </TabProvider>
+            <ProjectProvider>
+              <WorktreeProvider>
+                <TabProvider>
+                  <StoryProviders config={options?.config} messages={options?.messages}>
+                    <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
+                      <Story />
+                    </div>
+                  </StoryProviders>
+                </TabProvider>
+              </WorktreeProvider>
+            </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
       </SocketProvider>
     );
   };
+}
+
+/** Compose‑able decorators for integration‑style stories. Wrap with what you need. */
+export function withProject(Story: () => React.ReactNode) {
+  return (
+    <ProjectProvider>
+      <Story />
+    </ProjectProvider>
+  );
+}
+
+export function withWorktree(Story: () => React.ReactNode) {
+  return (
+    <WorktreeProvider>
+      <Story />
+    </WorktreeProvider>
+  );
+}
+
+export function withChannelSocketRouter(Story: () => React.ReactNode) {
+  return (
+    <ChannelIdProvider channelId={STORY_CHANNEL_ID}>
+      <ChannelSocketRouterProvider>
+        <Story />
+      </ChannelSocketRouterProvider>
+    </ChannelIdProvider>
+  );
+}
+
+export function withMessageVisibility(Story: () => React.ReactNode) {
+  return (
+    <MessageVisibilityProvider>
+      <Story />
+    </MessageVisibilityProvider>
+  );
 }
 
 function StoryProviders({
@@ -83,18 +130,22 @@ function StoryProviders({
 
   return (
     <ChannelIdProvider channelId={STORY_CHANNEL_ID}>
-      <ChannelMessagesProvider
-        initialState={messages}
-        dequeueMessage={() => messageQueueRef.current.shift()}
-        messageQueueRef={messageQueueRef}
-        resetStreamingRefsRef={resetStreamingRefsRef}
-      >
-        <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
-          <ChannelConfigProvider initialConfig={config}>
-            <ChannelComposeProvider>{children}</ChannelComposeProvider>
-          </ChannelConfigProvider>
-        </ChannelControlProvider>
-      </ChannelMessagesProvider>
+      <ChannelSocketRouterProvider>
+        <ChannelMessagesProvider
+          initialState={messages}
+          dequeueMessage={() => messageQueueRef.current.shift()}
+          messageQueueRef={messageQueueRef}
+          resetStreamingRefsRef={resetStreamingRefsRef}
+        >
+          <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
+            <ChannelConfigProvider initialConfig={config}>
+              <MessageVisibilityProvider>
+                <ChannelComposeProvider>{children}</ChannelComposeProvider>
+              </MessageVisibilityProvider>
+            </ChannelConfigProvider>
+          </ChannelControlProvider>
+        </ChannelMessagesProvider>
+      </ChannelSocketRouterProvider>
     </ChannelIdProvider>
   );
 }

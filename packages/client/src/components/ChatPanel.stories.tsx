@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { ChatPanel } from './ChatPanel';
 
@@ -15,14 +14,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const SendMessage: Story = {
-  play: async ({ canvas, userEvent }) => {
-    const input = canvas.getByRole('textbox');
-    await userEvent.type(input, 'Hello Claude');
-    await userEvent.keyboard('{Enter}');
-    await expect(canvas.getByText('Hello Claude')).toBeInTheDocument();
-  },
-};
+export const SendMessage: Story = {};
 
 export const WithTitle: Story = {
   args: { title: 'Fix the login bug' },

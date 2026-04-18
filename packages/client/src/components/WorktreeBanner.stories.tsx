@@ -1,16 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { withStoryChannel } from '../test/story-decorator';
 import { WorktreeBanner } from './WorktreeBanner';
 
 const meta = {
   component: WorktreeBanner,
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <div className="max-w-xl bg-bg text-text">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [withStoryChannel({ className: 'max-w-xl bg-bg text-text' })],
 } satisfies Meta<typeof WorktreeBanner>;
 
 export default meta;

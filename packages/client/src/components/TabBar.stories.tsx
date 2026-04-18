@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { TabBar } from './TabBar';
 
 const meta = {
@@ -54,8 +54,9 @@ export const CloseTab: Story = {
     activeTabId: 'abc12345',
   },
   play: async ({ args, canvas, userEvent }) => {
-    const closeBtns = canvas.getAllByRole('button', { name: /close/i });
-    await userEvent.click(closeBtns[0]);
+    await userEvent.click(canvas.getByRole('button', { name: /close fix auth/i }));
+    const body = within(document.body);
+    await userEvent.click(await body.findByRole('button', { name: /^close$/i }));
     await expect(args.onCloseTab).toHaveBeenCalledWith('abc12345');
   },
 };

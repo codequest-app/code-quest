@@ -1,12 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { withStoryChannel } from '../test/story-decorator';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
 const meta = {
   component: ReviewUpsellBanner,
   tags: ['autodocs'],
-  decorators: [withStoryChannel({ className: 'max-w-2xl bg-surface text-text p-4' })],
+  decorators: [
+    (Story) => {
+      usePreferencesStore.setState({ isReviewUpsellDismissed: false });
+      return <Story />;
+    },
+    withStoryChannel({
+      className: 'max-w-2xl bg-surface text-text p-4',
+      config: { experimentGates: { review_upsell: true } },
+    }),
+  ],
 } satisfies Meta<typeof ReviewUpsellBanner>;
 
 export default meta;
