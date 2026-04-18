@@ -1,5 +1,4 @@
 import type {
-  ClientMessage,
   SessionJoinResponse,
   SessionLaunchResponse,
   SessionResumeResponse,
@@ -29,7 +28,7 @@ async function setup(sessionId = 'cli-sess') {
 describe('ChatHandler > session', () => {
   describe('session creation', () => {
     it('creates a session and emits chat:created', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, channelId } = await setup();
 
       expect(channelId).toBeDefined();
       const { ChannelManager } = await import('../socket/channel-manager.ts');
@@ -83,7 +82,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('session record is written to DB with session_id set (from system/init, not started)', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, channelId } = await setup();
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getByChannelId(channelId);
@@ -478,7 +477,7 @@ describe('ChatHandler > session', () => {
 
   describe('session persist timing', () => {
     it('session record has sessionId immediately after launch', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, channelId } = await setup();
       await new Promise<void>((r) => setTimeout(r, 50));
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
@@ -514,7 +513,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('persist happens when session:init arrives with sessionId', async () => {
-      const { container, claude, channelId } = await setup();
+      const { container, channelId } = await setup();
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 
       // session:init already arrived during setup() — persist should have happened
@@ -581,7 +580,7 @@ describe('ChatHandler > session', () => {
     });
 
     it('raw entries are persisted to DB after session is created (no FK error)', async () => {
-      const { container, claude } = await setup();
+      const { container } = await setup();
 
       const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
       const entries = await rawEventStore.getBySession('cli-sess');
