@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import type { MenuItemFeature, SlashCommandFeature } from '../feature';
+import { describe, expect, it, vi } from 'vitest';
+import type { Feature, MenuItemFeature, SlashCommandFeature } from '../feature';
 import { createFeatureRegistry } from '../feature-registry';
+
+const newFeature = (over: Partial<Feature> = {}): Feature => ({
+  id: 'f',
+  label: 'F',
+  category: 'X',
+  execute: vi.fn(),
+  ...over,
+});
 
 describe('feature-registry', () => {
   describe('findSlashCommand', () => {
@@ -140,6 +148,80 @@ describe('feature-registry', () => {
 
       expect(registry.getSlashCommandFeatures()).toHaveLength(1);
       expect(registry.getMenuItemFeatures()).toHaveLength(1);
+    });
+  });
+
+  describe('Feature shape support (new unified type)', () => {
+    it('getFeatures returns registered Feature objects', () => {
+      const r = createFeatureRegistry();
+      r.register(newFeature({ id: 'a' }));
+      r.register(newFeature({ id: 'b' }));
+      expect(r.getFeatures().map((f) => f.id)).toEqual(['a', 'b']);
+    });
+
+    it('getMenuItemFeatures adapts new Feature to legacy MenuItemFeature shape', () => {
+      const r = createFeatureRegistry();
+      r.register(newFeature({ id: 'a', label: 'A', category: 'Cat' }));
+      const items = r.getMenuItemFeatures();
+      expect(items).toHaveLength(1);
+      expect(items[0].menuItem.label).toBe('A');
+      expect(items[0].menuItem.section).toBe('Cat');
+    });
+
+    it('getMenuItemFeatures merges new Features with legacy MenuItemFeatures', () => {
+      const r = createFeatureRegistry();
+      r.register(newFeature({ id: 'new-1' }));
+      const legacy: MenuItemFeature = {
+        id: 'legacy-1',
+        menuItem: { label: 'L', section: 'X' },
+        execute: vi.fn(),
+      };
+      r.register(legacy);
+      expect(
+        r
+          .getMenuItemFeatures()
+          .map((f) => f.id)
+          .sort(),
+      ).toEqual(['legacy-1', 'new-1']);
+    });
+
+    it('getSlashCommand resolves Feature.slash binding', () => {
+      const r = createFeatureRegistry();
+      const invoke = vi.fn();
+      r.register(
+        newFeature({
+          id: 'btw',
+          slash: { command: '/btw', invoke },
+        }),
+      );
+      const cmd = r.getSlashCommand('/btw');
+      expect(cmd?.id).toBe('btw');
+      cmd?.invoke('/btw hello');
+      expect(invoke).toHaveBeenCalledWith('/btw hello');
+    });
+
+    it('findSlashCommand matches via Feature.slash.match', () => {
+      const r = createFeatureRegistry();
+      r.register(
+        newFeature({
+          id: 'hello',
+          slash: {
+            command: '/hello',
+            match: (m) => m.trim().startsWith('/hello'),
+            invoke: vi.fn(),
+          },
+        }),
+      );
+      expect(r.findSlashCommand('/hello world')?.id).toBe('hello');
+      expect(r.findSlashCommand('/other')).toBeUndefined();
+    });
+
+    it('register replaces previous registration with the same id', () => {
+      const r = createFeatureRegistry();
+      r.register(newFeature({ id: 'dup', label: 'A' }));
+      r.register(newFeature({ id: 'dup', label: 'B' }));
+      expect(r.getFeatures()).toHaveLength(1);
+      expect(r.getFeatures()[0].label).toBe('B');
     });
   });
 });
