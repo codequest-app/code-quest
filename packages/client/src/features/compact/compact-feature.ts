@@ -1,16 +1,22 @@
-import type { SlashCommandFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
-export function createCompactFeature(
-  sendToCliDirectly: (message: string) => void,
-): SlashCommandFeature {
+export function createCompactFeature(sendToCliDirectly: (message: string) => void): Feature {
   return {
     id: 'compact',
-    command: '/compact',
-    match(message) {
-      return message.trim() === '/compact' || message.trim().startsWith('/compact ');
+    label: '/compact',
+    category: 'Slash Commands',
+    ui: { filterOnly: true },
+    execute() {
+      sendToCliDirectly('/compact');
     },
-    invoke(message) {
-      sendToCliDirectly(message);
+    slash: {
+      command: '/compact',
+      match(message) {
+        return message.trim() === '/compact' || message.trim().startsWith('/compact ');
+      },
+      invoke(message) {
+        sendToCliDirectly(message);
+      },
     },
   };
 }
