@@ -1,13 +1,16 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export function createManagePluginsFeature({
   onManagePlugins,
 }: {
   onManagePlugins?: () => void;
-}): MenuItemFeature {
+}): Feature {
   return {
     id: 'plugins',
-    menuItem: { label: 'Manage plugins', section: 'Customize', order: 2, closeSilent: true },
+    label: 'Manage plugins',
+    category: 'Customize',
+    order: 2,
+    ui: { closeSilent: true },
     execute() {
       onManagePlugins?.();
     },
