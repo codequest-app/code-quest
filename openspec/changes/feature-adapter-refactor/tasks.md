@@ -3,34 +3,34 @@
 - [x] 1.1 Baseline：158 test files / 1211 tests（含 2 個 flaky under parallel；單檔跑 PASS）。記錄於 `audit/baseline.md`
 - [x] 1.2 27 個 FakeSummoner-based 測試列於 `audit/fake-summoner-tests.txt`
 - [x] 1.3 Coverage audit：18 個 factory 已有 test；**補 5 個**（compact, manage-plugins, mcp-servers, rewind, usage）共 14 新 tests，全綠。map 於 `audit/coverage-map.md`
-- [ ] 1.4 commit audit baseline
+- [x] 1.4 commit audit baseline
 
 ## 2. Phase 1 — Adapter 基礎（TDD）
 
-- [ ] 2.1 RED：`lib/__tests__/feature-type.test.ts`（`Feature` / `FeatureState` 型別存在與 narrowing）
-- [ ] 2.2 GREEN：擴充 `lib/feature.ts` 加 `Feature` / `FeatureState` / type guards
-- [ ] 2.3 RED：`lib/adapters/__tests__/to-menu-item.test.tsx`（至少 5 scenarios：無 state / toggle / tri-state / select / ui.closeSilent override）
-- [ ] 2.4 GREEN：`lib/adapters/to-menu-item.tsx`
-- [ ] 2.5 RED：`lib/adapters/__tests__/to-palette-command.test.tsx`
-- [ ] 2.6 GREEN：`lib/adapters/to-palette-command.tsx`
-- [ ] 2.7 RED：`lib/adapters/__tests__/to-slash-command.test.ts`
-- [ ] 2.8 GREEN：`lib/adapters/to-slash-command.ts`
-- [ ] 2.9 RED：`lib/adapters/__tests__/trailing-renderers.test.tsx`
-- [ ] 2.10 GREEN：`lib/adapters/trailing-renderers.tsx`（含 `renderMenuTrailing` / `renderPaletteTrailing`）
-- [ ] 2.11 RED：擴充 `FeatureRegistry` test（`getFeatures()` 回 Feature[]，舊 API 保留）
-- [ ] 2.12 GREEN：`FeatureRegistry` 內部支援兩種 shape；新舊並存
-- [ ] 2.13 Commit `feat(lib): add Feature type + adapters + registry shim`
+- [x] 2.1 RED：`lib/__tests__/feature-type.test.ts`（`Feature` / `FeatureState` 型別存在與 narrowing）
+- [x] 2.2 GREEN：擴充 `lib/feature.ts` 加 `Feature` / `FeatureState` / type guards
+- [x] 2.3 RED：`lib/adapters/__tests__/to-menu-item.test.tsx`（至少 5 scenarios：無 state / toggle / tri-state / select / ui.closeSilent override）
+- [x] 2.4 GREEN：`lib/adapters/to-menu-item.tsx`
+- [x] 2.5 RED：`lib/adapters/__tests__/to-palette-command.test.tsx`
+- [x] 2.6 GREEN：`lib/adapters/to-palette-command.tsx`
+- [x] 2.7 RED：`lib/adapters/__tests__/to-slash-command.test.ts`
+- [x] 2.8 GREEN：`lib/adapters/to-slash-command.ts`
+- [x] 2.9 RED：`lib/adapters/__tests__/trailing-renderers.test.tsx`
+- [x] 2.10 GREEN：`lib/adapters/trailing-renderers.tsx`（含 `renderMenuTrailing` / `renderPaletteTrailing`）
+- [x] 2.11 RED：擴充 `FeatureRegistry` test（`getFeatures()` 回 Feature[]，舊 API 保留）
+- [x] 2.12 GREEN：`FeatureRegistry` 內部支援兩種 shape；新舊並存
+- [x] 2.13 Commit `feat(lib): add Feature type + adapters + registry shim`
 
 ## 3. Phase 1.5 — 示範遷移 `clear`（完整 TDD 跑一輪）
 
-- [ ] 3.1 檢視 `clear-feature.test.ts` 既有 tests（不改）
-- [ ] 3.2 寫新 test 驗證 `createClearFeature` 回 `Feature` shape（`label` / `category` / `execute`）
-- [ ] 3.3 改 `clear-feature.ts`（已是 `.ts`）回傳 Feature
-- [ ] 3.4 CommandMenu 接上（registry 拿 Feature 轉 MenuItemFeature）
-- [ ] 3.5 跑 **所有** test；確認 FakeSummoner 相關測試 0 改動 0 regression
-- [ ] 3.6 跑 storybook：CommandMenu stories 視覺一致
-- [ ] 3.7 Commit `refactor(features/clear): migrate to Feature shape`
-- [ ] 3.8 **若此步有任何 FakeSummoner test 變動 → 停下、回報、討論**
+- [x] 3.1 RED：clear-feature.test 改斷言新 shape（`feature.label` / `feature.category`，路徑變但語意不變）
+- [x] 3.2 GREEN：clear-feature.ts 改回傳 `Feature`（拿掉 `menuItem: {}` 包裝）
+- [x] 3.3 CommandMenu 未改（registry shim 自動 adapt）
+- [x] 3.4 完整 vitest：168 files / 1261 tests（0 regression；FakeSummoner 27 test 0 改動）
+- [x] 3.5 typecheck clean
+- [ ] 3.6 storybook（延後到 Phase 3 結尾統一跑）
+- [ ] 3.7 Commit
+- [x] 3.8 FakeSummoner test 0 變動 ✓
 
 ## 4. Phase 2 — 批次遷移（每組獨立 commit；每組完驗證）
 

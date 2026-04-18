@@ -1,4 +1,4 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export interface ClearFeatureDeps {
   clearMessages: () => void;
@@ -10,10 +10,12 @@ export function createClearFeature({
   clearMessages,
   clearModifiedFiles,
   sendMessage,
-}: ClearFeatureDeps): MenuItemFeature {
+}: ClearFeatureDeps): Feature {
   return {
     id: 'clear',
-    menuItem: { label: 'Clear conversation', section: 'Context', order: 0 },
+    label: 'Clear conversation',
+    category: 'Context',
+    order: 0,
     execute() {
       clearMessages();
       clearModifiedFiles();

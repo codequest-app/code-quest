@@ -14,10 +14,11 @@ describe('createClearFeature', () => {
     expect(createClearFeature(makeDeps()).id).toBe('clear');
   });
 
-  it('menuItem is in Context section with label Clear conversation', () => {
-    const { menuItem } = createClearFeature(makeDeps());
-    expect(menuItem.label).toBe('Clear conversation');
-    expect(menuItem.section).toBe('Context');
+  it('is in Context category with label Clear conversation', () => {
+    const feature = createClearFeature(makeDeps());
+    expect(feature.label).toBe('Clear conversation');
+    expect(feature.category).toBe('Context');
+    expect(feature.order).toBe(0);
   });
 
   it('execute calls clearMessages, clearModifiedFiles, and sends /clear to CLI', () => {
