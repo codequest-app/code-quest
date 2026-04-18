@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { toMenuItem } from '../../lib/adapters/to-menu-item';
 import type { Density } from '../../stores/usePreferencesStore';
 import { createDensityFeature } from './density-feature';
 
@@ -10,7 +11,7 @@ function DensityFeaturePreview({
   density: Density;
   setDensity: (v: Density) => void;
 }) {
-  const feature = createDensityFeature({ density, setDensity });
+  const feature = toMenuItem(createDensityFeature({ density, setDensity }));
   return (
     <button
       type="button"
