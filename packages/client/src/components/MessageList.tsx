@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useChannelControl, useChannelMessages, useMessageVisibility } from '../contexts/channel';
+import { filterTree } from '../utils/filter-tree';
 import { isMessageVisible } from '../utils/isMessageVisible';
 import { buildMessageTree } from '../utils/message-tree';
 import { MessageNodeList } from './MessageNodeList';
@@ -115,14 +116,14 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     }, [messages]);
 
     const q = searchQuery.toLowerCase();
-    const visibleMessages = messages.filter(
+    const fullTree = buildMessageTree(messages);
+    const visibleTree = filterTree(
+      fullTree,
       (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
     );
-    const filtered = q
-      ? visibleMessages.filter((m) => m.content.toLowerCase().includes(q))
-      : visibleMessages;
-
-    const tree = buildMessageTree(filtered);
+    const tree = q
+      ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q))
+      : visibleTree;
 
     return (
       <div

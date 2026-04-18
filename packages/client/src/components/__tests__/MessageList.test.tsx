@@ -242,6 +242,48 @@ describe('MessageList', () => {
     expect(document.body.textContent).toContain('React');
   });
 
+  it('hidden tool_use (TodoWrite in debug group, off by default) also hides its merged tool_result', async () => {
+    const user = userEvent.setup();
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'toolu_todo_1', name: 'TodoWrite', input: { todos: [] } } }),
+      );
+      await claude.emit(
+        s.toolResult(
+          'toolu_todo_1',
+          'Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress.',
+        ),
+      );
+    });
+    // Debug group (tool_use:TodoWrite) is off by default.
+    // The TodoWrite block itself must not render; there must be no orphan
+    // "Result" collapsible left behind that exposes its merged content.
+    expect(screen.queryByText('TodoWrite')).not.toBeInTheDocument();
+    const resultButtons = screen
+      .queryAllByRole('button')
+      .filter((el) => el.textContent?.startsWith('✓'));
+    expect(resultButtons).toHaveLength(0);
+    // Even when a stray Result button exists, the merged body stays hidden —
+    // guard against someone re-expanding via click exposing the text.
+    const maybeResult = screen.queryByText('Result');
+    if (maybeResult) await user.click(maybeResult);
+    expect(screen.queryByText(/Todos have been modified successfully/)).not.toBeInTheDocument();
+  });
+
+  it('visible tool_use still merges its tool_result (regression)', async () => {
+    const user = userEvent.setup();
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'toolu_grep_1', name: 'Grep', input: { pattern: 'foo' } } }),
+      );
+      await claude.emit(s.toolResult('toolu_grep_1', 'match found'));
+    });
+    await user.click(screen.getByText('Grep'));
+    expect(screen.getByText(/match found/)).toBeInTheDocument();
+  });
+
   it('renders tool_result merged into tool_use collapsible with diff', async () => {
     const user = userEvent.setup();
     const { claude } = await setup();
