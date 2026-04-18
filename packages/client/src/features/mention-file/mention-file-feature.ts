@@ -1,13 +1,15 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export interface MentionFileFeatureDeps {
   mentionFile: () => void;
 }
 
-export function createMentionFileFeature({ mentionFile }: MentionFileFeatureDeps): MenuItemFeature {
+export function createMentionFileFeature({ mentionFile }: MentionFileFeatureDeps): Feature {
   return {
     id: 'mention-file',
-    menuItem: { label: 'Mention file from this project...', section: 'Context', order: -1 },
+    label: 'Mention file from this project...',
+    category: 'Context',
+    order: -1,
     execute() {
       mentionFile();
     },
