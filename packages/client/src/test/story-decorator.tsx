@@ -2,7 +2,7 @@
  * Shared Storybook decorator for components that need Channel context.
  * Builds sub-provider tree directly — ChannelProvider not used (no initialState needed).
  */
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext';
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
@@ -18,6 +18,7 @@ import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
 import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createSocket } from '../socket/client';
+import type { ColorTheme, Density } from '../stores/usePreferencesStore';
 import type { ChannelState } from '../types/chat';
 
 const STORY_CHANNEL_ID = 'story';
@@ -79,6 +80,47 @@ export function withStoryChannel(options?: StoryChannelOptions) {
       </SocketProvider>
     );
   };
+}
+
+/** Applies theme/density data-attrs to <html> for the duration of a story.
+ *  Useful for previewing palette variants per story without changing app state. */
+export function withThemePreset({
+  theme,
+  density,
+}: {
+  theme?: ColorTheme;
+  density?: Density;
+} = {}) {
+  return (Story: () => React.ReactNode) => (
+    <ThemePresetWrapper theme={theme} density={density}>
+      <Story />
+    </ThemePresetWrapper>
+  );
+}
+
+function ThemePresetWrapper({
+  theme,
+  density,
+  children,
+}: {
+  theme?: ColorTheme;
+  density?: Density;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    const ds = document.documentElement.dataset;
+    const prevTheme = ds.theme;
+    const prevDensity = ds.density;
+    if (theme) ds.theme = theme;
+    if (density) ds.density = density;
+    return () => {
+      if (prevTheme === undefined) delete ds.theme;
+      else ds.theme = prevTheme;
+      if (prevDensity === undefined) delete ds.density;
+      else ds.density = prevDensity;
+    };
+  }, [theme, density]);
+  return <>{children}</>;
 }
 
 /** Compose‑able decorators for integration‑style stories. Wrap with what you need. */

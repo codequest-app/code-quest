@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ColorTheme = 'dark';
+export type ColorTheme = 'dark' | 'light';
 export type FontSize = 'sm' | 'md' | 'lg';
 export type Density = 'comfortable' | 'compact';
 export type Layout = 'a' | 'b';

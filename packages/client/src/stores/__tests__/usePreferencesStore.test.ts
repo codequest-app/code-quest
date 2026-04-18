@@ -28,6 +28,13 @@ describe('usePreferencesStore', () => {
     expect(state.isReviewUpsellDismissed).toBe(false);
   });
 
+  it('setColorTheme accepts light and persists', () => {
+    usePreferencesStore.getState().setColorTheme('light');
+    expect(usePreferencesStore.getState().colorTheme).toBe('light');
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(stored.state.colorTheme).toBe('light');
+  });
+
   it('axis setters update individual fields', () => {
     usePreferencesStore.getState().setFontSize('lg');
     expect(usePreferencesStore.getState().fontSize).toBe('lg');

@@ -77,10 +77,43 @@
      Tailwind tree-shakes from :root; re-add here when a consumer class lands. */
 }
 
+/* Light theme — VS Code Light+ palette. Contrast target: WCAG AA (≥ 4.5:1 body text).
+   v1 shipped without designer review; iterate via follow-up. */
+:root[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-surface: #f3f3f3;
+  --color-surface-hover: #e8e8e8;
+  --color-border: #d4d4d4;
+  --color-text: #1f1f1f;
+  --color-text-muted: #616161;
+  --color-text-bright: #000000;
+  --color-accent: #c6613f;
+  --color-success: #107c10;
+  --color-warning: #b58900;
+  --color-danger: #c72e0f;
+  --color-assistant: #c6613f;
+  --color-code: #f3f3f3;
+  --color-code-block: #fafafa;
+  --color-input-bg: #ffffff;
+  --color-success-bg: #e6f2e6;
+  --color-warning-bg: #fff8dc;
+  --color-danger-bg: #fde7e7;
+  --color-selected: #cce5ff;
+  --color-toggle: #005a9e;
+  --color-button: #005a9e;
+  --color-claude-clay-orange: #c6613f;
+}
+
 /* Font-size axis — html font-size drives rem cascade. md = browser default (16px). */
 :root[data-font="sm"] { font-size: 14px; }
 :root[data-font="md"] { font-size: 16px; }
 :root[data-font="lg"] { font-size: 18px; }
+
+/* Density axis — override Tailwind's `--spacing` base to shrink all p, gap, m
+   utilities proportionally (comfortable = default 0.25rem; compact 0.875x = 0.21875rem). */
+:root[data-density="compact"] {
+  --spacing: 0.21875rem;
+}
 
 /* --- Custom utilities --- */
 

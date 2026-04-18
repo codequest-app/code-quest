@@ -66,7 +66,7 @@
 
 ## 8. Phase 1 — 驗證
 
-- [ ] 8.1 `pnpm -C packages/client test` 全綠
+- [x] 8.1 `pnpm -C packages/client test` 全綠（154 files / 1193 tests）
 - [x] 8.1 vitest：154 files / 1193 tests 全綠
 - [x] 8.2 typecheck：clean
 - [x] 8.3 lint：新改動無新增 error（App.css 與 SideQuestionDialog 的 pre-existing debt 不屬本 change）
