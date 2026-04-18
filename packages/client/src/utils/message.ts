@@ -88,6 +88,7 @@ function messagesFromUserBlock(
   block: ContentBlock,
   parentToolUseId?: string,
   uuid?: string,
+  source?: 'typed' | 'skill' | 'command' | 'reminder',
 ): Message | null {
   switch (block.type) {
     case 'tool_result': {
@@ -117,7 +118,12 @@ function messagesFromUserBlock(
       });
     }
     case 'text': {
-      const m = msg({ role: 'user', type: 'text', content: block.text });
+      const m = msg({
+        role: 'user',
+        type: 'text',
+        content: block.text,
+        meta: { source: source ?? 'typed' },
+      });
       return uuid ? { ...m, cliUuid: uuid } : m;
     }
     default:
@@ -139,7 +145,12 @@ export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
       const parsed = historyUserSchema.safeParse(event.payload);
       if (!parsed.success) continue;
       for (const block of parsed.data.content) {
-        const m = messagesFromUserBlock(block, parsed.data.parentToolUseId, parsed.data.uuid);
+        const m = messagesFromUserBlock(
+          block,
+          parsed.data.parentToolUseId,
+          parsed.data.uuid,
+          parsed.data.source,
+        );
         if (m) messages.push(m);
       }
     } else if (event.name === 'message:result') {

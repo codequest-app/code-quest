@@ -54,19 +54,34 @@ function UnhandledContent({ content, meta }: { content: string; meta?: Record<st
   );
 }
 
+function renderUserText(message: Message & { type: 'text' }): React.ReactNode {
+  if (message.role !== 'user') return <MarkdownContent content={message.content} />;
+  switch (message.meta?.source ?? 'typed') {
+    case 'skill':
+      return <MarkdownContent content={message.content} />;
+    case 'command':
+    case 'reminder':
+      return null;
+    default:
+      return message.content;
+  }
+}
+
 export function renderBody(
   message: Message,
   onDiffRespond?: (toolId: string, accepted: boolean) => void,
 ): React.ReactNode {
   const { content } = message;
   switch (message.type) {
-    case 'text':
+    case 'text': {
+      const body = renderUserText(message);
       return (
         <>
-          <MarkdownContent content={content} />
+          {body}
           {message.meta?.citations && <CitationsPanel citations={message.meta.citations} />}
         </>
       );
+    }
     case 'thinking':
       return (
         <ThinkingBlock
@@ -86,10 +101,8 @@ export function renderBody(
       return <div className="text-xs text-text-muted italic py-1">Thinking (redacted)</div>;
     case 'result':
       return <ResultContent meta={message.meta} />;
-    case 'error': {
-      const detail = (message.meta as { detail?: string } | undefined)?.detail;
-      return <ErrorContent content={detail ?? content} />;
-    }
+    case 'error':
+      return <ErrorContent content={message.meta?.detail ?? content} />;
     case 'pending_action':
       return <PendingActionContent content={content} />;
     case 'action_result':

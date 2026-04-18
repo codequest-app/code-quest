@@ -15,6 +15,7 @@ export const historyUserSchema = z.object({
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
   uuid: z.string().optional(),
+  source: z.enum(['typed', 'skill', 'command', 'reminder']).optional(),
 });
 export type HistoryUser = z.infer<typeof historyUserSchema>;
 

@@ -35,12 +35,152 @@ describe('ChatMessage', () => {
     expect(screen.getByText('Hi')).toBeInTheDocument();
   });
 
+  it('user typed text renders plain (no markdown parsing)', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          role: 'user',
+          type: 'text',
+          content: '**not bold** 1. a 2. b',
+          meta: { source: 'typed' },
+        }}
+      />,
+    );
+    expect(container.querySelector('strong')).toBeNull();
+    expect(container.querySelector('[data-role="user"] ol')).toBeNull();
+    expect(container.textContent).toContain('**not bold** 1. a 2. b');
+  });
+
+  it('user skill-body text renders markdown', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          role: 'user',
+          type: 'text',
+          content: '# Heading\n\n**bold** text',
+          meta: { source: 'skill' },
+        }}
+      />,
+    );
+    expect(container.querySelector('h1')?.textContent).toBe('Heading');
+    expect(container.querySelector('strong')?.textContent).toBe('bold');
+  });
+
+  it('user command text renders nothing', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          role: 'user',
+          type: 'text',
+          content: '<command-message>foo</command-message>',
+          meta: { source: 'command' },
+        }}
+      />,
+    );
+    expect(container.textContent).not.toContain('command-message');
+  });
+
+  it('user reminder text renders nothing', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          role: 'user',
+          type: 'text',
+          content: '<system-reminder>nag</system-reminder>',
+          meta: { source: 'reminder' },
+        }}
+      />,
+    );
+    expect(container.textContent).not.toContain('nag');
+  });
+
+  it('assistant text message has a copy button that copies the text content', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const { container } = render(
+      <ChatMessage message={{ ...base, type: 'text', content: 'Hello **world**' }} />,
+    );
+    const btn = container.querySelector('[data-testid="message-copy"]');
+    expect(btn).not.toBeNull();
+    if (btn) await user.click(btn as HTMLElement);
+    expect(writeText).toHaveBeenCalled();
+    expect(String(writeText.mock.calls[0][0])).toContain('Hello');
+  });
+
+  it('user text message renders a message-level copy button', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{ ...base, role: 'user', type: 'text', content: 'hi', meta: { source: 'typed' } }}
+      />,
+    );
+    expect(container.querySelector('[data-testid="message-copy"]')).not.toBeNull();
+  });
+
+  it('system error message does NOT render a message-level copy button', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{ ...base, role: 'system', type: 'error', content: 'Something broke' }}
+      />,
+    );
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+  });
+
+  it('tool_use message does NOT render a message-level copy button', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          type: 'tool_use',
+          content: 'Bash',
+          meta: { toolId: 't1', input: { command: 'ls' } },
+        }}
+      />,
+    );
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+  });
+
+  it('tool_result message does NOT render a message-level copy button', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          type: 'tool_result',
+          content: 'output',
+          meta: { toolId: 't1', name: 'Bash' },
+        }}
+      />,
+    );
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+  });
+
+  it('assistant text unaffected by meta.source', () => {
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          type: 'text',
+          content: '**bold**',
+          meta: { source: 'typed' } as never,
+        }}
+      />,
+    );
+    expect(container.querySelector('strong')?.textContent).toBe('bold');
+  });
+
   it('renders code blocks in text messages', () => {
     const { container } = render(
       <ChatMessage message={{ ...base, type: 'text', content: '```js\nconsole.log("hi")\n```' }} />,
     );
     expect(container.textContent).toContain('console');
-    expect(container.querySelector('pre')).toBeInTheDocument();
+    expect(container.querySelector('[class*="language-js"]')).toBeInTheDocument();
   });
 
   it('renders thinking message as collapsible with label', () => {
@@ -92,6 +232,44 @@ describe('ChatMessage', () => {
     );
     await user.click(screen.getByText(/bash/i));
     expect(screen.getByText(/ls -la/)).toBeInTheDocument();
+  });
+
+  it('Skill tool output renders as markdown after expand', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ChatMessage
+        message={{
+          ...base,
+          type: 'tool_use',
+          content: 'Skill',
+          meta: {
+            toolId: 't1',
+            input: { skill: 'opsx:propose' },
+            result: { content: 'Hi **world**\n\n- a\n- b', is_error: false },
+          },
+        }}
+      />,
+    );
+    await user.click(screen.getByText(/skill/i));
+    expect(container.querySelector('strong')?.textContent).toBe('world');
+    expect(container.querySelectorAll('li')).toHaveLength(2);
+  });
+
+  it('Skill tool without result shows skill id and running indicator', async () => {
+    const user = userEvent.setup();
+    render(
+      <ChatMessage
+        message={{
+          ...base,
+          type: 'tool_use',
+          content: 'Skill',
+          meta: { toolId: 't1', input: { skill: 'opsx:propose' } },
+        }}
+      />,
+    );
+    await user.click(screen.getByText(/skill/i));
+    expect(screen.getByText(/opsx:propose/)).toBeInTheDocument();
+    expect(screen.getByText(/running/i)).toBeInTheDocument();
   });
 
   it('renders tool_result as collapsible', () => {

@@ -16,7 +16,7 @@ function ErrorProbe() {
           key={m.id}
           data-testid={`err-${i}`}
           data-content={m.content}
-          data-detail={(m.meta as { detail?: string } | undefined)?.detail ?? ''}
+          data-detail={m.type === 'error' ? (m.meta?.detail ?? '') : ''}
         />
       ))}
     </ul>

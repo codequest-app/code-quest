@@ -66,6 +66,67 @@ describe('transform — user events', () => {
     expect(result).toBeNull();
   });
 
+  it('isSynthetic user event tagged source="skill" (regardless of prefix)', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      isSynthetic: true,
+      message: {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: 'Base directory for this skill: /p/skills/foo\n\n# Heading\n\n**bold**',
+          },
+        ],
+      },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.name).toBe('message:user');
+    expect(event?.payload).toMatchObject({ source: 'skill' });
+  });
+
+  it('isSynthetic slash-command body (no "Base directory" prefix) still source="skill"', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      isSynthetic: true,
+      message: {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: 'Propose a new change - create the change and generate all artifacts in one step.\n\n**Steps**\n\n1. Foo\n2. Bar',
+          },
+        ],
+      },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ source: 'skill' });
+  });
+
+  it('non-synthetic text that happens to contain "Base directory for this skill:" stays typed', () => {
+    const line = JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Base directory for this skill: whatever — user quoted the docs' },
+        ],
+      },
+    });
+    const result = toClientMessage(line);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ source: 'typed' });
+  });
+
+  it('plain typed user input tagged source="typed"', () => {
+    const segment = s.user('hello plain', { uuid: 'u-1' });
+    const result = toClientMessage(segment);
+    const event = Array.isArray(result) ? result[0] : result;
+    expect(event?.payload).toMatchObject({ source: 'typed' });
+  });
+
   it('text user echo (--replay-user-messages) carries uuid through transform', () => {
     const segment = s.user('hello-from-user', { uuid: 'real-cli-echo-uuid' });
     const result = toClientMessage(segment);

@@ -3348,6 +3348,290 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses tool-use.jsonl:1 1`] 
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses user-skill-body.jsonl:1 1`] = `
+{
+  "isSynthetic": true,
+  "message": {
+    "content": [
+      {
+        "text": "Base directory for this skill: /Users/user/.claude/plugins/cache/superpowers-marketplace/superpowers/4.3.1/skills/brainstorming
+
+# Brainstorming Ideas Into Designs
+
+## Overview
+
+Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+
+Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
+
+<HARD-GATE>
+Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+</HARD-GATE>
+
+## Anti-Pattern: "This Is Too Simple To Need A Design"
+
+Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+
+## Checklist
+
+You MUST create a task for each of these items and complete them in order:
+
+1. **Explore project context** — check files, docs, recent commits
+2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+3. **Propose 2-3 approaches** — with trade-offs and your recommendation
+4. **Present design** — in sections scaled to their complexity, get user approval after each section
+5. **Write design doc** — save to \`docs/plans/YYYY-MM-DD-<topic>-design.md\` and commit
+6. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+
+## Process Flow
+
+\`\`\`dot
+digraph brainstorming {
+    "Explore project context" [shape=box];
+    "Ask clarifying questions" [shape=box];
+    "Propose 2-3 approaches" [shape=box];
+    "Present design sections" [shape=box];
+    "User approves design?" [shape=diamond];
+    "Write design doc" [shape=box];
+    "Invoke writing-plans skill" [shape=doublecircle];
+
+    "Explore project context" -> "Ask clarifying questions";
+    "Ask clarifying questions" -> "Propose 2-3 approaches";
+    "Propose 2-3 approaches" -> "Present design sections";
+    "Present design sections" -> "User approves design?";
+    "User approves design?" -> "Present design sections" [label="no, revise"];
+    "User approves design?" -> "Write design doc" [label="yes"];
+    "Write design doc" -> "Invoke writing-plans skill";
+}
+\`\`\`
+
+**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+
+## The Process
+
+**Understanding the idea:**
+- Check out the current project state first (files, docs, recent commits)
+- Ask questions one at a time to refine the idea
+- Prefer multiple choice questions when possible, but open-ended is fine too
+- Only one question per message - if a topic needs more exploration, break it into multiple questions
+- Focus on understanding: purpose, constraints, success criteria
+
+**Exploring approaches:**
+- Propose 2-3 different approaches with trade-offs
+- Present options conversationally with your recommendation and reasoning
+- Lead with your recommended option and explain why
+
+**Presenting the design:**
+- Once you believe you understand what you're building, present the design
+- Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
+- Ask after each section whether it looks right so far
+- Cover: architecture, components, data flow, error handling, testing
+- Be ready to go back and clarify if something doesn't make sense
+
+## After the Design
+
+**Documentation:**
+- Write the validated design to \`docs/plans/YYYY-MM-DD-<topic>-design.md\`
+- Use elements-of-style:writing-clearly-and-concisely skill if available
+- Commit the design document to git
+
+**Implementation:**
+- Invoke the writing-plans skill to create a detailed implementation plan
+- Do NOT invoke any other skill. writing-plans is the next step.
+
+## Key Principles
+
+- **One question at a time** - Don't overwhelm with multiple questions
+- **Multiple choice preferred** - Easier to answer than open-ended when possible
+- **YAGNI ruthlessly** - Remove unnecessary features from all designs
+- **Explore alternatives** - Always propose 2-3 approaches before settling
+- **Incremental validation** - Present design, get approval before moving on
+- **Be flexible** - Go back and clarify when something doesn't make sense
+",
+        "type": "text",
+      },
+    ],
+    "role": "user",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "50e79363-c470-4ef9-9cb1-ca3f7b3d6dc8",
+  "type": "user",
+  "uuid": "ffdc99ab-1c89-438a-b5a6-821763ed3855",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses user-synthetic-slash.jsonl:1 1`] = `
+{
+  "isSynthetic": true,
+  "message": {
+    "content": [
+      {
+        "text": "Propose a new change - create the change and generate all artifacts in one step.
+
+I'll create a change with artifacts:
+- proposal.md (what & why)
+- design.md (how)
+- tasks.md (implementation steps)
+
+When ready to implement, run /opsx:apply
+
+---
+
+**Input**: The argument after \`/opsx:propose\` is the change name (kebab-case), OR a description of what the user wants to build.
+
+**Steps**
+
+1. **If no input provided, ask what they want to build**
+
+   Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
+   > "What change do you want to work on? Describe what you want to build or fix."
+
+   From their description, derive a kebab-case name (e.g., "add user authentication" → \`add-user-auth\`).
+
+   **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
+
+2. **Create the change directory**
+   \`\`\`bash
+   openspec new change "<name>"
+   \`\`\`
+   This creates a scaffolded change at \`openspec/changes/<name>/\` with \`.openspec.yaml\`.
+
+3. **Get the artifact build order**
+   \`\`\`bash
+   openspec status --change "<name>" --json
+   \`\`\`
+   Parse the JSON to get:
+   - \`applyRequires\`: array of artifact IDs needed before implementation (e.g., \`["tasks"]\`)
+   - \`artifacts\`: list of all artifacts with their status and dependencies
+
+4. **Create artifacts in sequence until apply-ready**
+
+   Use the **TodoWrite tool** to track progress through the artifacts.
+
+   Loop through artifacts in dependency order (artifacts with no pending dependencies first):
+
+   a. **For each artifact that is \`ready\` (dependencies satisfied)**:
+      - Get instructions:
+        \`\`\`bash
+        openspec instructions <artifact-id> --change "<name>" --json
+        \`\`\`
+      - The instructions JSON includes:
+        - \`context\`: Project background (constraints for you - do NOT include in output)
+        - \`rules\`: Artifact-specific rules (constraints for you - do NOT include in output)
+        - \`template\`: The structure to use for your output file
+        - \`instruction\`: Schema-specific guidance for this artifact type
+        - \`outputPath\`: Where to write the artifact
+        - \`dependencies\`: Completed artifacts to read for context
+      - Read any completed dependency files for context
+      - Create the artifact file using \`template\` as the structure
+      - Apply \`context\` and \`rules\` as constraints - but do NOT copy them into the file
+      - Show brief progress: "Created <artifact-id>"
+
+   b. **Continue until all \`applyRequires\` artifacts are complete**
+      - After creating each artifact, re-run \`openspec status --change "<name>" --json\`
+      - Check if every artifact ID in \`applyRequires\` has \`status: "done"\` in the artifacts array
+      - Stop when all \`applyRequires\` artifacts are done
+
+   c. **If an artifact requires user input** (unclear context):
+      - Use **AskUserQuestion tool** to clarify
+      - Then continue with creation
+
+5. **Show final status**
+   \`\`\`bash
+   openspec status --change "<name>"
+   \`\`\`
+
+**Output**
+
+After completing all artifacts, summarize:
+- Change name and location
+- List of artifacts created with brief descriptions
+- What's ready: "All artifacts created! Ready for implementation."
+- Prompt: "Run \`/opsx:apply\` to start implementing."
+
+**Artifact Creation Guidelines**
+
+- Follow the \`instruction\` field from \`openspec instructions\` for each artifact type
+- The schema defines what each artifact should contain - follow it
+- Read dependency artifacts for context before creating new ones
+- Use \`template\` as the structure for your output file - fill in its sections
+- **IMPORTANT**: \`context\` and \`rules\` are constraints for YOU, not content for the file
+  - Do NOT copy \`<context>\`, \`<rules>\`, \`<project_context>\` blocks into the artifact
+  - These guide what you write, but should never appear in the output
+
+**Guardrails**
+- Create ALL artifacts needed for implementation (as defined by schema's \`apply.requires\`)
+- Always read dependency artifacts before creating a new one
+- If context is critically unclear, ask the user - but prefer making reasonable decisions to keep momentum
+- If a change with that name already exists, ask if user wants to continue it or create a new one
+- Verify each artifact file exists after writing before proceeding to next
+
+
+ARGUMENTS: RPG UI 改造：將 cc-office 介面改造為 DQ 風格的 RPG 體驗。
+
+核心概念：
+- Project list = SFC 卡帶外觀
+- 點卡帶 → DQ 藍框選單（新冒險 / 讀取紀錄 / 設定）
+- Chat 畫面 = 戰鬥畫面，史萊姆 sprite 代表 Claude，狀態變化（idle/thinking/tool-use/error/done）
+- 下方 DQ 藍框四選單：戰鬥(prompt)/魔法(skills)/道具(worktree)/作戰(system prompt)/逃跑(abort)
+- MessageList = 右側可收合「戰鬥記錄」
+
+視覺/字體：
+- 日文 DQ 風（PixelMplus 或 美咲フォント，免費商用）
+- 現成 sprite（CC0/自繪像素風）
+- 選單文案走 i18n，key 用日文原文命名（menu.battle 等），v1 用中文文案
+- CC0 chiptune 音效（選單/確定/受傷/勝利）
+
+Mode toggle：
+- RPG mode ↔ Classic mode，存 localStorage，預設 Classic
+
+擴充整合（DQ 元素 ↔ cc-office 功能）：
+- HP/MP/G HUD：HP=context 剩餘、MP=token budget、G=累積 cost、LV=對話數
+- Subagents = 仲間（隊伍 sprite，delegate 時跳出施法）
+- MCP servers = 契約魔獸（召喚獸圖示）
+- CLI provider = 種族（claude/gemini 切換）
+- /compact = 宿屋（HP 回復動畫）
+- Error recovery = 教會復活
+- Permission prompt = 習得新咒文動畫
+- Plan mode = 作戰會議
+- Todo list = クエスト一覧（羊皮紙 + 打勾音效）
+- Tool call 動畫：Bash=劍擊、Read=調查、Write=書寫魔法陣、WebFetch=召喚
+- Thinking = 詠唱發光
+- Streaming = DQ 逐字顯示（保留既有行為）
+- Session auto-save = ぼうけんのしょ に きろくします 閃現
+- Session list = DQ 3 格存檔選擇畫面
+
+狀態異常：
+- error = どく（綠閃）
+- rate limit = ねむり
+- context 滿 = こんらん
+
+實用性守則：
+- 輸入框保持一般 textarea（只是外框畫藍框），不為擬真犧牲可用性
+- code block 複製、歷史 scroll 等高頻操作維持順手
+- 轉場 <= 0.5s
+- Classic mode 必須完整保留作為 fallback
+
+分階段：
+1. 階段一（低風險）：卡帶 project list + DQ 藍框選單 + mode toggle
+2. 階段二：戰鬥畫面外殼（史萊姆 sprite + 底部藍框選單 + 右側可收合記錄）+ i18n 骨架
+3. 階段三：互動選單（permission / plan mode / todo）+ HUD
+4. 階段四：隊伍系統（subagent/MCP sprite）+ 特效動畫 + 音效
+
+先定 requirements / ui-design / implementation 三層文件，實作留到之後的 change。",
+        "type": "text",
+      },
+    ],
+    "role": "user",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "6992bec6-60d1-49f1-8dee-e9b66d87998b",
+  "timestamp": "2026-04-17T22:11:21.342Z",
+  "type": "user",
+  "uuid": "086e0111-4509-4dd9-847c-963132d9f59f",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (real fixtures) > parses user-text.jsonl:1 1`] = `
 {
   "isReplay": true,
@@ -3861,5 +4145,26 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses unknown-event.js
   "session_id": "fake-session-unknown",
   "type": "some_future_type",
   "uuid": "fake-unknown-event-1",
+}
+`;
+
+exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses user-system-reminder.jsonl:1 1`] = `
+{
+  "isSynthetic": true,
+  "message": {
+    "content": [
+      {
+        "text": "<system-reminder>
+The task tools haven't been used recently. Consider using TaskCreate if relevant.
+</system-reminder>",
+        "type": "text",
+      },
+    ],
+    "role": "user",
+  },
+  "parent_tool_use_id": null,
+  "session_id": "synthetic-reminder",
+  "type": "user",
+  "uuid": "synthetic-reminder-uuid-1",
 }
 `;

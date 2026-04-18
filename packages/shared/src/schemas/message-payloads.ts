@@ -12,7 +12,12 @@ const messagePayloadBaseSchema = z.object({
 export const messageAssistantPayloadSchema = messagePayloadBaseSchema;
 export type MessageAssistantPayload = z.infer<typeof messageAssistantPayloadSchema>;
 
-export const messageUserPayloadSchema = messagePayloadBaseSchema;
+export const userSourceSchema = z.enum(['typed', 'skill', 'command', 'reminder']);
+export type UserSource = z.infer<typeof userSourceSchema>;
+
+export const messageUserPayloadSchema = messagePayloadBaseSchema.extend({
+  source: userSourceSchema.optional(),
+});
 export type MessageUserPayload = z.infer<typeof messageUserPayloadSchema>;
 
 export const messageResultPayloadSchema = z.object({

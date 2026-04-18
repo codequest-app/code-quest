@@ -20,6 +20,53 @@ function MessagesProbe() {
   );
 }
 
+describe('message:user handler — meta.source propagation', () => {
+  function SourceProbe() {
+    const { messages } = useChannelMessages();
+    const texts = messages.filter((m) => m.role === 'user' && m.type === 'text');
+    return (
+      <ul>
+        {texts.map((m, i) => (
+          <li
+            key={m.id}
+            data-testid={`text-${i}`}
+            data-source={(m.meta as { source?: string } | undefined)?.source ?? ''}
+          >
+            {m.content}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  it('isSynthetic event sets meta.source="skill"', async () => {
+    const { claude } = await renderWithChannel(<SourceProbe />);
+    await act(async () => {
+      await claude.emit(
+        JSON.stringify({
+          type: 'user',
+          isSynthetic: true,
+          message: {
+            role: 'user',
+            content: [{ type: 'text', text: '# Heading\n\n**bold**' }],
+          },
+        }),
+      );
+    });
+    const el = screen.getByTestId('text-0');
+    expect(el.getAttribute('data-source')).toBe('skill');
+  });
+
+  it('plain user input defaults meta.source to "typed"', async () => {
+    const { claude } = await renderWithChannel(<SourceProbe />);
+    await act(async () => {
+      await claude.emit(s.user('plain typed text'));
+    });
+    const el = screen.getByTestId('text-0');
+    expect(el.getAttribute('data-source')).toBe('typed');
+  });
+});
+
 describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
   it('CLI echo with matching content sets cliUuid; preserves local id', async () => {
     const user = userEvent.setup();

@@ -26,7 +26,7 @@ export function ToolBlockRow({
     <div
       className={cn('flex items-baseline gap-3', divider && 'border-b border-border', className)}
     >
-      <span className="text-[10px] font-mono text-text-muted/60 select-none flex-shrink-0 pl-3 py-2">
+      <span className="text-[10px] font-mono text-text-muted/60 select-none flex-shrink-0 pl-3 py-2 min-w-[3.5rem]">
         {label}
       </span>
       <div className="flex-1 min-w-0 overflow-x-auto py-2">{children}</div>

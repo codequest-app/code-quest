@@ -1,13 +1,97 @@
+import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Components } from 'react-markdown';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { cn } from '../utils/cn';
 import { CodeBlock } from './CodeBlock';
+import { CopyButton, HOVER_COPY_BASE } from './message-blocks/CopyButton';
+
+function isElementWithLanguageClass(node: React.ReactNode): boolean {
+  if (!node || typeof node !== 'object') return false;
+  const el = node as { props?: { className?: string; children?: React.ReactNode } };
+  const className = el.props?.className;
+  if (typeof className === 'string' && /language-\w+/.test(className)) return true;
+  return false;
+}
+
+function FencedCodeWrapper({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLPreElement>(null);
+  return (
+    <div className="relative group/code">
+      <CopyButton
+        getText={() => ref.current?.textContent ?? ''}
+        className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 z-10 group-hover/code:opacity-100')}
+        title="Copy"
+      />
+      <pre ref={ref}>{children}</pre>
+    </div>
+  );
+}
+
+function LinkWithContextMenu({ href, children }: { href?: string; children: React.ReactNode }) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  if (!href) return <span>{children}</span>;
+  return (
+    <>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenu({ x: e.clientX, y: e.clientY });
+        }}
+      >
+        {children}
+      </a>
+      {menu &&
+        createPortal(
+          <div
+            role="menu"
+            className="fixed z-50 bg-surface border border-border rounded shadow"
+            style={{ left: menu.x, top: menu.y }}
+            onMouseLeave={() => setMenu(null)}
+          >
+            <button
+              type="button"
+              className="block px-3 py-1 text-sm text-text hover:bg-surface-hover w-full text-left"
+              onClick={() => {
+                navigator.clipboard.writeText(href);
+                setMenu(null);
+              }}
+            >
+              Copy Link
+            </button>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
 
 const components: Components = {
   code({ className, children }) {
     const match = /language-(\w+)/.exec(className ?? '');
     const code = String(children).replace(/\n$/, '');
-    return <CodeBlock code={code} language={match?.[1]} className={className} />;
+    if (match?.[1]) {
+      return <CodeBlock code={code} language={match[1]} className={className} />;
+    }
+    return <code className={className}>{children}</code>;
+  },
+  pre({ children }) {
+    // When inner <code> has a language class, react-markdown already rendered
+    // a CodeBlock (which owns its own <pre> layout + copy button).
+    // Pass it through untouched to avoid double wrappers + duplicate copy.
+    if (isElementWithLanguageClass(children)) return <>{children}</>;
+    return <FencedCodeWrapper>{children}</FencedCodeWrapper>;
+  },
+  a({ href, children }) {
+    return (
+      <LinkWithContextMenu href={typeof href === 'string' ? href : undefined}>
+        {children}
+      </LinkWithContextMenu>
+    );
   },
   table({ children }) {
     return (

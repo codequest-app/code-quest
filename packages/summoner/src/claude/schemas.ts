@@ -184,6 +184,7 @@ export const userSchema = z.looseObject({
   session_id: z.string().optional(),
   uuid: z.string().optional(),
   tool_use_result: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+  isSynthetic: z.boolean().optional(),
 });
 
 // ── Result ──

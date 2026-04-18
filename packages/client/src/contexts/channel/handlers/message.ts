@@ -17,8 +17,10 @@ function applyUserContent(
   state: ChannelState,
   content: ContentBlock[],
   uuid?: string,
+  source?: 'typed' | 'skill' | 'command' | 'reminder',
 ): ChannelState {
   let messages = [...state.messages];
+  const resolvedSource = source ?? 'typed';
   for (const block of content) {
     if (block.type === 'text') {
       // Search from the end for the most recent matching local user msg.
@@ -36,14 +38,19 @@ function applyUserContent(
           }
           if (m.role === 'user' && m.type === 'text' && m.content === block.text && !m.cliUuid) {
             messages = [...messages];
-            messages[i] = { ...m, cliUuid: uuid };
+            messages[i] = { ...m, cliUuid: uuid, meta: { ...m.meta, source: resolvedSource } };
             matched = true;
             break;
           }
         }
       }
       if (matched) continue;
-      const m = msg({ role: 'user', type: 'text', content: block.text });
+      const m = msg({
+        role: 'user',
+        type: 'text',
+        content: block.text,
+        meta: { source: resolvedSource },
+      });
       messages = [...messages, uuid ? { ...m, cliUuid: uuid } : m];
     } else if (block.type === 'tool_result') {
       const rawContent = block.content;
@@ -71,7 +78,7 @@ function applyUserContent(
 // ── On handlers ──
 
 function onMessageUser(state: ChannelState, p: Payload<'message:user'>): ChannelState {
-  return applyUserContent(state, p.content, p.uuid);
+  return applyUserContent(state, p.content, p.uuid, p.source);
 }
 
 function onStreamText(state: ChannelState, p: Payload<'stream:text'>): ChannelState {

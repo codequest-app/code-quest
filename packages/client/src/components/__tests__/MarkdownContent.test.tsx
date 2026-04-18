@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MarkdownContent } from '../MarkdownContent';
 
 describe('MarkdownContent', () => {
@@ -31,6 +31,51 @@ describe('MarkdownContent', () => {
     const { container } = render(<MarkdownContent content="text" />);
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.className).toContain('max-w-none');
+  });
+
+  it('fenced code block without language still has copy button', () => {
+    const { container } = render(<MarkdownContent content={'```\nhello\n```'} />);
+    expect(container.textContent).toContain('hello');
+    expect(
+      container.querySelector('button[title="Copy"], button[title="Copy code"]'),
+    ).not.toBeNull();
+  });
+
+  it('fenced code block with language shows exactly one copy button', () => {
+    const { container } = render(<MarkdownContent content={'```ts\nconst x = 1;\n```'} />);
+    const copyButtons = container.querySelectorAll(
+      'button[title="Copy"], button[title="Copy code"], button[title="Copied!"]',
+    );
+    expect(copyButtons).toHaveLength(1);
+  });
+
+  it('inline code does not get a copy button', () => {
+    const { container } = render(<MarkdownContent content="Use `useState` please" />);
+    expect(container.querySelector('button[title="Copy"], button[title="Copy code"]')).toBeNull();
+  });
+
+  it('link shows "Copy Link" context menu on right-click and writes href', async () => {
+    const { container } = render(
+      <MarkdownContent content="See [docs](https://example.com/docs)" />,
+    );
+    const anchor = container.querySelector('a');
+    expect(anchor).not.toBeNull();
+    if (!anchor) return;
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const evt = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 10,
+      clientY: 10,
+    });
+    anchor.dispatchEvent(evt);
+    const menuItem = await screen.findByText('Copy Link');
+    menuItem.click();
+    expect(writeText).toHaveBeenCalledWith('https://example.com/docs');
   });
 
   it('fenced code block with language renders via CodeBlock (not plain pre.bg-code-block)', () => {

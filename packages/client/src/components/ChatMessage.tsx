@@ -1,7 +1,9 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode, useRef } from 'react';
 import type { ForkFn, Message, RewindFn } from '../types/ui';
+import { cn } from '../utils/cn';
 import { MessageActions } from './MessageActions';
 import { renderBody } from './MessageContent';
+import { CopyButton, HOVER_COPY_BASE } from './message-blocks/CopyButton';
 import { TruncatedContent } from './TruncatedContent';
 
 class ContentErrorBoundary extends Component<
@@ -30,6 +32,15 @@ class ContentErrorBoundary extends Component<
   }
 }
 
+const NO_COPY_TYPES = new Set([
+  'tool_use',
+  'tool_result',
+  'pending_action',
+  'action_result',
+  'image',
+  'document',
+]);
+
 interface ChatMessageProps {
   message: Message;
   showAvatar?: boolean;
@@ -46,13 +57,39 @@ export function ChatMessage({
   onDiffRespond,
 }: ChatMessageProps) {
   const isUser = message.role === 'user';
+  const userBodyRef = useRef<HTMLDivElement>(null);
 
   if (isUser) {
+    const userSource = message.type === 'text' ? (message.meta?.source ?? 'typed') : 'typed';
+    const preserveWhitespace = userSource === 'typed';
     return (
-      <div className="group text-sm py-1" data-role={message.role} data-type={message.type}>
-        <div className="bg-surface rounded-lg px-4 py-3 break-words whitespace-pre-wrap select-text leading-relaxed">
-          <ContentErrorBoundary>{renderBody(message, onDiffRespond)}</ContentErrorBoundary>
+      <div
+        className="group text-sm py-1 relative"
+        data-role={message.role}
+        data-type={message.type}
+      >
+        <div
+          ref={userBodyRef}
+          className={`bg-surface rounded-lg px-4 py-3 break-words select-text leading-relaxed ${preserveWhitespace ? 'whitespace-pre-wrap' : ''}`}
+        >
+          <ContentErrorBoundary>
+            {message.type === 'text' ? (
+              <TruncatedContent maxHeight={600}>
+                {renderBody(message, onDiffRespond)}
+              </TruncatedContent>
+            ) : (
+              renderBody(message, onDiffRespond)
+            )}
+          </ContentErrorBoundary>
         </div>
+        {message.type === 'text' && (
+          <CopyButton
+            data-testid="message-copy"
+            getText={() => userBodyRef.current?.textContent ?? ''}
+            className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 group-hover:opacity-100')}
+            title="Copy"
+          />
+        )}
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {message.attachments.map((att) => {
@@ -86,13 +123,29 @@ export function ChatMessage({
     );
   }
 
+  return <AssistantMessage message={message} onDiffRespond={onDiffRespond} />;
+}
+
+function AssistantMessage({
+  message,
+  onDiffRespond,
+}: {
+  message: Message;
+  onDiffRespond?: (toolId: string, accepted: boolean) => void;
+}) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const showCopy = message.role !== 'system' && !NO_COPY_TYPES.has(message.type);
   return (
     <div
-      className="group leading-relaxed text-sm py-1"
+      className="group leading-relaxed text-sm py-1 relative"
       data-role={message.role}
       data-type={message.type}
     >
-      <div className="min-w-0" data-type={message.type === 'text' ? 'text' : undefined}>
+      <div
+        ref={bodyRef}
+        className="min-w-0"
+        data-type={message.type === 'text' ? 'text' : undefined}
+      >
         {message.type === 'text' ? (
           <TruncatedContent maxHeight={600}>
             <ContentErrorBoundary>{renderBody(message, onDiffRespond)}</ContentErrorBoundary>
@@ -101,6 +154,14 @@ export function ChatMessage({
           renderBody(message, onDiffRespond)
         )}
       </div>
+      {showCopy && (
+        <CopyButton
+          data-testid="message-copy"
+          getText={() => bodyRef.current?.textContent ?? ''}
+          className={cn(HOVER_COPY_BASE, 'absolute top-1 right-1 group-hover:opacity-100')}
+          title="Copy"
+        />
+      )}
     </div>
   );
 }

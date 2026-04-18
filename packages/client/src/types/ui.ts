@@ -27,12 +27,17 @@ export type ForkFn = (messageId: string) => Promise<ForkConversationResponse>;
 
 interface TextMeta {
   citations?: Array<{ url?: string; title?: string; citedText?: string }>;
+  source?: 'typed' | 'skill' | 'command' | 'reminder';
 }
 
 interface ThinkingMeta {
   budget_tokens?: number;
   durationMs?: number | null;
   isStreaming?: boolean;
+}
+
+interface ErrorMeta {
+  detail?: string;
 }
 
 // ── UI-layer meta shapes (React prop types) ──
@@ -93,6 +98,7 @@ interface MetaMap {
 interface OptionalMetaMap {
   text: TextMeta;
   thinking: ThinkingMeta;
+  error: ErrorMeta;
 }
 
 type MessageType =

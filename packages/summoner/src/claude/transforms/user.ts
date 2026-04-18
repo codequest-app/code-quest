@@ -6,6 +6,8 @@ import { buildMessagePayload } from './helpers.ts';
 
 type UserMessage = z.infer<typeof userSchema>;
 
+export type UserSource = 'typed' | 'skill' | 'command' | 'reminder';
+
 export function transformUser(raw: UserMessage): ClientMessage | null {
   const parentToolUseId = raw.parent_tool_use_id ?? undefined;
   const message = raw.message;
@@ -38,8 +40,9 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
   }
 
   const uuid = typeof raw.uuid === 'string' ? raw.uuid : undefined;
+  const source: UserSource = raw.isSynthetic === true ? 'skill' : 'typed';
   return {
     name: 'message:user',
-    payload: buildMessagePayload(blocks, parentToolUseId, uuid),
+    payload: { ...buildMessagePayload(blocks, parentToolUseId, uuid), source },
   };
 }

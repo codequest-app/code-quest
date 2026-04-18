@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn';
 import { langFromPath } from '../../utils/syntax';
 import { getToolHeaderInfo } from '../../utils/tool-registry';
 import { CodeBlock } from '../CodeBlock';
+import { MarkdownContent } from '../MarkdownContent';
 import { AlertBanner } from './AlertBanner';
 import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './shared';
@@ -72,6 +73,32 @@ function FileToolBody({
   );
 }
 
+function SkillToolBody({
+  input,
+  resultContent,
+  hasResult,
+}: {
+  input: Record<string, unknown>;
+  resultContent?: string;
+  hasResult: boolean;
+}) {
+  const skillName = typeof input.skill === 'string' ? input.skill : undefined;
+  return (
+    <ToolBlock>
+      {skillName && (
+        <ToolBlockRow label="SKILL" copyText={skillName} divider={hasResult}>
+          <span>{skillName}</span>
+        </ToolBlockRow>
+      )}
+      {resultContent != null && (
+        <ToolBlockRow label="OUT">
+          <MarkdownContent content={resultContent} />
+        </ToolBlockRow>
+      )}
+    </ToolBlock>
+  );
+}
+
 function DefaultToolBody({
   input,
   resultContent,
@@ -129,6 +156,10 @@ export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUs
       case 'MultiEdit':
         if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
         return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
+      case 'Skill':
+        return (
+          <SkillToolBody input={input} resultContent={resultContent} hasResult={result != null} />
+        );
       default:
         return (
           <DefaultToolBody
