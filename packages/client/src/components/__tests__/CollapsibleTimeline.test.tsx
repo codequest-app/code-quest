@@ -4,33 +4,71 @@ import { msg } from '@/utils/message';
 import type { MessageNode } from '@/utils/message-tree';
 import { CollapsibleTimeline } from '../CollapsibleTimeline';
 
-function toolNode(overrides?: { result?: { content: string; is_error?: boolean } }): MessageNode {
+function toolNode(
+  opts: { name?: string; result?: { content: string; is_error?: boolean } } = {},
+): MessageNode {
   const m = msg({
     role: 'assistant',
     type: 'tool_use',
-    content: 'Read',
-    meta: { toolId: crypto.randomUUID(), input: {}, result: overrides?.result },
+    content: opts.name ?? 'Read',
+    meta: { toolId: crypto.randomUUID(), input: {}, result: opts.result },
   });
   return { message: m, children: [] };
 }
 
-function completedNodes(count: number): MessageNode[] {
-  return Array.from({ length: count }, () => toolNode({ result: { content: 'ok' } }));
+function textNode(content = 'hi'): MessageNode {
+  return { message: msg({ role: 'assistant', type: 'text', content }), children: [] };
 }
 
 describe('CollapsibleTimeline', () => {
-  it('auto-collapses on reload when all complete and toolCount >= 5', () => {
-    const nodes = completedNodes(5);
+  it('shows "Explored N" collapsed by default when 2+ consecutive read-only tools', () => {
+    const nodes = [
+      toolNode({ name: 'Read', result: { content: 'ok' } }),
+      toolNode({ name: 'Read', result: { content: 'ok' } }),
+    ];
     render(<CollapsibleTimeline nodes={nodes} />);
-
-    // Should show collapsed summary with "Explored" text
     expect(screen.getByText('Explored')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('stays expanded when toolCount < 5 even if all complete', () => {
-    const nodes = completedNodes(3);
+  it('single read-only tool renders solo (no "Explored")', () => {
+    const nodes = [toolNode({ name: 'Read', result: { content: 'ok' } })];
     render(<CollapsibleTimeline nodes={nodes} />);
-
     expect(screen.queryByText('Explored')).not.toBeInTheDocument();
+  });
+
+  it('consecutive Bash also collapses (cc-office groups any tool_use)', () => {
+    const nodes = [
+      toolNode({ name: 'Bash', result: { content: 'ok' } }),
+      toolNode({ name: 'Bash', result: { content: 'ok' } }),
+      toolNode({ name: 'Bash', result: { content: 'ok' } }),
+    ];
+    render(<CollapsibleTimeline nodes={nodes} />);
+    expect(screen.getByText('Explored')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('mixed Bash + Write + Read grouped together', () => {
+    const nodes = [
+      toolNode({ name: 'Bash', result: { content: 'ok' } }),
+      toolNode({ name: 'Write', result: { content: 'ok' } }),
+      toolNode({ name: 'Read', result: { content: 'ok' } }),
+    ];
+    render(<CollapsibleTimeline nodes={nodes} />);
+    expect(screen.getByText('Explored')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('assistant text between reads splits the group', () => {
+    const nodes = [
+      toolNode({ name: 'Read', result: { content: 'a' } }),
+      textNode('between'),
+      toolNode({ name: 'Read', result: { content: 'b' } }),
+      toolNode({ name: 'Read', result: { content: 'c' } }),
+    ];
+    render(<CollapsibleTimeline nodes={nodes} />);
+    // The trailing pair is grouped — count shows 2
+    expect(screen.getByText('Explored')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });

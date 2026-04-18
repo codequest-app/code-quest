@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { ForkFn, RewindFn } from '../types/ui';
 import { cn } from '../utils/cn';
 import type { MessageNode } from '../utils/message-tree';
+import { splitTimelineRuns, type TimelineRun } from '../utils/tool-group-rules';
 import { ChatMessage } from './ChatMessage';
 import { RotatableChevron } from './message-blocks/shared';
 import { SubagentChildren } from './SubagentChildren';
@@ -24,44 +25,83 @@ function dotClass(node: MessageNode): string {
   return 'bg-accent animate-pulse';
 }
 
-export function CollapsibleTimeline({
+interface RunProps {
+  onRewind?: RewindFn;
+  onFork?: ForkFn;
+  onStopTask?: (taskId: string) => void;
+  onDiffRespond?: (toolId: string, accepted: boolean) => void;
+}
+
+type RowPosition = 'first' | 'last' | 'middle' | 'only';
+
+function positionOf(index: number, total: number): RowPosition {
+  if (total === 1) return 'only';
+  if (index === 0) return 'first';
+  if (index === total - 1) return 'last';
+  return 'middle';
+}
+
+function TimelineRow({
+  node,
+  position,
+  onRewind,
+  onFork,
+  onStopTask,
+  onDiffRespond,
+}: RunProps & {
+  node: MessageNode;
+  position: RowPosition;
+}) {
+  const lineClass =
+    position === 'only'
+      ? 'hidden'
+      : position === 'first'
+        ? 'top-[18px] bottom-0'
+        : position === 'last'
+          ? 'top-0 h-[18px]'
+          : 'top-0 bottom-0';
+  return (
+    <div data-message-id={node.message.id} className="relative pl-[30px] py-2">
+      <span
+        className={cn(
+          'absolute left-[9px] top-[15px] w-[7px] h-[7px] rounded-full z-10',
+          dotClass(node),
+        )}
+      />
+      <span className={cn('absolute left-[12px] w-px bg-border', lineClass)} />
+      <ChatMessage
+        message={node.message}
+        showAvatar={false}
+        onRewind={onRewind}
+        onFork={onFork}
+        onDiffRespond={onDiffRespond}
+      />
+      {node.children.length > 0 && (
+        <SubagentChildren
+          nodes={node.children}
+          onStopTask={onStopTask}
+          onDiffRespond={onDiffRespond}
+          parentToolId={node.message.type === 'tool_use' ? node.message.meta.toolId : undefined}
+        />
+      )}
+    </div>
+  );
+}
+
+function ExploredGroup({
   nodes,
   onRewind,
   onFork,
   onStopTask,
   onDiffRespond,
-}: {
-  nodes: MessageNode[];
-  onRewind?: RewindFn;
-  onFork?: ForkFn;
-  onStopTask?: (taskId: string) => void;
-  onDiffRespond?: (toolId: string, accepted: boolean) => void;
-}) {
-  const allComplete = nodes.every((n) => getToolResult(n) != null);
+}: RunProps & { nodes: MessageNode[] }) {
+  const [expanded, setExpanded] = useState(false);
   const hasError = nodes.some((n) => getToolResult(n)?.is_error);
-  const toolCount = nodes.filter((n) => n.message.type === 'tool_use').length;
-  const shouldAutoCollapse = allComplete && toolCount >= 5;
-  const [expanded, setExpanded] = useState(!shouldAutoCollapse);
-  const autoCollapsedRef = useRef(shouldAutoCollapse);
-  const prevAllCompleteRef = useRef(allComplete);
 
-  useEffect(() => {
-    const wasIncomplete = !prevAllCompleteRef.current;
-    prevAllCompleteRef.current = allComplete;
-
-    if (wasIncomplete && allComplete && toolCount >= 5 && !autoCollapsedRef.current) {
-      autoCollapsedRef.current = true;
-      setExpanded(false);
-    }
-  }, [allComplete, toolCount]);
-
-  if (allComplete && !expanded) {
+  if (!expanded) {
     const dot = hasError ? 'bg-danger' : 'bg-success';
     return (
-      <div
-        className="animate-fade-in mt-1"
-        data-collapsed-ids={nodes.map((n) => n.message.id).join(',')}
-      >
+      <div data-collapsed-ids={nodes.map((n) => n.message.id).join(',')}>
         <button
           type="button"
           onClick={() => setExpanded(true)}
@@ -77,56 +117,63 @@ export function CollapsibleTimeline({
   }
 
   return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        className="flex items-center gap-2 pl-[30px] py-1 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
+      >
+        <RotatableChevron open className="text-[10px] opacity-50" />
+        <span>Collapse</span>
+      </button>
+      {nodes.map((node, i) => (
+        <TimelineRow
+          key={node.message.id}
+          node={node}
+          position={positionOf(i, nodes.length)}
+          onRewind={onRewind}
+          onFork={onFork}
+          onStopTask={onStopTask}
+          onDiffRespond={onDiffRespond}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function CollapsibleTimeline({
+  nodes,
+  onRewind,
+  onFork,
+  onStopTask,
+  onDiffRespond,
+}: RunProps & { nodes: MessageNode[] }) {
+  const runs: TimelineRun[] = splitTimelineRuns(nodes);
+  return (
     <div className="animate-fade-in mt-1">
-      {allComplete && (
-        <button
-          type="button"
-          onClick={() => setExpanded(false)}
-          className="flex items-center gap-2 pl-[30px] py-1 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
-        >
-          <RotatableChevron open className="text-[10px] opacity-50" />
-          <span>Collapse</span>
-        </button>
-      )}
-      {nodes.map((node, i) => {
-        const isFirst = i === 0;
-        const isLast = i === nodes.length - 1;
-        const lineClass = isFirst
-          ? 'top-[18px] bottom-0'
-          : isLast
-            ? 'top-0 h-[18px]'
-            : 'top-0 bottom-0';
-        return (
-          <div
-            key={node.message.id}
-            data-message-id={node.message.id}
-            className="relative pl-[30px] py-2"
-          >
-            <span
-              className={cn(
-                'absolute left-[9px] top-[15px] w-[7px] h-[7px] rounded-full z-10',
-                dotClass(node),
-              )}
-            />
-            <span className={cn('absolute left-[12px] w-px bg-border', lineClass)} />
-            <ChatMessage
-              message={node.message}
-              showAvatar={false}
+      {runs.map((run, i) => {
+        if (run.kind === 'grouped') {
+          return (
+            <ExploredGroup
+              key={run.nodes[0].message.id}
+              nodes={run.nodes}
               onRewind={onRewind}
               onFork={onFork}
+              onStopTask={onStopTask}
               onDiffRespond={onDiffRespond}
             />
-            {node.children.length > 0 && (
-              <SubagentChildren
-                nodes={node.children}
-                onStopTask={onStopTask}
-                onDiffRespond={onDiffRespond}
-                parentToolId={
-                  node.message.type === 'tool_use' ? node.message.meta.toolId : undefined
-                }
-              />
-            )}
-          </div>
+          );
+        }
+        return (
+          <TimelineRow
+            key={run.node.message.id}
+            node={run.node}
+            position={positionOf(i, runs.length)}
+            onRewind={onRewind}
+            onFork={onFork}
+            onStopTask={onStopTask}
+            onDiffRespond={onDiffRespond}
+          />
         );
       })}
     </div>
