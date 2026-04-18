@@ -314,7 +314,7 @@ export function create({
           : {}),
       };
       const projectRoot = row.projectRoot ?? (await resolveProjectRoot(gitService, cwd));
-      const { channel } = await channelManager.create(newChannelId, {
+      const { channel, initResult } = await channelManager.create(newChannelId, {
         launchOptions,
         cwd,
         onBeforeSpawn: (ch) => {
@@ -326,6 +326,16 @@ export function create({
           ch.projectRoot = projectRoot;
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
+      });
+
+      // Capture slashCommands/models/account from the CLI's initialize response
+      // into metaCache. Unlike launch, real CLI on --resume does not re-emit a
+      // system/init event, so Channel.applySessionInit never fires — without
+      // this call, metaCache.slashCommands stays empty and the client loses
+      // all CLI-provided slash commands after resume.
+      const { slashCommands } = await applyInitResponseAndBroadcast(initResult);
+      channel.updateMetaCache({
+        ...(slashCommands && { slashCommands }),
       });
 
       emitter.broadcastAll('session:created', {

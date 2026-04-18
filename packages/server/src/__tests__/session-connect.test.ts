@@ -1112,5 +1112,53 @@ describe('ChatHandler > session', () => {
       const lastSpawn = claude.provider.spawnCalls.at(-1);
       expect(lastSpawn?.options?.cwd).toBe('/tmp/some-project');
     });
+
+    it('resumed channel persists slashCommands from initialize response (so session:join meta surfaces them)', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      // Simulate real CLI resume: system/init emission carries NO slash_commands
+      // (the real CLI fixture has some baked in, so we strip them). Commands
+      // arrive only via the initialize control_response. This forces
+      // handleResume to capture them via applyInitResponseAndBroadcast.
+      const initNoSlash = (() => {
+        const obj = JSON.parse(s.init('sess-resume-slash'));
+        delete obj.slash_commands;
+        return JSON.stringify(obj);
+      })();
+      claude.prepareInit(
+        initNoSlash,
+        s.controlResponse('init', {
+          commands: [{ name: 'commit' }, { name: 'review' }, { name: 'help' }],
+        }),
+      );
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      await sessionStore.upsert({
+        id: 'sess-resume-slash',
+        channelId: 'ch-prev',
+        provider: 'claude',
+        command: 'claude',
+        args: '[]',
+        projectRoot: '/test/project',
+        mode: 'interactive',
+        role: 'chat',
+        cwd: '/tmp/resume-slash',
+        createdAt: new Date().toISOString(),
+      });
+
+      const resumed = await summoner.send<ResumeOk>('session:resume', {
+        sessionId: 'sess-resume-slash',
+      });
+      expect(resumed.ok).toBe(true);
+      const newChannelId = resumed.data.channelId;
+
+      await new Promise<void>((r) => setTimeout(r, 50));
+
+      const joined = await summoner.send<JoinOk>('session:join', { channelId: newChannelId });
+      expect(joined.ok).toBe(true);
+      expect(joined.data.meta.slashCommands).toEqual(['commit', 'review', 'help']);
+    });
   });
 });
