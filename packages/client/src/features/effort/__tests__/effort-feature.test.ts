@@ -2,39 +2,52 @@ import { describe, expect, it, vi } from 'vitest';
 import { createEffortFeature } from '../effort-feature';
 
 describe('createEffortFeature', () => {
-  it('menuItem has closeSilent true', () => {
-    const feature = createEffortFeature({ effort: null, effortLevels: [], onSetEffort: vi.fn() });
-    expect(feature.menuItem.closeSilent).toBe(true);
-  });
-
-  it('returns a MenuItemFeature with id effort-level and section Model', () => {
+  it('returns a Feature with id effort-level and category Model', () => {
     const feature = createEffortFeature({
       effort: null,
       effortLevels: ['low', 'medium', 'high', 'max'],
       onSetEffort: vi.fn(),
     });
     expect(feature.id).toBe('effort-level');
-    expect(feature.menuItem.section).toBe('Model');
+    expect(feature.category).toBe('Model');
   });
 
-  it('label shows just Effort and no description when no level set', () => {
+  it('label is Effort and description omitted when no level set', () => {
     const feature = createEffortFeature({
       effort: null,
       effortLevels: ['low', 'medium', 'high', 'max'],
       onSetEffort: vi.fn(),
     });
-    expect(feature.menuItem.label).toBe('Effort');
-    expect(feature.menuItem.description).toBeUndefined();
+    expect(feature.label).toBe('Effort');
+    expect(feature.description).toBeUndefined();
   });
 
-  it('label is always Effort and description shows current level', () => {
+  it('label is Effort and description shows current level', () => {
     const feature = createEffortFeature({
       effort: 'low',
       effortLevels: ['low', 'medium', 'high', 'max'],
       onSetEffort: vi.fn(),
     });
-    expect(feature.menuItem.label).toBe('Effort');
-    expect(feature.menuItem.description).toBe('(Low)');
+    expect(feature.label).toBe('Effort');
+    expect(feature.description).toBe('(Low)');
+  });
+
+  it('state is select with currentValue reflecting effort', () => {
+    const feature = createEffortFeature({
+      effort: 'medium',
+      effortLevels: ['low', 'medium', 'high', 'max'],
+      onSetEffort: vi.fn(),
+    });
+    expect(feature.state).toEqual({ kind: 'select', currentValue: 'medium' });
+  });
+
+  it('state currentValue is empty string when no effort set', () => {
+    const feature = createEffortFeature({
+      effort: null,
+      effortLevels: ['low', 'medium', 'high', 'max'],
+      onSetEffort: vi.fn(),
+    });
+    expect(feature.state).toEqual({ kind: 'select', currentValue: '' });
   });
 
   it('execute cycles to next effort level', () => {
