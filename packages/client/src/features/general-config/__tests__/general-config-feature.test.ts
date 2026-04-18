@@ -20,11 +20,11 @@ describe('createGeneralConfigFeature', () => {
     expect(createGeneralConfigFeature().id).toBe('general-config');
   });
 
-  it('menuItem is in Settings section with closeSilent', () => {
+  it('is in Settings category with closeSilent', () => {
     const feature = createGeneralConfigFeature();
-    expect(feature.menuItem.label).toBe('General config…');
-    expect(feature.menuItem.section).toBe('Settings');
-    expect(feature.menuItem.closeSilent).toBe(true);
+    expect(feature.label).toBe('General config…');
+    expect(feature.category).toBe('Settings');
+    expect(feature.ui?.closeSilent).toBe(true);
   });
 
   it('execute opens generalConfigSignal', () => {

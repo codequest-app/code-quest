@@ -1,10 +1,12 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 import { generalConfigSignal } from './general-config-signal';
 
-export function createGeneralConfigFeature(): MenuItemFeature {
+export function createGeneralConfigFeature(): Feature {
   return {
     id: 'general-config',
-    menuItem: { label: 'General config…', section: 'Settings', closeSilent: true },
+    label: 'General config…',
+    category: 'Settings',
+    ui: { closeSilent: true },
     execute() {
       generalConfigSignal.setOpen(true);
     },
