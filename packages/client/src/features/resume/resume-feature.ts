@@ -1,12 +1,14 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 import { createOpenSignal } from '../../lib/open-signal';
 
 export const resumeOpenSignal = createOpenSignal();
 
-export function createResumeFeature(): MenuItemFeature {
+export function createResumeFeature(): Feature {
   return {
     id: 'resume',
-    menuItem: { label: 'Resume conversation…', section: 'Context', order: 10 },
+    label: 'Resume conversation…',
+    category: 'Context',
+    order: 10,
     execute() {
       resumeOpenSignal.setOpen(true);
     },

@@ -11,10 +11,11 @@ describe('createResumeFeature', () => {
     expect(feature.id).toBe('resume');
   });
 
-  it('menuItem is in Context section with label Resume conversation…', () => {
+  it('is in Context category with label Resume conversation…', () => {
     const feature = createResumeFeature();
-    expect(feature.menuItem.label).toBe('Resume conversation…');
-    expect(feature.menuItem.section).toBe('Context');
+    expect(feature.label).toBe('Resume conversation…');
+    expect(feature.category).toBe('Context');
+    expect(feature.order).toBe(10);
   });
 
   it('execute sets signal open to true', () => {
