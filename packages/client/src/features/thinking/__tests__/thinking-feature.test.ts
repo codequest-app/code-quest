@@ -2,19 +2,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { createThinkingFeature } from '../thinking-feature';
 
 describe('createThinkingFeature', () => {
-  it('menuItem has closeSilent true', () => {
-    const feature = createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() });
-    expect(feature.menuItem.closeSilent).toBe(true);
-  });
-
-  it('returns a MenuItemFeature with id toggle-thinking and section Model', () => {
+  it('returns a Feature with id toggle-thinking and category Model', () => {
     const feature = createThinkingFeature({
       isThinkingOn: false,
       onSetThinkingLevel: vi.fn(),
     });
     expect(feature.id).toBe('toggle-thinking');
-    expect(feature.menuItem.section).toBe('Model');
-    expect(feature.menuItem.label).toBe('Thinking');
+    expect(feature.category).toBe('Model');
+    expect(feature.label).toBe('Thinking');
+  });
+
+  it('state reflects isThinkingOn: false → active false', () => {
+    const feature = createThinkingFeature({ isThinkingOn: false, onSetThinkingLevel: vi.fn() });
+    expect(feature.state).toEqual({ kind: 'toggle', active: false });
+  });
+
+  it('state reflects isThinkingOn: true → active true', () => {
+    const feature = createThinkingFeature({ isThinkingOn: true, onSetThinkingLevel: vi.fn() });
+    expect(feature.state).toEqual({ kind: 'toggle', active: true });
   });
 
   it('execute calls onSetThinkingLevel with default_on when thinking is off', () => {
