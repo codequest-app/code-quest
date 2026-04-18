@@ -1,13 +1,12 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
-export function createMcpServersFeature({
-  onToggleMcp,
-}: {
-  onToggleMcp?: () => void;
-}): MenuItemFeature {
+export function createMcpServersFeature({ onToggleMcp }: { onToggleMcp?: () => void }): Feature {
   return {
     id: 'mcp-servers',
-    menuItem: { label: 'Manage MCP servers', section: 'Customize', order: 1, closeSilent: true },
+    label: 'Manage MCP servers',
+    category: 'Customize',
+    order: 1,
+    ui: { closeSilent: true },
     execute() {
       onToggleMcp?.();
     },
