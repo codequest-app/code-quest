@@ -29,7 +29,7 @@
 - [x] 3.4 完整 vitest：168 files / 1261 tests（0 regression；FakeSummoner 27 test 0 改動）
 - [x] 3.5 typecheck clean
 - [ ] 3.6 storybook（延後到 Phase 3 結尾統一跑）
-- [ ] 3.7 Commit
+- [x] 3.7 Commit `576cd2fb`
 - [x] 3.8 FakeSummoner test 0 變動 ✓
 
 ## 4. Phase 2 — 批次遷移（每組獨立 commit；每組完驗證）
@@ -42,48 +42,52 @@
 5. 若 FakeSummoner test 動 → 停下討論
 
 **4A. 無 state（16 個）**
-- [ ] 4A.1 `compact`
-- [ ] 4A.2 `resume`
-- [ ] 4A.3 `rewind`
-- [ ] 4A.4 `new-conversation`
-- [ ] 4A.5 `usage`
-- [ ] 4A.6 `view-help`
-- [ ] 4A.7 `switch-account`
-- [ ] 4A.8 `reload-plugins`
-- [ ] 4A.9 `mention-file`
-- [ ] 4A.10 `attach-file`
-- [ ] 4A.11 `manage-plugins`
-- [ ] 4A.12 `mcp-servers`
-- [ ] 4A.13 `mcp-status`
-- [ ] 4A.14 `general-config`
-- [ ] 4A.15 `open-settings`
+- [x] 4A.1 `compact`
+- [x] 4A.2 `resume`
+- [x] 4A.3 `rewind`
+- [x] 4A.4 `new-conversation`
+- [x] 4A.5 `usage`
+- [x] 4A.6 `view-help`
+- [x] 4A.7 `switch-account`
+- [x] 4A.8 `reload-plugins`
+- [x] 4A.9 `mention-file`
+- [x] 4A.10 `attach-file`
+- [x] 4A.11 `manage-plugins`
+- [x] 4A.12 `mcp-servers`
+- [x] 4A.13 `mcp-status`
+- [x] 4A.14 `general-config`
+- [x] 4A.15 `open-settings`
 
 **4B. 有 state（6 個）**
-- [ ] 4B.1 `fast-mode`（toggle）— 遷完立即檢查 trailing 視覺對齊（storybook snapshot）
-- [ ] 4B.2 `thinking`（toggle）
-- [ ] 4B.3 `color-theme`（toggle）
-- [ ] 4B.4 `density`（toggle）
-- [ ] 4B.5 `effort`（select）
-- [ ] 4B.6 `model`（select）
+- [x] 4B.1 `fast-mode`（toggle）— commit `6aadce16` + cleanup `41797175`
+- [x] 4B.2 `thinking`（toggle）
+- [x] 4B.3 `color-theme`（toggle）
+- [x] 4B.4 `density`（toggle）
+- [x] 4B.5 `effort`（select）
+- [x] 4B.6 `model`（select）
 
 **4C. 複雜**
-- [ ] 4C.1 `btw` — 合併 `createBtwLocalFeature` + `createBtwFeature` 為單一 `createBtwFeature`；更新 CommandMenu / slash registration
+- [x] 4C.1 `btw` — commit `01b64c40`（保留 createBtwLocalFeature 為 per-render 包裝，base feature 統一）
 
 **4D. Palette-only**
-- [ ] 4D.1 `filters`（tri-state）
-- [ ] 4D.2 `raw-panel`（toggle）
+- [x] 4D.1 `filters`（tri-state）
+- [x] 4D.2 `raw-panel`（toggle）
 
 ## 5. Phase 3 — 清理與驗證
 
-- [ ] 5.1 檢查 `MenuItemFeature` / `SlashCommandFeature` export 仍被哪些檔案 import；評估是否可隱藏
-- [ ] 5.2 Registry 移除 legacy shape 分支（若已無 legacy 註冊點）
-- [ ] 5.3 全套驗證：
-  - `pnpm -C packages/client test`（>= baseline 數量，0 regression）
-  - `pnpm -C packages/client exec tsc --noEmit` clean
-  - `pnpm -C packages/client test-storybook:ci` 全綠
-  - `pnpm -C packages/client lint` 無新 error
-- [ ] 5.4 FakeSummoner 測試清單跑一次 → 與 pre-refactor baseline 對比，**必須 0 改動 0 regression**
-- [ ] 5.5 Commit `chore(feature-registry): remove legacy shape support`
+- [x] 5.1 `MenuItemFeature` / `SlashCommandFeature` 只存在於 `lib/{feature.ts, adapters/, feature-registry.ts, build-menu-items.ts}` + 相關 tests；**0 個 factory / component / context 檔直接使用**
+- [~] 5.2 Legacy shape 支援**保留**（registry + build-menu-items 的 legacy branch）。決定理由：
+  - 零外部 call site 使用，但移除沒有實質好處
+  - 10 行 shim 成本低、無 runtime penalty
+  - 保留為未來 plugin 註冊或外部 feature registration 留門
+  - 可視需要未來另開 change 移除
+- [x] 5.3 全套驗證：
+  - vitest: 170 files / 1281 tests（vs pre-refactor 1211 baseline：+70 new tests）
+  - typecheck: clean
+  - test-storybook:ci: 95 suites / 356 tests
+  - biome: 變動範圍 clean（6 infos = pre-existing）
+- [x] 5.4 FakeSummoner 27 測試 **0 修改** ✓
+- [~] 5.5 （跳過 legacy 移除 commit — 依 5.2 決定保留）
 - [ ] 5.6 `/opsx:archive feature-adapter-refactor`
 
 ## 6. 約束（全程遵守）
