@@ -95,7 +95,7 @@ describe('buildMenuItems', () => {
   it('slash section maps slashCommands to menu items sorted by label', () => {
     const btwLocalFeature = createBtwLocalFeature({
       slashFilter: null,
-      btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+      baseFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
     });
     const { slash } = buildMenuItems(
       defaultParams({ slashCommands: ['help', 'review'], localFeatures: [btwLocalFeature] }),
@@ -192,7 +192,7 @@ describe('buildMenuItems', () => {
       const localFeatures = [
         createBtwLocalFeature({
           slashFilter: null,
-          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+          baseFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
         }),
       ];
       const { slash } = buildMenuItems(defaultParams({ localFeatures }));
@@ -203,7 +203,7 @@ describe('buildMenuItems', () => {
       const localFeatures = [
         createBtwLocalFeature({
           slashFilter: 'btw',
-          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+          baseFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
         }),
       ];
       const { slash } = buildMenuItems(defaultParams({ localFeatures }));
@@ -215,7 +215,7 @@ describe('buildMenuItems', () => {
       const localFeatures = [
         createBtwLocalFeature({
           slashFilter: 'btw hello world',
-          btwSlashFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
+          baseFeature: createBtwFeature({ askSideQuestion: vi.fn() }),
         }),
       ];
       const { slash } = buildMenuItems(defaultParams({ localFeatures }));
@@ -228,7 +228,7 @@ describe('buildMenuItems', () => {
       const askSideQuestion = vi.fn().mockResolvedValue({ ok: true, data: { answer: '4' } });
       const btwSlashFeature = createBtwFeature({ askSideQuestion });
       const localFeatures = [
-        createBtwLocalFeature({ slashFilter: 'btw what is 2+2?', btwSlashFeature }),
+        createBtwLocalFeature({ slashFilter: 'btw what is 2+2?', baseFeature: btwSlashFeature }),
       ];
       const { slash } = buildMenuItems(defaultParams({ close, localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
@@ -240,7 +240,9 @@ describe('buildMenuItems', () => {
     it('does not invoke btw feature when question is empty', () => {
       const askSideQuestion = vi.fn();
       const btwSlashFeature = createBtwFeature({ askSideQuestion });
-      const localFeatures = [createBtwLocalFeature({ slashFilter: 'btw', btwSlashFeature })];
+      const localFeatures = [
+        createBtwLocalFeature({ slashFilter: 'btw', baseFeature: btwSlashFeature }),
+      ];
       const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();

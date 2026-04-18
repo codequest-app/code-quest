@@ -167,7 +167,7 @@ export function CommandMenu({
   const density = usePreferencesStore((s) => s.density);
   const setDensity = usePreferencesStore((s) => s.setDensity);
 
-  const btwSlashFeature = registry.getSlashCommand('/btw');
+  const btwBaseFeature = registry.getFeatures().find((f) => f.id === 'btw');
   const localFeatures = [
     createModelFeature({ modelLabel }),
     createAttachFileFeature({ onAttachFile }),
@@ -183,8 +183,8 @@ export function CommandMenu({
     createDensityFeature({ density, setDensity }),
     createOpenSettingsFeature({ onOpen: () => openSettingsSignal.setOpen(true) }),
     ...(supportsFastMode ? [createFastModeFeature({ fastModeState, setFastMode })] : []),
-    ...(btwSlashFeature
-      ? [createBtwLocalFeature({ slashFilter: compose.slashFilter, btwSlashFeature })]
+    ...(btwBaseFeature
+      ? [createBtwLocalFeature({ slashFilter: compose.slashFilter, baseFeature: btwBaseFeature })]
       : []),
   ];
 

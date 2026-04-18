@@ -1,5 +1,5 @@
 import type { RpcResult } from '@code-quest/shared';
-import type { MenuItemFeature, SlashCommandFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 type Subscriber = () => void;
 
@@ -46,58 +46,62 @@ export interface BtwFeatureDeps {
   askSideQuestion: (question: string) => Promise<RpcResult<{ answer: string }>>;
 }
 
-interface BtwLocalFeatureDeps {
-  slashFilter: string | null;
-  btwSlashFeature: SlashCommandFeature;
-}
+export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): Feature {
+  function invoke(message: string) {
+    const question = message.trim().slice(4).trim();
+    if (!question) return;
+    btwSignal.setState({ open: true, question, answer: null, loading: true, error: null });
+    askSideQuestion(question)
+      .then((result) => {
+        if (result.ok) {
+          btwSignal.setState({ loading: false, answer: result.data.answer });
+        } else {
+          btwSignal.setState({ loading: false, error: result.error });
+        }
+      })
+      .catch((e: unknown) => {
+        btwSignal.setState({
+          loading: false,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      });
+  }
 
-export function createBtwLocalFeature({
-  slashFilter,
-  btwSlashFeature,
-}: BtwLocalFeatureDeps): MenuItemFeature {
-  const question = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
   return {
     id: 'btw',
-    menuItem: {
-      label: '/btw',
-      section: 'Slash Commands',
-      disabled: !question,
-      matchFirstToken: true,
-    },
+    label: '/btw',
+    category: 'Slash Commands',
+    ui: { matchFirstToken: true },
     execute() {
-      if (question) {
-        btwSlashFeature.invoke(`/btw ${question}`);
-      }
+      // Menu click with no slashFilter context — no-op; live invocation happens
+      // via createBtwLocalFeature (wrapping this base + current slashFilter).
+    },
+    slash: {
+      command: '/btw',
+      match(message) {
+        const trimmed = message.trim();
+        return trimmed === '/btw' || trimmed.startsWith('/btw ');
+      },
+      invoke,
     },
   };
 }
 
-export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): SlashCommandFeature {
+interface BtwLocalFeatureDeps {
+  slashFilter: string | null;
+  baseFeature: Feature;
+}
+
+/** Per-render overlay: takes the registered `btw` Feature plus the current
+ *  slashFilter, produces a Feature whose `disabled` + `execute` reflect the
+ *  live question. Registered separately in CommandMenu per render. */
+export function createBtwLocalFeature({ slashFilter, baseFeature }: BtwLocalFeatureDeps): Feature {
+  const question = slashFilter?.startsWith('btw ') ? slashFilter.slice(4).trim() : null;
   return {
-    id: 'btw',
-    command: '/btw',
-    match(message) {
-      const trimmed = message.trim();
-      return trimmed === '/btw' || trimmed.startsWith('/btw ');
-    },
-    invoke(message) {
-      const question = message.trim().slice(4).trim();
-      if (!question) return;
-      btwSignal.setState({ open: true, question, answer: null, loading: true, error: null });
-      askSideQuestion(question)
-        .then((result) => {
-          if (result.ok) {
-            btwSignal.setState({ loading: false, answer: result.data.answer });
-          } else {
-            btwSignal.setState({ loading: false, error: result.error });
-          }
-        })
-        .catch((e: unknown) => {
-          btwSignal.setState({
-            loading: false,
-            error: e instanceof Error ? e.message : String(e),
-          });
-        });
+    ...baseFeature,
+    disabled: !question,
+    execute() {
+      if (question) baseFeature.slash?.invoke(`/btw ${question}`);
     },
   };
 }
