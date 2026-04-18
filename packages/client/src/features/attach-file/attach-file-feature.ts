@@ -1,13 +1,16 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 export interface AttachFileFeatureDeps {
   onAttachFile?: () => void;
 }
 
-export function createAttachFileFeature({ onAttachFile }: AttachFileFeatureDeps): MenuItemFeature {
+export function createAttachFileFeature({ onAttachFile }: AttachFileFeatureDeps): Feature {
   return {
     id: 'attach-file',
-    menuItem: { label: 'Attach file…', section: 'Context', order: -2, closeSilent: true },
+    label: 'Attach file…',
+    category: 'Context',
+    order: -2,
+    ui: { closeSilent: true },
     execute() {
       onAttachFile?.();
     },
