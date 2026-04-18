@@ -7,11 +7,11 @@ describe('createViewHelpFeature', () => {
     expect(feature.id).toBe('view-help');
   });
 
-  it('menuItem is in Support section with closeSilent', () => {
+  it('is in Support category with closeSilent', () => {
     const feature = createViewHelpFeature({ openUrl: vi.fn() });
-    expect(feature.menuItem.label).toBe('View help docs');
-    expect(feature.menuItem.section).toBe('Support');
-    expect(feature.menuItem.closeSilent).toBe(true);
+    expect(feature.label).toBe('View help docs');
+    expect(feature.category).toBe('Support');
+    expect(feature.ui?.closeSilent).toBe(true);
   });
 
   it('execute calls openUrl with provided docsUrl', () => {

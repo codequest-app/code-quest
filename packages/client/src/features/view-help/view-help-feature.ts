@@ -1,4 +1,4 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 const FALLBACK_DOCS_URL = 'https://docs.anthropic.com/en/docs/claude-code/overview';
 
@@ -8,10 +8,12 @@ export function createViewHelpFeature({
 }: {
   openUrl: (url: string) => void;
   docsUrl?: string;
-}): MenuItemFeature {
+}): Feature {
   return {
     id: 'view-help',
-    menuItem: { label: 'View help docs', section: 'Support', closeSilent: true },
+    label: 'View help docs',
+    category: 'Support',
+    ui: { closeSilent: true },
     execute() {
       openUrl(docsUrl ?? FALLBACK_DOCS_URL);
     },
