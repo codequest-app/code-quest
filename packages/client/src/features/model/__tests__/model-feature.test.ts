@@ -11,20 +11,15 @@ describe('createModelFeature', () => {
     expect(feature.id).toBe('model');
   });
 
-  it('menuItem is in Model section with label Switch model', () => {
+  it('is in Model category with label Switch model', () => {
     const feature = createModelFeature({ modelLabel: 'Opus' });
-    expect(feature.menuItem.label).toBe('Switch model');
-    expect(feature.menuItem.section).toBe('Model');
+    expect(feature.label).toBe('Switch model');
+    expect(feature.category).toBe('Model');
   });
 
-  it('menuItem has closeSilent true', () => {
-    const feature = createModelFeature({ modelLabel: 'Opus' });
-    expect(feature.menuItem.closeSilent).toBe(true);
-  });
-
-  it('menuItem trailing shows modelLabel', () => {
+  it('state is select with currentValue reflecting modelLabel', () => {
     const feature = createModelFeature({ modelLabel: 'Opus 4' });
-    expect(feature.menuItem.trailing).toBeTruthy();
+    expect(feature.state).toEqual({ kind: 'select', currentValue: 'Opus 4' });
   });
 
   it('execute sets signal open to true', () => {
