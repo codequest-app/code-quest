@@ -1,13 +1,12 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
-export function createMcpStatusFeature({
-  onMcpStatus,
-}: {
-  onMcpStatus?: () => void;
-}): MenuItemFeature {
+export function createMcpStatusFeature({ onMcpStatus }: { onMcpStatus?: () => void }): Feature {
   return {
     id: 'mcp-status',
-    menuItem: { label: 'MCP status', section: 'Customize', order: 0, closeSilent: true },
+    label: 'MCP status',
+    category: 'Customize',
+    order: 0,
+    ui: { closeSilent: true },
     execute() {
       onMcpStatus?.();
     },

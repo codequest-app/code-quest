@@ -6,11 +6,11 @@ describe('createMcpStatusFeature', () => {
     expect(createMcpStatusFeature({}).id).toBe('mcp-status');
   });
 
-  it('menuItem is in Customize section with label MCP status', () => {
-    const { menuItem } = createMcpStatusFeature({});
-    expect(menuItem.label).toBe('MCP status');
-    expect(menuItem.section).toBe('Customize');
-    expect(menuItem.closeSilent).toBe(true);
+  it('is in Customize category with label MCP status', () => {
+    const feature = createMcpStatusFeature({});
+    expect(feature.label).toBe('MCP status');
+    expect(feature.category).toBe('Customize');
+    expect(feature.ui?.closeSilent).toBe(true);
   });
 
   it('execute calls onMcpStatus', () => {
