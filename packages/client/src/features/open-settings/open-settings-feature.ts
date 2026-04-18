@@ -1,18 +1,16 @@
-import type { MenuItemFeature } from '../../lib/feature';
+import type { Feature } from '../../lib/feature';
 
 interface OpenSettingsFeatureDeps {
   onOpen: () => void;
 }
 
-export function createOpenSettingsFeature({ onOpen }: OpenSettingsFeatureDeps): MenuItemFeature {
+export function createOpenSettingsFeature({ onOpen }: OpenSettingsFeatureDeps): Feature {
   return {
     id: 'open-settings',
-    menuItem: {
-      label: 'Open preferences',
-      section: 'Settings',
-      order: 20,
-      closeSilent: false,
-    },
+    label: 'Open preferences',
+    category: 'Settings',
+    order: 20,
+    ui: { closeSilent: false },
     execute: onOpen,
   };
 }
