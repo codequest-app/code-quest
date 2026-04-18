@@ -76,18 +76,19 @@
 ## 5. Phase 3 — 清理與驗證
 
 - [x] 5.1 `MenuItemFeature` / `SlashCommandFeature` 只存在於 `lib/{feature.ts, adapters/, feature-registry.ts, build-menu-items.ts}` + 相關 tests；**0 個 factory / component / context 檔直接使用**
-- [~] 5.2 Legacy shape 支援**保留**（registry + build-menu-items 的 legacy branch）。決定理由：
-  - 零外部 call site 使用，但移除沒有實質好處
-  - 10 行 shim 成本低、無 runtime penalty
-  - 保留為未來 plugin 註冊或外部 feature registration 留門
-  - 可視需要未來另開 change 移除
+- [x] 5.2 Legacy shape 支援**已移除**（commit `c9f087da`）：
+  - `register()` typed as `Feature` only
+  - `getAll()` 回 `Feature[]`
+  - drop `isFeature` / `isMenuItemFeature` / `isSlashCommandFeature` guards
+  - `localFeatures` in build-menu-items = `Feature[]`
+  - 砍 191 行（淨），11 個 legacy 測試移除
 - [x] 5.3 全套驗證：
   - vitest: 170 files / 1281 tests（vs pre-refactor 1211 baseline：+70 new tests）
   - typecheck: clean
   - test-storybook:ci: 95 suites / 356 tests
   - biome: 變動範圍 clean（6 infos = pre-existing）
 - [x] 5.4 FakeSummoner 27 測試 **0 修改** ✓
-- [~] 5.5 （跳過 legacy 移除 commit — 依 5.2 決定保留）
+- [x] 5.5 legacy 移除 commit `c9f087da`
 - [ ] 5.6 `/opsx:archive feature-adapter-refactor`
 
 ## 6. 約束（全程遵守）
