@@ -3,6 +3,7 @@ import {
   type Density,
   type FontSize,
   type Layout,
+  type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
 } from '@code-quest/shared';
 import { create } from 'zustand';
@@ -10,16 +11,7 @@ import { persist } from 'zustand/middleware';
 
 export type { ColorTheme, Density, FontSize, Layout };
 
-interface PreferencesState {
-  colorTheme: ColorTheme;
-  fontSize: FontSize;
-  density: Density;
-  layout: Layout;
-  hiddenItems: string[];
-
-  isOnboardingDismissed: boolean;
-  isReviewUpsellDismissed: boolean;
-
+interface PreferencesState extends PersistedPreferences {
   setColorTheme: (v: ColorTheme) => void;
   setFontSize: (v: FontSize) => void;
   setDensity: (v: Density) => void;
