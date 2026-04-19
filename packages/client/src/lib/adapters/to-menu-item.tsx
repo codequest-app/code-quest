@@ -1,5 +1,64 @@
-import type { Feature, MenuItemView } from '../feature';
-import { renderMenuTrailing } from './trailing-renderers';
+import { ChoicePills } from '../../components/ui/ChoicePills';
+import { EffortSwitch } from '../../components/ui/EffortSwitch';
+import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
+import { TriStateIndicator } from '../../components/ui/TriStateIndicator';
+import { deriveGroupAggregate } from '../derive-group-aggregate';
+import type { Feature, FeatureState, MenuItemView } from '../feature';
+
+interface TrailingOpts {
+  featureId?: string;
+}
+
+export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): React.ReactNode {
+  if (!state) return undefined;
+  if (state.kind === 'toggle') {
+    return (
+      <span
+        data-testid={opts?.featureId ? `${opts.featureId}-switch` : 'toggle-switch'}
+        data-state={state.active ? 'on' : 'off'}
+      >
+        <ToggleSwitch isOn={state.active} />
+      </span>
+    );
+  }
+  if (state.kind === 'group') {
+    return (
+      <TriStateIndicator
+        state={deriveGroupAggregate(state.items)}
+        onPartial={state.onPartial}
+        featureId={opts?.featureId}
+      />
+    );
+  }
+  if (state.kind === 'select') {
+    return (
+      <span data-testid="select-current" className="font-mono text-[11px] text-text-muted">
+        {state.currentValue}
+      </span>
+    );
+  }
+  if (state.kind === 'segmented') {
+    return (
+      <EffortSwitch
+        level={state.currentValue ?? undefined}
+        levels={state.options}
+        onSelect={state.onSelect}
+      />
+    );
+  }
+  if (state.kind === 'choice') {
+    return (
+      <ChoicePills
+        options={state.options}
+        currentValue={state.currentValue}
+        onSelect={state.onSelect}
+        featureId={opts?.featureId}
+      />
+    );
+  }
+  const _exhaustive: never = state;
+  return _exhaustive;
+}
 
 export function toMenuItem(f: Feature): MenuItemView {
   return {

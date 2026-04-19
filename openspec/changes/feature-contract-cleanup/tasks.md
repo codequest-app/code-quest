@@ -14,11 +14,11 @@
 
 ## 3. Split `trailing-renderers.tsx` per surface
 
-- [ ] 3.1 Promote `TriStateIndicator` to `components/ui/TriStateIndicator.tsx`
-- [ ] 3.2 Move `renderMenuTrailing` into `to-menu-item.tsx` (fold inline)
-- [ ] 3.3 Move `renderPaletteTrailing` into `to-palette-command.tsx` (fold inline)
-- [ ] 3.4 Delete `lib/adapters/trailing-renderers.tsx` and its test file (redistribute tests to the two adapter test files)
-- [ ] 3.5 Run tests + typecheck + biome; commit
+- [x] 3.1 Promote `TriStateIndicator` to `components/ui/TriStateIndicator.tsx`
+- [x] 3.2 Move `renderMenuTrailing` into `to-menu-item.tsx` (fold inline)
+- [x] 3.3 Move `renderPaletteTrailing` into `to-palette-command.tsx` (fold inline)
+- [x] 3.4 Delete `lib/adapters/trailing-renderers.tsx` and its test file (redistribute tests to the two adapter test files)
+- [x] 3.5 Run tests + typecheck + biome; commit
 
 ## 4. Registry + builder consolidation
 

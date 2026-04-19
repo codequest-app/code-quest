@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { renderMenuTrailing, renderPaletteTrailing } from '../trailing-renderers';
+import { renderMenuTrailing } from '../to-menu-item';
+import { renderPaletteTrailing } from '../to-palette-command';
 
 describe('renderMenuTrailing', () => {
   it('returns undefined when state is undefined', () => {
