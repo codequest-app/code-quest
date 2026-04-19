@@ -1,31 +1,4 @@
-export interface SlashCommandView {
-  id: string;
-  command: string;
-  match?(message: string): boolean;
-  invoke(message: string): void;
-  execute?(): void;
-}
-
-export interface MenuItemView {
-  id: string;
-  menuItem: {
-    label: string;
-    section: string;
-    /** Lower order = closer to top within the section. Defaults to Infinity. */
-    order?: number;
-    /** Use closeSilent instead of close after execute (default: false) */
-    closeSilent?: boolean;
-    /** Show only when filtering, not in the default open menu */
-    filterOnly?: boolean;
-    description?: string;
-    trailing?: React.ReactNode;
-    disabled?: boolean;
-    matchFirstToken?: boolean;
-  };
-  execute(): void;
-}
-
-/** New unified feature shape — capability as pure data, adapted per UI surface. */
+/** Unified feature shape — capability as pure data, adapted per UI surface. */
 export interface Feature {
   id: string;
   label: string;

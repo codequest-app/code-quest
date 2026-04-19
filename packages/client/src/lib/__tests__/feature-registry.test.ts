@@ -11,7 +11,7 @@ const mk = (over: Partial<Feature> = {}): Feature => ({
 });
 
 describe('feature-registry', () => {
-  describe('register + getFeatures / getAll', () => {
+  describe('register + getFeatures', () => {
     it('stores registered features in insertion order', () => {
       const r = createFeatureRegistry();
       r.register(mk({ id: 'a' }));
@@ -25,17 +25,6 @@ describe('feature-registry', () => {
       r.register(mk({ id: 'dup', label: 'B' }));
       expect(r.getFeatures()).toHaveLength(1);
       expect(r.getFeatures()[0].label).toBe('B');
-    });
-  });
-
-  describe('getMenuItemViews', () => {
-    it('adapts every Feature to MenuItemView', () => {
-      const r = createFeatureRegistry();
-      r.register(mk({ id: 'a', label: 'A', section: 'Settings' }));
-      const items = r.getMenuItemViews();
-      expect(items).toHaveLength(1);
-      expect(items[0].menuItem.label).toBe('A');
-      expect(items[0].menuItem.section).toBe('Settings');
     });
   });
 
@@ -79,14 +68,13 @@ describe('feature-registry', () => {
     });
   });
 
-  describe('getSlashCommand / getSlashCommandViews', () => {
-    it('returns features with a slash binding', () => {
+  describe('getSlashCommand', () => {
+    it('returns the Feature whose slash.command equals command', () => {
       const r = createFeatureRegistry();
       const slashFn = vi.fn();
       r.register(mk({ id: 'a', slash: { command: '/a', invoke: slashFn } }));
       r.register(mk({ id: 'b' })); // no slash
       expect(r.getSlashCommand('/a')?.id).toBe('a');
-      expect(r.getSlashCommandViews().map((f) => f.id)).toEqual(['a']);
     });
 
     it('returns undefined for unknown command', () => {
@@ -96,7 +84,7 @@ describe('feature-registry', () => {
   });
 
   describe('hybrid feature (slash + menu on one Feature)', () => {
-    it('appears in both getSlashCommandViews and getMenuItemViews', () => {
+    it('is reachable via getFeatures and findSlashCommand', () => {
       const r = createFeatureRegistry();
       r.register(
         mk({
@@ -106,8 +94,8 @@ describe('feature-registry', () => {
           slash: { command: '/usage', invoke: vi.fn() },
         }),
       );
-      expect(r.getSlashCommandViews()).toHaveLength(1);
-      expect(r.getMenuItemViews()).toHaveLength(1);
+      expect(r.getFeatures()).toHaveLength(1);
+      expect(r.findSlashCommand('/usage')?.id).toBe('usage');
     });
   });
 });

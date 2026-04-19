@@ -37,15 +37,15 @@
 
 ## 6. Remove view types; expose `Feature[]` from registry
 
-- [ ] 6.1 Narrow `FeatureRegistry` interface: remove `getSlashCommandFeatures()` and `getMenuItemFeatures()`; keep `getFeatures(): Feature[]`, `register()`, `findSlashCommand()`, `getSlashCommand()` (latter two can return `Feature | undefined` reading `.slash`)
-- [ ] 6.2 Update `buildMenuItems` to map `Feature[]` through `toMenuItem` inline instead of reading pre-adapted `MenuItemView[]`
-- [ ] 6.3 Update slash command consumers to read `feature.slash?.command` / `.slash?.invoke` directly
-- [ ] 6.4 Delete `SlashCommandView` and `MenuItemView` type exports from `feature.ts`
-- [ ] 6.5 Run tests + typecheck + biome; commit
+- [x] 6.1 Narrow `FeatureRegistry` interface: remove `getSlashCommandFeatures()` and `getMenuItemFeatures()`; keep `getFeatures(): Feature[]`, `register()`, `findSlashCommand()`, `getSlashCommand()` (latter two can return `Feature | undefined` reading `.slash`)
+- [x] 6.2 Update `buildMenuItems` to map `Feature[]` through `toMenuItem` inline instead of reading pre-adapted `MenuItemView[]`
+- [x] 6.3 Update slash command consumers to read `feature.slash?.command` / `.slash?.invoke` directly
+- [x] 6.4 Delete `SlashCommandView` and `MenuItemView` type exports from `feature.ts`
+- [x] 6.5 Run tests + typecheck + biome; commit
 
 ## 7. Final verification
 
-- [ ] 7.1 Full test suite green
-- [ ] 7.2 Typecheck clean
-- [ ] 7.3 Biome clean
-- [ ] 7.4 Manual sanity check: CommandMenu opens via button + via "/"; CommandPalette tabs switch; filter groups toggle
+- [x] 7.1 Full test suite green
+- [x] 7.2 Typecheck clean
+- [x] 7.3 Biome clean
+- [x] 7.4 Manual sanity check: CommandMenu opens via button + via "/"; CommandPalette tabs switch; filter groups toggle

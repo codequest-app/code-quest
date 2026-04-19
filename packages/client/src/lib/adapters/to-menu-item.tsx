@@ -3,7 +3,23 @@ import { EffortSwitch } from '../../components/ui/EffortSwitch';
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import { TriStateIndicator } from '../../components/ui/TriStateIndicator';
 import { deriveGroupAggregate } from '../derive-group-aggregate';
-import type { Feature, FeatureState, MenuItemView } from '../feature';
+import type { Feature, FeatureState } from '../feature';
+
+interface MenuItemView {
+  id: string;
+  menuItem: {
+    label: string;
+    section: string;
+    order?: number;
+    closeSilent?: boolean;
+    filterOnly?: boolean;
+    description?: string;
+    trailing?: React.ReactNode;
+    disabled?: boolean;
+    matchFirstToken?: boolean;
+  };
+  execute(): void;
+}
 
 interface TrailingOpts {
   featureId?: string;

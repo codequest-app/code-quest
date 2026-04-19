@@ -366,8 +366,8 @@ export function ChannelMessagesProvider({
     registry.register(createCompactFeature((msg) => messageActions.sendMessage(msg)));
     const sendMessage = (message: string) => {
       const feature = registry.findSlashCommand(message);
-      if (feature) {
-        feature.invoke(message);
+      if (feature?.slash) {
+        feature.slash.invoke(message);
         return;
       }
       messageActions.sendMessage(message);

@@ -1,6 +1,5 @@
-import { toMenuItem } from '../../lib/adapters/to-menu-item';
-import { toSlashCommand } from '../../lib/adapters/to-slash-command';
-import type { Feature, FeatureSection, MenuItemView, SlashCommandView } from '../../lib/feature';
+import { renderMenuTrailing } from '../../lib/adapters/to-menu-item';
+import type { Feature, FeatureSection } from '../../lib/feature';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 
 export interface MenuItem {
@@ -34,31 +33,39 @@ export interface BuildMenuItemsParams {
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
-const byOrder = (a: { menuItem: { order?: number } }, b: { menuItem: { order?: number } }) =>
-  (a.menuItem.order ?? Number.POSITIVE_INFINITY) - (b.menuItem.order ?? Number.POSITIVE_INFINITY);
+const byOrder = (a: Feature, b: Feature) =>
+  (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY);
+
+function featureToMenuItem(
+  f: Feature,
+  onClose: { close: () => void; closeSilent: () => void },
+): MenuItem {
+  const closeSilent = f.ui?.closeSilent ?? f.state?.kind === 'toggle';
+  return {
+    id: f.id,
+    label: f.label,
+    description: f.description,
+    section: f.section,
+    disabled: f.disabled,
+    filterOnly: f.ui?.filterOnly,
+    matchFirstToken: f.ui?.matchFirstToken,
+    trailing: renderMenuTrailing(f.state, { featureId: f.id }),
+    onClick: () => {
+      f.execute();
+      closeSilent ? onClose.closeSilent() : onClose.close();
+    },
+  };
+}
 
 function buildSection(
-  menuFeatures: MenuItemView[],
+  features: Feature[],
   section: FeatureSection,
   onClose: { close: () => void; closeSilent: () => void },
 ): MenuItem[] {
-  return menuFeatures
-    .filter((f) => f.menuItem.section === section)
+  return features
+    .filter((f) => f.section === section)
     .sort(byOrder)
-    .map((f) => ({
-      id: f.id,
-      label: f.menuItem.label,
-      description: f.menuItem.description,
-      section,
-      disabled: f.menuItem.disabled,
-      filterOnly: f.menuItem.filterOnly,
-      matchFirstToken: f.menuItem.matchFirstToken,
-      trailing: f.menuItem.trailing,
-      onClick: () => {
-        f.execute();
-        f.menuItem.closeSilent ? onClose.closeSilent() : onClose.close();
-      },
-    }));
+    .map((f) => featureToMenuItem(f, onClose));
 }
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
@@ -69,52 +76,27 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   // Local features override registry entries with the same id (e.g. btw: registry
   // has the base Feature; CommandMenu adds a per-render wrapper that knows the
   // live slashFilter state).
-  const menuFeatureById = new Map<string, MenuItemView>();
-  for (const f of registry.getMenuItemViews()) menuFeatureById.set(f.id, f);
-  for (const f of local) menuFeatureById.set(f.id, toMenuItem(f));
-  const menuFeatures = [...menuFeatureById.values()];
-  const menuFeatureIds = new Set(menuFeatureById.keys());
+  const featureById = new Map<string, Feature>();
+  for (const f of registry.getFeatures()) featureById.set(f.id, f);
+  for (const f of local) featureById.set(f.id, f);
+  const features = [...featureById.values()];
 
-  const slashFeatureById = new Map<string, SlashCommandView>();
-  for (const f of registry.getSlashCommandViews()) slashFeatureById.set(f.id, f);
-  for (const f of local) {
-    const slash = toSlashCommand(f);
-    if (slash) slashFeatureById.set(f.id, slash);
-  }
-  const slashFeatures = [...slashFeatureById.values()].filter(
-    (f) => f.execute && !menuFeatureIds.has(f.id),
+  const section = (name: FeatureSection) => buildSection(features, name, { close, closeSilent });
+
+  const context = section('Context');
+  const model = section('Model');
+  const customize = section('Customize');
+  const settings = section('Settings');
+  const support = section('Support');
+
+  // Slash section = registry Features whose section is 'Slash Commands'
+  // + CLI commands whose names don't already collide with a registry slash binding.
+  const registrySlashCommands = new Set(
+    features.flatMap((f) => (f.slash?.command ? [f.slash.command] : [])),
   );
-
-  const section = (name: FeatureSection) =>
-    buildSection(menuFeatures, name, { close, closeSilent });
-
-  const context: MenuItem[] = section('Context');
-
-  const model: MenuItem[] = section('Model');
-
-  const customize: MenuItem[] = section('Customize');
-
-  const settings: MenuItem[] = section('Settings');
-
-  const support: MenuItem[] = section('Support');
-
-  const allRegistryCommandIds = new Set(registry.getSlashCommandViews().map((f) => f.command));
-  const filteredCliCommands = slashCommands.filter((cmd) => !allRegistryCommandIds.has(`/${cmd}`));
-
-  function toRegistrySlashItem(f: (typeof slashFeatures)[number]): MenuItem {
-    return {
-      id: f.id,
-      label: f.command,
-      section: 'Slash Commands',
-      onClick: () => {
-        f.execute?.();
-        close();
-      },
-    };
-  }
-
-  function toCliSlashItem(cmd: string): MenuItem {
-    return {
+  const cliSlashItems: MenuItem[] = slashCommands
+    .filter((cmd) => !registrySlashCommands.has(`/${cmd}`))
+    .map((cmd) => ({
       id: `slash-${cmd}`,
       label: `/${cmd}`,
       section: 'Slash Commands',
@@ -122,17 +104,11 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
         compose.executeSlashCommand(`/${cmd}`);
         close();
       },
-    };
-  }
+    }));
 
-  const registrySlashItems: MenuItem[] = slashFeatures.map(toRegistrySlashItem);
-  const cliSlashItems: MenuItem[] = filteredCliCommands.map(toCliSlashItem);
-
-  const slash: MenuItem[] = [
-    ...section('Slash Commands'),
-    ...registrySlashItems,
-    ...cliSlashItems,
-  ].sort((a, b) => a.label.localeCompare(b.label));
+  const slash: MenuItem[] = [...section('Slash Commands'), ...cliSlashItems].sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
 
   return { context, model, customize, slash, settings, support };
 }
