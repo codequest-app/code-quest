@@ -625,11 +625,25 @@ expect(result).toBe(expectedValue); // 永遠不變
 
 ---
 
-## 相關文檔
+## 相關 skill
 
-- **PTY 架構**: `/pty-architecture`
-- **戰鬥管理**: `/battle-management`
-- **專案總覽**: `/project-overview`
+**TDD 與 test double 理論**：
+- `tdd` — 通用 TDD（Red-Green-Refactor、命名、金字塔）
+- `test-doubles` — 五型（Mock / Stub / Fake / Spy / Dummy）理論與選擇順序
+
+**Test harness（具體工具）**：
+- `fake-summoner-server` — server 端 socket / pipeline / ProcessRunner harness
+- `fake-summoner-client` — client 端 `renderWithChannel` / `renderWithWorkspace`
+- `fixture-driven-tdd` — parser / protocol 用真實 CLI JSON fixture 驅動
+
+**各層測試慣例**：
+- `vitest-testing` — server vitest 專案慣例（5-tier test double）
+- `frontend-testing` — client RTL 慣例（7-tier test double、query 優先序）
+- `testing-best-practices` — 共用 Vitest + RTL + MSW 慣例
+- `cc-office-review` — cc-office 專案特定測試檢查
+
+**專案脈絡**：
+- `project-overview` — 當前架構（roadmap 參考 `rpg-roadmap`）
 
 **測試框架文檔**:
 - Vitest: https://vitest.dev/

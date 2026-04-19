@@ -252,3 +252,10 @@ Component composition 放心用 `className` prop override，不用擔心 CSS 順
 | `@custom-variant` | Custom variants (dark, etc.) |
 | `@utility` | Custom utility with modifier support |
 | `@layer base/components/utilities` | Custom CSS in cascade layers |
+
+## 相關 skill
+
+- Component / hook 慣例（useRef / useEffect 影響 class 計算）→ `react-hooks`
+- Storybook stories 搭配樣式確認 → `storybook-component`
+- Icon 慣例（heroicons facade、custom SVG 情境）→ `cc-office-review`
+- className 斷言在測試中的寫法 → `frontend-testing` / `testing-best-practices`

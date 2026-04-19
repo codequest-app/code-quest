@@ -179,3 +179,10 @@ await vi.advanceTimersByTimeAsync(5000);
 - Using `advanceTimersByTime` (sync) with promises causes hanging tests — use the `Async` variant
 - Hooks inside `describe` only apply to that block; global `beforeEach` applies to the entire file
 - ESM + `vi.mock`: factory functions must not reference variables defined outside the factory (temporal dead zone)
+
+## 相關 skill
+
+- Server 端 FakeSummoner harness → `fake-summoner-server`
+- Fixture-driven parser/protocol 測試 → `fixture-driven-tdd`
+- TDD 流程 → `tdd` / `tdd-guidelines`
+- Test double 五型理論 → `test-doubles`

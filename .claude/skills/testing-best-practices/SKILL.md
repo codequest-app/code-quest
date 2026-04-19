@@ -97,5 +97,13 @@ Semantic token 當 behavior assertion 合理；任意 utility 值（`p-4`、`tex
 
 - **TDD first**：先寫測試，再寫 code
 - **重構階段 expect 不變**：要改 expect = 行為變更，走 RED → GREEN
-- **直接組合測試工具**：FakeClaude + testing-library 直接用，不再包 `setupPipeline` / `synthesizeStore` wrapper
+- **直接組合測試工具**：FakeSummoner（`createFakeSummoner().claude()`）+ testing-library 直接用，不再包 `setupPipeline` / `synthesizeStore` wrapper
 - **Hook 抽取確認 2+ component 共用**；測試用 `renderHook`
+
+## 相關 skill
+
+- Component / hook 測試細節 → `frontend-testing`
+- Socket + pipeline test harness → `fake-summoner-client` / `fake-summoner-server`
+- TDD 流程與 expect 不變原則 → `tdd` / `tdd-guidelines`
+- Test double 五型理論 → `test-doubles`
+- Storybook play function → `storybook-component`

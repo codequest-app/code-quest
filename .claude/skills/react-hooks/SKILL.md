@@ -329,3 +329,10 @@ For hooks with external dependencies (socket, API), inject via parameters — av
 | Wrapping every function in `useCallback` | Only when passed to memoized children or in deps |
 | `ref.current` in dep array | Refs are mutable — biome ignores them; use event-based updates |
 | Effect runs on every render | Check dependency array; empty `[]` for mount-only |
+
+## 相關 skill
+
+- Context 測試 / socket 互動 → `fake-summoner-client`
+- Hook / component 測試 RTL 慣例 → `frontend-testing` / `testing-best-practices`
+- Store pattern（zustand 當 state 替代）→ `zustand-state`
+- Tailwind class + axis 影響 render → `tailwind-v4`

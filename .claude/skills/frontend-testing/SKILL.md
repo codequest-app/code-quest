@@ -465,3 +465,11 @@ describe('fetchTerminals', () => {
 | `msw` | Network-level request interception | Proxy Mock (#3) |
 | `storybook` | Visual testing + play functions | — |
 | `react-error-boundary` | Error Boundary component | — |
+
+## 相關 skill
+
+- Socket + pipeline test harness → `fake-summoner-client`
+- RTL query / className 斷言 / userEvent → `testing-best-practices`
+- Hook / Context 慣例 → `react-hooks`
+- Storybook play function / 視覺回歸 → `storybook-component`
+- Test double 五種類型理論 → `test-doubles`
