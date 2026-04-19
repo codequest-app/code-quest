@@ -1,7 +1,7 @@
 import type { Feature } from '../feature';
 import { renderPaletteTrailing } from './trailing-renderers';
 
-export interface PaletteCommand {
+interface PaletteCommand {
   id: string;
   label: string;
   section: string;

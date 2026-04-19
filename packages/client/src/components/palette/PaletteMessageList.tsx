@@ -43,17 +43,6 @@ export interface PaletteMessageListProps {
   listRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-function filterMessages(
-  messages: Message[],
-  query: string,
-  recentCount: number,
-  searchLimit: number,
-): Message[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return messages.slice(-recentCount);
-  return messages.filter((m) => messagePreview(m).toLowerCase().includes(q)).slice(0, searchLimit);
-}
-
 export function PaletteMessageList({
   messages,
   query,
@@ -66,7 +55,10 @@ export function PaletteMessageList({
   searchLimit = DEFAULT_SEARCH_LIMIT,
   listRef,
 }: PaletteMessageListProps) {
-  const results = filterMessages(messages, query, recentCount, searchLimit);
+  const q = query.trim().toLowerCase();
+  const results = q
+    ? messages.filter((m) => messagePreview(m).toLowerCase().includes(q)).slice(0, searchLimit)
+    : messages.slice(-recentCount);
   if (results.length === 0) return null;
 
   return (

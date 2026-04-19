@@ -17,7 +17,6 @@ describe('feature-registry', () => {
       r.register(mk({ id: 'a' }));
       r.register(mk({ id: 'b' }));
       expect(r.getFeatures().map((f) => f.id)).toEqual(['a', 'b']);
-      expect(r.getAll().map((f) => f.id)).toEqual(['a', 'b']);
     });
 
     it('replaces an existing registration with the same id', () => {

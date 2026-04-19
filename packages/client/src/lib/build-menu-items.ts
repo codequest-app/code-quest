@@ -34,19 +34,6 @@ export interface BuildMenuItemsParams {
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
-function adaptLocalMenuItems(local: Feature[]): MenuItemFeature[] {
-  return local.map(toMenuItem);
-}
-
-function adaptLocalSlashCommands(local: Feature[]): SlashCommandFeature[] {
-  const out: SlashCommandFeature[] = [];
-  for (const f of local) {
-    const slash = toSlashCommand(f);
-    if (slash) out.push(slash);
-  }
-  return out;
-}
-
 const byOrder = (a: { menuItem: { order?: number } }, b: { menuItem: { order?: number } }) =>
   (a.menuItem.order ?? Number.POSITIVE_INFINITY) - (b.menuItem.order ?? Number.POSITIVE_INFINITY);
 
@@ -60,13 +47,16 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   // live slashFilter state).
   const menuFeatureById = new Map<string, MenuItemFeature>();
   for (const f of registry.getMenuItemFeatures()) menuFeatureById.set(f.id, f);
-  for (const f of adaptLocalMenuItems(local)) menuFeatureById.set(f.id, f);
+  for (const f of local) menuFeatureById.set(f.id, toMenuItem(f));
   const menuFeatures = [...menuFeatureById.values()];
   const menuFeatureIds = new Set(menuFeatureById.keys());
 
   const slashFeatureById = new Map<string, SlashCommandFeature>();
   for (const f of registry.getSlashCommandFeatures()) slashFeatureById.set(f.id, f);
-  for (const f of adaptLocalSlashCommands(local)) slashFeatureById.set(f.id, f);
+  for (const f of local) {
+    const slash = toSlashCommand(f);
+    if (slash) slashFeatureById.set(f.id, slash);
+  }
   const slashFeatures = [...slashFeatureById.values()].filter(
     (f) => f.execute && !menuFeatureIds.has(f.id),
   );

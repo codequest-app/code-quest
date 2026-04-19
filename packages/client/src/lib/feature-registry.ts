@@ -6,11 +6,10 @@ export interface FeatureRegistry {
   register(feature: Feature): void;
   findSlashCommand(message: string): SlashCommandFeature | undefined;
   getSlashCommand(command: string): SlashCommandFeature | undefined;
-  getAll(): Feature[];
-  getSlashCommandFeatures(): SlashCommandFeature[];
-  getMenuItemFeatures(): MenuItemFeature[];
   /** Primary accessor — returns the raw Feature objects. */
   getFeatures(): Feature[];
+  getSlashCommandFeatures(): SlashCommandFeature[];
+  getMenuItemFeatures(): MenuItemFeature[];
 }
 
 export function createFeatureRegistry(): FeatureRegistry {
@@ -38,10 +37,6 @@ export function createFeatureRegistry(): FeatureRegistry {
         if (slash?.command === command) return slash;
       }
       return undefined;
-    },
-
-    getAll() {
-      return [...entries];
     },
 
     getSlashCommandFeatures() {
