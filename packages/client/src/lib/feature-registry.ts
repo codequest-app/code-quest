@@ -14,6 +14,14 @@ export interface FeatureRegistry {
 
 export function createFeatureRegistry(): FeatureRegistry {
   const entries: Feature[] = [];
+  const slashCache = new WeakMap<Feature, SlashCommandFeature | null>();
+  const slashOf = (f: Feature): SlashCommandFeature | null => {
+    const cached = slashCache.get(f);
+    if (cached !== undefined) return cached;
+    const slash = toSlashCommand(f) ?? null;
+    slashCache.set(f, slash);
+    return slash;
+  };
 
   return {
     register(feature) {
@@ -24,7 +32,7 @@ export function createFeatureRegistry(): FeatureRegistry {
 
     findSlashCommand(message) {
       for (const f of entries) {
-        const slash = toSlashCommand(f);
+        const slash = slashOf(f);
         if (!slash) continue;
         if (slash.match ? slash.match(message) : message.trim() === slash.command) return slash;
       }
@@ -33,7 +41,7 @@ export function createFeatureRegistry(): FeatureRegistry {
 
     getSlashCommand(command) {
       for (const f of entries) {
-        const slash = toSlashCommand(f);
+        const slash = slashOf(f);
         if (slash?.command === command) return slash;
       }
       return undefined;
@@ -42,7 +50,7 @@ export function createFeatureRegistry(): FeatureRegistry {
     getSlashCommandFeatures() {
       const out: SlashCommandFeature[] = [];
       for (const f of entries) {
-        const slash = toSlashCommand(f);
+        const slash = slashOf(f);
         if (slash) out.push(slash);
       }
       return out;

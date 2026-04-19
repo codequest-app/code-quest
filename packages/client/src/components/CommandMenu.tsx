@@ -285,7 +285,7 @@ export function CommandMenu({
     if (!externalOpen) return;
     const handleNavKey = (e: KeyboardEvent) => {
       const items = flatItemsRef.current;
-      if (!NAV_KEYS.includes(e.key as (typeof NAV_KEYS)[number])) return;
+      if (!(NAV_KEYS as readonly string[]).includes(e.key)) return;
       if (items.length === 0) return;
       e.preventDefault();
       handleNavigateAndSelect(e.key, items, {
@@ -352,7 +352,7 @@ export function CommandMenu({
       compose.focusTextarea();
       return;
     }
-    if (!NAV_KEYS.includes(e.key as (typeof NAV_KEYS)[number])) return;
+    if (!(NAV_KEYS as readonly string[]).includes(e.key)) return;
     e.preventDefault();
     handleNavigateAndSelect(e.key, flatItems, {
       insertSlash: (t) => compose.insertSlashCommand(t),
@@ -408,60 +408,51 @@ export function CommandMenu({
                 No matching commands
               </div>
             ) : (
-              <>
-                <MenuSection
-                  label="Context"
-                  items={filteredContext}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst
-                />
-
-                {modelSectionVisible && (
+              [
+                { label: 'Context', items: filteredContext, isFirst: true, visible: true },
+                {
+                  label: 'Model',
+                  items: filteredModel,
+                  isFirst: !hasPrev.model,
+                  visible: modelSectionVisible,
+                },
+                {
+                  label: 'Customize',
+                  items: filteredCustomize,
+                  isFirst: !hasPrev.customize,
+                  visible: true,
+                },
+                {
+                  label: 'Slash Commands',
+                  items: filteredSlash,
+                  isFirst: !hasPrev.slash,
+                  visible: true,
+                },
+                {
+                  label: 'Settings',
+                  items: filteredSettings,
+                  isFirst: !hasPrev.settings,
+                  visible: true,
+                },
+                {
+                  label: 'Support',
+                  items: filteredSupport,
+                  isFirst: !hasPrev.support,
+                  visible: true,
+                },
+              ]
+                .filter((s) => s.visible)
+                .map((s) => (
                   <MenuSection
-                    label="Model"
-                    items={filteredModel}
+                    key={s.label}
+                    label={s.label}
+                    items={s.items}
                     activeId={activeId}
                     activeItemRef={activeItemRef}
                     onHover={setActiveId}
-                    isFirst={!hasPrev.model}
+                    isFirst={s.isFirst}
                   />
-                )}
-
-                <MenuSection
-                  label="Customize"
-                  items={filteredCustomize}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!hasPrev.customize}
-                />
-                <MenuSection
-                  label="Slash Commands"
-                  items={filteredSlash}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!hasPrev.slash}
-                />
-                <MenuSection
-                  label="Settings"
-                  items={filteredSettings}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!hasPrev.settings}
-                />
-                <MenuSection
-                  label="Support"
-                  items={filteredSupport}
-                  activeId={activeId}
-                  activeItemRef={activeItemRef}
-                  onHover={setActiveId}
-                  isFirst={!hasPrev.support}
-                />
-              </>
+                ))
             )}
           </div>
         </div>

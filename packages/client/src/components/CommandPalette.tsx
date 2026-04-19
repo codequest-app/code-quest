@@ -10,8 +10,7 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { isMessageVisible, messagePreview } from '../utils/isMessageVisible';
 import { PaletteCommandList } from './palette/PaletteCommandList';
 import { PaletteMessageList } from './palette/PaletteMessageList';
-
-const RECENT_COUNT = 8;
+import { paletteMessageResults } from './palette/palette-message-results';
 
 /**
  * Tab bar config. 'messages' is a pseudo-tab backed by PaletteMessageList
@@ -25,6 +24,8 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+const isPaletteTab = (t: TabId): t is PaletteTab => t !== 'messages';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -74,15 +75,11 @@ export function CommandPalette({
     (m) => isMessageVisible(m, enabledTypes) && m.content.length > 0,
   );
   const q = query.trim().toLowerCase();
+  const messageResults = paletteMessageResults(visibleMessages, query);
 
-  const messageResults = q
-    ? visibleMessages.filter((m) => messagePreview(m).toLowerCase().includes(q)).slice(0, 50)
-    : visibleMessages.slice(-RECENT_COUNT);
-
-  const featuresInActiveTab =
-    activeTab === 'messages'
-      ? []
-      : paletteFeatures.filter((f) => (f.tabs ?? ['all']).includes(activeTab as PaletteTab));
+  const featuresInActiveTab = isPaletteTab(activeTab)
+    ? paletteFeatures.filter((f) => (f.tabs ?? ['all']).includes(activeTab))
+    : [];
 
   useEffect(() => {
     if (open) {

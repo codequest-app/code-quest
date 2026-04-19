@@ -56,7 +56,7 @@ export interface Feature extends ChannelFeature {
   };
 }
 
-export const PALETTE_TABS = ['all', 'actions'] as const;
+const PALETTE_TABS = ['all', 'actions'] as const;
 export type PaletteTab = (typeof PALETTE_TABS)[number];
 
 /**

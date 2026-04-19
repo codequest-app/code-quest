@@ -1,9 +1,11 @@
 import type { Message } from '../../types/ui';
 import { messagePreview } from '../../utils/isMessageVisible';
 import { highlight, typeColor, typeLabel } from '../../utils/message-preview';
-
-const DEFAULT_RECENT_COUNT = 8;
-const DEFAULT_SEARCH_LIMIT = 50;
+import {
+  PALETTE_RECENT_COUNT,
+  PALETTE_SEARCH_LIMIT,
+  paletteMessageResults,
+} from './palette-message-results';
 
 const BADGE: React.CSSProperties = {
   fontSize: '9px',
@@ -51,14 +53,11 @@ export function PaletteMessageList({
   onJumpTo,
   onClose,
   showHeader = false,
-  recentCount = DEFAULT_RECENT_COUNT,
-  searchLimit = DEFAULT_SEARCH_LIMIT,
+  recentCount = PALETTE_RECENT_COUNT,
+  searchLimit = PALETTE_SEARCH_LIMIT,
   listRef,
 }: PaletteMessageListProps) {
-  const q = query.trim().toLowerCase();
-  const results = q
-    ? messages.filter((m) => messagePreview(m).toLowerCase().includes(q)).slice(0, searchLimit)
-    : messages.slice(-recentCount);
+  const results = paletteMessageResults(messages, query, { recentCount, searchLimit });
   if (results.length === 0) return null;
 
   return (

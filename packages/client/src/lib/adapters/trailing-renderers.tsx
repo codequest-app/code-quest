@@ -104,7 +104,8 @@ export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): R
       />
     );
   }
-  return undefined;
+  const _exhaustive: never = state;
+  return _exhaustive;
 }
 
 /**

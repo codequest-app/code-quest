@@ -40,7 +40,7 @@ export function createChoiceFeature<T extends string>({
     label,
     section,
     order,
-    ...(tabs ? { tabs } : {}),
+    tabs,
     state: {
       kind: 'choice',
       options,
