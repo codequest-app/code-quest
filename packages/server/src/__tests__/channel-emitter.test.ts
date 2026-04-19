@@ -1,9 +1,15 @@
+import { ClaudeAdapter, ProcessRunner } from '@code-quest/summoner';
+import { FakeProcessProvider } from '@code-quest/summoner/test';
 import { describe, expect, it, vi } from 'vitest';
-import type { Channel } from '../socket/channel.ts';
+import { Channel } from '../socket/channel.ts';
 import { ChannelEmitter } from '../socket/channel-emitter.ts';
 
-function fakeChannel(channelId = 'ch-1'): Channel {
-  return { channelId } as unknown as Channel;
+function makeChannel(channelId = 'ch-1'): Channel {
+  const runner = new ProcessRunner({
+    adapter: new ClaudeAdapter(),
+    processProvider: new FakeProcessProvider(),
+  });
+  return new Channel(runner, channelId, 'claude', '/test/cwd');
 }
 
 describe('ChannelEmitter', () => {
@@ -13,7 +19,7 @@ describe('ChannelEmitter', () => {
       const handler = vi.fn();
       emitter.on('message:result', handler);
 
-      const ch = fakeChannel();
+      const ch = makeChannel();
       emitter.dispatch('message:result', ch, { some: 'data' });
 
       expect(handler).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
@@ -24,7 +30,7 @@ describe('ChannelEmitter', () => {
       const handler = vi.fn();
       emitter.on('message:result', handler);
 
-      emitter.dispatch('session:init', fakeChannel(), {});
+      emitter.dispatch('session:init', makeChannel(), {});
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -36,7 +42,7 @@ describe('ChannelEmitter', () => {
       emitter.on('message:result', handler1);
       emitter.on('message:result', handler2);
 
-      const ch = fakeChannel();
+      const ch = makeChannel();
       emitter.dispatch('message:result', ch, { some: 'data' });
 
       expect(handler1).toHaveBeenCalledWith(ch, { some: 'data' }, undefined, undefined);
@@ -52,7 +58,7 @@ describe('ChannelEmitter', () => {
         throw error;
       });
 
-      const ch = fakeChannel();
+      const ch = makeChannel();
       emitter.dispatch('test:event', ch, {});
 
       // Give the microtask queue a tick so the promise rejection is handled
@@ -69,7 +75,7 @@ describe('ChannelEmitter', () => {
       emitter.on('channel:exit', handler1);
       emitter.on('channel:exit', handler2);
 
-      const ch = fakeChannel();
+      const ch = makeChannel();
       emitter.dispatch('channel:exit', ch, { code: 0 });
 
       expect(handler1).toHaveBeenCalledWith(ch, { code: 0 }, undefined, undefined);

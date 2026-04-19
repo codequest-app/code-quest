@@ -835,7 +835,10 @@ describe('ChatHandler > session', () => {
       const events = claude.events('message:assistant');
       expect(events.length).toBeGreaterThanOrEqual(1);
       expect(
-        events.some((e) => (e.content?.[0] as { text?: string } | undefined)?.text === 'got it'),
+        events.some((e) => {
+          const first = e.content?.[0];
+          return first?.type === 'text' && first.text === 'got it';
+        }),
       ).toBe(true);
     });
 

@@ -1,4 +1,10 @@
-import type { RpcResult } from '@code-quest/shared';
+import type {
+  DisableChromeMcpResponse,
+  DisableJupyterMcpResponse,
+  EnableJupyterMcpResponse,
+  EnsureChromeMcpResponse,
+  RpcResult,
+} from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
@@ -133,13 +139,12 @@ describe('ChatHandler > mcp', () => {
     it('ensure_chrome_mcp_enabled: emits connecting then connected and returns wasDisabled:true', async () => {
       const { claude } = await setup();
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:ensure_chrome',
-        { channelId: 'any' },
-      );
+      const res = await claude.send<EnsureChromeMcpResponse>('mcp:ensure_chrome', {
+        channelId: 'any',
+      });
 
       expect(res.success).toBe(true);
-      expect((res.response as { wasDisabled: boolean }).wasDisabled).toBe(true);
+      expect(res.response?.wasDisabled).toBe(true);
 
       const states = claude
         .events('settings:update')
@@ -154,13 +159,12 @@ describe('ChatHandler > mcp', () => {
 
       await claude.send('mcp:ensure_chrome', { channelId: 'any' });
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:ensure_chrome',
-        { channelId: 'any' },
-      );
+      const res = await claude.send<EnsureChromeMcpResponse>('mcp:ensure_chrome', {
+        channelId: 'any',
+      });
 
       expect(res.success).toBe(true);
-      expect((res.response as { wasDisabled: boolean }).wasDisabled).toBe(false);
+      expect(res.response?.wasDisabled).toBe(false);
     });
 
     it('disable_chrome_mcp: emits disconnected and returns wasEnabled:true', async () => {
@@ -170,13 +174,12 @@ describe('ChatHandler > mcp', () => {
 
       const countBefore = claude.events('settings:update').length;
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:disable_chrome',
-        { channelId: 'any' },
-      );
+      const res = await claude.send<DisableChromeMcpResponse>('mcp:disable_chrome', {
+        channelId: 'any',
+      });
 
       expect(res.success).toBe(true);
-      expect((res.response as { wasEnabled: boolean }).wasEnabled).toBe(true);
+      expect(res.response?.wasEnabled).toBe(true);
 
       const states = claude
         .events('settings:update')
@@ -189,13 +192,12 @@ describe('ChatHandler > mcp', () => {
     it('enable_jupyter_mcp: emits active and returns correct response', async () => {
       const { claude } = await setup();
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:enable_jupyter',
-        { channelId: 'any' },
-      );
+      const res = await claude.send<EnableJupyterMcpResponse>('mcp:enable_jupyter', {
+        channelId: 'any',
+      });
 
       expect(res.success).toBe(true);
-      expect((res.response as { type: string }).type).toBe('enable_jupyter_mcp_response');
+      expect(res.response?.type).toBe('enable_jupyter_mcp_response');
 
       const states = claude
         .events('settings:update')
@@ -207,13 +209,12 @@ describe('ChatHandler > mcp', () => {
     it('disable_jupyter_mcp: emits inactive and returns correct response', async () => {
       const { claude } = await setup();
 
-      const res = await claude.send<{ success: boolean; response?: Record<string, unknown> }>(
-        'mcp:disable_jupyter',
-        { channelId: 'any' },
-      );
+      const res = await claude.send<DisableJupyterMcpResponse>('mcp:disable_jupyter', {
+        channelId: 'any',
+      });
 
       expect(res.success).toBe(true);
-      expect((res.response as { type: string }).type).toBe('disable_jupyter_mcp_response');
+      expect(res.response?.type).toBe('disable_jupyter_mcp_response');
 
       const states = claude
         .events('settings:update')

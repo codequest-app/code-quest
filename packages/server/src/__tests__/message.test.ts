@@ -44,10 +44,10 @@ describe('ChatHandler > message', () => {
 
     // Sender should NOT receive message:user from emitToOthers
     expect(
-      windowA
-        .events('message:user')
-        .filter((e) => (e.content?.[0] as { text?: string } | undefined)?.text === 'hello from A')
-        .length,
+      windowA.events('message:user').filter((e) => {
+        const first = e.content?.[0];
+        return first?.type === 'text' && first.text === 'hello from A';
+      }).length,
     ).toBe(0);
   });
 
@@ -88,7 +88,10 @@ describe('ChatHandler > message', () => {
     expect(claude.events('message:user').length).toBeGreaterThan(0);
     const texts = claude
       .events('message:assistant')
-      .map((e) => (e.content?.[0] as { text?: string } | undefined)?.text)
+      .map((e) => {
+        const first = e.content?.[0];
+        return first?.type === 'text' ? first.text : undefined;
+      })
       .filter(Boolean);
     expect(texts).toContain('Done');
     expect(claude.events('message:result').length).toBeGreaterThan(0);

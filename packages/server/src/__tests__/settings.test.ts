@@ -187,7 +187,8 @@ describe('ChatHandler > settings', () => {
         received.some(
           (r) =>
             r.request.subtype === 'set_max_thinking_tokens' &&
-            (r.request as { tokens?: number }).tokens === 0,
+            'tokens' in r.request &&
+            r.request.tokens === 0,
         ),
       ).toBe(true);
     });
@@ -470,9 +471,13 @@ describe('ChatHandler > settings', () => {
       );
       await claude.emit(s.result());
 
-      const usageUpdates = claude
-        .events('request')
-        .filter((p) => (p as { request?: { type?: string } }).request?.type === 'usage_update');
+      const usageUpdates = claude.events('request').filter((p) => {
+        if (typeof p !== 'object' || p === null || !('request' in p)) return false;
+        const req = p.request;
+        return (
+          typeof req === 'object' && req !== null && 'type' in req && req.type === 'usage_update'
+        );
+      });
       expect(usageUpdates.length).toBe(0);
     });
 

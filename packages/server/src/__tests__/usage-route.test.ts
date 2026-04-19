@@ -1,30 +1,39 @@
+import type { UsageQuota } from '@code-quest/shared';
 import express from 'express';
 import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 import { createUsageRouter } from '../routes/usage.ts';
-import type { UsageTracker } from '../services/usage-tracker.ts';
+import { UsageTracker } from '../services/usage-tracker.ts';
 
-function createMockTracker(usage = {}): UsageTracker {
-  return {
-    update: vi.fn(),
-    getUsage: vi.fn().mockReturnValue(usage),
-  } as unknown as UsageTracker;
+class FakeUsageTracker extends UsageTracker {
+  constructor(private readonly usage: UsageQuota = {}) {
+    super();
+  }
+  override getUsage(): UsageQuota {
+    return this.usage;
+  }
+}
+
+class BrokenUsageTracker extends UsageTracker {
+  override getUsage(): UsageQuota {
+    throw new Error('tracker broken');
+  }
 }
 
 describe('GET /api/usage', () => {
   it('returns usage data from tracker', async () => {
     const usage = { five_hour: { utilization: 0.3 } };
-    const tracker = createMockTracker(usage);
+    const tracker = new FakeUsageTracker(usage);
     const app = express();
     app.use(createUsageRouter(tracker));
 
     const res = await request(app).get('/api/usage');
     expect(res.status).toBe(200);
     expect(res.body).toEqual(usage);
-    expect(tracker.getUsage).toHaveBeenCalled();
   });
 
   it('returns empty usage when no data', async () => {
-    const tracker = createMockTracker({});
+    const tracker = new FakeUsageTracker({});
     const app = express();
     app.use(createUsageRouter(tracker));
 
@@ -34,10 +43,7 @@ describe('GET /api/usage', () => {
   });
 
   it('returns 500 on tracker error', async () => {
-    const tracker = createMockTracker();
-    (tracker.getUsage as ReturnType<typeof vi.fn>).mockImplementation(() => {
-      throw new Error('tracker broken');
-    });
+    const tracker = new BrokenUsageTracker();
     const app = express();
     app.use(createUsageRouter(tracker));
 
