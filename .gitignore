@@ -60,8 +60,6 @@ Thumbs.db
 .claude/plans/
 .claude/projects/
 .claude/sessions/
-.claude/skills/*/
-!.claude/skills/README.md
 
 # Worktrees
 .worktrees/
