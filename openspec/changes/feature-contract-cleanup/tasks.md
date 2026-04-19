@@ -7,10 +7,10 @@
 
 ## 2. Split `feature.ts` by concern
 
-- [ ] 2.1 Extract `deriveGroupAggregate` to `lib/derive-group-aggregate.ts`; update 3 importers (trailing-renderers + FeatureRow)
-- [ ] 2.2 Move `PALETTE_TABS` + `PaletteTab` to `components/palette/palette-tabs.ts`; update imports
-- [ ] 2.3 Verify `feature.ts` now contains only types + `FEATURE_SECTIONS` const
-- [ ] 2.4 Run tests + typecheck + biome; commit
+- [x] 2.1 Extract `deriveGroupAggregate` to `lib/derive-group-aggregate.ts`; update 3 importers (trailing-renderers + FeatureRow)
+- [x] 2.2 ~~Move `PALETTE_TABS` + `PaletteTab` to palette~~ — skipped: would force lib→components dependency inversion; type stays in `feature.ts`
+- [x] 2.3 Verify `feature.ts` now contains only types + `FEATURE_SECTIONS` const
+- [x] 2.4 Run tests + typecheck + biome; commit
 
 ## 3. Split `trailing-renderers.tsx` per surface
 

@@ -2,7 +2,8 @@ import { ChoicePills } from '../../components/ui/ChoicePills';
 import { EffortSwitch } from '../../components/ui/EffortSwitch';
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import { cn } from '../../utils/cn';
-import { deriveGroupAggregate, type FeatureState } from '../feature';
+import { deriveGroupAggregate } from '../derive-group-aggregate';
+import type { FeatureState } from '../feature';
 
 function TriStateIndicator({
   state,
