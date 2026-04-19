@@ -22,7 +22,7 @@ description: >
 | `createFakeSummoner` / `createFakeServer` / `createTestContainer` | `../test/index`（server 專用版，會 wire DI container） |
 | `segments as s` | `@code-quest/summoner/test` |
 
-Server tests **不要** `import { createFakeSummoner } from '@code-quest/summoner/test'` — 那是 summoner base 版，沒掛 DI container。
+Server tests 一律從 `../test/index.ts` import — 那是包過 DI container 的版本。`@code-quest/summoner/test` 的同名 export 是 summoner base 版，給 summoner package 本身測試用。
 
 ## 最小 Setup
 

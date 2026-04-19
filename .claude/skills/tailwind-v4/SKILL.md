@@ -119,7 +119,7 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 
 包文字的元素（button / chip / badge）優先用 rem-based utility，避免 axis 切換時視覺破版。
 
-## 優先內建 utility，不用 arbitrary value
+## 優先內建 utility
 
 遇到 `[Npx]` / `[Nrem]` / `[rgba(...)]` 先檢查能否改內建。差 1-2px 就近取（設計系統一致性 > pixel-perfect）。
 
@@ -163,7 +163,7 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 
 ### 3-tier text opacity（專案慣例）
 
-文字 muted 層級收斂到三階，其他值（/50、/70、/80）避免：
+文字 muted 層級收斂到三階，需要更細層級時優先重新評估 hierarchy：
 
 | class | 用途 |
 |---|---|
