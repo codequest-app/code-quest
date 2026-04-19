@@ -1,10 +1,14 @@
+import {
+  type ColorTheme,
+  type Density,
+  type FontSize,
+  type Layout,
+  preferencesStateSchema,
+} from '@code-quest/shared';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ColorTheme = 'dark' | 'light';
-export type FontSize = 'sm' | 'md' | 'lg';
-export type Density = 'comfortable' | 'compact';
-export type Layout = 'a' | 'b';
+export type { ColorTheme, Density, FontSize, Layout };
 
 interface PreferencesState {
   colorTheme: ColorTheme;
@@ -33,6 +37,8 @@ const DEFAULTS = {
   hiddenItems: [] as string[],
 };
 
+const persistedPreferencesSchema = preferencesStateSchema.partial();
+
 export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
@@ -51,7 +57,8 @@ export const usePreferencesStore = create<PreferencesState>()(
       name: 'code-quest:preferences',
       version: 2,
       migrate: (persisted: unknown) => {
-        const prev = (persisted ?? {}) as Partial<PreferencesState>;
+        const parsed = persistedPreferencesSchema.safeParse(persisted);
+        const prev = parsed.success ? parsed.data : {};
         return { ...DEFAULTS, ...prev } as PreferencesState;
       },
     },

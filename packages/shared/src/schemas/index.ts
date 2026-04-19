@@ -27,6 +27,8 @@ export * from './notification.ts';
 export * from './plan.ts';
 // ── Plugin ──
 export * from './plugin.ts';
+// ── Preferences (client-persisted) ──
+export * from './preferences.ts';
 export * from './provider.ts';
 export * from './question.ts';
 // ── RPC ──
