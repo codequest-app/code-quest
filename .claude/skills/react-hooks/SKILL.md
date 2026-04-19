@@ -155,6 +155,15 @@ function MessageList() {
 - Contexts where every consumer needs both state and actions
 - Prototyping / early development (split when performance matters)
 
+### UI state vs Data state
+
+UI-only state (toggle 開關、dialog open、hover) 獨立放 UI context，不混進 data context。Data context 改動觸發的 re-render 不該影響「我剛打開一個 dropdown」這種純 UI 狀態。
+
+### Component 職責
+
+- Socket / RPC 呼叫走 Context action（handler），component 只呼叫 action — 不在 component 直接 `socket.emit(...)`
+- Component 讀多個 context 只是為了把 props 橋接給子 component → 讓子 component 自己讀 context，父不必中介
+
 ### Don't Pass Class Instances
 
 Avoid passing class instances directly as context values. Class methods lose `this` binding when destructured. Use `.bind()` or arrow functions in `useMemo`:

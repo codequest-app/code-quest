@@ -61,6 +61,16 @@ description: cc-office 專案特定的 code review 檢查。搭配通用 code-re
 - handler map export 用 `satisfies Record<string, ...>` 確保型別
 - effects 和 state handlers 分開 export：`xxxHandlerOn` + `xxxHandlerEffects`
 
+## Icon 慣例
+
+- 優先用 `ui/Icons` facade（re-export heroicons + `ActionButton` + `SlashCommandIcon`）
+- 新 icon 需求 → 先找 heroicons `/24/outline`；沒對應才自訂
+- 自訂 SVG 情境（合法）：
+  - brand mark（`✦`）
+  - extension 視覺 parity（`PermissionModeIcons`）
+  - dynamic chart（`SparkLegend` `EffortDots`）
+- SVG 尺寸慣例：svgBase 用 `width: '100%'; height: '100%'`，由 wrapper `w-X h-X` 控渲染尺寸（跟 `data-font` axis 等比縮放）
+
 ## React Compiler 相容性
 
 已啟用 `babel-plugin-react-compiler`。檢查：
@@ -71,7 +81,7 @@ description: cc-office 專案特定的 code review 檢查。搭配通用 code-re
 
 ## 測試
 
-- 使用 FakeClaude + real JSON（segments）
-- 不用 spy 測 socket.emit — 用 `claude.received()` 驗證
-- client 測試用 `renderWithChannel` + testing-library
+- 使用 FakeSummoner + real JSON segments（`@code-quest/summoner/test` 的 `s.*()` builder）
+- 驗證 action 發 socket event 用完整 pipeline + `claude.received(...)`，不 spy emit
+- client 測試用 `renderWithChannel` / `renderWithWorkspace` + testing-library
 - expect 不變原則：重構不改 expect

@@ -119,6 +119,39 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 
 包文字的元素（button / chip / badge）優先用 rem-based utility，避免 axis 切換時視覺破版。
 
+## 優先內建 utility，不用 arbitrary value
+
+遇到 `[Npx]` / `[Nrem]` / `[rgba(...)]` 先檢查能否改內建。差 1-2px 就近取（設計系統一致性 > pixel-perfect）。
+
+### Spacing（`p/m/w/h/gap/top/left/right/bottom`）
+
+預設 `--spacing: 0.25rem`，所以 `N` = 4N px。Tailwind v4 支援任意整數：`w-160` = 640px。半步只有 `0.5/1.5/2.5/3.5`。
+
+| px | Tailwind | px | Tailwind |
+|---|---|---|---|
+| 2 | `0.5` | 24 | `6` |
+| 4 | `1` | 32 | `8` |
+| 6 | `1.5` | 40 | `10` |
+| 8 | `2` | 48 | `12` |
+| 10 | `2.5` | 64 | `16` |
+| 12 | `3` | 96 | `24` |
+| 14 | `3.5` | 任意 4N | `N` |
+| 16 | `4` | 200 | `50` |
+| 20 | `5` | 640 | `160` |
+
+### 其他內建 scale
+
+- **Rounded**：`rounded-sm`(2) / `rounded`(4) / `rounded-md`(6) / `rounded-lg`(8) / `rounded-xl`(12) / `rounded-2xl`(16) / `rounded-full`
+- **Text size**：`text-xs`(12) / `text-sm`(14) / `text-base`(16) / `text-lg`(18) / `text-xl`(20) / `text-2xl`(24) — 不使用自訂 token
+- **Tracking**（em-based）：`tracking-tighter`(-0.05em) / `tight`(-0.025) / `normal`(0) / `wide`(0.025) / `wider`(0.05) / `widest`(0.1)
+- **Leading**：`leading-none`(1) / `tight`(1.25) / `snug`(1.375) / `normal`(1.5) / `relaxed`(1.625) / `loose`(2)
+
+### Arbitrary value 正當情境
+
+- 計算值：`max-h-[calc(100vh-64px)]`
+- 動態 CSS variable：`bg-[linear-gradient(...var(--X)...)]`
+- 沒有對應的刻意 off-grid 值（如 `w-[26px]` icon — review 時確認是否真需要 26 而非 24/28）
+
 ## Opacity modifier（v4 推薦）
 
 `--color-X` 是 hex token 時，直接用 opacity modifier 產生半透明：
@@ -127,6 +160,16 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 <div className="bg-accent/10" />        // ✅ v4 modifier
 <div className="text-text-muted/60" />  // ✅ 3-tier opacity
 ```
+
+### 3-tier text opacity（專案慣例）
+
+文字 muted 層級收斂到三階，其他值（/50、/70、/80）避免：
+
+| class | 用途 |
+|---|---|
+| `text-text-muted` | primary muted（次要文字） |
+| `text-text-muted/60` | faint（placeholder、disabled-ish） |
+| `text-text-muted/40` | super faint（gutter、decorator） |
 
 早期 pre-v4 的 `rgba(var(--color-X-rgb), 0.N)` 模式改用 modifier：
 
