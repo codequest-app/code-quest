@@ -1,6 +1,14 @@
 ---
 name: cc-office-review
-description: cc-office 專案特定的 code review 檢查。搭配通用 code-review skill 使用。當 review cc-office 程式碼時自動套用。
+description: >
+  cc-office project-specific code review checks covering import order,
+  zod schema placement, cross-package event-name alignment, server
+  handler middleware, channel / emitter semantics, client handler
+  organization, React Compiler compatibility, icon facade convention,
+  and FakeSummoner test patterns. Pairs with generic `code-review`
+  skill. Use when reviewing cc-office code, discussing refactor,
+  checking a PR for protocol/handler/zod alignment, or verifying that
+  recent changes match project conventions.
 ---
 
 # cc-office 專案特定 Code Review

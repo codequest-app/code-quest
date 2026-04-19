@@ -67,9 +67,9 @@ Each level **removes more real behavior**:
 - **Mock**: No real behavior at all
 - **Stub**: No behavior + hardcoded data — lowest confidence
 
-### ❌ Avoid `vi.mock()` for Module Replacement
+### Prefer dependency injection over `vi.mock()` for module replacement
 
-`vi.mock()` replaces the **entire module** — you're testing mock behavior, not real behavior.
+`vi.mock()` replaces the **entire module** — you're testing mock behavior, not real behavior. Inject the dependency (socket, store, service) as a parameter or via context instead; it gives real coverage and keeps the test pressing on the actual API surface.
 
 ```typescript
 // ❌ BAD — tests mock, not real hook
@@ -208,7 +208,7 @@ expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
 expect(claude.socket.emit).toHaveBeenCalledWith('chat:stop_task', ...);
 ```
 
-### ❌ NEVER use these patterns:
+### Legacy patterns to migrate away from
 
 ```typescript
 // ❌ BAD — hand-construct fake socket

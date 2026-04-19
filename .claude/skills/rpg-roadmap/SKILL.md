@@ -1,11 +1,11 @@
 ---
 name: rpg-roadmap
 description: >
-  **Roadmap — 尚未實作。** Code Quest RPG vision for cc-office — CodeLand world,
-  11 systems, HP/MP/EXP/Gold mechanics, battle-trigger rules, pixel-art visual
-  style. Use when designing future RPG features, discussing long-term direction,
-  or reading legacy docs under `docs/ui-design/`. Current architecture: see
-  `project-overview`.
+  Roadmap (not yet implemented). Code Quest RPG vision for cc-office —
+  CodeLand world, 11 systems, HP/MP/EXP/Gold mechanics, battle-trigger
+  rules, pixel-art visual style. Use when designing future RPG features,
+  discussing long-term direction, or reading legacy docs under
+  `docs/ui-design/`. Current architecture: see `project-overview`.
 ---
 
 # Code Quest — RPG Roadmap（尚未實作）
