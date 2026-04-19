@@ -321,11 +321,6 @@ export function CommandMenu({
     hasPrev,
   } = layout;
   const f = effectiveFilter.toLowerCase();
-  const modelHasPrev = hasPrev.model;
-  const customizeHasPrev = hasPrev.customize;
-  const slashHasPrev = hasPrev.slash;
-  const settingsHasPrev = hasPrev.settings;
-  const supportHasPrev = hasPrev.support;
   useLayoutEffect(() => {
     flatItemsRef.current = flatItems;
   });
@@ -430,7 +425,7 @@ export function CommandMenu({
                     activeId={activeId}
                     activeItemRef={activeItemRef}
                     onHover={setActiveId}
-                    isFirst={!modelHasPrev}
+                    isFirst={!hasPrev.model}
                   />
                 )}
 
@@ -440,7 +435,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
-                  isFirst={!customizeHasPrev}
+                  isFirst={!hasPrev.customize}
                 />
                 <MenuSection
                   label="Slash Commands"
@@ -448,7 +443,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
-                  isFirst={!slashHasPrev}
+                  isFirst={!hasPrev.slash}
                 />
                 <MenuSection
                   label="Settings"
@@ -456,7 +451,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
-                  isFirst={!settingsHasPrev}
+                  isFirst={!hasPrev.settings}
                 />
                 <MenuSection
                   label="Support"
@@ -464,7 +459,7 @@ export function CommandMenu({
                   activeId={activeId}
                   activeItemRef={activeItemRef}
                   onHover={setActiveId}
-                  isFirst={!supportHasPrev}
+                  isFirst={!hasPrev.support}
                 />
               </>
             )}

@@ -1,13 +1,4 @@
-import type { MenuItem } from './build-menu-items';
-
-interface MenuSections {
-  context: MenuItem[];
-  model: MenuItem[];
-  customize: MenuItem[];
-  slash: MenuItem[];
-  settings: MenuItem[];
-  support: MenuItem[];
-}
+import type { MenuItem, MenuSections } from './build-menu-items';
 
 /**
  * Filtered + laid-out view of the menu, derived purely from the given
@@ -45,7 +36,6 @@ export function filterMenuItems(items: MenuItem[], filter: string): MenuItem[] {
 }
 
 export function computeMenuLayout(sections: MenuSections, filter: string): MenuLayout {
-  const f = filter.toLowerCase();
   const context = filterMenuItems(sections.context, filter);
   const model = filterMenuItems(sections.model, filter);
   const customize = filterMenuItems(sections.customize, filter);
@@ -53,7 +43,7 @@ export function computeMenuLayout(sections: MenuSections, filter: string): MenuL
   const settings = filterMenuItems(sections.settings, filter);
   const support = filterMenuItems(sections.support, filter);
 
-  const modelVisible = !f || model.length > 0;
+  const modelVisible = !filter || model.length > 0;
 
   const contextPresent = context.length > 0;
   const hasPrevModel = contextPresent;

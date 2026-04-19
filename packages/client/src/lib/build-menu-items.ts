@@ -16,7 +16,7 @@ export interface MenuItem {
   onClick?: () => void;
 }
 
-interface MenuSections {
+export interface MenuSections {
   context: MenuItem[];
   model: MenuItem[];
   customize: MenuItem[];
