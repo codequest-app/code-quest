@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ContentRenderer } from '../ContentRenderer';
 
 // Minimal stubs so tests don't need real diff/ansi parsers
@@ -23,8 +23,6 @@ vi.mock('../../DiffViewer', () => ({
 vi.mock('../../../utils/diff', () => ({
   isDiff: (s: string) => s.startsWith('--- '),
 }));
-
-import { vi } from 'vitest';
 
 describe('ContentRenderer', () => {
   it('renders DiffViewer when content is a diff', () => {

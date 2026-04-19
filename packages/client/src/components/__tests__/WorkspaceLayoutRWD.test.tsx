@@ -29,6 +29,7 @@ function mockMatchMedia(width: number) {
           listeners.get(query)?.delete(fn);
         },
         dispatchEvent: () => false,
+        // Narrow stub of MediaQueryList — covers only the surface this RWD test uses.
       }) as unknown as MediaQueryList,
   );
 

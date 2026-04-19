@@ -33,6 +33,8 @@ function createMatchMediaStub(initialDark: boolean): () => MqlStub {
         cb({ matches, media: '(prefers-color-scheme: dark)' } as MediaQueryListEvent);
       }
     },
+    // Test-only helpers (_listeners / _set) — cast to MqlStub so tests can drive the stub
+    // matches-value externally; the real MediaQueryList interface has no such hooks.
   } as unknown as MqlStub;
   return () => mql;
 }

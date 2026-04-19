@@ -8,7 +8,7 @@ import { launchOptionsSchema } from '../session.ts';
 import { effortLevelSchema } from '../settings.ts';
 
 describe('effortLevelSchema', () => {
-  it('exports exactly low, medium, high, max', () => {
+  it('exports exactly low, medium, high, max, xhigh', () => {
     expect(effortLevelSchema.options.toSorted()).toEqual(['high', 'low', 'max', 'medium', 'xhigh']);
   });
 });

@@ -180,10 +180,9 @@ describe('ChannelProvider', () => {
     await sendUserMessage(user, 'second');
     await user.click(screen.getByTitle('Stop'));
 
-    const interrupts = claude.received('control_request').filter((cr) => {
-      const req = cr.request as Record<string, unknown> | undefined;
-      return req?.subtype === 'interrupt';
-    });
+    const interrupts = claude
+      .received('control_request')
+      .filter((cr) => cr.request.subtype === 'interrupt');
     expect(interrupts.length).toBe(2);
   });
 
