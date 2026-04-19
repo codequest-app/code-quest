@@ -14,6 +14,7 @@ import { createSwitchAccountFeature } from '../features/switch-account/switch-ac
 import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
 import { buildMenuItems, type MenuItem } from '../lib/build-menu-items';
+import { computeMenuLayout } from '../lib/menu-layout';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { openUrl } from '../utils/open-url';
@@ -307,53 +308,24 @@ export function CommandMenu({
     closeSilent,
     compose: { executeSlashCommand: compose.executeSlashCommand },
   });
+  const layout = computeMenuLayout(sections, effectiveFilter);
   const {
-    context: contextItems,
-    model: modelItems,
-    customize: customizeItems,
-    slash: slashItems,
-    settings: settingsItems,
-    support: supportItems,
-  } = sections;
-
-  // Filter — filterOnly items only appear when filter text is non-empty
+    context: filteredContext,
+    model: filteredModel,
+    customize: filteredCustomize,
+    slash: filteredSlash,
+    settings: filteredSettings,
+    support: filteredSupport,
+    modelVisible: modelSectionVisible,
+    flatItems,
+    hasPrev,
+  } = layout;
   const f = effectiveFilter.toLowerCase();
-  const filterItems = (items: MenuItem[]) => {
-    return items.filter((i) => {
-      if (i.filterOnly && !f) return false;
-      if (f) {
-        const matchText = i.matchFirstToken ? f.split(' ')[0] : f;
-        return i.label.toLowerCase().includes(matchText);
-      }
-      return true;
-    });
-  };
-
-  const filteredContext = filterItems(contextItems);
-  const filteredModel = filterItems(modelItems);
-  const filteredCustomize = filterItems(customizeItems);
-  const filteredSlash = filterItems(slashItems);
-  const filteredSettings = filterItems(settingsItems);
-  const filteredSupport = filterItems(supportItems);
-
-  const modelSectionVisible = !f || filteredModel.length > 0;
-
-  // Compute whether each section has any preceding visible sections (for divider logic)
-  const contextVisible = filteredContext.length > 0;
-  const modelHasPrev = contextVisible;
-  const customizeHasPrev = contextVisible || modelSectionVisible;
-  const slashHasPrev = customizeHasPrev || filteredCustomize.length > 0;
-  const settingsHasPrev = slashHasPrev || filteredSlash.length > 0;
-  const supportHasPrev = settingsHasPrev || filteredSettings.length > 0;
-
-  const flatItems: MenuItem[] = [
-    ...filteredContext,
-    ...(modelSectionVisible ? filteredModel : []),
-    ...filteredCustomize,
-    ...filteredSlash,
-    ...filteredSettings,
-    ...filteredSupport,
-  ];
+  const modelHasPrev = hasPrev.model;
+  const customizeHasPrev = hasPrev.customize;
+  const slashHasPrev = hasPrev.slash;
+  const settingsHasPrev = hasPrev.settings;
+  const supportHasPrev = hasPrev.support;
   useLayoutEffect(() => {
     flatItemsRef.current = flatItems;
   });
