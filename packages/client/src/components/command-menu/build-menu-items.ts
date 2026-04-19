@@ -1,7 +1,7 @@
-import { toMenuItem } from './adapters/to-menu-item';
-import { toSlashCommand } from './adapters/to-slash-command';
-import type { Feature, FeatureSection, MenuItemView, SlashCommandView } from './feature';
-import type { FeatureRegistry } from './feature-registry';
+import { toMenuItem } from '../../lib/adapters/to-menu-item';
+import { toSlashCommand } from '../../lib/adapters/to-slash-command';
+import type { Feature, FeatureSection, MenuItemView, SlashCommandView } from '../../lib/feature';
+import type { FeatureRegistry } from '../../lib/feature-registry';
 
 export interface MenuItem {
   id: string;

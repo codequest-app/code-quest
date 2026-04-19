@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
-import { CommandMenu } from './CommandMenu';
+import { CommandMenu } from './command-menu/CommandMenu';
 
 const meta = {
   component: CommandMenu,

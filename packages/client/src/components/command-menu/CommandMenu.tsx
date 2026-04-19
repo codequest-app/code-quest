@@ -1,23 +1,23 @@
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useChannelCompose, useChannelConfig } from '../contexts/channel';
-import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
-import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
-import { createBtwLocalFeature } from '../features/btw/btw-feature';
-import { createEffortFeature } from '../features/effort/effort-feature';
-import { createFastModeFeature } from '../features/fast-mode/fast-mode-feature';
-import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
-import { createManagePluginsFeature } from '../features/manage-plugins/manage-plugins-feature';
-import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
-import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
-import { createModelFeature } from '../features/model/model-feature';
-import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
-import { createThinkingFeature } from '../features/thinking/thinking-feature';
-import { createViewHelpFeature } from '../features/view-help/view-help-feature';
-import { buildMenuItems, type MenuItem } from '../lib/build-menu-items';
-import { computeMenuLayout } from '../lib/menu-layout';
-import { cn } from '../utils/cn';
-import { findModel, getEffortLevels } from '../utils/model-utils';
-import { openUrl } from '../utils/open-url';
+import { useChannelCompose, useChannelConfig } from '../../contexts/channel';
+import { useFeatureRegistry } from '../../contexts/channel/FeatureRegistryContext';
+import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
+import { createBtwLocalFeature } from '../../features/btw/btw-feature';
+import { createEffortFeature } from '../../features/effort/effort-feature';
+import { createFastModeFeature } from '../../features/fast-mode/fast-mode-feature';
+import { createGeneralConfigFeature } from '../../features/general-config/general-config-feature';
+import { createManagePluginsFeature } from '../../features/manage-plugins/manage-plugins-feature';
+import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
+import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
+import { createModelFeature } from '../../features/model/model-feature';
+import { createSwitchAccountFeature } from '../../features/switch-account/switch-account-feature';
+import { createThinkingFeature } from '../../features/thinking/thinking-feature';
+import { createViewHelpFeature } from '../../features/view-help/view-help-feature';
+import { cn } from '../../utils/cn';
+import { findModel, getEffortLevels } from '../../utils/model-utils';
+import { openUrl } from '../../utils/open-url';
+import { buildMenuItems, type MenuItem } from './build-menu-items';
+import { computeMenuLayout } from './menu-layout';
 
 function MenuItemRow({
   item,

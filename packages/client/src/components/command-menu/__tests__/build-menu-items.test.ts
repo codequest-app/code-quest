@@ -1,18 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
-import { btwSignal, createBtwFeature, createBtwLocalFeature } from '../../features/btw/btw-feature';
-import { createClearFeature } from '../../features/clear/clear-feature';
-import { createEffortFeature } from '../../features/effort/effort-feature';
-import { createFastModeFeature } from '../../features/fast-mode/fast-mode-feature';
-import { createManagePluginsFeature } from '../../features/manage-plugins/manage-plugins-feature';
-import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
-import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
-import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
-import { createModelFeature } from '../../features/model/model-feature';
-import { createThinkingFeature } from '../../features/thinking/thinking-feature';
+import { createAttachFileFeature } from '../../../features/attach-file/attach-file-feature';
+import {
+  btwSignal,
+  createBtwFeature,
+  createBtwLocalFeature,
+} from '../../../features/btw/btw-feature';
+import { createClearFeature } from '../../../features/clear/clear-feature';
+import { createEffortFeature } from '../../../features/effort/effort-feature';
+import { createFastModeFeature } from '../../../features/fast-mode/fast-mode-feature';
+import { createManagePluginsFeature } from '../../../features/manage-plugins/manage-plugins-feature';
+import { createMcpServersFeature } from '../../../features/mcp-servers/mcp-servers-feature';
+import { createMcpStatusFeature } from '../../../features/mcp-status/mcp-status-feature';
+import { createMentionFileFeature } from '../../../features/mention-file/mention-file-feature';
+import { createModelFeature } from '../../../features/model/model-feature';
+import { createThinkingFeature } from '../../../features/thinking/thinking-feature';
+import type { Feature } from '../../../lib/feature';
+import { createFeatureRegistry } from '../../../lib/feature-registry';
 import { type BuildMenuItemsParams, buildMenuItems } from '../build-menu-items';
-import type { Feature } from '../feature';
-import { createFeatureRegistry } from '../feature-registry';
 
 function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItemsParams {
   return {

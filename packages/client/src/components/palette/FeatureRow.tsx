@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { toPaletteCommand } from '../../lib/adapters/to-palette-command';
 import { deriveGroupAggregate } from '../../lib/derive-group-aggregate';
 import type { Feature } from '../../lib/feature';
 import { cn } from '../../utils/cn';
+import { toPaletteCommand } from './to-palette-command';
 
 export interface FeatureRowProps {
   feature: Feature;

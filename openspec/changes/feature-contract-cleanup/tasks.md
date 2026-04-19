@@ -28,12 +28,12 @@
 
 ## 5. Relocate surface-specific files out of `lib/`
 
-- [ ] 5.1 Move `lib/adapters/to-palette-command.tsx` → `components/palette/to-palette-command.tsx`; update importer
-- [ ] 5.2 Create `components/command-menu/` directory
-- [ ] 5.3 Move `components/CommandMenu.tsx` → `components/command-menu/CommandMenu.tsx`; update imports from outside
-- [ ] 5.4 Move `lib/build-menu-items.ts` → `components/command-menu/build-menu-items.ts`; update imports + test location
-- [ ] 5.5 Move `lib/menu-layout.ts` → `components/command-menu/menu-layout.ts`; update imports + test location
-- [ ] 5.6 Run tests + typecheck + biome; commit
+- [x] 5.1 Move `lib/adapters/to-palette-command.tsx` → `components/palette/to-palette-command.tsx`; update importer
+- [x] 5.2 Create `components/command-menu/` directory
+- [x] 5.3 Move `components/CommandMenu.tsx` → `components/command-menu/CommandMenu.tsx`; update imports from outside
+- [x] 5.4 Move `lib/build-menu-items.ts` → `components/command-menu/build-menu-items.ts`; update imports + test location
+- [x] 5.5 Move `lib/menu-layout.ts` → `components/command-menu/menu-layout.ts`; update imports + test location
+- [x] 5.6 Run tests + typecheck + biome; commit
 
 ## 6. Remove view types; expose `Feature[]` from registry
 
