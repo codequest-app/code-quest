@@ -11,9 +11,10 @@ export function createModelFeature({ modelLabel }: ModelFeatureDeps): Feature {
   return {
     id: 'model',
     label: 'Switch model',
-    category: 'Model',
+    section: 'Model',
     order: 0,
     state: { kind: 'select', currentValue: modelLabel },
+    ui: { closeSilent: true },
     execute() {
       modelOpenSignal.setOpen(true);
     },

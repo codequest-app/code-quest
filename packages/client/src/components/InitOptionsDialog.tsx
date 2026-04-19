@@ -16,12 +16,12 @@ const TEXTAREA_SM =
   'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-[40px]';
 
 const HOOK_DEFS = [
-  { key: 'captureBaseline', label: 'captureBaseline (PreToolUse)', category: 'PreToolUse' },
-  { key: 'saveFileIfNeeded', label: 'saveFileIfNeeded (PreToolUse)', category: 'PreToolUse' },
+  { key: 'captureBaseline', label: 'captureBaseline (PreToolUse)', section: 'PreToolUse' },
+  { key: 'saveFileIfNeeded', label: 'saveFileIfNeeded (PreToolUse)', section: 'PreToolUse' },
   {
     key: 'findDiagnosticsProblems',
     label: 'findDiagnosticsProblems (PostToolUse)',
-    category: 'PostToolUse',
+    section: 'PostToolUse',
   },
 ] as const;
 
@@ -31,8 +31,8 @@ function buildEnabledHooks(
   const enabled: Record<string, Array<{ matcher: string; hookCallbackIds: string[] }>> = {};
   for (const def of HOOK_DEFS) {
     if (!hooks[def.key]) continue;
-    if (!enabled[def.category]) enabled[def.category] = [];
-    enabled[def.category].push({ matcher: def.key, hookCallbackIds: [def.key] });
+    if (!enabled[def.section]) enabled[def.section] = [];
+    enabled[def.section].push({ matcher: def.key, hookCallbackIds: [def.key] });
   }
   return enabled;
 }

@@ -15,7 +15,7 @@ export function createUsageFeature({ emitRefreshUsage }: UsageFeatureDeps): Feat
   return {
     id: 'usage',
     label: 'Account & usage…',
-    category: 'Model',
+    section: 'Model',
     order: 40,
     ui: { closeSilent: true },
     execute: run,

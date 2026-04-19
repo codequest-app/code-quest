@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { createEffortFeature } from '../effort-feature';
 
 describe('createEffortFeature', () => {
-  it('returns a Feature with id effort-level and category Model', () => {
+  it('returns a Feature with id effort-level and section Model', () => {
     const feature = createEffortFeature({
       effort: null,
       effortLevels: ['low', 'medium', 'high', 'max'],
       onSetEffort: vi.fn(),
     });
     expect(feature.id).toBe('effort-level');
-    expect(feature.category).toBe('Model');
+    expect(feature.section).toBe('Model');
   });
 
   it('label is Effort and description omitted when no level set', () => {
@@ -32,22 +32,30 @@ describe('createEffortFeature', () => {
     expect(feature.description).toBe('(Low)');
   });
 
-  it('state is select with currentValue reflecting effort', () => {
+  it('state is segmented with options, currentValue and onSelect', () => {
+    const onSetEffort = vi.fn();
     const feature = createEffortFeature({
       effort: 'medium',
       effortLevels: ['low', 'medium', 'high', 'max'],
-      onSetEffort: vi.fn(),
+      onSetEffort,
     });
-    expect(feature.state).toEqual({ kind: 'select', currentValue: 'medium' });
+    expect(feature.state).toMatchObject({
+      kind: 'segmented',
+      options: ['low', 'medium', 'high', 'max'],
+      currentValue: 'medium',
+    });
+    if (feature.state?.kind !== 'segmented') throw new Error('expected segmented');
+    feature.state.onSelect('high');
+    expect(onSetEffort).toHaveBeenCalledWith('high');
   });
 
-  it('state currentValue is empty string when no effort set', () => {
+  it('state currentValue is null when no effort set', () => {
     const feature = createEffortFeature({
       effort: null,
       effortLevels: ['low', 'medium', 'high', 'max'],
       onSetEffort: vi.fn(),
     });
-    expect(feature.state).toEqual({ kind: 'select', currentValue: '' });
+    expect(feature.state).toMatchObject({ kind: 'segmented', currentValue: null });
   });
 
   it('execute cycles to next effort level', () => {

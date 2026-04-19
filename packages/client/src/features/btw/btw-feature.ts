@@ -70,7 +70,7 @@ export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): Feature {
   return {
     id: 'btw',
     label: '/btw',
-    category: 'Slash Commands',
+    section: 'Slash Commands',
     ui: { matchFirstToken: true },
     execute() {
       // Menu click with no slashFilter context — no-op; live invocation happens

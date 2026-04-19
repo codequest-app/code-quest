@@ -13,7 +13,7 @@ export function createFastModeFeature({
   return {
     id: 'fast-mode',
     label: 'Toggle fast mode',
-    category: 'Model',
+    section: 'Model',
     order: 30,
     state: { kind: 'toggle', active },
     execute() {

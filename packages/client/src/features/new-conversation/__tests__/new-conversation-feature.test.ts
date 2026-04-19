@@ -7,10 +7,10 @@ describe('createNewConversationFeature', () => {
     expect(feature.id).toBe('new-conversation');
   });
 
-  it('is in Context category with filterOnly true', () => {
+  it('is in Context section with filterOnly true', () => {
     const feature = createNewConversationFeature({ sendMessage: vi.fn() });
     expect(feature.label).toBe('New conversation');
-    expect(feature.category).toBe('Context');
+    expect(feature.section).toBe('Context');
     expect(feature.ui?.filterOnly).toBe(true);
   });
 

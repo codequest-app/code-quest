@@ -14,7 +14,7 @@ export function createClearFeature({
   return {
     id: 'clear',
     label: 'Clear conversation',
-    category: 'Context',
+    section: 'Context',
     order: 0,
     execute() {
       clearMessages();

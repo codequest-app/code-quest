@@ -12,7 +12,7 @@ export function createViewHelpFeature({
   return {
     id: 'view-help',
     label: 'View help docs',
-    category: 'Support',
+    section: 'Support',
     ui: { closeSilent: true },
     execute() {
       openUrl(docsUrl ?? FALLBACK_DOCS_URL);

@@ -4,7 +4,7 @@ export function createMcpStatusFeature({ onMcpStatus }: { onMcpStatus?: () => vo
   return {
     id: 'mcp-status',
     label: 'MCP status',
-    category: 'Customize',
+    section: 'Customize',
     order: 0,
     ui: { closeSilent: true },
     execute() {

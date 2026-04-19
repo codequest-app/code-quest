@@ -3,8 +3,6 @@ import { useChannelCompose, useChannelConfig } from '../contexts/channel';
 import { useFeatureRegistry } from '../contexts/channel/FeatureRegistryContext';
 import { createAttachFileFeature } from '../features/attach-file/attach-file-feature';
 import { createBtwLocalFeature } from '../features/btw/btw-feature';
-import { createColorThemeFeature } from '../features/color-theme/color-theme-feature';
-import { createDensityFeature } from '../features/density/density-feature';
 import { createEffortFeature } from '../features/effort/effort-feature';
 import { createFastModeFeature } from '../features/fast-mode/fast-mode-feature';
 import { createGeneralConfigFeature } from '../features/general-config/general-config-feature';
@@ -12,13 +10,10 @@ import { createManagePluginsFeature } from '../features/manage-plugins/manage-pl
 import { createMcpServersFeature } from '../features/mcp-servers/mcp-servers-feature';
 import { createMcpStatusFeature } from '../features/mcp-status/mcp-status-feature';
 import { createModelFeature } from '../features/model/model-feature';
-import { createOpenSettingsFeature } from '../features/open-settings/open-settings-feature';
-import { openSettingsSignal } from '../features/open-settings/open-settings-signal';
 import { createSwitchAccountFeature } from '../features/switch-account/switch-account-feature';
 import { createThinkingFeature } from '../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../features/view-help/view-help-feature';
 import { buildMenuItems, type MenuItem } from '../lib/build-menu-items';
-import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { openUrl } from '../utils/open-url';
@@ -162,11 +157,6 @@ export function CommandMenu({
 
   const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
 
-  const colorTheme = usePreferencesStore((s) => s.colorTheme);
-  const setColorTheme = usePreferencesStore((s) => s.setColorTheme);
-  const density = usePreferencesStore((s) => s.density);
-  const setDensity = usePreferencesStore((s) => s.setDensity);
-
   const btwBaseFeature = registry.getFeatures().find((f) => f.id === 'btw');
   const localFeatures = [
     createModelFeature({ modelLabel }),
@@ -179,9 +169,6 @@ export function CommandMenu({
     createViewHelpFeature({ openUrl, docsUrl }),
     createEffortFeature({ effort, effortLevels, onSetEffort }),
     createThinkingFeature({ isThinkingOn, onSetThinkingLevel }),
-    createColorThemeFeature({ colorTheme, setColorTheme }),
-    createDensityFeature({ density, setDensity }),
-    createOpenSettingsFeature({ onOpen: () => openSettingsSignal.setOpen(true) }),
     ...(supportsFastMode ? [createFastModeFeature({ fastModeState, setFastMode })] : []),
     ...(btwBaseFeature
       ? [createBtwLocalFeature({ slashFilter: compose.slashFilter, baseFeature: btwBaseFeature })]

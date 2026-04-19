@@ -67,6 +67,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
   // Always render as div — avoids button-in-button nesting when used inside menu items
   return (
     <div
+      data-testid="effort-switch"
       role="slider"
       tabIndex={0}
       aria-valuenow={idx}

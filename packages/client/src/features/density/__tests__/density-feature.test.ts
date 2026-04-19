@@ -2,31 +2,37 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDensityFeature } from '../density-feature';
 
 describe('createDensityFeature', () => {
-  it('has correct id/category/label/order', () => {
+  it('has correct id/section/label/order', () => {
     const feature = createDensityFeature({ density: 'comfortable', setDensity: vi.fn() });
-    expect(feature.id).toBe('toggle-density');
-    expect(feature.category).toBe('Settings');
-    expect(feature.label).toBe('Toggle density');
+    expect(feature.id).toBe('density');
+    expect(feature.section).toBe('Settings');
+    expect(feature.label).toBe('Density');
     expect(feature.order).toBe(11);
   });
 
-  it('state reflects current density as toggle (compact → active true)', () => {
-    const feature = createDensityFeature({ density: 'compact', setDensity: vi.fn() });
-    expect(feature.state).toEqual({ kind: 'toggle', active: true });
+  it('state is choice with Comfortable/Compact options', () => {
+    const setDensity = vi.fn();
+    const feature = createDensityFeature({ density: 'compact', setDensity });
+    expect(feature.state).toMatchObject({
+      kind: 'choice',
+      options: [
+        { value: 'comfortable', label: 'Comfortable' },
+        { value: 'compact', label: 'Compact' },
+      ],
+      currentValue: 'compact',
+    });
+    if (feature.state?.kind !== 'choice') throw new Error('expected choice');
+    feature.state.onSelect('comfortable');
+    expect(setDensity).toHaveBeenCalledWith('comfortable');
   });
 
-  it('state reflects current density as toggle (comfortable → active false)', () => {
-    const feature = createDensityFeature({ density: 'comfortable', setDensity: vi.fn() });
-    expect(feature.state).toEqual({ kind: 'toggle', active: false });
-  });
-
-  it('execute toggles comfortable -> compact', () => {
+  it('execute cycles comfortable -> compact (for Enter key)', () => {
     const setDensity = vi.fn();
     createDensityFeature({ density: 'comfortable', setDensity }).execute();
     expect(setDensity).toHaveBeenCalledWith('compact');
   });
 
-  it('execute toggles compact -> comfortable', () => {
+  it('execute wraps compact -> comfortable', () => {
     const setDensity = vi.fn();
     createDensityFeature({ density: 'compact', setDensity }).execute();
     expect(setDensity).toHaveBeenCalledWith('comfortable');

@@ -38,6 +38,20 @@ describe('CommandPalette — All tab', () => {
     expect(screen.getByText(/raw event panel/i)).toBeInTheDocument();
   });
 
+  it('does not show Open preferences (moved to ActivityBar gear icon)', async () => {
+    await renderAll();
+    expect(screen.queryByText(/open preferences/i)).not.toBeInTheDocument();
+  });
+
+  it('hides low-frequency preferences (theme/density/font-size) from All tab', async () => {
+    await renderAll();
+    // Settings-section features have ui.hideFromAll — they live in a
+    // dedicated Settings tab, not cluttering the quick-access All view.
+    expect(screen.queryByText(/^theme$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^density$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^font size$/i)).not.toBeInTheDocument();
+  });
+
   it('shows visibility group rows in All tab (expandable)', async () => {
     const user = userEvent.setup();
     await renderAll();
@@ -99,7 +113,7 @@ describe('CommandPalette — All tab', () => {
     expect(resultButtons).toHaveLength(0);
   });
 
-  it('clicking ∂ pill in All tab switches to actions tab', async () => {
+  it('partial group ∂ pill renders in All tab (expand to see detail via label click)', async () => {
     const user = userEvent.setup();
     await renderWithChannel(
       <>
@@ -113,9 +127,13 @@ describe('CommandPalette — All tab', () => {
     const hooksRow = screen.getByTestId('group-row-hooks');
     const partialPill = hooksRow.querySelector('[data-testid="group-toggle"]')!;
     expect(partialPill.textContent).toBe('∂');
-    await user.click(partialPill);
-    // should now be on actions tab
-    expect(screen.getByRole('tab', { name: /actions/i })).toHaveAttribute('aria-selected', 'true');
+    // Actions tab no longer exists — detail view is inline: clicking
+    // group-label expands the row's per-type toggles right here in All.
+    const label = hooksRow.querySelector('[data-testid="group-label"]')!;
+    await user.click(label);
+    // after expand, per-type pills become visible for hooks group types
+    const anyHookPill = hooksRow.querySelector('[data-testid^="type-pill-"]');
+    expect(anyHookPill).toBeTruthy();
   });
 
   it('search query filters messages in All tab', async () => {

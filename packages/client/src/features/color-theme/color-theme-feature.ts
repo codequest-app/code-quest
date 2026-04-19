@@ -1,3 +1,4 @@
+import { createChoiceFeature } from '../../lib/create-choice-feature';
 import type { Feature } from '../../lib/feature';
 import type { ColorTheme } from '../../stores/usePreferencesStore';
 
@@ -10,14 +11,17 @@ export function createColorThemeFeature({
   colorTheme,
   setColorTheme,
 }: ColorThemeFeatureDeps): Feature {
-  return {
+  return createChoiceFeature<ColorTheme>({
     id: 'switch-color-theme',
-    label: 'Switch theme',
-    category: 'Settings',
+    label: 'Theme',
+    section: 'Settings',
     order: 10,
-    state: { kind: 'toggle', active: colorTheme === 'dark' },
-    execute() {
-      setColorTheme(colorTheme === 'dark' ? 'light' : 'dark');
-    },
-  };
+    tabs: ['actions'],
+    options: [
+      { value: 'dark', label: 'Dark' },
+      { value: 'light', label: 'Light' },
+    ],
+    currentValue: colorTheme,
+    onSelect: setColorTheme,
+  });
 }

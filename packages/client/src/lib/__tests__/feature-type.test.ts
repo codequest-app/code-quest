@@ -6,7 +6,7 @@ describe('Feature type', () => {
     const f: Feature = {
       id: 'clear',
       label: 'Clear',
-      category: 'Context',
+      section: 'Context',
       execute() {},
     };
     expect(f.id).toBe('clear');
@@ -16,7 +16,7 @@ describe('Feature type', () => {
     const f: Feature = {
       id: 'fast-mode',
       label: 'Toggle',
-      category: 'Model',
+      section: 'Model',
       state: { kind: 'toggle', active: true },
       execute() {},
     };
@@ -27,7 +27,7 @@ describe('Feature type', () => {
     const f: Feature = {
       id: 'btw',
       label: '/btw',
-      category: 'Slash Commands',
+      section: 'Slash Commands',
       execute() {},
       slash: { command: '/btw', invoke() {} },
     };
@@ -36,8 +36,11 @@ describe('Feature type', () => {
 
   it('FeatureState is a discriminated union', () => {
     const toggle: FeatureState = { kind: 'toggle', active: false };
-    const tri: FeatureState = { kind: 'tri-state', state: 'partial' };
+    const tri: FeatureState = {
+      kind: 'group',
+      items: [{ value: 'x', label: 'x', on: true, toggle: () => {} }],
+    };
     const sel: FeatureState = { kind: 'select', currentValue: 'x' };
-    expect([toggle.kind, tri.kind, sel.kind]).toEqual(['toggle', 'tri-state', 'select']);
+    expect([toggle.kind, tri.kind, sel.kind]).toEqual(['toggle', 'group', 'select']);
   });
 });

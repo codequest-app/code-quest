@@ -6,10 +6,10 @@ describe('createMentionFileFeature', () => {
     expect(createMentionFileFeature({ mentionFile: vi.fn() }).id).toBe('mention-file');
   });
 
-  it('is in Context category with label Mention file from this project...', () => {
+  it('is in Context section with label Mention file from this project...', () => {
     const feature = createMentionFileFeature({ mentionFile: vi.fn() });
     expect(feature.label).toBe('Mention file from this project...');
-    expect(feature.category).toBe('Context');
+    expect(feature.section).toBe('Context');
   });
 
   it('execute calls mentionFile', () => {

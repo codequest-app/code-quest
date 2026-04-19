@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { createThinkingFeature } from '../thinking-feature';
 
 describe('createThinkingFeature', () => {
-  it('returns a Feature with id toggle-thinking and category Model', () => {
+  it('returns a Feature with id toggle-thinking and section Model', () => {
     const feature = createThinkingFeature({
       isThinkingOn: false,
       onSetThinkingLevel: vi.fn(),
     });
     expect(feature.id).toBe('toggle-thinking');
-    expect(feature.category).toBe('Model');
+    expect(feature.section).toBe('Model');
     expect(feature.label).toBe('Thinking');
   });
 

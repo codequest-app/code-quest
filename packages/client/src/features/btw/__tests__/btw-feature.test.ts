@@ -8,11 +8,11 @@ afterEach(() => {
 });
 
 describe('createBtwFeature', () => {
-  it('returns a Feature with id btw, /btw slash binding, and Slash Commands category', () => {
+  it('returns a Feature with id btw, /btw slash binding, and Slash Commands section', () => {
     const feature = createBtwFeature({ askSideQuestion: vi.fn() });
     expect(feature.id).toBe('btw');
     expect(feature.label).toBe('/btw');
-    expect(feature.category).toBe('Slash Commands');
+    expect(feature.section).toBe('Slash Commands');
     expect(feature.slash?.command).toBe('/btw');
     expect(feature.ui?.matchFirstToken).toBe(true);
   });
@@ -118,11 +118,11 @@ describe('createBtwLocalFeature (per-render, disabled when no question)', () => 
     expect(invoke).not.toHaveBeenCalled();
   });
 
-  it('carries over id, label, category, and matchFirstToken from base', () => {
+  it('carries over id, label, section, and matchFirstToken from base', () => {
     const feat = createBtwLocalFeature({ slashFilter: 'btw x', baseFeature });
     expect(feat.id).toBe('btw');
     expect(feat.label).toBe('/btw');
-    expect(feat.category).toBe('Slash Commands');
+    expect(feat.section).toBe('Slash Commands');
     expect(feat.ui?.matchFirstToken).toBe(true);
   });
 });

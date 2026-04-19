@@ -4,7 +4,7 @@ import { toSlashCommand } from '../to-slash-command';
 
 describe('toSlashCommand', () => {
   it('returns null when feature has no slash binding', () => {
-    const f: Feature = { id: 'a', label: 'A', category: 'X', execute: vi.fn() };
+    const f: Feature = { id: 'a', label: 'A', section: 'Customize', execute: vi.fn() };
     expect(toSlashCommand(f)).toBeNull();
   });
 
@@ -14,7 +14,7 @@ describe('toSlashCommand', () => {
     const f: Feature = {
       id: 'a',
       label: 'A',
-      category: 'X',
+      section: 'Customize',
       execute: vi.fn(),
       slash: { command: '/a', match, invoke },
     };
@@ -30,7 +30,7 @@ describe('toSlashCommand', () => {
     const f: Feature = {
       id: 'btw',
       label: '/btw',
-      category: 'X',
+      section: 'Customize',
       execute: vi.fn(),
       slash: { command: '/btw', invoke: vi.fn() },
     };

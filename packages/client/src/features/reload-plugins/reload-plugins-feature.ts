@@ -22,7 +22,7 @@ export function createReloadPluginsFeature(
   return {
     id: 'reload-plugins',
     label: '/reload-plugins',
-    category: 'Slash Commands',
+    section: 'Slash Commands',
     execute: run,
     slash: {
       command: '/reload-plugins',

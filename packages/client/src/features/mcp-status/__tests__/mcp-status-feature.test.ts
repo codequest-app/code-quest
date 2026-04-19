@@ -6,10 +6,10 @@ describe('createMcpStatusFeature', () => {
     expect(createMcpStatusFeature({}).id).toBe('mcp-status');
   });
 
-  it('is in Customize category with label MCP status', () => {
+  it('is in Customize section with label MCP status', () => {
     const feature = createMcpStatusFeature({});
     expect(feature.label).toBe('MCP status');
-    expect(feature.category).toBe('Customize');
+    expect(feature.section).toBe('Customize');
     expect(feature.ui?.closeSilent).toBe(true);
   });
 

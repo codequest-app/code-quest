@@ -1,6 +1,6 @@
 import { toMenuItem } from './adapters/to-menu-item';
 import { toSlashCommand } from './adapters/to-slash-command';
-import type { Feature, MenuItemFeature, SlashCommandFeature } from './feature';
+import type { Feature, FeatureSection, MenuItemFeature, SlashCommandFeature } from './feature';
 import type { FeatureRegistry } from './feature-registry';
 
 export interface MenuItem {
@@ -55,14 +55,23 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const { close, closeSilent, compose } = params;
 
   const local = params.localFeatures ?? [];
-  const menuFeatures = [...registry.getMenuItemFeatures(), ...adaptLocalMenuItems(local)];
-  const menuFeatureIds = new Set(menuFeatures.map((f) => f.id));
-  const slashFeatures = [
-    ...registry.getSlashCommandFeatures(),
-    ...adaptLocalSlashCommands(local),
-  ].filter((f) => f.execute && !menuFeatureIds.has(f.id));
+  // Local features override registry entries with the same id (e.g. btw: registry
+  // has the base Feature; CommandMenu adds a per-render wrapper that knows the
+  // live slashFilter state).
+  const menuFeatureById = new Map<string, MenuItemFeature>();
+  for (const f of registry.getMenuItemFeatures()) menuFeatureById.set(f.id, f);
+  for (const f of adaptLocalMenuItems(local)) menuFeatureById.set(f.id, f);
+  const menuFeatures = [...menuFeatureById.values()];
+  const menuFeatureIds = new Set(menuFeatureById.keys());
 
-  function buildSection(section: string): MenuItem[] {
+  const slashFeatureById = new Map<string, SlashCommandFeature>();
+  for (const f of registry.getSlashCommandFeatures()) slashFeatureById.set(f.id, f);
+  for (const f of adaptLocalSlashCommands(local)) slashFeatureById.set(f.id, f);
+  const slashFeatures = [...slashFeatureById.values()].filter(
+    (f) => f.execute && !menuFeatureIds.has(f.id),
+  );
+
+  function buildSection(section: FeatureSection): MenuItem[] {
     return menuFeatures
       .filter((f) => f.menuItem.section === section)
       .sort(byOrder)

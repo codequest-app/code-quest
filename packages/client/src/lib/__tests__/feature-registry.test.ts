@@ -5,7 +5,7 @@ import { createFeatureRegistry } from '../feature-registry';
 const mk = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',
   label: 'F',
-  category: 'X',
+  section: 'Customize',
   execute: vi.fn(),
   ...over,
 });
@@ -32,11 +32,11 @@ describe('feature-registry', () => {
   describe('getMenuItemFeatures', () => {
     it('adapts every Feature to MenuItemFeature', () => {
       const r = createFeatureRegistry();
-      r.register(mk({ id: 'a', label: 'A', category: 'Cat' }));
+      r.register(mk({ id: 'a', label: 'A', section: 'Settings' }));
       const items = r.getMenuItemFeatures();
       expect(items).toHaveLength(1);
       expect(items[0].menuItem.label).toBe('A');
-      expect(items[0].menuItem.section).toBe('Cat');
+      expect(items[0].menuItem.section).toBe('Settings');
     });
   });
 
@@ -75,7 +75,7 @@ describe('feature-registry', () => {
 
     it('does not match a feature without slash binding', () => {
       const r = createFeatureRegistry();
-      r.register(mk({ id: 'rewind', label: 'Rewind', category: 'Context' }));
+      r.register(mk({ id: 'rewind', label: 'Rewind', section: 'Context' }));
       expect(r.findSlashCommand('/rewind')).toBeUndefined();
     });
   });
@@ -103,7 +103,7 @@ describe('feature-registry', () => {
         mk({
           id: 'usage',
           label: 'Account & usage…',
-          category: 'Model',
+          section: 'Model',
           slash: { command: '/usage', invoke: vi.fn() },
         }),
       );

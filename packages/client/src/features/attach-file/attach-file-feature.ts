@@ -8,7 +8,7 @@ export function createAttachFileFeature({ onAttachFile }: AttachFileFeatureDeps)
   return {
     id: 'attach-file',
     label: 'Attach file…',
-    category: 'Context',
+    section: 'Context',
     order: -2,
     ui: { closeSilent: true },
     execute() {

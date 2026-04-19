@@ -3,13 +3,13 @@ import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { cn } from '../utils/cn';
-import { EffortSwitch, effortLabel } from './icons/EffortSwitch';
 import {
   AskBeforeEditsSmallIcon,
   CheckIcon,
   EffortIcon,
   PERMISSION_MODE_ICONS,
 } from './icons/PermissionModeIcons';
+import { EffortSwitch, effortLabel } from './ui/EffortSwitch';
 
 function getPermissionModes(brandName: string) {
   return [

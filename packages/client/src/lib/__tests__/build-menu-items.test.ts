@@ -122,7 +122,7 @@ describe('buildMenuItems', () => {
     registry.register({
       id: 'usage',
       label: 'Account & usage',
-      category: 'Model',
+      section: 'Model',
       execute: vi.fn(),
     });
     const localFeatures = [
@@ -149,7 +149,7 @@ describe('buildMenuItems', () => {
     registry.register({
       id: 'model',
       label: 'Switch model',
-      category: 'Model',
+      section: 'Model',
       order: 0,
       ui: { closeSilent: true },
       execute,
@@ -182,7 +182,7 @@ describe('buildMenuItems', () => {
     registry.register({
       id: 'rewind',
       label: 'Rewind',
-      category: 'Context',
+      section: 'Context',
       execute: vi.fn(),
     });
     const { context } = buildMenuItems(defaultParams({ registry }));
@@ -279,7 +279,7 @@ describe('buildMenuItems', () => {
     registry.register({
       id: 'reload-plugins',
       label: '/reload-plugins',
-      category: 'Slash Commands',
+      section: 'Slash Commands',
       execute: vi.fn(),
       slash: { command: '/reload-plugins', invoke: vi.fn() },
     });
@@ -294,7 +294,7 @@ describe('buildMenuItems', () => {
     registry.register({
       id: 'reload-plugins',
       label: '/reload-plugins',
-      category: 'Slash Commands',
+      section: 'Slash Commands',
       execute,
       slash: { command: '/reload-plugins', invoke: vi.fn() },
     });
@@ -312,7 +312,7 @@ describe('buildMenuItems', () => {
     const feature: Feature = {
       id: 'rewind',
       label: 'Rewind',
-      category: 'Context',
+      section: 'Context',
       execute,
     };
     registry.register(feature);
@@ -321,5 +321,40 @@ describe('buildMenuItems', () => {
     item?.onClick?.();
     expect(execute).toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
+  });
+
+  describe('regression: btw + CLI slash commands', () => {
+    it('btw appears exactly once in slash section when registered + wrapped locally', () => {
+      // Production scenario: ChannelMessagesContext registers createBtwFeature
+      // and CommandMenu adds createBtwLocalFeature to localFeatures per render.
+      // Previously this caused a duplicate /btw row.
+      const registry = createFeatureRegistry();
+      const baseFeature = createBtwFeature({ askSideQuestion: vi.fn() });
+      registry.register(baseFeature);
+      const localFeatures = [createBtwLocalFeature({ slashFilter: 'btw q', baseFeature })];
+      const { slash } = buildMenuItems(defaultParams({ registry, localFeatures }));
+      const btwItems = slash.filter((i) => i.id === 'btw');
+      expect(btwItems).toHaveLength(1);
+    });
+
+    it('CLI-only slash commands still appear in slash section', () => {
+      // Server-provided builtins like /help, /bash, /terminal that are NOT in registry
+      // must still render as CLI-slash items.
+      const registry = createFeatureRegistry();
+      registry.register(createBtwFeature({ askSideQuestion: vi.fn() })); // in registry
+      const { slash } = buildMenuItems(
+        defaultParams({
+          registry,
+          slashCommands: ['help', 'bash', 'terminal', 'compact', 'btw'],
+        }),
+      );
+      const labels = slash.map((i) => i.label);
+      // CLI-only builtins appear
+      expect(labels).toContain('/help');
+      expect(labels).toContain('/bash');
+      expect(labels).toContain('/terminal');
+      // /btw appears (via registry) but not duplicated by CLI list
+      expect(labels.filter((l) => l === '/btw')).toHaveLength(1);
+    });
   });
 });

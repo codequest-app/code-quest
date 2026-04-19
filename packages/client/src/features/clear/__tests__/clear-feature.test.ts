@@ -14,10 +14,10 @@ describe('createClearFeature', () => {
     expect(createClearFeature(makeDeps()).id).toBe('clear');
   });
 
-  it('is in Context category with label Clear conversation', () => {
+  it('is in Context section with label Clear conversation', () => {
     const feature = createClearFeature(makeDeps());
     expect(feature.label).toBe('Clear conversation');
-    expect(feature.category).toBe('Context');
+    expect(feature.section).toBe('Context');
     expect(feature.order).toBe(0);
   });
 

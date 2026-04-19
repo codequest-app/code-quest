@@ -7,7 +7,7 @@ export function createRewindFeature(): Feature {
   return {
     id: 'rewind',
     label: 'Rewind',
-    category: 'Context',
+    section: 'Context',
     order: 1,
     execute() {
       rewindOpenSignal.setOpen(true);

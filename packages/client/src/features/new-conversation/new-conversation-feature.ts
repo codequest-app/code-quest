@@ -8,7 +8,7 @@ export function createNewConversationFeature({
   return {
     id: 'new-conversation',
     label: 'New conversation',
-    category: 'Context',
+    section: 'Context',
     ui: { filterOnly: true },
     execute() {
       sendMessage('/new');

@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRawPanelFeature } from '../raw-panel-feature';
 
 describe('createRawPanelFeature', () => {
-  it('has id raw-panel in Panels category with label Raw Event Panel', () => {
+  it('has id raw-panel in Panels section with label Raw Event Panel', () => {
     const feature = createRawPanelFeature({ active: false, onToggle: vi.fn() });
     expect(feature.id).toBe('raw-panel');
-    expect(feature.category).toBe('Panels');
+    expect(feature.section).toBe('Panels');
     expect(feature.label).toBe('Raw Event Panel');
   });
 

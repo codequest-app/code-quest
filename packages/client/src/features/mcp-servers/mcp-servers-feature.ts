@@ -4,7 +4,7 @@ export function createMcpServersFeature({ onToggleMcp }: { onToggleMcp?: () => v
   return {
     id: 'mcp-servers',
     label: 'Manage MCP servers',
-    category: 'Customize',
+    section: 'Customize',
     order: 1,
     ui: { closeSilent: true },
     execute() {

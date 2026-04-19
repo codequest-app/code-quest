@@ -6,7 +6,7 @@ import { toPaletteCommand } from '../to-palette-command';
 const base = (over: Partial<Feature> = {}): Feature => ({
   id: 'x',
   label: 'X',
-  category: 'General',
+  section: 'Settings',
   execute: vi.fn(),
   ...over,
 });
@@ -17,7 +17,7 @@ describe('toPaletteCommand', () => {
     const out = toPaletteCommand(f);
     expect(out.id).toBe('x');
     expect(out.label).toBe('X');
-    expect(out.category).toBe('General');
+    expect(out.section).toBe('Settings');
     expect(out.description).toBe('short help');
   });
 
@@ -27,10 +27,14 @@ describe('toPaletteCommand', () => {
     expect(execute).toHaveBeenCalledOnce();
   });
 
-  it('renders trailing for toggle state', () => {
+  it('renders trailing for toggle state as ON/OFF pill (palette pill vocabulary)', () => {
     const f = base({ state: { kind: 'toggle', active: false } });
     render(<>{toPaletteCommand(f).trailing}</>);
-    expect(screen.getByTestId('toggle-switch')).toHaveAttribute('data-state', 'off');
+    // palette surface renders toggle as pill (same as filter group pill) —
+    // adapter tags the pill with the feature id so surface tests can target it
+    const pill = screen.getByTestId('x-toggle');
+    expect(pill).toHaveAttribute('data-state', 'none');
+    expect(pill.textContent).toBe('OFF');
   });
 
   it('renders trailing for select state', () => {

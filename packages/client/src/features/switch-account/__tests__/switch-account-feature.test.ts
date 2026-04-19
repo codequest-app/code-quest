@@ -20,10 +20,10 @@ describe('createSwitchAccountFeature', () => {
     expect(createSwitchAccountFeature().id).toBe('switch-account');
   });
 
-  it('is in Settings category with closeSilent', () => {
+  it('is in Settings section with closeSilent', () => {
     const feature = createSwitchAccountFeature();
     expect(feature.label).toBe('Switch account');
-    expect(feature.category).toBe('Settings');
+    expect(feature.section).toBe('Settings');
     expect(feature.ui?.closeSilent).toBe(true);
   });
 

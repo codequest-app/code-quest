@@ -8,7 +8,7 @@ export function createMentionFileFeature({ mentionFile }: MentionFileFeatureDeps
   return {
     id: 'mention-file',
     label: 'Mention file from this project...',
-    category: 'Context',
+    section: 'Context',
     order: -1,
     execute() {
       mentionFile();

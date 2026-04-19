@@ -12,7 +12,7 @@ export function createThinkingFeature({
   return {
     id: 'toggle-thinking',
     label: 'Thinking',
-    category: 'Model',
+    section: 'Model',
     order: 20,
     state: { kind: 'toggle', active: isThinkingOn },
     execute() {

@@ -8,7 +8,7 @@ export function createManagePluginsFeature({
   return {
     id: 'plugins',
     label: 'Manage plugins',
-    category: 'Customize',
+    section: 'Customize',
     order: 2,
     ui: { closeSilent: true },
     execute() {

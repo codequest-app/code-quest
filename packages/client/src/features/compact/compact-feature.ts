@@ -4,7 +4,7 @@ export function createCompactFeature(sendToCliDirectly: (message: string) => voi
   return {
     id: 'compact',
     label: '/compact',
-    category: 'Slash Commands',
+    section: 'Slash Commands',
     ui: { filterOnly: true },
     execute() {
       sendToCliDirectly('/compact');

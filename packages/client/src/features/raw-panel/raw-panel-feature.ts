@@ -9,7 +9,7 @@ export function createRawPanelFeature({ active, onToggle }: RawPanelFeatureDeps)
   return {
     id: 'raw-panel',
     label: 'Raw Event Panel',
-    category: 'Panels',
+    section: 'Panels',
     state: { kind: 'toggle', active },
     execute() {
       onToggle();

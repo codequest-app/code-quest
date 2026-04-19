@@ -5,7 +5,7 @@ export function createGeneralConfigFeature(): Feature {
   return {
     id: 'general-config',
     label: 'General config…',
-    category: 'Settings',
+    section: 'Settings',
     ui: { closeSilent: true },
     execute() {
       generalConfigSignal.setOpen(true);

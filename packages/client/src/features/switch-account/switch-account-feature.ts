@@ -5,7 +5,7 @@ export function createSwitchAccountFeature(): Feature {
   return {
     id: 'switch-account',
     label: 'Switch account',
-    category: 'Settings',
+    section: 'Settings',
     ui: { closeSilent: true },
     execute() {
       switchAccountSignal.setOpen(true);

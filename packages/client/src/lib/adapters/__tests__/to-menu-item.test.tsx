@@ -6,7 +6,7 @@ import { toMenuItem } from '../to-menu-item';
 const base = (override: Partial<Feature> = {}): Feature => ({
   id: 'x',
   label: 'X',
-  category: 'General',
+  section: 'Settings',
   execute: vi.fn(),
   ...override,
 });
@@ -17,7 +17,7 @@ describe('toMenuItem', () => {
     const out = toMenuItem(f);
     expect(out.id).toBe('x');
     expect(out.menuItem.label).toBe('X');
-    expect(out.menuItem.section).toBe('General');
+    expect(out.menuItem.section).toBe('Settings');
     expect(out.menuItem.order).toBe(5);
     expect(out.menuItem.description).toBe('(help)');
     expect(out.menuItem.disabled).toBe(true);
@@ -47,11 +47,12 @@ describe('toMenuItem', () => {
     expect(out.menuItem.filterOnly).toBe(true);
   });
 
-  it('renders toggle state as trailing ToggleSwitch', () => {
+  it('renders toggle state as trailing ToggleSwitch (per-feature testid)', () => {
     const f = base({ state: { kind: 'toggle', active: true } });
     const out = toMenuItem(f);
     render(<>{out.menuItem.trailing}</>);
-    expect(screen.getByTestId('toggle-switch')).toHaveAttribute('data-state', 'on');
+    // menu surface keeps ToggleSwitch; adapter tags it with feature id
+    expect(screen.getByTestId('x-switch')).toHaveAttribute('data-state', 'on');
   });
 
   it('no trailing when no state', () => {

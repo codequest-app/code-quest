@@ -1,165 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import { useChannelMessages, useMessageVisibility } from '../contexts/channel';
-import type { Message } from '../types/ui';
+import { createColorThemeFeature } from '../features/color-theme/color-theme-feature';
+import { createDensityFeature } from '../features/density/density-feature';
+import { createFilterFeatures } from '../features/filters/create-filter-features';
+import { createFontSizeFeature } from '../features/font-size/font-size-feature';
+import { createRawPanelFeature } from '../features/raw-panel/raw-panel-feature';
+import type { Feature, PaletteTab } from '../lib/feature';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { isMessageVisible, messagePreview } from '../utils/isMessageVisible';
-import { MESSAGE_TYPE_LABELS } from '../utils/message-type-labels';
-import { ActionsTab, FiltersSection, PanelsSection, SECTION_LABEL } from './ActionsTab';
-
-type Tab = 'all' | 'messages' | 'actions';
-
-const TYPE_COLORS: Partial<Record<string, string>> = {
-  text: '#81b88b',
-  thinking: '#9d7fd4',
-  redacted_thinking: '#9d7fd4',
-  tool_use: '#d97757',
-  tool_result: '#c6913f',
-  error: '#f48771',
-  result: '#e1c08d',
-  hook_started: '#5a9fd4',
-  hook_response: '#5a9fd4',
-  hook_diagnostics: '#5a9fd4',
-};
-
-function typeColor(type: string): string {
-  return TYPE_COLORS[type] ?? '#6a6a6e';
-}
-
-function typeLabel(type: string): string {
-  return MESSAGE_TYPE_LABELS[type as Message['type']] ?? type;
-}
-
-function highlight(text: string, query: string): Array<{ text: string; match: boolean }> {
-  if (!query) return [{ text, match: false }];
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return [{ text, match: false }];
-  return [
-    { text: text.slice(0, idx), match: false },
-    { text: text.slice(idx, idx + query.length), match: true },
-    { text: text.slice(idx + query.length), match: false },
-  ];
-}
+import { PaletteCommandList } from './palette/PaletteCommandList';
+import { PaletteMessageList } from './palette/PaletteMessageList';
 
 const RECENT_COUNT = 8;
 
-const BADGE: React.CSSProperties = {
-  fontSize: '9px',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  borderRadius: '3px',
-  padding: '2px 5px',
-  flexShrink: 0,
-  marginTop: '1px',
-  whiteSpace: 'nowrap',
-  minWidth: '90px',
-  textAlign: 'center',
-};
+/**
+ * Tab bar config. 'messages' is a pseudo-tab backed by PaletteMessageList
+ * (not a Feature); other tabs render features whose `tabs` field includes
+ * that tab id. Features without `tabs` default to ['all'].
+ */
+const TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'messages', label: 'Messages' },
+  { id: 'actions', label: 'Actions' },
+] as const;
 
-interface MessageResultListProps {
-  results: Message[];
-  activeIdx: number;
-  query: string;
-  showSection: boolean;
-  listRef: React.RefObject<HTMLDivElement | null>;
-  onJumpTo: (id: string) => void;
-  onClose: () => void;
-  setActiveIdx: (idx: number) => void;
-}
-
-function MessageResultList({
-  results,
-  activeIdx,
-  query,
-  showSection,
-  listRef,
-  onJumpTo,
-  onClose,
-  setActiveIdx,
-}: MessageResultListProps) {
-  if (results.length === 0) return null;
-  return (
-    <>
-      {showSection && <div style={SECTION_LABEL}>Messages</div>}
-      <div ref={listRef}>
-        {results.map((msg, idx) => {
-          const isActive = idx === activeIdx;
-          const color = typeColor(msg.type);
-          const label = typeLabel(msg.type);
-          const preview = messagePreview(msg).slice(0, 200);
-          const previewParts = highlight(preview, query);
-          return (
-            <button
-              key={msg.id}
-              type="button"
-              data-active={isActive || undefined}
-              onClick={() => {
-                onJumpTo(msg.id);
-                onClose();
-              }}
-              onMouseEnter={() => setActiveIdx(idx)}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                width: '100%',
-                padding: '10px 16px',
-                background: isActive ? 'rgba(217,119,87,0.07)' : 'transparent',
-                border: 'none',
-                borderLeft: `2px solid ${isActive ? '#d97757' : 'transparent'}`,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background 0.1s',
-              }}
-            >
-              <span
-                style={{
-                  ...BADGE,
-                  color,
-                  background: `${color}18`,
-                  border: `1px solid ${color}40`,
-                }}
-              >
-                {label}
-              </span>
-              <span
-                style={{
-                  fontSize: '12px',
-                  fontFamily: 'monospace',
-                  color: '#9d9d9d',
-                  lineHeight: '1.5',
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                }}
-              >
-                {previewParts.map((part, i) => {
-                  const key = part.match ? 'match' : i === 0 ? 'pre' : 'post';
-                  return part.match ? (
-                    <mark
-                      key={key}
-                      style={{
-                        background: 'rgba(217,119,87,0.3)',
-                        color: '#d97757',
-                        borderRadius: '2px',
-                        padding: '0 1px',
-                      }}
-                    >
-                      {part.text}
-                    </mark>
-                  ) : (
-                    <span key={key}>{part.text}</span>
-                  );
-                })}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-}
+type TabId = (typeof TABS)[number]['id'];
 
 interface CommandPaletteProps {
   open: boolean;
@@ -177,27 +42,53 @@ export function CommandPalette({
   rawPanelActive = false,
 }: CommandPaletteProps) {
   const { messages } = useChannelMessages();
-  const { enabledTypes } = useMessageVisibility();
+  const { enabledTypes, unknownTypes, toggleType } = useMessageVisibility();
+  const colorTheme = usePreferencesStore((s) => s.colorTheme);
+  const setColorTheme = usePreferencesStore((s) => s.setColorTheme);
+  const density = usePreferencesStore((s) => s.density);
+  const setDensity = usePreferencesStore((s) => s.setDensity);
+  const fontSize = usePreferencesStore((s) => s.fontSize);
+  const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<Tab>('all');
+  const [activeTab, setActiveTab] = useState<TabId>(TABS[0].id);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [activeFeatureId, setActiveFeatureId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const latestByType = new Map<string, string>();
+  for (const msg of messages) latestByType.set(msg.type, messagePreview(msg));
+
+  const paletteFeatures: Feature[] = [
+    ...createFilterFeatures({ enabledTypes, unknownTypes, toggleType, latestByType }),
+    createRawPanelFeature({
+      active: rawPanelActive,
+      onToggle: onToggleRawPanel ?? (() => {}),
+    }),
+    createColorThemeFeature({ colorTheme, setColorTheme }),
+    createDensityFeature({ density, setDensity }),
+    createFontSizeFeature({ fontSize, setFontSize }),
+  ];
 
   const visibleMessages = messages.filter(
     (m) => isMessageVisible(m, enabledTypes) && m.content.length > 0,
   );
   const q = query.trim().toLowerCase();
 
-  const messageResults: Message[] = q
+  const messageResults = q
     ? visibleMessages.filter((m) => messagePreview(m).toLowerCase().includes(q)).slice(0, 50)
     : visibleMessages.slice(-RECENT_COUNT);
+
+  const featuresInActiveTab =
+    activeTab === 'messages'
+      ? []
+      : paletteFeatures.filter((f) => (f.tabs ?? ['all']).includes(activeTab as PaletteTab));
 
   useEffect(() => {
     if (open) {
       setQuery('');
       setActiveIdx(0);
-      setActiveTab('all');
+      setActiveTab(TABS[0].id);
       const id = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(id);
     }
@@ -280,13 +171,13 @@ export function CommandPalette({
           role="tablist"
           style={{ display: 'flex', borderBottom: '1px solid #2a2c30', flexShrink: 0 }}
         >
-          {(['all', 'messages', 'actions'] as Tab[]).map((tab) => (
+          {TABS.map((tab) => (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
               role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: '8px 16px',
                 fontSize: '11px',
@@ -296,13 +187,13 @@ export function CommandPalette({
                 textTransform: 'uppercase',
                 background: 'none',
                 border: 'none',
-                borderBottom: activeTab === tab ? '2px solid #d97757' : '2px solid transparent',
-                color: activeTab === tab ? '#d97757' : '#6a6a6e',
+                borderBottom: activeTab === tab.id ? '2px solid #d97757' : '2px solid transparent',
+                color: activeTab === tab.id ? '#d97757' : '#6a6a6e',
                 cursor: 'pointer',
                 transition: 'color 0.1s, border-color 0.1s',
               }}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -356,34 +247,16 @@ export function CommandPalette({
         </div>
 
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          {activeTab === 'all' && (
+          {activeTab === 'messages' ? (
             <>
-              <MessageResultList
-                results={messageResults}
-                activeIdx={activeIdx}
+              <PaletteMessageList
+                messages={visibleMessages}
                 query={query}
-                showSection={true}
-                listRef={listRef}
+                activeIdx={activeIdx}
+                onActiveChange={setActiveIdx}
                 onJumpTo={onJumpTo}
                 onClose={onClose}
-                setActiveIdx={setActiveIdx}
-              />
-              <FiltersSection flat={false} onPartialClick={() => setActiveTab('actions')} />
-              <PanelsSection onToggleRawPanel={onToggleRawPanel} rawPanelActive={rawPanelActive} />
-            </>
-          )}
-
-          {activeTab === 'messages' && (
-            <>
-              <MessageResultList
-                results={messageResults}
-                activeIdx={activeIdx}
-                query={query}
-                showSection={false}
                 listRef={listRef}
-                onJumpTo={onJumpTo}
-                onClose={onClose}
-                setActiveIdx={setActiveIdx}
               />
               {q && messageResults.length === 0 && (
                 <div
@@ -400,14 +273,27 @@ export function CommandPalette({
                 </div>
               )}
             </>
-          )}
-
-          {activeTab === 'actions' && (
-            <ActionsTab
-              flat={false}
-              onToggleRawPanel={onToggleRawPanel}
-              rawPanelActive={rawPanelActive}
-            />
+          ) : (
+            <>
+              {activeTab === 'all' && (
+                <PaletteMessageList
+                  messages={visibleMessages}
+                  query={query}
+                  activeIdx={activeIdx}
+                  onActiveChange={setActiveIdx}
+                  onJumpTo={onJumpTo}
+                  onClose={onClose}
+                  showHeader
+                  listRef={listRef}
+                />
+              )}
+              <PaletteCommandList
+                features={featuresInActiveTab}
+                query={query}
+                activeId={activeFeatureId}
+                onActiveChange={setActiveFeatureId}
+              />
+            </>
           )}
         </div>
 

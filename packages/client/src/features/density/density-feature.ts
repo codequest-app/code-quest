@@ -1,3 +1,4 @@
+import { createChoiceFeature } from '../../lib/create-choice-feature';
 import type { Feature } from '../../lib/feature';
 import type { Density } from '../../stores/usePreferencesStore';
 
@@ -7,14 +8,17 @@ interface DensityFeatureDeps {
 }
 
 export function createDensityFeature({ density, setDensity }: DensityFeatureDeps): Feature {
-  return {
-    id: 'toggle-density',
-    label: 'Toggle density',
-    category: 'Settings',
+  return createChoiceFeature<Density>({
+    id: 'density',
+    label: 'Density',
+    section: 'Settings',
     order: 11,
-    state: { kind: 'toggle', active: density === 'compact' },
-    execute() {
-      setDensity(density === 'comfortable' ? 'compact' : 'comfortable');
-    },
-  };
+    tabs: ['actions'],
+    options: [
+      { value: 'comfortable', label: 'Comfortable' },
+      { value: 'compact', label: 'Compact' },
+    ],
+    currentValue: density,
+    onSelect: setDensity,
+  });
 }

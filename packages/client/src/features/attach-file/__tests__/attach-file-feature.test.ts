@@ -6,10 +6,10 @@ describe('createAttachFileFeature', () => {
     expect(createAttachFileFeature({}).id).toBe('attach-file');
   });
 
-  it('is in Context category with label Attach file…', () => {
+  it('is in Context section with label Attach file…', () => {
     const feature = createAttachFileFeature({});
     expect(feature.label).toBe('Attach file…');
-    expect(feature.category).toBe('Context');
+    expect(feature.section).toBe('Context');
     expect(feature.ui?.closeSilent).toBe(true);
   });
 

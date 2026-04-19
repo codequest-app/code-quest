@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { createFastModeFeature } from '../fast-mode-feature';
 
 describe('createFastModeFeature', () => {
-  it('returns a Feature with id fast-mode in Model category', () => {
+  it('returns a Feature with id fast-mode in Model section', () => {
     const feature = createFastModeFeature({ fastModeState: null, setFastMode: vi.fn() });
     expect(feature.id).toBe('fast-mode');
-    expect(feature.category).toBe('Model');
+    expect(feature.section).toBe('Model');
     expect(feature.label).toBe('Toggle fast mode');
     expect(feature.order).toBe(30);
   });

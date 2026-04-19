@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createRewindFeature, rewindOpenSignal } from '../rewind-feature';
 
 describe('createRewindFeature', () => {
-  it('has id rewind with label in Context category', () => {
+  it('has id rewind with label in Context section', () => {
     const feature = createRewindFeature();
     expect(feature.id).toBe('rewind');
     expect(feature.label).toBe('Rewind');
-    expect(feature.category).toBe('Context');
+    expect(feature.section).toBe('Context');
     expect(feature.order).toBe(1);
   });
 

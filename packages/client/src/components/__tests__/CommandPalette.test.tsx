@@ -79,8 +79,8 @@ describe('CommandPalette — open/close', () => {
   });
 });
 
-describe('CommandPalette — tabs', () => {
-  it('renders All, Messages, Actions tabs', async () => {
+describe('CommandPalette — tabs (explicit curation)', () => {
+  it('renders All, Messages, Actions tabs from TABS config', async () => {
     await renderPalette();
     expect(screen.getByRole('tab', { name: /all/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /messages/i })).toBeInTheDocument();
@@ -99,11 +99,16 @@ describe('CommandPalette — tabs', () => {
     expect(screen.getByRole('tab', { name: /messages/i })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('clicking Actions tab switches to actions view', async () => {
+  it('clicking Actions tab shows filter groups AND settings (theme/density/font-size)', async () => {
     const user = userEvent.setup();
     await renderPalette();
     await user.click(screen.getByRole('tab', { name: /actions/i }));
     expect(screen.getByRole('tab', { name: /actions/i })).toHaveAttribute('aria-selected', 'true');
+    // Actions = Filters ∪ Settings per TABS config
+    expect(screen.getByTestId('group-row-conversation')).toBeInTheDocument();
+    expect(screen.getByText(/^theme$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^density$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^font size$/i)).toBeInTheDocument();
   });
 });
 

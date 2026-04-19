@@ -1,9 +1,8 @@
 import { Bars3Icon, FolderOpenIcon, RectangleStackIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { TabProvider } from '../contexts/TabContext';
 import { WorkspaceActionsProvider } from '../contexts/WorkspaceActionsContext';
-import { openSettingsSignal } from '../features/open-settings/open-settings-signal';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
 import { ActivityBar } from './ActivityBar';
@@ -36,13 +35,6 @@ export function WorkspaceLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const signalOpen = useSyncExternalStore(
-    (cb) => openSettingsSignal.subscribe(cb),
-    () => openSettingsSignal.isOpen,
-  );
-  useEffect(() => {
-    if (signalOpen) setSettingsOpen(true);
-  }, [signalOpen]);
   const { projects, activeProjectCwd, sessions } = useProjectState();
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
@@ -159,13 +151,7 @@ export function WorkspaceLayout() {
           onSelect={handleAddProject}
           onClose={() => setDialogOpen(false)}
         />
-        <SettingsDialog
-          open={settingsOpen}
-          onClose={() => {
-            setSettingsOpen(false);
-            openSettingsSignal.setOpen(false);
-          }}
-        />
+        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </div>
     </WorkspaceActionsProvider>
   );

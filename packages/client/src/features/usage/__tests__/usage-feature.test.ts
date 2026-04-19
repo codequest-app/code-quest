@@ -7,7 +7,7 @@ describe('createUsageFeature', () => {
     expect(feature.id).toBe('usage');
     expect(feature.slash?.command).toBe('/usage');
     expect(feature.label).toBe('Account & usage…');
-    expect(feature.category).toBe('Model');
+    expect(feature.section).toBe('Model');
     expect(feature.order).toBe(40);
     expect(feature.ui?.closeSilent).toBe(true);
   });

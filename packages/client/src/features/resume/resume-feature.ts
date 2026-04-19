@@ -7,7 +7,7 @@ export function createResumeFeature(): Feature {
   return {
     id: 'resume',
     label: 'Resume conversation…',
-    category: 'Context',
+    section: 'Context',
     order: 10,
     execute() {
       resumeOpenSignal.setOpen(true);

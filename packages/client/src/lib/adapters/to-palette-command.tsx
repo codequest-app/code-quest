@@ -4,7 +4,7 @@ import { renderPaletteTrailing } from './trailing-renderers';
 export interface PaletteCommand {
   id: string;
   label: string;
-  category: string;
+  section: string;
   description?: string;
   disabled?: boolean;
   trailing?: React.ReactNode;
@@ -15,10 +15,10 @@ export function toPaletteCommand(f: Feature): PaletteCommand {
   return {
     id: f.id,
     label: f.label,
-    category: f.category,
+    section: f.section,
     description: f.description,
     disabled: f.disabled,
-    trailing: renderPaletteTrailing(f.state),
+    trailing: renderPaletteTrailing(f.state, { featureId: f.id }),
     onExecute: f.execute,
   };
 }
