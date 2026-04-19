@@ -180,165 +180,24 @@ describe('OutputParser', () => {
 
 ---
 
-## Test Double 優先順序
+## Test Double 選擇
 
-```
-Fake > Spy > Stub > Mock
-```
+本 skill 聚焦 TDD 流程。Test double 選擇依情境見專屬 skill：
 
-### 1. Fake (最優先)
+- **經典五型定義**（Dummy / Stub / Fake / Spy / Mock）→ `test-doubles` skill
+- **Client 測試**（React / socket / Zustand）→ `frontend-testing` skill
+- **Server 測試**（Node / socket.io / DB / CLI）→ `vitest-testing` skill
 
-**定義**: 真正可運作的實作，但使用簡化版本 (例如：記憶體資料庫)
-
-**範例**: Fake BattleStore
-
-```typescript
-// tests/fakes/FakeBattleStore.ts
-export class FakeBattleStore {
-  private battles = new Map();
-
-  async saveBattles(battles: Map<string, Battle>) {
-    // 實際儲存到記憶體 (而非檔案)
-    battles.forEach((battle, id) => {
-      this.battles.set(id, { ...battle });
-    });
-  }
-
-  async loadBattles(): Promise<Map<string, Battle>> {
-    // 實際從記憶體載入
-    return new Map(this.battles);
-  }
-
-  // 測試輔助方法
-  clear() {
-    this.battles.clear();
-  }
-}
-
-// 使用 Fake
-it('應該持久化戰鬥狀態', async () => {
-  // Given: 使用 Fake Store
-  const store = new FakeBattleStore();
-  const server = new BattleServer({ store });
-
-  // When: 啟動戰鬥
-  const battleId = server.startBattle(config);
-  await server.saveBattles();
-
-  // Then: 應該儲存戰鬥
-  const loaded = await store.loadBattles();
-  expect(loaded.has(battleId)).toBe(true);
-});
-```
-
-### 2. Spy (次優先)
-
-**定義**: 記錄被呼叫的資訊，但執行真正的實作
-
-**範例**: Spy on PTY events
-
-```typescript
-// tests/integration/battle-bridge.test.ts
-import { vi } from 'vitest';
-
-it('應該在 PTY 輸出時呼叫 onOutput', async () => {
-  // Given: Spy on onOutput
-  const onOutputSpy = vi.fn();
-  const bridge = new BattleBridge();
-  bridge.onOutput = onOutputSpy;
-
-  // When: 啟動戰鬥
-  const battleId = bridge.startBattle(battleId, config);
-
-  // 等待 PTY 輸出
-  await vi.waitFor(() => {
-    expect(onOutputSpy).toHaveBeenCalled();
-  });
-
-  // Then: 應該呼叫 onOutput
-  expect(onOutputSpy).toHaveBeenCalledWith(
-    battleId,
-    expect.any(String)
-  );
-});
-```
-
-### 3. Stub (第三優先)
-
-**定義**: 回傳預設的回應，不執行真正的邏輯
-
-**範例**: Stub WebSocket
-
-```typescript
-// tests/stubs/StubWebSocket.ts
-export class StubWebSocket {
-  readyState = WebSocket.OPEN;
-  sentMessages: string[] = [];
-
-  send(data: string) {
-    this.sentMessages.push(data);
-  }
-
-  close() {
-    this.readyState = WebSocket.CLOSED;
-  }
-
-  // 測試輔助方法
-  simulateMessage(data: string) {
-    this.onmessage?.({ data });
-  }
-}
-
-// 使用 Stub
-it('應該廣播事件給所有連接', () => {
-  // Given: Stub WebSocket
-  const ws1 = new StubWebSocket();
-  const ws2 = new StubWebSocket();
-  server.addConnection(battleId, ws1);
-  server.addConnection(battleId, ws2);
-
-  // When: 廣播事件
-  server.broadcastToBattle(battleId, { type: 'test' });
-
-  // Then: 兩個 WebSocket 都應該收到
-  expect(ws1.sentMessages).toHaveLength(1);
-  expect(ws2.sentMessages).toHaveLength(1);
-});
-```
-
-### 4. Mock (最後手段)
-
-**定義**: 預先設定期望的呼叫，驗證是否符合
-
-**範例**: Mock external service
-
-```typescript
-// 只在必須驗證呼叫順序或次數時使用
-it('應該按順序呼叫生命週期方法', () => {
-  // Given: Mock lifecycle
-  const lifecycle = {
-    onStart: vi.fn(),
-    onOutput: vi.fn(),
-    onEnd: vi.fn()
-  };
-
-  // When: 執行戰鬥
-  battle.run(lifecycle);
-
-  // Then: 驗證呼叫順序
-  expect(lifecycle.onStart).toHaveBeenCalledBefore(lifecycle.onOutput);
-  expect(lifecycle.onOutput).toHaveBeenCalledBefore(lifecycle.onEnd);
-});
-```
-
-**為何避免過度使用 Mock？**
-- ❌ 綁定實作細節 (例如：呼叫次數、參數)
-- ❌ 重構時測試容易壞掉
-- ❌ 測試變得脆弱
+核心原則：**優先真實實作；需要隔離再選 double，層級越低越好**。重構時 expect 不變的黃金法則跟 test double 型別無關。
 
 ---
 
 ## 前端測試策略
+
+> **React component / hook / store 的細節 patterns** 參考 `frontend-testing` 與 `testing-best-practices` skill。
+> 本節只涵蓋 TDD 流程裡的 MSW 設定範例。
+>
+> **ky-based API client 測試** 用 `msw-fetch-mock` 套件（protocol-level intercept），詳見 `msw-fetch-mock` skill。
 
 ### MSW (Mock Service Worker) 設定
 
@@ -632,9 +491,9 @@ $ npm test
 
 ---
 
-## 常見反模式
+## 常見陷阱
 
-### ❌ 反模式 1：先寫實作再寫測試
+### 陷阱 1：先寫實作再補測試
 
 ```typescript
 // ❌ 錯誤：先寫了完整的實作
@@ -649,7 +508,7 @@ it('should work', () => {
 });
 ```
 
-### ❌ 反模式 2：過度設計
+### 陷阱 2：一次實作太多功能
 
 ```typescript
 // ❌ 錯誤：一次實作太多功能
@@ -664,7 +523,7 @@ export class BattleServer {
 }
 ```
 
-### ❌ 反模式 3：測試實作細節
+### 陷阱 3：測試實作細節而非行為
 
 ```typescript
 // ❌ 錯誤：測試內部實作
@@ -686,7 +545,7 @@ it('should emit output when PTY produces data', async () => {
 });
 ```
 
-### ❌ 反模式 4：重構時改變 expect
+### 陷阱 4：重構時改動 expect
 
 ```typescript
 // ❌ 錯誤
