@@ -1,6 +1,6 @@
 import { toMenuItem } from './adapters/to-menu-item';
 import { toSlashCommand } from './adapters/to-slash-command';
-import type { Feature, FeatureSection, MenuItemFeature, SlashCommandFeature } from './feature';
+import type { Feature, FeatureSection, MenuItemView, SlashCommandView } from './feature';
 import type { FeatureRegistry } from './feature-registry';
 
 export interface MenuItem {
@@ -45,14 +45,14 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   // Local features override registry entries with the same id (e.g. btw: registry
   // has the base Feature; CommandMenu adds a per-render wrapper that knows the
   // live slashFilter state).
-  const menuFeatureById = new Map<string, MenuItemFeature>();
-  for (const f of registry.getMenuItemFeatures()) menuFeatureById.set(f.id, f);
+  const menuFeatureById = new Map<string, MenuItemView>();
+  for (const f of registry.getMenuItemViews()) menuFeatureById.set(f.id, f);
   for (const f of local) menuFeatureById.set(f.id, toMenuItem(f));
   const menuFeatures = [...menuFeatureById.values()];
   const menuFeatureIds = new Set(menuFeatureById.keys());
 
-  const slashFeatureById = new Map<string, SlashCommandFeature>();
-  for (const f of registry.getSlashCommandFeatures()) slashFeatureById.set(f.id, f);
+  const slashFeatureById = new Map<string, SlashCommandView>();
+  for (const f of registry.getSlashCommandViews()) slashFeatureById.set(f.id, f);
   for (const f of local) {
     const slash = toSlashCommand(f);
     if (slash) slashFeatureById.set(f.id, slash);
@@ -91,7 +91,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
 
   const support: MenuItem[] = buildSection('Support');
 
-  const allRegistryCommandIds = new Set(registry.getSlashCommandFeatures().map((f) => f.command));
+  const allRegistryCommandIds = new Set(registry.getSlashCommandViews().map((f) => f.command));
   const filteredCliCommands = slashCommands.filter((cmd) => !allRegistryCommandIds.has(`/${cmd}`));
 
   function toRegistrySlashItem(f: (typeof slashFeatures)[number]): MenuItem {

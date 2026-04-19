@@ -28,11 +28,11 @@ describe('feature-registry', () => {
     });
   });
 
-  describe('getMenuItemFeatures', () => {
-    it('adapts every Feature to MenuItemFeature', () => {
+  describe('getMenuItemViews', () => {
+    it('adapts every Feature to MenuItemView', () => {
       const r = createFeatureRegistry();
       r.register(mk({ id: 'a', label: 'A', section: 'Settings' }));
-      const items = r.getMenuItemFeatures();
+      const items = r.getMenuItemViews();
       expect(items).toHaveLength(1);
       expect(items[0].menuItem.label).toBe('A');
       expect(items[0].menuItem.section).toBe('Settings');
@@ -79,14 +79,14 @@ describe('feature-registry', () => {
     });
   });
 
-  describe('getSlashCommand / getSlashCommandFeatures', () => {
+  describe('getSlashCommand / getSlashCommandViews', () => {
     it('returns features with a slash binding', () => {
       const r = createFeatureRegistry();
       const slashFn = vi.fn();
       r.register(mk({ id: 'a', slash: { command: '/a', invoke: slashFn } }));
       r.register(mk({ id: 'b' })); // no slash
       expect(r.getSlashCommand('/a')?.id).toBe('a');
-      expect(r.getSlashCommandFeatures().map((f) => f.id)).toEqual(['a']);
+      expect(r.getSlashCommandViews().map((f) => f.id)).toEqual(['a']);
     });
 
     it('returns undefined for unknown command', () => {
@@ -96,7 +96,7 @@ describe('feature-registry', () => {
   });
 
   describe('hybrid feature (slash + menu on one Feature)', () => {
-    it('appears in both getSlashCommandFeatures and getMenuItemFeatures', () => {
+    it('appears in both getSlashCommandViews and getMenuItemViews', () => {
       const r = createFeatureRegistry();
       r.register(
         mk({
@@ -106,8 +106,8 @@ describe('feature-registry', () => {
           slash: { command: '/usage', invoke: vi.fn() },
         }),
       );
-      expect(r.getSlashCommandFeatures()).toHaveLength(1);
-      expect(r.getMenuItemFeatures()).toHaveLength(1);
+      expect(r.getSlashCommandViews()).toHaveLength(1);
+      expect(r.getMenuItemViews()).toHaveLength(1);
     });
   });
 });

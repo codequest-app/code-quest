@@ -41,7 +41,7 @@ describe('buildMenuItems', () => {
     ]);
   });
 
-  it('context section includes attach-file from registry MenuItemFeature', () => {
+  it('context section includes attach-file from registry MenuItemView', () => {
     const registry = createFeatureRegistry();
     const onAttachFile = vi.fn();
     registry.register(createAttachFileFeature({ onAttachFile }));
@@ -61,7 +61,7 @@ describe('buildMenuItems', () => {
     expect(closeSilent).toHaveBeenCalled();
   });
 
-  it('context section includes mention-file from registry MenuItemFeature', () => {
+  it('context section includes mention-file from registry MenuItemView', () => {
     const registry = createFeatureRegistry();
     const mentionFile = vi.fn();
     registry.register(createMentionFileFeature({ mentionFile }));
@@ -81,7 +81,7 @@ describe('buildMenuItems', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('context section includes clear item from registry MenuItemFeature', () => {
+  it('context section includes clear item from registry MenuItemView', () => {
     const registry = createFeatureRegistry();
     const clearMessages = vi.fn();
     const clearModifiedFiles = vi.fn();
@@ -177,7 +177,7 @@ describe('buildMenuItems', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('context section includes rewind item from registry MenuItemFeature', () => {
+  it('context section includes rewind item from registry MenuItemView', () => {
     const registry = createFeatureRegistry();
     registry.register({
       id: 'rewind',
@@ -274,7 +274,7 @@ describe('buildMenuItems', () => {
     expect(closeSilent).toHaveBeenCalled();
   });
 
-  it('slash section includes registry SlashCommandFeature with execute', () => {
+  it('slash section includes registry SlashCommandView with execute', () => {
     const registry = createFeatureRegistry();
     registry.register({
       id: 'reload-plugins',

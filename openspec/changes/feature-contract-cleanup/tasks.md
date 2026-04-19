@@ -1,0 +1,51 @@
+## 1. Low-risk type cleanup
+
+- [x] 1.1 Remove `ChannelFeature` interface; inline `id: string` into `Feature`, `SlashCommandFeature`, `MenuItemFeature`
+- [x] 1.2 Rename `SlashCommandFeature` → `SlashCommandView` across all imports
+- [x] 1.3 Rename `MenuItemFeature` → `MenuItemView` across all imports
+- [x] 1.4 Run tests + typecheck + biome; commit
+
+## 2. Split `feature.ts` by concern
+
+- [ ] 2.1 Extract `deriveGroupAggregate` to `lib/derive-group-aggregate.ts`; update 3 importers (trailing-renderers + FeatureRow)
+- [ ] 2.2 Move `PALETTE_TABS` + `PaletteTab` to `components/palette/palette-tabs.ts`; update imports
+- [ ] 2.3 Verify `feature.ts` now contains only types + `FEATURE_SECTIONS` const
+- [ ] 2.4 Run tests + typecheck + biome; commit
+
+## 3. Split `trailing-renderers.tsx` per surface
+
+- [ ] 3.1 Promote `TriStateIndicator` to `components/ui/TriStateIndicator.tsx`
+- [ ] 3.2 Move `renderMenuTrailing` into `to-menu-item.tsx` (fold inline)
+- [ ] 3.3 Move `renderPaletteTrailing` into `to-palette-command.tsx` (fold inline)
+- [ ] 3.4 Delete `lib/adapters/trailing-renderers.tsx` and its test file (redistribute tests to the two adapter test files)
+- [ ] 3.5 Run tests + typecheck + biome; commit
+
+## 4. Registry + builder consolidation
+
+- [ ] 4.1 Extract private `findSlash(predicate)` helper in `feature-registry.ts`; rewrite `findSlashCommand` and `getSlashCommand` to use it
+- [ ] 4.2 Lift `buildSection` out of `buildMenuItems()` to module level
+- [ ] 4.3 Run tests + typecheck + biome; commit
+
+## 5. Relocate surface-specific files out of `lib/`
+
+- [ ] 5.1 Move `lib/adapters/to-palette-command.tsx` → `components/palette/to-palette-command.tsx`; update importer
+- [ ] 5.2 Create `components/command-menu/` directory
+- [ ] 5.3 Move `components/CommandMenu.tsx` → `components/command-menu/CommandMenu.tsx`; update imports from outside
+- [ ] 5.4 Move `lib/build-menu-items.ts` → `components/command-menu/build-menu-items.ts`; update imports + test location
+- [ ] 5.5 Move `lib/menu-layout.ts` → `components/command-menu/menu-layout.ts`; update imports + test location
+- [ ] 5.6 Run tests + typecheck + biome; commit
+
+## 6. Remove view types; expose `Feature[]` from registry
+
+- [ ] 6.1 Narrow `FeatureRegistry` interface: remove `getSlashCommandFeatures()` and `getMenuItemFeatures()`; keep `getFeatures(): Feature[]`, `register()`, `findSlashCommand()`, `getSlashCommand()` (latter two can return `Feature | undefined` reading `.slash`)
+- [ ] 6.2 Update `buildMenuItems` to map `Feature[]` through `toMenuItem` inline instead of reading pre-adapted `MenuItemView[]`
+- [ ] 6.3 Update slash command consumers to read `feature.slash?.command` / `.slash?.invoke` directly
+- [ ] 6.4 Delete `SlashCommandView` and `MenuItemView` type exports from `feature.ts`
+- [ ] 6.5 Run tests + typecheck + biome; commit
+
+## 7. Final verification
+
+- [ ] 7.1 Full test suite green
+- [ ] 7.2 Typecheck clean
+- [ ] 7.3 Biome clean
+- [ ] 7.4 Manual sanity check: CommandMenu opens via button + via "/"; CommandPalette tabs switch; filter groups toggle

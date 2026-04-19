@@ -1,15 +1,13 @@
-export interface ChannelFeature {
+export interface SlashCommandView {
   id: string;
-}
-
-export interface SlashCommandFeature extends ChannelFeature {
   command: string;
   match?(message: string): boolean;
   invoke(message: string): void;
   execute?(): void;
 }
 
-export interface MenuItemFeature extends ChannelFeature {
+export interface MenuItemView {
+  id: string;
   menuItem: {
     label: string;
     section: string;
@@ -28,7 +26,8 @@ export interface MenuItemFeature extends ChannelFeature {
 }
 
 /** New unified feature shape — capability as pure data, adapted per UI surface. */
-export interface Feature extends ChannelFeature {
+export interface Feature {
+  id: string;
   label: string;
   /** Visual grouping — CommandMenu block AND CommandPalette in-tab header. */
   section: FeatureSection;

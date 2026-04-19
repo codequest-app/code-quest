@@ -1,7 +1,7 @@
-import type { Feature, MenuItemFeature } from '../feature';
+import type { Feature, MenuItemView } from '../feature';
 import { renderMenuTrailing } from './trailing-renderers';
 
-export function toMenuItem(f: Feature): MenuItemFeature {
+export function toMenuItem(f: Feature): MenuItemView {
   return {
     id: f.id,
     menuItem: {

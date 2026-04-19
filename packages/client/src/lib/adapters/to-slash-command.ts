@@ -1,6 +1,6 @@
-import type { Feature, SlashCommandFeature } from '../feature';
+import type { Feature, SlashCommandView } from '../feature';
 
-export function toSlashCommand(f: Feature): SlashCommandFeature | null {
+export function toSlashCommand(f: Feature): SlashCommandView | null {
   if (!f.slash) return null;
   return {
     id: f.id,
