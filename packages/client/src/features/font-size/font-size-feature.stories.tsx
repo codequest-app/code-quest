@@ -1,0 +1,45 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
+import { toMenuItem } from '../../lib/adapters/to-menu-item';
+import type { FontSize } from '../../stores/usePreferencesStore';
+import { createFontSizeFeature } from './font-size-feature';
+
+function FontSizeFeaturePreview({
+  fontSize,
+  setFontSize,
+}: {
+  fontSize: FontSize;
+  setFontSize: (v: FontSize) => void;
+}) {
+  const feature = toMenuItem(createFontSizeFeature({ fontSize, setFontSize }));
+  return (
+    <button
+      type="button"
+      onClick={feature.execute}
+      className="text-left px-3 py-1 w-80 flex items-center justify-between text-text hover:bg-white/10 rounded"
+    >
+      <span>{feature.menuItem.label}</span>
+      {feature.menuItem.trailing}
+    </button>
+  );
+}
+
+const meta = {
+  component: FontSizeFeaturePreview,
+  tags: ['autodocs'],
+  args: { setFontSize: fn() },
+  decorators: [
+    (Story) => (
+      <div className="bg-bg text-text p-6 min-h-[120px]">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof FontSizeFeaturePreview>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Small: Story = { args: { fontSize: 'sm' } };
+export const Medium: Story = { args: { fontSize: 'md' } };
+export const Large: Story = { args: { fontSize: 'lg' } };
