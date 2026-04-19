@@ -72,8 +72,8 @@ export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): R
       />
     );
   }
-  const _exhaustive: never = state;
-  return _exhaustive;
+  state satisfies never;
+  return null;
 }
 
 export function toMenuItem(f: Feature): MenuItemView {

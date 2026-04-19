@@ -17,13 +17,6 @@ interface TrailingOpts {
   featureId?: string;
 }
 
-/**
- * Palette-surface trailing renderer. Toggles render as the same ON/OFF pill
- * used by filter groups (TriStateIndicator with 'all'/'none') so the entire
- * palette has a single trailing-visual vocabulary. Menu keeps the ToggleSwitch
- * because its rows use a different visual language. Unhandled kinds fall
- * through to the menu renderer so new FeatureState kinds don't silently drop.
- */
 export function renderPaletteTrailing(state?: FeatureState, opts?: TrailingOpts): React.ReactNode {
   if (!state) return undefined;
   if (state.kind === 'toggle') {

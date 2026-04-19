@@ -73,9 +73,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const { close, closeSilent, compose } = params;
 
   const local = params.localFeatures ?? [];
-  // Local features override registry entries with the same id (e.g. btw: registry
-  // has the base Feature; CommandMenu adds a per-render wrapper that knows the
-  // live slashFilter state).
+  // Local features override registry entries with the same id.
   const featureById = new Map<string, Feature>();
   for (const f of registry.getFeatures()) featureById.set(f.id, f);
   for (const f of local) featureById.set(f.id, f);
@@ -89,8 +87,6 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const settings = section('Settings');
   const support = section('Support');
 
-  // Slash section = registry Features whose section is 'Slash Commands'
-  // + CLI commands whose names don't already collide with a registry slash binding.
   const registrySlashCommands = new Set(
     features.flatMap((f) => (f.slash?.command ? [f.slash.command] : [])),
   );

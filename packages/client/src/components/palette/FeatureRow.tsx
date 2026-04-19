@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { deriveGroupAggregate } from '../../lib/derive-group-aggregate';
 import type { Feature } from '../../lib/feature';
 import { cn } from '../../utils/cn';
+import { TOGGLE_PILL_BASE, togglePillColor, togglePillSymbol } from '../ui/TriStateIndicator';
 import { toPaletteCommand } from './to-palette-command';
 
 export interface FeatureRowProps {
@@ -96,13 +97,12 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
             handleAggToggle();
           }}
           className={cn(
-            'text-[9px] font-mono font-bold tracking-[0.05em] rounded-[3px] px-1.5 py-0.5 cursor-pointer shrink-0 border',
-            agg === 'all' && 'bg-accent text-white border-accent',
-            agg === 'none' && 'text-text-muted border-border',
-            agg === 'partial' && 'text-warning border-warning',
+            TOGGLE_PILL_BASE,
+            togglePillColor(agg),
+            'tracking-[0.05em] cursor-pointer shrink-0',
           )}
         >
-          {agg === 'all' ? 'ON' : agg === 'none' ? 'OFF' : '∂'}
+          {togglePillSymbol(agg)}
         </button>
       </div>
       {expanded && groupState.items.length > 0 && (
@@ -135,11 +135,12 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
                   item.toggle();
                 }}
                 className={cn(
-                  'text-[9px] font-mono font-bold tracking-[0.05em] rounded-[3px] px-1.5 py-0.5 cursor-pointer shrink-0 border',
-                  item.on ? 'bg-accent text-white border-accent' : 'text-text-muted border-border',
+                  TOGGLE_PILL_BASE,
+                  togglePillColor(item.on ? 'all' : 'none'),
+                  'tracking-[0.05em] cursor-pointer shrink-0',
                 )}
               >
-                {item.on ? 'ON' : 'OFF'}
+                {togglePillSymbol(item.on ? 'all' : 'none')}
               </button>
             </div>
           ))}
