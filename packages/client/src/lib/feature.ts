@@ -37,7 +37,7 @@ export type PaletteTab = (typeof PALETTE_TABS)[number];
  * in-tab header). Listing here ensures typos become compile errors at
  * factories, adapters, and consumers.
  */
-export const FEATURE_SECTIONS = [
+const FEATURE_SECTIONS = [
   'Context',
   'Model',
   'Customize',

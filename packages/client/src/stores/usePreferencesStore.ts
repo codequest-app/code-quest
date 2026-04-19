@@ -9,7 +9,7 @@ import {
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type { ColorTheme, Density, FontSize, Layout };
+export type { ColorTheme, Density, FontSize };
 
 interface PreferencesState extends PersistedPreferences {
   setColorTheme: (v: ColorTheme) => void;
