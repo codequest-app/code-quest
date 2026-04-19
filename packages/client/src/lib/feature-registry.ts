@@ -22,6 +22,15 @@ export function createFeatureRegistry(): FeatureRegistry {
     slashCache.set(f, slash);
     return slash;
   };
+  const findSlash = (
+    predicate: (slash: SlashCommandView) => boolean,
+  ): SlashCommandView | undefined => {
+    for (const f of entries) {
+      const slash = slashOf(f);
+      if (slash && predicate(slash)) return slash;
+    }
+    return undefined;
+  };
 
   return {
     register(feature) {
@@ -31,29 +40,17 @@ export function createFeatureRegistry(): FeatureRegistry {
     },
 
     findSlashCommand(message) {
-      for (const f of entries) {
-        const slash = slashOf(f);
-        if (!slash) continue;
-        if (slash.match ? slash.match(message) : message.trim() === slash.command) return slash;
-      }
-      return undefined;
+      return findSlash((slash) =>
+        slash.match ? slash.match(message) : message.trim() === slash.command,
+      );
     },
 
     getSlashCommand(command) {
-      for (const f of entries) {
-        const slash = slashOf(f);
-        if (slash?.command === command) return slash;
-      }
-      return undefined;
+      return findSlash((slash) => slash.command === command);
     },
 
     getSlashCommandViews() {
-      const out: SlashCommandView[] = [];
-      for (const f of entries) {
-        const slash = slashOf(f);
-        if (slash) out.push(slash);
-      }
-      return out;
+      return entries.map(slashOf).filter((s): s is SlashCommandView => s !== null);
     },
 
     getMenuItemViews() {

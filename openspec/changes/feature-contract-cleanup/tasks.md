@@ -22,9 +22,9 @@
 
 ## 4. Registry + builder consolidation
 
-- [ ] 4.1 Extract private `findSlash(predicate)` helper in `feature-registry.ts`; rewrite `findSlashCommand` and `getSlashCommand` to use it
-- [ ] 4.2 Lift `buildSection` out of `buildMenuItems()` to module level
-- [ ] 4.3 Run tests + typecheck + biome; commit
+- [x] 4.1 Extract private `findSlash(predicate)` helper in `feature-registry.ts`; rewrite `findSlashCommand` and `getSlashCommand` to use it
+- [x] 4.2 Lift `buildSection` out of `buildMenuItems()` to module level
+- [x] 4.3 Run tests + typecheck + biome; commit
 
 ## 5. Relocate surface-specific files out of `lib/`
 

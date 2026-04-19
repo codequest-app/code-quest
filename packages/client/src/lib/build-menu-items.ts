@@ -37,6 +37,30 @@ export interface BuildMenuItemsParams {
 const byOrder = (a: { menuItem: { order?: number } }, b: { menuItem: { order?: number } }) =>
   (a.menuItem.order ?? Number.POSITIVE_INFINITY) - (b.menuItem.order ?? Number.POSITIVE_INFINITY);
 
+function buildSection(
+  menuFeatures: MenuItemView[],
+  section: FeatureSection,
+  onClose: { close: () => void; closeSilent: () => void },
+): MenuItem[] {
+  return menuFeatures
+    .filter((f) => f.menuItem.section === section)
+    .sort(byOrder)
+    .map((f) => ({
+      id: f.id,
+      label: f.menuItem.label,
+      description: f.menuItem.description,
+      section,
+      disabled: f.menuItem.disabled,
+      filterOnly: f.menuItem.filterOnly,
+      matchFirstToken: f.menuItem.matchFirstToken,
+      trailing: f.menuItem.trailing,
+      onClick: () => {
+        f.execute();
+        f.menuItem.closeSilent ? onClose.closeSilent() : onClose.close();
+      },
+    }));
+}
+
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const { slashCommands, registry } = params;
   const { close, closeSilent, compose } = params;
@@ -61,35 +85,18 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
     (f) => f.execute && !menuFeatureIds.has(f.id),
   );
 
-  function buildSection(section: FeatureSection): MenuItem[] {
-    return menuFeatures
-      .filter((f) => f.menuItem.section === section)
-      .sort(byOrder)
-      .map((f) => ({
-        id: f.id,
-        label: f.menuItem.label,
-        description: f.menuItem.description,
-        section,
-        disabled: f.menuItem.disabled,
-        filterOnly: f.menuItem.filterOnly,
-        matchFirstToken: f.menuItem.matchFirstToken,
-        trailing: f.menuItem.trailing,
-        onClick: () => {
-          f.execute();
-          f.menuItem.closeSilent ? closeSilent() : close();
-        },
-      }));
-  }
+  const section = (name: FeatureSection) =>
+    buildSection(menuFeatures, name, { close, closeSilent });
 
-  const context: MenuItem[] = buildSection('Context');
+  const context: MenuItem[] = section('Context');
 
-  const model: MenuItem[] = buildSection('Model');
+  const model: MenuItem[] = section('Model');
 
-  const customize: MenuItem[] = buildSection('Customize');
+  const customize: MenuItem[] = section('Customize');
 
-  const settings: MenuItem[] = buildSection('Settings');
+  const settings: MenuItem[] = section('Settings');
 
-  const support: MenuItem[] = buildSection('Support');
+  const support: MenuItem[] = section('Support');
 
   const allRegistryCommandIds = new Set(registry.getSlashCommandViews().map((f) => f.command));
   const filteredCliCommands = slashCommands.filter((cmd) => !allRegistryCommandIds.has(`/${cmd}`));
@@ -122,7 +129,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const cliSlashItems: MenuItem[] = filteredCliCommands.map(toCliSlashItem);
 
   const slash: MenuItem[] = [
-    ...buildSection('Slash Commands'),
+    ...section('Slash Commands'),
     ...registrySlashItems,
     ...cliSlashItems,
   ].sort((a, b) => a.label.localeCompare(b.label));
