@@ -15,6 +15,16 @@ Client 端 `FakeSummoner` 繼承 server 基礎版 + 加上 **TypedSocket 型別*
 
 React 互動必須在 `act()` 裡 flush。
 
+## Import 來源
+
+| 東西 | 從哪 import |
+|---|---|
+| `renderWithChannel` / `renderWithWorkspace` | `@/test/render-with-channel` / `@/test/render-with-workspace` |
+| `createFakeSummoner` / `FakeSummoner` | `@/test/fake-summoner`（含 TypedSocket 強型別） |
+| `createFakeServer` | `@code-quest/server/test` |
+| `segments as s` / `controlRequest*` | `@code-quest/summoner/test` |
+| `sendUserMessage` / `emitAssistantTurn` | `@/test/helpers` |
+
 ## renderWithChannel — 最常用
 
 自動包 `SocketProvider` → `SessionProvider` → ... → `TabProvider` → `ChannelProvider`，並跑 `claude.initialize()`。
@@ -133,6 +143,9 @@ expect(screen.getByText(/Bash/)).toBeInTheDocument();
 需要 prime 服務（例如 git worktree list）時，先用**一個 summoner** 設好 state，再給**另一個 summoner** 連上：
 
 ```tsx
+import { createFakeServer } from '@code-quest/server/test';
+import { FakeSummoner } from '@/test/fake-summoner';
+
 const server = createFakeServer();
 const primingSummoner = new FakeSummoner(server);
 primingSummoner.git()!.setProjectRoot('/repo');

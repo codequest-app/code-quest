@@ -15,11 +15,20 @@ description: >
 
 每個 FakeSummoner 代表「一個 UI window」。多 window 測試建立多個 summoner 共用同一 server。
 
+## Import 來源
+
+| 東西 | 從哪 import |
+|---|---|
+| `createFakeSummoner` / `createFakeServer` / `createTestContainer` | `../test/index`（server 專用版，會 wire DI container） |
+| `segments as s` | `@code-quest/summoner/test` |
+
+Server tests **不要** `import { createFakeSummoner } from '@code-quest/summoner/test'` — 那是 summoner base 版，沒掛 DI container。
+
 ## 最小 Setup
 
 ```ts
-import { createFakeSummoner } from '@code-quest/summoner/test';
 import { segments as s } from '@code-quest/summoner/test';
+import { createFakeSummoner } from '../test/index.ts';
 
 const claude = createFakeSummoner().claude();
 const channelId = await claude.initialize();
@@ -30,7 +39,7 @@ const channelId = await claude.initialize();
 ## 含 DI container（存取 services）
 
 ```ts
-import { createTestContainer, createFakeServer } from '../test/index';
+import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 
 async function setup(sessionId = 'cli-sess') {
   const container = createTestContainer();
