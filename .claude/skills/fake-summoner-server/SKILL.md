@@ -240,15 +240,15 @@ const channel = new Channel(makeRunner(), 'sess-1', 'claude', '/cwd');
 
 好處：API 變動時測試會跟著更新，不會被型別 cast 靜默略過。
 
-## 慣例對照
+## 慣例
 
-| 情境 | 採用 | 取代舊法 |
-|---|---|---|
-| fake socket | `createFakeSummoner()` 提供的 dual-emitter socket | 手搭 `{ on: vi.fn(), emit: vi.fn() }` |
-| fake ProcessRunner | `new ProcessRunner({ adapter, processProvider: new FakeProcessProvider() })` | 手搭 `{ write/on/off: vi.fn() } as ProcessRunner` |
-| protocol event 建構 | `segments.*()` builder | 手構 `{ type: 'assistant', ... } as any` |
-| 啟動 FakeClaude | `createFakeSummoner().claude().initialize()` | 舊名 `createFakeClaude` |
-| 測啟動流程 | `initialize()` 或 `prepareInit()`（外部 launch） | 跳過 `initialize()` |
+| 情境 | 採用 |
+|---|---|
+| fake socket | `createFakeSummoner()` 提供的 dual-emitter socket |
+| fake ProcessRunner | `new ProcessRunner({ adapter, processProvider: new FakeProcessProvider() })` |
+| protocol event 建構 | `segments.*()` builder |
+| 啟動 FakeClaude | `createFakeSummoner().claude().initialize()` |
+| 測啟動流程 | `initialize()` 或 `prepareInit()`（外部 launch） |
 
 ## 相關 skill
 

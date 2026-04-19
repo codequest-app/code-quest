@@ -199,16 +199,16 @@ expect(responses.map((r) => r.response.request_id)).toContain('req-1');
 
 **負面斷言**（「不應該送」）用 `claude.received(...).length` before/after 比較。
 
-## 慣例對照
+## 慣例
 
-| 情境 | 採用 | 取代舊法 |
-|---|---|---|
-| 取得 fake socket + handlers | `createFakeSummoner()` + `renderWithChannel` + segment emit | 舊 API `createSocket()` / `addHandler()` / `setJoinResult()` |
-| Fake socket 物件 | FakeSummoner 提供的 dual-emitter socket | 手搭 `{ on: vi.fn(), emit: vi.fn() }` |
-| 驗證 action 發 socket event | 完整 pipeline + `claude.received(...)` | `vi.spyOn(socket, 'emit')` / `{ emit: vi.fn() }` |
-| 包 `claude.emit()` flush state | `await act(async () => claude.emit(...))` | 裸 emit（React 會 warn） |
-| `skipInit: true` 模式 | 搭配 `cwd` prop 由外部 launch | 只給 `skipInit: true` 會卡住 |
-| `renderHook` 重複 render | wrapper 用 `useRef` lazy init summoner | 每 render 都 `new FakeSummoner` 會斷線 |
+| 情境 | 採用 |
+|---|---|
+| 取得 fake socket + handlers | `createFakeSummoner()` + `renderWithChannel` + segment emit |
+| Fake socket 物件 | FakeSummoner 提供的 dual-emitter socket |
+| 驗證 action 發 socket event | 完整 pipeline + `claude.received(...)` |
+| 包 `claude.emit()` flush state | `await act(async () => claude.emit(...))` |
+| `skipInit: true` 模式 | 搭配 `cwd` prop 由外部 launch |
+| `renderHook` 重複 render | wrapper 用 `useRef` lazy init summoner |
 
 ## 相關 skill
 
