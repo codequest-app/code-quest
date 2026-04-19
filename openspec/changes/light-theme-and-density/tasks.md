@@ -21,7 +21,7 @@
 ## 4. Storybook decorator
 
 - [x] 4.1 在 `story-decorator.tsx` 新增 `withThemePreset({ theme, density })`：render 前寫 `<html>` data-attr，unmount 還原
-- [ ] 4.2 為代表性 component 加 variant stories（延後：Playwright dump 截圖已覆蓋四組合視覺）
+- [x] 4.2 為代表性 component 加 variant stories：SettingsDialog / CommandPalette / ChatMessage 各加 4 個 variant（dark/light × comfortable/compact），使用 `withThemePreset` decorator — 在 `feat/storybook-complete-coverage` 分支補上
 
 ## 5. Unit / type 驗證
 
