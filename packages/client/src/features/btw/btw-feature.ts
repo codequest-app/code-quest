@@ -1,4 +1,5 @@
 import type { RpcResult } from '@code-quest/shared';
+import { useSyncExternalStore } from 'react';
 import type { Feature } from '../../lib/feature';
 
 type Subscriber = () => void;
@@ -104,4 +105,11 @@ export function createBtwLocalFeature({ slashFilter, baseFeature }: BtwLocalFeat
       if (question) baseFeature.slash?.invoke(`/btw ${question}`);
     },
   };
+}
+
+export function useBtwState(): BtwState {
+  return useSyncExternalStore(
+    (cb) => btwSignal.subscribe(cb),
+    () => btwSignal.getState(),
+  );
 }

@@ -12,8 +12,7 @@ import {
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
-import { btwSignal } from '../features/btw/btw-feature';
-import { useBtwState } from '../features/btw/use-btw-state';
+import { btwSignal, useBtwState } from '../features/btw/btw-feature';
 import { resumeOpenSignal } from '../features/resume/resume-feature';
 import { cn } from '../utils/cn';
 import { resumeRoute } from '../utils/resume-route';
