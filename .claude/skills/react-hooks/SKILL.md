@@ -236,54 +236,9 @@ const value = useMemo(() => ({ ...state, ...actions }), [state, actions]);
 
 ---
 
-## Refs and Dependency Arrays
+## Refs、dependency arrays 與 biome useExhaustiveDependencies
 
-### Biome `useExhaustiveDependencies` Rules
-
-Biome treats **any component-scoped variable** as a potential dependency. Only these are recognized as stable (excluded from deps):
-
-- `useRef()` return value
-- `useState()` setter (second element)
-- `useReducer()` dispatch (second element)
-- `useTransition()` startTransition (second element)
-
-### Avoiding False Positives
-
-```ts
-// Problem: component-scoped function flagged by biome
-function useChat(socket) {
-  const ref1 = useRef(false);
-  const ref2 = useRef(false);
-
-  // Bad: biome flags resetAll as missing dep
-  const resetAll = () => { ref1.current = false; ref2.current = false; };
-  useEffect(() => { resetAll(); }, [socket]); // warning!
-
-  // Good: module-level function, takes refs as params
-  // (defined OUTSIDE the hook)
-  useEffect(() => { resetRefs(ref1, ref2); }, [socket]); // no warning
-}
-
-// Module-level — invisible to biome's dep analysis
-function resetRefs(...refs: MutableRefObject<boolean>[]) {
-  for (const ref of refs) ref.current = false;
-}
-```
-
-### Zustand `getState()` in Hooks
-
-`useChannel.getState()` inside callbacks is fine — it reads latest state without subscribing. No need to add store values to dependency arrays.
-
-```ts
-const sendMessage = useCallback((message: string) => {
-  const { sessionId, addMessage } = useChannel.getState();
-  if (!sessionId) return;
-  addMessage(msg({ role: 'user', type: 'text', content: message }));
-  socket.emit('chat:send', { sessionId, message });
-}, [socket]); // only socket needed
-```
-
----
+biome 的 `useExhaustiveDependencies` 規則、component-scoped function 的 false positive 修法、`useChannel.getState()` 在 callback 裡的用法見 `references/biome-deps-and-refs.md`。快速結論：useRef 值、useState setter、useReducer dispatch、useTransition startTransition 這四類是 stable，其他都視為 dep。
 
 ## Testing Custom Hooks
 
