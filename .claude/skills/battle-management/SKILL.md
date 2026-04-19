@@ -1,12 +1,13 @@
 ---
 name: battle-management
 description: >
-  Battle management system with AI dispatch and multi-battle handling.
-  Use when implementing combat flow, managing parallel AI battles,
-  designing battle UI, or working with worktree-based battle isolation.
+  **Roadmap — 尚未實作。** Battle management system (Code Quest RPG vision) — AI dispatch, multi-battle handling, worktree-based battle isolation. See `rpg-roadmap` / `project-overview` for framing.
+  Use when designing future combat flow, planning parallel AI battles, or reading legacy design docs.
 ---
 
-# 戰鬥管理系統 - 多 AI 並行戰鬥設計
+# 戰鬥管理系統 - 多 AI 並行戰鬥設計（Roadmap，尚未實作）
+
+> ⚠️ 本 skill 描述 Code Quest RPG 願景的戰鬥系統，目前 cc-office 未實作。當前專案是 Claude Code web client — 現況見 `project-overview`。
 
 ## 核心設計理念
 

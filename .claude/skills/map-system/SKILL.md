@@ -1,12 +1,13 @@
 ---
 name: map-system
 description: >
-  Dual-mode map system (2D overhead + dialogue mode) and location structure.
-  Use when implementing map or scene systems, designing location-based features,
-  planning town/wilderness/dungeon content, or working on navigation mechanics.
+  **Roadmap — 尚未實作。** Dual-mode map system (2D overhead + dialogue mode) and location structure (Code Quest RPG vision). See `rpg-roadmap` / `project-overview` for framing.
+  Use when designing future map/scene features, town/wilderness/dungeon content, or reading legacy design docs.
 ---
 
-# 地圖系統 - 雙模式探索設計
+# 地圖系統 - 雙模式探索設計（Roadmap，尚未實作）
+
+> ⚠️ 本 skill 描述 Code Quest RPG 願景的地圖系統，目前 cc-office 未實作。當前專案是 Claude Code web client — 現況見 `project-overview`。
 
 ## 設計理念
 
