@@ -7,7 +7,7 @@ import { FeatureRow } from '../FeatureRow';
 function makeGroupFeature(overrides: Partial<Feature> = {}): Feature {
   return {
     id: 'tools',
-    label: '工具',
+    label: 'Tools',
     section: 'Filters',
     execute: () => {},
     state: {

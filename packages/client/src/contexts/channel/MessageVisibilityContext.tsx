@@ -29,13 +29,13 @@ interface Group {
 export const VISIBILITY_GROUPS: Group[] = [
   {
     id: 'conversation',
-    label: '對話',
+    label: 'Conversation',
     icon: ChatBubbleLeftRightIcon,
     types: ['text', 'thinking', 'redacted_thinking'],
   },
   {
     id: 'tools',
-    label: '工具',
+    label: 'Tools',
     icon: WrenchScrewdriverIcon,
     types: [
       'tool_use',
@@ -48,7 +48,7 @@ export const VISIBILITY_GROUPS: Group[] = [
   },
   {
     id: 'system',
-    label: '系統',
+    label: 'System',
     icon: Cog6ToothIcon,
     types: [
       'result',
