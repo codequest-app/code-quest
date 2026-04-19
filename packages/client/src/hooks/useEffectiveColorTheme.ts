@@ -1,0 +1,24 @@
+import type { EffectiveColorTheme } from '@code-quest/shared';
+import { useSyncExternalStore } from 'react';
+import { usePreferencesStore } from '../stores/usePreferencesStore';
+
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+
+function subscribePrefersDark(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const mq = window.matchMedia(DARK_QUERY);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+}
+
+function getPrefersDark(): boolean {
+  if (typeof window === 'undefined') return true;
+  return window.matchMedia(DARK_QUERY).matches;
+}
+
+export function useEffectiveColorTheme(): EffectiveColorTheme {
+  const preference = usePreferencesStore((s) => s.colorTheme);
+  const prefersDark = useSyncExternalStore(subscribePrefersDark, getPrefersDark, () => true);
+  if (preference === 'system') return prefersDark ? 'dark' : 'light';
+  return preference;
+}

@@ -1,0 +1,97 @@
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { useEffectiveColorTheme } from '../useEffectiveColorTheme';
+
+type MqlStub = MediaQueryList & {
+  _listeners: Set<(e: MediaQueryListEvent) => void>;
+  _set: (matches: boolean) => void;
+};
+
+function createMatchMediaStub(initialDark: boolean): () => MqlStub {
+  let currentDark = initialDark;
+  const listeners = new Set<(e: MediaQueryListEvent) => void>();
+  const mql = {
+    get matches() {
+      return currentDark;
+    },
+    media: '(prefers-color-scheme: dark)',
+    onchange: null,
+    addEventListener: (type: string, cb: (e: MediaQueryListEvent) => void) => {
+      if (type === 'change') listeners.add(cb);
+    },
+    removeEventListener: (type: string, cb: (e: MediaQueryListEvent) => void) => {
+      if (type === 'change') listeners.delete(cb);
+    },
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+    _listeners: listeners,
+    _set: (matches: boolean) => {
+      currentDark = matches;
+      for (const cb of listeners) {
+        cb({ matches, media: '(prefers-color-scheme: dark)' } as MediaQueryListEvent);
+      }
+    },
+  } as unknown as MqlStub;
+  return () => mql;
+}
+
+describe('useEffectiveColorTheme', () => {
+  let mqlFactory: () => MqlStub;
+  let originalMatchMedia: typeof window.matchMedia;
+
+  beforeEach(() => {
+    originalMatchMedia = window.matchMedia;
+    mqlFactory = createMatchMediaStub(true);
+    window.matchMedia = vi.fn(mqlFactory);
+    usePreferencesStore.setState({ colorTheme: 'system' });
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it('returns dark when preference is dark', () => {
+    usePreferencesStore.setState({ colorTheme: 'dark' });
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('dark');
+  });
+
+  it('returns light when preference is light', () => {
+    usePreferencesStore.setState({ colorTheme: 'light' });
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('light');
+  });
+
+  it('returns dark when preference is system and OS prefers dark', () => {
+    mqlFactory = createMatchMediaStub(true);
+    window.matchMedia = vi.fn(mqlFactory);
+    usePreferencesStore.setState({ colorTheme: 'system' });
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('dark');
+  });
+
+  it('returns light when preference is system and OS prefers light', () => {
+    mqlFactory = createMatchMediaStub(false);
+    window.matchMedia = vi.fn(mqlFactory);
+    usePreferencesStore.setState({ colorTheme: 'system' });
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('light');
+  });
+
+  it('re-renders when OS preference changes live', () => {
+    const stub = mqlFactory();
+    window.matchMedia = vi.fn(() => stub);
+    usePreferencesStore.setState({ colorTheme: 'system' });
+
+    const { result } = renderHook(() => useEffectiveColorTheme());
+    expect(result.current).toBe('dark');
+
+    act(() => {
+      stub._set(false);
+    });
+
+    expect(result.current).toBe('light');
+  });
+});
