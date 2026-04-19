@@ -38,4 +38,10 @@ describe('preferencesStateSchema', () => {
     const parsed = preferencesStateSchema.partial().safeParse({ density: 'roomy' });
     expect(parsed.success).toBe(false);
   });
+
+  it('accepts colorTheme: system (third option)', () => {
+    const parsed = preferencesStateSchema.partial().safeParse({ colorTheme: 'system' });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.colorTheme).toBe('system');
+  });
 });

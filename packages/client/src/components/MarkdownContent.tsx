@@ -21,7 +21,10 @@ function FencedCodeWrapper({ children }: { children: React.ReactNode }) {
     <div className="relative group/code">
       <CopyButton
         getText={() => ref.current?.textContent ?? ''}
-        className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 z-10 group-hover/code:opacity-100')}
+        className={cn(
+          HOVER_COPY_BASE,
+          'absolute top-2 right-2 z-sticky group-hover/code:opacity-100',
+        )}
         title="Copy"
       />
       <pre ref={ref}>{children}</pre>
@@ -49,7 +52,7 @@ function LinkWithContextMenu({ href, children }: { href?: string; children: Reac
         createPortal(
           <div
             role="menu"
-            className="fixed z-50 bg-surface border border-border rounded shadow"
+            className="fixed z-modal bg-surface border border-border rounded shadow"
             style={{ left: menu.x, top: menu.y }}
             onMouseLeave={() => setMenu(null)}
           >
@@ -132,7 +135,7 @@ const components: Components = {
 
 export function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-invert prose-sm max-w-none">
+    <div className="prose prose-themed prose-sm max-w-none">
       <Markdown remarkPlugins={[remarkGfm]} components={components}>
         {content}
       </Markdown>

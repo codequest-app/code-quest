@@ -45,7 +45,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
   const content = (
     <>
       <div
-        className="absolute top-0 left-0 h-full rounded-[9px] bg-toggle transition-[width] duration-150"
+        className="absolute top-0 left-0 h-full rounded-lg bg-toggle transition-all duration-150"
         style={{ width: fillWidth }}
       />
       {levels.map((_, i) =>
@@ -58,7 +58,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
         ) : null,
       )}
       <div
-        className="absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-[left] duration-150"
+        className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-all duration-150"
         style={{ left: thumbLeft }}
       />
     </>
@@ -74,7 +74,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
       aria-valuemin={0}
       aria-valuemax={count - 1}
       aria-label="Effort level"
-      className="relative w-[76px] h-[18px] rounded-[9px] bg-surface-hover overflow-hidden shrink-0 cursor-pointer"
+      className="relative w-19 h-5 rounded-lg bg-surface-hover overflow-hidden shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       onMouseDown={(e) => e.preventDefault()}
       onClick={handleClick}
       onKeyDown={(e) => {

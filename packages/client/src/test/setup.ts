@@ -5,7 +5,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
 beforeEach(() => {
-  usePreferencesStore.setState({ isOnboardingDismissed: true });
+  usePreferencesStore.setState({ hiddenItems: ['onboarding-overlay'] });
 });
 
 afterEach(() => {

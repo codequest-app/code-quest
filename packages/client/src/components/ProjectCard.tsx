@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { cn } from '../utils/cn';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 import { ProjectContextMenu } from './ProjectContextMenu';
-import { ResumeSessionsDialog } from './ResumeSessionsDialog';
+import { ResumeSessionsDropdown } from './ResumeSessionsDropdown';
 
 export function ProjectCard({
   name,
@@ -31,7 +31,7 @@ export function ProjectCard({
       <button
         type="button"
         className={cn(
-          'mx-2 my-1 px-3 py-2 rounded cursor-pointer text-sm text-left w-[calc(100%-16px)]',
+          'block my-1 px-3 py-2 rounded cursor-pointer text-sm text-left w-full',
           active
             ? 'border border-accent bg-accent/10 text-text'
             : 'border border-transparent hover:bg-white/5 text-text-muted',
@@ -58,7 +58,7 @@ export function ProjectCard({
         />
       )}
       {cwd && dialogOpen && (
-        <ResumeSessionsDialog cwd={cwd} open={dialogOpen} onOpenChange={setDialogOpen} />
+        <ResumeSessionsDropdown cwd={cwd} open={dialogOpen} onOpenChange={setDialogOpen} />
       )}
       {cwd && worktreeDialogOpen && (
         <CreateWorktreeDialog

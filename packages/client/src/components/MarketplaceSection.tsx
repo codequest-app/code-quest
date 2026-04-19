@@ -1,5 +1,5 @@
 import type { MarketplaceInfo } from '@code-quest/shared';
-import { IconButton, RefreshIcon, TrashIcon } from './ui/Icons';
+import { ActionButton, RefreshIcon, TrashIcon } from './ui/Icons';
 
 export interface MarketplaceSectionProps {
   marketplaces: MarketplaceInfo[];
@@ -29,20 +29,20 @@ export function MarketplaceSection({
           onChange={(e) => onNewSourceChange(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onAdd()}
           placeholder="Marketplace source URL…"
-          className="flex-1 border border-border bg-input text-text placeholder:text-text-muted rounded-md px-3 py-2 text-[0.9em] outline-none focus:border-accent"
+          className="flex-1 border border-border bg-input text-text placeholder:text-text-muted rounded-md px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <button
           type="button"
           disabled={!newSource.trim() || adding}
           onClick={onAdd}
-          className="px-3 py-2 rounded-md bg-button text-white text-[0.85em] border-0 disabled:opacity-40"
+          className="px-3 py-2 rounded-md bg-button text-white text-sm border-0 disabled:opacity-40"
         >
           Add
         </button>
       </div>
 
       {marketplaces.length === 0 ? (
-        <p className="text-center text-text/50 py-8 text-[0.9em]">No marketplaces configured.</p>
+        <p className="text-center text-text-muted/60 py-8 text-sm">No marketplaces configured.</p>
       ) : (
         <ul className="list-none m-0 p-0">
           {marketplaces.map((mp) => {
@@ -65,21 +65,21 @@ export function MarketplaceSection({
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-text font-medium text-[0.9em]">{mp.name}</span>
-                    <span className="text-[0.75em] text-text-muted">{src.source}</span>
+                    <span className="text-text font-medium text-sm">{mp.name}</span>
+                    <span className="text-xs text-text-muted">{src.source}</span>
                   </div>
-                  {detail && <p className="text-text-muted text-[0.75em] m-0 truncate">{detail}</p>}
-                  <p className="text-text-muted text-[0.75em] mt-1 m-0">
+                  {detail && <p className="text-text-muted text-xs m-0 truncate">{detail}</p>}
+                  <p className="text-text-muted text-xs mt-1 m-0">
                     {mp.installedCount} / {mp.pluginCount} installed
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
-                  <IconButton onClick={onRefresh} label="Refresh marketplace">
-                    <RefreshIcon />
-                  </IconButton>
-                  <IconButton onClick={() => onRemove(mp.name)} label="Remove marketplace" danger>
-                    <TrashIcon />
-                  </IconButton>
+                <div className="flex items-center gap-1.5 ml-3 shrink-0">
+                  <ActionButton onClick={onRefresh} label="Refresh marketplace">
+                    <RefreshIcon className="w-3.5 h-3.5" />
+                  </ActionButton>
+                  <ActionButton onClick={() => onRemove(mp.name)} label="Remove marketplace" danger>
+                    <TrashIcon className="w-3.5 h-3.5" />
+                  </ActionButton>
                 </div>
               </li>
             );

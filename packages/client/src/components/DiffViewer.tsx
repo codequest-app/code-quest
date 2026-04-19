@@ -145,7 +145,7 @@ export function DiffViewer({
       <div>
         {fileName && <DiffFileHeader fileName={fileName} lines={content.split('\n')} />}
         <textarea
-          className="w-full bg-code-block p-3 text-[13px] font-mono border border-border rounded-b-lg"
+          className="w-full bg-code-block p-3 text-xs font-mono border border-border rounded-b-lg"
           value={editedContent}
           onChange={(e) => setEditedContent(e.target.value)}
           data-testid="diff-edit-textarea"
@@ -163,7 +163,7 @@ export function DiffViewer({
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="text-xs text-text-muted hover:text-text-muted/80 font-medium"
+            className="text-xs text-text-muted hover:text-text-muted/60 font-medium"
             data-testid="diff-cancel-edit"
           >
             Cancel
@@ -202,11 +202,12 @@ export function DiffViewer({
       )}
       <pre
         className={cn(
-          'bg-code-block p-3 overflow-x-auto text-[13px] font-mono border border-border',
+          'bg-code-block p-3 overflow-x-auto text-xs font-mono border border-border',
           fileName ? 'rounded-b-lg' : 'rounded-lg',
         )}
       >
         {annotated.map(({ cls, gutter, text }, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: diff lines render once, never reorder
           <div key={`${i}-${gutter ?? ''}`} className={cls}>
             {gutter && <span className="text-text-muted/40 select-none mr-2">{gutter}</span>}
             {text}

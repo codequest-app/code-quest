@@ -1,5 +1,6 @@
 import type { Feature } from '../../lib/feature';
 import { cn } from '../../utils/cn';
+import { SectionHeader } from '../ui/SectionHeader';
 import { FeatureRow } from './FeatureRow';
 
 export interface PaletteCommandListProps {
@@ -54,20 +55,7 @@ export function PaletteCommandList({
     <div className={cn(className)}>
       {groups.map((group) => (
         <section key={group.label} aria-label={group.label}>
-          <h3
-            style={{
-              padding: '6px 16px 2px',
-              fontSize: '9px',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#4a4a4e',
-              margin: 0,
-            }}
-          >
-            {group.label}
-          </h3>
+          <SectionHeader>{group.label}</SectionHeader>
           {group.features.map((f) => (
             <FeatureRow
               key={f.id}

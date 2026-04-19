@@ -66,6 +66,30 @@ describe('Dialog', () => {
     expect(title).toHaveClass('sr-only');
   });
 
+  it('applies size="lg" sizing class when provided', () => {
+    render(
+      <Dialog open>
+        <DialogContent title="Large" size="lg">
+          <p>Big dialog</p>
+        </DialogContent>
+      </Dialog>,
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toMatch(/w-160/);
+  });
+
+  it('applies size="fullscreen" when provided', () => {
+    render(
+      <Dialog open>
+        <DialogContent title="Full" size="fullscreen">
+          <p>Full viewer</p>
+        </DialogContent>
+      </Dialog>,
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toMatch(/w-screen/);
+  });
+
   it('renders DialogClose button', async () => {
     const onOpenChange = vi.fn();
     render(

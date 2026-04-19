@@ -1,8 +1,8 @@
-import clsx from 'clsx';
+import { cn } from '../../utils/cn';
 
 const thumb = (isOn: boolean) => (
   <div
-    className={clsx(
+    className={cn(
       'absolute top-0.5 w-3 h-3 rounded-full bg-white flex items-center justify-center transition-transform',
       isOn ? 'translate-x-3.5' : 'translate-x-0.5',
     )}
@@ -23,8 +23,8 @@ const thumb = (isOn: boolean) => (
 );
 
 const pillClass = (isOn: boolean) =>
-  clsx(
-    'relative w-7 h-4 rounded-full transition-colors flex-shrink-0',
+  cn(
+    'relative w-7 h-4 rounded-full transition-colors shrink-0',
     isOn ? 'bg-toggle' : 'bg-white/20',
   );
 

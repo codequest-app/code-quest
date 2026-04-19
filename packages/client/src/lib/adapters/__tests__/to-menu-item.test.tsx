@@ -50,7 +50,7 @@ describe('toMenuItem', () => {
   it('renders toggle state as trailing ToggleSwitch (per-feature testid)', () => {
     const f = base({ state: { kind: 'toggle', active: true } });
     const out = toMenuItem(f);
-    render(<>{out.menuItem.trailing}</>);
+    render(out.menuItem.trailing);
     // menu surface keeps ToggleSwitch; adapter tags it with feature id
     expect(screen.getByTestId('x-switch')).toHaveAttribute('data-state', 'on');
   });

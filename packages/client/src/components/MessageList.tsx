@@ -139,13 +139,13 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
           data-testid="message-list-scroll"
         >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-[30px]">
+            <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
               <span className="text-4xl text-assistant">✦</span>
               <span className="text-lg font-medium text-text-bright">CC Office</span>
               <span className="text-sm text-text-muted">How can I help you today?</span>
             </div>
           ) : (
-            <div data-testid="message-content-wrapper" className="px-5 pt-5 pb-32">
+            <div data-testid="message-content-wrapper" className="px-4 pt-5 pb-32">
               <MessageNodeList
                 nodes={tree}
                 prevRole={null}
@@ -165,7 +165,7 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
             aria-label="Scroll to bottom"
             data-testid="scroll-to-bottom"
             onClick={scrollToBottom}
-            className="absolute bottom-4 right-4 z-30 w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-lg cursor-pointer transition-colors"
+            className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           >
             ↓
           </button>

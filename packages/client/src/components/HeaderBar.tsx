@@ -2,7 +2,7 @@ import { ClockIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 
-const HDR_BTN = 'text-text-muted hover:text-text text-[11px] transition-colors cursor-pointer';
+const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
 
 export interface HeaderBarProps {
   title?: string | null;
@@ -19,19 +19,17 @@ export function HeaderBar({ title, onOpenCommandPalette, onOpenResume }: HeaderB
   return (
     <header className="flex items-center gap-3 px-4 h-11 bg-surface border-b border-border text-xs shrink-0">
       {model && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
           {shortModelName(model, availableModels)}
         </span>
       )}
       {thinkingLevel && thinkingLevel !== 'off' && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
           {thinkingLevel}
         </span>
       )}
       {sessionLabel && (
-        <span className="text-text-muted/70 text-[11px] truncate flex-1 min-w-0">
-          {sessionLabel}
-        </span>
+        <span className="text-text-muted/60 text-xs truncate flex-1 min-w-0">{sessionLabel}</span>
       )}
       {!sessionLabel && <div className="flex-1" />}
 

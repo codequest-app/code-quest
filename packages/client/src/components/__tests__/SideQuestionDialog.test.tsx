@@ -55,12 +55,10 @@ describe('SideQuestionDialog', () => {
   it('calls onClose on backdrop click', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    renderDialog({ answer: 'hello', onClose });
-
-    // Click outside the dialog panel (the backdrop)
-    const backdrop = screen.getByRole('presentation');
-    await user.click(backdrop);
-
+    const { baseElement } = renderDialog({ answer: 'hello', onClose });
+    const overlay = baseElement.querySelector('[data-state="open"][aria-hidden="true"]');
+    if (!overlay) throw new Error('overlay not found');
+    await user.click(overlay);
     expect(onClose).toHaveBeenCalledOnce();
   });
 

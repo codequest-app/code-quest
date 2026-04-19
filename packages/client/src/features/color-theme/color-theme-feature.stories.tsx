@@ -30,7 +30,7 @@ const meta = {
   args: { setColorTheme: fn() },
   decorators: [
     (Story) => (
-      <div className="bg-bg text-text p-6 min-h-[120px]">
+      <div className="bg-bg text-text p-6 min-h-30">
         <Story />
       </div>
     ),

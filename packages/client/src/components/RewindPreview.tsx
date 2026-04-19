@@ -41,7 +41,7 @@ export function RewindPreview({ data }: RewindPreviewProps) {
   return (
     <JsonViewer
       data={data}
-      className="bg-code-block p-3 rounded-lg overflow-auto text-[13px] border border-border max-h-60"
+      className="bg-code-block p-3 rounded-lg overflow-auto text-xs border border-border max-h-60"
     />
   );
 }
@@ -55,13 +55,13 @@ function FileDiffEntry({ path, diff }: { path: string; diff: FileDiff }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-[13px] font-mono w-full text-left hover:bg-white/5 rounded px-1"
+        className="flex items-center gap-2 text-xs font-mono w-full text-left hover:bg-white/5 rounded px-1"
       >
         <span className={badgeClass[type]}>{type}</span>
         <span className="text-text">{path}</span>
       </button>
       {open && (
-        <div className="ml-4 mt-1 text-[12px] font-mono flex flex-col gap-1">
+        <div className="ml-4 mt-1 text-xs font-mono flex flex-col gap-1">
           {diff.oldContent !== null && (
             <details>
               <summary className="cursor-pointer text-text-muted">Old content</summary>

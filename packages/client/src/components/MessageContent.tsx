@@ -28,7 +28,7 @@ import { CollapsibleBlock } from './message-blocks/shared';
 import { ThinkingBlock } from './ThinkingBlock';
 
 const JSON_VIEWER_CLASS =
-  'bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] border border-border';
+  'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';
 
 function CollapsibleDataContent({
   icon,

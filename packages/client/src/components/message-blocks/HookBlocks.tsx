@@ -7,7 +7,7 @@ export function HookStartedContent({ content, meta }: { content: string; meta?: 
     <StatusLine icon="⚙" className="text-text-muted">
       <span>Running hook: {content}</span>
       {meta?.hookEvent ? (
-        <span className="text-text-muted/50">({String(meta.hookEvent)})</span>
+        <span className="text-text-muted/60">({String(meta.hookEvent)})</span>
       ) : null}
     </StatusLine>
   );
@@ -29,7 +29,7 @@ export function HookResponseContent({
     );
   return (
     <CollapsibleBlock icon="🔗" label={`Hook done: ${content}`}>
-      <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80')}>{output}</pre>
+      <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60')}>{output}</pre>
     </CollapsibleBlock>
   );
 }

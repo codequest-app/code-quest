@@ -9,7 +9,7 @@ const meta = {
   args: { onAction: fn() },
   decorators: [
     (Story) => (
-      <div className="flex h-[320px] bg-bg text-text">
+      <div className="flex h-80 bg-bg text-text">
         <Story />
       </div>
     ),

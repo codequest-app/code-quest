@@ -28,9 +28,9 @@ function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowPro
         gap: '12px',
         width: '100%',
         padding: '8px 16px',
-        background: isActive ? 'rgba(217,119,87,0.07)' : 'transparent',
+        background: isActive ? 'var(--color-row-active-bg)' : 'transparent',
         border: 'none',
-        borderLeft: `2px solid ${isActive ? '#d97757' : 'transparent'}`,
+        borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
         cursor: feature.disabled ? 'not-allowed' : 'pointer',
         textAlign: 'left',
         transition: 'background 0.1s',
@@ -40,7 +40,7 @@ function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowPro
       <span
         style={{
           fontSize: '13px',
-          color: '#ccc',
+          color: 'var(--color-text)',
           flex: 1,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -99,7 +99,7 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
           className={cn(
             TOGGLE_PILL_BASE,
             togglePillColor(agg),
-            'tracking-[0.05em] cursor-pointer shrink-0',
+            'tracking-wider cursor-pointer shrink-0',
           )}
         >
           {togglePillSymbol(agg)}
@@ -115,7 +115,7 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
             >
               <span
                 className={cn(
-                  'text-[11px] font-mono shrink-0 w-36 overflow-hidden text-ellipsis whitespace-nowrap',
+                  'text-xs font-mono shrink-0 w-36 overflow-hidden text-ellipsis whitespace-nowrap',
                   item.on ? 'text-text' : 'text-text-muted',
                 )}
               >
@@ -123,7 +123,7 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
               </span>
               <span
                 data-testid={`type-sample-${item.value}`}
-                className="text-[10px] font-mono text-text-muted flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                className="text-xs font-mono text-text-muted flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               >
                 {item.preview ?? ''}
               </span>
@@ -137,7 +137,7 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
                 className={cn(
                   TOGGLE_PILL_BASE,
                   togglePillColor(item.on ? 'all' : 'none'),
-                  'tracking-[0.05em] cursor-pointer shrink-0',
+                  'tracking-wider cursor-pointer shrink-0',
                 )}
               >
                 {togglePillSymbol(item.on ? 'all' : 'none')}

@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
+import { TextField } from './ui/TextField';
 
 interface ElicitationDialogProps {
   requestId: string;
@@ -44,7 +46,7 @@ export function ElicitationDialog({
           )}
           {inputType === 'select' && options.length > 0 ? (
             <select
-              className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
+              className="w-full bg-input-overlay border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
               value={value}
               onChange={(e) => setValue(e.target.value)}
             >
@@ -56,29 +58,21 @@ export function ElicitationDialog({
               ))}
             </select>
           ) : (
-            <input
+            <TextField
               type={inputType === 'url' ? 'url' : 'text'}
-              className="w-full bg-black/20 border border-border rounded px-2 py-1.5 text-sm text-text focus:outline-none"
+              className="w-full py-1.5"
               placeholder={inputType === 'url' ? 'https://' : 'Enter value…'}
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={setValue}
             />
           )}
           <div className="flex gap-2 justify-end pt-1">
-            <button
-              type="button"
-              onClick={() => onCancel(requestId)}
-              className="px-3 py-1.5 text-xs text-text-muted hover:text-text transition-colors"
-            >
+            <Button variant="ghost" onClick={() => onCancel(requestId)}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!value.trim()}
-              className="px-3 py-1.5 bg-accent text-white rounded text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-80 transition-opacity"
-            >
+            </Button>
+            <Button type="submit" disabled={!value.trim()}>
               Submit
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>

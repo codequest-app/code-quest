@@ -100,7 +100,7 @@ export function WorkspaceLayout() {
                     <button
                       type="button"
                       data-testid="sidebar-backdrop"
-                      className="fixed inset-0 z-40 bg-black/40 cursor-default"
+                      className="fixed inset-0 z-overlay bg-black/40 cursor-default"
                       onClick={() => setDrawerOpen(false)}
                       onKeyDown={(e) => e.key === 'Escape' && setDrawerOpen(false)}
                     />
@@ -108,7 +108,7 @@ export function WorkspaceLayout() {
                   <div
                     className={cn(
                       'h-full overflow-auto border-r border-border bg-surface shrink-0',
-                      !isDesktop && 'fixed top-0 left-0 z-50 animate-slide-in-from-left',
+                      !isDesktop && 'fixed top-0 left-0 z-modal animate-slide-in-from-left',
                     )}
                     style={{ width: SIDEBAR_WIDTH }}
                     data-testid="sidebar-panel"

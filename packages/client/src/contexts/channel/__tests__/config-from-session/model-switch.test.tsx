@@ -58,7 +58,7 @@ describe('model switch updates local model info', () => {
     expect(screen.queryByText(/extra high/i)).not.toBeInTheDocument();
   });
 
-  it('ModelPickerPanel shows correct displayName after model switch', async () => {
+  it('ModelPickerPopover shows correct displayName after model switch', async () => {
     const MODEL_A = 'claude-opus-4-6';
     const MODEL_B = 'claude-haiku-4-5';
     const summoner = createFakeSummoner();

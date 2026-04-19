@@ -2,6 +2,7 @@ import { validateWorktreeName } from '@code-quest/shared';
 import { useState } from 'react';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useWorktreeActions } from '../contexts/WorktreeContext';
+import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export function CreateWorktreeDialog({
@@ -52,7 +53,7 @@ export function CreateWorktreeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent title="Create Worktree" className="w-[420px]">
+      <DialogContent title="Create Worktree" className="w-105">
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
           <label htmlFor="worktree-name" className="text-xs text-text-muted">
             Worktree name
@@ -72,21 +73,13 @@ export function CreateWorktreeDialog({
           </div>
           <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-3">
             <DialogClose asChild>
-              <button
-                type="button"
-                className="px-4 py-1.5 text-sm rounded border border-border hover:bg-white/5"
-                disabled={isCreating}
-              >
+              <Button variant="secondary" size="md" disabled={isCreating}>
                 Cancel
-              </button>
+              </Button>
             </DialogClose>
-            <button
-              type="submit"
-              className="px-4 py-1.5 text-sm rounded bg-accent text-white disabled:opacity-40"
-              disabled={isCreating || !name}
-            >
+            <Button type="submit" size="md" disabled={isCreating || !name}>
               {isCreating ? 'Creating…' : 'Create'}
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>

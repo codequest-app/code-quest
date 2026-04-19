@@ -10,10 +10,7 @@ function resetStore() {
     colorTheme: 'dark',
     fontSize: 'md',
     density: 'comfortable',
-    layout: 'a',
     hiddenItems: [],
-    isOnboardingDismissed: false,
-    isReviewUpsellDismissed: false,
   });
 }
 
@@ -29,7 +26,22 @@ describe('SettingsDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('reflects current store values as selected radios', () => {
+  it('renders one FeatureRow per preference axis', () => {
+    render(<SettingsDialog open={true} onClose={vi.fn()} />);
+    const ids = ['switch-color-theme', 'font-size', 'density'];
+    for (const id of ids) {
+      expect(screen.getByTestId(`${id}-pills`)).toBeInTheDocument();
+    }
+  });
+
+  it('color theme pills include Dark, Light, and System', () => {
+    render(<SettingsDialog open={true} onClose={vi.fn()} />);
+    expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Light' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'System' })).toBeInTheDocument();
+  });
+
+  it('reflects current store values as selected pills', () => {
     usePreferencesStore.setState({ colorTheme: 'light', fontSize: 'lg', density: 'compact' });
     render(<SettingsDialog open={true} onClose={vi.fn()} />);
     expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
@@ -49,6 +61,13 @@ describe('SettingsDialog', () => {
     render(<SettingsDialog open={true} onClose={vi.fn()} />);
     await user.click(screen.getByRole('radio', { name: 'Light' }));
     expect(usePreferencesStore.getState().colorTheme).toBe('light');
+  });
+
+  it('clicking System theme updates store', async () => {
+    const user = userEvent.setup();
+    render(<SettingsDialog open={true} onClose={vi.fn()} />);
+    await user.click(screen.getByRole('radio', { name: 'System' }));
+    expect(usePreferencesStore.getState().colorTheme).toBe('system');
   });
 
   it('clicking Compact density updates store', async () => {

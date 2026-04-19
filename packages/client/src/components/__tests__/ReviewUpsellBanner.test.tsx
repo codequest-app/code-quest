@@ -7,7 +7,7 @@ import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('ReviewUpsellBanner', () => {
   beforeEach(() => {
-    usePreferencesStore.setState({ isReviewUpsellDismissed: false });
+    usePreferencesStore.setState({ hiddenItems: [] });
   });
 
   it('does not render when gate is off', async () => {
@@ -29,7 +29,7 @@ describe('ReviewUpsellBanner', () => {
   });
 
   it('does not render when gate is on but dismissed', async () => {
-    usePreferencesStore.setState({ isReviewUpsellDismissed: true });
+    usePreferencesStore.setState({ hiddenItems: ['banner-review-upsell'] });
     const { claude, addProject } = await renderWithWorkspace();
     const project = await addProject();
     await project.launchSession();

@@ -18,7 +18,7 @@ import { cn } from '../utils/cn';
 import { resumeRoute } from '../utils/resume-route';
 import { ChatInputArea } from './ChatInputArea';
 import { CommandPalette } from './CommandPalette';
-import { ContentPreviewPanel } from './ContentPreviewPanel';
+import { ContentPreviewDialog } from './ContentPreviewDialog';
 import { ElicitationDialog } from './ElicitationDialog';
 import { HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
@@ -65,6 +65,7 @@ export function ChatPanel({ title }: { title?: string }) {
   const [resumeLoading, setResumeLoading] = useState(false);
 
   const messageListRef = useRef<MessageListHandle>(null);
+  const chatColumnRef = useRef<HTMLDivElement>(null);
 
   const fetchResumeSessions = () =>
     listSessions({
@@ -132,7 +133,7 @@ export function ChatPanel({ title }: { title?: string }) {
     <div className="flex flex-1 overflow-hidden min-w-0">
       <OnboardingOverlay />
       {pendingDiffReview && (
-        <ContentPreviewPanel
+        <ContentPreviewDialog
           content=""
           title={pendingDiffReview.filePath ?? 'Diff'}
           diffs={[
@@ -150,7 +151,7 @@ export function ChatPanel({ title }: { title?: string }) {
           onClose={() => clearPendingDiffReview()}
         />
       )}
-      <div className="relative flex flex-col flex-1 min-w-0">
+      <div ref={chatColumnRef} className="relative flex flex-col flex-1 min-w-0">
         <HeaderBar
           title={title}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
@@ -184,16 +185,17 @@ export function ChatPanel({ title }: { title?: string }) {
           answer={sideQuestion.answer}
           loading={sideQuestion.loading}
           error={sideQuestion.error}
+          container={chatColumnRef.current}
           onClose={() => btwSignal.setState({ open: false })}
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-bg from-20% to-transparent px-4 pb-4 pt-1">
-          <div className="max-w-[680px] mx-auto w-full flex flex-col gap-3">
+          <div className="max-w-170 mx-auto w-full flex flex-col gap-3">
             <ChatInputArea />
           </div>
         </div>
       </div>
       {activeSidePanel === 'raw' && (
-        <div className={cn('fixed inset-0 z-50', SIDE_PANEL, 'md:static md:inset-auto')}>
+        <div className={cn('fixed inset-0 z-modal', SIDE_PANEL, 'md:static md:inset-auto')}>
           <RawEventPanel
             onSubscribe={subscribeRawEvents}
             onClose={() => setActiveSidePanel(null)}

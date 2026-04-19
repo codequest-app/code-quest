@@ -1,35 +1,33 @@
-/** SVG icons for @ mention dropdown — extracted from extension webview. */
+/** Icons used in the @ mention dropdown and related context-adding UI. */
+export { DocumentIcon as FileIcon, FolderIcon } from '@heroicons/react/24/outline';
 
-export function FileIcon() {
+/** Custom folder-with-@-mark icon for "Add context from files" action. */
+export function AddContextIcon({ className }: { className?: string }) {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
       xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
       aria-hidden="true"
+      className={className}
     >
       <path
-        d="M11.5859 2C11.9837 2.00004 12.3652 2.15818 12.6465 2.43945L15.5605 5.35352C15.8418 5.63478 16 6.01629 16 6.41406V16.5C16 17.3284 15.3284 18 14.5 18H5.5C4.72334 18 4.08461 17.4097 4.00781 16.6533L4 16.5V3.5C4 2.67157 4.67157 2 5.5 2H11.5859ZM5.5 3C5.22386 3 5 3.22386 5 3.5V16.5C5 16.7761 5.22386 17 5.5 17H14.5C14.7761 17 15 16.7761 15 16.5V7H12.5C11.6716 7 11 6.32843 11 5.5V3H5.5ZM12 5.5C12 5.77614 12.2239 6 12.5 6H14.793L12 3.20703V5.5Z"
-        fill="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v6a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 18v-.75m0-5.25V5.25A2.25 2.25 0 014.5 3h3.879a2.25 2.25 0 011.591.659l1.682 1.682a2.25 2.25 0 001.59.659H19.5A2.25 2.25 0 0121.75 8.25V12"
       />
-    </svg>
-  );
-}
-
-export function FolderIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M16.5 3C17.3284 3 18 3.67157 18 4.5V15.5C18 16.3284 17.3284 17 16.5 17H3.5C2.67157 17 2 16.3284 2 15.5V6.5C2 5.67157 2.67157 5 3.5 5H10.793L12.3535 3.43945L12.4639 3.33984C12.7307 3.12123 13.0661 3.00003 13.4141 3H16.5ZM13.4141 4C13.3146 4.00003 13.2182 4.02961 13.1367 4.08398L13.0605 4.14648L11.3535 5.85352C11.2597 5.94728 11.1326 6 11 6H3.5C3.22386 6 3 6.22386 3 6.5V15.5C3 15.7761 3.22386 16 3.5 16H16.5C16.7761 16 17 15.7761 17 15.5V4.5C17 4.22386 16.7761 4 16.5 4H13.4141Z"
+      <text
+        x="12"
+        y="16.5"
+        textAnchor="middle"
+        fontSize="8"
         fill="currentColor"
-      />
+        fontFamily="monospace"
+      >
+        @
+      </text>
     </svg>
   );
 }

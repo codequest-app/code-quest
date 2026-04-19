@@ -8,7 +8,7 @@ const meta = {
   tags: ['autodocs'],
   args: { resetErrorBoundary: fn() },
   decorators: [
-    withStoryChannel({ className: 'h-[400px] bg-bg text-text flex items-center justify-center' }),
+    withStoryChannel({ className: 'h-100 bg-bg text-text flex items-center justify-center' }),
   ],
 } satisfies Meta<typeof ErrorFallback>;
 

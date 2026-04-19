@@ -2,7 +2,9 @@ import type { McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { cn } from '../utils/cn';
+import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
+import { XIcon } from './ui/Icons';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];
@@ -199,8 +201,11 @@ export function ManageMcpDialog({
               'Manage MCP Servers'
             )}
           </span>
-          <DialogClose className="text-text-muted hover:text-text text-lg leading-none">
-            ✕
+          <DialogClose
+            aria-label="Close"
+            className="p-1 text-text-muted hover:text-text hover:bg-white/5 rounded"
+          >
+            <XIcon className="w-4 h-4" />
           </DialogClose>
         </div>
 
@@ -219,7 +224,7 @@ export function ManageMcpDialog({
                       s.status === 'disabled' && 'opacity-60',
                     )}
                   >
-                    <span className="font-mono text-[13px] font-medium text-text truncate">
+                    <span className="font-mono text-xs font-medium text-text truncate">
                       {s.name}
                     </span>
                     <PlainStatusBadge status={s.status} />
@@ -254,7 +259,7 @@ export function ManageMcpDialog({
               <div className="my-2">
                 {groups.map(([scope, group]) => (
                   <div key={scope}>
-                    <div className="text-[12px] font-semibold text-text-muted pb-1 pt-2 first:pt-0">
+                    <div className="text-xs font-semibold text-text-muted pb-1 pt-2 first:pt-0">
                       {scopeLabel(scope, mcpScopes)} ({group.length})
                     </div>
                     {group.map((s) => (
@@ -270,7 +275,7 @@ export function ManageMcpDialog({
                           s.status === 'disabled' && 'opacity-60',
                         )}
                       >
-                        <span className="font-mono text-[13px] font-medium text-text truncate">
+                        <span className="font-mono text-xs font-medium text-text truncate">
                           {s.name}
                         </span>
                         <RichStatusBadge status={s.status} />
@@ -286,7 +291,7 @@ export function ManageMcpDialog({
                 href="https://code.claude.com/docs/en/mcp"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[13px] text-text-muted hover:underline"
+                className="text-xs text-text-muted hover:underline"
               >
                 Learn more about MCP
               </a>
@@ -298,7 +303,7 @@ export function ManageMcpDialog({
         {detail && isManageable && (
           <div className="space-y-3">
             <div className="flex items-center justify-between bg-bg-secondary border border-border rounded p-3">
-              <span className="font-mono text-[13px] font-medium text-text">{detail.name}</span>
+              <span className="font-mono text-xs font-medium text-text">{detail.name}</span>
               <RichStatusBadge status={detail.status} />
             </div>
 
@@ -313,39 +318,38 @@ export function ManageMcpDialog({
                 (detail.status === 'connected' ||
                   detail.status === 'failed' ||
                   detail.status === 'error') && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="xs"
                     disabled={!!pending}
                     onClick={() => act('reconnect', () => onReconnect(detail.name))}
-                    className="text-xs px-3 py-1.5 rounded border border-border text-text hover:bg-bg-secondary disabled:opacity-50"
                   >
                     {pending?.action === 'reconnect' ? 'Reconnecting…' : 'Reconnect'}
-                  </button>
+                  </Button>
                 )}
 
               {onToggle && detail.status !== 'disabled' ? (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="xs"
                   disabled={!!pending}
                   onClick={() => act('disable', () => onToggle(detail.name, false))}
-                  className="text-xs px-3 py-1.5 rounded border border-border text-text hover:bg-bg-secondary disabled:opacity-50"
                 >
                   {pending?.action === 'disable' ? 'Disabling…' : 'Disable'}
-                </button>
+                </Button>
               ) : onToggle ? (
-                <button
-                  type="button"
+                <Button
+                  size="xs"
                   disabled={!!pending}
                   onClick={() => act('enable', () => onToggle(detail.name, true))}
-                  className="text-xs px-3 py-1.5 rounded border border-border bg-accent text-white hover:bg-accent/80 disabled:opacity-50"
                 >
                   {pending?.action === 'enable' ? 'Enabling…' : 'Enable'}
-                </button>
+                </Button>
               ) : null}
 
               {onAuthenticate && (detail.status === 'needs-auth' || detail.status === 'failed') && (
-                <button
-                  type="button"
+                <Button
+                  size="xs"
                   disabled={!!pending}
                   onClick={() =>
                     act('authenticate', async () => {
@@ -355,15 +359,16 @@ export function ManageMcpDialog({
                         setFeedback({ msg: `Open: ${res.data.authUrl}`, ok: true });
                     })
                   }
-                  className="text-xs px-3 py-1.5 rounded border border-border bg-accent text-white hover:bg-accent/80 disabled:opacity-50"
                 >
                   {pending?.action === 'authenticate' ? 'Authenticating…' : 'Authenticate'}
-                </button>
+                </Button>
               )}
 
               {onClearAuth && detail.status === 'connected' && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="xs"
+                  className="text-danger"
                   disabled={!!pending}
                   onClick={() =>
                     act('clearAuth', async () => {
@@ -372,10 +377,9 @@ export function ManageMcpDialog({
                       else setFeedback({ msg: 'Auth cleared', ok: true });
                     })
                   }
-                  className="text-xs px-3 py-1.5 rounded border border-border text-danger hover:bg-bg-secondary disabled:opacity-50"
                 >
                   {pending?.action === 'clearAuth' ? 'Clearing…' : 'Clear Auth'}
-                </button>
+                </Button>
               )}
             </div>
           </div>

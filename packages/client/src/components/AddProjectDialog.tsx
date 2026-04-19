@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { FileTree } from './FileTree';
+import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
+import { XIcon } from './ui/Icons';
 
 export function AddProjectDialog({
   open,
@@ -30,16 +32,22 @@ export function AddProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        title="Select Project Directory"
-        className="w-[480px] max-h-[70vh] flex flex-col"
-      >
+      <DialogContent title="Select Project Directory" className="w-120 max-h-[70vh] flex flex-col">
+        <DialogClose asChild>
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute top-3 right-3 p-1 text-text-muted hover:text-text hover:bg-white/5 rounded"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </DialogClose>
         {selectedPath && (
           <div className="-mx-4 px-4 py-1.5 text-xs text-text-muted truncate border-b border-border bg-bg/30 mb-2">
             {selectedPath}
           </div>
         )}
-        <div className="flex-1 overflow-auto min-h-[200px]">
+        <div className="flex-1 overflow-auto min-h-50">
           <FileTree
             highlightedPath={selectedPath}
             onHighlight={setSelectedPath}
@@ -52,21 +60,13 @@ export function AddProjectDialog({
         </div>
         <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-3">
           <DialogClose asChild>
-            <button
-              type="button"
-              className="px-4 py-1.5 text-sm rounded border border-border hover:bg-white/5"
-            >
+            <Button variant="secondary" size="md">
               Cancel
-            </button>
+            </Button>
           </DialogClose>
-          <button
-            type="button"
-            className="px-4 py-1.5 text-sm rounded bg-accent text-white disabled:opacity-40"
-            disabled={!selectedPath}
-            onClick={handleOpen}
-          >
+          <Button size="md" disabled={!selectedPath} onClick={handleOpen}>
             Open
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,8 @@
 import type { Question } from '@code-quest/shared';
 import { useRef, useState } from 'react';
 import { cn } from '../utils/cn';
+import { CheckMark } from './ui/Icons';
+import { TextField } from './ui/TextField';
 
 function CheckIndicator({ checked }: { checked: boolean }) {
   return (
@@ -11,15 +13,9 @@ function CheckIndicator({ checked }: { checked: boolean }) {
       )}
     >
       {checked && (
-        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none">
-          <path
-            d="M2 6L5 9L10 3"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <span className="text-white">
+          <CheckMark className="w-2.5 h-2.5" />
+        </span>
       )}
     </div>
   );
@@ -67,7 +63,7 @@ function OptionItem({
         selected ? 'bg-accent/10' : 'hover:bg-white/5',
       )}
     >
-      <div className="mt-0.5 flex-shrink-0">
+      <div className="mt-0.5 shrink-0">
         {multiSelect ? (
           <CheckIndicator checked={selected} />
         ) : (
@@ -76,7 +72,7 @@ function OptionItem({
       </div>
       <div>
         <div className="text-text">{label}</div>
-        {description && <div className="text-text-muted text-[11px]">{description}</div>}
+        {description && <div className="text-text-muted text-xs">{description}</div>}
       </div>
     </div>
   );
@@ -161,7 +157,7 @@ export function QuestionContent({
   return (
     <div>
       {/* Tab navigation */}
-      <div className="flex items-center gap-2.5 mb-3 -mt-1" role="tablist">
+      <div className="flex items-center gap-2 mb-3 -mt-1" role="tablist">
         {questions.map((q, i) => {
           const isActive = i === activeTab;
           const isAnswered = (selections[q.question]?.size ?? 0) > 0;
@@ -216,13 +212,12 @@ export function QuestionContent({
         />
 
         {isSelected('Other') && (
-          <input
-            ref={otherInputRef}
-            type="text"
+          <TextField
+            inputRef={otherInputRef}
             placeholder="Type your answer..."
             value={otherTexts[currentQuestion.question] ?? ''}
-            onChange={(e) => handleOtherText(currentQuestion.question, e.target.value)}
-            className="text-xs bg-black/20 rounded px-2 py-1 text-text border border-white/10 ml-6"
+            onChange={(v) => handleOtherText(currentQuestion.question, v)}
+            className="text-xs ml-6"
           />
         )}
       </div>

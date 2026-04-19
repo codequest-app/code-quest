@@ -45,7 +45,7 @@ export function ResultContent({ meta }: { meta?: ResultMeta }) {
   return (
     <CenterDivider data-type="result">
       {stats && (
-        <div className="flex gap-3 font-mono text-[11px] text-text-muted/50">
+        <div className="flex gap-3 font-mono text-xs text-text-muted/60">
           {stats.costUsd != null && <span>${stats.costUsd.toFixed(4)}</span>}
           {stats.durationMs != null && <span>{(stats.durationMs / 1000).toFixed(1)}s</span>}
           {stats.inputTokens != null && <span>↑{stats.inputTokens}</span>}
@@ -137,7 +137,7 @@ export function TaskStartedContent({
     <StatusLine icon="🚀" className="text-text-muted">
       <span>{content}</span>
       {meta?.taskType != null && (
-        <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-[10px] font-mono">
+        <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-xs font-mono">
           {String(meta.taskType)}
         </span>
       )}
@@ -148,7 +148,7 @@ export function TaskStartedContent({
 export function StreamlinedTextContent({ content }: { content: string }) {
   return (
     <div className="relative">
-      <span className="absolute -top-1 right-0 text-[10px] text-text-muted/50 font-mono">
+      <span className="absolute -top-1 right-0 text-xs text-text-muted/60 font-mono">
         fast mode
       </span>
       <MarkdownContent content={content} />
@@ -173,7 +173,7 @@ export function ImageContent({ meta }: { meta?: ImageMeta }) {
       <img
         src={dataUrl}
         alt="Attachment"
-        className="max-w-full max-h-[400px] rounded-lg border border-border"
+        className="max-w-full max-h-100 rounded-lg border border-border"
       />
     </div>
   );
@@ -200,7 +200,7 @@ export function DocumentContent({ content, meta }: { content: string; meta?: Doc
       className="inline-flex items-center gap-2 bg-code-block border border-border rounded-lg px-3 py-2 text-xs text-text hover:bg-surface-hover transition-colors cursor-pointer"
     >
       <span>📄</span>
-      <span className="max-w-[200px] truncate">{title}</span>
+      <span className="max-w-50 truncate">{title}</span>
     </button>
   );
 }

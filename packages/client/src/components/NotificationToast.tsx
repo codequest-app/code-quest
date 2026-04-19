@@ -14,7 +14,7 @@ interface NotificationToastProps {
   onDismiss: () => void;
 }
 
-const TOAST_BTN = 'px-3 py-1.5 rounded-md cursor-pointer text-[13px] font-medium transition-all';
+const TOAST_BTN = 'px-3 py-1.5 rounded-md cursor-pointer text-sm font-medium transition-all';
 
 /** Show a notification toast with buttons and respond callback */
 export function showNotificationToast(

@@ -20,6 +20,7 @@ export function createColorThemeFeature({
     options: [
       { value: 'dark', label: 'Dark' },
       { value: 'light', label: 'Light' },
+      { value: 'system', label: 'System' },
     ],
     currentValue: colorTheme,
     onSelect: setColorTheme,

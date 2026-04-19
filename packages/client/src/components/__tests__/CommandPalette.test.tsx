@@ -2,7 +2,6 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { emitAssistantTurn as _emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { CommandPalette } from '../CommandPalette';
 

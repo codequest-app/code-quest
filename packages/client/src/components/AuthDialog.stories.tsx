@@ -10,7 +10,7 @@ const meta = {
     open: true,
     onClose: fn(),
   },
-  decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-[300px]' })],
+  decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-75' })],
 } satisfies Meta<typeof AuthDialog>;
 
 export default meta;

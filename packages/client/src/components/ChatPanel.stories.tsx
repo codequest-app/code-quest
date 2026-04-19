@@ -6,7 +6,7 @@ const meta = {
   component: ChatPanel,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-  decorators: [withStoryChannel({ className: 'h-[600px] bg-bg text-text' })],
+  decorators: [withStoryChannel({ className: 'h-150 bg-bg text-text' })],
 } satisfies Meta<typeof ChatPanel>;
 
 export default meta;

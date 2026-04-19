@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
+import { withThemePreset } from '../test/story-decorator';
 import type { Message } from '../types/ui';
 import { ChatMessage } from './ChatMessage';
 
@@ -215,4 +216,28 @@ export const TaskStartedNoType: Story = {
       content: 'Starting task',
     },
   },
+};
+
+const sampleText: Message = {
+  ...base,
+  role: 'assistant',
+  type: 'text',
+  content: 'Here is a sample assistant reply so you can preview the palette + density combo.',
+};
+
+export const DarkComfortable: Story = {
+  args: { message: sampleText },
+  decorators: [withThemePreset({ theme: 'dark', density: 'comfortable' })],
+};
+export const DarkCompact: Story = {
+  args: { message: sampleText },
+  decorators: [withThemePreset({ theme: 'dark', density: 'compact' })],
+};
+export const LightComfortable: Story = {
+  args: { message: sampleText },
+  decorators: [withThemePreset({ theme: 'light', density: 'comfortable' })],
+};
+export const LightCompact: Story = {
+  args: { message: sampleText },
+  decorators: [withThemePreset({ theme: 'light', density: 'compact' })],
 };

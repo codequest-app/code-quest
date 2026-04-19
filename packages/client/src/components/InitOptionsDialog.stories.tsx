@@ -8,7 +8,7 @@ const meta = {
   args: { open: true, onClose: fn(), onSave: fn() },
   decorators: [
     (Story) => (
-      <div className="bg-bg text-text min-h-[400px]">
+      <div className="bg-bg text-text min-h-100">
         <Story />
       </div>
     ),

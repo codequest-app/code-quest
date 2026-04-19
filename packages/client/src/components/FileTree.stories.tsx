@@ -7,9 +7,7 @@ const meta = {
   component: FileTree,
   tags: ['autodocs'],
   args: { onSelect: fn(), onHighlight: fn() },
-  decorators: [
-    withStoryApp({ className: 'w-[360px] h-[400px] bg-bg text-text p-2 overflow-auto' }),
-  ],
+  decorators: [withStoryApp({ className: 'w-90 h-100 bg-bg text-text p-2 overflow-auto' })],
 } satisfies Meta<typeof FileTree>;
 
 export default meta;

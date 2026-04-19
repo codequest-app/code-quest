@@ -42,8 +42,8 @@ function formatAuthMethod(
 
 function AccountRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center text-[13px] py-1">
-      <span className="text-text/70">{label}</span>
+    <div className="flex justify-between items-center text-xs py-1">
+      <span className="text-text-muted/60">{label}</span>
       <span className="text-text">{value}</span>
     </div>
   );
@@ -64,7 +64,7 @@ function UsageBarRow({
 
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-[13px]">
+      <div className="flex justify-between text-xs">
         <span className="text-text">{label}</span>
         <span className="text-text tabular-nums">{pct}%</span>
       </div>
@@ -74,7 +74,7 @@ function UsageBarRow({
           style={{ width: `${pct}%` }}
         />
       </div>
-      {resetText && <div className="text-[11px] text-text/50">Resets {resetText}</div>}
+      {resetText && <div className="text-xs text-text-muted/60">Resets {resetText}</div>}
     </div>
   );
 }
@@ -109,14 +109,14 @@ export function AccountUsageDialog({
     <div
       role="none"
       data-testid="dialog-backdrop"
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/50"
+      className="fixed inset-0 z-popover flex items-center justify-center overflow-y-auto bg-black/50"
       onClick={onClose}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
       <div
         role="dialog"
         aria-label="Account & Usage"
-        className="bg-bg border border-border rounded-lg w-[400px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-64px)] overflow-y-auto m-4 p-4 select-text outline-none"
+        className="bg-bg border border-border rounded-lg w-100 dialog-viewport overflow-y-auto m-4 p-4 select-text outline-none"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -135,7 +135,7 @@ export function AccountUsageDialog({
         <div className="space-y-4">
           {/* ACCOUNT section */}
           <div className="space-y-1">
-            <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px] mb-2">
+            <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
               Account
             </h4>
             {model && <AccountRow label="Model" value={model} />}
@@ -153,7 +153,7 @@ export function AccountUsageDialog({
           {/* SESSION section */}
           {stats && (stats.costUsd != null || stats.numTurns != null) && (
             <div className="space-y-1">
-              <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px] mb-2">
+              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
                 Session
               </h4>
               {stats.costUsd != null && (
@@ -176,18 +176,18 @@ export function AccountUsageDialog({
           {/* CONTEXT section */}
           {contextUsage?.categories && (
             <div className="space-y-2">
-              <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
+              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
                 Context ({contextUsage.percentage ?? 0}% used)
               </h4>
-              <div className="text-[11px] text-text-muted mb-1">
+              <div className="text-xs text-text-muted mb-1">
                 {formatTokens(contextUsage.totalTokens ?? 0)} /{' '}
                 {formatTokens(contextUsage.maxTokens ?? 0)} tokens
               </div>
               {contextUsage.categories
                 .filter((c) => c.name !== 'Free space')
                 .map((cat) => (
-                  <div key={cat.name} className="flex justify-between text-[12px]">
-                    <span className="text-text/70">{cat.name}</span>
+                  <div key={cat.name} className="flex justify-between text-xs">
+                    <span className="text-text-muted/60">{cat.name}</span>
                     <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
                   </div>
                 ))}
@@ -196,7 +196,7 @@ export function AccountUsageDialog({
 
           {/* QUOTA section */}
           <div className="space-y-3">
-            <h4 className="text-[12px] font-semibold text-text/70 uppercase tracking-[0.5px]">
+            <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
               Quota
             </h4>
             {authMethod && authMethod !== 'claudeai' && !usage ? (
@@ -225,7 +225,7 @@ export function AccountUsageDialog({
             {authMethod === 'claudeai' && (
               <button
                 type="button"
-                className="text-[13px] text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
+                className="text-xs text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
                 onClick={() => window.open(manageUrl, '_blank')}
               >
                 Manage usage on claude.ai

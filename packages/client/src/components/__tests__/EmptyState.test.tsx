@@ -24,4 +24,10 @@ describe('EmptyState', () => {
     await user.click(screen.getByText('Do it'));
     expect(onAction).toHaveBeenCalled();
   });
+
+  it('renders without action button when actionLabel/onAction are omitted', () => {
+    render(<EmptyState message="No matches" />);
+    expect(screen.getByText('No matches')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });

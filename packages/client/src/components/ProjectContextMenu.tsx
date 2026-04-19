@@ -39,7 +39,7 @@ export function ProjectContextMenu({
       ref={ref}
       role="menu"
       style={{ position: 'fixed', left: `${x}px`, top: `${y}px` }}
-      className="z-50 min-w-[180px] rounded border border-border bg-surface shadow-lg py-1"
+      className="z-modal min-w-45 rounded border border-border bg-surface shadow-lg py-1"
     >
       <button
         type="button"

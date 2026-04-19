@@ -3,13 +3,9 @@ import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { cn } from '../utils/cn';
-import {
-  AskBeforeEditsSmallIcon,
-  CheckIcon,
-  EffortIcon,
-  PERMISSION_MODE_ICONS,
-} from './icons/PermissionModeIcons';
+import { EffortIcon, PERMISSION_MODE_ICONS } from './icons/PermissionModeIcons';
 import { EffortSwitch, effortLabel } from './ui/EffortSwitch';
+import { CheckMark } from './ui/Icons';
 
 function getPermissionModes(brandName: string) {
   return [
@@ -91,25 +87,24 @@ export function PermissionModePicker({
         type="button"
         title={(permissionById[mode] ?? DEFAULT_MODE).title}
         onClick={() => setShowModePicker((v) => !v)}
-        className="permission-mode-btn text-[0.92em] text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-[2px] px-[4px] py-[2px] rounded-[2px] hover:bg-white/5"
+        className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:bg-white/5"
       >
-        <span className="w-[24px] h-[24px] flex-shrink-0">
-          {(mode in PERMISSION_MODE_ICONS
-            ? PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS].smallIcon
-            : null) ?? <AskBeforeEditsSmallIcon />}
+        <span className="w-4 h-4 shrink-0">
+          {PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS] ??
+            PERMISSION_MODE_ICONS.normal}
         </span>
         <span>{(permissionById[mode] ?? DEFAULT_MODE).label}</span>
       </button>
       {showModePicker && (
         <div
           ref={modePickerRef}
-          className="absolute bottom-full right-0 mb-1 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[280px] py-1"
+          className="absolute bottom-full right-0 mb-1 bg-surface border border-border rounded-lg shadow-lg z-modal min-w-70 py-1"
         >
-          <div className="px-3 py-1.5 text-[11px] text-text-muted flex items-center justify-between">
+          <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
             <span className="font-semibold">Modes</span>
             <span className="opacity-60 flex items-center gap-1">
-              <kbd className="bg-white/10 rounded px-1 text-[10px]">⇧</kbd> +{' '}
-              <kbd className="bg-white/10 rounded px-1 text-[10px]">tab</kbd> to switch
+              <kbd className="bg-white/10 rounded px-1 text-xs">⇧</kbd> +{' '}
+              <kbd className="bg-white/10 rounded px-1 text-xs">tab</kbd> to switch
             </span>
           </div>
           {permissionModes.map((m) => (
@@ -121,24 +116,20 @@ export function PermissionModePicker({
                 setShowModePicker(false);
               }}
               className={cn(
-                'w-full text-left px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors',
+                'w-full text-left px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors',
                 m.id === mode ? 'bg-selected text-white' : 'hover:bg-white/5',
               )}
             >
-              <span className="w-5 h-5 flex-shrink-0 mt-0.5">
-                {m.id in PERMISSION_MODE_ICONS
-                  ? PERMISSION_MODE_ICONS[m.id as keyof typeof PERMISSION_MODE_ICONS].icon
-                  : undefined}
+              <span className="w-5 h-5 shrink-0">
+                {PERMISSION_MODE_ICONS[m.id as keyof typeof PERMISSION_MODE_ICONS]}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium">{m.label}</div>
-                <div className="text-[11px] opacity-70">{m.description}</div>
+                <div className="text-xs">{m.label}</div>
+                <div className="text-xs opacity-70">{m.description}</div>
               </div>
-              {m.id === mode && (
-                <span className="mt-0.5">
-                  <CheckIcon />
-                </span>
-              )}
+              <span className="w-4 shrink-0">
+                {m.id === mode && <CheckMark className="w-4 h-4" />}
+              </span>
             </button>
           ))}
           {onSetEffort && (
@@ -153,8 +144,8 @@ export function PermissionModePicker({
                 }}
                 title="Click to cycle effort level"
               >
-                <span className="text-[13px] text-text-muted flex items-center gap-1.5">
-                  <span className="w-5 h-5 flex-shrink-0">
+                <span className="text-xs text-text-muted flex items-center gap-3">
+                  <span className="w-5 h-5 shrink-0">
                     <EffortIcon />
                   </span>
                   Effort

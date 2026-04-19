@@ -10,10 +10,7 @@ describe('usePreferencesStore', () => {
       colorTheme: 'dark',
       fontSize: 'md',
       density: 'comfortable',
-      layout: 'a',
       hiddenItems: [],
-      isOnboardingDismissed: false,
-      isReviewUpsellDismissed: false,
     });
   });
 
@@ -22,10 +19,18 @@ describe('usePreferencesStore', () => {
     expect(state.colorTheme).toBe('dark');
     expect(state.fontSize).toBe('md');
     expect(state.density).toBe('comfortable');
-    expect(state.layout).toBe('a');
     expect(state.hiddenItems).toEqual([]);
-    expect(state.isOnboardingDismissed).toBe(false);
-    expect(state.isReviewUpsellDismissed).toBe(false);
+  });
+
+  it('setColorTheme accepts the system value', () => {
+    usePreferencesStore.getState().setColorTheme('system');
+    expect(usePreferencesStore.getState().colorTheme).toBe('system');
+  });
+
+  it('migration from v2 without persisted colorTheme defaults to system', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { fontSize: 'lg' }, version: 2 }));
+    usePreferencesStore.persist.rehydrate();
+    expect(usePreferencesStore.getState().colorTheme).toBe('system');
   });
 
   it('setColorTheme accepts light and persists', () => {
@@ -42,18 +47,27 @@ describe('usePreferencesStore', () => {
     usePreferencesStore.getState().setDensity('compact');
     expect(usePreferencesStore.getState().density).toBe('compact');
 
-    usePreferencesStore.getState().setLayout('b');
-    expect(usePreferencesStore.getState().layout).toBe('b');
-
     usePreferencesStore.getState().setHiddenItems(['foo', 'bar']);
     expect(usePreferencesStore.getState().hiddenItems).toEqual(['foo', 'bar']);
   });
 
-  it('dismissOnboarding / dismissReviewUpsell set flags', () => {
-    usePreferencesStore.getState().dismissOnboarding();
-    usePreferencesStore.getState().dismissReviewUpsell();
-    expect(usePreferencesStore.getState().isOnboardingDismissed).toBe(true);
-    expect(usePreferencesStore.getState().isReviewUpsellDismissed).toBe(true);
+  it('hideItem appends id only once (dedup)', () => {
+    const { hideItem } = usePreferencesStore.getState();
+    hideItem('banner-x');
+    hideItem('banner-x');
+    expect(usePreferencesStore.getState().hiddenItems).toEqual(['banner-x']);
+  });
+
+  it('showItem removes id from hiddenItems', () => {
+    usePreferencesStore.setState({ hiddenItems: ['a', 'b', 'c'] });
+    usePreferencesStore.getState().showItem('b');
+    expect(usePreferencesStore.getState().hiddenItems).toEqual(['a', 'c']);
+  });
+
+  it('clearHiddenItems empties the list', () => {
+    usePreferencesStore.setState({ hiddenItems: ['a', 'b'] });
+    usePreferencesStore.getState().clearHiddenItems();
+    expect(usePreferencesStore.getState().hiddenItems).toEqual([]);
   });
 
   it('persists axis changes to localStorage', () => {
@@ -62,24 +76,57 @@ describe('usePreferencesStore', () => {
     expect(stored.state.fontSize).toBe('sm');
   });
 
-  it('migrates legacy v0 state (only onboarding/review) by filling in axis defaults', () => {
+  it('migrates v2 → v3: legacy onboarding/review booleans fold into hiddenItems', () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        state: { isOnboardingDismissed: true, isReviewUpsellDismissed: true },
-        version: 0,
+        state: {
+          colorTheme: 'light',
+          isOnboardingDismissed: true,
+          isReviewUpsellDismissed: true,
+        },
+        version: 2,
       }),
     );
 
     usePreferencesStore.persist.rehydrate();
 
     const state = usePreferencesStore.getState();
-    expect(state.isOnboardingDismissed).toBe(true);
-    expect(state.isReviewUpsellDismissed).toBe(true);
-    expect(state.colorTheme).toBe('dark');
+    expect(state.colorTheme).toBe('light');
+    expect(state.hiddenItems).toContain('onboarding-overlay');
+    expect(state.hiddenItems).toContain('banner-review-upsell');
     expect(state.fontSize).toBe('md');
-    expect(state.density).toBe('comfortable');
-    expect(state.layout).toBe('a');
-    expect(state.hiddenItems).toEqual([]);
+  });
+
+  it('migrates v2 → v3: false booleans do not produce hiddenItems entries', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: { isOnboardingDismissed: false, isReviewUpsellDismissed: false },
+        version: 2,
+      }),
+    );
+
+    usePreferencesStore.persist.rehydrate();
+
+    expect(usePreferencesStore.getState().hiddenItems).toEqual([]);
+  });
+
+  it('v2 migration preserves existing hiddenItems and deduplicates', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          hiddenItems: ['onboarding-overlay', 'custom-item'],
+          isOnboardingDismissed: true,
+        },
+        version: 2,
+      }),
+    );
+
+    usePreferencesStore.persist.rehydrate();
+
+    const items = usePreferencesStore.getState().hiddenItems;
+    expect(items).toEqual(['onboarding-overlay', 'custom-item']);
   });
 });

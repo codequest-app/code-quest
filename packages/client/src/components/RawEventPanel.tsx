@@ -4,6 +4,7 @@ import { cn } from '../utils/cn';
 import { JsonViewer } from './JsonViewer';
 import { RawEventFilterBar } from './RawEventFilterBar';
 import { SearchBar } from './SearchBar';
+import { PanelHeader } from './ui/PanelHeader';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 
@@ -115,47 +116,49 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
 
   return (
     <div className="flex flex-col h-full bg-surface border-r border-border">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <span className="text-sm font-medium text-text">Raw Events</span>
-        <div className="flex gap-2">
-          {onSubscribe && (
-            <button
-              type="button"
-              title="Auto-scroll"
-              onClick={() => {
-                setAutoScroll(true);
-                userScrolledRef.current = false;
-                bottomRef.current?.scrollIntoView({ behavior: 'instant' });
-              }}
-              className={cn(ICON_BTN, autoScroll && 'text-accent')}
-            >
-              ⤓
+      <PanelHeader
+        title="Raw Events"
+        actions={
+          <div className="flex gap-2">
+            {onSubscribe && (
+              <button
+                type="button"
+                title="Auto-scroll"
+                onClick={() => {
+                  setAutoScroll(true);
+                  userScrolledRef.current = false;
+                  bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+                }}
+                className={cn(ICON_BTN, autoScroll && 'text-accent')}
+              >
+                ⤓
+              </button>
+            )}
+            {onFetch && (
+              <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
+                ↻
+              </button>
+            )}
+            {events.length > 0 && (
+              <button
+                type="button"
+                title="Clear"
+                onClick={() => {
+                  setEvents([]);
+                  seenTypesRef.current = new Set();
+                  setVisibleTypes(new Set());
+                }}
+                className={ICON_BTN}
+              >
+                ⌀
+              </button>
+            )}
+            <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
+              ✕
             </button>
-          )}
-          {onFetch && (
-            <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
-              ↻
-            </button>
-          )}
-          {events.length > 0 && (
-            <button
-              type="button"
-              title="Clear"
-              onClick={() => {
-                setEvents([]);
-                seenTypesRef.current = new Set();
-                setVisibleTypes(new Set());
-              }}
-              className={ICON_BTN}
-            >
-              ⌀
-            </button>
-          )}
-          <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
-            ✕
-          </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
       <SearchBar
         searchQuery={searchText}
         setSearchQuery={setSearchText}
@@ -178,12 +181,13 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
         {filteredEvents.map((evt, i) => {
           const evtType = getEventType(evt);
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: events are append-only, never reorder
             <details key={`${i}-${evtType ?? 'unknown'}`} className="border-b border-border">
               <summary className="px-4 py-2 cursor-pointer text-xs text-text-muted hover:text-text">
                 Event #{i + 1}
                 {evtType ? ` — ${evtType}` : ''}
               </summary>
-              <div className="px-4 py-2 text-[11px] overflow-x-auto">
+              <div className="px-4 py-2 text-xs overflow-x-auto">
                 <JsonViewer data={evt} />
               </div>
             </details>

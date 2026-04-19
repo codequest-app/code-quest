@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { InitOptions } from '../types/chat';
+import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 interface InitOptionsDialogProps {
@@ -11,9 +12,9 @@ interface InitOptionsDialogProps {
 
 const LABEL_CLASS = 'flex flex-col gap-1 text-xs text-text-muted';
 const TEXTAREA_LG =
-  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-[60px]';
+  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-15';
 const TEXTAREA_SM =
-  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-[40px]';
+  'bg-code-block border border-border rounded p-2 text-sm text-text font-mono resize-y min-h-10';
 
 const HOOK_DEFS = [
   { key: 'captureBaseline', label: 'captureBaseline (PreToolUse)', section: 'PreToolUse' },
@@ -133,24 +134,14 @@ export function InitOptionsDialog({ open, onClose, onSave, initial }: InitOption
             </div>
           </details>
         </div>
-        <p className="text-[11px] text-text-muted/60 mt-3">
-          Takes effect on next session creation.
-        </p>
+        <p className="text-xs text-text-muted/60 mt-3">Takes effect on next session creation.</p>
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded border border-border text-text-muted hover:bg-white/5"
-          >
+          <Button variant="secondary" size="xs" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80"
-          >
+          </Button>
+          <Button size="xs" onClick={handleSave}>
             Save
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

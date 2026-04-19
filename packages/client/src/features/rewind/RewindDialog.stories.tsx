@@ -8,7 +8,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     withStoryChannel({
-      className: 'bg-bg text-text min-h-[400px] flex items-center justify-center',
+      className: 'bg-bg text-text min-h-100 flex items-center justify-center',
     }),
   ],
 } satisfies Meta<typeof RewindDialog>;

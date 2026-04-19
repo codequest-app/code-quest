@@ -8,7 +8,7 @@ export function RotatableChevron({ open, className }: { open?: boolean; classNam
 }
 
 export const CODE_BLOCK_CLASS =
-  'bg-code-block p-3 rounded-lg overflow-x-auto text-[13px] font-mono border border-border';
+  'bg-code-block p-3 rounded-lg overflow-x-auto text-xs font-mono border border-border';
 
 export function CollapsibleBlock({
   icon,
@@ -33,7 +33,7 @@ export function CollapsibleBlock({
       >
         <span>{icon}</span>
         <span className="font-semibold text-text-bright">{label}</span>
-        {labelDetail && <span className="opacity-70 truncate max-w-[300px]">{labelDetail}</span>}
+        {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
         {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
         <RotatableChevron open={open} className="text-xs opacity-50" />
       </button>

@@ -7,8 +7,17 @@
  * Overrides per-axis live in :root[data-*] blocks below.
  */
 @theme {
-  --font-sans: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+
+  /* Z-index tiers — use semantic names so stacking intent is explicit */
+  --z-index-raised: 1; /* in-content stacking (dot over line, icon over bg) */
+  --z-index-sticky: 10; /* sticky/overlay within a section */
+  --z-index-float: 30; /* floating buttons (scroll-to-bottom) */
+  --z-index-overlay: 40; /* backdrop behind modals */
+  --z-index-modal: 50; /* dialogs, dropdowns (default modal layer) */
+  --z-index-popover: 60; /* popovers that must render above modals */
+  --z-index-palette: 70; /* command palette — above everything */
 
   /* VS Code Dark+ neutral palette */
   --color-bg: #1e1e1e;
@@ -33,6 +42,7 @@
   --color-code: #252526;
   --color-code-block: #1e1e1e;
   --color-input-bg: #3c3c3c;
+  --color-input-overlay: rgba(0, 0, 0, 0.2);
   --color-tool-bg: #1a1a1a;
   --color-success-bg: #1a1f1a;
   --color-warning-bg: #201f1a;
@@ -43,14 +53,40 @@
   --color-toggle: #0e639c;
   --color-button: #0078d4;
 
+  /* ChatInputArea — integrates with VSCode theme when embedded in webview */
+  --color-chat-input-bg: var(--vscode-menu-background, #252526);
+  --color-chat-input-border: var(--vscode-inlineChatInput-border, #3e3e42);
+
   /* Claude brand */
   --color-claude-clay-orange: #c6613f;
   --color-claude-orange: #d97757;
+
+  /* RGB-split for alpha composition — use like rgba(var(--color-accent-rgb), 0.2) */
+  --color-accent-rgb: 217, 119, 87;
+  --color-border-rgb: 62, 62, 66;
+  --color-shadow-rgb: 0, 0, 0;
+  /* Hover tint: white in dark mode, black in light mode */
+  --color-hover-tint-rgb: 255, 255, 255;
+
+  /* Floating surfaces (dialog / palette / popover) */
+  --color-overlay: rgba(10, 10, 12, 0.75);
+  --color-floating-bg-from: #1c1e22;
+  --color-floating-bg-to: #181a1e;
+  --color-floating-border: #3e3e42;
+  --color-floating-border-subtle: #2a2c30;
+  --color-floating-shadow: rgba(0, 0, 0, 0.7);
+  --color-accent-glow: rgba(217, 119, 87, 0.12);
+  --color-row-active-bg: rgba(217, 119, 87, 0.07);
+  --color-accent-mark-bg: rgba(217, 119, 87, 0.3);
+  --color-text-subtle: #6a6a6e;
+  --color-text-faint: #3a3a3e;
+  --color-text-dim: #4a4a4e;
 }
 
 /* Color theme axis — explicit dark block re-declares @theme defaults so the
    selector wins once a light theme lands. Values MUST stay in sync with @theme. */
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --color-bg: #1e1e1e;
   --color-surface: #252526;
   --color-surface-hover: #2a2d2e;
@@ -66,6 +102,7 @@
   --color-code: #252526;
   --color-code-block: #1e1e1e;
   --color-input-bg: #3c3c3c;
+  --color-input-overlay: rgba(0, 0, 0, 0.2);
   --color-success-bg: #1a1f1a;
   --color-warning-bg: #201f1a;
   --color-danger-bg: #201a1a;
@@ -73,6 +110,25 @@
   --color-toggle: #0e639c;
   --color-button: #0078d4;
   --color-claude-clay-orange: #c6613f;
+
+  --color-accent-rgb: 217, 119, 87;
+  --color-border-rgb: 62, 62, 66;
+  --color-shadow-rgb: 0, 0, 0;
+  --color-hover-tint-rgb: 255, 255, 255;
+
+  /* Floating surfaces */
+  --color-overlay: rgba(10, 10, 12, 0.75);
+  --color-floating-bg-from: #1c1e22;
+  --color-floating-bg-to: #181a1e;
+  --color-floating-border: #3e3e42;
+  --color-floating-border-subtle: #2a2c30;
+  --color-floating-shadow: rgba(0, 0, 0, 0.7);
+  --color-accent-glow: rgba(217, 119, 87, 0.12);
+  --color-row-active-bg: rgba(217, 119, 87, 0.07);
+  --color-accent-mark-bg: rgba(217, 119, 87, 0.3);
+  --color-text-subtle: #6a6a6e;
+  --color-text-faint: #3a3a3e;
+  --color-text-dim: #4a4a4e;
   /* --color-tool-bg and --color-claude-orange stay @theme-only — currently unused,
      Tailwind tree-shakes from :root; re-add here when a consumer class lands. */
 }
@@ -80,6 +136,7 @@
 /* Light theme — VS Code Light+ palette. Contrast target: WCAG AA (≥ 4.5:1 body text).
    v1 shipped without designer review; iterate via follow-up. */
 :root[data-theme="light"] {
+  color-scheme: light;
   --color-bg: #ffffff;
   --color-surface: #f3f3f3;
   --color-surface-hover: #e8e8e8;
@@ -95,6 +152,7 @@
   --color-code: #f3f3f3;
   --color-code-block: #fafafa;
   --color-input-bg: #ffffff;
+  --color-input-overlay: rgba(0, 0, 0, 0.05);
   --color-success-bg: #e6f2e6;
   --color-warning-bg: #fff8dc;
   --color-danger-bg: #fde7e7;
@@ -102,12 +160,37 @@
   --color-toggle: #005a9e;
   --color-button: #005a9e;
   --color-claude-clay-orange: #c6613f;
+
+  --color-accent-rgb: 198, 97, 63;
+  --color-border-rgb: 212, 212, 212;
+  --color-shadow-rgb: 0, 0, 0;
+  --color-hover-tint-rgb: 0, 0, 0;
+
+  /* Floating surfaces — light palette */
+  --color-overlay: rgba(0, 0, 0, 0.35);
+  --color-floating-bg-from: #fafafa;
+  --color-floating-bg-to: #f0f0f0;
+  --color-floating-border: #d4d4d4;
+  --color-floating-border-subtle: #e5e5e5;
+  --color-floating-shadow: rgba(0, 0, 0, 0.15);
+  --color-accent-glow: rgba(198, 97, 63, 0.1);
+  --color-row-active-bg: rgba(198, 97, 63, 0.12);
+  --color-accent-mark-bg: rgba(198, 97, 63, 0.25);
+  --color-text-subtle: #8a8a8a;
+  --color-text-faint: #b5b5b5;
+  --color-text-dim: #9c9c9c;
 }
 
 /* Font-size axis — html font-size drives rem cascade. md = browser default (16px). */
-:root[data-font="sm"] { font-size: 14px; }
-:root[data-font="md"] { font-size: 16px; }
-:root[data-font="lg"] { font-size: 18px; }
+:root[data-font="sm"] {
+  font-size: 14px;
+}
+:root[data-font="md"] {
+  font-size: 16px;
+}
+:root[data-font="lg"] {
+  font-size: 18px;
+}
 
 /* Density axis — override Tailwind's `--spacing` base to shrink all p, gap, m
    utilities proportionally (comfortable = default 0.25rem; compact 0.875x = 0.21875rem). */
@@ -115,7 +198,61 @@
   --spacing: 0.21875rem;
 }
 
+/* Theme-reactive prose — rewires Tailwind Typography CSS vars to our tokens
+   so markdown content flips contrast with the active theme. */
+.prose-themed {
+  --tw-prose-body: var(--color-text);
+  --tw-prose-headings: var(--color-text-bright);
+  --tw-prose-lead: var(--color-text);
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-bold: var(--color-text-bright);
+  --tw-prose-counters: var(--color-text-muted);
+  --tw-prose-bullets: var(--color-text-muted);
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-quotes: var(--color-text-muted);
+  --tw-prose-quote-borders: var(--color-border);
+  --tw-prose-captions: var(--color-text-muted);
+  --tw-prose-code: var(--color-text-bright);
+  --tw-prose-pre-code: var(--color-text);
+  --tw-prose-pre-bg: var(--color-code-block);
+  --tw-prose-th-borders: var(--color-border);
+  --tw-prose-td-borders: var(--color-border);
+  --tw-prose-kbd: var(--color-text-bright);
+  --tw-prose-kbd-shadows: var(--color-shadow-rgb);
+}
+
 /* --- Custom utilities --- */
+
+@utility dialog-viewport {
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 4rem);
+}
+
+@utility inset-border {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+@utility floating-popover-lg {
+  background: linear-gradient(
+    180deg,
+    var(--color-floating-bg-from) 0%,
+    var(--color-floating-bg-to) 100%
+  );
+  box-shadow:
+    0 24px 64px var(--color-floating-shadow),
+    inset 0 0 0 1px var(--color-accent-glow);
+}
+
+@utility floating-popover-sm {
+  background: linear-gradient(
+    160deg,
+    var(--color-floating-bg-from) 0%,
+    var(--color-floating-bg-to) 100%
+  );
+  box-shadow:
+    0 8px 32px var(--color-floating-shadow),
+    inset 0 0 0 1px var(--color-accent-glow);
+}
 
 @utility animate-fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -134,18 +271,32 @@
 }
 
 @keyframes slideInFromLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Global thin scrollbar — matches VS Code Dark+ style */
@@ -173,8 +324,17 @@
 
 /* Spotlight jump highlight — box-shadow so it's always visible above child backgrounds */
 @keyframes spotlight-flash {
-  0%, 25% { box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.65), 0 0 8px rgba(217, 119, 87, 0.15); }
-  100%    { box-shadow: 0 0 0 2px rgba(217, 119, 87, 0),   0 0 0   rgba(217, 119, 87, 0); }
+  0%,
+  25% {
+    box-shadow:
+      0 0 0 2px rgba(217, 119, 87, 0.65),
+      0 0 8px rgba(217, 119, 87, 0.15);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(217, 119, 87, 0),
+      0 0 0 rgba(217, 119, 87, 0);
+  }
 }
 
 .spotlight-highlight {
@@ -204,29 +364,31 @@
 
 /* Input container border focus colors by permission mode */
 [data-permission-mode="normal"]:focus-within {
-  border-color: var(--color-accent) !important;
+  border-color: var(--color-accent);
   box-shadow: 0 1px 2px rgba(217, 119, 87, 0.2);
 }
 
 [data-permission-mode="plan"]:focus-within {
-  border-color: var(--color-button) !important;
+  border-color: var(--color-button);
   box-shadow: 0 1px 2px rgba(0, 127, 212, 0.2);
 }
 
 [data-permission-mode="bypassPermissions"]:focus-within,
 [data-permission-mode="auto"]:focus-within {
-  border-color: var(--color-danger) !important;
+  border-color: var(--color-danger);
 }
 
 [data-permission-mode="acceptEdits"]:focus-within {
-  border-color: var(--color-text) !important;
+  border-color: var(--color-text);
   box-shadow: 0 1px 2px rgba(204, 204, 204, 0.1);
 }
 
 /* --- Base resets --- */
 
 @layer base {
-  html, body, #root {
+  html,
+  body,
+  #root {
     width: 100%;
     height: 100%;
   }

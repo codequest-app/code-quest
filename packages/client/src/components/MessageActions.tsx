@@ -6,7 +6,9 @@ import type { ForkFn, RewindFn } from '../types/ui';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from '../utils/cn';
 import { RewindPreview } from './RewindPreview';
+import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
+import { ReplyIcon } from './ui/Icons';
 
 interface MessageActionsProps {
   /** CLI/JSONL uuid; required for fork & rewind RPCs that go through the CLI. */
@@ -110,26 +112,14 @@ export function MessageActions({
           onClick={() => setMenuOpen((v) => !v)}
           className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-text-muted hover:text-accent transition-opacity cursor-pointer rounded hover:bg-white/5"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-          </svg>
+          <ReplyIcon className="w-3.5 h-3.5" />
         </button>
 
         {menuOpen && (
           <div
             ref={menuRef}
             className={cn(
-              'absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[200px] py-1 transition-opacity',
+              'absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-modal min-w-50 py-1 transition-opacity',
               menuVisible ? 'opacity-100' : 'opacity-0',
             )}
           >
@@ -151,7 +141,7 @@ export function MessageActions({
       </div>
 
       {rewindState.phase === 'fallback' && (
-        <span className="inline-flex items-center gap-1 text-[11px]">
+        <span className="inline-flex items-center gap-1 text-xs">
           <span className="text-warning">No preview available.</span>
           <button
             type="button"
@@ -175,20 +165,12 @@ export function MessageActions({
             <RewindPreview data={rewindState.phase === 'preview' ? rewindState.data : {}} />
           </div>
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="text-xs px-3 py-1.5 rounded border border-border text-text-muted hover:bg-white/5"
-            >
+            <Button variant="secondary" size="xs" onClick={handleCancel}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmRewind}
-              className="text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80"
-            >
+            </Button>
+            <Button size="xs" onClick={handleConfirmRewind}>
               Confirm Rewind
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

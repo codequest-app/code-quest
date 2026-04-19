@@ -37,7 +37,7 @@ export function SessionDropdown({
       <div
         role="none"
         data-testid="session-dropdown-overlay"
-        className="fixed inset-0 z-[999]"
+        className="fixed inset-0 z-popover"
         onMouseDown={(e) => {
           e.preventDefault();
           onClose();
@@ -48,7 +48,7 @@ export function SessionDropdown({
         role="dialog"
         aria-label="Session list"
         data-testid="session-dropdown-panel"
-        className="fixed z-[1000] right-4 top-12 bg-[var(--color-surface,#1e1e1e)] border border-border rounded-xl flex flex-col shadow-lg overflow-hidden"
+        className="fixed z-popover right-4 top-12 bg-surface border border-border rounded-xl flex flex-col shadow-lg overflow-hidden"
         style={{
           width: 'min(400px, calc(100vw - 32px))',
           maxHeight: 'min(500px, 50vh)',

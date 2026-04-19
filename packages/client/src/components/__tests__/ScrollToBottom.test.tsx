@@ -137,12 +137,12 @@ describe('Scroll to bottom button', () => {
     expect(screen.queryByRole('button', { name: /scroll to bottom/i })).not.toBeInTheDocument();
   });
 
-  it('scroll button has z-30 so it appears above the chat input overlay', async () => {
+  it('scroll button has z-float so it appears above the chat input overlay', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
     const container = screen.getByTestId('message-list');
     act(() => simulateScrolledUp(container));
     const btn = screen.getByRole('button', { name: /scroll to bottom/i });
-    expect(btn.className).toMatch(/\bz-30\b/);
+    expect(btn.className).toMatch(/\bz-float\b/);
   });
 });

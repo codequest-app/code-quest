@@ -7,16 +7,14 @@ describe('message-blocks', () => {
   describe('ToolUseBlock (via renderBody)', () => {
     it('renders tool_use with tool name', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', input: { command: 'ls -la' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'ls -la' } },
+        }),
       );
       expect(screen.getByText('Bash')).toBeInTheDocument();
     });
@@ -24,20 +22,18 @@ describe('message-blocks', () => {
     it('Bash IN/OUT are in a single combined block (one bg-code-block container)', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              input: { command: 'ls' },
-              result: { content: 'file.txt' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            input: { command: 'ls' },
+            result: { content: 'file.txt' },
+          },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       const blocks = container.querySelectorAll('.bg-code-block');
@@ -47,16 +43,14 @@ describe('message-blocks', () => {
     it('copy icon is solid (title="Copy"), changes to check after click, reverts after timeout', async () => {
       const user = userEvent.setup({ delay: null });
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       const copyBtn = screen.getByTitle('Copy');
@@ -70,16 +64,14 @@ describe('message-blocks', () => {
     it('copy button uses heroicons svg, not emoji', async () => {
       const user = userEvent.setup();
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       const copyBtn = screen.getByTitle('Copy');
@@ -90,20 +82,18 @@ describe('message-blocks', () => {
     it('Bash content does not wrap (whitespace-pre, not whitespace-pre-wrap)', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              input: { command: 'echo hi' },
-              result: { content: 'hello world' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            input: { command: 'echo hi' },
+            result: { content: 'hello world' },
+          },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       const pres = container.querySelectorAll('pre');
@@ -115,16 +105,14 @@ describe('message-blocks', () => {
     it('copy button is a grid cell (NOT absolute positioned) in IN row', async () => {
       const user = userEvent.setup();
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'echo hi' } },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       const copyBtn = screen.getByTitle('Copy');
@@ -134,16 +122,14 @@ describe('message-blocks', () => {
     it('renders IN label for bash tool input when expanded', async () => {
       const user = userEvent.setup();
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Bash',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', input: { command: 'echo hello' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'echo hello' } },
+        }),
       );
       await user.click(screen.getByText('Bash'));
       expect(screen.getByText('IN')).toBeInTheDocument();
@@ -152,20 +138,18 @@ describe('message-blocks', () => {
     it('renders IN/OUT labels for default tool with input and result when expanded', async () => {
       const user = userEvent.setup();
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Grep',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              input: { pattern: 'foo', path: '/src' },
-              result: { content: 'found 3 matches' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Grep',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            input: { pattern: 'foo', path: '/src' },
+            result: { content: 'found 3 matches' },
+          },
+        }),
       );
       await user.click(screen.getByText('Grep'));
       expect(screen.getByText('IN')).toBeInTheDocument();
@@ -175,20 +159,18 @@ describe('message-blocks', () => {
     it('default tool (Grep) IN/OUT share one bordered box, labels are inside', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Grep',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              input: { pattern: 'foo', path: '/src' },
-              result: { content: 'found 3 matches' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Grep',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            input: { pattern: 'foo', path: '/src' },
+            result: { content: 'found 3 matches' },
+          },
+        }),
       );
       await user.click(screen.getByText('Grep'));
       // Only ONE outer border box (not two separate bordered rows)
@@ -203,20 +185,18 @@ describe('message-blocks', () => {
     it('Read tool result renders with syntax highlighting (no plain pre.bg-code-block)', async () => {
       const user = userEvent.setup();
       const { container } = render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'Read',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              input: { file_path: '/src/Foo.tsx' },
-              result: { content: 'import React from "react";\nexport function Foo() {}' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Read',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            input: { file_path: '/src/Foo.tsx' },
+            result: { content: 'import React from "react";\nexport function Foo() {}' },
+          },
+        }),
       );
       await user.click(screen.getByText('Read'));
       // SyntaxHighlighter splits tokens into spans — check full textContent
@@ -228,16 +208,14 @@ describe('message-blocks', () => {
 
     it('renders TodoRead tool_use (visibility controlled by MessageVisibilityContext, not ToolUseBlock)', () => {
       const { container } = render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_use',
-            content: 'TodoRead',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-2', input: {} },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'TodoRead',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-2', input: {} },
+        }),
       );
       // ToolUseBlock no longer hides TodoRead — filtering is done at MessageList level
       expect(container.innerHTML).not.toBe('');
@@ -248,16 +226,14 @@ describe('message-blocks', () => {
   describe('ToolResultBlock (via renderBody)', () => {
     it('renders tool_result with label', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_result',
-            content: 'file contents here',
-            timestamp: Date.now(),
-            meta: { toolId: 'tu-1', name: 'Read' },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_result',
+          content: 'file contents here',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', name: 'Read' },
+        }),
       );
       expect(screen.getByText('Result: Read')).toBeInTheDocument();
     });
@@ -266,39 +242,35 @@ describe('message-blocks', () => {
   describe('SystemBlocks (via renderBody)', () => {
     it('renders error message', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'system',
-            type: 'error',
-            content: 'Something went wrong',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'error',
+          content: 'Something went wrong',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     });
 
     it('renders result stats', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'system',
-            type: 'result',
-            content: '',
-            timestamp: Date.now(),
-            meta: {
-              stats: {
-                costUsd: 0.05,
-                durationMs: 3000,
-                inputTokens: 100,
-                outputTokens: 50,
-                numTurns: 1,
-              },
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'result',
+          content: '',
+          timestamp: Date.now(),
+          meta: {
+            stats: {
+              costUsd: 0.05,
+              durationMs: 3000,
+              inputTokens: 100,
+              outputTokens: 50,
+              numTurns: 1,
             },
-          })}
-        </>,
+          },
+        }),
       );
       expect(screen.getByText('$0.0500')).toBeInTheDocument();
       expect(screen.getByText('1 turns')).toBeInTheDocument();
@@ -306,30 +278,26 @@ describe('message-blocks', () => {
 
     it('renders compact boundary', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'system',
-            type: 'compact_boundary',
-            content: '',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'compact_boundary',
+          content: '',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText('Context was compressed')).toBeInTheDocument();
     });
 
     it('renders control response with approved style', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'user',
-            type: 'action_result',
-            content: 'Approved: Bash',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'user',
+          type: 'action_result',
+          content: 'Approved: Bash',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText(/Approved: Bash/)).toBeInTheDocument();
     });
@@ -338,15 +306,13 @@ describe('message-blocks', () => {
   describe('HookBlocks (via renderBody)', () => {
     it('renders hook_started', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'system',
-            type: 'hook_started',
-            content: 'pre-commit',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'hook_started',
+          content: 'pre-commit',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText(/Running hook: pre-commit/)).toBeInTheDocument();
     });
@@ -355,30 +321,26 @@ describe('message-blocks', () => {
   describe('Other blocks (via renderBody)', () => {
     it('renders text with markdown', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'text',
-            content: 'Hello **world**',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'text',
+          content: 'Hello **world**',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText('world')).toBeInTheDocument();
     });
 
     it('renders interrupt', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'system',
-            type: 'interrupt',
-            content: '',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'interrupt',
+          content: '',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText('Interrupted by user')).toBeInTheDocument();
     });
@@ -387,16 +349,14 @@ describe('message-blocks', () => {
   describe('Content block types (via renderBody)', () => {
     it('renders image content block with base64 src', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'image',
-            content: '',
-            timestamp: Date.now(),
-            meta: { source: { type: 'base64', media_type: 'image/png', data: 'iVBOR' } },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'image',
+          content: '',
+          timestamp: Date.now(),
+          meta: { source: { type: 'base64', media_type: 'image/png', data: 'iVBOR' } },
+        }),
       );
       const img = screen.getByRole('img');
       expect(img).toBeInTheDocument();
@@ -405,34 +365,30 @@ describe('message-blocks', () => {
 
     it('renders document content block with download button', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'document',
-            content: '',
-            timestamp: Date.now(),
-            meta: {
-              title: 'report.pdf',
-              source: { type: 'base64', media_type: 'application/pdf', data: 'JVBER' },
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'document',
+          content: '',
+          timestamp: Date.now(),
+          meta: {
+            title: 'report.pdf',
+            source: { type: 'base64', media_type: 'application/pdf', data: 'JVBER' },
+          },
+        }),
       );
       expect(screen.getByText('report.pdf')).toBeInTheDocument();
     });
 
     it('renders redacted_thinking as placeholder', () => {
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'redacted_thinking',
-            content: '',
-            timestamp: Date.now(),
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'redacted_thinking',
+          content: '',
+          timestamp: Date.now(),
+        }),
       );
       expect(screen.getByText(/thinking.*redacted/i)).toBeInTheDocument();
     });
@@ -440,23 +396,21 @@ describe('message-blocks', () => {
     it('renders tool_result with array content extracting text', async () => {
       const user = userEvent.setup();
       render(
-        <>
-          {renderBody({
-            id: '1',
-            role: 'assistant',
-            type: 'tool_result',
-            content: '',
-            timestamp: Date.now(),
-            meta: {
-              toolId: 'tu-1',
-              name: 'Read',
-              arrayContent: [
-                { type: 'text', text: 'file contents here' },
-                { type: 'tool_reference', tool_name: 'Read' },
-              ],
-            },
-          })}
-        </>,
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_result',
+          content: '',
+          timestamp: Date.now(),
+          meta: {
+            toolId: 'tu-1',
+            name: 'Read',
+            arrayContent: [
+              { type: 'text', text: 'file contents here' },
+              { type: 'tool_reference', tool_name: 'Read' },
+            ],
+          },
+        }),
       );
       // Expand the collapsible block
       await user.click(screen.getByText(/Result: Read/));

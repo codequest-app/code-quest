@@ -1,6 +1,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import type { Project } from '../contexts/ProjectContext';
 import { ProjectCard } from './ProjectCard';
+import { SectionHeader } from './ui/SectionHeader';
 
 export function ProjectList({
   projects,
@@ -15,8 +16,8 @@ export function ProjectList({
 }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-2 py-1 text-xs font-semibold uppercase text-muted">Projects</div>
-      <div className="flex-1 overflow-auto">
+      <SectionHeader>Projects</SectionHeader>
+      <div className="flex-1 overflow-auto px-2">
         {projects.map((p) => (
           <ProjectCard
             key={p.cwd}

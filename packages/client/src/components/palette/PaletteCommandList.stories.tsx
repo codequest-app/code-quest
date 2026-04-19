@@ -21,7 +21,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div className="bg-surface text-text w-[640px] p-2">
+      <div className="bg-surface text-text w-160 p-2">
         <Story />
       </div>
     ),

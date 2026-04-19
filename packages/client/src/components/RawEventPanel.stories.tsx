@@ -8,7 +8,7 @@ const meta = {
   args: { onClose: fn() },
   decorators: [
     (Story) => (
-      <div className="w-72 h-[400px] bg-bg text-text">
+      <div className="w-72 h-100 bg-bg text-text">
         <Story />
       </div>
     ),

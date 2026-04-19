@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
+import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 interface AuthDialogProps {
@@ -43,13 +44,9 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
               Login to {providerConfig?.brand.name ?? 'Claude'} to use your account. An active
               session is required.
             </p>
-            <button
-              type="button"
-              onClick={login}
-              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 text-sm"
-            >
+            <Button size="md" onClick={login}>
               Login with Browser
-            </button>
+            </Button>
           </div>
         )}
 
@@ -94,14 +91,9 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
                 className="bg-input-bg border border-border rounded px-3 py-1.5 text-sm text-text"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => submitOAuthCode(code, state)}
-              disabled={!code}
-              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 text-sm disabled:opacity-40"
-            >
+            <Button size="md" onClick={() => submitOAuthCode(code, state)} disabled={!code}>
               Submit
-            </button>
+            </Button>
           </div>
         )}
 
@@ -110,25 +102,16 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
         {auth.status === 'error' && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-danger">{auth.errorMsg}</p>
-            <button
-              type="button"
-              onClick={resetAuth}
-              className="px-4 py-2 bg-surface-hover text-text rounded text-sm"
-            >
+            <Button variant="secondary" size="md" onClick={resetAuth}>
               Try Again
-            </button>
+            </Button>
           </div>
         )}
 
         {auth.status !== 'success' && (
           <div className="flex justify-end mt-3">
             <DialogClose asChild>
-              <button
-                type="button"
-                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded"
-              >
-                Cancel
-              </button>
+              <Button variant="ghost">Cancel</Button>
             </DialogClose>
           </div>
         )}

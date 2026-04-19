@@ -19,8 +19,8 @@ const InitOptionsDialog = lazy(() =>
 const ManageMcpDialog = lazy(() =>
   import('./ManageMcpDialog').then((m) => ({ default: m.ManageMcpDialog })),
 );
-const PluginsPanel = lazy(() =>
-  import('./PluginsPanel').then((m) => ({ default: m.PluginsPanel })),
+const ManagePluginsDialog = lazy(() =>
+  import('./ManagePluginsDialog').then((m) => ({ default: m.ManagePluginsDialog })),
 );
 
 export type ActiveDialog = 'modelPicker' | 'manageMcp' | 'mcpStatus' | 'plugins' | null;
@@ -138,7 +138,7 @@ export function ToolbarDialogs({
       )}
       {activeDialog === 'plugins' && (
         <Suspense fallback={null}>
-          <PluginsPanel open onClose={closeDialog} />
+          <ManagePluginsDialog open onClose={closeDialog} />
         </Suspense>
       )}
       {isSwitchAccountOpen && (

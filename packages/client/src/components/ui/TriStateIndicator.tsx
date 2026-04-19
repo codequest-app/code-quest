@@ -1,7 +1,7 @@
 import { cn } from '../../utils/cn';
 
 export const TOGGLE_PILL_BASE =
-  'text-[9px] font-mono font-bold rounded-[3px] px-1.5 py-0.5 border inline-block';
+  'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border inline-block';
 
 export function togglePillColor(state: 'all' | 'partial' | 'none'): string {
   return cn(

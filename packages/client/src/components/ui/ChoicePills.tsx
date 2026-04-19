@@ -35,7 +35,7 @@ export function ChoicePills({ options, currentValue, onSelect, featureId }: Choi
             key={opt.value}
             data-testid={featureId ? `${featureId}-pill-${opt.value}` : undefined}
             className={cn(
-              'text-[10px] font-mono font-bold rounded-[3px] px-1.5 py-0.5 border cursor-pointer',
+              'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border cursor-pointer',
               selected
                 ? 'bg-accent text-white border-accent'
                 : 'text-text-muted border-border hover:text-text',

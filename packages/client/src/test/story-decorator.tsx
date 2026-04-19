@@ -2,7 +2,9 @@
  * Shared Storybook decorator for components that need Channel context.
  * Builds sub-provider tree directly — ChannelProvider not used (no initialState needed).
  */
-import { useEffect, useRef } from 'react';
+
+import type { EffectiveColorTheme } from '@code-quest/shared';
+import { useLayoutEffect, useRef } from 'react';
 import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext';
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
@@ -18,7 +20,7 @@ import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
 import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createSocket } from '../socket/client';
-import type { ColorTheme, Density } from '../stores/usePreferencesStore';
+import type { Density } from '../stores/usePreferencesStore';
 import type { ChannelState } from '../types/chat';
 
 const STORY_CHANNEL_ID = 'story';
@@ -88,7 +90,7 @@ export function withThemePreset({
   theme,
   density,
 }: {
-  theme?: ColorTheme;
+  theme?: EffectiveColorTheme;
   density?: Density;
 } = {}) {
   return (Story: () => React.ReactNode) => (
@@ -103,11 +105,14 @@ function ThemePresetWrapper({
   density,
   children,
 }: {
-  theme?: ColorTheme;
+  theme?: EffectiveColorTheme;
   density?: Density;
   children: React.ReactNode;
 }) {
-  useEffect(() => {
+  // Use useLayoutEffect so the data-attr is applied before the browser paints,
+  // which matters for Storybook play functions that read computed style right
+  // after render.
+  useLayoutEffect(() => {
     const ds = document.documentElement.dataset;
     const prevTheme = ds.theme;
     const prevDensity = ds.density;

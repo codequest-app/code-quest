@@ -7,7 +7,7 @@ const meta = {
   component: ProjectContextMenu,
   tags: ['autodocs'],
   args: { x: 80, y: 80, onSelectResume: fn(), onClose: fn() },
-  decorators: [withStoryApp({ className: 'relative h-[240px] bg-bg text-text' })],
+  decorators: [withStoryApp({ className: 'relative h-60 bg-bg text-text' })],
 } satisfies Meta<typeof ProjectContextMenu>;
 
 export default meta;

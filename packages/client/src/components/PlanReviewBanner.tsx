@@ -8,7 +8,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../contexts/channel';
 import { pluralize } from '../utils/pluralize';
 import { MarkdownContent } from './MarkdownContent';
-import { PlanCommentOverlay } from './PlanCommentOverlay';
+import { PlanCommentPopover } from './PlanCommentPopover';
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 
@@ -66,14 +66,14 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
           <button
             type="button"
             onClick={handleApprove}
-            className="px-3 py-1.5 bg-success text-white rounded-md cursor-pointer text-[13px] font-medium transition-all hover:opacity-80"
+            className="px-3 py-1.5 bg-success text-white rounded-md cursor-pointer text-sm font-medium transition-all hover:opacity-80"
           >
             Approve Plan
           </button>
           <button
             type="button"
             onClick={handleReject}
-            className="px-3 py-1.5 bg-warning text-white rounded-md cursor-pointer text-[13px] font-medium transition-all hover:opacity-80"
+            className="px-3 py-1.5 bg-warning text-white rounded-md cursor-pointer text-sm font-medium transition-all hover:opacity-80"
           >
             Continue Planning
           </button>
@@ -91,10 +91,10 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
           </summary>
           <div
             ref={planContentRef}
-            className="relative mt-2 bg-black/20 rounded-lg px-4 py-3 border border-white/10 prose prose-invert prose-sm max-w-none"
+            className="relative mt-2 bg-input-overlay rounded-lg px-4 py-3 border border-white/10 prose prose-invert prose-sm max-w-none"
           >
             <MarkdownContent content={plan} />
-            <PlanCommentOverlay containerRef={planContentRef} onAddComment={addPlanComment} />
+            <PlanCommentPopover containerRef={planContentRef} onAddComment={addPlanComment} />
           </div>
         </details>
       )}
@@ -103,7 +103,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) 
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={2}
-        className="text-sm bg-black/20 rounded px-2 py-1 text-text border border-white/10 resize-y"
+        className="text-sm bg-input-overlay rounded px-2 py-1 text-text border border-white/10 resize-y"
       />
       {allowedPrompts && allowedPrompts.length > 0 && (
         <div className="text-xs text-text-muted">

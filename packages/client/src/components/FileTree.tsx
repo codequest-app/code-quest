@@ -99,7 +99,7 @@ export function FileTree({
 
       {contextMenu && (
         <div
-          className="fixed z-50 bg-surface border border-border rounded shadow-lg py-1 min-w-[160px]"
+          className="fixed z-modal bg-surface border border-border rounded shadow-lg py-1 min-w-40"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <button

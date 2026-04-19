@@ -29,7 +29,7 @@ describe('toPaletteCommand', () => {
 
   it('renders trailing for toggle state as ON/OFF pill (palette pill vocabulary)', () => {
     const f = base({ state: { kind: 'toggle', active: false } });
-    render(<>{toPaletteCommand(f).trailing}</>);
+    render(toPaletteCommand(f).trailing);
     // palette surface renders toggle as pill (same as filter group pill) —
     // adapter tags the pill with the feature id so surface tests can target it
     const pill = screen.getByTestId('x-toggle');
@@ -39,7 +39,7 @@ describe('toPaletteCommand', () => {
 
   it('renders trailing for select state', () => {
     const f = base({ state: { kind: 'select', currentValue: 'dark' } });
-    render(<>{toPaletteCommand(f).trailing}</>);
+    render(toPaletteCommand(f).trailing);
     expect(screen.getByTestId('select-current')).toHaveTextContent('dark');
   });
 

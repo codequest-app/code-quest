@@ -14,7 +14,7 @@ const meta = {
   component: ProjectList,
   tags: ['autodocs'],
   args: { onSelect: fn(), onAdd: fn() },
-  decorators: [withStoryApp({ className: 'w-[280px] h-[360px] bg-bg text-text' })],
+  decorators: [withStoryApp({ className: 'w-70 h-90 bg-bg text-text' })],
 } satisfies Meta<typeof ProjectList>;
 
 export default meta;

@@ -58,7 +58,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {
   decorators: [
-    withStoryChannel({ messages: { messages: [] }, className: 'h-[500px] bg-bg text-text' }),
+    withStoryChannel({ messages: { messages: [] }, className: 'h-125 bg-bg text-text' }),
   ],
 };
 
@@ -66,7 +66,7 @@ export const Conversation: Story = {
   decorators: [
     withStoryChannel({
       messages: { messages: conversation },
-      className: 'h-[500px] bg-bg text-text',
+      className: 'h-125 bg-bg text-text',
     }),
   ],
 };
@@ -80,7 +80,7 @@ export const WithError: Story = {
           { id: '8', role: 'system', type: 'error', content: 'Connection lost', timestamp: 8 },
         ],
       },
-      className: 'h-[500px] bg-bg text-text',
+      className: 'h-125 bg-bg text-text',
     }),
   ],
 };
@@ -109,7 +109,7 @@ export const WithSubagent: Story = {
   decorators: [
     withStoryChannel({
       messages: { messages: withSubagent },
-      className: 'h-[500px] bg-bg text-text',
+      className: 'h-125 bg-bg text-text',
     }),
   ],
   play: async ({ canvas, userEvent }) => {

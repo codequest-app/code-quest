@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 import { MarkdownContent } from './MarkdownContent';
+import { ChevronRight } from './ui/Icons';
 
 interface ThinkingBlockProps {
   content: string;
@@ -36,25 +37,10 @@ export function ThinkingBlock({
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
       <summary className="list-none flex items-center gap-2 cursor-pointer select-none text-text-muted py-1 hover:text-text transition-colors">
-        <svg
-          aria-hidden="true"
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          className={cn('transition-transform flex-shrink-0', open && 'rotate-90')}
-        >
-          <path
-            d="M4 2L8 6L4 10"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ChevronRight className={cn('transition-transform shrink-0', open && 'rotate-90')} />
         <span>{label}</span>
       </summary>
-      <div className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/80">
+      <div className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
         <MarkdownContent content={content} />
       </div>
     </details>

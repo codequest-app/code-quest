@@ -8,7 +8,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => {
-      usePreferencesStore.setState({ isOnboardingDismissed: false });
+      usePreferencesStore.setState({ hiddenItems: [] });
       return <Story />;
     },
   ],
@@ -34,7 +34,9 @@ export const Skip: Story = {
   play: async ({ userEvent }) => {
     const body = within(document.body);
     await userEvent.click(await body.findByRole('button', { name: /skip/i }));
-    await expect(usePreferencesStore.getState().isOnboardingDismissed).toBe(true);
+    await expect(usePreferencesStore.getState().hiddenItems.includes('onboarding-overlay')).toBe(
+      true,
+    );
   },
 };
 
@@ -45,6 +47,8 @@ export const Finish: Story = {
       await userEvent.click(await body.findByRole('button', { name: /next/i }));
     }
     await userEvent.click(await body.findByRole('button', { name: /done/i }));
-    await expect(usePreferencesStore.getState().isOnboardingDismissed).toBe(true);
+    await expect(usePreferencesStore.getState().hiddenItems.includes('onboarding-overlay')).toBe(
+      true,
+    );
   },
 };

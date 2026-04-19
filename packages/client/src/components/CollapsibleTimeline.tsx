@@ -56,19 +56,14 @@ function TimelineRow({
     position === 'only'
       ? 'hidden'
       : position === 'first'
-        ? 'top-[18px] bottom-0'
+        ? 'top-4 bottom-0'
         : position === 'last'
-          ? 'top-0 h-[18px]'
+          ? 'top-0 h-4'
           : 'top-0 bottom-0';
   return (
-    <div data-message-id={node.message.id} className="relative pl-[30px] py-2">
-      <span
-        className={cn(
-          'absolute left-[9px] top-[15px] w-[7px] h-[7px] rounded-full z-10',
-          dotClass(node),
-        )}
-      />
-      <span className={cn('absolute left-[12px] w-px bg-border', lineClass)} />
+    <div data-message-id={node.message.id} className="relative pl-7 py-2">
+      <span className={cn('absolute left-2 top-4 w-2 h-2 rounded-full z-sticky', dotClass(node))} />
+      <span className={cn('absolute left-3 w-px bg-border', lineClass)} />
       <ChatMessage
         message={node.message}
         showAvatar={false}
@@ -105,12 +100,12 @@ function ExploredGroup({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-2 pl-[30px] py-2 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
+          className="flex items-center gap-2 pl-7 py-2 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
         >
-          <span className={cn('w-[7px] h-[7px] rounded-full', dot)} />
+          <span className={cn('w-2 h-2 rounded-full', dot)} />
           <span className="font-medium">Explored</span>
-          <span className="bg-white/10 rounded-full px-1.5 py-0.5 text-[10px]">{nodes.length}</span>
-          <RotatableChevron className="text-[10px] opacity-50" />
+          <span className="bg-white/10 rounded-full px-1.5 py-0.5 text-xs">{nodes.length}</span>
+          <RotatableChevron className="text-xs opacity-50" />
         </button>
       </div>
     );
@@ -121,9 +116,9 @@ function ExploredGroup({
       <button
         type="button"
         onClick={() => setExpanded(false)}
-        className="flex items-center gap-2 pl-[30px] py-1 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
+        className="flex items-center gap-2 pl-7 py-1 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors"
       >
-        <RotatableChevron open className="text-[10px] opacity-50" />
+        <RotatableChevron open className="text-xs opacity-50" />
         <span>Collapse</span>
       </button>
       {nodes.map((node, i) => (

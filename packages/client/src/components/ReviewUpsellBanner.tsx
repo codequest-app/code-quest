@@ -1,10 +1,13 @@
+import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
 export function ReviewUpsellBanner() {
   const { experimentGates } = useChannelConfig();
-  const { isReviewUpsellDismissed: isDismissed, dismissReviewUpsell: dismiss } =
-    usePreferencesStore();
+  const hiddenItems = usePreferencesStore((s) => s.hiddenItems);
+  const hideItem = usePreferencesStore((s) => s.hideItem);
+  const isDismissed = hiddenItems.includes(DISMISSIBLE_IDS.reviewUpsellBanner);
+  const dismiss = () => hideItem(DISMISSIBLE_IDS.reviewUpsellBanner);
   const enabled = experimentGates.review_upsell === true;
 
   if (!enabled || isDismissed) return null;

@@ -22,7 +22,7 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
   return (
     <div
       style={{
-        borderBottom: '1px solid #2a2c30',
+        borderBottom: '1px solid var(--color-floating-border-subtle)',
         padding: '6px 0 6px 12px',
         display: 'flex',
         flexDirection: 'column',
@@ -45,7 +45,7 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
             fontFamily: 'monospace',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: '#3e3e42',
+            color: 'var(--color-border)',
           }}
         >
           channels
@@ -57,7 +57,7 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
             style={{
               fontSize: '8px',
               fontFamily: 'monospace',
-              color: '#3a3a3e',
+              color: 'var(--color-text-faint)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -66,10 +66,10 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
               transition: 'color 0.1s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#d97757';
+              e.currentTarget.style.color = 'var(--color-accent)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#3a3a3e';
+              e.currentTarget.style.color = 'var(--color-text-faint)';
             }}
           >
             all
@@ -80,7 +80,7 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
             style={{
               fontSize: '8px',
               fontFamily: 'monospace',
-              color: '#3a3a3e',
+              color: 'var(--color-text-faint)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -89,10 +89,10 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
               transition: 'color 0.1s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#cccccc';
+              e.currentTarget.style.color = 'var(--color-text)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#3a3a3e';
+              e.currentTarget.style.color = 'var(--color-text-faint)';
             }}
           >
             none
@@ -131,9 +131,11 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
                 padding: '2px 6px',
                 borderRadius: '3px',
                 border: active
-                  ? '1px solid rgba(217,119,87,0.5)'
-                  : '1px solid rgba(255,255,255,0.06)',
-                background: active ? 'rgba(217,119,87,0.08)' : 'rgba(255,255,255,0.02)',
+                  ? '1px solid rgba(var(--color-accent-rgb), 0.5)'
+                  : '1px solid rgba(var(--color-hover-tint-rgb), 0.06)',
+                background: active
+                  ? 'rgba(var(--color-accent-rgb), 0.08)'
+                  : 'rgba(var(--color-hover-tint-rgb), 0.02)',
                 cursor: 'pointer',
                 flexShrink: 0,
                 overflow: 'hidden',
@@ -148,7 +150,9 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
                   bottom: 0,
                   top: 0,
                   width: `${Math.max(barRatio * 100, 8)}%`,
-                  background: active ? 'rgba(217,119,87,0.06)' : 'rgba(255,255,255,0.015)',
+                  background: active
+                    ? 'rgba(var(--color-accent-rgb), 0.06)'
+                    : 'rgba(var(--color-hover-tint-rgb), 0.015)',
                   transition: 'width 0.3s',
                   pointerEvents: 'none',
                 }}
@@ -157,7 +161,7 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
                 style={{
                   fontSize: '9px',
                   fontFamily: 'monospace',
-                  color: active ? '#d97757' : '#4a4a4e',
+                  color: active ? 'var(--color-accent)' : 'var(--color-text-dim)',
                   transition: 'color 0.15s',
                   position: 'relative',
                   whiteSpace: 'nowrap',
@@ -172,7 +176,9 @@ export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilte
                 style={{
                   fontSize: '8px',
                   fontFamily: 'monospace',
-                  color: active ? 'rgba(217,119,87,0.6)' : 'rgba(255,255,255,0.12)',
+                  color: active
+                    ? 'rgba(var(--color-accent-rgb), 0.6)'
+                    : 'rgba(var(--color-hover-tint-rgb), 0.12)',
                   position: 'relative',
                   transition: 'color 0.15s',
                 }}

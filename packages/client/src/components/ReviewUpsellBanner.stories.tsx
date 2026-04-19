@@ -9,7 +9,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => {
-      usePreferencesStore.setState({ isReviewUpsellDismissed: false });
+      usePreferencesStore.setState({ hiddenItems: [] });
       return <Story />;
     },
     withStoryChannel({

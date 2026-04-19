@@ -7,7 +7,7 @@ const meta = {
   component: ProjectCard,
   tags: ['autodocs'],
   args: { onSelect: fn() },
-  decorators: [withStoryApp({ className: 'w-[260px] bg-bg text-text' })],
+  decorators: [withStoryApp({ className: 'w-65 bg-bg text-text' })],
 } satisfies Meta<typeof ProjectCard>;
 
 export default meta;

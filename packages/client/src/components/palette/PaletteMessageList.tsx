@@ -1,6 +1,7 @@
 import type { Message } from '../../types/ui';
 import { messagePreview } from '../../utils/isMessageVisible';
 import { highlight, typeColor, typeLabel } from '../../utils/message-preview';
+import { SectionHeader } from '../ui/SectionHeader';
 import {
   PALETTE_RECENT_COUNT,
   PALETTE_SEARCH_LIMIT,
@@ -20,16 +21,6 @@ const BADGE: React.CSSProperties = {
   whiteSpace: 'nowrap',
   minWidth: '90px',
   textAlign: 'center',
-};
-
-const SECTION_HEADER: React.CSSProperties = {
-  padding: '6px 16px 2px',
-  fontSize: '9px',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
-  color: '#4a4a4e',
 };
 
 export interface PaletteMessageListProps {
@@ -62,7 +53,7 @@ export function PaletteMessageList({
 
   return (
     <>
-      {showHeader && <div style={SECTION_HEADER}>Messages</div>}
+      {showHeader && <SectionHeader>Messages</SectionHeader>}
       <div ref={listRef}>
         {results.map((msg, idx) => {
           const isActive = idx === activeIdx;
@@ -86,9 +77,9 @@ export function PaletteMessageList({
                 gap: '12px',
                 width: '100%',
                 padding: '10px 16px',
-                background: isActive ? 'rgba(217,119,87,0.07)' : 'transparent',
+                background: isActive ? 'var(--color-row-active-bg)' : 'transparent',
                 border: 'none',
-                borderLeft: `2px solid ${isActive ? '#d97757' : 'transparent'}`,
+                borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'background 0.1s',
@@ -108,7 +99,7 @@ export function PaletteMessageList({
                 style={{
                   fontSize: '12px',
                   fontFamily: 'monospace',
-                  color: '#9d9d9d',
+                  color: 'var(--color-text-muted)',
                   lineHeight: '1.5',
                   overflow: 'hidden',
                   display: '-webkit-box',
@@ -122,8 +113,8 @@ export function PaletteMessageList({
                     <mark
                       key={key}
                       style={{
-                        background: 'rgba(217,119,87,0.3)',
-                        color: '#d97757',
+                        background: 'var(--color-accent-mark-bg)',
+                        color: 'var(--color-accent)',
                         borderRadius: '2px',
                         padding: '0 1px',
                       }}

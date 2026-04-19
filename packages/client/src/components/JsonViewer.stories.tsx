@@ -29,7 +29,7 @@ export const Nested: Story = {
       stats: { tokens: 1024, cost: 0.002 },
       tools: ['Read', 'Write', 'Bash'],
     },
-    className: 'bg-code-block p-3 rounded-lg text-[13px]',
+    className: 'bg-code-block p-3 rounded-lg text-xs',
   },
 };
 

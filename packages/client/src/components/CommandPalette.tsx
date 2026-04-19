@@ -7,10 +7,12 @@ import { createFontSizeFeature } from '../features/font-size/font-size-feature';
 import { createRawPanelFeature } from '../features/raw-panel/raw-panel-feature';
 import type { Feature, PaletteTab } from '../lib/feature';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { cn } from '../utils/cn';
 import { isMessageVisible, messagePreview } from '../utils/isMessageVisible';
 import { PaletteCommandList } from './palette/PaletteCommandList';
 import { PaletteMessageList } from './palette/PaletteMessageList';
 import { paletteMessageResults } from './palette/palette-message-results';
+import { SearchField } from './ui/SearchField';
 
 /**
  * Tab bar config. 'messages' is a pseudo-tab backed by PaletteMessageList
@@ -132,17 +134,7 @@ export function CommandPalette({
       role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: '10vh',
-        background: 'rgba(10,10,12,0.75)',
-        backdropFilter: 'blur(2px)',
-      }}
+      className="fixed inset-0 z-palette flex items-start justify-center pt-[10vh] bg-overlay backdrop-blur-[2px]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -151,23 +143,10 @@ export function CommandPalette({
       }}
     >
       <div
-        style={{
-          width: '640px',
-          maxWidth: 'calc(100vw - 48px)',
-          background: 'linear-gradient(180deg, #1c1e22 0%, #181a1e 100%)',
-          border: '1px solid #3e3e42',
-          borderRadius: '8px',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(217,119,87,0.12) inset',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '70vh',
-        }}
+        data-testid="command-palette-dialog"
+        className="w-160 max-w-[calc(100vw-48px)] max-h-[70vh] flex flex-col overflow-hidden rounded-lg border border-floating-border floating-popover-lg"
       >
-        <div
-          role="tablist"
-          style={{ display: 'flex', borderBottom: '1px solid #2a2c30', flexShrink: 0 }}
-        >
+        <div role="tablist" className="flex border-b border-floating-border-subtle shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -175,75 +154,27 @@ export function CommandPalette({
               role="tab"
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '8px 16px',
-                fontSize: '11px',
-                fontFamily: 'monospace',
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                background: 'none',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #d97757' : '2px solid transparent',
-                color: activeTab === tab.id ? '#d97757' : '#6a6a6e',
-                cursor: 'pointer',
-                transition: 'color 0.1s, border-color 0.1s',
-              }}
+              className={cn(
+                'px-4 py-2 text-xs font-mono font-semibold uppercase tracking-wider border-b-2 cursor-pointer transition-colors',
+                activeTab === tab.id
+                  ? 'border-accent text-accent'
+                  : 'border-transparent text-text-subtle',
+              )}
             >
               {tab.label}
             </button>
           ))}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 16px',
-            gap: '12px',
-            height: '52px',
-            flexShrink: 0,
-            borderBottom: '1px solid #2a2c30',
-          }}
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-            aria-hidden="true"
-            style={{ flexShrink: 0, color: '#d97757' }}
-          >
-            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M10.5 10.5L14 14"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Search messages or type a command…"
-            aria-label="Search"
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              fontFamily: 'monospace',
-              color: '#e8e8e8',
-              letterSpacing: '0.01em',
-            }}
-          />
-        </div>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          onKeyDown={handleKey}
+          placeholder="Search messages or type a command…"
+          inputRef={inputRef}
+        />
 
-        <div style={{ overflowY: 'auto', flex: 1 }}>
+        <div className="overflow-y-auto flex-1">
           {activeTab === 'messages' ? (
             <>
               <PaletteMessageList
@@ -256,17 +187,9 @@ export function CommandPalette({
                 listRef={listRef}
               />
               {q && messageResults.length === 0 && (
-                <div
-                  style={{
-                    padding: '32px 16px',
-                    textAlign: 'center',
-                    fontFamily: 'monospace',
-                    fontSize: '12px',
-                    color: '#3e3e42',
-                  }}
-                >
-                  <div style={{ fontSize: '24px', marginBottom: '8px', opacity: 0.4 }}>∅</div>
-                  no matches for <span style={{ color: '#d97757' }}>"{query}"</span>
+                <div className="px-4 py-8 text-center font-mono text-xs text-border">
+                  <div className="text-2xl mb-2 opacity-40">∅</div>
+                  no matches for <span className="text-accent">"{query}"</span>
                 </div>
               )}
             </>
@@ -294,36 +217,13 @@ export function CommandPalette({
           )}
         </div>
 
-        <div
-          style={{
-            borderTop: '1px solid #2a2c30',
-            padding: '6px 16px',
-            display: 'flex',
-            gap: '16px',
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontSize: '9px',
-              fontFamily: 'monospace',
-              color: '#3a3a3e',
-              letterSpacing: '0.05em',
-            }}
-          >
+        <div className="border-t border-floating-border-subtle px-4 py-1.5 flex gap-4 shrink-0">
+          <span className="text-xs font-mono text-text-faint tracking-wider">
             {q
               ? `${messageResults.length} result${messageResults.length === 1 ? '' : 's'}`
               : `${visibleMessages.length} messages`}
           </span>
-          <span
-            style={{
-              fontSize: '9px',
-              fontFamily: 'monospace',
-              color: '#3a3a3e',
-              letterSpacing: '0.05em',
-              marginLeft: 'auto',
-            }}
-          >
+          <span className="text-xs font-mono text-text-faint tracking-wider ml-auto">
             ↑↓ navigate · ↵ jump · esc close
           </span>
         </div>

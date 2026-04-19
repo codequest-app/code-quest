@@ -6,7 +6,7 @@ import { ManageMcpDialog } from './ManageMcpDialog';
 const meta = {
   component: ManageMcpDialog,
   tags: ['autodocs'],
-  decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-[400px]' })],
+  decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-100' })],
 } satisfies Meta<typeof ManageMcpDialog>;
 
 export default meta;

@@ -6,7 +6,7 @@ const meta = {
   component: WorkspaceLayout,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-  decorators: [withStoryApp({ className: 'h-[600px] flex flex-col bg-bg text-text' })],
+  decorators: [withStoryApp({ className: 'h-150 flex flex-col bg-bg text-text' })],
 } satisfies Meta<typeof WorkspaceLayout>;
 
 export default meta;

@@ -1,5 +1,7 @@
+import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useState } from 'react';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 function getSteps(brandName: string) {
@@ -25,7 +27,10 @@ function getSteps(brandName: string) {
 }
 
 export function OnboardingOverlay() {
-  const { isOnboardingDismissed, dismissOnboarding } = usePreferencesStore();
+  const hiddenItems = usePreferencesStore((s) => s.hiddenItems);
+  const hideItem = usePreferencesStore((s) => s.hideItem);
+  const isOnboardingDismissed = hiddenItems.includes(DISMISSIBLE_IDS.onboardingOverlay);
+  const dismissOnboarding = () => hideItem(DISMISSIBLE_IDS.onboardingOverlay);
   const [step, setStep] = useState(0);
   const steps = getSteps('Claude');
   const current = steps[step];
@@ -51,21 +56,17 @@ export function OnboardingOverlay() {
         <h3 className="text-lg font-semibold text-text mb-2">{current.title}</h3>
         <p className="text-sm text-text-muted mb-6">{current.description}</p>
         <div className="flex justify-between">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="md"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
-            className="px-3 py-1.5 text-sm text-text-muted hover:text-text disabled:opacity-30 cursor-pointer disabled:cursor-default"
           >
             Back
-          </button>
-          <button
-            type="button"
-            onClick={() => (isLast ? dismissOnboarding() : setStep((s) => s + 1))}
-            className="px-4 py-1.5 text-sm bg-accent text-white rounded-md cursor-pointer hover:bg-accent/80"
-          >
+          </Button>
+          <Button size="md" onClick={() => (isLast ? dismissOnboarding() : setStep((s) => s + 1))}>
             {isLast ? 'Done' : 'Next'}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,0 +1,50 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { cn } from '../../utils/cn';
+import { CopyButton, HOVER_COPY_BASE } from './CopyButton';
+
+const meta = {
+  component: CopyButton,
+  tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="bg-bg text-text p-6 w-90">
+        <Story />
+      </div>
+    ),
+  ],
+} satisfies Meta<typeof CopyButton>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+// CodeBlock-style overlay: CopyButton sits absolutely over a group-hover container
+export const CodeBlockOverlay: Story = {
+  render: (args) => (
+    <div className="relative group/code bg-code-block rounded p-3">
+      <pre className="text-xs font-mono m-0 text-text">{'const x = 42;\nconsole.log(x);'}</pre>
+      <CopyButton
+        {...args}
+        text={'const x = 42;\nconsole.log(x);'}
+        className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 group-hover/code:opacity-100')}
+      />
+    </div>
+  ),
+  args: {},
+};
+
+// ChatMessage-style: appears next to message content on hover
+export const MessageHoverReveal: Story = {
+  render: (args) => (
+    <div className="group flex items-start gap-2 bg-surface rounded p-3">
+      <span className="text-text flex-1">
+        Hover this row to reveal the copy button on the right.
+      </span>
+      <CopyButton
+        {...args}
+        text="Copied from the message"
+        className={cn(HOVER_COPY_BASE, 'group-hover:opacity-100')}
+      />
+    </div>
+  ),
+  args: {},
+};

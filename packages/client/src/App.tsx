@@ -8,22 +8,23 @@ import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { WorktreeProvider } from './contexts/WorktreeContext';
+import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme';
 import { createSocket } from './socket/client';
 import { usePreferencesStore } from './stores/usePreferencesStore';
 import './App.css';
 
 export function App() {
   const [socket] = useState(() => createSocket());
-  const colorTheme = usePreferencesStore((s) => s.colorTheme);
+  const effectiveColorTheme = useEffectiveColorTheme();
   const fontSize = usePreferencesStore((s) => s.fontSize);
   const density = usePreferencesStore((s) => s.density);
 
   useEffect(() => {
     const ds = document.documentElement.dataset;
-    ds.theme = colorTheme;
+    ds.theme = effectiveColorTheme;
     ds.font = fontSize;
     ds.density = density;
-  }, [colorTheme, fontSize, density]);
+  }, [effectiveColorTheme, fontSize, density]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">

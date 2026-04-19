@@ -10,7 +10,7 @@ import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './shared';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
 
 function PartialInputPlaceholder({ content }: { content: string }) {
-  return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/80 animate-pulse')}>{content}</pre>;
+  return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60 animate-pulse')}>{content}</pre>;
 }
 
 function ToolErrorBanner({ message }: { message: string }) {
@@ -183,7 +183,7 @@ export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUs
         {resultIsError && resultContent && <ToolErrorBanner message={resultContent} />}
         {renderBody()}
         {!partialInput && !result && (
-          <div className="text-xs text-text-muted/50 animate-pulse mt-1">Running...</div>
+          <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
         )}
       </CollapsibleBlock>
     </div>

@@ -20,9 +20,9 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
 function TypeIcon({ type }: { type: string }) {
   switch (type) {
     case 'directory':
-      return <FolderIcon />;
+      return <FolderIcon className="w-5 h-5" />;
     default:
-      return <FileIcon />;
+      return <FileIcon className="w-5 h-5" />;
   }
 }
 
@@ -65,7 +65,7 @@ function FileResultItem({
         isActive ? 'bg-selected' : 'hover:bg-white/5',
       )}
     >
-      <div className="w-5 h-5 flex items-center justify-center text-text-muted opacity-60 flex-shrink-0">
+      <div className="w-5 h-5 flex items-center justify-center text-text-muted opacity-60 shrink-0">
         <TypeIcon type={file.type} />
       </div>
       {file.type === 'file' ? (
@@ -127,9 +127,9 @@ export function MentionDropdown({
   return (
     <div
       data-testid="mention-dropdown"
-      className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in-fast z-50"
+      className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in-fast z-modal"
     >
-      <div className="max-h-[300px] overflow-y-auto py-0.5">
+      <div className="max-h-75 overflow-y-auto py-0.5">
         {hasFileSearch && searchStatus === 'loading' && (
           <div className="px-3 py-2 text-xs text-text-muted text-center">Searching…</div>
         )}

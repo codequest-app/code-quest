@@ -1,8 +1,8 @@
 import {
   type ColorTheme,
   type Density,
+  DISMISSIBLE_IDS,
   type FontSize,
-  type Layout,
   type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
 } from '@code-quest/shared';
@@ -15,41 +15,59 @@ interface PreferencesState extends PersistedPreferences {
   setColorTheme: (v: ColorTheme) => void;
   setFontSize: (v: FontSize) => void;
   setDensity: (v: Density) => void;
-  setLayout: (v: Layout) => void;
   setHiddenItems: (v: string[]) => void;
-  dismissOnboarding: () => void;
-  dismissReviewUpsell: () => void;
+  hideItem: (id: string) => void;
+  showItem: (id: string) => void;
+  clearHiddenItems: () => void;
 }
 
-const DEFAULTS = {
-  colorTheme: 'dark' as const,
-  fontSize: 'md' as const,
-  density: 'comfortable' as const,
-  layout: 'a' as const,
-  hiddenItems: [] as string[],
+const DEFAULTS: PersistedPreferences = {
+  colorTheme: 'system',
+  fontSize: 'md',
+  density: 'comfortable',
+  hiddenItems: [],
 };
 
 const persistedPreferencesSchema = preferencesStateSchema.partial();
+
+interface V2Shape {
+  colorTheme?: ColorTheme;
+  fontSize?: FontSize;
+  density?: Density;
+  hiddenItems?: string[];
+  isOnboardingDismissed?: boolean;
+  isReviewUpsellDismissed?: boolean;
+}
+
+function migrateV2ToV3(persisted: V2Shape): Partial<PersistedPreferences> {
+  const hidden = new Set(persisted.hiddenItems ?? []);
+  if (persisted.isOnboardingDismissed) hidden.add(DISMISSIBLE_IDS.onboardingOverlay);
+  if (persisted.isReviewUpsellDismissed) hidden.add(DISMISSIBLE_IDS.reviewUpsellBanner);
+  const { isOnboardingDismissed, isReviewUpsellDismissed, ...rest } = persisted;
+  void isOnboardingDismissed;
+  void isReviewUpsellDismissed;
+  return { ...rest, hiddenItems: [...hidden] };
+}
 
 export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
       ...DEFAULTS,
-      isOnboardingDismissed: false,
-      isReviewUpsellDismissed: false,
       setColorTheme: (colorTheme) => set({ colorTheme }),
       setFontSize: (fontSize) => set({ fontSize }),
       setDensity: (density) => set({ density }),
-      setLayout: (layout) => set({ layout }),
       setHiddenItems: (hiddenItems) => set({ hiddenItems }),
-      dismissOnboarding: () => set({ isOnboardingDismissed: true }),
-      dismissReviewUpsell: () => set({ isReviewUpsellDismissed: true }),
+      hideItem: (id) =>
+        set((s) => (s.hiddenItems.includes(id) ? s : { hiddenItems: [...s.hiddenItems, id] })),
+      showItem: (id) => set((s) => ({ hiddenItems: s.hiddenItems.filter((i) => i !== id) })),
+      clearHiddenItems: () => set({ hiddenItems: [] }),
     }),
     {
       name: 'code-quest:preferences',
-      version: 2,
-      migrate: (persisted: unknown) => {
-        const parsed = persistedPreferencesSchema.safeParse(persisted);
+      version: 3,
+      migrate: (persisted: unknown, fromVersion: number) => {
+        const v2 = fromVersion < 3 ? migrateV2ToV3((persisted ?? {}) as V2Shape) : persisted;
+        const parsed = persistedPreferencesSchema.safeParse(v2);
         const prev = parsed.success ? parsed.data : {};
         return { ...DEFAULTS, ...prev } as PreferencesState;
       },

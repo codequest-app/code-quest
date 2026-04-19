@@ -2,7 +2,7 @@ import type { McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 
-const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-[11px] transition-colors';
+const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-xs transition-colors';
 
 const MCP_STATUS_BADGE: Partial<Record<McpServerInfo['status'], string>> & { _default: string } = {
   connected: 'bg-success text-white',
@@ -49,7 +49,7 @@ export function McpServerRow({
       <div className="flex items-center gap-3 px-4 py-3">
         <span
           className={cn(
-            'text-[11px] px-1.5 py-0.5 rounded font-mono shrink-0',
+            'text-xs px-1.5 py-0.5 rounded font-mono shrink-0',
             MCP_STATUS_BADGE[s.status] ?? MCP_STATUS_BADGE._default,
           )}
         >
@@ -90,7 +90,7 @@ export function McpServerRow({
             }
           }}
           className={cn(
-            'text-[11px] px-2 py-0.5 rounded border transition-colors',
+            'text-xs px-2 py-0.5 rounded border transition-colors',
             s.enabled
               ? 'border-success/30 text-success hover:bg-success/10'
               : 'border-border text-text-muted hover:bg-white/5',
@@ -165,7 +165,7 @@ export function McpServerRow({
             href={authUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-accent hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             Complete authentication →
           </a>
@@ -207,11 +207,11 @@ export function McpServerRow({
       {toolsExpanded && (
         <div data-testid={`tools-${s.name}`} className="px-6 pb-3">
           {tools.length === 0 ? (
-            <p className="text-[11px] text-text-muted">No tools</p>
+            <p className="text-xs text-text-muted">No tools</p>
           ) : (
             <ul className="space-y-1">
               {tools.map((tool) => (
-                <li key={tool.name} className="text-[11px]">
+                <li key={tool.name} className="text-xs">
                   <span className="font-mono text-text">{tool.name}</span>
                   {tool.description && (
                     <span className="ml-1 text-text-muted">— {tool.description}</span>

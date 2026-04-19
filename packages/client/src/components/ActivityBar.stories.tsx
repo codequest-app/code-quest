@@ -15,7 +15,7 @@ const meta = {
   args: { items, onToggle: fn() },
   decorators: [
     (Story) => (
-      <div className="flex h-[240px] bg-bg text-text">
+      <div className="flex h-60 bg-bg text-text">
         <Story />
       </div>
     ),

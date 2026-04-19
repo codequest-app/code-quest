@@ -108,7 +108,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   };
 
   const handleConfirm = () => {
-    if (!selected || !selected.message.cliUuid) return;
+    if (!selected?.message.cliUuid) return;
     onConfirm({ messageId: selected.message.cliUuid, promptText: selected.promptText });
   };
 
@@ -144,7 +144,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
 
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent title="Fork and rewind" className="w-[520px] max-w-[90vw]">
+        <DialogContent title="Fork and rewind" className="w-130 max-w-[90vw]">
           <p className="text-sm text-text-muted mb-2">
             A new forked conversation will be created after rewinding.
           </p>
@@ -172,7 +172,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
                     </span>{' '}
                     will be added across {pluralize(rewindCheck.filesChanged?.length ?? 0, 'file')}:
                   </p>
-                  <ul className="text-xs text-text-muted font-mono mb-2 max-h-[150px] overflow-y-auto">
+                  <ul className="text-xs text-text-muted font-mono mb-2 max-h-37 overflow-y-auto">
                     {rewindCheck.filesChanged?.map((f) => (
                       <li key={f} className="py-0.5">
                         {f}
@@ -216,7 +216,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   const now = new Date();
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent title="Rewind to…" className="w-[520px] max-w-[90vw]">
+      <DialogContent title="Rewind to…" className="w-130 max-w-[90vw]">
         {items.length === 0 ? (
           <p className="text-sm text-text-muted py-4 text-center">No messages to rewind to yet.</p>
         ) : (
@@ -230,7 +230,7 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
               aria-label="Messages to rewind to"
               tabIndex={0}
               onKeyDown={handleKeyDown}
-              className="flex flex-col gap-0.5 outline-none max-h-[300px] overflow-y-auto"
+              className="flex flex-col gap-0.5 outline-none max-h-75 overflow-y-auto"
             >
               {items.map((item, i) => (
                 <RewindOption
@@ -245,11 +245,10 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
               ))}
             </div>
             <p className="text-xs text-text-muted mt-3">
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-[10px]">↑</kbd>{' '}
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-[10px]">↓</kbd> to navigate
-              · <kbd className="px-1 py-0.5 bg-surface-hover rounded text-[10px]">Enter</kbd> to
-              select · <kbd className="px-1 py-0.5 bg-surface-hover rounded text-[10px]">Esc</kbd>{' '}
-              to close
+              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">↑</kbd>{' '}
+              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">↓</kbd> to navigate ·{' '}
+              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Enter</kbd> to select ·{' '}
+              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Esc</kbd> to close
             </p>
           </>
         )}

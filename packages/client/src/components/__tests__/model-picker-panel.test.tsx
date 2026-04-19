@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ModelPickerPanel } from '../ModelPickerPanel';
+import { ModelPickerPopover } from '../ModelPickerPopover';
 
 // Include a 'default' entry so the sentinel button is suppressed — tests only deal with real models
 const models = [
@@ -13,7 +13,7 @@ const models = [
 
 function renderPanel(currentModel: string | null = null, onSwitch = vi.fn(), onClose = vi.fn()) {
   render(
-    <ModelPickerPanel
+    <ModelPickerPopover
       currentModel={currentModel}
       availableModels={models}
       onSwitch={onSwitch}
@@ -23,7 +23,7 @@ function renderPanel(currentModel: string | null = null, onSwitch = vi.fn(), onC
   return { onSwitch, onClose };
 }
 
-describe('ModelPickerPanel', () => {
+describe('ModelPickerPopover', () => {
   describe('active model highlighting', () => {
     it('highlights the currently selected model with bg-selected', () => {
       renderPanel('claude-sonnet-4-20250514');

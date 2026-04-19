@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 import { cn } from '../utils/cn';
+import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 
 export interface TabInfo {
@@ -90,20 +91,18 @@ export function TabBar({
               title={tab.worktree?.path}
             >
               <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
-              <span className="truncate max-w-[120px]">
-                {tab.title || tab.sessionId.slice(0, 8)}
-              </span>
+              <span className="truncate max-w-30">{tab.title || tab.sessionId.slice(0, 8)}</span>
               {tab.worktree ? (
                 <span
                   data-testid="tab-worktree-badge"
-                  className="text-[10px] text-text-muted/70 px-1 rounded bg-white/5"
+                  className="text-xs text-text-muted/60 px-1 rounded bg-white/5"
                 >
                   {tab.worktree.name}
                 </span>
               ) : null}
               <button
                 type="button"
-                className="ml-1 text-text-muted hover:text-text text-[10px]"
+                className="ml-1 text-text-muted hover:text-text text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   setConfirmingId(tab.sessionId);
@@ -148,23 +147,20 @@ export function TabBar({
           </p>
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
-              <button
-                type="button"
-                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded"
-              >
+              <Button variant="ghost" size="md">
                 Cancel
-              </button>
+              </Button>
             </DialogClose>
-            <button
-              type="button"
-              className="px-3 py-1.5 text-sm bg-danger text-white rounded hover:bg-danger/80"
+            <Button
+              variant="danger"
+              size="md"
               onClick={() => {
                 if (confirmingId) onCloseTab(confirmingId);
                 setConfirmingId(null);
               }}
             >
               Close
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -46,7 +46,7 @@ export function SearchBar({
             data-active={String(rawActive)}
             onClick={onToggleRaw}
             className={cn(
-              'cursor-pointer transition-colors text-[11px] font-medium px-1.5 py-0.5 rounded',
+              'cursor-pointer transition-colors text-xs font-medium px-1.5 py-0.5 rounded',
               rawActive ? 'text-accent bg-accent/10' : 'text-text-muted hover:text-text',
             )}
           >

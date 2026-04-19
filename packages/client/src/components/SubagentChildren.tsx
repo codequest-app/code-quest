@@ -23,7 +23,7 @@ export function SubagentChildren({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-text-muted/50 hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
+          className="text-xs text-text-muted/60 hover:text-text-muted cursor-pointer select-none flex items-center gap-1 py-0.5"
         >
           <RotatableChevron open={expanded} />
           <span>{pluralize(nodes.length, 'subagent message')}</span>
@@ -33,7 +33,7 @@ export function SubagentChildren({
             type="button"
             title="Stop subagent"
             onClick={() => onStopTask(parentToolId)}
-            className="text-[11px] text-danger hover:text-danger/80 transition-colors"
+            className="text-xs text-danger hover:text-danger/80 transition-colors"
           >
             ■
           </button>

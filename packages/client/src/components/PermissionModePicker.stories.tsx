@@ -7,9 +7,7 @@ const meta = {
   component: PermissionModePicker,
   tags: ['autodocs'],
   args: { onSetPermissionMode: fn(), onSetEffort: fn() },
-  decorators: [
-    withStoryChannel({ className: 'bg-bg text-text p-4 flex justify-end min-h-[60px]' }),
-  ],
+  decorators: [withStoryChannel({ className: 'bg-bg text-text p-4 flex justify-end min-h-15' })],
 } satisfies Meta<typeof PermissionModePicker>;
 
 export default meta;

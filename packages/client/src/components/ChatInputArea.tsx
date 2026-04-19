@@ -3,7 +3,7 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '../cont
 import { ComposeInput } from './ComposeInput';
 import { ComposeToolbar } from './ComposeToolbar';
 import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel';
-import { PendingActionBanner } from './PendingActionBanner';
+import { PendingActionButtons } from './PendingActionButtons';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
 export function ChatInputArea() {
@@ -35,12 +35,12 @@ export function ChatInputArea() {
           e.target.value = '';
         }}
       />
-      <PendingActionBanner />
+      <PendingActionButtons />
       <ReviewUpsellBanner />
       <div
         data-permission-mode={permissionMode ?? 'normal'}
         data-spark={isFastMode ? 'on' : undefined}
-        className="rounded-xl bg-[var(--vscode-menu-background,var(--color-surface))] border border-[var(--vscode-inlineChatInput-border,var(--color-border))] transition-all relative shadow-[0_1px_2px_#0000001a]"
+        className="rounded-xl bg-chat-input-bg border border-chat-input-border transition-all relative shadow-sm"
         onClick={focusTextarea}
         role="none"
       >

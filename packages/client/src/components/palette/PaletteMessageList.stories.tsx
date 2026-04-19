@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { withThemePreset } from '../../test/story-decorator';
 import type { Message } from '../../types/ui';
 import { PaletteMessageList } from './PaletteMessageList';
 
@@ -47,7 +48,7 @@ const meta = {
   },
   decorators: [
     (Story) => (
-      <div className="bg-surface text-text w-[640px] p-2">
+      <div className="bg-surface text-text w-160 p-2">
         <Story />
       </div>
     ),
@@ -75,4 +76,9 @@ export const Active: Story = {
 
 export const WithSectionHeader: Story = {
   args: { messages: baseMessages, query: '', showHeader: true },
+};
+
+export const Light: Story = {
+  args: { messages: baseMessages, query: 'login', activeIdx: 0 },
+  decorators: [withThemePreset({ theme: 'light' })],
 };

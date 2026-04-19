@@ -23,9 +23,7 @@ export function OptionButton({
         selected ? 'bg-accent text-white' : 'hover:bg-white/5',
       )}
     >
-      <span
-        className={cn('w-4 text-center flex-shrink-0', selected ? 'text-white' : 'text-text-muted')}
-      >
+      <span className={cn('w-4 text-center shrink-0', selected ? 'text-white' : 'text-text-muted')}>
         {index}
       </span>
       <span>{label}</span>

@@ -27,8 +27,8 @@ import { type ActiveDialog, ToolbarDialogs } from './ToolbarDialogs';
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 
-const ModelPickerPanel = lazy(() =>
-  import('./ModelPickerPanel').then((m) => ({ default: m.ModelPickerPanel })),
+const ModelPickerPopover = lazy(() =>
+  import('./ModelPickerPopover').then((m) => ({ default: m.ModelPickerPopover })),
 );
 
 const mcpStatusSchema = mcpServerInfoSchema.shape.status;
@@ -169,11 +169,11 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
         forkSession={forkSession}
         updateValue={compose.updateValue}
       />
-      <div className="flex items-center gap-[2px] px-[8px] py-[5px] text-[13px]">
+      <div className="flex items-center gap-0.5 px-2 py-1 text-xs">
         {isModelPickerOpen && (
           <Suspense fallback={null}>
             <div ref={pickerRef}>
-              <ModelPickerPanel
+              <ModelPickerPopover
                 currentModel={model ?? null}
                 availableModels={availableModels}
                 onSwitch={setModel}
@@ -195,7 +195,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
         />
 
         {showContextUsage && (
-          <span className="text-text-muted shrink-0 flex items-center gap-[3px]">
+          <span className="text-text-muted shrink-0 flex items-center gap-0.5">
             {isContextCompressed ? (
               'compact'
             ) : (
@@ -224,7 +224,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
             title="Stop"
             disabled={isCancelling}
             onClick={abort}
-            className="w-[26px] h-[26px] flex items-center justify-center rounded text-white text-xs transition-colors disabled:opacity-50 send-btn"
+            className="w-6 h-6 flex items-center justify-center rounded text-white text-xs transition-colors disabled:opacity-50 send-btn"
           >
             ■
           </button>
@@ -234,7 +234,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
             title="Send"
             disabled={!compose.hasText}
             onClick={compose.submit}
-            className="w-[26px] h-[26px] flex items-center justify-center rounded text-white text-base transition-colors disabled:opacity-40 disabled:cursor-not-allowed send-btn"
+            className="w-6 h-6 flex items-center justify-center rounded text-white text-base transition-colors disabled:opacity-40 disabled:cursor-not-allowed send-btn"
           >
             ↑
           </button>

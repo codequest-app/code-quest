@@ -10,21 +10,19 @@ describe('renderMenuTrailing', () => {
   });
 
   it('renders ToggleSwitch with active state for kind=toggle', () => {
-    render(<>{renderMenuTrailing({ kind: 'toggle', active: true })}</>);
+    render(renderMenuTrailing({ kind: 'toggle', active: true }));
     expect(screen.getByTestId('toggle-switch')).toHaveAttribute('data-state', 'on');
   });
 
   it('renders tri-state indicator for kind=group (aggregate derived from items)', () => {
     render(
-      <>
-        {renderMenuTrailing({
-          kind: 'group',
-          items: [
-            { value: 'a', label: 'A', on: true, toggle: () => {} },
-            { value: 'b', label: 'B', on: true, toggle: () => {} },
-          ],
-        })}
-      </>,
+      renderMenuTrailing({
+        kind: 'group',
+        items: [
+          { value: 'a', label: 'A', on: true, toggle: () => {} },
+          { value: 'b', label: 'B', on: true, toggle: () => {} },
+        ],
+      }),
     );
     // all items on → aggregate 'all'
     expect(screen.getByTestId('tri-state-indicator')).toHaveAttribute('data-state', 'all');
@@ -32,15 +30,13 @@ describe('renderMenuTrailing', () => {
 
   it('derives partial aggregate when some items are on', () => {
     render(
-      <>
-        {renderMenuTrailing({
-          kind: 'group',
-          items: [
-            { value: 'a', label: 'A', on: true, toggle: () => {} },
-            { value: 'b', label: 'B', on: false, toggle: () => {} },
-          ],
-        })}
-      </>,
+      renderMenuTrailing({
+        kind: 'group',
+        items: [
+          { value: 'a', label: 'A', on: true, toggle: () => {} },
+          { value: 'b', label: 'B', on: false, toggle: () => {} },
+        ],
+      }),
     );
     expect(screen.getByTestId('tri-state-indicator')).toHaveAttribute('data-state', 'partial');
   });
@@ -66,24 +62,22 @@ describe('renderMenuTrailing', () => {
   });
 
   it('renders current value for kind=select', () => {
-    render(<>{renderMenuTrailing({ kind: 'select', currentValue: 'gpt-4' })}</>);
+    render(renderMenuTrailing({ kind: 'select', currentValue: 'gpt-4' }));
     expect(screen.getByTestId('select-current')).toHaveTextContent('gpt-4');
   });
 
   it('renders pill group for kind=choice with all options visible', async () => {
     const onSelect = vi.fn();
     render(
-      <>
-        {renderMenuTrailing({
-          kind: 'choice',
-          options: [
-            { value: 'dark', label: 'Dark' },
-            { value: 'light', label: 'Light' },
-          ],
-          currentValue: 'dark',
-          onSelect,
-        })}
-      </>,
+      renderMenuTrailing({
+        kind: 'choice',
+        options: [
+          { value: 'dark', label: 'Dark' },
+          { value: 'light', label: 'Light' },
+        ],
+        currentValue: 'dark',
+        onSelect,
+      }),
     );
     const darkPill = screen.getByRole('radio', { name: 'Dark' }) as HTMLInputElement;
     const lightPill = screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement;
@@ -95,14 +89,12 @@ describe('renderMenuTrailing', () => {
 
   it('renders EffortSwitch (segmented slider) for kind=segmented', () => {
     render(
-      <>
-        {renderMenuTrailing({
-          kind: 'segmented',
-          options: ['low', 'medium', 'high'],
-          currentValue: 'medium',
-          onSelect: vi.fn(),
-        })}
-      </>,
+      renderMenuTrailing({
+        kind: 'segmented',
+        options: ['low', 'medium', 'high'],
+        currentValue: 'medium',
+        onSelect: vi.fn(),
+      }),
     );
     // EffortSwitch renders a slider with notch dots — presence check via testid
     expect(screen.getByTestId('effort-switch')).toBeInTheDocument();
@@ -115,14 +107,14 @@ describe('renderPaletteTrailing', () => {
   });
 
   it('renders ON pill (tri-state "all") for kind=toggle with active=true', () => {
-    render(<>{renderPaletteTrailing({ kind: 'toggle', active: true })}</>);
+    render(renderPaletteTrailing({ kind: 'toggle', active: true }));
     const pill = screen.getByTestId('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'all');
     expect(pill.textContent).toBe('ON');
   });
 
   it('renders OFF pill (tri-state "none") for kind=toggle with active=false', () => {
-    render(<>{renderPaletteTrailing({ kind: 'toggle', active: false })}</>);
+    render(renderPaletteTrailing({ kind: 'toggle', active: false }));
     const pill = screen.getByTestId('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'none');
     expect(pill.textContent).toBe('OFF');
@@ -130,15 +122,13 @@ describe('renderPaletteTrailing', () => {
 
   it('renders tri-state pill for kind=group (palette: partial aggregate from items)', () => {
     render(
-      <>
-        {renderPaletteTrailing({
-          kind: 'group',
-          items: [
-            { value: 'a', label: 'A', on: true, toggle: () => {} },
-            { value: 'b', label: 'B', on: false, toggle: () => {} },
-          ],
-        })}
-      </>,
+      renderPaletteTrailing({
+        kind: 'group',
+        items: [
+          { value: 'a', label: 'A', on: true, toggle: () => {} },
+          { value: 'b', label: 'B', on: false, toggle: () => {} },
+        ],
+      }),
     );
     const pill = screen.getByTestId('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'partial');
@@ -146,14 +136,12 @@ describe('renderPaletteTrailing', () => {
   });
 
   it('tags pill with per-feature testid when featureId provided', () => {
-    render(
-      <>{renderPaletteTrailing({ kind: 'toggle', active: false }, { featureId: 'raw-panel' })}</>,
-    );
+    render(renderPaletteTrailing({ kind: 'toggle', active: false }, { featureId: 'raw-panel' }));
     expect(screen.getByTestId('raw-panel-toggle')).toHaveAttribute('data-state', 'none');
   });
 
   it('falls back to menu rendering for kind=select (no palette case today)', () => {
-    render(<>{renderPaletteTrailing({ kind: 'select', currentValue: 'gpt-4' })}</>);
+    render(renderPaletteTrailing({ kind: 'select', currentValue: 'gpt-4' }));
     expect(screen.getByTestId('select-current')).toHaveTextContent('gpt-4');
   });
 });

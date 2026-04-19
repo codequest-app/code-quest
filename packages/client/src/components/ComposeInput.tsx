@@ -11,7 +11,7 @@ import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
 
 const TEXTAREA_CLASS =
-  'w-full bg-transparent text-text px-[14px] py-[10px] resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
+  'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
@@ -262,10 +262,11 @@ export function ComposeInput() {
         <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
           {attachedFiles.map((file, index) => (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: duplicate filenames allowed; index disambiguates
               key={`${file.name}-${index}`}
-              className="bg-code-block border border-border rounded-[6px] flex items-center gap-[6px] px-[10px] py-[6px] text-xs shrink-0"
+              className="bg-code-block border border-border rounded-md flex items-center gap-1.5 px-2.5 py-1.5 text-xs shrink-0"
             >
-              <span className="max-w-[160px] truncate">📄 {file.name}</span>
+              <span className="max-w-40 truncate">📄 {file.name}</span>
               <button
                 type="button"
                 onClick={() => removeAttachment(index)}
@@ -278,7 +279,7 @@ export function ComposeInput() {
           ))}
         </div>
       )}
-      <div className="grid max-h-[200px] overflow-y-auto">
+      <div className="grid max-h-50 overflow-y-auto">
         <textarea
           ref={textareaRef}
           rows={1}

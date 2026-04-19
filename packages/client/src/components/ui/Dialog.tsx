@@ -5,6 +5,8 @@ import { cn } from '../../utils/cn';
 export const Dialog = RadixDialog.Root;
 export const DialogClose = RadixDialog.Close;
 
+type DialogSize = 'md' | 'lg' | 'fullscreen';
+
 interface DialogContentProps {
   children: ReactNode;
   className?: string;
@@ -12,7 +14,18 @@ interface DialogContentProps {
   mandatory?: boolean;
   title: string;
   hideTitle?: boolean;
+  size?: DialogSize;
+  /** Portal target. When set, overlay + content render inside the given
+   *  element (which SHOULD be `position: relative`) instead of document.body
+   *  — use for dialogs scoped to a panel region (e.g. ChatPanel). */
+  container?: HTMLElement | null;
 }
+
+const SIZE_CLASSES: Record<DialogSize, string> = {
+  md: 'dialog-viewport p-4',
+  lg: 'w-160 dialog-viewport p-4',
+  fullscreen: 'w-screen h-screen max-w-none max-h-none p-0 rounded-none border-0',
+};
 
 export function DialogContent({
   children,
@@ -20,13 +33,25 @@ export function DialogContent({
   mandatory = false,
   title,
   hideTitle = false,
+  size = 'md',
+  container,
 }: DialogContentProps) {
+  // When portaled into a scoped container, position with `absolute` instead
+  // of `fixed` so overlay + content are bounded by that container's box.
+  const scoped = container != null;
+  const overlayPos = scoped ? 'absolute inset-0' : 'fixed inset-0';
+  const contentPos = scoped
+    ? 'absolute z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
+    : 'fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2';
+
   return (
-    <RadixDialog.Portal>
-      <RadixDialog.Overlay className="fixed inset-0 z-50 bg-bg/60" />
+    <RadixDialog.Portal container={container ?? undefined}>
+      <RadixDialog.Overlay className={cn(overlayPos, 'z-modal bg-bg/60')} />
       <RadixDialog.Content
         className={cn(
-          'fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface text-text border border-border rounded-lg shadow-xl p-4 max-h-[calc(100vh-64px)] overflow-y-auto outline-none',
+          contentPos,
+          'bg-surface text-text border border-border rounded-lg shadow-xl overflow-y-auto outline-none',
+          SIZE_CLASSES[size],
           className,
         )}
         onEscapeKeyDown={mandatory ? (e) => e.preventDefault() : undefined}

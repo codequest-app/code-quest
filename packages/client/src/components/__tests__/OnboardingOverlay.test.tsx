@@ -6,7 +6,7 @@ import { OnboardingOverlay } from '../OnboardingOverlay';
 
 describe('OnboardingOverlay', () => {
   beforeEach(() => {
-    usePreferencesStore.setState({ isOnboardingDismissed: false });
+    usePreferencesStore.setState({ hiddenItems: [] });
   });
 
   it('renders first step by default', () => {
@@ -16,7 +16,7 @@ describe('OnboardingOverlay', () => {
   });
 
   it('returns null when dismissed', () => {
-    usePreferencesStore.setState({ isOnboardingDismissed: true });
+    usePreferencesStore.setState({ hiddenItems: ['onboarding-overlay'] });
     const { container } = render(<OnboardingOverlay />);
     expect(container.innerHTML).toBe('');
   });
@@ -41,7 +41,7 @@ describe('OnboardingOverlay', () => {
     const user = userEvent.setup();
     render(<OnboardingOverlay />);
     await user.click(screen.getByRole('button', { name: /skip/i }));
-    expect(usePreferencesStore.getState().isOnboardingDismissed).toBe(true);
+    expect(usePreferencesStore.getState().hiddenItems).toContain('onboarding-overlay');
   });
 
   it('dismisses when Done is clicked on last step', async () => {
@@ -52,7 +52,7 @@ describe('OnboardingOverlay', () => {
     await user.click(screen.getByRole('button', { name: /next/i }));
     expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /done/i }));
-    expect(usePreferencesStore.getState().isOnboardingDismissed).toBe(true);
+    expect(usePreferencesStore.getState().hiddenItems).toContain('onboarding-overlay');
   });
 
   it('disables Back button on first step', () => {

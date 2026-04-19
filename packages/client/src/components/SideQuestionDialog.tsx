@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { MarkdownContent } from './MarkdownContent';
+import { Dialog, DialogContent } from './ui/Dialog';
 
 interface SideQuestionDialogProps {
   open: boolean;
@@ -8,6 +8,9 @@ interface SideQuestionDialogProps {
   loading: boolean;
   error: string | null;
   onClose: () => void;
+  /** Optional portal target to scope the backdrop to a subset of the viewport
+   *  (e.g. ChatPanel) instead of covering the whole app. */
+  container?: HTMLElement | null;
 }
 
 export function SideQuestionDialog({
@@ -17,50 +20,25 @@ export function SideQuestionDialog({
   loading,
   error,
   onClose,
+  container,
 }: SideQuestionDialogProps) {
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', handleKey, true);
-    return () => document.removeEventListener('keydown', handleKey, true);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   return (
-    <>
-      {/* Backdrop — covers ChatPanel only; Escape is primary dismiss */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: backdrop dismiss is supplementary; Escape handled at document level */}
-      <div
-        role="presentation"
-        className="absolute inset-0 z-30 bg-black/40 flex items-start justify-center px-4"
-        onClick={onClose}
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        title="Side question"
+        hideTitle
+        container={container}
+        className="max-w-150 w-full p-0 overflow-hidden mt-[15vh] top-0 translate-y-0"
       >
-        {/* Panel — stop propagation so clicks inside don't close */}
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only; keyboard handled at document level */}
-        <div
-          role="dialog"
-          aria-label="/btw"
-          aria-modal="true"
-          className="mt-[15vh] max-w-[600px] w-full bg-surface border border-border rounded-lg shadow-2xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-4 pt-4 pb-2 border-b border-border">
-            <p className="text-xs text-text-muted font-mono truncate">/btw {question}</p>
-          </div>
-          <div className="px-4 py-3 max-h-[55vh] overflow-y-auto text-sm">
-            {loading && <p className="text-text-muted">Thinking…</p>}
-            {!loading && error && <p className="text-danger">{error}</p>}
-            {!loading && answer !== null && <MarkdownContent content={answer} />}
-          </div>
+        <div className="px-4 pt-4 pb-2 border-b border-border">
+          <p className="text-xs text-text-muted font-mono truncate">/btw {question}</p>
         </div>
-      </div>
-    </>
+        <div className="px-4 py-3 max-h-[55vh] overflow-y-auto text-sm">
+          {loading && <p className="text-text-muted">Thinking…</p>}
+          {!loading && error && <p className="text-danger">{error}</p>}
+          {!loading && answer !== null && <MarkdownContent content={answer} />}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
