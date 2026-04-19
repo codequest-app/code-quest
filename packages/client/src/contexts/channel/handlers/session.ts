@@ -6,10 +6,10 @@ import type {
   RpcResult,
   SideQuestionResult,
 } from '@code-quest/shared';
+import { isRecord } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
-import { isRecord } from '@/utils/is-record';
 import type { Payload } from './guard';
 
 // ── On handlers ──

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSwitchAccountFeature } from '../switch-account-feature';
-import { switchAccountSignal } from '../switch-account-signal';
+import { createSwitchAccountFeature, switchAccountSignal } from '../switch-account-feature';
 
 describe('switchAccountSignal', () => {
   it('starts closed', () => {

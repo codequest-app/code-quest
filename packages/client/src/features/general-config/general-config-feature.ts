@@ -1,5 +1,7 @@
 import type { Feature } from '../../lib/feature';
-import { generalConfigSignal } from './general-config-signal';
+import { createOpenSignal } from '../../lib/open-signal';
+
+export const generalConfigSignal = createOpenSignal();
 
 export function createGeneralConfigFeature(): Feature {
   return {

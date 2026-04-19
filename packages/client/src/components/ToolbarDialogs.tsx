@@ -3,10 +3,10 @@ import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import type { ChannelConfigValue } from '../contexts/channel/ChannelConfigContext';
 import type { ChannelMessagesValue } from '../contexts/channel/ChannelMessagesContext';
-import { generalConfigSignal } from '../features/general-config/general-config-signal';
+import { generalConfigSignal } from '../features/general-config/general-config-feature';
 import { RewindDialog } from '../features/rewind/RewindDialog';
 import { rewindOpenSignal } from '../features/rewind/rewind-feature';
-import { switchAccountSignal } from '../features/switch-account/switch-account-signal';
+import { switchAccountSignal } from '../features/switch-account/switch-account-feature';
 import { usageOpenSignal } from '../features/usage/usage-feature';
 
 const AccountUsageDialog = lazy(() =>

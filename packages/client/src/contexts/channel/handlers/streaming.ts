@@ -1,9 +1,8 @@
 import type { ContentBlock } from '@code-quest/shared';
-import { fileReadResponseSchema } from '@code-quest/shared';
+import { fileReadResponseSchema, isRecord } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';
-import { isRecord } from '@/utils/is-record';
 import { msg, patchMeta, updateLastMessage } from '@/utils/message';
 import type { Payload } from './guard';
 

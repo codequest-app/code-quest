@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGeneralConfigFeature } from '../general-config-feature';
-import { generalConfigSignal } from '../general-config-signal';
+import { createGeneralConfigFeature, generalConfigSignal } from '../general-config-feature';
 
 describe('generalConfigSignal', () => {
   it('starts closed', () => {

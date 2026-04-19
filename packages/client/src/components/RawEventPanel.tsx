@@ -1,6 +1,6 @@
+import { isRecord } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../utils/cn';
-import { isRecord } from '../utils/is-record';
 import { JsonViewer } from './JsonViewer';
 import { RawEventFilterBar } from './RawEventFilterBar';
 import { SearchBar } from './SearchBar';
