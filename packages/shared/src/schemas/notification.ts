@@ -17,11 +17,6 @@ export const notificationPayloadSchema = z.object({
 });
 export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
 
-export const notificationResponseSchema = z.looseObject({
-  buttonValue: z.string().optional(),
-});
-export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
-
 // ── S2C payloads ──
 
 export const notificationToastPayloadSchema = z.object({

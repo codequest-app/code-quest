@@ -24,10 +24,10 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 ## 4. Server — Channel collaborator split (biggest scope)
 
-- [ ] 4.1 Introduce `packages/server/src/socket/control-request-tracker.ts` exporting a `ControlRequestTracker` class owning the `pendingRequests` / `controlRequestMeta` / timeout state currently in `Channel`
-- [ ] 4.2 Introduce `packages/server/src/socket/notification-tracker.ts` exporting a `NotificationTracker` class owning `pendingNotifications` / `mcpTimeouts` state
-- [ ] 4.3 Thread both trackers into `Channel` via composition; keep every public method on `Channel` with identical signatures delegating to the trackers
-- [ ] 4.4 Run full server test suite and confirm no test / assertion changed
+- [x] 4.1 Introduce `packages/server/src/socket/control-request-tracker.ts` exporting a `ControlRequestTracker` class owning the `pendingRequests` / `controlRequestMeta` / timeout state currently in `Channel`
+- [~] 4.2 NotificationTracker skipped — `notificationRequests` map was dead state (never `.set()` anywhere). Deleted the dead map + methods + never-taken branch in `handlers/message.ts` + `notificationResponseSchema` in shared. `mcpTimeouts` stays inline (3 one-liners, not worth a class).
+- [x] 4.3 Thread ControlRequestTracker into `Channel` via composition; every public `Channel` method preserved with identical signatures
+- [x] 4.4 Full server suite 483/483 green; shared 63/63; summoner 326/326; client 1295/1295
 
 ## 5. Shared — schema audit & consolidation
 

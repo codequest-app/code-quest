@@ -155,11 +155,6 @@ export function create({
       const [channelId, channel] = match;
       if (!channel) return;
 
-      // Notification response
-      if (channel.resolveNotificationRequest(requestId, { ...response })) {
-        return;
-      }
-
       const meta = channel.getControlRequestMeta(requestId);
 
       const parsed = controlRespondPayloadSchema.parse(response);
