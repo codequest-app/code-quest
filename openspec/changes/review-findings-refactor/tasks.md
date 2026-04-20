@@ -19,8 +19,8 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 ## 3. Server — helper extractions (shorter long functions)
 
-- [ ] 3.1 Extract `resolveTerminalCwd` and `createAndConfigureChannel` helpers from `packages/server/src/socket/handlers/terminal.ts#handleOpenClaude`
-- [ ] 3.2 Extract `applyPerLaunchSettings` vs broadcast helpers from `packages/server/src/socket/handlers/session/connect.ts#finalizeAndNotify`
+- [x] 3.1 Extract `resolveTerminalCwd` and `createAndConfigureChannel` helpers from `packages/server/src/socket/handlers/terminal.ts#handleOpenClaude`
+- [~] 3.2 Extract `applyPerLaunchSettings` vs broadcast helpers from `packages/server/src/socket/handlers/session/connect.ts#finalizeAndNotify`
 
 ## 4. Server — Channel collaborator split (biggest scope)
 

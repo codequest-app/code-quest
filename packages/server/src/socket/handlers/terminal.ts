@@ -30,6 +30,28 @@ export function create({
     }
   }
 
+  /** Pick an explicit cwd from the payload, else fall back to the cwd of an
+   *  existing channel on the same id. Returns null when neither is available. */
+  function resolveTerminalCwd(explicitCwd: string | undefined, channelId: string): string | null {
+    if (explicitCwd) return explicitCwd;
+    return channelManager.get(channelId)?.cwd ?? null;
+  }
+
+  async function spawnTerminalChannel(
+    baseCwd: string,
+    socket: TypedSocket | undefined,
+  ): Promise<{ channel: Channel; channelId: string }> {
+    const channelId = crypto.randomUUID();
+    const { channel } = await channelManager.create(channelId, {
+      cwd: baseCwd,
+      onBeforeSpawn: (c) => {
+        if (socket) channelManager.addSocketToChannel(c, socket);
+      },
+    });
+    channelManager.broadcastSessionState(channelId, 'idle');
+    return { channel, channelId };
+  }
+
   async function handleOpenClaude(
     _ch: Channel | null,
     payload: unknown,
@@ -38,27 +60,14 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudePayloadSchema.parse(payload);
-      const existingChannel = channelManager.get(channelId);
-      const baseCwd = cwd ?? existingChannel?.cwd;
+      const baseCwd = resolveTerminalCwd(cwd, channelId);
       if (!baseCwd) {
         cb?.(err('no cwd available for terminal:open_claude'));
         return;
       }
 
-      const newChannelId = crypto.randomUUID();
-      const { channel: ch } = await channelManager.create(newChannelId, {
-        cwd: baseCwd,
-        onBeforeSpawn: (c) => {
-          if (socket) channelManager.addSocketToChannel(c, socket);
-        },
-      });
-
-      channelManager.broadcastSessionState(newChannelId, 'idle');
-
-      if (prompt) {
-        ch.sendMessage(prompt);
-      }
-
+      const { channel, channelId: newChannelId } = await spawnTerminalChannel(baseCwd, socket);
+      if (prompt) channel.sendMessage(prompt);
       cb?.(ok({ channelId: newChannelId }));
     } catch (e) {
       cb?.(err(errMsg(e, 'Failed to open claude terminal')));
