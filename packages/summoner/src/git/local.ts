@@ -160,6 +160,13 @@ export class LocalGitService implements GitService {
     return simpleGit({ baseDir: cwd ?? process.cwd(), trimmed: true });
   }
 
+  /** Checkout `branch`, trying three strategies in order:
+   *   1. Plain `git checkout branch` — works if the branch already exists locally
+   *   2. `git fetch origin` then retry — picks up branches created on the remote
+   *      after our last fetch
+   *   3. `git checkout -t origin/branch` — creates a tracking branch from the
+   *      remote ref when no local branch exists yet
+   *  Only the final strategy is allowed to surface its error. */
   private async checkoutWithFallback(git: SimpleGit, branch: string): Promise<void> {
     try {
       await git.checkout(branch);

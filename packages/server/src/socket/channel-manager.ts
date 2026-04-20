@@ -77,10 +77,10 @@ export class ChannelManager {
     return this.channels.get(channelId);
   }
 
-  /** Find channel that owns a pending control/notification request. Returns [channelId, channel]. */
+  /** Find channel that owns a pending control request. Returns [channelId, channel]. */
   findByRequestId(requestId: string): [string, Channel] | undefined {
     for (const [id, ch] of this.channels) {
-      if (ch.hasControlRequest(requestId) || ch.hasNotificationRequest(requestId)) {
+      if (ch.hasControlRequest(requestId)) {
         return [id, ch];
       }
     }

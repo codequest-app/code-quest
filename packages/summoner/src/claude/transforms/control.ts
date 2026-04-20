@@ -6,6 +6,23 @@ import type { controlRequestSchema } from '../schemas.ts';
 type ControlRequestMessage = z.infer<typeof controlRequestSchema>;
 type RequestContext = { requestId: string; request: ControlRequestMessage['request'] };
 
+type ElicitationInputType = 'url' | 'select' | 'text';
+function inputTypeFromMode(mode: string | undefined): ElicitationInputType {
+  switch (mode) {
+    case 'url':
+      return 'url';
+    case 'form':
+      return 'select';
+    default:
+      return 'text';
+  }
+}
+
+type NotificationSeverity = 'error' | 'warning' | 'info';
+function normalizeSeverity(raw: string): NotificationSeverity {
+  return raw === 'error' || raw === 'warning' ? raw : 'info';
+}
+
 function handleCanUseTool({ requestId, request }: RequestContext): ClientMessage {
   return {
     name: 'control:permission',
@@ -38,7 +55,7 @@ function handleHookCallback({ requestId, request }: RequestContext): ClientMessa
 function handleElicitation({ requestId, request }: RequestContext): ClientMessage {
   const elInput = asRecord(request.input);
   const mode = asString(elInput?.mode, undefined);
-  const inputType = mode === 'url' ? 'url' : mode === 'form' ? 'select' : 'text';
+  const inputType = inputTypeFromMode(mode);
   const reqSchema = asRecord(elInput?.requested_schema);
   const options = mode === 'form' ? Object.keys(asRecord(reqSchema?.properties) ?? {}) : undefined;
   return {
@@ -109,7 +126,7 @@ function handleShowNotification({ requestId, request }: RequestContext): ClientM
     payload: {
       requestId,
       message: asString(notifInput?.message, ''),
-      severity: severity === 'error' || severity === 'warning' ? severity : 'info',
+      severity: normalizeSeverity(severity),
       buttons: Array.isArray(notifInput?.buttons) ? notifInput.buttons : undefined,
       onlyIfNotVisible:
         typeof notifInput?.onlyIfNotVisible === 'boolean' ? notifInput.onlyIfNotVisible : undefined,

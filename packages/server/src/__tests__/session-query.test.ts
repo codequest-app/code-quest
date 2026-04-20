@@ -1,5 +1,5 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
-import type { ClientMessage, GetSessionResponse, SessionListResponse } from '@code-quest/shared';
+import type { GetSessionResponse, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;

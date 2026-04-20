@@ -104,10 +104,12 @@ export class LocalFilesystemService implements FilesystemService {
   private extractDirectories(files: string[]): string[] {
     const dirs = new Set<string>();
     for (const f of files) {
-      let idx = f.indexOf('/');
-      while (idx !== -1) {
-        dirs.add(f.substring(0, idx));
-        idx = f.indexOf('/', idx + 1);
+      const parts = f.split('/');
+      // Drop the file name (last segment); accumulate each directory prefix.
+      let prefix = '';
+      for (let i = 0; i < parts.length - 1; i++) {
+        prefix = prefix ? `${prefix}/${parts[i]}` : parts[i];
+        dirs.add(prefix);
       }
     }
     return [...dirs].map((d) => `${d}/`);

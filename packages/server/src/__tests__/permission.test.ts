@@ -264,7 +264,7 @@ describe('ChatHandler > control', () => {
     });
 
     it('system/init persists session with session_id', async () => {
-      const { container, claude, channelId } = await setup('my-session-id');
+      const { container, channelId } = await setup('my-session-id');
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getByChannelId(channelId);

@@ -11,6 +11,8 @@ interface ToolHeaderInfo {
 }
 
 const MCP_PREFIX = 'mcp__';
+const MCP_SUMMARY_MAX_LENGTH = 60;
+const AGENT_DESCRIPTION_MAX_LENGTH = 80;
 
 /** Check if a tool name is an MCP tool (prefixed with mcp__) */
 export function isMcpTool(name: string): boolean {
@@ -44,7 +46,7 @@ function mcpHeader(toolName: string, input: ToolInput): ToolHeaderInfo {
   const summary = input.query ?? input.command ?? input.message ?? '';
   return {
     name: `${server}::${tool}`,
-    detail: summary ? String(summary).slice(0, 60) : undefined,
+    detail: summary ? String(summary).slice(0, MCP_SUMMARY_MAX_LENGTH) : undefined,
   };
 }
 
@@ -65,7 +67,10 @@ export function getToolHeaderInfo(toolName: string, input: ToolInput): ToolHeade
     case 'Task':
       return {
         name: 'Agent',
-        detail: String(input.description ?? input.prompt ?? 'task').slice(0, 80),
+        detail: String(input.description ?? input.prompt ?? 'task').slice(
+          0,
+          AGENT_DESCRIPTION_MAX_LENGTH,
+        ),
       };
     default:
       return isMcpTool(toolName) ? mcpHeader(toolName, input) : { name: toolName };

@@ -7,32 +7,28 @@ export const streamChunkSchema = z.object({
 });
 export type StreamChunk = z.infer<typeof streamChunkSchema>;
 
-export const streamChunkPayloadSchema = z.object({
-  channelId: z.string(),
+const channelIdBase = z.object({ channelId: z.string() });
+
+export const streamChunkPayloadSchema = channelIdBase.extend({
   chunk: streamChunkSchema,
   parentToolUseId: z.string().optional(),
 });
 export type StreamChunkPayload = z.infer<typeof streamChunkPayloadSchema>;
 
-export const streamEndPayloadSchema = z.object({
-  channelId: z.string(),
-});
+export const streamEndPayloadSchema = channelIdBase;
 export type StreamEndPayload = z.infer<typeof streamEndPayloadSchema>;
 
-export const streamTextPayloadSchema = z.object({
-  channelId: z.string(),
+export const streamTextPayloadSchema = channelIdBase.extend({
   text: z.string(),
 });
 export type StreamTextPayload = z.infer<typeof streamTextPayloadSchema>;
 
-export const streamToolSummaryPayloadSchema = z.object({
-  channelId: z.string(),
+export const streamToolSummaryPayloadSchema = channelIdBase.extend({
   toolSummary: z.string(),
 });
 export type StreamToolSummaryPayload = z.infer<typeof streamToolSummaryPayloadSchema>;
 
-export const streamBlockStartPayloadSchema = z.object({
-  channelId: z.string(),
+export const streamBlockStartPayloadSchema = channelIdBase.extend({
   index: z.number(),
   blockType: z.string(),
   contentBlock: z.record(z.string(), z.unknown()).optional(),

@@ -2,7 +2,6 @@ import type {
   ChannelMetaCache,
   ClientMessage,
   ControlResponse,
-  NotificationResponse,
   SessionConfig,
   WorktreeInfo,
 } from '@code-quest/shared';
@@ -14,6 +13,7 @@ import {
 } from '@code-quest/shared';
 import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
 import { detectWorktree } from '@code-quest/summoner';
+import { ControlRequestTracker, DEFAULT_CONTROL_TIMEOUT } from './control-request-tracker.ts';
 import type { RequestMeta } from './schemas.ts';
 import { pickDefined } from './utils/helpers.ts';
 
@@ -23,21 +23,12 @@ export interface ChannelHooks {
   onExit?: (channel: Channel, code: number | null) => void;
 }
 
-interface PendingRequest {
-  resolve: (value: ControlResponse) => void;
-  reject: (reason: Error) => void;
-  timer: ReturnType<typeof setTimeout>;
-}
-
 /** Stored listener references for unbindRunner cleanup. */
 interface RunnerListenerRefs {
   clientMessage: (message: ClientMessage) => void;
   controlResponse: (response: ResolvedControlResponse) => void;
   exit: (code: number | null) => void;
 }
-
-/** Default timeout for control requests (ms). */
-const DEFAULT_CONTROL_TIMEOUT = 30_000;
 
 export class Channel {
   // ── Identity ──
@@ -68,12 +59,7 @@ export class Channel {
   private _isProcessing = false;
 
   // ── Control requests ──
-  private readonly _controlRequestMeta = new Map<string, RequestMeta>();
-  private readonly pendingRequests = new Map<string, PendingRequest>();
-  private readonly notificationRequests = new Map<
-    string,
-    (response: NotificationResponse) => void
-  >();
+  private readonly controlRequests: ControlRequestTracker;
   private readonly mcpTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── Meta ──
@@ -99,6 +85,7 @@ export class Channel {
     this.provider = provider;
     this.cwd = cwd;
     this.controlTimeout = controlTimeout;
+    this.controlRequests = new ControlRequestTracker(controlTimeout);
   }
 
   // ── State accessors ──
@@ -164,23 +151,19 @@ export class Channel {
   // ── Control request tracking ──
 
   trackControlRequest(requestId: string, meta: RequestMeta): void {
-    this._controlRequestMeta.set(requestId, meta);
+    this.controlRequests.trackInbound(requestId, meta);
   }
 
   removeControlRequest(requestId: string): void {
-    this._controlRequestMeta.delete(requestId);
+    this.controlRequests.removeInbound(requestId);
   }
 
   hasControlRequest(requestId: string): boolean {
-    return this._controlRequestMeta.has(requestId);
+    return this.controlRequests.hasInbound(requestId);
   }
 
   getControlRequestMeta(requestId: string): RequestMeta | undefined {
-    return this._controlRequestMeta.get(requestId);
-  }
-
-  hasNotificationRequest(requestId: string): boolean {
-    return this.notificationRequests.has(requestId);
+    return this.controlRequests.getInboundMeta(requestId);
   }
 
   setMcpTimeout(requestId: string, timer: ReturnType<typeof setTimeout>): void {
@@ -191,14 +174,6 @@ export class Channel {
     const t = this.mcpTimeouts.get(requestId);
     if (t) clearTimeout(t);
     this.mcpTimeouts.delete(requestId);
-  }
-
-  resolveNotificationRequest(requestId: string, response: NotificationResponse): boolean {
-    const resolve = this.notificationRequests.get(requestId);
-    if (!resolve) return false;
-    this.notificationRequests.delete(requestId);
-    resolve(response);
-    return true;
   }
 
   // ── Runner wrappers ──
@@ -223,39 +198,13 @@ export class Channel {
     this.runner.kill();
   }
 
-  private resolveControlResponse(response: ResolvedControlResponse): void {
-    const pending = this.pendingRequests.get(response.requestId);
-    if (!pending) return;
-
-    clearTimeout(pending.timer);
-    this.pendingRequests.delete(response.requestId);
-
-    pending.resolve({
-      success: response.success,
-      response: response.response,
-      error: response.error,
-    });
-  }
-
   sendRequest(event: string, payload: Record<string, unknown> = {}): Promise<ControlResponse> {
     const { subtype, input } = this.runner.formatRequest(event, payload);
-    return this.sendControlRequest(subtype, input);
-  }
-
-  private sendControlRequest(
-    subtype: string,
-    params?: Record<string, unknown>,
-  ): Promise<ControlResponse> {
-    const requestId = crypto.randomUUID();
-    return new Promise<ControlResponse>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pendingRequests.delete(requestId);
-        reject(new Error(`Control request '${subtype}' timed out`));
-      }, this.controlTimeout);
-
-      this.pendingRequests.set(requestId, { resolve, reject, timer });
-      this.runner.sendControlRequest(subtype, params, requestId);
-    });
+    return this.controlRequests.sendOutbound(
+      (s, p, id) => this.runner.sendControlRequest(s, p, id),
+      subtype,
+      input,
+    );
   }
 
   private applyErrorMessage(payload: unknown): void {
@@ -320,18 +269,12 @@ export class Channel {
     };
 
     const onControlResponse = (response: ResolvedControlResponse) => {
-      this.resolveControlResponse(response);
+      this.controlRequests.resolveOutbound(response);
     };
 
     const onExit = (code: number | null) => {
       this.exited = true;
-
-      // Reject all pending control requests — process is gone
-      for (const [id, pending] of this.pendingRequests) {
-        clearTimeout(pending.timer);
-        pending.reject(new Error(this.lastError ?? `Process exited with code ${code}`));
-        this.pendingRequests.delete(id);
-      }
+      this.controlRequests.rejectAllPending(this.lastError ?? `Process exited with code ${code}`);
 
       // Delegate cleanup to hook (broadcastSessionConfig, session:closed emit)
       hooks.onExit?.(this, code);
@@ -359,16 +302,7 @@ export class Channel {
 
   destroy(): void {
     this.unbindRunner();
-    this._controlRequestMeta.clear();
-    for (const [, pending] of this.pendingRequests) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error('Channel destroyed'));
-    }
-    this.pendingRequests.clear();
-    for (const resolve of this.notificationRequests.values()) {
-      resolve({});
-    }
-    this.notificationRequests.clear();
+    this.controlRequests.clear();
     for (const timer of this.mcpTimeouts.values()) clearTimeout(timer);
     this.mcpTimeouts.clear();
     this.resetSessionConfig();
