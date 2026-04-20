@@ -200,7 +200,7 @@ export class Channel {
 
   sendRequest(event: string, payload: Record<string, unknown> = {}): Promise<ControlResponse> {
     const { subtype, input } = this.runner.formatRequest(event, payload);
-    return this.controlRequests.send(
+    return this.controlRequests.sendOutbound(
       (s, p, id) => this.runner.sendControlRequest(s, p, id),
       subtype,
       input,
@@ -269,7 +269,7 @@ export class Channel {
     };
 
     const onControlResponse = (response: ResolvedControlResponse) => {
-      this.controlRequests.resolveResponse(response);
+      this.controlRequests.resolveOutbound(response);
     };
 
     const onExit = (code: number | null) => {

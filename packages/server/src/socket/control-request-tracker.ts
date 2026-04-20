@@ -47,7 +47,7 @@ export class ControlRequestTracker {
 
   // ── Outbound (server→CLI) ──
 
-  send(
+  sendOutbound(
     send: ControlRequestSender,
     subtype: string,
     params?: Record<string, unknown>,
@@ -64,7 +64,7 @@ export class ControlRequestTracker {
     });
   }
 
-  resolveResponse(response: ResolvedControlResponse): void {
+  resolveOutbound(response: ResolvedControlResponse): void {
     const p = this.pending.get(response.requestId);
     if (!p) return;
     clearTimeout(p.timer);
