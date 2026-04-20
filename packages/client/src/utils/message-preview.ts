@@ -20,21 +20,33 @@ const MESSAGE_TYPE_LABELS: Partial<Record<Message['type'], string>> = {
   tool_result: 'tool result',
 };
 
+// Message-type badge palette used by the command palette's message preview list.
+// Hex values are inlined in CSS `style` with alpha suffixes (`${color}18`) so
+// they must remain literal hex strings for the suffix concatenation to work.
+const TYPE_COLOR_GREEN = '#81b88b';
+const TYPE_COLOR_PURPLE = '#9d7fd4';
+const TYPE_COLOR_ORANGE = '#d97757';
+const TYPE_COLOR_AMBER = '#c6913f';
+const TYPE_COLOR_RED = '#f48771';
+const TYPE_COLOR_GOLD = '#e1c08d';
+const TYPE_COLOR_BLUE = '#5a9fd4';
+const TYPE_COLOR_DEFAULT = '#6a6a6e';
+
 const TYPE_COLORS: Partial<Record<string, string>> = {
-  text: '#81b88b',
-  thinking: '#9d7fd4',
-  redacted_thinking: '#9d7fd4',
-  tool_use: '#d97757',
-  tool_result: '#c6913f',
-  error: '#f48771',
-  result: '#e1c08d',
-  hook_started: '#5a9fd4',
-  hook_response: '#5a9fd4',
-  hook_diagnostics: '#5a9fd4',
+  text: TYPE_COLOR_GREEN,
+  thinking: TYPE_COLOR_PURPLE,
+  redacted_thinking: TYPE_COLOR_PURPLE,
+  tool_use: TYPE_COLOR_ORANGE,
+  tool_result: TYPE_COLOR_AMBER,
+  error: TYPE_COLOR_RED,
+  result: TYPE_COLOR_GOLD,
+  hook_started: TYPE_COLOR_BLUE,
+  hook_response: TYPE_COLOR_BLUE,
+  hook_diagnostics: TYPE_COLOR_BLUE,
 };
 
 export function typeColor(type: string): string {
-  return TYPE_COLORS[type] ?? '#6a6a6e';
+  return TYPE_COLORS[type] ?? TYPE_COLOR_DEFAULT;
 }
 
 export function typeLabel(type: string): string {
