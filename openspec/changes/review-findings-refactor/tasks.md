@@ -4,18 +4,18 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 ## 1. Client — low-risk constant extractions
 
-- [ ] 1.1 Extract `NAV_KEYS_COMPOSE` constant in `packages/client/src/components/ComposeInput.tsx` (replaces duplicate array literal at two call sites)
-- [ ] 1.2 Create `packages/client/src/utils/time-constants.ts` with `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `MS_PER_SECOND`, `MS_PER_MINUTE`, `MS_PER_HOUR`, `MS_PER_DAY`, `DAYS_PER_MONTH_APPROX`, `DAYS_PER_YEAR_APPROX`
-- [ ] 1.3 Refactor `packages/client/src/utils/format-relative-date.ts` to use the new time constants
-- [ ] 1.4 Refactor `packages/client/src/utils/format-reset-time.ts` to use the new time constants
-- [ ] 1.5 Rename magic `60` / `80` slice lengths in `packages/client/src/utils/tool-registry.ts` to named constants (`SUMMARY_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`)
-- [ ] 1.6 Move hard-coded hex values in `packages/client/src/utils/message-preview.ts` `TYPE_COLORS` to Tailwind theme tokens (or a named palette const if no matching token exists)
+- [~] 1.1 Extract `NAV_KEYS_COMPOSE` constant in `packages/client/src/components/ComposeInput.tsx` (replaces duplicate array literal at two call sites)
+- [x] 1.2 Create `packages/client/src/utils/time-constants.ts` with `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `MS_PER_SECOND`, `MS_PER_MINUTE`, `MS_PER_HOUR`, `MS_PER_DAY`, `DAYS_PER_MONTH_APPROX`, `DAYS_PER_YEAR_APPROX`
+- [x] 1.3 Refactor `packages/client/src/utils/format-relative-date.ts` to use the new time constants
+- [x] 1.4 Refactor `packages/client/src/utils/format-reset-time.ts` to use the new time constants
+- [x] 1.5 Rename magic `60` / `80` slice lengths in `packages/client/src/utils/tool-registry.ts` to named constants (`SUMMARY_MAX_LENGTH`, `DESCRIPTION_MAX_LENGTH`)
+- [x] 1.6 Move hard-coded hex values in `packages/client/src/utils/message-preview.ts` `TYPE_COLORS` to Tailwind theme tokens (or a named palette const if no matching token exists)
 
 ## 2. Summoner — readability refactors
 
-- [ ] 2.1 Replace nested ternaries at `packages/summoner/src/claude/transforms/control.ts:41` and `:112` with `switch` or lookup table
-- [ ] 2.2 Rewrite `extractDirectories` in `packages/summoner/src/filesystem/local.ts` using `split('/').filter(Boolean)` / `reduce` accumulation (replaces O(n²) `indexOf` loop)
-- [ ] 2.3 Flatten `checkoutWithFallback` cascade in `packages/summoner/src/git/local.ts:167-177`; add comment documenting the fallback strategy order
+- [x] 2.1 Replace nested ternaries at `packages/summoner/src/claude/transforms/control.ts:41` and `:112` with `switch` or lookup table
+- [x] 2.2 Rewrite `extractDirectories` in `packages/summoner/src/filesystem/local.ts` using `split('/').filter(Boolean)` / `reduce` accumulation (replaces O(n²) `indexOf` loop)
+- [x] 2.3 Flatten `checkoutWithFallback` cascade in `packages/summoner/src/git/local.ts:167-177`; add comment documenting the fallback strategy order
 
 ## 3. Server — helper extractions (shorter long functions)
 
