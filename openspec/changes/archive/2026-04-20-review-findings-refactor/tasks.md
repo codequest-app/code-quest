@@ -40,4 +40,4 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 - [x] 6.1 `pnpm test` passes across all packages (server 483, shared 63, summoner 326, client 1295)
 - [x] 6.2 `pnpm exec biome check` clean (2 pre-existing warnings in test files unrelated to this change)
 - [x] 6.3 `pnpm exec tsc --noEmit` clean per package (via pre-commit hooks)
-- [ ] 6.4 Push branch + confirm lefthook pre-push hooks (typecheck + tests) pass
+- [x] 6.4 Branch merged to main as 1097f27a; pre-push lefthook (client + server tests) passed

@@ -1,7 +1,10 @@
-## ADDED Requirements
+# message-visibility Specification
 
+## Purpose
+TBD - created by archiving change command-palette. Update Purpose after archive.
+## Requirements
 ### Requirement: Default visibility matches extension
-Five groups; 對話/工具/系統 are on by default, Hooks/Debug are off.
+There SHALL be five groups; 對話/工具/系統 SHALL be on by default, and Hooks/Debug SHALL be off by default.
 
 #### Scenario: Initial state
 - **WHEN** user opens cc-office for the first time (no localStorage entry)
@@ -10,7 +13,7 @@ Five groups; 對話/工具/系統 are on by default, Hooks/Debug are off.
 ---
 
 ### Requirement: Group-level toggle
-Toggling a group turns all its types on or off at once.
+Toggling a group SHALL turn all its types on or off at once.
 
 #### Scenario: Toggle group off
 - **WHEN** user toggles a group off in CommandPalette
@@ -23,7 +26,7 @@ Toggling a group turns all its types on or off at once.
 ---
 
 ### Requirement: Per-type override via pill/chip
-Expanding a group in Actions tab reveals individual type pills; clicking a pill toggles only that type.
+Expanding a group in the Actions tab SHALL reveal individual type pills; clicking a pill SHALL toggle only that type.
 
 #### Scenario: Partial group state
 - **WHEN** some but not all types within a group are enabled
@@ -32,8 +35,9 @@ Expanding a group in Actions tab reveals individual type pills; clicking a pill 
 ---
 
 ### Requirement: Persistence
-Visibility state is persisted to localStorage and restored on reload.
+Visibility state SHALL be persisted to localStorage and MUST be restored on reload.
 
 #### Scenario: Reload restores state
 - **WHEN** user reloads the page after changing visibility
 - **THEN** the same groups/types are visible as before reload
+

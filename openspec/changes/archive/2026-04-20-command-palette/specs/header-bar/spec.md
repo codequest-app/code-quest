@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Single ⌘K trigger replaces all toolbar buttons
-HeaderBar exposes only `onOpenCommandPalette` — all other action props (onToggleRaw, rawActive, onOpenSpotlight) are removed.
+HeaderBar SHALL expose only `onOpenCommandPalette` — all other action props (onToggleRaw, rawActive, onOpenSpotlight) MUST be removed.
 
 #### Scenario: Only ⌘K button visible
 - **WHEN** HeaderBar renders

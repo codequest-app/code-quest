@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Panel toggles section
-Actions tab shows a "Panels" section with toggleable panel commands.
+Actions tab SHALL show a "Panels" section with toggleable panel commands.
 
 #### Scenario: Toggle Raw Event Panel
 - **WHEN** user activates "Raw Event Panel" action
@@ -10,7 +10,7 @@ Actions tab shows a "Panels" section with toggleable panel commands.
 ---
 
 ### Requirement: Message Visibility section with expandable groups
-Actions tab shows "Message Visibility" section; each group row has a toggle `[●/○]` and a chevron `▶/▼` for inline expansion.
+Actions tab SHALL show a "Message Visibility" section; each group row SHALL have a toggle `[●/○]` and a chevron `▶/▼` for inline expansion.
 
 #### Scenario: Expand group
 - **WHEN** user clicks the chevron `▶` on a group row
@@ -31,7 +31,7 @@ Actions tab shows "Message Visibility" section; each group row has a toggle `[�
 ---
 
 ### Requirement: All tab shows flat group-level actions only
-In All tab, Message Visibility actions appear as flat group rows (no expansion, no pills).
+In the All tab, Message Visibility actions SHALL appear as flat group rows (no expansion, no pills).
 
 #### Scenario: All tab action display
 - **WHEN** All tab is active

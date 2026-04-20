@@ -1,8 +1,12 @@
 ---
-name: "OPSX: Onboard"
-description: Guided onboarding - walk through a complete OpenSpec workflow cycle with narration
-category: Workflow
-tags: [workflow, onboarding, tutorial, learning]
+name: openspec-onboard
+description: Guided onboarding for OpenSpec - walk through a complete workflow cycle with narration and real codebase work.
+license: MIT
+compatibility: Requires openspec CLI.
+metadata:
+  author: openspec
+  version: "1.0"
+  generatedBy: "1.3.0"
 ---
 
 Guide the user through their first complete OpenSpec workflow cycle. This is a teaching experience—you'll do real work in their codebase while explaining each step.

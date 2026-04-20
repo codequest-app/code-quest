@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Open / close
-The CommandPalette opens on ⌘K (or Ctrl+K) from anywhere in the app and closes on Esc or backdrop click.
+The CommandPalette SHALL open on ⌘K (or Ctrl+K) from anywhere in the app and SHALL close on Esc or backdrop click.
 
 #### Scenario: Open with keyboard shortcut
 - **WHEN** user presses ⌘K
@@ -18,7 +18,7 @@ The CommandPalette opens on ⌘K (or Ctrl+K) from anywhere in the app and closes
 ---
 
 ### Requirement: Three tabs — All, Messages, Actions
-The palette has three tabs. The active tab filters what is shown in the results list.
+The palette SHALL provide three tabs (All, Messages, Actions). The active tab SHALL filter what is shown in the results list.
 
 #### Scenario: All tab (default)
 - **WHEN** palette opens with no query
@@ -35,7 +35,7 @@ The palette has three tabs. The active tab filters what is shown in the results 
 ---
 
 ### Requirement: Keyboard navigation
-↑↓ moves the active item, Enter activates it, Tab cycles tabs.
+↑↓ SHALL move the active item, Enter SHALL activate it, and Tab SHALL cycle tabs.
 
 #### Scenario: Arrow navigation
 - **WHEN** palette is open and user presses ↓ or ↑
