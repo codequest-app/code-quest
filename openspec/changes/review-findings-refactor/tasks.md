@@ -31,9 +31,9 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 ## 5. Shared — schema audit & consolidation
 
-- [ ] 5.1 Extract `channelIdPayloadBase` in `packages/shared/src/schemas/message-stream.ts`; update the 6 payload schemas to `channelIdPayloadBase.extend({ ... })`
-- [ ] 5.2 Audit each `z.looseObject()` call site across `packages/shared/src/schemas/`; for schemas whose all callers are in-repo with known fixed keys, migrate to `z.object(...)`. Leave loose for CLI-provider-facing payloads.
-- [ ] 5.3 Verify and remove confirmed-unused exports from `packages/shared/src/schemas/common.ts` (grep across workspace for `successResponseSchema`, `messageContentSchema` — remove only if truly no consumers)
+- [x] 5.1 Extract `channelIdPayloadBase` in `packages/shared/src/schemas/message-stream.ts`; update the 6 payload schemas to `channelIdPayloadBase.extend({ ... })`
+- [~] 5.2 Audit each `z.looseObject()` call site across `packages/shared/src/schemas/`; for schemas whose all callers are in-repo with known fixed keys, migrate to `z.object(...)`. Leave loose for CLI-provider-facing payloads.
+- [~] 5.3 Verify and remove confirmed-unused exports from `packages/shared/src/schemas/common.ts` (grep across workspace for `successResponseSchema`, `messageContentSchema` — remove only if truly no consumers)
 
 ## 6. Verification
 

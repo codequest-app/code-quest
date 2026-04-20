@@ -14,12 +14,12 @@ export const terminalOpenClaudePayloadSchema = z.object({
 });
 export type TerminalOpenClaudePayload = z.infer<typeof terminalOpenClaudePayloadSchema>;
 
-export const terminalGetContentsResponseSchema = z.looseObject({
+export const terminalGetContentsResponseSchema = z.object({
   content: z.string().nullable(),
 });
 export type TerminalGetContentsResponse = z.infer<typeof terminalGetContentsResponseSchema>;
 
-export const terminalOpenClaudeResponseSchema = z.looseObject({
+export const terminalOpenClaudeResponseSchema = z.object({
   success: z.boolean(),
   channelId: z.string().optional(),
   error: z.string().optional(),
