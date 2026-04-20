@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode, useRef } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import type { ForkFn, Message, RewindFn } from '../types/ui';
 import { cn } from '../utils/cn';
 import { MessageActions } from './MessageActions';
@@ -57,7 +57,6 @@ export function ChatMessage({
   onDiffRespond,
 }: ChatMessageProps) {
   const isUser = message.role === 'user';
-  const userBodyRef = useRef<HTMLDivElement>(null);
 
   if (isUser) {
     const userSource = message.type === 'text' ? (message.meta?.source ?? 'typed') : 'typed';
@@ -69,7 +68,6 @@ export function ChatMessage({
         data-type={message.type}
       >
         <div
-          ref={userBodyRef}
           className={`bg-surface rounded-lg px-4 py-3 break-words select-text leading-relaxed ${preserveWhitespace ? 'whitespace-pre-wrap' : ''}`}
         >
           <ContentErrorBoundary>
@@ -85,7 +83,7 @@ export function ChatMessage({
         {message.type === 'text' && (
           <CopyButton
             data-testid="message-copy"
-            getText={() => userBodyRef.current?.textContent ?? ''}
+            text={message.content}
             className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 group-hover:opacity-100')}
             title="Copy"
           />
@@ -133,7 +131,6 @@ function AssistantMessage({
   message: Message;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }) {
-  const bodyRef = useRef<HTMLDivElement>(null);
   const showCopy = message.role !== 'system' && !NO_COPY_TYPES.has(message.type);
   return (
     <div
@@ -141,11 +138,7 @@ function AssistantMessage({
       data-role={message.role}
       data-type={message.type}
     >
-      <div
-        ref={bodyRef}
-        className="min-w-0"
-        data-type={message.type === 'text' ? 'text' : undefined}
-      >
+      <div className="min-w-0" data-type={message.type === 'text' ? 'text' : undefined}>
         {message.type === 'text' ? (
           <TruncatedContent maxHeight={600}>
             <ContentErrorBoundary>{renderBody(message, onDiffRespond)}</ContentErrorBoundary>
@@ -157,7 +150,7 @@ function AssistantMessage({
       {showCopy && (
         <CopyButton
           data-testid="message-copy"
-          getText={() => bodyRef.current?.textContent ?? ''}
+          text={message.content}
           className={cn(HOVER_COPY_BASE, 'absolute top-1 right-1 group-hover:opacity-100')}
           title="Copy"
         />

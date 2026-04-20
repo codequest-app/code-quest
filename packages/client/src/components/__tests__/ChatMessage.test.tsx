@@ -115,6 +115,38 @@ describe('ChatMessage', () => {
     expect(String(writeText.mock.calls[0][0])).toContain('Hello');
   });
 
+  it('assistant copy uses raw message.content (not DOM textContent)', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const content = 'line one\n\n**bold** line';
+    const { container } = render(<ChatMessage message={{ ...base, type: 'text', content }} />);
+    const btn = container.querySelector('[data-testid="message-copy"]');
+    if (btn) await user.click(btn as HTMLElement);
+    expect(writeText).toHaveBeenCalledWith(content);
+  });
+
+  it('user typed copy uses raw message.content verbatim', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const content = '**not bold** 1. a 2. b';
+    const { container } = render(
+      <ChatMessage
+        message={{ ...base, role: 'user', type: 'text', content, meta: { source: 'typed' } }}
+      />,
+    );
+    const btn = container.querySelector('[data-testid="message-copy"]');
+    if (btn) await user.click(btn as HTMLElement);
+    expect(writeText).toHaveBeenCalledWith(content);
+  });
+
   it('user text message renders a message-level copy button', () => {
     const { container } = render(
       <ChatMessage
