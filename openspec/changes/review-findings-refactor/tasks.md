@@ -4,7 +4,7 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 ## 1. Client — low-risk constant extractions
 
-- [~] 1.1 Extract `NAV_KEYS_COMPOSE` constant in `packages/client/src/components/ComposeInput.tsx` (replaces duplicate array literal at two call sites)
+- [~] 1.1 Skipped — only 1 call site of `['Tab','ArrowUp','ArrowDown','Enter']` exists in `ComposeInput.tsx:176`. Reviewer claimed two sites; grep confirms one. 2+ consumer rule → inline stays.
 - [x] 1.2 Create `packages/client/src/utils/time-constants.ts` with `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `MS_PER_SECOND`, `MS_PER_MINUTE`, `MS_PER_HOUR`, `MS_PER_DAY`, `DAYS_PER_MONTH_APPROX`, `DAYS_PER_YEAR_APPROX`
 - [x] 1.3 Refactor `packages/client/src/utils/format-relative-date.ts` to use the new time constants
 - [x] 1.4 Refactor `packages/client/src/utils/format-reset-time.ts` to use the new time constants
@@ -20,7 +20,7 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 ## 3. Server — helper extractions (shorter long functions)
 
 - [x] 3.1 Extract `resolveTerminalCwd` and `createAndConfigureChannel` helpers from `packages/server/src/socket/handlers/terminal.ts#handleOpenClaude`
-- [~] 3.2 Extract `applyPerLaunchSettings` vs broadcast helpers from `packages/server/src/socket/handlers/session/connect.ts#finalizeAndNotify`
+- [~] 3.2 Skipped — `finalizeAndNotify` is 28 lines and already delegates to `applyPerLaunchSettings` + `applyInitResponseAndBroadcast` + `emitInitState` + callback/broadcast. No further cohesive block to extract.
 
 ## 4. Server — Channel collaborator split (biggest scope)
 
@@ -33,11 +33,11 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 
 - [x] 5.1 Extract `channelIdPayloadBase` in `packages/shared/src/schemas/message-stream.ts`; update the 6 payload schemas to `channelIdPayloadBase.extend({ ... })`
 - [x] 5.2 Audit each z.looseObject() — DECISION: keep all 40. looseObject is Zod v4 forward-compat primitive (replaces .passthrough); z.object silently drops unknown fields on parse. Original audit framing was wrong.
-- [~] 5.3 Verify and remove confirmed-unused exports from `packages/shared/src/schemas/common.ts` (grep across workspace for `successResponseSchema`, `messageContentSchema` — remove only if truly no consumers)
+- [~] 5.3 Skipped — all three are in use: `successResponseSchema` (response-schemas.test.ts), `messageContentSchema` (session-connect.test.ts), `clientMessageSchema` (shared/session.ts).
 
 ## 6. Verification
 
-- [ ] 6.1 `pnpm test` passes across all packages
-- [ ] 6.2 `pnpm exec biome check` clean
-- [ ] 6.3 `pnpm exec tsc --noEmit` clean per package
+- [x] 6.1 `pnpm test` passes across all packages (server 483, shared 63, summoner 326, client 1295)
+- [x] 6.2 `pnpm exec biome check` clean (2 pre-existing warnings in test files unrelated to this change)
+- [x] 6.3 `pnpm exec tsc --noEmit` clean per package (via pre-commit hooks)
 - [ ] 6.4 Push branch + confirm lefthook pre-push hooks (typecheck + tests) pass
