@@ -32,7 +32,7 @@ Each task is one small TDD-guarded commit. Green tests required before next task
 ## 5. Shared — schema audit & consolidation
 
 - [x] 5.1 Extract `channelIdPayloadBase` in `packages/shared/src/schemas/message-stream.ts`; update the 6 payload schemas to `channelIdPayloadBase.extend({ ... })`
-- [~] 5.2 Audit each `z.looseObject()` call site across `packages/shared/src/schemas/`; for schemas whose all callers are in-repo with known fixed keys, migrate to `z.object(...)`. Leave loose for CLI-provider-facing payloads.
+- [x] 5.2 Audit each z.looseObject() — DECISION: keep all 40. looseObject is Zod v4 forward-compat primitive (replaces .passthrough); z.object silently drops unknown fields on parse. Original audit framing was wrong.
 - [~] 5.3 Verify and remove confirmed-unused exports from `packages/shared/src/schemas/common.ts` (grep across workspace for `successResponseSchema`, `messageContentSchema` — remove only if truly no consumers)
 
 ## 6. Verification
