@@ -1,5 +1,5 @@
 import { EVENTS, type SessionStateSummary } from '@code-quest/shared';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -25,7 +25,7 @@ type AnySocket = { emit: (event: string, ...args: any[]) => unknown };
  */
 export function withStoryWorkspaceFixtures(fixtures: WorkspaceFixtures = {}) {
   return (Story: () => React.ReactNode) => {
-    const { socket, summoner } = useMemo(() => {
+    const [{ socket, summoner }] = useState(() => {
       const s = createFakeSummoner();
       const sock = s.socket as unknown as AnySocket;
       const originalEmit = sock.emit.bind(sock);
@@ -50,9 +50,8 @@ export function withStoryWorkspaceFixtures(fixtures: WorkspaceFixtures = {}) {
         return originalEmit(event, ...args);
       };
       return { socket: s.socket, summoner: s };
-    }, []);
+    });
 
-    // Release FakeClaude/FakeServer resources on story switch / HMR.
     useEffect(() => () => summoner.disconnect(), [summoner]);
 
     const className =
