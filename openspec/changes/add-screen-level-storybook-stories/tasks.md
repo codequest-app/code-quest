@@ -24,14 +24,14 @@
 - [x] 3.3 Add `ActiveChat` story using `makeSession()`
 - [x] 3.4 Add `WithPendingPermission` story (shell with session; ToolPermissionCard itself has dedicated story)
 - [x] 3.5 Add `WithWorktree` story using `makeWorktreeSession()` + `capabilities: { worktree: true }`
-- [ ] 3.6 Boot Storybook locally, click through each story, confirm expected shell chrome renders (manual)
+- [x] 3.6 Boot Storybook locally, click through each story, confirm expected shell chrome renders (manual)
 
 ## 4. ChatPanel workflow stories
 
 - [x] 4.1 Add `LongConversation` story using `makeLongConversation()` via `withStoryChannel`
 - [x] 4.2 Add `ProcessingWithTool` story using `makeProcessingWithTool()`
 - [x] 4.3 Add `WithDiff` story using `makeConversationWithDiff()`
-- [ ] 4.4 Verify DiffViewer renders inline and processing spinner appears (manual)
+- [x] 4.4 Verify DiffViewer renders inline and processing spinner appears (manual)
 
 ## 5. App shell composition story
 
@@ -45,5 +45,5 @@
 
 - [x] 6.1 `pnpm --filter client exec tsc --noEmit` passes
 - [x] 6.2 Storybook build passes (`pnpm build-storybook`) — all stories compile and bundle successfully
-- [ ] 6.3 Boot Storybook (`pnpm storybook`), click through every new story, no console errors (manual)
+- [x] 6.3 Boot Storybook (`pnpm storybook`), click through every new story, no console errors (manual)
 - [x] 6.4 Git diff confined to `test/*`, `App.stories.tsx`, and component `.stories.tsx` — zero production code changes

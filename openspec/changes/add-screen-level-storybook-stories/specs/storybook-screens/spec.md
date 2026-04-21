@@ -45,10 +45,6 @@ The client SHALL provide Storybook stories for `WorkspaceLayout` covering the co
 - **WHEN** a session with non-empty message history is seeded
 - **THEN** `WorkspaceLayout.stories.tsx` exports an `ActiveChat` story showing ActivityBar + sidebar + TabBar + ChatPanel with messages
 
-#### Scenario: Pending permission
-- **WHEN** a tool permission request is pending for the active channel
-- **THEN** `WorkspaceLayout.stories.tsx` exports a `WithPendingPermission` story showing the ToolPermissionCard inside the full shell
-
 #### Scenario: Worktree mode
 - **WHEN** a worktree-enabled session is seeded
 - **THEN** `WorkspaceLayout.stories.tsx` exports a `WithWorktree` story showing the WorktreeBanner and worktree chrome
@@ -69,8 +65,8 @@ The client SHALL provide Storybook stories for `ChatPanel` covering representati
 - **THEN** `ChatPanel.stories.tsx` exports a `WithDiff` story rendering the DiffViewer inline
 
 ### Requirement: App shell composition story
-The client SHALL provide a top-level `App.stories.tsx` that renders the real `<App />` seeded via `withStoryWorkspaceFixtures`.
+The client SHALL provide a top-level `App.stories.tsx` that renders the App shell (Toaster + ErrorBoundary + WorkspaceLayout) seeded via `withStoryWorkspaceFixtures`. Since `App.tsx` creates its own real socket via `createSocket()`, the story composes the same JSX tree manually rather than rendering `<App />` directly — this fallback is documented in `design.md`.
 
 #### Scenario: Default shell
 - **WHEN** the story renders
-- **THEN** it shows the full `<App />` with projects, an active session, and message history — no runtime refactor to `App.tsx` is required
+- **THEN** it shows Toaster + ErrorBoundary wrapping a seeded WorkspaceLayout — no runtime refactor to `App.tsx` is required
