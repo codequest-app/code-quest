@@ -21,7 +21,7 @@ export const UserMessage: Story = {
   args: {
     cliUuid: 'cli-msg-1',
     messageRole: 'user',
-    onRewind: fn().mockResolvedValue({ success: false }),
+    onRewind: fn().mockResolvedValue({ ok: false }),
   },
 };
 
@@ -29,19 +29,11 @@ export const AssistantMessage: Story = {
   args: {
     cliUuid: 'cli-msg-2',
     messageRole: 'assistant',
-    onRewind: fn().mockResolvedValue({ success: false }),
-  },
-};
-
-export const RewindFallback: Story = {
-  args: {
-    cliUuid: 'cli-msg-1',
-    messageRole: 'user',
     onRewind: fn().mockResolvedValue({ ok: false }),
   },
 };
 
-export const RewindConfirm: Story = {
+export const RewindFallback: Story = {
   args: {
     cliUuid: 'cli-msg-1',
     messageRole: 'user',

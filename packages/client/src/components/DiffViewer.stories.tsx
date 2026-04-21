@@ -58,7 +58,7 @@ export const EditMode: Story = {
   },
   play: async ({ args, canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: /edit/i }));
-    const textarea = canvas.getByTestId('diff-edit-textarea');
+    const textarea = canvas.getByRole('textbox');
     await expect(textarea).toBeInTheDocument();
     await userEvent.clear(textarea);
     await userEvent.type(textarea, 'const updated = true;\nconst unchanged = 1;');

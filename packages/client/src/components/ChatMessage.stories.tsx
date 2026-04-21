@@ -51,7 +51,7 @@ export const TextWithCodeBlock: Story = {
     },
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByTitle(/copy/i).length).toBeGreaterThan(0);
+    await expect(canvas.getAllByRole('button', { name: /copy/i }).length).toBeGreaterThan(0);
   },
 };
 

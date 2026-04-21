@@ -45,12 +45,12 @@ export const WithTitle: Story = {
 export const WithRename: Story = {
   args: {
     session: { ...baseSession, title: 'Old title' },
-    onRename: fn().mockResolvedValue({ success: true }),
+    onRename: fn().mockResolvedValue({ ok: true, data: {} }),
   },
 };
 
 export const WithDelete: Story = {
   args: {
-    onDelete: fn().mockResolvedValue({ success: true }),
+    onDelete: fn().mockResolvedValue({ ok: true, data: {} }),
   },
 };

@@ -1,4 +1,3 @@
-import type { PlanCommentData } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef } from 'react';
 import { fn } from 'storybook/test';
@@ -12,7 +11,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function PlanCommentDemo({ onAddComment }: { onAddComment: (c: PlanCommentData) => void }) {
+function PlanCommentDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   return (
     <div className="bg-surface text-text p-6 relative" ref={containerRef}>
@@ -20,15 +19,12 @@ function PlanCommentDemo({ onAddComment }: { onAddComment: (c: PlanCommentData) 
         Select any text in this paragraph to trigger the comment overlay. The overlay appears
         anchored to your selection and lets you add a comment before approving the plan.
       </p>
-      <PlanCommentPopover containerRef={containerRef} onAddComment={onAddComment} />
+      <PlanCommentPopover containerRef={containerRef} onAddComment={fn()} />
     </div>
   );
 }
 
 export const Interactive: Story = {
-  args: {
-    containerRef: { current: null },
-    onAddComment: fn(),
-  },
-  render: () => <PlanCommentDemo onAddComment={fn()} />,
+  args: { containerRef: { current: null }, onAddComment: fn() },
+  render: () => <PlanCommentDemo />,
 };

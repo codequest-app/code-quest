@@ -8,7 +8,7 @@ const meta = {
   args: { onSelectMention: fn() },
   decorators: [
     (Story) => (
-      <div className="relative bg-bg text-text" style={{ minHeight: 350, paddingTop: 320 }}>
+      <div className="relative bg-bg text-text min-h-[350px] pt-80">
         <Story />
       </div>
     ),

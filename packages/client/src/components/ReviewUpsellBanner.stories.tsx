@@ -24,7 +24,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    await expect(canvas.getByTestId('review-upsell-banner')).toBeInTheDocument();
     await expect(canvas.getByText(/try the new code review feature/i)).toBeInTheDocument();
     await expect(canvas.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
   },

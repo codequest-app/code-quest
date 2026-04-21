@@ -14,10 +14,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const SendMessage: Story = {};
-
 export const WithTitle: Story = {
   args: { title: 'Fix the login bug' },
 };
-
-export const Processing: Story = {};

@@ -6,10 +6,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div
-        className="relative bg-bg text-text p-8 border border-border rounded-xl"
-        style={{ minHeight: 40 }}
-      >
+      <div className="relative bg-bg text-text p-8 border border-border rounded-xl min-h-10">
         <Story />
       </div>
     ),

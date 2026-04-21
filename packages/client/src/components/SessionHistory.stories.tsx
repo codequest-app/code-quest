@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { SessionHistory } from './SessionHistory';
 
+const ok = { ok: true as const, data: {} };
+
 const meta = {
   component: SessionHistory,
   tags: ['autodocs'],
@@ -18,7 +20,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Loading: Story = {
-  args: { sessions: [], loading: true, onSelect: () => {} },
+  args: { sessions: [], loading: true, onSelect: fn() },
 };
 
 export const WithSessions: Story = {
@@ -49,12 +51,12 @@ export const WithSessions: Story = {
         createdAt: '2025-06-02T14:30:00Z',
       },
     ],
-    onSelect: (id) => console.log(id),
+    onSelect: fn(),
   },
 };
 
 export const Empty: Story = {
-  args: { sessions: [], onSelect: () => {} },
+  args: { sessions: [], onSelect: fn() },
 };
 
 export const WithRename: Story = {
@@ -74,6 +76,6 @@ export const WithRename: Story = {
       },
     ],
     onSelect: fn(),
-    onRename: fn().mockResolvedValue({ success: true }),
+    onRename: fn().mockResolvedValue(ok),
   },
 };

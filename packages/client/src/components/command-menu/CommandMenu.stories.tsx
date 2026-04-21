@@ -23,12 +23,3 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-
-export const WithAllCallbacks: Story = {
-  args: {
-    onMcpStatus: fn(),
-    onToggleMcp: fn(),
-    onManagePlugins: fn(),
-    onAttachFile: fn(),
-  },
-};
