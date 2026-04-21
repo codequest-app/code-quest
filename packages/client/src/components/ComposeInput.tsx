@@ -1,5 +1,5 @@
 import type { FileSearchResult } from '@code-quest/shared';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -43,6 +43,7 @@ export function ComposeInput() {
     dismissSlash,
     submit,
     attachedFiles,
+    addAttachments,
     removeAttachment,
   } = compose;
 
@@ -248,6 +249,19 @@ export function ComposeInput() {
     handleSubmitKeyDown(e);
   }
 
+  function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
+    const images: File[] = [];
+    for (const item of e.clipboardData.items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) images.push(file);
+      }
+    }
+    if (images.length === 0) return;
+    e.preventDefault();
+    addAttachments(images);
+  }
+
   const hasFileResults = fileResults.length > 0 || searchStatus !== 'idle';
   const showMentionDropdown = mentionOpen && hasFileResults;
 
@@ -286,6 +300,7 @@ export function ComposeInput() {
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onSelect={syncCursorPos}
           onClick={syncCursorPos}
           placeholder={

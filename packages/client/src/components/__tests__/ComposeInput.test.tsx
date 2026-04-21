@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../test/fake-summoner';
@@ -54,6 +54,59 @@ describe('ComposeInput', () => {
   it('renders without error when no attachments', async () => {
     await renderWithChannel(<ComposeInput />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
+  });
+
+  describe('paste image', () => {
+    function pasteClipboard(
+      target: Element,
+      items: { kind: string; type: string; file?: File }[],
+    ): void {
+      const clipboardData = {
+        items: items.map((i) => ({
+          kind: i.kind,
+          type: i.type,
+          getAsFile: () => i.file ?? null,
+        })),
+      };
+      fireEvent.paste(target, { clipboardData });
+    }
+
+    it('pasting an image attaches it and leaves textarea empty', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const img = new File(['fake-bytes'], 'screenshot.png', { type: 'image/png' });
+      pasteClipboard(textarea, [{ kind: 'file', type: 'image/png', file: img }]);
+      expect(await screen.findByLabelText('Remove screenshot.png')).toBeInTheDocument();
+      expect(textarea).toHaveValue('');
+    });
+
+    it('pasting multiple images attaches all in order', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const a = new File(['a'], 'a.png', { type: 'image/png' });
+      const b = new File(['b'], 'b.jpg', { type: 'image/jpeg' });
+      pasteClipboard(textarea, [
+        { kind: 'file', type: 'image/png', file: a },
+        { kind: 'file', type: 'image/jpeg', file: b },
+      ]);
+      expect(await screen.findByLabelText('Remove a.png')).toBeInTheDocument();
+      expect(screen.getByLabelText('Remove b.jpg')).toBeInTheDocument();
+    });
+
+    it('pasting plain text does not create an attachment', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      pasteClipboard(textarea, [{ kind: 'string', type: 'text/plain' }]);
+      expect(screen.queryByLabelText(/^Remove /)).toBeNull();
+    });
+
+    it('pasting a non-image file is ignored', async () => {
+      await renderWithChannel(<ComposeInput />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const pdf = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' });
+      pasteClipboard(textarea, [{ kind: 'file', type: 'application/pdf', file: pdf }]);
+      expect(screen.queryByLabelText(/^Remove /)).toBeNull();
+    });
   });
 
   describe('@ mention', () => {
