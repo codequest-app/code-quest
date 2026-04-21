@@ -141,5 +141,9 @@ export function createMessageActions({
     channelEmit(socket, channelId, EVENTS.session.close, {});
   }
 
-  return { sendMessage, abort, kill };
+  function appendMessage(fields: Parameters<typeof msg>[0]) {
+    setChannelState((s) => addMessage(s, fields));
+  }
+
+  return { sendMessage, abort, kill, appendMessage };
 }

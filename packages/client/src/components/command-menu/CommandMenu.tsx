@@ -20,6 +20,7 @@ import { IconButton } from '../ui/IconButton';
 import { SlashCommandIcon } from '../ui/Icons';
 import { buildMenuItems, type MenuItem } from './build-menu-items';
 import { computeMenuLayout } from './menu-layout';
+import { slashPaletteState } from './slash-palette-state';
 
 function MenuItemRow({
   item,
@@ -323,8 +324,14 @@ export function CommandMenu({
     hasPrev,
   } = layout;
   const f = effectiveFilter.toLowerCase();
+  // Typing any whitespace after the slash (e.g. `/test `, `/ wiki`) signals
+  // the user is no longer picking from the palette — hide it so Enter can
+  // fall through to the normal send path.
+  const paletteExternallyVisible = externalOpen && !/\s/.test(effectiveFilter);
+
   useLayoutEffect(() => {
     flatItemsRef.current = flatItems;
+    slashPaletteState.itemsCount = paletteExternallyVisible ? flatItems.length : 0;
   });
 
   // Auto-select first matching item when filter changes
@@ -370,7 +377,7 @@ export function CommandMenu({
         <SlashCommandIcon className="w-5 h-5" />
       </IconButton>
 
-      {open && (
+      {(buttonOpen || paletteExternallyVisible) && (
         <div
           role="menu"
           className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-modal text-xs max-h-[50vh] overflow-hidden animate-slide-up"

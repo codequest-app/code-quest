@@ -64,18 +64,27 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
       if (showScrollButton === atBottom) setShowScrollButton(!atBottom);
     };
 
-    const lastContentLen = messages.length > 0 ? messages[messages.length - 1].content.length : 0;
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+    const lastContentLen = lastMsg?.content.length ?? 0;
+    const lastRole = lastMsg?.role ?? null;
     const prevScrollRef = useRef({ count: messages.length, contentLen: lastContentLen });
     useEffect(() => {
       const countChanged = messages.length !== prevScrollRef.current.count;
       const contentGrew = lastContentLen !== prevScrollRef.current.contentLen;
       prevScrollRef.current = { count: messages.length, contentLen: lastContentLen };
       if (!countChanged && !contentGrew) return;
+      // A new user message means the user just submitted — always pull the
+      // view back to the bottom, even if they had scrolled up while reading.
+      if (countChanged && lastRole === 'user') {
+        isAtBottomRef.current = true;
+        scrollToEnd(scrollRef, programmaticScrollRef, 'smooth');
+        return;
+      }
       if (isAtBottomRef.current) {
         const behavior = countChanged ? 'smooth' : 'instant';
         scrollToEnd(scrollRef, programmaticScrollRef, behavior);
       }
-    }, [messages.length, lastContentLen]);
+    }, [messages.length, lastContentLen, lastRole]);
 
     const scrollToBottom = () => {
       isAtBottomRef.current = true;

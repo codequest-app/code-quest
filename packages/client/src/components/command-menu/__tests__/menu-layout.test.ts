@@ -39,6 +39,20 @@ describe('filterMenuItems', () => {
     expect(filterMenuItems(items, '/btw hello world').map((i) => i.id)).toEqual(['btw']);
   });
 
+  it('matchFirstToken items do NOT match when the filter first-token is empty', () => {
+    const items = [
+      item({ id: 'btw', label: '/btw', matchFirstToken: true }),
+      item({ id: 'plain', label: '/plain' }),
+    ];
+    // Leading space → first token is "" → must not universally match
+    expect(filterMenuItems(items, ' wiki').map((i) => i.id)).toEqual([]);
+  });
+
+  it('matchFirstToken items still do not match unrelated filters', () => {
+    const items = [item({ id: 'btw', label: '/btw', matchFirstToken: true })];
+    expect(filterMenuItems(items, 'wiki').map((i) => i.id)).toEqual([]);
+  });
+
   it('filterOnly items appear when filter is non-empty and match', () => {
     const items = [item({ id: 'new', label: 'New conversation', filterOnly: true })];
     expect(filterMenuItems(items, '').map((i) => i.id)).toEqual([]);

@@ -7,6 +7,7 @@ import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
+import { slashPaletteState } from './command-menu/slash-palette-state';
 import { MentionDropdown } from './MentionDropdown';
 import { SparkLegend } from './SparkLegend';
 
@@ -174,9 +175,15 @@ export function ComposeInput() {
       dismissSlash();
       return true;
     }
-    if (['Tab', 'ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
+    // Enter only belongs to the palette when it has something to select —
+    // otherwise it must fall through so `/unknown` can reach the CLI.
+    if (e.key === 'Enter') {
+      if (slashPaletteState.itemsCount === 0) return false;
       e.preventDefault();
-      // CommandMenu document listener handles the actual navigation
+      return true;
+    }
+    if (['Tab', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      e.preventDefault();
       return true;
     }
     return false;

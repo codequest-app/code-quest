@@ -2,8 +2,9 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { emitAssistantTurn } from '../../test/helpers';
+import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
+import { ComposeInput } from '../ComposeInput';
 import { MessageList } from '../MessageList';
 
 async function renderWithMessages() {
@@ -79,6 +80,30 @@ describe('Auto-scroll behavior', () => {
     });
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
+  });
+
+  it('forces scroll to bottom when the user submits a new message, even if scrolled up', async () => {
+    await renderWithChannel(
+      <>
+        <MessageList />
+        <ComposeInput />
+      </>,
+    );
+    const container = screen.getByTestId('message-list');
+
+    // Wait for initial programmatic scroll to settle, then scroll up
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 600));
+    });
+    simulateScrolledUp(container);
+
+    const scrollIntoView = vi.fn();
+    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+
+    await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), 'hi{Enter}');
+
+    // Submitting a message MUST pull the view back to the bottom
+    expect(scrollIntoView).toHaveBeenCalled();
   });
 
   it('auto-scrolls when streaming delta grows content while user is at bottom', async () => {
