@@ -54,54 +54,27 @@ function groupByScope(
   return result;
 }
 
-// ── mo0: icon map ($T1) and label map (go0) ──────────────────────────────────
-const STATUS_ICON: Partial<Record<string, string>> = {
-  connected: '✓',
-  failed: '✗',
-  'needs-auth': '⚠',
-  pending: '◐',
-  disabled: '○',
+interface StatusMeta {
+  icon?: string;
+  label?: string;
+  badge?: string;
+}
+
+const STATUS_CONFIG: Record<string, StatusMeta> = {
+  connected: { icon: '✓', label: 'Connected', badge: 'bg-success text-white' },
+  failed: { icon: '✗', label: 'Failed', badge: 'bg-danger text-white' },
+  error: { badge: 'bg-danger text-white' },
+  'needs-auth': { icon: '⚠', label: 'Needs Auth', badge: 'bg-warning text-black' },
+  pending: { icon: '◐', label: 'Connecting…', badge: 'bg-text-muted/60 text-white' },
+  connecting: { label: 'Connecting…', badge: 'bg-text-muted/60 text-white' },
+  disabled: { icon: '○', label: 'Disabled', badge: 'bg-border text-text-muted' },
 };
 
-function statusIcon(status: string): string {
-  return STATUS_ICON[status] ?? '?';
-}
+const DEFAULT_BADGE = 'bg-border text-text-muted';
 
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'connected':
-      return 'Connected';
-    case 'failed':
-      return 'Failed';
-    case 'needs-auth':
-      return 'Needs Auth';
-    case 'pending':
-    case 'connecting':
-      return 'Connecting…';
-    case 'disabled':
-      return 'Disabled';
-    default:
-      return status; // go0 default: return $ (lowercase)
-  }
-}
-
-// ── mo0: badge color classes ──────────────────────────────────────────────────
-function statusBadgeCls(status: string): string {
-  switch (status) {
-    case 'connected':
-      return 'bg-success text-white';
-    case 'failed':
-    case 'error':
-      return 'bg-danger text-white';
-    case 'needs-auth':
-      return 'bg-warning text-black';
-    case 'pending':
-    case 'connecting':
-      return 'bg-text-muted/60 text-white';
-    default:
-      return 'bg-border text-text-muted';
-  }
-}
+const statusIcon = (status: string): string => STATUS_CONFIG[status]?.icon ?? '?';
+const statusLabel = (status: string): string => STATUS_CONFIG[status]?.label ?? status;
+const statusBadgeCls = (status: string): string => STATUS_CONFIG[status]?.badge ?? DEFAULT_BADGE;
 
 // ── So0: plain status badge (no icon, raw status string) ────────────────────
 function PlainStatusBadge({ status }: { status: string }) {
