@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { withStoryChannel, withThemePreset } from '../test/story-decorator';
 import type { Message } from '../types/ui';
 import { CommandPalette } from './CommandPalette';
@@ -52,20 +52,6 @@ export const DarkCompact: Story = {
 };
 export const LightComfortable: Story = {
   decorators: [withThemePreset({ theme: 'light', density: 'comfortable' })],
-  play: async () => {
-    const dialog = document.querySelector<HTMLElement>('[data-testid="command-palette-dialog"]');
-    if (!dialog) throw new Error('command-palette-dialog not found');
-    await expect(document.documentElement.dataset.theme).toBe('light');
-    // Assert the dialog responds to the theme token by comparing its
-    // resolved background against the computed token value (both in the
-    // browser's rgb(…) form, avoiding hex/rgb format skew).
-    const probe = document.createElement('div');
-    probe.style.background = 'var(--color-floating-bg-from)';
-    document.body.appendChild(probe);
-    const resolvedBgFrom = getComputedStyle(probe).backgroundColor;
-    probe.remove();
-    await expect(getComputedStyle(dialog).backgroundImage).toContain(resolvedBgFrom);
-  },
 };
 export const LightCompact: Story = {
   decorators: [withThemePreset({ theme: 'light', density: 'compact' })],

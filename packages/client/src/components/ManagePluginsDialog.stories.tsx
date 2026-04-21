@@ -12,14 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WithPlugins: Story = {
-  args: {
-    open: true,
-    onClose: fn(),
-  },
-};
-
-export const Empty: Story = {
+export const Default: Story = {
   args: {
     open: true,
     onClose: fn(),

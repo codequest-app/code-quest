@@ -16,9 +16,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = {
+export const Open: Story = {
   args: {
     open: true,
+    onClose: fn(),
+    onConfirm: fn(),
+  },
+};
+
+export const Closed: Story = {
+  args: {
+    open: false,
     onClose: fn(),
     onConfirm: fn(),
   },
