@@ -8,7 +8,9 @@ import { resumeOpenSignal } from '../../../features/resume/resume-feature';
 import { rewindOpenSignal } from '../../../features/rewind/rewind-feature';
 import { switchAccountSignal } from '../../../features/switch-account/switch-account-feature';
 import { usageOpenSignal } from '../../../features/usage/usage-feature';
+import { COMPOSE_PLACEHOLDER } from '../../../test/helpers';
 import { renderWithChannel } from '../../../test/render-with-channel';
+import { ComposeInput } from '../../ComposeInput';
 import { CommandMenu } from '../CommandMenu';
 
 const defaultControlResponse = s.controlResponse('init', {
@@ -246,6 +248,70 @@ describe('CommandMenu', () => {
       for (const g of groups) {
         expect(g).toHaveAttribute('aria-label');
       }
+    });
+  });
+
+  describe('slash palette visibility on external (compose-driven) open', () => {
+    function ComposeAndMenu() {
+      return (
+        <>
+          <ComposeInput />
+          <CommandMenu />
+        </>
+      );
+    }
+
+    it('keeps the palette visible for unmatched filter with no whitespace', async () => {
+      await renderWithChannel(<ComposeAndMenu />, {
+        initSegment: s.init('sess-1'),
+        extraSegments: [defaultControlResponse],
+      });
+      await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), '/zzznomatch');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByText('No matching commands')).toBeInTheDocument();
+    });
+
+    it('hides the palette the moment the user types a space after the slash', async () => {
+      await renderWithChannel(<ComposeAndMenu />, {
+        initSegment: s.init('sess-1'),
+        extraSegments: [defaultControlResponse],
+      });
+      await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), '/test ');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('shows the palette when a registered slash matches', async () => {
+      await renderWithChannel(<ComposeAndMenu />, {
+        initSegment: s.init('sess-1'),
+        extraSegments: [defaultControlResponse],
+      });
+      await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), '/btw');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
+
+    it('hides the palette for a leading-space filter like "/ wiki"', async () => {
+      await renderWithChannel(<ComposeAndMenu />, {
+        initSegment: s.init('sess-1'),
+        extraSegments: [defaultControlResponse],
+      });
+      await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), '/ wiki');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('Enter with unmatched slash sends raw text to CLI', async () => {
+      const { claude } = await renderWithChannel(<ComposeAndMenu />, {
+        initSegment: s.init('sess-1'),
+        extraSegments: [defaultControlResponse],
+      });
+      const compose = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      const before = claude.received('user').length;
+      await userEvent.type(compose, '/zzznomatch{Enter}');
+      const sent = claude.received('user').slice(before);
+      expect(sent).toHaveLength(1);
+      expect(sent[0]).toMatchObject({
+        message: { content: [{ text: '/zzznomatch' }] },
+      });
+      expect(compose).toHaveValue('');
     });
   });
 });

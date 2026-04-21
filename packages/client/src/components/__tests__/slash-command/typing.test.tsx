@@ -55,6 +55,15 @@ describe('slash command integration', () => {
       expect(screen.getByText('No matching commands')).toBeInTheDocument();
     });
 
+    it('hides the palette once the user types a trailing space', async () => {
+      const user = userEvent.setup();
+      await renderChatInputArea({ slashCommands: ['compact'] });
+
+      await user.type(screen.getByRole('textbox'), '/test ');
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
     it('auto-highlights first matching slash command', async () => {
       const user = userEvent.setup();
       await renderChatInputArea({ slashCommands: ['compact', 'cost', 'scu-template'] });
