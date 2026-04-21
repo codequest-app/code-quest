@@ -1,4 +1,12 @@
-import { index, int, mysqlTable, primaryKey, text, varchar } from 'drizzle-orm/mysql-core';
+import {
+  index,
+  int,
+  mediumtext,
+  mysqlTable,
+  primaryKey,
+  text,
+  varchar,
+} from 'drizzle-orm/mysql-core';
 import type {
   RawEntryColumnName,
   SessionColumnName,
@@ -32,7 +40,7 @@ export const rawEntries = mysqlTable(
     sessionId: varchar('session_id', { length: 36 }).notNull(),
     promptId: varchar('prompt_id', { length: 36 }).notNull(),
     dir: varchar('dir', { length: 10 }).notNull(),
-    raw: text('raw').notNull(),
+    raw: mediumtext('raw').notNull(),
     seq: int('seq').notNull().default(0),
     createdAt: varchar('created_at', { length: 30 }).notNull(),
   },
