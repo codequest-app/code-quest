@@ -92,3 +92,28 @@ if (typeof IntersectionObserver === 'undefined') {
     disconnect() {}
   } as unknown as typeof IntersectionObserver;
 }
+
+// jsdom has no layout → TanStack Virtual's getBoundingClientRect returns zeros
+// so the virtualizer renders nothing. Mock useVirtualizer to render all items
+// (matches pre-virtualization DOM, keeps querySelector-based assertions working).
+vi.mock('@tanstack/react-virtual', async () => {
+  const actual =
+    await vi.importActual<typeof import('@tanstack/react-virtual')>('@tanstack/react-virtual');
+  type Opts = { count: number };
+  type VirtualItem = { index: number; start: number; size: number; key: number };
+  return {
+    ...actual,
+    useVirtualizer: ({ count }: Opts) => ({
+      getTotalSize: () => count * 80,
+      getVirtualItems: (): VirtualItem[] =>
+        Array.from({ length: count }, (_, i) => ({
+          index: i,
+          start: i * 80,
+          size: 80,
+          key: i,
+        })),
+      measureElement: () => {},
+      scrollToIndex: () => {},
+    }),
+  };
+});

@@ -72,89 +72,75 @@ export function TabProvider({
     activeTabId: initialState?.activeTabId ?? null,
   }));
 
-  const addTab = (id: string, cwd?: string) => {
-    setState((prev) => {
-      if (id in prev.tabs) return prev;
-      const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
-      return { tabs, activeTabId: prev.activeTabId ?? id };
-    });
-  };
+  // cwd prop is read inside stable actions via ref so actions keep a single
+  // identity across renders (otherwise downstream memoization breaks).
+  const cwdRef = useRef(cwd);
+  cwdRef.current = cwd;
 
-  const removeTab = (id: string) => {
-    setState((prev) => {
-      if (!(id in prev.tabs)) return prev;
-      const { [id]: _, ...rest } = prev.tabs;
-      const remaining = Object.keys(rest);
-      return {
-        tabs: rest,
-        activeTabId:
-          prev.activeTabId === id ? (remaining.length > 0 ? remaining[0] : null) : prev.activeTabId,
-      };
-    });
-  };
-
-  const setActiveTab = (id: string) => {
-    setState((prev) => (prev.activeTabId === id ? prev : { ...prev, activeTabId: id }));
-  };
-
-  const setTabTitle = (id: string, title: string) => {
-    setState((prev) => {
-      const existing = prev.tabs[id];
-      if (!existing) return prev;
-      return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, title } } };
-    });
-  };
-
-  const setTabStatus = (id: string, status: TabMeta['tabStatus']) => {
-    setState((prev) => {
-      const existing = prev.tabs[id];
-      if (!existing) return prev;
-      return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, tabStatus: status } } };
-    });
-  };
-
-  const createNewTab = (opts?: { cwd?: string }): { channelId: string } => {
-    const channelId = crypto.randomUUID();
-    const tabCwd = opts?.cwd ?? cwd;
-    setState((prev) => ({
-      tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
-      activeTabId: channelId,
-    }));
-    return { channelId };
-  };
-
-  const replaceActiveTab = (newChannelId: string) => {
-    setState((prev) => {
-      if (!prev.activeTabId) return prev;
-      const { [prev.activeTabId]: _, ...rest } = prev.tabs;
-      return {
-        tabs: { ...rest, [newChannelId]: DEFAULT_META },
-        activeTabId: newChannelId,
-      };
-    });
-  };
-
-  const replaceTab = (oldChannelId: string, newChannelId: string) => {
-    setState((prev) => {
-      if (!(oldChannelId in prev.tabs)) return prev;
-      const { [oldChannelId]: old, ...rest } = prev.tabs;
-      return {
-        tabs: { ...rest, [newChannelId]: { ...old } },
-        activeTabId: prev.activeTabId === oldChannelId ? newChannelId : prev.activeTabId,
-      };
-    });
-  };
-
-  const actions: TabActionsValue = {
-    addTab,
-    removeTab,
-    setActiveTab,
-    setTabTitle,
-    setTabStatus,
-    createNewTab,
-    replaceActiveTab,
-    replaceTab,
-  };
+  const [actions] = useState<TabActionsValue>(() => ({
+    addTab: (id, cwd) => {
+      setState((prev) => {
+        if (id in prev.tabs) return prev;
+        const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
+        return { tabs, activeTabId: prev.activeTabId ?? id };
+      });
+    },
+    removeTab: (id) => {
+      setState((prev) => {
+        if (!(id in prev.tabs)) return prev;
+        const { [id]: _, ...rest } = prev.tabs;
+        const wasActive = prev.activeTabId === id;
+        const activeTabId = wasActive ? (Object.keys(rest)[0] ?? null) : prev.activeTabId;
+        return { tabs: rest, activeTabId };
+      });
+    },
+    setActiveTab: (id) => {
+      setState((prev) => (prev.activeTabId === id ? prev : { ...prev, activeTabId: id }));
+    },
+    setTabTitle: (id, title) => {
+      setState((prev) => {
+        const existing = prev.tabs[id];
+        if (!existing) return prev;
+        return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, title } } };
+      });
+    },
+    setTabStatus: (id, status) => {
+      setState((prev) => {
+        const existing = prev.tabs[id];
+        if (!existing) return prev;
+        return { ...prev, tabs: { ...prev.tabs, [id]: { ...existing, tabStatus: status } } };
+      });
+    },
+    createNewTab: (opts) => {
+      const channelId = crypto.randomUUID();
+      const tabCwd = opts?.cwd ?? cwdRef.current;
+      setState((prev) => ({
+        tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
+        activeTabId: channelId,
+      }));
+      return { channelId };
+    },
+    replaceActiveTab: (newChannelId) => {
+      setState((prev) => {
+        if (!prev.activeTabId) return prev;
+        const { [prev.activeTabId]: _, ...rest } = prev.tabs;
+        return {
+          tabs: { ...rest, [newChannelId]: DEFAULT_META },
+          activeTabId: newChannelId,
+        };
+      });
+    },
+    replaceTab: (oldChannelId, newChannelId) => {
+      setState((prev) => {
+        if (!(oldChannelId in prev.tabs)) return prev;
+        const { [oldChannelId]: old, ...rest } = prev.tabs;
+        return {
+          tabs: { ...rest, [newChannelId]: { ...old } },
+          activeTabId: prev.activeTabId === oldChannelId ? newChannelId : prev.activeTabId,
+        };
+      });
+    },
+  }));
 
   // Sync tabs from sessions prop (incremental diff)
   const prevSessionIds = useRef<Set<string>>(new Set());
@@ -168,13 +154,13 @@ export function TabProvider({
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
 
     if (added.length === 1 && removed.length === 1) {
-      replaceActiveTab(added[0].channelId);
+      actions.replaceActiveTab(added[0].channelId);
     } else {
       for (const s of added) {
-        addTab(s.channelId);
+        actions.addTab(s.channelId);
       }
       for (const id of removed) {
-        removeTab(id);
+        actions.removeTab(id);
       }
     }
     prevSessionIds.current = currentIds;
@@ -194,14 +180,12 @@ export function TabProvider({
     if (!pendingActivateChannel || !projectActions) return;
     if (pendingActivateChannel.cwd !== cwd) return;
     if (!(pendingActivateChannel.channelId in state.tabs)) return;
-    setActiveTab(pendingActivateChannel.channelId);
+    actions.setActiveTab(pendingActivateChannel.channelId);
     projectActions.clearPendingActivate();
   }, [pendingActivateChannel, state.tabs, cwd]);
 
-  const stateValue: TabStateValue = { tabs: state.tabs, activeTabId: state.activeTabId };
-
   return (
-    <TabStateContext.Provider value={stateValue}>
+    <TabStateContext.Provider value={state}>
       <TabActionsContext.Provider value={actions}>{children}</TabActionsContext.Provider>
     </TabStateContext.Provider>
   );

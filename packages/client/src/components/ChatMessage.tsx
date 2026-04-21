@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, memo, type ReactNode } from 'react';
 import type { ForkFn, Message, RewindFn } from '../types/ui';
 import { cn } from '../utils/cn';
 import { MessageActions } from './MessageActions';
@@ -49,7 +49,7 @@ interface ChatMessageProps {
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }
 
-export function ChatMessage({
+export const ChatMessage = memo(function ChatMessage({
   message,
   showAvatar = true,
   onRewind,
@@ -122,7 +122,7 @@ export function ChatMessage({
   }
 
   return <AssistantMessage message={message} onDiffRespond={onDiffRespond} />;
-}
+});
 
 function AssistantMessage({
   message,

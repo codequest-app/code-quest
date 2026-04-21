@@ -1,5 +1,6 @@
 import { isRecord } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../utils/cn';
 import { JsonViewer } from './JsonViewer';
 import { RawEventFilterBar } from './RawEventFilterBar';
@@ -7,6 +8,7 @@ import { SearchBar } from './SearchBar';
 import { PanelHeader } from './ui/PanelHeader';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
+const SCROLL_THRESHOLD_PX = 50;
 
 function getEventType(evt: unknown): string | undefined {
   if (!isRecord(evt)) return undefined;
@@ -16,6 +18,21 @@ function getEventType(evt: unknown): string | undefined {
 function isDeltaType(type: string): boolean {
   return type.toLowerCase().includes('delta');
 }
+
+const RawEventRow = memo(function RawEventRow({ index, event }: { index: number; event: unknown }) {
+  const evtType = getEventType(event);
+  return (
+    <details className="border-b border-border">
+      <summary className="px-4 py-2 cursor-pointer text-xs text-text-muted hover:text-text">
+        Event #{index + 1}
+        {evtType ? ` — ${evtType}` : ''}
+      </summary>
+      <div className="px-4 py-2 text-xs overflow-x-auto">
+        <JsonViewer data={event} />
+      </div>
+    </details>
+  );
+});
 
 interface RawEventPanelProps {
   onFetch?: () => Promise<{ events: unknown[] }>;
@@ -30,9 +47,10 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
   const [searchText, setSearchText] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const seenTypesRef = useRef<Set<string>>(new Set());
-  const listRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const userScrolledRef = useRef(false);
+  const autoScrollRef = useRef(autoScroll);
+  autoScrollRef.current = autoScroll;
 
   function trackNewTypes(evts: unknown[]) {
     const toAdd: string[] = [];
@@ -54,32 +72,30 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     }
   }
 
-  const autoScrollRef = useRef(autoScroll);
-  autoScrollRef.current = autoScroll;
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: trackNewTypes stable via React Compiler
   useEffect(() => {
     if (!onSubscribe) return;
     const unsubscribe = onSubscribe((evt) => {
       trackNewTypes([evt]);
       setEvents((prev) => [...prev, evt]);
-      queueMicrotask(() => {
-        if (autoScrollRef.current) bottomRef.current?.scrollIntoView({ behavior: 'instant' });
-      });
     });
     return unsubscribe;
   }, [onSubscribe]);
 
-  function handleScroll() {
-    const el = listRef.current;
-    if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD_PX;
     if (!atBottom && !userScrolledRef.current) {
       userScrolledRef.current = true;
       setAutoScroll(false);
     } else if (atBottom) {
       userScrolledRef.current = false;
     }
+  }
+
+  function scrollToBottom() {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }
 
   const handleRefresh = async () => {
@@ -96,23 +112,43 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     }
   };
 
-  // Compute type counts sorted by count desc
-  const typeCounts = new Map<string, number>();
-  for (const evt of events) {
-    const t = getEventType(evt);
-    if (t) typeCounts.set(t, (typeCounts.get(t) ?? 0) + 1);
-  }
-  const filterEntries = Array.from(typeCounts.entries())
-    .map(([type, count]) => ({ type, count }))
-    .sort((a, b) => b.count - a.count);
-
-  const search = searchText.toLowerCase();
-  const filteredEvents = events
-    .filter((evt) => {
+  const filterEntries = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const evt of events) {
       const t = getEventType(evt);
-      return !t || visibleTypes.has(t);
-    })
-    .filter((evt) => !search || JSON.stringify(evt).toLowerCase().includes(search));
+      if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [events]);
+
+  const filteredEvents = useMemo(() => {
+    const search = searchText.toLowerCase();
+    return events.filter((evt) => {
+      const t = getEventType(evt);
+      if (t && !visibleTypes.has(t)) return false;
+      if (search && !JSON.stringify(evt).toLowerCase().includes(search)) return false;
+      return true;
+    });
+  }, [events, visibleTypes, searchText]);
+
+  const virtualizer = useVirtualizer({
+    count: filteredEvents.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 40,
+    overscan: 10,
+  });
+
+  // Re-pin to bottom when new events arrive or virtualizer re-measures; both
+  // trigger via totalSize (count change implies size change).
+  const totalSize = virtualizer.getTotalSize();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: totalSize is the trigger; scrollToBottom stable
+  useEffect(() => {
+    if (autoScrollRef.current) scrollToBottom();
+  }, [totalSize]);
+
+  const virtualItems = virtualizer.getVirtualItems();
 
   return (
     <div className="flex flex-col h-full bg-surface border-r border-border">
@@ -127,7 +163,7 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
                 onClick={() => {
                   setAutoScroll(true);
                   userScrolledRef.current = false;
-                  bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+                  scrollToBottom();
                 }}
                 className={cn(ICON_BTN, autoScroll && 'text-accent')}
               >
@@ -171,29 +207,45 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
           onChange={setVisibleTypes}
         />
       )}
-      <div ref={listRef} onScroll={handleScroll} className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 relative">
         {loading && <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>}
         {!loading && events.length === 0 && (
           <div className="px-4 py-8 text-center text-text-muted text-sm">
             {onSubscribe ? 'Waiting for events…' : 'No events. Click ↻ to fetch.'}
           </div>
         )}
-        {filteredEvents.map((evt, i) => {
-          const evtType = getEventType(evt);
-          return (
-            // biome-ignore lint/suspicious/noArrayIndexKey: events are append-only, never reorder
-            <details key={`${i}-${evtType ?? 'unknown'}`} className="border-b border-border">
-              <summary className="px-4 py-2 cursor-pointer text-xs text-text-muted hover:text-text">
-                Event #{i + 1}
-                {evtType ? ` — ${evtType}` : ''}
-              </summary>
-              <div className="px-4 py-2 text-xs overflow-x-auto">
-                <JsonViewer data={evt} />
-              </div>
-            </details>
-          );
-        })}
-        <div ref={bottomRef} />
+        {!loading && filteredEvents.length > 0 && (
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+          >
+            <div
+              style={{
+                height: totalSize,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualItems.map((item) => (
+                <div
+                  key={item.key}
+                  data-index={item.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${item.start}px)`,
+                  }}
+                >
+                  <RawEventRow index={item.index} event={filteredEvents[item.index]} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

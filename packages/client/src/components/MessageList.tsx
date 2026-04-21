@@ -1,9 +1,10 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { RefObject } from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useChannelControl, useChannelMessages, useMessageVisibility } from '../contexts/channel';
 import { filterTree } from '../utils/filter-tree';
 import { isMessageVisible } from '../utils/isMessageVisible';
-import { buildMessageTree } from '../utils/message-tree';
+import { buildMessageTree, type MessageNode } from '../utils/message-tree';
 import { MessageNodeList } from './MessageNodeList';
 import { SpinnerVerb } from './SpinnerVerb';
 
@@ -31,6 +32,11 @@ function scrollToEnd(
   }
 }
 
+function collectIds(node: MessageNode, topIndex: number, map: Map<string, number>) {
+  map.set(node.message.id, topIndex);
+  for (const child of node.children) collectIds(child, topIndex, map);
+}
+
 export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string }>(
   function MessageList({ searchQuery = '' }, ref) {
     const {
@@ -43,7 +49,6 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     const { stopTask: onStopTask, diffRespond: onDiffRespond } = useChannelControl();
     const { enabledTypes, registerUnknownType, unknownTypes } = useMessageVisibility();
     const scrollRef = useRef<HTMLDivElement | null>(null);
-    const containerRef = useRef<HTMLDivElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const isAtBottomRef = useRef(true);
     const programmaticScrollRef = useRef(false);
@@ -74,39 +79,8 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
 
     const scrollToBottom = () => {
       isAtBottomRef.current = true;
-      scrollToEnd(scrollRef, programmaticScrollRef, 'smooth');
+      scrollToEnd(scrollRef, programmaticScrollRef, 'instant');
     };
-
-    useImperativeHandle(ref, () => ({
-      scrollToMessage(id: string) {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
-        // If the message is inside a collapsed timeline, expand it first
-        const collapsed = container.querySelector(`[data-collapsed-ids*="${id}"]`);
-        if (collapsed) {
-          const expandBtn = collapsed.querySelector('button') as HTMLButtonElement | null;
-          expandBtn?.click();
-          // Wait one frame for the DOM to re-render, then scroll
-          requestAnimationFrame(() => this.scrollToMessage(id));
-          return;
-        }
-
-        const el = container.querySelector(`[data-message-id="${id}"]`);
-        if (!el) return;
-
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const bubble = (el.querySelector('[data-type]') ?? el) as HTMLElement;
-        bubble.classList.remove('spotlight-highlight');
-        void bubble.offsetHeight; // force reflow to restart animation
-        bubble.classList.add('spotlight-highlight');
-        bubble.addEventListener(
-          'animationend',
-          () => bubble.classList.remove('spotlight-highlight'),
-          { once: true },
-        );
-      },
-    }));
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler stabilizes registerUnknownType
     useEffect(() => {
@@ -116,18 +90,92 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     }, [messages]);
 
     const q = searchQuery.toLowerCase();
-    const fullTree = buildMessageTree(messages);
-    const visibleTree = filterTree(
-      fullTree,
-      (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
-    );
-    const tree = q
-      ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q))
-      : visibleTree;
+    const tree = useMemo(() => {
+      const fullTree = buildMessageTree(messages);
+      const visibleTree = filterTree(
+        fullTree,
+        (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
+      );
+      return q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree;
+    }, [messages, enabledTypes, unknownTypes, q]);
+
+    const idToIndex = useMemo(() => {
+      const map = new Map<string, number>();
+      tree.forEach((node, i) => {
+        collectIds(node, i, map);
+      });
+      return map;
+    }, [tree]);
+
+    const virtualizer = useVirtualizer({
+      count: tree.length,
+      getScrollElement: () => scrollContainerRef.current,
+      estimateSize: () => 80,
+      overscan: 5,
+    });
+
+    // Virtualizer's total size changes as items get measured, but that doesn't
+    // fire scroll events. Re-sync stick-to-bottom and scroll-button visibility
+    // whenever the measured total grows.
+    const totalSize = virtualizer.getTotalSize();
+    // biome-ignore lint/correctness/useExhaustiveDependencies: totalSize is the trigger; effect reads live scroll metrics via ref
+    useEffect(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      if (isAtBottomRef.current) {
+        el.scrollTop = el.scrollHeight;
+        return;
+      }
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD_PX;
+      setShowScrollButton(!atBottom);
+    }, [totalSize]);
+
+    useImperativeHandle(ref, () => ({
+      scrollToMessage(id: string) {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const collapsed = container.querySelector(`[data-collapsed-ids*="${id}"]`);
+        if (collapsed) {
+          const expandBtn = collapsed.querySelector('button') as HTMLButtonElement | null;
+          expandBtn?.click();
+          requestAnimationFrame(() => this.scrollToMessage(id));
+          return;
+        }
+
+        const scrollAndSpotlight = (el: Element) => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const bubble = (el.querySelector('[data-type]') ?? el) as HTMLElement;
+          bubble.classList.remove('spotlight-highlight');
+          void bubble.offsetHeight;
+          bubble.classList.add('spotlight-highlight');
+          bubble.addEventListener(
+            'animationend',
+            () => bubble.classList.remove('spotlight-highlight'),
+            { once: true },
+          );
+        };
+
+        const el = container.querySelector(`[data-message-id="${id}"]`);
+        if (el) {
+          scrollAndSpotlight(el);
+          return;
+        }
+
+        const index = idToIndex.get(id);
+        if (index === undefined) return;
+        virtualizer.scrollToIndex(index, { align: 'center' });
+        requestAnimationFrame(() => {
+          const later = container.querySelector(`[data-message-id="${id}"]`);
+          if (later) scrollAndSpotlight(later);
+        });
+      },
+    }));
+
+    const virtualItems = virtualizer.getVirtualItems();
 
     return (
       <div
-        ref={containerRef}
         className="relative flex-1 overflow-hidden"
         data-testid="message-list"
         onScroll={handleScroll}
@@ -146,14 +194,41 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
             </div>
           ) : (
             <div data-testid="message-content-wrapper" className="px-4 pt-5 pb-32">
-              <MessageNodeList
-                nodes={tree}
-                prevRole={null}
-                onRewind={onRewind}
-                onFork={onFork}
-                onStopTask={onStopTask}
-                onDiffRespond={onDiffRespond}
-              />
+              <div
+                style={{
+                  height: totalSize,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualItems.map((item) => {
+                  const node = tree[item.index];
+                  const prevRole = item.index > 0 ? tree[item.index - 1].message.role : null;
+                  return (
+                    <div
+                      key={node.message.id}
+                      data-index={item.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${item.start}px)`,
+                      }}
+                    >
+                      <MessageNodeList
+                        nodes={[node]}
+                        prevRole={prevRole}
+                        onRewind={onRewind}
+                        onFork={onFork}
+                        onStopTask={onStopTask}
+                        onDiffRespond={onDiffRespond}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
               {isProcessing && <SpinnerVerb statusText={statusText} />}
               <div ref={scrollRef} data-testid="message-list-bottom" />
             </div>

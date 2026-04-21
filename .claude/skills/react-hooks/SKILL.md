@@ -190,49 +190,17 @@ const [state, dispatch] = useReducer(reducer, init);
 
 ### Context Value Stability
 
-With React Compiler, no manual memoization needed:
+Provider value 可以直接寫 inline — Compiler 會 memo。詳見 `react-compiler` skill。
 
 ```tsx
-// ✅ Good (React Compiler handles it)
-<Ctx.Provider value={{ count, increment }}>
+<Ctx.Provider value={{ count, increment }}>  {/* Compiler auto-memo */}
 ```
 
 ---
 
-## useCallback & useMemo — 讓 React Compiler 處理
+## useCallback / useMemo / React.memo
 
-**This project uses React Compiler.** Write plain functions and derived values — Compiler memoizes them automatically at build time.
-
-### React Compiler handles memoization automatically
-
-React Compiler auto-memoizes components, hooks, and values at build time. Writing `useMemo` or `useCallback` is **redundant** and adds unnecessary noise. The compiler does it better because it memoizes at a granular level that manual hooks cannot achieve.
-
-### Rules
-
-1. **Write plain functions and values** — Compiler memoizes them automatically
-2. **Let Compiler handle component memoization** — `React.memo()` is unnecessary
-3. **Context Provider values** — Compiler optimizes re-renders; write the value inline
-4. **Existing `useMemo`/`useCallback`** — remove during refactoring
-5. **Derive during render** — `const filtered = items.filter(pred)` is correct and optimal
-
-### Examples
-
-```tsx
-// ✅ Correct (React Compiler project)
-function Provider({ children }) {
-  const [state, setState] = useState(init);
-  const actions = createActions(setState);  // no useMemo needed
-  return (
-    <Ctx.Provider value={{ ...state, ...actions }}>  {/* no useMemo needed */}
-      {children}
-    </Ctx.Provider>
-  );
-}
-
-// ❌ Wrong (unnecessary manual memoization)
-const actions = useMemo(() => createActions(setState), [setState]);
-const value = useMemo(() => ({ ...state, ...actions }), [state, actions]);
-```
+**This project uses React Compiler.** 大部分情境 Compiler 會自動 memo，不用手動加。但有 3 個架構邊界必須手動處理（component `React.memo`、prop capture 意圖、高頻 setState commit）— 完整規則見 **`react-compiler` skill**。
 
 ---
 

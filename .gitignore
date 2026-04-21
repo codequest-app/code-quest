@@ -1,3 +1,6 @@
+# Local design mockups / scratch
+mockups/
+
 # Dependencies
 node_modules/
 .pnpm-store/

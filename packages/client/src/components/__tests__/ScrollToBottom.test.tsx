@@ -124,7 +124,7 @@ describe('Scroll to bottom button', () => {
     const scrollIntoView = vi.fn();
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
     await user.click(screen.getByRole('button', { name: /scroll to bottom/i }));
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
   });
 
   it('hides button when scrolled back to bottom', async () => {

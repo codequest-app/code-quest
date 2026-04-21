@@ -188,7 +188,7 @@ export function ChatPanel({ title }: { title?: string }) {
           container={chatColumnRef.current}
           onClose={() => btwSignal.setState({ open: false })}
         />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-bg from-20% to-transparent px-4 pb-4 pt-1">
+        <div className="absolute bottom-0 left-0 right-0 z-sticky bg-gradient-to-t from-bg from-20% to-transparent px-4 pb-4 pt-1">
           <div className="max-w-170 mx-auto w-full flex flex-col gap-3">
             <ChatInputArea />
           </div>

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { useTextScramble } from '../hooks/useTextScramble';
+import { useEffect, useRef } from 'react';
 
 const ICON_CYCLE_MS = 120;
+const SCRAMBLE_FRAME_MS = 40;
 const VERB_DELAYS = [2000, 3000, 5000] as const;
 const VERB_DELAY_DEFAULT = 5000;
+const VERB_SUFFIX = '...';
 
 const ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
 const ICON_CYCLE = [...ICONS, ...[...ICONS].reverse()];
@@ -56,8 +57,67 @@ const DEFAULT_VERBS = [
   'Wrangling',
 ];
 
-function randomVerb(verbs: string[]): string {
-  return verbs[Math.floor(Math.random() * verbs.length)];
+function randomFrom<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function padToLength(text: string, len: number): string {
+  return text.length >= len ? text : text + ' '.repeat(len - text.length);
+}
+
+function scrambleChar(target: string, stage: number): string {
+  if (target === ' ') return ' ';
+  switch (stage) {
+    case 3:
+      return target;
+    case 2:
+    case 1:
+      return randomFrom(['.', '_', target]);
+    case 0:
+      return '▌';
+    default:
+      return target;
+  }
+}
+
+function replaceCharAt(str: string, index: number, char: string): string {
+  if (index < 0 || index >= str.length) return str;
+  return str.slice(0, index) + char + str.slice(index + 1);
+}
+
+/** Animate `padded` into `el.textContent` one column at a time. Returns cancel fn. */
+function runScramble(el: HTMLElement, padded: string): () => void {
+  let index = 0;
+  let current = padded;
+  let lastTime = 0;
+  let raf: number | null = null;
+
+  const tick = (time: number) => {
+    if (time - lastTime < SCRAMBLE_FRAME_MS) {
+      raf = requestAnimationFrame(tick);
+      return;
+    }
+    lastTime = time;
+    if (index - 3 >= padded.length) {
+      el.textContent = padded;
+      raf = null;
+      return;
+    }
+    for (let offset = 0; offset <= 3; offset++) {
+      const charIdx = index - offset;
+      if (charIdx >= 0 && charIdx < padded.length) {
+        current = replaceCharAt(current, charIdx, scrambleChar(padded[charIdx], offset));
+      }
+    }
+    el.textContent = current;
+    index++;
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+
+  return () => {
+    if (raf !== null) cancelAnimationFrame(raf);
+  };
 }
 
 interface SpinnerVerbProps {
@@ -65,56 +125,69 @@ interface SpinnerVerbProps {
   verbs?: string[];
 }
 
+// All animation writes go to DOM refs directly so React never re-renders on tick.
 export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbProps) {
-  const [iconIndex, setIconIndex] = useState(0);
-  const [verb, setVerb] = useState(() => randomVerb(verbs));
-  const verbTimerRef = useRef(0);
+  const iconRef = useRef<HTMLSpanElement | null>(null);
+  const verbRef = useRef<HTMLSpanElement | null>(null);
 
-  // Cycle icon every 120ms
   useEffect(() => {
+    let i = 0;
     const id = setInterval(() => {
-      setIconIndex((i) => (i + 1) % ICON_CYCLE.length);
+      i = (i + 1) % ICON_CYCLE.length;
+      if (iconRef.current) iconRef.current.textContent = ICON_CYCLE[i];
     }, ICON_CYCLE_MS);
     return () => clearInterval(id);
   }, []);
 
-  // Change verb on schedule: 2s, 3s, 5s, then every 5s
-  const scheduleNextVerb = () => {
-    const count = verbTimerRef.current;
-    const delay = count < VERB_DELAYS.length ? VERB_DELAYS[count] : VERB_DELAY_DEFAULT;
-    verbTimerRef.current++;
-    return delay;
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scheduleNextVerb stable via React Compiler
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      setVerb(randomVerb(verbs));
-      timer = setTimeout(tick, scheduleNextVerb());
-    };
-    timer = setTimeout(tick, scheduleNextVerb());
-    return () => clearTimeout(timer);
-  }, [verbs]);
+    const el = verbRef.current;
+    if (!el) return;
+    const maxLen = Math.max(...verbs.map((v) => v.length)) + VERB_SUFFIX.length;
+    const makeTarget = (text: string) => padToLength(`${text}${VERB_SUFFIX}`, maxLen);
 
-  const displayText = statusText ?? verb;
-  const maxLen = Math.max(...verbs.map((v) => v.length)) + 3; // +3 for "..."
-  const scrambled = useTextScramble(`${displayText}...`, maxLen);
+    el.textContent = makeTarget(statusText ?? randomFrom(verbs));
+
+    let cancelScramble: (() => void) | null = null;
+    const scramble = (padded: string) => {
+      cancelScramble?.();
+      cancelScramble = runScramble(el, padded);
+    };
+
+    // When statusText is provided, no verb cycling — caller controls the text.
+    if (statusText) return () => cancelScramble?.();
+
+    let verbCount = 0;
+    let verbTimer: ReturnType<typeof setTimeout>;
+    const scheduleNext = () => {
+      const delay = verbCount < VERB_DELAYS.length ? VERB_DELAYS[verbCount] : VERB_DELAY_DEFAULT;
+      verbCount++;
+      verbTimer = setTimeout(() => {
+        scramble(makeTarget(randomFrom(verbs)));
+        scheduleNext();
+      }, delay);
+    };
+    scheduleNext();
+
+    return () => {
+      clearTimeout(verbTimer);
+      cancelScramble?.();
+    };
+  }, [statusText, verbs]);
 
   return (
     <div className="relative z-raised inline-flex items-center gap-1 h-[1.85em] mt-1 px-4">
       <span
+        ref={iconRef}
         data-testid="spinner-icon"
         className="text-accent text-[1.5em] inline-block w-[1.5em] text-center font-mono"
       >
-        {ICON_CYCLE[iconIndex]}
+        {ICON_CYCLE[0]}
       </span>
       <span
+        ref={verbRef}
         data-testid="spinner-verb"
         className="text-xs text-text font-medium font-mono whitespace-pre"
-      >
-        {scrambled}
-      </span>
+      />
     </div>
   );
 }

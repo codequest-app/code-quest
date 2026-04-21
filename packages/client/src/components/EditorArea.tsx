@@ -1,4 +1,5 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { memo } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
@@ -7,9 +8,32 @@ import { ChatPanel } from './ChatPanel';
 import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
 
-export function EditorArea() {
+interface TabContentProps {
+  channelId: string;
+  cwd?: string;
+  title?: string;
+}
+
+const TabContent = memo(function TabContent({ channelId, cwd, title }: TabContentProps) {
+  const { setTabTitle, setTabStatus, createNewTab } = useTabActions();
+  return (
+    <ChannelProvider
+      channelId={channelId}
+      cwd={cwd}
+      onChange={(update) => {
+        if (update.title) setTabTitle(channelId, update.title);
+        if (update.status) setTabStatus(channelId, update.status);
+      }}
+      onNewChannel={(newCwd) => createNewTab({ cwd: newCwd })}
+    >
+      <ChatPanel title={title} />
+    </ChannelProvider>
+  );
+});
+
+export const EditorArea = memo(function EditorArea() {
   const { activeTabId, tabs } = useTabState();
-  const { setActiveTab, removeTab, createNewTab, setTabTitle, setTabStatus } = useTabActions();
+  const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();
 
   const handleCloseTab = (id: string) => {
@@ -18,15 +42,13 @@ export function EditorArea() {
   };
 
   const tabEntries = Object.entries(tabs);
-  const tabIds = tabEntries.map(([id]) => id);
-
   const openTabs = tabEntries.map(([id, meta]) => ({
     sessionId: id,
     title: meta.title,
     status: meta.tabStatus,
   }));
 
-  if (tabIds.length === 0) {
+  if (tabEntries.length === 0) {
     return (
       <EmptyState
         icon={<ChatBubbleLeftRightIcon className="w-10 h-10" />}
@@ -47,26 +69,16 @@ export function EditorArea() {
         onNewTab={() => createNewTab()}
       />
       <div className="flex flex-1 overflow-hidden">
-        {tabIds.map((id) => (
+        {tabEntries.map(([id, meta]) => (
           <div
             key={id}
             data-testid={id === activeTabId ? 'tab-container' : undefined}
             className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : 'hidden')}
           >
-            <ChannelProvider
-              channelId={id}
-              cwd={tabs[id]?.cwd}
-              onChange={(update) => {
-                if (update.title) setTabTitle(id, update.title);
-                if (update.status) setTabStatus(id, update.status);
-              }}
-              onNewChannel={(cwd) => createNewTab({ cwd })}
-            >
-              <ChatPanel title={tabs[id]?.title} />
-            </ChannelProvider>
+            <TabContent channelId={id} cwd={meta.cwd} title={meta.title} />
           </div>
         ))}
       </div>
     </div>
   );
-}
+});

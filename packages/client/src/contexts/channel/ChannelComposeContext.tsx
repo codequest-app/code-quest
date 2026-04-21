@@ -106,20 +106,22 @@ function createComposeActions(
     const { value: v, attachedFiles: files } = get();
     const trimmed = v.trim();
     if (!trimmed) return;
-    if (files.length > 0) {
-      void Promise.all(
-        files.map(async (f) => {
-          const data = await toBase64(f);
-          return `[Attachment: ${f.name}]\n${data}`;
-        }),
-      ).then((parts) => {
-        sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
-        setState((prev) => ({ ...prev, attachedFiles: [] }));
-      });
-    } else {
+    if (files.length === 0) {
+      setState((prev) => ({ ...prev, value: '', slashOpen: false }));
       sendMessage(trimmed);
+      return;
     }
-    setState((prev) => ({ ...prev, value: '', slashOpen: false }));
+    // Encode first, then clear + send together — clearing before encoding
+    // would lose the user's text if a file fails to read.
+    void Promise.all(
+      files.map(async (f) => {
+        const data = await toBase64(f);
+        return `[Attachment: ${f.name}]\n${data}`;
+      }),
+    ).then((parts) => {
+      sendMessage(`${trimmed}\n\n${parts.join('\n\n')}`);
+      setState((prev) => ({ ...prev, value: '', slashOpen: false, attachedFiles: [] }));
+    });
   };
 
   const clearSlashToken = () => {
