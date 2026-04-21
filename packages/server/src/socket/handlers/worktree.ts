@@ -1,6 +1,7 @@
 import {
   createWorktreePayloadSchema,
   deleteWorktreePayloadSchema,
+  EVENTS,
   listWorktreesPayloadSchema,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
@@ -15,6 +16,44 @@ export function create({
   channelManager,
   gitService,
 }: Pick<HandlerContext, 'emitter' | 'channelManager' | 'gitService'>): void {
+  // Use getProjectRoot (main repo), NOT getRepoRoot, to avoid creating
+  // a nested worktree when invoked from inside an existing worktree.
+  const resolveProjectRoot = (cwd: string): Promise<string | null> =>
+    gitService.getProjectRoot(cwd).catch(() => null);
+
+  type WorktreeInfo = Awaited<ReturnType<typeof gitService.createWorktree>>;
+
+  async function spawnChannelInWorktree(
+    projectRoot: string,
+    info: WorktreeInfo,
+    socket: TypedSocket | undefined,
+  ): Promise<{ channelId: string; worktreePath: string }> {
+    const newChannelId = crypto.randomUUID();
+    try {
+      await channelManager.create(newChannelId, {
+        cwd: info.path,
+        onBeforeSpawn: (ch) => {
+          ch.projectRoot = projectRoot;
+          ch.worktree = { name: info.name, path: info.path, branch: info.branch };
+          if (socket) channelManager.addSocketToChannel(ch, socket);
+        },
+      });
+      emitter.broadcastAll(EVENTS.session.created, {
+        channelId: newChannelId,
+        cwd: info.path,
+        projectRoot,
+      });
+      return { channelId: newChannelId, worktreePath: info.path };
+    } catch (e) {
+      try {
+        await gitService.deleteWorktree(projectRoot, info.name);
+      } catch (rbErr) {
+        logger.error({ rbErr }, 'Worktree rollback failed after spawn error');
+      }
+      throw e;
+    }
+  }
+
   async function handleCreate(
     _ch: Channel | null,
     payload: unknown,
@@ -28,15 +67,13 @@ export function create({
     }
     const { cwd, name } = parsed.data;
 
-    // Use getProjectRoot (main repo), NOT getRepoRoot, to avoid creating
-    // a nested worktree when invoked from inside an existing worktree.
-    const projectRoot = await gitService.getProjectRoot(cwd).catch(() => null);
+    const projectRoot = await resolveProjectRoot(cwd);
     if (!projectRoot) {
       callback?.(err('Not inside a git repository'));
       return;
     }
 
-    let info: Awaited<ReturnType<typeof gitService.createWorktree>> | null = null;
+    let info: WorktreeInfo;
     try {
       info = await gitService.createWorktree(projectRoot, name);
     } catch (e) {
@@ -44,32 +81,9 @@ export function create({
       return;
     }
 
-    const newChannelId = crypto.randomUUID();
     try {
-      await channelManager.create(newChannelId, {
-        cwd: info.path,
-        onBeforeSpawn: (ch) => {
-          // Must set before spawn so early broadcastSessionState emits include these.
-          ch.projectRoot = projectRoot;
-          ch.worktree = { name: info.name, path: info.path, branch: info.branch };
-          if (socket) channelManager.addSocketToChannel(ch, socket);
-        },
-      });
-
-      emitter.broadcastAll('session:created', {
-        channelId: newChannelId,
-        cwd: info.path,
-        projectRoot,
-      });
-
-      callback?.(ok({ channelId: newChannelId, worktreePath: info.path }));
+      callback?.(ok(await spawnChannelInWorktree(projectRoot, info, socket)));
     } catch (e) {
-      // Rollback the worktree filesystem state on spawn failure.
-      try {
-        await gitService.deleteWorktree(projectRoot, info.name);
-      } catch (rbErr) {
-        logger.error({ rbErr }, 'Worktree rollback failed after spawn error');
-      }
       callback?.(err(errMsg(e, 'Failed to spawn channel in new worktree')));
     }
   }
@@ -122,7 +136,7 @@ export function create({
     }
   }
 
-  emitter.on('worktree:create', handleCreate);
-  emitter.on('worktree:list', handleList);
-  emitter.on('worktree:delete', handleDelete);
+  emitter.on(EVENTS.worktree.create, handleCreate);
+  emitter.on(EVENTS.worktree.list, handleList);
+  emitter.on(EVENTS.worktree.delete, handleDelete);
 }

@@ -1,3 +1,4 @@
+import { EVENTS } from '@code-quest/shared';
 import { toast } from 'sonner';
 import { showNotificationToast } from '@/components/NotificationToast';
 import type { TypedSocket } from '@/socket/client';
@@ -105,7 +106,7 @@ function onNotificationShowEffect(
   const reqId = p.requestId;
   if (p.buttons?.length && reqId) {
     showNotificationToast(p.message ?? '', severity, p.buttons, (response) =>
-      channelEmit(deps.socket, deps.channelId, 'chat:respond', {
+      channelEmit(deps.socket, deps.channelId, EVENTS.chat.respond, {
         requestId: reqId,
         response,
       }),
@@ -122,7 +123,7 @@ function onRawEventEffect(deps: EffectDeps, p: Payload<'raw:event'>): void {
     toast.info('New session started');
   } else if (p.rawType === 'control_request/open_in_editor') {
     toast.info('Open in Editor is not supported in web mode');
-    channelEmit(deps.socket, deps.channelId, 'chat:respond', {
+    channelEmit(deps.socket, deps.channelId, EVENTS.chat.respond, {
       requestId: String(p.data.requestId),
       response: { behavior: 'allow' },
     });

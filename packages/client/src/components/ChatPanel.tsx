@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import {
-  useChannelCompose,
+  useChannelComposeActions,
   useChannelConfig,
   useChannelControl,
   useChannelId,
@@ -36,7 +36,7 @@ export function ChatPanel({ title }: { title?: string }) {
   const { messages, subscribeRawEvents } = useChannelMessages();
   const sideQuestion = useBtwState();
   const { worktree } = useChannelConfig();
-  const { focusTextarea } = useChannelCompose();
+  const { focusTextarea } = useChannelComposeActions();
   const { listSessions, renameSession, deleteSession, resume } = useSession();
   const { setActiveProject, requestActivateChannel } = useProjectActions();
   const { activeProjectCwd } = useProjectState();

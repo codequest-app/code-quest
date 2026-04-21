@@ -2,6 +2,7 @@ import {
   type ClientMessage,
   contentBlockSchema,
   controlRequestEventSchema,
+  EVENTS,
   isRecord,
   type ServerToClientEvents,
 } from '@code-quest/shared';
@@ -14,11 +15,11 @@ import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
 import type { TypedSocket } from './types.ts';
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */
-const HISTORY_NAMES = new Set([
-  'message:assistant',
-  'message:user',
-  'message:result',
-  'session:init',
+const HISTORY_NAMES = new Set<string>([
+  EVENTS.message.assistant,
+  EVENTS.message.user,
+  EVENTS.message.result,
+  EVENTS.session.init,
 ]);
 
 export class SessionHistory {
@@ -84,7 +85,7 @@ export class SessionHistory {
         return parsedBlock.success ? [parsedBlock.data] : [];
       });
       result.push({
-        name: 'message:user',
+        name: EVENTS.message.user,
         payload: { content: blocks },
       });
     }
@@ -135,10 +136,13 @@ export class SessionHistory {
     const pendingRequests: Array<{ requestId: string; message: ClientMessage }> = [];
 
     for (const message of messages) {
-      if (message.name === 'control:permission' || message.name === 'control:elicitation') {
+      if (
+        message.name === EVENTS.control.permission ||
+        message.name === EVENTS.control.elicitation
+      ) {
         const { requestId } = controlRequestEventSchema.parse(message.payload);
         pendingRequests.push({ requestId, message });
-      } else if (message.name === 'control:cancel') {
+      } else if (message.name === EVENTS.control.cancel) {
         const { requestId } = controlRequestEventSchema.parse(message.payload);
         respondedRequestIds.add(requestId);
       }

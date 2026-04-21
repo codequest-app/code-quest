@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { usageOpenSignal } from '../../features/usage/usage-feature';
 import { renderWithChannel } from '../../test/render-with-channel';
-import { useChannelCompose } from '../channel';
+import { useChannelCompose, useChannelComposeActions } from '../channel';
 
 /** Renders a test harness that exposes compose context via UI */
 function ComposeTestUI() {
@@ -159,6 +159,41 @@ describe('ChannelComposeProvider', () => {
     await userEvent.click(screen.getByText('Mention'));
     await userEvent.click(screen.getByText('Mention'));
     expect(screen.getByPlaceholderText('compose')).toHaveValue('@');
+  });
+
+  describe('re-render isolation', () => {
+    it('action-only consumer does not re-render on typing', async () => {
+      const renderCount = { current: 0 };
+
+      function Typer() {
+        const { value, updateValue } = useChannelCompose();
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => updateValue(e.target.value, e.target.selectionStart)}
+            placeholder="typer"
+          />
+        );
+      }
+
+      function SiblingSpy() {
+        useChannelComposeActions();
+        renderCount.current += 1;
+        return <span data-testid="sibling" />;
+      }
+
+      await renderWithChannel(
+        <>
+          <Typer />
+          <SiblingSpy />
+        </>,
+      );
+      const initial = renderCount.current;
+
+      await userEvent.type(screen.getByPlaceholderText('typer'), 'hello');
+
+      expect(renderCount.current).toBe(initial);
+    });
   });
 
   describe('executeSlashCommand routing', () => {

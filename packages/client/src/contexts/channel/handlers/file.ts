@@ -1,4 +1,5 @@
 import type { ListFilesResponse, RpcResult, TerminalGetContentsResponse } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 
@@ -11,15 +12,15 @@ interface FileActionsDeps {
 
 export function createFileActions({ socket, channelId }: FileActionsDeps) {
   function searchFiles(pattern: string): Promise<ListFilesResponse> {
-    return rpc(socket, 'file:list', { channelId, pattern });
+    return rpc(socket, EVENTS.file.list, { channelId, pattern });
   }
 
   function getTerminalContents(): Promise<TerminalGetContentsResponse> {
-    return rpc(socket, 'terminal:read', { channelId });
+    return rpc(socket, EVENTS.terminal.read, { channelId });
   }
 
   function openClaudeTerminal(): Promise<RpcResult<{ channelId: string }>> {
-    return rpc(socket, 'terminal:open_claude', { channelId });
+    return rpc(socket, EVENTS.terminal.open_claude, { channelId });
   }
 
   return { searchFiles, getTerminalContents, openClaudeTerminal };

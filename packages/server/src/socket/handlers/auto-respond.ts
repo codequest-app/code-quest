@@ -1,4 +1,4 @@
-import { autoRespondPayloadSchema } from '@code-quest/shared';
+import { autoRespondPayloadSchema, EVENTS } from '@code-quest/shared';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
@@ -9,8 +9,8 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     ch.respondToRequest(requestId, response);
   }
 
-  emitter.on('action:open_url', withChannel(onAutoRespond));
-  emitter.on('action:open_file', withChannel(onAutoRespond));
-  emitter.on('notification:show', withChannel(onAutoRespond));
-  emitter.on('mcp:auto_respond', withChannel(onAutoRespond));
+  emitter.on(EVENTS.action.open_url, withChannel(onAutoRespond));
+  emitter.on(EVENTS.action.open_file, withChannel(onAutoRespond));
+  emitter.on(EVENTS.notification.show, withChannel(onAutoRespond));
+  emitter.on(EVENTS.mcp.auto_respond, withChannel(onAutoRespond));
 }

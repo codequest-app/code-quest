@@ -1,4 +1,5 @@
 import {
+  EVENTS,
   type ForkConversationResponse,
   type ListFilesResponse,
   type PlanCommentData,
@@ -158,34 +159,41 @@ export function ChannelMessagesProvider({
 
   const joinedRef = useRef(false);
 
+  function recordJoinError(errorContent: string) {
+    joinedRef.current = true; // allow session:states even on join failure
+    setChannelState((prev) => ({
+      ...prev,
+      messages: [...prev.messages, msg({ role: 'system', type: 'error', content: errorContent })],
+    }));
+  }
+
+  function applyJoinSnapshot(snapshot: {
+    state: string;
+    events?: Parameters<typeof buildMessagesFromHistory>[0];
+  }) {
+    setChannelState((prev) => {
+      const updated = {
+        ...prev,
+        status: snapshot.state === 'busy' ? ('busy' as const) : ('idle' as const),
+      };
+      if (prev.messages.length === 0 && snapshot.events?.length) {
+        updated.messages = buildMessagesFromHistory(snapshot.events);
+      }
+      return updated;
+    });
+    joinedRef.current = true;
+  }
+
   function joinSession() {
-    socket.emit('session:join', { channelId }, (raw: unknown) => {
+    socket.emit(EVENTS.session.join, { channelId }, (raw: unknown) => {
       const parsed = sessionJoinResponseSchema.safeParse(raw);
       if (!parsed.success || !parsed.data.ok) {
-        joinedRef.current = true; // allow session:states even on join failure
         const errorContent =
           parsed.success && !parsed.data.ok ? parsed.data.error : 'Failed to join session';
-        setChannelState((prev) => ({
-          ...prev,
-          messages: [
-            ...prev.messages,
-            msg({ role: 'system', type: 'error', content: errorContent }),
-          ],
-        }));
+        recordJoinError(errorContent);
         return;
       }
-      const snapshot = parsed.data.data;
-      setChannelState((prev) => {
-        const updated = {
-          ...prev,
-          status: snapshot.state === 'busy' ? ('busy' as const) : ('idle' as const),
-        };
-        if (prev.messages.length === 0 && snapshot.events?.length) {
-          updated.messages = buildMessagesFromHistory(snapshot.events);
-        }
-        return updated;
-      });
-      joinedRef.current = true;
+      applyJoinSnapshot(parsed.data.data);
     });
   }
 
@@ -248,11 +256,11 @@ export function ChannelMessagesProvider({
   useEffect(() => {
     if (!socket) return;
 
-    const resetEvents = new Set([
-      'system:compact_boundary',
-      'error:message',
-      'stream:text',
-      'stream:tool_summary',
+    const resetEvents = new Set<string>([
+      EVENTS.system.compact_boundary,
+      EVENTS.error.message,
+      EVENTS.stream.text,
+      EVENTS.stream.tool_summary,
     ]);
 
     const allHandlers = {
@@ -313,7 +321,7 @@ export function ChannelMessagesProvider({
     });
     const next = dequeueMessageRef.current();
     if (!next) return;
-    socket.emit('chat:send', { channelId, message: next });
+    socket.emit(EVENTS.chat.send, { channelId, message: next });
     setChannelState((prev) => ({ ...prev, status: 'processing' as const }));
   }
 
@@ -321,7 +329,7 @@ export function ChannelMessagesProvider({
   // biome-ignore lint/correctness/useExhaustiveDependencies: onMessageResult uses channelId+socket which are in deps
   useEffect(() => {
     if (!socket) return;
-    return router.on('message:result', onMessageResult);
+    return router.on(EVENTS.message.result, onMessageResult);
   }, [channelId, socket, router]);
 
   // Side-effect events are now handled by auto-wiring via messagesEffects
@@ -346,7 +354,7 @@ export function ChannelMessagesProvider({
     registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
     registry.register(
       createUsageFeature({
-        emitRefreshUsage: () => socket.emit('settings:refresh_usage', { channelId }),
+        emitRefreshUsage: () => socket.emit(EVENTS.settings.refresh_usage, { channelId }),
       }),
     );
     registry.register(createRewindFeature());

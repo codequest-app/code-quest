@@ -1,4 +1,4 @@
-import { gitCheckoutPayloadSchema, gitLogPayloadSchema } from '@code-quest/shared';
+import { EVENTS, gitCheckoutPayloadSchema, gitLogPayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -76,8 +76,8 @@ export function create({
     }
   }
 
-  emitter.on('git:status', withChannel(handleStatus));
-  emitter.on('git:checkout', withChannel(handleCheckout));
-  emitter.on('git:log', withChannel(handleLog));
-  emitter.on('git:diff', withChannel(handleDiff));
+  emitter.on(EVENTS.git.status, withChannel(handleStatus));
+  emitter.on(EVENTS.git.checkout, withChannel(handleCheckout));
+  emitter.on(EVENTS.git.log, withChannel(handleLog));
+  emitter.on(EVENTS.git.diff, withChannel(handleDiff));
 }

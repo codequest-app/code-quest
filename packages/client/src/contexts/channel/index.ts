@@ -1,4 +1,4 @@
-export { useChannelCompose } from './ChannelComposeContext';
+export { useChannelCompose, useChannelComposeActions } from './ChannelComposeContext';
 export { useChannelConfig } from './ChannelConfigContext';
 export { ChannelProvider } from './ChannelContext';
 export { useChannelControl } from './ChannelControlContext';

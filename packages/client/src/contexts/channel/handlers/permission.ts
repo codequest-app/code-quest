@@ -1,4 +1,5 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
@@ -67,7 +68,7 @@ export const controlHandlers = {
 
 function onControlMcpEffect(deps: EffectDeps, p: Payload<'control:mcp'>): void {
   const mcpMsg = p.message;
-  deps.socket.emit('chat:respond', {
+  deps.socket.emit(EVENTS.chat.respond, {
     channelId: deps.channelId,
     requestId: p.requestId,
     response: {
@@ -110,7 +111,7 @@ export function createControlActions({
     const ctrls = controlsRef.current;
     const target = requestId ? ctrls.find((c) => c.requestId === requestId) : ctrls[0];
     if (!target) return;
-    emit('chat:respond', { requestId: target.requestId, response });
+    emit(EVENTS.chat.respond, { requestId: target.requestId, response });
     const controlLabel = target.toolName ?? target.subtype;
     const action = getFeedbackLabel(response);
     setControls((prev) => prev.filter((c) => c.requestId !== target.requestId));
@@ -126,7 +127,7 @@ export function createControlActions({
   function diffRespond(toolId: string, accepted: boolean) {
     const ctrl = controlsRef.current.find((c) => c.toolUseId === toolId);
     if (!ctrl) return;
-    emit('chat:respond', {
+    emit(EVENTS.chat.respond, {
       requestId: ctrl.requestId,
       response: accepted
         ? { behavior: 'allow' as const, updatedInput: {} }
@@ -135,11 +136,11 @@ export function createControlActions({
   }
 
   function stopTask(taskId: string) {
-    emit('chat:stop_task', { taskId });
+    emit(EVENTS.chat.stop_task, { taskId });
   }
 
   function respondToElicitation(requestId: string, answer: string) {
-    emit('chat:respond', {
+    emit(EVENTS.chat.respond, {
       requestId,
       response: { behavior: 'allow', updatedInput: { url: answer, value: answer } },
     });
@@ -147,7 +148,7 @@ export function createControlActions({
   }
 
   function cancelElicitation(requestId: string) {
-    emit('chat:respond', { requestId, response: { behavior: 'deny' } });
+    emit(EVENTS.chat.respond, { requestId, response: { behavior: 'deny' } });
     setElicitation(null);
   }
 

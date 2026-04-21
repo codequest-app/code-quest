@@ -1,3 +1,4 @@
+import { EVENTS } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { RawEventPanel } from './RawEventPanel';
@@ -52,10 +53,10 @@ export const Streaming: Story = {
   args: {
     onSubscribe: (cb: (evt: unknown) => void) => {
       const events = [
-        { type: 'message:assistant', content: 'Hello from Claude' },
-        { type: 'stream:chunk', delta: { type: 'text_delta', text: 'streaming...' } },
-        { type: 'control:permission', toolName: 'Bash', input: { command: 'ls' } },
-        { type: 'message:result', stats: { durationMs: 500 } },
+        { type: EVENTS.message.assistant, content: 'Hello from Claude' },
+        { type: EVENTS.stream.chunk, delta: { type: 'text_delta', text: 'streaming...' } },
+        { type: EVENTS.control.permission, toolName: 'Bash', input: { command: 'ls' } },
+        { type: EVENTS.message.result, stats: { durationMs: 500 } },
       ];
       let i = 0;
       const interval = setInterval(() => {

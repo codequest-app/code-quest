@@ -1,4 +1,4 @@
-import { terminalOpenClaudePayloadSchema } from '@code-quest/shared';
+import { EVENTS, terminalOpenClaudePayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -74,6 +74,6 @@ export function create({
     }
   }
 
-  emitter.on('terminal:read', withChannel(handleRead));
-  emitter.on('terminal:open_claude', handleOpenClaude);
+  emitter.on(EVENTS.terminal.read, withChannel(handleRead));
+  emitter.on(EVENTS.terminal.open_claude, handleOpenClaude);
 }

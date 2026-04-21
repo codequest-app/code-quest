@@ -1,3 +1,4 @@
+import { EVENTS } from '@code-quest/shared';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
@@ -11,6 +12,6 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     ch.write(JSON.stringify({ type: 'stop_speech_to_text', channelId: ch.channelId }));
   }
 
-  emitter.on('speech:start', withChannel(handleStart));
-  emitter.on('speech:stop', withChannel(handleStop));
+  emitter.on(EVENTS.speech.start, withChannel(handleStart));
+  emitter.on(EVENTS.speech.stop, withChannel(handleStop));
 }

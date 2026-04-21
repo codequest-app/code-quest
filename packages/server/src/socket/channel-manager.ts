@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';
@@ -203,7 +204,7 @@ export class ChannelManager {
     const ch = this.channels.get(channelId);
     const ss = ch?.sessionConfig ?? {};
 
-    this.emitter.broadcastAll('session:states', {
+    this.emitter.broadcastAll(EVENTS.session.states, {
       sessions: [
         {
           channelId,
@@ -222,7 +223,7 @@ export class ChannelManager {
 
     const settings = ch?.toSettingsUpdatePayload();
     if (settings) {
-      this.emitter.broadcastAll('settings:update', { channelId, ...settings });
+      this.emitter.broadcastAll(EVENTS.settings.update, { channelId, ...settings });
     }
   }
 }

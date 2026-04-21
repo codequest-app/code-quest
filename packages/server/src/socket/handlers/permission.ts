@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import {
   controlForwardPayloadSchema,
   controlOpenDiffPayloadSchema,
+  EVENTS,
   permissionPayloadSchema,
   requestIdPayloadSchema,
 } from '@code-quest/shared';
@@ -13,7 +14,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   function onCancel(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);
-    emitter.emit(ch.channelId, 'chat:cancel_request', {
+    emitter.emit(ch.channelId, EVENTS.chat.cancel_request, {
       channelId: ch.channelId,
       targetRequestId: requestId,
     });
@@ -34,7 +35,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       controlForwardPayloadSchema.parse(payload);
 
     ch.trackControlRequest(requestId, { subtype, toolName, toolUseId });
-    emitter.emit(ch.channelId, 'raw:event', {
+    emitter.emit(ch.channelId, EVENTS.raw.event, {
       channelId: ch.channelId,
       rawType: `control_request/${subtype}`,
       data: { requestId, subtype, toolName, toolUseId, input, suggestions, callbackId },
@@ -49,7 +50,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       readFileOrEmpty(newPath),
     ]);
     ch.trackControlRequest(requestId, { subtype: 'open_diff' });
-    emitter.emit(ch.channelId, 'control:diff_review', {
+    emitter.emit(ch.channelId, EVENTS.control.diff_review, {
       channelId: ch.channelId,
       requestId,
       toolId: requestId,
@@ -59,9 +60,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     });
   }
 
-  emitter.on('control:cancel', withChannel(onCancel));
-  emitter.on('control:permission', withChannel(onPermission));
-  emitter.on('control:elicitation', withChannel(onElicitation));
-  emitter.on('control:forward', withChannel(onForwardToClient));
-  emitter.on('control:open_diff', withChannel(onOpenDiff));
+  emitter.on(EVENTS.control.cancel, withChannel(onCancel));
+  emitter.on(EVENTS.control.permission, withChannel(onPermission));
+  emitter.on(EVENTS.control.elicitation, withChannel(onElicitation));
+  emitter.on(EVENTS.control.forward, withChannel(onForwardToClient));
+  emitter.on(EVENTS.control.open_diff, withChannel(onOpenDiff));
 }

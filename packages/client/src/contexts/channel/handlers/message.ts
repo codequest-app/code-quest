@@ -1,4 +1,5 @@
 import type { ContentBlock } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
@@ -132,12 +133,12 @@ export function createMessageActions({
   }
 
   function abort() {
-    channelEmit(socket, channelId, 'chat:cancel', {});
+    channelEmit(socket, channelId, EVENTS.chat.cancel, {});
     setChannelState((prev) => ({ ...prev, status: 'cancelling' as const }));
   }
 
   function kill() {
-    channelEmit(socket, channelId, 'session:close', {});
+    channelEmit(socket, channelId, EVENTS.session.close, {});
   }
 
   return { sendMessage, abort, kill };

@@ -1,4 +1,4 @@
-import { rateLimitInternalPayloadSchema } from '@code-quest/shared';
+import { EVENTS, rateLimitInternalPayloadSchema } from '@code-quest/shared';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 
@@ -11,5 +11,5 @@ export function create({
     usageTracker.update(info);
   }
 
-  emitter.on('system:rate_limit', onRateLimit);
+  emitter.on(EVENTS.system.rate_limit, onRateLimit);
 }

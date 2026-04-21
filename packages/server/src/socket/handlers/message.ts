@@ -11,6 +11,7 @@ import {
   chatStopTaskPayloadSchema,
   controlGenerateTitleResponseSchema,
   controlRespondPayloadSchema,
+  EVENTS,
 } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
@@ -63,7 +64,7 @@ export function create({
         ch.sendMessage(textMessage);
         channelManager.broadcastSessionState(channelId, 'busy');
 
-        emitter.emitToOthers(channelId, socket.id, 'message:user', {
+        emitter.emitToOthers(channelId, socket.id, EVENTS.message.user, {
           channelId,
           content: [{ type: 'text', text: textMessage }],
         });
@@ -101,7 +102,7 @@ export function create({
   ): void {
     channel.removeControlRequest(requestId);
     channel.respondToRequest(requestId, cliResponse);
-    emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId: requestId });
+    emitter.emit(channelId, EVENTS.chat.cancel_request, { channelId, targetRequestId: requestId });
   }
 
   function buildMcpResponse(
@@ -247,7 +248,7 @@ export function create({
             message: 'User cancelled',
             interrupt: false,
           });
-          emitter.emit(channelId, 'chat:cancel_request', { channelId, targetRequestId });
+          emitter.emit(channelId, EVENTS.chat.cancel_request, { channelId, targetRequestId });
         }
       },
     );
@@ -263,23 +264,33 @@ export function create({
     );
   }
 
+  async function requestTitle(ch: Channel, prompt: string): Promise<string | null> {
+    const res = await ch.sendRequest(EVENTS.session.generate_title, { description: prompt });
+    const parsed = controlGenerateTitleResponseSchema.safeParse(res.response);
+    return parsed.success ? parsed.data.title : null;
+  }
+
+  function persistTitle(channelId: string, title: string): void {
+    sessionStore
+      .renameByChannelId(channelId, title)
+      .catch((e: unknown) => logger.warn({ err: e }, 'Failed to persist session title'));
+  }
+
+  function broadcastTitle(channelId: string, title: string): void {
+    channelManager.broadcastSessionState(channelId, 'idle', title);
+  }
+
   async function generateTitleIfNeeded(channelId: string, ch: Channel): Promise<void> {
     const pendingPrompt = ch.pendingTitlePrompt;
     if (!pendingPrompt) return;
 
     ch.pendingTitlePrompt = undefined;
     try {
-      const res = await ch.sendRequest('session:generate_title', {
-        description: pendingPrompt,
-      });
-      const parsed = controlGenerateTitleResponseSchema.safeParse(res.response);
-      if (!parsed.success) return;
-      const { title } = parsed.data;
+      const title = await requestTitle(ch, pendingPrompt);
+      if (!title) return;
       ch.title = title;
-      sessionStore
-        .renameByChannelId(channelId, title)
-        .catch((e: unknown) => logger.warn({ err: e }, 'Failed to persist session title'));
-      channelManager.broadcastSessionState(channelId, 'idle', title);
+      persistTitle(channelId, title);
+      broadcastTitle(channelId, title);
     } catch (e) {
       logger.error({ err: e }, 'Failed to generate session title');
     }
@@ -295,15 +306,15 @@ export function create({
     interruptedChannels.delete(ch.channelId);
   }
 
-  emitter.on('message:result', withChannel(onMessageResult));
+  emitter.on(EVENTS.message.result, withChannel(onMessageResult));
   emitter.on('channel:exit', withChannel(onChannelExit));
-  emitter.on('chat:send', withSocket(handleSend));
-  emitter.on('chat:cancel', withChannel(handleCancel));
-  emitter.on('chat:respond', handleRespond);
-  emitter.on('chat:stop_task', withChannel(handleStopTask));
-  emitter.on('chat:cancel_async', withChannel(handleCancelAsync));
-  emitter.on('chat:rewind_code', withError(withChannel(handleRewindCode)));
-  emitter.on('chat:ask_side_question', withError(withChannel(handleAskSideQuestion)));
-  emitter.on('chat:cancel_request', handleCancelRequest);
-  emitter.on('chat:hook_respond', withChannel(handleHookRespond));
+  emitter.on(EVENTS.chat.send, withSocket(handleSend));
+  emitter.on(EVENTS.chat.cancel, withChannel(handleCancel));
+  emitter.on(EVENTS.chat.respond, handleRespond);
+  emitter.on(EVENTS.chat.stop_task, withChannel(handleStopTask));
+  emitter.on(EVENTS.chat.cancel_async, withChannel(handleCancelAsync));
+  emitter.on(EVENTS.chat.rewind_code, withError(withChannel(handleRewindCode)));
+  emitter.on(EVENTS.chat.ask_side_question, withError(withChannel(handleAskSideQuestion)));
+  emitter.on(EVENTS.chat.cancel_request, handleCancelRequest);
+  emitter.on(EVENTS.chat.hook_respond, withChannel(handleHookRespond));
 }

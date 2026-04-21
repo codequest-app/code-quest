@@ -1,4 +1,5 @@
 import type { WorktreeInfo } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import { rpc } from '../socket/rpc';
 import { useSocket } from './SocketContext';
@@ -37,17 +38,17 @@ export function WorktreeProvider({ children }: { children: ReactNode }) {
 
   const [actions] = useState<WorktreeActions>(() => ({
     async create(cwd, name) {
-      const res = await rpc(socket, 'worktree:create', { cwd, name });
+      const res = await rpc(socket, EVENTS.worktree.create, { cwd, name });
       return res.ok ? res.data : { error: res.error };
     },
     async list(cwd) {
-      const res = await rpc(socket, 'worktree:list', { cwd });
+      const res = await rpc(socket, EVENTS.worktree.list, { cwd });
       const worktrees = res.ok ? res.data.worktrees : [];
       setListing((prev) => ({ ...prev, [cwd]: worktrees }));
       return worktrees;
     },
     async remove(cwd, name) {
-      const res = await rpc(socket, 'worktree:delete', { cwd, name });
+      const res = await rpc(socket, EVENTS.worktree.delete, { cwd, name });
       if (res.ok) {
         setListing((prev) => {
           const next = { ...prev };

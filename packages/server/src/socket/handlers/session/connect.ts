@@ -8,6 +8,7 @@ import {
   channelExitPayloadSchema,
   controlInitResponseSchema,
   ERROR_CODES,
+  EVENTS,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
@@ -59,9 +60,9 @@ export function create({
    *  Used by both launch finalization and session:join history replay. */
   function emitInitState(channel: Channel, socket: TypedSocket | undefined): void {
     if (!socket) return;
-    socket.emit('session:init', buildSessionInitPayload(channel));
+    socket.emit(EVENTS.session.init, buildSessionInitPayload(channel));
     if (channelManager.cachedModels) {
-      socket.emit('app:models', { channelId: '', models: channelManager.cachedModels });
+      socket.emit(EVENTS.app.models, { channelId: '', models: channelManager.cachedModels });
     }
   }
 
@@ -69,22 +70,27 @@ export function create({
     channel: Channel,
     parsed: Pick<SessionLaunchPayload, 'model' | 'permissionMode' | 'thinkingLevel'>,
   ): Promise<void> {
+    const applySetting = (event: string, payload: Record<string, unknown>, label: string) =>
+      channel
+        .sendRequest(event, payload)
+        .catch((e) => logger.warn({ err: e }, `Failed to set ${label}`));
+
     if (parsed.model) {
-      await channel
-        .sendRequest('settings:set_model', { model: parsed.model })
-        .catch((e) => logger.warn({ err: e }, 'Failed to set model'));
+      await applySetting(EVENTS.settings.set_model, { model: parsed.model }, 'model');
     }
     if (parsed.permissionMode) {
-      await channel
-        .sendRequest('settings:set_permission_mode', { mode: parsed.permissionMode })
-        .catch((e) => logger.warn({ err: e }, 'Failed to set permission mode'));
+      await applySetting(
+        EVENTS.settings.set_permission_mode,
+        { mode: parsed.permissionMode },
+        'permission mode',
+      );
     }
     if (parsed.thinkingLevel) {
-      await channel
-        .sendRequest('settings:set_thinking_level', {
-          tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
-        })
-        .catch((e) => logger.warn({ err: e }, 'Failed to set thinking tokens'));
+      await applySetting(
+        EVENTS.settings.set_thinking_level,
+        { tokens: parsed.thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS },
+        'thinking tokens',
+      );
     }
   }
 
@@ -100,12 +106,12 @@ export function create({
     if (models) {
       channelManager.cachedModels = models;
       await settingsStore.set(channelManager.provider, 'models', models);
-      emitter.broadcastAll('app:models', { channelId: '', models });
+      emitter.broadcastAll(EVENTS.app.models, { channelId: '', models });
     }
 
     if (account && Object.keys(account).length > 0) {
       const { email, subscriptionType, authMethod, organization } = account;
-      emitter.broadcastAll('settings:update', {
+      emitter.broadcastAll(EVENTS.settings.update, {
         channelId: '',
         accountInfo: { email, subscriptionType, authMethod, organization },
       });
@@ -151,7 +157,7 @@ export function create({
     emitInitState(channel, socket);
 
     callback?.(ok({ channelId: channel.channelId, slashCommands, models, account }));
-    emitter.broadcastAll('session:created', {
+    emitter.broadcastAll(EVENTS.session.created, {
       channelId: channel.channelId,
       cwd: channel.cwd,
       projectRoot: channel.projectRoot ?? channel.cwd,
@@ -274,7 +280,7 @@ export function create({
     const { code: _code } = channelExitPayloadSchema.parse(payload);
     channelManager.broadcastSessionState(ch.channelId, 'exited');
     ch.resetSessionConfig();
-    emitter.emit(ch.channelId, 'session:closed', {
+    emitter.emit(ch.channelId, EVENTS.session.closed, {
       channelId: ch.channelId,
       ...(ch.lastError ? { error: ch.lastError } : {}),
     });
@@ -338,7 +344,7 @@ export function create({
         ...(slashCommands && { slashCommands }),
       });
 
-      emitter.broadcastAll('session:created', {
+      emitter.broadcastAll(EVENTS.session.created, {
         channelId: channel.channelId,
         cwd: channel.cwd,
         projectRoot: channel.projectRoot ?? channel.cwd,
@@ -355,9 +361,9 @@ export function create({
     }
   }
 
-  emitter.on('session:init', withChannel(onSessionInit));
+  emitter.on(EVENTS.session.init, withChannel(onSessionInit));
   emitter.on('channel:exit', withChannel(onChannelExit));
-  emitter.on('session:launch', handleLaunch);
-  emitter.on('session:join', handleJoin);
-  emitter.on('session:resume', handleResume);
+  emitter.on(EVENTS.session.launch, handleLaunch);
+  emitter.on(EVENTS.session.join, handleJoin);
+  emitter.on(EVENTS.session.resume, handleResume);
 }

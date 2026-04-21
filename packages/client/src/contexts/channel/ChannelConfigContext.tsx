@@ -2,6 +2,7 @@ import {
   type AccountInfo,
   type ControlResponse,
   type EffortLevel,
+  EVENTS,
   getProviderConfigResponseSchema,
   type ModelInfo,
   type ProviderClientConfig,
@@ -136,7 +137,7 @@ export function ChannelConfigProvider({
   // ── Fetch provider config on mount ──
   useEffect(() => {
     if (!channelId) return;
-    socket.emit('app:config', { channelId }, (raw) => {
+    socket.emit(EVENTS.app.config, { channelId }, (raw) => {
       const parsed = getProviderConfigResponseSchema.safeParse(raw);
       if (!parsed.success) return;
       const res = parsed.data;

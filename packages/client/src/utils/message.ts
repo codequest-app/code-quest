@@ -1,6 +1,7 @@
 import {
   type ChatStats,
   type ContentBlock,
+  EVENTS,
   historyAssistantSchema,
   historyResultSchema,
   historyUserSchema,
@@ -134,14 +135,14 @@ function messagesFromUserBlock(
 export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
   const messages: Message[] = [];
   for (const event of events) {
-    if (event.name === 'message:assistant') {
+    if (event.name === EVENTS.message.assistant) {
       const parsed = historyAssistantSchema.safeParse(event.payload);
       if (!parsed.success) continue;
       for (const block of parsed.data.content) {
         const m = messagesFromAssistantBlock(block, parsed.data.parentToolUseId);
         if (m) messages.push(m);
       }
-    } else if (event.name === 'message:user') {
+    } else if (event.name === EVENTS.message.user) {
       const parsed = historyUserSchema.safeParse(event.payload);
       if (!parsed.success) continue;
       for (const block of parsed.data.content) {
@@ -153,7 +154,7 @@ export function buildMessagesFromHistory(events: ClientMessage[]): Message[] {
         );
         if (m) messages.push(m);
       }
-    } else if (event.name === 'message:result') {
+    } else if (event.name === EVENTS.message.result) {
       const parsed = historyResultSchema.safeParse(event.payload);
       if (!parsed.success) continue;
       const stats = mapSessionStats(parsed.data.stats);

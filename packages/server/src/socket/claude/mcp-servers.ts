@@ -1,4 +1,4 @@
-import { channelIdPayloadSchema } from '@code-quest/shared';
+import { channelIdPayloadSchema, EVENTS } from '@code-quest/shared';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import type { ChannelEmitter } from '../channel-emitter.ts';
@@ -41,16 +41,16 @@ function createMcpHandler(
 
       if (action.connectingState) {
         setMcpState(action.stateKey, action.connectingState);
-        emitter.broadcastAll('settings:update', {
+        emitter.broadcastAll(EVENTS.settings.update, {
           channelId: '',
           [action.stateKey]: action.connectingState,
         });
       }
 
-      await channel.sendRequest('mcp:set_servers', action.servers);
+      await channel.sendRequest(EVENTS.mcp.set_servers, action.servers);
 
       setMcpState(action.stateKey, action.successState);
-      emitter.broadcastAll('settings:update', {
+      emitter.broadcastAll(EVENTS.settings.update, {
         channelId: '',
         [action.stateKey]: action.successState,
       });
@@ -58,7 +58,7 @@ function createMcpHandler(
     } catch (err) {
       if (action.errorState) {
         setMcpState(action.stateKey, action.errorState);
-        emitter.broadcastAll('settings:update', {
+        emitter.broadcastAll(EVENTS.settings.update, {
           channelId: '',
           [action.stateKey]: action.errorState,
         });
@@ -73,7 +73,7 @@ export function create({
   emitter,
 }: Pick<HandlerContext, 'channelManager' | 'emitter'>): void {
   emitter.on(
-    'mcp:ensure_chrome',
+    EVENTS.mcp.ensure_chrome,
     createMcpHandler(channelManager, emitter, {
       servers: { 'claude-in-chrome': { command: 'claude', args: ['mcp', 'serve', 'chrome'] } },
       stateKey: 'chromeMcpState',
@@ -87,7 +87,7 @@ export function create({
   );
 
   emitter.on(
-    'mcp:disable_chrome',
+    EVENTS.mcp.disable_chrome,
     createMcpHandler(channelManager, emitter, {
       servers: {},
       stateKey: 'chromeMcpState',
@@ -99,7 +99,7 @@ export function create({
   );
 
   emitter.on(
-    'mcp:enable_jupyter',
+    EVENTS.mcp.enable_jupyter,
     createMcpHandler(channelManager, emitter, {
       servers: { 'claude-jupyter': { command: 'claude', args: ['mcp', 'serve', 'jupyter'] } },
       stateKey: 'jupyterMcpState',
@@ -111,7 +111,7 @@ export function create({
   );
 
   emitter.on(
-    'mcp:disable_jupyter',
+    EVENTS.mcp.disable_jupyter,
     createMcpHandler(channelManager, emitter, {
       servers: {},
       stateKey: 'jupyterMcpState',

@@ -7,6 +7,7 @@ import type {
   TeleportSessionResponse,
 } from '@code-quest/shared';
 import {
+  EVENTS,
   initResponseSchema,
   sessionCreatedPayloadSchema,
   sessionDeadPayloadSchema,
@@ -70,7 +71,7 @@ interface SessionContextValue {
   /** Register a listener that fires synchronously when a `session:states`
    * broadcast arrives, before React batches the `sessions` state update.
    * Use this when subscribers need the same sync timing as a direct
-   * `socket.on('session:states', ...)` (e.g., a joinedRef gate that must
+   * `socket.on(EVENTS.session.states, ...)` (e.g., a joinedRef gate that must
    * reflect pre-join vs post-join distinction). */
   subscribeSessionStates: (cb: (payload: SessionStatesPayload) => void) => () => void;
 }
@@ -151,16 +152,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const onAuthUrl = (payload: { channelId: string; url: string; method: string }) => {
       setAuth((prev) => ({ ...prev, status: 'code', authUrl: payload.url }));
     };
-    socket.on('notification:auth_url', onAuthUrl);
+    socket.on(EVENTS.notification.auth_url, onAuthUrl);
     return () => {
-      socket.off('notification:auth_url', onAuthUrl);
+      socket.off(EVENTS.notification.auth_url, onAuthUrl);
     };
   }, [socket]);
 
   // app:init + session:* broadcasts — maintain the live session list.
   useEffect(() => {
     const onConnect = () => {
-      socket.emit('app:init', (raw) => {
+      socket.emit(EVENTS.app.init, (raw) => {
         const parsed = initResponseSchema.safeParse(raw);
         if (!parsed.success) return;
         setSessions(parsed.data.sessions);
@@ -189,44 +190,44 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     socket.on('connect', onConnect);
     if (socket.connected) onConnect();
-    socket.on('session:created', onCreated);
-    socket.on('session:dead', onDead);
-    socket.on('session:states', onStates);
+    socket.on(EVENTS.session.created, onCreated);
+    socket.on(EVENTS.session.dead, onDead);
+    socket.on(EVENTS.session.states, onStates);
     return () => {
       socket.off('connect', onConnect);
-      socket.off('session:created', onCreated);
-      socket.off('session:dead', onDead);
-      socket.off('session:states', onStates);
+      socket.off(EVENTS.session.created, onCreated);
+      socket.off(EVENTS.session.dead, onDead);
+      socket.off(EVENTS.session.states, onStates);
     };
   }, [socket]);
 
   const [actions] = useState<SessionActionsValue>(() => ({
     setInitOptions,
-    listSessions: (opts) => rpc(socket, 'session:list', opts ?? {}),
-    listRemoteSessions: (opts) => rpc(socket, 'session:list_remote', opts ?? {}),
-    getSession: (channelId) => rpc(socket, 'session:get', { channelId }),
+    listSessions: (opts) => rpc(socket, EVENTS.session.list, opts ?? {}),
+    listRemoteSessions: (opts) => rpc(socket, EVENTS.session.list_remote, opts ?? {}),
+    getSession: (channelId) => rpc(socket, EVENTS.session.get, { channelId }),
     forkSession: (forkedFromChannelId, resumeSessionAt) =>
-      rpc(socket, 'session:fork', {
+      rpc(socket, EVENTS.session.fork, {
         forkedFromChannelId,
         resumeSessionAt,
         newChannelId: crypto.randomUUID(),
       }),
     teleportSession: (remoteChannelId, branch) =>
-      rpc(socket, 'session:teleport', {
+      rpc(socket, EVENTS.session.teleport, {
         remoteChannelId,
         branch,
         newChannelId: crypto.randomUUID(),
       }),
-    renameSession: (channelId, title) => rpc(socket, 'session:rename', { channelId, title }),
-    deleteSession: (channelId) => rpc(socket, 'session:delete', { channelId }),
+    renameSession: (channelId, title) => rpc(socket, EVENTS.session.rename, { channelId, title }),
+    deleteSession: (channelId) => rpc(socket, EVENTS.session.delete, { channelId }),
     updateSessionState: (channelId, update) =>
-      rpc(socket, 'session:update_state', { channelId, ...update }),
+      rpc(socket, EVENTS.session.update_state, { channelId, ...update }),
     closeSession: (channelId: string) => {
-      socket.emit('session:close', { channelId });
+      socket.emit(EVENTS.session.close, { channelId });
     },
     resume: (sessionId: string) =>
       new Promise<{ channelId: string }>((resolve, reject) => {
-        socket.emit('session:resume', { sessionId }, (raw: unknown) => {
+        socket.emit(EVENTS.session.resume, { sessionId }, (raw: unknown) => {
           const parsed = sessionResumeResponseSchema.safeParse(raw);
           if (!parsed.success) {
             reject(new Error('Invalid response'));
@@ -241,7 +242,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }),
     login: () => {
       setAuth({ status: 'waiting', authUrl: null, errorMsg: null });
-      socket.emit('auth:login', { method: 'oauth' }, (res) => {
+      socket.emit(EVENTS.auth.login, { method: 'oauth' }, (res) => {
         if (!res.ok) {
           setAuth({ status: 'error', authUrl: null, errorMsg: res.error ?? 'Login failed' });
         }
@@ -249,7 +250,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     submitOAuthCode: (code: string, state?: string) => {
       setAuth((prev) => ({ ...prev, status: 'waiting' }));
-      socket.emit('auth:oauth_code', { code, state }, (res) => {
+      socket.emit(EVENTS.auth.oauth_code, { code, state }, (res) => {
         if (res.ok) {
           setAuth({ status: 'success', authUrl: null, errorMsg: null });
         } else {

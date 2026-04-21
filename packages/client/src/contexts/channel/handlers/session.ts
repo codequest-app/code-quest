@@ -6,7 +6,7 @@ import type {
   RpcResult,
   SideQuestionResult,
 } from '@code-quest/shared';
-import { isRecord } from '@code-quest/shared';
+import { EVENTS, isRecord } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
@@ -38,7 +38,7 @@ interface SessionActionsDeps {
 
 export function createSessionActions({ socket, channelId }: SessionActionsDeps) {
   function fetchRawEvents(): Promise<RawEventsResponse> {
-    return rpc(socket, 'session:raw_events', { channelId });
+    return rpc(socket, EVENTS.session.raw_events, { channelId });
   }
 
   function subscribeRawEvents(cb: (evt: unknown) => void): () => void {
@@ -52,7 +52,7 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
   }
 
   function forkSession(messageId: string): Promise<ForkConversationResponse> {
-    return rpc(socket, 'session:fork', {
+    return rpc(socket, EVENTS.session.fork, {
       forkedFromChannelId: channelId,
       resumeSessionAt: messageId,
       newChannelId: crypto.randomUUID(),
@@ -63,15 +63,15 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     userMessageId: string,
     dryRun = false,
   ): Promise<RpcResult<RewindResult>> {
-    return rpc(socket, 'chat:rewind_code', { channelId, userMessageId, dryRun });
+    return rpc(socket, EVENTS.chat.rewind_code, { channelId, userMessageId, dryRun });
   }
 
   function askSideQuestion(question: string): Promise<RpcResult<SideQuestionResult>> {
-    return rpc(socket, 'chat:ask_side_question', { channelId, question });
+    return rpc(socket, EVENTS.chat.ask_side_question, { channelId, question });
   }
 
   function reloadPlugins(): Promise<PluginReloadResult> {
-    return rpc(socket, 'plugin:reload', { channelId });
+    return rpc(socket, EVENTS.plugin.reload, { channelId });
   }
 
   return {

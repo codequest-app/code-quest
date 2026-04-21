@@ -1,5 +1,6 @@
 import {
   ERROR_CODES,
+  EVENTS,
   sessionClosePayloadSchema,
   sessionDeletePayloadSchema,
   sessionGenerateTitlePayloadSchema,
@@ -23,7 +24,7 @@ export function create({
     try {
       const { channelId } = sessionClosePayloadSchema.parse(payload);
       ch.kill();
-      emitter.broadcastAll('session:dead', { channelId });
+      emitter.broadcastAll(EVENTS.session.dead, { channelId });
     } catch (err) {
       logger.warn({ err }, 'Failed to close session');
     }
@@ -75,7 +76,7 @@ export function create({
   ): Promise<void> {
     try {
       const { description, persist } = sessionGenerateTitlePayloadSchema.parse(payload);
-      const result = await ch.sendRequest('session:generate_title', {
+      const result = await ch.sendRequest(EVENTS.session.generate_title, {
         description,
         persist,
       });
@@ -100,9 +101,9 @@ export function create({
     }
   }
 
-  emitter.on('session:close', withChannel(handleClose));
-  emitter.on('session:delete', handleDelete);
-  emitter.on('session:rename', handleRename);
-  emitter.on('session:generate_title', withChannel(handleGenerateTitle));
-  emitter.on('session:update_state', handleUpdateState);
+  emitter.on(EVENTS.session.close, withChannel(handleClose));
+  emitter.on(EVENTS.session.delete, handleDelete);
+  emitter.on(EVENTS.session.rename, handleRename);
+  emitter.on(EVENTS.session.generate_title, withChannel(handleGenerateTitle));
+  emitter.on(EVENTS.session.update_state, handleUpdateState);
 }

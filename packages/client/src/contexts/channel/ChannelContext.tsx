@@ -1,4 +1,4 @@
-import { sessionLaunchResponseSchema } from '@code-quest/shared';
+import { EVENTS, sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { EmptyState } from '../../components/EmptyState';
 import { SpinnerVerb } from '../../components/SpinnerVerb';
@@ -45,7 +45,7 @@ export function ChannelProvider({
     if (!cwd) return;
     launchedRef.current = true;
     setState({ status: 'connecting' });
-    socket.emit('session:launch', { channelId, cwd }, (raw: unknown) => {
+    socket.emit(EVENTS.session.launch, { channelId, cwd }, (raw: unknown) => {
       const parsed = sessionLaunchResponseSchema.safeParse(raw);
       if (!parsed.success) {
         setState({ status: 'error', message: 'Failed to connect' });

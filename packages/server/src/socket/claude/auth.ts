@@ -1,5 +1,6 @@
 import {
   controlAuthenticateResponseSchema,
+  EVENTS,
   loginPayloadSchema,
   oauthCodePayloadSchema,
 } from '@code-quest/shared';
@@ -41,7 +42,7 @@ export function create({
       });
       const authData = controlAuthenticateResponseSchema.parse(controlResp.response);
       if (authData.manualUrl || authData.automaticUrl) {
-        socket?.emit('notification:auth_url', {
+        socket?.emit(EVENTS.notification.auth_url, {
           channelId: '',
           url: authData.automaticUrl ?? authData.manualUrl ?? '',
           method: 'browser',
@@ -82,7 +83,7 @@ export function create({
     }
   }
 
-  emitter.on('auth:status', handleStatus);
-  emitter.on('auth:login', handleLogin);
-  emitter.on('auth:oauth_code', handleOAuthCode);
+  emitter.on(EVENTS.auth.status, handleStatus);
+  emitter.on(EVENTS.auth.login, handleLogin);
+  emitter.on(EVENTS.auth.oauth_code, handleOAuthCode);
 }

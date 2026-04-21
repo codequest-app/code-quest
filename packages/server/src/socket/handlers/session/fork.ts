@@ -1,4 +1,5 @@
 import {
+  EVENTS,
   gitUpdateSkippedBranchPayloadSchema,
   sessionForkPayloadSchema,
   sessionTeleportPayloadSchema,
@@ -67,7 +68,7 @@ export function create({
           if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
-      emitter.broadcastAll('session:created', {
+      emitter.broadcastAll(EVENTS.session.created, {
         channelId: newChannelId,
         cwd: parentRow.cwd,
         projectRoot,
@@ -114,7 +115,7 @@ export function create({
       const projectRoot = await resolveProjectRoot(gitService, cwd);
       const newCh = channelManager.get(parsed.newChannelId);
       if (newCh) newCh.projectRoot = projectRoot;
-      emitter.broadcastAll('session:created', {
+      emitter.broadcastAll(EVENTS.session.created, {
         channelId: parsed.newChannelId,
         cwd,
         projectRoot,
@@ -154,7 +155,7 @@ export function create({
     }
   }
 
-  emitter.on('session:fork', handleFork);
-  emitter.on('session:teleport', handleTeleport);
-  emitter.on('git:update_skipped_branch', withError(withChannel(handleUpdateSkippedBranch)));
+  emitter.on(EVENTS.session.fork, handleFork);
+  emitter.on(EVENTS.session.teleport, handleTeleport);
+  emitter.on(EVENTS.git.update_skipped_branch, withError(withChannel(handleUpdateSkippedBranch)));
 }

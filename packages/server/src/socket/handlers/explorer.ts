@@ -1,4 +1,4 @@
-import { explorerBrowsePayloadSchema } from '@code-quest/shared';
+import { EVENTS, explorerBrowsePayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
@@ -8,7 +8,7 @@ export function create({
   filesystemService: fs,
 }: Pick<HandlerContext, 'emitter' | 'filesystemService'>): void {
   emitter.on(
-    'explorer:browse',
+    EVENTS.explorer.browse,
     async (_ch, payload: unknown, _socket?: TypedSocket, cb?: SocketCallback) => {
       try {
         const { path } = explorerBrowsePayloadSchema.parse(payload);

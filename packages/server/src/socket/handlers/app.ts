@@ -1,3 +1,4 @@
+import { EVENTS } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -77,7 +78,7 @@ export function create({
     }
   }
 
-  emitter.on('app:init', handleInit);
-  emitter.on('app:config', handleConfig);
+  emitter.on(EVENTS.app.init, handleInit);
+  emitter.on(EVENTS.app.config, handleConfig);
   emitter.on('disconnect', handleDisconnect);
 }

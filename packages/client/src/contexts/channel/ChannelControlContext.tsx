@@ -1,4 +1,5 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
+import { EVENTS } from '@code-quest/shared';
 import {
   createContext,
   type ReactNode,
@@ -172,9 +173,9 @@ export function ChannelControlProvider({
   // biome-ignore lint/correctness/useExhaustiveDependencies: handlers use channelId which is stable for effect
   useEffect(() => {
     if (!channelId) return;
-    const off1 = router.on('control:permission', onControlPermission);
-    const off2 = router.on('control:hook_callback', onControlHookCallback);
-    const off3 = router.on('session:closed', onSessionClosed);
+    const off1 = router.on(EVENTS.control.permission, onControlPermission);
+    const off2 = router.on(EVENTS.control.hook_callback, onControlHookCallback);
+    const off3 = router.on(EVENTS.session.closed, onSessionClosed);
     return () => {
       off1();
       off2();

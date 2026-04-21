@@ -9,6 +9,7 @@ export type {
   MessagePayloadMap,
   ServerToClientEvents,
 } from './socket-events.ts';
+export { EVENTS } from './socket-events.ts';
 
 // Utils
 export { errMsg } from './utils/err-msg.ts';

@@ -1,5 +1,6 @@
 import {
   channelIdPayloadSchema,
+  EVENTS,
   type PlanCommentData,
   planCommentPayloadSchema,
   planRemoveCommentPayloadSchema,
@@ -38,7 +39,10 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
       getOrCreate(channelId).push(comment);
       cb?.(ok({}));
       if (socket)
-        emitter.emitToOthers(channelId, socket.id, 'plan:comment_added', { channelId, comment });
+        emitter.emitToOthers(channelId, socket.id, EVENTS.plan.comment_added, {
+          channelId,
+          comment,
+        });
     } catch (e) {
       cb?.(err(errMsg(e, 'Failed to add comment')));
     }
@@ -80,7 +84,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
       comments.splice(idx, 1);
       cb?.(ok({}));
       if (socket)
-        emitter.emitToOthers(channelId, socket.id, 'plan:comment_removed', {
+        emitter.emitToOthers(channelId, socket.id, EVENTS.plan.comment_removed, {
           channelId,
           commentId,
         });
@@ -112,10 +116,10 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     return feedback;
   }
 
-  emitter.on('plan:comment', addComment);
-  emitter.on('plan:comments', getComments);
-  emitter.on('plan:remove_comment', removeComment);
-  emitter.on('plan:close_preview', closePreview);
+  emitter.on(EVENTS.plan.comment, addComment);
+  emitter.on(EVENTS.plan.comments, getComments);
+  emitter.on(EVENTS.plan.remove_comment, removeComment);
+  emitter.on(EVENTS.plan.close_preview, closePreview);
 
   return { consumeCommentsAsUserFeedback };
 }

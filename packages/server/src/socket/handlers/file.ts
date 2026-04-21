@@ -1,4 +1,4 @@
-import { fileListPayloadSchema, fileReadPayloadSchema } from '@code-quest/shared';
+import { EVENTS, fileListPayloadSchema, fileReadPayloadSchema } from '@code-quest/shared';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
@@ -49,6 +49,6 @@ export function create({
     }
   }
 
-  emitter.on('file:read', withError(withChannel(handleRead)));
-  emitter.on('file:list', withChannel(handleList));
+  emitter.on(EVENTS.file.read, withError(withChannel(handleRead)));
+  emitter.on(EVENTS.file.list, withChannel(handleList));
 }

@@ -1,5 +1,9 @@
 import { useRef } from 'react';
-import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import {
+  useChannelComposeActions,
+  useChannelConfig,
+  useChannelMessages,
+} from '../contexts/channel';
 import { ComposeInput } from './ComposeInput';
 import { ComposeToolbar } from './ComposeToolbar';
 import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel';
@@ -8,7 +12,7 @@ import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
 export function ChatInputArea() {
   const { permissionMode, isFastMode } = useChannelConfig();
-  const { focusTextarea, addAttachments } = useChannelCompose();
+  const { focusTextarea, addAttachments } = useChannelComposeActions();
   const { modifiedFiles, removeModifiedFile } = useChannelMessages();
 
   const modifiedFileEntries = Object.entries(modifiedFiles);

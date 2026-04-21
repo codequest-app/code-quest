@@ -1,5 +1,6 @@
 import {
   contextUsageDataSchema,
+  EVENTS,
   modelInfoSchema,
   requestIdPayloadSchema,
   serverActionModelSchema,
@@ -39,7 +40,7 @@ export function create({
           if (!parsed.data.supportsAutoMode) return [m];
           return [{ ...parsed.data, supportsAutoMode: false }];
         });
-    emitter.broadcastAll('app:models', { channelId: '', models });
+    emitter.broadcastAll(EVENTS.app.models, { channelId: '', models });
   }
   type SettingHandler<T> = {
     schema: { parse(p: unknown): T };
@@ -67,7 +68,7 @@ export function create({
     schema: settingsSetModelPayloadSchema,
     errorMsg: 'Failed to set model',
     run: async (ch, { model }) => {
-      await ch.sendRequest('settings:set_model', { model });
+      await ch.sendRequest(EVENTS.settings.set_model, { model });
       await settingsStore
         .set(ch.provider, 'model', model)
         .catch((e) => logger.warn({ err: e }, 'Failed to persist model to settings store'));
@@ -79,10 +80,10 @@ export function create({
     schema: settingsSetPermissionModePayloadSchema,
     errorMsg: 'Failed to set permission mode',
     run: async (ch, { channelId, mode }) => {
-      await ch.sendRequest('settings:set_permission_mode', { mode });
+      await ch.sendRequest(EVENTS.settings.set_permission_mode, { mode });
       ch.updateSessionConfig({ permissionMode: mode });
       await settingsStore.set(ch.provider, 'permissionMode', mode);
-      emitter.broadcastAll('settings:update', { channelId, initialPermissionMode: mode });
+      emitter.broadcastAll(EVENTS.settings.update, { channelId, initialPermissionMode: mode });
     },
   });
 
@@ -90,19 +91,19 @@ export function create({
     schema: settingsSetThinkingLevelPayloadSchema,
     errorMsg: 'Failed to set thinking level',
     run: async (ch, { channelId, thinkingLevel }) => {
-      await ch.sendRequest('settings:set_thinking_level', {
+      await ch.sendRequest(EVENTS.settings.set_thinking_level, {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
-      emitter.broadcastAll('settings:update', { channelId, thinkingLevel });
+      emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel });
     },
   });
 
   async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
     try {
       const { channelId, enabled } = settingsSetProactivePayloadSchema.parse(payload);
-      await ch.sendRequest('settings:set_proactive', { enabled });
-      emitter.broadcastAll('settings:update', {
+      await ch.sendRequest(EVENTS.settings.set_proactive, { enabled });
+      emitter.broadcastAll(EVENTS.settings.update, {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
       });
@@ -126,10 +127,10 @@ export function create({
     schema: settingsApplyPayloadSchema,
     errorMsg: 'Invalid payload',
     run: async (ch, { channelId, settings }) => {
-      await ch.sendRequest('settings:apply', { settings });
+      await ch.sendRequest(EVENTS.settings.apply, { settings });
       if (settings.effortLevel != null) {
         await settingsStore.set(ch.provider, 'effortLevel', String(settings.effortLevel));
-        emitter.broadcastAll('settings:update', {
+        emitter.broadcastAll(EVENTS.settings.update, {
           channelId,
           effort: String(settings.effortLevel),
         });
@@ -181,7 +182,7 @@ export function create({
       }
     }
 
-    socket.emit('settings:usage', {
+    socket.emit(EVENTS.settings.usage, {
       channelId: '',
       usage: usageData,
       ...(contextUsage ? { contextUsage } : {}),
@@ -220,15 +221,15 @@ export function create({
     channelManager.broadcastSessionState(ch.channelId, 'busy');
   }
 
-  emitter.on('settings:get_settings', withChannel(onGetSettings));
-  emitter.on('settings:model_updated', withChannel(onModelUpdated));
-  emitter.on('settings:permission_mode_updated', withChannel(onPermissionModeUpdated));
-  emitter.on('settings:set_model', withError(withChannel(handleSetModel)));
-  emitter.on('settings:set_permission_mode', withError(withChannel(handleSetPermissionMode)));
-  emitter.on('settings:set_thinking_level', withError(withChannel(handleSetThinkingLevel)));
-  emitter.on('settings:set_proactive', withChannel(handleSetProactive));
-  emitter.on('settings:set_remote_control', withChannel(handleSetRemoteControl));
-  emitter.on('settings:apply', withError(withChannel(handleApply)));
-  emitter.on('settings:state', withError(withChannel(handleState)));
-  emitter.on('settings:refresh_usage', handleRefreshUsage);
+  emitter.on(EVENTS.settings.get_settings, withChannel(onGetSettings));
+  emitter.on(EVENTS.settings.model_updated, withChannel(onModelUpdated));
+  emitter.on(EVENTS.settings.permission_mode_updated, withChannel(onPermissionModeUpdated));
+  emitter.on(EVENTS.settings.set_model, withError(withChannel(handleSetModel)));
+  emitter.on(EVENTS.settings.set_permission_mode, withError(withChannel(handleSetPermissionMode)));
+  emitter.on(EVENTS.settings.set_thinking_level, withError(withChannel(handleSetThinkingLevel)));
+  emitter.on(EVENTS.settings.set_proactive, withChannel(handleSetProactive));
+  emitter.on(EVENTS.settings.set_remote_control, withChannel(handleSetRemoteControl));
+  emitter.on(EVENTS.settings.apply, withError(withChannel(handleApply)));
+  emitter.on(EVENTS.settings.state, withError(withChannel(handleState)));
+  emitter.on(EVENTS.settings.refresh_usage, handleRefreshUsage);
 }

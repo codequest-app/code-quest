@@ -1,5 +1,5 @@
 import type { ContentBlock } from '@code-quest/shared';
-import { fileReadResponseSchema, isRecord } from '@code-quest/shared';
+import { EVENTS, fileReadResponseSchema, isRecord } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';
@@ -163,7 +163,7 @@ export function wireStreamingHandlers({
     const inp = block.input;
     const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
     if (!filePath) return;
-    socket.emit('file:read', { channelId, filePath }, (raw) => {
+    socket.emit(EVENTS.file.read, { channelId, filePath }, (raw) => {
       const parsed = fileReadResponseSchema.safeParse(raw);
       if (!parsed.success) return;
       const res = parsed.data;
@@ -240,12 +240,12 @@ export function wireStreamingHandlers({
     handleAssistantContent(p.content, p.parentToolUseId);
   }
 
-  socket.on('stream:chunk', onStreamChunk);
-  socket.on('stream:end', onStreamEnd);
-  socket.on('message:assistant', onMessageAssistant);
+  socket.on(EVENTS.stream.chunk, onStreamChunk);
+  socket.on(EVENTS.stream.end, onStreamEnd);
+  socket.on(EVENTS.message.assistant, onMessageAssistant);
   return () => {
-    socket.off('stream:chunk', onStreamChunk);
-    socket.off('stream:end', onStreamEnd);
-    socket.off('message:assistant', onMessageAssistant);
+    socket.off(EVENTS.stream.chunk, onStreamChunk);
+    socket.off(EVENTS.stream.end, onStreamEnd);
+    socket.off(EVENTS.message.assistant, onMessageAssistant);
   };
 }

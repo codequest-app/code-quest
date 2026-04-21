@@ -77,6 +77,13 @@ export function useChannelCompose(): ChannelComposeContextValue {
   return { ...state, ...actions };
 }
 
+export function useChannelComposeActions(): ComposeActionsValue {
+  const actions = useContext(ComposeActionsContext);
+  if (!actions)
+    throw new Error('useChannelComposeActions must be used within a ChannelComposeProvider');
+  return actions;
+}
+
 interface ComposeState {
   value: string;
   cursorPos: number;
@@ -133,12 +140,21 @@ function createComposeActions(
   const openMention = () => setState((prev) => ({ ...prev, mentionOpen: true }));
   const closeMention = () => setState((prev) => ({ ...prev, mentionOpen: false }));
 
+  const insertAtMentionSite = (
+    text: string,
+    pos: number,
+    slashToken: ReturnType<typeof getSlashQuery>,
+  ): string =>
+    slashToken
+      ? `${text.slice(0, slashToken.start)}@${text.slice(slashToken.end)}`
+      : `${text.slice(0, pos)}@${text.slice(pos)}`;
+
   const mentionFile = () => {
     const snap = get();
     const snapToken = getSlashQuery(snap.value, snap.cursorPos);
+    const cursorInsideMention = !snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null;
 
-    // If cursor is already inside a mention (@…), just open without inserting a duplicate @
-    if (!snapToken && getMentionQuery(snap.value, snap.cursorPos) !== null) {
+    if (cursorInsideMention) {
       requestFocusRef.current?.(snap.cursorPos);
       mentionTriggerRef.current?.(snap.value, snap.cursorPos);
       setState((prev) => ({ ...prev, mentionOpen: true }));
@@ -146,21 +162,25 @@ function createComposeActions(
     }
 
     const focusAt = snapToken ? snapToken.start + 1 : snap.cursorPos + 1;
-    const triggeredValue = snapToken
-      ? `${snap.value.slice(0, snapToken.start)}@${snap.value.slice(snapToken.end)}`
-      : `${snap.value.slice(0, snap.cursorPos)}@${snap.value.slice(snap.cursorPos)}`;
+    const triggeredValue = insertAtMentionSite(snap.value, snap.cursorPos, snapToken);
     setState((prev) => {
       const token = getSlashQuery(prev.value, prev.cursorPos);
       if (token) {
-        const newValue = `${prev.value.slice(0, token.start)}@${prev.value.slice(token.end)}`;
-        return { ...prev, value: newValue, slashOpen: false, mentionOpen: true };
+        return {
+          ...prev,
+          value: insertAtMentionSite(prev.value, prev.cursorPos, token),
+          slashOpen: false,
+          mentionOpen: true,
+        };
       }
-      // Defensive: if already in a mention context, skip to avoid duplicate @
       if (getMentionQuery(prev.value, prev.cursorPos) !== null) {
         return { ...prev, slashOpen: false, mentionOpen: true };
       }
-      const newValue = `${prev.value.slice(0, prev.cursorPos)}@${prev.value.slice(prev.cursorPos)}`;
-      return { ...prev, value: newValue, mentionOpen: true };
+      return {
+        ...prev,
+        value: insertAtMentionSite(prev.value, prev.cursorPos, null),
+        mentionOpen: true,
+      };
     });
     requestFocusRef.current?.(focusAt);
     mentionTriggerRef.current?.(triggeredValue, focusAt);
@@ -271,44 +291,42 @@ export function ChannelComposeProvider({ children }: { children: ReactNode }) {
     : false;
 
   const requestFocusRef = useRef<((pos?: number) => void) | null>(null);
-  const registerFocus = (fn: (pos?: number) => void) => {
-    requestFocusRef.current = fn;
-  };
-
   const mentionTriggerRef = useRef<((value: string, pos: number) => void) | null>(null);
-  const registerMentionTrigger = (fn: (value: string, pos: number) => void) => {
-    mentionTriggerRef.current = fn;
-  };
 
-  const [actionsBlock] = useState(() =>
-    createComposeActions(
+  const [actionsValue] = useState<ComposeActionsValue>(() => {
+    const block = createComposeActions(
       stateRef,
       setState,
       sendMessage,
       requestFocusRef,
       mentionTriggerRef,
       registry,
-    ),
-  );
+    );
+    return {
+      ...block,
+      registerFocus: (fn: (pos?: number) => void) => {
+        requestFocusRef.current = fn;
+      },
+      registerMentionTrigger: (fn: (value: string, pos: number) => void) => {
+        mentionTriggerRef.current = fn;
+      },
+    };
+  });
+
+  const stateValue: ComposeStateValue = {
+    value,
+    hasText,
+    cursorPos,
+    slashOpen,
+    mentionOpen,
+    slashFilter,
+    hasTextBeforeSlash,
+    attachedFiles,
+  };
 
   return (
-    <ComposeActionsContext.Provider
-      value={{ registerFocus, registerMentionTrigger, ...actionsBlock }}
-    >
-      <ComposeStateContext.Provider
-        value={{
-          value,
-          hasText,
-          cursorPos,
-          slashOpen,
-          mentionOpen,
-          slashFilter,
-          hasTextBeforeSlash,
-          attachedFiles,
-        }}
-      >
-        {children}
-      </ComposeStateContext.Provider>
+    <ComposeActionsContext.Provider value={actionsValue}>
+      <ComposeStateContext.Provider value={stateValue}>{children}</ComposeStateContext.Provider>
     </ComposeActionsContext.Provider>
   );
 }

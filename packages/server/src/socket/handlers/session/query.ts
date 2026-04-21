@@ -1,5 +1,6 @@
 import {
   ERROR_CODES,
+  EVENTS,
   sessionGetPayloadSchema,
   sessionListPayloadSchema,
   sessionListRemotePayloadSchema,
@@ -125,8 +126,8 @@ export function create({
     }
   }
 
-  emitter.on('session:list', handleList);
-  emitter.on('session:list_remote', handleListRemote);
-  emitter.on('session:get', handleGet);
-  emitter.on('session:raw_events', handleRawEvents);
+  emitter.on(EVENTS.session.list, handleList);
+  emitter.on(EVENTS.session.list_remote, handleListRemote);
+  emitter.on(EVENTS.session.get, handleGet);
+  emitter.on(EVENTS.session.raw_events, handleRawEvents);
 }

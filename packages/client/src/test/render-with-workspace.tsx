@@ -1,5 +1,6 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness */
 
+import { EVENTS } from '@code-quest/shared';
 import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -32,7 +33,7 @@ async function launchSession(
 ): Promise<string> {
   let channelId = '';
   const initPromise = new Promise<string>((resolve) => {
-    summoner.on('session:init', (p: any) => {
+    summoner.on(EVENTS.session.init, (p: any) => {
       if (!channelId) {
         channelId = p.channelId;
         resolve(p.channelId);

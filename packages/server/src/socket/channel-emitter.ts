@@ -1,4 +1,4 @@
-import { ERROR_CODES, isRecord } from '@code-quest/shared';
+import { ERROR_CODES, EVENTS, isRecord } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
@@ -95,7 +95,7 @@ export class ChannelEmitter {
    * Auto-broadcasts to channel sockets (except session:init).
    */
   dispatchRunnerMessage(ch: Channel, event: string, payload: unknown): void {
-    if (event !== 'session:init') {
+    if (event !== EVENTS.session.init) {
       const data: Record<string, unknown> = isRecord(payload) ? payload : {};
       this.emit(ch.channelId, event, { channelId: ch.channelId, ...data });
     }

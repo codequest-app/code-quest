@@ -1,6 +1,7 @@
 import {
   addMarketplacePayloadSchema,
   availablePluginSchema,
+  EVENTS,
   listPluginsPayloadSchema,
   type MarketplaceRawItem,
   type MarketplaceSourceConfig,
@@ -190,9 +191,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }
   }
 
-  emitter.on('plugin:list', handleList);
+  emitter.on(EVENTS.plugin.list, handleList);
   emitter.on(
-    'plugin:install',
+    EVENTS.plugin.install,
     createPluginCommandHandler({
       schema: pluginInstallPayloadSchema,
       toArgs: ({ pluginId }) => ['install', pluginId],
@@ -201,7 +202,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }),
   );
   emitter.on(
-    'plugin:uninstall',
+    EVENTS.plugin.uninstall,
     createPluginCommandHandler({
       schema: pluginUninstallPayloadSchema,
       toArgs: ({ pluginId }) => ['uninstall', pluginId],
@@ -210,7 +211,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }),
   );
   emitter.on(
-    'plugin:toggle',
+    EVENTS.plugin.toggle,
     createPluginCommandHandler({
       schema: pluginTogglePayloadSchema,
       toArgs: ({ pluginId, enabled }) => [enabled ? 'enable' : 'disable', pluginId],
@@ -218,9 +219,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       successExtra: { needsRestart: true },
     }),
   );
-  emitter.on('plugin:list_marketplaces', handleListMarketplaces);
+  emitter.on(EVENTS.plugin.list_marketplaces, handleListMarketplaces);
   emitter.on(
-    'plugin:add_marketplace',
+    EVENTS.plugin.add_marketplace,
     createPluginCommandHandler({
       schema: addMarketplacePayloadSchema,
       toArgs: ({ source }) => ['marketplace', 'add', source],
@@ -228,7 +229,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }),
   );
   emitter.on(
-    'plugin:remove_marketplace',
+    EVENTS.plugin.remove_marketplace,
     createPluginCommandHandler({
       schema: removeMarketplacePayloadSchema,
       toArgs: ({ marketplaceId }) => ['marketplace', 'remove', marketplaceId],
@@ -236,7 +237,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }),
   );
   emitter.on(
-    'plugin:refresh_marketplace',
+    EVENTS.plugin.refresh_marketplace,
     createPluginCommandHandler({
       schema: refreshMarketplacePayloadSchema,
       toArgs: ({ marketplaceId }) => ['marketplace', 'update', marketplaceId],
@@ -251,15 +252,17 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     cb?: SocketCallback,
   ): Promise<void> {
     try {
-      const result = await ch.sendRequest('plugin:reload', {});
-      const mapped = result.response ? ch.runner.mapResponse('plugin:reload', result.response) : {};
+      const result = await ch.sendRequest(EVENTS.plugin.reload, {});
+      const mapped = result.response
+        ? ch.runner.mapResponse(EVENTS.plugin.reload, result.response)
+        : {};
       cb?.({
         success: result.success,
         ...mapped,
         ...(result.error ? { error: result.error } : {}),
       });
       if (result.success && result.response) {
-        emitter.emit(ch.channelId, 'plugin:reloaded', {
+        emitter.emit(ch.channelId, EVENTS.plugin.reloaded, {
           channelId: ch.channelId,
           ...result.response,
         });
@@ -269,5 +272,5 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     }
   }
 
-  emitter.on('plugin:reload', withError(withChannel(handleReload)));
+  emitter.on(EVENTS.plugin.reload, withError(withChannel(handleReload)));
 }
