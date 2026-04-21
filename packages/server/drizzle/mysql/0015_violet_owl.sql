@@ -1,0 +1,1 @@
+ALTER TABLE `raw_entries` MODIFY COLUMN `raw` mediumtext NOT NULL;
