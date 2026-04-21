@@ -25,6 +25,7 @@ import { createBtwFeature } from '../../features/btw/btw-feature';
 import { createClearFeature } from '../../features/clear/clear-feature';
 import { createCompactFeature } from '../../features/compact/compact-feature';
 import { createNewConversationFeature } from '../../features/new-conversation/new-conversation-feature';
+import { createRecapFeature } from '../../features/recap/recap-feature';
 import { createReloadPluginsFeature } from '../../features/reload-plugins/reload-plugins-feature';
 import { createResumeFeature } from '../../features/resume/resume-feature';
 import { createRewindFeature } from '../../features/rewind/rewind-feature';
@@ -372,6 +373,12 @@ export function ChannelMessagesProvider({
     );
     registry.register(createResumeFeature());
     registry.register(createCompactFeature((msg) => messageActions.sendMessage(msg)));
+    registry.register(
+      createRecapFeature({
+        askSideQuestion: sessionActions.askSideQuestion,
+        appendMessage: messageActions.appendMessage,
+      }),
+    );
     const sendMessage = (message: string) => {
       const feature = registry.findSlashCommand(message);
       if (feature?.slash) {
