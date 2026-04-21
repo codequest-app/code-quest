@@ -1,14 +1,4 @@
-/**
- * App shell composition stories.
- *
- * Note: we do NOT render `<App />` directly — it calls `createSocket()` to
- * connect to a real backend, which is incompatible with Storybook. Instead we
- * mirror its provider stack via `withStoryWorkspaceFixtures`, plus the
- * `<Toaster />` and `<ErrorBoundary>` wrappers. Tracked in design.md
- * "Decision: App.stories renders real <App />" — this is the documented
- * fallback.
- */
-
+// Mirrors <App /> shell without `createSocket()` so the decorator can inject a fake socket.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';

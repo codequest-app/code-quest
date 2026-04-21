@@ -1,12 +1,9 @@
-/**
- * Shared fixture builders for Storybook stories.
- *
- * Usage: import from `*.stories.tsx` or `*.test.*` only — never from runtime.
- * See `openspec/specs/storybook-screens/spec.md`.
- */
-
 import type { PendingControl, SessionStateSummary } from '@code-quest/shared';
 import type { Message } from '../types/ui';
+
+export const STORY_CHANNEL_ID = 'story-channel';
+export const STORY_WORKTREE_CHANNEL_ID = 'story-worktree';
+export const STORY_PROJECT_ROOT = '/Users/demo/cc-office';
 
 const BASE_TIMESTAMP = 1_700_000_000_000;
 
@@ -14,9 +11,7 @@ function t(offset: number): number {
   return BASE_TIMESTAMP + offset * 1000;
 }
 
-/** Long mixed-type conversation (20+ messages) for Workspace / ChatPanel screens. */
-export function makeLongConversation(overrides?: Record<string, unknown>): Message[] {
-  void overrides;
+export function makeLongConversation(): Message[] {
   return [
     { id: 'm1', role: 'user', type: 'text', content: 'Fix the login bug', timestamp: t(0) },
     {
@@ -190,7 +185,6 @@ export function makeLongConversation(overrides?: Record<string, unknown>): Messa
   ];
 }
 
-/** Conversation frozen mid-tool-use (no tool_result) for the processing state. */
 export function makeProcessingWithTool(): Message[] {
   return [
     { id: 'p1', role: 'user', type: 'text', content: 'Search for TODO comments', timestamp: t(0) },
@@ -212,7 +206,6 @@ export function makeProcessingWithTool(): Message[] {
   ];
 }
 
-/** Conversation where the latest tool_result carries a unified diff. */
 export function makeConversationWithDiff(): Message[] {
   return [
     { id: 'd1', role: 'user', type: 'text', content: 'Rename the function', timestamp: t(0) },
@@ -236,7 +229,6 @@ export function makeConversationWithDiff(): Message[] {
   ];
 }
 
-/** A pending `can_use_tool` permission request. */
 export function makePendingPermission(overrides?: Partial<PendingControl>): PendingControl {
   return {
     requestId: 'req-1',
@@ -250,26 +242,23 @@ export function makePendingPermission(overrides?: Partial<PendingControl>): Pend
   };
 }
 
-/** A session summary for one channel/project. */
 export function makeSession(overrides?: Partial<SessionStateSummary>): SessionStateSummary {
   return {
-    channelId: 'story-channel',
+    channelId: STORY_CHANNEL_ID,
     state: 'idle',
     title: 'Fix the login bug',
-    projectRoot: '/Users/demo/cc-office',
-    cwd: '/Users/demo/cc-office',
+    projectRoot: STORY_PROJECT_ROOT,
+    cwd: STORY_PROJECT_ROOT,
     modelSetting: 'claude-sonnet-4-6',
     ...overrides,
   };
 }
 
-/** A session that lives inside a worktree (cwd points to .claude/worktrees/<name>). */
 export function makeWorktreeSession(overrides?: Partial<SessionStateSummary>): SessionStateSummary {
   return makeSession({
-    channelId: 'story-worktree',
+    channelId: STORY_WORKTREE_CHANNEL_ID,
     title: 'Feature: auth refactor',
-    projectRoot: '/Users/demo/cc-office',
-    cwd: '/Users/demo/cc-office/.claude/worktrees/feat-auth',
+    cwd: `${STORY_PROJECT_ROOT}/.claude/worktrees/feat-auth`,
     ...overrides,
   });
 }
