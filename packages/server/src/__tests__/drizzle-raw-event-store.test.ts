@@ -1,9 +1,9 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEntries } from '../db/schema-sqlite.ts';
+import { rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 
@@ -17,11 +17,11 @@ describe('DrizzleRawEventStore', () => {
   beforeEach(() => {
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
-    store = new DrizzleRawEventStore(db, rawEntries);
+    store = new DrizzleRawEventStore(db, rawEvents);
   });
 
   it('appends and retrieves raw entries via getBySession', async () => {
-    const entry: RawEntry = {
+    const entry: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',

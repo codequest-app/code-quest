@@ -1,8 +1,8 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEntries } from '../db/schema-sqlite.ts';
+import { rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawEventStore } from '../services/composite-raw-event-store.ts';
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
@@ -18,17 +18,17 @@ describe('CompositeRawEventStore', () => {
   beforeEach(() => {
     const dbA = createDatabase(':memory:');
     migrate(dbA, { migrationsFolder });
-    storeA = new DrizzleRawEventStore(dbA, rawEntries);
+    storeA = new DrizzleRawEventStore(dbA, rawEvents);
 
     const dbB = createDatabase(':memory:');
     migrate(dbB, { migrationsFolder });
-    storeB = new DrizzleRawEventStore(dbB, rawEntries);
+    storeB = new DrizzleRawEventStore(dbB, rawEvents);
   });
 
   it('appends to all stores', async () => {
     const composite = new CompositeRawEventStore([storeA, storeB]);
 
-    const entry: RawEntry = {
+    const entry: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -45,7 +45,7 @@ describe('CompositeRawEventStore', () => {
   it('reads from the first store', async () => {
     const composite = new CompositeRawEventStore([storeA, storeB]);
 
-    const entry: RawEntry = {
+    const entry: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -90,7 +90,7 @@ describe('CompositeRawEventStore', () => {
     };
     const composite = new CompositeRawEventStore([failStore1, failStore2]);
 
-    const entry: RawEntry = {
+    const entry: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -116,7 +116,7 @@ describe('CompositeRawEventStore', () => {
     };
     const composite = new CompositeRawEventStore([failStore, storeB]);
 
-    const entry: RawEntry = {
+    const entry: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',

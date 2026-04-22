@@ -1,4 +1,4 @@
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 
@@ -29,8 +29,8 @@ export function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): str
 }
 
 export interface RawEventStore {
-  append(entry: RawEntry): Promise<void>;
-  getBySession(sessionId: string): Promise<RawEntry[]>;
+  append(entry: RawEvent): Promise<void>;
+  getBySession(sessionId: string): Promise<RawEvent[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
   cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>;
 }

@@ -411,8 +411,8 @@ describe('ChatHandler > session', () => {
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const channel = mgr.get(channelId)!;
-      const rawEntries = await rawStore.getBySession(channel.sessionId!);
-      const userRawEntries = rawEntries.filter((e) => {
+      const rawEvents = await rawStore.getBySession(channel.sessionId!);
+      const userRawEntries = rawEvents.filter((e) => {
         try {
           const obj = JSON.parse(e.raw.trim());
           return obj?.type === 'user';

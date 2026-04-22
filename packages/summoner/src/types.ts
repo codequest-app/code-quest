@@ -11,7 +11,7 @@ export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 
 // --- Raw entry for recording ---
 
-export const rawEntrySchema = z.object({
+export const rawEventSchema = z.object({
   timestamp: z.number(),
   sessionId: z.string(),
   direction: z.enum(['in', 'out', 'err']),
@@ -19,7 +19,7 @@ export const rawEntrySchema = z.object({
   seq: z.number(),
 });
 
-export type RawEntry = z.infer<typeof rawEntrySchema>;
+export type RawEvent = z.infer<typeof rawEventSchema>;
 
 // --- ProcessHandle / ProcessProvider ---
 
@@ -96,5 +96,5 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
   ): string;
   formatControlResponse(requestId: string, response: Record<string, unknown>): string;
   mapResponse(event: string, response: Record<string, unknown>): Record<string, unknown>;
-  extractRespondedRequestIds(rawEntries: Array<{ direction: string; raw: string }>): Set<string>;
+  extractRespondedRequestIds(rawEvents: Array<{ direction: string; raw: string }>): Set<string>;
 }

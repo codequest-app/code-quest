@@ -168,9 +168,9 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     return this.protocol.formatControlResponse(requestId, response);
   }
 
-  extractRespondedRequestIds(rawEntries: Array<{ direction: string; raw: string }>): Set<string> {
+  extractRespondedRequestIds(rawEvents: Array<{ direction: string; raw: string }>): Set<string> {
     const ids = new Set<string>();
-    for (const entry of rawEntries) {
+    for (const entry of rawEvents) {
       if (entry.direction !== 'in') continue;
       try {
         const obj = JSON.parse(entry.raw.trim());

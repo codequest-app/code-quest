@@ -1,6 +1,6 @@
 import { getTableColumns } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { RAW_ENTRY_COLUMNS, SESSION_COLUMNS } from '../db/schema-columns.ts';
+import { RAW_EVENT_COLUMNS, SESSION_COLUMNS } from '../db/schema-columns.ts';
 import * as mysqlSchema from '../db/schema-mysql.ts';
 import * as sqliteSchema from '../db/schema-sqlite.ts';
 
@@ -11,9 +11,9 @@ describe('schema consistency', () => {
     expect(sqliteCols).toEqual(mysqlCols);
   });
 
-  it('rawEntries: sqlite and mysql have same column names', () => {
-    const sqliteCols = Object.keys(getTableColumns(sqliteSchema.rawEntries)).sort();
-    const mysqlCols = Object.keys(getTableColumns(mysqlSchema.rawEntries)).sort();
+  it('rawEvents: sqlite and mysql have same column names', () => {
+    const sqliteCols = Object.keys(getTableColumns(sqliteSchema.rawEvents)).sort();
+    const mysqlCols = Object.keys(getTableColumns(mysqlSchema.rawEvents)).sort();
     expect(sqliteCols).toEqual(mysqlCols);
   });
 
@@ -22,8 +22,8 @@ describe('schema consistency', () => {
     expect(sqliteCols).toEqual([...SESSION_COLUMNS].sort());
   });
 
-  it('rawEntries: column names match shared definition', () => {
-    const sqliteCols = Object.keys(getTableColumns(sqliteSchema.rawEntries)).sort();
-    expect(sqliteCols).toEqual([...RAW_ENTRY_COLUMNS].sort());
+  it('rawEvents: column names match shared definition', () => {
+    const sqliteCols = Object.keys(getTableColumns(sqliteSchema.rawEvents)).sort();
+    expect(sqliteCols).toEqual([...RAW_EVENT_COLUMNS].sort());
   });
 });

@@ -1,4 +1,4 @@
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
@@ -9,11 +9,11 @@ export class CompositeRawEventStore implements RawEventStore {
     }
   }
 
-  async append(entry: RawEntry): Promise<void> {
+  async append(entry: RawEvent): Promise<void> {
     await this.fanOut('append', (s) => s.append(entry));
   }
 
-  async getBySession(sessionId: string): Promise<RawEntry[]> {
+  async getBySession(sessionId: string): Promise<RawEvent[]> {
     return this.stores[0].getBySession(sessionId);
   }
 

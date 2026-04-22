@@ -134,19 +134,19 @@ function buildStores(
   const settingsStores: SettingsStore[] = [];
 
   if (config?.sqlite) {
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
   if (config?.mysql) {
-    eventStores.push(new DrizzleRawEventStore(config.mysql.database, mysqlSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(config.mysql.database, mysqlSchema.rawEvents));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
   }
 
   if (eventStores.length === 0) {
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
   }
   if (sessionStores.length === 0) {
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));

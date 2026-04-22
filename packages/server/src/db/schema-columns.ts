@@ -1,5 +1,5 @@
 /**
- * Shared column name definitions for sessions and raw_entries tables.
+ * Shared column name definitions for sessions, raw_events, raw_deltas tables.
  * Both SQLite and MySQL schemas must use exactly these column names.
  * The consistency test in schema-consistency.test.ts verifies this at test time.
  */
@@ -20,10 +20,21 @@ export const SESSION_COLUMNS = [
   'createdAt',
 ] as const;
 
-export const RAW_ENTRY_COLUMNS = ['id', 'sessionId', 'dir', 'raw', 'seq', 'createdAt'] as const;
+export const RAW_EVENT_COLUMNS = ['id', 'sessionId', 'dir', 'raw', 'seq', 'createdAt'] as const;
+
+export const RAW_DELTA_COLUMNS = [
+  'id',
+  'parentId',
+  'sessionId',
+  'dir',
+  'raw',
+  'seq',
+  'createdAt',
+] as const;
 
 export const SETTINGS_COLUMNS = ['provider', 'key', 'value'] as const;
 
 export type SessionColumnName = (typeof SESSION_COLUMNS)[number];
-export type RawEntryColumnName = (typeof RAW_ENTRY_COLUMNS)[number];
+export type RawEventColumnName = (typeof RAW_EVENT_COLUMNS)[number];
+export type RawDeltaColumnName = (typeof RAW_DELTA_COLUMNS)[number];
 export type SettingsColumnName = (typeof SETTINGS_COLUMNS)[number];

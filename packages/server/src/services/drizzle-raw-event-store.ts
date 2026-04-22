@@ -1,4 +1,4 @@
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import type { Column } from 'drizzle-orm';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';
 import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './raw-event-store.ts';
 
-const rawEntryRowSchema = z.object({
+const rawEventRowSchema = z.object({
   sessionId: z.string(),
   dir: z.string(),
   raw: z.string(),
@@ -14,7 +14,7 @@ const rawEntryRowSchema = z.object({
   createdAt: z.string(),
 });
 
-type RawEntryRow = z.infer<typeof rawEntryRowSchema>;
+type RawEventRow = z.infer<typeof rawEventRowSchema>;
 
 const directionSchema = z.enum(['in', 'out', 'err']);
 
@@ -27,7 +27,7 @@ interface RawEntriesTable {
   createdAt: Column;
 }
 
-function findText(rows: RawEntryRow[], type: 'user' | 'assistant'): string | undefined {
+function findText(rows: RawEventRow[], type: 'user' | 'assistant'): string | undefined {
   for (const row of rows) {
     const text = extractTextFromRaw(row.raw, type);
     if (text) return text;
@@ -41,7 +41,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     private table: RawEntriesTable,
   ) {}
 
-  async append(entry: RawEntry): Promise<void> {
+  async append(entry: RawEvent): Promise<void> {
     await this.db.insert(this.table).values({
       id: uuidv7(),
       sessionId: entry.sessionId,
@@ -54,7 +54,7 @@ export class DrizzleRawEventStore implements RawEventStore {
 
   // Query last 10 'out' entries — not all are assistant (init, status, etc.), so we scan a few
   async getPreview(sessionId: string): Promise<SessionPreview> {
-    const lastOutRows = z.array(rawEntryRowSchema).parse(
+    const lastOutRows = z.array(rawEventRowSchema).parse(
       await this.db
         .select()
         .from(this.table)
@@ -64,7 +64,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     );
 
     // First 'in' entry is the first user message
-    const firstInRows = z.array(rawEntryRowSchema).parse(
+    const firstInRows = z.array(rawEventRowSchema).parse(
       await this.db
         .select()
         .from(this.table)
@@ -98,7 +98,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     await this.db.insert(this.table).values(values);
   }
 
-  async getBySession(sessionId: string): Promise<RawEntry[]> {
+  async getBySession(sessionId: string): Promise<RawEvent[]> {
     const rows = await this.db
       .select()
       .from(this.table)
@@ -106,7 +106,7 @@ export class DrizzleRawEventStore implements RawEventStore {
       .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
     return z
-      .array(rawEntryRowSchema)
+      .array(rawEventRowSchema)
       .parse(rows)
       .map((row) => ({
         timestamp: new Date(row.createdAt).getTime(),

@@ -4,7 +4,7 @@ import {
   sessionForkPayloadSchema,
   sessionTeleportPayloadSchema,
 } from '@code-quest/shared';
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
@@ -140,7 +140,7 @@ export function create({
   ): Promise<void> {
     try {
       const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
-      const entry: RawEntry = {
+      const entry: RawEvent = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.channelId),
         direction: 'out',

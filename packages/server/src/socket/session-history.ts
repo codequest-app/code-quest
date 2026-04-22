@@ -58,15 +58,15 @@ export class SessionHistory {
     messages: ClientMessage[];
     respondedRequestIds: Set<string>;
   }> {
-    const rawEntries = await this.rawEventStore.getBySession(sessionId);
-    const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEntries);
-    const messages = this.replayEntries(rawEntries);
+    const rawEvents = await this.rawEventStore.getBySession(sessionId);
+    const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEvents);
+    const messages = this.replayEntries(rawEvents);
     return { messages, respondedRequestIds };
   }
 
   private async replaySession(sessionId: string): Promise<ClientMessage[]> {
-    const rawEntries = await this.rawEventStore.getBySession(sessionId);
-    return this.replayEntries(rawEntries);
+    const rawEvents = await this.rawEventStore.getBySession(sessionId);
+    return this.replayEntries(rawEvents);
   }
 
   private replayStdoutEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
@@ -91,9 +91,9 @@ export class SessionHistory {
     }
   }
 
-  private replayEntries(rawEntries: Array<{ raw: string; direction: string }>): ClientMessage[] {
+  private replayEntries(rawEvents: Array<{ raw: string; direction: string }>): ClientMessage[] {
     // First pass: detect if stdout already echoes user messages
-    const hasStdoutUserEcho = rawEntries.some((e) => {
+    const hasStdoutUserEcho = rawEvents.some((e) => {
       if (e.direction !== 'out') return false;
       try {
         const obj: unknown = JSON.parse(e.raw.trim());
@@ -105,7 +105,7 @@ export class SessionHistory {
 
     // Second pass: replay in original order
     const result: ClientMessage[] = [];
-    for (const entry of rawEntries) {
+    for (const entry of rawEvents) {
       const trimmed = entry.raw.trim();
       if (!trimmed) continue;
 
