@@ -81,7 +81,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     };
   }
 
-  async cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
+  async cloneEvents(fromSessionId: string, toSessionId: string, ids?: string[]): Promise<void> {
     if (fromSessionId === toSessionId) {
       throw new Error('cloneEvents: source and destination sessionId must differ');
     }
@@ -90,7 +90,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     // Batch insert preserves insertion order (drizzle emits a single INSERT
     // ... VALUES (...), (...) and we assign seq explicitly).
     const values = rows.map((row, i) => ({
-      id: uuidv7(),
+      id: ids?.[i] ?? uuidv7(),
       sessionId: toSessionId,
       dir: row.direction,
       raw: row.raw,

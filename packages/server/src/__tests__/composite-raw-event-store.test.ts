@@ -164,6 +164,39 @@ describe('CompositeRawEventStore', () => {
     expect(returnedId).toMatch(/^[0-9a-f]{8}-/);
   });
 
+  it('cloneEvents generates ids once and passes the same ids to every inner store', async () => {
+    const idsSeenByA: string[][] = [];
+    const idsSeenByB: string[][] = [];
+    const makeSpy = (captured: string[][]): RawEventStore => ({
+      async append(_event, id) {
+        return id ?? 'gen';
+      },
+      async getBySession() {
+        return [
+          { timestamp: 0, sessionId: 'parent', direction: 'in', raw: 'r-0', seq: 0 },
+          { timestamp: 1, sessionId: 'parent', direction: 'out', raw: 'r-1', seq: 1 },
+        ];
+      },
+      async getPreview() {
+        return {};
+      },
+      async cloneEvents(_from, _to, ids) {
+        captured.push(ids ?? []);
+      },
+    });
+    const spyA = makeSpy(idsSeenByA);
+    const spyB = makeSpy(idsSeenByB);
+    const composite = new CompositeRawEventStore([spyA, spyB]);
+
+    await composite.cloneEvents('parent', 'child');
+
+    expect(idsSeenByA[0]).toHaveLength(2);
+    expect(idsSeenByA[0]).toEqual(idsSeenByB[0]);
+    for (const id of idsSeenByA[0]) {
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-/);
+    }
+  });
+
   it('honors explicitly provided id', async () => {
     const spy: RawEventStore = {
       async append(_e, id) {

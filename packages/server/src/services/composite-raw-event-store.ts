@@ -25,7 +25,13 @@ export class CompositeRawEventStore implements RawEventStore {
   }
 
   async cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
-    await this.fanOut('clone', (s) => s.cloneEvents(fromSessionId, toSessionId));
+    // Generate ids once — all backing stores end up with the same PKs for
+    // cloned rows, keeping downstream references (e.g. raw_deltas.parent_id)
+    // valid regardless of which backend answers reads.
+    const rows = await this.stores[0].getBySession(fromSessionId);
+    if (rows.length === 0) return;
+    const ids = rows.map(() => uuidv7());
+    await this.fanOut('clone', (s) => s.cloneEvents(fromSessionId, toSessionId, ids));
   }
 
   private async fanOut(label: string, op: (s: RawEventStore) => Promise<unknown>): Promise<void> {

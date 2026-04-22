@@ -38,5 +38,12 @@ export interface RawEventStore {
   append(event: RawEvent, id?: string): Promise<string>;
   getBySession(sessionId: string): Promise<RawEvent[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
-  cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>;
+  /**
+   * Clone all events of `fromSessionId` under `toSessionId`. When `ids` is
+   * supplied the Nth cloned row uses `ids[N]` as its primary key (aligned with
+   * the row order returned by `getBySession`); otherwise ids are generated.
+   * Composite stores use the shared-id variant so all backing stores end up
+   * with identical primary keys.
+   */
+  cloneEvents(fromSessionId: string, toSessionId: string, ids?: string[]): Promise<void>;
 }
