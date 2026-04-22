@@ -1,43 +1,57 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEntries } from '../db/schema-sqlite.ts';
+import { rawDeltas, rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
-import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
+import { DrizzleRawDeltaStore } from '../services/drizzle-raw-delta-store.ts';
+import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-describe('DrizzleRawStore', () => {
+describe('DrizzleRawEventStore', () => {
   let db: ReturnType<typeof createDatabase>;
-  let store: DrizzleRawStore;
+  let store: DrizzleRawEventStore;
 
   beforeEach(() => {
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
-    store = new DrizzleRawStore(db, rawEntries);
+    store = new DrizzleRawEventStore(db, rawEvents);
   });
 
-  it('appends and retrieves raw entries via getBySession', async () => {
-    const entry: RawEntry = {
+  it('appends and retrieves raw events via getBySession', async () => {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-aaa',
       direction: 'out',
       raw: s.assistant('hello'),
       seq: 0,
     };
 
-    await store.append(entry);
-    const results = await store.getBySession('sess-1');
+    const id = await store.append(event);
 
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+
+    const results = await store.getBySession('sess-1');
     expect(results).toHaveLength(1);
     expect(results[0].sessionId).toBe('sess-1');
-    expect(results[0].promptId).toBe('prompt-aaa');
     expect(results[0].direction).toBe('out');
-    expect(results[0].raw).toBe(entry.raw);
+    expect(results[0].raw).toBe(event.raw);
+  });
+
+  it('append uses the provided id verbatim when given', async () => {
+    const event: RawEvent = {
+      timestamp: Date.now(),
+      sessionId: 'sess-fixed',
+      direction: 'out',
+      raw: s.assistant('x'),
+      seq: 0,
+    };
+
+    const returned = await store.append(event, 'fixed-id-123');
+    expect(returned).toBe('fixed-id-123');
   });
 
   it('returns empty array for unknown session', async () => {
@@ -50,7 +64,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: Date.now() + i,
         sessionId: 'sess-3',
-        promptId: `prompt-${i}`,
         direction: 'out',
         raw: `line ${i}`,
         seq: i,
@@ -67,7 +80,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: now,
         sessionId: 'sess-p',
-        promptId: 'p1',
         direction: 'out',
         raw: s.assistant('Looking at the code'),
         seq: 0,
@@ -75,7 +87,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: now + 1,
         sessionId: 'sess-p',
-        promptId: 'p1',
         direction: 'out',
         raw: s.assistant('Fixed the bug'),
         seq: 1,
@@ -94,7 +105,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: Date.now(),
         sessionId: 'sess-u',
-        promptId: 'p1',
         direction: 'in',
         raw: JSON.stringify({
           type: 'user',
@@ -113,7 +123,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now + 200,
       sessionId: 'sess-4',
-      promptId: 'prompt-c',
       direction: 'out',
       raw: 'c',
       seq: 2,
@@ -121,7 +130,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now,
       sessionId: 'sess-4',
-      promptId: 'prompt-a',
       direction: 'out',
       raw: 'a',
       seq: 0,
@@ -129,7 +137,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now + 100,
       sessionId: 'sess-4',
-      promptId: 'prompt-b',
       direction: 'out',
       raw: 'b',
       seq: 1,
@@ -146,7 +153,6 @@ describe('DrizzleRawStore', () => {
         await store.append({
           timestamp: now + i,
           sessionId: 'sess-parent',
-          promptId: `p-${i}`,
           direction: i === 0 ? 'in' : 'out',
           raw: `raw-${i}`,
           seq: i,
@@ -159,7 +165,6 @@ describe('DrizzleRawStore', () => {
       expect(cloned).toHaveLength(3);
       expect(cloned.map((r) => r.sessionId)).toEqual(['sess-new', 'sess-new', 'sess-new']);
       expect(cloned.map((r) => r.raw)).toEqual(['raw-0', 'raw-1', 'raw-2']);
-      expect(cloned.map((r) => r.promptId)).toEqual(['p-0', 'p-1', 'p-2']);
       expect(cloned.map((r) => r.direction)).toEqual(['in', 'out', 'out']);
       expect(cloned.map((r) => r.seq)).toEqual([1, 2, 3]);
     });
@@ -172,6 +177,81 @@ describe('DrizzleRawStore', () => {
 
     it('rejects cloning to the same sessionId', async () => {
       await expect(store.cloneEvents('sess-x', 'sess-x')).rejects.toThrow();
+    });
+  });
+
+  describe('getBySession with delta table — UNION ALL', () => {
+    it('merges events + deltas ordered by createdAt/seq', async () => {
+      const db = createDatabase(':memory:');
+      migrate(db, { migrationsFolder });
+      const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
+      const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
+
+      const now = Date.now();
+      await unionStore.append({
+        sessionId: 'S',
+        direction: 'in',
+        raw: 'E0',
+        seq: 0,
+        timestamp: now,
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'D1',
+        seq: 1,
+        timestamp: now + 10,
+      });
+      await unionStore.append({
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'E2',
+        seq: 2,
+        timestamp: now + 20,
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'D3',
+        seq: 3,
+        timestamp: now + 30,
+      });
+
+      const rows = await unionStore.getBySession('S');
+      expect(rows.map((r) => r.raw)).toEqual(['E0', 'D1', 'E2', 'D3']);
+    });
+
+    it('cloneEvents still reads events only (deltas stay put)', async () => {
+      const db = createDatabase(':memory:');
+      migrate(db, { migrationsFolder });
+      const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
+      const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
+
+      await unionStore.append({
+        sessionId: 'parent',
+        direction: 'in',
+        raw: 'event-A',
+        seq: 0,
+        timestamp: Date.now(),
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'parent',
+        direction: 'out',
+        raw: 'delta-A',
+        seq: 1,
+        timestamp: Date.now() + 10,
+      });
+
+      await unionStore.cloneEvents('parent', 'child');
+
+      // Child has only event rows — deltas were NOT cloned into raw_events.
+      const childUnion = await unionStore.getBySession('child');
+      const childDeltas = await deltaStore.getBySession('child');
+      expect(childUnion.map((r) => r.raw)).toEqual(['event-A']);
+      expect(childDeltas).toEqual([]);
     });
   });
 });

@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "lib": ["ES2022"],
+    "lib": ["ES2023"],
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

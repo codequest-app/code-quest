@@ -11,7 +11,7 @@ type ResumeOk = Extract<SessionResumeResponse, { ok: true }>;
 
 import { segments as s } from '@code-quest/summoner/test';
 import { logger } from '../logger.ts';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
@@ -339,7 +339,7 @@ describe('ChatHandler > session', () => {
     it('returns stored messages in callback after join', async () => {
       const { claude, channelId } = await setup();
 
-      // Send message + receive reply (stored in raw_entries)
+      // Send message + receive reply (stored in raw_events)
       await claude.send('chat:send', { channelId, message: 'hi' });
       await claude.emit(s.assistant('hello world'));
       await claude.emit(s.result());
@@ -407,12 +407,12 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       // Verify raw_event_store has both stdin and stdout records
-      const rawStore = container.get<RawEventStore>(TYPES.RawEventStore);
+      const rawStore = container.get<RawEventService>(TYPES.RawEventService);
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const channel = mgr.get(channelId)!;
-      const rawEntries = await rawStore.getBySession(channel.sessionId!);
-      const userRawEntries = rawEntries.filter((e) => {
+      const rawEvents = await rawStore.getBySession(channel.sessionId!);
+      const userRawEntries = rawEvents.filter((e) => {
         try {
           const obj = JSON.parse(e.raw.trim());
           return obj?.type === 'user';
@@ -420,7 +420,7 @@ describe('ChatHandler > session', () => {
           return false;
         }
       });
-      // stdin + stdout echo = 2 raw entries for one "hello"
+      // stdin + stdout echo = 2 raw events for one "hello"
       expect(userRawEntries.length).toBe(2);
       expect(userRawEntries.map((e) => e.direction).sort()).toEqual(['in', 'out']);
 
@@ -440,7 +440,7 @@ describe('ChatHandler > session', () => {
 
     it('returns session_init event when session has no user messages', async () => {
       const { claude, channelId } = await setup();
-      // No sendMessage — only session_init in raw_entries
+      // No sendMessage — only session_init in raw_events
 
       const result = await claude.send<JoinOk>('session:join', { channelId });
 
@@ -579,12 +579,12 @@ describe('ChatHandler > session', () => {
       expect(claude.handle.signal.aborted).toBe(false);
     });
 
-    it('raw entries are persisted to DB after session is created (no FK error)', async () => {
+    it('raw events are persisted to DB after session is created (no FK error)', async () => {
       const { container } = await setup();
 
-      const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
-      const entries = await rawEventStore.getBySession('cli-sess');
-      expect(entries.length).toBeGreaterThan(0);
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
+      expect(events.length).toBeGreaterThan(0);
     });
 
     it('records each stdin message exactly once in raw event store', async () => {
@@ -598,9 +598,9 @@ describe('ChatHandler > session', () => {
 
       await claude.send('chat:send', { channelId, message: 'hello' });
 
-      const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
-      const entries = await rawEventStore.getBySession('cli-sess');
-      const stdinHellos = entries.filter(
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
+      const stdinHellos = events.filter(
         (e) =>
           e.direction === 'in' && e.raw.includes('"hello"') && !e.raw.includes('control_request'),
       );
@@ -897,7 +897,7 @@ describe('ChatHandler > session', () => {
       expect(created.channelId).toBe(clientId);
     });
 
-    it('rawEventStore stores entries keyed by CLI session_id (not channelId)', async () => {
+    it('rawEventService stores entries keyed by CLI session_id (not channelId)', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);
       const claude = createFakeSummoner(server).claude();
@@ -911,9 +911,9 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.assistant('hi'));
       await claude.emit(s.result());
 
-      const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
-      const entries = await rawEventStore.getBySession('cli-sess');
-      expect(entries.length).toBeGreaterThan(0);
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
+      expect(events.length).toBeGreaterThan(0);
     });
 
     it('getRunner(clientId) returns the session after chat:create', async () => {

@@ -4,7 +4,7 @@ import {
   sessionForkPayloadSchema,
   sessionTeleportPayloadSchema,
 } from '@code-quest/shared';
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
@@ -18,12 +18,17 @@ export function create({
   channelManager,
   sessionHistory,
   sessionStore,
-  rawEventStore,
+  rawEventService,
   emitter,
   gitService,
 }: Pick<
   HandlerContext,
-  'channelManager' | 'sessionHistory' | 'sessionStore' | 'rawEventStore' | 'emitter' | 'gitService'
+  | 'channelManager'
+  | 'sessionHistory'
+  | 'sessionStore'
+  | 'rawEventService'
+  | 'emitter'
+  | 'gitService'
 >): void {
   async function handleFork(
     _ch: Channel | null,
@@ -47,7 +52,7 @@ export function create({
       }
 
       const newSessionId = crypto.randomUUID();
-      await rawEventStore.cloneEvents(parentSessionId, newSessionId);
+      await rawEventService.cloneEvents(parentSessionId, newSessionId);
 
       // Resolve projectRoot upfront so onBeforeSpawn can set it before any
       // broadcastSessionState emits (matches launch/resume symmetry).
@@ -140,15 +145,14 @@ export function create({
   ): Promise<void> {
     try {
       const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
-      const entry: RawEntry = {
+      const event: RawEvent = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.channelId),
-        promptId: '',
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,
       };
-      await rawEventStore.append(entry);
+      await rawEventService.appendEvent(event);
       callback?.(ok({}));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to update skipped branch')));

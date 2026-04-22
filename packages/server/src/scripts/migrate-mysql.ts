@@ -6,9 +6,9 @@ import mysql from 'mysql2/promise';
 
 import { config } from '../config.ts';
 
-const url = config.databaseUrl;
+const url = config.database.url;
 if (!url) {
-  console.error('DATABASE_URL is not set');
+  console.error('DATABASE_URL is not set — nothing to migrate.');
   process.exit(1);
 }
 

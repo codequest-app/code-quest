@@ -105,9 +105,9 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionGetPayloadSchema.parse(payload);
-      const entries = await sessionHistory.getRawEntries(channelId);
+      const rawEvents = await sessionHistory.getRawEvents(channelId);
       const rawJsonSchema = z.record(z.string(), z.unknown());
-      const events = entries.map((e) => {
+      const events = rawEvents.map((e) => {
         try {
           const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));
           if (parsed.success) {

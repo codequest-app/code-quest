@@ -18,7 +18,7 @@ export type {
   ProcessHandle,
   ProcessProvider,
   ProviderAdapter,
-  RawEntry,
+  RawEvent,
   ResolvedControlResponse,
 } from './types.ts';
-export { rawEntrySchema } from './types.ts';
+export { rawEventSchema } from './types.ts';

@@ -8,9 +8,10 @@ import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { Server } from 'socket.io';
-import { config } from '../config.ts';
+import { config, resolveSqlitePath } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
 import { logger } from '../logger.ts';
 import { createProfileRouter } from '../routes/profile.ts';
 import { createSessionsRouter } from '../routes/sessions.ts';
@@ -23,21 +24,32 @@ import { TYPES } from '../types.ts';
 
 const storeConfig: StoreConfig = {};
 
-if (config.rawStore.drivers.includes('sqlite')) {
-  storeConfig.sqlite = true;
+if (config.database.sqliteUrl) {
+  storeConfig.sqliteDatabase = createDatabase(resolveSqlitePath(config.database.sqliteUrl));
 }
 
-if (config.rawStore.drivers.includes('mysql') && config.databaseUrl) {
-  storeConfig.mysql = { database: createMysqlDatabase(config.databaseUrl) };
+if (config.database.url) {
+  storeConfig.mysqlDatabase = createMysqlDatabase(config.database.url);
 }
 
-if (config.rawStore.drivers.includes('file')) {
-  storeConfig.file = { dir: config.rawStore.fileDir };
+if (!storeConfig.sqliteDatabase && !storeConfig.mysqlDatabase) {
+  throw new Error(
+    'No database backend configured. Set DATABASE_URL (MySQL) and/or ' +
+      'DATABASE_SQLITE_URL (e.g. file:./data/code-quest.db) in .env. ' +
+      'See packages/server/.env.example for a working default.',
+  );
+}
+
+if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
+  logger.warn(
+    'RAW_EVENTS_READ_DELTAS=true but RAW_EVENTS_WRITE_DELTAS=false — ' +
+      'no deltas will ever be persisted, so UNION reads an empty table. ' +
+      'Did you mean to set both?',
+  );
 }
 
 const container = createContainer({
   processProvider: new ChildProcessProvider(),
-  dbPath: config.rawStore.sqlitePath,
   storeConfig,
 });
 
@@ -54,9 +66,9 @@ const socketServer = container.get<SocketServer>(TYPES.SocketServer);
 socketServer.register(io);
 
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
+const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
 const usageTracker = container.get<UsageTracker>(TYPES.UsageTracker);
-app.use(createSessionsRouter(sessionStore, rawEventStore));
+app.use(createSessionsRouter(sessionStore, rawEventService));
 app.use(createUsageRouter(usageTracker));
 app.use(createProfileRouter(() => ({ authenticated: false })));
 

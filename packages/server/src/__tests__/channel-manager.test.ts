@@ -264,16 +264,16 @@ describe('ChannelManager', () => {
   });
 
   describe('raw event persistence', () => {
-    it('persists raw entries to rawEventStore', async () => {
+    it('persists raw events to rawEventService', async () => {
       const { container, claude, channelId } = await setup();
 
       await claude.send('chat:send', { channelId, message: 'persist-test' });
       await claude.emit(s.assistant('reply'));
       await claude.emit(s.result());
 
-      const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
-      const entries = await rawEventStore.getBySession('test-session-001');
-      expect(entries.length).toBeGreaterThan(0);
+      const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('test-session-001');
+      expect(events.length).toBeGreaterThan(0);
     });
   });
 });

@@ -36,7 +36,7 @@ describe('ChatHandler > session', () => {
     it('uses first user message as title when session has no title', async () => {
       const { claude, channelId } = await setup();
 
-      // Send a user message so raw_entries has a 'user' entry
+      // Send a user message so raw_events has a 'user' entry
       await claude.send('chat:send', { channelId, message: 'Hello world' });
       await claude.emit(s.assistant('hi'));
       await claude.emit(s.result());

@@ -4,7 +4,7 @@ import type {
   TeleportSessionResponse,
 } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
@@ -265,7 +265,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     expect(args[resumeIdx + 1]).toBe('sess-cwd-parent');
   });
 
-  it('clones parent rawEventStore rows under the new sessionId', async () => {
+  it('clones parent rawEventService rows under the new sessionId', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const summoner = createFakeSummoner(server);
@@ -284,19 +284,17 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
       createdAt: new Date().toISOString(),
     });
 
-    const rawStore = container.get<RawEventStore>(TYPES.RawEventStore);
-    await rawStore.append({
+    const rawStore = container.get<RawEventService>(TYPES.RawEventService);
+    await rawStore.appendEvent({
       timestamp: Date.now(),
       sessionId: 'sess-clone-parent',
-      promptId: 'p-A',
       direction: 'in',
       raw: 'raw-A',
       seq: 0,
     });
-    await rawStore.append({
+    await rawStore.appendEvent({
       timestamp: Date.now() + 1,
       sessionId: 'sess-clone-parent',
-      promptId: 'p-B',
       direction: 'out',
       raw: 'raw-B',
       seq: 1,

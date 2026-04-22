@@ -4,7 +4,7 @@ import type { SessionStore } from '../services/session-store.ts';
 
 export function createSessionsRouter(
   sessionStore: SessionStore,
-  rawEventStore?: RawEventStore,
+  rawEventService?: RawEventStore,
 ): Router {
   const router = Router();
 
@@ -14,9 +14,9 @@ export function createSessionsRouter(
       const offset = Math.max(Number(req.query.offset) || 0, 0);
       const result = await sessionStore.list({ limit, offset });
 
-      if (rawEventStore) {
+      if (rawEventService) {
         const previews = await Promise.all(
-          result.sessions.map((s) => rawEventStore.getPreview(s.id)),
+          result.sessions.map((s) => rawEventService.getPreview(s.id)),
         );
         const enriched = result.sessions.map((s, i) => ({
           ...s,
@@ -48,11 +48,11 @@ export function createSessionsRouter(
 
   router.get('/api/sessions/:id/events', async (req, res) => {
     try {
-      if (!rawEventStore) {
+      if (!rawEventService) {
         res.status(501).json({ error: 'Event store not available' });
         return;
       }
-      const events = await rawEventStore.getBySession(req.params.id);
+      const events = await rawEventService.getBySession(req.params.id);
       const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
       const offset = Math.max(Number(req.query.offset) || 0, 0);
       const paged = events.slice(offset, offset + limit);

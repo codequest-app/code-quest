@@ -1,45 +1,88 @@
 import { logger } from '../logger.ts';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
 import type { Channel } from './channel.ts';
+import { isDelta } from './raw-classifier.ts';
+
+interface PendingEvent {
+  raw: string;
+  direction: 'in' | 'out' | 'err';
+  timestamp: number;
+  seq: number;
+}
+
+function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
+  if (direction !== 'in') return false;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) return false;
+    return (parsed as { type?: unknown }).type === 'user';
+  } catch {
+    return false;
+  }
+}
 
 export class RawRecorder {
-  constructor(private rawEventStore: RawEventStore) {}
+  constructor(
+    private service: RawEventService,
+    private writeDeltas: boolean,
+  ) {}
 
   wire(channel: Channel): void {
     const { runner } = channel;
     let seqCounter = 0;
-    const pendingRawEntries: Array<{
-      raw: string;
-      direction: 'in' | 'out' | 'err';
-      timestamp: number;
-      seq: number;
-    }> = [];
+    let currentTurnRootId: string | null = null;
+    const pendingEvents: PendingEvent[] = [];
 
-    const flushPending = (sessionId: string) => {
-      for (const pending of pendingRawEntries) {
-        this.rawEventStore
-          .append({ ...pending, sessionId, promptId: '' })
-          .catch((err) => logger.error({ err }, 'Failed to persist buffered raw event'));
-      }
-      pendingRawEntries.length = 0;
-    };
-
-    const recordRaw = (raw: string, direction: 'in' | 'out' | 'err') => {
-      const sessionId = channel.sessionId;
-      if (!sessionId) {
-        pendingRawEntries.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
+    const persistOne = async (pending: PendingEvent, sessionId: string): Promise<void> => {
+      if (isDelta(pending.raw)) {
+        if (!this.writeDeltas) return;
+        await this.service.appendDelta({
+          parentId: currentTurnRootId ?? '',
+          sessionId,
+          direction: pending.direction,
+          raw: pending.raw,
+          seq: pending.seq,
+          timestamp: pending.timestamp,
+        });
         return;
       }
-      if (pendingRawEntries.length > 0) flushPending(sessionId);
-      this.rawEventStore
-        .append({
-          timestamp: Date.now(),
-          sessionId,
-          promptId: '',
-          raw,
-          direction,
-          seq: seqCounter++,
-        })
+
+      // Remember the user-stdin event's id as turn root so subsequent
+      // deltas in the same turn can attribute to it via parentId.
+      const id = await this.service.appendEvent({
+        sessionId,
+        direction: pending.direction,
+        raw: pending.raw,
+        seq: pending.seq,
+        timestamp: pending.timestamp,
+      });
+      if (isUserStdin(pending.raw, pending.direction)) {
+        currentTurnRootId = id;
+      }
+    };
+
+    const flushPending = async (sessionId: string): Promise<void> => {
+      for (const pending of pendingEvents) {
+        try {
+          await persistOne(pending, sessionId);
+        } catch (err) {
+          logger.error({ err }, 'Failed to persist buffered raw event');
+        }
+      }
+      pendingEvents.length = 0;
+    };
+
+    const recordRaw = (raw: string, direction: 'in' | 'out' | 'err'): void => {
+      const sessionId = channel.sessionId;
+      if (!sessionId) {
+        pendingEvents.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
+        return;
+      }
+      const next: PendingEvent = { raw, direction, timestamp: Date.now(), seq: seqCounter++ };
+      // Chain so buffered events flush before this one appends (preserves seq order in DB).
+      const flush = pendingEvents.length > 0 ? flushPending(sessionId) : Promise.resolve();
+      void flush
+        .then(() => persistOne(next, sessionId))
         .catch((err) => logger.error({ err }, 'Failed to persist raw event'));
     };
 

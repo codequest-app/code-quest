@@ -1,4 +1,4 @@
-import type { RawEntry } from '@code-quest/summoner';
+import type { RawEvent } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 
@@ -29,8 +29,21 @@ export function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): str
 }
 
 export interface RawEventStore {
-  append(entry: RawEntry): Promise<void>;
-  getBySession(sessionId: string): Promise<RawEntry[]>;
+  /**
+   * Append a raw event. Returns the primary-key id of the inserted row.
+   * If `id` is provided, the store uses it verbatim; otherwise one is generated.
+   * Composite stores use this to share the same id across all backing stores,
+   * so downstream references (e.g. raw_deltas.parent_id) remain consistent.
+   */
+  append(event: RawEvent, id?: string): Promise<string>;
+  getBySession(sessionId: string): Promise<RawEvent[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
-  cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>;
+  /**
+   * Clone all events of `fromSessionId` under `toSessionId`. When `ids` is
+   * supplied the Nth cloned row uses `ids[N]` as its primary key (aligned with
+   * the row order returned by `getBySession`); otherwise ids are generated.
+   * Composite stores use the shared-id variant so all backing stores end up
+   * with identical primary keys.
+   */
+  cloneEvents(fromSessionId: string, toSessionId: string, ids?: string[]): Promise<void>;
 }

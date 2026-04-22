@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import 'reflect-metadata';
 import type { ProcessProvider } from '@code-quest/summoner';
 import {
@@ -14,15 +13,19 @@ import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
-import { CompositeRawStore } from './services/composite-raw-store.ts';
+import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
+import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
-import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
+import { CompositeSettingsStore } from './services/composite-settings-store.ts';
+import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
+import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
+import type { RawDeltaStore } from './services/raw-delta-store.ts';
+import { RawEventService } from './services/raw-event-service.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
-import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
@@ -32,15 +35,14 @@ import { SessionHistory } from './socket/session-history.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
-  sqlite?: boolean;
-  mysql?: { database: MysqlDatabase };
-  file?: { dir: string };
+  /** SQLite db handle. Undefined = sqlite backend disabled. */
+  sqliteDatabase?: DrizzleDatabase;
+  /** MySQL db handle. Undefined = mysql backend disabled. */
+  mysqlDatabase?: MysqlDatabase;
 }
 
 export interface ContainerOptions {
   processProvider?: ProcessProvider;
-  database?: DrizzleDatabase;
-  dbPath?: string;
   storeConfig?: StoreConfig;
 }
 
@@ -67,25 +69,36 @@ export function createContainer(options: ContainerOptions): Container {
   };
   container.bind<RunnerFactory>(TYPES.RunnerFactory).toConstantValue(runnerFactory);
 
-  const db = options.database ?? createDatabase(options.dbPath);
+  // Bind whichever DB handle is available to TYPES.Database (kept for handler
+  // consumers that still reach for a raw Drizzle handle; sqlite preferred when
+  // both are present since most tooling keys off it). Fallback to in-memory
+  // sqlite only for test containers that pass nothing.
+  const db = options.storeConfig?.sqliteDatabase ?? createDatabase(':memory:');
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
-  const { eventStores, sessionStores, settingsStores } = buildStores(db, options.storeConfig);
+  const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
+    options.storeConfig,
+    { readDeltas: config.rawEvents.readDeltas },
+  );
 
-  const rawEventStore: RawEventStore =
-    eventStores.length === 1 ? eventStores[0] : new CompositeRawStore(eventStores);
-  container.bind<RawEventStore>(TYPES.RawEventStore).toConstantValue(rawEventStore);
+  const lowEventStore = pickOrComposite(eventStores, (s) => new CompositeRawEventStore(s));
+  const lowDeltaStore = pickOrComposite(deltaStores, (s) => new CompositeRawDeltaStore(s));
 
-  const sessionStore: SessionStore =
-    sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
+  const rawEventService = new RawEventService(lowEventStore, lowDeltaStore);
+  container.bind<RawEventService>(TYPES.RawEventService).toConstantValue(rawEventService);
+
+  const sessionStore = pickOrComposite(sessionStores, (s) => new CompositeSessionStore(s));
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  const rawRecorder = new RawRecorder(rawEventStore);
+  const settingsStore = pickOrComposite(settingsStores, (s) => new CompositeSettingsStore(s));
+  container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
+
+  const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.writeDeltas);
   const emitter = new ChannelEmitter();
   // SessionHistory and ChannelManager reference each other via lazy callbacks
   // (neither is called during construction — only at runtime)
   const sessionHistory: SessionHistory = new SessionHistory(
-    rawEventStore,
+    rawEventService,
     sessionStore,
     adapter,
     (id) => channelManager.get(id),
@@ -118,49 +131,51 @@ export function createContainer(options: ContainerOptions): Container {
     .toConstantValue(new LocalFilesystemService(config.explorerRoots));
   container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
 
-  const settingsStore: SettingsStore = settingsStores[0];
-  container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
-
   return container;
 }
 
+function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
+  return stores.length === 1 ? stores[0] : makeComposite(stores);
+}
+
 function buildStores(
-  db: DrizzleDatabase,
   config?: StoreConfig,
+  flags: { readDeltas: boolean } = { readDeltas: false },
 ): {
   eventStores: RawEventStore[];
+  deltaStores: RawDeltaStore[];
   sessionStores: SessionStore[];
   settingsStores: SettingsStore[];
 } {
   const eventStores: RawEventStore[] = [];
+  const deltaStores: RawDeltaStore[] = [];
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 
-  if (config?.sqlite) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
+  if (config?.sqliteDatabase) {
+    const db = config.sqliteDatabase;
+    const deltaTableForRead = flags.readDeltas ? sqliteSchema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, deltaTableForRead));
+    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
-  if (config?.mysql) {
-    eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.rawEntries));
-    sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
-    settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
-  }
-
-  if (config?.file) {
-    settingsStores.push(new FileSettingsStore(join(config.file.dir, 'settings.json')));
+  if (config?.mysqlDatabase) {
+    const db = config.mysqlDatabase;
+    const deltaTableForRead = flags.readDeltas ? mysqlSchema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents, deltaTableForRead));
+    deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
+    sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));
   }
 
   if (eventStores.length === 0) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
-  }
-  if (sessionStores.length === 0) {
-    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
-  }
-  if (settingsStores.length === 0) {
-    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
+    throw new Error(
+      'At least one database backend must be configured. ' +
+        'Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',
+    );
   }
 
-  return { eventStores, sessionStores, settingsStores };
+  return { eventStores, deltaStores, sessionStores, settingsStores };
 }

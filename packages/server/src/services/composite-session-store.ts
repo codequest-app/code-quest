@@ -1,4 +1,5 @@
 import { logger } from '../logger.ts';
+import { fanOutWrites } from './composite-fan-out.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
 
 export class CompositeSessionStore implements SessionStore {
@@ -27,19 +28,7 @@ export class CompositeSessionStore implements SessionStore {
   }
 
   async upsert(record: SessionRecord): Promise<void> {
-    const results = await Promise.allSettled(this.stores.map((s) => s.upsert(record)));
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failures.length > 0 && failures.length < results.length) {
-      for (const f of failures) {
-        logger.error({ err: f.reason }, 'Partial session upsert failure');
-      }
-    }
-    if (failures.length === results.length) {
-      throw new AggregateError(
-        failures.map((r) => r.reason),
-        'All session stores failed to upsert',
-      );
-    }
+    await fanOutWrites(this.stores, 'session upsert', (s) => s.upsert(record));
   }
 
   private async fanoutBool(
@@ -68,17 +57,22 @@ export class CompositeSessionStore implements SessionStore {
   }
 
   async renameByChannelId(channelId: string, title: string): Promise<boolean> {
-    const r = await this.getByChannelId(channelId);
-    return r ? this.rename(r.id, title) : false;
+    return this.byChannelId(channelId, (id) => this.rename(id, title));
   }
 
   async updateStatusByChannelId(channelId: string, status: string): Promise<boolean> {
-    const r = await this.getByChannelId(channelId);
-    return r ? this.updateStatus(r.id, status) : false;
+    return this.byChannelId(channelId, (id) => this.updateStatus(id, status));
   }
 
   async deleteByChannelId(channelId: string): Promise<boolean> {
-    const r = await this.getByChannelId(channelId);
-    return r ? this.delete(r.id) : false;
+    return this.byChannelId(channelId, (id) => this.delete(id));
+  }
+
+  private async byChannelId(
+    channelId: string,
+    op: (id: string) => Promise<boolean>,
+  ): Promise<boolean> {
+    const record = await this.getByChannelId(channelId);
+    return record ? op(record.id) : false;
   }
 }
