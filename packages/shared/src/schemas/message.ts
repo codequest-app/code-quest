@@ -47,7 +47,6 @@ export type ChatCancelPayload = z.infer<typeof chatCancelPayloadSchema>;
 export const chatRewindCodePayloadSchema = z.object({
   channelId: z.string(),
   userMessageId: z.string().optional(),
-  dryRun: z.boolean().optional(),
 });
 export type ChatRewindCodePayload = z.infer<typeof chatRewindCodePayloadSchema>;
 

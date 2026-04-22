@@ -3,6 +3,7 @@ import { useTree } from '@headless-tree/react/react-compiler';
 import { FolderIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { useExplorerBrowse } from '../hooks/useExplorerBrowse';
+import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
 
 interface DirectoryItem {
@@ -45,7 +46,7 @@ export function FileTree({
     isItemFolder: () => true,
     createLoadingItemData: () => ({ name: 'Loading...', path: '' }),
     dataLoader: {
-      getItem: (itemId) => ({ name: itemId.split('/').pop() ?? itemId, path: itemId }),
+      getItem: (itemId) => ({ name: basename(itemId), path: itemId }),
       getChildrenWithData: async (itemId) => {
         const path = itemId === 'root' ? undefined : itemId;
         const directories = await browse(path);

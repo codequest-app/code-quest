@@ -59,11 +59,8 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
     });
   }
 
-  function rewindToMessage(
-    userMessageId: string,
-    dryRun = false,
-  ): Promise<RpcResult<RewindResult>> {
-    return rpc(socket, EVENTS.chat.rewind_code, { channelId, userMessageId, dryRun });
+  function rewindToMessage(userMessageId: string): Promise<RpcResult<RewindResult>> {
+    return rpc(socket, EVENTS.chat.rewind_code, { channelId, userMessageId });
   }
 
   function askSideQuestion(question: string): Promise<RpcResult<SideQuestionResult>> {

@@ -129,31 +129,13 @@ describe('ChatMessage', () => {
     expect(writeText).toHaveBeenCalledWith(content);
   });
 
-  it('user typed copy uses raw message.content verbatim', async () => {
-    const user = userEvent.setup();
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
-      configurable: true,
-    });
-    const content = '**not bold** 1. a 2. b';
-    const { container } = render(
-      <ChatMessage
-        message={{ ...base, role: 'user', type: 'text', content, meta: { source: 'typed' } }}
-      />,
-    );
-    const btn = container.querySelector('[data-testid="message-copy"]');
-    if (btn) await user.click(btn as HTMLElement);
-    expect(writeText).toHaveBeenCalledWith(content);
-  });
-
-  it('user text message renders a message-level copy button', () => {
+  it('user text message does NOT render a separate copy button (available via actions menu)', () => {
     const { container } = render(
       <ChatMessage
         message={{ ...base, role: 'user', type: 'text', content: 'hi', meta: { source: 'typed' } }}
       />,
     );
-    expect(container.querySelector('[data-testid="message-copy"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
   });
 
   it('system error message does NOT render a message-level copy button', () => {

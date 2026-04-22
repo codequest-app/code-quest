@@ -201,10 +201,10 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { userMessageId, dryRun } = chatRewindCodePayloadSchema.parse(payload);
+      const { userMessageId } = chatRewindCodePayloadSchema.parse(payload);
       const result = await ch.sendRequest('message:rewind', {
         user_message_id: userMessageId ?? '',
-        dry_run: dryRun ?? false,
+        dry_run: false,
       });
       callback?.(ok(result));
     } catch (e) {

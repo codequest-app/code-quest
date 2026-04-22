@@ -1,7 +1,6 @@
 import { effortLevelSchema } from '@code-quest/shared';
-import { useRef, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
-import { useClickOutside } from '../hooks/useClickOutside';
+import { usePopover } from '../hooks/usePopover';
 import { cn } from '../utils/cn';
 import { EffortIcon, PERMISSION_MODE_ICONS } from './icons/PermissionModeIcons';
 import { EffortSwitch, effortLabel } from './ui/EffortSwitch';
@@ -74,11 +73,12 @@ export function PermissionModePicker({
   const permissionModes = allModes.filter((m) => m.id !== 'auto' || supportsAutoMode);
   const permissionById = Object.fromEntries(permissionModes.map((m) => [m.id, m]));
 
-  const [showModePicker, setShowModePicker] = useState(false);
-  const modePickerRef = useRef<HTMLDivElement>(null);
-  const modeButtonRef = useRef<HTMLButtonElement>(null);
-
-  useClickOutside([modePickerRef, modeButtonRef], () => setShowModePicker(false), showModePicker);
+  const {
+    open: showModePicker,
+    setOpen: setShowModePicker,
+    triggerRef: modeButtonRef,
+    panelRef: modePickerRef,
+  } = usePopover<HTMLButtonElement, HTMLDivElement>();
 
   return (
     <div className="relative">

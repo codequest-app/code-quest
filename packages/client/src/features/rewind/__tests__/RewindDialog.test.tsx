@@ -124,7 +124,7 @@ describe('RewindDialog', () => {
     await user.click(screen.getAllByRole('option')[0]);
 
     // Should show confirmation dialog
-    const confirmDialog = await screen.findByRole('dialog', { name: /fork and rewind/i });
+    const confirmDialog = await screen.findByRole('dialog', { name: /^Rewind code$/ });
     expect(confirmDialog).toBeInTheDocument();
     expect(screen.getByText(/continue/i)).toBeInTheDocument();
     expect(screen.getByText(/never mind/i)).toBeInTheDocument();
@@ -160,68 +160,15 @@ describe('RewindDialog', () => {
     await sendMessage(claude, user, 'hello');
 
     await openRewindDialog(user);
-    await screen.findByRole('dialog', { name: /rewind/i });
+    await screen.findByRole('dialog', { name: /rewind to/i });
     await user.click(screen.getAllByRole('option')[0]);
-    await screen.findByRole('dialog', { name: /fork and rewind/i });
+    // Phase 2 title is "Rewind" (not "Fork and rewind" — those are separate actions)
+    await screen.findByRole('dialog', { name: /^Rewind code$/ });
 
-    // Shortcut "1" should be a separate element, not part of button label text
     const continueBtn = screen.getByRole('button', { name: 'Continue' });
     expect(continueBtn).toBeInTheDocument();
     const neverMindBtn = screen.getByRole('button', { name: 'Never mind' });
     expect(neverMindBtn).toBeInTheDocument();
-  });
-
-  it('shows canRewind=false message when dryRun says cannot rewind', async () => {
-    const { claude, user, addProject } = await renderWithWorkspace();
-    const project = await addProject();
-    await project.launchSession();
-    await sendMessage(claude, user, 'hello');
-
-    claude.onControlRequest((req) => {
-      if (req.subtype === 'rewind_files') {
-        return { canRewind: false };
-      }
-      return null;
-    });
-
-    await openRewindDialog(user);
-    await screen.findByRole('dialog', { name: /rewind/i });
-    await user.click(screen.getAllByRole('option')[0]);
-    await screen.findByRole('dialog', { name: /fork and rewind/i });
-
-    expect(await screen.findByText(/cannot rewind/i)).toBeInTheDocument();
-  });
-
-  it('does not re-call rewindToMessage when same message selected again after back', async () => {
-    const { claude, user, addProject } = await renderWithWorkspace();
-    const project = await addProject();
-    await project.launchSession();
-    await sendMessage(claude, user, 'hello');
-
-    let callCount = 0;
-    claude.onControlRequest((req) => {
-      if (req.subtype === 'rewind_files') {
-        callCount++;
-        return { canRewind: true, filesChanged: [], deletions: 0, insertions: 0 };
-      }
-      return null;
-    });
-
-    await openRewindDialog(user);
-    await screen.findByRole('dialog', { name: /rewind/i });
-
-    // Select the message → triggers dry-run (call 1)
-    await user.click(screen.getAllByRole('option')[0]);
-    await screen.findByRole('dialog', { name: /fork and rewind/i });
-
-    // Go back
-    await user.click(screen.getByText(/never mind/i));
-
-    // Select same message again → should use cache, no second call
-    await user.click(screen.getAllByRole('option')[0]);
-    await screen.findByRole('dialog', { name: /fork and rewind/i });
-
-    expect(callCount).toBe(1);
   });
 
   it('closes confirmation dialog on "Never mind"', async () => {
@@ -234,10 +181,10 @@ describe('RewindDialog', () => {
     await screen.findByRole('dialog', { name: /rewind/i });
     await user.click(screen.getAllByRole('option')[0]);
 
-    await screen.findByRole('dialog', { name: /fork and rewind/i });
+    await screen.findByRole('dialog', { name: /^Rewind code$/ });
     await user.click(screen.getByText(/never mind/i));
 
     // Should go back to message list (or close entirely)
-    expect(screen.queryByRole('dialog', { name: /fork and rewind/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: /^Rewind code$/ })).not.toBeInTheDocument();
   });
 });

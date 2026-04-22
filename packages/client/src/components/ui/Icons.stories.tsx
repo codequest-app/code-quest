@@ -7,7 +7,6 @@ import {
   ChevronRight,
   PlusIcon,
   RefreshIcon,
-  ReplyIcon,
   SearchIcon,
   SlashCommandIcon,
   TrashIcon,
@@ -23,7 +22,6 @@ const ICONS = [
   { name: 'TrashIcon', Icon: TrashIcon },
   { name: 'RefreshIcon', Icon: RefreshIcon },
   { name: 'PlusIcon', Icon: PlusIcon },
-  { name: 'ReplyIcon', Icon: ReplyIcon },
   { name: 'SlashCommandIcon', Icon: SlashCommandIcon },
 ] as const;
 

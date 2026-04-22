@@ -14,6 +14,7 @@ interface DialogContentProps {
   mandatory?: boolean;
   title: string;
   hideTitle?: boolean;
+  hideTitleDivider?: boolean;
   size?: DialogSize;
   /** Portal target. When set, overlay + content render inside the given
    *  element (which SHOULD be `position: relative`) instead of document.body
@@ -33,6 +34,7 @@ export function DialogContent({
   mandatory = false,
   title,
   hideTitle = false,
+  hideTitleDivider = false,
   size = 'md',
   container,
 }: DialogContentProps) {
@@ -63,7 +65,10 @@ export function DialogContent({
           className={
             hideTitle
               ? 'sr-only'
-              : 'text-sm font-semibold text-text pb-2 mb-3 border-b border-border'
+              : cn(
+                  'text-sm font-semibold text-text mb-3',
+                  hideTitleDivider ? '' : 'pb-2 border-b border-border',
+                )
           }
         >
           {title}

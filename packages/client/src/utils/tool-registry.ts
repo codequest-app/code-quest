@@ -1,3 +1,5 @@
+import { basename } from './basename';
+
 type ToolInput = Record<string, unknown>;
 
 /** Structured header for rendering: name bold + detail secondary + optional range */
@@ -23,10 +25,6 @@ export function isMcpTool(name: string): boolean {
 export function parseMcpToolName(name: string): { server: string; tool: string } {
   const parts = name.slice(MCP_PREFIX.length).split('__');
   return { server: parts[0] ?? name, tool: parts.slice(1).join('__') || name };
-}
-
-function basename(path: string): string {
-  return path.split('/').pop() ?? path;
 }
 
 function fileDetail(input: ToolInput): string | undefined {

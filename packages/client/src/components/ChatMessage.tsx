@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, memo, type ReactNode } from 'react';
 import type { ForkFn, Message, RewindFn } from '../types/ui';
+import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
 import { MessageActions } from './MessageActions';
 import { renderBody } from './MessageContent';
@@ -80,18 +81,21 @@ export const ChatMessage = memo(function ChatMessage({
             )}
           </ContentErrorBoundary>
         </div>
-        {message.type === 'text' && (
-          <CopyButton
-            data-testid="message-copy"
-            text={message.content}
-            className={cn(HOVER_COPY_BASE, 'absolute top-2 right-2 group-hover:opacity-100')}
-            title="Copy"
-          />
+        {showAvatar && onRewind && (
+          <div className="absolute top-2 right-2">
+            <MessageActions
+              cliUuid={message.cliUuid}
+              messageRole={message.role}
+              messageContent={message.content}
+              onRewind={onRewind}
+              onFork={onFork}
+            />
+          </div>
         )}
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {message.attachments.map((att) => {
-              const basename = att.filename.split('/').pop() ?? att.filename;
+              const fileName = basename(att.filename);
               const range =
                 att.startLine != null
                   ? `:${att.startLine}${att.endLine != null ? `-${att.endLine}` : ''}`
@@ -101,21 +105,12 @@ export const ChatMessage = memo(function ChatMessage({
                   key={`${att.filename}-${att.startLine}`}
                   className="inline-flex items-center gap-1 text-xs text-text-muted bg-white/5 border border-border/50 rounded px-2 py-0.5"
                 >
-                  {basename}
+                  {fileName}
                   {range}
                 </span>
               );
             })}
           </div>
-        )}
-        {showAvatar && onRewind && (
-          <MessageActions
-            cliUuid={message.cliUuid}
-            messageRole={message.role}
-            messageContent={message.content}
-            onRewind={onRewind}
-            onFork={onFork}
-          />
         )}
       </div>
     );

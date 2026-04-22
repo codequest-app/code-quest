@@ -5,7 +5,6 @@
  */
 export {
   ArrowPathIcon as RefreshIcon,
-  ArrowUturnLeftIcon as ReplyIcon,
   CheckIcon as CheckMark,
   ChevronDownIcon as ChevronDown,
   ChevronRightIcon as ChevronRight,

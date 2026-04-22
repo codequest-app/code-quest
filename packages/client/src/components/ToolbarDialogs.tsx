@@ -152,7 +152,7 @@ export function ToolbarDialogs({
           onClose={() => rewindOpenSignal.setOpen(false)}
           onConfirm={({ messageId, promptText }) => {
             rewindOpenSignal.setOpen(false);
-            rewindToMessage(messageId, false)
+            rewindToMessage(messageId)
               .then((result) => {
                 if (result.ok && result.data.canRewind) {
                   forkSession(messageId).catch((err) => {
