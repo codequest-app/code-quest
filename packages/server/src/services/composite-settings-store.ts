@@ -1,4 +1,4 @@
-import { logger } from '../logger.ts';
+import { fanOutWrites } from './composite-fan-out.ts';
 import type { SettingsStore } from './settings-store.ts';
 
 /**
@@ -22,18 +22,6 @@ export class CompositeSettingsStore implements SettingsStore {
   }
 
   async set(provider: string, key: string, value: unknown): Promise<void> {
-    const results = await Promise.allSettled(this.stores.map((s) => s.set(provider, key, value)));
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failures.length === 0) return;
-    if (failures.length < results.length) {
-      for (const f of failures) {
-        logger.error({ err: f.reason }, 'Partial settings set failure');
-      }
-      return;
-    }
-    throw new AggregateError(
-      failures.map((r) => r.reason),
-      'All settings stores failed to set',
-    );
+    await fanOutWrites(this.stores, 'settings set', (s) => s.set(provider, key, value));
   }
 }

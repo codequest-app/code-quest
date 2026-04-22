@@ -1,4 +1,4 @@
-import { logger } from '../logger.ts';
+import { fanOutWrites } from './composite-fan-out.ts';
 import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
 
 export class CompositeRawDeltaStore implements RawDeltaStore {
@@ -9,22 +9,10 @@ export class CompositeRawDeltaStore implements RawDeltaStore {
   }
 
   async append(event: RawDeltaEntry): Promise<void> {
-    const results = await Promise.allSettled(this.stores.map((s) => s.append(event)));
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failures.length === 0) return;
-    if (failures.length < results.length) {
-      for (const f of failures) {
-        logger.error({ err: f.reason }, 'Partial raw delta append failure');
-      }
-      return;
-    }
-    throw new AggregateError(
-      failures.map((r) => r.reason),
-      'All delta stores failed to append',
-    );
+    await fanOutWrites(this.stores, 'raw delta append', (s) => s.append(event));
   }
 
-  async getBySession(sessionId: string): Promise<RawDeltaEntry[]> {
+  getBySession(sessionId: string): Promise<RawDeltaEntry[]> {
     return this.stores[0].getBySession(sessionId);
   }
 }
