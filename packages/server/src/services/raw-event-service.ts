@@ -35,9 +35,12 @@ export class RawEventService {
   }
 
   async getBySession(sessionId: string, opts?: GetBySessionOptions): Promise<RawEvent[]> {
-    const events = await this.eventStore.getBySession(sessionId);
-    if (!opts?.includeDeltas) return events;
-    const deltas = await this.deltaStore.getBySession(sessionId);
+    if (!opts?.includeDeltas) return this.eventStore.getBySession(sessionId);
+    // Two independent queries — parallelize.
+    const [events, deltas] = await Promise.all([
+      this.eventStore.getBySession(sessionId),
+      this.deltaStore.getBySession(sessionId),
+    ]);
     // Deltas return as RawDeltaEntry (with parentId); the RawEvent surface
     // drops parentId via the projection below. UNION ORDER BY seq.
     const merged: RawEvent[] = [
