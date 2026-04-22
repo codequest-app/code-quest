@@ -40,7 +40,6 @@ describe('transform — control requests', () => {
     expect(result.messages).toMatchObject([
       { name: 'settings:get_settings', payload: { requestId: 'gs-1' } },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts set_model → settings:model_updated event with input', () => {
@@ -50,7 +49,6 @@ describe('transform — control requests', () => {
     expect(result.messages).toMatchObject([
       { name: 'settings:model_updated', payload: { requestId: 'sm-1', input: { model: 'haiku' } } },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts set_permission_mode → settings:permission_mode_updated event with input', () => {
@@ -63,13 +61,11 @@ describe('transform — control requests', () => {
         payload: { requestId: 'sp-1', input: { mode: 'plan' } },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts initialize → passthrough (no events)', () => {
     const result = transformResult(s.controlRequest('init-1', 'initialize'));
     expect(result.messages).toHaveLength(0);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts mcp_message notification → mcp:auto_respond with requestId and response', () => {
@@ -82,7 +78,6 @@ describe('transform — control requests', () => {
     expect(result.messages).toMatchObject([
       { name: 'mcp:auto_respond', payload: { requestId: 'mcp-1', response: { mcp_response: {} } } },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts mcp_message request (has id) → control:mcp', () => {
@@ -109,7 +104,6 @@ describe('transform — control requests', () => {
         },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts open_file → action:open_file with requestId and auto-respond payload', () => {
@@ -126,7 +120,6 @@ describe('transform — control requests', () => {
         },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts show_notification → notification:show with requestId and auto-respond payload', () => {
@@ -151,7 +144,6 @@ describe('transform — control requests', () => {
         },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts show_notification with severity=error', () => {
@@ -189,7 +181,6 @@ describe('transform — control requests', () => {
         payload: { requestId: 'od-1', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 
   it('converts unknown subtype → control:forward event', () => {
@@ -204,7 +195,6 @@ describe('transform — control requests', () => {
         },
       },
     ]);
-    expect(result.serverActions).toHaveLength(0);
   });
 });
 

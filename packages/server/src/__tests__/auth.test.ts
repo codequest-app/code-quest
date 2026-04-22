@@ -1,9 +1,9 @@
-import type { RpcResult } from '@code-quest/shared';
+import type { Ack, RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
 type AuthLoginResponse = RpcResult<{ auth?: unknown }>;
-type AuthOauthCodeResponse = RpcResult<Record<string, never>>;
+type AuthOauthCodeResponse = Ack;
 
 async function setup(sessionId = 'cli-sess') {
   const claude = createFakeSummoner().claude();

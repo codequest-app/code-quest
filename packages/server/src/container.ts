@@ -28,7 +28,7 @@ import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
-import { ChannelManager } from './socket/channel-manager.ts';
+import { ChannelManager, type SessionLookup } from './socket/channel-manager.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
 import { SessionHistory } from './socket/session-history.ts';
@@ -94,21 +94,12 @@ export function createContainer(options: ContainerOptions): Container {
 
   const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.writeDeltas);
   const emitter = new ChannelEmitter();
-  // SessionHistory and ChannelManager reference each other via lazy callbacks
-  // (neither is called during construction — only at runtime)
-  const sessionHistory: SessionHistory = new SessionHistory(
-    rawEventService,
-    sessionStore,
-    adapter,
-    (id) => channelManager.get(id),
-  );
-  const channelManager: ChannelManager = new ChannelManager(
-    runnerFactory,
-    adapter,
-    rawRecorder,
-    emitter,
-    (channelId) => sessionHistory.resolveSessionId(channelId),
-    async (channelId) => {
+  // Circular wiring between ChannelManager and SessionHistory via lazy lookup —
+  // neither is invoked during construction, so the forward-reference is safe.
+  let sessionHistory: SessionHistory;
+  const sessionLookup: SessionLookup = {
+    resolveSessionId: (channelId) => sessionHistory.resolveSessionId(channelId),
+    resolveCwd: async (channelId) => {
       const sessionId = await sessionHistory.resolveSessionId(channelId);
       const row = await sessionStore.getById(sessionId);
       if (!row?.cwd) {
@@ -118,7 +109,15 @@ export function createContainer(options: ContainerOptions): Container {
       }
       return row.cwd;
     },
+  };
+  const channelManager: ChannelManager = new ChannelManager(
+    runnerFactory,
+    adapter,
+    rawRecorder,
+    emitter,
+    sessionLookup,
   );
+  sessionHistory = new SessionHistory(rawEventService, sessionStore, adapter, channelManager);
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
   container.bind<ChannelEmitter>(TYPES.ChannelEventRouter).toConstantValue(emitter);

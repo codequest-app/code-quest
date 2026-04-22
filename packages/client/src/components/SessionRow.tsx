@@ -1,4 +1,4 @@
-import type { RpcResult, SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../utils/cn';
@@ -9,8 +9,8 @@ interface SessionRowProps {
   isFocused?: boolean;
   onSelect: (id: string) => void;
   onMouseEnter?: () => void;
-  onRename?: (id: string, title: string) => Promise<RpcResult<Record<string, never>>>;
-  onDelete?: (id: string) => Promise<RpcResult<Record<string, never>>>;
+  onRename?: (id: string, title: string) => Promise<Ack>;
+  onDelete?: (id: string) => Promise<Ack>;
   searchQuery?: string;
 }
 

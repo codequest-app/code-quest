@@ -38,6 +38,6 @@ export function expectName<N extends ClientMessage['name']>(
 
 export function transformResult(line: string) {
   const event = parseMessage(line);
-  if (!event) return { messages: [], controlResponses: [], serverActions: [] };
+  if (!event) return { messages: [], controlResponses: [] };
   return adapter.transform(event);
 }

@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { basename, join, normalize, resolve } from 'node:path';
+import { basename, join, normalize, relative, resolve } from 'node:path';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { DirectoryEntry, FileResult, FilesystemService, ReadFileResult } from './types.ts';
@@ -67,7 +67,9 @@ export class LocalFilesystemService implements FilesystemService {
   async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
     const resolvedCwd = resolve(cwd);
     const absolute = resolve(resolvedCwd, normalize(filePath));
-    if (!absolute.startsWith(`${resolvedCwd}/`) && absolute !== resolvedCwd) {
+    // path.relative handles OS separators; ".." prefix signals escape.
+    const rel = relative(resolvedCwd, absolute);
+    if (rel.startsWith('..')) {
       return { error: 'Path traversal not allowed' };
     }
     try {

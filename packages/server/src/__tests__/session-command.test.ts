@@ -1,10 +1,10 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 
-import type { RpcResult, SessionListResponse } from '@code-quest/shared';
+import type { Ack, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
-type UpdateStateResp = RpcResult<Record<string, never>>;
+type UpdateStateResp = Ack;
 type SessionListOk = Extract<SessionListResponse, { ok: true }>;
 
 async function setup(sessionId = 'cli-sess') {

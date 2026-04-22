@@ -464,7 +464,14 @@ export function getSchemaForType(type: string, subtype?: string): z.ZodType | un
 /** Set of all known CLI event type strings. */
 export const KNOWN_EVENT_TYPES = new Set(['system', ...Object.keys(typeRegistry)]);
 
-/** Union type inferred from all CLI event Zod schemas. */
+/** Union type inferred from all CLI event Zod schemas.
+ *
+ * NOTE: Hand-maintained alongside `typeRegistry` / `systemSubtypeRegistry`.
+ * `z.discriminatedUnion('type', [...])` doesn't fit because system events
+ * all share `type: 'system'` and distinguish by `subtype` — zod requires
+ * unique discriminant values. Flattening system into top-level types would
+ * break the CLI wire contract. If a schema is added, it MUST be appended
+ * below AND in the appropriate registry above. */
 export type ProtocolMessage =
   | z.infer<typeof systemInitSchema>
   | z.infer<typeof systemStatusSchema>

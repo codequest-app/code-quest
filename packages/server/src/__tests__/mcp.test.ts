@@ -1,4 +1,5 @@
 import type {
+  Ack,
   DisableChromeMcpResponse,
   DisableJupyterMcpResponse,
   EnableJupyterMcpResponse,
@@ -9,7 +10,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
 type McpAuthResp = RpcResult<{ authUrl?: string }>;
-type McpEmptyResp = RpcResult<Record<string, never>>;
+type McpEmptyResp = Ack;
 type McpAskDebuggerResp = RpcResult<{ response: { type: 'ask_debugger_help_response' } }>;
 type McpAskDebuggerOk = Extract<McpAskDebuggerResp, { ok: true }>;
 

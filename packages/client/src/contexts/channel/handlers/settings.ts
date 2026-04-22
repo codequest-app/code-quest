@@ -1,4 +1,5 @@
 import {
+  type Ack,
   type ControlResponse,
   EVENTS,
   effortLevelSchema,
@@ -223,7 +224,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     emit(EVENTS.settings.set_proactive, { enabled });
   }
 
-  function setEffort(effort: string): Promise<RpcResult<Record<string, never>>> {
+  function setEffort(effort: string): Promise<Ack> {
     return rpc(deps.socket, EVENTS.settings.apply, {
       channelId: deps.channelId,
       settings: { effortLevel: effort },
@@ -275,10 +276,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     return rpc(deps.socket, EVENTS.mcp.authenticate, { channelId: deps.channelId, serverName });
   }
 
-  function mcpOAuthCallback(
-    serverName: string,
-    callbackUrl: string,
-  ): Promise<RpcResult<Record<string, never>>> {
+  function mcpOAuthCallback(serverName: string, callbackUrl: string): Promise<Ack> {
     return rpc(deps.socket, EVENTS.mcp.oauth_callback, {
       channelId: deps.channelId,
       serverName,
@@ -286,7 +284,7 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     });
   }
 
-  function mcpClearAuth(serverName: string): Promise<RpcResult<Record<string, never>>> {
+  function mcpClearAuth(serverName: string): Promise<Ack> {
     return rpc(deps.socket, EVENTS.mcp.clear_auth, { channelId: deps.channelId, serverName });
   }
 

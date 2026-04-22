@@ -43,7 +43,6 @@ export interface ProcessProvider {
 export interface AdapterOutput {
   messages: ClientMessage[];
   controlResponses: ResolvedControlResponse[];
-  serverActions: never[];
 }
 
 // --- ParseResult: generic parse output ---
@@ -96,5 +95,7 @@ export interface ProviderAdapter<E = unknown, L = unknown> {
   ): string;
   formatControlResponse(requestId: string, response: Record<string, unknown>): string;
   mapResponse(event: string, response: Record<string, unknown>): Record<string, unknown>;
-  extractRespondedRequestIds(rawEvents: Array<{ direction: string; raw: string }>): Set<string>;
+  extractRespondedRequestIds(
+    parsedEvents: Array<{ direction: string; obj: Record<string, unknown> }>,
+  ): Set<string>;
 }

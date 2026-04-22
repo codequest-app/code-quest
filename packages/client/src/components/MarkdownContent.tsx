@@ -1,18 +1,17 @@
-import { useRef, useState } from 'react';
+import { isValidElement, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Components } from 'react-markdown';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { copyToClipboard } from '../utils/clipboard';
 import { cn } from '../utils/cn';
 import { CodeBlock } from './CodeBlock';
 import { CopyButton, HOVER_COPY_BASE } from './message-blocks/CopyButton';
 
 function isElementWithLanguageClass(node: React.ReactNode): boolean {
-  if (!node || typeof node !== 'object') return false;
-  const el = node as { props?: { className?: string; children?: React.ReactNode } };
-  const className = el.props?.className;
-  if (typeof className === 'string' && /language-\w+/.test(className)) return true;
-  return false;
+  if (!isValidElement<{ className?: string }>(node)) return false;
+  const className = node.props.className;
+  return typeof className === 'string' && /language-\w+/.test(className);
 }
 
 function FencedCodeWrapper({ children }: { children: React.ReactNode }) {
@@ -60,7 +59,7 @@ function LinkWithContextMenu({ href, children }: { href?: string; children: Reac
               type="button"
               className="block px-3 py-1 text-sm text-text hover:bg-surface-hover w-full text-left"
               onClick={() => {
-                navigator.clipboard.writeText(href);
+                void copyToClipboard(href);
                 setMenu(null);
               }}
             >

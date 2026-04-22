@@ -197,5 +197,5 @@ export function transformControlRequest(raw: ControlRequestMessage): AdapterOutp
   const result = handler ? handler(ctx) : handleForwardToClient(ctx);
 
   const messages = result ? [result] : [];
-  return { messages, serverActions: [], controlResponses: [] };
+  return { messages, controlResponses: [] };
 }

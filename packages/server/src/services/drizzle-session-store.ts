@@ -25,12 +25,12 @@ export class DrizzleSessionStore implements SessionStore {
     private sessions: SessionsTable,
   ) {}
 
+  // Read-then-write; not atomic. Safe because onSessionInit is the only caller
+  // and each channel emits session:init once. Switch to onConflictDoUpdate if
+  // concurrent upserts for the same sessionId become realistic.
   async upsert(record: SessionRecord): Promise<void> {
     const existing = await this.getById(record.id);
     if (existing) {
-      // Same sessionId reappearing — a new Channel is wrapping the same CLI
-      // conversation (resume, or fork reusing sessionId in fakes). Point the
-      // row's channelId at the current wrapper and refresh lineage/status.
       await this.db
         .update(this.sessions)
         .set({
@@ -93,25 +93,28 @@ export class DrizzleSessionStore implements SessionStore {
     return sessionRecordSchema.optional().parse(rows[0]) ?? null;
   }
 
-  async rename(id: string, title: string): Promise<boolean> {
-    const existing = await this.getById(id);
-    if (!existing) return false;
-    await this.db.update(this.sessions).set({ title }).where(eq(this.sessions.id, id));
+  private async withExistingId(id: string, op: () => Promise<unknown>): Promise<boolean> {
+    if (!(await this.getById(id))) return false;
+    await op();
     return true;
+  }
+
+  async rename(id: string, title: string): Promise<boolean> {
+    return this.withExistingId(id, () =>
+      this.db.update(this.sessions).set({ title }).where(eq(this.sessions.id, id)),
+    );
   }
 
   async updateStatus(id: string, status: string): Promise<boolean> {
-    const existing = await this.getById(id);
-    if (!existing) return false;
-    await this.db.update(this.sessions).set({ status }).where(eq(this.sessions.id, id));
-    return true;
+    return this.withExistingId(id, () =>
+      this.db.update(this.sessions).set({ status }).where(eq(this.sessions.id, id)),
+    );
   }
 
   async delete(id: string): Promise<boolean> {
-    const existing = await this.getById(id);
-    if (!existing) return false;
-    await this.db.delete(this.sessions).where(eq(this.sessions.id, id));
-    return true;
+    return this.withExistingId(id, () =>
+      this.db.delete(this.sessions).where(eq(this.sessions.id, id)),
+    );
   }
 
   async renameByChannelId(channelId: string, title: string): Promise<boolean> {

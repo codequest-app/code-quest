@@ -6,7 +6,7 @@ import {
   isRecord,
   type ServerToClientEvents,
 } from '@code-quest/shared';
-import type { ProviderAdapter } from '@code-quest/summoner';
+import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionPreview } from '../services/raw-event-store.ts';
@@ -14,6 +14,8 @@ import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
 import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
 import type { TypedSocket } from './types.ts';
+
+type RawEventDirection = RawEvent['direction'];
 
 /** History-relevant socket event names — excludes streaming, control, and transient types. */
 const HISTORY_NAMES = new Set<string>([
@@ -23,16 +25,39 @@ const HISTORY_NAMES = new Set<string>([
   EVENTS.session.init,
 ]);
 
+/** Minimal surface SessionHistory needs from ChannelManager. */
+export interface ChannelLookup {
+  get(id: string): Channel | undefined;
+}
+
+function parseRawEvents(
+  rawEvents: Array<{ raw: string; direction: RawEventDirection }>,
+): Array<{ direction: RawEventDirection; obj: Record<string, unknown> }> {
+  const parsed: Array<{ direction: RawEventDirection; obj: Record<string, unknown> }> = [];
+  for (const event of rawEvents) {
+    const trimmed = event.raw.trim();
+    if (!trimmed) continue;
+    try {
+      const raw: unknown = JSON.parse(trimmed);
+      if (!isRecord(raw)) continue;
+      parsed.push({ direction: event.direction, obj: raw });
+    } catch (err) {
+      logger.debug(err, 'Skipping malformed raw event during replay');
+    }
+  }
+  return parsed;
+}
+
 export class SessionHistory {
   constructor(
     private rawEventService: RawEventService,
     private sessionStore: SessionStore,
     private adapter: ProviderAdapter,
-    private getChannel: (id: string) => Channel | undefined,
+    private channels: ChannelLookup,
   ) {}
 
   async resolveSessionId(channelId: string): Promise<string> {
-    const channel = this.getChannel(channelId);
+    const channel = this.channels.get(channelId);
     if (channel?.sessionId) return channel.sessionId;
     const record = await this.sessionStore.getByChannelId(channelId);
     return record?.id ?? channelId;
@@ -60,9 +85,11 @@ export class SessionHistory {
     respondedRequestIds: Set<string>;
   }> {
     const rawEvents = await this.rawEventService.getBySession(sessionId);
-    const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEvents);
-    const messages = this.replayEvents(rawEvents);
-    return { messages, respondedRequestIds };
+    const parsed = parseRawEvents(rawEvents);
+    return {
+      messages: this.replayParsed(parsed),
+      respondedRequestIds: this.adapter.extractRespondedRequestIds(parsed),
+    };
   }
 
   private async replaySession(sessionId: string): Promise<ClientMessage[]> {
@@ -92,38 +119,24 @@ export class SessionHistory {
     }
   }
 
-  private replayEvents(rawEvents: Array<{ raw: string; direction: string }>): ClientMessage[] {
-    // First pass: detect if stdout already echoes user messages
-    const hasStdoutUserEcho = rawEvents.some((e) => {
-      if (e.direction !== 'out') return false;
-      try {
-        const obj: unknown = JSON.parse(e.raw.trim());
-        return isRecord(obj) && obj.type === 'user';
-      } catch {
-        return false;
-      }
-    });
+  private replayEvents(
+    rawEvents: Array<{ raw: string; direction: RawEventDirection }>,
+  ): ClientMessage[] {
+    return this.replayParsed(parseRawEvents(rawEvents));
+  }
 
-    // Second pass: replay in original order
+  private replayParsed(
+    parsed: Array<{ direction: RawEventDirection; obj: Record<string, unknown> }>,
+  ): ClientMessage[] {
+    const hasStdoutUserEcho = parsed.some((e) => e.direction === 'out' && e.obj.type === 'user');
     const result: ClientMessage[] = [];
-    for (const event of rawEvents) {
-      const trimmed = event.raw.trim();
-      if (!trimmed) continue;
-
-      try {
-        const raw: unknown = JSON.parse(trimmed);
-        if (!isRecord(raw)) continue;
-
-        if (event.direction === 'out') {
-          this.replayStdoutEvent(raw, result);
-        } else if (event.direction === 'in' && !hasStdoutUserEcho) {
-          this.replayStdinEvent(raw, result);
-        }
-      } catch (err) {
-        logger.debug(err, 'Skipping malformed raw event during replay');
+    for (const event of parsed) {
+      if (event.direction === 'out') {
+        this.replayStdoutEvent(event.obj, result);
+      } else if (event.direction === 'in' && !hasStdoutUserEcho) {
+        this.replayStdinEvent(event.obj, result);
       }
     }
-
     return result;
   }
 
@@ -137,16 +150,18 @@ export class SessionHistory {
     const pendingRequests: Array<{ requestId: string; message: ClientMessage }> = [];
 
     for (const message of messages) {
-      if (
-        message.name === EVENTS.control.permission ||
-        message.name === EVENTS.control.elicitation
-      ) {
-        const { requestId } = controlRequestEventSchema.parse(message.payload);
-        pendingRequests.push({ requestId, message });
-      } else if (message.name === EVENTS.control.cancel) {
-        const { requestId } = controlRequestEventSchema.parse(message.payload);
-        respondedRequestIds.add(requestId);
+      const isPending =
+        message.name === EVENTS.control.permission || message.name === EVENTS.control.elicitation;
+      const isCancel = message.name === EVENTS.control.cancel;
+      if (!isPending && !isCancel) continue;
+
+      const parsed = controlRequestEventSchema.safeParse(message.payload);
+      if (!parsed.success) {
+        logger.warn({ err: parsed.error, name: message.name }, 'Malformed control event in replay');
+        continue;
       }
+      if (isPending) pendingRequests.push({ requestId: parsed.data.requestId, message });
+      else respondedRequestIds.add(parsed.data.requestId);
     }
 
     for (const { requestId, message } of pendingRequests) {

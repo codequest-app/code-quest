@@ -13,6 +13,7 @@ import {
   settingsSetThinkingLevelPayloadSchema,
   settingsUpdatedPayloadSchema,
 } from '@code-quest/shared';
+import type { z } from 'zod';
 import { config } from '../../config.ts';
 import { logger } from '../../logger.ts';
 import type { HandlerContext } from '../../types.ts';
@@ -95,37 +96,37 @@ export function create({
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
-      const displayPatch = thinkingDisplay != null ? { thinkingDisplay } : {};
       if (thinkingDisplay != null) {
         await settingsStore.set(ch.provider, 'thinkingDisplay', thinkingDisplay);
+        emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel, thinkingDisplay });
+      } else {
+        emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel });
       }
-      emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel, ...displayPatch });
     },
   });
 
-  async function handleSetProactive(ch: Channel, payload: unknown): Promise<void> {
-    try {
-      const { channelId, enabled } = settingsSetProactivePayloadSchema.parse(payload);
+  const handleSetProactive = createSettingHandler({
+    schema: settingsSetProactivePayloadSchema,
+    errorMsg: 'Failed to set proactive mode',
+    run: async (ch, { channelId, enabled }) => {
       await ch.sendRequest(EVENTS.settings.set_proactive, { enabled });
       emitter.broadcastAll(EVENTS.settings.update, {
         channelId,
         fastModeState: enabled ? 'on' : 'off',
       });
-    } catch (err) {
-      logger.warn({ err }, 'Failed to set proactive mode');
-    }
-  }
+    },
+  });
 
-  function handleSetRemoteControl(ch: Channel, payload: unknown): void {
-    try {
-      const { enabled } = settingsSetRemoteControlPayloadSchema.parse(payload);
+  const handleSetRemoteControl = createSettingHandler({
+    schema: settingsSetRemoteControlPayloadSchema,
+    errorMsg: 'Failed to set remote control',
+    run: async (ch, { enabled }) => {
+      // Fire-and-forget — remote_control is a best-effort notification.
       ch.sendRequest('settings:remote_control', { enabled }).catch((err) =>
         logger.debug({ err }, 'sendRequest failed'),
       );
-    } catch (err) {
-      logger.warn({ err }, 'Failed to set remote control');
-    }
-  }
+    },
+  });
 
   const handleApply = createSettingHandler({
     schema: settingsApplyPayloadSchema,
@@ -209,21 +210,27 @@ export function create({
     }
   }
 
-  function onModelUpdated(ch: Channel, payload: unknown): void {
+  function onCliSettingsUpdate<InputSchema extends z.ZodTypeAny>(
+    ch: Channel,
+    payload: unknown,
+    inputSchema: InputSchema,
+    apply: (ch: Channel, input: z.infer<InputSchema>) => void,
+  ): void {
     const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
-    const { model } = serverActionModelSchema.parse(input ?? {});
-    ch.updateSessionConfig({ model });
+    apply(ch, inputSchema.parse(input ?? {}));
     ch.respondToRequest(requestId, { subtype: 'success' });
     channelManager.broadcastSessionState(ch.channelId, 'busy');
   }
 
-  function onPermissionModeUpdated(ch: Channel, payload: unknown): void {
-    const { requestId, input } = settingsUpdatedPayloadSchema.parse(payload);
-    const { mode } = serverActionModeSchema.parse(input ?? {});
-    ch.updateSessionConfig({ permissionMode: mode });
-    ch.respondToRequest(requestId, { subtype: 'success' });
-    channelManager.broadcastSessionState(ch.channelId, 'busy');
-  }
+  const onModelUpdated = (ch: Channel, payload: unknown) =>
+    onCliSettingsUpdate(ch, payload, serverActionModelSchema, (c, { model }) =>
+      c.updateSessionConfig({ model }),
+    );
+
+  const onPermissionModeUpdated = (ch: Channel, payload: unknown) =>
+    onCliSettingsUpdate(ch, payload, serverActionModeSchema, (c, { mode }) =>
+      c.updateSessionConfig({ permissionMode: mode }),
+    );
 
   emitter.on(EVENTS.settings.get_settings, withChannel(onGetSettings));
   emitter.on(EVENTS.settings.model_updated, withChannel(onModelUpdated));

@@ -32,7 +32,7 @@ function handleContentBlockDelta(
           chunk: {
             kind: 'citations',
             content: '',
-            citations: [delta.citations ?? delta.citation].flat().filter(Boolean),
+            citations: delta.citations ?? (delta.citation ? [delta.citation] : []),
           },
           ...parent,
         },

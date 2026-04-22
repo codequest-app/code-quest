@@ -1,4 +1,4 @@
-import type { McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
+import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { cn } from '../utils/cn';
@@ -102,7 +102,7 @@ interface ManageMcpDialogProps {
   onReconnect?: (name: string) => Promise<void>;
   onToggle?: (name: string, enabled: boolean) => Promise<void>;
   onAuthenticate?: (name: string) => Promise<RpcResult<{ authUrl?: string }>>;
-  onClearAuth?: (name: string) => Promise<RpcResult<Record<string, never>>>;
+  onClearAuth?: (name: string) => Promise<Ack>;
   onRefresh?: () => void;
 }
 

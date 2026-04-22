@@ -1,5 +1,5 @@
 import { mkdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve, sep } from 'node:path';
 import {
   errMsg,
   type GitDiffResult,
@@ -112,9 +112,9 @@ export class LocalGitService implements GitService {
       const git = this.createGit(cwd);
       const commonDir = (await git.revparse(['--git-common-dir'])).trim();
       // commonDir is either an absolute path or a path relative to cwd.
-      const absolute = commonDir.startsWith('/') ? commonDir : resolve(cwd, commonDir);
+      const absolute = isAbsolute(commonDir) ? commonDir : resolve(cwd, commonDir);
       // Strip the trailing `.git` (main repo) or `.git/worktrees/<name>` (linked worktree).
-      const dotGitIdx = absolute.lastIndexOf('/.git');
+      const dotGitIdx = absolute.lastIndexOf(`${sep}.git`);
       if (dotGitIdx === -1) return absolute;
       return absolute.slice(0, dotGitIdx);
     } catch (err) {

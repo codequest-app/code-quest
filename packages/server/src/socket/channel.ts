@@ -13,6 +13,8 @@ import {
 } from '@code-quest/shared';
 import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
 import { detectWorktree } from '@code-quest/summoner';
+import type { z } from 'zod';
+import { logger } from '../logger.ts';
 import { ControlRequestTracker, DEFAULT_CONTROL_TIMEOUT } from './control-request-tracker.ts';
 import type { RequestMeta } from './schemas.ts';
 import { pickDefined } from './utils/helpers.ts';
@@ -207,40 +209,59 @@ export class Channel {
     );
   }
 
+  private safeApply<S extends z.ZodTypeAny>(
+    schema: S,
+    payload: unknown,
+    label: string,
+    apply: (data: z.infer<S>) => void,
+  ): void {
+    const parsed = schema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error, channelId: this.channelId }, `Malformed ${label}`);
+      return;
+    }
+    apply(parsed.data);
+  }
+
   private applyErrorMessage(payload: unknown): void {
-    const { message } = errorMessageEventSchema.parse(payload);
-    this.lastError = message;
+    this.safeApply(errorMessageEventSchema, payload, 'error:message', ({ message }) => {
+      this.lastError = message;
+    });
   }
 
   private applySessionInit(payload: unknown): void {
-    const init = sessionInitEventSchema.parse(payload);
-    if (init.sessionId) {
-      this.sessionId = init.sessionId;
-    }
-    const { cwd: initCwd, ...initConfig } = sessionInitConfigSchema.parse(init.config ?? {});
-    if (initCwd) {
-      this.cwd = initCwd;
-      const wt = detectWorktree(initCwd);
-      if (wt) this.worktree = wt;
-    }
-    this.updateSessionConfig(initConfig);
-    this.updateMetaCache(
-      pickDefined({
-        model: init.model,
-        tools: init.tools,
-        permissionMode: init.permissionMode,
-        fastModeState: init.fastModeState,
-        mcpServers: init.mcpServers,
-        slashCommands: init.slashCommands,
-      }),
-    );
+    this.safeApply(sessionInitEventSchema, payload, 'session:init', (init) => {
+      if (init.sessionId) this.sessionId = init.sessionId;
+      this.safeApply(
+        sessionInitConfigSchema,
+        init.config ?? {},
+        'session:init config',
+        ({ cwd: initCwd, ...initConfig }) => {
+          if (initCwd) {
+            this.cwd = initCwd;
+            const wt = detectWorktree(initCwd);
+            if (wt) this.worktree = wt;
+          }
+          this.updateSessionConfig(initConfig);
+        },
+      );
+      this.updateMetaCache(
+        pickDefined({
+          model: init.model,
+          tools: init.tools,
+          permissionMode: init.permissionMode,
+          fastModeState: init.fastModeState,
+          mcpServers: init.mcpServers,
+          slashCommands: init.slashCommands,
+        }),
+      );
+    });
   }
 
   private applySessionStatus(payload: unknown): void {
-    const status = sessionStatusEventSchema.parse(payload);
-    if (status.permissionMode !== undefined) {
-      this.updateSessionConfig({ permissionMode: status.permissionMode });
-    }
+    this.safeApply(sessionStatusEventSchema, payload, 'session:status', ({ permissionMode }) => {
+      if (permissionMode !== undefined) this.updateSessionConfig({ permissionMode });
+    });
   }
 
   /** Update channel internal state from runner messages. */

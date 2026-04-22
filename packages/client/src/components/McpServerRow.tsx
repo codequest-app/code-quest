@@ -1,4 +1,4 @@
-import type { McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
+import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 
@@ -21,11 +21,8 @@ interface McpServerRowProps {
   onReconnect: (serverName: string) => void | Promise<void>;
   onListTools?: (serverName: string) => Promise<McpTool[]>;
   onAuthenticate?: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
-  onOAuthCallback?: (
-    serverName: string,
-    callbackUrl: string,
-  ) => Promise<RpcResult<Record<string, never>>>;
-  onClearAuth?: (serverName: string) => Promise<RpcResult<Record<string, never>>>;
+  onOAuthCallback?: (serverName: string, callbackUrl: string) => Promise<Ack>;
+  onClearAuth?: (serverName: string) => Promise<Ack>;
   showFeedback: (message: string, type: 'success' | 'error') => void;
 }
 
@@ -43,6 +40,16 @@ export function McpServerRow({
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
   const [callbackInput, setCallbackInput] = useState('');
+
+  const runAction = async <T,>(label: string, fn: () => T | Promise<T>): Promise<T | null> => {
+    try {
+      return await fn();
+    } catch (err) {
+      console.error(`McpServerRow ${label} failed for ${s.name}:`, err);
+      showFeedback(`Failed to ${label} ${s.name}`, 'error');
+      return null;
+    }
+  };
 
   return (
     <div className="border-b border-border">
@@ -65,12 +72,10 @@ export function McpServerRow({
                 setToolsExpanded(false);
                 return;
               }
-              try {
-                const result = await onListTools(s.name);
+              const result = await runAction('list tools for', () => onListTools(s.name));
+              if (result) {
                 setTools(result);
                 setToolsExpanded(true);
-              } catch {
-                showFeedback(`Failed to list tools for ${s.name}`, 'error');
               }
             }}
             className={ACTION_LINK_BTN}
@@ -82,12 +87,8 @@ export function McpServerRow({
           type="button"
           title={`Toggle ${s.name}`}
           onClick={async () => {
-            try {
-              await onToggle(s.name, !s.enabled);
-              showFeedback(`${s.name} toggled`, 'success');
-            } catch {
-              showFeedback(`Failed to toggle ${s.name}`, 'error');
-            }
+            const ok = await runAction('toggle', () => onToggle(s.name, !s.enabled));
+            if (ok !== null) showFeedback(`${s.name} toggled`, 'success');
           }}
           className={cn(
             'text-xs px-2 py-0.5 rounded border transition-colors',
@@ -102,12 +103,8 @@ export function McpServerRow({
           type="button"
           title={`Reconnect ${s.name}`}
           onClick={async () => {
-            try {
-              await onReconnect(s.name);
-              showFeedback(`${s.name} reconnected`, 'success');
-            } catch {
-              showFeedback(`Failed to reconnect ${s.name}`, 'error');
-            }
+            const ok = await runAction('reconnect', () => onReconnect(s.name));
+            if (ok !== null) showFeedback(`${s.name} reconnected`, 'success');
           }}
           className={ACTION_LINK_BTN}
         >
@@ -118,16 +115,10 @@ export function McpServerRow({
             type="button"
             title={`Clear Auth ${s.name}`}
             onClick={async () => {
-              try {
-                const result = await onClearAuth(s.name);
-                if (result.ok) {
-                  showFeedback(`${s.name} auth cleared`, 'success');
-                } else {
-                  showFeedback(result.error || 'Clear auth failed', 'error');
-                }
-              } catch {
-                showFeedback(`Failed to clear auth for ${s.name}`, 'error');
-              }
+              const result = await runAction('clear auth for', () => onClearAuth(s.name));
+              if (result === null) return;
+              if (result.ok) showFeedback(`${s.name} auth cleared`, 'success');
+              else showFeedback(result.error || 'Clear auth failed', 'error');
             }}
             className={ACTION_LINK_BTN}
           >
@@ -139,18 +130,15 @@ export function McpServerRow({
             type="button"
             title={`Auth ${s.name}`}
             onClick={async () => {
-              try {
-                const result = await onAuthenticate(s.name);
-                if (result.ok && result.data.authUrl) {
-                  setAuthUrl(result.data.authUrl);
-                  showFeedback(`Auth URL received for ${s.name}`, 'success');
-                } else if (result.ok) {
-                  showFeedback(`${s.name} authenticated`, 'success');
-                } else {
-                  showFeedback(result.error || 'Auth failed', 'error');
-                }
-              } catch {
-                showFeedback(`Failed to authenticate ${s.name}`, 'error');
+              const result = await runAction('authenticate', () => onAuthenticate(s.name));
+              if (result === null) return;
+              if (result.ok && result.data.authUrl) {
+                setAuthUrl(result.data.authUrl);
+                showFeedback(`Auth URL received for ${s.name}`, 'success');
+              } else if (result.ok) {
+                showFeedback(`${s.name} authenticated`, 'success');
+              } else {
+                showFeedback(result.error || 'Auth failed', 'error');
               }
             }}
             className={ACTION_LINK_BTN}
@@ -183,17 +171,16 @@ export function McpServerRow({
                 onClick={async () => {
                   const url = callbackInput.trim();
                   if (!url) return;
-                  try {
-                    const result = await onOAuthCallback(s.name, url);
-                    if (result.ok) {
-                      showFeedback(`OAuth callback sent for ${s.name}`, 'success');
-                      setCallbackInput('');
-                      setAuthUrl('');
-                    } else {
-                      showFeedback(result.error || 'Callback failed', 'error');
-                    }
-                  } catch {
-                    showFeedback(`Failed to submit callback for ${s.name}`, 'error');
+                  const result = await runAction('submit callback for', () =>
+                    onOAuthCallback(s.name, url),
+                  );
+                  if (result === null) return;
+                  if (result.ok) {
+                    showFeedback(`OAuth callback sent for ${s.name}`, 'success');
+                    setCallbackInput('');
+                    setAuthUrl('');
+                  } else {
+                    showFeedback(result.error || 'Callback failed', 'error');
                   }
                 }}
                 className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-accent/80"

@@ -48,7 +48,6 @@ describe('ClaudeAdapter', () => {
         name: 'message:assistant',
         payload: { content: [{ type: 'text', text: 'hello world' }] },
       });
-      expect(output.serverActions).toHaveLength(0);
       expect(output.controlResponses).toHaveLength(0);
     });
 
@@ -86,7 +85,6 @@ describe('ClaudeAdapter', () => {
           response: { type: 'open_url_response' },
         },
       });
-      expect(output.serverActions).toHaveLength(0);
     });
 
     it('open_diff produces control:open_diff event (no serverActions)', () => {
@@ -106,7 +104,6 @@ describe('ClaudeAdapter', () => {
           payload: { requestId: 'req-2', originalPath: '/tmp/a.ts', newPath: '/tmp/b.ts' },
         },
       ]);
-      expect(output.serverActions).toHaveLength(0);
     });
 
     it('transforms permission request into control:permission event', () => {
@@ -119,7 +116,6 @@ describe('ClaudeAdapter', () => {
 
       expect(output.messages).toHaveLength(1);
       expect(output.messages[0]).toMatchObject({ name: 'control:permission' });
-      expect(output.serverActions).toHaveLength(0);
     });
 
     it('transforms control_response into controlResponses', () => {
