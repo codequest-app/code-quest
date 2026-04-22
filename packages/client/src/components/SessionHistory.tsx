@@ -1,4 +1,4 @@
-import type { RpcResult, SessionSummary } from '@code-quest/shared';
+import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useState } from 'react';
 import { SessionRow } from './SessionRow';
 
@@ -6,8 +6,8 @@ interface SessionHistoryProps {
   sessions: SessionSummary[];
   loading?: boolean;
   onSelect: (id: string) => void;
-  onRename?: (id: string, title: string) => Promise<RpcResult<Record<string, never>>>;
-  onDelete?: (id: string) => Promise<RpcResult<Record<string, never>>>;
+  onRename?: (id: string, title: string) => Promise<Ack>;
+  onDelete?: (id: string) => Promise<Ack>;
 }
 
 export function SessionHistory({

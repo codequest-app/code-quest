@@ -21,6 +21,11 @@ function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
   }
 }
 
+/** Max raw events buffered before a sessionId arrives. If the CLI fails to
+ *  emit session:init we'd otherwise grow unbounded; dropping oldest bounds
+ *  memory while still capturing enough context to debug the failure. */
+const PENDING_CAP = 1000;
+
 export class RawRecorder {
   constructor(
     private service: RawEventService,
@@ -31,6 +36,7 @@ export class RawRecorder {
     const { runner } = channel;
     let seqCounter = 0;
     let currentTurnRootId: string | null = null;
+    let pendingDropWarned = false;
     const pendingEvents: PendingEvent[] = [];
 
     const persistOne = async (pending: PendingEvent, sessionId: string): Promise<void> => {
@@ -75,6 +81,16 @@ export class RawRecorder {
     const recordRaw = (raw: string, direction: 'in' | 'out' | 'err'): void => {
       const sessionId = channel.sessionId;
       if (!sessionId) {
+        if (pendingEvents.length >= PENDING_CAP) {
+          pendingEvents.shift();
+          if (!pendingDropWarned) {
+            pendingDropWarned = true;
+            logger.warn(
+              { channelId: channel.channelId, cap: PENDING_CAP },
+              'raw-recorder pending buffer hit cap; dropping oldest (session:init never arrived?)',
+            );
+          }
+        }
         pendingEvents.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
         return;
       }

@@ -1,4 +1,5 @@
 import type {
+  Ack,
   ForkConversationResponse,
   RpcResult,
   SessionStateSummary,
@@ -43,12 +44,12 @@ interface SessionContextValue {
     resumeSessionAt: string,
   ) => Promise<ForkConversationResponse>;
   teleportSession: (remoteChannelId: string, branch?: string) => Promise<TeleportSessionResponse>;
-  renameSession: (channelId: string, title: string) => Promise<RpcResult<Record<string, never>>>;
-  deleteSession: (channelId: string) => Promise<RpcResult<Record<string, never>>>;
+  renameSession: (channelId: string, title: string) => Promise<Ack>;
+  deleteSession: (channelId: string) => Promise<Ack>;
   updateSessionState: (
     channelId: string,
     update: { title?: string; state?: 'busy' | 'idle' },
-  ) => Promise<RpcResult<Record<string, never>>>;
+  ) => Promise<Ack>;
 
   closeSession: (channelId: string) => void;
   /** Resume a historical session by its sessionId. Server reuses a live

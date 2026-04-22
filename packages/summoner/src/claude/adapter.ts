@@ -21,11 +21,11 @@ import { transformUser } from './transforms/user.ts';
 
 interface ConvertResult {
   messages: ClientMessage[];
-  serverActions: never[];
+
   controlResponses: ResolvedControlResponse[];
 }
 
-const EMPTY: ConvertResult = { messages: [], serverActions: [], controlResponses: [] };
+const EMPTY: ConvertResult = { messages: [], controlResponses: [] };
 
 interface RequestMapping {
   subtype: string;
@@ -133,8 +133,8 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
   }
 
   transform(message: ProtocolMessage): AdapterOutput {
-    const { messages, serverActions, controlResponses } = this.convertMessage(message);
-    return { messages, controlResponses, serverActions };
+    const { messages, controlResponses } = this.convertMessage(message);
+    return { messages, controlResponses };
   }
 
   formatRequest(
@@ -168,20 +168,14 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     return this.protocol.formatControlResponse(requestId, response);
   }
 
-  extractRespondedRequestIds(rawEvents: Array<{ direction: string; raw: string }>): Set<string> {
+  extractRespondedRequestIds(
+    parsedEvents: Array<{ direction: string; obj: Record<string, unknown> }>,
+  ): Set<string> {
     const ids = new Set<string>();
-    for (const event of rawEvents) {
+    for (const event of parsedEvents) {
       if (event.direction !== 'in') continue;
-      try {
-        const obj = JSON.parse(event.raw.trim());
-        if (!isRecord(obj)) continue;
-        const resp = isRecord(obj.response) ? obj.response : undefined;
-        if (typeof resp?.request_id === 'string') ids.add(resp.request_id);
-      } catch (error) {
-        // summoner is a standalone package with no pino dependency; keep console.debug
-        // for best-effort diagnostics while scanning possibly-malformed raw entries.
-        console.debug('Failed to parse JSON', error);
-      }
+      const resp = isRecord(event.obj.response) ? event.obj.response : undefined;
+      if (typeof resp?.request_id === 'string') ids.add(resp.request_id);
     }
     return ids;
   }
@@ -195,7 +189,6 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
       const resp = message.response;
       return {
         messages: [],
-        serverActions: [],
         controlResponses: [
           {
             requestId: resp.request_id,
@@ -210,7 +203,6 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     if (message.type === 'control_cancel_request') {
       return {
         messages: [{ name: 'control:cancel', payload: { requestId: message.request_id } }],
-        serverActions: [],
         controlResponses: [],
       };
     }
@@ -223,7 +215,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     const result = this.convertOtherMessage(message);
     if (result === null) return EMPTY;
     const messages = Array.isArray(result) ? result : [result];
-    return { messages, serverActions: [], controlResponses: [] };
+    return { messages, controlResponses: [] };
   }
 
   // ── Non-control messages → ClientMessage ──
@@ -238,60 +230,63 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
 }
 
 type OtherTransformer = (m: ProtocolMessage) => ClientMessage | ClientMessage[] | null;
+type MessageByType<T extends ProtocolMessage['type']> = Extract<ProtocolMessage, { type: T }>;
 
-const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = {
-  system: (m) => transformSystem(m as Extract<ProtocolMessage, { type: 'system' }>),
-  assistant: (m) => transformAssistant(m as Extract<ProtocolMessage, { type: 'assistant' }>),
-  user: (m) => transformUser(m as Extract<ProtocolMessage, { type: 'user' }>),
-  result: (m) => transformResult(m as Extract<ProtocolMessage, { type: 'result' }>),
-  stream_event: (m) => transformStream(m as Extract<ProtocolMessage, { type: 'stream_event' }>),
-  rate_limit_event: (m) =>
-    convertRateLimitMessage(m as Extract<ProtocolMessage, { type: 'rate_limit_event' }>),
-  speech_to_text_message: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'speech_to_text_message' }>;
-    return { name: 'speech:message', payload: { text: msg.text, done: msg.done } };
-  },
-  streamlined_text: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'streamlined_text' }>;
-    return { name: 'stream:text', payload: { text: msg.text } };
-  },
-  streamlined_tool_use_summary: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'streamlined_tool_use_summary' }>;
-    return { name: 'stream:tool_summary', payload: { toolSummary: msg.tool_summary } };
-  },
-  error: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'error' }>;
-    return {
-      name: 'error:message',
-      payload: { message: msg.error?.message ?? 'Unknown error' },
-    };
-  },
-  experiment_gates: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'experiment_gates' }>;
+/** Register a typed handler for a ProtocolMessage discriminant. The `as`
+ *  cast is contained here (single place) so call sites below read as
+ *  type-narrowed functions over the concrete variant. */
+function handler<T extends ProtocolMessage['type']>(
+  key: T,
+  fn: (m: MessageByType<T>) => ClientMessage | ClientMessage[] | null,
+): [T, OtherTransformer] {
+  return [key, (m) => fn(m as MessageByType<T>)];
+}
+
+const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = Object.fromEntries([
+  handler('system', transformSystem),
+  handler('assistant', transformAssistant),
+  handler('user', transformUser),
+  handler('result', transformResult),
+  handler('stream_event', transformStream),
+  handler('rate_limit_event', convertRateLimitMessage),
+  handler('speech_to_text_message', (msg) => ({
+    name: 'speech:message',
+    payload: { text: msg.text, done: msg.done },
+  })),
+  handler('streamlined_text', (msg) => ({
+    name: 'stream:text',
+    payload: { text: msg.text },
+  })),
+  handler('streamlined_tool_use_summary', (msg) => ({
+    name: 'stream:tool_summary',
+    payload: { toolSummary: msg.tool_summary },
+  })),
+  handler('error', (msg) => ({
+    name: 'error:message',
+    payload: { message: msg.error?.message ?? 'Unknown error' },
+  })),
+  handler('experiment_gates', (msg) => {
     const gates: Record<string, boolean> = {};
     for (const [k, v] of Object.entries(msg.gates)) {
       gates[k] = Boolean(v);
     }
     return { name: 'app:experiment_gates', payload: { gates } };
-  },
-  available_models: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'available_models' }>;
-    return { name: 'app:models', payload: { models: msg.models } };
-  },
-  notification: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'notification' }>;
-    return { name: 'notification:toast', payload: { message: msg.message } };
-  },
-  auth_status: (m) => convertAuthStatusMessage(m),
-  auth_url: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'auth_url' }>;
-    return {
-      name: 'notification:auth_url',
-      payload: { url: msg.url, method: msg.method ?? 'oauth' },
-    };
-  },
-  raw_event: (m) => {
-    const msg = m as Extract<ProtocolMessage, { type: 'raw_event' }>;
-    return { name: 'raw:event', payload: { rawType: msg.rawType, data: msg.data } };
-  },
-};
+  }),
+  handler('available_models', (msg) => ({
+    name: 'app:models',
+    payload: { models: msg.models },
+  })),
+  handler('notification', (msg) => ({
+    name: 'notification:toast',
+    payload: { message: msg.message },
+  })),
+  handler('auth_status', convertAuthStatusMessage),
+  handler('auth_url', (msg) => ({
+    name: 'notification:auth_url',
+    payload: { url: msg.url, method: msg.method ?? 'oauth' },
+  })),
+  handler('raw_event', (msg) => ({
+    name: 'raw:event',
+    payload: { rawType: msg.rawType, data: msg.data },
+  })),
+]);

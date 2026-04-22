@@ -1,45 +1,594 @@
-// ── Auth ──
+// NOTE: Explicit re-exports. If you add a new export to any schema file,
+// add its name to the corresponding block below (type vs value matters).
 
-export * from './actions.ts';
-export * from './auth.ts';
-// ── Common / Actions / Question / Provider ──
-export * from './common.ts';
-// ── Control ──
-export * from './control.ts';
-export * from './control-response.ts';
-export * from './explorer.ts';
-// ── File / Explorer ──
-export * from './file.ts';
-// ── Git ──
-export * from './git.ts';
-// ── MCP ──
-export * from './mcp.ts';
-// ── Message ──
-export * from './message.ts';
-export * from './message-blocks.ts';
-export * from './message-meta.ts';
-export * from './message-payloads.ts';
-export * from './message-stats.ts';
-export * from './message-stream.ts';
-// ── Notification ──
-export * from './notification.ts';
-// ── Plan ──
-export * from './plan.ts';
-// ── Plugin ──
-export * from './plugin.ts';
-// ── Preferences (client-persisted) ──
-export * from './preferences.ts';
-export * from './provider.ts';
-export * from './question.ts';
-// ── RPC ──
-export * from './rpc.ts';
-// ── Session ──
-export * from './session.ts';
-// ── Settings ──
-export * from './settings.ts';
-// ── System ──
-export * from './system.ts';
-// ── Terminal ──
-export * from './terminal.ts';
-// ── Worktree ──
-export * from './worktree.ts';
+export type {
+  ActionOpenFilePayload,
+  ActionOpenUrlPayload,
+} from './actions.ts';
+export {
+  actionOpenFilePayloadSchema,
+  actionOpenUrlPayloadSchema,
+} from './actions.ts';
+export type {
+  AccountInfo,
+  AuthResult,
+  AuthStatus,
+  LoginPayload,
+  OAuthCodePayload,
+} from './auth.ts';
+export {
+  accountInfoSchema,
+  authResultSchema,
+  authStatusSchema,
+  loginPayloadSchema,
+  oauthCodePayloadSchema,
+} from './auth.ts';
+export type {
+  CancelRequestPayload,
+  ChannelIdPayload,
+  ChannelMetaCache,
+  ControlResponse,
+  ErrorMessagePayload,
+  SpeechToTextMessagePayload,
+} from './common.ts';
+export {
+  cancelRequestPayloadSchema,
+  channelIdPayloadSchema,
+  channelMetaCacheSchema,
+  clientMessageSchema,
+  controlResponseSchema,
+  errorMessagePayloadSchema,
+  messageContentSchema,
+  speechToTextMessagePayloadSchema,
+  successResponseSchema,
+} from './common.ts';
+export type {
+  AutoRespondPayload,
+  ControlCancelPayload,
+  ControlDiffReviewPayload,
+  ControlElicitationPayload,
+  ControlForwardPayload,
+  ControlMcpPayload,
+  ControlOpenDiffPayload,
+  ControlPermissionPayload,
+  ControlPermissionResponse,
+  ControlRespondPayload,
+  PendingControl,
+  PermissionPayload,
+  RequestIdPayload,
+  ResolvedControlResponse,
+} from './control.ts';
+export {
+  autoRespondPayloadSchema,
+  controlCancelPayloadSchema,
+  controlDiffReviewPayloadSchema,
+  controlElicitationPayloadSchema,
+  controlForwardPayloadSchema,
+  controlMcpPayloadSchema,
+  controlOpenDiffPayloadSchema,
+  controlPermissionPayloadSchema,
+  controlPermissionResponseSchema,
+  controlRespondPayloadSchema,
+  pendingControlSchema,
+  permissionPayloadSchema,
+  requestIdPayloadSchema,
+  resolvedControlResponseSchema,
+} from './control.ts';
+export type {
+  ControlAuthenticateResponse,
+  ControlGenerateTitleResponse,
+  ControlInitResponse,
+  GetClaudeStateResponse,
+} from './control-response.ts';
+export {
+  controlAuthenticateResponseSchema,
+  controlGenerateTitleResponseSchema,
+  controlInitResponseSchema,
+  getClaudeStateResponseSchema,
+} from './control-response.ts';
+export type {
+  ExplorerBrowsePayload,
+  ExplorerBrowseResponse,
+  ExplorerDirectory,
+} from './explorer.ts';
+export {
+  explorerBrowsePayloadSchema,
+  explorerBrowseResponseSchema,
+  explorerDirectorySchema,
+} from './explorer.ts';
+export type {
+  FileListPayload,
+  FileReadPayload,
+  FileReadResponse,
+  FileSearchResult,
+  ListFilesResponse,
+} from './file.ts';
+export {
+  fileListPayloadSchema,
+  fileReadPayloadSchema,
+  fileReadResponseSchema,
+  fileSearchResultSchema,
+  listFilesResponseSchema,
+} from './file.ts';
+export type {
+  GitCheckoutPayload,
+  GitDiffPayload,
+  GitDiffResult,
+  GitExecPayload,
+  GitExecResponse,
+  GitFileChange,
+  GitLogEntry,
+  GitLogPayload,
+  GitLogResult,
+  GitStatusPayload,
+  GitStatusResult,
+  GitUpdateSkippedBranchPayload,
+} from './git.ts';
+export {
+  gitCheckoutPayloadSchema,
+  gitDiffPayloadSchema,
+  gitDiffResultSchema,
+  gitExecPayloadSchema,
+  gitExecResponseSchema,
+  gitFileChangeSchema,
+  gitLogEntrySchema,
+  gitLogPayloadSchema,
+  gitLogResultSchema,
+  gitStatusPayloadSchema,
+  gitStatusResultSchema,
+  gitUpdateSkippedBranchPayloadSchema,
+} from './git.ts';
+export type {
+  AskDebuggerHelpResponse,
+  DisableChromeMcpResponse,
+  DisableJupyterMcpResponse,
+  EnableJupyterMcpResponse,
+  EnsureChromeMcpResponse,
+  McpAuthenticatePayload,
+  McpAuthResult,
+  McpGetServersPayload,
+  McpMessagePayload,
+  McpOAuthCallbackPayload,
+  McpPayload,
+  McpReconnectPayload,
+  McpServerInfo,
+  McpSetEnabledPayload,
+  McpSetServersPayload,
+  McpTool,
+} from './mcp.ts';
+export {
+  askDebuggerHelpResponseSchema,
+  disableChromeMcpResponseSchema,
+  disableJupyterMcpResponseSchema,
+  enableJupyterMcpResponseSchema,
+  ensureChromeMcpResponseSchema,
+  mcpAuthenticatePayloadSchema,
+  mcpAuthResultSchema,
+  mcpGetServersPayloadSchema,
+  mcpMessagePayloadSchema,
+  mcpOAuthCallbackPayloadSchema,
+  mcpPayloadSchema,
+  mcpReconnectPayloadSchema,
+  mcpServerInfoSchema,
+  mcpSetEnabledPayloadSchema,
+  mcpSetServersPayloadSchema,
+  mcpToolSchema,
+} from './mcp.ts';
+export type {
+  ChatAskSideQuestionPayload,
+  ChatCancelAsyncMessagePayload,
+  ChatCancelPayload,
+  ChatRespondPayload,
+  ChatRewindCodePayload,
+  ChatSendPayload,
+  ChatStopTaskPayload,
+  HistoryAssistant,
+  HistoryResult,
+  HistoryUser,
+  SideQuestionResult,
+} from './message.ts';
+export {
+  chatAskSideQuestionPayloadSchema,
+  chatCancelAsyncMessagePayloadSchema,
+  chatCancelPayloadSchema,
+  chatRespondPayloadSchema,
+  chatRewindCodePayloadSchema,
+  chatSendPayloadSchema,
+  chatStopTaskPayloadSchema,
+  historyAssistantSchema,
+  historyResultSchema,
+  historyUserSchema,
+  sideQuestionResultSchema,
+} from './message.ts';
+export type {
+  ContentBlock,
+  TextBlock,
+  ThinkingBlock,
+  ToolResultBlock,
+  ToolUseBlock,
+} from './message-blocks.ts';
+export {
+  contentBlockSchema,
+  textBlockSchema,
+  thinkingBlockSchema,
+  toolResultBlockSchema,
+  toolUseBlockSchema,
+} from './message-blocks.ts';
+export type {
+  MessageAttachment,
+  MessageRole,
+  ResultMeta,
+  ToolResult,
+  ToolResultMeta,
+  ToolUseMeta,
+} from './message-meta.ts';
+export {
+  messageAttachmentSchema,
+  messageRoleSchema,
+  resultMetaSchema,
+  toolResultMetaSchema,
+  toolResultSchema,
+  toolUseMetaSchema,
+} from './message-meta.ts';
+export type {
+  MessageAssistantPayload,
+  MessageResultPayload,
+  MessageUserPayload,
+  UserSource,
+} from './message-payloads.ts';
+export {
+  messageAssistantPayloadSchema,
+  messageResultPayloadSchema,
+  messageUserPayloadSchema,
+  userSourceSchema,
+} from './message-payloads.ts';
+export type {
+  ChatStats,
+  ModelUsageEntry,
+  SessionStats,
+} from './message-stats.ts';
+export {
+  chatStatsSchema,
+  modelUsageEntrySchema,
+  sessionStatsSchema,
+} from './message-stats.ts';
+export type {
+  StreamBlockStartPayload,
+  StreamChunk,
+  StreamChunkPayload,
+  StreamEndPayload,
+  StreamTextPayload,
+  StreamToolSummaryPayload,
+} from './message-stream.ts';
+export {
+  streamBlockStartPayloadSchema,
+  streamChunkPayloadSchema,
+  streamChunkSchema,
+  streamEndPayloadSchema,
+  streamTextPayloadSchema,
+  streamToolSummaryPayloadSchema,
+} from './message-stream.ts';
+export type {
+  NotificationAuthStatusPayload,
+  NotificationAuthUrlPayload,
+  NotificationButton,
+  NotificationPayload,
+  NotificationShowPayload,
+  NotificationToastPayload,
+  RawEventPayload,
+} from './notification.ts';
+export {
+  notificationAuthStatusPayloadSchema,
+  notificationAuthUrlPayloadSchema,
+  notificationButtonSchema,
+  notificationPayloadSchema,
+  notificationShowPayloadSchema,
+  notificationToastPayloadSchema,
+  rawEventPayloadSchema,
+} from './notification.ts';
+export type {
+  GetPlanCommentsResponse,
+  PlanCommentData,
+  PlanCommentPayload,
+  PlanInput,
+  PlanRemoveCommentPayload,
+} from './plan.ts';
+export {
+  getPlanCommentsResponseSchema,
+  planCommentDataSchema,
+  planCommentPayloadSchema,
+  planInputSchema,
+  planRemoveCommentPayloadSchema,
+} from './plan.ts';
+export type {
+  AddMarketplacePayload,
+  AvailablePlugin,
+  ListMarketplacesResponse,
+  ListPluginsPayload,
+  ListPluginsResponse,
+  MarketplaceInfo,
+  MarketplaceRawItem,
+  MarketplaceResult,
+  MarketplaceSourceConfig,
+  PluginInfo,
+  PluginInstallPayload,
+  PluginReloadPayload,
+  PluginReloadRequestPayload,
+  PluginReloadResult,
+  PluginResult,
+  PluginTogglePayload,
+  PluginUninstallPayload,
+  RefreshMarketplacePayload,
+  RemoveMarketplacePayload,
+} from './plugin.ts';
+export {
+  addMarketplacePayloadSchema,
+  availablePluginSchema,
+  listMarketplacesResponseSchema,
+  listPluginsPayloadSchema,
+  listPluginsResponseSchema,
+  marketplaceInfoSchema,
+  marketplaceRawItemSchema,
+  marketplaceResultSchema,
+  marketplaceSourceConfigSchema,
+  pluginInfoSchema,
+  pluginInstallPayloadSchema,
+  pluginReloadPayloadSchema,
+  pluginReloadRequestPayloadSchema,
+  pluginReloadResultSchema,
+  pluginResultSchema,
+  pluginTogglePayloadSchema,
+  pluginUninstallPayloadSchema,
+  refreshMarketplacePayloadSchema,
+  removeMarketplacePayloadSchema,
+} from './plugin.ts';
+export type {
+  ColorTheme,
+  Density,
+  EffectiveColorTheme,
+  FontSize,
+  PreferencesState,
+} from './preferences.ts';
+export {
+  colorThemeSchema,
+  DISMISSIBLE_IDS,
+  densitySchema,
+  fontSizeSchema,
+  preferencesStateSchema,
+} from './preferences.ts';
+export type {
+  GetProviderConfigResponse,
+  ProviderClientConfig,
+} from './provider.ts';
+export {
+  getProviderConfigResponseSchema,
+  providerClientConfigSchema,
+} from './provider.ts';
+export type {
+  Question,
+  QuestionOption,
+} from './question.ts';
+export {
+  questionOptionSchema,
+  questionSchema,
+} from './question.ts';
+export type {
+  Ack,
+  RpcErr,
+  RpcOk,
+  RpcResult,
+} from './rpc.ts';
+export { rpcResult } from './rpc.ts';
+export type {
+  CancelRequestEventPayload,
+  ChannelExitPayload,
+  CloseChannelPayload,
+  ControlRequestEvent,
+  ErrorMessageEvent,
+  FileDiff,
+  ForkConversationResponse,
+  GenerateSessionTitleResponse,
+  GetSessionResponse,
+  InitializeOptions,
+  InitResponse,
+  InitResponseResult,
+  RawEventsResponse,
+  RewindResult,
+  SessionBroadcastState,
+  SessionClosedPayload,
+  SessionClosePayload,
+  SessionConfig,
+  SessionCreatedPayload,
+  SessionDeadPayload,
+  SessionDeletePayload,
+  SessionForkPayload,
+  SessionGenerateTitlePayload,
+  SessionGetPayload,
+  SessionInitConfig,
+  SessionInitEvent,
+  SessionInitPayload,
+  SessionJoinPayload,
+  SessionJoinResponse,
+  SessionLaunchPayload,
+  SessionLaunchResponse,
+  SessionListPayload,
+  SessionListRemotePayload,
+  SessionListResponse,
+  SessionRenamePayload,
+  SessionResumePayload,
+  SessionResumeResponse,
+  SessionStateSummary,
+  SessionStatesPayload,
+  SessionStatusEvent,
+  SessionStatusPayload,
+  SessionSummary,
+  SessionTeleportPayload,
+  SessionUpdateStatePayload,
+  TeleportSessionResponse,
+} from './session.ts';
+export {
+  cancelRequestEventPayloadSchema,
+  channelExitPayloadSchema,
+  closeChannelPayloadSchema,
+  controlRequestEventSchema,
+  errorMessageEventSchema,
+  fileDiffSchema,
+  forkConversationResponseSchema,
+  generateSessionTitleResponseSchema,
+  getSessionResponseSchema,
+  initializeOptionsSchema,
+  initResponseResultSchema,
+  initResponseSchema,
+  launchOptionsSchema,
+  rawEventsResponseSchema,
+  rewindResultSchema,
+  sessionBroadcastStateSchema,
+  sessionClosedPayloadSchema,
+  sessionClosePayloadSchema,
+  sessionConfigSchema,
+  sessionCreatedPayloadSchema,
+  sessionDeadPayloadSchema,
+  sessionDeletePayloadSchema,
+  sessionForkPayloadSchema,
+  sessionGenerateTitlePayloadSchema,
+  sessionGetPayloadSchema,
+  sessionInitConfigSchema,
+  sessionInitEventSchema,
+  sessionInitPayloadSchema,
+  sessionJoinPayloadSchema,
+  sessionJoinResponseSchema,
+  sessionLaunchPayloadSchema,
+  sessionLaunchResponseSchema,
+  sessionListPayloadSchema,
+  sessionListRemotePayloadSchema,
+  sessionListResponseSchema,
+  sessionRenamePayloadSchema,
+  sessionResumePayloadSchema,
+  sessionResumeResponseSchema,
+  sessionStateSummarySchema,
+  sessionStatesPayloadSchema,
+  sessionStatusEventSchema,
+  sessionStatusPayloadSchema,
+  sessionSummarySchema,
+  sessionTeleportPayloadSchema,
+  sessionUpdateStatePayloadSchema,
+  teleportSessionResponseSchema,
+} from './session.ts';
+export type {
+  ChromeMcpState,
+  ContextCategory,
+  ContextUsageData,
+  DebuggerMcpState,
+  EffortLevel,
+  JupyterMcpState,
+  RateLimitInfo,
+  RemoteControlStateInfo,
+  ServerActionMode,
+  ServerActionModel,
+  SettingsApplyPayload,
+  SettingsGetStatePayload,
+  SettingsSetModelPayload,
+  SettingsSetPermissionModePayload,
+  SettingsSetProactivePayload,
+  SettingsSetRemoteControlPayload,
+  SettingsSetThinkingLevelPayload,
+  SettingsUpdatedPayload,
+  StateUsagePayload,
+  ThinkingDisplay,
+  UpdateStatePayload,
+  UsageQuota,
+  UsageQuotaTier,
+} from './settings.ts';
+export {
+  chromeMcpStateSchema,
+  contextCategorySchema,
+  contextUsageDataSchema,
+  debuggerMcpStateSchema,
+  effortLevelSchema,
+  jupyterMcpStateSchema,
+  rateLimitInfoSchema,
+  remoteControlStateInfoSchema,
+  serverActionModelSchema,
+  serverActionModeSchema,
+  settingsApplyPayloadSchema,
+  settingsGetStatePayloadSchema,
+  settingsSetModelPayloadSchema,
+  settingsSetPermissionModePayloadSchema,
+  settingsSetProactivePayloadSchema,
+  settingsSetRemoteControlPayloadSchema,
+  settingsSetThinkingLevelPayloadSchema,
+  settingsUpdatedPayloadSchema,
+  stateUsagePayloadSchema,
+  thinkingDisplaySchema,
+  updateStatePayloadSchema,
+  usageQuotaSchema,
+  usageQuotaTierSchema,
+} from './settings.ts';
+export type {
+  ChatHookCallbackRespondPayload,
+  ControlHookCallbackPayload,
+  HookResponseInfo,
+  HookStartedInfo,
+  ModelInfo,
+  RateLimitInternalPayload,
+  SystemApiRetryPayload,
+  SystemAvailableModelsPayload,
+  SystemCompactBoundaryPayload,
+  SystemExperimentGatesPayload,
+  SystemHookResponsePayload,
+  SystemHookStartedPayload,
+  SystemMirrorErrorPayload,
+  SystemRateLimitPayload,
+  SystemRemoteControlPayload,
+  SystemTaskNotificationPayload,
+  SystemTaskProgressPayload,
+  SystemTaskStartedPayload,
+} from './system.ts';
+export {
+  chatHookCallbackRespondPayloadSchema,
+  controlHookCallbackPayloadSchema,
+  hookResponseInfoSchema,
+  hookStartedInfoSchema,
+  modelInfoSchema,
+  rateLimitInternalPayloadSchema,
+  systemApiRetryPayloadSchema,
+  systemAvailableModelsPayloadSchema,
+  systemCompactBoundaryPayloadSchema,
+  systemExperimentGatesPayloadSchema,
+  systemHookResponsePayloadSchema,
+  systemHookStartedPayloadSchema,
+  systemMirrorErrorPayloadSchema,
+  systemRateLimitPayloadSchema,
+  systemRemoteControlPayloadSchema,
+  systemTaskNotificationPayloadSchema,
+  systemTaskProgressPayloadSchema,
+  systemTaskStartedPayloadSchema,
+} from './system.ts';
+export type {
+  TerminalGetContentsPayload,
+  TerminalGetContentsResponse,
+  TerminalOpenClaudePayload,
+  TerminalOpenClaudeResponse,
+} from './terminal.ts';
+export {
+  terminalGetContentsPayloadSchema,
+  terminalGetContentsResponseSchema,
+  terminalOpenClaudePayloadSchema,
+  terminalOpenClaudeResponseSchema,
+} from './terminal.ts';
+export type {
+  CreateWorktreePayload,
+  CreateWorktreeResponse,
+  DeleteWorktreePayload,
+  ListWorktreesPayload,
+  WorktreeInfo,
+  WorktreeListResponse,
+} from './worktree.ts';
+export {
+  createWorktreePayloadSchema,
+  createWorktreeResponseSchema,
+  deleteWorktreePayloadSchema,
+  listWorktreesPayloadSchema,
+  worktreeInfoSchema,
+  worktreeListResponseSchema,
+} from './worktree.ts';

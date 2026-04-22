@@ -1,45 +1,27 @@
+import type { ActionOpenFilePayload, ActionOpenUrlPayload } from './schemas/actions.ts';
+import type { AuthStatus, LoginPayload, OAuthCodePayload } from './schemas/auth.ts';
 import type {
-  ActionOpenFilePayload,
-  ActionOpenUrlPayload,
-  AddMarketplacePayload,
-  AuthStatus,
-  CancelRequestEventPayload,
   CancelRequestPayload,
   ChannelIdPayload,
-  ChatAskSideQuestionPayload,
-  ChatCancelAsyncMessagePayload,
-  ChatCancelPayload,
-  ChatHookCallbackRespondPayload,
-  ChatRespondPayload,
-  ChatRewindCodePayload,
-  ChatSendPayload,
-  ChatStopTaskPayload,
-  CloseChannelPayload,
+  ControlResponse,
+  ErrorMessagePayload,
+  SpeechToTextMessagePayload,
+} from './schemas/common.ts';
+import type {
   ControlCancelPayload,
   ControlDiffReviewPayload,
   ControlElicitationPayload,
-  ControlHookCallbackPayload,
   ControlMcpPayload,
   ControlPermissionPayload,
-  ControlResponse,
-  CreateWorktreePayload,
-  CreateWorktreeResponse,
-  DeleteWorktreePayload,
-  DisableChromeMcpResponse,
-  DisableJupyterMcpResponse,
-  EnableJupyterMcpResponse,
-  EnsureChromeMcpResponse,
-  ErrorMessagePayload,
-  ExplorerBrowsePayload,
-  ExplorerBrowseResponse,
+} from './schemas/control.ts';
+import type { ExplorerBrowsePayload, ExplorerBrowseResponse } from './schemas/explorer.ts';
+import type {
   FileListPayload,
   FileReadPayload,
   FileReadResponse,
-  ForkConversationResponse,
-  GenerateSessionTitleResponse,
-  GetPlanCommentsResponse,
-  GetProviderConfigResponse,
-  GetSessionResponse,
+  ListFilesResponse,
+} from './schemas/file.ts';
+import type {
   GitCheckoutPayload,
   GitDiffPayload,
   GitDiffResult,
@@ -50,14 +32,12 @@ import type {
   GitStatusPayload,
   GitStatusResult,
   GitUpdateSkippedBranchPayload,
-  InitResponse,
-  ListFilesResponse,
-  ListMarketplacesResponse,
-  ListPluginsPayload,
-  ListPluginsResponse,
-  ListWorktreesPayload,
-  LoginPayload,
-  MarketplaceResult,
+} from './schemas/git.ts';
+import type {
+  DisableChromeMcpResponse,
+  DisableJupyterMcpResponse,
+  EnableJupyterMcpResponse,
+  EnsureChromeMcpResponse,
   McpAuthenticatePayload,
   McpGetServersPayload,
   McpMessagePayload,
@@ -65,16 +45,47 @@ import type {
   McpReconnectPayload,
   McpSetEnabledPayload,
   McpSetServersPayload,
+} from './schemas/mcp.ts';
+import type {
+  ChatAskSideQuestionPayload,
+  ChatCancelAsyncMessagePayload,
+  ChatCancelPayload,
+  ChatRespondPayload,
+  ChatRewindCodePayload,
+  ChatSendPayload,
+  ChatStopTaskPayload,
+  SideQuestionResult,
+} from './schemas/message.ts';
+import type {
   MessageAssistantPayload,
   MessageResultPayload,
   MessageUserPayload,
+} from './schemas/message-payloads.ts';
+import type {
+  StreamBlockStartPayload,
+  StreamChunkPayload,
+  StreamEndPayload,
+  StreamTextPayload,
+  StreamToolSummaryPayload,
+} from './schemas/message-stream.ts';
+import type {
   NotificationAuthStatusPayload,
   NotificationAuthUrlPayload,
   NotificationShowPayload,
   NotificationToastPayload,
-  OAuthCodePayload,
+  RawEventPayload,
+} from './schemas/notification.ts';
+import type {
+  GetPlanCommentsResponse,
   PlanCommentPayload,
   PlanRemoveCommentPayload,
+} from './schemas/plan.ts';
+import type {
+  AddMarketplacePayload,
+  ListMarketplacesResponse,
+  ListPluginsPayload,
+  ListPluginsResponse,
+  MarketplaceResult,
   PluginInstallPayload,
   PluginReloadPayload,
   PluginReloadRequestPayload,
@@ -82,12 +93,20 @@ import type {
   PluginResult,
   PluginTogglePayload,
   PluginUninstallPayload,
-  RawEventPayload,
-  RawEventsResponse,
   RefreshMarketplacePayload,
   RemoveMarketplacePayload,
+} from './schemas/plugin.ts';
+import type { GetProviderConfigResponse } from './schemas/provider.ts';
+import type { Ack, RpcResult } from './schemas/rpc.ts';
+import type {
+  CancelRequestEventPayload,
+  CloseChannelPayload,
+  ForkConversationResponse,
+  GenerateSessionTitleResponse,
+  GetSessionResponse,
+  InitResponse,
+  RawEventsResponse,
   RewindResult,
-  RpcResult,
   SessionClosedPayload,
   SessionClosePayload,
   SessionCreatedPayload,
@@ -111,6 +130,9 @@ import type {
   SessionStatusPayload,
   SessionTeleportPayload,
   SessionUpdateStatePayload,
+  TeleportSessionResponse,
+} from './schemas/session.ts';
+import type {
   SettingsApplyPayload,
   SettingsGetStatePayload,
   SettingsSetModelPayload,
@@ -118,14 +140,12 @@ import type {
   SettingsSetProactivePayload,
   SettingsSetRemoteControlPayload,
   SettingsSetThinkingLevelPayload,
-  SideQuestionResult,
-  SpeechToTextMessagePayload,
   StateUsagePayload,
-  StreamBlockStartPayload,
-  StreamChunkPayload,
-  StreamEndPayload,
-  StreamTextPayload,
-  StreamToolSummaryPayload,
+  UpdateStatePayload,
+} from './schemas/settings.ts';
+import type {
+  ChatHookCallbackRespondPayload,
+  ControlHookCallbackPayload,
   SystemApiRetryPayload,
   SystemAvailableModelsPayload,
   SystemCompactBoundaryPayload,
@@ -138,13 +158,19 @@ import type {
   SystemTaskNotificationPayload,
   SystemTaskProgressPayload,
   SystemTaskStartedPayload,
-  TeleportSessionResponse,
+} from './schemas/system.ts';
+import type {
   TerminalGetContentsPayload,
   TerminalGetContentsResponse,
   TerminalOpenClaudePayload,
-  UpdateStatePayload,
+} from './schemas/terminal.ts';
+import type {
+  CreateWorktreePayload,
+  CreateWorktreeResponse,
+  DeleteWorktreePayload,
+  ListWorktreesPayload,
   WorktreeListResponse,
-} from './schemas/index.ts';
+} from './schemas/worktree.ts';
 
 export interface ClientToServerEvents {
   // ── Chat Operations ──
@@ -158,17 +184,11 @@ export interface ClientToServerEvents {
   ) => void;
 
   // ── Aligned: Settings ──
-  'settings:set_model': (
-    payload: SettingsSetModelPayload,
-    cb: (res: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'settings:set_model': (payload: SettingsSetModelPayload, cb: (res: Ack) => void) => void;
   'settings:set_permission_mode': (payload: SettingsSetPermissionModePayload) => void;
   'settings:set_thinking_level': (payload: SettingsSetThinkingLevelPayload) => void;
   'settings:refresh_usage': (payload: ChannelIdPayload) => void;
-  'settings:apply': (
-    payload: SettingsApplyPayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'settings:apply': (payload: SettingsApplyPayload, callback: (response: Ack) => void) => void;
   'settings:state': (
     payload: SettingsGetStatePayload,
     callback: (response: RpcResult<{ state: Record<string, unknown> }>) => void,
@@ -195,17 +215,11 @@ export interface ClientToServerEvents {
     payload: SessionForkPayload,
     callback: (response: ForkConversationResponse) => void,
   ) => void;
-  'session:rename': (
-    payload: SessionRenamePayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
-  'session:delete': (
-    payload: SessionDeletePayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'session:rename': (payload: SessionRenamePayload, callback: (response: Ack) => void) => void;
+  'session:delete': (payload: SessionDeletePayload, callback: (response: Ack) => void) => void;
   'session:update_state': (
     payload: SessionUpdateStatePayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
+    callback: (response: Ack) => void,
   ) => void;
 
   // ── Aligned: MCP ──
@@ -225,14 +239,8 @@ export interface ClientToServerEvents {
     payload: McpAuthenticatePayload,
     callback: (result: RpcResult<{ authUrl?: string }>) => void,
   ) => void;
-  'mcp:clear_auth': (
-    payload: McpAuthenticatePayload,
-    callback: (result: RpcResult<Record<string, never>>) => void,
-  ) => void;
-  'mcp:oauth_callback': (
-    payload: McpOAuthCallbackPayload,
-    callback: (result: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'mcp:clear_auth': (payload: McpAuthenticatePayload, callback: (result: Ack) => void) => void;
+  'mcp:oauth_callback': (payload: McpOAuthCallbackPayload, callback: (result: Ack) => void) => void;
   'mcp:set_servers': (
     payload: McpSetServersPayload,
     callback: (response: ControlResponse) => void,
@@ -270,14 +278,11 @@ export interface ClientToServerEvents {
 
   // ── Aligned: File & Git ──
   'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
-  'git:checkout': (
-    payload: GitCheckoutPayload,
-    callback: (result: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'git:checkout': (payload: GitCheckoutPayload, callback: (result: Ack) => void) => void;
   'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
+    callback: (response: Ack) => void,
   ) => void;
   'git:exec': (payload: GitExecPayload, callback: (response: GitExecResponse) => void) => void;
 
@@ -319,28 +324,19 @@ export interface ClientToServerEvents {
     payload: LoginPayload,
     callback: (result: RpcResult<{ auth?: unknown }>) => void,
   ) => void;
-  'auth:oauth_code': (
-    payload: OAuthCodePayload,
-    callback: (result: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'auth:oauth_code': (payload: OAuthCodePayload, callback: (result: Ack) => void) => void;
 
   // ── Aligned: Plan ──
-  'plan:comment': (
-    payload: PlanCommentPayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'plan:comment': (payload: PlanCommentPayload, callback: (response: Ack) => void) => void;
   'plan:comments': (
     payload: ChannelIdPayload,
     callback: (response: GetPlanCommentsResponse) => void,
   ) => void;
   'plan:remove_comment': (
     payload: PlanRemoveCommentPayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
+    callback: (response: Ack) => void,
   ) => void;
-  'plan:close_preview': (
-    payload: ChannelIdPayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'plan:close_preview': (payload: ChannelIdPayload, callback: (response: Ack) => void) => void;
 
   // ── File Operations ──
   'file:read': (payload: FileReadPayload, callback: (response: FileReadResponse) => void) => void;
@@ -408,10 +404,7 @@ export interface ClientToServerEvents {
     payload: ListWorktreesPayload,
     callback: (response: WorktreeListResponse) => void,
   ) => void;
-  'worktree:delete': (
-    payload: DeleteWorktreePayload,
-    callback: (response: RpcResult<Record<string, never>>) => void,
-  ) => void;
+  'worktree:delete': (payload: DeleteWorktreePayload, callback: (response: Ack) => void) => void;
 }
 
 // ── ClientMessage discriminated union ──

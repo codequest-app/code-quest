@@ -10,6 +10,12 @@ import type { RawRecorder } from './raw-recorder.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
+/** Minimal interface ChannelManager needs from SessionHistory + sessionStore. */
+export interface SessionLookup {
+  resolveSessionId(channelId: string): Promise<string>;
+  resolveCwd(channelId: string): Promise<string>;
+}
+
 interface CreateChannelOptions {
   launchOptions?: LaunchOptions;
   initOptions?: Record<string, unknown>;
@@ -37,8 +43,7 @@ export class ChannelManager {
     private adapter: ProviderAdapter,
     private rawRecorder: RawRecorder,
     private emitter: ChannelEmitter,
-    private resolveSessionId: (channelId: string) => Promise<string>,
-    private resolveCwd: (channelId: string) => Promise<string>,
+    private sessions: SessionLookup,
   ) {
     this.hooks = {
       onClientMessage: (ch, message) =>
@@ -123,12 +128,12 @@ export class ChannelManager {
     }
 
     // Lazy resume from DB
-    const sessionId = await this.resolveSessionId(channelId);
+    const sessionId = await this.sessions.resolveSessionId(channelId);
     if (sessionId === channelId) {
       throw new Error(`Session not found: ${channelId}`);
     }
 
-    const cwd = await this.resolveCwd(channelId);
+    const cwd = await this.sessions.resolveCwd(channelId);
 
     const runner = this.runnerFactory.create({ resumeSessionId: sessionId }, { cwd });
     const channel = this.setupChannel(channelId, runner, cwd);

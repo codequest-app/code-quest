@@ -110,7 +110,6 @@ describe('End-to-end: FakeClaude → ClaudeAdapter → ClientMessage', () => {
     expect(msg.payload.url).toBe('https://example.com');
     expect(msg.payload.requestId).toBe('req-url');
     expect(msg.payload.response).toEqual({ type: 'open_url_response' });
-    expect(output.serverActions).toHaveLength(0);
   });
 
   it('message_stop → stream:end', () => {

@@ -21,6 +21,10 @@ export type RpcErr = z.infer<typeof rpcErrSchema>;
 export type RpcOk<T> = { ok: true; data: T };
 export type RpcResult<T> = RpcOk<T> | RpcErr;
 
+/** Ack — void RPC result. Use instead of `RpcResult<Record<string, never>>`
+ *  for RPCs whose success payload carries no data (only ok/error status). */
+export type Ack = RpcResult<Record<string, never>>;
+
 /**
  * Build a zod schema for an RpcResult whose success payload matches the given
  * data schema. Returns a discriminated union on `ok`.

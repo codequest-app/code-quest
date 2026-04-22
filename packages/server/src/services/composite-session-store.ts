@@ -2,6 +2,10 @@ import { logger } from '../logger.ts';
 import { fanOutWrites } from './composite-fan-out.ts';
 import type { SessionRecord, SessionStore } from './session-store.ts';
 
+/**
+ * Fan-out writes to all stores, read from stores[0]. Assumes channel→id
+ * agreement across backends (guaranteed because upsert fans out).
+ */
 export class CompositeSessionStore implements SessionStore {
   constructor(private stores: SessionStore[]) {
     if (stores.length === 0) {

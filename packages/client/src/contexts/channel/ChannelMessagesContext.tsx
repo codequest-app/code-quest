@@ -32,7 +32,13 @@ import { createRewindFeature } from '../../features/rewind/rewind-feature';
 import { createUsageFeature } from '../../features/usage/usage-feature';
 import { createFeatureRegistry } from '../../lib/feature-registry';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
-import { buildMessagesFromHistory, mapSessionStats, msg, patchMeta } from '../../utils/message';
+import {
+  buildMessagesFromHistory,
+  mapSessionStats,
+  msg,
+  patchMeta,
+  systemMessage,
+} from '../../utils/message';
 import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelIdContext';
@@ -397,7 +403,7 @@ export function ChannelMessagesProvider({
       addSystemMessage: (type: string, content: string) =>
         setChannelState((prev) => ({
           ...prev,
-          messages: [...prev.messages, msg({ role: 'system', type: type as never, content })],
+          messages: [...prev.messages, systemMessage(type, content)],
         })),
       clearMessages,
       clearModifiedFiles,

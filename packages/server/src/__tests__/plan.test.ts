@@ -1,10 +1,10 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 
-import type { RpcResult } from '@code-quest/shared';
+import type { Ack } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
-type PlanEmptyResp = RpcResult<Record<string, never>>;
+type PlanEmptyResp = Ack;
 
 async function setup(sessionId = 'cli-sess') {
   const claude = createFakeSummoner().claude();

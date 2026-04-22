@@ -1,10 +1,10 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 
-import type { CreateWorktreeResponse, RpcResult, WorktreeListResponse } from '@code-quest/shared';
+import type { Ack, CreateWorktreeResponse, WorktreeListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import { createFakeSummoner } from '../test/index.ts';
 
-type WorktreeDeleteResp = RpcResult<Record<string, never>>;
+type WorktreeDeleteResp = Ack;
 
 async function setup(sessionId = 'cli-sess') {
   const summoner = createFakeSummoner();

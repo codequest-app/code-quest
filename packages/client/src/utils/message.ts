@@ -31,6 +31,12 @@ export const msg = <T extends Message['type']>(
     ...fields,
   }) as Extract<Message, { type: T }>;
 
+/** Escape hatch for runtime-supplied `type` strings not in the Message union
+ *  (e.g., forward-compat CLI events). UI has a fallback renderer. */
+export function systemMessage(type: string, content: string): Message {
+  return msg({ role: 'system', type: type as never, content });
+}
+
 /** Append a message to channel state. */
 export function addMessage(state: ChannelState, fields: Parameters<typeof msg>[0]): ChannelState {
   return { ...state, messages: [...state.messages, msg(fields)] };

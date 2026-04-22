@@ -1,5 +1,6 @@
 import {
   type AccountInfo,
+  type Ack,
   type ControlResponse,
   type EffortLevel,
   EVENTS,
@@ -53,7 +54,7 @@ export interface ChannelConfigValue extends ConfigState {
   setPermissionMode: (mode: string) => void;
   setThinkingLevel: (level: string) => void;
   setFastMode: (enabled: boolean) => void;
-  setEffort: (effort: string) => Promise<RpcResult<Record<string, never>>>;
+  setEffort: (effort: string) => Promise<Ack>;
   mcpStatus: () => Promise<ControlResponse>;
   mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
   mcpReconnect: (serverName: string) => Promise<ControlResponse>;
@@ -61,11 +62,8 @@ export interface ChannelConfigValue extends ConfigState {
   mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<ControlResponse>;
   mcpListTools: (serverName: string) => Promise<unknown[]>;
   mcpAuthenticate: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
-  mcpOAuthCallback: (
-    serverName: string,
-    callbackUrl: string,
-  ) => Promise<RpcResult<Record<string, never>>>;
-  mcpClearAuth: (serverName: string) => Promise<RpcResult<Record<string, never>>>;
+  mcpOAuthCallback: (serverName: string, callbackUrl: string) => Promise<Ack>;
+  mcpClearAuth: (serverName: string) => Promise<Ack>;
   ensureChromeMcpEnabled: () => Promise<ControlResponse>;
   disableChromeMcp: () => Promise<ControlResponse>;
   enableJupyterMcp: () => Promise<ControlResponse>;

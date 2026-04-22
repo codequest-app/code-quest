@@ -6,17 +6,21 @@ import type {
   ProcessProvider,
   ProviderAdapter,
 } from './types.ts';
+import { isRecord } from './utils.ts';
 
 /** Synthesize a raw_event fallback for unknown/error parse results so the
- *  adapter only ever sees typed messages. Returns null for skip. */
-function toProtocolMessage(result: ParseResult): Record<string, unknown> | null {
+ *  adapter only ever sees typed messages. Returns null for skip. The `E as`
+ *  casts assume the adapter's E union includes a raw_event variant (e.g.
+ *  ClaudeAdapter's ProtocolMessage). Providers without that fallback cannot
+ *  use this helper. */
+function toProtocolMessage<E>(result: ParseResult<E>): E | null {
   switch (result.status) {
     case 'skip':
       return null;
     case 'ok':
-      return result.message as Record<string, unknown>;
+      return result.message;
     case 'unknown':
-      return { type: 'raw_event', rawType: result.type, data: result.data };
+      return { type: 'raw_event', rawType: result.type, data: result.data } as E;
     case 'error': {
       let data: unknown;
       try {
@@ -25,28 +29,28 @@ function toProtocolMessage(result: ParseResult): Record<string, unknown> | null 
         console.debug('Failed to parse JSON', err);
         data = { raw: result.raw };
       }
-      return { type: 'raw_event', rawType: 'parse_error', data };
+      return { type: 'raw_event', rawType: 'parse_error', data } as E;
     }
   }
 }
 
-interface ProcessRunnerOptions {
-  adapter: ProviderAdapter;
+interface ProcessRunnerOptions<E = unknown, L = unknown> {
+  adapter: ProviderAdapter<E, L>;
   processProvider?: ProcessProvider;
-  args?: unknown;
+  args?: L;
   parentEnv?: NodeJS.ProcessEnv;
   spawnOptions?: Record<string, unknown>;
 }
 
-export class ProcessRunner extends EventEmitter {
-  private readonly adapter: ProviderAdapter;
+export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
+  private readonly adapter: ProviderAdapter<E, L>;
   private readonly processProvider?: ProcessProvider;
   readonly launchArgs: string[];
   private readonly parentEnv: NodeJS.ProcessEnv;
   private readonly spawnOptions: Record<string, unknown>;
   private handle: ProcessHandle | null = null;
 
-  constructor(options: ProcessRunnerOptions) {
+  constructor(options: ProcessRunnerOptions<E, L>) {
     super();
     this.adapter = options.adapter;
     this.processProvider = options.processProvider;
@@ -104,10 +108,8 @@ export class ProcessRunner extends EventEmitter {
    *  reaching back into runner state. */
   private augmentForPersistence(message: ClientMessage): ClientMessage {
     if (message.name !== 'session:init') return message;
-    return {
-      ...message,
-      payload: { ...(message.payload as Record<string, unknown>), args: this.launchArgs },
-    };
+    const base = isRecord(message.payload) ? message.payload : {};
+    return { ...message, payload: { ...base, args: this.launchArgs } };
   }
 
   write(raw: string): void {

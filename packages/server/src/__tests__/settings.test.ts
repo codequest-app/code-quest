@@ -1,8 +1,8 @@
-import type { RpcResult } from '@code-quest/shared';
+import type { Ack, RpcResult } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { SettingsStore } from '../services/settings-store.ts';
 
-type SettingsApplyResp = RpcResult<Record<string, never>>;
+type SettingsApplyResp = Ack;
 type SettingsStateResp = RpcResult<{ state: Record<string, unknown> }>;
 type SettingsStateOk = Extract<SettingsStateResp, { ok: true }>;
 
