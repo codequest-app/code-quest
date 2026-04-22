@@ -14,7 +14,6 @@ export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 export const rawEntrySchema = z.object({
   timestamp: z.number(),
   sessionId: z.string(),
-  promptId: z.string(),
   direction: z.enum(['in', 'out', 'err']),
   raw: z.string(),
   seq: z.number(),

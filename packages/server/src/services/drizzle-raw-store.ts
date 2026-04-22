@@ -8,7 +8,6 @@ import { extractTextFromRaw, type RawEventStore, type SessionPreview } from './r
 
 const rawEntryRowSchema = z.object({
   sessionId: z.string(),
-  promptId: z.string(),
   dir: z.string(),
   raw: z.string(),
   seq: z.number(),
@@ -22,7 +21,6 @@ const directionSchema = z.enum(['in', 'out', 'err']);
 interface RawEntriesTable {
   id: Column;
   sessionId: Column;
-  promptId: Column;
   dir: Column;
   raw: Column;
   seq: Column;
@@ -47,7 +45,6 @@ export class DrizzleRawStore implements RawEventStore {
     await this.db.insert(this.table).values({
       id: uuidv7(),
       sessionId: entry.sessionId,
-      promptId: entry.promptId,
       dir: entry.direction,
       raw: entry.raw,
       seq: entry.seq,
@@ -93,7 +90,6 @@ export class DrizzleRawStore implements RawEventStore {
     const values = rows.map((row, i) => ({
       id: uuidv7(),
       sessionId: toSessionId,
-      promptId: row.promptId,
       dir: row.direction,
       raw: row.raw,
       seq: i + 1,
@@ -115,7 +111,6 @@ export class DrizzleRawStore implements RawEventStore {
       .map((row) => ({
         timestamp: new Date(row.createdAt).getTime(),
         sessionId: row.sessionId,
-        promptId: row.promptId,
         direction: directionSchema.parse(row.dir),
         raw: row.raw,
         seq: row.seq,

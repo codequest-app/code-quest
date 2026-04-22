@@ -24,7 +24,6 @@ describe('DrizzleRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-aaa',
       direction: 'out',
       raw: s.assistant('hello'),
       seq: 0,
@@ -35,7 +34,6 @@ describe('DrizzleRawStore', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].sessionId).toBe('sess-1');
-    expect(results[0].promptId).toBe('prompt-aaa');
     expect(results[0].direction).toBe('out');
     expect(results[0].raw).toBe(entry.raw);
   });
@@ -50,7 +48,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: Date.now() + i,
         sessionId: 'sess-3',
-        promptId: `prompt-${i}`,
         direction: 'out',
         raw: `line ${i}`,
         seq: i,
@@ -67,7 +64,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: now,
         sessionId: 'sess-p',
-        promptId: 'p1',
         direction: 'out',
         raw: s.assistant('Looking at the code'),
         seq: 0,
@@ -75,7 +71,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: now + 1,
         sessionId: 'sess-p',
-        promptId: 'p1',
         direction: 'out',
         raw: s.assistant('Fixed the bug'),
         seq: 1,
@@ -94,7 +89,6 @@ describe('DrizzleRawStore', () => {
       await store.append({
         timestamp: Date.now(),
         sessionId: 'sess-u',
-        promptId: 'p1',
         direction: 'in',
         raw: JSON.stringify({
           type: 'user',
@@ -113,7 +107,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now + 200,
       sessionId: 'sess-4',
-      promptId: 'prompt-c',
       direction: 'out',
       raw: 'c',
       seq: 2,
@@ -121,7 +114,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now,
       sessionId: 'sess-4',
-      promptId: 'prompt-a',
       direction: 'out',
       raw: 'a',
       seq: 0,
@@ -129,7 +121,6 @@ describe('DrizzleRawStore', () => {
     await store.append({
       timestamp: now + 100,
       sessionId: 'sess-4',
-      promptId: 'prompt-b',
       direction: 'out',
       raw: 'b',
       seq: 1,
@@ -146,7 +137,6 @@ describe('DrizzleRawStore', () => {
         await store.append({
           timestamp: now + i,
           sessionId: 'sess-parent',
-          promptId: `p-${i}`,
           direction: i === 0 ? 'in' : 'out',
           raw: `raw-${i}`,
           seq: i,
@@ -159,7 +149,6 @@ describe('DrizzleRawStore', () => {
       expect(cloned).toHaveLength(3);
       expect(cloned.map((r) => r.sessionId)).toEqual(['sess-new', 'sess-new', 'sess-new']);
       expect(cloned.map((r) => r.raw)).toEqual(['raw-0', 'raw-1', 'raw-2']);
-      expect(cloned.map((r) => r.promptId)).toEqual(['p-0', 'p-1', 'p-2']);
       expect(cloned.map((r) => r.direction)).toEqual(['in', 'out', 'out']);
       expect(cloned.map((r) => r.seq)).toEqual([1, 2, 3]);
     });

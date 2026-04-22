@@ -30,7 +30,6 @@ export const rawEntries = sqliteTable(
   {
     id: text('id').primaryKey(),
     sessionId: text('session_id').notNull(),
-    promptId: text('prompt_id').notNull(),
     dir: text('dir').notNull(),
     raw: text('raw').notNull(),
     seq: integer('seq').notNull().default(0),

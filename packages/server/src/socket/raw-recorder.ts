@@ -18,7 +18,7 @@ export class RawRecorder {
     const flushPending = (sessionId: string) => {
       for (const pending of pendingRawEntries) {
         this.rawEventStore
-          .append({ ...pending, sessionId, promptId: '' })
+          .append({ ...pending, sessionId })
           .catch((err) => logger.error({ err }, 'Failed to persist buffered raw event'));
       }
       pendingRawEntries.length = 0;
@@ -35,7 +35,6 @@ export class RawRecorder {
         .append({
           timestamp: Date.now(),
           sessionId,
-          promptId: '',
           raw,
           direction,
           seq: seqCounter++,

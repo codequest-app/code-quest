@@ -1,0 +1,1 @@
+ALTER TABLE `raw_entries` DROP COLUMN `prompt_id`;

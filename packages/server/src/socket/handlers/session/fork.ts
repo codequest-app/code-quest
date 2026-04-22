@@ -143,7 +143,6 @@ export function create({
       const entry: RawEntry = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.channelId),
-        promptId: '',
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,

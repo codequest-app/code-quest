@@ -288,7 +288,6 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     await rawStore.append({
       timestamp: Date.now(),
       sessionId: 'sess-clone-parent',
-      promptId: 'p-A',
       direction: 'in',
       raw: 'raw-A',
       seq: 0,
@@ -296,7 +295,6 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     await rawStore.append({
       timestamp: Date.now() + 1,
       sessionId: 'sess-clone-parent',
-      promptId: 'p-B',
       direction: 'out',
       raw: 'raw-B',
       seq: 1,

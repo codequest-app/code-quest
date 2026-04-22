@@ -20,15 +20,7 @@ export const SESSION_COLUMNS = [
   'createdAt',
 ] as const;
 
-export const RAW_ENTRY_COLUMNS = [
-  'id',
-  'sessionId',
-  'promptId',
-  'dir',
-  'raw',
-  'seq',
-  'createdAt',
-] as const;
+export const RAW_ENTRY_COLUMNS = ['id', 'sessionId', 'dir', 'raw', 'seq', 'createdAt'] as const;
 
 export const SETTINGS_COLUMNS = ['provider', 'key', 'value'] as const;
 

@@ -38,7 +38,6 @@ export const rawEntries = mysqlTable(
   {
     id: varchar('id', { length: 36 }).primaryKey(),
     sessionId: varchar('session_id', { length: 36 }).notNull(),
-    promptId: varchar('prompt_id', { length: 36 }).notNull(),
     dir: varchar('dir', { length: 10 }).notNull(),
     raw: mediumtext('raw').notNull(),
     seq: int('seq').notNull().default(0),

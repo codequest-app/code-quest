@@ -31,7 +31,6 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-1',
       direction: 'out',
       raw: 'hello',
       seq: 0,
@@ -49,7 +48,6 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-0',
       direction: 'out',
       raw: 'data',
       seq: 0,
@@ -95,7 +93,6 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
       seq: 0,
@@ -122,7 +119,6 @@ describe('CompositeRawStore', () => {
     const entry: RawEntry = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
-      promptId: 'prompt-0',
       direction: 'out',
       raw: 'test',
       seq: 0,
