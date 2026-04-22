@@ -66,10 +66,6 @@ export class ChannelManager {
     return this.runnerFactory.command;
   }
 
-  get runnerArgs(): string[] {
-    return this.runnerFactory.args;
-  }
-
   get providerClientConfig() {
     return this.adapter.clientConfig;
   }

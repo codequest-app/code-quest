@@ -90,6 +90,27 @@ describe('ChatHandler > session', () => {
       expect(record!.id).toBe('cli-sess');
     });
 
+    it('session record args reflect the actual spawn args (not a static base)', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const claude = createFakeSummoner(server).claude();
+      claude.prepareInit(s.init('args-sess'));
+
+      await claude.send<LaunchOk>('session:launch', {
+        channelId: 'ch-args',
+        launchOptions: { thinking: 'adaptive', thinkingDisplay: 'summarized' },
+      });
+      await new Promise<void>((r) => setTimeout(r, 30));
+
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      const row = await sessionStore.getById('args-sess');
+      const args: string[] = JSON.parse(row!.args);
+      expect(args).toContain('--thinking');
+      expect(args[args.indexOf('--thinking') + 1]).toBe('adaptive');
+      expect(args).toContain('--thinking-display');
+      expect(args[args.indexOf('--thinking-display') + 1]).toBe('summarized');
+    });
+
     it('persists projectRoot on session record (from gitService.getProjectRoot)', async () => {
       const { FakeGitService } = await import('@code-quest/summoner/test');
       const fakeGit = new FakeGitService();

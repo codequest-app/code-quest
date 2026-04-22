@@ -454,10 +454,12 @@ interface InternalOnlyMessageMap {
 /** Wire events whose producer payload differs from the wire payload
  * (extra scaffolding fields consumed server-side before socket emit). */
 interface ProducerOverrideMap {
-  // sessionId carried for Channel.handleInternalMessage
+  // sessionId carried for Channel.handleInternalMessage; args injected by
+  // ProcessRunner for session persistence (record actual spawn args).
   'session:init': Omit<WireBase<'session:init'>, 'config'> & {
     sessionId?: string;
     config?: Record<string, unknown>;
+    args?: string[];
   };
   // Producer adds requestId + response scaffolding for auto-respond handler
   'notification:show': Omit<WireBase<'notification:show'>, 'severity' | 'buttons'> & {

@@ -65,7 +65,6 @@ export function createContainer(options: ContainerOptions): Container {
         spawnOptions,
       }),
     command: adapter.command,
-    args: adapter.buildArgs(),
   };
   container.bind<RunnerFactory>(TYPES.RunnerFactory).toConstantValue(runnerFactory);
 

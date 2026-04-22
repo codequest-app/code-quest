@@ -360,6 +360,8 @@ export const sessionInitEventSchema = z.looseObject({
   fastModeState: z.unknown().optional(),
   mcpServers: z.array(z.looseObject({ name: z.string(), status: z.string() })).optional(),
   slashCommands: z.array(z.string()).optional(),
+  /** Runner-augmented: the resolved CLI args passed to child_process.spawn. */
+  args: z.array(z.string()).optional(),
 });
 export type SessionInitEvent = z.infer<typeof sessionInitEventSchema>;
 
