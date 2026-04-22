@@ -1,5 +1,11 @@
 import { EventEmitter } from 'node:events';
-import type { ParseResult, ProcessHandle, ProcessProvider, ProviderAdapter } from './types.ts';
+import type {
+  ClientMessage,
+  ParseResult,
+  ProcessHandle,
+  ProcessProvider,
+  ProviderAdapter,
+} from './types.ts';
 
 /** Synthesize a raw_event fallback for unknown/error parse results so the
  *  adapter only ever sees typed messages. Returns null for skip. */
@@ -35,7 +41,7 @@ interface ProcessRunnerOptions {
 export class ProcessRunner extends EventEmitter {
   private readonly adapter: ProviderAdapter;
   private readonly processProvider?: ProcessProvider;
-  private readonly launchArgs: string[];
+  readonly launchArgs: string[];
   private readonly parentEnv: NodeJS.ProcessEnv;
   private readonly spawnOptions: Record<string, unknown>;
   private handle: ProcessHandle | null = null;
@@ -88,8 +94,20 @@ export class ProcessRunner extends EventEmitter {
       this.emit('control_response', cr);
     }
     for (const message of messages) {
-      this.emit('client_message', message);
+      this.emit('client_message', this.augmentForPersistence(message));
     }
+  }
+
+  /** session:init is the one moment server needs to record how this
+   *  process was actually spawned. Piggyback the resolved launchArgs
+   *  on that event's payload so server can write it to DB without
+   *  reaching back into runner state. */
+  private augmentForPersistence(message: ClientMessage): ClientMessage {
+    if (message.name !== 'session:init') return message;
+    return {
+      ...message,
+      payload: { ...(message.payload as Record<string, unknown>), args: this.launchArgs },
+    };
   }
 
   write(raw: string): void {

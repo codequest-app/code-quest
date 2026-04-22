@@ -9,6 +9,7 @@ import {
   controlInitResponseSchema,
   ERROR_CODES,
   EVENTS,
+  sessionInitEventSchema,
   sessionJoinPayloadSchema,
   sessionLaunchPayloadSchema,
   sessionResumePayloadSchema,
@@ -260,20 +261,28 @@ export function create({
     }
   }
 
-  function onSessionInit(ch: Channel, _payload: unknown): void {
+  function onSessionInit(ch: Channel, payload: unknown): void {
     channelManager.broadcastSessionState(ch.channelId, 'busy');
 
     // Persist when session:init arrives (sessionId now available).
     // All channel-creation paths set ch.projectRoot before spawn.
     if (ch.sessionId) {
       const projectRoot = ch.projectRoot ?? ch.cwd;
+      const parsed = sessionInitEventSchema.safeParse(payload);
+      const runnerArgs = parsed.success ? (parsed.data.args ?? []) : [];
+      if (runnerArgs.length === 0) {
+        logger.warn(
+          { channelId: ch.channelId },
+          'session:init payload missing args; DB record will store [] (check ProcessRunner augmentation)',
+        );
+      }
       sessionStore
         .upsert({
           id: ch.sessionId,
           channelId: ch.channelId,
           provider: channelManager.provider,
           command: channelManager.runnerCommand,
-          args: JSON.stringify(channelManager.runnerArgs),
+          args: JSON.stringify(runnerArgs),
           cwd: ch.cwd,
           projectRoot,
           mode: 'interactive',

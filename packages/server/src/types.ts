@@ -16,7 +16,6 @@ import type { SessionHistory } from './socket/session-history.ts';
 export interface RunnerFactory {
   create(opts?: LaunchOptions, spawnOptions?: Record<string, unknown>): ProcessRunner;
   readonly command: string;
-  readonly args: string[];
 }
 
 export const TYPES = {

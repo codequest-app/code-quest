@@ -14,6 +14,58 @@ function createRunner() {
 }
 
 describe('ProcessRunner', () => {
+  describe('launchArgs', () => {
+    it('exposes adapter-resolved args as public readonly', () => {
+      const adapter = new ClaudeAdapter();
+      const opts = { model: 'claude-sonnet-4-6', thinking: 'adaptive' as const };
+      const runner = new ProcessRunner({
+        adapter,
+        processProvider: new FakeProcessProvider(),
+        args: opts,
+      });
+      expect(runner.launchArgs).toEqual(adapter.buildArgs(opts));
+      expect(runner.launchArgs).toContain('--model');
+      expect(runner.launchArgs).toContain('--thinking');
+    });
+
+    it('augments session:init ClientMessage payload with args', async () => {
+      const adapter = new ClaudeAdapter();
+      const provider = new FakeProcessProvider();
+      const runner = new ProcessRunner({
+        adapter,
+        processProvider: provider,
+        args: { thinking: 'adaptive' as const, thinkingDisplay: 'summarized' as const },
+      });
+      const events: ClientMessage[] = [];
+      runner.on('client_message', (e: ClientMessage) => events.push(e));
+
+      runner.spawn();
+      provider.latest.emit(s.init('test-sess'));
+      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+
+      const init = events.find((e) => e.name === 'session:init');
+      expect(init).toBeDefined();
+      const payload = init?.payload as { args?: string[] };
+      expect(payload.args).toEqual(runner.launchArgs);
+    });
+
+    it('does not augment non-init ClientMessages', async () => {
+      const { runner, provider } = createRunner();
+      const events: ClientMessage[] = [];
+      runner.on('client_message', (e: ClientMessage) => events.push(e));
+
+      runner.spawn();
+      provider.latest.emit(s.init('test-sess'));
+      provider.latest.emit(s.result());
+      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+
+      const nonInit = events.filter((e) => e.name !== 'session:init');
+      for (const ev of nonInit) {
+        expect((ev.payload as { args?: unknown }).args).toBeUndefined();
+      }
+    });
+  });
+
   describe('spawn and event emission', () => {
     it('emits parsed events from CLI stdout', async () => {
       const { runner, provider } = createRunner();
