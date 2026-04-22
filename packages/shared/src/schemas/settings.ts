@@ -17,9 +17,13 @@ export const settingsSetModelPayloadSchema = z.object({
 });
 export type SettingsSetModelPayload = z.infer<typeof settingsSetModelPayloadSchema>;
 
+export const thinkingDisplaySchema = z.enum(['summarized', 'omitted']);
+export type ThinkingDisplay = z.infer<typeof thinkingDisplaySchema>;
+
 export const settingsSetThinkingLevelPayloadSchema = z.object({
   channelId: z.string(),
   thinkingLevel: z.string(),
+  thinkingDisplay: thinkingDisplaySchema.optional(),
 });
 export type SettingsSetThinkingLevelPayload = z.infer<typeof settingsSetThinkingLevelPayloadSchema>;
 
@@ -89,6 +93,7 @@ export const updateStatePayloadSchema = z.object({
   defaultCwd: z.string().optional(),
   initialPermissionMode: z.string().optional(),
   thinkingLevel: z.string().optional(),
+  thinkingDisplay: thinkingDisplaySchema.optional(),
   mcpServers: z
     .array(z.object({ name: z.string(), status: z.string(), scope: z.string().optional() }))
     .optional(),

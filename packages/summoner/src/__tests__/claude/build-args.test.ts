@@ -83,6 +83,35 @@ describe('ClaudeProtocol.buildArgs', () => {
     expect(args).not.toContain('--thinking');
   });
 
+  describe('--thinking-display', () => {
+    it('emits --thinking-display summarized with adaptive mode', () => {
+      const args = protocol.buildArgs({ thinking: 'adaptive', thinkingDisplay: 'summarized' });
+      expect(args).toContain('--thinking-display');
+      expect(args[args.indexOf('--thinking-display') + 1]).toBe('summarized');
+    });
+
+    it('emits --thinking-display omitted with adaptive mode', () => {
+      const args = protocol.buildArgs({ thinking: 'adaptive', thinkingDisplay: 'omitted' });
+      expect(args[args.indexOf('--thinking-display') + 1]).toBe('omitted');
+    });
+
+    it('does NOT emit --thinking-display when thinking=disabled', () => {
+      const args = protocol.buildArgs({ thinking: 'disabled', thinkingDisplay: 'summarized' });
+      expect(args).not.toContain('--thinking-display');
+    });
+
+    it('does NOT emit --thinking-display with numeric budget (legacy path)', () => {
+      const args = protocol.buildArgs({ thinking: 31999, thinkingDisplay: 'summarized' });
+      expect(args).toContain('--max-thinking-tokens');
+      expect(args).not.toContain('--thinking-display');
+    });
+
+    it('does NOT emit --thinking-display when thinkingDisplay unset', () => {
+      const args = protocol.buildArgs({ thinking: 'adaptive' });
+      expect(args).not.toContain('--thinking-display');
+    });
+  });
+
   // ── Effort & limits ──
 
   it('adds --effort', () => {

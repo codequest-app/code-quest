@@ -31,6 +31,14 @@ describe('ThinkingBlock', () => {
     expect(summary?.querySelector('svg')).toBeInTheDocument();
   });
 
+  it('chevron SVG has explicit size class (else heroicons stretch to fill flex parent)', () => {
+    const { container } = render(<ThinkingBlock content="thinking..." />);
+    const svg = container.querySelector('summary svg');
+    const classes = svg?.getAttribute('class') ?? '';
+    expect(classes).toMatch(/\bw-\d/);
+    expect(classes).toMatch(/\bh-\d/);
+  });
+
   it('expands on click to show thinking content', async () => {
     const { container } = render(<ThinkingBlock content="I need to analyze this code..." />);
     const summary = container.querySelector('summary')!;

@@ -1,5 +1,6 @@
 import os from 'node:os';
 import 'dotenv/config';
+import type { ThinkingDisplay } from '@code-quest/shared';
 
 type Env = Record<string, string | undefined>;
 
@@ -7,6 +8,11 @@ type Env = Record<string, string | undefined>;
 export function parseBool(raw: string | undefined, defaultValue: boolean): boolean {
   if (raw === undefined) return defaultValue;
   return raw === 'true' || raw === '1';
+}
+
+/** Invalid / unset → 'summarized' (CLI-default-compat + UI expects content). */
+function parseThinkingDisplay(raw: string | undefined): ThinkingDisplay {
+  return raw === 'omitted' ? 'omitted' : 'summarized';
 }
 
 /** Resolve a SQLite URL to the filesystem path better-sqlite3 expects.
@@ -41,6 +47,7 @@ export function loadConfig(env: Env = process.env) {
     },
     systemPrompt: env.CLI_SYSTEM_PROMPT ?? '',
     allowDangerouslySkipPermissions: parseBool(env.CLI_BYPASS_PERMISSIONS, true),
+    thinkingDisplay: parseThinkingDisplay(env.CLI_THINKING_DISPLAY),
     explorerRoots: parseExplorerRoots(env.EXPLORER_ROOTS),
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
   } as const;

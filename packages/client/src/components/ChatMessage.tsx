@@ -40,6 +40,8 @@ const NO_COPY_TYPES = new Set([
   'action_result',
   'image',
   'document',
+  'thinking',
+  'redacted_thinking',
 ]);
 
 interface ChatMessageProps {
@@ -126,6 +128,11 @@ function AssistantMessage({
   message: Message;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }) {
+  const body = renderBody(message, onDiffRespond);
+  // Opus 4.7 returns signature-only thinking unless `--thinking-display summarized`,
+  // and historical sessions are empty-body forever. Skip the whole row in that case.
+  if (body == null) return null;
+
   const showCopy = message.role !== 'system' && !NO_COPY_TYPES.has(message.type);
   return (
     <div
@@ -136,10 +143,10 @@ function AssistantMessage({
       <div className="min-w-0" data-type={message.type === 'text' ? 'text' : undefined}>
         {message.type === 'text' ? (
           <TruncatedContent maxHeight={600}>
-            <ContentErrorBoundary>{renderBody(message, onDiffRespond)}</ContentErrorBoundary>
+            <ContentErrorBoundary>{body}</ContentErrorBoundary>
           </TruncatedContent>
         ) : (
-          renderBody(message, onDiffRespond)
+          body
         )}
       </div>
       {showCopy && (

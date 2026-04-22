@@ -129,4 +129,20 @@ describe('loadConfig — non-database envs', () => {
     expect(c.rawEvents.writeDeltas).toBe(true);
     expect(c.rawEvents.readDeltas).toBe(true);
   });
+
+  it('CLI_THINKING_DISPLAY unset → summarized', () => {
+    expect(loadConfig({}).thinkingDisplay).toBe('summarized');
+  });
+
+  it('CLI_THINKING_DISPLAY=summarized → summarized', () => {
+    expect(loadConfig({ CLI_THINKING_DISPLAY: 'summarized' }).thinkingDisplay).toBe('summarized');
+  });
+
+  it('CLI_THINKING_DISPLAY=omitted → omitted', () => {
+    expect(loadConfig({ CLI_THINKING_DISPLAY: 'omitted' }).thinkingDisplay).toBe('omitted');
+  });
+
+  it('CLI_THINKING_DISPLAY=garbage → falls back to summarized', () => {
+    expect(loadConfig({ CLI_THINKING_DISPLAY: 'bogus' }).thinkingDisplay).toBe('summarized');
+  });
 });

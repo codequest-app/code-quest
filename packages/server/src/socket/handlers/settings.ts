@@ -90,12 +90,16 @@ export function create({
   const handleSetThinkingLevel = createSettingHandler({
     schema: settingsSetThinkingLevelPayloadSchema,
     errorMsg: 'Failed to set thinking level',
-    run: async (ch, { channelId, thinkingLevel }) => {
+    run: async (ch, { channelId, thinkingLevel, thinkingDisplay }) => {
       await ch.sendRequest(EVENTS.settings.set_thinking_level, {
         tokens: thinkingLevel === 'off' ? 0 : DEFAULT_THINKING_TOKENS,
       });
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
-      emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel });
+      const displayPatch = thinkingDisplay != null ? { thinkingDisplay } : {};
+      if (thinkingDisplay != null) {
+        await settingsStore.set(ch.provider, 'thinkingDisplay', thinkingDisplay);
+      }
+      emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel, ...displayPatch });
     },
   });
 

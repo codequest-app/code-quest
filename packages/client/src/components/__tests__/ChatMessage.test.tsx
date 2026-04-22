@@ -161,6 +161,28 @@ describe('ChatMessage', () => {
     expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
   });
 
+  it('thinking message has no copy button (Copy is not meaningful for thoughts)', () => {
+    const { container } = render(
+      <ChatMessage message={{ ...base, type: 'thinking', content: 'reasoning...' }} />,
+    );
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+  });
+
+  it('empty-body thinking message renders nothing at all', () => {
+    const { container } = render(
+      <ChatMessage message={{ ...base, type: 'thinking', content: '' }} />,
+    );
+    // No wrapper, no copy button, nothing.
+    expect(container.querySelector('[data-role="assistant"]')).toBeNull();
+    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+  });
+
+  it('non-empty thinking still renders its block (happy path)', () => {
+    render(<ChatMessage message={{ ...base, type: 'thinking', content: 'Hmm, let me see' }} />);
+    // ThinkingBlock summary label shows either "Thinking" or "Thought for Ns"
+    expect(screen.getByText(/Thinking|Thought for/)).toBeInTheDocument();
+  });
+
   it('tool_result message does NOT render a message-level copy button', () => {
     const { container } = render(
       <ChatMessage
