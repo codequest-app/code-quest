@@ -1,5 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { rawDeltas } from '../db/schema-sqlite.ts';
+import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
@@ -48,14 +50,15 @@ describe('raw delta persistence (end-to-end via RawRecorder)', () => {
       await claude.emit(s.assistant('Hello'));
       await claude.emit(s.result());
 
-      const svc = container.get<RawEventService>(TYPES.RawEventStore);
-      const eventsOnly = await svc.getBySession('sess-nodeltas');
-      const withDeltas = await svc.getBySession('sess-nodeltas', { includeDeltas: true });
+      // raw_deltas should be empty; service.getBySession (UNION) returns only events.
+      const db = container.get<DrizzleDatabase>(TYPES.Database);
+      const deltaRows = await db.select().from(rawDeltas);
+      expect(deltaRows).toEqual([]);
 
-      // Terminal events present (user, assistant, result, maybe init).
-      expect(eventsOnly.length).toBeGreaterThan(0);
-      // No delta rows added, so UNION is the same shape as events-only.
-      expect(withDeltas.length).toBe(eventsOnly.length);
+      const svc = container.get<RawEventService>(TYPES.RawEventStore);
+      const rows = await svc.getBySession('sess-nodeltas');
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
     });
   });
 
@@ -77,19 +80,19 @@ describe('raw delta persistence (end-to-end via RawRecorder)', () => {
       // Wait for async persistence to settle.
       await new Promise((r) => setTimeout(r, 50));
 
+      const db = container.get<DrizzleDatabase>(TYPES.Database);
+      const deltaRows = await db.select().from(rawDeltas);
+      expect(deltaRows.length).toBeGreaterThanOrEqual(2);
+      expect(deltaRows.some((r) => String(r.raw).includes('Hel'))).toBe(true);
+      expect(deltaRows.some((r) => String(r.raw).includes('lo'))).toBe(true);
+
+      // Service.getBySession UNIONs by default: includes both events and deltas.
       const svc = container.get<RawEventService>(TYPES.RawEventStore);
-      const withDeltas = await svc.getBySession('sess-deltas', { includeDeltas: true });
-      const eventsOnly = await svc.getBySession('sess-deltas');
-
-      // UNION strictly larger than events-only (deltas present).
-      expect(withDeltas.length).toBeGreaterThan(eventsOnly.length);
-
-      // The delta rows include our injected text fragments.
-      const deltaRawTexts = withDeltas
-        .filter((r) => !eventsOnly.some((e) => e.seq === r.seq))
-        .map((r) => r.raw);
-      expect(deltaRawTexts.some((raw) => raw.includes('Hel'))).toBe(true);
-      expect(deltaRawTexts.some((raw) => raw.includes('lo'))).toBe(true);
+      const unioned = await svc.getBySession('sess-deltas');
+      const hasDelta = unioned.some((r) => r.raw.includes('content_block_delta'));
+      const hasAssistant = unioned.some((r) => r.raw.startsWith('{"type":"assistant"'));
+      expect(hasDelta).toBe(true);
+      expect(hasAssistant).toBe(true);
     });
   });
 });

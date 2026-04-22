@@ -50,10 +50,9 @@ export class SessionHistory {
 
   async getRawEvents(
     channelId: string,
-    opts?: { includeDeltas?: boolean },
   ): Promise<Array<{ direction: string; seq: number; raw: string }>> {
     const sessionId = await this.resolveSessionId(channelId);
-    return this.rawEventStore.getBySession(sessionId, opts);
+    return this.rawEventStore.getBySession(sessionId);
   }
 
   async getPendingReplayMessages(sessionId: string): Promise<{

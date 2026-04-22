@@ -3,8 +3,9 @@ import { fileURLToPath } from 'node:url';
 import type { RawEvent } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEvents } from '../db/schema-sqlite.ts';
+import { rawDeltas, rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
+import { DrizzleRawDeltaStore } from '../services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -176,6 +177,81 @@ describe('DrizzleRawEventStore', () => {
 
     it('rejects cloning to the same sessionId', async () => {
       await expect(store.cloneEvents('sess-x', 'sess-x')).rejects.toThrow();
+    });
+  });
+
+  describe('getBySession with delta table — UNION ALL', () => {
+    it('merges events + deltas ordered by createdAt/seq', async () => {
+      const db = createDatabase(':memory:');
+      migrate(db, { migrationsFolder });
+      const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
+      const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
+
+      const now = Date.now();
+      await unionStore.append({
+        sessionId: 'S',
+        direction: 'in',
+        raw: 'E0',
+        seq: 0,
+        timestamp: now,
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'D1',
+        seq: 1,
+        timestamp: now + 10,
+      });
+      await unionStore.append({
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'E2',
+        seq: 2,
+        timestamp: now + 20,
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'S',
+        direction: 'out',
+        raw: 'D3',
+        seq: 3,
+        timestamp: now + 30,
+      });
+
+      const rows = await unionStore.getBySession('S');
+      expect(rows.map((r) => r.raw)).toEqual(['E0', 'D1', 'E2', 'D3']);
+    });
+
+    it('cloneEvents still reads events only (deltas stay put)', async () => {
+      const db = createDatabase(':memory:');
+      migrate(db, { migrationsFolder });
+      const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
+      const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
+
+      await unionStore.append({
+        sessionId: 'parent',
+        direction: 'in',
+        raw: 'event-A',
+        seq: 0,
+        timestamp: Date.now(),
+      });
+      await deltaStore.append({
+        parentId: '',
+        sessionId: 'parent',
+        direction: 'out',
+        raw: 'delta-A',
+        seq: 1,
+        timestamp: Date.now() + 10,
+      });
+
+      await unionStore.cloneEvents('parent', 'child');
+
+      // Child has only event rows — deltas were NOT cloned into raw_events.
+      const childUnion = await unionStore.getBySession('child');
+      const childDeltas = await deltaStore.getBySession('child');
+      expect(childUnion.map((r) => r.raw)).toEqual(['event-A']);
+      expect(childDeltas).toEqual([]);
     });
   });
 });

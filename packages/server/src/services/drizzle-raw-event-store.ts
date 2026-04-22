@@ -27,6 +27,30 @@ interface RawEventsTable {
   createdAt: Column;
 }
 
+interface RawDeltasTable {
+  id: Column;
+  parentId: Column;
+  sessionId: Column;
+  dir: Column;
+  raw: Column;
+  seq: Column;
+  createdAt: Column;
+}
+
+/** Drizzle's select-builder chain supports .unionAll + .orderBy; our minimal
+ *  DrizzleDb structural type omits those methods. This local shape narrows
+ *  just enough to keep the UNION ALL call typechecked without leaking raw
+ *  dialect types. */
+interface UnionableSelectBuilder<T> {
+  from(table: unknown): {
+    where(cond: unknown): {
+      unionAll(other: unknown): {
+        orderBy(...cols: unknown[]): Promise<T[]>;
+      };
+    };
+  };
+}
+
 function findText(rows: RawEventRow[], type: 'user' | 'assistant'): string | undefined {
   for (const row of rows) {
     const text = extractTextFromRaw(row.raw, type);
@@ -35,10 +59,26 @@ function findText(rows: RawEventRow[], type: 'user' | 'assistant'): string | und
   return undefined;
 }
 
+function toRawEvent(row: RawEventRow): RawEvent {
+  return {
+    timestamp: new Date(row.createdAt).getTime(),
+    sessionId: row.sessionId,
+    direction: directionSchema.parse(row.dir),
+    raw: row.raw,
+    seq: row.seq,
+  };
+}
+
 export class DrizzleRawEventStore implements RawEventStore {
+  /**
+   * @param deltaTable optional sibling table. When supplied, `getBySession`
+   *   emits a SQL `UNION ALL` across raw_events + raw_deltas. Omitted for
+   *   single-table scenarios (e.g. isolated unit tests).
+   */
   constructor(
     private db: DrizzleDb,
     private table: RawEventsTable,
+    private deltaTable?: RawDeltasTable,
   ) {}
 
   async append(event: RawEvent, id?: string): Promise<string> {
@@ -54,7 +94,7 @@ export class DrizzleRawEventStore implements RawEventStore {
     return rowId;
   }
 
-  // Query last 10 'out' events — not all are assistant (init, status, etc.), so we scan a few
+  /** Query last 10 'out' events — not all are assistant (init, status, etc.). */
   async getPreview(sessionId: string): Promise<SessionPreview> {
     const lastOutRows = z.array(rawEventRowSchema).parse(
       await this.db
@@ -65,7 +105,6 @@ export class DrizzleRawEventStore implements RawEventStore {
         .limit(10),
     );
 
-    // First 'in' event is the first user message
     const firstInRows = z.array(rawEventRowSchema).parse(
       await this.db
         .select()
@@ -85,10 +124,9 @@ export class DrizzleRawEventStore implements RawEventStore {
     if (fromSessionId === toSessionId) {
       throw new Error('cloneEvents: source and destination sessionId must differ');
     }
-    const rows = await this.getBySession(fromSessionId);
+    // Events-only read — deltas are debug data and don't belong to a fork.
+    const rows = await this.getEventsBySession(fromSessionId);
     if (rows.length === 0) return;
-    // Batch insert preserves insertion order (drizzle emits a single INSERT
-    // ... VALUES (...), (...) and we assign seq explicitly).
     const values = rows.map((row, i) => ({
       id: ids?.[i] ?? uuidv7(),
       sessionId: toSessionId,
@@ -100,22 +138,54 @@ export class DrizzleRawEventStore implements RawEventStore {
     await this.db.insert(this.table).values(values);
   }
 
+  /** Default read: SQL `UNION ALL` raw_events + raw_deltas when deltaTable set. */
   async getBySession(sessionId: string): Promise<RawEvent[]> {
+    if (!this.deltaTable) return this.getEventsBySession(sessionId);
+
+    const eventCols = {
+      sessionId: this.table.sessionId,
+      dir: this.table.dir,
+      raw: this.table.raw,
+      seq: this.table.seq,
+      createdAt: this.table.createdAt,
+    };
+    const deltaCols = {
+      sessionId: this.deltaTable.sessionId,
+      dir: this.deltaTable.dir,
+      raw: this.deltaTable.raw,
+      seq: this.deltaTable.seq,
+      createdAt: this.deltaTable.createdAt,
+    };
+
+    const builder = this.db.select as unknown as (
+      cols: typeof eventCols,
+    ) => UnionableSelectBuilder<RawEventRow>;
+
+    const eventsQ = builder
+      .call(this.db, eventCols)
+      .from(this.table)
+      .where(eq(this.table.sessionId, sessionId));
+    const deltasQ = (
+      this.db.select as unknown as (cols: typeof deltaCols) => UnionableSelectBuilder<RawEventRow>
+    )
+      .call(this.db, deltaCols)
+      .from(this.deltaTable)
+      .where(eq(this.deltaTable.sessionId, sessionId));
+
+    const rows = await eventsQ
+      .unionAll(deltasQ)
+      .orderBy(asc(this.table.createdAt), asc(this.table.seq));
+    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+  }
+
+  /** Events-only read — used by cloneEvents. */
+  private async getEventsBySession(sessionId: string): Promise<RawEvent[]> {
     const rows = await this.db
       .select()
       .from(this.table)
       .where(eq(this.table.sessionId, sessionId))
       .orderBy(asc(this.table.createdAt), asc(this.table.seq));
 
-    return z
-      .array(rawEventRowSchema)
-      .parse(rows)
-      .map((row) => ({
-        timestamp: new Date(row.createdAt).getTime(),
-        sessionId: row.sessionId,
-        direction: directionSchema.parse(row.dir),
-        raw: row.raw,
-        seq: row.seq,
-      }));
+    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
   }
 }

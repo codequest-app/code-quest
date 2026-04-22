@@ -150,7 +150,7 @@ function buildStores(config?: StoreConfig): {
 
   if (config?.sqliteDatabase) {
     const db = config.sqliteDatabase;
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, sqliteSchema.rawDeltas));
     deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
@@ -158,7 +158,7 @@ function buildStores(config?: StoreConfig): {
 
   if (config?.mysqlDatabase) {
     const db = config.mysqlDatabase;
-    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents));
+    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents, mysqlSchema.rawDeltas));
     deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));
