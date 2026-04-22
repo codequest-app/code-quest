@@ -16,6 +16,7 @@ import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
+import { CompositeSettingsStore } from './services/composite-settings-store.ts';
 import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
@@ -126,7 +127,8 @@ export function createContainer(options: ContainerOptions): Container {
     .toConstantValue(new LocalFilesystemService(config.explorerRoots));
   container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
 
-  const settingsStore: SettingsStore = settingsStores[0];
+  const settingsStore: SettingsStore =
+    settingsStores.length === 1 ? settingsStores[0] : new CompositeSettingsStore(settingsStores);
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
 
   return container;
