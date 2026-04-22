@@ -8,9 +8,10 @@ import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { Server } from 'socket.io';
-import { config } from '../config.ts';
+import { config, resolveSqlitePath } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
 import { logger } from '../logger.ts';
 import { createProfileRouter } from '../routes/profile.ts';
 import { createSessionsRouter } from '../routes/sessions.ts';
@@ -23,17 +24,24 @@ import { TYPES } from '../types.ts';
 
 const storeConfig: StoreConfig = {};
 
-if (config.rawEvents.drivers.includes('sqlite')) {
-  storeConfig.sqlite = true;
+if (config.database.sqliteUrl) {
+  storeConfig.sqliteDatabase = createDatabase(resolveSqlitePath(config.database.sqliteUrl));
 }
 
-if (config.rawEvents.drivers.includes('mysql') && config.databaseUrl) {
-  storeConfig.mysql = { database: createMysqlDatabase(config.databaseUrl) };
+if (config.database.url) {
+  storeConfig.mysqlDatabase = createMysqlDatabase(config.database.url);
+}
+
+if (!storeConfig.sqliteDatabase && !storeConfig.mysqlDatabase) {
+  throw new Error(
+    'No database backend configured. Set DATABASE_URL (MySQL) and/or ' +
+      'DATABASE_SQLITE_URL (e.g. file:./data/code-quest.db) in .env. ' +
+      'See packages/server/.env.example for a working default.',
+  );
 }
 
 const container = createContainer({
   processProvider: new ChildProcessProvider(),
-  dbPath: config.rawEvents.sqlitePath,
   storeConfig,
 });
 

@@ -6,7 +6,7 @@ import { FakeFilesystemService, FakeGitService } from '@code-quest/summoner/test
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
-import type { DrizzleDatabase } from '../db/sqlite-client.ts';
+import { createDatabase } from '../db/sqlite-client.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
 import { TYPES } from '../types.ts';
 import { InMemorySettingsStore } from './in-memory-settings-store.ts';
@@ -21,13 +21,13 @@ interface TestContainerOverrides {
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
+  const sqliteDatabase = createDatabase(':memory:');
+  migrate(sqliteDatabase, { migrationsFolder });
+
   const container = createContainer({
     ...overrides,
-    storeConfig: { sqlite: true },
+    storeConfig: { sqliteDatabase },
   });
-
-  const db = container.get<DrizzleDatabase>(TYPES.Database);
-  migrate(db, { migrationsFolder });
 
   // Use in-memory settings in tests to avoid file system state leaking between runs
   container

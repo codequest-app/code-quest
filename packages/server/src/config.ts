@@ -1,13 +1,6 @@
 import os from 'node:os';
 import 'dotenv/config';
 
-const DRIVERS = ['sqlite', 'mysql'] as const;
-export type RawEventsDriver = (typeof DRIVERS)[number];
-
-function isDriver(s: string): s is RawEventsDriver {
-  return (DRIVERS as readonly string[]).includes(s);
-}
-
 type Env = Record<string, string | undefined>;
 
 /** Parse env var as boolean. Accepts 'true'/'1' as true, 'false'/'0' as false. */
@@ -22,22 +15,14 @@ function parseBool(raw: string | undefined, defaultValue: boolean): boolean {
   return raw === 'true' || raw === '1';
 }
 
-export function parseRawEventsDrivers(raw: string): RawEventsDriver[] {
-  const parts = raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const valid: RawEventsDriver[] = [];
-  for (const part of parts) {
-    if (isDriver(part)) {
-      valid.push(part);
-    } else {
-      console.warn(
-        `Unknown RAW_EVENTS_DRIVERS value "${part}" — ignored. Valid: ${DRIVERS.join(', ')}`,
-      );
-    }
-  }
-  return valid;
+/** Resolve a SQLite URL to the filesystem path better-sqlite3 expects.
+ *  Canonical form is `file:...` (Drizzle / Prisma convention). Bare paths
+ *  are accepted so users migrating from RAW_EVENTS_SQLITE_PATH can paste
+ *  their value verbatim. */
+export function resolveSqlitePath(url: string): string {
+  if (url === 'file::memory:') return ':memory:';
+  if (url.startsWith('file:')) return url.slice(5);
+  return url;
 }
 
 function parseExplorerRoots(raw?: string): string[] {
@@ -52,10 +37,11 @@ function parseExplorerRoots(raw?: string): string[] {
 export function loadConfig(env: Env = process.env) {
   return {
     port: Number(env.APP_PORT ?? 3000),
-    databaseUrl: env.DATABASE_URL,
+    database: {
+      url: env.DATABASE_URL || undefined,
+      sqliteUrl: env.DATABASE_SQLITE_URL || undefined,
+    },
     rawEvents: {
-      drivers: parseRawEventsDrivers(env.RAW_EVENTS_DRIVERS ?? ''),
-      sqlitePath: env.RAW_EVENTS_SQLITE_PATH ?? './data/code-quest.db',
       persistDeltas: parseBool(env.RAW_EVENTS_PERSIST_DELTAS, false),
     },
     systemPrompt: env.CLI_SYSTEM_PROMPT ?? '',

@@ -12,7 +12,8 @@ import { TYPES } from '../types.ts';
 
 const configMock = vi.hoisted(() => ({
   autoMode: true,
-  rawEvents: { drivers: [], sqlitePath: ':memory:', persistDeltas: false },
+  database: { url: undefined, sqliteUrl: 'file::memory:' },
+  rawEvents: { persistDeltas: false },
   explorerRoots: [],
 }));
 vi.mock('../config.ts', () => ({ config: configMock }));

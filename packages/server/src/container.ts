@@ -35,14 +35,14 @@ import { SessionHistory } from './socket/session-history.ts';
 import { type RunnerFactory, TYPES } from './types.ts';
 
 export interface StoreConfig {
-  sqlite?: boolean;
-  mysql?: { database: MysqlDatabase };
+  /** SQLite db handle. Undefined = sqlite backend disabled. */
+  sqliteDatabase?: DrizzleDatabase;
+  /** MySQL db handle. Undefined = mysql backend disabled. */
+  mysqlDatabase?: MysqlDatabase;
 }
 
 export interface ContainerOptions {
   processProvider?: ProcessProvider;
-  database?: DrizzleDatabase;
-  dbPath?: string;
   storeConfig?: StoreConfig;
 }
 
@@ -69,11 +69,14 @@ export function createContainer(options: ContainerOptions): Container {
   };
   container.bind<RunnerFactory>(TYPES.RunnerFactory).toConstantValue(runnerFactory);
 
-  const db = options.database ?? createDatabase(options.dbPath);
+  // Bind whichever DB handle is available to TYPES.Database (kept for handler
+  // consumers that still reach for a raw Drizzle handle; sqlite preferred when
+  // both are present since most tooling keys off it). Fallback to in-memory
+  // sqlite only for test containers that pass nothing.
+  const db = options.storeConfig?.sqliteDatabase ?? createDatabase(':memory:');
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
   const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
-    db,
     options.storeConfig,
   );
 
@@ -134,10 +137,7 @@ export function createContainer(options: ContainerOptions): Container {
   return container;
 }
 
-function buildStores(
-  db: DrizzleDatabase,
-  config?: StoreConfig,
-): {
+function buildStores(config?: StoreConfig): {
   eventStores: RawEventStore[];
   deltaStores: RawDeltaStore[];
   sessionStores: SessionStore[];
@@ -148,31 +148,27 @@ function buildStores(
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 
-  if (config?.sqlite) {
+  if (config?.sqliteDatabase) {
+    const db = config.sqliteDatabase;
     eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
     deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
-  if (config?.mysql) {
-    eventStores.push(new DrizzleRawEventStore(config.mysql.database, mysqlSchema.rawEvents));
-    deltaStores.push(new DrizzleRawDeltaStore(config.mysql.database, mysqlSchema.rawDeltas));
-    sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
-    settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
+  if (config?.mysqlDatabase) {
+    const db = config.mysqlDatabase;
+    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents));
+    deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
+    sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
+    settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));
   }
 
   if (eventStores.length === 0) {
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
-  }
-  if (deltaStores.length === 0) {
-    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
-  }
-  if (sessionStores.length === 0) {
-    sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
-  }
-  if (settingsStores.length === 0) {
-    settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
+    throw new Error(
+      'At least one database backend must be configured. ' +
+        'Provide sqliteDatabase and/or mysqlDatabase in StoreConfig.',
+    );
   }
 
   return { eventStores, deltaStores, sessionStores, settingsStores };
