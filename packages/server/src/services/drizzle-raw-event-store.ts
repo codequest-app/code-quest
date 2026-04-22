@@ -94,29 +94,26 @@ export class DrizzleRawEventStore implements RawEventStore {
     return rowId;
   }
 
-  /** Query last 10 'out' events — not all are assistant (init, status, etc.). */
   async getPreview(sessionId: string): Promise<SessionPreview> {
-    const lastOutRows = z.array(rawEventRowSchema).parse(
-      await this.db
+    // Last 10 'out' rows because not every out event is an assistant message (init, status, etc.).
+    const [lastOutRaw, firstInRaw] = await Promise.all([
+      this.db
         .select()
         .from(this.table)
         .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'out')))
         .orderBy(desc(this.table.seq))
         .limit(10),
-    );
-
-    const firstInRows = z.array(rawEventRowSchema).parse(
-      await this.db
+      this.db
         .select()
         .from(this.table)
         .where(and(eq(this.table.sessionId, sessionId), eq(this.table.dir, 'in')))
         .orderBy(asc(this.table.seq))
         .limit(5),
-    );
+    ]);
 
     return {
-      lastAssistant: findText(lastOutRows, 'assistant'),
-      firstUser: findText(firstInRows, 'user'),
+      lastAssistant: findText(z.array(rawEventRowSchema).parse(lastOutRaw), 'assistant'),
+      firstUser: findText(z.array(rawEventRowSchema).parse(firstInRaw), 'user'),
     };
   }
 
@@ -138,7 +135,6 @@ export class DrizzleRawEventStore implements RawEventStore {
     await this.db.insert(this.table).values(values);
   }
 
-  /** Default read: SQL `UNION ALL` raw_events + raw_deltas when deltaTable set. */
   async getBySession(sessionId: string): Promise<RawEvent[]> {
     if (!this.deltaTable) return this.getEventsBySession(sessionId);
 
@@ -178,7 +174,6 @@ export class DrizzleRawEventStore implements RawEventStore {
     return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
   }
 
-  /** Events-only read — used by cloneEvents. */
   private async getEventsBySession(sessionId: string): Promise<RawEvent[]> {
     const rows = await this.db
       .select()
