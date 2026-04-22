@@ -10,7 +10,6 @@ interface PendingEvent {
   seq: number;
 }
 
-/** `true` when the raw line is a stdin user message (the start of a turn). */
 function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
   if (direction !== 'in') return false;
   try {
@@ -25,7 +24,7 @@ function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
 export class RawRecorder {
   constructor(
     private service: RawEventService,
-    private persistDeltas: boolean,
+    private writeDeltas: boolean,
   ) {}
 
   wire(channel: Channel): void {
@@ -35,9 +34,8 @@ export class RawRecorder {
     const pendingEvents: PendingEvent[] = [];
 
     const persistOne = async (pending: PendingEvent, sessionId: string): Promise<void> => {
-      // Delta path — dropped entirely if opt-out.
       if (isDelta(pending.raw)) {
-        if (!this.persistDeltas) return;
+        if (!this.writeDeltas) return;
         await this.service.appendDelta({
           parentId: currentTurnRootId ?? '',
           sessionId,
@@ -49,8 +47,8 @@ export class RawRecorder {
         return;
       }
 
-      // Non-delta — hits raw_events. If it's a user stdin, remember its id
-      // as the turn root so subsequent deltas attribute to it.
+      // Remember the user-stdin event's id as turn root so subsequent
+      // deltas in the same turn can attribute to it via parentId.
       const id = await this.service.appendEvent({
         sessionId,
         direction: pending.direction,
@@ -80,11 +78,12 @@ export class RawRecorder {
         pendingEvents.push({ raw, direction, timestamp: Date.now(), seq: seqCounter++ });
         return;
       }
-      if (pendingEvents.length > 0) void flushPending(sessionId);
-      void persistOne(
-        { raw, direction, timestamp: Date.now(), seq: seqCounter++ },
-        sessionId,
-      ).catch((err) => logger.error({ err }, 'Failed to persist raw event'));
+      const next: PendingEvent = { raw, direction, timestamp: Date.now(), seq: seqCounter++ };
+      // Chain so buffered events flush before this one appends (preserves seq order in DB).
+      const flush = pendingEvents.length > 0 ? flushPending(sessionId) : Promise.resolve();
+      void flush
+        .then(() => persistOne(next, sessionId))
+        .catch((err) => logger.error({ err }, 'Failed to persist raw event'));
     };
 
     runner.on('stdout', (line: string) => recordRaw(line, 'out'));

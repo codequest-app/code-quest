@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { envBool, loadConfig, resolveSqlitePath } from '../config.ts';
+import { loadConfig, parseBool, resolveSqlitePath } from '../config.ts';
 
 describe('resolveSqlitePath', () => {
   it('strips file: prefix', () => {
@@ -20,25 +20,25 @@ describe('resolveSqlitePath', () => {
   });
 });
 
-describe('envBool', () => {
-  it('returns default when env var is undefined', () => {
-    expect(envBool('NONEXISTENT_VAR')).toBe(false);
-    expect(envBool('NONEXISTENT_VAR', true)).toBe(true);
+describe('parseBool', () => {
+  it('returns default when raw is undefined', () => {
+    expect(parseBool(undefined, false)).toBe(false);
+    expect(parseBool(undefined, true)).toBe(true);
   });
 
   it('returns true for "true" and "1"', () => {
-    expect(envBool('TEST_BOOL', false, 'true')).toBe(true);
-    expect(envBool('TEST_BOOL', false, '1')).toBe(true);
+    expect(parseBool('true', false)).toBe(true);
+    expect(parseBool('1', false)).toBe(true);
   });
 
   it('returns false for "false" and "0"', () => {
-    expect(envBool('TEST_BOOL', true, 'false')).toBe(false);
-    expect(envBool('TEST_BOOL', true, '0')).toBe(false);
+    expect(parseBool('false', true)).toBe(false);
+    expect(parseBool('0', true)).toBe(false);
   });
 
   it('returns false for unrecognized values', () => {
-    expect(envBool('TEST_BOOL', false, 'yes')).toBe(false);
-    expect(envBool('TEST_BOOL', false, '')).toBe(false);
+    expect(parseBool('yes', false)).toBe(false);
+    expect(parseBool('', false)).toBe(false);
   });
 });
 
@@ -96,14 +96,37 @@ describe('loadConfig — non-database envs', () => {
   it('empty env — defaults apply', () => {
     const c = loadConfig({});
     expect(c.port).toBe(3000);
-    expect(c.rawEvents.persistDeltas).toBe(false);
+    expect(c.rawEvents.writeDeltas).toBe(false);
+    expect(c.rawEvents.readDeltas).toBe(false);
     expect(c.autoMode).toBe(true);
     expect(c.allowDangerouslySkipPermissions).toBe(true);
     expect(c.systemPrompt).toBe('');
   });
 
-  it('RAW_EVENTS_PERSIST_DELTAS=true enables delta persistence', () => {
-    expect(loadConfig({ RAW_EVENTS_PERSIST_DELTAS: 'true' }).rawEvents.persistDeltas).toBe(true);
-    expect(loadConfig({ RAW_EVENTS_PERSIST_DELTAS: '1' }).rawEvents.persistDeltas).toBe(true);
+  it('RAW_EVENTS_WRITE_DELTAS=true enables delta writes (only)', () => {
+    const c = loadConfig({ RAW_EVENTS_WRITE_DELTAS: 'true' });
+    expect(c.rawEvents.writeDeltas).toBe(true);
+    expect(c.rawEvents.readDeltas).toBe(false);
+  });
+
+  it('RAW_EVENTS_READ_DELTAS=true enables UNION reads (only)', () => {
+    const c = loadConfig({ RAW_EVENTS_READ_DELTAS: 'true' });
+    expect(c.rawEvents.writeDeltas).toBe(false);
+    expect(c.rawEvents.readDeltas).toBe(true);
+  });
+
+  it('both flags independently true', () => {
+    const c = loadConfig({
+      RAW_EVENTS_WRITE_DELTAS: 'true',
+      RAW_EVENTS_READ_DELTAS: 'true',
+    });
+    expect(c.rawEvents.writeDeltas).toBe(true);
+    expect(c.rawEvents.readDeltas).toBe(true);
+  });
+
+  it('accepts "1" as true for both flags', () => {
+    const c = loadConfig({ RAW_EVENTS_WRITE_DELTAS: '1', RAW_EVENTS_READ_DELTAS: '1' });
+    expect(c.rawEvents.writeDeltas).toBe(true);
+    expect(c.rawEvents.readDeltas).toBe(true);
   });
 });

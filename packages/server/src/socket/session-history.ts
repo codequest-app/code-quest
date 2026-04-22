@@ -25,7 +25,7 @@ const HISTORY_NAMES = new Set<string>([
 
 export class SessionHistory {
   constructor(
-    private rawEventStore: RawEventService,
+    private rawEventService: RawEventService,
     private sessionStore: SessionStore,
     private adapter: ProviderAdapter,
     private getChannel: (id: string) => Channel | undefined,
@@ -45,28 +45,28 @@ export class SessionHistory {
   }
 
   async getPreview(sessionId: string): Promise<SessionPreview> {
-    return this.rawEventStore.getPreview(sessionId);
+    return this.rawEventService.getPreview(sessionId);
   }
 
   async getRawEvents(
     channelId: string,
   ): Promise<Array<{ direction: string; seq: number; raw: string }>> {
     const sessionId = await this.resolveSessionId(channelId);
-    return this.rawEventStore.getBySession(sessionId);
+    return this.rawEventService.getBySession(sessionId);
   }
 
   async getPendingReplayMessages(sessionId: string): Promise<{
     messages: ClientMessage[];
     respondedRequestIds: Set<string>;
   }> {
-    const rawEvents = await this.rawEventStore.getBySession(sessionId);
+    const rawEvents = await this.rawEventService.getBySession(sessionId);
     const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEvents);
     const messages = this.replayEvents(rawEvents);
     return { messages, respondedRequestIds };
   }
 
   private async replaySession(sessionId: string): Promise<ClientMessage[]> {
-    const rawEvents = await this.rawEventStore.getBySession(sessionId);
+    const rawEvents = await this.rawEventService.getBySession(sessionId);
     return this.replayEvents(rawEvents);
   }
 

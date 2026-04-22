@@ -78,21 +78,22 @@ export function createContainer(options: ContainerOptions): Container {
 
   const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
     options.storeConfig,
+    { readDeltas: config.rawEvents.readDeltas },
   );
 
-  const lowEventStore: RawEventStore =
-    eventStores.length === 1 ? eventStores[0] : new CompositeRawEventStore(eventStores);
-  const lowDeltaStore: RawDeltaStore =
-    deltaStores.length === 1 ? deltaStores[0] : new CompositeRawDeltaStore(deltaStores);
+  const lowEventStore = pickOrComposite(eventStores, (s) => new CompositeRawEventStore(s));
+  const lowDeltaStore = pickOrComposite(deltaStores, (s) => new CompositeRawDeltaStore(s));
 
   const rawEventService = new RawEventService(lowEventStore, lowDeltaStore);
-  container.bind<RawEventService>(TYPES.RawEventStore).toConstantValue(rawEventService);
+  container.bind<RawEventService>(TYPES.RawEventService).toConstantValue(rawEventService);
 
-  const sessionStore: SessionStore =
-    sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
+  const sessionStore = pickOrComposite(sessionStores, (s) => new CompositeSessionStore(s));
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.persistDeltas);
+  const settingsStore = pickOrComposite(settingsStores, (s) => new CompositeSettingsStore(s));
+  container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
+
+  const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.writeDeltas);
   const emitter = new ChannelEmitter();
   // SessionHistory and ChannelManager reference each other via lazy callbacks
   // (neither is called during construction — only at runtime)
@@ -130,14 +131,17 @@ export function createContainer(options: ContainerOptions): Container {
     .toConstantValue(new LocalFilesystemService(config.explorerRoots));
   container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
 
-  const settingsStore: SettingsStore =
-    settingsStores.length === 1 ? settingsStores[0] : new CompositeSettingsStore(settingsStores);
-  container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
-
   return container;
 }
 
-function buildStores(config?: StoreConfig): {
+function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
+  return stores.length === 1 ? stores[0] : makeComposite(stores);
+}
+
+function buildStores(
+  config?: StoreConfig,
+  flags: { readDeltas: boolean } = { readDeltas: false },
+): {
   eventStores: RawEventStore[];
   deltaStores: RawDeltaStore[];
   sessionStores: SessionStore[];
@@ -150,7 +154,8 @@ function buildStores(config?: StoreConfig): {
 
   if (config?.sqliteDatabase) {
     const db = config.sqliteDatabase;
-    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, sqliteSchema.rawDeltas));
+    const deltaTableForRead = flags.readDeltas ? sqliteSchema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents, deltaTableForRead));
     deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
@@ -158,7 +163,8 @@ function buildStores(config?: StoreConfig): {
 
   if (config?.mysqlDatabase) {
     const db = config.mysqlDatabase;
-    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents, mysqlSchema.rawDeltas));
+    const deltaTableForRead = flags.readDeltas ? mysqlSchema.rawDeltas : undefined;
+    eventStores.push(new DrizzleRawEventStore(db, mysqlSchema.rawEvents, deltaTableForRead));
     deltaStores.push(new DrizzleRawDeltaStore(db, mysqlSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, mysqlSchema.settings));

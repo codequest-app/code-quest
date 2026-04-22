@@ -36,7 +36,7 @@ import type { SessionHistory } from './session-history.ts';
 @injectable()
 export class SocketServer {
   constructor(
-    @inject(TYPES.RawEventStore) private rawEventStore: RawEventService,
+    @inject(TYPES.RawEventService) private rawEventService: RawEventService,
     @inject(TYPES.SessionStore) private sessionStore: SessionStore,
     @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
@@ -61,7 +61,7 @@ export class SocketServer {
       settingsStore: this.settingsStore,
       usageTracker: this.usageTracker,
       sessionHistory: this.sessionHistory,
-      rawEventStore: this.rawEventStore,
+      rawEventService: this.rawEventService,
       filesystemService: this.filesystemService,
       gitService: this.gitService,
       planHandler,

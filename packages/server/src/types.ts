@@ -22,7 +22,7 @@ export interface RunnerFactory {
 export const TYPES = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
-  RawEventStore: Symbol.for('RawEventStore'),
+  RawEventService: Symbol.for('RawEventService'),
   SocketServer: Symbol.for('SocketServer'),
   Database: Symbol.for('Database'),
   UsageTracker: Symbol.for('UsageTracker'),
@@ -42,7 +42,7 @@ export interface HandlerContext {
   settingsStore: SettingsStore;
   usageTracker: UsageTracker;
   sessionHistory: SessionHistory;
-  rawEventStore: RawEventService;
+  rawEventService: RawEventService;
   filesystemService: FilesystemService;
   gitService: GitService;
   planHandler: PlanApi;

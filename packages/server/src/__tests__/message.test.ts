@@ -116,8 +116,8 @@ describe('ChatHandler > message', () => {
     await claude.emit(s.assistant('ok'));
     await claude.emit(s.result());
 
-    const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
-    const stored = await rawEventStore.getBySession('cli-sess');
+    const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+    const stored = await rawEventService.getBySession('cli-sess');
     expect(stored.length).toBeGreaterThan(0);
   });
 

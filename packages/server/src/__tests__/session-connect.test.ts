@@ -407,7 +407,7 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.result());
 
       // Verify raw_event_store has both stdin and stdout records
-      const rawStore = container.get<RawEventService>(TYPES.RawEventStore);
+      const rawStore = container.get<RawEventService>(TYPES.RawEventService);
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
       const channel = mgr.get(channelId)!;
@@ -582,8 +582,8 @@ describe('ChatHandler > session', () => {
     it('raw events are persisted to DB after session is created (no FK error)', async () => {
       const { container } = await setup();
 
-      const rawEventStore = container.get<RawEventService>(TYPES.RawEventStore);
-      const events = await rawEventStore.getBySession('cli-sess');
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
       expect(events.length).toBeGreaterThan(0);
     });
 
@@ -598,8 +598,8 @@ describe('ChatHandler > session', () => {
 
       await claude.send('chat:send', { channelId, message: 'hello' });
 
-      const rawEventStore = container.get<RawEventService>(TYPES.RawEventStore);
-      const events = await rawEventStore.getBySession('cli-sess');
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
       const stdinHellos = events.filter(
         (e) =>
           e.direction === 'in' && e.raw.includes('"hello"') && !e.raw.includes('control_request'),
@@ -897,7 +897,7 @@ describe('ChatHandler > session', () => {
       expect(created.channelId).toBe(clientId);
     });
 
-    it('rawEventStore stores entries keyed by CLI session_id (not channelId)', async () => {
+    it('rawEventService stores entries keyed by CLI session_id (not channelId)', async () => {
       const container = createTestContainer();
       const server = createFakeServer(container);
       const claude = createFakeSummoner(server).claude();
@@ -911,8 +911,8 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.assistant('hi'));
       await claude.emit(s.result());
 
-      const rawEventStore = container.get<RawEventService>(TYPES.RawEventStore);
-      const events = await rawEventStore.getBySession('cli-sess');
+      const rawEventService = container.get<RawEventService>(TYPES.RawEventService);
+      const events = await rawEventService.getBySession('cli-sess');
       expect(events.length).toBeGreaterThan(0);
     });
 

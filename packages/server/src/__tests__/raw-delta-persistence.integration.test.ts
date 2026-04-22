@@ -9,21 +9,22 @@ import { TYPES } from '../types.ts';
 const configMock = vi.hoisted(() => ({
   autoMode: true,
   database: { url: undefined, sqliteUrl: 'file::memory:' },
-  rawEvents: { persistDeltas: false },
+  rawEvents: { writeDeltas: false, readDeltas: false },
   explorerRoots: [],
 }));
 
 vi.mock('../config.ts', () => ({ config: configMock }));
 
 beforeEach(() => {
-  configMock.rawEvents.persistDeltas = false;
+  configMock.rawEvents.writeDeltas = false;
+  configMock.rawEvents.readDeltas = false;
 });
 
 afterEach(() => {
-  configMock.rawEvents.persistDeltas = false;
+  configMock.rawEvents.writeDeltas = false;
+  configMock.rawEvents.readDeltas = false;
 });
 
-/** Minimal delta stream event from the CLI. */
 function deltaLine(text: string): string {
   return JSON.stringify({
     type: 'stream_event',
@@ -35,64 +36,77 @@ function deltaLine(text: string): string {
   });
 }
 
-describe('raw delta persistence (end-to-end via RawRecorder)', () => {
-  describe('RAW_EVENTS_PERSIST_DELTAS=false (default)', () => {
-    it('does not persist content_block_delta rows; terminal events still stored', async () => {
-      const container = createTestContainer();
-      const server = createFakeServer(container);
-      const summoner = createFakeSummoner(server);
-      const claude = summoner.claude();
-      await claude.initialize(s.init('sess-nodeltas'));
+async function runTurn(sessionId: string) {
+  const container = createTestContainer();
+  const server = createFakeServer(container);
+  const summoner = createFakeSummoner(server);
+  const claude = summoner.claude();
+  await claude.initialize(s.init(sessionId));
 
-      await claude.send('chat:send', { channelId: 'sess-nodeltas', message: 'hi' });
-      await claude.emit(deltaLine('Hel'));
-      await claude.emit(deltaLine('lo'));
-      await claude.emit(s.assistant('Hello'));
-      await claude.emit(s.result());
+  await claude.send('chat:send', { channelId: sessionId, message: 'hi' });
+  await claude.emit(deltaLine('Hel'));
+  await claude.emit(deltaLine('lo'));
+  await claude.emit(s.assistant('Hello'));
+  await claude.emit(s.result());
 
-      // raw_deltas should be empty; service.getBySession (UNION) returns only events.
-      const db = container.get<DrizzleDatabase>(TYPES.Database);
-      const deltaRows = await db.select().from(rawDeltas);
-      expect(deltaRows).toEqual([]);
+  // let async persistence settle
+  await new Promise((r) => setTimeout(r, 50));
+  return container;
+}
 
-      const svc = container.get<RawEventService>(TYPES.RawEventStore);
-      const rows = await svc.getBySession('sess-nodeltas');
-      expect(rows.length).toBeGreaterThan(0);
-      expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
-    });
+describe('raw delta persistence — four flag quadrants', () => {
+  it('WRITE=false, READ=false — clean mode: no deltas persisted, UNION skipped', async () => {
+    const container = await runTurn('sess-q1');
+
+    const db = container.get<DrizzleDatabase>(TYPES.Database);
+    const deltaRows = await db.select().from(rawDeltas);
+    expect(deltaRows).toEqual([]);
+
+    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const rows = await svc.getBySession('sess-q1');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
   });
 
-  describe('RAW_EVENTS_PERSIST_DELTAS=true', () => {
-    it('persists deltas to raw_deltas with parent_id pointing at the user stdin row', async () => {
-      configMock.rawEvents.persistDeltas = true;
-      const container = createTestContainer();
-      const server = createFakeServer(container);
-      const summoner = createFakeSummoner(server);
-      const claude = summoner.claude();
-      await claude.initialize(s.init('sess-deltas'));
+  it('WRITE=true, READ=false — quiet persist: deltas stored but not surfaced by getBySession', async () => {
+    configMock.rawEvents.writeDeltas = true;
+    const container = await runTurn('sess-q2');
 
-      await claude.send('chat:send', { channelId: 'sess-deltas', message: 'hi' });
-      await claude.emit(deltaLine('Hel'));
-      await claude.emit(deltaLine('lo'));
-      await claude.emit(s.assistant('Hello'));
-      await claude.emit(s.result());
+    const db = container.get<DrizzleDatabase>(TYPES.Database);
+    const deltaRows = await db.select().from(rawDeltas);
+    expect(deltaRows.length).toBeGreaterThanOrEqual(2);
 
-      // Wait for async persistence to settle.
-      await new Promise((r) => setTimeout(r, 50));
+    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const rows = await svc.getBySession('sess-q2');
+    expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
+  });
 
-      const db = container.get<DrizzleDatabase>(TYPES.Database);
-      const deltaRows = await db.select().from(rawDeltas);
-      expect(deltaRows.length).toBeGreaterThanOrEqual(2);
-      expect(deltaRows.some((r) => String(r.raw).includes('Hel'))).toBe(true);
-      expect(deltaRows.some((r) => String(r.raw).includes('lo'))).toBe(true);
+  it('WRITE=true, READ=true — full debug: deltas persisted and surfaced via UNION', async () => {
+    configMock.rawEvents.writeDeltas = true;
+    configMock.rawEvents.readDeltas = true;
+    const container = await runTurn('sess-q3');
 
-      // Service.getBySession UNIONs by default: includes both events and deltas.
-      const svc = container.get<RawEventService>(TYPES.RawEventStore);
-      const unioned = await svc.getBySession('sess-deltas');
-      const hasDelta = unioned.some((r) => r.raw.includes('content_block_delta'));
-      const hasAssistant = unioned.some((r) => r.raw.startsWith('{"type":"assistant"'));
-      expect(hasDelta).toBe(true);
-      expect(hasAssistant).toBe(true);
-    });
+    const db = container.get<DrizzleDatabase>(TYPES.Database);
+    const deltaRows = await db.select().from(rawDeltas);
+    expect(deltaRows.length).toBeGreaterThanOrEqual(2);
+
+    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const unioned = await svc.getBySession('sess-q3');
+    expect(unioned.some((r) => r.raw.includes('content_block_delta'))).toBe(true);
+    expect(unioned.some((r) => r.raw.startsWith('{"type":"assistant"'))).toBe(true);
+  });
+
+  it('WRITE=false, READ=true — no-op UNION: empty delta table, events still returned', async () => {
+    configMock.rawEvents.readDeltas = true;
+    const container = await runTurn('sess-q4');
+
+    const db = container.get<DrizzleDatabase>(TYPES.Database);
+    const deltaRows = await db.select().from(rawDeltas);
+    expect(deltaRows).toEqual([]);
+
+    const svc = container.get<RawEventService>(TYPES.RawEventService);
+    const rows = await svc.getBySession('sess-q4');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => !r.raw.includes('content_block_delta'))).toBe(true);
   });
 });

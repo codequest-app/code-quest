@@ -40,6 +40,14 @@ if (!storeConfig.sqliteDatabase && !storeConfig.mysqlDatabase) {
   );
 }
 
+if (config.rawEvents.readDeltas && !config.rawEvents.writeDeltas) {
+  logger.warn(
+    'RAW_EVENTS_READ_DELTAS=true but RAW_EVENTS_WRITE_DELTAS=false — ' +
+      'no deltas will ever be persisted, so UNION reads an empty table. ' +
+      'Did you mean to set both?',
+  );
+}
+
 const container = createContainer({
   processProvider: new ChildProcessProvider(),
   storeConfig,
@@ -58,9 +66,9 @@ const socketServer = container.get<SocketServer>(TYPES.SocketServer);
 socketServer.register(io);
 
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-const rawEventStore = container.get<RawEventStore>(TYPES.RawEventStore);
+const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
 const usageTracker = container.get<UsageTracker>(TYPES.UsageTracker);
-app.use(createSessionsRouter(sessionStore, rawEventStore));
+app.use(createSessionsRouter(sessionStore, rawEventService));
 app.use(createUsageRouter(usageTracker));
 app.use(createProfileRouter(() => ({ authenticated: false })));
 

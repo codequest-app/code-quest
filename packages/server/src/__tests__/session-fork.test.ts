@@ -265,7 +265,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     expect(args[resumeIdx + 1]).toBe('sess-cwd-parent');
   });
 
-  it('clones parent rawEventStore rows under the new sessionId', async () => {
+  it('clones parent rawEventService rows under the new sessionId', async () => {
     const container = createTestContainer();
     const server = createFakeServer(container);
     const summoner = createFakeSummoner(server);
@@ -284,7 +284,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
       createdAt: new Date().toISOString(),
     });
 
-    const rawStore = container.get<RawEventService>(TYPES.RawEventStore);
+    const rawStore = container.get<RawEventService>(TYPES.RawEventService);
     await rawStore.appendEvent({
       timestamp: Date.now(),
       sessionId: 'sess-clone-parent',

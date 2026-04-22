@@ -3,14 +3,8 @@ import 'dotenv/config';
 
 type Env = Record<string, string | undefined>;
 
-/** Parse env var as boolean. Accepts 'true'/'1' as true, 'false'/'0' as false. */
-export function envBool(key: string, defaultValue = false, raw?: string): boolean {
-  const v = raw ?? process.env[key];
-  if (v === undefined) return defaultValue;
-  return v === 'true' || v === '1';
-}
-
-function parseBool(raw: string | undefined, defaultValue: boolean): boolean {
+/** Accepts `'true'` / `'1'` as true; anything else (including undefined) → defaultValue. */
+export function parseBool(raw: string | undefined, defaultValue: boolean): boolean {
   if (raw === undefined) return defaultValue;
   return raw === 'true' || raw === '1';
 }
@@ -42,7 +36,8 @@ export function loadConfig(env: Env = process.env) {
       sqliteUrl: env.DATABASE_SQLITE_URL || undefined,
     },
     rawEvents: {
-      persistDeltas: parseBool(env.RAW_EVENTS_PERSIST_DELTAS, false),
+      writeDeltas: parseBool(env.RAW_EVENTS_WRITE_DELTAS, false),
+      readDeltas: parseBool(env.RAW_EVENTS_READ_DELTAS, false),
     },
     systemPrompt: env.CLI_SYSTEM_PROMPT ?? '',
     allowDangerouslySkipPermissions: parseBool(env.CLI_BYPASS_PERMISSIONS, true),

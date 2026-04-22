@@ -18,12 +18,17 @@ export function create({
   channelManager,
   sessionHistory,
   sessionStore,
-  rawEventStore,
+  rawEventService,
   emitter,
   gitService,
 }: Pick<
   HandlerContext,
-  'channelManager' | 'sessionHistory' | 'sessionStore' | 'rawEventStore' | 'emitter' | 'gitService'
+  | 'channelManager'
+  | 'sessionHistory'
+  | 'sessionStore'
+  | 'rawEventService'
+  | 'emitter'
+  | 'gitService'
 >): void {
   async function handleFork(
     _ch: Channel | null,
@@ -47,7 +52,7 @@ export function create({
       }
 
       const newSessionId = crypto.randomUUID();
-      await rawEventStore.cloneEvents(parentSessionId, newSessionId);
+      await rawEventService.cloneEvents(parentSessionId, newSessionId);
 
       // Resolve projectRoot upfront so onBeforeSpawn can set it before any
       // broadcastSessionState emits (matches launch/resume symmetry).
@@ -147,7 +152,7 @@ export function create({
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,
       };
-      await rawEventStore.appendEvent(event);
+      await rawEventService.appendEvent(event);
       callback?.(ok({}));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to update skipped branch')));
