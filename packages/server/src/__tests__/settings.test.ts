@@ -214,6 +214,40 @@ describe('ChatHandler > settings', () => {
 
       expect(await settingsStore.get('claude', 'thinkingLevel')).toBe('default_on');
     });
+
+    it('persists thinkingDisplay when supplied', async () => {
+      const { claude, channelId, settingsStore } = await setup();
+
+      await claude.send('settings:set_thinking_level', {
+        channelId,
+        thinkingLevel: 'default_on',
+        thinkingDisplay: 'omitted',
+      });
+
+      expect(await settingsStore.get('claude', 'thinkingDisplay')).toBe('omitted');
+    });
+
+    it('does not touch thinkingDisplay in store when payload omits it', async () => {
+      const { claude, channelId, settingsStore } = await setup();
+      await settingsStore.set('claude', 'thinkingDisplay', 'summarized');
+
+      await claude.send('settings:set_thinking_level', { channelId, thinkingLevel: 'default_on' });
+
+      expect(await settingsStore.get('claude', 'thinkingDisplay')).toBe('summarized');
+    });
+
+    it('emits thinkingDisplay in settings:update when supplied', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('settings:set_thinking_level', {
+        channelId,
+        thinkingLevel: 'default_on',
+        thinkingDisplay: 'omitted',
+      });
+
+      const match = claude.events('settings:update').find((e) => e.thinkingDisplay === 'omitted');
+      expect(match).toBeDefined();
+    });
   });
 
   describe('launch_claude per-launch settings', () => {

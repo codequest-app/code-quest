@@ -11,6 +11,7 @@ export const launchOptionsSchema = z.object({
   model: z.string().optional(),
   fallbackModel: z.string().optional(),
   thinking: z.union([z.enum(['adaptive', 'disabled']), z.number()]).optional(),
+  thinkingDisplay: z.enum(['summarized', 'omitted']).optional(),
   effort: z.enum(['high', 'medium', 'low', 'max']).optional(),
   maxTurns: z.number().optional(),
   maxBudgetUsd: z.number().optional(),

@@ -29,6 +29,9 @@ function pushModelFlags(args: string[], o: LaunchOptions): void {
       args.push('--max-thinking-tokens', String(o.thinking));
     } else {
       args.push('--thinking', o.thinking);
+      if (o.thinkingDisplay != null && o.thinking !== 'disabled') {
+        args.push('--thinking-display', o.thinkingDisplay);
+      }
     }
   }
   if (o.effort) args.push('--effort', o.effort);

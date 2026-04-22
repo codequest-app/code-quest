@@ -83,6 +83,7 @@ export function renderBody(
       );
     }
     case 'thinking':
+      if (!content.trim()) return null;
       return (
         <ThinkingBlock
           content={content}

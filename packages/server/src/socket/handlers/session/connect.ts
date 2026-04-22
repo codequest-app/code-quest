@@ -124,7 +124,16 @@ export function create({
     launchOptions: Record<string, unknown>;
     initOptions: Record<string, unknown>;
   } {
+    // When thinking is on, pass `--thinking adaptive` at spawn. cc-office's
+    // per-launch settings only send a runtime `set_max_thinking_tokens`
+    // control request; without this CLI flag, Opus 4.7 silently defaults
+    // thinking output to `omitted` (API-default flip vs 4.6) and our
+    // thinkingDisplay/summarized knob is gated out by buildArgs.
+    const injectThinkingFlag =
+      parsed.thinkingLevel !== 'off' && parsed.launchOptions?.thinking === undefined;
     const launchOptions = {
+      thinkingDisplay: config.thinkingDisplay,
+      ...(injectThinkingFlag ? { thinking: 'adaptive' as const } : {}),
       ...parsed.launchOptions,
       ...(config.allowDangerouslySkipPermissions ? { allowDangerouslySkipPermissions: true } : {}),
     };
