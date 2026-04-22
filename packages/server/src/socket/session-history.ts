@@ -8,7 +8,8 @@ import {
 } from '@code-quest/shared';
 import type { ProviderAdapter } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
-import type { RawEventStore, SessionPreview } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
+import type { SessionPreview } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { Channel } from './channel.ts';
 import { typedJsonObjectSchema, userMessageInputSchema } from './schemas.ts';
@@ -24,7 +25,7 @@ const HISTORY_NAMES = new Set<string>([
 
 export class SessionHistory {
   constructor(
-    private rawEventStore: RawEventStore,
+    private rawEventStore: RawEventService,
     private sessionStore: SessionStore,
     private adapter: ProviderAdapter,
     private getChannel: (id: string) => Channel | undefined,
@@ -47,11 +48,12 @@ export class SessionHistory {
     return this.rawEventStore.getPreview(sessionId);
   }
 
-  async getRawEntries(
+  async getRawEvents(
     channelId: string,
+    opts?: { includeDeltas?: boolean },
   ): Promise<Array<{ direction: string; seq: number; raw: string }>> {
     const sessionId = await this.resolveSessionId(channelId);
-    return this.rawEventStore.getBySession(sessionId);
+    return this.rawEventStore.getBySession(sessionId, opts);
   }
 
   async getPendingReplayMessages(sessionId: string): Promise<{
@@ -60,16 +62,16 @@ export class SessionHistory {
   }> {
     const rawEvents = await this.rawEventStore.getBySession(sessionId);
     const respondedRequestIds = this.adapter.extractRespondedRequestIds(rawEvents);
-    const messages = this.replayEntries(rawEvents);
+    const messages = this.replayEvents(rawEvents);
     return { messages, respondedRequestIds };
   }
 
   private async replaySession(sessionId: string): Promise<ClientMessage[]> {
     const rawEvents = await this.rawEventStore.getBySession(sessionId);
-    return this.replayEntries(rawEvents);
+    return this.replayEvents(rawEvents);
   }
 
-  private replayStdoutEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
+  private replayStdoutEvent(raw: Record<string, unknown>, result: ClientMessage[]): void {
     const parsed = typedJsonObjectSchema.safeParse(raw);
     if (parsed.success) {
       const converted = this.adapter.transform(parsed.data).messages;
@@ -77,7 +79,7 @@ export class SessionHistory {
     }
   }
 
-  private replayStdinEntry(raw: Record<string, unknown>, result: ClientMessage[]): void {
+  private replayStdinEvent(raw: Record<string, unknown>, result: ClientMessage[]): void {
     const parsed = userMessageInputSchema.safeParse(raw);
     if (parsed.success) {
       const blocks = parsed.data.message.content.flatMap((b) => {
@@ -91,7 +93,7 @@ export class SessionHistory {
     }
   }
 
-  private replayEntries(rawEvents: Array<{ raw: string; direction: string }>): ClientMessage[] {
+  private replayEvents(rawEvents: Array<{ raw: string; direction: string }>): ClientMessage[] {
     // First pass: detect if stdout already echoes user messages
     const hasStdoutUserEcho = rawEvents.some((e) => {
       if (e.direction !== 'out') return false;
@@ -105,21 +107,21 @@ export class SessionHistory {
 
     // Second pass: replay in original order
     const result: ClientMessage[] = [];
-    for (const entry of rawEvents) {
-      const trimmed = entry.raw.trim();
+    for (const event of rawEvents) {
+      const trimmed = event.raw.trim();
       if (!trimmed) continue;
 
       try {
         const raw: unknown = JSON.parse(trimmed);
         if (!isRecord(raw)) continue;
 
-        if (entry.direction === 'out') {
-          this.replayStdoutEntry(raw, result);
-        } else if (entry.direction === 'in' && !hasStdoutUserEcho) {
-          this.replayStdinEntry(raw, result);
+        if (event.direction === 'out') {
+          this.replayStdoutEvent(raw, result);
+        } else if (event.direction === 'in' && !hasStdoutUserEcho) {
+          this.replayStdinEvent(raw, result);
         }
       } catch (err) {
-        logger.debug(err, 'Skipping malformed raw entry during replay');
+        logger.debug(err, 'Skipping malformed raw event during replay');
       }
     }
 

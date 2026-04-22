@@ -140,14 +140,14 @@ export function create({
   ): Promise<void> {
     try {
       const { branch, failed } = gitUpdateSkippedBranchPayloadSchema.parse(payload);
-      const entry: RawEvent = {
+      const event: RawEvent = {
         timestamp: Date.now(),
         sessionId: await sessionHistory.resolveSessionId(ch.channelId),
         direction: 'out',
         raw: JSON.stringify({ type: 'teleport-skipped-branch', branch, failed }),
         seq: 0,
       };
-      await rawEventStore.append(entry);
+      await rawEventStore.appendEvent(event);
       callback?.(ok({}));
     } catch (e) {
       callback?.(err(errMsg(e, 'Failed to update skipped branch')));

@@ -13,11 +13,15 @@ import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
+import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
+import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
+import type { RawDeltaStore } from './services/raw-delta-store.ts';
+import { RawEventService } from './services/raw-event-service.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
@@ -67,22 +71,29 @@ export function createContainer(options: ContainerOptions): Container {
   const db = options.database ?? createDatabase(options.dbPath);
   container.bind<DrizzleDatabase>(TYPES.Database).toConstantValue(db);
 
-  const { eventStores, sessionStores, settingsStores } = buildStores(db, options.storeConfig);
+  const { eventStores, deltaStores, sessionStores, settingsStores } = buildStores(
+    db,
+    options.storeConfig,
+  );
 
-  const rawEventStore: RawEventStore =
+  const lowEventStore: RawEventStore =
     eventStores.length === 1 ? eventStores[0] : new CompositeRawEventStore(eventStores);
-  container.bind<RawEventStore>(TYPES.RawEventStore).toConstantValue(rawEventStore);
+  const lowDeltaStore: RawDeltaStore =
+    deltaStores.length === 1 ? deltaStores[0] : new CompositeRawDeltaStore(deltaStores);
+
+  const rawEventService = new RawEventService(lowEventStore, lowDeltaStore);
+  container.bind<RawEventService>(TYPES.RawEventStore).toConstantValue(rawEventService);
 
   const sessionStore: SessionStore =
     sessionStores.length === 1 ? sessionStores[0] : new CompositeSessionStore(sessionStores);
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
-  const rawRecorder = new RawRecorder(rawEventStore);
+  const rawRecorder = new RawRecorder(rawEventService, config.rawEvents.persistDeltas);
   const emitter = new ChannelEmitter();
   // SessionHistory and ChannelManager reference each other via lazy callbacks
   // (neither is called during construction — only at runtime)
   const sessionHistory: SessionHistory = new SessionHistory(
-    rawEventStore,
+    rawEventService,
     sessionStore,
     adapter,
     (id) => channelManager.get(id),
@@ -126,27 +137,34 @@ function buildStores(
   config?: StoreConfig,
 ): {
   eventStores: RawEventStore[];
+  deltaStores: RawDeltaStore[];
   sessionStores: SessionStore[];
   settingsStores: SettingsStore[];
 } {
   const eventStores: RawEventStore[] = [];
+  const deltaStores: RawDeltaStore[] = [];
   const sessionStores: SessionStore[] = [];
   const settingsStores: SettingsStore[] = [];
 
   if (config?.sqlite) {
     eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
+    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
   if (config?.mysql) {
     eventStores.push(new DrizzleRawEventStore(config.mysql.database, mysqlSchema.rawEvents));
+    deltaStores.push(new DrizzleRawDeltaStore(config.mysql.database, mysqlSchema.rawDeltas));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
   }
 
   if (eventStores.length === 0) {
     eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEvents));
+  }
+  if (deltaStores.length === 0) {
+    deltaStores.push(new DrizzleRawDeltaStore(db, sqliteSchema.rawDeltas));
   }
   if (sessionStores.length === 0) {
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
@@ -155,5 +173,5 @@ function buildStores(
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
-  return { eventStores, sessionStores, settingsStores };
+  return { eventStores, deltaStores, sessionStores, settingsStores };
 }

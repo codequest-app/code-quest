@@ -6,6 +6,7 @@ import {
   sessionListRemotePayloadSchema,
 } from '@code-quest/shared';
 import { z } from 'zod';
+import { config } from '../../../config.ts';
 import { logger } from '../../../logger.ts';
 import type { HandlerContext } from '../../../types.ts';
 import type { Channel } from '../../channel.ts';
@@ -105,9 +106,11 @@ export function create({
   ): Promise<void> {
     try {
       const { channelId } = sessionGetPayloadSchema.parse(payload);
-      const entries = await sessionHistory.getRawEntries(channelId);
+      const rawEvents = await sessionHistory.getRawEvents(channelId, {
+        includeDeltas: config.rawEvents.persistDeltas,
+      });
       const rawJsonSchema = z.record(z.string(), z.unknown());
-      const events = entries.map((e) => {
+      const events = rawEvents.map((e) => {
         try {
           const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));
           if (parsed.success) {

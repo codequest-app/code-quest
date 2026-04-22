@@ -2,7 +2,7 @@ import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/sha
 import type { FilesystemService, GitService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { Server } from 'socket.io';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
@@ -36,7 +36,7 @@ import type { SessionHistory } from './session-history.ts';
 @injectable()
 export class SocketServer {
   constructor(
-    @inject(TYPES.RawEventStore) private rawEventStore: RawEventStore,
+    @inject(TYPES.RawEventStore) private rawEventStore: RawEventService,
     @inject(TYPES.SessionStore) private sessionStore: SessionStore,
     @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) private channelManager: ChannelManager,

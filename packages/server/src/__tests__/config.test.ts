@@ -66,8 +66,19 @@ describe('loadConfig', () => {
     expect(config.port).toBe(3000);
     expect(config.rawEvents.drivers).toEqual([]);
     expect(config.rawEvents.sqlitePath).toBe('./data/code-quest.db');
+    expect(config.rawEvents.persistDeltas).toBe(false);
     expect(config.autoMode).toBe(true);
     expect(config.allowDangerouslySkipPermissions).toBe(true);
     expect(config.systemPrompt).toBe('');
+  });
+
+  it('RAW_EVENTS_PERSIST_DELTAS=true enables delta persistence', () => {
+    const config = loadConfig({ RAW_EVENTS_PERSIST_DELTAS: 'true' });
+    expect(config.rawEvents.persistDeltas).toBe(true);
+  });
+
+  it('RAW_EVENTS_PERSIST_DELTAS=1 also enables', () => {
+    const config = loadConfig({ RAW_EVENTS_PERSIST_DELTAS: '1' });
+    expect(config.rawEvents.persistDeltas).toBe(true);
   });
 });

@@ -56,6 +56,7 @@ export function loadConfig(env: Env = process.env) {
     rawEvents: {
       drivers: parseRawEventsDrivers(env.RAW_EVENTS_DRIVERS ?? ''),
       sqlitePath: env.RAW_EVENTS_SQLITE_PATH ?? './data/code-quest.db',
+      persistDeltas: parseBool(env.RAW_EVENTS_PERSIST_DELTAS, false),
     },
     systemPrompt: env.CLI_SYSTEM_PROMPT ?? '',
     allowDangerouslySkipPermissions: parseBool(env.CLI_BYPASS_PERMISSIONS, true),

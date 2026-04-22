@@ -4,7 +4,7 @@ import type {
   TeleportSessionResponse,
 } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
-import type { RawEventStore } from '../services/raw-event-store.ts';
+import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
@@ -284,15 +284,15 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
       createdAt: new Date().toISOString(),
     });
 
-    const rawStore = container.get<RawEventStore>(TYPES.RawEventStore);
-    await rawStore.append({
+    const rawStore = container.get<RawEventService>(TYPES.RawEventStore);
+    await rawStore.appendEvent({
       timestamp: Date.now(),
       sessionId: 'sess-clone-parent',
       direction: 'in',
       raw: 'raw-A',
       seq: 0,
     });
-    await rawStore.append({
+    await rawStore.appendEvent({
       timestamp: Date.now() + 1,
       sessionId: 'sess-clone-parent',
       direction: 'out',

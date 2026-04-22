@@ -88,6 +88,35 @@ raw_events                raw_deltas
 - Anchored to a real row (not a synthetic UUID): `JOIN raw_deltas d ON d.parent_id = e.id` gets the user's message text.
 - Pre-turn deltas (CLI emits events before first user stdin) use `parent_id = ''` as the "unattributed" marker.
 
+### Decision 3b: Facade service hides the table split from consumers
+
+Consumers (RawRecorder, session-history replay, RPC handlers) import **one** interface: `RawEventStore`. Internally a facade `RawEventService` holds two low-level stores (for `raw_events` and `raw_deltas` respectively), routes writes by kind, and UNIONs reads when opt-in.
+
+```
+RawEventStore  (public interface)
+  ↑ implemented by
+RawEventService  (facade)
+  ├── eventStore: CompositeRawEventStore → [DrizzleRawEventStore]+   (atom per table+db)
+  └── deltaStore: CompositeRawDeltaStore → [DrizzleRawDeltaStore]+
+```
+
+**Why separate atoms**: `DrizzleRawEventStore` stays single-table / single-purpose (matches Drizzle idiom). The facade composes. This keeps infra classes testable in isolation.
+
+**Why keep `RawDeltaStore` interface internal**: no consumer outside the service needs to know about it. It exists for the facade to hold both composite and raw drizzle stores behind the same type in unit tests.
+
+Public surface:
+```ts
+interface RawEventStore {
+  appendEvent(event: RawEvent): Promise<string>;         // → raw_events
+  appendDelta(delta: RawDeltaEntry): Promise<void>;      // → raw_deltas
+  getBySession(id: string, opts?: { includeDeltas?: boolean }): Promise<RawEvent[]>;
+  getPreview(id: string): Promise<SessionPreview>;       // events only
+  cloneEvents(from: string, to: string): Promise<void>;  // events only
+}
+```
+
+Default `getBySession` returns events only — chat replay, `cloneEvents`, `getPreview` never see deltas. RawEventPanel RPC calls with `{ includeDeltas: config.rawEvents.persistDeltas }` to UNION when the flag is on.
+
 ### Decision 4: `RawEventStore.append()` returns the inserted id
 
 ```ts

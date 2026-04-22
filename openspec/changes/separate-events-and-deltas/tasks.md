@@ -17,46 +17,58 @@
 - [x] `packages/server/src/services/drizzle-raw-event-store.ts`: point at `rawEvents`; rename row schema and types.
 - [x] All source sites migrated (grep-clean).
 
-### 4. `RawEventStore.append` returns id
-- [ ] Red: test append returns the row's PK id.
-- [ ] Green: `DrizzleRawEventStore.append` returns the generated `uuidv7()`.
-- [ ] `CompositeRawEventStore.append` generates id once, passes to all inner stores, returns it.
+### 4. `DrizzleRawEventStore.append` returns id
+- [x] Interface returns `Promise<string>`.
+- [x] Drizzle impl generates `uuidv7()` or honours caller-supplied id.
+- [x] Composite generates id once, passes to inner stores.
+- [x] Tests covering both behaviours.
 
 ### 5. Classifier
-- [ ] `packages/server/src/socket/raw-classifier.ts`: `export function isDelta(raw: string): boolean`.
-- [ ] Unit tests: delta subtypes → true; non-delta + malformed → false.
+- [x] `packages/server/src/socket/raw-classifier.ts` `isDelta(raw)`.
+- [x] Unit tests covering delta subtypes, non-delta, malformed.
 
-### 6. `DrizzleRawDeltaStore`
-- [ ] New file `packages/server/src/services/drizzle-raw-delta-store.ts`.
-- [ ] Interface `RawDeltaStore` with `append(entry: RawDeltaEntry)` and `getBySession(sessionId)`.
-- [ ] Unit tests (round-trip, parent_id preservation, order).
+### 6. `DrizzleRawDeltaStore` + `RawDeltaStore` interface
+- [x] `packages/server/src/services/raw-delta-store.ts` interface + entry type.
+- [x] `packages/server/src/services/drizzle-raw-delta-store.ts` impl.
+- [x] Unit tests (round-trip, parent_id preservation, order).
+- [x] `CompositeRawDeltaStore` for multi-driver fan-out (symmetric with events).
 
 ### 7. Config: `persistDeltas`
-- [ ] Add `persistDeltas: boolean` to `config.rawEvents` in `loadConfig`.
-- [ ] Parse `RAW_EVENTS_PERSIST_DELTAS` (default `false`).
-- [ ] Unit test.
+- [x] `RAW_EVENTS_PERSIST_DELTAS` boolean in `loadConfig`; default `false`.
+- [x] Unit tests covering default / `'true'` / `'1'` / unset.
 
-### 8. RawRecorder routing (closure-local state)
-- [ ] Inject `rawDeltaStore` + `persistDeltas` into `RawRecorder`.
-- [ ] Inside `wire(channel)`, add `let currentTurnRootId: string | null = null;`.
-- [ ] Branch logic for delta vs non-delta; stamp `parent_id`; update `currentTurnRootId` when user stdin lands.
-- [ ] Unit tests with mock stores (all four branches).
+### 8. Facade `RawEventService` (consolidates `RawEventStore` public interface)
+- [x] New file `packages/server/src/services/raw-event-service.ts`.
+- [x] Wraps `RawEventStore` (low-level events) + `RawDeltaStore`.
+- [x] Public methods: `appendEvent`, `appendDelta`, `getBySession(id, opts?)`, `getPreview`, `cloneEvents`.
+- [x] `getBySession(id, { includeDeltas: true })` UNIONs both tables, sorted by `seq`.
+- [x] Unit tests covering all routing + union behaviours.
+- [x] Promote `RawEventService` to be bound as `TYPES.RawEventStore` — consumers see only one type; `TYPES.RawDeltaStore` removed.
 
-### 9. Container wiring
-- [ ] `buildStores` returns `rawDeltaStores[]`.
-- [ ] IoC bind `RawDeltaStore`.
-- [ ] `RawRecorder` constructor takes both stores + config flag.
+### 9. RawRecorder routing
+- [x] `RawRecorder` takes a single `RawEventStore` service + `persistDeltas` flag.
+- [x] Inside `wire(channel)`, closure-local `currentTurnRootId`.
+- [x] Delta branch → `service.appendDelta({ parentId, ... })` when flag on; drop otherwise.
+- [x] Non-delta branch → `id = await service.appendEvent(...)`; stamp `currentTurnRootId` when user stdin.
+- [x] Integration test covers delta on/off via real RawRecorder + FakeClaude pipeline (`raw-delta-persistence.integration.test.ts`).
 
-### 10. RawEventPanel RPC merge
-- [ ] `session:raw_events` handler: if `config.rawEvents.persistDeltas` → UNION + merge by seq.
-- [ ] Integration test.
+### 10. Container wiring
+- [x] `buildStores` returns `eventStores` + `deltaStores` arrays.
+- [x] Compose each into `CompositeRaw*Store`.
+- [x] Construct `RawEventService` from the two composites; bind as `TYPES.RawEventStore`.
+- [x] Drop `TYPES.RawDeltaStore`.
+- [x] `RawRecorder` receives the service.
 
-### 11. `.env` / `.env.example`
-- [ ] Uncomment `RAW_EVENTS_PERSIST_DELTAS=false` in `.env.example` with doc.
+### 11. RawEventPanel RPC
+- [x] `session:raw_events` handler calls `service.getBySession(sessionId, { includeDeltas: config.rawEvents.persistDeltas })`.
+- [x] Integration test verifying deltas show up when flag is on, not when off.
 
-### 12. Full regression
-- [ ] `pnpm -r test` green.
-- [ ] `pnpm tsc --noEmit` clean.
+### 12. `.env` / `.env.example`
+- [x] Uncomment `RAW_EVENTS_PERSIST_DELTAS=false` in `.env.example` with doc.
 
-### 13. Smoke (manual, user-run)
+### 13. Full regression
+- [x] `pnpm -r test` green.
+- [x] `pnpm tsc --noEmit` clean.
+
+### 14. Smoke (manual, user-run)
 - [ ] Boot server. Send a user message with and without the flag to verify persistence split.

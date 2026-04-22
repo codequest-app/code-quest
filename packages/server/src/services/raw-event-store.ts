@@ -29,7 +29,13 @@ export function extractTextFromRaw(raw: string, type: 'user' | 'assistant'): str
 }
 
 export interface RawEventStore {
-  append(entry: RawEvent): Promise<void>;
+  /**
+   * Append a raw event. Returns the primary-key id of the inserted row.
+   * If `id` is provided, the store uses it verbatim; otherwise one is generated.
+   * Composite stores use this to share the same id across all backing stores,
+   * so downstream references (e.g. raw_deltas.parent_id) remain consistent.
+   */
+  append(event: RawEvent, id?: string): Promise<string>;
   getBySession(sessionId: string): Promise<RawEvent[]>;
   getPreview(sessionId: string): Promise<SessionPreview>;
   cloneEvents(fromSessionId: string, toSessionId: string): Promise<void>;

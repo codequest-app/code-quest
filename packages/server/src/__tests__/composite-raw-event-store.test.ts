@@ -28,7 +28,7 @@ describe('CompositeRawEventStore', () => {
   it('appends to all stores', async () => {
     const composite = new CompositeRawEventStore([storeA, storeB]);
 
-    const entry: RawEvent = {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -36,7 +36,7 @@ describe('CompositeRawEventStore', () => {
       seq: 0,
     };
 
-    await composite.append(entry);
+    await composite.append(event);
 
     expect(await storeA.getBySession('sess-1')).toHaveLength(1);
     expect(await storeB.getBySession('sess-1')).toHaveLength(1);
@@ -45,7 +45,7 @@ describe('CompositeRawEventStore', () => {
   it('reads from the first store', async () => {
     const composite = new CompositeRawEventStore([storeA, storeB]);
 
-    const entry: RawEvent = {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -53,7 +53,7 @@ describe('CompositeRawEventStore', () => {
       seq: 0,
     };
 
-    await composite.append(entry);
+    await composite.append(event);
     const results = await composite.getBySession('sess-1');
     expect(results).toHaveLength(1);
     expect(results[0].raw).toBe('data');
@@ -90,7 +90,7 @@ describe('CompositeRawEventStore', () => {
     };
     const composite = new CompositeRawEventStore([failStore1, failStore2]);
 
-    const entry: RawEvent = {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -98,7 +98,7 @@ describe('CompositeRawEventStore', () => {
       seq: 0,
     };
 
-    await expect(composite.append(entry)).rejects.toThrow();
+    await expect(composite.append(event)).rejects.toThrow();
   });
 
   it('continues writing to other stores even if one fails', async () => {
@@ -116,7 +116,7 @@ describe('CompositeRawEventStore', () => {
     };
     const composite = new CompositeRawEventStore([failStore, storeB]);
 
-    const entry: RawEvent = {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -124,8 +124,68 @@ describe('CompositeRawEventStore', () => {
       seq: 0,
     };
 
-    await composite.append(entry);
+    await composite.append(event);
     const results = await storeB.getBySession('sess-1');
     expect(results).toHaveLength(1);
+  });
+
+  it('generates id once and passes it to all inner stores', async () => {
+    const idsSeenBy: string[] = [];
+    const makeSpy = (): RawEventStore => ({
+      async append(_e, id) {
+        idsSeenBy.push(id ?? '(none)');
+        return id ?? 'local';
+      },
+      async getBySession() {
+        return [];
+      },
+      async getPreview() {
+        return {};
+      },
+      async cloneEvents() {},
+    });
+    const a = makeSpy();
+    const b = makeSpy();
+    const composite = new CompositeRawEventStore([a, b]);
+
+    const event: RawEvent = {
+      timestamp: Date.now(),
+      sessionId: 'sess',
+      direction: 'out',
+      raw: 'x',
+      seq: 0,
+    };
+
+    const returnedId = await composite.append(event);
+
+    expect(idsSeenBy).toHaveLength(2);
+    expect(idsSeenBy[0]).toBe(idsSeenBy[1]);
+    expect(returnedId).toBe(idsSeenBy[0]);
+    expect(returnedId).toMatch(/^[0-9a-f]{8}-/);
+  });
+
+  it('honors explicitly provided id', async () => {
+    const spy: RawEventStore = {
+      async append(_e, id) {
+        return id ?? 'unset';
+      },
+      async getBySession() {
+        return [];
+      },
+      async getPreview() {
+        return {};
+      },
+      async cloneEvents() {},
+    };
+    const composite = new CompositeRawEventStore([spy]);
+    const event: RawEvent = {
+      timestamp: Date.now(),
+      sessionId: 'sess',
+      direction: 'out',
+      raw: 'x',
+      seq: 0,
+    };
+    const id = await composite.append(event, 'caller-supplied-id');
+    expect(id).toBe('caller-supplied-id');
   });
 });

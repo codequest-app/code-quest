@@ -20,8 +20,8 @@ describe('DrizzleRawEventStore', () => {
     store = new DrizzleRawEventStore(db, rawEvents);
   });
 
-  it('appends and retrieves raw entries via getBySession', async () => {
-    const entry: RawEvent = {
+  it('appends and retrieves raw events via getBySession', async () => {
+    const event: RawEvent = {
       timestamp: Date.now(),
       sessionId: 'sess-1',
       direction: 'out',
@@ -29,13 +29,28 @@ describe('DrizzleRawEventStore', () => {
       seq: 0,
     };
 
-    await store.append(entry);
-    const results = await store.getBySession('sess-1');
+    const id = await store.append(event);
 
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+
+    const results = await store.getBySession('sess-1');
     expect(results).toHaveLength(1);
     expect(results[0].sessionId).toBe('sess-1');
     expect(results[0].direction).toBe('out');
-    expect(results[0].raw).toBe(entry.raw);
+    expect(results[0].raw).toBe(event.raw);
+  });
+
+  it('append uses the provided id verbatim when given', async () => {
+    const event: RawEvent = {
+      timestamp: Date.now(),
+      sessionId: 'sess-fixed',
+      direction: 'out',
+      raw: s.assistant('x'),
+      seq: 0,
+    };
+
+    const returned = await store.append(event, 'fixed-id-123');
+    expect(returned).toBe('fixed-id-123');
   });
 
   it('returns empty array for unknown session', async () => {

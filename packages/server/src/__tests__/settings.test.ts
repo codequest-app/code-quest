@@ -10,7 +10,11 @@ import { afterEach, vi } from 'vitest';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
 
-const configMock = vi.hoisted(() => ({ autoMode: true }));
+const configMock = vi.hoisted(() => ({
+  autoMode: true,
+  rawEvents: { drivers: [], sqlitePath: ':memory:', persistDeltas: false },
+  explorerRoots: [],
+}));
 vi.mock('../config.ts', () => ({ config: configMock }));
 afterEach(() => {
   configMock.autoMode = true;

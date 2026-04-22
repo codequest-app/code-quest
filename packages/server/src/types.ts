@@ -4,7 +4,7 @@ import type {
   LaunchOptions,
   ProcessRunner,
 } from '@code-quest/summoner';
-import type { RawEventStore } from './services/raw-event-store.ts';
+import type { RawEventService } from './services/raw-event-service.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
 import type { UsageTracker } from './services/usage-tracker.ts';
@@ -42,7 +42,7 @@ export interface HandlerContext {
   settingsStore: SettingsStore;
   usageTracker: UsageTracker;
   sessionHistory: SessionHistory;
-  rawEventStore: RawEventStore;
+  rawEventStore: RawEventService;
   filesystemService: FilesystemService;
   gitService: GitService;
   planHandler: PlanApi;

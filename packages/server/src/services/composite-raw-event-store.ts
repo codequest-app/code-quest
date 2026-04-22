@@ -1,4 +1,5 @@
 import type { RawEvent } from '@code-quest/summoner';
+import { v7 as uuidv7 } from 'uuid';
 import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
@@ -9,8 +10,10 @@ export class CompositeRawEventStore implements RawEventStore {
     }
   }
 
-  async append(entry: RawEvent): Promise<void> {
-    await this.fanOut('append', (s) => s.append(entry));
+  async append(event: RawEvent, id?: string): Promise<string> {
+    const rowId = id ?? uuidv7();
+    await this.fanOut('append', (s) => s.append(event, rowId));
+    return rowId;
   }
 
   async getBySession(sessionId: string): Promise<RawEvent[]> {
