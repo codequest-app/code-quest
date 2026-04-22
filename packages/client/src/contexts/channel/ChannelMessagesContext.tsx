@@ -80,7 +80,7 @@ export interface ChannelMessagesValue {
   getTerminalContents: () => Promise<TerminalGetContentsResponse>;
   openClaudeTerminal: () => Promise<RpcResult<{ channelId: string }>>;
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
-  rewindToMessage: (userMessageId: string, dryRun?: boolean) => Promise<RpcResult<RewindResult>>;
+  rewindToMessage: (userMessageId: string) => Promise<RpcResult<RewindResult>>;
   askSideQuestion: (question: string) => Promise<RpcResult<SideQuestionResult>>;
   reloadPlugins: () => Promise<PluginReloadResult>;
 }

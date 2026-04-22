@@ -381,7 +381,6 @@ describe('ChatHandler > settings', () => {
       const result = await claude.send('chat:rewind_code', {
         channelId,
         userMessageId: 'msg-1',
-        dryRun: true,
       });
 
       const received = claude.received('control_request');
@@ -395,7 +394,6 @@ describe('ChatHandler > settings', () => {
       const result = await claude.send('chat:rewind_code', {
         channelId: 'unknown',
         userMessageId: 'msg-1',
-        dryRun: false,
       });
       expect(result).toMatchObject({ ok: false, error: 'Session not found' });
     });

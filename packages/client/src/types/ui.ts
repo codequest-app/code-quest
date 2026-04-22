@@ -19,7 +19,7 @@ export type SessionStatus =
   | 'busy'
   | 'cancelling';
 
-export type RewindFn = (messageId: string, dryRun: boolean) => Promise<RpcResult<RewindResult>>;
+export type RewindFn = (messageId: string) => Promise<RpcResult<RewindResult>>;
 
 export type ForkFn = (messageId: string) => Promise<ForkConversationResponse>;
 

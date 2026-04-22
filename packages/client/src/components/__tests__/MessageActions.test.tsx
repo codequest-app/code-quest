@@ -43,14 +43,16 @@ describe('MessageActions', () => {
     expect(screen.getByText('Fork conversation from here')).toBeInTheDocument();
   });
 
-  it('clicking rewind sends rewind_code to server', async () => {
+  it('clicking "Rewind code to here" opens a confirm dialog titled "Rewind code"', async () => {
     const { user } = await setupWithTurn();
 
     await user.click(screen.getByTitle('Message actions'));
     await user.click(screen.getByText('Rewind code to here'));
 
-    // Server received the rewind request — popup closed after action
-    expect(screen.queryByText('Rewind code to here')).not.toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', { name: /^Rewind code$/ });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Never mind' })).toBeInTheDocument();
   });
 
   it('clicking fork sends fork_conversation to server', async () => {
@@ -74,6 +76,30 @@ describe('MessageActions', () => {
 
     expect(screen.queryByText('Fork conversation from here')).not.toBeInTheDocument();
     expect(screen.queryByText('Fork and rewind code')).not.toBeInTheDocument();
+  });
+
+  it('clicking "Fork and rewind code" opens a confirm dialog titled "Fork and rewind"', async () => {
+    const { user } = await setupWithTurn();
+
+    await user.click(screen.getByTitle('Message actions'));
+    await user.click(screen.getByText('Fork and rewind code'));
+
+    const dialog = await screen.findByRole('dialog', { name: /fork and rewind/i });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Never mind' })).toBeInTheDocument();
+  });
+
+  it('Never mind on fork-and-rewind dialog dismisses without forking', async () => {
+    const { user } = await setupWithTurn();
+
+    await user.click(screen.getByTitle('Message actions'));
+    await user.click(screen.getByText('Fork and rewind code'));
+    await screen.findByRole('dialog', { name: /fork and rewind/i });
+
+    await user.click(screen.getByRole('button', { name: 'Never mind' }));
+
+    expect(screen.queryByRole('dialog', { name: /fork and rewind/i })).not.toBeInTheDocument();
   });
 
   it('closing popup hides options', async () => {

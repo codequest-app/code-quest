@@ -1,5 +1,6 @@
 import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { basename } from '../utils/basename';
 import { useSession } from './SessionContext';
 
 export interface Project {
@@ -40,7 +41,7 @@ export function useProjectActions(): ProjectActions {
 }
 
 function cwdToProject(cwd: string): Project {
-  return { cwd, name: cwd.split('/').pop() ?? cwd };
+  return { cwd, name: basename(cwd) };
 }
 
 const TERMINAL_STATES = new Set<string>(

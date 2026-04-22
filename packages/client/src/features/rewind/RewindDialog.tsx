@@ -1,11 +1,12 @@
-import type { RewindResult } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '../../components/ui/Dialog';
+import { Kbd } from '../../components/ui/Kbd';
 import { useChannelMessages } from '../../contexts/channel';
 import type { Message } from '../../types/ui';
 import { cn } from '../../utils/cn';
 import { formatRelativeDate } from '../../utils/format-relative-date';
-import { pluralize } from '../../utils/pluralize';
+import { RewindBody } from './RewindBody';
+import { RewindConfirmDialog } from './RewindConfirmDialog';
 
 interface RewindItem {
   message: Message;
@@ -62,60 +63,30 @@ interface RewindDialogProps {
 }
 
 export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
-  const { messages, rewindToMessage } = useChannelMessages();
-  const items = getRewindableMessages(messages);
+  const { messages } = useChannelMessages();
+  const items = useMemo(() => getRewindableMessages(messages), [messages]);
   const [focusIndex, setFocusIndex] = useState(0);
   const [selected, setSelected] = useState<RewindItem | null>(null);
-  const [rewindCheck, setRewindCheck] = useState<RewindResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [now, setNow] = useState<Date>(() => new Date());
   const listRef = useRef<HTMLDivElement>(null);
-  const rewindCheckCache = useRef<Map<string, RewindResult>>(new Map());
 
   useEffect(() => {
-    if (open) {
-      setFocusIndex(0);
-      setSelected(null);
-      setRewindCheck(null);
-      rewindCheckCache.current.clear();
-      setTimeout(() => listRef.current?.focus(), 0);
-    }
+    if (!open) return;
+    setFocusIndex(0);
+    setSelected(null);
+    setNow(new Date());
+    const t = setTimeout(() => listRef.current?.focus(), 0);
+    return () => clearTimeout(t);
   }, [open]);
 
-  const handleSelect = (item: RewindItem) => {
-    setSelected(item);
-    const cached = rewindCheckCache.current.get(item.message.id);
-    if (cached) {
-      setRewindCheck(cached);
-      return;
-    }
-    setLoading(true);
-    setRewindCheck(null);
-    rewindToMessage(item.message.id, true)
-      .then((result) => {
-        const check = result.ok ? result.data : { canRewind: false as const, error: result.error };
-        rewindCheckCache.current.set(item.message.id, check);
-        setRewindCheck(check);
-      })
-      .catch((err) => {
-        const check = {
-          canRewind: false as const,
-          error: err instanceof Error ? err.message : String(err),
-        };
-        rewindCheckCache.current.set(item.message.id, check);
-        setRewindCheck(check);
-      })
-      .finally(() => setLoading(false));
-  };
+  const handleSelect = (item: RewindItem) => setSelected(item);
 
   const handleConfirm = () => {
     if (!selected?.message.cliUuid) return;
     onConfirm({ messageId: selected.message.cliUuid, promptText: selected.promptText });
   };
 
-  const handleBack = () => {
-    setSelected(null);
-    setRewindCheck(null);
-  };
+  const handleBack = () => setSelected(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -139,84 +110,21 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
   };
 
   if (selected) {
-    const hasChanges = rewindCheck?.filesChanged && rewindCheck.filesChanged.length > 0;
-    const canConfirm = rewindCheck?.canRewind && !loading;
-
     return (
-      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent title="Fork and rewind" className="w-130 max-w-[90vw]">
-          <p className="text-sm text-text-muted mb-2">
-            A new forked conversation will be created after rewinding.
-          </p>
-
-          {loading && <p className="text-sm text-text-muted py-2">Checking code changes…</p>}
-
-          {!loading && rewindCheck?.error && (
-            <p className="text-sm text-danger py-2">{rewindCheck.error}</p>
-          )}
-          {!loading && rewindCheck && !rewindCheck.canRewind && !rewindCheck.error && (
-            <p className="text-sm text-text-muted py-2">Cannot rewind from this message.</p>
-          )}
-
-          {!loading && rewindCheck?.canRewind && (
-            <>
-              {hasChanges ? (
-                <>
-                  <p className="text-sm mb-2">
-                    <span className="text-danger">
-                      {pluralize(rewindCheck.deletions ?? 0, 'line')}
-                    </span>{' '}
-                    will be removed and{' '}
-                    <span className="text-success">
-                      {pluralize(rewindCheck.insertions ?? 0, 'line')}
-                    </span>{' '}
-                    will be added across {pluralize(rewindCheck.filesChanged?.length ?? 0, 'file')}:
-                  </p>
-                  <ul className="text-xs text-text-muted font-mono mb-2 max-h-37 overflow-y-auto">
-                    {rewindCheck.filesChanged?.map((f) => (
-                      <li key={f} className="py-0.5">
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p className="text-sm mb-2">
-                  The code <strong>has not changed</strong>, so no code will be restored.
-                </p>
-              )}
-              <p className="text-xs text-text-muted mb-3 flex items-center gap-1">
-                <span>ⓘ</span> Rewinding does not affect files edited manually or via bash.
-              </p>
-            </>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={!canConfirm}
-              onClick={handleConfirm}
-              className="flex-1 px-3 py-1.5 rounded text-sm font-medium bg-accent text-white hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span aria-hidden="true">1</span> Continue
-            </button>
-            <button
-              type="button"
-              onClick={handleBack}
-              className="flex-1 px-3 py-1.5 rounded text-sm text-text hover:bg-white/10"
-            >
-              <span aria-hidden="true">2</span> Never mind
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RewindConfirmDialog
+        open={open}
+        title="Rewind code"
+        onConfirm={handleConfirm}
+        onCancel={handleBack}
+      >
+        <RewindBody />
+      </RewindConfirmDialog>
     );
   }
 
-  const now = new Date();
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent title="Rewind to…" className="w-130 max-w-[90vw]">
+      <DialogContent title="Rewind to…" hideTitleDivider className="w-130 max-w-[90vw]">
         {items.length === 0 ? (
           <p className="text-sm text-text-muted py-4 text-center">No messages to rewind to yet.</p>
         ) : (
@@ -245,10 +153,8 @@ export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
               ))}
             </div>
             <p className="text-xs text-text-muted mt-3">
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">↑</kbd>{' '}
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">↓</kbd> to navigate ·{' '}
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Enter</kbd> to select ·{' '}
-              <kbd className="px-1 py-0.5 bg-surface-hover rounded text-xs">Esc</kbd> to close
+              <Kbd>↑</Kbd> <Kbd>↓</Kbd> to navigate · <Kbd>Enter</Kbd> to select · <Kbd>Esc</Kbd> to
+              close
             </p>
           </>
         )}
