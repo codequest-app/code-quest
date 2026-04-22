@@ -43,7 +43,7 @@ function MenuItemRow({
       onMouseEnter={() => onHover(item.id)}
       className={cn(
         'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
-        isActive ? 'bg-selected text-white' : 'text-text hover:bg-white/10',
+        isActive ? 'bg-selected text-selected-text' : 'text-text hover:tint-10',
       )}
     >
       <span className="flex items-center gap-1.5">

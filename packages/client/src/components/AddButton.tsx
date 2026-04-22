@@ -63,7 +63,7 @@ export function AddButton({
               type="button"
               title={item.title}
               onClick={item.onClick}
-              className="w-full text-left px-3 py-2 text-xs text-text hover:bg-white/5 flex items-center gap-2"
+              className="w-full text-left px-3 py-2 text-xs text-text hover:tint-5 flex items-center gap-2"
             >
               <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
                 {item.icon}

@@ -21,7 +21,7 @@ export function ReviewUpsellBanner() {
       <button
         type="button"
         onClick={dismiss}
-        className="text-xs text-text-muted hover:text-text px-2 py-1 rounded hover:bg-white/10"
+        className="text-xs text-text-muted hover:text-text px-2 py-1 rounded hover:tint-10"
       >
         Dismiss
       </button>

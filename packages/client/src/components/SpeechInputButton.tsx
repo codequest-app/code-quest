@@ -1,4 +1,5 @@
 import { MicrophoneIcon } from '@heroicons/react/24/outline';
+import { cn } from '../utils/cn';
 import { IconButton } from './ui/IconButton';
 
 interface SpeechInputButtonProps {
@@ -6,6 +7,7 @@ interface SpeechInputButtonProps {
   onToggle: () => void;
   isSupported: boolean;
   interimText?: string;
+  className?: string;
 }
 
 export function SpeechInputButton({
@@ -13,11 +15,12 @@ export function SpeechInputButton({
   onToggle,
   isSupported,
   interimText,
+  className,
 }: SpeechInputButtonProps) {
   if (!isSupported) return null;
 
   return (
-    <div className="relative flex items-center">
+    <div className={cn('relative flex items-center', className)}>
       {interimText && (
         <span className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 text-xs italic text-text-muted bg-surface border border-border rounded px-2 py-1 whitespace-nowrap max-w-50 truncate pointer-events-none">
           {interimText}
@@ -27,7 +30,7 @@ export function SpeechInputButton({
         aria-label={isListening ? 'Stop mic' : 'Start mic'}
         title={isListening ? 'Stop recording' : 'Start voice input'}
         onClick={onToggle}
-        className="relative"
+        className="relative text-text-muted hover:text-text-bright"
       >
         {isListening ? (
           <span className="relative flex h-3 w-3">
@@ -35,7 +38,7 @@ export function SpeechInputButton({
             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
           </span>
         ) : (
-          <MicrophoneIcon className="w-5 h-5" />
+          <MicrophoneIcon className="w-4 h-4" />
         )}
       </IconButton>
     </div>

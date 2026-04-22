@@ -1,5 +1,7 @@
 /** Effort level slider matching extension's toggle UI.
- *  Pill track with fill, notch dots, and white thumb. */
+ *  Pill track with fill, notch dots, and a thumb handle. */
+
+import { cn } from '../../utils/cn';
 
 const EFFORT_LABELS: Record<string, string> = {
   low: 'Low',
@@ -19,6 +21,11 @@ interface EffortSwitchProps {
   onSelect?: (level: string) => void;
 }
 
+// Thumb size in CSS terms — matches `w-3.5 h-3.5` so it scales with both the
+// density axis (via --spacing) and the font-size axis (via rem). Layout is
+// fully container-relative so the track width can be anything.
+const THUMB_CSS = 'calc(var(--spacing) * 3.5)';
+
 function pct(idx: number, count: number) {
   return count > 1 ? idx / (count - 1) : 0;
 }
@@ -28,10 +35,12 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
   const count = levels.length;
   const ratio = pct(idx, count);
 
-  // Layout: 76×18 track, 14px thumb, 2px inset
-  const thumbLeft = `calc(2px + ${ratio} * (76px - 14px - 4px))`;
-  const fillWidth = `calc(2px + ${ratio} * (76px - 14px - 4px) + 14px + 2px)`;
-  const notchLeft = (i: number) => `calc(2px + ${pct(i, count)} * (76px - 14px - 4px) + 7px)`;
+  const travel = `(100% - ${THUMB_CSS})`;
+  const thumbLeft = `calc(${travel} * ${ratio})`;
+  // Fill covers from left to thumb right edge — at max this equals 100%
+  // (full container); at min it equals the thumb width (exactly under thumb).
+  const fillWidth = `calc(${travel} * ${ratio} + ${THUMB_CSS})`;
+  const notchLeft = (i: number) => `calc(${travel} * ${pct(i, count)} + ${THUMB_CSS} / 2)`;
 
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     if (!onSelect) return;
@@ -42,29 +51,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
     onSelect(levels[Math.round(x * (count - 1))]);
   };
 
-  const content = (
-    <>
-      <div
-        className="absolute top-0 left-0 h-full rounded-lg bg-toggle transition-all duration-150"
-        style={{ width: fillWidth }}
-      />
-      {levels.map((_, i) =>
-        i > idx ? (
-          <div
-            key={levels[i]}
-            className="absolute top-1/2 w-1 h-1 rounded-full bg-white/30 -translate-x-1/2 -translate-y-1/2"
-            style={{ left: notchLeft(i) }}
-          />
-        ) : null,
-      )}
-      <div
-        className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-all duration-150"
-        style={{ left: thumbLeft }}
-      />
-    </>
-  );
+  const ticksAfterThumb = Array.from({ length: count - idx - 1 }, (_, k) => idx + 1 + k);
 
-  // Always render as div — avoids button-in-button nesting when used inside menu items
   return (
     <div
       data-testid="effort-switch"
@@ -74,7 +62,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
       aria-valuemin={0}
       aria-valuemax={count - 1}
       aria-label="Effort level"
-      className="relative w-19 h-5 rounded-lg bg-surface-hover overflow-hidden shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="relative w-19 h-5 rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       onMouseDown={(e) => e.preventDefault()}
       onClick={handleClick}
       onKeyDown={(e) => {
@@ -87,7 +75,36 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
       }}
       title="Click a position to set effort level"
     >
-      {content}
+      <div
+        data-testid="effort-switch-track"
+        className="absolute inset-0 rounded-full bg-surface-hover overflow-hidden"
+      >
+        <div
+          data-testid="effort-switch-fill"
+          className="absolute top-1/2 -translate-y-1/2 left-0 h-3.5 rounded-full bg-toggle transition-all duration-150"
+          style={{ width: fillWidth }}
+        />
+        {ticksAfterThumb.map((i) => (
+          <div
+            key={levels[i]}
+            data-testid="effort-switch-tick"
+            className={cn(
+              'absolute top-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2',
+              'bg-[rgba(var(--color-text-rgb),0.35)]',
+            )}
+            style={{ left: notchLeft(i) }}
+          />
+        ))}
+        <div
+          data-testid="effort-switch-thumb"
+          className={cn(
+            'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
+            'bg-white shadow-sm ring-1 ring-[rgba(0,0,0,0.2)]',
+            'transition-all duration-150',
+          )}
+          style={{ left: thumbLeft }}
+        />
+      </div>
     </div>
   );
 }

@@ -50,12 +50,9 @@
 
   /* Interactive */
   --color-selected: #094771;
+  --color-selected-text: #ffffff;
   --color-toggle: #0e639c;
   --color-button: #0078d4;
-
-  /* ChatInputArea — integrates with VSCode theme when embedded in webview */
-  --color-chat-input-bg: var(--vscode-menu-background, #252526);
-  --color-chat-input-border: var(--vscode-inlineChatInput-border, #3e3e42);
 
   /* Claude brand */
   --color-claude-clay-orange: #c6613f;
@@ -65,6 +62,8 @@
   --color-accent-rgb: 217, 119, 87;
   --color-border-rgb: 62, 62, 66;
   --color-shadow-rgb: 0, 0, 0;
+  --color-button-rgb: 0, 120, 212;
+  --color-text-rgb: 204, 204, 204;
   /* Hover tint: white in dark mode, black in light mode */
   --color-hover-tint-rgb: 255, 255, 255;
 
@@ -107,6 +106,7 @@
   --color-warning-bg: #201f1a;
   --color-danger-bg: #201a1a;
   --color-selected: #094771;
+  --color-selected-text: #ffffff;
   --color-toggle: #0e639c;
   --color-button: #0078d4;
   --color-claude-clay-orange: #c6613f;
@@ -114,6 +114,8 @@
   --color-accent-rgb: 217, 119, 87;
   --color-border-rgb: 62, 62, 66;
   --color-shadow-rgb: 0, 0, 0;
+  --color-button-rgb: 0, 120, 212;
+  --color-text-rgb: 204, 204, 204;
   --color-hover-tint-rgb: 255, 255, 255;
 
   /* Floating surfaces */
@@ -157,6 +159,7 @@
   --color-warning-bg: #fff8dc;
   --color-danger-bg: #fde7e7;
   --color-selected: #cce5ff;
+  --color-selected-text: #1f1f1f;
   --color-toggle: #005a9e;
   --color-button: #005a9e;
   --color-claude-clay-orange: #c6613f;
@@ -164,6 +167,8 @@
   --color-accent-rgb: 198, 97, 63;
   --color-border-rgb: 212, 212, 212;
   --color-shadow-rgb: 0, 0, 0;
+  --color-button-rgb: 0, 90, 158;
+  --color-text-rgb: 31, 31, 31;
   --color-hover-tint-rgb: 0, 0, 0;
 
   /* Floating surfaces — light palette */
@@ -222,6 +227,14 @@
 }
 
 /* --- Custom utilities --- */
+
+@utility tint-5 {
+  background-color: rgba(var(--color-hover-tint-rgb), 0.05);
+}
+
+@utility tint-10 {
+  background-color: rgba(var(--color-hover-tint-rgb), 0.1);
+}
 
 @utility dialog-viewport {
   max-width: calc(100vw - 2rem);
@@ -342,45 +355,34 @@
   border-radius: 6px;
 }
 
-/* --- Permission Mode color system --- */
+/* --- Permission-mode → CSS var dispatch ---
+   Selectors set semantic tokens only (--mode-accent / --mode-accent-rgb /
+   --mode-shadow-alpha); actual visual styles live on the element via
+   Tailwind `bg-[var(--mode-accent)]` etc., so the mode-vs-visual mapping
+   has a single source of truth without global CSS owning the visuals. */
 
-/* Default: normal mode (claude clay orange) */
-.send-btn {
-  background-color: var(--color-claude-clay-orange);
+[data-mode="normal"] {
+  --mode-accent: var(--color-claude-clay-orange);
+  --mode-accent-rgb: var(--color-accent-rgb);
+  --mode-shadow-alpha: 0.2;
 }
 
-[data-permission-mode="acceptEdits"] .send-btn {
-  background-color: var(--color-text);
+[data-mode="plan"] {
+  --mode-accent: var(--color-button);
+  --mode-accent-rgb: var(--color-button-rgb);
+  --mode-shadow-alpha: 0.2;
 }
 
-[data-permission-mode="plan"] .send-btn {
-  background-color: var(--color-button);
+[data-mode="acceptEdits"] {
+  --mode-accent: var(--color-text);
+  --mode-accent-rgb: var(--color-text-rgb);
+  --mode-shadow-alpha: 0.1;
 }
 
-[data-permission-mode="bypassPermissions"] .send-btn,
-[data-permission-mode="auto"] .send-btn {
-  background-color: var(--color-danger);
-}
-
-/* Input container border focus colors by permission mode */
-[data-permission-mode="normal"]:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 1px 2px rgba(217, 119, 87, 0.2);
-}
-
-[data-permission-mode="plan"]:focus-within {
-  border-color: var(--color-button);
-  box-shadow: 0 1px 2px rgba(0, 127, 212, 0.2);
-}
-
-[data-permission-mode="bypassPermissions"]:focus-within,
-[data-permission-mode="auto"]:focus-within {
-  border-color: var(--color-danger);
-}
-
-[data-permission-mode="acceptEdits"]:focus-within {
-  border-color: var(--color-text);
-  box-shadow: 0 1px 2px rgba(204, 204, 204, 0.1);
+[data-mode="bypassPermissions"],
+[data-mode="auto"] {
+  --mode-accent: var(--color-danger);
+  --mode-shadow-alpha: 0;
 }
 
 /* --- Base resets --- */

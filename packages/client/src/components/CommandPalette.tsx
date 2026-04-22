@@ -10,6 +10,7 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { cn } from '../utils/cn';
 import { isMessageVisible, messagePreview } from '../utils/isMessageVisible';
 import { PaletteCommandList } from './palette/PaletteCommandList';
+import { PaletteEmpty } from './palette/PaletteEmpty';
 import { PaletteMessageList } from './palette/PaletteMessageList';
 import { paletteMessageResults } from './palette/palette-message-results';
 import { SearchField } from './ui/SearchField';
@@ -82,6 +83,9 @@ export function CommandPalette({
   const featuresInActiveTab = isPaletteTab(activeTab)
     ? paletteFeatures.filter((f) => (f.tabs ?? ['all']).includes(activeTab))
     : [];
+  const hasFeatureMatch = q
+    ? featuresInActiveTab.some((f) => f.label.toLowerCase().includes(q))
+    : featuresInActiveTab.length > 0;
 
   useEffect(() => {
     if (open) {
@@ -186,12 +190,7 @@ export function CommandPalette({
                 onClose={onClose}
                 listRef={listRef}
               />
-              {q && messageResults.length === 0 && (
-                <div className="px-4 py-8 text-center font-mono text-xs text-border">
-                  <div className="text-2xl mb-2 opacity-40">∅</div>
-                  no matches for <span className="text-accent">"{query}"</span>
-                </div>
-              )}
+              {messageResults.length === 0 && <PaletteEmpty query={query} />}
             </>
           ) : (
             <>
@@ -213,6 +212,9 @@ export function CommandPalette({
                 activeId={activeFeatureId}
                 onActiveChange={setActiveFeatureId}
               />
+              {q && !hasFeatureMatch && messageResults.length === 0 && (
+                <PaletteEmpty query={query} />
+              )}
             </>
           )}
         </div>

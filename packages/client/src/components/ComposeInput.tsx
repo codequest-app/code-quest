@@ -5,30 +5,17 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '../cont
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
-import { findModel, getEffortLevels } from '../utils/model-utils';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
 import { slashPaletteState } from './command-menu/slash-palette-state';
 import { MentionDropdown } from './MentionDropdown';
-import { SparkLegend } from './SparkLegend';
 
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
 export function ComposeInput() {
   const { isProcessing, searchFiles } = useChannelMessages();
-  const {
-    model,
-    availableModels,
-    effort,
-    isFastMode,
-    providerConfig,
-    permissionMode,
-    setPermissionMode,
-  } = useChannelConfig();
+  const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
-
-  const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
-  const effortLevels = getEffortLevels(modelEntry);
 
   const {
     value,
@@ -274,11 +261,6 @@ export function ComposeInput() {
 
   return (
     <>
-      <SparkLegend
-        effort={effort ?? undefined}
-        effortLevels={effortLevels}
-        isFastMode={isFastMode}
-      />
       {attachedFiles.length > 0 && (
         <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
           {attachedFiles.map((file, index) => (

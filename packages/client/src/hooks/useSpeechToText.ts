@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 declare global {
@@ -92,6 +92,13 @@ export function useSpeechToText() {
   const stop = () => {
     recognitionRef.current?.stop();
   };
+
+  useEffect(
+    () => () => {
+      recognitionRef.current?.stop();
+    },
+    [],
+  );
 
   const toggleListening = () => {
     if (isListening) {

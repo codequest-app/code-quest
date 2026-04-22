@@ -1,18 +1,21 @@
+import { toPermissionMode } from '@code-quest/shared';
 import { useRef } from 'react';
 import {
   useChannelComposeActions,
   useChannelConfig,
   useChannelMessages,
 } from '../contexts/channel';
+import { cn } from '../utils/cn';
 import { ComposeInput } from './ComposeInput';
 import { ComposeToolbar } from './ComposeToolbar';
 import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel';
 import { PendingActionButtons } from './PendingActionButtons';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
+import { SpeechInputContainer } from './SpeechInputContainer';
 
 export function ChatInputArea() {
-  const { permissionMode, isFastMode } = useChannelConfig();
-  const { focusTextarea, addAttachments } = useChannelComposeActions();
+  const { permissionMode } = useChannelConfig();
+  const { focusTextarea, addAttachments, insertSlashCommand } = useChannelComposeActions();
   const { modifiedFiles, removeModifiedFile } = useChannelMessages();
 
   const modifiedFileEntries = Object.entries(modifiedFiles);
@@ -42,13 +45,20 @@ export function ChatInputArea() {
       <PendingActionButtons />
       <ReviewUpsellBanner />
       <div
-        data-permission-mode={permissionMode ?? 'normal'}
-        data-spark={isFastMode ? 'on' : undefined}
-        className="rounded-xl bg-chat-input-bg border border-chat-input-border transition-all relative shadow-sm"
+        data-mode={toPermissionMode(permissionMode)}
+        className={cn(
+          'rounded-xl bg-surface border border-border transition-all relative shadow-sm',
+          'focus-within:border-[var(--mode-accent)]',
+          'focus-within:shadow-[0_1px_2px_rgba(var(--mode-accent-rgb),var(--mode-shadow-alpha,0))]',
+        )}
         onClick={focusTextarea}
         role="none"
       >
         <ComposeInput />
+        <SpeechInputContainer
+          onFinal={insertSlashCommand}
+          className="absolute top-2 right-2 z-10"
+        />
         <ComposeToolbar onAttachFile={openFilePicker} />
       </div>
       {modifiedFileEntries.length > 0 && (

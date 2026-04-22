@@ -137,4 +137,22 @@ describe('useSpeechToText', () => {
     expect(result.current.isListening).toBe(false);
     toastErrorSpy.mockRestore();
   });
+
+  it('stops active recognition on unmount so dangling listeners do not leak', () => {
+    let instance: MockSpeechRecognition | undefined;
+    win.SpeechRecognition = class extends MockSpeechRecognition {
+      constructor() {
+        super();
+        instance = this;
+      }
+    };
+
+    const { result, unmount } = renderHook(() => useSpeechToText());
+    act(() => result.current.start());
+    expect(instance?.start).toHaveBeenCalled();
+    expect(result.current.isListening).toBe(true);
+
+    unmount();
+    expect(instance?.stop).toHaveBeenCalled();
+  });
 });

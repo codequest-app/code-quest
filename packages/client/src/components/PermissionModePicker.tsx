@@ -87,7 +87,7 @@ export function PermissionModePicker({
         type="button"
         title={(permissionById[mode] ?? DEFAULT_MODE).title}
         onClick={() => setShowModePicker((v) => !v)}
-        className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:bg-white/5"
+        className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
       >
         <span className="w-4 h-4 shrink-0">
           {PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS] ??
@@ -103,8 +103,8 @@ export function PermissionModePicker({
           <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
             <span className="font-semibold">Modes</span>
             <span className="opacity-60 flex items-center gap-1">
-              <kbd className="bg-white/10 rounded px-1 text-xs">⇧</kbd> +{' '}
-              <kbd className="bg-white/10 rounded px-1 text-xs">tab</kbd> to switch
+              <kbd className="tint-10 rounded px-1 text-xs">⇧</kbd> +{' '}
+              <kbd className="tint-10 rounded px-1 text-xs">tab</kbd> to switch
             </span>
           </div>
           {permissionModes.map((m) => (
@@ -117,7 +117,7 @@ export function PermissionModePicker({
               }}
               className={cn(
                 'w-full text-left px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors',
-                m.id === mode ? 'bg-selected text-white' : 'hover:bg-white/5',
+                m.id === mode ? 'bg-selected text-selected-text' : 'hover:tint-5',
               )}
             >
               <span className="w-5 h-5 shrink-0">
@@ -137,19 +137,20 @@ export function PermissionModePicker({
               <div className="border-t border-border/50" />
               <button
                 type="button"
-                className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:bg-white/5 cursor-pointer"
+                className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
                 onClick={() => {
                   const idx = effort ? effortLevels.indexOf(effort) : -1;
                   onSetEffort?.(effortLevels[(idx + 1) % effortLevels.length]);
                 }}
                 title="Click to cycle effort level"
               >
-                <span className="text-xs text-text-muted flex items-center gap-3">
+                <span className="text-xs text-text-muted flex items-center gap-2">
                   <span className="w-5 h-5 shrink-0">
                     <EffortIcon />
                   </span>
-                  Effort
-                  <span className="opacity-70">({effortLabel(effort)})</span>
+                  <span>
+                    Effort <span className="opacity-70">({effortLabel(effort)})</span>
+                  </span>
                 </span>
                 <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
               </button>

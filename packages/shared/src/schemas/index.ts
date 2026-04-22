@@ -286,6 +286,11 @@ export {
   notificationToastPayloadSchema,
   rawEventPayloadSchema,
 } from './notification.ts';
+export {
+  PERMISSION_MODES,
+  type PermissionMode,
+  toPermissionMode,
+} from './permission-mode.ts';
 export type {
   GetPlanCommentsResponse,
   PlanCommentData,

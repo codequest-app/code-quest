@@ -38,7 +38,7 @@ function DefaultModelOption({
       onClick={onSelect}
       className={cn(
         'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
-        isActive ? 'bg-selected' : 'hover:bg-white/10',
+        isActive ? 'bg-selected' : 'hover:tint-10',
       )}
     >
       <div>
@@ -142,7 +142,7 @@ export function ModelPickerPopover({
             onClick={() => handleSelect(item.value)}
             className={cn(
               'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
-              isActive(index) ? 'bg-selected' : 'hover:bg-white/10',
+              isActive(index) ? 'bg-selected' : 'hover:tint-10',
             )}
           >
             <div>

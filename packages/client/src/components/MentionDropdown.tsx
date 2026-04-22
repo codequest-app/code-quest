@@ -62,7 +62,7 @@ function FileResultItem({
       tabIndex={-1}
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 cursor-pointer rounded',
-        isActive ? 'bg-selected' : 'hover:bg-white/5',
+        isActive ? 'bg-selected text-selected-text' : 'hover:tint-5',
       )}
     >
       <div className="w-5 h-5 flex items-center justify-center text-text-muted opacity-60 shrink-0">
@@ -94,7 +94,7 @@ function DropdownItem({ label, onSelect }: { label: string; onSelect: () => void
         e.preventDefault();
         onSelect();
       }}
-      className="w-full text-left px-3 py-1.5 text-xs text-text hover:bg-white/10 font-mono"
+      className="w-full text-left px-3 py-1.5 text-xs text-text hover:tint-10 font-mono"
     >
       {label}
     </button>

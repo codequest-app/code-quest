@@ -2,6 +2,8 @@ import {
   contextUsageDataSchema,
   type McpServerInfo,
   mcpServerInfoSchema,
+  type PermissionMode,
+  toPermissionMode,
 } from '@code-quest/shared';
 import {
   lazy,
@@ -16,16 +18,50 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '../cont
 import { useSession } from '../contexts/SessionContext';
 import { modelOpenSignal } from '../features/model/model-feature';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { useSpeechToText } from '../hooks/useSpeechToText';
+import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { AddButton } from './AddButton';
 import { ContextPieChart } from './ContextPieChart';
 import { CommandMenu } from './command-menu/CommandMenu';
 import { PermissionModePicker } from './PermissionModePicker';
-import { SpeechInputButton } from './SpeechInputButton';
 import { type ActiveDialog, ToolbarDialogs } from './ToolbarDialogs';
+import { IconButton } from './ui/IconButton';
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
+
+function SendButton({
+  mode,
+  isProcessing,
+  isCancelling,
+  hasText,
+  onAbort,
+  onSubmit,
+}: {
+  mode: PermissionMode;
+  isProcessing: boolean;
+  isCancelling: boolean;
+  hasText: boolean;
+  onAbort: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <IconButton
+      variant="plain"
+      title={isProcessing ? 'Stop' : 'Send'}
+      disabled={isProcessing ? isCancelling : !hasText}
+      data-mode={mode}
+      onClick={isProcessing ? onAbort : onSubmit}
+      className={cn(
+        'bg-[var(--mode-accent)] text-white',
+        isProcessing
+          ? 'text-xs disabled:opacity-50'
+          : 'text-base disabled:opacity-40 disabled:cursor-not-allowed',
+      )}
+    >
+      {isProcessing ? '■' : '↑'}
+    </IconButton>
+  );
+}
 
 const ModelPickerPopover = lazy(() =>
   import('./ModelPickerPopover').then((m) => ({ default: m.ModelPickerPopover })),
@@ -103,21 +139,6 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
   const closeDialog = () => setActiveDialog(null);
 
   const pickerRef = useRef<HTMLDivElement>(null);
-  const {
-    isListening,
-    interimTranscript,
-    finalTranscript,
-    resetTranscript,
-    toggleListening,
-    isSupported,
-  } = useSpeechToText();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resetTranscript/insertSlashCommand stable via React Compiler
-  useEffect(() => {
-    if (!finalTranscript) return;
-    compose.insertSlashCommand(finalTranscript);
-    resetTranscript();
-  }, [finalTranscript]);
 
   // Auto-refresh MCP status when dialog opens
   // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
@@ -218,32 +239,13 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
           onSetEffort={setEffort}
         />
 
-        {isProcessing ? (
-          <button
-            type="button"
-            title="Stop"
-            disabled={isCancelling}
-            onClick={abort}
-            className="w-6 h-6 flex items-center justify-center rounded text-white text-xs transition-colors disabled:opacity-50 send-btn"
-          >
-            ■
-          </button>
-        ) : (
-          <button
-            type="button"
-            title="Send"
-            disabled={!compose.hasText}
-            onClick={compose.submit}
-            className="w-6 h-6 flex items-center justify-center rounded text-white text-base transition-colors disabled:opacity-40 disabled:cursor-not-allowed send-btn"
-          >
-            ↑
-          </button>
-        )}
-        <SpeechInputButton
-          isListening={isListening}
-          onToggle={toggleListening}
-          isSupported={isSupported}
-          interimText={interimTranscript || undefined}
+        <SendButton
+          mode={toPermissionMode(permissionMode)}
+          isProcessing={isProcessing}
+          isCancelling={isCancelling}
+          hasText={compose.hasText}
+          onAbort={abort}
+          onSubmit={compose.submit}
         />
       </div>
     </>
