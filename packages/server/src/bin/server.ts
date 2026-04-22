@@ -23,21 +23,17 @@ import { TYPES } from '../types.ts';
 
 const storeConfig: StoreConfig = {};
 
-if (config.rawStore.drivers.includes('sqlite')) {
+if (config.rawEvents.drivers.includes('sqlite')) {
   storeConfig.sqlite = true;
 }
 
-if (config.rawStore.drivers.includes('mysql') && config.databaseUrl) {
+if (config.rawEvents.drivers.includes('mysql') && config.databaseUrl) {
   storeConfig.mysql = { database: createMysqlDatabase(config.databaseUrl) };
-}
-
-if (config.rawStore.drivers.includes('file')) {
-  storeConfig.file = { dir: config.rawStore.fileDir };
 }
 
 const container = createContainer({
   processProvider: new ChildProcessProvider(),
-  dbPath: config.rawStore.sqlitePath,
+  dbPath: config.rawEvents.sqlitePath,
   storeConfig,
 });
 

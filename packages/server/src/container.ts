@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import 'reflect-metadata';
 import type { ProcessProvider } from '@code-quest/summoner';
 import {
@@ -14,15 +13,14 @@ import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
-import { CompositeRawStore } from './services/composite-raw-store.ts';
+import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
-import { DrizzleRawStore } from './services/drizzle-raw-store.ts';
+import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
-import { FileSettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager } from './socket/channel-manager.ts';
@@ -34,7 +32,6 @@ import { type RunnerFactory, TYPES } from './types.ts';
 export interface StoreConfig {
   sqlite?: boolean;
   mysql?: { database: MysqlDatabase };
-  file?: { dir: string };
 }
 
 export interface ContainerOptions {
@@ -73,7 +70,7 @@ export function createContainer(options: ContainerOptions): Container {
   const { eventStores, sessionStores, settingsStores } = buildStores(db, options.storeConfig);
 
   const rawEventStore: RawEventStore =
-    eventStores.length === 1 ? eventStores[0] : new CompositeRawStore(eventStores);
+    eventStores.length === 1 ? eventStores[0] : new CompositeRawEventStore(eventStores);
   container.bind<RawEventStore>(TYPES.RawEventStore).toConstantValue(rawEventStore);
 
   const sessionStore: SessionStore =
@@ -137,23 +134,19 @@ function buildStores(
   const settingsStores: SettingsStore[] = [];
 
   if (config?.sqlite) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(db, sqliteSchema.settings));
   }
 
   if (config?.mysql) {
-    eventStores.push(new DrizzleRawStore(config.mysql.database, mysqlSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(config.mysql.database, mysqlSchema.rawEntries));
     sessionStores.push(new DrizzleSessionStore(config.mysql.database, mysqlSchema.sessions));
     settingsStores.push(new DrizzleSettingsStore(config.mysql.database, mysqlSchema.settings));
   }
 
-  if (config?.file) {
-    settingsStores.push(new FileSettingsStore(join(config.file.dir, 'settings.json')));
-  }
-
   if (eventStores.length === 0) {
-    eventStores.push(new DrizzleRawStore(db, sqliteSchema.rawEntries));
+    eventStores.push(new DrizzleRawEventStore(db, sqliteSchema.rawEntries));
   }
   if (sessionStores.length === 0) {
     sessionStores.push(new DrizzleSessionStore(db, sqliteSchema.sessions));

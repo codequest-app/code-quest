@@ -2,10 +2,10 @@ import type { RawEntry } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
-export class CompositeRawStore implements RawEventStore {
+export class CompositeRawEventStore implements RawEventStore {
   constructor(private stores: RawEventStore[]) {
     if (stores.length === 0) {
-      throw new Error('CompositeRawStore requires at least one store');
+      throw new Error('CompositeRawEventStore requires at least one store');
     }
   }
 

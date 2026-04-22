@@ -4,29 +4,29 @@ import type { RawEntry } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { rawEntries } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
-import { CompositeRawStore } from '../services/composite-raw-store.ts';
-import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
+import { CompositeRawEventStore } from '../services/composite-raw-event-store.ts';
+import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-describe('CompositeRawStore', () => {
-  let storeA: DrizzleRawStore;
-  let storeB: DrizzleRawStore;
+describe('CompositeRawEventStore', () => {
+  let storeA: DrizzleRawEventStore;
+  let storeB: DrizzleRawEventStore;
 
   beforeEach(() => {
     const dbA = createDatabase(':memory:');
     migrate(dbA, { migrationsFolder });
-    storeA = new DrizzleRawStore(dbA, rawEntries);
+    storeA = new DrizzleRawEventStore(dbA, rawEntries);
 
     const dbB = createDatabase(':memory:');
     migrate(dbB, { migrationsFolder });
-    storeB = new DrizzleRawStore(dbB, rawEntries);
+    storeB = new DrizzleRawEventStore(dbB, rawEntries);
   });
 
   it('appends to all stores', async () => {
-    const composite = new CompositeRawStore([storeA, storeB]);
+    const composite = new CompositeRawEventStore([storeA, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -43,7 +43,7 @@ describe('CompositeRawStore', () => {
   });
 
   it('reads from the first store', async () => {
-    const composite = new CompositeRawStore([storeA, storeB]);
+    const composite = new CompositeRawEventStore([storeA, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -60,7 +60,7 @@ describe('CompositeRawStore', () => {
   });
 
   it('throws when constructed with empty stores array', () => {
-    expect(() => new CompositeRawStore([])).toThrow();
+    expect(() => new CompositeRawEventStore([])).toThrow();
   });
 
   it('throws when all stores fail on append', async () => {
@@ -88,7 +88,7 @@ describe('CompositeRawStore', () => {
       },
       async cloneEvents() {},
     };
-    const composite = new CompositeRawStore([failStore1, failStore2]);
+    const composite = new CompositeRawEventStore([failStore1, failStore2]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),
@@ -114,7 +114,7 @@ describe('CompositeRawStore', () => {
       },
       async cloneEvents() {},
     };
-    const composite = new CompositeRawStore([failStore, storeB]);
+    const composite = new CompositeRawEventStore([failStore, storeB]);
 
     const entry: RawEntry = {
       timestamp: Date.now(),

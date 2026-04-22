@@ -35,7 +35,7 @@ function findText(rows: RawEntryRow[], type: 'user' | 'assistant'): string | und
   return undefined;
 }
 
-export class DrizzleRawStore implements RawEventStore {
+export class DrizzleRawEventStore implements RawEventStore {
   constructor(
     private db: DrizzleDb,
     private table: RawEntriesTable,

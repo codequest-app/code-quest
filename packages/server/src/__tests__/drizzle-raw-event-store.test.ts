@@ -5,19 +5,19 @@ import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { rawEntries } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
-import { DrizzleRawStore } from '../services/drizzle-raw-store.ts';
+import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
-describe('DrizzleRawStore', () => {
+describe('DrizzleRawEventStore', () => {
   let db: ReturnType<typeof createDatabase>;
-  let store: DrizzleRawStore;
+  let store: DrizzleRawEventStore;
 
   beforeEach(() => {
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
-    store = new DrizzleRawStore(db, rawEntries);
+    store = new DrizzleRawEventStore(db, rawEntries);
   });
 
   it('appends and retrieves raw entries via getBySession', async () => {

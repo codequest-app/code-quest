@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { envBool, parseRawStoreDrivers } from '../config.ts';
+import { envBool, loadConfig, parseRawEventsDrivers } from '../config.ts';
 
-describe('parseRawStoreDrivers', () => {
+describe('parseRawEventsDrivers', () => {
   it('accepts valid drivers', () => {
-    expect(parseRawStoreDrivers('sqlite,file')).toEqual(['sqlite', 'file']);
+    expect(parseRawEventsDrivers('sqlite,mysql')).toEqual(['sqlite', 'mysql']);
   });
 
-  it('filters out invalid drivers', () => {
-    expect(parseRawStoreDrivers('sqlite,sqllite,file')).toEqual(['sqlite', 'file']);
+  it('filters out invalid drivers (including removed "file")', () => {
+    expect(parseRawEventsDrivers('sqlite,file,sqllite')).toEqual(['sqlite']);
   });
 
   it('returns empty array for empty string', () => {
-    expect(parseRawStoreDrivers('')).toEqual([]);
+    expect(parseRawEventsDrivers('')).toEqual([]);
   });
 
   it('trims whitespace', () => {
-    expect(parseRawStoreDrivers(' mysql , sqlite ')).toEqual(['mysql', 'sqlite']);
+    expect(parseRawEventsDrivers(' mysql , sqlite ')).toEqual(['mysql', 'sqlite']);
   });
 });
 
@@ -38,5 +38,36 @@ describe('envBool', () => {
   it('returns false for unrecognized values', () => {
     expect(envBool('TEST_BOOL', false, 'yes')).toBe(false);
     expect(envBool('TEST_BOOL', false, '')).toBe(false);
+  });
+});
+
+describe('loadConfig', () => {
+  it('reads all new env names', () => {
+    const config = loadConfig({
+      APP_PORT: '4242',
+      RAW_EVENTS_DRIVERS: 'sqlite,mysql',
+      RAW_EVENTS_SQLITE_PATH: '/tmp/app.db',
+      CLI_SYSTEM_PROMPT: 'sys',
+      CLI_AUTO_MODE: 'false',
+      CLI_BYPASS_PERMISSIONS: 'false',
+      EXPLORER_ROOTS: '/tmp/a,/tmp/b',
+    });
+    expect(config.port).toBe(4242);
+    expect(config.rawEvents.drivers).toEqual(['sqlite', 'mysql']);
+    expect(config.rawEvents.sqlitePath).toBe('/tmp/app.db');
+    expect(config.systemPrompt).toBe('sys');
+    expect(config.autoMode).toBe(false);
+    expect(config.allowDangerouslySkipPermissions).toBe(false);
+    expect(config.explorerRoots).toEqual(['/tmp/a', '/tmp/b']);
+  });
+
+  it('empty env — defaults apply', () => {
+    const config = loadConfig({});
+    expect(config.port).toBe(3000);
+    expect(config.rawEvents.drivers).toEqual([]);
+    expect(config.rawEvents.sqlitePath).toBe('./data/code-quest.db');
+    expect(config.autoMode).toBe(true);
+    expect(config.allowDangerouslySkipPermissions).toBe(true);
+    expect(config.systemPrompt).toBe('');
   });
 });

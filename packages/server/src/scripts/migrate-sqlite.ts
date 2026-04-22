@@ -4,7 +4,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { config } from '../config.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 
-const path = config.rawStore.sqlitePath;
+const path = config.rawEvents.sqlitePath;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
