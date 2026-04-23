@@ -1,7 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { FakeSpeechRecognition, setupSpeechRecognition } from '../../test/fake-speech-recognition';
 import { createFakeSummoner } from '../../test/fake-summoner';
-import { FakeSpeechRecognition, setupSpeechRecognition } from '../../test/fakes/speech-recognition';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 async function setup() {

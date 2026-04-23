@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MentionDropdown } from '../MentionDropdown';
 
@@ -51,7 +52,8 @@ describe('MentionDropdown', () => {
     expect(screen.queryByText('/')).not.toBeInTheDocument();
   });
 
-  it('click directory calls onSelectMention with navigateInto=true', () => {
+  it('click directory calls onSelectMention with navigateInto=true', async () => {
+    const user = userEvent.setup();
     const props = createBaseProps();
     render(
       <MentionDropdown
@@ -59,11 +61,12 @@ describe('MentionDropdown', () => {
         fileResults={[{ path: 'src/', name: 'src', type: 'directory' }]}
       />,
     );
-    fireEvent.mouseDown(screen.getByText('src/'));
+    await user.click(screen.getByText('src/'));
     expect(props.onSelectMention).toHaveBeenCalledWith('@src/', true);
   });
 
-  it('click file calls onSelectMention with navigateInto=false or undefined', () => {
+  it('click file calls onSelectMention with navigateInto=false or undefined', async () => {
+    const user = userEvent.setup();
     const props = createBaseProps();
     render(
       <MentionDropdown
@@ -71,11 +74,12 @@ describe('MentionDropdown', () => {
         fileResults={[{ path: 'README.md', name: 'README.md', type: 'file' }]}
       />,
     );
-    fireEvent.mouseDown(screen.getByText('README.md'));
+    await user.click(screen.getByText('README.md'));
     expect(props.onSelectMention).toHaveBeenCalledWith('@README.md', false);
   });
 
-  it('click directory calls onSelectMention — caller should trigger new search', () => {
+  it('click directory calls onSelectMention — caller should trigger new search', async () => {
+    const user = userEvent.setup();
     const props = createBaseProps();
     // Simulate: after navigateInto, caller updates fileResults with new directory contents
     const { rerender } = render(
@@ -89,7 +93,7 @@ describe('MentionDropdown', () => {
     );
 
     // Click directory
-    fireEvent.mouseDown(screen.getByText('src/'));
+    await user.click(screen.getByText('src/'));
     expect(props.onSelectMention).toHaveBeenCalledWith('@src/', true);
 
     // Simulate caller re-rendering with new directory contents
@@ -113,7 +117,8 @@ describe('MentionDropdown', () => {
     expect(screen.queryByText('package.json')).not.toBeInTheDocument();
   });
 
-  it('navigateInto=true keeps dropdown open for new search', () => {
+  it('navigateInto=true keeps dropdown open for new search', async () => {
+    const user = userEvent.setup();
     let lastSuggestion = '';
     let lastNavigate = false;
     const onSelect = (s: string, n: boolean) => {
@@ -130,7 +135,7 @@ describe('MentionDropdown', () => {
     );
 
     // Click directory — navigateInto should be true
-    fireEvent.mouseDown(screen.getByRole('option'));
+    await user.click(screen.getByRole('option'));
     expect(lastSuggestion).toBe('@src/');
     expect(lastNavigate).toBe(true);
 
@@ -146,7 +151,8 @@ describe('MentionDropdown', () => {
     expect(screen.getByText('config.ts')).toBeInTheDocument();
   });
 
-  it('hover changes active item', () => {
+  it('hover changes active item', async () => {
+    const user = userEvent.setup();
     const onHover = vi.fn();
     render(
       <MentionDropdown
@@ -158,7 +164,7 @@ describe('MentionDropdown', () => {
         onHover={onHover}
       />,
     );
-    fireEvent.mouseEnter(screen.getByText('b.ts'));
+    await user.hover(screen.getByText('b.ts'));
     expect(onHover).toHaveBeenCalledWith(1);
   });
 });

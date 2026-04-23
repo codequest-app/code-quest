@@ -1,5 +1,4 @@
 import { createFakeServer } from '@code-quest/server/test';
-import { validateWorktreeName } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useRef } from 'react';
@@ -11,30 +10,9 @@ import { WorktreeProvider } from '../../contexts/WorktreeContext';
 import { FakeSummoner } from '../../test/fake-summoner';
 import { CreateWorktreeDialog } from '../CreateWorktreeDialog';
 
-describe('validateWorktreeName', () => {
-  it('accepts simple names', () => {
-    expect(validateWorktreeName('feature-x')).toBeNull();
-    expect(validateWorktreeName('feat_1.0')).toBeNull();
-  });
-
-  it('rejects empty name', () => {
-    expect(validateWorktreeName('')).toMatch(/required/i);
-  });
-
-  it('rejects invalid characters', () => {
-    expect(validateWorktreeName('../bad')).toMatch(/letters, numbers/i);
-    expect(validateWorktreeName('has space')).toMatch(/letters, numbers/i);
-  });
-
-  it('rejects names ending with dot or .lock', () => {
-    expect(validateWorktreeName('foo.')).toMatch(/end with/i);
-    expect(validateWorktreeName('foo.lock')).toMatch(/end with/i);
-  });
-
-  it('rejects over-long names', () => {
-    expect(validateWorktreeName('a'.repeat(101))).toMatch(/100 characters/);
-  });
-});
+// validateWorktreeName has dedicated tests in
+// packages/shared/src/validators/__tests__/worktree-name.test.ts — no need to
+// duplicate pure-validator coverage here.
 
 describe('CreateWorktreeDialog', () => {
   function Wrapper({ children }: { children: ReactNode }) {

@@ -1,5 +1,5 @@
 import { segments as s } from '@code-quest/summoner/test';
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
@@ -14,10 +14,11 @@ describe('ChatPanel', () => {
   });
 
   it('sends message — message appears in UI', async () => {
+    const user = userEvent.setup();
     await renderWithChannel(<ChatPanel />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    fireEvent.change(textarea, { target: { value: 'test message' } });
-    fireEvent.click(screen.getByTitle('Send'));
+    await user.type(textarea, 'test message');
+    await user.click(screen.getByTitle('Send'));
     expect(screen.getByText('test message')).toBeInTheDocument();
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
@@ -284,11 +285,12 @@ describe('ChatPanel', () => {
 
   describe('/compact slash command', () => {
     it('sends /compact to CLI', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatPanel />);
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      fireEvent.change(textarea, { target: { value: '/compact' } });
-      fireEvent.click(screen.getByTitle('Send'));
+      await user.type(textarea, '/compact');
+      await user.click(screen.getByTitle('Send'));
 
       expect(claude.received('user')).toHaveLength(1);
       expect(claude.received('user')[0]).toMatchObject({
@@ -297,11 +299,12 @@ describe('ChatPanel', () => {
     });
 
     it('sends /compact with argument to CLI', async () => {
+      const user = userEvent.setup();
       const { claude } = await renderWithChannel(<ChatPanel />);
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-      fireEvent.change(textarea, { target: { value: '/compact 50' } });
-      fireEvent.click(screen.getByTitle('Send'));
+      await user.type(textarea, '/compact 50');
+      await user.click(screen.getByTitle('Send'));
 
       expect(claude.received('user')).toHaveLength(1);
       expect(claude.received('user')[0]).toMatchObject({

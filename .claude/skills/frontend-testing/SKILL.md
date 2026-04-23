@@ -2,300 +2,249 @@
 name: frontend-testing
 description: >
   Frontend testing guide for React components, hooks, and stores using testing-library, vitest, and Storybook.
-  Use when writing or refactoring component tests, hook tests, or choosing between test doubles
-  (fake, spy, mock, stub). Covers query priority (getByRole > getByText), userEvent patterns,
-  and when to use Storybook play functions vs testing-library tests.
+  Use when writing or refactoring component tests, hook tests, or choosing between test doubles.
+  Covers six core principles (Testing Library first, Fake for external deps, Fake Component for isolation,
+  test placement at smallest meaningful root, preserve-expect refactor discipline, unified fake file naming),
+  query priority, userEvent patterns, and when to use Storybook play functions vs testing-library tests.
 ---
 
 # Frontend Testing Guide
 
 > 相關 skill 分工：
 > - 五型經典定義（Dummy/Stub/Fake/Spy/Mock）→ `test-doubles`
-> - Server-side test double 選擇 → `vitest-testing`
+> - Server 測試 pattern（DB / socket.io server-side）→ `vitest-testing` (server)
 > - TDD 流程 → `tdd-guidelines`
-> - RTL + Storybook 通用慣例 → `testing-best-practices`
+> - Socket + pipeline test harness → `fake-summoner-client`
+> - Hook / Context 慣例 → `react-hooks`
+> - Storybook play function / 視覺回歸 → `storybook-component`
+> - 共通慣例（RTL query、userEvent）→ `testing-best-practices`
 
-## Test Double Selection Order
+## Core Principles
 
-**Prefer no double. Escalate only when necessary.**
+這六條依序優先，後條在前條同時成立時才考慮。
 
-```
-No Double → Spy → Proxy Mock → Partial Mock → Fake (Wrapper) → Mock (vi.fn) → Stub
-```
+### 1. Testing Library first; no unit/integration split
 
-| # | Type | What it does | When to use | Frontend example |
-|---|------|-------------|-------------|-----------------|
-| 1 | **No Double** | Real implementation, no substitution | Always first choice | Zustand store, pure components, real child components |
-| 2 | **Spy** | Observes real function without replacing | Verify a call happened | `vi.spyOn(session, 'abort')` — real method still runs |
-| 3 | **Proxy Mock** | Intercepts external calls at protocol level | Any data fetching (direct or via prop callback) | `msw-fetch-mock` (preferred), MSW handlers — real code runs, network is faked |
-| 4 | **Partial Mock** | Replaces one method, rest stays real | One method is expensive | `vi.spyOn(obj, 'heavyMethod').mockReturnValue(cached)` |
-| 5 | **Fake (Wrapper)** | Lightweight working substitute | External system boundaries | FakeSummoner (EventEmitter-based socket + server pipeline) |
-| 6 | **Mock (vi.fn)** | Standalone function with no real impl | Callback props | `onSend={vi.fn()}` — no real behavior |
-| 7 | **Stub** | Fixed return, no logic | Hardcoded test data | `vi.fn().mockReturnValue(fixedData)` — most artificial |
+使用者視角撰寫測試，render 有意義的最小 tree；**只有一種檔名** `*.test.ts` / `*.test.tsx`，不再有 `*.integration.test.*` 或其他變體。
 
-### Decision Flow
+- ✅ 用 `render()` + testing-library query，不用 shallow render
+- ✅ 斷言使用者可觀察到的結果（DOM、callback、store 狀態），不斷言實作細節
+- ❌ 不在 `vitest.config.ts` 區分 unit / integration glob
 
-```
-Can I use the real thing with no substitution?
-  ├─ YES → No Double (Zustand store, pure functions, real components)
-  └─ NO → Do I just need to observe a call?
-      ├─ YES → Spy (vi.spyOn, real method still runs)
-      └─ NO → Does data flow through an external system?
-          ├─ HTTP/fetch → Proxy Mock (msw-fetch-mock — intercept at protocol level)
-          │               See msw-fetch-mock skill for API details.
-          ├─ Socket.IO → FakeClaude (see "Socket Testing" section below)
-          └─ Neither → Can I replace just one method?
-              ├─ YES → Partial Mock (vi.spyOn + mockReturnValue)
-              └─ NO → Do I need to verify it was called?
-                  ├─ YES → Mock (vi.fn())
-                  └─ NO → Stub (vi.fn().mockReturnValue())
-```
+### 2. Fake first — when the real external dependency is hard to use in tests
 
-> **Key rule:** If a prop callback wraps a `socket.emit()` call (e.g. `onFetch`, `listSessions`,
-> `onSave`), the test should use FakeClaude socket — wire up providers with `claude.socket` and pass the
-> real callback to the component. Do **not** replace socket-based callbacks with `vi.fn()` (#6).
+當測試對象依賴「外部系統」（網路、Socket.IO、瀏覽器 API、時間、CLI）且真實依賴不易在測試中使用時，**Fake 是首選替代品**。對「內部 module」的觀察仍用 Spy；完全替換整個內部 module（`vi.mock`）是最後手段。
 
-### Why This Order Matters
+決策流程見 [Test Double Decision Flow](#test-double-decision-flow)。
 
-Each level **removes more real behavior**:
+### 3. Fake Component for subcomponent isolation
 
-- **No Double**: 100% real — highest confidence
-- **Spy**: 99% real — just observing
-- **Proxy Mock**: Real code runs, only network is intercepted
-- **Partial Mock**: One seam replaced, rest is real
-- **Fake**: Working substitute, but custom implementation
-- **Mock**: No real behavior at all
-- **Stub**: No behavior + hardcoded data — lowest confidence
+隔離子元件（不想連動其 deps）時，MUST 撰寫 `Fake<Name>` React 元件**共用原 prop 型別**，勝過 `vi.mock('./X', () => ({ X: () => null }))`。
 
-### Prefer dependency injection over `vi.mock()` for module replacement
+```tsx
+// ❌ BAD — 失去型別檢查，重構脆弱
+vi.mock('./ComposeToolbar', () => ({ ComposeToolbar: () => null }));
 
-`vi.mock()` replaces the **entire module** — you're testing mock behavior, not real behavior. Inject the dependency (socket, store, service) as a parameter or via context instead; it gives real coverage and keeps the test pressing on the actual API surface.
+// ✅ GOOD — Fake Component 契約對齊
+// src/test/fake-compose-toolbar.tsx
+import type { ComposeToolbarProps } from '../components/ComposeToolbar';
 
-```typescript
-// ❌ BAD — tests mock, not real hook
-vi.mock('../../hooks/use-chat', () => ({
-  useChat: () => ({
-    sendMessage: vi.fn(),
-  }),
-}));
-
-// ✅ GOOD — inject dependency, use fake
-function ChatPanel({ socket }: { socket: TypedSocket }) {
-  const { sendMessage } = useChat(socket); // socket is injectable
+export function FakeComposeToolbar(props: ComposeToolbarProps) {
+  return <div data-testid="fake-toolbar" data-mode={props.mode} />;
 }
-// In test: pass a fake socket
-render(<ChatPanel socket={fakeSocket} />);
+
+// test
+vi.mock('./ComposeToolbar', () => ({ ComposeToolbar: FakeComposeToolbar }));
+// 或 test helper 透過 props 注入
 ```
 
-**If you must mock a module**, it means your design has a coupling problem. Fix the design first.
+好處：
+- 維持 prop 型別檢查（重構 real component 時，fake 編譯錯誤提醒更新）
+- 可 `data-testid` 斷言 parent 傳進去的 prop
+- 明確可見「這是測試替身」
+
+### 4. Tests live at the smallest meaningful render root
+
+用 testing-library 時，測試 render 的是**對使用者有意義的最小單位**，不是對原始碼檔案一檔對一檔。
+
+| 情境 | 要不要建專屬 `.test`？ |
+|---|---|
+| 純 util / store / hook | ✅ 建（`.test.ts` / `renderHook`） |
+| 有自身邏輯 / state / 複雜渲染的元件（如 `EffortSwitch`） | ✅ 建 |
+| 簡單 presentational primitive（Badge / IconButton / PaletteEmpty） | ❌ 不建；透過 consumer 測試覆蓋 |
+| Context / Provider | ✅ 建（測 provider 本身），但簡單 state passthrough 可由 consumer 覆蓋 |
+
+### 5. Refactor preserves assertions (expect unchanged or equivalent)
+
+重構測試時：
+- 每個原 `expect(` 的意義 MUST 在重構後找到對應（可移位、可合併語意相同的多個斷言）
+- 重構後 `grep -c 'expect(' <file>` ≥ 原數
+- **允許**：rename、arrange 抽進 helper、fake 代替 mock、新增更強 assertion
+- **禁止**：刪 assertion 而未遷移、弱化 assertion（`toBe(5)` → `toBeGreaterThan(0)` 等）
+
+#### 重構時同時檢查的品質項
+
+a. **可讀性優先**：名字取對比少寫幾行重要。含糊變數（`tmp` / `result`）→ 貼近行為的名字（`thumbLeft` / `onFinalTranscript`）。magic number / string 有被命名的價值就抽常數
+
+b. **不使用 inline type assertion** — `as { foo: string }` / `as unknown as X` 都 MUST 不出現於測試碼（test harness 合理特例另議）。改用：
+  - 從 zod schema `infer` 型別（`z.infer<typeof schema>`）
+  - 明確的 `interface` / `type alias`
+  - 若值來自網路 / CLI / 外部 I/O 邊界，在**進入測試前**用 zod `parse()` / `safeParse()` 擋
+
+c. **zod 用於邊界而非 inline mock shape** — 不要用 zod 現場宣告一個「just for this test」的小 schema 來做 mock payload；mock payload 用符合真實 schema 的 fixture（例如 `segments.assistant(...)` 這類 helper）。測試對象是元件行為，不是 schema 驗證本身。
+
+d. **Import 整理**：refactor 後跑 `biome check --write` 處理 organizeImports；測試檔 import 應跟著分類（第三方 → 專案絕對路徑 → 相對路徑）
+
+### 6. Fake files — unified naming and placement
+
+所有測試用 Fake 檔案 MUST 放於 `packages/client/src/test/` 平鋪層級，**不使用 `fakes/` 子目錄**。
+
+- 檔名：`fake-<kebab>.ts[x]`
+- Exported class / function：`Fake<PascalCase>`
+- Setup helper：`setup<PascalCase>()`（beforeEach/afterEach 安裝與清理 window API 等）
+
+```
+src/test/
+├── fake-summoner.ts         # Socket + pipeline
+├── fake-raf.ts              # requestAnimationFrame
+├── fake-speech-recognition.ts  # window.SpeechRecognition
+└── fake-compose-toolbar.tsx # React component fake
+```
+
+### 6.5. Refactoring — extend existing tests before creating new files
+
+新增測試前先 grep 既有 `.test` 檔，若新行為屬同一 render root / unit，MUST 在該檔加 `it()` / `expect()`；只有 scope 明顯不同時才建新檔。
+
+---
+
+## Test Double Decision Flow
+
+```
+測試對象有依賴嗎？
+│
+├─ 無 → No Double（純函式、純元件、Zustand store）
+│
+└─ 有 → 外部 or 內部？
+    │
+    ├─ 外部（程序外 / 網路 / 瀏覽器 API / 時間 / CLI）
+    │   │
+    │   ├─ 真依賴在測試環境便宜可用？
+    │   │   ├─ YES → 用真的（e.g., in-memory SQLite）
+    │   │   └─ NO  ↓
+    │   │
+    │   └─ Fake 首選
+    │       ├─ HTTP/fetch → MSW handlers（proxy fake）
+    │       ├─ Socket + CLI → FakeSummoner / renderWithChannel / renderWithWorkspace
+    │       ├─ 瀏覽器 API（SpeechRecognition 等）→ Fake<API> + setup<API>()
+    │       └─ 時間 → vi.useFakeTimers()
+    │
+    └─ 內部（自家 repo 的 module / 元件）
+        │
+        ├─ 想觀察呼叫（真實代碼仍跑）→ Spy (vi.spyOn)
+        ├─ 想隔離子元件（不連動 deps）→ Fake Component（原則 3）
+        ├─ 想替換一個方法 → Partial Mock (vi.spyOn + mockReturnValue)
+        └─ 想完全替換整個 module → vi.mock（**最後手段**，重構脆弱；通常代表設計耦合）
+```
+
+### Double 類型對照
+
+| # | Type | 真實程度 | 典型場景 | 範例 |
+|---|---|---|---|---|
+| 1 | **No Double** | 100% | Pure 程式 | Zustand store、pure components |
+| 2 | **Fake**（外部） | 高 | 外部系統替身 | FakeSummoner、FakeSpeechRecognition、MSW |
+| 3 | **Fake Component** | 高 | 子元件隔離 | FakeComposeToolbar |
+| 4 | **Spy** | 99% | 觀察內部呼叫 | `vi.spyOn(service, 'method')` |
+| 5 | **Partial Mock** | 中 | 替一個方法 | `vi.spyOn + mockReturnValue` |
+| 6 | **vi.mock** | 低 | 最後手段 | 整個 module 替換 |
+| 7 | **Mock/Stub callback** | 低 | 純 UI callback | `onClose={vi.fn()}`（無 data flow） |
+
+### Why this order matters
+
+每進一階，被替換的真實行為就多一分：
+- **No Double / Fake**：保留原行為面向（介面不變時測試穩）
+- **Spy**：只加觀察，行為不變
+- **Mock / Stub**：失去真實行為 — 重構時脆弱，容易掩蓋 bug
+
+> **關鍵規則**：若一個 prop callback 封裝了 `socket.emit()`（如 `onFetch` / `listSessions`），**不要** `vi.fn()` 取代 — 使用 FakeSummoner 走完整 socket 通道。
+
+---
 
 ## Query Priority (Testing Library)
 
-Always query as the user would. Ordered from most to least preferred:
+使用者怎麼找元素，測試就怎麼 query：
 
-### Tier 1: Accessible to Everyone
-| Query | Use for |
-|-------|---------|
-| `getByRole('button', { name: /send/i })` | **Default choice** — any element in accessibility tree |
-| `getByLabelText('Email')` | Form fields with labels |
-| `getByPlaceholderText('Search...')` | When no label exists |
-| `getByText('Submit')` | Non-interactive text content |
-| `getByDisplayValue('pre-filled')` | Filled form inputs |
+### Tier 1 — 可及性樹
+| Query | 用途 |
+|---|---|
+| `getByRole('button', { name: /send/i })` | **預設首選** |
+| `getByLabelText('Email')` | 有 label 的表單欄位 |
+| `getByPlaceholderText('Search...')` | 無 label 時的 fallback |
+| `getByText('Submit')` | 非互動文字內容 |
+| `getByDisplayValue('pre-filled')` | 已填值的 input |
 
-### Tier 2: Semantic
-| Query | Use for |
-|-------|---------|
-| `getByAltText('Logo')` | Images, area elements |
-| `getByTitle('Close')` | Title attributes (unreliable) |
+### Tier 2 — 語意
+| Query | 用途 |
+|---|---|
+| `getByAltText('Logo')` | 圖片 |
+| `getByTitle('Close')` | `title` 屬性（不穩定，慎用） |
 
-### Tier 3: Last Resort
-| Query | Use for |
-|-------|---------|
-| `getByTestId('complex-widget')` | Only when semantic queries impossible |
+### Tier 3 — 最後手段
+| Query | 用途 |
+|---|---|
+| `getByTestId('complex-widget')` | 語意查詢真的無解時 |
 
-### Query Variants
-| Variant | Behavior | When |
-|---------|----------|------|
-| `getBy` | Throws if not found | Element must exist |
-| `queryBy` | Returns null if not found | Assert element absence |
-| `findBy` | Async, waits for element | After state update / async |
+### Variants
+| Variant | 行為 | 時機 |
+|---|---|---|
+| `getBy` | 找不到就 throw | 元素必須存在 |
+| `queryBy` | 找不到回 null | 斷言不存在 |
+| `findBy` | async，等元素出現 | async state 更新後 |
 
-## Testing Strategy Split
+---
 
-| What to test | Where | Tool |
-|-------------|-------|------|
-| Visual states & variations | Storybook stories | `args` |
-| Click, type, hover interactions | Storybook `play` functions | `userEvent`, `expect`, `canvas` |
-| Component renders correct output | Vitest + testing-library | `render`, `screen` |
-| Hook logic (state, effects) | Vitest + `renderHook` | `@testing-library/react` |
-| Store logic (actions, selectors) | Vitest (no React) | `store.getState()` |
-| Socket ↔ UI integration | Vitest + FakeClaude | `claude.emit(segment)` + `screen` |
-| Full page integration | Storybook composite story | Decorators + providers |
+## Testing Strategy Split (Vitest vs Storybook)
 
-### Rule of Thumb
+| 測什麼 | 放哪裡 | 工具 |
+|---|---|---|
+| 視覺變體 | Storybook stories | `args` |
+| 互動（click / type / hover） | Storybook `play` functions | `userEvent` + `expect` |
+| 元件輸出正確 | Vitest + testing-library | `render` / `screen` |
+| Hook 邏輯 | Vitest + `renderHook` | `@testing-library/react` |
+| Store 邏輯 | Vitest（不用 React） | `store.getState()` |
+| Socket ↔ UI 整合 | Vitest + FakeSummoner | `claude.emit(segment)` + `screen` |
+| 跨元件完整頁面 | Storybook composite story | decorators + providers |
 
-- **Storybook** = visual documentation + interaction demos (will be seen by team)
-- **Vitest** = correctness guarantees + edge cases + regression prevention (will be run in CI)
-- Don't duplicate: if storybook play covers the interaction, vitest doesn't need to repeat it
+**Rule of thumb**：
+- Storybook = 視覺文件 + 互動 demo（team 會看）
+- Vitest = 正確性保證 + edge case + 回歸防止（CI 會跑）
+- 不重複：storybook play 已覆蓋的互動，vitest 不再重複
 
-## Socket Testing with FakeClaude
+---
 
-See `fake-summoner-client` skill for full API. Three test patterns for socket-dependent components:
+## Socket Testing with FakeSummoner
 
-### Pattern 1: State injection (no socket needed)
+詳細 API → `fake-summoner-client` skill；常用 pattern（state injection / full pipeline / observable effect）+ legacy anti-pattern 清單 → **`references/fake-patterns.md`**。
 
-When testing component rendering with specific state, use `initialState` on `ChannelProvider`.
-No socket interaction, no FakeClaude pipeline.
-
-```typescript
-// ✅ GOOD — test component rendering with specific state
-render(
-  <SocketProvider socket={createFakeSummoner().claude().socket}>
-    <SessionProvider>
-      <TabProvider>
-        <ChannelProvider
-          channelId="ch-1"
-          initialState={{
-            pendingControls: [{ requestId: 'r1', subtype: 'can_use_tool', toolName: 'Bash' }],
-          }}
-        >
-          <ChatPanel joinSession={vi.fn()} toggleHistory={vi.fn()} />
-        </ChannelProvider>
-      </TabProvider>
-    </SessionProvider>
-  </SocketProvider>,
-);
-
-expect(screen.getByText(/Bash/)).toBeInTheDocument();
-```
-
-### Pattern 2: Full pipeline (server→client→UI) — `renderWithWorkspace`
-
-When testing CLI→server→client event flow, use `renderWithWorkspace` + `claude.emit()`.
-Client FakeClaude auto-wraps emit with `act()` — no manual act needed.
-
-```typescript
-// ✅ GOOD — full pipeline with renderWithWorkspace
-import { renderWithWorkspace } from '../../test/render-with-workspace';
-
-const { claude, user } = await renderWithWorkspace();
-const textarea = screen.getByPlaceholderText(/Esc to focus/i);
-await user.click(textarea);
-await user.type(textarea, 'hello');
-await user.keyboard('{Enter}');
-
-await claude.emit(s.assistant('Hello!'));
-await claude.emit(s.result());
-
-expect(screen.getByText(/Hello!/)).toBeInTheDocument();
-```
-
-### Pattern 3: Verify client→server action via UI effect
-
-Verify actions by their **observable effect** (state change, UI update), not by spying on socket.emit.
-For fire-and-forget actions with no UI effect, verify click doesn't crash.
-
-```typescript
-// ✅ GOOD — verify action via state change
-await user.click(screen.getByText('Yes'));
-expect(screen.getByTestId('pending-count')).toHaveTextContent('0'); // pendingControls cleared
-
-// ✅ GOOD — fire-and-forget, verify no crash
-await user.click(screen.getByTitle('Stop subagent'));
-expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
-
-// ❌ BAD — socket.emit spy
-expect(claude.socket.emit).toHaveBeenCalledWith('chat:stop_task', ...);
-```
-
-### Legacy patterns to migrate away from
-
-```typescript
-// ❌ BAD — hand-construct fake socket
-const fakeSocket = { on: vi.fn(), emit: vi.fn(), ... };
-
-// ❌ BAD — mock callback without real socket
-const onFetch = vi.fn().mockResolvedValue({ events: mockEvents });
-
-// ❌ BAD — access serverSocket internals
-(claude.socket as any).serverSocket.emit('event', data);
-
-// ❌ BAD — client directly emit server events
-claude.socket.emit('request_usage_update' as never, {}, () => {});
-
-// ❌ BAD — addHandler is deprecated (use initialState or FakeClaude pipeline)
-socket.addHandler('terminal:get_contents', () => ({ content: '...' }));
-
-// ❌ BAD — setJoinResult is deprecated (use FakeClaude initialize)
-socket.setJoinResult({ channelId: 'ch-1', state: 'idle' });
-
-// ❌ BAD — createSocket() is deprecated (use createFakeSummoner().claude().socket)
-import { createSocket } from '../../socket/client';
-const socket = createSocket();
-```
-
-### When vi.fn() IS acceptable for callbacks
-
-- **Pure UI callbacks** with no data flow: `onClose`, `onDismiss`, `onSelect(id)` — Mock (#6)
-- **Callbacks the component just calls to notify parent**: not socket-based, no data returned
-- If unsure: check if the callback wraps `socket.emit()` — if yes, use FakeClaude socket
+速查：
+- State injection（不經管線）
+- Full pipeline 用 `renderWithWorkspace` 或 `renderWithChannel`（`skipInit: true` 取得未 init 狀態）
+- Verify action 用 observable side effect，**不用** `socket.emit` spy
 
 ## userEvent vs fireEvent
 
-Always prefer `userEvent` — it simulates real user behavior (focus, keydown, keyup, input):
+永遠先 `userEvent`（模擬真實 focus / keydown / keyup / input）：
 
-```typescript
-import userEvent from '@testing-library/user-event';
-
+```tsx
 const user = userEvent.setup();
 await user.type(screen.getByRole('textbox'), 'hello');
 await user.click(screen.getByRole('button'));
 await user.keyboard('{Enter}');
 ```
 
-Only use `fireEvent` for events `userEvent` doesn't support (e.g. `scroll`, `resize`).
+`fireEvent` 只保留給 userEvent 不支援的事件：`contextMenu` / `scroll` / `paste clipboardData` / `mouseUp` 文字選取。
 
-## Component Test Template
+## Templates & Packages
 
-```typescript
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-
-describe('MyComponent', () => {
-  it('calls onSubmit with input value', async () => {
-    const onSubmit = vi.fn(); // dummy — we only verify it's called
-    const user = userEvent.setup();
-
-    render(<MyComponent onSubmit={onSubmit} />);
-
-    await user.type(screen.getByRole('textbox'), 'hello');
-    await user.click(screen.getByRole('button', { name: /submit/i }));
-
-    expect(onSubmit).toHaveBeenCalledWith('hello');
-  });
-});
-```
-
-## Framework-specific 測試模板
-
-各 library（React Hook Form + Zod、React Query、Error Boundary、ky API client）的測試模板收在 `references/framework-patterns.md`。用到對應 library 時再查。
-
-## Packages
-
-| Package | Purpose | Test Double Level |
-|---------|---------|-------------------|
-| `@testing-library/react` | `render`, `screen`, `renderHook` | — |
-| `@testing-library/user-event` | Realistic user interaction simulation | — |
-| `@testing-library/jest-dom` | DOM matchers (`toBeInTheDocument`, etc.) | — |
-| `vitest` | Runner + `vi.fn()` / `vi.spyOn()` | Spy, Mock |
-| `msw` | Network-level request interception | Proxy Mock (#3) |
-| `storybook` | Visual testing + play functions | — |
-| `react-error-boundary` | Error Boundary component | — |
-
-## 相關 skill
-
-- Socket + pipeline test harness → `fake-summoner-client`
-- RTL query / className 斷言 / userEvent → `testing-best-practices`
-- Hook / Context 慣例 → `react-hooks`
-- Storybook play function / 視覺回歸 → `storybook-component`
-- Test double 五種類型理論 → `test-doubles`
+- Component / Fake<BrowserAPI> / Fake Component templates → **`references/templates.md`**
+- Framework-specific（React Hook Form + Zod / React Query / Error Boundary / ky）→ **`references/framework-patterns.md`**
+- Packages cheatsheet → `references/templates.md` 尾段

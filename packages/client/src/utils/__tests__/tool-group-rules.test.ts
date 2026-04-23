@@ -1,26 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import type { Message } from '@/types/ui';
 import type { MessageNode } from '../message-tree';
 import { splitTimelineRuns } from '../tool-group-rules';
 
+// `splitTimelineRuns` only inspects `type`; we cast partial shapes to `Message`
+// instead of reconstructing each variant's full `meta` union per type.
+
 function toolNode(name: string, id = `t-${name}`): MessageNode {
-  return {
-    message: {
-      id,
-      role: 'assistant',
-      type: 'tool_use',
-      content: name,
-      timestamp: 0,
-      meta: { toolId: id, input: {} },
-    } as never,
-    children: [],
-  };
+  const message = {
+    id,
+    role: 'assistant',
+    type: 'tool_use',
+    content: name,
+    timestamp: 0,
+  } as Message;
+  return { message, children: [] };
 }
 
 function textNode(content = 'hello', id = 't-text'): MessageNode {
-  return {
-    message: { id, role: 'assistant', type: 'text', content, timestamp: 0 } as never,
-    children: [],
-  };
+  const message = { id, role: 'assistant', type: 'text', content, timestamp: 0 } as Message;
+  return { message, children: [] };
 }
 
 describe('splitTimelineRuns', () => {
@@ -67,8 +66,14 @@ describe('splitTimelineRuns', () => {
 
   it('thinking also splits a group', () => {
     const b1 = toolNode('Bash', 'b1');
-    const think: ReturnType<typeof textNode> = {
-      message: { id: 'k', role: 'assistant', type: 'thinking', content: '', timestamp: 0 } as never,
+    const think: MessageNode = {
+      message: {
+        id: 'k',
+        role: 'assistant',
+        type: 'thinking',
+        content: '',
+        timestamp: 0,
+      } as Message,
       children: [],
     };
     const b2 = toolNode('Bash', 'b2');

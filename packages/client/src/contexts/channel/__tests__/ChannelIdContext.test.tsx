@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { ChannelIdProvider, useChannelId } from '../ChannelIdContext';
 
 function Display() {
@@ -25,5 +26,10 @@ describe('ChannelIdContext', () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  it('ChannelProvider wires the channelId prop through useChannelId()', async () => {
+    const { channelId } = await renderWithChannel(<Display />, { channelId: 'ch-smoke' });
+    expect(screen.getByTestId('channel-id')).toHaveTextContent(channelId);
   });
 });

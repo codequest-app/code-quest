@@ -1,10 +1,16 @@
 ---
 name: vitest-testing
 description: >
-  Project-specific Vitest testing reference for the server package. Use when writing or modifying vitest tests, fixing failing tests, testing specific modules like DB or socket.io, choosing mocking strategies, or working with async patterns and fake timers.
+  Project-specific Vitest testing reference for the **server** package (packages/server). Use when writing
+  or modifying server-side vitest tests, fixing failing tests, testing DB / socket.io server-side,
+  choosing mocking strategies, or working with async patterns and fake timers. For frontend tests
+  (packages/client) see `frontend-testing`.
 ---
 
-# Vitest Testing — Project Reference
+# Vitest Testing — Server Reference
+
+> ⚠️ **This skill is server-focused.** Frontend tests follow `frontend-testing` (Testing Library +
+> six core principles). This file covers DB / socket.io server-side / CLI process patterns only.
 
 Stack: vitest 1.x, TypeScript, ESM, better-sqlite3, socket.io-client
 

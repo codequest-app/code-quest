@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { Message } from '@/types/ui';
 import { filterTree } from '../filter-tree';
 import type { MessageNode } from '../message-tree';
 
-function node(id: string, type: string, children: MessageNode[] = []): MessageNode {
-  return {
-    message: { id, role: 'assistant', type, content: id, timestamp: 0 } as never,
-    children,
-  };
+function node(id: string, type: Message['type'], children: MessageNode[] = []): MessageNode {
+  // Minimal Message shape — `filterTree` only inspects `type`; `meta` variants
+  // per type are irrelevant to this util's logic.
+  const message = { id, role: 'assistant', type, content: id, timestamp: 0 } as Message;
+  return { message, children };
 }
 
 describe('filterTree', () => {

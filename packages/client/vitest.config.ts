@@ -30,7 +30,7 @@ export default defineConfig({
       },
     },
     passWithNoTests: false,
-    include: ['src/**/*.test.{ts,tsx}', 'src/**/*.integration.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
   },
 });

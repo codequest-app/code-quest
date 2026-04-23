@@ -2,50 +2,36 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ContentRenderer } from '../ContentRenderer';
 
-// Minimal stubs so tests don't need real diff/ansi parsers
-vi.mock('../shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../shared')>();
-  return {
-    ...actual,
-    hasAnsi: (s: string) => s.includes('\x1b['),
-    AnsiContent: ({ content }: { content: string }) => (
-      <div data-testid="ansi-content">{content}</div>
-    ),
-    CODE_BLOCK_CLASS: 'code-block',
-    parseFilePathsInContent: (s: string) => [s],
-  };
-});
+// Uses real DiffViewer + AnsiContent (principle 2: prefer no double for
+// internal modules). Real components expose the testids asserted below.
 
-vi.mock('../../DiffViewer', () => ({
-  DiffViewer: ({ content }: { content: string }) => <div data-testid="diff-viewer">{content}</div>,
-}));
-
-vi.mock('../../../utils/diff', () => ({
-  isDiff: (s: string) => s.startsWith('--- '),
-}));
+const sampleDiff = ['--- a/file.txt', '+++ b/file.txt', '@@ -1,1 +1,1 @@', '-old', '+new'].join(
+  '\n',
+);
 
 describe('ContentRenderer', () => {
-  it('renders DiffViewer when content is a diff', () => {
-    render(<ContentRenderer content="--- a\n+++ b" />);
-    expect(screen.getByTestId('diff-viewer')).toBeInTheDocument();
+  it('routes to DiffViewer when content is a diff', () => {
+    render(<ContentRenderer content={sampleDiff} />);
+    expect(screen.getByTestId('diff-filename')).toHaveTextContent('file.txt');
   });
 
-  it('renders AnsiContent when content has ANSI codes', () => {
+  it('routes to AnsiContent when content has ANSI codes', () => {
     render(<ContentRenderer content={'\x1b[32mgreen\x1b[0m'} />);
     expect(screen.getByTestId('ansi-content')).toBeInTheDocument();
   });
 
-  it('renders pre with plain text otherwise', () => {
+  it('renders plain text inside <pre> when neither diff nor ANSI', () => {
     render(<ContentRenderer content="plain text" />);
     expect(screen.getByText('plain text').tagName).toBe('PRE');
   });
 
-  it('passes editable/onAccept/onReject to DiffViewer', () => {
+  it('forwards editable/onAccept/onReject to DiffViewer', () => {
     const onAccept = vi.fn();
     const onReject = vi.fn();
-    const { container } = render(
-      <ContentRenderer content="--- a\n+++ b" editable onAccept={onAccept} onReject={onReject} />,
+    render(
+      <ContentRenderer content={sampleDiff} editable onAccept={onAccept} onReject={onReject} />,
     );
-    expect(container.querySelector('[data-testid="diff-viewer"]')).toBeInTheDocument();
+    expect(screen.getByTestId('diff-accept')).toBeInTheDocument();
+    expect(screen.getByTestId('diff-reject')).toBeInTheDocument();
   });
 });

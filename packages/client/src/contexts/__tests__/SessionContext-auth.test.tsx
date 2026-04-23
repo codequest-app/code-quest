@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useSession } from '@/contexts/SessionContext';
@@ -22,62 +22,45 @@ function AuthProbe() {
 
 describe('SessionContext — auth callbacks (FakeSummoner)', () => {
   describe('auth:login', () => {
-    it('sets status to error when server returns { ok: false }', async () => {
+    it('sets status to error when fake server has no active session', async () => {
       const user = userEvent.setup();
-      const { summoner } = await renderWithChannel(<AuthProbe />);
+      // `skipInit: true` → renderWithChannel does not initialize a channel,
+      // so the real fake-server auth handler returns { ok: false, error: 'No active session' }.
+      await renderWithChannel(<AuthProbe />, { skipInit: true });
 
-      // Intercept auth:login to return failure (no alive channel in fake server = error path)
-      const origEmit = summoner.socket.emit.bind(summoner.socket);
-      // @ts-expect-error — intercept FakeSocket.emit
-      summoner.socket.emit = (event: string, ...args: unknown[]) => {
-        if (event === 'auth:login') {
-          const cb = args[args.length - 1];
-          if (typeof cb === 'function') cb({ ok: false, error: 'No active session' });
-          return summoner.socket;
-        }
-        return origEmit(event, ...args);
-      };
+      await user.click(screen.getByText('login'));
 
-      await act(async () => {
-        await user.click(screen.getByText('login'));
-        await new Promise<void>((r) => setTimeout(r, 50));
+      await waitFor(() => {
+        expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
       });
-
-      expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
-      expect(screen.getByTestId('auth-error')).toHaveTextContent('No active session');
+      expect(screen.getByTestId('auth-error')).toHaveTextContent(/no active session/i);
     });
   });
 
   describe('auth:oauth_code', () => {
-    it('sets status to success when server returns { ok: true }', async () => {
+    it('sets status to success via natural fake-server flow', async () => {
       const user = userEvent.setup();
-      const { summoner } = await renderWithChannel(<AuthProbe />);
+      // Default fake-server handles auth:oauth_code -> CLI control requests -> ok({})
+      await renderWithChannel(<AuthProbe />);
 
-      const origEmit = summoner.socket.emit.bind(summoner.socket);
-      // @ts-expect-error — intercept FakeSocket.emit
-      summoner.socket.emit = (event: string, ...args: unknown[]) => {
-        if (event === 'auth:oauth_code') {
-          const cb = args[args.length - 1];
-          if (typeof cb === 'function') cb({ ok: true });
-          return summoner.socket;
-        }
-        return origEmit(event, ...args);
-      };
+      await user.click(screen.getByText('submit-oauth'));
 
-      await act(async () => {
-        await user.click(screen.getByText('submit-oauth'));
-        await new Promise<void>((r) => setTimeout(r, 50));
+      await waitFor(() => {
+        expect(screen.getByTestId('auth-status')).toHaveTextContent('success');
       });
-
-      expect(screen.getByTestId('auth-status')).toHaveTextContent('success');
     });
 
     it('sets status to error when server returns { ok: false }', async () => {
+      // NOTE: `auth:oauth_code` failure can't be driven via the fake server —
+      // `FakeClaude.onControlRequest` only supports success responses. Until
+      // the summoner harness exposes an error-response API, override the
+      // socket.emit ack directly to exercise the client's SessionContext
+      // error-handling path.
       const user = userEvent.setup();
       const { summoner } = await renderWithChannel(<AuthProbe />);
 
       const origEmit = summoner.socket.emit.bind(summoner.socket);
-      // @ts-expect-error — intercept FakeSocket.emit
+      // @ts-expect-error — intercept FakeSocket.emit (harness limitation)
       summoner.socket.emit = (event: string, ...args: unknown[]) => {
         if (event === 'auth:oauth_code') {
           const cb = args[args.length - 1];
@@ -87,12 +70,11 @@ describe('SessionContext — auth callbacks (FakeSummoner)', () => {
         return origEmit(event, ...args);
       };
 
-      await act(async () => {
-        await user.click(screen.getByText('submit-oauth'));
-        await new Promise<void>((r) => setTimeout(r, 50));
-      });
+      await user.click(screen.getByText('submit-oauth'));
 
-      expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
+      await waitFor(() => {
+        expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
+      });
       expect(screen.getByTestId('auth-error')).toHaveTextContent('OAuth failed');
     });
   });

@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { extractNewContent, isDiff, parseDiffFileName } from '../../utils/diff';
+import { extractNewContent } from '../../utils/diff';
 import { DiffViewer } from '../DiffViewer';
 
+// Pure diff parsing (isDiff / parseDiffFileName / extractNewContent etc.) is
+// covered in src/utils/__tests__/diff.test.ts. This file covers DiffViewer UI.
 const sampleDiff = [
   '--- a/file.txt',
   '+++ b/file.txt',
@@ -12,27 +14,6 @@ const sampleDiff = [
   '+new line',
   ' same line',
 ].join('\n');
-
-describe('isDiff', () => {
-  it('detects unified diff format', () => {
-    expect(isDiff(sampleDiff)).toBe(true);
-    expect(isDiff('plain text')).toBe(false);
-  });
-
-  it('returns false for diff without @@ hunks', () => {
-    expect(isDiff('--- a/file\n+++ b/file\n')).toBe(false);
-  });
-});
-
-describe('parseDiffFileName', () => {
-  it('extracts filename from b/ prefix', () => {
-    expect(parseDiffFileName(sampleDiff)).toBe('file.txt');
-  });
-
-  it('returns null for content without filename', () => {
-    expect(parseDiffFileName('@@ -1,3 +1,3 @@\n-old\n+new')).toBeNull();
-  });
-});
 
 function renderDiff(overrides: Partial<Parameters<typeof DiffViewer>[0]> = {}) {
   return render(<DiffViewer content={sampleDiff} {...overrides} />);
