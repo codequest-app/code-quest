@@ -15,18 +15,18 @@ export function create({
     ch: Channel,
     _payload: unknown,
     _socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       if (ch.terminalLines.length === 0) {
-        cb?.({ content: null });
+        callback?.({ content: null });
         return;
       }
       const lines = ch.terminalLines.slice(-100);
-      cb?.({ content: lines.join('\n') });
+      callback?.({ content: lines.join('\n') });
     } catch (err) {
       logger.warn({ err }, 'Failed to read terminal');
-      cb?.({ content: null });
+      callback?.({ content: null });
     }
   }
 
@@ -56,21 +56,21 @@ export function create({
     _ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const { channelId, prompt, cwd } = terminalOpenClaudePayloadSchema.parse(payload);
       const baseCwd = resolveTerminalCwd(cwd, channelId);
       if (!baseCwd) {
-        cb?.(err('no cwd available for terminal:open_claude'));
+        callback?.(err('no cwd available for terminal:open_claude'));
         return;
       }
 
       const { channel, channelId: newChannelId } = await spawnTerminalChannel(baseCwd, socket);
       if (prompt) channel.sendMessage(prompt);
-      cb?.(ok({ channelId: newChannelId }));
+      callback?.(ok({ channelId: newChannelId }));
     } catch (e) {
-      cb?.(err(errMsg(e, 'Failed to open claude terminal')));
+      callback?.(err(errMsg(e, 'Failed to open claude terminal')));
     }
   }
 

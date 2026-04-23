@@ -7,6 +7,7 @@ export type {
   FilesystemService,
   ReadFileResult,
 } from './filesystem/types.ts';
+export { AlreadyRepoError, NotARepoError } from './git/errors.ts';
 export { detectWorktree, LocalGitService, validateWorktreeName } from './git/local.ts';
 export type { GitService } from './git/types.ts';
 export { ProcessRunner } from './runner.ts';

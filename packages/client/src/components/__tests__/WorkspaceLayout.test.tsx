@@ -1,5 +1,4 @@
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   type RenderWithWorkspaceResult,
@@ -39,18 +38,8 @@ describe('WorkspaceLayout', () => {
       expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
     });
 
-    it('renders ActivityBar with explorer icon', () => {
-      expect(screen.getByTitle('Projects')).toBeInTheDocument();
-    });
-
-    it('toggles sidebar when clicking ActivityBar icon', async () => {
-      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
-
-      await userEvent.click(screen.getByTitle('Projects'));
-      expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByTitle('Projects'));
-      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+    it('does NOT render ActivityBar (removed in favor of always-on sidebar + topbar Settings)', () => {
+      expect(screen.queryByTitle('Projects')).toBeNull();
     });
 
     it('sidebar shows project list by default', () => {

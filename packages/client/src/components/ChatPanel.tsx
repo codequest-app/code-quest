@@ -9,6 +9,7 @@ import {
   useChannelId,
   useChannelMessages,
 } from '../contexts/channel';
+import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
@@ -38,7 +39,8 @@ export function ChatPanel({ title }: { title?: string }) {
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelComposeActions();
   const { listSessions, renameSession, deleteSession, resume } = useSession();
-  const { setActiveProject, requestActivateChannel } = useProjectActions();
+  const { setActiveProject } = useProjectActions();
+  const { requestActivateChannel } = useNavigationActions();
   const { activeProjectCwd } = useProjectState();
   const { replaceTab } = useTabActions();
   const {

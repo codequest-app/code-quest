@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { memoryBackend, readPersistedRaw } from '../../test/memory-persist-storage';
 import { usePreferencesStore } from '../usePreferencesStore';
 
 const STORAGE_KEY = 'code-quest:preferences';
 
 describe('usePreferencesStore', () => {
   beforeEach(() => {
-    localStorage.clear();
     usePreferencesStore.setState({
       colorTheme: 'dark',
       fontSize: 'md',
@@ -28,7 +28,7 @@ describe('usePreferencesStore', () => {
   });
 
   it('migration from v2 without persisted colorTheme defaults to system', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { fontSize: 'lg' }, version: 2 }));
+    memoryBackend.setItem(STORAGE_KEY, JSON.stringify({ state: { fontSize: 'lg' }, version: 2 }));
     usePreferencesStore.persist.rehydrate();
     expect(usePreferencesStore.getState().colorTheme).toBe('system');
   });
@@ -36,7 +36,7 @@ describe('usePreferencesStore', () => {
   it('setColorTheme accepts light and persists', () => {
     usePreferencesStore.getState().setColorTheme('light');
     expect(usePreferencesStore.getState().colorTheme).toBe('light');
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    const stored = JSON.parse(readPersistedRaw(STORAGE_KEY) ?? '{}');
     expect(stored.state.colorTheme).toBe('light');
   });
 
@@ -70,14 +70,14 @@ describe('usePreferencesStore', () => {
     expect(usePreferencesStore.getState().hiddenItems).toEqual([]);
   });
 
-  it('persists axis changes to localStorage', () => {
+  it('persists axis changes via zustand persist', () => {
     usePreferencesStore.getState().setFontSize('sm');
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    const stored = JSON.parse(readPersistedRaw(STORAGE_KEY) ?? '{}');
     expect(stored.state.fontSize).toBe('sm');
   });
 
   it('migrates v2 → v3: legacy onboarding/review booleans fold into hiddenItems', () => {
-    localStorage.setItem(
+    memoryBackend.setItem(
       STORAGE_KEY,
       JSON.stringify({
         state: {
@@ -99,7 +99,7 @@ describe('usePreferencesStore', () => {
   });
 
   it('migrates v2 → v3: false booleans do not produce hiddenItems entries', () => {
-    localStorage.setItem(
+    memoryBackend.setItem(
       STORAGE_KEY,
       JSON.stringify({
         state: { isOnboardingDismissed: false, isReviewUpsellDismissed: false },
@@ -113,7 +113,7 @@ describe('usePreferencesStore', () => {
   });
 
   it('v2 migration preserves existing hiddenItems and deduplicates', () => {
-    localStorage.setItem(
+    memoryBackend.setItem(
       STORAGE_KEY,
       JSON.stringify({
         state: {

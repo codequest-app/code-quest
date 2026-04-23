@@ -2,9 +2,21 @@ import '@testing-library/jest-dom/vitest';
 import { createFakeSocket } from '@code-quest/summoner/test';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore';
+import { useMessageVisibilityStore } from '../stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { memoryBackend, memoryPersist } from './memory-persist-storage';
+
+// DI: swap each persisted store's storage adapter from localStorage to the
+// in-memory backend. Production stores know nothing about tests.
+for (const store of [useExpandedProjectsStore, useMessageVisibilityStore, usePreferencesStore]) {
+  store.persist.setOptions({ storage: memoryPersist() });
+}
 
 beforeEach(() => {
+  memoryBackend.clear();
+  useExpandedProjectsStore.setState({ expanded: [] });
+  useMessageVisibilityStore.setState({ enabledTypes: null });
   usePreferencesStore.setState({ hiddenItems: ['onboarding-overlay'] });
 });
 

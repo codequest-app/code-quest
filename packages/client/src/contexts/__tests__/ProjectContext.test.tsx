@@ -1,9 +1,10 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../test/fake-summoner';
+import { createFakeSummoner, type FakeSummoner } from '../../test/fake-summoner';
 import {
   deriveProjects,
+  type Project,
   ProjectProvider,
   useProjectActions,
   useProjectState,
@@ -11,67 +12,160 @@ import {
 import { SessionProvider } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 
-function Wrapper({ children }: { children: ReactNode }) {
-  const summoner = createFakeSummoner();
-  return (
-    <SocketProvider socket={summoner.socket}>
-      <SessionProvider>
-        <ProjectProvider>{children}</ProjectProvider>
-      </SessionProvider>
-    </SocketProvider>
-  );
+function makeWrapper(summoner: FakeSummoner) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <SocketProvider socket={summoner.socket}>
+        <SessionProvider>
+          <ProjectProvider>{children}</ProjectProvider>
+        </SessionProvider>
+      </SocketProvider>
+    );
+  };
 }
 
-describe('ProjectContext', () => {
-  it('starts with no projects and no active project', () => {
+function setupSummoner(paths: { dirs?: Array<[string, string[]]>; files?: string[] } = {}) {
+  const summoner = createFakeSummoner();
+  // Make every dir parent an explorer root so projects:add path validation passes.
+  // Tests don't care about the root boundary; they care about the test fixture
+  // paths being accepted.
+  const roots = (paths.dirs ?? []).map(([p]) => p);
+  if (roots.length > 0) summoner.filesystem().setRoots(roots);
+  for (const [parent, children] of paths.dirs ?? []) {
+    summoner.filesystem().addDirectory(parent, children);
+  }
+  for (const path of paths.files ?? []) {
+    summoner.filesystem().addFile(path, '');
+  }
+  return summoner;
+}
+
+describe('ProjectContext (server-backed)', () => {
+  it('starts with no projects after initial list response', async () => {
+    const summoner = setupSummoner();
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
-      { wrapper: Wrapper },
+      { wrapper: makeWrapper(summoner) },
     );
-    expect(result.current.state.projects).toEqual([]);
+    await waitFor(() => expect(result.current.state.projects).toEqual([]));
     expect(result.current.state.activeProjectCwd).toBeNull();
   });
 
-  it('addProject adds a project and sets it as active', () => {
+  it('addProject adds a project and sets it as active', async () => {
+    const summoner = setupSummoner({ dirs: [['/path/to', ['cc-office']]] });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
-      { wrapper: Wrapper },
+      { wrapper: makeWrapper(summoner) },
     );
 
-    act(() => {
-      result.current.actions.addProject('/path/to/cc-office');
+    await act(async () => {
+      await result.current.actions.addProject('/path/to/cc-office');
     });
 
-    expect(result.current.state.projects).toEqual([
-      { cwd: '/path/to/cc-office', name: 'cc-office' },
-    ]);
+    await waitFor(() =>
+      expect(result.current.state.projects).toEqual([
+        expect.objectContaining({ cwd: '/path/to/cc-office', name: 'cc-office' }),
+      ]),
+    );
     expect(result.current.state.activeProjectCwd).toBe('/path/to/cc-office');
   });
 
-  it('addProject does not duplicate existing project', () => {
+  it('addProject does not duplicate existing project', async () => {
+    const summoner = setupSummoner({
+      dirs: [['/path/to', ['cc-office', 'DQ']]],
+    });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
-      { wrapper: Wrapper },
+      { wrapper: makeWrapper(summoner) },
     );
 
-    act(() => {
-      result.current.actions.addProject('/path/to/cc-office');
-      result.current.actions.addProject('/path/to/DQ');
-      result.current.actions.addProject('/path/to/cc-office');
+    await act(async () => {
+      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/DQ');
+      await result.current.actions.addProject('/path/to/cc-office');
     });
 
-    expect(result.current.state.projects).toHaveLength(2);
+    await waitFor(() => expect(result.current.state.projects).toHaveLength(2));
   });
 
-  it('setActiveProject switches active project', () => {
+  it('addProject returns error response for non-existent path', async () => {
+    // Path /does is within root scope but the directory doesn't exist in fs
+    const summoner = setupSummoner({ dirs: [['/does', []]] });
+    const { result } = renderHook(() => useProjectActions(), {
+      wrapper: makeWrapper(summoner),
+    });
+
+    let res: Project | { error: string; path?: string } | undefined;
+    await act(async () => {
+      res = await result.current.addProject('/does/not/exist');
+    });
+
+    expect(res).toEqual(
+      expect.objectContaining({ error: 'path_not_found', path: '/does/not/exist' }),
+    );
+  });
+
+  it('reflects projects:added broadcasts (multi-tab consistency)', async () => {
+    const summoner = setupSummoner({ dirs: [['/path', ['shared']]] });
+    const { result } = renderHook(() => useProjectState(), {
+      wrapper: makeWrapper(summoner),
+    });
+    await waitFor(() => expect(result.current.projects).toEqual([]));
+
+    // Simulate another tab adding a project — server broadcasts projects:added.
+    act(() => {
+      summoner.claude().pushServerEvent('projects:added', {
+        id: '11111111-1111-4111-8111-111111111111',
+        path: '/path/shared',
+        name: 'shared',
+        pinned: false,
+        color: null,
+        lastOpenedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      });
+    });
+
+    await waitFor(() =>
+      expect(result.current.projects).toEqual([
+        expect.objectContaining({ cwd: '/path/shared', name: 'shared' }),
+      ]),
+    );
+  });
+
+  it('reflects projects:removed broadcasts', async () => {
+    const summoner = setupSummoner({ dirs: [['/path', ['proj']]] });
     const { result } = renderHook(
       () => ({ state: useProjectState(), actions: useProjectActions() }),
-      { wrapper: Wrapper },
+      { wrapper: makeWrapper(summoner) },
     );
 
+    await act(async () => {
+      await result.current.actions.addProject('/path/proj');
+    });
+    await waitFor(() => expect(result.current.state.projects).toHaveLength(1));
+
     act(() => {
-      result.current.actions.addProject('/path/to/cc-office');
-      result.current.actions.addProject('/path/to/DQ');
+      summoner.claude().pushServerEvent('projects:removed', {
+        id: '00000000-0000-4000-8000-000000000000',
+        path: '/path/proj',
+      });
+    });
+
+    await waitFor(() => expect(result.current.state.projects).toEqual([]));
+  });
+
+  it('setActiveProject switches active project', async () => {
+    const summoner = setupSummoner({
+      dirs: [['/path/to', ['cc-office', 'DQ']]],
+    });
+    const { result } = renderHook(
+      () => ({ state: useProjectState(), actions: useProjectActions() }),
+      { wrapper: makeWrapper(summoner) },
+    );
+
+    await act(async () => {
+      await result.current.actions.addProject('/path/to/cc-office');
+      await result.current.actions.addProject('/path/to/DQ');
     });
 
     act(() => {
@@ -81,7 +175,115 @@ describe('ProjectContext', () => {
     expect(result.current.state.activeProjectCwd).toBe('/path/to/DQ');
   });
 
-  describe('deriveProjects (groups by projectRoot)', () => {
+  describe('pinProject / renameProject / removeProject', () => {
+    it('pinProject(true) updates state to pinned', async () => {
+      const summoner = setupSummoner({ dirs: [['/p', ['a']]] });
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: makeWrapper(summoner) },
+      );
+      await act(async () => {
+        await result.current.actions.addProject('/p/a');
+      });
+      await waitFor(() => expect(result.current.state.projects).toHaveLength(1));
+      expect(result.current.state.projects[0].pinned).toBe(false);
+
+      await act(async () => {
+        await result.current.actions.pinProject('/p/a', true);
+      });
+      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(true));
+    });
+
+    it('pinProject(false) toggles back to unpinned', async () => {
+      const summoner = setupSummoner({ dirs: [['/p', ['a']]] });
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: makeWrapper(summoner) },
+      );
+      await act(async () => {
+        await result.current.actions.addProject('/p/a');
+        await result.current.actions.pinProject('/p/a', true);
+      });
+      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(true));
+
+      await act(async () => {
+        await result.current.actions.pinProject('/p/a', false);
+      });
+      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(false));
+    });
+
+    it('renameProject updates name in state', async () => {
+      const summoner = setupSummoner({ dirs: [['/p', ['a']]] });
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: makeWrapper(summoner) },
+      );
+      await act(async () => {
+        await result.current.actions.addProject('/p/a');
+      });
+
+      await act(async () => {
+        await result.current.actions.renameProject('/p/a', 'Renamed');
+      });
+      await waitFor(() => expect(result.current.state.projects[0].name).toBe('Renamed'));
+    });
+
+    it('removeProject removes from state when no active sessions', async () => {
+      const summoner = setupSummoner({ dirs: [['/p', ['a', 'b']]] });
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: makeWrapper(summoner) },
+      );
+      await act(async () => {
+        await result.current.actions.addProject('/p/a');
+        await result.current.actions.addProject('/p/b');
+      });
+      await waitFor(() => expect(result.current.state.projects).toHaveLength(2));
+
+      await act(async () => {
+        await result.current.actions.removeProject('/p/a');
+      });
+      await waitFor(() => expect(result.current.state.projects).toHaveLength(1));
+      expect(result.current.state.projects[0].cwd).toBe('/p/b');
+    });
+
+    it('pinProject returns project_not_found for unknown cwd (client-side check)', async () => {
+      const summoner = setupSummoner();
+      const { result } = renderHook(() => useProjectActions(), {
+        wrapper: makeWrapper(summoner),
+      });
+
+      let res:
+        | { cwd: string; name: string; pinned: boolean; lastOpenedAt: string }
+        | { error: string }
+        | undefined;
+      await act(async () => {
+        res = await result.current.pinProject('/unknown', true);
+      });
+      expect(res).toEqual({ error: 'project_not_found' });
+    });
+
+    it('removeProject switches active project to next when active is removed', async () => {
+      const summoner = setupSummoner({ dirs: [['/p', ['a', 'b']]] });
+      const { result } = renderHook(
+        () => ({ state: useProjectState(), actions: useProjectActions() }),
+        { wrapper: makeWrapper(summoner) },
+      );
+      await act(async () => {
+        await result.current.actions.addProject('/p/a');
+        await result.current.actions.addProject('/p/b');
+      });
+      // /p/b is the most recently added → active
+      await waitFor(() => expect(result.current.state.activeProjectCwd).toBe('/p/b'));
+
+      await act(async () => {
+        await result.current.actions.removeProject('/p/b');
+      });
+      await waitFor(() => expect(result.current.state.activeProjectCwd).toBe('/p/a'));
+    });
+  });
+
+  describe('deriveProjects (legacy helper, no longer used by provider)', () => {
     it('groups sessions with same projectRoot but different cwd under one Project', () => {
       const sessions = [
         { channelId: 'a', state: 'idle' as const, cwd: '/repo', projectRoot: '/repo' },
@@ -93,62 +295,7 @@ describe('ProjectContext', () => {
         },
       ];
       const result = deriveProjects(sessions, []);
-      expect(result).toEqual([{ cwd: '/repo', name: 'repo' }]);
-    });
-  });
-
-  describe('pendingActivateChannel', () => {
-    it('starts as null', () => {
-      const { result } = renderHook(() => useProjectState(), { wrapper: Wrapper });
-      expect(result.current.pendingActivateChannel).toBeNull();
-    });
-
-    it('requestActivateChannel sets pendingActivateChannel', () => {
-      const { result } = renderHook(
-        () => ({ state: useProjectState(), actions: useProjectActions() }),
-        { wrapper: Wrapper },
-      );
-
-      act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
-      });
-
-      expect(result.current.state.pendingActivateChannel).toEqual({
-        cwd: '/proj',
-        channelId: 'ch-1',
-      });
-    });
-
-    it('actions object keeps stable identity across state updates (TabProvider dep-array relies on this)', () => {
-      const { result, rerender } = renderHook(
-        () => ({ state: useProjectState(), actions: useProjectActions() }),
-        { wrapper: Wrapper },
-      );
-
-      const firstActions = result.current.actions;
-
-      act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
-      });
-      rerender();
-
-      expect(result.current.actions).toBe(firstActions);
-    });
-
-    it('clearPendingActivate resets to null', () => {
-      const { result } = renderHook(
-        () => ({ state: useProjectState(), actions: useProjectActions() }),
-        { wrapper: Wrapper },
-      );
-
-      act(() => {
-        result.current.actions.requestActivateChannel('/proj', 'ch-1');
-      });
-      act(() => {
-        result.current.actions.clearPendingActivate();
-      });
-
-      expect(result.current.state.pendingActivateChannel).toBeNull();
+      expect(result).toEqual([expect.objectContaining({ cwd: '/repo', name: 'repo' })]);
     });
   });
 });

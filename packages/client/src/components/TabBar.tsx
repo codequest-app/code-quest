@@ -8,7 +8,11 @@ export interface TabInfo {
   sessionId: string;
   title?: string;
   status: SessionStatus;
-  worktree?: { name: string; path: string };
+  /** Presence of `worktree` signals the tab runs inside a git worktree folder.
+   *  `branch` is preferred for the badge label; `name` is fallback. */
+  worktree?: { name: string; path: string; branch?: string };
+  /** Project basename for the scope-tag (`projectName/branch`). */
+  projectName?: string;
 }
 
 /** Group key: null for main-tree tabs, worktree name for worktree tabs.
@@ -92,12 +96,17 @@ export function TabBar({
             >
               <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
               <span className="truncate max-w-30">{tab.title || tab.sessionId.slice(0, 8)}</span>
+              {tab.worktree && tab.projectName ? (
+                <span data-testid="tab-scope-tag" className="text-[10px] text-text-subtle">
+                  {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
+                </span>
+              ) : null}
               {tab.worktree ? (
                 <span
                   data-testid="tab-worktree-badge"
                   className="text-xs text-text-muted/60 px-1 rounded bg-white/5"
                 >
-                  {tab.worktree.name}
+                  ⎇ {tab.worktree.branch ?? tab.worktree.name}
                 </span>
               ) : null}
               <button
@@ -130,7 +139,8 @@ export function TabBar({
           type="button"
           className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
           onClick={onOpenHistory}
-          title="Session History"
+          aria-label="Session history"
+          title="Session history"
         >
           ☰
         </button>

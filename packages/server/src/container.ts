@@ -13,6 +13,7 @@ import type { MysqlDatabase } from './db/mysql-client.ts';
 import * as mysqlSchema from './db/schema-mysql.ts';
 import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
+import { CompositeProjectStore } from './services/composite-project-store.ts';
 import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
@@ -21,6 +22,9 @@ import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
+import { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
+import type { ProjectStore } from './services/project-store.ts';
+import { DrizzleProjectStore } from './services/project-store.ts';
 import type { RawDeltaStore } from './services/raw-delta-store.ts';
 import { RawEventService } from './services/raw-event-service.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';
@@ -89,6 +93,10 @@ export function createContainer(options: ContainerOptions): Container {
   const sessionStore = pickOrComposite(sessionStores, (s) => new CompositeSessionStore(s));
   container.bind<SessionStore>(TYPES.SessionStore).toConstantValue(sessionStore);
 
+  const projectStores = buildProjectStores(options.storeConfig, db);
+  const projectStore = pickOrComposite(projectStores, (s) => new CompositeProjectStore(s));
+  container.bind<ProjectStore>(TYPES.ProjectStore).toConstantValue(projectStore);
+
   const settingsStore = pickOrComposite(settingsStores, (s) => new CompositeSettingsStore(s));
   container.bind<SettingsStore>(TYPES.SettingsStore).toConstantValue(settingsStore);
 
@@ -121,6 +129,13 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
   container.bind<SessionHistory>(TYPES.SessionHistory).toConstantValue(sessionHistory);
   container.bind<ChannelEmitter>(TYPES.ChannelEventRouter).toConstantValue(emitter);
+
+  // ProjectAutoUpserter — bridges session lifecycle → project entity (Direction C).
+  // Constructed after emitter so it can broadcast updates.
+  const projectAutoUpserter = new ProjectAutoUpserter(projectStore, emitter);
+  container
+    .bind<ProjectAutoUpserter>(TYPES.ProjectAutoUpserter)
+    .toConstantValue(projectAutoUpserter);
 
   container.bind<UsageTracker>(TYPES.UsageTracker).to(UsageTracker).inSingletonScope();
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
@@ -176,4 +191,23 @@ function buildStores(
   }
 
   return { eventStores, deltaStores, sessionStores, settingsStores };
+}
+
+function buildProjectStores(
+  config: StoreConfig | undefined,
+  fallbackDb: DrizzleDatabase,
+): ProjectStore[] {
+  const stores: ProjectStore[] = [];
+  if (config?.sqliteDatabase) {
+    stores.push(new DrizzleProjectStore(config.sqliteDatabase, sqliteSchema.projects));
+  }
+  if (config?.mysqlDatabase) {
+    stores.push(new DrizzleProjectStore(config.mysqlDatabase, mysqlSchema.projects));
+  }
+  // Fallback: use the in-memory sqlite handle that container falls back to
+  // when no storeConfig is provided (matches the same default for all stores).
+  if (stores.length === 0) {
+    stores.push(new DrizzleProjectStore(fallbackDb, sqliteSchema.projects));
+  }
+  return stores;
 }

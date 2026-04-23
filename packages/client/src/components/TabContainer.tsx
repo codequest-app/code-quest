@@ -3,7 +3,10 @@ import { memo } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useSession } from '../contexts/SessionContext';
 import { useTabActions, useTabState } from '../contexts/TabContext';
+import { useWorktreeState } from '../contexts/WorktreeContext';
+import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
+import { findWorktreeByCwd } from '../utils/findWorktreeByCwd';
 import { ChatPanel } from './ChatPanel';
 import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
@@ -31,10 +34,11 @@ const TabContent = memo(function TabContent({ channelId, cwd, title }: TabConten
   );
 });
 
-export const EditorArea = memo(function EditorArea() {
+export const TabContainer = memo(function TabContainer() {
   const { activeTabId, tabs } = useTabState();
   const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();
+  const { listing } = useWorktreeState();
 
   const handleCloseTab = (id: string) => {
     closeSession(id);
@@ -42,11 +46,18 @@ export const EditorArea = memo(function EditorArea() {
   };
 
   const tabEntries = Object.entries(tabs);
-  const openTabs = tabEntries.map(([id, meta]) => ({
-    sessionId: id,
-    title: meta.title,
-    status: meta.tabStatus,
-  }));
+  const openTabs = tabEntries.map(([id, meta]) => {
+    const found = findWorktreeByCwd(listing, meta.cwd);
+    return {
+      sessionId: id,
+      title: meta.title,
+      status: meta.tabStatus,
+      worktree: found
+        ? { name: found.worktree.name, path: found.worktree.path, branch: found.worktree.branch }
+        : undefined,
+      projectName: found ? basename(found.projectCwd) : undefined,
+    };
+  });
 
   if (tabEntries.length === 0) {
     return (
@@ -60,7 +71,7 @@ export const EditorArea = memo(function EditorArea() {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-w-0" data-testid="editor-area">
+    <div className="flex flex-col flex-1 min-w-0" data-testid="tab-container-root">
       <TabBar
         tabs={openTabs}
         activeTabId={activeTabId}

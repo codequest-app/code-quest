@@ -2,7 +2,9 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
+import { AppReadinessProvider } from '../contexts/AppReadinessContext';
 import { ChannelProvider } from '../contexts/channel/ChannelContext';
+import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -45,24 +47,28 @@ export async function renderWithChannel(
   const result = render(ui, {
     wrapper: ({ children }) => (
       <SocketProvider socket={summoner.socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <TabProvider cwd={options.cwd}>
-                <ChannelProvider
-                  channelId={channelId}
-                  // skipInit tests want ChannelProvider to drive the launch.
-                  // Otherwise claude.initialize below handles it; setting cwd
-                  // here would fire a duplicate session:launch and conflict.
-                  cwd={options.skipInit ? options.cwd : undefined}
-                  onNewChannel={options.onNewChannel}
-                >
-                  {children}
-                </ChannelProvider>
-              </TabProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
+        <AppReadinessProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <NavigationProvider>
+                  <TabProvider cwd={options.cwd}>
+                    <ChannelProvider
+                      channelId={channelId}
+                      // skipInit tests want ChannelProvider to drive the launch.
+                      // Otherwise claude.initialize below handles it; setting cwd
+                      // here would fire a duplicate session:launch and conflict.
+                      cwd={options.skipInit ? options.cwd : undefined}
+                      onNewChannel={options.onNewChannel}
+                    >
+                      {children}
+                    </ChannelProvider>
+                  </TabProvider>
+                </NavigationProvider>
+              </ProjectProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppReadinessProvider>
       </SocketProvider>
     ),
   });

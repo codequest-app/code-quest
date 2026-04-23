@@ -212,6 +212,55 @@ expect(responses.map((r) => r.response.request_id)).toContain('req-1');
 
 **負面斷言**（「不應該送」）用 `claude.received(...).length` before/after 比較。
 
+## 多層驗證 — 優先策略
+
+當 user flow 同時涉及 **socket + DB + UI**（典型 `add / remove / rename / fork / close`），**預設四層全驗**：
+
+| 層 | API | 抓的 bug |
+|---|---|---|
+| ① UI | `screen.getByText` / `queryByText` | wire 沒接 |
+| ② Server 廣播 | `summoner.claude().events('event:name')` | handler 沒跑 / payload schema 錯 |
+| ③ Store / DB | `container.get(TYPES.ProjectStore).getByPath(...)` | store / fan-out / transaction |
+| ④ Client state | state probe / queryByText 反射 | 訂閱沒接、setState 漏 |
+
+**不要只驗 UI**。FakeSummoner 本來就給你真 pipeline，每層都查得到 → 多驗一層幾乎免費。
+
+完整範例 + 反向驗證（reject 路徑）見 `references/fake-patterns.md` 的 **Pattern 3.5: 多層驗證**。
+
+### 不適用情境
+
+| 情境 | 跳過哪層 |
+|---|---|
+| 純 UI primitive（Button / Dialog） | ②③ |
+| 非 socket 事件流 | ② |
+| 不寫 DB 的 action（純 UI state） | ③ |
+
+### 跟「callback spy」反 pattern 的關係
+
+`vi.fn()` callback 對純 UI primitive 還是 OK（`onClose`/`onSelect`），但 **socket-涉入的 action 不要只驗 callback 被呼叫** — 用上面四層替代。
+
+## 模擬 server 主動推送 — `claude.pushServerEvent`
+
+當測「server 自己 broadcast」（例如另一個 tab 的 action 觸發 broadcast）：
+
+```ts
+// ✅ 用 claude.pushServerEvent — 高層 API，封裝 serverSocket 細節
+act(() => {
+  summoner.claude().pushServerEvent('projects:added', {
+    id: '...', path: '/x', name: 'x', pinned: false, color: null,
+    lastOpenedAt: '...', createdAt: '...',
+  });
+});
+await waitFor(() => expect(state.projects).toHaveLength(1));
+
+// ❌ 不要直接戳 serverSocket — 破抽象、容易跟 FakeSocket 內部 coupling
+summoner.socket.serverSocket.emit('projects:added', payload);
+```
+
+適用情境：`projects:added/updated/removed`、`notification:show`、`session:states`、其他 server-broadcast 類事件。
+
+如果是測「自己 client 觸發的 server 廣播」，優先用真 pipeline（`actions.addProject(cwd)` → server handler → 自動 broadcast）；`pushServerEvent` 留給「另一個 tab / system event」場景。
+
 ## 慣例
 
 | 情境 | 採用 |

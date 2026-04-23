@@ -5,6 +5,7 @@
 
 import type { EffectiveColorTheme } from '@code-quest/shared';
 import { useLayoutEffect, useRef } from 'react';
+import { AppReadinessProvider } from '../contexts/AppReadinessContext';
 import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext';
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
@@ -13,6 +14,7 @@ import { ChannelIdProvider } from '../contexts/channel/ChannelIdContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
 import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext';
 import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext';
+import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -40,19 +42,25 @@ export function withStoryApp(options?: { className?: string }) {
     const socket = createSocket();
     return (
       <SocketProvider socket={socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <WorktreeProvider>
-                <TabProvider>
-                  <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
-                    <Story />
-                  </div>
-                </TabProvider>
-              </WorktreeProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
+        <AppReadinessProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <NavigationProvider>
+                  <WorktreeProvider>
+                    <TabProvider>
+                      <div
+                        className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}
+                      >
+                        <Story />
+                      </div>
+                    </TabProvider>
+                  </WorktreeProvider>
+                </NavigationProvider>
+              </ProjectProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppReadinessProvider>
       </SocketProvider>
     );
   };
@@ -64,21 +72,27 @@ export function withStoryChannel(options?: StoryChannelOptions) {
     const socket = createSocket();
     return (
       <SocketProvider socket={socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <WorktreeProvider>
-                <TabProvider>
-                  <StoryProviders config={options?.config} messages={options?.messages}>
-                    <div className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}>
-                      <Story />
-                    </div>
-                  </StoryProviders>
-                </TabProvider>
-              </WorktreeProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
+        <AppReadinessProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <NavigationProvider>
+                  <WorktreeProvider>
+                    <TabProvider>
+                      <StoryProviders config={options?.config} messages={options?.messages}>
+                        <div
+                          className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}
+                        >
+                          <Story />
+                        </div>
+                      </StoryProviders>
+                    </TabProvider>
+                  </WorktreeProvider>
+                </NavigationProvider>
+              </ProjectProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppReadinessProvider>
       </SocketProvider>
     );
   };
@@ -132,7 +146,9 @@ function ThemePresetWrapper({
 export function withProject(Story: () => React.ReactNode) {
   return (
     <ProjectProvider>
-      <Story />
+      <NavigationProvider>
+        <Story />
+      </NavigationProvider>
     </ProjectProvider>
   );
 }

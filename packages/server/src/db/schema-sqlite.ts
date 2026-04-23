@@ -1,5 +1,6 @@
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type {
+  ProjectColumnName,
   RawDeltaColumnName,
   RawEventColumnName,
   SessionColumnName,
@@ -76,6 +77,23 @@ export const settings = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.provider, table.key] })],
 );
+
+export const projects = sqliteTable(
+  'projects',
+  {
+    id: text('id').primaryKey(),
+    path: text('path').notNull().unique(),
+    name: text('name').notNull(),
+    pinned: integer('pinned', { mode: 'boolean' }).notNull().default(false),
+    color: text('color'),
+    lastOpenedAt: text('last_opened_at').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [index('idx_projects_pinned_last_opened').on(table.pinned, table.lastOpenedAt)],
+);
+type _AssertProjectCols = keyof typeof projects._.columns extends ProjectColumnName ? true : never;
+const _projectCheck: _AssertProjectCols = true;
+void _projectCheck;
 
 const _sessionCheck: _AssertSessionCols = true;
 const _rawEventCheck: _AssertRawEventCols = true;

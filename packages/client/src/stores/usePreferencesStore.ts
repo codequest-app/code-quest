@@ -8,6 +8,7 @@ import {
 } from '@code-quest/shared';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { localStoragePersist } from './persistStorage';
 
 export type { ColorTheme, Density, FontSize };
 
@@ -64,6 +65,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     }),
     {
       name: 'code-quest:preferences',
+      storage: localStoragePersist(),
       version: 3,
       migrate: (persisted: unknown, fromVersion: number) => {
         const v2 = fromVersion < 3 ? migrateV2ToV3((persisted ?? {}) as V2Shape) : persisted;

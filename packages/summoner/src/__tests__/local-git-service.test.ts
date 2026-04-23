@@ -135,7 +135,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
 
     it('returns main repo path (not worktree path) when called from a worktree', async () => {
       // Create a worktree, then verify getProjectRoot from inside it returns the main repo
-      const wt = await service.createWorktree(tmpDir, 'project-root-wt');
+      const wt = await service.createWorktree(tmpDir, { name: 'project-root-wt' });
       try {
         const root = await service.getProjectRoot(wt.path);
         expect(root).toBe(tmpDir);
@@ -160,7 +160,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
 
   describe('worktree', () => {
     it('roundtrip: create + list + delete', async () => {
-      const wt = await service.createWorktree(tmpDir, 'roundtrip-wt');
+      const wt = await service.createWorktree(tmpDir, { name: 'roundtrip-wt' });
       expect(wt.name).toBe('roundtrip-wt');
       expect(wt.branch).toBe('worktree-roundtrip-wt');
 
@@ -173,7 +173,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
     });
 
     it('createWorktree rejects invalid name', async () => {
-      await expect(service.createWorktree(tmpDir, '../bad')).rejects.toThrow(
+      await expect(service.createWorktree(tmpDir, { name: '../bad' })).rejects.toThrow(
         /Invalid worktree name/,
       );
     });

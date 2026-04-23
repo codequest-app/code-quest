@@ -5,6 +5,8 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
+import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -106,15 +108,19 @@ export async function renderWithWorkspace(
 
   render(
     <SocketProvider socket={summoner.socket}>
-      <SessionProvider>
-        <PluginProvider>
-          <ProjectProvider>
-            <WorktreeProvider>
-              <WorkspaceLayout />
-            </WorktreeProvider>
-          </ProjectProvider>
-        </PluginProvider>
-      </SessionProvider>
+      <AppReadinessProvider>
+        <SessionProvider>
+          <PluginProvider>
+            <ProjectProvider>
+              <NavigationProvider>
+                <WorktreeProvider>
+                  <WorkspaceLayout />
+                </WorktreeProvider>
+              </NavigationProvider>
+            </ProjectProvider>
+          </PluginProvider>
+        </SessionProvider>
+      </AppReadinessProvider>
     </SocketProvider>,
   );
 

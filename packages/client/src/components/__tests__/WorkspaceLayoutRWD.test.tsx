@@ -1,51 +1,10 @@
 import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupMatchMedia } from '../../test/fake-match-media';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
-type MediaQueryListener = (e: MediaQueryListEvent) => void;
-
-function mockMatchMedia(width: number) {
-  let currentWidth = width;
-  const listeners = new Map<string, Set<MediaQueryListener>>();
-
-  const queryMatches = (query: string, w: number) => {
-    if (query === '(min-width: 1024px)') return w >= 1024;
-    if (query === '(min-width: 768px)') return w >= 768;
-    return false;
-  };
-
-  window.matchMedia = vi.fn(
-    (query: string) =>
-      ({
-        get matches() {
-          return queryMatches(query, currentWidth);
-        },
-        media: query,
-        addEventListener: (_: string, fn: MediaQueryListener) => {
-          if (!listeners.has(query)) listeners.set(query, new Set());
-          listeners.get(query)!.add(fn);
-        },
-        removeEventListener: (_: string, fn: MediaQueryListener) => {
-          listeners.get(query)?.delete(fn);
-        },
-        dispatchEvent: () => false,
-        // Narrow stub of MediaQueryList — covers only the surface this RWD test uses.
-      }) as unknown as MediaQueryList,
-  );
-
-  return {
-    triggerChange: (newWidth: number) => {
-      currentWidth = newWidth;
-      for (const [query, fns] of listeners) {
-        const matches = queryMatches(query, newWidth);
-        for (const fn of fns) fn({ matches } as MediaQueryListEvent);
-      }
-    },
-  };
-}
-
 async function setupWithProject(width: number) {
-  mockMatchMedia(width);
+  setupMatchMedia(width);
   const result = await renderWithWorkspace();
   const project = await result.addProject();
   await project.launchSession();
@@ -55,22 +14,37 @@ async function setupWithProject(width: number) {
 afterEach(() => vi.restoreAllMocks());
 
 describe('WorkspaceLayout — Desktop (≥1024px)', () => {
-  it('shows ActivityBar', async () => {
+  it('does NOT render ActivityBar', async () => {
     await setupWithProject(1440);
-    expect(screen.getByTitle('Projects')).toBeInTheDocument();
+    expect(screen.queryByTestId('activity-bar')).toBeNull();
+    expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
-  it('shows sidebar inline (not as overlay)', async () => {
+  it('sidebar is always visible (inline, not overlay)', async () => {
     await setupWithProject(1440);
     const sidebar = screen.getByTestId('sidebar-panel');
     expect(sidebar.className).not.toContain('fixed');
   });
+
+  it('shows Settings button in topbar; click opens Settings dialog', async () => {
+    const { user } = await setupWithProject(1440);
+    const settings = screen.getByRole('button', { name: /settings/i });
+    expect(settings).toBeInTheDocument();
+    await user.click(settings);
+    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it('does NOT render a hamburger on desktop', async () => {
+    await setupWithProject(1440);
+    expect(screen.queryByRole('button', { name: /^menu$/i })).toBeNull();
+  });
 });
 
 describe('WorkspaceLayout — Tablet (768–1023px)', () => {
-  it('shows ActivityBar', async () => {
+  it('does NOT render ActivityBar', async () => {
     await setupWithProject(800);
-    expect(screen.getByTitle('Projects')).toBeInTheDocument();
+    expect(screen.queryByTestId('activity-bar')).toBeNull();
+    expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
   it('sidebar is hidden by default', async () => {
@@ -78,9 +52,9 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
     expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
   });
 
-  it('clicking ActivityBar opens sidebar as overlay drawer', async () => {
+  it('topbar hamburger opens sidebar as overlay drawer', async () => {
     const { user } = await setupWithProject(800);
-    await user.click(screen.getByTitle('Projects'));
+    await user.click(screen.getByRole('button', { name: /^menu$/i }));
     const sidebar = screen.getByTestId('sidebar-panel');
     expect(sidebar).toBeInTheDocument();
     expect(sidebar.className).toContain('fixed');
@@ -88,24 +62,31 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
 
   it('shows backdrop when drawer is open', async () => {
     const { user } = await setupWithProject(800);
-    await user.click(screen.getByTitle('Projects'));
+    await user.click(screen.getByRole('button', { name: /^menu$/i }));
     expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
   });
 
   it('clicking backdrop closes the drawer', async () => {
     const { user } = await setupWithProject(800);
-    await user.click(screen.getByTitle('Projects'));
+    await user.click(screen.getByRole('button', { name: /^menu$/i }));
     expect(screen.getByTestId('sidebar-panel')).toBeInTheDocument();
 
     await user.click(screen.getByTestId('sidebar-backdrop'));
     expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
     expect(screen.queryByTestId('sidebar-backdrop')).not.toBeInTheDocument();
   });
+
+  it('shows Settings button in topbar; click opens dialog', async () => {
+    const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /settings/i }));
+    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
+  });
 });
 
 describe('WorkspaceLayout — Mobile (<768px)', () => {
-  it('hides ActivityBar on mobile', async () => {
+  it('does NOT render ActivityBar on mobile', async () => {
     await setupWithProject(375);
+    expect(screen.queryByTestId('activity-bar')).toBeNull();
     expect(screen.queryByTitle('Projects')).not.toBeInTheDocument();
   });
 
@@ -131,6 +112,12 @@ describe('WorkspaceLayout — Mobile (<768px)', () => {
     await user.click(screen.getByRole('button', { name: 'Menu' }));
     expect(screen.getByTestId('sidebar-panel').className).toContain('fixed');
   });
+
+  it('shows Settings button in mobile topbar; click opens dialog', async () => {
+    const { user } = await setupWithProject(375);
+    await user.click(screen.getByRole('button', { name: /settings/i }));
+    expect(await screen.findByRole('dialog', { name: /settings/i })).toBeInTheDocument();
+  });
 });
 
 describe('WorkspaceLayout — RWD layout width constraints', () => {
@@ -142,13 +129,13 @@ describe('WorkspaceLayout — RWD layout width constraints', () => {
 
   it('active tab container has min-w-0 to prevent InputArea centering bug on mobile', async () => {
     await setupWithProject(375);
-    const el = screen.getByTestId('tab-container');
+    const el = screen.getByTestId('tab-container-root');
     expect(el.className).toContain('min-w-0');
   });
 
-  it('EditorArea root has min-w-0 so content does not force parent wider than viewport', async () => {
+  it('TabContainer root has min-w-0 so content does not force parent wider than viewport', async () => {
     await setupWithProject(375);
-    const el = screen.getByTestId('editor-area');
+    const el = screen.getByTestId('tab-container-root');
     expect(el.className).toContain('min-w-0');
   });
 });

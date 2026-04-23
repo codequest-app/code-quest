@@ -5,9 +5,24 @@ import { withStoryApp } from '../test/story-decorator';
 import { ProjectList } from './ProjectList';
 
 const projects: Project[] = [
-  { name: 'cc-office', cwd: '/Users/demo/cc-office' },
-  { name: 'anthropic-sdk', cwd: '/Users/demo/anthropic-sdk' },
-  { name: 'blog', cwd: '/Users/demo/blog' },
+  {
+    name: 'cc-office',
+    cwd: '/Users/demo/cc-office',
+    pinned: true,
+    lastOpenedAt: '2025-01-03T10:00:00Z',
+  },
+  {
+    name: 'anthropic-sdk',
+    cwd: '/Users/demo/anthropic-sdk',
+    pinned: false,
+    lastOpenedAt: '2025-01-02T10:00:00Z',
+  },
+  {
+    name: 'blog',
+    cwd: '/Users/demo/blog',
+    pinned: false,
+    lastOpenedAt: '2025-01-01T10:00:00Z',
+  },
 ];
 
 const meta = {

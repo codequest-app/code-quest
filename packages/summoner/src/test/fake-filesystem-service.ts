@@ -89,4 +89,40 @@ export class FakeFilesystemService implements FilesystemService {
     }
     return { content };
   }
+
+  async exists(path: string): Promise<boolean> {
+    if (this.files.has(path)) return true;
+    if (this.dirs.has(path)) return true;
+    if (this.roots.includes(path)) return true;
+    // also true if path is a child registered under any parent dirs
+    for (const [parent, children] of this.dirs) {
+      for (const child of children) {
+        if (join(parent, child) === path) return true;
+      }
+    }
+    return false;
+  }
+
+  async isDirectory(path: string): Promise<boolean> {
+    return (await this.statKind(path)) === 'directory';
+  }
+
+  async statKind(path: string): Promise<'file' | 'directory' | null> {
+    if (this.files.has(path)) return 'file';
+    if (this.dirs.has(path)) return 'directory';
+    if (this.roots.includes(path)) return 'directory';
+    for (const [parent, children] of this.dirs) {
+      for (const child of children) {
+        if (join(parent, child) === path) return 'directory';
+      }
+    }
+    return null;
+  }
+
+  isWithinExplorerRoots(path: string): boolean {
+    for (const root of this.roots) {
+      if (path === root || path.startsWith(`${root}/`)) return true;
+    }
+    return false;
+  }
 }

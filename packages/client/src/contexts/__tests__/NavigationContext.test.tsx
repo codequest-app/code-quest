@@ -1,0 +1,112 @@
+import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { describe, expect, it } from 'vitest';
+import { NavigationProvider, useNavigationActions, useNavigationState } from '../NavigationContext';
+
+function wrapper({ children }: { children: ReactNode }) {
+  return <NavigationProvider>{children}</NavigationProvider>;
+}
+
+describe('NavigationContext', () => {
+  describe('pendingActivateChannel', () => {
+    it('starts as null', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.pendingActivateChannel).toBeNull();
+    });
+
+    it('requestActivateChannel sets pendingActivateChannel', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+
+      expect(result.current.state.pendingActivateChannel).toEqual({
+        cwd: '/proj',
+        channelId: 'ch-1',
+      });
+    });
+
+    it('actions object keeps stable identity across state updates', () => {
+      const { result, rerender } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+      const firstActions = result.current.actions;
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+      rerender();
+
+      expect(result.current.actions).toBe(firstActions);
+    });
+
+    it('clearPendingActivate resets to null', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestActivateChannel('/proj', 'ch-1');
+      });
+      act(() => {
+        result.current.actions.clearPendingActivate();
+      });
+
+      expect(result.current.state.pendingActivateChannel).toBeNull();
+    });
+  });
+
+  describe('pendingOpenWorktree', () => {
+    it('requestOpenWorktree sets intent with forceNew default false', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestOpenWorktree('/proj', '/proj/.claude/worktrees/x');
+      });
+
+      expect(result.current.state.pendingOpenWorktree).toEqual({
+        projectCwd: '/proj',
+        worktreeCwd: '/proj/.claude/worktrees/x',
+        forceNew: false,
+      });
+    });
+
+    it('requestOpenWorktree with forceNew=true', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestOpenWorktree('/p', '/p/wt', true);
+      });
+
+      expect(result.current.state.pendingOpenWorktree?.forceNew).toBe(true);
+    });
+
+    it('clearPendingOpenWorktree resets to null', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.requestOpenWorktree('/p', '/p/wt');
+      });
+      act(() => {
+        result.current.actions.clearPendingOpenWorktree();
+      });
+
+      expect(result.current.state.pendingOpenWorktree).toBeNull();
+    });
+  });
+});

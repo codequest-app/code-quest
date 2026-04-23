@@ -38,7 +38,7 @@ describe('CommandPalette — All tab', () => {
     expect(screen.getByText(/raw event panel/i)).toBeInTheDocument();
   });
 
-  it('does not show Open preferences (moved to ActivityBar gear icon)', async () => {
+  it('does not show Open preferences (accessible via the topbar Settings cog)', async () => {
     await renderAll();
     expect(screen.queryByText(/open preferences/i)).not.toBeInTheDocument();
   });

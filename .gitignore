@@ -89,3 +89,4 @@ openspec/.vector-search.db
 packages/server/data/
 .vscode/
 .claude/worktrees/
+openspec/.vector-search.db*

@@ -11,6 +11,7 @@ import { ProjectProvider } from '../../ProjectContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../../TabContext';
+import { WorktreeProvider } from '../../WorktreeContext';
 
 function renderInTab(ui: ReactElement) {
   const summoner = createFakeSummoner();
@@ -34,7 +35,9 @@ describe('TabProvider', () => {
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <WorkspaceLayout />
+                <WorktreeProvider>
+                  <WorkspaceLayout />
+                </WorktreeProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
@@ -146,7 +149,7 @@ describe('TabProvider', () => {
       // After renderWithWorkspace, session:created was broadcast with cwd
       // → deriveProjects should have created a project
       // → WorkspaceLayout should render project path with TabProvider(sessions)
-      // → Tab should be visible in project's EditorArea
+      // → Tab should be visible in project's TabContainer
       expect(screen.getByPlaceholderText(/Esc to focus/i)).toBeInTheDocument();
       expect(screen.queryAllByLabelText(/^Close /).length).toBeGreaterThanOrEqual(1);
     });

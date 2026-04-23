@@ -9,7 +9,8 @@ import {
   type WorktreeInfo,
 } from '@code-quest/shared';
 import { GitResponseError, type SimpleGit, simpleGit } from 'simple-git';
-import type { GitService } from './types.ts';
+import { AlreadyRepoError, NotARepoError } from './errors.ts';
+import type { CreateWorktreeOptions, GitService } from './types.ts';
 
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
 
@@ -33,9 +34,15 @@ function parseWorktreeList(stdout: string): WorktreeInfo[] {
 
   const flush = () => {
     if (current.worktreePath) {
-      const match = WORKTREE_PATH_RE.exec(current.worktreePath);
+      const match = current.worktreePath.match(WORKTREE_PATH_RE);
       if (match) {
         worktrees.push({ name: match[1], path: current.worktreePath, branch: current.branch });
+      } else {
+        // Main worktree (or any non-managed worktree): name from branch when
+        // available, fall back to last path segment.
+        const fallback = current.worktreePath.split(/[/\\]/).filter(Boolean).pop() ?? '';
+        const name = current.branch ?? fallback;
+        worktrees.push({ name, path: current.worktreePath, branch: current.branch });
       }
     }
     current = {};
@@ -123,22 +130,94 @@ export class LocalGitService implements GitService {
     }
   }
 
-  async createWorktree(repoRoot: string, name?: string): Promise<WorktreeInfo> {
-    const worktreeName = name || this.generateWorktreeName();
+  async initRepo(cwd: string): Promise<{ branch: string }> {
+    if ((await this.getRepoRoot(cwd)) !== null) throw new AlreadyRepoError(cwd);
+    const git = this.createGit(cwd);
+    // -b main: ensure default branch is "main" regardless of git's init.defaultBranch.
+    // -c user.*: avoid commit failure when user has no global git identity configured.
+    await git.raw(['init', '-b', 'main']);
+    await git.raw([
+      '-c',
+      'user.email=cc-office@local',
+      '-c',
+      'user.name=cc-office',
+      'commit',
+      '--allow-empty',
+      '-m',
+      'Initial commit',
+    ]);
+    return { branch: 'main' };
+  }
+
+  async createWorktree(repoRoot: string, opts: CreateWorktreeOptions = {}): Promise<WorktreeInfo> {
+    const { existingBranch, newBranch, baseBranch, name, path } = opts;
+
+    // Resolve (worktreeName, branch, isNewBranch) based on mode.
+    let worktreeName: string;
+    let branch: string;
+    let createBranch: boolean;
+    if (existingBranch) {
+      worktreeName = name ?? this.branchToSlug(existingBranch);
+      branch = existingBranch;
+      createBranch = false;
+    } else if (newBranch) {
+      worktreeName = name ?? this.branchToSlug(newBranch);
+      branch = newBranch;
+      createBranch = true;
+    } else {
+      // Legacy shortcut: auto-generate `worktree-<slug>` as a brand-new branch.
+      worktreeName = name ?? this.generateWorktreeName();
+      branch = `worktree-${worktreeName}`;
+      createBranch = true;
+    }
     validateWorktreeName(worktreeName);
 
-    const worktreePath = join(repoRoot, '.claude', 'worktrees', worktreeName);
-    const branchName = `worktree-${worktreeName}`;
+    const worktreePath = path ?? join(repoRoot, '.claude', 'worktrees', worktreeName);
 
     if (await this.isExistingWorktree(worktreePath)) {
-      return { name: worktreeName, path: worktreePath, branch: branchName };
+      return { name: worktreeName, path: worktreePath, branch };
     }
 
-    await this.addWorktree(repoRoot, worktreePath, branchName);
-    return { name: worktreeName, path: worktreePath, branch: branchName };
+    if (createBranch) {
+      // Legacy path preserved: prune stale refs + nuke old branch + base the
+      // new branch on origin/<default>. Used by quick "Create Worktree…" action.
+      await this.addWorktree(repoRoot, worktreePath, branch, baseBranch);
+    } else {
+      // Checkout existing branch — no fetch, no prune, no nuke.
+      await mkdir(join(worktreePath, '..'), { recursive: true });
+      const result = await this.rawGit(this.createGit(repoRoot), [
+        'worktree',
+        'add',
+        worktreePath,
+        branch,
+      ]);
+      if (result.exitCode !== 0) {
+        throw new Error(result.stdout.trim() || 'git worktree add failed');
+      }
+    }
+    return { name: worktreeName, path: worktreePath, branch };
+  }
+
+  async listBranches(repoRoot: string): Promise<string[]> {
+    if ((await this.getRepoRoot(repoRoot)) === null) throw new NotARepoError(repoRoot);
+    const result = await this.rawGit(this.createGit(repoRoot), [
+      'branch',
+      '--list',
+      '--format=%(refname:short)',
+    ]);
+    if (result.exitCode !== 0) return [];
+    return result.stdout
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+  }
+
+  private branchToSlug(branch: string): string {
+    return branch.replace(/\//g, '-').replace(/[^a-zA-Z0-9_-]/g, '-');
   }
 
   async listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
+    if ((await this.getRepoRoot(repoRoot)) === null) throw new NotARepoError(repoRoot);
     const result = await this.rawGit(this.createGit(repoRoot), ['worktree', 'list', '--porcelain']);
     if (result.exitCode !== 0) return [];
     return parseWorktreeList(result.stdout);
@@ -232,13 +311,18 @@ export class LocalGitService implements GitService {
     repoRoot: string,
     worktreePath: string,
     branchName: string,
+    baseBranchOverride?: string,
   ): Promise<void> {
-    await mkdir(join(repoRoot, '.claude', 'worktrees'), { recursive: true });
+    await mkdir(join(worktreePath, '..'), { recursive: true });
 
     const git = this.createGit(repoRoot);
-    const defaultBranch = await this.getDefaultBranch(repoRoot);
-    const fetchResult = await this.rawGit(git, ['fetch', 'origin', defaultBranch]);
-    const base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
+    const defaultBranch = baseBranchOverride ?? (await this.getDefaultBranch(repoRoot));
+    // Only fetch when basing on the default branch; explicit base is assumed to be local.
+    let base = defaultBranch;
+    if (!baseBranchOverride) {
+      const fetchResult = await this.rawGit(git, ['fetch', 'origin', defaultBranch]);
+      base = fetchResult.exitCode === 0 ? `origin/${defaultBranch}` : 'HEAD';
+    }
 
     await this.rawGit(git, ['worktree', 'prune']);
     await this.rawGit(git, ['branch', '-D', branchName]);

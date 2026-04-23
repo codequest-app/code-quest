@@ -39,23 +39,23 @@ function createRequestHandler<T extends z.ZodObject<z.ZodRawShape>>(opts: Reques
     ch: Channel,
     payload: unknown,
     _socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): Promise<void> {
     try {
       const parsed = schema.parse(payload);
       const requestPayload = mapParsed ? mapParsed(parsed) : parsed;
       const result = await ch.sendRequest(event, requestPayload);
       if (!mapSuccess) {
-        cb?.(result);
+        callback?.(result);
         return;
       }
-      cb?.(
+      callback?.(
         result.success
           ? ok(mapSuccess(result.response))
           : err(result.error ?? failureMessage ?? errorMessage),
       );
     } catch (e) {
-      cb?.(wrapThrown(e));
+      callback?.(wrapThrown(e));
     }
   };
 }
@@ -121,13 +121,13 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     _ch: Channel | null,
     payload: unknown,
     _socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       channelIdPayloadSchema.parse(payload);
-      cb?.(ok({ response: { type: 'ask_debugger_help_response' as const } }));
+      callback?.(ok({ response: { type: 'ask_debugger_help_response' as const } }));
     } catch (e) {
-      cb?.(err(errMsg(e, 'Invalid payload')));
+      callback?.(err(errMsg(e, 'Invalid payload')));
     }
   }
 

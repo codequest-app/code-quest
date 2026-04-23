@@ -1,6 +1,7 @@
 import type { SessionSummary } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { SessionDropdown } from './SessionDropdown';
@@ -15,7 +16,8 @@ interface ResumeSessionsDropdownProps {
 
 export function ResumeSessionsDropdown({ cwd, open, onOpenChange }: ResumeSessionsDropdownProps) {
   const { listSessions, renameSession, deleteSession, resume } = useSession();
-  const { setActiveProject, requestActivateChannel } = useProjectActions();
+  const { setActiveProject } = useProjectActions();
+  const { requestActivateChannel } = useNavigationActions();
 
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(false);

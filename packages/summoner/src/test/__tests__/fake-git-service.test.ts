@@ -81,7 +81,7 @@ describe('FakeGitService', () => {
 
     it('createWorktree adds and returns worktree', async () => {
       const git = new FakeGitService();
-      const wt = await git.createWorktree('/repo', 'my-task');
+      const wt = await git.createWorktree('/repo', { name: 'my-task' });
       expect(wt.name).toBe('my-task');
       expect(wt.branch).toBe('worktree-my-task');
       expect(await git.listWorktrees('/repo')).toHaveLength(1);
@@ -99,7 +99,7 @@ describe('FakeGitService', () => {
 
     it('deleteWorktree removes worktree', async () => {
       const git = new FakeGitService();
-      await git.createWorktree('/repo', 'to-delete');
+      await git.createWorktree('/repo', { name: 'to-delete' });
       await git.deleteWorktree('/repo', 'to-delete');
       expect(await git.listWorktrees('/repo')).toHaveLength(0);
     });
@@ -115,7 +115,30 @@ describe('FakeGitService', () => {
 
       expect((await git.status('/r')).branch).toBe('main');
       expect((await git.diff('/r')).diff).toBe('');
-      expect(await git.listWorktrees('/r')).toHaveLength(0);
+      // After reset, only the default-seeded /repo is treated as a git repo.
+      expect(await git.listWorktrees('/repo')).toHaveLength(0);
     });
   });
+});
+
+// ── Contract tests (run the same suite against the real GitService too) ──
+import {
+  type ContractSetup,
+  gitServiceContract,
+} from '../../git/__tests__/git-service.contract.ts';
+
+let pathCounter = 0;
+const uniquePath = (prefix: string): string => `${prefix}-${++pathCounter}`;
+
+gitServiceContract('FakeGitService', async (): Promise<ContractSetup> => {
+  const service = new FakeGitService();
+  return {
+    service,
+    cwd: uniquePath('/non-git'),
+    makeExistingRepo: async () => {
+      const path = uniquePath('/repo');
+      await service.initRepo(path);
+      return path;
+    },
+  };
 });

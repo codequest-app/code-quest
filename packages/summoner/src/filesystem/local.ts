@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, join, normalize, relative, resolve } from 'node:path';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
@@ -117,53 +117,69 @@ export class LocalFilesystemService implements FilesystemService {
     return [...dirs].map((d) => `${d}/`);
   }
 
-  private listRootEntries(files: string[], dirs: string[]): FileResult[] {
+  /** Shared build step for listRootEntries / listDirectory: dedup by key, sort by path, cap. */
+  private collectEntries(
+    dirs: string[],
+    files: string[],
+    toDirEntry: (d: string) => { key: string; result: FileResult } | null,
+    toFileEntry: (f: string) => { key: string; result: FileResult } | null,
+  ): FileResult[] {
     const seen = new Set<string>();
     const results: FileResult[] = [];
-
     for (const d of dirs) {
-      const root = d.split('/')[0];
-      if (root && !seen.has(root)) {
-        seen.add(root);
-        results.push({ path: `${root}/`, name: root, type: 'directory' });
+      const item = toDirEntry(d);
+      if (item && !seen.has(item.key)) {
+        seen.add(item.key);
+        results.push(item.result);
       }
     }
-
     for (const f of files) {
-      if (!f.includes('/') && !seen.has(f)) {
-        seen.add(f);
-        results.push({ path: f, name: f, type: 'file' });
+      const item = toFileEntry(f);
+      if (item && !seen.has(item.key)) {
+        seen.add(item.key);
+        results.push(item.result);
       }
     }
-
     return results.sort((a, b) => a.path.localeCompare(b.path)).slice(0, MAX_RESULTS);
   }
 
+  private listRootEntries(files: string[], dirs: string[]): FileResult[] {
+    return this.collectEntries(
+      dirs,
+      files,
+      (d) => {
+        const root = d.split('/')[0];
+        return root
+          ? { key: root, result: { path: `${root}/`, name: root, type: 'directory' } }
+          : null;
+      },
+      (f) => (f.includes('/') ? null : { key: f, result: { path: f, name: f, type: 'file' } }),
+    );
+  }
+
   private listDirectory(prefix: string, files: string[], dirs: string[]): FileResult[] {
-    const seen = new Set<string>();
-    const results: FileResult[] = [];
     const prefixLower = prefix.toLowerCase();
-
-    for (const d of dirs) {
-      if (!d.toLowerCase().startsWith(prefixLower)) continue;
-      const rest = d.slice(prefix.length);
-      const segment = rest.split('/')[0];
-      if (segment && !seen.has(segment)) {
-        seen.add(segment);
-        results.push({ path: `${prefix}${segment}/`, name: segment, type: 'directory' });
-      }
-    }
-
-    for (const f of files) {
-      if (!f.toLowerCase().startsWith(prefixLower)) continue;
-      const rest = f.slice(prefix.length);
-      if (!rest.includes('/') && !seen.has(rest)) {
-        seen.add(rest);
-        results.push({ path: f, name: basename(f), type: 'file' });
-      }
-    }
-
-    return results.sort((a, b) => a.path.localeCompare(b.path)).slice(0, MAX_RESULTS);
+    return this.collectEntries(
+      dirs,
+      files,
+      (d) => {
+        if (!d.toLowerCase().startsWith(prefixLower)) return null;
+        const segment = d.slice(prefix.length).split('/')[0];
+        return segment
+          ? {
+              key: segment,
+              result: { path: `${prefix}${segment}/`, name: segment, type: 'directory' },
+            }
+          : null;
+      },
+      (f) => {
+        if (!f.toLowerCase().startsWith(prefixLower)) return null;
+        const rest = f.slice(prefix.length);
+        return rest.includes('/')
+          ? null
+          : { key: rest, result: { path: f, name: basename(f), type: 'file' } };
+      },
+    );
   }
 
   private fuzzySearch(pattern: string, files: string[], dirs: string[]): FileResult[] {
@@ -186,5 +202,38 @@ export class LocalFilesystemService implements FilesystemService {
       name: r.item.filename,
       type: r.item.isDirectory ? 'directory' : 'file',
     }));
+  }
+
+  async exists(path: string): Promise<boolean> {
+    try {
+      await stat(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async isDirectory(path: string): Promise<boolean> {
+    try {
+      const s = await stat(path);
+      return s.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
+  async statKind(path: string): Promise<'file' | 'directory' | null> {
+    try {
+      const s = await stat(path);
+      if (s.isDirectory()) return 'directory';
+      if (s.isFile()) return 'file';
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  isWithinExplorerRoots(path: string): boolean {
+    return this.validatePath(path, this.explorerRoots) !== null;
   }
 }

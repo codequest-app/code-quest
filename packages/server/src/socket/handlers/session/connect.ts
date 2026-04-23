@@ -50,12 +50,19 @@ export function create({
   channelManager,
   settingsStore,
   sessionStore,
+  projectAutoUpserter,
   sessionHistory,
   emitter,
   gitService,
 }: Pick<
   HandlerContext,
-  'channelManager' | 'settingsStore' | 'sessionStore' | 'sessionHistory' | 'emitter' | 'gitService'
+  | 'channelManager'
+  | 'settingsStore'
+  | 'sessionStore'
+  | 'projectAutoUpserter'
+  | 'sessionHistory'
+  | 'emitter'
+  | 'gitService'
 >): void {
   /** Push the session:init payload + cached models list to a single socket.
    *  Used by both launch finalization and session:join history replay. */
@@ -291,6 +298,10 @@ export function create({
           createdAt: new Date().toISOString(),
         })
         .catch((err) => logger.error({ err }, 'Failed to persist session'));
+
+      // Bridge: ensure projects entity exists + broadcast.
+      // ProjectAutoUpserter encapsulates the cross-store concern.
+      void projectAutoUpserter.onSessionCreated(projectRoot);
     }
   }
 

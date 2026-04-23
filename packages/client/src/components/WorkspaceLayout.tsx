@@ -1,23 +1,18 @@
-import { Bars3Icon, FolderOpenIcon, RectangleStackIcon } from '@heroicons/react/24/outline';
+import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
+import { useSession } from '../contexts/SessionContext';
 import { TabProvider } from '../contexts/TabContext';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
-import { ActivityBar } from './ActivityBar';
 import { AddProjectDialog } from './AddProjectDialog';
-import { EditorArea } from './EditorArea';
 import { EmptyState } from './EmptyState';
-import { ProjectList } from './ProjectList';
+import { ProjectTree } from './ProjectTree';
 import { SettingsDialog } from './SettingsDialog';
-
-const SIDEBAR_ITEMS = [
-  {
-    id: 'projects',
-    icon: <RectangleStackIcon className="w-5 h-5" />,
-    title: 'Projects',
-  },
-];
+import { TabContainer } from './TabContainer';
+import { TopScopeSwitcher } from './TopScopeSwitcher';
+import { WorkspaceTopbar } from './WorkspaceTopbar';
 
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');
@@ -30,30 +25,33 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
 const SIDEBAR_WIDTH = 260;
 
 export function WorkspaceLayout() {
-  const [activePanel, setActivePanel] = useState<string | null>('projects');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { projects, activeProjectCwd, sessions } = useProjectState();
+  const { projects, activeProjectCwd } = useProjectState();
+  const { sessions } = useSession();
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
   const isDesktop = breakpoint === 'desktop';
   const isMobile = breakpoint === 'mobile';
 
-  function handleAddProject(cwd: string) {
-    addProject(cwd);
+  async function handleAddProject(cwd: string) {
+    const res = await addProject(cwd);
+    if ('error' in res) {
+      const msg =
+        res.error === 'path_not_found'
+          ? `Path not found: ${res.path ?? cwd}`
+          : res.error === 'path_not_directory'
+            ? `Not a directory: ${res.path ?? cwd}`
+            : `Could not add project (${res.error})`;
+      toast.error(msg);
+      return;
+    }
     setDialogOpen(false);
   }
 
-  function handleActivityBarToggle(panel: string | null) {
-    if (isDesktop) {
-      setActivePanel(panel);
-    } else {
-      setDrawerOpen((open) => !open);
-    }
-  }
-
-  const sidebarVisible = isDesktop ? !!activePanel : drawerOpen;
+  // Sidebar is always visible on desktop; on tablet/mobile it's an overlay drawer.
+  const sidebarVisible = isDesktop || drawerOpen;
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -68,30 +66,19 @@ export function WorkspaceLayout() {
         />
       ) : (
         <>
-          {isMobile && (
-            <div
-              data-testid="mobile-topbar"
-              className="flex items-center h-11 px-3 border-b border-border bg-surface shrink-0"
-            >
-              <button
-                type="button"
-                aria-label="Menu"
-                onClick={() => setDrawerOpen(true)}
-                className="flex items-center justify-center w-8 h-8 rounded text-text-muted hover:text-text hover:bg-white/5"
-              >
-                <Bars3Icon className="w-5 h-5" />
-              </button>
-            </div>
-          )}
+          <WorkspaceTopbar
+            mode={isMobile ? 'mobile' : 'desktop'}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenMenu={isDesktop ? undefined : () => setDrawerOpen(true)}
+          >
+            <TopScopeSwitcher
+              projects={projects}
+              activeProjectCwd={activeProjectCwd}
+              onSelect={setActiveProject}
+              onAddProject={() => setDialogOpen(true)}
+            />
+          </WorkspaceTopbar>
           <div className="flex flex-1 overflow-hidden">
-            {!isMobile && (
-              <ActivityBar
-                items={SIDEBAR_ITEMS}
-                activePanel={isDesktop ? activePanel : drawerOpen ? 'projects' : null}
-                onToggle={handleActivityBarToggle}
-                onOpenSettings={() => setSettingsOpen(true)}
-              />
-            )}
             {sidebarVisible && (
               <>
                 {!isDesktop && (
@@ -111,10 +98,10 @@ export function WorkspaceLayout() {
                   style={{ width: SIDEBAR_WIDTH }}
                   data-testid="sidebar-panel"
                 >
-                  <ProjectList
+                  <ProjectTree
                     projects={projects}
                     activeProjectCwd={activeProjectCwd}
-                    onSelect={(cwd) => {
+                    onSelectProject={(cwd) => {
                       setActiveProject(cwd);
                       if (!isDesktop) setDrawerOpen(false);
                     }}
@@ -136,7 +123,7 @@ export function WorkspaceLayout() {
                     sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
                     cwd={project.cwd}
                   >
-                    <EditorArea />
+                    <TabContainer />
                   </TabProvider>
                 </div>
               ))}

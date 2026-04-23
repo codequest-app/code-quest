@@ -22,7 +22,39 @@ function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
 }
 
 describe('TabBar worktree grouping', () => {
-  it('renders a worktree badge for tabs with a worktree', () => {
+  it('renders a scope-tag `projectName/branch` when worktree present', () => {
+    render(
+      <TabBar
+        tabs={[
+          {
+            sessionId: 'wt',
+            title: 't',
+            status: 'idle',
+            projectName: 'cc-office',
+            worktree: { name: 'feat-x', path: '/p', branch: 'feat-x' },
+          },
+        ]}
+        activeTabId="wt"
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('tab-scope-tag')).toHaveTextContent('cc-office/feat-x');
+  });
+
+  it('no scope-tag when tab has no worktree (non-git)', () => {
+    render(
+      <TabBar
+        tabs={[{ sessionId: 't', title: 't', status: 'idle' }]}
+        activeTabId="t"
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('tab-scope-tag')).toBeNull();
+  });
+
+  it('renders a worktree badge with branch name when branch present', () => {
     render(
       <TabBar
         tabs={[
@@ -30,7 +62,11 @@ describe('TabBar worktree grouping', () => {
             sessionId: 'wt-sess',
             title: 'Feature A',
             status: 'idle',
-            worktree: { name: 'feat-a', path: '/repo/.claude/worktrees/feat-a' },
+            worktree: {
+              name: 'feat-a',
+              path: '/repo/.claude/worktrees/feat-a',
+              branch: 'feat-a',
+            },
           },
         ]}
         activeTabId="wt-sess"
@@ -38,7 +74,27 @@ describe('TabBar worktree grouping', () => {
         onCloseTab={vi.fn()}
       />,
     );
-    expect(screen.getByTestId('tab-worktree-badge')).toHaveTextContent('feat-a');
+    const badge = screen.getByTestId('tab-worktree-badge');
+    expect(badge.textContent).toBe('⎇ feat-a');
+  });
+
+  it('falls back to worktree name when branch missing', () => {
+    render(
+      <TabBar
+        tabs={[
+          {
+            sessionId: 'wt',
+            title: 't',
+            status: 'idle',
+            worktree: { name: 'only-name', path: '/p/.claude/worktrees/only-name' },
+          },
+        ]}
+        activeTabId="wt"
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('tab-worktree-badge').textContent).toBe('⎇ only-name');
   });
 
   it('renders a divider between main-tree tabs and worktree tabs', () => {

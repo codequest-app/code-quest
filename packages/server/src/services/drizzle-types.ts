@@ -11,12 +11,14 @@ interface DrizzleQueryResult extends Promise<unknown[]> {
   } & Promise<unknown[]>;
 }
 
+interface DrizzleSelectFrom extends DrizzleQueryResult {
+  where(cond: unknown): DrizzleQueryResult;
+}
+
 export interface DrizzleDb {
   insert(table: unknown): { values(v: unknown): Promise<unknown> };
   select(cols?: unknown): {
-    from(table: unknown): {
-      where(cond: unknown): DrizzleQueryResult;
-    };
+    from(table: unknown): DrizzleSelectFrom;
   };
   update(table: unknown): {
     set(values: unknown): { where(cond: unknown): Promise<unknown> };

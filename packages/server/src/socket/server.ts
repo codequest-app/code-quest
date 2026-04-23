@@ -2,6 +2,8 @@ import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/sha
 import type { FilesystemService, GitService } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { Server } from 'socket.io';
+import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';
+import type { ProjectStore } from '../services/project-store.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { SettingsStore } from '../services/settings-store.ts';
@@ -22,6 +24,7 @@ import * as mcp from './handlers/mcp.ts';
 import * as message from './handlers/message.ts';
 import * as permission from './handlers/permission.ts';
 import * as plan from './handlers/plan.ts';
+import * as projects from './handlers/projects.ts';
 import * as sessionCommand from './handlers/session/command.ts';
 import * as sessionConnect from './handlers/session/connect.ts';
 import * as sessionFork from './handlers/session/fork.ts';
@@ -38,6 +41,8 @@ export class SocketServer {
   constructor(
     @inject(TYPES.RawEventService) private rawEventService: RawEventService,
     @inject(TYPES.SessionStore) private sessionStore: SessionStore,
+    @inject(TYPES.ProjectStore) private projectStore: ProjectStore,
+    @inject(TYPES.ProjectAutoUpserter) private projectAutoUpserter: ProjectAutoUpserter,
     @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
     @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
     @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
@@ -58,6 +63,8 @@ export class SocketServer {
       emitter: em,
       channelManager: cm,
       sessionStore: this.sessionStore,
+      projectStore: this.projectStore,
+      projectAutoUpserter: this.projectAutoUpserter,
       settingsStore: this.settingsStore,
       usageTracker: this.usageTracker,
       sessionHistory: this.sessionHistory,
@@ -77,6 +84,7 @@ export class SocketServer {
     mcp.create(ctx);
     file.create(ctx);
     explorer.create(ctx);
+    projects.create(ctx);
 
     settings.create(ctx);
     git.create(ctx);

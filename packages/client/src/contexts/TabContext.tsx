@@ -1,11 +1,10 @@
 import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
-// Intentional dependency — Decision 10: ProjectContext mediates the
-// "activate this channel for cwd X" intent across the sidebar/editor split.
-// Soft-bound: TabProvider may be mounted standalone in tests, so we read
-// the contexts directly and treat absence as "no pending intent".
-import { ProjectActionsContext, ProjectStateContext } from './ProjectContext';
+// Intentional dependency — NavigationContext mediates sidebar/editor
+// intents (activate channel, open worktree). Soft-bound via direct useContext
+// so TabProvider can be mounted standalone in tests without a NavigationProvider.
+import { NavigationActionsContext, NavigationStateContext } from './NavigationContext';
 
 interface TabMeta {
   title?: string;
@@ -166,23 +165,46 @@ export function TabProvider({
     prevSessionIds.current = currentIds;
   }, [sessions]);
 
-  // Decision 10: consume pendingActivateChannel intent from ProjectContext.
+  // Consume pendingActivateChannel intent from NavigationContext.
   // Fires only when (a) the cwd matches our own AND (b) the channel is
   // already in our tabs. Otherwise we wait — the sessions-prop effect above
   // may add the channel later, and this effect will re-run via the tabs dep.
   // Dep array MUST include both pendingActivateChannel AND state.tabs,
   // otherwise a pending intent that lands before auto-addTab is silently lost.
-  const projectState = useContext(ProjectStateContext);
-  const projectActions = useContext(ProjectActionsContext);
-  const pendingActivateChannel = projectState?.pendingActivateChannel ?? null;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab is a local closure that only calls setState; projectActions identity is preserved by ProjectProvider's useState initializer (see ProjectContext.tsx)
+  const navState = useContext(NavigationStateContext);
+  const navActions = useContext(NavigationActionsContext);
+  const pendingActivateChannel = navState?.pendingActivateChannel ?? null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setActiveTab is a local closure that only calls setState; navActions identity is preserved by NavigationProvider's useState initializer
   useEffect(() => {
-    if (!pendingActivateChannel || !projectActions) return;
+    if (!pendingActivateChannel || !navActions) return;
     if (pendingActivateChannel.cwd !== cwd) return;
     if (!(pendingActivateChannel.channelId in state.tabs)) return;
     actions.setActiveTab(pendingActivateChannel.channelId);
-    projectActions.clearPendingActivate();
+    navActions.clearPendingActivate();
   }, [pendingActivateChannel, state.tabs, cwd]);
+
+  // Consume pendingOpenWorktree intent — sidebar clicked a worktree row.
+  // Fires when projectCwd matches our own; finds an existing tab with
+  // matching cwd and switches, else creates a new tab on that worktree.
+  const pendingOpenWorktree = navState?.pendingOpenWorktree ?? null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: same reasoning as pendingActivateChannel effect — actions identity is stable
+  useEffect(() => {
+    if (!pendingOpenWorktree || !navActions) return;
+    if (pendingOpenWorktree.projectCwd !== cwd) return;
+    const existingId = pendingOpenWorktree.forceNew
+      ? undefined
+      : Object.entries(state.tabs).find(
+          ([, meta]) => meta.cwd === pendingOpenWorktree.worktreeCwd,
+        )?.[0];
+    if (existingId) {
+      actions.setActiveTab(existingId);
+    } else {
+      // Mockup's openWt: when no matching tab exists, create one (open-or-switch).
+      // Duplicate-tab creation stays behind ⋯ menu "Open in new chat" (forceNew=true).
+      actions.createNewTab({ cwd: pendingOpenWorktree.worktreeCwd });
+    }
+    navActions.clearPendingOpenWorktree();
+  }, [pendingOpenWorktree, state.tabs, cwd]);
 
   return (
     <TabStateContext.Provider value={state}>

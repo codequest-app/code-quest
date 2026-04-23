@@ -3,17 +3,17 @@
 ### 行為
 
 **Desktop（≥1024px）**
-- 現有三欄版面不變：ActivityBar（40px）+ Sidebar（260px）+ EditorArea（flex-1）
+- 現有三欄版面不變：ActivityBar（40px）+ Sidebar（260px）+ TabContainer（flex-1）
 
 **Tablet（768–1023px）**
 - ActivityBar 顯示
 - Sidebar 預設隱藏，點 ActivityBar icon 展開為 overlay drawer（從左側 slide in，有 backdrop）
-- EditorArea 佔滿 ActivityBar 以外的全部寬度
+- TabContainer 佔滿 ActivityBar 以外的全部寬度
 
 **Mobile（< 768px）**
 - ActivityBar 隱藏
 - Sidebar 隱藏（由 MobileNav drawer 取代）
-- EditorArea 全寬
+- TabContainer 全寬
 - MobileNav 固定在底部（h-14，56px）
 - ChatPanel 的 ChatInputArea absolute bottom 需預留 MobileNav 高度（bottom-[calc(1rem+56px)]）
 

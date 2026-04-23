@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   int,
   mediumtext,
@@ -8,6 +9,7 @@ import {
   varchar,
 } from 'drizzle-orm/mysql-core';
 import type {
+  ProjectColumnName,
   RawDeltaColumnName,
   RawEventColumnName,
   SessionColumnName,
@@ -85,6 +87,20 @@ export const settings = mysqlTable(
   (table) => [primaryKey({ columns: [table.provider, table.key] })],
 );
 
+export const projects = mysqlTable(
+  'projects',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    path: varchar('path', { length: 768 }).notNull().unique(),
+    name: varchar('name', { length: 255 }).notNull(),
+    pinned: boolean('pinned').notNull().default(false),
+    color: varchar('color', { length: 16 }),
+    lastOpenedAt: varchar('last_opened_at', { length: 30 }).notNull(),
+    createdAt: varchar('created_at', { length: 30 }).notNull(),
+  },
+  (table) => [index('idx_projects_pinned_last_opened').on(table.pinned, table.lastOpenedAt)],
+);
+
 const _sessionCheck: _AssertSessionCols = true;
 const _rawEventCheck: _AssertRawEventCols = true;
 const _rawDeltaCheck: _AssertRawDeltaCols = true;
@@ -92,7 +108,10 @@ type _AssertSettingsCols = keyof typeof settings._.columns extends SettingsColum
   ? true
   : never;
 const _settingsCheck: _AssertSettingsCols = true;
+type _AssertProjectCols = keyof typeof projects._.columns extends ProjectColumnName ? true : never;
+const _projectCheck: _AssertProjectCols = true;
 void _sessionCheck;
 void _rawEventCheck;
 void _rawDeltaCheck;
 void _settingsCheck;
+void _projectCheck;

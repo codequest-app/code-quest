@@ -1,28 +1,57 @@
-import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import {
+  EVENTS,
+  isRecord,
+  type ProjectsRemovedEvent,
+  type Project as ServerProject,
+  type SessionStateSummary,
+  sessionBroadcastStateSchema,
+} from '@code-quest/shared';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { basename } from '../utils/basename';
-import { useSession } from './SessionContext';
+import { useSocket } from './SocketContext';
 
 export interface Project {
   cwd: string;
   name: string;
+  pinned: boolean;
+  lastOpenedAt: string;
+}
+
+/** Adapter: server `Project` (path + metadata) → UI `Project` (cwd + name + ...).
+ *  Maps server-side `path` to UI-side `cwd`; passes through metadata fields. */
+function toUiProject(p: ServerProject): Project {
+  return {
+    cwd: p.path,
+    name: p.name,
+    pinned: p.pinned,
+    lastOpenedAt: p.lastOpenedAt,
+  };
 }
 
 interface ProjectState {
   projects: Project[];
   activeProjectCwd: string | null;
-  sessions: SessionStateSummary[];
-  /** Server capabilities from app:init. Consumed by WorktreeProvider etc. */
-  capabilities: { worktree: boolean };
-  /** When set, a TabProvider whose cwd matches will activate the channelId once it appears in tabs. */
-  pendingActivateChannel: { cwd: string; channelId: string } | null;
 }
 
 interface ProjectActions {
-  addProject: (cwd: string) => void;
+  /**
+   * Adds project via server. Returns project on success or
+   * `{ error: 'path_not_found' | 'path_not_directory' | ... }`.
+   * Becomes the active project on success.
+   */
+  addProject: (cwd: string) => Promise<Project | { error: string; path?: string }>;
   setActiveProject: (cwd: string) => void;
-  requestActivateChannel: (cwd: string, channelId: string) => void;
-  clearPendingActivate: () => void;
+
+  /** Toggle pinned state via server. */
+  pinProject: (cwd: string, pinned: boolean) => Promise<ProjectMutationResult>;
+  /** Update display name via server. */
+  renameProject: (cwd: string, name: string) => Promise<ProjectMutationResult>;
+  /**
+   * Remove project via server. Server rejects when active sessions exist
+   * for the path; resolves to `{ error: 'project_has_active_sessions',
+   * activeSessionCount }` in that case.
+   */
+  removeProject: (cwd: string) => Promise<ProjectMutationResult>;
 }
 
 export const ProjectStateContext = createContext<ProjectState | null>(null);
@@ -40,15 +69,85 @@ export function useProjectActions(): ProjectActions {
   return ctx;
 }
 
-function cwdToProject(cwd: string): Project {
-  return { cwd, name: basename(cwd) };
-}
-
 const TERMINAL_STATES = new Set<string>(
   sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
 );
 
-/** Project identity = projectRoot (server guarantees non-null: git root or cwd fallback). */
+type Socket = ReturnType<typeof useSocket>['socket'];
+
+/** Resolve (socket, target) for a cwd, returning the pre-flight error when either fails. */
+function resolveTarget(
+  socket: Socket | null,
+  knownProjects: ServerProject[],
+  cwd: string,
+): { socket: Socket; target: ServerProject } | { error: 'socket_not_ready' | 'project_not_found' } {
+  if (!socket) return { error: 'socket_not_ready' };
+  const target = knownProjects.find((p) => p.path === cwd);
+  if (!target) return { error: 'project_not_found' };
+  return { socket, target };
+}
+
+function logOnError(action: string, res: unknown): void {
+  if (isRecord(res) && 'error' in res && res.error) {
+    console.warn(`[ProjectContext] ${action} failed:`, res);
+  }
+}
+
+function mutateProject(
+  socket: Socket | null,
+  knownProjects: ServerProject[],
+  cwd: string,
+  patch: { name?: string; pinned?: boolean; color?: string | null },
+): Promise<ProjectMutationResult> {
+  return new Promise((resolve) => {
+    const pre = resolveTarget(socket, knownProjects, cwd);
+    if ('error' in pre) {
+      logOnError('pinProject/renameProject', pre);
+      resolve(pre);
+      return;
+    }
+    pre.socket.emit(EVENTS.projects.update, { id: pre.target.id, patch }, (res) => {
+      logOnError('projects:update', res);
+      resolve('error' in res ? res : toUiProject(res));
+    });
+  });
+}
+
+function removeProjectImpl(
+  socket: Socket | null,
+  knownProjects: ServerProject[],
+  cwd: string,
+): Promise<ProjectMutationResult> {
+  return new Promise((resolve) => {
+    const pre = resolveTarget(socket, knownProjects, cwd);
+    if ('error' in pre) {
+      logOnError('removeProject', pre);
+      resolve(pre);
+      return;
+    }
+    pre.socket.emit(EVENTS.projects.remove, { id: pre.target.id }, (res) => {
+      logOnError('projects:remove', res);
+      // server returns { ok: true }; resolve with the removed project shape
+      resolve('error' in res ? res : toUiProject(pre.target));
+    });
+  });
+}
+
+type ProjectMutationResult = Project | { error: string; activeSessionCount?: number };
+
+function pickNextActive(remaining: ServerProject[]): string | null {
+  if (remaining.length === 0) return null;
+  // pinned first, then by lastOpenedAt desc
+  const sorted = [...remaining].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;
+  });
+  return sorted[0]?.path ?? null;
+}
+
+/** Pure helper that groups sessions by `projectRoot` into Project objects.
+ *  Provider no longer uses this internally (server is the source of truth) but
+ *  it remains exported for any consumer that wants to derive ad-hoc. */
 export function deriveProjects(sessions: SessionStateSummary[], prev: Project[]): Project[] {
   const keys = new Set<string>();
   for (const s of sessions) {
@@ -56,48 +155,105 @@ export function deriveProjects(sessions: SessionStateSummary[], prev: Project[])
   }
   if (keys.size === 0) return prev;
   const existing = new Set(prev.map((p) => p.cwd));
-  const newProjects = [...keys].filter((k) => !existing.has(k)).map(cwdToProject);
+  const newProjects = [...keys]
+    .filter((k) => !existing.has(k))
+    .map((cwd) => ({ cwd, name: basename(cwd), pinned: false, lastOpenedAt: '' }));
   return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
-  const { sessions, capabilities } = useSession();
+  const { socket } = useSocket();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);
-  const [pendingActivateChannel, setPendingActivateChannel] = useState<{
-    cwd: string;
-    channelId: string;
-  } | null>(null);
 
-  // Sync derived projects whenever the session list changes.
+  // Stable socket ref so actions captured in initial useState don't go stale.
+  const socketRef = useRef(socket);
   useEffect(() => {
-    setProjects((prev) => deriveProjects(sessions, prev));
-  }, [sessions]);
+    socketRef.current = socket;
+  }, [socket]);
 
-  // Actions close only over stable setState refs — keep the same object
-  // identity across renders so consumers (esp. TabProvider's
-  // pendingActivateChannel effect) can safely include `projectActions` in
-  // their dep arrays without re-firing on every ProjectProvider render.
+  // Server projects (with `id` + path) — actions need this to resolve cwd → id.
+  const serverProjectsRef = useRef<ServerProject[]>([]);
+  const activeRef = useRef<string | null>(activeProjectCwd);
+  useEffect(() => {
+    activeRef.current = activeProjectCwd;
+  }, [activeProjectCwd]);
+
+  // Subscribe to server-pushed projects:* events + initial load.
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit(EVENTS.projects.list, {}, (res) => {
+      serverProjectsRef.current = res.projects;
+      setProjects(res.projects.map(toUiProject));
+    });
+
+    const onAdded = (p: ServerProject) => {
+      const exists = serverProjectsRef.current.some((x) => x.path === p.path);
+      if (!exists) serverProjectsRef.current = [...serverProjectsRef.current, p];
+      setProjects((prev) =>
+        prev.some((x) => x.cwd === p.path) ? prev : [...prev, toUiProject(p)],
+      );
+    };
+    const onUpdated = (p: ServerProject) => {
+      serverProjectsRef.current = serverProjectsRef.current.map((x) => (x.path === p.path ? p : x));
+      setProjects((prev) => prev.map((x) => (x.cwd === p.path ? toUiProject(p) : x)));
+    };
+    const onRemoved = (event: ProjectsRemovedEvent) => {
+      serverProjectsRef.current = serverProjectsRef.current.filter((x) => x.path !== event.path);
+      setProjects((prev) => prev.filter((x) => x.cwd !== event.path));
+      // If removed project was active, switch to next (pinned-first, then recent).
+      if (activeRef.current === event.path) {
+        const next = pickNextActive(serverProjectsRef.current);
+        setActiveProjectCwd(next);
+      }
+    };
+
+    socket.on(EVENTS.projects.added, onAdded);
+    socket.on(EVENTS.projects.updated, onUpdated);
+    socket.on(EVENTS.projects.removed, onRemoved);
+
+    return () => {
+      socket.off(EVENTS.projects.added, onAdded);
+      socket.off(EVENTS.projects.updated, onUpdated);
+      socket.off(EVENTS.projects.removed, onRemoved);
+    };
+  }, [socket]);
+
+  // Stable identity for actions — TabProvider relies on this in dep arrays.
   const [actions] = useState<ProjectActions>(() => ({
-    addProject: (cwd: string) => {
-      setProjects((prev) => {
-        if (prev.some((p) => p.cwd === cwd)) return prev;
-        return [...prev, cwdToProject(cwd)];
-      });
-      setActiveProjectCwd(cwd);
-    },
+    addProject: (cwd: string) =>
+      new Promise<Project | { error: string; path?: string }>((resolve) => {
+        const s = socketRef.current;
+        if (!s) {
+          resolve({ error: 'socket_not_ready' });
+          return;
+        }
+        s.emit(EVENTS.projects.add, { path: cwd }, (res) => {
+          if ('error' in res) {
+            logOnError('projects:add', res);
+            resolve(res);
+            return;
+          }
+          // Success — state will also update via projects:added broadcast.
+          // Set active here directly for snappy UI.
+          setActiveProjectCwd(res.path);
+          resolve(toUiProject(res));
+        });
+      }),
     setActiveProject: (cwd: string) => setActiveProjectCwd(cwd),
-    requestActivateChannel: (cwd: string, channelId: string) =>
-      setPendingActivateChannel({ cwd, channelId }),
-    clearPendingActivate: () => setPendingActivateChannel(null),
+
+    pinProject: (cwd: string, pinned: boolean) =>
+      mutateProject(socketRef.current, serverProjectsRef.current, cwd, { pinned }),
+    renameProject: (cwd: string, name: string) =>
+      mutateProject(socketRef.current, serverProjectsRef.current, cwd, { name }),
+    removeProject: (cwd: string) =>
+      removeProjectImpl(socketRef.current, serverProjectsRef.current, cwd),
   }));
 
   const state: ProjectState = {
     projects,
     activeProjectCwd,
-    sessions,
-    capabilities,
-    pendingActivateChannel,
   };
   return (
     <ProjectStateContext.Provider value={state}>

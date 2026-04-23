@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
+import { memoryBackend, readPersistedRaw } from '../../../test/memory-persist-storage';
 import { renderWithChannel } from '../../../test/render-with-channel';
 import { useMessageVisibility } from '../MessageVisibilityContext';
 
@@ -37,13 +38,7 @@ function Probe() {
   );
 }
 
-beforeEach(() => {
-  localStorage.removeItem(LS_KEY);
-  useMessageVisibilityStore.setState({ enabledTypes: null });
-});
-
 afterEach(() => {
-  localStorage.removeItem(LS_KEY);
   useMessageVisibilityStore.setState({ enabledTypes: null });
 });
 
@@ -162,19 +157,18 @@ describe('MessageVisibilityContext — other group (unknown types)', () => {
   });
 });
 
-describe('MessageVisibilityContext — localStorage persistence', () => {
-  it('persists state to localStorage on change', async () => {
+describe('MessageVisibilityContext — persistence', () => {
+  it('persists state on change', async () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-hooks'));
-    const stored = localStorage.getItem(LS_KEY);
+    const stored = readPersistedRaw(LS_KEY);
     expect(stored).not.toBeNull();
     const parsed = JSON.parse(stored!);
     expect(parsed.state.enabledTypes).toContain('hook_started');
   });
 
-  it('restores state from localStorage on mount', async () => {
-    // Pre-seed localStorage in Zustand persist format
+  it('restores state on mount', async () => {
     const seedTypes = [
       'hook_started',
       'hook_response',
@@ -183,7 +177,7 @@ describe('MessageVisibilityContext — localStorage persistence', () => {
       'thinking',
       'redacted_thinking',
     ];
-    localStorage.setItem(
+    memoryBackend.setItem(
       LS_KEY,
       JSON.stringify({ state: { enabledTypes: seedTypes }, version: 0 }),
     );
@@ -194,8 +188,8 @@ describe('MessageVisibilityContext — localStorage persistence', () => {
     expect(screen.getByTestId('hooks-state').textContent).toBe('all');
   });
 
-  it('ignores invalid localStorage data (non-array) and uses defaults', async () => {
-    localStorage.setItem(LS_KEY, JSON.stringify({ invalid: 'object' }));
+  it('ignores invalid persisted data (non-array) and uses defaults', async () => {
+    memoryBackend.setItem(LS_KEY, JSON.stringify({ invalid: 'object' }));
     useMessageVisibilityStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Should fall back to defaults — hooks off, conversation on
@@ -204,8 +198,8 @@ describe('MessageVisibilityContext — localStorage persistence', () => {
     expect(enabled).not.toContain('hook_started');
   });
 
-  it('ignores localStorage entries that are not strings', async () => {
-    localStorage.setItem(LS_KEY, JSON.stringify([42, null, 'text']));
+  it('ignores persisted entries that are not strings', async () => {
+    memoryBackend.setItem(LS_KEY, JSON.stringify([42, null, 'text']));
     useMessageVisibilityStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Unrecognized format — store falls back to null → context uses defaults

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { localStoragePersist } from './persistStorage';
 
 interface MessageVisibilityState {
   enabledTypes: string[] | null;
@@ -12,6 +13,6 @@ export const useMessageVisibilityStore = create<MessageVisibilityState>()(
       enabledTypes: null,
       setEnabledTypes: (types) => set({ enabledTypes: types }),
     }),
-    { name: 'code-quest:message-visibility' },
+    { name: 'code-quest:message-visibility', storage: localStoragePersist() },
   ),
 );

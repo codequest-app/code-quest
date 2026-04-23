@@ -110,4 +110,81 @@ describe.skipIf(SKIP)('LocalFilesystemService', () => {
       });
     });
   });
+
+  describe('exists', () => {
+    it('returns true for existing directory', async () => {
+      expect(await service.exists(tmpDir)).toBe(true);
+      expect(await service.exists(join(tmpDir, 'alpha'))).toBe(true);
+    });
+
+    it('returns true for existing file', async () => {
+      expect(await service.exists(join(tmpDir, 'package.json'))).toBe(true);
+    });
+
+    it('returns false for non-existent path', async () => {
+      expect(await service.exists(join(tmpDir, 'does-not-exist'))).toBe(false);
+    });
+
+    it('returns false for path under non-existent parent', async () => {
+      expect(await service.exists('/totally/nonexistent/path')).toBe(false);
+    });
+  });
+
+  describe('isDirectory', () => {
+    it('returns true for directory', async () => {
+      expect(await service.isDirectory(tmpDir)).toBe(true);
+      expect(await service.isDirectory(join(tmpDir, 'alpha'))).toBe(true);
+    });
+
+    it('returns false for file', async () => {
+      expect(await service.isDirectory(join(tmpDir, 'package.json'))).toBe(false);
+    });
+
+    it('returns false for non-existent path', async () => {
+      expect(await service.isDirectory(join(tmpDir, 'nope'))).toBe(false);
+    });
+  });
+
+  describe('statKind (single-syscall replacement for exists+isDirectory)', () => {
+    it('returns "directory" for a directory', async () => {
+      expect(await service.statKind(tmpDir)).toBe('directory');
+      expect(await service.statKind(join(tmpDir, 'alpha'))).toBe('directory');
+    });
+
+    it('returns "file" for a file', async () => {
+      expect(await service.statKind(join(tmpDir, 'package.json'))).toBe('file');
+    });
+
+    it('returns null for non-existent path', async () => {
+      expect(await service.statKind(join(tmpDir, 'nope'))).toBeNull();
+    });
+  });
+
+  describe('isWithinExplorerRoots', () => {
+    it('returns true for the root itself (boundary inclusive)', () => {
+      expect(service.isWithinExplorerRoots(tmpDir)).toBe(true);
+    });
+
+    it('returns true for paths inside a root', () => {
+      expect(service.isWithinExplorerRoots(join(tmpDir, 'alpha'))).toBe(true);
+      expect(service.isWithinExplorerRoots(join(tmpDir, 'src'))).toBe(true);
+    });
+
+    it('returns false for paths outside any root', () => {
+      expect(service.isWithinExplorerRoots('/etc/passwd')).toBe(false);
+      expect(service.isWithinExplorerRoots('/totally/unrelated')).toBe(false);
+    });
+
+    it('returns false for a parent of a root (cannot escape upward)', () => {
+      // tmpDir is e.g. /var/folders/.../fs-service-test-xxx — its parent is not allowed
+      const parent = tmpDir.substring(0, tmpDir.lastIndexOf('/')) || '/';
+      expect(service.isWithinExplorerRoots(parent)).toBe(false);
+    });
+
+    it('returns false for prefix-similar but not actually inside (foo vs foo-bar)', () => {
+      // Service constructed with [tmpDir]; '/path/to/foo-bar' should not match '/path/to/foo'
+      const sibling = `${tmpDir}-sibling`;
+      expect(service.isWithinExplorerRoots(sibling)).toBe(false);
+    });
+  });
 });

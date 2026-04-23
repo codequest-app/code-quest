@@ -32,19 +32,19 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     _ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       const { channelId, comment } = planCommentPayloadSchema.parse(payload);
       getOrCreate(channelId).push(comment);
-      cb?.(ok({}));
+      callback?.(ok({}));
       if (socket)
         emitter.emitToOthers(channelId, socket.id, EVENTS.plan.comment_added, {
           channelId,
           comment,
         });
     } catch (e) {
-      cb?.(err(errMsg(e, 'Failed to add comment')));
+      callback?.(err(errMsg(e, 'Failed to add comment')));
     }
   }
 
@@ -52,14 +52,14 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     _ch: Channel | null,
     payload: unknown,
     _socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       const { channelId } = channelIdPayloadSchema.parse(payload);
-      cb?.({ comments: commentsMap.get(channelId) ?? [] });
+      callback?.({ comments: commentsMap.get(channelId) ?? [] });
     } catch (err) {
       logger.debug(err, 'failed to get plan comments');
-      cb?.({ comments: [] });
+      callback?.({ comments: [] });
     }
   }
 
@@ -67,29 +67,29 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     _ch: Channel | null,
     payload: unknown,
     socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       const { channelId, commentId } = planRemoveCommentPayloadSchema.parse(payload);
       const comments = commentsMap.get(channelId);
       if (!comments) {
-        cb?.(err('Comment not found'));
+        callback?.(err('Comment not found'));
         return;
       }
       const idx = comments.findIndex((c) => c.id === commentId);
       if (idx === -1) {
-        cb?.(err('Comment not found'));
+        callback?.(err('Comment not found'));
         return;
       }
       comments.splice(idx, 1);
-      cb?.(ok({}));
+      callback?.(ok({}));
       if (socket)
         emitter.emitToOthers(channelId, socket.id, EVENTS.plan.comment_removed, {
           channelId,
           commentId,
         });
     } catch (e) {
-      cb?.(err(errMsg(e, 'Failed to remove comment')));
+      callback?.(err(errMsg(e, 'Failed to remove comment')));
     }
   }
 
@@ -97,14 +97,14 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): PlanApi {
     _ch: Channel | null,
     payload: unknown,
     _socket?: TypedSocket,
-    cb?: SocketCallback,
+    callback?: SocketCallback,
   ): void {
     try {
       const { channelId } = channelIdPayloadSchema.parse(payload);
       commentsMap.delete(channelId);
-      cb?.(ok({}));
+      callback?.(ok({}));
     } catch (e) {
-      cb?.(err(errMsg(e, 'Failed to close preview')));
+      callback?.(err(errMsg(e, 'Failed to close preview')));
     }
   }
 

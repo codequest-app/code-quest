@@ -4,7 +4,12 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../../test/fake-summoner';
-import { ProjectProvider, useProjectActions, useProjectState } from '../../ProjectContext';
+import {
+  NavigationProvider,
+  useNavigationActions,
+  useNavigationState,
+} from '../../NavigationContext';
+import { ProjectProvider } from '../../ProjectContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../../TabContext';
@@ -30,9 +35,11 @@ function renderWithProjectAndSessions(
     <SocketProvider socket={summoner.socket}>
       <SessionProvider>
         <ProjectProvider>
-          <TabProvider cwd={initial.cwd} sessions={sessions}>
-            {ui}
-          </TabProvider>
+          <NavigationProvider>
+            <TabProvider cwd={initial.cwd} sessions={sessions}>
+              {ui}
+            </TabProvider>
+          </NavigationProvider>
         </ProjectProvider>
       </SessionProvider>
     </SocketProvider>
@@ -44,9 +51,11 @@ function renderWithProjectAndSessions(
       <SocketProvider socket={summoner.socket}>
         <SessionProvider>
           <ProjectProvider>
-            <TabProvider cwd={initial.cwd} sessions={sessions}>
-              {ui}
-            </TabProvider>
+            <NavigationProvider>
+              <TabProvider cwd={initial.cwd} sessions={sessions}>
+                {ui}
+              </TabProvider>
+            </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>
       </SocketProvider>,
@@ -59,8 +68,8 @@ describe('TabProvider', () => {
   describe('pendingActivateChannel intent (Decision 10)', () => {
     function ProbeAndTrigger({ trigger }: { trigger: { cwd: string; channelId: string } }) {
       const { activeTabId } = useTabState();
-      const { pendingActivateChannel } = useProjectState();
-      const { requestActivateChannel } = useProjectActions();
+      const { pendingActivateChannel } = useNavigationState();
+      const { requestActivateChannel } = useNavigationActions();
       return (
         <>
           <span data-testid="active">{activeTabId ?? 'null'}</span>

@@ -1,5 +1,7 @@
 import { EVENTS, type SessionStateSummary } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
+import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
@@ -59,17 +61,21 @@ export function withStoryWorkspaceFixtures(fixtures: WorkspaceFixtures = {}) {
 
     return (
       <SocketProvider socket={socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <WorktreeProvider>
-                <div className={className}>
-                  <Story />
-                </div>
-              </WorktreeProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
+        <AppReadinessProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <NavigationProvider>
+                  <WorktreeProvider>
+                    <div className={className}>
+                      <Story />
+                    </div>
+                  </WorktreeProvider>
+                </NavigationProvider>
+              </ProjectProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppReadinessProvider>
       </SocketProvider>
     );
   };

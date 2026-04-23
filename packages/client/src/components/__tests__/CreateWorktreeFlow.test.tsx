@@ -1,6 +1,6 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { FakeGitService } from '@code-quest/summoner/test';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
@@ -21,9 +21,10 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     // Sanity: 1 tab.
     expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
 
-    // Act: right-click the ProjectCard (in the sidebar).
+    // Act: right-click the ProjectCard (in the sidebar — disambiguates from
+    // the TopScopeSwitcher trigger which also shows project name).
     const sidebar = screen.getByTestId('sidebar-panel');
-    const projectButton = await screen.findByRole('button', { name: /app/i });
+    const projectButton = await within(sidebar).findByRole('button', { name: /app/i });
     await user.pointer({ keys: '[MouseRight>]', target: projectButton });
 
     // "Create Worktree…" menu item appears.
@@ -31,18 +32,18 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     expect(menuItem).toBeInTheDocument();
     void sidebar;
 
-    // Click it → dialog opens.
+    // Click it → dialog opens (2-tab redesign, Phase 10.8c).
     await user.click(menuItem);
-    const nameInput = await screen.findByLabelText(/Worktree name/i);
-    expect(nameInput).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: /new worktree/i })).toBeInTheDocument();
 
-    // Fill + submit.
-    await user.type(nameInput, 'feat-a');
+    // Switch to "Create new branch" tab and fill the branch name.
+    await user.click(screen.getByRole('tab', { name: /create new branch/i }));
+    await user.type(screen.getByLabelText(/new branch name/i), 'feat-a');
     await user.click(screen.getByRole('button', { name: /^Create$/ }));
 
     // Assert: dialog closes, a second tab appears inside same Project.
     await waitFor(() => {
-      expect(screen.queryByLabelText(/Worktree name/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: /new worktree/i })).not.toBeInTheDocument();
     });
     await waitFor(() => {
       expect(screen.getAllByLabelText(/^Close /)).toHaveLength(2);

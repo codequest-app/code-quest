@@ -120,6 +120,13 @@
       "when": 1776823980583,
       "tag": "0016_separate_events_and_deltas",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1776918000000,
+      "tag": "0017_add_projects_table",
+      "breakpoints": true
     }
   ]
 }

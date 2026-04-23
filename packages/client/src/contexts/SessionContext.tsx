@@ -56,12 +56,8 @@ interface SessionContextValue {
    *  channel if one already wraps this sessionId; otherwise spawns. */
   resume: (sessionId: string) => Promise<{ channelId: string }>;
 
-  initOptions: Record<string, unknown>;
-  setInitOptions: (opts: Record<string, unknown>) => void;
-
   // ── Live session list (from app:init + broadcasts) ──
   sessions: SessionStateSummary[];
-  capabilities: { worktree: boolean };
 
   // ── Auth ──
   auth: AuthState;
@@ -77,13 +73,10 @@ interface SessionContextValue {
   subscribeSessionStates: (cb: (payload: SessionStatesPayload) => void) => () => void;
 }
 
-type SessionStateValue = Pick<
-  SessionContextValue,
-  'initOptions' | 'auth' | 'sessions' | 'capabilities'
->;
+type SessionStateValue = Pick<SessionContextValue, 'auth' | 'sessions'>;
 type SessionActionsValue = Omit<SessionContextValue, keyof SessionStateValue>;
 
-const SessionStateContext = createContext<SessionStateValue | null>(null);
+export const SessionStateContext = createContext<SessionStateValue | null>(null);
 const SessionActionsContext = createContext<SessionActionsValue | null>(null);
 
 export function useSession(): SessionContextValue {
@@ -131,10 +124,8 @@ function handleStates(raw: unknown): SessionUpdater | null {
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
 
-  const [initOptions, setInitOptions] = useState<Record<string, unknown>>({});
   const [auth, setAuth] = useState<AuthState>({ status: 'idle', authUrl: null, errorMsg: null });
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
-  const [capabilities, setCapabilities] = useState<{ worktree: boolean }>({ worktree: false });
 
   const sessionStatesListenersRef = useRef<Set<(p: SessionStatesPayload) => void>>(new Set());
 
@@ -166,10 +157,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const parsed = initResponseSchema.safeParse(raw);
         if (!parsed.success) return;
         setSessions(parsed.data.sessions);
-        if (parsed.data.capabilities) setCapabilities(parsed.data.capabilities);
-        if (parsed.data.settings && Object.keys(parsed.data.settings).length > 0) {
-          setInitOptions(parsed.data.settings);
-        }
       });
     };
 
@@ -203,7 +190,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [socket]);
 
   const [actions] = useState<SessionActionsValue>(() => ({
-    setInitOptions,
     listSessions: (opts) => rpc(socket, EVENTS.session.list, opts ?? {}),
     listRemoteSessions: (opts) => rpc(socket, EVENTS.session.list_remote, opts ?? {}),
     getSession: (channelId) => rpc(socket, EVENTS.session.get, { channelId }),
@@ -274,7 +260,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionActionsContext.Provider value={actions}>
-      <SessionStateContext.Provider value={{ initOptions, auth, sessions, capabilities }}>
+      <SessionStateContext.Provider value={{ auth, sessions }}>
         {children}
       </SessionStateContext.Provider>
     </SessionActionsContext.Provider>

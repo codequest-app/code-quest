@@ -2,23 +2,20 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { ProjectStateContext } from '../../contexts/ProjectContext';
+import { AppReadinessStateContext } from '../../contexts/AppReadinessContext';
 import { ProjectContextMenu } from '../ProjectContextMenu';
 
-/** Provide a minimal ProjectState with worktree capability enabled. */
+/** Provide a minimal AppReadinessState with worktree capability enabled. */
 function WithWorktreeCapability({ children }: { children: ReactNode }) {
   return (
-    <ProjectStateContext.Provider
+    <AppReadinessStateContext.Provider
       value={{
-        projects: [],
-        activeProjectCwd: null,
-        sessions: [],
+        initOptions: {},
         capabilities: { worktree: true },
-        pendingActivateChannel: null,
       }}
     >
       {children}
-    </ProjectStateContext.Provider>
+    </AppReadinessStateContext.Provider>
   );
 }
 
@@ -63,6 +60,45 @@ describe('ProjectContextMenu', () => {
     expect(menu.style.position).toBe('fixed');
     expect(menu.style.left).toBe('42px');
     expect(menu.style.top).toBe('84px');
+  });
+
+  describe('Rename / Remove items', () => {
+    it('hides Rename when onSelectRename is not provided', () => {
+      render(<ProjectContextMenu x={0} y={0} onSelectResume={() => {}} onClose={() => {}} />);
+      expect(screen.queryByRole('menuitem', { name: /rename/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Rename when handler is provided; clicking fires handler', async () => {
+      const onSelectRename = vi.fn();
+      render(
+        <ProjectContextMenu
+          x={0}
+          y={0}
+          onSelectResume={() => {}}
+          onSelectRename={onSelectRename}
+          onClose={() => {}}
+        />,
+      );
+      const item = await screen.findByRole('menuitem', { name: /rename/i });
+      await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
+      expect(onSelectRename).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows Remove with danger styling when handler is provided; clicking fires handler', async () => {
+      const onSelectRemove = vi.fn();
+      render(
+        <ProjectContextMenu
+          x={0}
+          y={0}
+          onSelectResume={() => {}}
+          onSelectRemove={onSelectRemove}
+          onClose={() => {}}
+        />,
+      );
+      const item = await screen.findByRole('menuitem', { name: /remove/i });
+      await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
+      expect(onSelectRemove).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Create Worktree item', () => {

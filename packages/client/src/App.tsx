@@ -3,6 +3,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
+import { AppReadinessProvider } from './contexts/AppReadinessContext';
+import { NavigationProvider } from './contexts/NavigationContext';
 import { PluginProvider } from './contexts/PluginContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
@@ -31,15 +33,19 @@ export function App() {
       <Toaster position="top-right" richColors />
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <SocketProvider socket={socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <ProjectProvider>
-                <WorktreeProvider>
-                  <WorkspaceLayout />
-                </WorktreeProvider>
-              </ProjectProvider>
-            </PluginProvider>
-          </SessionProvider>
+          <AppReadinessProvider>
+            <SessionProvider>
+              <PluginProvider>
+                <ProjectProvider>
+                  <NavigationProvider>
+                    <WorktreeProvider>
+                      <WorkspaceLayout />
+                    </WorktreeProvider>
+                  </NavigationProvider>
+                </ProjectProvider>
+              </PluginProvider>
+            </SessionProvider>
+          </AppReadinessProvider>
         </SocketProvider>
       </ErrorBoundary>
     </div>

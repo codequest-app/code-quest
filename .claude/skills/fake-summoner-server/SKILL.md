@@ -249,6 +249,28 @@ const channel = new Channel(makeRunner(), 'sess-1', 'claude', '/cwd');
 
 好處：API 變動時測試會跟著更新，不會被型別 cast 靜默略過。
 
+## 多層驗證（server 版）
+
+Handler 測試預設多層驗證（FakeSummoner 給真 DB + 真 socket + 真 process）：
+
+| 層 | API | 抓的 bug |
+|---|---|---|
+| ① RPC response | `await claude.send('event', payload)` return value | RPC shape 錯 |
+| ② Broadcast | `summoner.otherClient().events('event:name')` / 另一 FakeClaude 監聽 | broadcast 漏、channel filter 錯 |
+| ③ **DB / Store** | `container.get(TYPES.XxxStore).getByY(...)` | store 邏輯、composite fan-out、transaction |
+| ④ CLI stdin | `claude.received('cmd_type')` | controller → CLI writes |
+
+**不要只驗 RPC response**。副作用真的發生比 response shape 重要。
+
+```ts
+const res = await claude.send('projects:add', { path: '/tmp/x' });
+expect(res).not.toHaveProperty('error');                              // ①
+expect(claude.events('projects:added').length).toBeGreaterThan(0);    // ②
+expect(await projectStore.getByPath('/tmp/x')).not.toBeNull();        // ③
+```
+
+對應 client 端在 `frontend-testing/references/fake-patterns.md` 的 Pattern 3.5。
+
 ## 慣例
 
 | 情境 | 採用 |
@@ -258,6 +280,7 @@ const channel = new Channel(makeRunner(), 'sess-1', 'claude', '/cwd');
 | protocol event 建構 | `segments.*()` builder |
 | 啟動 FakeClaude | `createFakeSummoner().claude().initialize()` |
 | 測啟動流程 | `initialize()` 或 `prepareInit()`（外部 launch） |
+| 副作用驗證 | 多層（RPC + emit + store + stdin）都驗，不要只驗 RPC |
 
 ## 相關 skill
 

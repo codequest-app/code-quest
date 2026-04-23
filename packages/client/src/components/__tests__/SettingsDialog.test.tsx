@@ -5,7 +5,6 @@ import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { SettingsDialog } from '../SettingsDialog';
 
 function resetStore() {
-  localStorage.clear();
   usePreferencesStore.setState({
     colorTheme: 'dark',
     fontSize: 'md',

@@ -4,7 +4,8 @@ import type {
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
-import type { GitService } from '../git/types.ts';
+import { AlreadyRepoError, NotARepoError } from '../git/errors.ts';
+import type { CreateWorktreeOptions, GitService } from '../git/types.ts';
 
 export class FakeGitService implements GitService {
   readonly capabilities = { worktree: true } as const;
@@ -18,6 +19,9 @@ export class FakeGitService implements GitService {
   private _projectRoot: string | null = null;
   private _worktrees: WorktreeInfo[] = [];
   private _checkoutError: Error | null = null;
+  /** Paths registered as git repos. Default seed `/repo` keeps legacy tests
+   *  (which never call markAsRepo) working without changes. */
+  private _initializedRepos = new Set<string>(['/repo']);
 
   // ── Setup API ──
 
@@ -53,6 +57,11 @@ export class FakeGitService implements GitService {
     this._checkoutError = err;
   }
 
+  /** Register a path as an existing git repo (so listWorktrees won't throw). */
+  markAsRepo(path: string): void {
+    this._initializedRepos.add(path);
+  }
+
   reset(): void {
     this._branch = 'main';
     this._clean = true;
@@ -63,6 +72,7 @@ export class FakeGitService implements GitService {
     this._projectRoot = null;
     this._worktrees = [];
     this._checkoutError = null;
+    this._initializedRepos = new Set<string>(['/repo']);
   }
 
   // ── GitService interface ──
@@ -100,18 +110,48 @@ export class FakeGitService implements GitService {
     return this._repoRoot;
   }
 
-  async createWorktree(_repoRoot: string, name?: string): Promise<WorktreeInfo> {
-    const wtName = name ?? `claude-session-${Date.now()}`;
+  async initRepo(cwd: string): Promise<{ branch: string }> {
+    if (this._initializedRepos.has(cwd)) throw new AlreadyRepoError(cwd);
+    this._initializedRepos.add(cwd);
+    this._worktrees.push({ name: 'main', path: cwd, branch: 'main' });
+    return { branch: 'main' };
+  }
+
+  async createWorktree(repoRoot: string, opts: CreateWorktreeOptions = {}): Promise<WorktreeInfo> {
+    const { existingBranch, newBranch, name, path } = opts;
+    let wtName: string;
+    let branch: string;
+    if (existingBranch) {
+      wtName = name ?? existingBranch.replace(/\//g, '-');
+      branch = existingBranch;
+    } else if (newBranch) {
+      wtName = name ?? newBranch.replace(/\//g, '-');
+      branch = newBranch;
+    } else {
+      wtName = name ?? `claude-session-${Date.now()}`;
+      branch = `worktree-${wtName}`;
+    }
     const wt: WorktreeInfo = {
       name: wtName,
-      path: `${_repoRoot}/.claude/worktrees/${wtName}`,
-      branch: `worktree-${wtName}`,
+      path: path ?? `${repoRoot}/.claude/worktrees/${wtName}`,
+      branch,
     };
     this._worktrees.push(wt);
     return wt;
   }
 
-  async listWorktrees(_repoRoot: string): Promise<WorktreeInfo[]> {
+  async listBranches(repoRoot: string): Promise<string[]> {
+    if (!this._initializedRepos.has(repoRoot)) throw new NotARepoError(repoRoot);
+    // Default includes 'main'; test may configure via markAsRepo + initRepo.
+    const branchSet = new Set<string>(['main']);
+    for (const wt of this._worktrees) {
+      if (wt.branch) branchSet.add(wt.branch);
+    }
+    return [...branchSet];
+  }
+
+  async listWorktrees(repoRoot: string): Promise<WorktreeInfo[]> {
+    if (!this._initializedRepos.has(repoRoot)) throw new NotARepoError(repoRoot);
     return this._worktrees;
   }
 

@@ -1,9 +1,31 @@
-import { validateWorktreeName } from '@code-quest/shared';
-import { useState } from 'react';
-import { useProjectActions } from '../contexts/ProjectContext';
+import { useEffect, useState } from 'react';
+import { useNavigationActions } from '../contexts/NavigationContext';
 import { useWorktreeActions } from '../contexts/WorktreeContext';
 import { Button } from './ui/Button';
-import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
+import { Dialog, DialogContent } from './ui/Dialog';
+import { CommandPreview } from './worktree-dialog/CommandPreview';
+import { ExistingPane } from './worktree-dialog/ExistingPane';
+import { NewPane } from './worktree-dialog/NewPane';
+import { TabButton } from './worktree-dialog/TabButton';
+import { autoDerivePath, buildWorktreeCommand } from './worktree-dialog-helpers';
+
+type Mode = 'existing' | 'new';
+
+interface FormState {
+  existingBranch: string;
+  existingPath: string;
+  newBranch: string;
+  baseBranch: string;
+  newPath: string;
+}
+
+const DEFAULT_FORM: FormState = {
+  existingBranch: '',
+  existingPath: '',
+  newBranch: '',
+  baseBranch: 'main',
+  newPath: '',
+};
 
 export function CreateWorktreeDialog({
   open,
@@ -14,72 +36,132 @@ export function CreateWorktreeDialog({
   cwd: string;
   onClose: () => void;
 }) {
-  const { create } = useWorktreeActions();
-  const { requestActivateChannel } = useProjectActions();
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const { create, listBranches } = useWorktreeActions();
+  const { requestActivateChannel } = useNavigationActions();
 
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+  const [mode, setMode] = useState<Mode>('existing');
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [openInSession, setOpenInSession] = useState(true);
+  const [branches, setBranches] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load branches when dialog opens. Errors swallowed — dropdown just stays empty.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await listBranches(cwd);
+      if (cancelled) return;
+      if (Array.isArray(res)) setBranches(res);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, cwd, listBranches]);
+
+  function resetAndClose() {
+    setForm(DEFAULT_FORM);
+    setError(null);
+    setMode('existing');
+    onClose();
+  }
+
+  const activeBranch = mode === 'existing' ? form.existingBranch : form.newBranch;
+  const activePath =
+    (mode === 'existing' ? form.existingPath : form.newPath) || autoDerivePath(cwd, activeBranch);
+  const previewCommand = buildWorktreeCommand({
+    mode,
+    branch: activeBranch,
+    baseBranch: mode === 'new' ? form.baseBranch : undefined,
+    path: activePath,
+  });
+
+  const submitDisabled =
+    isCreating || (mode === 'existing' ? !form.existingBranch : !form.newBranch);
+
+  async function handleSubmit(e: { preventDefault: () => void }) {
     e.preventDefault();
-    const validationError = validateWorktreeName(name);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
     setError(null);
     setIsCreating(true);
     try {
-      const result = await create(cwd, name);
+      const payload =
+        mode === 'existing'
+          ? { cwd, existingBranch: form.existingBranch, path: activePath }
+          : { cwd, newBranch: form.newBranch, baseBranch: form.baseBranch, path: activePath };
+      const result = await create(payload);
       if ('error' in result) {
         setError(result.error);
         return;
       }
-      requestActivateChannel(cwd, result.channelId);
-      setName('');
-      onClose();
+      if (openInSession) requestActivateChannel(cwd, result.channelId);
+      resetAndClose();
     } finally {
       setIsCreating(false);
     }
   }
 
-  function handleOpenChange(next: boolean) {
-    if (!next) {
-      setName('');
-      setError(null);
-      onClose();
-    }
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent title="Create Worktree" className="w-105">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <label htmlFor="worktree-name" className="text-xs text-text-muted">
-            Worktree name
-          </label>
-          <input
-            id="worktree-name"
-            autoFocus
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="feature-x"
-            className="px-2 py-1.5 text-sm rounded border border-border bg-bg/60 focus:outline-none focus:border-accent"
-          />
-          {error ? <div className="text-xs text-red-500">{error}</div> : null}
-          <div className="text-xs text-text-muted">
-            Creates a git worktree at {cwd}/.claude/worktrees/&lt;name&gt; and opens a new session.
+    <Dialog open={open} onOpenChange={(next) => !next && resetAndClose()}>
+      <DialogContent title="New worktree" className="w-120">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div role="tablist" className="flex gap-1 border-b border-border -mx-4 px-4">
+            <TabButton active={mode === 'existing'} onClick={() => setMode('existing')}>
+              Checkout existing
+            </TabButton>
+            <TabButton active={mode === 'new'} onClick={() => setMode('new')}>
+              Create new branch
+            </TabButton>
           </div>
-          <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-3">
-            <DialogClose asChild>
-              <Button variant="secondary" size="md" disabled={isCreating}>
+
+          {mode === 'existing' ? (
+            <ExistingPane
+              branches={branches}
+              value={form.existingBranch}
+              onBranchChange={(v) => setForm((f) => ({ ...f, existingBranch: v }))}
+              path={form.existingPath}
+              placeholderPath={autoDerivePath(cwd, form.existingBranch)}
+              onPathChange={(v) => setForm((f) => ({ ...f, existingPath: v }))}
+            />
+          ) : (
+            <NewPane
+              branchName={form.newBranch}
+              onBranchNameChange={(v) => setForm((f) => ({ ...f, newBranch: v }))}
+              baseBranch={form.baseBranch}
+              baseOptions={branches.length > 0 ? branches : ['main']}
+              onBaseChange={(v) => setForm((f) => ({ ...f, baseBranch: v }))}
+              path={form.newPath}
+              placeholderPath={autoDerivePath(cwd, form.newBranch)}
+              onPathChange={(v) => setForm((f) => ({ ...f, newPath: v }))}
+            />
+          )}
+
+          <CommandPreview command={previewCommand} />
+          {error ? <div className="text-xs text-red-500">{error}</div> : null}
+
+          <div className="flex items-center justify-between gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-2">
+            <label className="flex items-center gap-2 text-xs text-text-muted">
+              <input
+                type="checkbox"
+                checked={openInSession}
+                onChange={(e) => setOpenInSession(e.target.checked)}
+              />
+              Open new session here
+            </label>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="md"
+                type="button"
+                onClick={resetAndClose}
+                disabled={isCreating}
+              >
                 Cancel
               </Button>
-            </DialogClose>
-            <Button type="submit" size="md" disabled={isCreating || !name}>
-              {isCreating ? 'Creating…' : 'Create'}
-            </Button>
+              <Button type="submit" size="md" disabled={submitDisabled}>
+                {isCreating ? 'Creating…' : 'Create'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

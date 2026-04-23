@@ -96,6 +96,18 @@ import type {
   RefreshMarketplacePayload,
   RemoveMarketplacePayload,
 } from './schemas/plugin.ts';
+import type {
+  Project,
+  ProjectsAddPayload,
+  ProjectsAddResponse,
+  ProjectsListPayload,
+  ProjectsListResponse,
+  ProjectsRemovedEvent,
+  ProjectsRemovePayload,
+  ProjectsRemoveResponse,
+  ProjectsUpdatePayload,
+  ProjectsUpdateResponse,
+} from './schemas/projects.ts';
 import type { GetProviderConfigResponse } from './schemas/provider.ts';
 import type { Ack, RpcResult } from './schemas/rpc.ts';
 import type {
@@ -168,8 +180,19 @@ import type {
   CreateWorktreePayload,
   CreateWorktreeResponse,
   DeleteWorktreePayload,
+  InitRepoPayload,
+  InitRepoResponse,
+  ListBranchesPayload,
+  ListBranchesResponse,
   ListWorktreesPayload,
+  WorktreeAddedEvent,
+  WorktreeBranchChangedEvent,
+  WorktreeCheckoutPayload,
+  WorktreeCheckoutResponse,
   WorktreeListResponse,
+  WorktreeRemovedEvent,
+  WorktreeStatusPayload,
+  WorktreeStatusResponse,
 } from './schemas/worktree.ts';
 
 export interface ClientToServerEvents {
@@ -274,6 +297,24 @@ export interface ClientToServerEvents {
   'explorer:browse': (
     payload: ExplorerBrowsePayload,
     callback: (response: ExplorerBrowseResponse) => void,
+  ) => void;
+
+  // ── Projects (global, no channel) ──
+  'projects:list': (
+    payload: ProjectsListPayload,
+    callback: (response: ProjectsListResponse) => void,
+  ) => void;
+  'projects:add': (
+    payload: ProjectsAddPayload,
+    callback: (response: ProjectsAddResponse) => void,
+  ) => void;
+  'projects:update': (
+    payload: ProjectsUpdatePayload,
+    callback: (response: ProjectsUpdateResponse) => void,
+  ) => void;
+  'projects:remove': (
+    payload: ProjectsRemovePayload,
+    callback: (response: ProjectsRemoveResponse) => void,
   ) => void;
 
   // ── Aligned: File & Git ──
@@ -405,6 +446,22 @@ export interface ClientToServerEvents {
     callback: (response: WorktreeListResponse) => void,
   ) => void;
   'worktree:delete': (payload: DeleteWorktreePayload, callback: (response: Ack) => void) => void;
+  'worktree:initRepo': (
+    payload: InitRepoPayload,
+    callback: (response: InitRepoResponse) => void,
+  ) => void;
+  'worktree:listBranches': (
+    payload: ListBranchesPayload,
+    callback: (response: ListBranchesResponse) => void,
+  ) => void;
+  'worktree:checkout': (
+    payload: WorktreeCheckoutPayload,
+    callback: (response: WorktreeCheckoutResponse) => void,
+  ) => void;
+  'worktree:status': (
+    payload: WorktreeStatusPayload,
+    callback: (response: WorktreeStatusResponse) => void,
+  ) => void;
 }
 
 // ── ClientMessage discriminated union ──
@@ -527,6 +584,17 @@ export interface ServerToClientEvents {
   'session:dead': (payload: SessionDeadPayload) => void;
   'session:states': (payload: SessionStatesPayload) => void;
 
+  // ── Projects (global broadcast) ──
+  'projects:listed': (projects: Project[]) => void;
+  'projects:added': (project: Project) => void;
+  'projects:updated': (project: Project) => void;
+  'projects:removed': (event: ProjectsRemovedEvent) => void;
+
+  // ── Worktree (global broadcast) ──
+  'worktree:added': (event: WorktreeAddedEvent) => void;
+  'worktree:removed': (event: WorktreeRemovedEvent) => void;
+  'worktree:branchChanged': (event: WorktreeBranchChangedEvent) => void;
+
   // ══════════════════════════════════════════════════════════
   // Named socket events (type:subtype format)
   // Each event has its own typed payload.
@@ -639,6 +707,16 @@ export const EVENTS = {
   },
   explorer: {
     browse: 'explorer:browse',
+  },
+  projects: {
+    list: 'projects:list',
+    add: 'projects:add',
+    update: 'projects:update',
+    remove: 'projects:remove',
+    listed: 'projects:listed',
+    added: 'projects:added',
+    updated: 'projects:updated',
+    removed: 'projects:removed',
   },
   file: {
     list: 'file:list',
@@ -769,8 +847,15 @@ export const EVENTS = {
     read: 'terminal:read',
   },
   worktree: {
+    added: 'worktree:added',
+    branchChanged: 'worktree:branchChanged',
+    checkout: 'worktree:checkout',
     create: 'worktree:create',
     delete: 'worktree:delete',
+    initRepo: 'worktree:initRepo',
     list: 'worktree:list',
+    listBranches: 'worktree:listBranches',
+    removed: 'worktree:removed',
+    status: 'worktree:status',
   },
 } as const satisfies Record<string, Record<string, string>>;

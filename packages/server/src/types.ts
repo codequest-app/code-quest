@@ -4,6 +4,8 @@ import type {
   LaunchOptions,
   ProcessRunner,
 } from '@code-quest/summoner';
+import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
+import type { ProjectStore } from './services/project-store.ts';
 import type { RawEventService } from './services/raw-event-service.ts';
 import type { SessionStore } from './services/session-store.ts';
 import type { SettingsStore } from './services/settings-store.ts';
@@ -21,6 +23,8 @@ export interface RunnerFactory {
 export const TYPES = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
+  ProjectStore: Symbol.for('ProjectStore'),
+  ProjectAutoUpserter: Symbol.for('ProjectAutoUpserter'),
   RawEventService: Symbol.for('RawEventService'),
   SocketServer: Symbol.for('SocketServer'),
   Database: Symbol.for('Database'),
@@ -38,6 +42,8 @@ export interface HandlerContext {
   emitter: ChannelEmitter;
   channelManager: ChannelManager;
   sessionStore: SessionStore;
+  projectStore: ProjectStore;
+  projectAutoUpserter: ProjectAutoUpserter;
   settingsStore: SettingsStore;
   usageTracker: UsageTracker;
   sessionHistory: SessionHistory;
