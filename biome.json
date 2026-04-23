@@ -52,7 +52,8 @@
       "!**/playwright-report",
       "!**/test-results",
       "!**/pnpm-lock.yaml",
-      "!**/*.jsonl"
+      "!**/*.jsonl",
+      "!docs/prototype"
     ]
   }
 }
