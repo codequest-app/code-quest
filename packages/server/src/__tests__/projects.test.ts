@@ -44,6 +44,7 @@ describe('projects socket handler', () => {
     it('returns no user-added projects initially', async () => {
       const { claude } = await setup();
       const res = await claude.send<ProjectsListResponse>('projects:list', {});
+      if ('error' in res) throw new Error(res.error);
       expect(withoutSessionProject(res.projects)).toEqual([]);
     });
 
@@ -54,6 +55,7 @@ describe('projects socket handler', () => {
 
       await claude.send<ProjectsAddResponse>('projects:add', { path: '/tmp/cc-office' });
       const list = await claude.send<ProjectsListResponse>('projects:list', {});
+      if ('error' in list) throw new Error(list.error);
       const userProjects = withoutSessionProject(list.projects);
       expect(userProjects).toHaveLength(1);
       expect(userProjects[0].path).toBe('/tmp/cc-office');
@@ -120,7 +122,7 @@ describe('projects socket handler', () => {
 
     it('reject path outside EXPLORER_ROOTS: ① error, ② no emit, ③ no DB row', async () => {
       const { claude, summoner, projectStore } = await setup();
-      // Setup explorer root scope = ['/tmp']; the candidate path is OUTSIDE.
+      // Setup root scope = ['/tmp']; the candidate path is OUTSIDE.
       summoner.filesystem().setRoots(['/tmp']);
       summoner.filesystem().addDirectory('/forbidden', []);
       const beforeEvents = claude.events('projects:added').length;
@@ -270,6 +272,7 @@ describe('projects socket handler', () => {
       // Session on SESSION_CWD is active (claude.initialize'd that path).
       const { claude, projectStore } = await setup();
       const list = await claude.send<ProjectsListResponse>('projects:list', {});
+      if ('error' in list) throw new Error(list.error);
       const sessionProject = list.projects.find((p) => p.path === SESSION_CWD);
       expect(sessionProject).toBeTruthy();
       const beforeEvents = claude.events('projects:removed').length;
@@ -380,6 +383,7 @@ describe('projects socket handler', () => {
 
       // ① list includes session cwd
       const list = await claude.send<ProjectsListResponse>('projects:list', {});
+      if ('error' in list) throw new Error(list.error);
       expect(list.projects.some((p) => p.path === SESSION_CWD)).toBe(true);
 
       // ② projects:added was broadcast

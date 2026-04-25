@@ -3,6 +3,8 @@
 import { FakeClaude } from './fake-claude.ts';
 import type { FakeFilesystemService } from './fake-filesystem-service.ts';
 import type { FakeGitService } from './fake-git-service.ts';
+import type { FakeOpenspecService } from './fake-openspec-service.ts';
+import type { FakePluginCliService } from './fake-plugin-cli-service.ts';
 import type { FakeProcessProvider } from './fake-process-provider.ts';
 import type { FakeSocket } from './fake-socket.ts';
 
@@ -17,6 +19,8 @@ export class FakeSummoner {
   private readonly _provider: FakeProcessProvider;
   private readonly _filesystem: FakeFilesystemService;
   private readonly _git?: FakeGitService;
+  private readonly _openspec?: FakeOpenspecService;
+  private readonly _pluginCli?: FakePluginCliService;
   private readonly _recordedEvents: Array<{ event: string; payload: any }> = [];
   private _claude?: FakeClaude;
 
@@ -26,6 +30,8 @@ export class FakeSummoner {
     this._provider = conn.provider;
     this._filesystem = conn.filesystem;
     if ('git' in conn) this._git = conn.git;
+    if ('openspec' in conn) this._openspec = conn.openspec;
+    if ('pluginCli' in conn) this._pluginCli = conn.pluginCli;
 
     // Auto-record all server → client events
     const { serverSocket } = this._socket;
@@ -44,6 +50,16 @@ export class FakeSummoner {
   /** Get the FakeGitService (only available when connected to a server with GitService). */
   git(): FakeGitService | undefined {
     return this._git;
+  }
+
+  /** Get the FakeOpenspecService. */
+  openspec(): FakeOpenspecService | undefined {
+    return this._openspec;
+  }
+
+  /** Get the FakePluginCliService (only when wired by server FakeServer). */
+  pluginCli(): FakePluginCliService | undefined {
+    return this._pluginCli;
   }
 
   /** Lazy Claude — created on first call. */
@@ -96,6 +112,8 @@ export interface ServerConnector {
     provider: FakeProcessProvider;
     filesystem: FakeFilesystemService;
     git?: FakeGitService;
+    openspec?: FakeOpenspecService;
+    pluginCli?: FakePluginCliService;
   };
 }
 

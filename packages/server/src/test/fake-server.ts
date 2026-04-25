@@ -1,10 +1,17 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
 
-import type { FilesystemService, GitService } from '@code-quest/summoner';
+import type {
+  FilesystemService,
+  GitService,
+  OpenspecService,
+  PluginCliService,
+} from '@code-quest/summoner';
 import {
   createFakeSocket,
   type FakeFilesystemService,
   type FakeGitService,
+  type FakeOpenspecService,
+  type FakePluginCliService,
   FakeProcessProvider,
   type FakeSocket,
   type FakeSummoner,
@@ -51,6 +58,8 @@ export class FakeServer {
     provider: FakeProcessProvider;
     filesystem: FakeFilesystemService;
     git: FakeGitService;
+    openspec: FakeOpenspecService;
+    pluginCli: FakePluginCliService;
   } {
     const socket = createFakeSocket();
     this._allServerSockets.push(socket.serverSocket);
@@ -63,7 +72,13 @@ export class FakeServer {
       TYPES.FilesystemService,
     ) as FakeFilesystemService;
     const git = this._container.get<GitService>(TYPES.GitService) as FakeGitService;
-    return { socket, provider, filesystem, git };
+    const openspec = this._container.get<OpenspecService>(
+      TYPES.OpenspecService,
+    ) as FakeOpenspecService;
+    const pluginCli = this._container.get<PluginCliService>(
+      TYPES.PluginCliService,
+    ) as FakePluginCliService;
+    return { socket, provider, filesystem, git, openspec, pluginCli };
   }
 }
 

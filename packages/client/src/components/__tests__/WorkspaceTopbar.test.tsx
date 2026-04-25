@@ -24,28 +24,49 @@ describe('WorkspaceTopbar', () => {
     expect(onOpenSettings).toHaveBeenCalled();
   });
 
-  it('renders a hamburger (aria-label="Menu") when onOpenMenu is provided', async () => {
-    const onOpenMenu = vi.fn();
+  it('renders a left trigger (aria-label="Toggle sidebar") when onToggleLeft is provided', async () => {
+    const onToggleLeft = vi.fn();
     render(
-      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onOpenMenu={onOpenMenu}>
+      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onToggleLeft={onToggleLeft}>
         <span>content</span>
       </WorkspaceTopbar>,
     );
-    const menu = screen.getByRole('button', { name: /menu/i });
-    await userEvent.setup().click(menu);
-    expect(onOpenMenu).toHaveBeenCalled();
+    const btn = screen.getByRole('button', { name: /toggle sidebar/i });
+    await userEvent.setup().click(btn);
+    expect(onToggleLeft).toHaveBeenCalled();
   });
 
-  it('does NOT render a hamburger when onOpenMenu is omitted', () => {
+  it('renders a right trigger (aria-label="Toggle right pane") when onToggleRight is provided', async () => {
+    const onToggleRight = vi.fn();
+    render(
+      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onToggleRight={onToggleRight}>
+        <span>content</span>
+      </WorkspaceTopbar>,
+    );
+    const btn = screen.getByRole('button', { name: /toggle right pane/i });
+    await userEvent.setup().click(btn);
+    expect(onToggleRight).toHaveBeenCalled();
+  });
+
+  it('omits left trigger when onToggleLeft not provided', () => {
     render(
       <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
         <span>content</span>
       </WorkspaceTopbar>,
     );
-    expect(screen.queryByRole('button', { name: /menu/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /toggle sidebar/i })).toBeNull();
   });
 
-  it('forwards testId to the root element data-testid attribute', () => {
+  it('omits right trigger when onToggleRight not provided', () => {
+    render(
+      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
+        <span>content</span>
+      </WorkspaceTopbar>,
+    );
+    expect(screen.queryByRole('button', { name: /toggle right pane/i })).toBeNull();
+  });
+
+  it('forwards mode to the root data-testid attribute', () => {
     const { rerender } = render(
       <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
         <span>content</span>
@@ -60,19 +81,25 @@ describe('WorkspaceTopbar', () => {
     expect(screen.getByTestId('mobile-topbar')).toBeInTheDocument();
   });
 
-  it('order (left → right): hamburger, children, Settings', () => {
+  it('order (left → right): leftTrigger, children, rightTrigger, Settings', () => {
     render(
-      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onOpenMenu={() => {}}>
+      <WorkspaceTopbar
+        mode="desktop"
+        onOpenSettings={() => {}}
+        onToggleLeft={() => {}}
+        onToggleRight={() => {}}
+      >
         <span data-testid="slot-content">content</span>
       </WorkspaceTopbar>,
     );
     const root = screen.getByTestId('desktop-topbar');
-    const hamburger = screen.getByRole('button', { name: /menu/i });
+    const left = screen.getByRole('button', { name: /toggle sidebar/i });
     const content = screen.getByTestId('slot-content');
+    const right = screen.getByRole('button', { name: /toggle right pane/i });
     const settings = screen.getByRole('button', { name: /settings/i });
-    const children = Array.from(root.children);
-    // Position check via DOM order — hamburger first, content somewhere after, settings last.
-    expect(children.indexOf(hamburger)).toBeLessThan(children.indexOf(content));
-    expect(children.indexOf(content)).toBeLessThan(children.indexOf(settings));
+    const indexOf = (el: Element) => Array.from(root.children).indexOf(el as HTMLElement);
+    expect(indexOf(left)).toBeLessThan(indexOf(content));
+    expect(indexOf(content)).toBeLessThan(indexOf(right));
+    expect(indexOf(right)).toBeLessThan(indexOf(settings));
   });
 });

@@ -1,12 +1,14 @@
 import { EVENTS, type SessionStateSummary } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
-import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { AppInitProvider } from '../contexts/AppInitContext';
+import { FsProvider } from '../contexts/FsContext';
+import { GitProvider } from '../contexts/GitContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
+import { OpenspecProvider } from '../contexts/OpenspecContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createFakeSummoner } from './fake-summoner';
 
 export interface WorkspaceFixtures {
@@ -61,21 +63,25 @@ export function withStoryWorkspaceFixtures(fixtures: WorkspaceFixtures = {}) {
 
     return (
       <SocketProvider socket={socket}>
-        <AppReadinessProvider>
+        <AppInitProvider>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
                 <NavigationProvider>
-                  <WorktreeProvider>
-                    <div className={className}>
-                      <Story />
-                    </div>
-                  </WorktreeProvider>
+                  <GitProvider>
+                    <FsProvider>
+                      <OpenspecProvider>
+                        <div className={className}>
+                          <Story />
+                        </div>
+                      </OpenspecProvider>
+                    </FsProvider>
+                  </GitProvider>
                 </NavigationProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppReadinessProvider>
+        </AppInitProvider>
       </SocketProvider>
     );
   };

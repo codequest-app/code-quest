@@ -26,7 +26,7 @@ function makeWrapper(summoner: FakeSummoner) {
 
 function setupSummoner(paths: { dirs?: Array<[string, string[]]>; files?: string[] } = {}) {
   const summoner = createFakeSummoner();
-  // Make every dir parent an explorer root so projects:add path validation passes.
+  // Make every dir parent an allowed root so projects:add path validation passes.
   // Tests don't care about the root boundary; they care about the test fixture
   // paths being accepted.
   const roots = (paths.dirs ?? []).map(([p]) => p);

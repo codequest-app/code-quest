@@ -71,16 +71,42 @@ if (typeof ResizeObserver === 'undefined') {
   } as unknown as typeof ResizeObserver;
 }
 
-// react-resizable-panels requires full DOM measurement APIs unavailable in jsdom
+// react-resizable-panels requires full DOM measurement APIs unavailable in jsdom.
+// Mock matches real API (PanelGroup / Panel / PanelResizeHandle); Panel forwards
+// ref to a minimal object so imperative collapse/expand calls in prod code
+// become observable spies rather than real drags.
 vi.mock('react-resizable-panels', async () => {
   const React = await import('react');
   const h = React.createElement;
   return {
-    Group: (p: { children?: React.ReactNode }) =>
-      h('div', { 'data-testid': 'panel-group' }, p.children),
-    Panel: (p: { children?: React.ReactNode; 'data-testid'?: string }) =>
-      h('div', { 'data-testid': p['data-testid'] }, p.children),
-    Separator: () => h('div', { 'data-testid': 'resize-handle' }),
+    PanelGroup: (p: { children?: React.ReactNode; autoSaveId?: string; direction?: string }) =>
+      h('div', { 'data-testid': 'panel-group', 'data-autosave-id': p.autoSaveId }, p.children),
+    Panel: React.forwardRef(
+      (
+        p: { children?: React.ReactNode; id?: string; [k: string]: unknown },
+        ref: React.Ref<{ collapse: () => void; expand: () => void; isCollapsed: () => boolean }>,
+      ) => {
+        // Expose a minimal imperative handle so tests / production refs don't crash.
+        React.useImperativeHandle(
+          ref,
+          () => ({
+            collapse: () => {},
+            expand: () => {},
+            isCollapsed: () => false,
+          }),
+          [],
+        );
+        return h(
+          'div',
+          {
+            'data-testid':
+              (p as { 'data-testid'?: string })['data-testid'] ?? `panel-${p.id ?? ''}`,
+          },
+          p.children,
+        );
+      },
+    ),
+    PanelResizeHandle: () => h('div', { 'data-testid': 'resize-handle' }),
   };
 });
 

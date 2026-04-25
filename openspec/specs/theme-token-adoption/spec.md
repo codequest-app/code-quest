@@ -82,3 +82,89 @@ Permission-mode 相關的視覺樣式（send button 背景、ChatInputArea focus
 - **AND** className 含 `data-[mode=plan]:bg-button`（或等效 arbitrary value 對應 plan mode token）
 - **AND** 切換 permissionMode 會自動觸發 Tailwind variant 切換，無需額外 JS
 
+### Requirement: Tiny text sizes (10–11 px) collapse into the existing `text-xs` token
+
+Component className strings under `packages/client/src/components/` SHALL NOT use Tailwind arbitrary values `text-[10px]` or `text-[11px]`. Both collapse into the existing `text-xs` (12 px) token. Visual weight differences for uppercase chips MUST be controlled via `tracking`, opacity (`bg-x/10`, `border-x/30`), and color choice — not by sub-12px font sizes.
+
+The token-first rule already documents the wider principle ("差 1-2px 就近取"); this requirement makes the 10/11 → xs collapse explicit so it survives future PR review.
+
+#### Scenario: New component
+- **WHEN** a new component is added under `packages/client/src/components/`
+- **THEN** its className strings contain no `text-[10px]` or `text-[11px]`
+- **AND** any visually "smaller than body" element uses `text-xs`
+
+#### Scenario: Existing arbitrary text size
+- **WHEN** code review or grep finds `text-[10px]` or `text-[11px]` in a component className
+- **THEN** the value is replaced with `text-xs` in the same change
+
+#### Scenario: Chip / badge needs visual reduction
+- **WHEN** a chip or badge looks too heavy at `text-xs`
+- **THEN** the design adjusts via `tracking-wider`, lower opacity background, lighter color, or smaller padding — not by reverting to `text-[10px]`
+
+### Requirement: Pixel-valued Tailwind arbitraries collapse to built-in utilities
+
+Component className strings under `packages/client/src/components/` SHALL NOT use Tailwind arbitrary values of the form `\w+-[Npx]` (any utility, any pixel value). Tailwind v4's integer spacing (`h-9`, `max-h-120`, `max-w-45`, etc.) and existing `@theme` tokens cover the design ranges; the 1–2 px gap allowed by the "差 1-2px 就近取" rule absorbs the rest.
+
+The arbitrary form survives only for these explicit categories:
+
+- `calc(...)` / `min(...)` / `max(...)` expressions
+- `var(--…)` references (CSS-variable indirection)
+- Viewport-relative units (`*vh`, `*vw`, `*dvh`)
+- em-relative units (`*em`) — keeps font-axis scaling intact
+- Radix data-attribute selectors (`data-[state=…]`, `data-[highlighted]`, etc.)
+- Documented "intentional off-grid" cases (e.g. `backdrop-blur-[2px]` for sub-token glass effect)
+
+#### Scenario: New component
+- **WHEN** a new component file under `packages/client/src/components/` is added
+- **THEN** its className strings contain no `\w+-[Npx]` literal-pixel arbitraries
+
+#### Scenario: Existing arbitrary
+- **WHEN** code review or grep finds `\w+-[Npx]` outside the allow-list
+- **THEN** the value is replaced with the matching Tailwind built-in (integer spacing or named utility) in the same change
+
+#### Scenario: Justified arbitrary
+- **WHEN** the design genuinely needs a value Tailwind cannot express (calc, var, viewport, em, intentional off-grid)
+- **THEN** the arbitrary is allowed, and the surrounding code carries a brief comment explaining why
+
+### Requirement: `text-2xs` (10 px) is the sanctioned token for chip-style and section-heading text
+
+`@theme` SHALL declare `--text-2xs: 0.625rem` (10 px). The corresponding `text-2xs` utility is the **only** legitimate way for component code to use 10 px font size. Two use-categories qualify:
+
+1. Uppercase tracked chip / badge labels (e.g. SpecPane `Ready`, `Archive`, task pill).
+2. Section-heading utilities such as `section-label` (consolidated from the previously hardcoded `font-size: 10px`).
+
+Body text, links, hints, and dialog descriptions continue to use `text-xs` (12 px). The arbitrary `text-[10px]` ban from `text-arbitrary-cleanup` stays in force; `text-2xs` is the proper replacement, not the arbitrary.
+
+#### Scenario: Chip badge needs sub-12 px text
+- **WHEN** an uppercase tracked chip needs less visual weight than its surrounding body text
+- **THEN** the className uses `text-2xs`, not `text-[10px]`
+
+#### Scenario: Section heading utility
+- **WHEN** an `@utility` defines a section-heading style (uppercase tracked label)
+- **THEN** its `font-size` is `var(--text-2xs)`, not a hardcoded `10px`
+
+#### Scenario: Body text remains text-xs
+- **WHEN** a paragraph, dialog body, or hint needs "small" text
+- **THEN** the className uses `text-xs` (12 px) — `text-2xs` is reserved for chip / heading scale
+
+### Requirement: `--color-*-rgb` tokens are restricted to inline-style alpha and mode-aware shadow indirection
+
+The `--color-*-rgb` family in `@theme` SHALL be limited to two specific use categories that Tailwind's opacity modifier cannot serve:
+
+1. **Inline-style alpha**: `style={{ background: 'rgba(var(--color-X-rgb), 0.N)' }}` — Tailwind's `bg-X/N` is className-only.
+2. **Mode-aware shadow indirection**: `--mode-accent-rgb: var(--color-X-rgb)` re-exports that change with provider mode (Claude / Gemini / Codex), where the alpha varies per state.
+
+Any other use case (className-driven alpha) MUST use Tailwind's opacity modifier (`bg-accent/10`, `text-success/60`, etc.) instead.
+
+#### Scenario: New className needs alpha
+- **WHEN** a developer adds a className that needs partial opacity of a theme color
+- **THEN** the className uses `bg-X/N` / `text-X/N` / `border-X/N` opacity modifier — not `bg-[rgba(var(--color-X-rgb),0.N)]`
+
+#### Scenario: Inline style needs alpha
+- **WHEN** the styling cannot live in a className (conditional inline `style`, animations with dynamic alpha)
+- **THEN** `rgba(var(--color-X-rgb), 0.N)` is the sanctioned pattern, and the surviving `--color-X-rgb` token must remain in `@theme`
+
+#### Scenario: RGB-split token has zero consumers
+- **WHEN** an audit finds an `--color-X-rgb` token with no inline-style or mode-shadow consumer
+- **THEN** the token is removed from `@theme`
+

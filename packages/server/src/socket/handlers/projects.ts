@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import {
   EVENTS,
+  errMsg,
   type ProjectsError,
   type ProjectsRemoveResponse,
   type ProjectsUpdateResponse,
@@ -23,7 +24,7 @@ function canonicalize(path: string): string {
 /** Validate an add-project path against roots / existence / directory-ness.
  *  Returns null when valid, or the exact error response otherwise. */
 async function validateAddPath(fs: FilesystemService, path: string): Promise<ProjectsError | null> {
-  if (!fs.isWithinExplorerRoots(path)) return { error: 'path_outside_roots', path };
+  if (!fs.isWithinRoots(path)) return { error: 'path_outside_roots', path };
   const kind = await fs.statKind(path);
   if (kind === null) return { error: 'path_not_found', path };
   if (kind !== 'directory') return { error: 'path_not_directory', path };
@@ -48,7 +49,7 @@ export function create({
         callback?.({ projects });
       } catch (err) {
         logger.warn({ err }, 'Failed to list projects');
-        callback?.({ projects: [] });
+        callback?.({ error: errMsg(err, 'Failed to list projects') });
       }
     },
   );
@@ -74,7 +75,7 @@ export function create({
     },
   );
 
-  // Asymmetry by design: `projects:add` is gated by isWithinExplorerRoots, but
+  // Asymmetry by design: `projects:add` is gated by isWithinRoots, but
   // `projects:update` and `projects:remove` are NOT. Once a project is in the
   // DB, users must remain able to rename/pin/clean it up even after admin
   // shrinks EXPLORER_ROOTS — otherwise legacy entries become unmanageable.

@@ -1,0 +1,229 @@
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useOpenspecActions, useOpenspecList } from '../contexts/OpenspecContext';
+import { ArchiveChangeDialog } from './ArchiveChangeDialog';
+import { EmptyState } from './EmptyState';
+import { NewChangeDialog } from './NewChangeDialog';
+import { SpecModal } from './SpecModal';
+import { CommandHint } from './ui/CommandHint';
+import { PaneStatusFooter } from './ui/PaneStatusFooter';
+import { SkeletonRows } from './ui/SkeletonRows';
+
+export interface SpecPaneProps {
+  cwd: string;
+}
+
+interface OpenSpec {
+  kind: 'change' | 'spec';
+  name: string;
+}
+
+export function SpecPane({ cwd }: SpecPaneProps) {
+  const data = useOpenspecList(cwd);
+  const { changeNew, archive, refetchOpenspecList } = useOpenspecActions();
+  const [open, setOpen] = useState<OpenSpec | null>(null);
+  const [newChangeOpen, setNewChangeOpen] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+
+  async function handleCreateChange(name: string) {
+    const result = await changeNew(cwd, name);
+    if ('error' in result) {
+      toast.error(`Create failed: ${result.error}`);
+      return;
+    }
+    toast.success(`Created change ${name}`);
+    setNewChangeOpen(false);
+    await refetchOpenspecList(cwd);
+  }
+
+  async function handleArchive(name: string, opts: { skipSpecs: boolean }) {
+    const result = await archive(cwd, name, opts);
+    if ('error' in result) {
+      toast.error(`Archive failed: ${result.error}`);
+      return;
+    }
+    toast.success(`Archived ${name}`);
+    setArchiveTarget(null);
+    await refetchOpenspecList(cwd);
+  }
+
+  if (data && 'error' in data) {
+    if (data.error === 'no-openspec') {
+      return (
+        <EmptyState
+          icon={<ClipboardDocumentListIcon className="w-9 h-9" />}
+          message="No openspec/ directory in this project."
+          hint={<CommandHint command="openspec init" />}
+        />
+      );
+    }
+    if (data.error === 'openspec-cli-not-found') {
+      return (
+        <EmptyState
+          icon={<ClipboardDocumentListIcon className="w-9 h-9" />}
+          message="openspec CLI not found on PATH."
+          hint={<CommandHint command="npm i -g @fission-codes/openspec" />}
+        />
+      );
+    }
+    return <EmptyState message={data.error} />;
+  }
+
+  // `data === undefined` while the openspec list fetch is in flight. Keep the
+  // Section frame visible so the `+ new` action stays reachable; substitute a
+  // small loading hint in place of each section's body.
+  const isLoading = !data;
+
+  return (
+    <div className="flex flex-col h-full" data-testid="spec-pane">
+      <div className="flex-1 min-h-0 overflow-auto p-2 text-sm">
+        <Section
+          title="Active changes"
+          scope="worktree"
+          action={
+            <button
+              type="button"
+              aria-label="New change"
+              onClick={() => setNewChangeOpen(true)}
+              className="text-xs text-accent hover:underline"
+            >
+              + new
+            </button>
+          }
+        >
+          {isLoading ? (
+            <SkeletonRows count={3} />
+          ) : data && data.changes.length > 0 ? (
+            <ul className="flex flex-col">
+              {data.changes.map((c) => {
+                const ready = c.status === 'complete';
+                return (
+                  <li
+                    key={c.name}
+                    className="flex items-center gap-2 px-1 py-0.5 hover:bg-white/5 rounded"
+                  >
+                    <button
+                      type="button"
+                      data-testid={`spec-change-row-${c.name}`}
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
+                      onClick={() => setOpen({ kind: 'change', name: c.name })}
+                    >
+                      <span aria-hidden className="text-xs">
+                        📋
+                      </span>
+                      <span className="font-mono text-xs truncate flex-1">{c.name}</span>
+                    </button>
+                    {ready && (
+                      <span
+                        data-testid={`spec-ready-badge-${c.name}`}
+                        className="shrink-0 px-1.5 py-px rounded border border-success/30 bg-success/10 text-success font-mono text-2xs uppercase tracking-wide"
+                      >
+                        Ready
+                      </span>
+                    )}
+                    {ready && (
+                      <button
+                        type="button"
+                        aria-label={`Archive ${c.name}`}
+                        onClick={() => setArchiveTarget(c.name)}
+                        className="shrink-0 px-1.5 py-px rounded border border-border text-text-muted hover:border-danger hover:text-danger font-mono text-2xs uppercase cursor-pointer"
+                      >
+                        Archive
+                      </button>
+                    )}
+                    {c.tasks && (
+                      <span
+                        data-testid={`spec-task-pill-${c.name}`}
+                        className="shrink-0 px-1.5 py-px rounded border border-border text-text-muted font-mono text-2xs"
+                      >
+                        {c.tasks.done}/{c.tasks.total}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="text-text-dim text-xs px-1">No active changes</div>
+          )}
+        </Section>
+        <Section title="Specs" scope="project">
+          {isLoading ? (
+            <SkeletonRows count={3} />
+          ) : data && data.specs.length > 0 ? (
+            <ul className="flex flex-col">
+              {data.specs.map((s) => (
+                <li key={s.capability}>
+                  <button
+                    type="button"
+                    data-testid={`spec-capability-row-${s.capability}`}
+                    className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-white/5 rounded"
+                    onClick={() => setOpen({ kind: 'spec', name: s.capability })}
+                  >
+                    <span aria-hidden className="text-text-dim text-xs">
+                      ▸
+                    </span>
+                    <span className="font-mono text-xs">{s.capability}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-text-dim text-xs px-1">No specs</div>
+          )}
+        </Section>
+      </div>
+      {data && !('error' in data) && (
+        <PaneStatusFooter>
+          <span>
+            {data.changes.length} {data.changes.length === 1 ? 'change' : 'changes'}
+          </span>
+          <span>·</span>
+          <span>
+            {data.specs.length} {data.specs.length === 1 ? 'spec' : 'specs'}
+          </span>
+        </PaneStatusFooter>
+      )}
+      {open && (
+        <SpecModal cwd={cwd} kind={open.kind} name={open.name} onClose={() => setOpen(null)} />
+      )}
+      <NewChangeDialog
+        open={newChangeOpen}
+        onSubmit={handleCreateChange}
+        onClose={() => setNewChangeOpen(false)}
+      />
+      <ArchiveChangeDialog
+        open={archiveTarget !== null}
+        name={archiveTarget ?? ''}
+        onSubmit={(opts) =>
+          archiveTarget ? handleArchive(archiveTarget, opts) : Promise.resolve()
+        }
+        onClose={() => setArchiveTarget(null)}
+      />
+    </div>
+  );
+}
+
+function Section({
+  title,
+  scope,
+  action,
+  children,
+}: {
+  title: string;
+  scope?: 'worktree' | 'project';
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-3">
+      <h3 className="section-label px-1 mb-1 flex items-baseline gap-1">
+        <span>{title}</span>
+        {scope && <span className="text-xs text-text-dim normal-case">({scope})</span>}
+        {action && <span className="ml-auto">{action}</span>}
+      </h3>
+      {children}
+    </div>
+  );
+}

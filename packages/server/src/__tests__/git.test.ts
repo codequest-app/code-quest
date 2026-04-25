@@ -8,6 +8,7 @@ type GitEmptyResp = Ack;
 
 async function setup(sessionId = 'cli-sess') {
   const summoner = createFakeSummoner();
+  summoner.filesystem().setRoots(['/repo']);
   const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
   return { claude, channelId, git: summoner.git()! };
@@ -41,7 +42,7 @@ describe('ChatHandler > git', () => {
 
       const result = await claude.send<{
         entries: Array<{ hash: string; message: string; author: string; date: string }>;
-      }>('git:log', { channelId, limit: 5 });
+      }>('git:log', { cwd: '/repo', limit: 5 });
 
       expect(result.entries).toHaveLength(2);
       expect(result.entries[0]).toEqual({
@@ -52,30 +53,32 @@ describe('ChatHandler > git', () => {
       });
     });
 
-    it('git:log returns empty entries on error', async () => {
-      const { claude, channelId, git } = await setup();
-      // FakeGitService default: empty entries
-      git.setLogEntries([]);
+    it('git:log surfaces error result when service throws', async () => {
+      const { claude, git } = await setup();
+      git.setLogError('fatal: bad revision');
 
-      const result = await claude.send<{ entries: unknown[] }>('git:log', { channelId });
+      const result = await claude.send<{ entries?: unknown[]; error?: string }>('git:log', {
+        cwd: '/repo',
+      });
 
-      expect(result.entries).toEqual([]);
+      expect(result.error).toBe('fatal: bad revision');
+      expect(result.entries).toBeUndefined();
     });
 
     it('git:diff returns diff output', async () => {
-      const { claude, channelId, git } = await setup();
+      const { claude, git } = await setup();
       git.setDiff('+added\n-removed\n');
 
-      const result = await claude.send<{ diff: string }>('git:diff', { channelId });
+      const result = await claude.send<{ diff: string }>('git:diff', { cwd: '/repo' });
 
       expect(result.diff).toBe('+added\n-removed\n');
     });
 
     it('git:diff returns empty string on error', async () => {
-      const { claude, channelId } = await setup();
+      const { claude } = await setup();
       // FakeGitService default: empty diff
 
-      const result = await claude.send<{ diff: string }>('git:diff', { channelId });
+      const result = await claude.send<{ diff: string }>('git:diff', { cwd: '/repo' });
 
       expect(result.diff).toBe('');
     });
@@ -83,10 +86,11 @@ describe('ChatHandler > git', () => {
 
   describe('git:checkout', () => {
     it('should succeed when checkout works', async () => {
-      const { claude, channelId } = await setup();
+      const { claude, git } = await setup();
+      git.setProjectRoot('/repo');
 
       const result = await claude.send<GitEmptyResp>('git:checkout', {
-        channelId,
+        cwd: '/repo',
         branch: 'feature/test',
       });
 
@@ -94,16 +98,47 @@ describe('ChatHandler > git', () => {
     });
 
     it('should return error when checkout fails', async () => {
-      const { claude, channelId, git } = await setup();
+      const { claude, git } = await setup();
       git.setCheckoutError(new Error('fatal: no such branch'));
 
       const result = await claude.send<GitEmptyResp>('git:checkout', {
-        channelId,
+        cwd: '/repo',
         branch: 'nonexistent',
       });
 
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error).toBeDefined();
+    });
+  });
+
+  describe('git:discardFile', () => {
+    it('records the file and returns ok', async () => {
+      const { claude, git } = await setup();
+      const result = await claude.send<{ ok: true } | { error: string }>('git:discardFile', {
+        cwd: '/repo',
+        file: 'src/foo.ts',
+      });
+      expect(result).toEqual({ ok: true });
+      expect(git.discardedFiles).toEqual(['src/foo.ts']);
+    });
+
+    it('returns error when service fails', async () => {
+      const { claude, git } = await setup();
+      git.setDiscardError('pathspec did not match any files');
+      const result = await claude.send<{ ok: true } | { error: string }>('git:discardFile', {
+        cwd: '/repo',
+        file: 'src/missing.ts',
+      });
+      expect(result).toEqual({ error: 'pathspec did not match any files' });
+    });
+
+    it('rejects cwd outside allowed roots', async () => {
+      const { claude } = await setup();
+      const result = await claude.send<{ ok: true } | { error: string }>('git:discardFile', {
+        cwd: '/elsewhere',
+        file: 'a.ts',
+      });
+      expect(result).toEqual({ error: 'Path outside allowed roots' });
     });
   });
 });

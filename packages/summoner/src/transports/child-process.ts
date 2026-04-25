@@ -1,6 +1,6 @@
 import { type SpawnOptions, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import type { ProcessHandle, ProcessProvider } from '../types.ts';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '../types.ts';
 
 export class ChildProcessProvider implements ProcessProvider {
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle {
@@ -11,6 +11,17 @@ export class ChildProcessProvider implements ProcessProvider {
       ...options,
     };
     const proc = spawn(command, args, spawnOpts);
+
+    // ENOENT/EACCES from spawn arrives as an 'error' event. With no listener,
+    // Node treats it as unhandled and crashes the process. Abort so the
+    // readline iterable ends cleanly and downstream callers see a normal
+    // "stream finished" rather than a process crash.
+    proc.on('error', (err) => {
+      // Log so operators can distinguish 'CLI not installed' (ENOENT) from
+      // a normal exit with no output — both look identical downstream.
+      console.error('[ChildProcessProvider] spawn error:', command, err);
+      if (!controller.signal.aborted) controller.abort();
+    });
 
     // When process exits naturally, abort the controller so readline ends
     proc.on('close', () => {
@@ -42,5 +53,23 @@ export class ChildProcessProvider implements ProcessProvider {
       if (signal.aborted) break;
       yield line;
     }
+  }
+
+  runOnce(command: string, args: string[], options?: SpawnOptions): Promise<ProcessRunResult> {
+    const proc = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'], ...options });
+    return new Promise<ProcessRunResult>((resolve, reject) => {
+      let stdout = '';
+      let stderr = '';
+      proc.stdout?.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString('utf-8');
+      });
+      proc.stderr?.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString('utf-8');
+      });
+      proc.on('error', reject);
+      proc.on('close', (code) => {
+        resolve({ exitCode: code ?? 0, stdout, stderr });
+      });
+    });
   }
 }

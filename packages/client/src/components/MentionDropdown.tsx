@@ -1,4 +1,4 @@
-import type { FileSearchResult } from '@code-quest/shared';
+import type { FsSearchResult } from '@code-quest/shared';
 import { cn } from '../utils/cn';
 import { FileIcon, FolderIcon } from './icons/MentionIcons';
 
@@ -35,7 +35,7 @@ function FileResultItem({
   onHover,
   itemRef,
 }: {
-  file: FileSearchResult;
+  file: FsSearchResult;
   index: number;
   selectedIndex: number;
   mentionQuery: string;
@@ -104,7 +104,7 @@ function DropdownItem({ label, onSelect }: { label: string; onSelect: () => void
 export interface MentionDropdownProps {
   mentionQuery: string;
   filteredSuggestions: string[];
-  fileResults: FileSearchResult[];
+  fileResults: FsSearchResult[];
   searchStatus: 'idle' | 'loading' | 'done';
   selectedIndex: number;
   hasFileSearch: boolean;
@@ -127,7 +127,7 @@ export function MentionDropdown({
   return (
     <div
       data-testid="mention-dropdown"
-      className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg overflow-hidden animate-fade-in-fast z-modal"
+      className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-floating overflow-hidden animate-fade-in-fast z-modal"
     >
       <div className="max-h-75 overflow-y-auto py-0.5">
         {hasFileSearch && searchStatus === 'loading' && (

@@ -1,11 +1,12 @@
 import { resolve } from 'node:path';
 import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
 import { EVENTS } from '@code-quest/shared';
-import type { LaunchOptions, ProviderAdapter } from '@code-quest/summoner';
+import type { LaunchOptions, ProviderAdapter, Unsubscribe } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';
 import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
+import { type DirtyBroadcasters, subscribeDirtyForSocket } from './dirty-subscriber.ts';
 import type { RawRecorder } from './raw-recorder.ts';
 import type { TypedServer, TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
@@ -29,6 +30,9 @@ export class ChannelManager {
   private channels = new Map<string, Channel>();
   private hooks: ChannelHooks;
   private _cachedModels: unknown[] | undefined;
+  /** socketId → channelId → unsubs from the 3 broadcasters. Released on
+   *  socket-leave-channel, channel destroy, or socket disconnect. */
+  private socketChannelSubs = new Map<string, Map<string, Unsubscribe[]>>();
 
   get cachedModels(): unknown[] | undefined {
     return this._cachedModels;
@@ -44,6 +48,7 @@ export class ChannelManager {
     private rawRecorder: RawRecorder,
     private emitter: ChannelEmitter,
     private sessions: SessionLookup,
+    private dirty?: DirtyBroadcasters,
   ) {
     this.hooks = {
       onClientMessage: (ch, message) =>
@@ -101,6 +106,47 @@ export class ChannelManager {
     return channel;
   }
 
+  /** Subscribe one socket to the 3 dirty broadcasters for a channel's cwd.
+   *  TopicEmitter dedups by (cwd, socket.id), so if the same socket also
+   *  has an fs:watch sub for the same cwd they collapse — events delivered
+   *  exactly once per socket per cwd. Refcounted: BOTH unsubscribes need
+   *  to fire to remove the entry. */
+  private subscribeBroadcastersForSocket(
+    channelId: string,
+    cwd: string,
+    socket: TypedSocket,
+  ): void {
+    if (!this.dirty) return;
+    const unsubs = subscribeDirtyForSocket(socket, cwd, this.dirty);
+    let perCh = this.socketChannelSubs.get(socket.id);
+    if (!perCh) {
+      perCh = new Map();
+      this.socketChannelSubs.set(socket.id, perCh);
+    }
+    // Replace any prior subs for the same (socket, channel) — defensive.
+    perCh.get(channelId)?.forEach((off) => {
+      off();
+    });
+    perCh.set(channelId, unsubs);
+  }
+
+  /** Release broadcaster subscriptions THIS class owns for a socket.
+   *
+   *  IMPORTANT invariant: `socketChannelSubs` (channelId-keyed) is intentionally
+   *  separate from `handlers/fs.ts`'s `subsBySocket` map (cwd-keyed). They
+   *  bridge the same `subscribeDirtyForSocket` helper but their lifecycles
+   *  differ — channel detach releases ChannelManager's subs only; the
+   *  socket's `fs:watch` subs remain active until `fs:unwatch` or socket
+   *  disconnect. Do NOT merge the two maps unless `fs:watch` semantics also
+   *  collapse (currently used by FilesPane's `useKeepFsWatcherAlive` to keep
+   *  the watcher alive independent of any channel join). */
+  private releaseBroadcastersForSocket(socketId: string): void {
+    const perCh = this.socketChannelSubs.get(socketId);
+    if (!perCh) return;
+    for (const unsubs of perCh.values()) for (const off of unsubs) off();
+    this.socketChannelSubs.delete(socketId);
+  }
+
   async create(
     channelId: string,
     opts: CreateChannelOptions,
@@ -155,6 +201,16 @@ export class ChannelManager {
     }
     channel.destroy();
     this.channels.delete(channelId);
+    // Release any per-socket subs that were tied to this channel.
+    for (const [socketId, perCh] of this.socketChannelSubs) {
+      if (perCh.has(channelId)) {
+        perCh.get(channelId)?.forEach((off) => {
+          off();
+        });
+        perCh.delete(channelId);
+        if (perCh.size === 0) this.socketChannelSubs.delete(socketId);
+      }
+    }
   }
 
   getAliveChannels(): Array<[string, Channel]> {
@@ -183,10 +239,13 @@ export class ChannelManager {
 
   addSocketToChannel(channel: Channel, socket: TypedSocket): void {
     this.emitter.addSocketToChannel(channel.channelId, socket);
+    this.subscribeBroadcastersForSocket(channel.channelId, channel.cwd, socket);
   }
 
   removeSocketFromAll(socketId: string): void {
     const channelIds = this.emitter.removeSocketFromAll(socketId);
+    // Always release broadcaster subs even if no channel set returned.
+    this.releaseBroadcastersForSocket(socketId);
     if (!channelIds) return;
 
     for (const channelId of channelIds) {

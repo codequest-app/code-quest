@@ -85,12 +85,12 @@ describe('EffortSwitch visual contract', () => {
     expect(max.className).toMatch(/\bbg-white\b/);
   });
 
-  it('tick color is theme-adaptive (uses CSS var, not bg-text-muted/30)', () => {
+  it('tick color is theme-adaptive (uses text token with opacity modifier)', () => {
     const { container } = renderSwitch('low');
     const ticks = container.querySelectorAll('[data-testid="effort-switch-tick"]');
     for (const tick of ticks) {
       expect(tick.className).not.toMatch(/bg-text-muted\/30/);
-      expect(tick.className).toMatch(/bg-\[rgba\(var\(--color-text-rgb\)/);
+      expect(tick.className).toMatch(/\bbg-text\/35\b/);
     }
   });
 });

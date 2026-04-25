@@ -251,8 +251,8 @@ describe('ProjectTree', () => {
     });
   });
 
-  describe('WorktreeRow click opens/switches tab (Phase 10.5)', () => {
-    it('clicking wt-row sets requestOpenWorktree intent', async () => {
+  describe('WorktreeRow click sets sidebar selection (does not open chat)', () => {
+    it('clicking wt-row sets selectedWorktreeCwd; pendingOpenWorktree stays null', async () => {
       const { Wrapper, summoner } = makeEnv();
       summoner.git()!.setProjectRoot('/repo');
       summoner.git()!.addWorktree({
@@ -262,8 +262,13 @@ describe('ProjectTree', () => {
       });
 
       function Probe() {
-        const { pendingOpenWorktree } = useNavigationState();
-        return <span data-testid="pending">{JSON.stringify(pendingOpenWorktree)}</span>;
+        const { pendingOpenWorktree, selectedWorktreeCwd } = useNavigationState();
+        return (
+          <>
+            <span data-testid="pending">{JSON.stringify(pendingOpenWorktree)}</span>
+            <span data-testid="selected">{JSON.stringify(selectedWorktreeCwd)}</span>
+          </>
+        );
       }
 
       render(
@@ -282,13 +287,11 @@ describe('ProjectTree', () => {
       await userEvent.setup({ pointerEventsCheck: 0 }).click(wtBtn);
 
       await waitFor(() => {
-        const pending = JSON.parse(screen.getByTestId('pending').textContent ?? 'null');
-        expect(pending).toEqual({
-          projectCwd: '/repo',
-          worktreeCwd: '/repo/.claude/worktrees/feat-x',
-          forceNew: false,
-        });
+        const sel = JSON.parse(screen.getByTestId('selected').textContent ?? '{}');
+        expect(sel).toEqual({ '/repo': '/repo/.claude/worktrees/feat-x' });
       });
+      // Pure selection — no chat-open intent fired.
+      expect(JSON.parse(screen.getByTestId('pending').textContent ?? 'null')).toBeNull();
     });
   });
 

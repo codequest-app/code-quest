@@ -14,7 +14,6 @@ import type {
   ControlMcpPayload,
   ControlPermissionPayload,
 } from './schemas/control.ts';
-import type { ExplorerBrowsePayload, ExplorerBrowseResponse } from './schemas/explorer.ts';
 import type {
   FileListPayload,
   FileReadPayload,
@@ -22,15 +21,43 @@ import type {
   ListFilesResponse,
 } from './schemas/file.ts';
 import type {
-  GitCheckoutPayload,
-  GitDiffPayload,
-  GitDiffResult,
+  FsBrowsePayload,
+  FsBrowseResponse,
+  FsCopyPayload,
+  FsCreatePayload,
+  FsDeletePayload,
+  FsMovePayload,
+  FsMutationResult,
+  FsReadPayload,
+  FsReadResponse,
+  FsRenamePayload,
+  FsSearchPayload,
+  FsSearchResponse,
+  FsUnwatchPayload,
+  FsWatchPayload,
+} from './schemas/fs.ts';
+import type { FilesDirtyEvent, GitDirtyEvent } from './schemas/fs-dirty.ts';
+import type {
+  GitAddPayload,
+  GitAddResult,
+  GitCommitPayload,
+  GitCommitResult,
+  GitDiffByCwdPayload,
+  GitDiffByCwdResult,
+  GitDiscardFilePayload,
+  GitDiscardFileResult,
   GitExecPayload,
   GitExecResponse,
+  GitFetchPayload,
+  GitFetchResult,
   GitLogPayload,
   GitLogResult,
-  GitStatusPayload,
-  GitStatusResult,
+  GitPullPayload,
+  GitPullResult,
+  GitPushPayload,
+  GitPushResult,
+  GitStatusByCwdPayload,
+  GitStatusByCwdResult,
   GitUpdateSkippedBranchPayload,
 } from './schemas/git.ts';
 import type {
@@ -75,6 +102,19 @@ import type {
   NotificationToastPayload,
   RawEventPayload,
 } from './schemas/notification.ts';
+import type {
+  OpenspecArchivePayload,
+  OpenspecArchiveResult,
+  OpenspecChangeNewPayload,
+  OpenspecChangeNewResult,
+  OpenspecDirtyEvent,
+  OpenspecListPayload,
+  OpenspecListResult,
+  OpenspecReadPayload,
+  OpenspecReadResult,
+  OpenspecToggleTaskPayload,
+  OpenspecToggleTaskResult,
+} from './schemas/openspec.ts';
 import type {
   GetPlanCommentsResponse,
   PlanCommentPayload,
@@ -179,18 +219,21 @@ import type {
 import type {
   CreateWorktreePayload,
   CreateWorktreeResponse,
-  DeleteWorktreePayload,
   InitRepoPayload,
   InitRepoResponse,
   ListBranchesPayload,
   ListBranchesResponse,
   ListWorktreesPayload,
   WorktreeAddedEvent,
+  WorktreeArchivePayload,
+  WorktreeArchiveResponse,
   WorktreeBranchChangedEvent,
   WorktreeCheckoutPayload,
   WorktreeCheckoutResponse,
   WorktreeListResponse,
   WorktreeRemovedEvent,
+  WorktreeRenamePayload,
+  WorktreeRenameResponse,
   WorktreeStatusPayload,
   WorktreeStatusResponse,
 } from './schemas/worktree.ts';
@@ -293,10 +336,36 @@ export interface ClientToServerEvents {
     callback: (response: RpcResult<{ response: { type: 'ask_debugger_help_response' } }>) => void,
   ) => void;
 
-  // ── Explorer (global, no channel) ──
-  'explorer:browse': (
-    payload: ExplorerBrowsePayload,
-    callback: (response: ExplorerBrowseResponse) => void,
+  // ── Filesystem (global, cwd-scoped — replaces explorer:* namespace) ──
+  'fs:browse': (payload: FsBrowsePayload, callback: (response: FsBrowseResponse) => void) => void;
+  'fs:read': (payload: FsReadPayload, callback: (response: FsReadResponse) => void) => void;
+  'fs:search': (payload: FsSearchPayload, callback: (response: FsSearchResponse) => void) => void;
+  'fs:watch': (payload: FsWatchPayload, callback?: () => void) => void;
+  'fs:unwatch': (payload: FsUnwatchPayload, callback?: () => void) => void;
+  'fs:create': (payload: FsCreatePayload, callback: (result: FsMutationResult) => void) => void;
+  'fs:delete': (payload: FsDeletePayload, callback: (result: FsMutationResult) => void) => void;
+  'fs:rename': (payload: FsRenamePayload, callback: (result: FsMutationResult) => void) => void;
+  'fs:copy': (payload: FsCopyPayload, callback: (result: FsMutationResult) => void) => void;
+  'fs:move': (payload: FsMovePayload, callback: (result: FsMutationResult) => void) => void;
+  'openspec:list': (
+    payload: OpenspecListPayload,
+    callback: (result: OpenspecListResult) => void,
+  ) => void;
+  'openspec:read': (
+    payload: OpenspecReadPayload,
+    callback: (result: OpenspecReadResult) => void,
+  ) => void;
+  'openspec:changeNew': (
+    payload: OpenspecChangeNewPayload,
+    callback: (result: OpenspecChangeNewResult) => void,
+  ) => void;
+  'openspec:archive': (
+    payload: OpenspecArchivePayload,
+    callback: (result: OpenspecArchiveResult) => void,
+  ) => void;
+  'openspec:toggleTask': (
+    payload: OpenspecToggleTaskPayload,
+    callback: (result: OpenspecToggleTaskResult) => void,
   ) => void;
 
   // ── Projects (global, no channel) ──
@@ -317,15 +386,60 @@ export interface ClientToServerEvents {
     callback: (response: ProjectsRemoveResponse) => void,
   ) => void;
 
-  // ── Aligned: File & Git ──
+  // ── Aligned: File & Git (per-cwd, mirrors `git` CLI) ──
   'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
-  'git:checkout': (payload: GitCheckoutPayload, callback: (result: Ack) => void) => void;
-  'git:status': (payload: GitStatusPayload, callback: (result: GitStatusResult) => void) => void;
+  'git:init': (payload: InitRepoPayload, callback: (response: InitRepoResponse) => void) => void;
+  'git:branches': (
+    payload: ListBranchesPayload,
+    callback: (response: ListBranchesResponse) => void,
+  ) => void;
+  'git:checkout': (
+    payload: WorktreeCheckoutPayload,
+    callback: (response: WorktreeCheckoutResponse) => void,
+  ) => void;
+  'git:status': (
+    payload: GitStatusByCwdPayload,
+    callback: (result: GitStatusByCwdResult) => void,
+  ) => void;
+  'git:statusSummary': (
+    payload: WorktreeStatusPayload,
+    callback: (response: WorktreeStatusResponse) => void,
+  ) => void;
+  'git:diff': (
+    payload: GitDiffByCwdPayload,
+    callback: (result: GitDiffByCwdResult) => void,
+  ) => void;
+  'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
+  'git:add': (payload: GitAddPayload, callback: (result: GitAddResult) => void) => void;
+  'git:commit': (payload: GitCommitPayload, callback: (result: GitCommitResult) => void) => void;
+  'git:push': (payload: GitPushPayload, callback: (result: GitPushResult) => void) => void;
+  'git:fetch': (payload: GitFetchPayload, callback: (result: GitFetchResult) => void) => void;
+  'git:pull': (payload: GitPullPayload, callback: (result: GitPullResult) => void) => void;
+  'git:discardFile': (
+    payload: GitDiscardFilePayload,
+    callback: (result: GitDiscardFileResult) => void,
+  ) => void;
   'git:update_skipped_branch': (
     payload: GitUpdateSkippedBranchPayload,
     callback: (response: Ack) => void,
   ) => void;
   'git:exec': (payload: GitExecPayload, callback: (response: GitExecResponse) => void) => void;
+  'git:worktree:list': (
+    payload: ListWorktreesPayload,
+    callback: (response: WorktreeListResponse) => void,
+  ) => void;
+  'git:worktree:add': (
+    payload: CreateWorktreePayload,
+    callback: (response: CreateWorktreeResponse) => void,
+  ) => void;
+  'git:worktree:remove': (
+    payload: WorktreeArchivePayload,
+    callback: (response: WorktreeArchiveResponse) => void,
+  ) => void;
+  'git:worktree:rename': (
+    payload: WorktreeRenamePayload,
+    callback: (response: WorktreeRenameResponse) => void,
+  ) => void;
 
   // ── Aligned: Plugin ──
   'plugin:list': (
@@ -405,8 +519,6 @@ export interface ClientToServerEvents {
     payload: ChannelIdPayload,
     callback: (response: RawEventsResponse) => void,
   ) => void;
-  'git:log': (payload: GitLogPayload, callback: (result: GitLogResult) => void) => void;
-  'git:diff': (payload: GitDiffPayload, callback: (result: GitDiffResult) => void) => void;
   'app:init': (callback: (response: InitResponse) => void) => void;
   'chat:cancel_request': (payload: CancelRequestPayload) => void;
   'app:config': (
@@ -435,33 +547,6 @@ export interface ClientToServerEvents {
   ) => void;
   'settings:set_remote_control': (payload: SettingsSetRemoteControlPayload) => void;
   'chat:hook_respond': (payload: ChatHookCallbackRespondPayload) => void;
-
-  // ── Worktree ──
-  'worktree:create': (
-    payload: CreateWorktreePayload,
-    callback: (response: CreateWorktreeResponse) => void,
-  ) => void;
-  'worktree:list': (
-    payload: ListWorktreesPayload,
-    callback: (response: WorktreeListResponse) => void,
-  ) => void;
-  'worktree:delete': (payload: DeleteWorktreePayload, callback: (response: Ack) => void) => void;
-  'worktree:initRepo': (
-    payload: InitRepoPayload,
-    callback: (response: InitRepoResponse) => void,
-  ) => void;
-  'worktree:listBranches': (
-    payload: ListBranchesPayload,
-    callback: (response: ListBranchesResponse) => void,
-  ) => void;
-  'worktree:checkout': (
-    payload: WorktreeCheckoutPayload,
-    callback: (response: WorktreeCheckoutResponse) => void,
-  ) => void;
-  'worktree:status': (
-    payload: WorktreeStatusPayload,
-    callback: (response: WorktreeStatusResponse) => void,
-  ) => void;
 }
 
 // ── ClientMessage discriminated union ──
@@ -590,6 +675,11 @@ export interface ServerToClientEvents {
   'projects:updated': (project: Project) => void;
   'projects:removed': (event: ProjectsRemovedEvent) => void;
 
+  // ── FS / Git dirty (per-cwd broadcast) ──
+  'files:dirty': (payload: FilesDirtyEvent) => void;
+  'git:dirty': (payload: GitDirtyEvent) => void;
+  'openspec:dirty': (payload: OpenspecDirtyEvent) => void;
+
   // ── Worktree (global broadcast) ──
   'worktree:added': (event: WorktreeAddedEvent) => void;
   'worktree:removed': (event: WorktreeRemovedEvent) => void;
@@ -705,8 +795,14 @@ export const EVENTS = {
   error: {
     message: 'error:message',
   },
-  explorer: {
-    browse: 'explorer:browse',
+  openspec: {
+    list: 'openspec:list',
+    read: 'openspec:read',
+    changeNew: 'openspec:changeNew',
+    archive: 'openspec:archive',
+    toggleTask: 'openspec:toggleTask',
+    // Server → client broadcast: openspec/* file changed
+    dirty: 'openspec:dirty',
   },
   projects: {
     list: 'projects:list',
@@ -722,13 +818,45 @@ export const EVENTS = {
     list: 'file:list',
     read: 'file:read',
   },
+  fs: {
+    // RPC (cwd-scoped, replaces explorer:*)
+    browse: 'fs:browse',
+    read: 'fs:read',
+    search: 'fs:search',
+    watch: 'fs:watch',
+    unwatch: 'fs:unwatch',
+    create: 'fs:create',
+    delete: 'fs:delete',
+    rename: 'fs:rename',
+    copy: 'fs:copy',
+    move: 'fs:move',
+    // Server → client broadcast: file changes detected by chokidar
+    dirty: 'files:dirty',
+  },
   git: {
+    init: 'git:init',
+    branches: 'git:branches',
     checkout: 'git:checkout',
-    diff: 'git:diff',
-    exec: 'git:exec',
-    log: 'git:log',
     status: 'git:status',
+    statusSummary: 'git:statusSummary',
+    diff: 'git:diff',
+    log: 'git:log',
+    add: 'git:add',
+    commit: 'git:commit',
+    push: 'git:push',
+    fetch: 'git:fetch',
+    pull: 'git:pull',
+    discardFile: 'git:discardFile',
+    exec: 'git:exec',
     update_skipped_branch: 'git:update_skipped_branch',
+    // Server → client broadcast: git state changed (HEAD / index / refs)
+    dirty: 'git:dirty',
+    worktree: {
+      list: 'git:worktree:list',
+      add: 'git:worktree:add',
+      remove: 'git:worktree:remove',
+      rename: 'git:worktree:rename',
+    },
   },
   mcp: {
     ask_debugger: 'mcp:ask_debugger',
@@ -846,16 +974,11 @@ export const EVENTS = {
     open_claude: 'terminal:open_claude',
     read: 'terminal:read',
   },
+  /** Server → client broadcast events (notifications). RPC events for
+   *  worktree management live under `git.worktree.*`. */
   worktree: {
     added: 'worktree:added',
     branchChanged: 'worktree:branchChanged',
-    checkout: 'worktree:checkout',
-    create: 'worktree:create',
-    delete: 'worktree:delete',
-    initRepo: 'worktree:initRepo',
-    list: 'worktree:list',
-    listBranches: 'worktree:listBranches',
     removed: 'worktree:removed',
-    status: 'worktree:status',
   },
-} as const satisfies Record<string, Record<string, string>>;
+} as const;

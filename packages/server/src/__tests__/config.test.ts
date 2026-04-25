@@ -90,7 +90,7 @@ describe('loadConfig — non-database envs', () => {
     expect(c.systemPrompt).toBe('sys');
     expect(c.autoMode).toBe(false);
     expect(c.allowDangerouslySkipPermissions).toBe(false);
-    expect(c.explorerRoots).toEqual(['/tmp/a', '/tmp/b']);
+    expect(c.fsRoots).toEqual(['/tmp/a', '/tmp/b']);
   });
 
   it('empty env — defaults apply', () => {

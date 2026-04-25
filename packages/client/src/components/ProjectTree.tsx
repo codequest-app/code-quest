@@ -57,9 +57,5 @@ export function ProjectTree({
 }
 
 function GroupHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-1 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-      {children}
-    </div>
-  );
+  return <div className="section-label px-1 pt-2 pb-1">{children}</div>;
 }

@@ -3,7 +3,10 @@ name: tailwind-v4
 description: >
   Tailwind CSS v4 styling with @theme, @utility, and @custom-variant directives.
   Use when styling components, configuring design tokens, adding custom utilities,
-  migrating from v3, or converting hardcoded colors to theme tokens.
+  migrating from v3, or converting hardcoded colors to theme tokens. Enforces
+  token-first design flow: look up existing @theme tokens before reaching for
+  arbitrary values, and extend @theme when a design exceeds the token range
+  rather than sprinkling ad-hoc `[Npx]` / `[#hex]` values.
 ---
 
 # Tailwind CSS v4
@@ -41,6 +44,62 @@ No `content` globs needed — auto-detected. No autoprefixer — Lightning CSS h
 | `content: [...]` | Auto-detected |
 | PostCSS required | `@tailwindcss/vite` plugin |
 | Container query plugin | Built-in `@container` |
+
+## Design flow: token-first
+
+設計 UI 時**先看 design token，再考慮 utility**。不要遇到設計稿的值就寫 arbitrary（`text-[13px]` / `bg-[#3a7]` / `p-[7px]`）。
+
+**正確順序（寫 JSX 前跑一遍）：**
+
+1. **先查既有 token** — 需要的顏色 / 字級 / 間距 / radius / shadow / z-index 是否已經在 `@theme` 或內建 scale？
+   - 顏色：`grep "^\s*--color-" packages/client/src/App.css`
+   - Spacing / text / z：用「優先內建 utility」表對照
+2. **差 1–2px / 1–2 階 → 就近取** — design system 的一致性 > pixel-perfect。`13px` 取 `text-xs` 或 `text-sm`、`#3a7d5e` 取 `text-success`。
+3. **超出既有 token 範圍 → 先擴 token，不要寫 arbitrary**
+   - 新色階：加 `--color-X` 到 `@theme`
+   - 新語意層級（z-index、muted tier、shadow）：加對應 `--*` token
+   - 新可重用效果：抽 `@utility`
+4. **只有這些 arbitrary 值是合法的**（見下方「Arbitrary value 正當情境」）：
+   - `calc(...)` 計算值
+   - 引用動態 CSS variable
+   - 刻意 off-grid 且有清楚理由（icon 尺寸、對齊特定視覺錨點）
+
+**不要這樣做**：
+
+```tsx
+// ❌ 為了新設計稿直接寫 arbitrary
+<div className="bg-[#2a4a6e] text-[13px] p-[7px] shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+
+// ✅ 先把需要的值加進 @theme，再用 semantic utility
+// App.css:  --color-surface-sunken: oklch(...); --shadow-card: 0 2px 8px rgba(0,0,0,0.4);
+<div className="bg-surface-sunken text-xs p-2 shadow-card" />
+```
+
+**特別 callout — literal-pixel arbitraries**：
+
+**任何** `\w+-[Npx]`（`text-[13px]` / `h-[38px]` / `max-h-[480px]` / `max-w-[180px]` 等）**明確禁止**。
+
+收斂規則：
+- text size: `text-[1Npx]` → `text-xs` (12px) 或 `text-2xs` (10px) chip token
+  - `text-2xs` 限：uppercase tracked chip badges、section-heading utility（`section-label` 用 `font-size: var(--text-2xs)` 而非 hardcoded `10px`）
+  - body / link / hint / dialog 文字：用 `text-xs`，**不要**用 `text-2xs`
+- height / width / spacing: 走 Tailwind v4 整數 spacing — `h-9` (36)、`max-h-120` (480)、`max-w-45` (180) 等。專案 `--spacing: 0.21875rem`，所以 `N × 0.21875rem` = N × 3.5px（注意：不是預設的 4px）
+- chip / badge 視覺重量靠 `tracking-wider` + `bg-x/10` + 弱化色控制，不是縮字
+- 沒有 px arbitrary 例外——`backdrop-blur` 用 Tailwind 最小 `xs` (4px)，其他都 N × 3.5px 就近取
+
+**注意：本專案 `--spacing: 0.21875rem`**（密度 axis 縮 87.5%），所以 Tailwind 預設「N = 4px」**不適用**——本專案 `N = 3.5px`：
+- `h-9` = 31.5px、`h-10` = 35px、`h-11` = 38.5px
+- `max-w-50` = 175px、`max-w-51` = 178.5px
+- `max-h-120` = 420px（不是 480px）—— 4 處重複的 480px dialog body 抽 `@utility max-h-dialog-body { max-height: 30rem; }`，30rem 直接用 rem 不靠 spacing 計算
+
+guard test: `packages/client/src/utils/__tests__/no-arbitrary-utility.test.ts` 掃 components + stories，PR 加新 `\w+-[Npx]` 時擋下來。
+
+**為什麼**：
+- arbitrary 值無法透過 `data-theme` / `data-font` / `data-density` axis 重載，使用者切主題或調密度時視覺破版。
+- token 有語意（`accent` / `surface-sunken` / `shadow-card`）；arbitrary 只是 raw value，下一個讀者看不出意圖。
+- 設計系統收斂：同一個顏色 / 尺寸出現在 5 個地方，都指向同一 token，之後微調改一處即可。
+
+**Review 時的判準**：看到 `[...]` 先問「為什麼不是 token？」——如果答案是「設計稿就這樣」而沒有 arbitrary 正當情境，先調 token。
 
 ## Theme Configuration (`@theme`)
 

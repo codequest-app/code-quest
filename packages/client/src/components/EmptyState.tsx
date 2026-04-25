@@ -1,19 +1,32 @@
 import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
+  /** Optional 32-40px glyph anchored above the message — gives the empty
+   *  state a visual anchor instead of just floating text. */
   icon?: ReactNode;
   message: string;
+  /** Optional secondary content below the message — code snippet, CTA link,
+   *  install instructions etc. */
+  hint?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
   testId?: string;
 }
 
-export function EmptyState({ icon, message, actionLabel, onAction, testId }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  message,
+  hint,
+  actionLabel,
+  onAction,
+  testId,
+}: EmptyStateProps) {
   const hasAction = actionLabel !== undefined && onAction !== undefined;
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-4 text-text-muted">
+    <div className="flex flex-col items-center justify-center flex-1 gap-4 text-text-muted text-center px-6">
       {icon && <span className="text-text-muted/60">{icon}</span>}
-      <p>{message}</p>
+      <p className="max-w-xs text-sm">{message}</p>
+      {hint && <div className="text-xs text-text-dim">{hint}</div>}
       {hasAction && (
         <button
           type="button"

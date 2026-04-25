@@ -1,5 +1,5 @@
-import { isValidElement, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import { isValidElement, useRef } from 'react';
 import type { Components } from 'react-markdown';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -32,43 +32,25 @@ function FencedCodeWrapper({ children }: { children: React.ReactNode }) {
 }
 
 function LinkWithContextMenu({ href, children }: { href?: string; children: React.ReactNode }) {
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   if (!href) return <span>{children}</span>;
   return (
-    <>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onContextMenu={(e) => {
-          e.preventDefault();
-          setMenu({ x: e.clientX, y: e.clientY });
-        }}
-      >
-        {children}
-      </a>
-      {menu &&
-        createPortal(
-          <div
-            role="menu"
-            className="fixed z-modal bg-surface border border-border rounded shadow"
-            style={{ left: menu.x, top: menu.y }}
-            onMouseLeave={() => setMenu(null)}
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild>
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          {children}
+        </a>
+      </ContextMenu.Trigger>
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="z-modal bg-surface border border-border rounded shadow py-1 min-w-32">
+          <ContextMenu.Item
+            onSelect={() => void copyToClipboard(href)}
+            className="block px-3 py-1 text-sm text-text data-[highlighted]:bg-surface-hover outline-none cursor-pointer"
           >
-            <button
-              type="button"
-              className="block px-3 py-1 text-sm text-text hover:bg-surface-hover w-full text-left"
-              onClick={() => {
-                void copyToClipboard(href);
-                setMenu(null);
-              }}
-            >
-              Copy Link
-            </button>
-          </div>,
-          document.body,
-        )}
-    </>
+            Copy Link
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
   );
 }
 

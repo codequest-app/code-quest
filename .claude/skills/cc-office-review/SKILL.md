@@ -87,6 +87,15 @@ description: >
 - 不依賴 render 順序的 side effect
 - 手動 useMemo/useCallback 不必要時可移除（compiler 自動 memoize）
 
+## UI / 樣式（design token first）
+
+- JSX 看到 arbitrary utility（`text-[13px]` / `bg-[#...]` / `p-[7px]` / `shadow-[...]`）先查有沒有對應 `@theme` token
+  - 差 1–2px / 1–2 階 → 就近取內建 utility（`text-xs` / `p-2`）
+  - 超出既有範圍 → **先擴 `@theme`，不要直接 arbitrary**
+  - 合法 arbitrary：`calc(...)`、引用 CSS variable、刻意 off-grid 且有理由
+- 顏色不寫 hex：查 `packages/client/src/App.css` 的 `--color-*` 語意 token（`accent` / `surface` / `text-muted` / `success` / `danger`…）
+- 細節流程參考 `tailwind-v4` skill 的「Design flow: token-first」
+
 ## 測試
 
 - 使用 FakeSummoner + real JSON segments（`@code-quest/summoner/test` 的 `s.*()` builder）

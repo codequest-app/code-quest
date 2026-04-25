@@ -7,6 +7,7 @@ import {
   sessionBroadcastStateSchema,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { basename } from '../utils/basename';
 import { useSocket } from './SocketContext';
 
@@ -184,6 +185,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     if (!socket) return;
 
     socket.emit(EVENTS.projects.list, {}, (res) => {
+      if ('error' in res) {
+        toast.error(`Failed to load projects: ${res.error}`);
+        return;
+      }
       serverProjectsRef.current = res.projects;
       setProjects(res.projects.map(toUiProject));
     });

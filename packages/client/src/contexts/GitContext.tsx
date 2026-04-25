@@ -1,0 +1,282 @@
+import type {
+  GitStatusByCwdResult,
+  WorktreeAddedEvent,
+  WorktreeBranchChangedEvent,
+  WorktreeInfo,
+  WorktreeRemovedEvent,
+} from '@code-quest/shared';
+import { EVENTS, gitStatusByCwdResultSchema } from '@code-quest/shared';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { useCwdQueryStore } from '../hooks/useCwdQueryStore';
+import { rpc } from '../socket/rpc';
+import { useSocket } from './SocketContext';
+
+/** Sentinel stored in `listing` when the project is not a git repo. */
+export const NOT_A_REPO = 'not_a_repo' as const;
+export type WorktreeListingEntry = WorktreeInfo[] | typeof NOT_A_REPO;
+
+interface WorktreeState {
+  listing: Record<string, WorktreeListingEntry>;
+}
+
+export type CreateWorktreeResult = { worktreePath: string; name: string; branch?: string };
+export type ListResult = WorktreeInfo[] | { error: 'not_a_repo' | string };
+export type InitRepoResult = { ok: true; branch: string } | { ok: false; error: string };
+
+export interface CreateWorktreeArgs {
+  cwd: string;
+  name?: string;
+  existingBranch?: string;
+  newBranch?: string;
+  baseBranch?: string;
+  path?: string;
+}
+
+export type CheckoutResult = { ok: true; branch: string } | { ok: false; error: string };
+
+export type GitFetchResult = { ok: true } | { error: string };
+export type GitPullResult = { ok: true; fastForwarded: boolean } | { error: string };
+
+interface WorktreeActions {
+  create: (
+    cwdOrArgs: string | CreateWorktreeArgs,
+    name?: string,
+  ) => Promise<CreateWorktreeResult | { error: string }>;
+  list: (cwd: string) => Promise<ListResult>;
+  /** Remove a worktree by name. Always updates the local listing on success.
+   *  `opts.force` defaults to false (allows the server to reject with `'dirty'`
+   *  so callers can prompt the user). Set `force: true` for the "fire and
+   *  forget" remove path. */
+  removeWorktree: (
+    projectCwd: string,
+    name: string,
+    opts?: { force?: boolean },
+  ) => Promise<{ ok: true } | { error: string }>;
+  initRepo: (cwd: string) => Promise<InitRepoResult>;
+  listBranches: (cwd: string) => Promise<string[] | { error: string }>;
+  checkout: (worktreeCwd: string, branch: string) => Promise<CheckoutResult>;
+  status: (
+    worktreeCwd: string,
+  ) => Promise<{ branch: string; isClean: boolean; changedFilesCount: number } | { error: string }>;
+  rename: (
+    worktreeCwd: string,
+    newBranchName: string,
+  ) => Promise<{ branch: string } | { error: string }>;
+  fetch: (cwd: string) => Promise<GitFetchResult>;
+  pull: (cwd: string) => Promise<GitPullResult>;
+  discardFile: (cwd: string, file: string) => Promise<{ ok: true } | { error: string }>;
+
+  // ── Per-cwd git status: external store API for useSyncExternalStore ──
+  /** Synchronous snapshot of cached git status for `cwd`. `undefined` if
+   *  not yet fetched. Pair with `subscribeGitStatusChange` via
+   *  `useSyncExternalStore` (or use the `useGitStatus` adapter hook). */
+  getGitStatus: (cwd: string) => GitStatusByCwdResult | undefined;
+  /** Notify on cache change for `cwd`. Parameterless callback — consumer
+   *  reads new value via `getGitStatus(cwd)`. First subscribe per cwd
+   *  triggers an initial fetch. Returned unsubscribe is idempotent. */
+  subscribeGitStatusChange: (cwd: string, onChange: () => void) => () => void;
+  /** Force a refetch (used by Refresh button etc.). */
+  refetchGitStatus: (cwd: string) => Promise<void>;
+}
+
+const GitStateContext = createContext<WorktreeState | null>(null);
+const GitActionsContext = createContext<WorktreeActions | null>(null);
+
+export function useGitState(): WorktreeState {
+  const ctx = useContext(GitStateContext);
+  if (!ctx) throw new Error('useGitState must be used within GitProvider');
+  return ctx;
+}
+
+export function useGitActions(): WorktreeActions {
+  const ctx = useContext(GitActionsContext);
+  if (!ctx) throw new Error('useGitActions must be used within GitProvider');
+  return ctx;
+}
+
+/** External-store adapter: returns the cached git status for `cwd`,
+ *  re-rendering the component when it changes. First mount per cwd
+ *  triggers fetch. Synchronous snapshot read = zero flicker on cwd
+ *  switches when the new cwd is already cached. */
+export function useGitStatus(cwd: string): GitStatusByCwdResult | undefined {
+  const { getGitStatus, subscribeGitStatusChange } = useGitActions();
+  const subscribe = useCallback(
+    (cb: () => void) => subscribeGitStatusChange(cwd, cb),
+    [cwd, subscribeGitStatusChange],
+  );
+  const getSnapshot = useCallback(() => getGitStatus(cwd), [cwd, getGitStatus]);
+  return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+const fetchGitStatus =
+  (socket: ReturnType<typeof useSocket>['socket']) =>
+  async (cwd: string): Promise<GitStatusByCwdResult> => {
+    const response = await rpc(socket, EVENTS.git.status, { cwd });
+    const parsed = gitStatusByCwdResultSchema.safeParse(response);
+    return parsed.success ? parsed.data : { error: 'invalid_response' };
+  };
+
+const extractGitDirtyCwd = (payload: unknown): string | null => {
+  if (typeof payload === 'object' && payload !== null && 'cwd' in payload) {
+    const cwd = (payload as { cwd: unknown }).cwd;
+    return typeof cwd === 'string' ? cwd : null;
+  }
+  return null;
+};
+
+export function GitProvider({ children }: { children: ReactNode }) {
+  const { socket } = useSocket();
+  const [listing, setListing] = useState<Record<string, WorktreeListingEntry>>({});
+
+  const fetch = useMemo(() => fetchGitStatus(socket), [socket]);
+  const statusStore = useCwdQueryStore<GitStatusByCwdResult>({
+    socket,
+    fetch,
+    dirtyEvent: EVENTS.git.dirty,
+    extractCwd: extractGitDirtyCwd,
+    idPrefix: 'git-sub',
+  });
+  const refetchIfSubscribed = statusStore.refetchIfSubscribed;
+
+  const actions = useMemo<WorktreeActions>(
+    () => ({
+      async create(cwdOrArgs, name) {
+        const payload: CreateWorktreeArgs =
+          typeof cwdOrArgs === 'string' ? { cwd: cwdOrArgs, name } : cwdOrArgs;
+        const res = await rpc(socket, EVENTS.git.worktree.add, payload);
+        return res.ok ? res.data : { error: res.error };
+      },
+      async list(cwd) {
+        const res = await rpc(socket, EVENTS.git.worktree.list, { cwd });
+        if (!res.ok) {
+          if (res.error === 'not_a_repo') {
+            setListing((prev) => ({ ...prev, [cwd]: NOT_A_REPO }));
+          }
+          return { error: res.error };
+        }
+        setListing((prev) => ({ ...prev, [cwd]: res.data.worktrees }));
+        return res.data.worktrees;
+      },
+      async removeWorktree(projectCwd, name, opts) {
+        const res = await rpc(socket, EVENTS.git.worktree.remove, {
+          projectCwd,
+          name,
+          force: opts?.force ?? false,
+        });
+        if ('ok' in res) {
+          setListing((prev) => {
+            const next = { ...prev };
+            const entry = next[projectCwd];
+            if (Array.isArray(entry)) next[projectCwd] = entry.filter((w) => w.name !== name);
+            return next;
+          });
+          return { ok: true };
+        }
+        return { error: res.error };
+      },
+      async initRepo(cwd) {
+        const res = await rpc(socket, EVENTS.git.init, { cwd });
+        if (!res.ok) return { ok: false, error: res.error };
+        return { ok: true, branch: res.data.branch };
+      },
+      async listBranches(cwd) {
+        const res = await rpc(socket, EVENTS.git.branches, { cwd });
+        return res.ok ? res.data.branches : { error: res.error };
+      },
+      async checkout(worktreeCwd, branch) {
+        const res = await rpc(socket, EVENTS.git.checkout, { cwd: worktreeCwd, branch });
+        if (!res.ok) return { ok: false, error: res.error };
+        return { ok: true, branch: res.data.branch };
+      },
+      async status(worktreeCwd) {
+        const res = await rpc(socket, EVENTS.git.statusSummary, { cwd: worktreeCwd });
+        return res.ok ? res.data : { error: res.error };
+      },
+      getGitStatus: statusStore.get,
+      subscribeGitStatusChange: statusStore.subscribe,
+      refetchGitStatus: statusStore.refetch,
+      async rename(worktreeCwd, newBranchName) {
+        const res = await rpc(socket, EVENTS.git.worktree.rename, {
+          cwd: worktreeCwd,
+          newBranchName,
+        });
+        return res.ok ? res.data : { error: res.error };
+      },
+      async fetch(cwd) {
+        return await rpc(socket, EVENTS.git.fetch, { cwd });
+      },
+      async pull(cwd) {
+        return await rpc(socket, EVENTS.git.pull, { cwd });
+      },
+      async discardFile(cwd, file) {
+        return await rpc(socket, EVENTS.git.discardFile, { cwd, file });
+      },
+    }),
+    [socket, statusStore],
+  );
+
+  // Worktree broadcasts + git:dirty central handler.
+  useEffect(() => {
+    if (!socket) return;
+    const onAdded = (event: WorktreeAddedEvent) => {
+      setListing((prev) => {
+        const entry = prev[event.projectCwd];
+        if (entry === undefined) return prev;
+        const nextList: WorktreeInfo[] = Array.isArray(entry) ? [...entry] : [];
+        if (nextList.some((w) => w.name === event.worktree.name)) return prev;
+        nextList.push(event.worktree);
+        return { ...prev, [event.projectCwd]: nextList };
+      });
+    };
+    const onRemoved = (event: WorktreeRemovedEvent) => {
+      setListing((prev) => {
+        const entry = prev[event.projectCwd];
+        if (!Array.isArray(entry)) return prev;
+        return { ...prev, [event.projectCwd]: entry.filter((w) => w.name !== event.name) };
+      });
+    };
+    const onBranchChanged = (event: WorktreeBranchChangedEvent) => {
+      setListing((prev) => {
+        const entry = prev[event.projectCwd];
+        if (!Array.isArray(entry)) return prev;
+        return {
+          ...prev,
+          [event.projectCwd]: entry.map((w) =>
+            w.path === event.worktreePath ? { ...w, branch: event.branch } : w,
+          ),
+        };
+      });
+      // Branch change invalidates git status for the worktree's cwd.
+      // Skip when nobody's reading — otherwise the cache grows forever
+      // with entries no consumer will ever observe.
+      void refetchIfSubscribed(event.worktreePath);
+    };
+
+    socket.on(EVENTS.worktree.added, onAdded);
+    socket.on(EVENTS.worktree.removed, onRemoved);
+    socket.on(EVENTS.worktree.branchChanged, onBranchChanged);
+    return () => {
+      socket.off(EVENTS.worktree.added, onAdded);
+      socket.off(EVENTS.worktree.removed, onRemoved);
+      socket.off(EVENTS.worktree.branchChanged, onBranchChanged);
+    };
+  }, [socket, refetchIfSubscribed]);
+
+  // Memoize so consumers reading via useGitState() don't re-render every
+  // time GitProvider's parent re-renders.
+  const state = useMemo<WorktreeState>(() => ({ listing }), [listing]);
+  return (
+    <GitStateContext.Provider value={state}>
+      <GitActionsContext.Provider value={actions}>{children}</GitActionsContext.Provider>
+    </GitStateContext.Provider>
+  );
+}

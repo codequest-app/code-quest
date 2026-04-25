@@ -3,13 +3,15 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
 import { ErrorFallback } from './components/ErrorFallback';
 import { WorkspaceLayout } from './components/WorkspaceLayout';
-import { AppReadinessProvider } from './contexts/AppReadinessContext';
+import { AppInitProvider } from './contexts/AppInitContext';
+import { FsProvider } from './contexts/FsContext';
+import { GitProvider } from './contexts/GitContext';
 import { NavigationProvider } from './contexts/NavigationContext';
+import { OpenspecProvider } from './contexts/OpenspecContext';
 import { PluginProvider } from './contexts/PluginContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { SessionProvider } from './contexts/SessionContext';
 import { SocketProvider } from './contexts/SocketContext';
-import { WorktreeProvider } from './contexts/WorktreeContext';
 import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme';
 import { createSocket } from './socket/client';
 import { usePreferencesStore } from './stores/usePreferencesStore';
@@ -33,19 +35,23 @@ export function App() {
       <Toaster position="top-right" richColors />
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <SocketProvider socket={socket}>
-          <AppReadinessProvider>
+          <AppInitProvider>
             <SessionProvider>
               <PluginProvider>
                 <ProjectProvider>
                   <NavigationProvider>
-                    <WorktreeProvider>
-                      <WorkspaceLayout />
-                    </WorktreeProvider>
+                    <GitProvider>
+                      <FsProvider>
+                        <OpenspecProvider>
+                          <WorkspaceLayout />
+                        </OpenspecProvider>
+                      </FsProvider>
+                    </GitProvider>
                   </NavigationProvider>
                 </ProjectProvider>
               </PluginProvider>
             </SessionProvider>
-          </AppReadinessProvider>
+          </AppInitProvider>
         </SocketProvider>
       </ErrorBoundary>
     </div>

@@ -61,7 +61,12 @@ export function setupMatchMedia(
       currentWidth = newWidth;
       for (const [query, list] of lists) {
         const matches = matcher(query, newWidth);
-        list.dispatchEvent(new MediaQueryListEvent('change', { matches, media: query }));
+        // jsdom doesn't ship MediaQueryListEvent — synthesize via Event +
+        // attached fields, which is what useMediaQuery reads.
+        const event = new Event('change') as Event & { matches: boolean; media: string };
+        event.matches = matches;
+        event.media = query;
+        list.dispatchEvent(event);
       }
     },
   };

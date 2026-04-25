@@ -1,6 +1,12 @@
 import type {
+  GitAddResult,
+  GitCommitResult,
   GitDiffResult,
+  GitDiscardFileResult,
+  GitFetchResult,
   GitLogResult,
+  GitPullResult,
+  GitPushResult,
   GitStatusResult,
   WorktreeInfo,
 } from '@code-quest/shared';
@@ -31,6 +37,27 @@ export interface GitService {
   checkout(cwd: string, branch: string): Promise<void>;
   log(cwd: string, limit?: number): Promise<GitLogResult>;
   diff(cwd: string): Promise<GitDiffResult>;
+  /** Stage changes (`git add`). Omit `paths` (or pass empty) to stage all
+   *  changes (equivalent to `git add -A`). Pass paths to stage only those. */
+  add(cwd: string, paths?: string[]): Promise<GitAddResult>;
+  /** Commit staged changes. Returns 'nothing-to-commit' error when no staged
+   *  changes exist (lets the UI surface a friendlier message). */
+  commit(cwd: string, message: string): Promise<GitCommitResult>;
+  /** Push the current branch to its upstream. Returns typed errors for
+   *  'no-upstream' / 'rejected' (non-FF). */
+  push(cwd: string): Promise<GitPushResult>;
+  /** Fetch all remotes (`git fetch --all`). Errors bubble as `{ error }`;
+   *  no typed variants — fetch rarely has actionable failure modes. */
+  fetch(cwd: string): Promise<GitFetchResult>;
+  /** Pull the current branch with fast-forward-only (`git pull --ff-only`).
+   *  `fastForwarded: true` if HEAD actually moved; `false` if already
+   *  up-to-date. Returns `{ error: 'non-ff' }` when remote has diverged —
+   *  UI tells user to resolve manually rather than attempting merge here. */
+  pull(cwd: string): Promise<GitPullResult>;
+  /** Discard unstaged working-tree edits for a single file
+   *  (`git checkout -- <file>`). Does NOT unstage — a separate
+   *  operation. File path is repo-relative as reported by git status. */
+  discardFile(cwd: string, file: string): Promise<GitDiscardFileResult>;
 
   /**
    * Top-level of the working tree containing cwd (`git rev-parse --show-toplevel`).
@@ -62,4 +89,15 @@ export interface GitService {
    *  Throws NotARepoError when the path is not a git repository. */
   listWorktrees(repoRoot: string): Promise<WorktreeInfo[]>;
   deleteWorktree(repoRoot: string, name: string): Promise<void>;
+  /** Rename the branch of a worktree (`git -C <wt> branch -m <newName>`).
+   *  Worktree directory name stays unchanged. Returns the new branch name. */
+  renameWorktree(worktreeCwd: string, newBranchName: string): Promise<{ branch: string }>;
+  /** Remove a worktree's working directory while keeping the branch ref.
+   *  Returns `{ error: 'dirty' }` when the worktree has uncommitted changes
+   *  and `force` is not set. */
+  archiveWorktree(
+    repoRoot: string,
+    name: string,
+    opts?: { force?: boolean },
+  ): Promise<{ ok: true } | { error: string }>;
 }

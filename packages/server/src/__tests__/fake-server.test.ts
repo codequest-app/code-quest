@@ -1,4 +1,4 @@
-import type { ExplorerBrowseResponse } from '@code-quest/shared';
+import type { FsBrowseResponse } from '@code-quest/shared';
 import { FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
@@ -11,7 +11,7 @@ describe('FakeSummoner', () => {
     expect(channelId).toBeTruthy();
   });
 
-  it('explorer:browse uses FakeFilesystemService', async () => {
+  it('fs:browse uses FakeFilesystemService', async () => {
     const summoner = createFakeSummoner();
     summoner.filesystem().setRoots(['/projects']);
     summoner.filesystem().addDirectory('/projects', ['app', 'blog']);
@@ -19,29 +19,31 @@ describe('FakeSummoner', () => {
     const claude = summoner.claude();
     await claude.initialize();
 
-    const result = await claude.send<ExplorerBrowseResponse>('explorer:browse', {});
+    const result = await claude.send<FsBrowseResponse>('fs:browse', {});
+    if ('error' in result) throw new Error(result.error);
     expect(result.directories).toEqual([{ name: 'projects', path: '/projects' }]);
 
-    const children = await claude.send<ExplorerBrowseResponse>('explorer:browse', {
+    const children = await claude.send<FsBrowseResponse>('fs:browse', {
       path: '/projects',
     });
+    if ('error' in children) throw new Error(children.error);
     expect(children.directories).toEqual([
       { name: 'app', path: '/projects/app' },
       { name: 'blog', path: '/projects/blog' },
     ]);
   });
 
-  it('explorer:browse returns empty when path not in fake fs', async () => {
+  it('fs:browse returns error when path is outside allowed roots', async () => {
     const summoner = createFakeSummoner();
     summoner.filesystem().setRoots(['/projects']);
 
     const claude = summoner.claude();
     await claude.initialize();
 
-    const result = await claude.send<ExplorerBrowseResponse>('explorer:browse', {
+    const result = await claude.send<FsBrowseResponse>('fs:browse', {
       path: '/unknown',
     });
-    expect(result.directories).toEqual([]);
+    expect(result).toEqual({ error: 'Path outside allowed roots' });
   });
 
   it('multi-window: both clients can browse filesystem', async () => {
@@ -60,13 +62,15 @@ describe('FakeSummoner', () => {
     await claudeB.initialize();
 
     // Both see the same fake filesystem (shared via server)
-    const resultA = await claudeA.send<ExplorerBrowseResponse>('explorer:browse', {
+    const resultA = await claudeA.send<FsBrowseResponse>('fs:browse', {
       path: '/shared',
     });
-    const resultB = await claudeB.send<ExplorerBrowseResponse>('explorer:browse', {
+    const resultB = await claudeB.send<FsBrowseResponse>('fs:browse', {
       path: '/shared',
     });
 
+    if ('error' in resultA) throw new Error(resultA.error);
+    if ('error' in resultB) throw new Error(resultB.error);
     expect(resultA.directories).toEqual([{ name: 'data', path: '/shared/data' }]);
     expect(resultB.directories).toEqual([{ name: 'data', path: '/shared/data' }]);
   });

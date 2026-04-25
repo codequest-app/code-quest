@@ -31,7 +31,7 @@ export function ProjectList({
         {pinned.length > 0 && (
           <>
             {showPinnedHeader && (
-              <div className="px-1 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+              <div className="px-1 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">
                 Pinned
               </div>
             )}
@@ -50,7 +50,7 @@ export function ProjectList({
         {recent.length > 0 && (
           <>
             {showRecentHeader && (
-              <div className="px-1 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+              <div className="px-1 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">
                 Recent
               </div>
             )}

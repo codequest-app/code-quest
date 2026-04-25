@@ -6,12 +6,15 @@ import { describe, expect, it } from 'vitest';
 import { WorkspaceLayout } from '../../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../../test/fake-summoner';
 import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { FsProvider } from '../../FsContext';
+import { GitProvider } from '../../GitContext';
+import { NavigationProvider } from '../../NavigationContext';
+import { OpenspecProvider } from '../../OpenspecContext';
 import { PluginProvider } from '../../PluginContext';
 import { ProjectProvider } from '../../ProjectContext';
 import { SessionProvider } from '../../SessionContext';
 import { SocketProvider } from '../../SocketContext';
 import { TabProvider, useTabActions, useTabState } from '../../TabContext';
-import { WorktreeProvider } from '../../WorktreeContext';
 
 function renderInTab(ui: ReactElement) {
   const summoner = createFakeSummoner();
@@ -35,9 +38,15 @@ describe('TabProvider', () => {
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
-                <WorktreeProvider>
-                  <WorkspaceLayout />
-                </WorktreeProvider>
+                <GitProvider>
+                  <FsProvider>
+                    <OpenspecProvider>
+                      <NavigationProvider>
+                        <WorkspaceLayout />
+                      </NavigationProvider>
+                    </OpenspecProvider>
+                  </FsProvider>
+                </GitProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
@@ -47,7 +56,7 @@ describe('TabProvider', () => {
       await userEvent.click(screen.getByTestId('empty-add-project'));
       await userEvent.click(await screen.findByRole('treeitem', { name: 'projects' }));
       await userEvent.click(await screen.findByRole('treeitem', { name: 'my-app' }));
-      await userEvent.click(screen.getByText('Open'));
+      await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
       expect(screen.getByRole('button', { name: /New Session/ })).toBeInTheDocument();
     });
 

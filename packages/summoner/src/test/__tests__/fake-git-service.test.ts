@@ -6,7 +6,7 @@ describe('FakeGitService', () => {
     it('returns default branch and clean state', async () => {
       const git = new FakeGitService();
       const result = await git.status('/repo');
-      expect(result).toEqual({ branch: 'main', isClean: true, changedFiles: [] });
+      expect(result).toMatchObject({ branch: 'main', isClean: true, changedFiles: [] });
     });
 
     it('returns configured state', async () => {
@@ -43,6 +43,7 @@ describe('FakeGitService', () => {
         { hash: 'def', message: 'fix', author: 'B', date: '2024-01-02' },
       ]);
       const result = await git.log('/repo');
+      if (!('entries' in result)) throw new Error('expected entries');
       expect(result.entries).toHaveLength(2);
     });
 
@@ -54,6 +55,7 @@ describe('FakeGitService', () => {
         { hash: 'c', message: 'c', author: 'C', date: '3' },
       ]);
       const result = await git.log('/repo', 2);
+      if (!('entries' in result)) throw new Error('expected entries');
       expect(result.entries).toHaveLength(2);
     });
   });
@@ -118,6 +120,93 @@ describe('FakeGitService', () => {
       // After reset, only the default-seeded /repo is treated as a git repo.
       expect(await git.listWorktrees('/repo')).toHaveLength(0);
     });
+  });
+});
+
+describe('renameWorktree', () => {
+  it('updates branch on a registered worktree', async () => {
+    const git = new FakeGitService();
+    git.addWorktree({ name: 'feat-x', path: '/repo/.wt/feat-x', branch: 'old' });
+    const result = await git.renameWorktree('/repo/.wt/feat-x', 'new-name');
+    expect(result).toEqual({ branch: 'new-name' });
+    const wts = await git.listWorktrees('/repo');
+    expect(wts.find((w) => w.path === '/repo/.wt/feat-x')?.branch).toBe('new-name');
+  });
+
+  it('throws when worktree path is not registered', async () => {
+    const git = new FakeGitService();
+    await expect(git.renameWorktree('/unknown', 'x')).rejects.toThrow();
+  });
+});
+
+describe('archiveWorktree', () => {
+  it('removes the worktree entry, keeping repo otherwise intact', async () => {
+    const git = new FakeGitService();
+    git.addWorktree({ name: 'feat-x', path: '/repo/.wt/feat-x', branch: 'old' });
+    const result = await git.archiveWorktree('/repo', 'feat-x');
+    expect(result).toEqual({ ok: true });
+    const wts = await git.listWorktrees('/repo');
+    expect(wts.find((w) => w.name === 'feat-x')).toBeUndefined();
+  });
+
+  it('returns dirty error when configured', async () => {
+    const git = new FakeGitService();
+    git.addWorktree({ name: 'feat-x', path: '/repo/.wt/feat-x', branch: 'old' });
+    git.setArchiveDirty(true);
+    const result = await git.archiveWorktree('/repo', 'feat-x');
+    expect(result).toEqual({ error: 'dirty' });
+    // worktree NOT removed when dirty
+    expect((await git.listWorktrees('/repo')).some((w) => w.name === 'feat-x')).toBe(true);
+  });
+
+  it('force=true bypasses dirty check', async () => {
+    const git = new FakeGitService();
+    git.addWorktree({ name: 'feat-x', path: '/repo/.wt/feat-x', branch: 'old' });
+    git.setArchiveDirty(true);
+    const result = await git.archiveWorktree('/repo', 'feat-x', { force: true });
+    expect(result).toEqual({ ok: true });
+  });
+});
+
+describe('FakeGitService add/commit/push', () => {
+  it('add (no paths) stages all changed files into counter', async () => {
+    const git = new FakeGitService();
+    git.setChangedFiles([
+      { status: 'M', file: 'a.ts' },
+      { status: '??', file: 'b.ts' },
+    ]);
+    await git.add('/repo');
+    expect(git.stagedCount).toBe(2);
+  });
+
+  it('commit returns hash and clears state', async () => {
+    const git = new FakeGitService();
+    git.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
+    await git.add('/repo');
+    const result = await git.commit('/repo', 'wip');
+    expect(result).toMatchObject({ ok: true });
+    if ('hash' in result) expect(result.hash).toMatch(/^fake-/);
+    expect(git.stagedCount).toBe(0);
+  });
+
+  it('commit returns nothing-to-commit error when no staged files', async () => {
+    const git = new FakeGitService();
+    expect(await git.commit('/repo', 'wip')).toEqual({ error: 'nothing-to-commit' });
+  });
+
+  it('commit surfaces configured error', async () => {
+    const git = new FakeGitService();
+    git.setChangedFiles([{ status: 'M', file: 'a.ts' }]);
+    await git.add('/repo');
+    git.setCommitError('hook-failed');
+    expect(await git.commit('/repo', 'wip')).toEqual({ error: 'hook-failed' });
+  });
+
+  it('push returns ok by default and surfaces configured error', async () => {
+    const git = new FakeGitService();
+    expect(await git.push('/repo')).toEqual({ ok: true });
+    git.setPushError('rejected');
+    expect(await git.push('/repo')).toEqual({ error: 'rejected' });
   });
 });
 

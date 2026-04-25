@@ -10,6 +10,7 @@ export type {
   ServerToClientEvents,
 } from './socket-events.ts';
 export { EVENTS } from './socket-events.ts';
+export { TopicEmitter } from './topic-emitter.ts';
 
 // Utils
 export { errMsg } from './utils/err-msg.ts';

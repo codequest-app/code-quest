@@ -43,7 +43,7 @@ describe('WorkspaceLayout', () => {
     });
 
     it('sidebar shows project list by default', () => {
-      expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Projects/i })).toBeInTheDocument();
     });
 
     it('close tab removes tab from UI', async () => {

@@ -1,9 +1,10 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { WorktreeRow } from '../WorktreeRow';
 
-const baseWt = {
+const baseWt: WorktreeInfo = {
   name: 'feat-x',
   path: '/repo/.claude/worktrees/feat-x',
   branch: 'worktree-feat-x',

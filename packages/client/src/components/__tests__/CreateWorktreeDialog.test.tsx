@@ -57,15 +57,14 @@ describe('CreateWorktreeDialog (2-tab redesign)', () => {
     expect(screen.getByLabelText(/^path/i)).toBeInTheDocument();
   });
 
-  it('shows "Open new session here" checkbox (default checked)', () => {
+  it('does NOT auto-open chat — creating a worktree no longer spawns a session', () => {
     const { Wrapper } = makeWrapper();
     render(
       <Wrapper>
         <CreateWorktreeDialog open cwd="/repo" onClose={vi.fn()} />
       </Wrapper>,
     );
-    const checkbox = screen.getByRole('checkbox', { name: /open new session here/i });
-    expect(checkbox).toBeChecked();
+    expect(screen.queryByRole('checkbox', { name: /open new session here/i })).toBeNull();
   });
 
   it('command preview reflects Tab B inputs live', async () => {

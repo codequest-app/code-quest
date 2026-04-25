@@ -41,12 +41,12 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
     await user.type(screen.getByLabelText(/new branch name/i), 'feat-a');
     await user.click(screen.getByRole('button', { name: /^Create$/ }));
 
-    // Assert: dialog closes, a second tab appears inside same Project.
+    // Assert: dialog closes; tab count UNCHANGED (creating a worktree no
+    // longer auto-spawns a chat session — user clicks the worktree row
+    // separately to open chat).
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /new worktree/i })).not.toBeInTheDocument();
     });
-    await waitFor(() => {
-      expect(screen.getAllByLabelText(/^Close /)).toHaveLength(2);
-    });
+    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
   });
 });

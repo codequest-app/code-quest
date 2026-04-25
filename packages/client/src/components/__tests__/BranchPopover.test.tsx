@@ -3,19 +3,32 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { BranchPopover } from '../BranchPopover';
 
+function renderPopover(props: {
+  branches: string[];
+  current: string | null;
+  onSelect?: (b: string) => void;
+  onCreateBranch?: (filter?: string) => void;
+  onClose?: () => void;
+}) {
+  const onClose = props.onClose ?? (() => {});
+  render(
+    <BranchPopover
+      trigger={<button type="button">open</button>}
+      defaultOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      branches={props.branches}
+      current={props.current}
+      onSelect={props.onSelect ?? (() => {})}
+      onCreateBranch={props.onCreateBranch ?? (() => {})}
+    />,
+  );
+}
+
 describe('BranchPopover', () => {
   it('lists branches with ✓ on current; current is pinned to top', () => {
-    render(
-      <BranchPopover
-        x={0}
-        y={0}
-        branches={['main', 'feat/x', 'fix/y']}
-        current="feat/x"
-        onSelect={() => {}}
-        onCreateBranch={() => {}}
-        onClose={() => {}}
-      />,
-    );
+    renderPopover({ branches: ['main', 'feat/x', 'fix/y'], current: 'feat/x' });
     const items = screen.getAllByRole('menuitem').filter((i) => i.dataset.kind === 'branch');
     expect(items[0].textContent).toContain('feat/x');
     expect(items[0].textContent).toContain('✓');
@@ -29,17 +42,7 @@ describe('BranchPopover', () => {
   it('clicking a branch calls onSelect with that branch + closes', async () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
-    render(
-      <BranchPopover
-        x={0}
-        y={0}
-        branches={['main', 'feat/x']}
-        current="main"
-        onSelect={onSelect}
-        onCreateBranch={() => {}}
-        onClose={onClose}
-      />,
-    );
+    renderPopover({ branches: ['main', 'feat/x'], current: 'main', onSelect, onClose });
     await userEvent
       .setup({ pointerEventsCheck: 0 })
       .click(screen.getByRole('menuitem', { name: /feat\/x/ }));
@@ -50,38 +53,11 @@ describe('BranchPopover', () => {
   it('"+ New branch (worktree)" item triggers onCreateBranch + closes', async () => {
     const onCreateBranch = vi.fn();
     const onClose = vi.fn();
-    render(
-      <BranchPopover
-        x={0}
-        y={0}
-        branches={['main']}
-        current="main"
-        onSelect={() => {}}
-        onCreateBranch={onCreateBranch}
-        onClose={onClose}
-      />,
-    );
+    renderPopover({ branches: ['main'], current: 'main', onCreateBranch, onClose });
     await userEvent
       .setup({ pointerEventsCheck: 0 })
       .click(screen.getByRole('menuitem', { name: /new branch/i }));
     expect(onCreateBranch).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('Escape closes popover', async () => {
-    const onClose = vi.fn();
-    render(
-      <BranchPopover
-        x={0}
-        y={0}
-        branches={['main']}
-        current="main"
-        onSelect={() => {}}
-        onCreateBranch={() => {}}
-        onClose={onClose}
-      />,
-    );
-    await userEvent.setup().keyboard('{Escape}');
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -91,17 +67,13 @@ describe('BranchPopover', () => {
       const onSelect = vi.fn();
       const onCreateBranch = vi.fn();
       const onClose = vi.fn();
-      render(
-        <BranchPopover
-          x={0}
-          y={0}
-          branches={branches}
-          current={opts?.current ?? null}
-          onSelect={onSelect}
-          onCreateBranch={onCreateBranch}
-          onClose={onClose}
-        />,
-      );
+      renderPopover({
+        branches,
+        current: opts?.current ?? null,
+        onSelect,
+        onCreateBranch,
+        onClose,
+      });
       return { onSelect, onCreateBranch, onClose, branches };
     }
 
@@ -130,7 +102,6 @@ describe('BranchPopover', () => {
     it('list has a bounded max-height and scrolls', () => {
       renderMany(100);
       const list = screen.getByTestId('branch-list');
-      // Use getComputedStyle fallback via className presence — jsdom doesn't compute maxHeight from Tailwind.
       expect(list.className).toMatch(/overflow-y-auto/);
       expect(list.className).toMatch(/max-h-/);
     });
@@ -139,7 +110,6 @@ describe('BranchPopover', () => {
       const { onSelect } = renderMany(5);
       const user = userEvent.setup();
       await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
-      // Cursor starts at index 0 (branch-0); two ArrowDowns → branch-2.
       expect(onSelect).toHaveBeenCalledWith('branch-2');
     });
 

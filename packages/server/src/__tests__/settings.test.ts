@@ -14,7 +14,7 @@ const configMock = vi.hoisted(() => ({
   autoMode: true,
   database: { url: undefined, sqliteUrl: 'file::memory:' },
   rawEvents: { writeDeltas: false, readDeltas: false },
-  explorerRoots: [],
+  fsRoots: [],
 }));
 vi.mock('../config.ts', () => ({ config: configMock }));
 afterEach(() => {

@@ -1,8 +1,22 @@
 import 'reflect-metadata';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { FilesystemService, GitService, ProcessProvider } from '@code-quest/summoner';
-import { FakeFilesystemService, FakeGitService } from '@code-quest/summoner/test';
+import type {
+  DiffFileService,
+  FilesystemService,
+  GitService,
+  OpenspecService,
+  PluginCliService,
+  ProcessProvider,
+} from '@code-quest/summoner';
+import {
+  FakeDiffFileService,
+  FakeFilesystemService,
+  FakeGitService,
+  FakeOpenspecService,
+  FakePluginCliService,
+  FakeWatchService,
+} from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { Container } from 'inversify';
 import { createContainer } from '../container.ts';
@@ -18,6 +32,9 @@ interface TestContainerOverrides {
   processProvider?: ProcessProvider;
   filesystemService?: FilesystemService;
   gitService?: GitService;
+  openspecService?: OpenspecService;
+  pluginCli?: PluginCliService;
+  diffFileService?: DiffFileService;
 }
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
@@ -26,6 +43,7 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
 
   const container = createContainer({
     ...overrides,
+    watchService: new FakeWatchService(),
     storeConfig: { sqliteDatabase },
   });
 
@@ -41,6 +59,18 @@ export function createTestContainer(overrides: TestContainerOverrides = {}): Con
   container
     .rebindSync<GitService>(TYPES.GitService)
     .toConstantValue(overrides.gitService ?? new FakeGitService());
+
+  container
+    .rebindSync<OpenspecService>(TYPES.OpenspecService)
+    .toConstantValue(overrides.openspecService ?? new FakeOpenspecService());
+
+  container
+    .rebindSync<PluginCliService>(TYPES.PluginCliService)
+    .toConstantValue(overrides.pluginCli ?? new FakePluginCliService());
+
+  container
+    .rebindSync<DiffFileService>(TYPES.DiffFileService)
+    .toConstantValue(overrides.diffFileService ?? new FakeDiffFileService());
 
   return container;
 }

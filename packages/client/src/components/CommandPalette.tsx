@@ -138,7 +138,7 @@ export function CommandPalette({
       role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
-      className="fixed inset-0 z-palette flex items-start justify-center pt-[10vh] bg-overlay backdrop-blur-[2px]"
+      className="fixed inset-0 z-palette flex items-start justify-center pt-[10vh] bg-overlay backdrop-blur-xs"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

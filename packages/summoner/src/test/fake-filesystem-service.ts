@@ -1,9 +1,11 @@
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import type {
   DirectoryEntry,
   FileResult,
   FilesystemService,
+  FsMutationResult,
   ReadFileResult,
+  WriteFileResult,
 } from '../filesystem/types.ts';
 
 export class FakeFilesystemService implements FilesystemService {
@@ -47,6 +49,23 @@ export class FakeFilesystemService implements FilesystemService {
       .map((name) => ({ name, path: join(path, name) }));
   }
 
+  async browseEntries(
+    path?: string,
+  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
+    const directories = await this.browseDirectories(path);
+    if (!path) return { directories, files: [] };
+    const prefix = path.endsWith('/') ? path : `${path}/`;
+    const files: DirectoryEntry[] = [];
+    for (const filePath of this.files.keys()) {
+      if (!filePath.startsWith(prefix)) continue;
+      const rel = filePath.slice(prefix.length);
+      if (rel.includes('/')) continue;
+      files.push({ name: rel, path: filePath });
+    }
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    return { directories, files };
+  }
+
   async listFiles(cwd: string, pattern: string): Promise<FileResult[]> {
     const results: FileResult[] = [];
 
@@ -76,6 +95,23 @@ export class FakeFilesystemService implements FilesystemService {
     }
 
     return results;
+  }
+
+  async readFileAbsolute(absolutePath: string): Promise<ReadFileResult> {
+    if (!this.isWithinRoots(absolutePath)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    const content = this.files.get(absolutePath);
+    if (content === undefined) return { error: `File not found: ${absolutePath}` };
+    return { content };
+  }
+
+  async writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult> {
+    if (!this.isWithinRoots(absolutePath)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    this.files.set(absolutePath, content);
+    return { ok: true };
   }
 
   async readFile(cwd: string, filePath: string): Promise<ReadFileResult> {
@@ -119,7 +155,129 @@ export class FakeFilesystemService implements FilesystemService {
     return null;
   }
 
-  isWithinExplorerRoots(path: string): boolean {
+  // ── Mutations ──
+
+  async create(absolutePath: string, kind: 'file' | 'directory'): Promise<FsMutationResult> {
+    if (!this.isWithinRoots(absolutePath)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    if (await this.exists(absolutePath)) return { error: 'exists' };
+    if (kind === 'directory') {
+      this.dirs.set(absolutePath, []);
+      this.linkChildToParent(absolutePath);
+    } else {
+      this.files.set(absolutePath, '');
+    }
+    return { ok: true };
+  }
+
+  async delete(absolutePath: string): Promise<FsMutationResult> {
+    if (!this.isWithinRoots(absolutePath)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    this.files.delete(absolutePath);
+    this.dirs.delete(absolutePath);
+    // Remove descendants
+    const prefix = `${absolutePath}/`;
+    for (const k of [...this.files.keys()]) if (k.startsWith(prefix)) this.files.delete(k);
+    for (const k of [...this.dirs.keys()]) if (k.startsWith(prefix)) this.dirs.delete(k);
+    // Detach from parent listing
+    this.unlinkChildFromParent(absolutePath);
+    return { ok: true };
+  }
+
+  async rename(from: string, to: string): Promise<FsMutationResult> {
+    if (!this.isWithinRoots(from) || !this.isWithinRoots(to)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    if (await this.exists(to)) return { error: 'exists' };
+    if (this.files.has(from)) {
+      this.files.set(to, this.files.get(from) ?? '');
+      this.files.delete(from);
+    } else if (this.dirs.has(from)) {
+      // Move dir + all descendants by prefix replace
+      const prefixOld = `${from}/`;
+      const prefixNew = `${to}/`;
+      this.dirs.set(to, this.dirs.get(from) ?? []);
+      this.dirs.delete(from);
+      for (const k of [...this.dirs.keys()]) {
+        if (k.startsWith(prefixOld)) {
+          this.dirs.set(prefixNew + k.slice(prefixOld.length), this.dirs.get(k) ?? []);
+          this.dirs.delete(k);
+        }
+      }
+      for (const k of [...this.files.keys()]) {
+        if (k.startsWith(prefixOld)) {
+          this.files.set(prefixNew + k.slice(prefixOld.length), this.files.get(k) ?? '');
+          this.files.delete(k);
+        }
+      }
+    } else {
+      return { error: 'source not found' };
+    }
+    this.unlinkChildFromParent(from);
+    this.linkChildToParent(to);
+    return { ok: true };
+  }
+
+  async copy(from: string, to: string): Promise<FsMutationResult> {
+    if (!this.isWithinRoots(from) || !this.isWithinRoots(to)) {
+      return { error: 'Path outside allowed roots' };
+    }
+    if (await this.exists(to)) return { error: 'exists' };
+    if (this.files.has(from)) {
+      this.files.set(to, this.files.get(from) ?? '');
+      this.linkChildToParent(to);
+      return { ok: true };
+    }
+    if (this.dirs.has(from)) {
+      const prefixOld = `${from}/`;
+      const prefixNew = `${to}/`;
+      this.dirs.set(to, [...(this.dirs.get(from) ?? [])]);
+      this.linkChildToParent(to);
+      for (const [k, v] of this.dirs.entries()) {
+        if (k.startsWith(prefixOld)) {
+          this.dirs.set(prefixNew + k.slice(prefixOld.length), [...v]);
+        }
+      }
+      for (const [k, v] of this.files.entries()) {
+        if (k.startsWith(prefixOld)) {
+          this.files.set(prefixNew + k.slice(prefixOld.length), v);
+        }
+      }
+      return { ok: true };
+    }
+    return { error: 'source not found' };
+  }
+
+  async move(from: string, to: string): Promise<FsMutationResult> {
+    return this.rename(from, to);
+  }
+
+  /** Append the new entry's basename to its parent directory listing if the
+   *  parent is registered. Idempotent. */
+  private linkChildToParent(absolutePath: string): void {
+    const parent = dirname(absolutePath);
+    const name = basename(absolutePath);
+    const siblings = this.dirs.get(parent);
+    if (siblings && !siblings.includes(name)) {
+      this.dirs.set(parent, [...siblings, name].sort());
+    }
+  }
+
+  private unlinkChildFromParent(absolutePath: string): void {
+    const parent = dirname(absolutePath);
+    const name = basename(absolutePath);
+    const siblings = this.dirs.get(parent);
+    if (siblings) {
+      this.dirs.set(
+        parent,
+        siblings.filter((n) => n !== name),
+      );
+    }
+  }
+
+  isWithinRoots(path: string): boolean {
     for (const root of this.roots) {
       if (path === root || path.startsWith(`${root}/`)) return true;
     }

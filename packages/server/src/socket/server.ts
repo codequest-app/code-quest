@@ -1,7 +1,14 @@
 import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
-import type { FilesystemService, GitService } from '@code-quest/summoner';
+import type {
+  DiffFileService,
+  FilesystemService,
+  GitService,
+  OpenspecService,
+  PluginCliService,
+} from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
 import type { Server } from 'socket.io';
+import type { DirtyBroadcaster } from '../services/dirty-broadcaster.ts';
 import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';
 import type { ProjectStore } from '../services/project-store.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
@@ -17,11 +24,12 @@ import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
 import * as app from './handlers/app.ts';
 import * as autoRespond from './handlers/auto-respond.ts';
-import * as explorer from './handlers/explorer.ts';
 import * as file from './handlers/file.ts';
+import * as fs from './handlers/fs.ts';
 import * as git from './handlers/git.ts';
 import * as mcp from './handlers/mcp.ts';
 import * as message from './handlers/message.ts';
+import * as openspec from './handlers/openspec.ts';
 import * as permission from './handlers/permission.ts';
 import * as plan from './handlers/plan.ts';
 import * as projects from './handlers/projects.ts';
@@ -33,7 +41,6 @@ import * as settings from './handlers/settings.ts';
 import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
-import * as worktree from './handlers/worktree.ts';
 import type { SessionHistory } from './session-history.ts';
 
 @injectable()
@@ -49,7 +56,16 @@ export class SocketServer {
     @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
     @inject(TYPES.FilesystemService) private filesystemService: FilesystemService,
     @inject(TYPES.GitService) private gitService: GitService,
+    @inject(TYPES.OpenspecService) private openspecService: OpenspecService,
+    @inject(TYPES.PluginCliService) private pluginCli: PluginCliService,
+    @inject(TYPES.DiffFileService) private diffFileService: DiffFileService,
     @inject(TYPES.SettingsStore) private settingsStore: SettingsStore,
+    @inject(TYPES.FsDirtyBroadcaster)
+    private fsDirtyBroadcaster: DirtyBroadcaster<string[]>,
+    @inject(TYPES.GitDirtyBroadcaster)
+    private gitDirtyBroadcaster: DirtyBroadcaster<void>,
+    @inject(TYPES.OpenspecDirtyBroadcaster)
+    private openspecDirtyBroadcaster: DirtyBroadcaster<void>,
   ) {}
 
   register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
@@ -71,7 +87,13 @@ export class SocketServer {
       rawEventService: this.rawEventService,
       filesystemService: this.filesystemService,
       gitService: this.gitService,
+      openspecService: this.openspecService,
+      pluginCli: this.pluginCli,
+      diffFileService: this.diffFileService,
       planHandler,
+      fsDirtyBroadcaster: this.fsDirtyBroadcaster,
+      gitDirtyBroadcaster: this.gitDirtyBroadcaster,
+      openspecDirtyBroadcaster: this.openspecDirtyBroadcaster,
     };
 
     // Handlers that only use emitter.on (no register needed)
@@ -79,11 +101,11 @@ export class SocketServer {
     autoRespond.create(ctx);
     permission.create(ctx);
     speech.create(ctx);
-    worktree.create(ctx);
     terminal.create(ctx);
     mcp.create(ctx);
     file.create(ctx);
-    explorer.create(ctx);
+    fs.create(ctx);
+    openspec.create(ctx);
     projects.create(ctx);
 
     settings.create(ctx);

@@ -34,8 +34,18 @@ export interface ProcessHandle {
   abort(): void;
 }
 
+/** Result of a one-shot command (`runOnce`). Streams are captured in full. */
+export interface ProcessRunResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}
+
 export interface ProcessProvider {
+  /** Spawn an interactive process (line-streamed stdout, writeable stdin). */
   spawn(command: string, args: string[], options?: SpawnOptions): ProcessHandle;
+  /** Spawn a one-shot command, wait for it to exit, capture stdout/stderr. */
+  runOnce(command: string, args: string[], options?: SpawnOptions): Promise<ProcessRunResult>;
 }
 
 // --- AdapterOutput: result of transforming a protocol message ---

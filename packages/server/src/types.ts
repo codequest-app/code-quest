@@ -1,9 +1,13 @@
 import type {
+  DiffFileService,
   FilesystemService,
   GitService,
   LaunchOptions,
+  OpenspecService,
+  PluginCliService,
   ProcessRunner,
 } from '@code-quest/summoner';
+import type { DirtyBroadcaster } from './services/dirty-broadcaster.ts';
 import type { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
 import type { ProjectStore } from './services/project-store.ts';
 import type { RawEventService } from './services/raw-event-service.ts';
@@ -35,7 +39,14 @@ export const TYPES = {
   ChannelEventRouter: Symbol.for('ChannelEventRouter'),
   FilesystemService: Symbol.for('FilesystemService'),
   GitService: Symbol.for('GitService'),
+  OpenspecService: Symbol.for('OpenspecService'),
+  PluginCliService: Symbol.for('PluginCliService'),
+  DiffFileService: Symbol.for('DiffFileService'),
   ProcessProvider: Symbol.for('ProcessProvider'),
+  WatchService: Symbol.for('WatchService'),
+  FsDirtyBroadcaster: Symbol.for('FsDirtyBroadcaster'),
+  GitDirtyBroadcaster: Symbol.for('GitDirtyBroadcaster'),
+  OpenspecDirtyBroadcaster: Symbol.for('OpenspecDirtyBroadcaster'),
 } as const;
 
 export interface HandlerContext {
@@ -50,5 +61,11 @@ export interface HandlerContext {
   rawEventService: RawEventService;
   filesystemService: FilesystemService;
   gitService: GitService;
+  openspecService: OpenspecService;
+  pluginCli: PluginCliService;
+  diffFileService: DiffFileService;
   planHandler: PlanApi;
+  fsDirtyBroadcaster: DirtyBroadcaster<string[]>;
+  gitDirtyBroadcaster: DirtyBroadcaster<void>;
+  openspecDirtyBroadcaster: DirtyBroadcaster<void>;
 }

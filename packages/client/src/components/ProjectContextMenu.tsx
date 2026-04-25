@@ -1,103 +1,125 @@
-import { useContext, useEffect, useRef } from 'react';
-import { AppReadinessStateContext } from '../contexts/AppReadinessContext';
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { type ReactNode, useContext } from 'react';
+import { AppInitStateContext } from '../contexts/AppInitContext';
 
-interface ProjectContextMenuProps {
-  x: number;
-  y: number;
+export interface ProjectMenuCallbacks {
   onSelectResume: () => void;
   onSelectCreateWorktree?: () => void;
   onSelectRename?: () => void;
   onSelectRemove?: () => void;
   onSelectInitRepo?: () => void;
-  onClose: () => void;
 }
 
-export function ProjectContextMenu({
-  x,
-  y,
-  onSelectResume,
-  onSelectCreateWorktree,
-  onSelectRename,
-  onSelectRemove,
-  onSelectInitRepo,
-  onClose,
-}: ProjectContextMenuProps) {
-  const capabilities = useContext(AppReadinessStateContext)?.capabilities ?? { worktree: false };
-  const ref = useRef<HTMLDivElement>(null);
+const ITEM_CLASS =
+  'w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5 data-[highlighted]:bg-white/5 outline-none cursor-pointer';
+const DANGER_ITEM_CLASS =
+  'w-full text-left px-3 py-1.5 text-sm text-danger hover:bg-danger/10 data-[highlighted]:bg-danger/10 outline-none cursor-pointer';
+const CONTENT_CLASS =
+  'z-modal min-w-45 rounded border border-border bg-surface shadow-floating py-1';
 
-  useEffect(() => {
-    function onMouseDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [onClose]);
+function useItemList(callbacks: ProjectMenuCallbacks) {
+  const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
+  const items: Array<{
+    key: string;
+    label: ReactNode;
+    onSelect: () => void;
+    danger?: boolean;
+    separatorBefore?: boolean;
+  }> = [{ key: 'resume', label: 'Resume session…', onSelect: callbacks.onSelectResume }];
+  if (capabilities.worktree && callbacks.onSelectCreateWorktree) {
+    items.push({
+      key: 'worktree',
+      label: 'Create Worktree…',
+      onSelect: callbacks.onSelectCreateWorktree,
+    });
+  }
+  if (callbacks.onSelectInitRepo) {
+    items.push({
+      key: 'init',
+      label: 'Initialize as git repo',
+      onSelect: callbacks.onSelectInitRepo,
+    });
+  }
+  if (callbacks.onSelectRename) {
+    items.push({ key: 'rename', label: 'Rename…', onSelect: callbacks.onSelectRename });
+  }
+  if (callbacks.onSelectRemove) {
+    items.push({
+      key: 'remove',
+      label: 'Remove…',
+      onSelect: callbacks.onSelectRemove,
+      danger: true,
+      separatorBefore: true,
+    });
+  }
+  return items;
+}
 
+interface DropdownProps extends ProjectMenuCallbacks {
+  trigger: ReactNode;
+}
+
+export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps) {
+  const items = useItemList(callbacks);
   return (
-    <div
-      ref={ref}
-      role="menu"
-      style={{ position: 'fixed', left: `${x}px`, top: `${y}px` }}
-      className="z-modal min-w-45 rounded border border-border bg-surface shadow-lg py-1"
-    >
-      <button
-        type="button"
-        role="menuitem"
-        onClick={onSelectResume}
-        className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5"
-      >
-        Resume session…
-      </button>
-      {capabilities.worktree && onSelectCreateWorktree ? (
-        <button
-          type="button"
-          role="menuitem"
-          onClick={onSelectCreateWorktree}
-          className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5"
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          collisionPadding={8}
+          className={CONTENT_CLASS}
         >
-          Create Worktree…
-        </button>
-      ) : null}
-      {onSelectInitRepo ? (
-        <button
-          type="button"
-          role="menuitem"
-          onClick={onSelectInitRepo}
-          className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5"
-        >
-          Initialize as git repo
-        </button>
-      ) : null}
-      {onSelectRename ? (
-        <button
-          type="button"
-          role="menuitem"
-          onClick={onSelectRename}
-          className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5"
-        >
-          Rename…
-        </button>
-      ) : null}
-      {onSelectRemove ? (
-        <>
-          <div className="my-1 border-t border-border" />
-          <button
-            type="button"
-            role="menuitem"
-            onClick={onSelectRemove}
-            className="w-full text-left px-3 py-1.5 text-sm text-danger hover:bg-danger/10"
-          >
-            Remove…
-          </button>
-        </>
-      ) : null}
-    </div>
+          {items.map((item) => (
+            <div key={item.key}>
+              {item.separatorBefore && (
+                <DropdownMenu.Separator className="my-1 border-t border-border" />
+              )}
+              <DropdownMenu.Item
+                onSelect={item.onSelect}
+                className={item.danger ? DANGER_ITEM_CLASS : ITEM_CLASS}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            </div>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+interface ContextProps extends ProjectMenuCallbacks {
+  children: ReactNode;
+  /** Disable the right-click menu (e.g. when no cwd available). */
+  disabled?: boolean;
+}
+
+export function ProjectContextMenu({ children, disabled, ...callbacks }: ContextProps) {
+  const items = useItemList(callbacks);
+  if (disabled) return <>{children}</>;
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
+      <ContextMenu.Portal>
+        <ContextMenu.Content className={CONTENT_CLASS}>
+          {items.map((item) => (
+            <div key={item.key}>
+              {item.separatorBefore && (
+                <ContextMenu.Separator className="my-1 border-t border-border" />
+              )}
+              <ContextMenu.Item
+                onSelect={item.onSelect}
+                className={item.danger ? DANGER_ITEM_CLASS : ITEM_CLASS}
+              >
+                {item.label}
+              </ContextMenu.Item>
+            </div>
+          ))}
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
   );
 }

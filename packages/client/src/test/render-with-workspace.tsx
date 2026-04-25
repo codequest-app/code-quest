@@ -5,13 +5,15 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
-import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { AppInitProvider } from '../contexts/AppInitContext';
+import { FsProvider } from '../contexts/FsContext';
+import { GitProvider } from '../contexts/GitContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
+import { OpenspecProvider } from '../contexts/OpenspecContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
 
 interface RenderWithWorkspaceOptions {
@@ -85,12 +87,12 @@ async function addProject(
     await user.click(within(sidebar).getByText(/Add/));
   }
 
-  // Browse FileTree → select → Open
+  // Browse FileTree → select → Add
   const root = await screen.findByRole('treeitem', { name: path.split('/').pop() });
   await user.click(root);
   const item = await screen.findByRole('treeitem', { name: dirName });
   await user.click(item);
-  await user.click(screen.getByText('Open'));
+  await user.click(screen.getByRole('button', { name: /^add$/i }));
 
   return { launchSession: () => launchSession(user, summoner) };
 }
@@ -108,19 +110,23 @@ export async function renderWithWorkspace(
 
   render(
     <SocketProvider socket={summoner.socket}>
-      <AppReadinessProvider>
+      <AppInitProvider>
         <SessionProvider>
           <PluginProvider>
             <ProjectProvider>
               <NavigationProvider>
-                <WorktreeProvider>
-                  <WorkspaceLayout />
-                </WorktreeProvider>
+                <GitProvider>
+                  <FsProvider>
+                    <OpenspecProvider>
+                      <WorkspaceLayout />
+                    </OpenspecProvider>
+                  </FsProvider>
+                </GitProvider>
               </NavigationProvider>
             </ProjectProvider>
           </PluginProvider>
         </SessionProvider>
-      </AppReadinessProvider>
+      </AppInitProvider>
     </SocketProvider>,
   );
 

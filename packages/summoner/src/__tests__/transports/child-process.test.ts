@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ChildProcessProvider } from '../../transports/child-process.ts';
 
 describe('ChildProcessProvider', () => {
@@ -53,5 +53,25 @@ describe('ChildProcessProvider', () => {
     const provider = new ChildProcessProvider();
     const handle = provider.spawn('echo', ['hi']);
     expect(handle.signal.aborted).toBe(false);
+  });
+
+  it('does not crash the process when spawn target is missing (ENOENT)', async () => {
+    const provider = new ChildProcessProvider();
+    // Without the 'error' listener, this throws an unhandled 'error' event
+    // and crashes the Node process. With the listener it must abort cleanly.
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handle = provider.spawn('this-binary-does-not-exist-xyz', []);
+
+    const lines: string[] = [];
+    for await (const line of handle.lines) {
+      lines.push(line);
+    }
+
+    expect(handle.signal.aborted).toBe(true);
+    expect(lines).toEqual([]);
+    // Operators need to distinguish 'CLI not installed' from 'CLI exited
+    // normally with no output' — silent abort hides the real failure mode.
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
   });
 });

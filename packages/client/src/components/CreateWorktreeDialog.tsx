@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigationActions } from '../contexts/NavigationContext';
-import { useWorktreeActions } from '../contexts/WorktreeContext';
+import { useGitActions } from '../contexts/GitContext';
 import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
 import { CommandPreview } from './worktree-dialog/CommandPreview';
@@ -36,12 +35,10 @@ export function CreateWorktreeDialog({
   cwd: string;
   onClose: () => void;
 }) {
-  const { create, listBranches } = useWorktreeActions();
-  const { requestActivateChannel } = useNavigationActions();
+  const { create, listBranches } = useGitActions();
 
   const [mode, setMode] = useState<Mode>('existing');
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [openInSession, setOpenInSession] = useState(true);
   const [branches, setBranches] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +91,6 @@ export function CreateWorktreeDialog({
         setError(result.error);
         return;
       }
-      if (openInSession) requestActivateChannel(cwd, result.channelId);
       resetAndClose();
     } finally {
       setIsCreating(false);
@@ -139,29 +135,19 @@ export function CreateWorktreeDialog({
           <CommandPreview command={previewCommand} />
           {error ? <div className="text-xs text-red-500">{error}</div> : null}
 
-          <div className="flex items-center justify-between gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-2">
-            <label className="flex items-center gap-2 text-xs text-text-muted">
-              <input
-                type="checkbox"
-                checked={openInSession}
-                onChange={(e) => setOpenInSession(e.target.checked)}
-              />
-              Open new session here
-            </label>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="md"
-                type="button"
-                onClick={resetAndClose}
-                disabled={isCreating}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" size="md" disabled={submitDisabled}>
-                {isCreating ? 'Creating…' : 'Create'}
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2 -mx-4 -mb-4 px-4 py-3 border-t border-border mt-2">
+            <Button
+              variant="secondary"
+              size="md"
+              type="button"
+              onClick={resetAndClose}
+              disabled={isCreating}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="md" disabled={submitDisabled}>
+              {isCreating ? 'Creating…' : 'Create'}
+            </Button>
           </div>
         </form>
       </DialogContent>

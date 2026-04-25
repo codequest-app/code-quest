@@ -7,7 +7,7 @@ import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
 
 describe('WorkspaceLayout worktree grouping', () => {
-  it('opens a new tab inside the SAME project when worktree:create spawns a session under /<project>/.claude/worktrees/<name>', async () => {
+  it('git:worktree:add is a pure git op — it does NOT auto-spawn a chat tab', async () => {
     // FakeGitService: any cwd under /projects/app (including worktrees) reports
     // projectRoot === /projects/app, so server + client group them together.
     const fakeGit = new FakeGitService();
@@ -28,7 +28,7 @@ describe('WorkspaceLayout worktree grouping', () => {
     await act(async () => {
       resp = await new Promise<CreateWorktreeResponse>((resolve) => {
         socket.emit(
-          'worktree:create',
+          'git:worktree:add',
           { cwd: '/projects/app', name: 'feat-a' },
           (r: CreateWorktreeResponse) => resolve(r),
         );
@@ -36,9 +36,11 @@ describe('WorkspaceLayout worktree grouping', () => {
     });
     expect(resp!.ok).toBe(true);
 
-    // A second tab (the worktree session) appears inside the same project.
+    // Tab count stays 1 — worktree creation no longer spawns a session.
+    // (User opens chat by clicking the worktree row in the sidebar.)
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^Close /)).toHaveLength(2);
+      // Allow microtasks to flush so any unintended tab creation would land.
     });
+    expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);
   });
 });

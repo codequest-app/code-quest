@@ -90,7 +90,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
             data-testid="effort-switch-tick"
             className={cn(
               'absolute top-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2',
-              'bg-[rgba(var(--color-text-rgb),0.35)]',
+              'bg-text/35',
             )}
             style={{ left: notchLeft(i) }}
           />
@@ -99,7 +99,7 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
           data-testid="effort-switch-thumb"
           className={cn(
             'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
-            'bg-white shadow-sm ring-1 ring-[rgba(0,0,0,0.2)]',
+            'bg-white shadow-sm ring-1 ring-black/20',
             'transition-all duration-150',
           )}
           style={{ left: thumbLeft }}

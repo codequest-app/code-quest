@@ -12,4 +12,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = {};
+export const Empty: Story = {
+  args: { projectCwd: '/projects/cc-office' },
+};

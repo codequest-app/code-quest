@@ -34,6 +34,9 @@ interface TabBarProps {
   tabs: TabInfo[];
   activeTabId: string | null;
   onSelectTab: (sessionId: string) => void;
+  /** Called when user shift+clicks (or holds modifier) on a tab — open it
+   *  side-by-side with the active tab. Optional; UI hides cue if not wired. */
+  onSplitTab?: (sessionId: string) => void;
   onCloseTab: (sessionId: string) => void;
   onNewTab?: () => void;
   onOpenHistory?: () => void;
@@ -52,10 +55,18 @@ export function TabBar({
   tabs,
   activeTabId,
   onSelectTab,
+  onSplitTab,
   onCloseTab,
   onNewTab,
   onOpenHistory,
 }: TabBarProps) {
+  const handleTabClick = (sessionId: string, e: React.MouseEvent | React.KeyboardEvent) => {
+    if (onSplitTab && (e.shiftKey || ('metaKey' in e && e.altKey))) {
+      onSplitTab(sessionId);
+      return;
+    }
+    onSelectTab(sessionId);
+  };
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (tabs.length === 0 && !onNewTab) return null;
@@ -82,11 +93,11 @@ export function TabBar({
                   ? 'text-text border-b-2 border-border-focus'
                   : 'text-text-muted hover:text-text hover:bg-white/5',
               )}
-              onClick={() => onSelectTab(tab.sessionId)}
+              onClick={(e) => handleTabClick(tab.sessionId, e)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  onSelectTab(tab.sessionId);
+                  handleTabClick(tab.sessionId, e);
                 }
               }}
               role="tab"
@@ -97,7 +108,7 @@ export function TabBar({
               <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
               <span className="truncate max-w-30">{tab.title || tab.sessionId.slice(0, 8)}</span>
               {tab.worktree && tab.projectName ? (
-                <span data-testid="tab-scope-tag" className="text-[10px] text-text-subtle">
+                <span data-testid="tab-scope-tag" className="text-xs text-text-subtle">
                   {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
                 </span>
               ) : null}

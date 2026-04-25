@@ -25,7 +25,7 @@ export function resolveSqlitePath(url: string): string {
   return url;
 }
 
-function parseExplorerRoots(raw?: string): string[] {
+function parseFsRoots(raw?: string): string[] {
   if (!raw) return [os.homedir()];
   const roots = raw
     .split(',')
@@ -48,7 +48,7 @@ export function loadConfig(env: Env = process.env) {
     systemPrompt: env.CLI_SYSTEM_PROMPT ?? '',
     allowDangerouslySkipPermissions: parseBool(env.CLI_BYPASS_PERMISSIONS, true),
     thinkingDisplay: parseThinkingDisplay(env.CLI_THINKING_DISPLAY),
-    explorerRoots: parseExplorerRoots(env.EXPLORER_ROOTS),
+    fsRoots: parseFsRoots(env.EXPLORER_ROOTS),
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
   } as const;
 }

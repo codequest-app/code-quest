@@ -14,7 +14,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { useAppReadiness } from '../contexts/AppReadinessContext';
+import { useAppInit } from '../contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { modelOpenSignal } from '../features/model/model-feature';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -109,7 +109,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
     setEffort,
     providerConfig,
   } = useChannelConfig();
-  const { initOptions, setInitOptions } = useAppReadiness();
+  const { initOptions, setInitOptions } = useAppInit();
   const compose = useChannelCompose();
 
   // MCP server refresh logic (inlined from ConnectedManageMcpDialog)

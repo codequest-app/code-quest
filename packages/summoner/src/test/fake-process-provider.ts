@@ -1,7 +1,7 @@
 import type { SpawnOptions } from 'node:child_process';
 import type { z } from 'zod';
 import type { controlRequestSchema, userSchema } from '../claude/schemas.ts';
-import type { ProcessHandle, ProcessProvider } from '../types.ts';
+import type { ProcessHandle, ProcessProvider, ProcessRunResult } from '../types.ts';
 
 /** Type map for messages tests inspect via `received(type)`. Each is a CLI
  *  stdin message the server sends to the runner. */
@@ -81,13 +81,30 @@ export class FakeProcessHandle implements ProcessHandle {
   };
 }
 
+interface SpawnCall {
+  command: string;
+  args: string[];
+  options?: SpawnOptions;
+}
+
 export class FakeProcessProvider implements ProcessProvider {
   private readonly handles: FakeProcessHandle[] = [];
-  private readonly _spawnCalls: Array<{ command: string; args: string[]; options?: SpawnOptions }> =
-    [];
+  private readonly _spawnCalls: SpawnCall[] = [];
+  private readonly _runOnceCalls: SpawnCall[] = [];
+  /** Queued responses for `runOnce`; defaults to `{exitCode:0, stdout:'', stderr:''}` when empty. */
+  private readonly runOnceResponses: ProcessRunResult[] = [];
 
-  get spawnCalls(): ReadonlyArray<{ command: string; args: string[]; options?: SpawnOptions }> {
+  get spawnCalls(): ReadonlyArray<SpawnCall> {
     return this._spawnCalls;
+  }
+
+  get runOnceCalls(): ReadonlyArray<SpawnCall> {
+    return this._runOnceCalls;
+  }
+
+  /** Push a canned response for the next `runOnce` call. FIFO order. */
+  enqueueRunOnce(result: ProcessRunResult): void {
+    this.runOnceResponses.push(result);
   }
 
   spawn(command: string, args: string[], options?: SpawnOptions): FakeProcessHandle {
@@ -95,6 +112,15 @@ export class FakeProcessProvider implements ProcessProvider {
     const handle = new FakeProcessHandle();
     this.handles.push(handle);
     return handle;
+  }
+
+  async runOnce(
+    command: string,
+    args: string[],
+    options?: SpawnOptions,
+  ): Promise<ProcessRunResult> {
+    this._runOnceCalls.push({ command, args, options });
+    return this.runOnceResponses.shift() ?? { exitCode: 0, stdout: '', stderr: '' };
   }
 
   get latest(): FakeProcessHandle {

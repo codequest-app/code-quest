@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { FsProvider } from '../../contexts/FsContext';
+import { GitProvider } from '../../contexts/GitContext';
+import { OpenspecProvider } from '../../contexts/OpenspecContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { AddProjectDialog } from '../AddProjectDialog';
@@ -12,7 +15,15 @@ function setup() {
   summoner.filesystem().addDirectory('/projects', ['cc-office', 'DQ']);
 
   function Wrapper({ children }: { children: ReactNode }) {
-    return <SocketProvider socket={summoner.socket}>{children}</SocketProvider>;
+    return (
+      <SocketProvider socket={summoner.socket}>
+        <GitProvider>
+          <FsProvider>
+            <OpenspecProvider>{children}</OpenspecProvider>
+          </FsProvider>
+        </GitProvider>
+      </SocketProvider>
+    );
   }
 
   return { Wrapper };
@@ -59,5 +70,51 @@ describe('AddProjectDialog', () => {
     const { Wrapper } = setup();
     render(<AddProjectDialog open onSelect={() => {}} onClose={() => {}} />, { wrapper: Wrapper });
     expect(screen.getByRole('dialog', { name: /Select Project Directory/i })).toBeInTheDocument();
+  });
+
+  it('confirm button is labelled "Add", not "Open"', () => {
+    const { Wrapper } = setup();
+    render(<AddProjectDialog open onSelect={() => {}} onClose={() => {}} />, { wrapper: Wrapper });
+    expect(screen.getByRole('button', { name: /^add$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^open$/i })).toBeNull();
+  });
+
+  it('rows in addedProjectCwds render aria-disabled and clicking does not highlight them', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    const onSelect = vi.fn();
+    render(
+      <AddProjectDialog
+        open
+        onSelect={onSelect}
+        onClose={() => {}}
+        addedProjectCwds={new Set(['/projects/cc-office'])}
+      />,
+      { wrapper: Wrapper },
+    );
+
+    // Expand the parent so the disabled child is visible.
+    await user.click(await screen.findByRole('treeitem', { name: 'projects' }));
+    const disabled = await screen.findByRole('treeitem', { name: 'cc-office' });
+    expect(disabled).toHaveAttribute('aria-disabled', 'true');
+
+    // Click the disabled row: highlight must NOT change to its path.
+    await user.click(disabled);
+    expect(screen.queryByText('/projects/cc-office')).toBeNull();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('right-click on a directory row reveals the CRUD context menu', async () => {
+    const user = userEvent.setup();
+    const { Wrapper } = setup();
+    render(<AddProjectDialog open onSelect={() => {}} onClose={() => {}} />, { wrapper: Wrapper });
+
+    const projects = await screen.findByRole('treeitem', { name: 'projects' });
+    await user.pointer({ keys: '[MouseRight]', target: projects });
+
+    expect(screen.getByText('New file…')).toBeInTheDocument();
+    expect(screen.getByText('New folder…')).toBeInTheDocument();
+    expect(screen.getByText('Rename…')).toBeInTheDocument();
+    expect(screen.getByText('Delete')).toBeInTheDocument();
   });
 });

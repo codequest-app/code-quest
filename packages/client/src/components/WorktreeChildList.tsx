@@ -1,23 +1,25 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
-import { useNavigationActions } from '../contexts/NavigationContext';
+import { toast } from 'sonner';
+import { useGitActions } from '../contexts/GitContext';
+import { useNavigationActions, useNavigationState } from '../contexts/NavigationContext';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
-import { useWorktreeActions } from '../contexts/WorktreeContext';
+import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog';
 import { BranchPopover } from './BranchPopover';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 import { RemoveWorktreeConfirmDialog } from './RemoveWorktreeConfirmDialog';
-import { WorktreeContextMenu } from './WorktreeContextMenu';
+import { RenameWorktreeDialog } from './RenameWorktreeDialog';
+import { WorktreeContextMenu, WorktreeDropdownMenu } from './WorktreeContextMenu';
 import { WorktreeRow } from './WorktreeRow';
 
-/** At most one of menu / remove / create / branch-popover is visible at a
- *  time — one discriminated union instead of four booleans prevents
- *  impossible combinations (e.g. "menu open while create dialog open"). */
-type Overlay =
-  | { kind: 'menu'; wt: WorktreeInfo; x: number; y: number }
+/** Dialogs (not menus/popovers) are still centrally owned since only one is
+ *  visible at a time. Menus/popovers are now per-row Radix state. */
+type Dialog =
   | { kind: 'remove'; wt: WorktreeInfo; activeCount: number }
+  | { kind: 'rename'; wt: WorktreeInfo }
+  | { kind: 'archive'; wt: WorktreeInfo; dirty: boolean }
   | { kind: 'create' }
-  | { kind: 'branchPopover'; wt: WorktreeInfo; x: number; y: number; branches: string[] }
   | null;
 
 export function WorktreeChildList({
@@ -29,18 +31,38 @@ export function WorktreeChildList({
 }) {
   const { sessions } = useSession();
   const { setActiveProject } = useProjectActions();
-  const { requestOpenWorktree } = useNavigationActions();
-  const { remove, listBranches, checkout, status } = useWorktreeActions();
+  const { requestOpenWorktree, setSelectedWorktree } = useNavigationActions();
+  const { selectedWorktreeCwd } = useNavigationState();
+  const { removeWorktree, listBranches, checkout, status, rename } = useGitActions();
 
-  // Open-or-switch a worktree: activate its project so the right TabProvider
-  // mounts, then fire the navigation intent for it to consume.
-  const openWorktree = (pCwd: string, wCwd: string, forceNew = false) => {
+  // Plain row click: activate project + remember sidebar selection. Does NOT
+  // open chat — user clicks `+` on the tab strip when ready.
+  const selectWorktree = (pCwd: string, wCwd: string) => {
     setActiveProject(pCwd);
+    setSelectedWorktree(pCwd, wCwd);
+  };
+
+  // Explicit chat-creation entry (context menu "Open in new chat").
+  const openWorktreeInChat = (pCwd: string, wCwd: string, forceNew = false) => {
+    setActiveProject(pCwd);
+    setSelectedWorktree(pCwd, wCwd);
     requestOpenWorktree(pCwd, wCwd, forceNew);
   };
 
-  const [overlay, setOverlay] = useState<Overlay>(null);
-  const closeOverlay = () => setOverlay(null);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const closeDialog = () => setDialog(null);
+  /** Which worktree's branch popover is open, and its loaded branch list. */
+  const [branchPop, setBranchPop] = useState<{ wt: WorktreeInfo; branches: string[] } | null>(null);
+
+  async function handleBranchPopoverOpen(wt: WorktreeInfo, open: boolean) {
+    if (!open) {
+      setBranchPop(null);
+      return;
+    }
+    const res = await listBranches(projectCwd);
+    const branches = Array.isArray(res) ? res : [];
+    setBranchPop({ wt, branches });
+  }
 
   // Server-sourced status (changed-file counts per worktree) — orthogonal to
   // UI overlays, keeps its own state.
@@ -63,83 +85,109 @@ export function WorktreeChildList({
   }, [worktrees, status]);
 
   function liveCountFor(wt: WorktreeInfo): number {
-    return sessions.filter((s) => s.projectRoot === wt.path && s.state !== 'exited').length;
+    // Match by `cwd` (where the session actually runs), NOT `projectRoot`
+    // (which is always the project root and would attribute every session
+    // to the main worktree row).
+    return sessions.filter((s) => s.cwd === wt.path && s.state !== 'exited').length;
   }
 
   return (
     <div className="ml-5 border-l border-border pl-2">
-      {worktrees.map((wt) => (
-        <WorktreeRow
-          key={wt.name}
-          worktree={wt}
-          active={false}
-          liveSessions={liveCountFor(wt)}
-          changes={changesByPath[wt.path] ?? 0}
-          onSelect={() => openWorktree(projectCwd, wt.path)}
-          onBranchClick={async (anchor) => {
-            const res = await listBranches(projectCwd);
-            const branches = Array.isArray(res) ? res : [];
-            setOverlay({ kind: 'branchPopover', wt, ...anchor, branches });
+      {worktrees.map((wt) => {
+        const menuCallbacks = {
+          onOpenHere: () => openWorktreeInChat(projectCwd, wt.path),
+          onOpenInNewChat: () => openWorktreeInChat(projectCwd, wt.path, true),
+          onCopyPath: () => {
+            void navigator.clipboard?.writeText(wt.path);
+          },
+          onRename: () => setDialog({ kind: 'rename', wt }),
+          onArchive: () => setDialog({ kind: 'archive', wt, dirty: false }),
+          onDelete: () => setDialog({ kind: 'remove', wt, activeCount: liveCountFor(wt) }),
+        };
+        return (
+          <WorktreeContextMenu key={wt.name} {...menuCallbacks}>
+            <WorktreeRow
+              worktree={wt}
+              active={selectedWorktreeCwd[projectCwd] === wt.path}
+              liveSessions={liveCountFor(wt)}
+              changes={changesByPath[wt.path] ?? 0}
+              onSelect={() => selectWorktree(projectCwd, wt.path)}
+              wrapBranchTrigger={(badge) => (
+                <BranchPopover
+                  trigger={badge}
+                  open={branchPop?.wt.path === wt.path}
+                  onOpenChange={(o) => void handleBranchPopoverOpen(wt, o)}
+                  branches={branchPop?.wt.path === wt.path ? branchPop.branches : []}
+                  current={wt.branch ?? null}
+                  onSelect={(branch) => {
+                    void checkout(wt.path, branch);
+                  }}
+                  onCreateBranch={() => setDialog({ kind: 'create' })}
+                />
+              )}
+              wrapMoreTrigger={(btn) => <WorktreeDropdownMenu trigger={btn} {...menuCallbacks} />}
+            />
+          </WorktreeContextMenu>
+        );
+      })}
+      {dialog?.kind === 'rename' && (
+        <RenameWorktreeDialog
+          open
+          currentBranch={dialog.wt.branch ?? dialog.wt.name}
+          onSubmit={async (newName) => {
+            const result = await rename(dialog.wt.path, newName);
+            if ('error' in result) {
+              toast.error(`Rename failed: ${result.error}`);
+            } else {
+              toast.success(`Renamed to ${result.branch}`);
+            }
+            closeDialog();
           }}
-          onMoreActions={(anchor) => setOverlay({ kind: 'menu', wt, ...anchor })}
-        />
-      ))}
-      {overlay?.kind === 'menu' && (
-        <WorktreeContextMenu
-          x={overlay.x}
-          y={overlay.y}
-          onOpenHere={() => openWorktree(projectCwd, overlay.wt.path)}
-          onOpenInNewChat={() => openWorktree(projectCwd, overlay.wt.path, true)}
-          onCopyPath={() => {
-            void navigator.clipboard?.writeText(overlay.wt.path);
-          }}
-          onRename={() => {
-            // TBD: `git worktree move` + branch rename — needs server support.
-            console.info('Rename worktree: not yet implemented');
-          }}
-          onArchive={() => {
-            // TBD: semantics unclear (move to archive dir? mark as archived?).
-            console.info('Archive worktree: not yet implemented');
-          }}
-          onDelete={() =>
-            setOverlay({ kind: 'remove', wt: overlay.wt, activeCount: liveCountFor(overlay.wt) })
-          }
-          onClose={closeOverlay}
+          onClose={closeDialog}
         />
       )}
-      {overlay?.kind === 'remove' && (
+      {dialog?.kind === 'archive' && (
+        <ArchiveWorktreeConfirmDialog
+          open
+          branch={dialog.wt.branch ?? dialog.wt.name}
+          dirty={dialog.dirty}
+          onConfirm={async ({ force }) => {
+            const result = await removeWorktree(projectCwd, dialog.wt.name, { force });
+            if ('error' in result) {
+              if (result.error === 'dirty') {
+                setDialog({ kind: 'archive', wt: dialog.wt, dirty: true });
+                return;
+              }
+              toast.error(`Archive failed: ${result.error}`);
+              closeDialog();
+              return;
+            }
+            toast.success(`Archived ${dialog.wt.name}`);
+            closeDialog();
+          }}
+          onClose={closeDialog}
+        />
+      )}
+      {dialog?.kind === 'remove' && (
         <RemoveWorktreeConfirmDialog
           open
-          branch={overlay.wt.branch ?? overlay.wt.name}
-          activeSessionCount={overlay.activeCount}
+          branch={dialog.wt.branch ?? dialog.wt.name}
+          activeSessionCount={dialog.activeCount}
           onConfirm={() => {
-            void remove(projectCwd, overlay.wt.name);
+            void removeWorktree(projectCwd, dialog.wt.name, { force: true });
           }}
-          onClose={closeOverlay}
+          onClose={closeDialog}
         />
       )}
       <button
         type="button"
-        onClick={() => setOverlay({ kind: 'create' })}
-        className="my-1 ml-2 px-2 py-1 text-[11px] text-left rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
+        onClick={() => setDialog({ kind: 'create' })}
+        className="my-1 ml-2 px-2 py-1 text-xs text-left rounded border border-dashed border-border bg-transparent text-text-muted hover:text-text hover:border-accent"
       >
         + New worktree…
       </button>
-      {overlay?.kind === 'create' && (
-        <CreateWorktreeDialog open cwd={projectCwd} onClose={closeOverlay} />
-      )}
-      {overlay?.kind === 'branchPopover' && (
-        <BranchPopover
-          x={overlay.x}
-          y={overlay.y}
-          branches={overlay.branches}
-          current={overlay.wt.branch ?? null}
-          onSelect={(branch) => {
-            void checkout(overlay.wt.path, branch);
-          }}
-          onCreateBranch={() => setOverlay({ kind: 'create' })}
-          onClose={closeOverlay}
-        />
+      {dialog?.kind === 'create' && (
+        <CreateWorktreeDialog open cwd={projectCwd} onClose={closeDialog} />
       )}
     </div>
   );

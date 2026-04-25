@@ -8,14 +8,18 @@ export function AddProjectDialog({
   open,
   onSelect,
   onClose,
+  addedProjectCwds,
 }: {
   open: boolean;
   onSelect: (cwd: string) => void;
   onClose: () => void;
+  /** Absolute cwds already tracked as projects — rendered disabled so the
+   *  user can't pick a duplicate. */
+  addedProjectCwds?: ReadonlySet<string>;
 }) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
-  function handleOpen() {
+  function handleAdd() {
     if (selectedPath) {
       onSelect(selectedPath);
       onClose();
@@ -51,6 +55,7 @@ export function AddProjectDialog({
           <FileTree
             highlightedPath={selectedPath}
             onHighlight={setSelectedPath}
+            disabledPaths={addedProjectCwds}
             onSelect={(path) => {
               onSelect(path);
               onClose();
@@ -64,8 +69,8 @@ export function AddProjectDialog({
               Cancel
             </Button>
           </DialogClose>
-          <Button size="md" disabled={!selectedPath} onClick={handleOpen}>
-            Open
+          <Button size="md" disabled={!selectedPath} onClick={handleAdd}>
+            Add
           </Button>
         </div>
       </DialogContent>

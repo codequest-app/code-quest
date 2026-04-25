@@ -75,12 +75,12 @@ export function TopScopeSwitcher({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-surface hover:border-accent text-text text-[13px] font-medium"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-border bg-surface hover:border-accent text-text text-xs font-medium"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <FolderIcon className="w-3.5 h-3.5 text-text-muted" />
-        <span className="truncate max-w-[180px]">
+        <span className="truncate max-w-50">
           {active ? displayName(active) : 'No project selected'}
         </span>
         <ChevronDownIcon className="w-3.5 h-3.5 text-text-muted" />
@@ -108,7 +108,7 @@ export function TopScopeSwitcher({
 
             {pinned.length > 0 && (
               <>
-                <div className="px-3 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                <div className="px-3 pt-1 pb-0.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
                   Pinned
                 </div>
                 {pinned.map((p) => (
@@ -124,7 +124,7 @@ export function TopScopeSwitcher({
 
             {recent.length > 0 && (
               <>
-                <div className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                <div className="px-3 pt-2 pb-0.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
                   Recent
                 </div>
                 {recent.map((p) => (

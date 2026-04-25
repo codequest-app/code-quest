@@ -42,6 +42,37 @@ describe('FakeFilesystemService', () => {
     });
   });
 
+  describe('browseEntries', () => {
+    it('returns sorted directories and files at a path', async () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/repo']);
+      fs.addDirectory('/repo', ['src']);
+      fs.addFile('/repo/README.md', '# hi');
+      fs.addFile('/repo/package.json', '{}');
+      const result = await fs.browseEntries('/repo');
+      expect(result.directories).toEqual([{ name: 'src', path: '/repo/src' }]);
+      expect(result.files).toEqual([
+        { name: 'package.json', path: '/repo/package.json' },
+        { name: 'README.md', path: '/repo/README.md' },
+      ]);
+    });
+
+    it('returns roots as directories with empty files when no path', async () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/repo']);
+      const result = await fs.browseEntries();
+      expect(result.directories).toEqual([{ name: 'repo', path: '/repo' }]);
+      expect(result.files).toEqual([]);
+    });
+
+    it('returns empty arrays for unknown path', async () => {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/repo']);
+      const result = await fs.browseEntries('/unknown');
+      expect(result).toEqual({ directories: [], files: [] });
+    });
+  });
+
   describe('listFiles', () => {
     it('returns files and directories for a cwd', async () => {
       const fs = new FakeFilesystemService();
@@ -92,6 +123,132 @@ describe('FakeFilesystemService', () => {
       expect(await fs.browseDirectories('/projects')).toEqual([]);
       expect(await fs.readFile('/projects/app', 'index.ts')).toEqual({
         error: 'File not found: index.ts',
+      });
+    });
+  });
+
+  describe('mutations (create / delete / rename / copy / move)', () => {
+    function setup() {
+      const fs = new FakeFilesystemService();
+      fs.setRoots(['/repo']);
+      fs.addDirectory('/repo', ['src']);
+      fs.addDirectory('/repo/src', []);
+      fs.addFile('/repo/foo.ts', 'export const foo = 1;\n');
+      fs.addFile('/repo/src/inner.ts', 'inner');
+      return fs;
+    }
+
+    describe('create', () => {
+      it('creates an empty file at a new path', async () => {
+        const fs = setup();
+        expect(await fs.create('/repo/new.ts', 'file')).toEqual({ ok: true });
+        expect(await fs.readFileAbsolute('/repo/new.ts')).toEqual({ content: '' });
+      });
+
+      it('creates a directory at a new path', async () => {
+        const fs = setup();
+        expect(await fs.create('/repo/new-dir', 'directory')).toEqual({ ok: true });
+        expect(await fs.statKind('/repo/new-dir')).toBe('directory');
+      });
+
+      it('rejects existing file', async () => {
+        const fs = setup();
+        expect(await fs.create('/repo/foo.ts', 'file')).toEqual({ error: 'exists' });
+      });
+
+      it('rejects path outside allowed roots', async () => {
+        const fs = setup();
+        expect(await fs.create('/etc/passwd', 'file')).toMatchObject({ error: expect.any(String) });
+      });
+    });
+
+    describe('delete', () => {
+      it('deletes a file', async () => {
+        const fs = setup();
+        expect(await fs.delete('/repo/foo.ts')).toEqual({ ok: true });
+        expect(await fs.exists('/repo/foo.ts')).toBe(false);
+      });
+
+      it('deletes a directory recursively', async () => {
+        const fs = setup();
+        expect(await fs.delete('/repo/src')).toEqual({ ok: true });
+        expect(await fs.exists('/repo/src/inner.ts')).toBe(false);
+      });
+
+      it('rejects path outside allowed roots', async () => {
+        const fs = setup();
+        expect(await fs.delete('/etc/passwd')).toMatchObject({ error: expect.any(String) });
+      });
+    });
+
+    describe('rename', () => {
+      it('renames a file in same directory', async () => {
+        const fs = setup();
+        expect(await fs.rename('/repo/foo.ts', '/repo/bar.ts')).toEqual({ ok: true });
+        expect(await fs.exists('/repo/foo.ts')).toBe(false);
+        expect(await fs.readFileAbsolute('/repo/bar.ts')).toEqual({
+          content: 'export const foo = 1;\n',
+        });
+      });
+
+      it('rejects when destination exists', async () => {
+        const fs = setup();
+        fs.addFile('/repo/bar.ts', 'existing');
+        expect(await fs.rename('/repo/foo.ts', '/repo/bar.ts')).toEqual({ error: 'exists' });
+      });
+
+      it('rejects path outside allowed roots', async () => {
+        const fs = setup();
+        expect(await fs.rename('/repo/foo.ts', '/etc/foo.ts')).toMatchObject({
+          error: expect.any(String),
+        });
+      });
+    });
+
+    describe('copy', () => {
+      it('copies a file', async () => {
+        const fs = setup();
+        expect(await fs.copy('/repo/foo.ts', '/repo/foo-copy.ts')).toEqual({ ok: true });
+        expect(await fs.readFileAbsolute('/repo/foo-copy.ts')).toEqual({
+          content: 'export const foo = 1;\n',
+        });
+        // Original still there
+        expect(await fs.exists('/repo/foo.ts')).toBe(true);
+      });
+
+      it('copies a directory recursively', async () => {
+        const fs = setup();
+        expect(await fs.copy('/repo/src', '/repo/src-copy')).toEqual({ ok: true });
+        expect(await fs.readFileAbsolute('/repo/src-copy/inner.ts')).toEqual({ content: 'inner' });
+      });
+
+      it('rejects when destination exists', async () => {
+        const fs = setup();
+        expect(await fs.copy('/repo/foo.ts', '/repo/foo.ts')).toEqual({ error: 'exists' });
+      });
+    });
+
+    describe('move', () => {
+      it('moves a file across directories', async () => {
+        const fs = setup();
+        expect(await fs.move('/repo/foo.ts', '/repo/src/foo.ts')).toEqual({ ok: true });
+        expect(await fs.exists('/repo/foo.ts')).toBe(false);
+        expect(await fs.readFileAbsolute('/repo/src/foo.ts')).toEqual({
+          content: 'export const foo = 1;\n',
+        });
+      });
+
+      it('rejects when destination exists', async () => {
+        const fs = setup();
+        fs.addFile('/repo/src/foo.ts', 'existing');
+        expect(await fs.move('/repo/foo.ts', '/repo/src/foo.ts')).toEqual({ error: 'exists' });
+      });
+
+      it('rejects path outside allowed roots', async () => {
+        const fs = setup();
+        expect(await fs.move('/repo/foo.ts', '/etc/foo.ts')).toMatchObject({
+          error: expect.any(String),
+        });
       });
     });
   });

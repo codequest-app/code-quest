@@ -41,8 +41,37 @@ export const deleteWorktreePayloadSchema = z.object({
 });
 export type DeleteWorktreePayload = z.infer<typeof deleteWorktreePayloadSchema>;
 
+export const worktreeRenamePayloadSchema = z.object({
+  /** Worktree's own absolute path (NOT main repo cwd). */
+  cwd: z.string(),
+  newBranchName: z.string().min(1),
+});
+export type WorktreeRenamePayload = z.infer<typeof worktreeRenamePayloadSchema>;
+
+export const worktreeRenameResponseSchema = rpcResult(z.object({ branch: z.string() }));
+export type WorktreeRenameResponse = z.infer<typeof worktreeRenameResponseSchema>;
+
+export const worktreeArchivePayloadSchema = z.object({
+  /** Main repo cwd (so simple-git's worktree-remove finds it). */
+  projectCwd: z.string(),
+  /** Worktree's name (matches `WorktreeInfo.name`). */
+  name: z.string(),
+  force: z.boolean().optional(),
+});
+export type WorktreeArchivePayload = z.infer<typeof worktreeArchivePayloadSchema>;
+
+export const worktreeArchiveResponseSchema = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ error: z.string() }),
+]);
+export type WorktreeArchiveResponse = z.infer<typeof worktreeArchiveResponseSchema>;
+
 export const createWorktreeResponseSchema = rpcResult(
-  z.object({ channelId: z.string(), worktreePath: z.string() }),
+  z.object({
+    worktreePath: z.string(),
+    name: z.string(),
+    branch: z.string().optional(),
+  }),
 );
 export type CreateWorktreeResponse = z.infer<typeof createWorktreeResponseSchema>;
 

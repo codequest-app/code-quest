@@ -17,9 +17,11 @@ interface TabMeta {
 interface TabStateValue {
   tabs: Record<string, TabMeta>;
   activeTabId: string | null;
+  /** When set, the chat area renders the active tab + this tab side-by-side. */
+  splitTabId: string | null;
 }
 
-const TabStateContext = createContext<TabStateValue | null>(null);
+export const TabStateContext = createContext<TabStateValue | null>(null);
 
 export function useTabState(): TabStateValue {
   const ctx = useContext(TabStateContext);
@@ -38,6 +40,10 @@ interface TabActionsValue {
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
+  /** Show the given tab side-by-side with the active tab. No-op if id === activeTabId. */
+  enterSplit: (id: string) => void;
+  /** Exit split mode (active tab keeps focus). */
+  exitSplit: () => void;
 }
 
 const TabActionsContext = createContext<TabActionsValue | null>(null);
@@ -60,28 +66,36 @@ export function TabProvider({
   initialState,
   sessions,
   cwd,
+  selectedCwd,
 }: {
   children: ReactNode;
   initialState?: { tabs: Record<string, TabMeta>; activeTabId: string | null };
   sessions?: SessionStateSummary[];
   cwd?: string;
+  /** Sidebar selection within this project. When set, `createNewTab()` (no
+   *  args) uses this instead of `cwd`. Lets `+` open a chat in the
+   *  currently-browsed worktree without explicit cwd plumbing. */
+  selectedCwd?: string;
 }) {
   const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
     activeTabId: initialState?.activeTabId ?? null,
+    splitTabId: null,
   }));
 
   // cwd prop is read inside stable actions via ref so actions keep a single
   // identity across renders (otherwise downstream memoization breaks).
   const cwdRef = useRef(cwd);
   cwdRef.current = cwd;
+  const selectedCwdRef = useRef(selectedCwd);
+  selectedCwdRef.current = selectedCwd;
 
   const [actions] = useState<TabActionsValue>(() => ({
     addTab: (id, cwd) => {
       setState((prev) => {
         if (id in prev.tabs) return prev;
         const tabs = { ...prev.tabs, [id]: { ...DEFAULT_META, cwd } };
-        return { tabs, activeTabId: prev.activeTabId ?? id };
+        return { ...prev, tabs, activeTabId: prev.activeTabId ?? id };
       });
     },
     removeTab: (id) => {
@@ -89,8 +103,14 @@ export function TabProvider({
         if (!(id in prev.tabs)) return prev;
         const { [id]: _, ...rest } = prev.tabs;
         const wasActive = prev.activeTabId === id;
-        const activeTabId = wasActive ? (Object.keys(rest)[0] ?? null) : prev.activeTabId;
-        return { tabs: rest, activeTabId };
+        const wasSplit = prev.splitTabId === id;
+        // If split tab is removed, clear split. If active is removed, promote
+        // splitTabId (when set) to active so users keep their secondary view.
+        const splitTabId = wasSplit || wasActive ? null : prev.splitTabId;
+        const activeTabId = wasActive
+          ? (prev.splitTabId ?? Object.keys(rest)[0] ?? null)
+          : prev.activeTabId;
+        return { tabs: rest, activeTabId, splitTabId };
       });
     },
     setActiveTab: (id) => {
@@ -112,8 +132,9 @@ export function TabProvider({
     },
     createNewTab: (opts) => {
       const channelId = crypto.randomUUID();
-      const tabCwd = opts?.cwd ?? cwdRef.current;
+      const tabCwd = opts?.cwd ?? selectedCwdRef.current ?? cwdRef.current;
       setState((prev) => ({
+        ...prev,
         tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
         activeTabId: channelId,
       }));
@@ -124,18 +145,32 @@ export function TabProvider({
         if (!prev.activeTabId) return prev;
         const { [prev.activeTabId]: _, ...rest } = prev.tabs;
         return {
+          ...prev,
           tabs: { ...rest, [newChannelId]: DEFAULT_META },
           activeTabId: newChannelId,
         };
       });
+    },
+    enterSplit: (id) => {
+      setState((prev) => {
+        if (!(id in prev.tabs)) return prev;
+        if (id === prev.activeTabId) return prev;
+        if (prev.splitTabId === id) return prev;
+        return { ...prev, splitTabId: id };
+      });
+    },
+    exitSplit: () => {
+      setState((prev) => (prev.splitTabId === null ? prev : { ...prev, splitTabId: null }));
     },
     replaceTab: (oldChannelId, newChannelId) => {
       setState((prev) => {
         if (!(oldChannelId in prev.tabs)) return prev;
         const { [oldChannelId]: old, ...rest } = prev.tabs;
         return {
+          ...prev,
           tabs: { ...rest, [newChannelId]: { ...old } },
           activeTabId: prev.activeTabId === oldChannelId ? newChannelId : prev.activeTabId,
+          splitTabId: prev.splitTabId === oldChannelId ? newChannelId : prev.splitTabId,
         };
       });
     },

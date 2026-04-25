@@ -5,7 +5,7 @@
 
 import type { EffectiveColorTheme } from '@code-quest/shared';
 import { useLayoutEffect, useRef } from 'react';
-import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { AppInitProvider } from '../contexts/AppInitContext';
 import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext';
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
@@ -14,13 +14,13 @@ import { ChannelIdProvider } from '../contexts/channel/ChannelIdContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
 import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext';
 import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext';
+import { GitProvider } from '../contexts/GitContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
 import { TabProvider } from '../contexts/TabContext';
-import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { createSocket } from '../socket/client';
 import type { Density } from '../stores/usePreferencesStore';
 import type { ChannelState } from '../types/chat';
@@ -42,12 +42,12 @@ export function withStoryApp(options?: { className?: string }) {
     const socket = createSocket();
     return (
       <SocketProvider socket={socket}>
-        <AppReadinessProvider>
+        <AppInitProvider>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
                 <NavigationProvider>
-                  <WorktreeProvider>
+                  <GitProvider>
                     <TabProvider>
                       <div
                         className={options?.className ?? 'max-w-3xl bg-bg text-text p-6 relative'}
@@ -55,12 +55,12 @@ export function withStoryApp(options?: { className?: string }) {
                         <Story />
                       </div>
                     </TabProvider>
-                  </WorktreeProvider>
+                  </GitProvider>
                 </NavigationProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppReadinessProvider>
+        </AppInitProvider>
       </SocketProvider>
     );
   };
@@ -72,12 +72,12 @@ export function withStoryChannel(options?: StoryChannelOptions) {
     const socket = createSocket();
     return (
       <SocketProvider socket={socket}>
-        <AppReadinessProvider>
+        <AppInitProvider>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
                 <NavigationProvider>
-                  <WorktreeProvider>
+                  <GitProvider>
                     <TabProvider>
                       <StoryProviders config={options?.config} messages={options?.messages}>
                         <div
@@ -87,12 +87,12 @@ export function withStoryChannel(options?: StoryChannelOptions) {
                         </div>
                       </StoryProviders>
                     </TabProvider>
-                  </WorktreeProvider>
+                  </GitProvider>
                 </NavigationProvider>
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppReadinessProvider>
+        </AppInitProvider>
       </SocketProvider>
     );
   };
@@ -155,9 +155,9 @@ export function withProject(Story: () => React.ReactNode) {
 
 export function withWorktree(Story: () => React.ReactNode) {
   return (
-    <WorktreeProvider>
+    <GitProvider>
       <Story />
-    </WorktreeProvider>
+    </GitProvider>
   );
 }
 

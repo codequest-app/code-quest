@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@code-quest/shared": "workspace:*",
+    "chokidar": "^5.0.0",
     "fuse.js": "^7.1.0",
     "glob": "^13.0.6",
     "simple-git": "^3.33.0",

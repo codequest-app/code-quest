@@ -1,11 +1,20 @@
 import 'reflect-metadata';
 import type { ProcessProvider } from '@code-quest/summoner';
 import {
+  ChildProcessProvider,
   ClaudeAdapter,
+  type DiffFileService,
   type GitService,
+  LocalDiffFileService,
   LocalFilesystemService,
   LocalGitService,
+  LocalOpenspecService,
+  LocalPluginCliService,
+  LocalWatchService,
+  type OpenspecService,
+  type PluginCliService,
   ProcessRunner,
+  type WatchService,
 } from '@code-quest/summoner';
 import { Container } from 'inversify';
 import { config } from './config.ts';
@@ -18,6 +27,7 @@ import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts'
 import { CompositeRawEventStore } from './services/composite-raw-event-store.ts';
 import { CompositeSessionStore } from './services/composite-session-store.ts';
 import { CompositeSettingsStore } from './services/composite-settings-store.ts';
+import { DirtyBroadcaster } from './services/dirty-broadcaster.ts';
 import { DrizzleRawDeltaStore } from './services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
@@ -33,6 +43,7 @@ import type { SettingsStore } from './services/settings-store.ts';
 import { UsageTracker } from './services/usage-tracker.ts';
 import { ChannelEmitter } from './socket/channel-emitter.ts';
 import { ChannelManager, type SessionLookup } from './socket/channel-manager.ts';
+import { matchesFs, matchesGit, matchesOpenspec } from './socket/dirty-matchers.ts';
 import { RawRecorder } from './socket/raw-recorder.ts';
 import { SocketServer } from './socket/server.ts';
 import { SessionHistory } from './socket/session-history.ts';
@@ -48,6 +59,8 @@ export interface StoreConfig {
 export interface ContainerOptions {
   processProvider?: ProcessProvider;
   storeConfig?: StoreConfig;
+  /** Override WatchService — tests pass FakeWatchService to avoid real chokidar. */
+  watchService?: WatchService;
 }
 
 export function createContainer(options: ContainerOptions): Container {
@@ -118,12 +131,39 @@ export function createContainer(options: ContainerOptions): Container {
       return row.cwd;
     },
   };
-  const channelManager: ChannelManager = new ChannelManager(
+  const watchService: WatchService = options.watchService ?? new LocalWatchService();
+  container.bind<WatchService>(TYPES.WatchService).toConstantValue(watchService);
+  const fsDirtyBroadcaster = new DirtyBroadcaster<string[]>(
+    watchService,
+    matchesFs,
+    (paths) => paths,
+  );
+  const gitDirtyBroadcaster = new DirtyBroadcaster<void>(watchService, matchesGit, () => undefined);
+  const openspecDirtyBroadcaster = new DirtyBroadcaster<void>(
+    watchService,
+    matchesOpenspec,
+    () => undefined,
+  );
+  container
+    .bind<DirtyBroadcaster<string[]>>(TYPES.FsDirtyBroadcaster)
+    .toConstantValue(fsDirtyBroadcaster);
+  container
+    .bind<DirtyBroadcaster<void>>(TYPES.GitDirtyBroadcaster)
+    .toConstantValue(gitDirtyBroadcaster);
+  container
+    .bind<DirtyBroadcaster<void>>(TYPES.OpenspecDirtyBroadcaster)
+    .toConstantValue(openspecDirtyBroadcaster);
+  const channelManager = new ChannelManager(
     runnerFactory,
     adapter,
     rawRecorder,
     emitter,
     sessionLookup,
+    {
+      fs: fsDirtyBroadcaster,
+      git: gitDirtyBroadcaster,
+      openspec: openspecDirtyBroadcaster,
+    },
   );
   sessionHistory = new SessionHistory(rawEventService, sessionStore, adapter, channelManager);
   container.bind<ChannelManager>(TYPES.ChannelManager).toConstantValue(channelManager);
@@ -141,8 +181,25 @@ export function createContainer(options: ContainerOptions): Container {
   container.bind<SocketServer>(TYPES.SocketServer).to(SocketServer).inSingletonScope();
   container
     .bind(TYPES.FilesystemService)
-    .toConstantValue(new LocalFilesystemService(config.explorerRoots));
+    .toConstantValue(new LocalFilesystemService(config.fsRoots, watchService));
   container.bind<GitService>(TYPES.GitService).toConstantValue(new LocalGitService());
+  container
+    .bind<PluginCliService>(TYPES.PluginCliService)
+    .toConstantValue(new LocalPluginCliService());
+  container
+    .bind<DiffFileService>(TYPES.DiffFileService)
+    .toConstantValue(new LocalDiffFileService());
+  const openspecProcess = container.isBound(TYPES.ProcessProvider)
+    ? container.get<ProcessProvider>(TYPES.ProcessProvider)
+    : new ChildProcessProvider();
+  container
+    .bind<OpenspecService>(TYPES.OpenspecService)
+    .toConstantValue(
+      new LocalOpenspecService(
+        container.get<LocalFilesystemService>(TYPES.FilesystemService),
+        openspecProcess,
+      ),
+    );
 
   return container;
 }

@@ -1,6 +1,6 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { rawDeltas } from '../db/schema-sqlite.ts';
+import { rawDeltas, rawEvents } from '../db/schema-sqlite.ts';
 import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
@@ -10,7 +10,7 @@ const configMock = vi.hoisted(() => ({
   autoMode: true,
   database: { url: undefined, sqliteUrl: 'file::memory:' },
   rawEvents: { writeDeltas: false, readDeltas: false },
-  explorerRoots: [],
+  fsRoots: [],
 }));
 
 vi.mock('../config.ts', () => ({ config: configMock }));
@@ -49,8 +49,13 @@ async function runTurn(sessionId: string) {
   await claude.emit(s.assistant('Hello'));
   await claude.emit(s.result());
 
-  // let async persistence settle
-  await new Promise((r) => setTimeout(r, 50));
+  // Wait until the assistant + result rows are persisted (instead of a
+  // fixed sleep — flaky on slow CI, wasteful on fast machines).
+  const db = container.get<DrizzleDatabase>(TYPES.Database);
+  await vi.waitFor(async () => {
+    const rows = await db.select().from(rawEvents);
+    if (rows.length < 2) throw new Error('persistence not settled');
+  });
   return container;
 }
 

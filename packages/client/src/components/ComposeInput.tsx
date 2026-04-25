@@ -1,4 +1,4 @@
-import type { FileSearchResult } from '@code-quest/shared';
+import type { FsSearchResult } from '@code-quest/shared';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
@@ -50,7 +50,7 @@ export function ComposeInput() {
 
   const inputHistory = useInputHistory();
   const mentionContainerRef = useRef<HTMLDivElement>(null);
-  const [fileResults, setFileResults] = useState<FileSearchResult[]>([]);
+  const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const scrollActiveIntoView = (el: HTMLDivElement | null) => {

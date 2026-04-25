@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import {
   controlForwardPayloadSchema,
   controlOpenDiffPayloadSchema,
@@ -10,7 +9,10 @@ import type { HandlerContext } from '../../types.ts';
 import type { Channel } from '../channel.ts';
 import { withChannel } from '../channel-emitter.ts';
 
-export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
+export function create({
+  emitter,
+  diffFileService,
+}: Pick<HandlerContext, 'emitter' | 'diffFileService'>): void {
   function onCancel(ch: Channel, payload: unknown): void {
     const { requestId } = requestIdPayloadSchema.parse(payload);
     ch.removeControlRequest(requestId);
@@ -44,10 +46,9 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
 
   async function onOpenDiff(ch: Channel, payload: unknown): Promise<void> {
     const { requestId, originalPath, newPath } = controlOpenDiffPayloadSchema.parse(payload);
-    const readFileOrEmpty = (path: string) => readFile(path, 'utf-8').catch(() => '');
     const [oldContent, newContent] = await Promise.all([
-      readFileOrEmpty(originalPath),
-      readFileOrEmpty(newPath),
+      diffFileService.read(originalPath),
+      diffFileService.read(newPath),
     ]);
     ch.trackControlRequest(requestId, { subtype: 'open_diff' });
     emitter.emit(ch.channelId, EVENTS.control.diff_review, {

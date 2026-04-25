@@ -14,9 +14,10 @@ export type Project = z.infer<typeof projectSchema>;
 export const projectsListPayloadSchema = z.object({}).optional();
 export type ProjectsListPayload = z.infer<typeof projectsListPayloadSchema>;
 
-export const projectsListResponseSchema = z.object({
-  projects: z.array(projectSchema),
-});
+export const projectsListResponseSchema = z.union([
+  z.object({ projects: z.array(projectSchema) }),
+  z.object({ error: z.string() }),
+]);
 export type ProjectsListResponse = z.infer<typeof projectsListResponseSchema>;
 
 export const projectsAddPayloadSchema = z.object({

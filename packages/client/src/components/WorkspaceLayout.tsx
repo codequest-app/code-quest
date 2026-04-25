@@ -1,14 +1,19 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { ActiveChatTabCwdProvider } from '../contexts/ActiveChatTabCwdContext';
+import { useNavigationState } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { TabProvider } from '../contexts/TabContext';
+import { useActiveCwd } from '../hooks/useActiveCwd';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
 import { AddProjectDialog } from './AddProjectDialog';
+import { DrawerAside } from './DrawerAside';
 import { EmptyState } from './EmptyState';
 import { ProjectTree } from './ProjectTree';
+import { RightPane } from './RightPane';
 import { SettingsDialog } from './SettingsDialog';
 import { TabContainer } from './TabContainer';
 import { TopScopeSwitcher } from './TopScopeSwitcher';
@@ -22,18 +27,42 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   return null;
 }
 
-const SIDEBAR_WIDTH = 260;
-
+/**
+ * Workspace shell — single component tree across all viewport widths. The
+ * sidebar and right pane are mounted exactly once each; CSS responsive
+ * modifiers decide whether they appear as docked columns (lg+) or as
+ * fixed-positioned slide-in drawers (<lg). This preserves component-local
+ * state (file-tree expansion, scroll, draft text, etc.) when the user
+ * resizes across the 768/1024 breakpoints.
+ *
+ * Resize-to-taste of the sidebar / right-pane widths is intentionally
+ * deferred — the previous react-resizable-panels integration was the
+ * source of the breakpoint-state-loss bug because Panels can't be both a
+ * docked column and a fixed-positioned drawer.
+ */
 export function WorkspaceLayout() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions } = useSession();
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
-  const isDesktop = breakpoint === 'desktop';
   const isMobile = breakpoint === 'mobile';
+
+  // One toggle per pane, semantics differ by breakpoint:
+  //   lg+:  open=true → docked column visible; open=false → collapsed (width 0)
+  //   <lg:  open=true → drawer slid in;        open=false → drawer slid out
+  // The two semantics flip meaning on resize, so we re-sync to the
+  // breakpoint default whenever it changes — otherwise a desktop-open
+  // sidebar becomes a content-blocking mobile drawer the instant the
+  // window narrows.
+  const [leftOpen, setLeftOpen] = useState(() => breakpoint === 'desktop');
+  const [rightOpen, setRightOpen] = useState(() => breakpoint === 'desktop');
+  useEffect(() => {
+    const isDesktop = breakpoint === 'desktop';
+    setLeftOpen(isDesktop);
+    setRightOpen(isDesktop);
+  }, [breakpoint]);
 
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
@@ -50,8 +79,9 @@ export function WorkspaceLayout() {
     setDialogOpen(false);
   }
 
-  // Sidebar is always visible on desktop; on tablet/mobile it's an overlay drawer.
-  const sidebarVisible = isDesktop || drawerOpen;
+  const hasCwd = activeProjectCwd !== null;
+  const onToggleLeft = () => setLeftOpen((v) => !v);
+  const onToggleRight = !hasCwd ? undefined : () => setRightOpen((v) => !v);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -69,7 +99,13 @@ export function WorkspaceLayout() {
           <WorkspaceTopbar
             mode={isMobile ? 'mobile' : 'desktop'}
             onOpenSettings={() => setSettingsOpen(true)}
-            onOpenMenu={isDesktop ? undefined : () => setDrawerOpen(true)}
+            onToggleLeft={onToggleLeft}
+            onToggleRight={onToggleRight}
+            sessions={sessions}
+            onActivateSession={(channelId) => {
+              const s = sessions.find((x) => x.channelId === channelId);
+              if (s) setActiveProject(s.projectRoot);
+            }}
           >
             <TopScopeSwitcher
               projects={projects}
@@ -78,65 +114,119 @@ export function WorkspaceLayout() {
               onAddProject={() => setDialogOpen(true)}
             />
           </WorkspaceTopbar>
-          <div className="flex flex-1 overflow-hidden">
-            {sidebarVisible && (
-              <>
-                {!isDesktop && (
-                  <button
-                    type="button"
-                    data-testid="sidebar-backdrop"
-                    className="fixed inset-0 z-overlay bg-black/40 cursor-default"
-                    onClick={() => setDrawerOpen(false)}
-                    onKeyDown={(e) => e.key === 'Escape' && setDrawerOpen(false)}
-                  />
-                )}
-                <div
-                  className={cn(
-                    'h-full overflow-auto border-r border-border bg-surface shrink-0',
-                    !isDesktop && 'fixed top-0 left-0 z-modal animate-slide-in-from-left',
-                  )}
-                  style={{ width: SIDEBAR_WIDTH }}
-                  data-testid="sidebar-panel"
+          <ActiveChatTabCwdProvider>
+            <div className="relative flex flex-1 overflow-hidden">
+              {leftOpen && (
+                <button
+                  type="button"
+                  aria-label="Dismiss sidebar"
+                  data-testid="sidebar-backdrop"
+                  onClick={() => setLeftOpen(false)}
+                  className="lg:hidden fixed inset-0 z-overlay bg-black/40"
+                />
+              )}
+              {rightOpen && hasCwd && (
+                <button
+                  type="button"
+                  aria-label="Dismiss right pane"
+                  data-testid="right-pane-backdrop"
+                  onClick={() => setRightOpen(false)}
+                  className="lg:hidden fixed inset-0 z-overlay bg-black/40"
+                />
+              )}
+
+              <DrawerAside
+                side="left"
+                open={leftOpen}
+                mobileWidthClass="w-[min(85vw,320px)]"
+                dockedWidthClass="lg:w-65"
+                testId="sidebar-panel"
+              >
+                <ProjectTree
+                  projects={projects}
+                  activeProjectCwd={activeProjectCwd}
+                  onSelectProject={(cwd) => {
+                    setActiveProject(cwd);
+                    if (breakpoint !== 'desktop') setLeftOpen(false);
+                  }}
+                  onAdd={() => setDialogOpen(true)}
+                />
+              </DrawerAside>
+
+              <main className="flex flex-1 min-w-0 h-full">
+                <ProjectsTabContainer
+                  projects={projects}
+                  activeProjectCwd={activeProjectCwd}
+                  sessions={sessions}
+                />
+              </main>
+
+              {hasCwd && (
+                <DrawerAside
+                  side="right"
+                  open={rightOpen}
+                  mobileWidthClass="w-[min(85vw,360px)]"
+                  dockedWidthClass="lg:w-80"
+                  testId="right-pane-drawer"
                 >
-                  <ProjectTree
-                    projects={projects}
-                    activeProjectCwd={activeProjectCwd}
-                    onSelectProject={(cwd) => {
-                      setActiveProject(cwd);
-                      if (!isDesktop) setDrawerOpen(false);
-                    }}
-                    onAdd={() => setDialogOpen(true)}
-                  />
-                </div>
-              </>
-            )}
-            <div className="flex flex-1 min-w-0">
-              {projects.map((project) => (
-                <div
-                  key={project.cwd}
-                  data-testid={project.cwd === activeProjectCwd ? 'project-container' : undefined}
-                  className={cn(
-                    project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0' : 'hidden',
-                  )}
-                >
-                  <TabProvider
-                    sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
-                    cwd={project.cwd}
-                  >
-                    <TabContainer />
-                  </TabProvider>
-                </div>
-              ))}
+                  <RightPaneWithCwd />
+                </DrawerAside>
+              )}
             </div>
-          </div>
+          </ActiveChatTabCwdProvider>
         </>
       )}
       <AddProjectDialog
         open={dialogOpen}
         onSelect={handleAddProject}
         onClose={() => setDialogOpen(false)}
+        addedProjectCwds={new Set(projects.map((p) => p.cwd))}
       />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
+  );
+}
+
+function ProjectsTabContainer({
+  projects,
+  activeProjectCwd,
+  sessions,
+}: {
+  projects: ReturnType<typeof useProjectState>['projects'];
+  activeProjectCwd: string | null;
+  sessions: ReturnType<typeof useSession>['sessions'];
+}) {
+  const { selectedWorktreeCwd } = useNavigationState();
+  return (
+    <div className="flex flex-1 min-w-0 h-full">
+      {projects.map((project) => (
+        <div
+          key={project.cwd}
+          data-testid={project.cwd === activeProjectCwd ? 'project-container' : undefined}
+          className={cn(project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden')}
+        >
+          <TabProvider
+            sessions={sessions.filter((s) => s.projectRoot === project.cwd)}
+            cwd={project.cwd}
+            selectedCwd={selectedWorktreeCwd[project.cwd] ?? undefined}
+          >
+            <TabContainer projectCwd={project.cwd} />
+          </TabProvider>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RightPaneWithCwd() {
+  const cwd = useActiveCwd();
+  if (!cwd) return null;
+  return (
+    <RightPane
+      cwd={cwd}
+      onMention={(path) => {
+        toast(`Mention queued: ${path}`);
+      }}
+    />
   );
 }

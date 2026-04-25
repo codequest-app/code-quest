@@ -13,6 +13,7 @@ import {
   refreshMarketplacePayloadSchema,
   removeMarketplacePayloadSchema,
 } from '@code-quest/shared';
+import type { PluginCliService } from '@code-quest/summoner';
 import { z } from 'zod';
 
 import { logger } from '../../logger.ts';
@@ -21,7 +22,6 @@ import type { Channel } from '../channel.ts';
 import { withChannel, withError } from '../channel-emitter.ts';
 import type { SocketCallback, TypedSocket } from '../types.ts';
 import { errMsg } from '../utils/helpers.ts';
-import { runPluginCommand, runPluginCommandAsync } from './cli.ts';
 import { claudeState, clearPluginCache, updatePluginCache } from './state.ts';
 
 function buildMarketplaceSource(k: MarketplaceRawItem): MarketplaceSourceConfig {
@@ -50,16 +50,19 @@ interface PluginCommandAction<T> {
   successExtra?: Record<string, unknown>;
 }
 
-function createPluginCommandHandler<T>(action: PluginCommandAction<T>) {
-  return (
+function createPluginCommandHandler<T>(
+  pluginCli: PluginCliService,
+  action: PluginCommandAction<T>,
+) {
+  return async (
     _ch: Channel | null,
     payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void => {
+  ): Promise<void> => {
     try {
       const parsed = action.schema.parse(payload);
-      const result = runPluginCommand(action.toArgs(parsed));
+      const result = await pluginCli.run(action.toArgs(parsed));
       if (!result.ok) {
         callback?.({ success: false, error: result.stderr || action.errorLabel });
         return;
@@ -103,7 +106,10 @@ function parseAvailablePluginJson(stdout: string): {
   return { installed: [], available: [] };
 }
 
-export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
+export function create({
+  emitter,
+  pluginCli,
+}: Pick<HandlerContext, 'emitter' | 'pluginCli'>): void {
   async function handleList(
     _ch: Channel | null,
     payload: unknown,
@@ -119,19 +125,23 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       }
     }
 
-    const installedResult = runPluginCommand(['list', '--json']);
+    const [installedResult, availableResult] = await Promise.all([
+      pluginCli.run(['list', '--json']),
+      includeAvailable ? pluginCli.run(['list', '--json', '--available']) : Promise.resolve(null),
+    ]);
+
+    if (!installedResult.ok) {
+      logger.warn({ stderr: installedResult.stderr }, 'plugin list --json failed');
+    }
     let installed: unknown[] = installedResult.ok
       ? parsePluginJson(installedResult.stdout, 'installed')
       : [];
 
     let available: unknown[] = [];
-    if (includeAvailable) {
-      const availableResult = await runPluginCommandAsync(['list', '--json', '--available']);
-      if (availableResult.ok) {
-        const parsed = parseAvailablePluginJson(availableResult.stdout);
-        if (parsed.installed.length) installed = parsed.installed;
-        if (parsed.available.length) available = parsed.available;
-      }
+    if (availableResult?.ok) {
+      const parsed = parseAvailablePluginJson(availableResult.stdout);
+      if (parsed.installed.length) installed = parsed.installed;
+      if (parsed.available.length) available = parsed.available;
     }
 
     const validInstalled = pluginInfoSchema.array().parse(installed);
@@ -161,12 +171,12 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
     return marketplaces;
   }
 
-  function handleListMarketplaces(
+  async function handleListMarketplaces(
     _ch: Channel | null,
     _payload: unknown,
     _socket?: TypedSocket,
     callback?: SocketCallback,
-  ): void {
+  ): Promise<void> {
     const cached = claudeState.pluginCache;
     if (
       cached &&
@@ -177,7 +187,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
       return;
     }
 
-    const result = runPluginCommand(['marketplace', 'list', '--json']);
+    const result = await pluginCli.run(['marketplace', 'list', '--json']);
     if (!result.ok) {
       callback?.({ marketplaces: [] });
       return;
@@ -194,7 +204,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   emitter.on(EVENTS.plugin.list, handleList);
   emitter.on(
     EVENTS.plugin.install,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: pluginInstallPayloadSchema,
       toArgs: ({ pluginId }) => ['install', pluginId],
       errorLabel: 'Failed to install plugin',
@@ -203,7 +213,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   );
   emitter.on(
     EVENTS.plugin.uninstall,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: pluginUninstallPayloadSchema,
       toArgs: ({ pluginId }) => ['uninstall', pluginId],
       errorLabel: 'Failed to uninstall plugin',
@@ -212,7 +222,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   );
   emitter.on(
     EVENTS.plugin.toggle,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: pluginTogglePayloadSchema,
       toArgs: ({ pluginId, enabled }) => [enabled ? 'enable' : 'disable', pluginId],
       errorLabel: 'Failed to toggle plugin',
@@ -222,7 +232,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   emitter.on(EVENTS.plugin.list_marketplaces, handleListMarketplaces);
   emitter.on(
     EVENTS.plugin.add_marketplace,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: addMarketplacePayloadSchema,
       toArgs: ({ source }) => ['marketplace', 'add', source],
       errorLabel: 'Failed to add marketplace',
@@ -230,7 +240,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   );
   emitter.on(
     EVENTS.plugin.remove_marketplace,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: removeMarketplacePayloadSchema,
       toArgs: ({ marketplaceId }) => ['marketplace', 'remove', marketplaceId],
       errorLabel: 'Failed to remove marketplace',
@@ -238,7 +248,7 @@ export function create({ emitter }: Pick<HandlerContext, 'emitter'>): void {
   );
   emitter.on(
     EVENTS.plugin.refresh_marketplace,
-    createPluginCommandHandler({
+    createPluginCommandHandler(pluginCli, {
       schema: refreshMarketplacePayloadSchema,
       toArgs: ({ marketplaceId }) => ['marketplace', 'update', marketplaceId],
       errorLabel: 'Failed to refresh marketplace',

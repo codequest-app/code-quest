@@ -70,6 +70,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
   describe('log', () => {
     it('returns commit entries', async () => {
       const result = await service.log(tmpDir);
+      if (!('entries' in result)) throw new Error('expected entries');
       expect(result.entries.length).toBeGreaterThan(0);
       expect(result.entries[0]).toMatchObject({
         hash: expect.any(String),
@@ -86,6 +87,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
       git('add . && git commit -m "third"');
 
       const result = await service.log(tmpDir, 1);
+      if (!('entries' in result)) throw new Error('expected entries');
       expect(result.entries).toHaveLength(1);
     });
   });

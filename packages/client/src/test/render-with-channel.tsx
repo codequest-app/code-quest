@@ -2,7 +2,7 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { AppReadinessProvider } from '../contexts/AppReadinessContext';
+import { AppInitProvider } from '../contexts/AppInitContext';
 import { ChannelProvider } from '../contexts/channel/ChannelContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
@@ -47,7 +47,7 @@ export async function renderWithChannel(
   const result = render(ui, {
     wrapper: ({ children }) => (
       <SocketProvider socket={summoner.socket}>
-        <AppReadinessProvider>
+        <AppInitProvider>
           <SessionProvider>
             <PluginProvider>
               <ProjectProvider>
@@ -68,7 +68,7 @@ export async function renderWithChannel(
               </ProjectProvider>
             </PluginProvider>
           </SessionProvider>
-        </AppReadinessProvider>
+        </AppInitProvider>
       </SocketProvider>
     ),
   });

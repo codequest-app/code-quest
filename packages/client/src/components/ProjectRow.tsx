@@ -1,13 +1,13 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
-import type { Project } from '../contexts/ProjectContext';
 import {
   NOT_A_REPO,
-  useWorktreeActions,
-  useWorktreeState,
+  useGitActions,
+  useGitState,
   type WorktreeListingEntry,
-} from '../contexts/WorktreeContext';
+} from '../contexts/GitContext';
+import type { Project } from '../contexts/ProjectContext';
 import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore';
 import { ProjectCard } from './ProjectCard';
 import { WorktreeChildList } from './WorktreeChildList';
@@ -33,8 +33,8 @@ export function ProjectRow({
   // toggles (single source of truth via zustand persist).
   const expanded = useExpandedProjectsStore((s) => s.expanded.includes(project.cwd));
   const { toggle, setExpanded } = useExpandedProjectsStore.getState();
-  const { listing } = useWorktreeState();
-  const { list, initRepo } = useWorktreeActions();
+  const { listing } = useGitState();
+  const { list, initRepo } = useGitActions();
 
   const entry = listing[project.cwd];
   const nonGit = isNonGit(entry);

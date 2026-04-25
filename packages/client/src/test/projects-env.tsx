@@ -1,10 +1,12 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import type { ReactNode } from 'react';
+import { FsProvider } from '../contexts/FsContext';
+import { GitProvider } from '../contexts/GitContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
+import { OpenspecProvider } from '../contexts/OpenspecContext';
 import { ProjectProvider } from '../contexts/ProjectContext';
 import { SessionProvider } from '../contexts/SessionContext';
 import { SocketProvider } from '../contexts/SocketContext';
-import { WorktreeProvider } from '../contexts/WorktreeContext';
 import { FakeSummoner } from './fake-summoner';
 
 export interface ProjectsEnv {
@@ -34,7 +36,11 @@ export function createProjectsEnv(opts?: { summoner?: FakeSummoner }): ProjectsE
         <SessionProvider>
           <ProjectProvider>
             <NavigationProvider>
-              <WorktreeProvider>{children}</WorktreeProvider>
+              <GitProvider>
+                <FsProvider>
+                  <OpenspecProvider>{children}</OpenspecProvider>
+                </FsProvider>
+              </GitProvider>
             </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>

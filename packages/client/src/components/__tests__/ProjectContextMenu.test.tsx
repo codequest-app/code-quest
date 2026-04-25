@@ -2,83 +2,57 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppReadinessStateContext } from '../../contexts/AppReadinessContext';
-import { ProjectContextMenu } from '../ProjectContextMenu';
+import { AppInitStateContext } from '../../contexts/AppInitContext';
+import { ProjectDropdownMenu } from '../ProjectContextMenu';
 
-/** Provide a minimal AppReadinessState with worktree capability enabled. */
+/** Provide a minimal AppInitState with worktree capability enabled. */
 function WithWorktreeCapability({ children }: { children: ReactNode }) {
   return (
-    <AppReadinessStateContext.Provider
+    <AppInitStateContext.Provider
       value={{
         initOptions: {},
         capabilities: { worktree: true },
       }}
     >
       {children}
-    </AppReadinessStateContext.Provider>
+    </AppInitStateContext.Provider>
   );
+}
+
+const TRIGGER = <button type="button">⋯</button>;
+
+async function open() {
+  await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByRole('button', { name: '⋯' }));
 }
 
 describe('ProjectContextMenu', () => {
   it('renders the "Resume session…" item; clicking calls onSelectResume', async () => {
     const onSelectResume = vi.fn();
-    render(
-      <ProjectContextMenu x={100} y={200} onSelectResume={onSelectResume} onClose={() => {}} />,
-    );
-
-    const item = screen.getByRole('menuitem', { name: /resume session/i });
+    render(<ProjectDropdownMenu trigger={TRIGGER} onSelectResume={onSelectResume} />);
+    await open();
+    const item = await screen.findByRole('menuitem', { name: /resume session/i });
     await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
     expect(onSelectResume).toHaveBeenCalledTimes(1);
   });
 
-  it('outside click calls onClose', async () => {
-    const onClose = vi.fn();
-    render(
-      <div>
-        <button type="button" data-testid="outside">
-          outside
-        </button>
-        <ProjectContextMenu x={100} y={200} onSelectResume={() => {}} onClose={onClose} />
-      </div>,
-    );
-
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByTestId('outside'));
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('Escape key calls onClose', async () => {
-    const onClose = vi.fn();
-    render(<ProjectContextMenu x={0} y={0} onSelectResume={() => {}} onClose={onClose} />);
-
-    await userEvent.setup({ pointerEventsCheck: 0 }).keyboard('{Escape}');
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('positions itself at given x/y via fixed positioning', () => {
-    render(<ProjectContextMenu x={42} y={84} onSelectResume={() => {}} onClose={() => {}} />);
-    const menu = screen.getByRole('menu');
-    expect(menu.style.position).toBe('fixed');
-    expect(menu.style.left).toBe('42px');
-    expect(menu.style.top).toBe('84px');
-  });
-
   describe('Rename / Remove items', () => {
-    it('hides Rename when onSelectRename is not provided', () => {
-      render(<ProjectContextMenu x={0} y={0} onSelectResume={() => {}} onClose={() => {}} />);
+    it('hides Rename when onSelectRename is not provided', async () => {
+      render(<ProjectDropdownMenu trigger={TRIGGER} onSelectResume={() => {}} />);
+      await open();
+      await screen.findByRole('menuitem', { name: /resume session/i });
       expect(screen.queryByRole('menuitem', { name: /rename/i })).not.toBeInTheDocument();
     });
 
     it('shows Rename when handler is provided; clicking fires handler', async () => {
       const onSelectRename = vi.fn();
       render(
-        <ProjectContextMenu
-          x={0}
-          y={0}
+        <ProjectDropdownMenu
+          trigger={TRIGGER}
           onSelectResume={() => {}}
           onSelectRename={onSelectRename}
-          onClose={() => {}}
         />,
       );
+      await open();
       const item = await screen.findByRole('menuitem', { name: /rename/i });
       await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
       expect(onSelectRename).toHaveBeenCalledTimes(1);
@@ -87,14 +61,13 @@ describe('ProjectContextMenu', () => {
     it('shows Remove with danger styling when handler is provided; clicking fires handler', async () => {
       const onSelectRemove = vi.fn();
       render(
-        <ProjectContextMenu
-          x={0}
-          y={0}
+        <ProjectDropdownMenu
+          trigger={TRIGGER}
           onSelectResume={() => {}}
           onSelectRemove={onSelectRemove}
-          onClose={() => {}}
         />,
       );
+      await open();
       const item = await screen.findByRole('menuitem', { name: /remove/i });
       await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
       expect(onSelectRemove).toHaveBeenCalledTimes(1);
@@ -102,25 +75,27 @@ describe('ProjectContextMenu', () => {
   });
 
   describe('Create Worktree item', () => {
-    it('hides the item when no WorktreeProvider (capabilities default to worktree=false)', () => {
+    it('hides the item when no GitProvider (capabilities default to worktree=false)', async () => {
       render(
-        <ProjectContextMenu
-          x={0}
-          y={0}
+        <ProjectDropdownMenu
+          trigger={TRIGGER}
           onSelectResume={() => {}}
           onSelectCreateWorktree={() => {}}
-          onClose={() => {}}
         />,
       );
+      await open();
+      await screen.findByRole('menuitem', { name: /resume session/i });
       expect(screen.queryByRole('menuitem', { name: /Create Worktree/i })).not.toBeInTheDocument();
     });
 
-    it('hides the item when onSelectCreateWorktree is not provided (even if capability is true)', () => {
+    it('hides the item when onSelectCreateWorktree is not provided (even if capability is true)', async () => {
       render(
         <WithWorktreeCapability>
-          <ProjectContextMenu x={0} y={0} onSelectResume={() => {}} onClose={() => {}} />
+          <ProjectDropdownMenu trigger={TRIGGER} onSelectResume={() => {}} />
         </WithWorktreeCapability>,
       );
+      await open();
+      await screen.findByRole('menuitem', { name: /resume session/i });
       expect(screen.queryByRole('menuitem', { name: /Create Worktree/i })).not.toBeInTheDocument();
     });
 
@@ -128,15 +103,14 @@ describe('ProjectContextMenu', () => {
       const onSelectCreateWorktree = vi.fn();
       render(
         <WithWorktreeCapability>
-          <ProjectContextMenu
-            x={0}
-            y={0}
+          <ProjectDropdownMenu
+            trigger={TRIGGER}
             onSelectResume={() => {}}
             onSelectCreateWorktree={onSelectCreateWorktree}
-            onClose={() => {}}
           />
         </WithWorktreeCapability>,
       );
+      await open();
       const item = await screen.findByRole('menuitem', { name: /Create Worktree/i });
       await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
       expect(onSelectCreateWorktree).toHaveBeenCalledTimes(1);
