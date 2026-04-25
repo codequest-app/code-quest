@@ -158,6 +158,70 @@ const result = adapter.parseLine(line);
 await vi.advanceTimersByTimeAsync(5000);
 ```
 
+### 用 `vi.waitFor` 同步 pipeline，避免 fixed-sleep
+
+測試跑完一個動作（socket send / claude.emit / abort …）需要等 async 副作用落地（event 廣播 / store 寫入 / downstream push），常見陷阱是寫 `await new Promise(r => setTimeout(r, 50))`。這種做法脆弱且慢：
+
+- 50ms 只是經驗值，排程抖動時不夠 → flaky
+- 實際效果早在 <10ms 完成，固定等 50ms 就是浪費
+
+用 `vi.waitFor` 指定**可觀察的後置條件**，事件到就繼續：
+
+```ts
+// 取代這個：
+await claude.send('session:fork', { ..., newChannelId: 'fork-verify' });
+await new Promise<void>((r) => setTimeout(r, 50));
+const row = await sessionStore.getByChannelId('fork-verify');
+expect(row).toBeDefined();
+
+// 改成：
+await claude.send('session:fork', { ..., newChannelId: 'fork-verify' });
+await vi.waitFor(async () => {
+  const row = await sessionStore.getByChannelId('fork-verify');
+  expect(row).toBeDefined();
+});
+```
+
+**absence 斷言（「不該發生」）**：用 waitFor 等一個**正向**事件證明 pipeline 已 flush，再 assert 目標事件不存在：
+
+```ts
+await vi.waitFor(() => {
+  expect(windowB.events('message:assistant').length).toBeGreaterThan(0);
+});
+expect(windowB.events('chat:cancel_request')).toHaveLength(0);
+```
+
+**不適用情境** — 沒 observable signal 的 cleanup（例：`handle.abort()` 後只有 internal `for await` 結束，對 socket 無推播；或「N 維持不變」的 absence over a window）— 只能保留 fixed wait + 註解說明為何。
+
+### 避免 `setTimeout(fn, 0)` / 雙 `queueMicrotask` 等待
+
+要把「目前所有 pending microtask + I/O 回呼」flush 完畢，用 `setImmediate`：
+
+```ts
+// 不要：
+await new Promise((r) => setTimeout(r, 0));
+await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+
+// 改成：
+await new Promise<void>((r) => setImmediate(r));
+```
+
+`setImmediate` 排在「下一個 I/O 階段」，自然在所有 pending microtask / promise rejection handler 之後執行。語意比「猜要兩個 microtask」清楚。
+
+### Fake timers + `userEvent` 的衝突
+
+`vi.useFakeTimers()` 連 microtask scheduling 都換掉時，`userEvent` 內部的 promise/microtask wait 會 deadlock。對策：
+
+- 限制 fake 範圍：`vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })` 只接管 setTimeout，userEvent 仍有實 microtask 可用
+- 仍 deadlock → 改用 `fireEvent`（同步、不依賴 timer）：
+  ```ts
+  // user.click → fireEvent.click
+  fireEvent.click(button);
+  // user.type 'hi{Enter}' → fireEvent.change + keyDown
+  fireEvent.change(input, { target: { value: 'hi' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  ```
+
 ---
 
 ## Isolation and Parallel Execution
