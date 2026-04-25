@@ -25,6 +25,19 @@ export function resolveSqlitePath(url: string): string {
   return url;
 }
 
+/** Default ws-only; falls back to ws on unrecognized values. */
+function parseTransport(raw: string | undefined): { ws: boolean; socketio: boolean } {
+  switch (raw) {
+    case 'socketio':
+      return { ws: false, socketio: true };
+    case 'both':
+      return { ws: true, socketio: true };
+    case 'ws':
+    default:
+      return { ws: true, socketio: false };
+  }
+}
+
 function parseFsRoots(raw?: string): string[] {
   if (!raw) return [os.homedir()];
   const roots = raw
@@ -50,6 +63,7 @@ export function loadConfig(env: Env = process.env) {
     thinkingDisplay: parseThinkingDisplay(env.CLI_THINKING_DISPLAY),
     fsRoots: parseFsRoots(env.EXPLORER_ROOTS),
     autoMode: parseBool(env.CLI_AUTO_MODE, true),
+    transport: parseTransport(env.TRANSPORT),
   } as const;
 }
 

@@ -1,7 +1,7 @@
 import { ERROR_CODES, EVENTS, isRecord } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
-import type { SocketCallback, TypedServer, TypedSocket } from './types.ts';
+import type { SocketCallback, TypedSocket } from './types.ts';
 
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (
@@ -42,11 +42,6 @@ export function withSocket(
   };
 }
 
-/** Typed socket.emit requires known event literals; dynamic event names need this helper. */
-function emitDynamic(sock: TypedSocket, event: string, ...args: unknown[]): void {
-  (sock.emit as (...a: unknown[]) => void)(event, ...args);
-}
-
 export class ChannelEmitter {
   private eventMap = new Map<string, EmitterHandler[]>();
 
@@ -54,7 +49,6 @@ export class ChannelEmitter {
   private channelSockets = new Map<string, Set<TypedSocket>>();
   private socketChannels = new Map<string, Set<string>>();
   private socketRefs = new Map<string, TypedSocket>();
-  private io?: TypedServer;
 
   // ── Subscribe ──
 
@@ -108,7 +102,7 @@ export class ChannelEmitter {
     const sockets = this.channelSockets.get(channelId);
     if (!sockets) return;
     for (const sock of sockets) {
-      emitDynamic(sock, event, ...args);
+      sock.emit(event, ...args);
     }
   }
 
@@ -122,7 +116,7 @@ export class ChannelEmitter {
     if (!sockets) return;
     for (const sock of sockets) {
       if (sock.id !== excludeSocketId) {
-        emitDynamic(sock, event, ...args);
+        sock.emit(event, ...args);
       }
     }
   }
@@ -148,10 +142,8 @@ export class ChannelEmitter {
 
   removeSocketFromAll(socketId: string): Set<string> | undefined {
     const channelIds = this.socketChannels.get(socketId);
-    if (!channelIds) return undefined;
-
     const socket = this.socketRefs.get(socketId);
-    if (socket) {
+    if (channelIds && socket) {
       for (const channelId of channelIds) {
         this.channelSockets.get(channelId)?.delete(socket);
       }
@@ -172,6 +164,10 @@ export class ChannelEmitter {
     socket: TypedSocket,
     resolveChannel: (channelId: string) => Channel | undefined,
   ): void {
+    // Register the socket in the global ref map so broadcastAll reaches every
+    // connected peer — even ones that have not (yet) joined a channel.
+    this.socketRefs.set(socket.id, socket);
+
     // Wire client socket events for emitter.on subscribers only.
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
@@ -203,15 +199,19 @@ export class ChannelEmitter {
     });
   }
 
-  // ── Global broadcast (via io) ──
+  // ── Global broadcast ──
 
-  register(io: TypedServer): void {
-    this.io = io;
-  }
-
+  /**
+   * Fan out an event to every tracked socket.
+   *
+   * Iterates `socketRefs` (the unique-by-id registry) so each connection
+   * receives the message exactly once even if it joined multiple channels.
+   * Transport-agnostic: works across any combination of attached transports
+   * (socket.io, ws, future) since they all produce TypedSockets.
+   */
   broadcastAll(event: string, ...args: unknown[]): void {
-    if (this.io) {
-      (this.io.emit as (...a: unknown[]) => void)(event, ...args);
+    for (const sock of this.socketRefs.values()) {
+      sock.emit(event, ...args);
     }
   }
 }

@@ -1,4 +1,3 @@
-import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import type {
   DiffFileService,
   FilesystemService,
@@ -7,7 +6,6 @@ import type {
   PluginCliService,
 } from '@code-quest/summoner';
 import { inject, injectable } from 'inversify';
-import type { Server } from 'socket.io';
 import type { DirtyBroadcaster } from '../services/dirty-broadcaster.ts';
 import type { ProjectAutoUpserter } from '../services/project-auto-upserter.ts';
 import type { ProjectStore } from '../services/project-store.ts';
@@ -42,6 +40,7 @@ import * as speech from './handlers/speech.ts';
 import * as terminal from './handlers/terminal.ts';
 import * as usage from './handlers/usage.ts';
 import type { SessionHistory } from './session-history.ts';
+import type { TransportHandle } from './transport.ts';
 
 @injectable()
 export class SocketServer {
@@ -68,10 +67,40 @@ export class SocketServer {
     private openspecDirtyBroadcaster: DirtyBroadcaster<void>,
   ) {}
 
-  register(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
-    const cm = this.channelManager;
-    cm.register(io);
+  private handlersWired = false;
 
+  /**
+   * Wire handlers (idempotent) and bridge new connections from the given
+   * TransportHandle into the shared ChannelEmitter.
+   *
+   * Multiple TransportHandles MAY be registered (e.g. socket.io + ws):
+   * handlers register exactly once; each subsequent call only attaches its
+   * transport's connection stream into the same emitter.
+   */
+  register(handle: TransportHandle): void {
+    this.wireHandlers();
+    this.attachTransport(handle);
+  }
+
+  /**
+   * Wire only the connection bridge for an additional transport. Use this
+   * when you have already called `register()` once (or `wireHandlers()`
+   * directly) and just need to plug in another transport.
+   */
+  attachTransport(handle: TransportHandle): void {
+    const em = this.emitter;
+    const cm = this.channelManager;
+    handle.onConnection((socket) => {
+      em.handleConnection(socket, (id) => cm.get(id));
+    });
+  }
+
+  /** Register all handlers onto the shared emitter. Idempotent. */
+  private wireHandlers(): void {
+    if (this.handlersWired) return;
+    this.handlersWired = true;
+
+    const cm = this.channelManager;
     const em = this.emitter;
     const planHandler = plan.create({ emitter: em });
 
@@ -124,9 +153,5 @@ export class SocketServer {
       claudeMcpServers.create(ctx);
       claudePlugin.create(ctx);
     }
-
-    io.on('connection', (socket) => {
-      em.handleConnection(socket, (id) => cm.get(id));
-    });
   }
 }

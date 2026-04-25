@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test harness uses type assertions */
-
 import type {
   FilesystemService,
   GitService,
@@ -38,18 +36,17 @@ export class FakeServer {
 
     const socketServer = container.get<SocketServer>(TYPES.SocketServer);
 
+    // Bridge: provide a fake TransportHandle whose onConnection feeds the
+    // socket pushed by `connect()` into the SocketServer.
     socketServer.register({
-      on: (event: string, cb: (...args: unknown[]) => void) => {
-        if (event === 'connection') {
-          this._connectionHandler = cb;
-        }
+      onConnection: (cb) => {
+        this._connectionHandler = cb as (s: unknown) => void;
+        return () => {
+          this._connectionHandler = null;
+        };
       },
-      emit: (event: string, ...args: unknown[]) => {
-        for (const ss of this._allServerSockets) {
-          ss.emit(event, ...args);
-        }
-      },
-    } as any);
+      close: async () => {},
+    });
   }
 
   /** Create a new window connection — returns socket, provider, filesystem, git. */

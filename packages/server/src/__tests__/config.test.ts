@@ -145,4 +145,29 @@ describe('loadConfig — non-database envs', () => {
   it('CLI_THINKING_DISPLAY=garbage → falls back to summarized', () => {
     expect(loadConfig({ CLI_THINKING_DISPLAY: 'bogus' }).thinkingDisplay).toBe('summarized');
   });
+
+  describe('TRANSPORT', () => {
+    it('default (unset) → ws only', () => {
+      expect(loadConfig({}).transport).toEqual({ ws: true, socketio: false });
+    });
+
+    it('TRANSPORT=ws → ws only', () => {
+      expect(loadConfig({ TRANSPORT: 'ws' }).transport).toEqual({ ws: true, socketio: false });
+    });
+
+    it('TRANSPORT=socketio → socket.io only', () => {
+      expect(loadConfig({ TRANSPORT: 'socketio' }).transport).toEqual({
+        ws: false,
+        socketio: true,
+      });
+    });
+
+    it('TRANSPORT=both → both enabled', () => {
+      expect(loadConfig({ TRANSPORT: 'both' }).transport).toEqual({ ws: true, socketio: true });
+    });
+
+    it('TRANSPORT=garbage → falls back to ws default', () => {
+      expect(loadConfig({ TRANSPORT: 'bogus' }).transport).toEqual({ ws: true, socketio: false });
+    });
+  });
 });

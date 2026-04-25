@@ -2,12 +2,10 @@ import 'reflect-metadata';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
-import type { ClientToServerEvents, ServerToClientEvents } from '@code-quest/shared';
 import { ChildProcessProvider } from '@code-quest/summoner';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
-import { Server } from 'socket.io';
 import { config, resolveSqlitePath } from '../config.ts';
 import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
@@ -19,7 +17,11 @@ import { createUsageRouter } from '../routes/usage.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 import type { UsageTracker } from '../services/usage-tracker.ts';
+import { NullAuthenticator } from '../socket/authenticator.ts';
 import type { SocketServer } from '../socket/server.ts';
+import { SocketIoTransport } from '../socket/socket-io-transport.ts';
+import type { TransportHandle } from '../socket/transport.ts';
+import { WsTransport } from '../socket/ws-transport.ts';
 import { TYPES } from '../types.ts';
 
 const storeConfig: StoreConfig = {};
@@ -58,12 +60,24 @@ app.use(helmet());
 app.use(cors());
 
 const httpServer = createServer(app);
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-  cors: { origin: '*' },
-});
+
+// Mount transports per config. socket.io and ws are independent and can both
+// run on the same http server (different paths). Default is ws-only.
+const authenticator = new NullAuthenticator();
+const handles: TransportHandle[] = [];
+if (config.transport.socketio) {
+  handles.push(new SocketIoTransport({ authenticator, cors: { origin: '*' } }).attach(httpServer));
+}
+if (config.transport.ws) {
+  handles.push(new WsTransport({ authenticator, path: '/ws' }).attach(httpServer));
+}
 
 const socketServer = container.get<SocketServer>(TYPES.SocketServer);
-socketServer.register(io);
+for (const handle of handles) socketServer.register(handle);
+logger.info(
+  { ws: config.transport.ws, socketio: config.transport.socketio },
+  'Transports attached',
+);
 
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
 const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
@@ -102,8 +116,9 @@ httpServer.listen(config.port, () => {
 
 const shutdown = () => {
   logger.info('Shutting down gracefully...');
-  io.close();
-  httpServer.close(() => process.exit(0));
+  Promise.all(handles.map((h) => h.close())).finally(() => {
+    httpServer.close(() => process.exit(0));
+  });
   setTimeout(() => process.exit(1), 10_000).unref();
 };
 

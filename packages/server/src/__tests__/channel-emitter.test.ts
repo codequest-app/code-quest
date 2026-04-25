@@ -82,4 +82,36 @@ describe('ChannelEmitter', () => {
       expect(handler2).toHaveBeenCalledWith(ch, { code: 0 }, undefined, undefined);
     });
   });
+
+  describe('broadcastAll', () => {
+    it('fans out to every tracked socket via per-socket emit', () => {
+      const emitter = new ChannelEmitter();
+      const sockA = { id: 's-a', emit: vi.fn(), on: vi.fn() };
+      const sockB = { id: 's-b', emit: vi.fn(), on: vi.fn() };
+      emitter.addSocketToChannel('ch-1', sockA);
+      emitter.addSocketToChannel('ch-2', sockB);
+
+      emitter.broadcastAll('system:announcement', { msg: 'hello' });
+
+      expect(sockA.emit).toHaveBeenCalledWith('system:announcement', { msg: 'hello' });
+      expect(sockB.emit).toHaveBeenCalledWith('system:announcement', { msg: 'hello' });
+    });
+
+    it('does not double-send when a socket joined multiple channels', () => {
+      const emitter = new ChannelEmitter();
+      const sock = { id: 's-1', emit: vi.fn(), on: vi.fn() };
+      emitter.addSocketToChannel('ch-1', sock);
+      emitter.addSocketToChannel('ch-2', sock);
+
+      emitter.broadcastAll('e', { x: 1 });
+
+      expect(sock.emit).toHaveBeenCalledTimes(1);
+      expect(sock.emit).toHaveBeenCalledWith('e', { x: 1 });
+    });
+
+    it('is a no-op when no sockets are tracked', () => {
+      const emitter = new ChannelEmitter();
+      expect(() => emitter.broadcastAll('e', {})).not.toThrow();
+    });
+  });
 });

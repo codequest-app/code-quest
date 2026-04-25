@@ -8,7 +8,7 @@ import { Channel, type ChannelHooks } from './channel.ts';
 import type { ChannelEmitter } from './channel-emitter.ts';
 import { type DirtyBroadcasters, subscribeDirtyForSocket } from './dirty-subscriber.ts';
 import type { RawRecorder } from './raw-recorder.ts';
-import type { TypedServer, TypedSocket } from './types.ts';
+import type { TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
 
 /** Minimal interface ChannelManager needs from SessionHistory + sessionStore. */
@@ -62,10 +62,6 @@ export class ChannelManager {
     if (!channel.isBound) {
       channel.bindRunner(this.hooks);
     }
-  }
-
-  register(io: TypedServer): void {
-    this.emitter.register(io);
   }
 
   get provider(): string {

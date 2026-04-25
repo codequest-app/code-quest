@@ -153,13 +153,17 @@ Client:
 ### Runtime 依賴（production）
 
 ```
-client ──socket.io──→ server ──ProcessRunner──→ CLI process
-  │                     │
+client ──transport──→ server ──ProcessRunner──→ CLI process
+  │       (ws default,  │
+  │        socket.io     │
+  │        fallback)     │
   └── @code-quest/shared (types only, no runtime)
                         │
                         └── @code-quest/summoner (runtime: parse + transform)
                         └── @code-quest/shared (runtime: schema validation)
 ```
+
+**Transport layer**: Both `ws` (raw WebSocket + JSON envelope, default) and `socket.io` (legacy Engine.IO) implement the same `Transport` contract and feed into one `ChannelEmitter`. Selectable via `TRANSPORT` env (server) and `VITE_TRANSPORT` env (client). See `docs/transport.md`.
 
 ### Test 依賴
 

@@ -12,6 +12,9 @@ export type {
 export { EVENTS } from './socket-events.ts';
 export { TopicEmitter } from './topic-emitter.ts';
 
+// Transport (envelope protocol for ws-based transport)
+export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
+
 // Utils
 export { errMsg } from './utils/err-msg.ts';
 export { isRecord } from './utils/is-record.ts';
