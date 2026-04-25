@@ -79,10 +79,10 @@ describe('renderMenuTrailing', () => {
         onSelect,
       }),
     );
-    const darkPill = screen.getByRole('radio', { name: 'Dark' }) as HTMLInputElement;
-    const lightPill = screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement;
-    expect(darkPill.checked).toBe(true);
-    expect(lightPill.checked).toBe(false);
+    const darkPill = screen.getByRole('radio', { name: 'Dark' });
+    const lightPill = screen.getByRole('radio', { name: 'Light' });
+    expect(darkPill).toHaveAttribute('aria-checked', 'true');
+    expect(lightPill).toHaveAttribute('aria-checked', 'false');
     await userEvent.click(lightPill);
     expect(onSelect).toHaveBeenCalledWith('light');
   });

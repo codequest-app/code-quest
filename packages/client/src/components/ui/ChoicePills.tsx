@@ -1,5 +1,6 @@
-import { useId } from 'react';
+import * as RadioGroup from '@radix-ui/react-radio-group';
 import { cn } from '../../utils/cn';
+import { focusRing } from './_tokens';
 
 interface ChoiceOption {
   value: string;
@@ -18,43 +19,35 @@ interface ChoicePillsProps {
  * Compact radio-pill group for discrete equal-weight choices
  * (theme / density / font-size). For ordered magnitudes use EffortSwitch.
  *
- * Uses native <input type="radio"> hidden inside styled <label>s so the
- * component is accessible without ARIA overrides.
+ * Behavior provided by Radix RadioGroup: role="radio", aria-checked,
+ * roving tabindex, ArrowLeft/ArrowRight/ArrowUp/ArrowDown nav, Space/Enter.
  */
 export function ChoicePills({ options, currentValue, onSelect, featureId }: ChoicePillsProps) {
-  const name = useId();
   return (
-    <span
+    <RadioGroup.Root
+      value={currentValue}
+      onValueChange={onSelect}
       data-testid={featureId ? `${featureId}-pills` : 'choice-pills'}
       className="inline-flex gap-1"
+      orientation="horizontal"
     >
-      {options.map((opt) => {
-        const selected = opt.value === currentValue;
-        return (
-          <label
-            key={opt.value}
-            data-testid={featureId ? `${featureId}-pill-${opt.value}` : undefined}
-            className={cn(
-              'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border cursor-pointer',
-              selected
-                ? 'bg-accent text-white border-accent'
-                : 'text-text-muted border-border hover:text-text',
-            )}
-          >
-            <input
-              type="radio"
-              name={name}
-              value={opt.value}
-              checked={selected}
-              onChange={() => onSelect(opt.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="sr-only"
-              aria-label={opt.label}
-            />
-            {opt.label}
-          </label>
-        );
-      })}
-    </span>
+      {options.map((opt) => (
+        <RadioGroup.Item
+          key={opt.value}
+          value={opt.value}
+          aria-label={opt.label}
+          data-testid={featureId ? `${featureId}-pill-${opt.value}` : undefined}
+          className={cn(
+            'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border cursor-pointer',
+            opt.value === currentValue
+              ? 'bg-accent text-white border-accent'
+              : 'text-text-muted border-border hover:text-text',
+            focusRing,
+          )}
+        >
+          {opt.label}
+        </RadioGroup.Item>
+      ))}
+    </RadioGroup.Root>
   );
 }

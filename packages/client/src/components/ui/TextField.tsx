@@ -1,8 +1,15 @@
 import type { ChangeEvent, Ref } from 'react';
 import { cn } from '../../utils/cn';
+import { controlBorder, focusRing } from './_tokens';
 
-const BASE =
-  'bg-input-overlay border border-border rounded px-2 py-1 text-text placeholder:text-text-muted text-sm focus:outline-none focus:border-accent/50';
+const BASE = cn(
+  'bg-input-overlay rounded px-2 py-1 text-text placeholder:text-text-muted text-sm',
+  controlBorder,
+  // Keep border-color shift on focus for backwards visual compat; layer
+  // the shared focus ring on top so keyboard focus is unmistakable.
+  'focus:outline-none focus:border-accent/50',
+  focusRing,
+);
 
 type CommonProps = {
   value: string;
@@ -34,9 +41,7 @@ type TextFieldProps = InputProps | TextareaProps;
 export function TextField(props: TextFieldProps) {
   const merged = cn(BASE, props.className);
   if (props.as === 'textarea') {
-    const { inputRef, onChange, as: _as, className: _cn, ...rest } = props;
-    void _as;
-    void _cn;
+    const { inputRef, onChange, as: _as, className: _className, ...rest } = props;
     return (
       <textarea
         ref={inputRef}
@@ -46,9 +51,7 @@ export function TextField(props: TextFieldProps) {
       />
     );
   }
-  const { inputRef, onChange, type = 'text', as: _as, className: _cn, ...rest } = props;
-  void _as;
-  void _cn;
+  const { inputRef, onChange, type = 'text', as: _as, className: _className, ...rest } = props;
   return (
     <input
       ref={inputRef}

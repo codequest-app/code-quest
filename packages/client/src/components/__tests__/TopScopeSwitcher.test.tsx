@@ -113,6 +113,27 @@ describe('TopScopeSwitcher', () => {
     expect(onAddProject).toHaveBeenCalled();
   });
 
+  it('outside click closes the dropdown (Radix-supplied; no document listener in component)', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    render(
+      <div>
+        <TopScopeSwitcher
+          projects={projects}
+          activeProjectCwd="/proj/a"
+          onSelect={() => {}}
+          onAddProject={() => {}}
+        />
+        <button type="button">outside</button>
+      </div>,
+    );
+    await user.click(screen.getByRole('button', { name: /alpha/i }));
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /outside/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+  });
+
   it('Escape closes the dropdown', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     render(

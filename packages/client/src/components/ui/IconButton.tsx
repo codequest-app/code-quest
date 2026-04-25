@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { cn } from '../../utils/cn';
+import { focusRing } from './_tokens';
 
 interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   type?: 'button' | 'submit' | 'reset';
@@ -11,7 +12,7 @@ interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 
   ref?: Ref<HTMLButtonElement>;
 }
 
-const BOX = 'w-6 h-6 flex items-center justify-center rounded transition-colors';
+const BOX = cn('w-6 h-6 flex items-center justify-center rounded transition-colors', focusRing);
 
 export function IconButton({
   type = 'button',

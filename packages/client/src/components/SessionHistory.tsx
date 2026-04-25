@@ -1,6 +1,8 @@
 import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useState } from 'react';
+import { cn } from '../utils/cn';
 import { SessionRow } from './SessionRow';
+import { focusRing } from './ui/_tokens';
 
 interface SessionHistoryProps {
   sessions: SessionSummary[];
@@ -58,7 +60,10 @@ export function SessionHistory({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Search sessions..."
-          className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent"
+          className={cn(
+            'w-full bg-bg border border-border rounded px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-accent',
+            focusRing,
+          )}
         />
       </div>
       <div

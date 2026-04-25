@@ -16,6 +16,7 @@ import { createViewHelpFeature } from '../../features/view-help/view-help-featur
 import { cn } from '../../utils/cn';
 import { findModel, getEffortLevels } from '../../utils/model-utils';
 import { openUrl } from '../../utils/open-url';
+import { isThinkingActive } from '../../utils/thinking';
 import { IconButton } from '../ui/IconButton';
 import { SlashCommandIcon } from '../ui/Icons';
 import { buildMenuItems, type MenuItem } from './build-menu-items';
@@ -159,7 +160,7 @@ export function CommandMenu({
   const supportsFastMode = modelEntry?.supportsFastMode ?? false;
   const effortLevels = getEffortLevels(modelEntry);
 
-  const isThinkingOn = thinkingLevel !== 'off' && thinkingLevel !== 'disabled';
+  const isThinkingOn = isThinkingActive(thinkingLevel);
 
   const btwBaseFeature = registry.getFeatures().find((f) => f.id === 'btw');
   const localFeatures = [

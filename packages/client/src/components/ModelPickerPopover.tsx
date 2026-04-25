@@ -2,6 +2,14 @@ import type { ModelInfo } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../utils/cn';
 import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../utils/model-utils';
+import { focusRing } from './ui/_tokens';
+
+const optionButtonClass = (isActive: boolean) =>
+  cn(
+    'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
+    isActive ? 'bg-selected' : 'hover:tint-10',
+    focusRing,
+  );
 
 interface ModelPickerPopoverProps {
   currentModel: string | null;
@@ -36,10 +44,7 @@ function DefaultModelOption({
       role="option"
       aria-selected={isSelected}
       onClick={onSelect}
-      className={cn(
-        'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
-        isActive ? 'bg-selected' : 'hover:tint-10',
-      )}
+      className={optionButtonClass(isActive)}
     >
       <div>
         <div className="text-text font-medium">{displayName}</div>
@@ -112,7 +117,10 @@ export function ModelPickerPopover({
       ref={containerRef}
       role="listbox"
       tabIndex={0}
-      className="absolute bottom-full left-0 right-0 mb-1 bg-surface border border-border rounded shadow-lg z-modal overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
+      className={cn(
+        'absolute bottom-full left-0 right-0 mb-1 bg-surface border border-border rounded shadow-lg z-modal overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none',
+        focusRing,
+      )}
       onKeyDown={handleKeyDown}
     >
       {/* Default (recommended) sentinel — only when server doesn't provide one */}
@@ -140,10 +148,7 @@ export function ModelPickerPopover({
             role="option"
             aria-selected={isSelected}
             onClick={() => handleSelect(item.value)}
-            className={cn(
-              'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
-              isActive(index) ? 'bg-selected' : 'hover:tint-10',
-            )}
+            className={optionButtonClass(isActive(index))}
           >
             <div>
               <div className="text-text font-medium">{displayName}</div>
