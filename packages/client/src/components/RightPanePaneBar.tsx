@@ -5,6 +5,7 @@ import {
   useRightPaneScopeActions,
 } from '../contexts/RightPaneScopeContext';
 import { basename } from '../utils/basename';
+import { cn } from '../utils/cn';
 
 export interface RightPanePaneBarProps {
   closeMode: 'collapse' | 'back';
@@ -19,41 +20,49 @@ export function RightPanePaneBar({ closeMode, onCollapse, onBack }: RightPanePan
   const isPinned = scope.mode === 'pinned';
   const hasCwd = cwd !== null;
 
-  const label = hasCwd ? `📁 ${basename(cwd)}` : '— no scope —';
-
   return (
-    <div className="flex items-center gap-2 px-3 h-9 border-b border-border text-xs text-text-muted">
-      <span data-testid="pane-bar-scope-label" className="flex-1 truncate">
-        {label}
+    <div className="flex items-center gap-1.5 px-2.5 py-2 border-b border-border shrink-0">
+      <span
+        data-testid="pane-bar-scope-label"
+        className={cn(
+          'flex-1 min-w-0 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs',
+          hasCwd ? 'border-border bg-white/[.04] text-text' : 'border-transparent text-text-muted',
+        )}
+      >
+        {hasCwd ? (
+          <>
+            <span className="text-text-muted truncate">{basename(cwd)}</span>
+            <span className="text-text-muted">·</span>
+            <span className="text-accent font-mono whitespace-nowrap">⎇ {basename(cwd)}</span>
+          </>
+        ) : (
+          '— no scope —'
+        )}
       </span>
+
       <Switch.Root
         checked={isPinned}
         onCheckedChange={togglePin}
         disabled={!hasCwd}
-        className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent bg-surface-hover transition-colors data-[state=checked]:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-2xs cursor-pointer transition-colors',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          isPinned
+            ? 'border-accent bg-accent/10 text-accent'
+            : 'border-border text-text-muted hover:text-text',
+        )}
       >
-        <Switch.Thumb className="pointer-events-none block h-4 w-4 rounded-full bg-text shadow-sm transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0" />
+        {isPinned ? '📌 pinned' : '⇆ follow'}
       </Switch.Root>
-      <span className="text-2xs">{isPinned ? '📌' : '⇆'}</span>
-      {closeMode === 'collapse' ? (
-        <button
-          type="button"
-          aria-label="Collapse right pane"
-          onClick={onCollapse}
-          className="px-1 hover:text-text"
-        >
-          —
-        </button>
-      ) : (
-        <button
-          type="button"
-          aria-label="Close right pane"
-          onClick={onBack}
-          className="px-1 hover:text-text"
-        >
-          ✕
-        </button>
-      )}
+
+      <button
+        type="button"
+        aria-label={closeMode === 'collapse' ? 'Collapse right pane' : 'Close right pane'}
+        onClick={closeMode === 'collapse' ? onCollapse : onBack}
+        className="shrink-0 px-1 text-text-muted hover:text-text text-xs"
+      >
+        {closeMode === 'collapse' ? '—' : '✕'}
+      </button>
     </div>
   );
 }
