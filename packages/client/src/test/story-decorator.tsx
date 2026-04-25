@@ -10,8 +10,8 @@ import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContex
 import type { ConfigState } from '../contexts/channel/ChannelConfigContext';
 import { ChannelConfigProvider } from '../contexts/channel/ChannelConfigContext';
 import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext';
-import { ChannelIdProvider } from '../contexts/channel/ChannelIdContext';
 import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
+import { ChannelMetaProvider } from '../contexts/channel/ChannelMetaContext';
 import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext';
 import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext';
 import { GitProvider } from '../contexts/GitContext';
@@ -163,11 +163,11 @@ export function withWorktree(Story: () => React.ReactNode) {
 
 export function withChannelSocketRouter(Story: () => React.ReactNode) {
   return (
-    <ChannelIdProvider channelId={STORY_CHANNEL_ID}>
+    <ChannelMetaProvider channelId={STORY_CHANNEL_ID}>
       <ChannelSocketRouterProvider>
         <Story />
       </ChannelSocketRouterProvider>
-    </ChannelIdProvider>
+    </ChannelMetaProvider>
   );
 }
 
@@ -192,7 +192,7 @@ function StoryProviders({
   const messageQueueRef = useRef<string[]>([]);
 
   return (
-    <ChannelIdProvider channelId={STORY_CHANNEL_ID}>
+    <ChannelMetaProvider channelId={STORY_CHANNEL_ID}>
       <ChannelSocketRouterProvider>
         <ChannelMessagesProvider
           initialState={messages}
@@ -209,6 +209,6 @@ function StoryProviders({
           </ChannelControlProvider>
         </ChannelMessagesProvider>
       </ChannelSocketRouterProvider>
-    </ChannelIdProvider>
+    </ChannelMetaProvider>
   );
 }

@@ -12,8 +12,8 @@ import {
 import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
-import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { useChannelId } from './ChannelMetaContext';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import { useFeatureRegistry } from './FeatureRegistryContext';
 import { composeHandlers } from './handlers/speech';

@@ -22,7 +22,6 @@ import * as claudeMcpServers from './claude/mcp-servers.ts';
 import * as claudePlugin from './claude/plugin.ts';
 import * as app from './handlers/app.ts';
 import * as autoRespond from './handlers/auto-respond.ts';
-import * as file from './handlers/file.ts';
 import * as fs from './handlers/fs.ts';
 import * as git from './handlers/git.ts';
 import * as mcp from './handlers/mcp.ts';
@@ -132,7 +131,6 @@ export class SocketServer {
     speech.create(ctx);
     terminal.create(ctx);
     mcp.create(ctx);
-    file.create(ctx);
     fs.create(ctx);
     openspec.create(ctx);
     projects.create(ctx);

@@ -4,7 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { ChannelProvider } from '../contexts/channel';
 import { useGitState } from '../contexts/GitContext';
 import { useSession } from '../contexts/SessionContext';
-import { useTabActions, useTabState } from '../contexts/TabContext';
+import { type TabMeta, useTabActions, useTabState } from '../contexts/TabContext';
 import { useActiveChatTabCwdPublisher } from '../hooks/useActiveChatTabCwdPublisher';
 import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
@@ -13,18 +13,22 @@ import { ChatPanel } from './ChatPanel';
 import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
 
-interface TabContentProps {
+interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'launchOnMount'> {
   channelId: string;
-  cwd?: string;
-  title?: string;
 }
 
-const TabContent = memo(function TabContent({ channelId, cwd, title }: TabContentProps) {
+const TabContent = memo(function TabContent({
+  channelId,
+  cwd,
+  title,
+  launchOnMount,
+}: TabContentProps) {
   const { setTabTitle, setTabStatus, createNewTab } = useTabActions();
   return (
     <ChannelProvider
       channelId={channelId}
       cwd={cwd}
+      launchOnMount={launchOnMount}
       onChange={(update) => {
         if (update.title) setTabTitle(channelId, update.title);
         if (update.status) setTabStatus(channelId, update.status);
@@ -43,7 +47,7 @@ function SplitHalf({
   onClose,
 }: {
   channelId: string;
-  meta: { title?: string; cwd?: string };
+  meta: TabMeta;
   isActive: boolean;
   onClose: () => void;
 }) {
@@ -67,7 +71,12 @@ function SplitHalf({
         </button>
       </div>
       <div className="flex flex-1 min-h-0 min-w-0">
-        <TabContent channelId={channelId} cwd={meta.cwd} title={meta.title} />
+        <TabContent
+          channelId={channelId}
+          cwd={meta.cwd}
+          title={meta.title}
+          launchOnMount={meta.launchOnMount}
+        />
       </div>
     </div>
   );
@@ -153,7 +162,12 @@ export const TabContainer = memo(function TabContainer({ projectCwd }: { project
               data-testid={id === activeTabId ? 'tab-container' : undefined}
               className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : 'hidden')}
             >
-              <TabContent channelId={id} cwd={meta.cwd} title={meta.title} />
+              <TabContent
+                channelId={id}
+                cwd={meta.cwd}
+                title={meta.title}
+                launchOnMount={meta.launchOnMount}
+              />
             </div>
           ))}
         </div>

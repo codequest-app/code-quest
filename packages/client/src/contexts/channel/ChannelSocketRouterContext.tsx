@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect } from 'react';
 import { useSocket } from '../SocketContext';
-import { useChannelId } from './ChannelIdContext';
+import { useChannelId } from './ChannelMetaContext';
 import { ChannelSocketRouter, createSocketAdapter } from './socket-router';
 
 const Context = createContext<ChannelSocketRouter | null>(null);

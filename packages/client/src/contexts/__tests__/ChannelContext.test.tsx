@@ -1,5 +1,5 @@
 /* biome-ignore-all lint/suspicious/noExplicitAny: test file */
-import { act, renderHook, screen } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -7,7 +7,15 @@ import { MessageList } from '../../components/MessageList';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';
+import { AppInitProvider } from '../AppInitContext';
 import { useChannelId, useChannelMessages } from '../channel';
+import { ChannelProvider } from '../channel/ChannelContext';
+import { NavigationProvider } from '../NavigationContext';
+import { PluginProvider } from '../PluginContext';
+import { ProjectProvider } from '../ProjectContext';
+import { SessionProvider } from '../SessionContext';
+import { SocketProvider } from '../SocketContext';
+import { TabProvider } from '../TabContext';
 
 /** Test harness that exposes useChannelMessages values to the DOM */
 function ChannelTestHarness() {
@@ -178,6 +186,7 @@ describe('ChannelContext', () => {
         summoner,
         cwd: '/bad/path',
         skipInit: true,
+        launchOnMount: true,
       });
 
       // Should show error, not children or spinner
@@ -230,6 +239,82 @@ describe('ChannelContext', () => {
 
       // If join failure blocks onSessionStates, processing stays false
       expect(screen.getByTestId('processing')).toHaveTextContent('true');
+    });
+  });
+
+  describe('launchOnMount gating', () => {
+    it('resume / fork tab does NOT spawn the CLI', async () => {
+      // Resume + fork tabs carry cwd from server but the channel already exists.
+      // ChannelProvider must NOT trigger another session:launch in this case.
+      const summoner = createFakeSummoner();
+
+      await renderWithChannel(<span data-testid="content">loaded</span>, {
+        summoner,
+        cwd: '/repo',
+        launchOnMount: false,
+        skipInit: true,
+      });
+
+      expect(summoner.sentEvents('session:launch')).toEqual([]);
+    });
+
+    it('new tab spawns the CLI on mount', async () => {
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
+
+      await renderWithChannel(<span data-testid="content">loaded</span>, {
+        summoner,
+        cwd: '/repo',
+        launchOnMount: true,
+        skipInit: true,
+      });
+
+      await waitFor(() => expect(summoner.sentEvents('session:launch')).toHaveLength(1));
+    });
+
+    it('switching projects on a launched tab does not re-spawn the CLI', async () => {
+      // Refactor protection: dropping `cwd` from the launch effect's deps relies
+      // on `launchedRef` being a sufficient one-shot guard. If a future change
+      // re-introduces `cwd` as an effect trigger AND the ref guard breaks, this
+      // test catches the duplicate spawn.
+      const summoner = createFakeSummoner();
+      summoner.claude().prepareInit();
+
+      // Inline provider stack (vs renderWithChannel) because this test needs
+      // to control `cwd` across rerenders to assert the one-shot invariant —
+      // the harness's wrapper captures cwd at first render only.
+      function Wrapper({ cwd }: { cwd: string }) {
+        return (
+          <SocketProvider socket={summoner.socket}>
+            <AppInitProvider>
+              <SessionProvider>
+                <PluginProvider>
+                  <ProjectProvider>
+                    <NavigationProvider>
+                      <TabProvider cwd={cwd}>
+                        <ChannelProvider channelId="ch-1" cwd={cwd} launchOnMount>
+                          <span data-testid="content">loaded</span>
+                        </ChannelProvider>
+                      </TabProvider>
+                    </NavigationProvider>
+                  </ProjectProvider>
+                </PluginProvider>
+              </SessionProvider>
+            </AppInitProvider>
+          </SocketProvider>
+        );
+      }
+      const { rerender } = render(<Wrapper cwd="/a" />);
+      await waitFor(() => expect(summoner.sentEvents('session:launch')).toHaveLength(1));
+
+      rerender(<Wrapper cwd="/b" />);
+      // Negative assertion: prove a spurious effect does NOT fire. waitFor /
+      // findBy can't express "stays at 1 over a window" — they resolve as
+      // soon as the predicate holds. A fixed wait is the honest tool here:
+      // long enough that any synchronous useEffect re-run would land within
+      // it, short enough not to bloat the suite.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(summoner.sentEvents('session:launch')).toHaveLength(1);
     });
   });
 });

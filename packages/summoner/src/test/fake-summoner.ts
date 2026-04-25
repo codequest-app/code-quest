@@ -22,6 +22,7 @@ export class FakeSummoner {
   private readonly _openspec?: FakeOpenspecService;
   private readonly _pluginCli?: FakePluginCliService;
   private readonly _recordedEvents: Array<{ event: string; payload: any }> = [];
+  private readonly _sentEvents: Array<{ event: string; payload: any }> = [];
   private _claude?: FakeClaude;
 
   constructor(server: ServerConnector) {
@@ -35,10 +36,18 @@ export class FakeSummoner {
 
     // Auto-record all server → client events
     const { serverSocket } = this._socket;
-    const origEmit = serverSocket.emit.bind(serverSocket);
+    const origServerEmit = serverSocket.emit.bind(serverSocket);
     serverSocket.emit = (event: string, ...args: unknown[]) => {
       this._recordedEvents.push({ event, payload: args[0] });
-      return origEmit(event, ...args);
+      return origServerEmit(event, ...args);
+    };
+
+    // Auto-record all client → server emits (mirror of `events()` for assertions
+    // about RPC calls the React layer issued).
+    const origClientEmit = this._socket.emit.bind(this._socket);
+    this._socket.emit = (event: string, ...args: unknown[]) => {
+      this._sentEvents.push({ event, payload: args[0] });
+      return origClientEmit(event, ...args);
     };
   }
 
@@ -84,6 +93,16 @@ export class FakeSummoner {
   events(eventName?: string): any {
     if (!eventName) return this._recordedEvents;
     return this._recordedEvents.filter((e) => e.event === eventName).map((e) => e.payload);
+  }
+
+  /** Query client → server emits (mirror of `events()`). Use to assert which
+   *  RPC calls the React layer made — preferred over monkey-patching
+   *  `socket.emit` in individual tests. */
+  sentEvents(): Array<{ event: string; payload: any }>;
+  sentEvents(eventName: string): any[];
+  sentEvents(eventName?: string): any {
+    if (!eventName) return this._sentEvents;
+    return this._sentEvents.filter((e) => e.event === eventName).map((e) => e.payload);
   }
 
   /** Subscribe to server events with callback (for timing-sensitive checks). */

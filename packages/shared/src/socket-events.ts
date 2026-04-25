@@ -15,12 +15,6 @@ import type {
   ControlPermissionPayload,
 } from './schemas/control.ts';
 import type {
-  FileListPayload,
-  FileReadPayload,
-  FileReadResponse,
-  ListFilesResponse,
-} from './schemas/file.ts';
-import type {
   FsBrowsePayload,
   FsBrowseResponse,
   FsCopyPayload,
@@ -386,8 +380,7 @@ export interface ClientToServerEvents {
     callback: (response: ProjectsRemoveResponse) => void,
   ) => void;
 
-  // ── Aligned: File & Git (per-cwd, mirrors `git` CLI) ──
-  'file:list': (payload: FileListPayload, callback: (response: ListFilesResponse) => void) => void;
+  // ── Aligned: Git (per-cwd, mirrors `git` CLI) ──
   'git:init': (payload: InitRepoPayload, callback: (response: InitRepoResponse) => void) => void;
   'git:branches': (
     payload: ListBranchesPayload,
@@ -492,9 +485,6 @@ export interface ClientToServerEvents {
     callback: (response: Ack) => void,
   ) => void;
   'plan:close_preview': (payload: ChannelIdPayload, callback: (response: Ack) => void) => void;
-
-  // ── File Operations ──
-  'file:read': (payload: FileReadPayload, callback: (response: FileReadResponse) => void) => void;
 
   // ── Clean relay protocol: new C→S events ──
   'session:launch': (
@@ -813,10 +803,6 @@ export const EVENTS = {
     added: 'projects:added',
     updated: 'projects:updated',
     removed: 'projects:removed',
-  },
-  file: {
-    list: 'file:list',
-    read: 'file:read',
   },
   fs: {
     // RPC (cwd-scoped, replaces explorer:*)

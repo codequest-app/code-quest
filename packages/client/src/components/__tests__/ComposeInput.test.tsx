@@ -146,8 +146,9 @@ describe('ComposeInput', () => {
     it('active file result item uses bg-selected class', async () => {
       const summoner = createFakeSummoner();
       const cwd = '/test/project';
-      await renderWithChannel(<ComposeInput />, { summoner, cwd });
+      summoner.filesystem().setRoots([cwd]);
       summoner.filesystem().addFile(`${cwd}/index.ts`, '');
+      await renderWithChannel(<ComposeInput />, { summoner, cwd });
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@index');
@@ -165,10 +166,10 @@ describe('ComposeInput', () => {
     it('selecting a file inserts @path and closes dropdown', async () => {
       const summoner = createFakeSummoner();
       const cwd = '/test/project';
-      await renderWithChannel(<ComposeInput />, { summoner, cwd });
-
+      summoner.filesystem().setRoots([cwd]);
       // Seed files at the channel's resolved cwd
       summoner.filesystem().addFile(`${cwd}/index.ts`, '');
+      await renderWithChannel(<ComposeInput />, { summoner, cwd });
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@index');

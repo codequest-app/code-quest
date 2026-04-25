@@ -22,6 +22,11 @@ interface RenderWithChannelOptions {
   onNewChannel?: (cwd: string) => void;
   /** Skip claude.initialize — useful for testing launch failure. */
   skipInit?: boolean;
+  /** Forces the underlying ChannelProvider's `launchOnMount` prop.
+   *  Default: false — children render immediately without a React-driven
+   *  spawn. Tests that want React to drive `session:launch` must set this
+   *  explicitly (typically alongside `cwd` and `skipInit: true`). */
+  launchOnMount?: boolean;
 }
 
 interface RenderWithChannelResult extends RenderResult {
@@ -55,10 +60,8 @@ export async function renderWithChannel(
                   <TabProvider cwd={options.cwd}>
                     <ChannelProvider
                       channelId={channelId}
-                      // skipInit tests want ChannelProvider to drive the launch.
-                      // Otherwise claude.initialize below handles it; setting cwd
-                      // here would fire a duplicate session:launch and conflict.
-                      cwd={options.skipInit ? options.cwd : undefined}
+                      cwd={options.cwd}
+                      launchOnMount={options.launchOnMount ?? false}
                       onNewChannel={options.onNewChannel}
                     >
                       {children}

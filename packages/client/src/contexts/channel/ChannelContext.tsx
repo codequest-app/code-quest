@@ -7,8 +7,8 @@ import { useSocket } from '../SocketContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
 import { ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
-import { ChannelIdProvider } from './ChannelIdContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
+import { ChannelMetaProvider } from './ChannelMetaContext';
 import { ChannelSocketRouterProvider } from './ChannelSocketRouterContext';
 import { MessageVisibilityProvider } from './MessageVisibilityContext';
 
@@ -25,19 +25,25 @@ export function ChannelProvider({
   onChange,
   onNewChannel,
   cwd,
+  launchOnMount = false,
 }: {
   channelId: string;
   children: ReactNode;
   onChange?: (update: ChannelChangeUpdate) => void;
   onNewChannel?: (cwd: string) => void;
   cwd?: string;
+  /** True when this provider must spawn the session via `session:launch`
+   *  on mount (createNewTab path). False when the channel already exists
+   *  on the server (resume / fork — `cwd` is just identity, not a launch
+   *  trigger). Replaces the legacy "cwd-as-sentinel" behaviour. */
+  launchOnMount?: boolean;
 }) {
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
 
   const [state, setState] = useState<ChannelState>(
-    cwd ? { status: 'connecting' } : { status: 'connected' },
+    launchOnMount ? { status: 'connecting' } : { status: 'connected' },
   );
   const launchedRef = useRef(false);
 
@@ -59,11 +65,11 @@ export function ChannelProvider({
     });
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable (only captures refs + setState), deps are channelId/cwd/socket
+  // biome-ignore lint/correctness/useExhaustiveDependencies: launch is stable; one-shot guarded by launchedRef. cwd is read at launch time, not as a re-trigger.
   useEffect(() => {
-    if (!cwd || launchedRef.current) return;
+    if (!launchOnMount || launchedRef.current) return;
     launch();
-  }, [cwd]);
+  }, [launchOnMount]);
 
   // ── Connecting ──
   if (state.status === 'connecting') {
@@ -91,7 +97,7 @@ export function ChannelProvider({
 
   // ── Connected — full provider tree ──
   return (
-    <ChannelIdProvider channelId={channelId}>
+    <ChannelMetaProvider channelId={channelId} cwd={cwd}>
       <ChannelSocketRouterProvider>
         <ChannelMessagesProvider
           onChange={onChange}
@@ -108,6 +114,6 @@ export function ChannelProvider({
           </ChannelControlProvider>
         </ChannelMessagesProvider>
       </ChannelSocketRouterProvider>
-    </ChannelIdProvider>
+    </ChannelMetaProvider>
   );
 }

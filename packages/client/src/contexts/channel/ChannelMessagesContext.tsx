@@ -1,7 +1,7 @@
 import {
   EVENTS,
   type ForkConversationResponse,
-  type ListFilesResponse,
+  type FsSearchResponse,
   type PlanCommentData,
   type PluginReloadResult,
   type RawEventsResponse,
@@ -41,7 +41,7 @@ import {
 } from '../../utils/message';
 import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
-import { useChannelId } from './ChannelIdContext';
+import { useChannelId, useChannelMeta } from './ChannelMetaContext';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import { FeatureRegistryContext } from './FeatureRegistryContext';
 import { createFileActions } from './handlers/file';
@@ -82,7 +82,7 @@ export interface ChannelMessagesValue {
   clearPlanComments: () => void;
   fetchRawEvents: () => Promise<RawEventsResponse>;
   subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
-  searchFiles: (pattern: string) => Promise<ListFilesResponse>;
+  searchFiles: (pattern: string) => Promise<FsSearchResponse>;
   getTerminalContents: () => Promise<TerminalGetContentsResponse>;
   openClaudeTerminal: () => Promise<RpcResult<{ channelId: string }>>;
   forkSession: (messageId: string) => Promise<ForkConversationResponse>;
@@ -140,6 +140,7 @@ export function ChannelMessagesProvider({
   children: ReactNode;
 }) {
   const channelId = useChannelId();
+  const { cwd } = useChannelMeta();
   const { socket } = useSocket();
 
   // ── Feature registry ──
@@ -398,7 +399,7 @@ export function ChannelMessagesProvider({
       ...messageActions,
       sendMessage,
       ...sessionActions,
-      ...createFileActions({ socket, channelId }),
+      ...createFileActions({ socket, channelId, cwd }),
       ...createPlanActions({ setChannelState }),
       addSystemMessage: (type: string, content: string) =>
         setChannelState((prev) => ({

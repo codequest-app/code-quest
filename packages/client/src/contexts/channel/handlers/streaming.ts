@@ -1,5 +1,5 @@
 import type { ContentBlock } from '@code-quest/shared';
-import { EVENTS, fileReadResponseSchema, isRecord } from '@code-quest/shared';
+import { EVENTS, fsReadResponseSchema, isRecord } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';
@@ -163,8 +163,8 @@ export function wireStreamingHandlers({
     const inp = block.input;
     const filePath = isRecord(inp) && 'file_path' in inp ? String(inp.file_path) : undefined;
     if (!filePath) return;
-    socket.emit(EVENTS.file.read, { channelId, filePath }, (raw) => {
-      const parsed = fileReadResponseSchema.safeParse(raw);
+    socket.emit(EVENTS.fs.read, { path: filePath }, (raw) => {
+      const parsed = fsReadResponseSchema.safeParse(raw);
       if (!parsed.success) return;
       const res = parsed.data;
       setState((prev) => {

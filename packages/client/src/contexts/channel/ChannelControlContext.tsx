@@ -12,8 +12,8 @@ import {
 import type { PendingDiffReview, PendingElicitation } from '../../types/chat';
 import { msg } from '../../utils/message';
 import { useSocket } from '../SocketContext';
-import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { useChannelId } from './ChannelMetaContext';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import type { Payload } from './handlers/guard';
 import type { EffectDeps } from './handlers/notification';

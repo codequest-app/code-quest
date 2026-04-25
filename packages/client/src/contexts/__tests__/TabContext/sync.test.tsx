@@ -5,7 +5,7 @@ import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../../test/fake-summoner';
 import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTabState } from '../../TabContext';
+import { TabProvider, useTabActions, useTabState } from '../../TabContext';
 
 const idleSession = (channelId: string, cwd = '/') => ({
   channelId,
@@ -36,7 +36,7 @@ function renderWithSessions(ui: ReactElement, initialSessions: SessionStateSumma
 
 describe('TabProvider', () => {
   describe('tab creation from sessions', () => {
-    it('creates tab without cwd from session (cwd only for new sessions via createNewTab)', () => {
+    it('preserves cwd from session sync (resume / fork need this)', () => {
       function Test() {
         const { tabs, activeTabId } = useTabState();
         const cwd = activeTabId ? tabs[activeTabId]?.cwd : undefined;
@@ -46,7 +46,7 @@ describe('TabProvider', () => {
       setSessions([
         { channelId: 'ch-1', state: 'idle', cwd: '/my/project', projectRoot: '/my/project' },
       ]);
-      expect(screen.getByTestId('cwd')).toHaveTextContent('none');
+      expect(screen.getByTestId('cwd')).toHaveTextContent('/my/project');
     });
 
     it('creates tab when session appears', () => {
@@ -161,7 +161,7 @@ describe('TabProvider', () => {
       expect(screen.getByTestId('keys')).toHaveTextContent('empty');
     });
 
-    it('session sync does not store cwd (cwd only for createNewTab)', () => {
+    it('session sync stores cwd from the session entry', () => {
       function Test() {
         const { tabs } = useTabState();
         return <span data-testid="cwd">{tabs.a?.cwd ?? 'undefined'}</span>;
@@ -170,7 +170,48 @@ describe('TabProvider', () => {
       setSessions([
         { channelId: 'a', state: 'idle', cwd: '/projects/app', projectRoot: '/projects/app' },
       ]);
-      expect(screen.getByTestId('cwd')).toHaveTextContent('undefined');
+      expect(screen.getByTestId('cwd')).toHaveTextContent('/projects/app');
+    });
+  });
+
+  describe('launchOnMount flag (separates "spawn new" from "channel exists on server")', () => {
+    it('tabs synced from server sessions do NOT request a new spawn', () => {
+      function Test() {
+        const { tabs } = useTabState();
+        return <span data-testid="flag">{String(tabs.a?.launchOnMount ?? 'missing')}</span>;
+      }
+      const { setSessions } = renderWithSessions(<Test />);
+      setSessions([
+        { channelId: 'a', state: 'idle', cwd: '/projects/app', projectRoot: '/projects/app' },
+      ]);
+      expect(screen.getByTestId('flag')).toHaveTextContent('false');
+    });
+
+    it('new tabs created via createNewTab spawn on mount', async () => {
+      let createdId = '';
+      function Test() {
+        const { tabs } = useTabState();
+        const actions = useTabActions();
+        return (
+          <>
+            <button
+              type="button"
+              data-testid="create"
+              onClick={() => {
+                createdId = actions.createNewTab({ cwd: '/x' }).channelId;
+              }}
+            >
+              create
+            </button>
+            <span data-testid="flag">
+              {createdId ? String(tabs[createdId]?.launchOnMount ?? 'missing') : '-'}
+            </span>
+          </>
+        );
+      }
+      const { user } = renderWithSessions(<Test />);
+      await user.click(screen.getByTestId('create'));
+      expect(screen.getByTestId('flag')).toHaveTextContent('true');
     });
   });
 });

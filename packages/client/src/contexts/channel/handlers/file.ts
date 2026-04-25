@@ -1,4 +1,4 @@
-import type { ListFilesResponse, RpcResult, TerminalGetContentsResponse } from '@code-quest/shared';
+import type { FsSearchResponse, RpcResult, TerminalGetContentsResponse } from '@code-quest/shared';
 import { EVENTS } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
@@ -8,11 +8,17 @@ import { rpc } from '@/socket/rpc';
 interface FileActionsDeps {
   socket: TypedSocket;
   channelId: string;
+  /** Channel's working directory — required for cwd-scoped fs:search.
+   *  Sourced from `useChannelMeta()` in ChannelMessagesContext. */
+  cwd?: string;
 }
 
-export function createFileActions({ socket, channelId }: FileActionsDeps) {
-  function searchFiles(pattern: string): Promise<ListFilesResponse> {
-    return rpc(socket, EVENTS.file.list, { channelId, pattern });
+export function createFileActions({ socket, channelId, cwd }: FileActionsDeps) {
+  function searchFiles(pattern: string): Promise<FsSearchResponse> {
+    // No cwd → no scope to search in. Return empty rather than crash; the
+    // mention picker just shows nothing.
+    if (!cwd) return Promise.resolve({ ok: true as const, data: { files: [] } });
+    return rpc(socket, EVENTS.fs.search, { cwd, pattern });
   }
 
   function getTerminalContents(): Promise<TerminalGetContentsResponse> {

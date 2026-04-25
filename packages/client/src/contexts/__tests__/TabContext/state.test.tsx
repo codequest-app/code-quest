@@ -228,6 +228,7 @@ describe('TabProvider', () => {
       expect(JSON.parse(screen.getByTestId('tabs').textContent!)['tab-1']).toEqual({
         title: undefined,
         tabStatus: 'connecting',
+        launchOnMount: false,
       });
     });
 
@@ -423,6 +424,7 @@ describe('TabProvider', () => {
       expect(JSON.parse(screen.getByTestId('tab').textContent!)).toEqual({
         title: 'Hello',
         tabStatus: 'disconnected',
+        launchOnMount: false,
       });
     });
 

@@ -6,10 +6,16 @@ import type { SessionStatus } from '../types/ui';
 // so TabProvider can be mounted standalone in tests without a NavigationProvider.
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext';
 
-interface TabMeta {
+export interface TabMeta {
   title?: string;
   tabStatus: SessionStatus;
   cwd?: string;
+  /** True when this tab represents a session that the client must spawn
+   *  (via session:launch). False when the channel already exists on the
+   *  server (resume / fork — sessions sync path). Decoupled from `cwd`
+   *  so that resume tabs can carry cwd without triggering a duplicate
+   *  spawn in `ChannelProvider`. */
+  launchOnMount: boolean;
 }
 
 // ── State context (changes frequently) ──
@@ -38,7 +44,7 @@ interface TabActionsValue {
   setTabTitle: (id: string, title: string) => void;
   setTabStatus: (id: string, status: TabMeta['tabStatus']) => void;
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
-  replaceActiveTab: (newChannelId: string) => void;
+  replaceActiveTab: (newChannelId: string, cwd?: string) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
   /** Show the given tab side-by-side with the active tab. No-op if id === activeTabId. */
   enterSplit: (id: string) => void;
@@ -56,7 +62,7 @@ export function useTabActions(): TabActionsValue {
 
 // ── Provider ──
 
-const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting' };
+const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting', launchOnMount: false };
 const TERMINAL_STATES = new Set<string>(
   sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
 );
@@ -135,18 +141,21 @@ export function TabProvider({
       const tabCwd = opts?.cwd ?? selectedCwdRef.current ?? cwdRef.current;
       setState((prev) => ({
         ...prev,
-        tabs: { ...prev.tabs, [channelId]: { ...DEFAULT_META, cwd: tabCwd } },
+        tabs: {
+          ...prev.tabs,
+          [channelId]: { ...DEFAULT_META, cwd: tabCwd, launchOnMount: true },
+        },
         activeTabId: channelId,
       }));
       return { channelId };
     },
-    replaceActiveTab: (newChannelId) => {
+    replaceActiveTab: (newChannelId, cwd) => {
       setState((prev) => {
         if (!prev.activeTabId) return prev;
         const { [prev.activeTabId]: _, ...rest } = prev.tabs;
         return {
           ...prev,
-          tabs: { ...rest, [newChannelId]: DEFAULT_META },
+          tabs: { ...rest, [newChannelId]: { ...DEFAULT_META, cwd } },
           activeTabId: newChannelId,
         };
       });
@@ -187,11 +196,14 @@ export function TabProvider({
     );
     const removed = [...prevSessionIds.current].filter((id) => !currentIds.has(id));
 
+    // Server-sourced tabs (resume / fork) inherit DEFAULT_META.launchOnMount=false
+    // — the channel already exists on the server; spawning again would duplicate.
+    // Only `createNewTab` opts into launchOnMount=true.
     if (added.length === 1 && removed.length === 1) {
-      actions.replaceActiveTab(added[0].channelId);
+      actions.replaceActiveTab(added[0].channelId, added[0].cwd);
     } else {
       for (const s of added) {
-        actions.addTab(s.channelId);
+        actions.addTab(s.channelId, s.cwd);
       }
       for (const id of removed) {
         actions.removeTab(id);

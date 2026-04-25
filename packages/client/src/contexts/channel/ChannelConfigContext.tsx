@@ -22,8 +22,8 @@ import {
 } from 'react';
 import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
-import { useChannelId } from './ChannelIdContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
+import { useChannelId } from './ChannelMetaContext';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext';
 import { configHandlers, createConfigActions, parseModels, toEffort } from './handlers/settings';
 

@@ -87,20 +87,6 @@ export {
   getClaudeStateResponseSchema,
 } from './control-response.ts';
 export type {
-  FileListPayload,
-  FileReadPayload,
-  FileReadResponse,
-  FileSearchResult,
-  ListFilesResponse,
-} from './file.ts';
-export {
-  fileListPayloadSchema,
-  fileReadPayloadSchema,
-  fileReadResponseSchema,
-  fileSearchResultSchema,
-  listFilesResponseSchema,
-} from './file.ts';
-export type {
   FsBrowsePayload,
   FsBrowseResponse,
   FsCopyPayload,
