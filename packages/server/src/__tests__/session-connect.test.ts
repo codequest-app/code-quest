@@ -499,12 +499,12 @@ describe('ChatHandler > session', () => {
   describe('session persist timing', () => {
     it('session record has sessionId immediately after launch', async () => {
       const { container, channelId } = await setup();
-      await new Promise<void>((r) => setTimeout(r, 50));
-
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const record = await sessionStore.getByChannelId(channelId);
-      expect(record).toBeDefined();
-      expect(record!.id).toBeTruthy();
+      await vi.waitFor(async () => {
+        const record = await sessionStore.getByChannelId(channelId);
+        expect(record).toBeDefined();
+        expect(record!.id).toBeTruthy();
+      });
     });
 
     it('session:created is NOT blocked when session:init has no sessionId', async () => {
@@ -526,11 +526,12 @@ describe('ChatHandler > session', () => {
       await windowA
         .claude()
         .initialize({ launch: { channelId } }, initWithoutSessionId, controlResp);
-      await new Promise<void>((r) => setTimeout(r, 50));
 
-      const createdEvents = windowB.events('session:created') as Array<{ channelId: string }>;
       // session:created should fire even without sessionId
-      expect(createdEvents.some((e) => e.channelId === channelId)).toBe(true);
+      await vi.waitFor(() => {
+        const createdEvents = windowB.events('session:created');
+        expect(createdEvents.some((e) => e.channelId === channelId)).toBe(true);
+      });
     });
 
     it('persist happens when session:init arrives with sessionId', async () => {
@@ -552,11 +553,11 @@ describe('ChatHandler > session', () => {
       // Launch a second session — windowB should receive session:created
       const newChannelId = crypto.randomUUID();
       await windowA.send('session:launch', { channelId: newChannelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
-      const createdEvents = windowB.events('session:created') as Array<{ channelId: string }>;
-      expect(createdEvents.length).toBeGreaterThan(0);
-      expect(createdEvents.some((e) => e.channelId === newChannelId)).toBe(true);
+      await vi.waitFor(() => {
+        const createdEvents = windowB.events('session:created');
+        expect(createdEvents.some((e) => e.channelId === newChannelId)).toBe(true);
+      });
     });
   });
 
@@ -663,16 +664,17 @@ describe('ChatHandler > session', () => {
 
       // B joins A's session
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       // A sends message → CLI replies → both sockets receive
       await windowA.send('chat:send', { channelId, message: 'hello from A' });
       await windowA.claude().emit(s.assistant('broadcast reply'));
       await windowA.claude().emit(s.result());
 
-      const bEvents = windowB.events('message:assistant');
-      expect(bEvents.length).toBeGreaterThan(0);
-      expect(bEvents[0].channelId).toBe(channelId);
+      await vi.waitFor(() => {
+        const bEvents = windowB.events('message:assistant');
+        expect(bEvents.length).toBeGreaterThan(0);
+        expect(bEvents[0].channelId).toBe(channelId);
+      });
     });
 
     it('window B receives only expected events when A sends a message (no cancel)', async () => {
@@ -682,31 +684,19 @@ describe('ChatHandler > session', () => {
       const channelId = await windowA.claude().initialize(s.init('cli-sess'));
 
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       await windowA.send('chat:send', { channelId, message: 'hello' });
       await windowA.claude().emit(s.assistant('hi'));
       await windowA.claude().emit(s.result());
 
-      const allBEvents = [
-        ...windowB
-          .events('chat:cancel_request')
-          .map((p) => ({ event: 'chat:cancel_request', payload: p })),
-        ...windowB.events('control:cancel').map((p) => ({ event: 'control:cancel', payload: p })),
-        ...windowB
-          .events('control:permission')
-          .map((p) => ({ event: 'control:permission', payload: p })),
-        ...windowB
-          .events('message:assistant')
-          .map((p) => ({ event: 'message:assistant', payload: p })),
-        ...windowB.events('session:states').map((p) => ({ event: 'session:states', payload: p })),
-        ...windowB.events('session:closed').map((p) => ({ event: 'session:closed', payload: p })),
-      ];
+      // Wait for the assistant broadcast to reach windowB so any cancel
+      // events scheduled earlier would have flushed too.
+      await vi.waitFor(() => {
+        expect(windowB.events('message:assistant').length).toBeGreaterThan(0);
+      });
 
-      const cancelEvents = allBEvents.filter(
-        (e) => e.event === 'chat:cancel_request' || e.event === 'control:cancel',
-      );
-      expect(cancelEvents).toHaveLength(0);
+      expect(windowB.events('chat:cancel_request')).toHaveLength(0);
+      expect(windowB.events('control:cancel')).toHaveLength(0);
     });
 
     it('window B does NOT receive chat:cancel_request when A sends a message', async () => {
@@ -716,15 +706,16 @@ describe('ChatHandler > session', () => {
       const channelId = await windowA.claude().initialize(s.init('cli-sess'));
 
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       // A sends message — should NOT trigger cancel_request on B
       await windowA.send('chat:send', { channelId, message: 'hello' });
       await windowA.claude().emit(s.assistant('hi'));
       await windowA.claude().emit(s.result());
 
-      const bCancelEvents = windowB.events('chat:cancel_request');
-      expect(bCancelEvents).toHaveLength(0);
+      await vi.waitFor(() => {
+        expect(windowB.events('message:assistant').length).toBeGreaterThan(0);
+      });
+      expect(windowB.events('chat:cancel_request')).toHaveLength(0);
     });
 
     it('window B receives chat:cancel_request when window A responds to permission', async () => {
@@ -734,7 +725,6 @@ describe('ChatHandler > session', () => {
       const channelId = await windowA.claude().initialize(s.init('cli-sess'));
 
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       await windowA.send('chat:send', { channelId, message: 'go' });
       await windowA
@@ -752,9 +742,11 @@ describe('ChatHandler > session', () => {
         response: { behavior: 'allow', updatedInput: {} },
       });
 
-      const bCancelEvents = windowB.events('chat:cancel_request');
-      expect(bCancelEvents.length).toBeGreaterThan(0);
-      expect(bCancelEvents[0].targetRequestId).toBe('req-ab');
+      await vi.waitFor(() => {
+        const bCancelEvents = windowB.events('chat:cancel_request');
+        expect(bCancelEvents.length).toBeGreaterThan(0);
+        expect(bCancelEvents[0].targetRequestId).toBe('req-ab');
+      });
     });
 
     // NOTE: "old socket does not receive events after disconnect" requires FakeSocket
@@ -775,19 +767,19 @@ describe('ChatHandler > session', () => {
       await windowA.claude().emit(s.assistant('world'));
       await windowA.claude().emit(s.result());
       windowA.claude().handle.abort();
+      // abort is a synchronous signal flip; server-side channel cleanup runs
+      // via `for await` loop end + emit('exit') with no observable client
+      // signal — keep a small wait for that to settle.
       await new Promise<void>((r) => setTimeout(r, 50));
 
       // windowB joins (triggers lazy resume)
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
-      // Lazy resume should NOT broadcast session:created — session already exists
-      const createdEvents = windowB.events('session:created') as Array<{ channelId: string }>;
-      // Filter out events from the initial creation — only check for events after the resume
-      // The initial windowA.claude().initialize broadcasts session:created to all sockets including windowB
-      // So we check that no NEW session:created was broadcast for the same channelId during resume
+      // Lazy resume should NOT broadcast session:created — session already exists.
+      // The initial windowA.claude().initialize broadcasts session:created to all
+      // sockets (including windowB); resume should NOT add another.
+      const createdEvents = windowB.events('session:created');
       const resumeCreatedEvents = createdEvents.filter((e) => e.channelId === channelId);
-      // The initial creation broadcasts 1 event; resume should NOT add another
       expect(resumeCreatedEvents.length).toBeLessThanOrEqual(1);
     });
   });
@@ -801,11 +793,12 @@ describe('ChatHandler > session', () => {
 
       // socketA closes session
       await windowA.send('session:close', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
-      const deadEvents = windowB.events('session:dead') as Array<{ channelId: string }>;
-      expect(deadEvents.length).toBeGreaterThan(0);
-      expect(deadEvents[0].channelId).toBe(channelId);
+      await vi.waitFor(() => {
+        const deadEvents = windowB.events('session:dead');
+        expect(deadEvents.length).toBeGreaterThan(0);
+        expect(deadEvents[0].channelId).toBe(channelId);
+      });
     });
   });
 
@@ -1100,11 +1093,11 @@ describe('ChatHandler > session', () => {
       expect(resumeIdx).toBeGreaterThanOrEqual(0);
       expect(args[resumeIdx + 1]).toBe('sess-fresh');
 
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const row = await sessionStore.getById('sess-fresh');
-      expect(row).toBeDefined();
-      expect(row!.channelId).toBe(result.data.channelId);
+      await vi.waitFor(async () => {
+        const row = await sessionStore.getById('sess-fresh');
+        expect(row).toBeDefined();
+        expect(row!.channelId).toBe(result.data.channelId);
+      });
     });
 
     it('spawns child process with the historical row cwd (CLI JSONL lookup)', async () => {
@@ -1176,8 +1169,6 @@ describe('ChatHandler > session', () => {
       });
       expect(resumed.ok).toBe(true);
       const newChannelId = resumed.data.channelId;
-
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       const joined = await summoner.send<JoinOk>('session:join', { channelId: newChannelId });
       expect(joined.ok).toBe(true);

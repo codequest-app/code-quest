@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { segments as s } from '@code-quest/summoner/test';
+import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import type { SessionStore } from '../services/session-store.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';
 import { TYPES } from '../types.ts';
@@ -13,6 +13,12 @@ async function setup(sessionId = 'cli-sess') {
   const claude = summoner.claude();
   const channelId = await claude.initialize(s.init(sessionId));
   return { container, claude, channelId };
+}
+
+function waitForDiffReview(claude: FakeClaude): Promise<void> {
+  return vi.waitFor(() => {
+    expect(claude.events('control:diff_review').length).toBeGreaterThan(0);
+  });
 }
 
 describe('ChatHandler > control', () => {
@@ -146,8 +152,7 @@ describe('ChatHandler > control', () => {
           newFilePath: '/tmp/new.ts',
         }),
       );
-      // open_diff involves server sendControlRequest → auto-respond; wait for notification flow
-      await new Promise<void>((r) => setTimeout(r, 50));
+      await waitForDiffReview(claude);
 
       await claude.send('chat:respond', {
         channelId,
@@ -168,7 +173,7 @@ describe('ChatHandler > control', () => {
           newFilePath: '/tmp/new.ts',
         }),
       );
-      await new Promise<void>((r) => setTimeout(r, 50));
+      await waitForDiffReview(claude);
 
       await claude.send('chat:respond', {
         channelId,
@@ -283,11 +288,7 @@ describe('ChatHandler > control', () => {
           newFilePath: '/tmp/new.ts',
         }),
       );
-      // open_diff triggers notification_request → sendControlRequest → auto-respond; needs extra wait
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const diffEvents = claude.events('control:diff_review');
-      expect(diffEvents.length).toBeGreaterThan(0);
+      await waitForDiffReview(claude);
     });
   });
 
@@ -379,10 +380,7 @@ describe('ChatHandler > control', () => {
             newFilePath: newPath,
           }),
         );
-        await new Promise<void>((r) => setTimeout(r, 50));
-
-        const diffEvents = claude.events('control:diff_review');
-        expect(diffEvents.length).toBeGreaterThan(0);
+        await waitForDiffReview(claude);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -398,10 +396,7 @@ describe('ChatHandler > control', () => {
           newFilePath: '/nonexistent/new.ts',
         }),
       );
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const diffEvents = claude.events('control:diff_review');
-      expect(diffEvents.length).toBeGreaterThan(0);
+      await waitForDiffReview(claude);
     });
   });
 
@@ -515,11 +510,12 @@ describe('ChatHandler > control', () => {
 
       const windowB = createFakeSummoner(server);
       await windowB.send('session:join', { channelId });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
-      const bPermEvents = windowB.events('control:permission');
-      expect(bPermEvents.length).toBeGreaterThan(0);
-      expect(bPermEvents[0].requestId).toBe('req-replay');
+      await vi.waitFor(() => {
+        const bPermEvents = windowB.events('control:permission');
+        expect(bPermEvents.length).toBeGreaterThan(0);
+        expect(bPermEvents[0].requestId).toBe('req-replay');
+      });
     });
 
     it('does not hang: mcp_message cleared on session kill', async () => {

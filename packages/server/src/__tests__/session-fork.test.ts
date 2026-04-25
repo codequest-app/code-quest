@@ -67,13 +67,15 @@ describe('ChatHandler > session', () => {
         resumeSessionAt: 'msg-1',
         newChannelId: 'fork-verify',
       });
-      await new Promise<void>((r) => setTimeout(r, 50));
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const forked = await sessionStore.getByChannelId('fork-verify');
-      expect(forked).toBeDefined();
-      expect(forked!.parentId).toBe(channelId);
-      expect(forked!.parentId).not.toBe('fork-verify');
+      const forked = await vi.waitFor(async () => {
+        const row = await sessionStore.getByChannelId('fork-verify');
+        expect(row).toBeDefined();
+        return row!;
+      });
+      expect(forked.parentId).toBe(channelId);
+      expect(forked.parentId).not.toBe('fork-verify');
     });
 
     it('fork_conversation emits session:created exactly once', async () => {
