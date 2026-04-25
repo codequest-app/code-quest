@@ -1,4 +1,3 @@
-/* biome-ignore-all lint/suspicious/noExplicitAny: test file uses type assertions */
 import type { GetSessionResponse, SessionListResponse } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 
@@ -46,7 +45,7 @@ describe('ChatHandler > session', () => {
         {},
       ) as Promise<SessionListOk>);
       expect(result.ok).toBe(true);
-      const session = result.data.sessions.find((s: any) => s.channelId === channelId);
+      const session = result.data.sessions.find((s) => s.channelId === channelId);
 
       expect(session).toBeDefined();
       // Session has no explicit title, so firstUserMessage should be used
@@ -68,18 +67,19 @@ describe('ChatHandler > session', () => {
       await claude.emit(s.init('cli-sess', { model: 'claude-sonnet-4-6' }));
       await claude.emit(s.assistant('hi'));
       await claude.emit(s.result());
-      await new Promise<void>((r) => setTimeout(r, 100));
 
-      // Verify client-facing API returns title
-      const result = await (claude.send<SessionListResponse>(
-        'session:list',
-        {},
-      ) as Promise<SessionListOk>);
-      expect(result.ok).toBe(true);
-      const session = result.data.sessions.find((sess: any) => sess.channelId === channelId);
-      expect(session?.title).toBe('Generated Title');
+      // Title generation is async post-result; poll until it lands.
+      await vi.waitFor(async () => {
+        const result = await (claude.send<SessionListResponse>(
+          'session:list',
+          {},
+        ) as Promise<SessionListOk>);
+        expect(result.ok).toBe(true);
+        const session = result.data.sessions.find((sess) => sess.channelId === channelId);
+        expect(session?.title).toBe('Generated Title');
+      });
 
-      // Verify DB persistence
+      // DB persistence should have landed by the time API returns it.
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
       const record = await sessionStore.getByChannelId(channelId);
       expect(record).toBeDefined();
@@ -100,7 +100,7 @@ describe('ChatHandler > session', () => {
         cwd: process.cwd(),
       })) as SessionListOk;
       expect(cwdResult.ok).toBe(true);
-      expect(cwdResult.data.sessions.every((s: any) => s.cwd === process.cwd())).toBe(true);
+      expect(cwdResult.data.sessions.every((s) => s.cwd === process.cwd())).toBe(true);
 
       const noMatchResult = (await claude.send<SessionListResponse>('session:list', {
         cwd: '/nonexistent/path',
@@ -131,7 +131,7 @@ describe('ChatHandler > session', () => {
       }) as Promise<SessionListOk>);
 
       expect(result.ok).toBe(true);
-      const ids = result.data.sessions.map((s: any) => s.id);
+      const ids = result.data.sessions.map((s) => s.id);
       expect(ids).toContain('historical-sess');
       expect(ids).not.toContain('alive-sess');
       expect(result.data.total).toBe(1);
@@ -157,7 +157,7 @@ describe('ChatHandler > session', () => {
       })) as SessionListOk;
 
       expect(result.ok).toBe(true);
-      const ids = result.data.sessions.map((s: any) => s.id);
+      const ids = result.data.sessions.map((s) => s.id);
       expect(ids).toContain('alive-sess-2');
       expect(ids).toContain('historical-sess-2');
     });
@@ -188,7 +188,7 @@ describe('ChatHandler > session', () => {
       }) as Promise<SessionListOk>);
 
       expect(result.ok).toBe(true);
-      expect(result.data.sessions.map((s: any) => s.id)).toContain('only-historical');
+      expect(result.data.sessions.map((s) => s.id)).toContain('only-historical');
     });
 
     it('session:list with hasParentId only returns sessions with parentId', async () => {
@@ -207,9 +207,7 @@ describe('ChatHandler > session', () => {
       })) as SessionListOk;
       expect(remoteResult.ok).toBe(true);
       expect(
-        remoteResult.data.sessions.every(
-          (s: any) => s.parentId !== undefined && s.parentId !== null,
-        ),
+        remoteResult.data.sessions.every((s) => s.parentId !== undefined && s.parentId !== null),
       ).toBe(true);
     });
   });
