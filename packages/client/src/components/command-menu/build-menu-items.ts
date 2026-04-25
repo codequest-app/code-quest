@@ -40,7 +40,7 @@ function featureToMenuItem(
   f: Feature,
   onClose: { close: () => void; closeSilent: () => void },
 ): MenuItem {
-  const closeSilent = f.ui?.closeSilent ?? f.state?.kind === 'toggle';
+  const isToggle = f.state?.kind === 'toggle';
   return {
     id: f.id,
     label: f.label,
@@ -52,7 +52,10 @@ function featureToMenuItem(
     trailing: renderMenuTrailing(f.state, { featureId: f.id }),
     onClick: () => {
       f.execute();
-      closeSilent ? onClose.closeSilent() : onClose.close();
+      // Toggles stay open so the user can flip several without reopening.
+      if (isToggle) return;
+      if (f.ui?.closeSilent) onClose.closeSilent();
+      else onClose.close();
     },
   };
 }

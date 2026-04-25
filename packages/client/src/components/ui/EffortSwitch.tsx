@@ -1,7 +1,15 @@
 /** Effort level slider matching extension's toggle UI.
- *  Pill track with fill, notch dots, and a thumb handle. */
+ *  Pill track with fill, notch dots, and a thumb handle.
+ *
+ *  NOT migrated to `@radix-ui/react-slider` — the original visual contract
+ *  (thumb edges align flush with pill edges via `(100% - thumbWidth) * ratio`,
+ *  fill bar always present including the under-thumb pill at value=0) doesn't
+ *  fit Radix Slider's center-aligned thumb / 0-width-Range-at-min model.
+ *  We trade the Radix-supplied keyboard/click behavior for visual fidelity;
+ *  hand-rolled handlers below cover Arrow keys + click-to-position. */
 
 import { cn } from '../../utils/cn';
+import { focusRing } from './_tokens';
 
 const EFFORT_LABELS: Record<string, string> = {
   low: 'Low',
@@ -37,8 +45,6 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
 
   const travel = `(100% - ${THUMB_CSS})`;
   const thumbLeft = `calc(${travel} * ${ratio})`;
-  // Fill covers from left to thumb right edge — at max this equals 100%
-  // (full container); at min it equals the thumb width (exactly under thumb).
   const fillWidth = `calc(${travel} * ${ratio} + ${THUMB_CSS})`;
   const notchLeft = (i: number) => `calc(${travel} * ${pct(i, count)} + ${THUMB_CSS} / 2)`;
 
@@ -62,26 +68,33 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
       aria-valuemin={0}
       aria-valuemax={count - 1}
       aria-label="Effort level"
-      className="relative w-19 h-5 rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-disabled={!onSelect || undefined}
+      className={cn('relative w-19 h-5 rounded-full shrink-0 cursor-pointer', focusRing)}
       onMouseDown={(e) => e.preventDefault()}
       onClick={handleClick}
       onKeyDown={(e) => {
         if (!onSelect) return;
-        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-        if (dir) {
-          e.preventDefault();
-          onSelect(levels[Math.max(0, Math.min(count - 1, idx + dir))]);
-        }
+        let next = idx;
+        if (e.key === 'ArrowRight') next = Math.min(count - 1, idx + 1);
+        else if (e.key === 'ArrowLeft') next = Math.max(0, idx - 1);
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = count - 1;
+        else return;
+        e.preventDefault();
+        if (next !== idx) onSelect(levels[next]);
       }}
       title="Click a position to set effort level"
     >
       <div
         data-testid="effort-switch-track"
-        className="absolute inset-0 rounded-full bg-surface-hover overflow-hidden"
+        // Visible pill rides at the same h-3.5 as thumb + fill so the
+        // three read as a single coherent slim slider; the outer wrapper
+        // (h-5) supplies the larger click hit area + focus ring slot.
+        className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-3.5 rounded-full bg-surface-hover overflow-hidden"
       >
         <div
           data-testid="effort-switch-fill"
-          className="absolute top-1/2 -translate-y-1/2 left-0 h-3.5 rounded-full bg-toggle transition-all duration-150"
+          className="absolute top-0 left-0 h-full rounded-full bg-toggle transition-all duration-150"
           style={{ width: fillWidth }}
         />
         {ticksAfterThumb.map((i) => (

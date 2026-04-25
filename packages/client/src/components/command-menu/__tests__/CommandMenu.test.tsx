@@ -203,6 +203,19 @@ describe('CommandMenu', () => {
       expect(updates.some((u) => u.thinkingLevel === 'default_on')).toBe(true);
     });
 
+    it('clicking a toggle item keeps the menu open (so user can flip multiple toggles)', async () => {
+      const { claude, channelId } = await renderCommandMenu();
+      await act(async () => {
+        claude.pushServerEvent('settings:update', { channelId, thinkingLevel: 'off' });
+      });
+      await openMenu();
+      const thinking = screen.getByText('Thinking');
+      await userEvent.click(thinking);
+      // Toggle items should NOT collapse the menu — user expects to keep
+      // flipping switches without re-opening.
+      expect(screen.getByText('Thinking')).toBeInTheDocument();
+    });
+
     it('clicking fast mode item toggles fast mode and server emits settings:update', async () => {
       const { summoner } = await renderWithChannel(<CommandMenu />, {
         initSegment: s.init('sess-1', { fastModeState: 'off' }),
