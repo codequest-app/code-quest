@@ -187,9 +187,10 @@ describe('CommandMenu', () => {
       });
       await openMenu();
       await userEvent.click(screen.getByText(/^Effort/));
-      await new Promise((r) => setTimeout(r, 50));
-      const updates = summoner.events('settings:update');
-      expect(updates.some((u) => u.effort === 'medium')).toBe(true);
+      await vi.waitFor(() => {
+        const updates = summoner.events('settings:update');
+        expect(updates.some((u) => u.effort === 'medium')).toBe(true);
+      });
     });
 
     it('clicking Thinking item toggles thinking level and server emits settings:update', async () => {

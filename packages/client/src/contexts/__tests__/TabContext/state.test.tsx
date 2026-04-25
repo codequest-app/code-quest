@@ -2,7 +2,7 @@ import type { SessionStateSummary } from '@code-quest/shared';
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '../../../test/fake-summoner';
 import {
   NavigationProvider,
@@ -141,10 +141,12 @@ describe('TabProvider', () => {
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByText('request'));
 
-      await new Promise((r) => setTimeout(r, 30));
-
+      // Wait for the pending intent to land; active staying put is the
+      // negative half of the same observation.
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-target"');
+      });
       expect(screen.getByTestId('active')).toHaveTextContent('ch-a');
-      expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-target"');
     });
   });
 

@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
 import { describe, expect, it } from 'vitest';
@@ -26,11 +26,10 @@ describe('setModel — callback response format', () => {
       </>,
     );
 
-    await act(async () => {
-      await user.click(screen.getByText('switch-model'));
-      await new Promise<void>((r) => setTimeout(r, 50));
-    });
+    await user.click(screen.getByText('switch-model'));
 
+    // FakeSummoner returns { ok: true } synchronously; click already awaited
+    // the resulting state flush. Negative assertion below is the contract.
     expect(screen.queryByText(/Failed to switch model/i)).toBeNull();
   });
 
@@ -58,11 +57,9 @@ describe('setModel — callback response format', () => {
       { summoner },
     );
 
-    await act(async () => {
-      await user.click(screen.getByText('switch-model'));
-      await new Promise<void>((r) => setTimeout(r, 50));
-    });
+    await user.click(screen.getByText('switch-model'));
 
+    // findByText already polls for the toast to appear — no extra sleep needed.
     expect(await screen.findByText(/Failed to switch model/i)).toBeInTheDocument();
   });
 });

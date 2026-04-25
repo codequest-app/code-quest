@@ -61,8 +61,8 @@ describe('ChannelEmitter', () => {
       const ch = makeChannel();
       emitter.dispatch('test:event', ch, {});
 
-      // Give the microtask queue a tick so the promise rejection is handled
-      await new Promise((r) => setTimeout(r, 0));
+      // setImmediate runs after pending microtasks/rejections are flushed
+      await new Promise((r) => setImmediate(r));
       // If we get here without unhandled rejection, the test passes
     });
   });
