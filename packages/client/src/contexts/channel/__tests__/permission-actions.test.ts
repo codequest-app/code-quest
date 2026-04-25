@@ -41,8 +41,7 @@ async function setup(controls: PendingControl[]) {
 }
 
 async function flush() {
-  await new Promise<void>((r) => queueMicrotask(r));
-  await new Promise<void>((r) => setTimeout(r, 10));
+  await new Promise<void>((r) => setImmediate(r));
 }
 
 const ctrl1: PendingControl = { requestId: 'req-1', subtype: 'can_use_tool', toolName: 'Bash' };

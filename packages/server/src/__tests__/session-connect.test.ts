@@ -100,11 +100,14 @@ describe('ChatHandler > session', () => {
         channelId: 'ch-args',
         launchOptions: { thinking: 'adaptive', thinkingDisplay: 'summarized' },
       });
-      await new Promise<void>((r) => setTimeout(r, 30));
 
       const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-      const row = await sessionStore.getById('args-sess');
-      const args: string[] = JSON.parse(row!.args);
+      const row = await vi.waitFor(async () => {
+        const r = await sessionStore.getById('args-sess');
+        expect(r).toBeDefined();
+        return r!;
+      });
+      const args: string[] = JSON.parse(row.args);
       expect(args).toContain('--thinking');
       expect(args[args.indexOf('--thinking') + 1]).toBe('adaptive');
       expect(args).toContain('--thinking-display');
@@ -1040,7 +1043,11 @@ describe('ChatHandler > session', () => {
         sessionId: 'dead-resume-sess',
       });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+      // Wait until the server-side spawn lands (so the error result we
+      // emit next is consumed by the right child process).
+      await vi.waitFor(() => {
+        expect(claude.provider.spawnCalls.length).toBeGreaterThan(0);
+      });
       await claude.emit(
         s.resultError({ errors: ['No conversation found with session ID: dead-resume-sess'] }),
       );
@@ -1050,9 +1057,10 @@ describe('ChatHandler > session', () => {
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error).toBeDefined();
 
-      await new Promise<void>((r) => setTimeout(r, 30));
-      const record = await sessionStore.getById('dead-resume-sess');
-      expect(record?.status).toBe('dead');
+      await vi.waitFor(async () => {
+        const record = await sessionStore.getById('dead-resume-sess');
+        expect(record?.status).toBe('dead');
+      });
     });
   });
 
