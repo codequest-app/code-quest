@@ -23,8 +23,6 @@ export interface TabMeta {
 interface TabStateValue {
   tabs: Record<string, TabMeta>;
   activeTabId: string | null;
-  /** When set, the chat area renders the active tab + this tab side-by-side. */
-  splitTabId: string | null;
 }
 
 export const TabStateContext = createContext<TabStateValue | null>(null);
@@ -46,10 +44,6 @@ interface TabActionsValue {
   createNewTab: (opts?: { cwd?: string }) => { channelId: string };
   replaceActiveTab: (newChannelId: string, cwd?: string) => void;
   replaceTab: (oldChannelId: string, newChannelId: string) => void;
-  /** Show the given tab side-by-side with the active tab. No-op if id === activeTabId. */
-  enterSplit: (id: string) => void;
-  /** Exit split mode (active tab keeps focus). */
-  exitSplit: () => void;
 }
 
 const TabActionsContext = createContext<TabActionsValue | null>(null);
@@ -86,7 +80,6 @@ export function TabProvider({
   const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
     activeTabId: initialState?.activeTabId ?? null,
-    splitTabId: null,
   }));
 
   // cwd prop is read inside stable actions via ref so actions keep a single
@@ -109,14 +102,8 @@ export function TabProvider({
         if (!(id in prev.tabs)) return prev;
         const { [id]: _, ...rest } = prev.tabs;
         const wasActive = prev.activeTabId === id;
-        const wasSplit = prev.splitTabId === id;
-        // If split tab is removed, clear split. If active is removed, promote
-        // splitTabId (when set) to active so users keep their secondary view.
-        const splitTabId = wasSplit || wasActive ? null : prev.splitTabId;
-        const activeTabId = wasActive
-          ? (prev.splitTabId ?? Object.keys(rest)[0] ?? null)
-          : prev.activeTabId;
-        return { tabs: rest, activeTabId, splitTabId };
+        const activeTabId = wasActive ? (Object.keys(rest)[0] ?? null) : prev.activeTabId;
+        return { tabs: rest, activeTabId };
       });
     },
     setActiveTab: (id) => {
@@ -160,17 +147,6 @@ export function TabProvider({
         };
       });
     },
-    enterSplit: (id) => {
-      setState((prev) => {
-        if (!(id in prev.tabs)) return prev;
-        if (id === prev.activeTabId) return prev;
-        if (prev.splitTabId === id) return prev;
-        return { ...prev, splitTabId: id };
-      });
-    },
-    exitSplit: () => {
-      setState((prev) => (prev.splitTabId === null ? prev : { ...prev, splitTabId: null }));
-    },
     replaceTab: (oldChannelId, newChannelId) => {
       setState((prev) => {
         if (!(oldChannelId in prev.tabs)) return prev;
@@ -179,7 +155,6 @@ export function TabProvider({
           ...prev,
           tabs: { ...rest, [newChannelId]: { ...old } },
           activeTabId: prev.activeTabId === oldChannelId ? newChannelId : prev.activeTabId,
-          splitTabId: prev.splitTabId === oldChannelId ? newChannelId : prev.splitTabId,
         };
       });
     },

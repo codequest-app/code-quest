@@ -440,4 +440,31 @@ describe('TabProvider', () => {
       );
     });
   });
+
+  describe('split mode is removed', () => {
+    it('TabActions does not expose enterSplit / exitSplit', () => {
+      const summoner = createFakeSummoner();
+      const { result } = renderHook(() => useTabActions(), {
+        wrapper: ({ children }) => (
+          <SocketProvider socket={summoner.socket}>
+            <TabProvider>{children}</TabProvider>
+          </SocketProvider>
+        ),
+      });
+      expect(result.current).not.toHaveProperty('enterSplit');
+      expect(result.current).not.toHaveProperty('exitSplit');
+    });
+
+    it('TabState does not expose splitTabId', () => {
+      const summoner = createFakeSummoner();
+      const { result } = renderHook(() => useTabState(), {
+        wrapper: ({ children }) => (
+          <SocketProvider socket={summoner.socket}>
+            <TabProvider>{children}</TabProvider>
+          </SocketProvider>
+        ),
+      });
+      expect(result.current).not.toHaveProperty('splitTabId');
+    });
+  });
 });

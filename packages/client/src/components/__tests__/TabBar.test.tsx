@@ -1,5 +1,7 @@
+import * as Tabs from '@radix-ui/react-tabs';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { TabBar, type TabInfo } from '../TabBar';
 
@@ -9,110 +11,112 @@ const tabs: TabInfo[] = [
   { sessionId: 'sess-3', status: 'disconnected' },
 ];
 
-function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
-  return render(
-    <TabBar
-      tabs={tabs}
-      activeTabId="sess-1"
-      onSelectTab={vi.fn()}
-      onCloseTab={vi.fn()}
-      {...overrides}
-    />,
+/** TabBar requires an enclosing `<Tabs.Root>` (provided by TabContainer in
+ *  prod). Wrap with controlled value matching `activeTabId`. */
+function withRoot(activeTabId: string | null, children: ReactNode) {
+  return (
+    <Tabs.Root value={activeTabId ?? undefined} onValueChange={() => {}}>
+      {children}
+    </Tabs.Root>
   );
+}
+
+function renderTabBar(overrides: Partial<Parameters<typeof TabBar>[0]> = {}) {
+  const props = {
+    tabs,
+    activeTabId: 'sess-1' as string | null,
+    onSelectTab: vi.fn(),
+    onCloseTab: vi.fn(),
+    ...overrides,
+  };
+  return render(withRoot(props.activeTabId, <TabBar {...props} />));
 }
 
 describe('TabBar worktree grouping', () => {
   it('renders a scope-tag `projectName/branch` when worktree present', () => {
     render(
-      <TabBar
-        tabs={[
-          {
-            sessionId: 'wt',
-            title: 't',
-            status: 'idle',
-            projectName: 'cc-office',
-            worktree: { name: 'feat-x', path: '/p', branch: 'feat-x' },
-          },
-        ]}
-        activeTabId="wt"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-      />,
+      withRoot(
+        'wt',
+        <TabBar
+          tabs={[
+            {
+              sessionId: 'wt',
+              title: 't',
+              status: 'idle',
+              projectName: 'cc-office',
+              worktree: { name: 'feat-x', path: '/p', branch: 'feat-x' },
+            },
+          ]}
+          activeTabId="wt"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
     );
     expect(screen.getByTestId('tab-scope-tag')).toHaveTextContent('cc-office/feat-x');
   });
 
   it('no scope-tag when tab has no worktree (non-git)', () => {
     render(
-      <TabBar
-        tabs={[{ sessionId: 't', title: 't', status: 'idle' }]}
-        activeTabId="t"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-      />,
+      withRoot(
+        't',
+        <TabBar
+          tabs={[{ sessionId: 't', title: 't', status: 'idle' }]}
+          activeTabId="t"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
     );
     expect(screen.queryByTestId('tab-scope-tag')).toBeNull();
   });
 
-  it('renders a worktree badge with branch name when branch present', () => {
+  // Note: the standalone `tab-worktree-badge` (⎇ branch) was removed in the
+  // F.html visual alignment — `tab-scope-tag` (`projectName/branch`) covers the
+  // same information without duplication. Branch fallback to `worktree.name`
+  // is now exercised via the scope-tag below.
+  it('scope-tag falls back to worktree name when branch missing', () => {
     render(
-      <TabBar
-        tabs={[
-          {
-            sessionId: 'wt-sess',
-            title: 'Feature A',
-            status: 'idle',
-            worktree: {
-              name: 'feat-a',
-              path: '/repo/.claude/worktrees/feat-a',
-              branch: 'feat-a',
+      withRoot(
+        'wt',
+        <TabBar
+          tabs={[
+            {
+              sessionId: 'wt',
+              title: 't',
+              status: 'idle',
+              projectName: 'cc',
+              worktree: { name: 'only-name', path: '/p/.claude/worktrees/only-name' },
             },
-          },
-        ]}
-        activeTabId="wt-sess"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-      />,
+          ]}
+          activeTabId="wt"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
     );
-    const badge = screen.getByTestId('tab-worktree-badge');
-    expect(badge.textContent).toBe('⎇ feat-a');
-  });
-
-  it('falls back to worktree name when branch missing', () => {
-    render(
-      <TabBar
-        tabs={[
-          {
-            sessionId: 'wt',
-            title: 't',
-            status: 'idle',
-            worktree: { name: 'only-name', path: '/p/.claude/worktrees/only-name' },
-          },
-        ]}
-        activeTabId="wt"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-      />,
-    );
-    expect(screen.getByTestId('tab-worktree-badge').textContent).toBe('⎇ only-name');
+    expect(screen.getByTestId('tab-scope-tag').textContent).toBe('cc/only-name');
   });
 
   it('renders a divider between main-tree tabs and worktree tabs', () => {
     render(
-      <TabBar
-        tabs={[
-          { sessionId: 'main', title: 'main', status: 'idle' },
-          {
-            sessionId: 'wt',
-            title: 'feat',
-            status: 'idle',
-            worktree: { name: 'feat', path: '/repo/.claude/worktrees/feat' },
-          },
-        ]}
-        activeTabId="main"
-        onSelectTab={vi.fn()}
-        onCloseTab={vi.fn()}
-      />,
+      withRoot(
+        'main',
+        <TabBar
+          tabs={[
+            { sessionId: 'main', title: 'main', status: 'idle' },
+            {
+              sessionId: 'wt',
+              title: 'feat',
+              status: 'idle',
+              worktree: { name: 'feat', path: '/repo/.claude/worktrees/feat' },
+            },
+          ]}
+          activeTabId="main"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
     );
     expect(screen.getAllByTestId('tab-divider')).toHaveLength(1);
   });
@@ -169,8 +173,8 @@ describe('TabBar', () => {
   });
 
   it('returns null when no tabs', () => {
-    const { container } = renderTabBar({ tabs: [], activeTabId: null });
-    expect(container.firstChild).toBeNull();
+    renderTabBar({ tabs: [], activeTabId: null });
+    expect(screen.queryByTestId('tab-bar')).toBeNull();
   });
 
   it('shows status indicator dots', () => {
@@ -216,5 +220,33 @@ describe('TabBar', () => {
     renderTabBar({ onNewTab });
     await user.click(screen.getByLabelText('New tab'));
     expect(onNewTab).toHaveBeenCalledOnce();
+  });
+});
+
+describe('TabBar Radix migration', () => {
+  it('exposes a tablist with one tab per session via ARIA roles', () => {
+    renderTabBar();
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(tabs.length);
+  });
+
+  it('marks exactly the active tab as aria-selected', () => {
+    renderTabBar({ activeTabId: 'sess-2' });
+    const selected = screen
+      .getAllByRole('tab')
+      .filter((t) => t.getAttribute('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toHaveAccessibleName(/Chat 2/);
+  });
+
+  it('roving tabindex: at most one tab is tab-stop (initially the tablist itself, after focus the active trigger)', () => {
+    renderTabBar({ activeTabId: 'sess-2' });
+    // Radix delegates tab-stop tracking to RovingFocusGroup. At rest, tab
+    // triggers all hold tabindex="-1" and the tablist element holds the
+    // single tab-stop. Asserting we never have more than one tabbable
+    // trigger captures the invariant without coupling to whether init
+    // happens pre- or post-focus.
+    const focusable = screen.getAllByRole('tab').filter((t) => t.getAttribute('tabindex') === '0');
+    expect(focusable.length).toBeLessThanOrEqual(1);
   });
 });

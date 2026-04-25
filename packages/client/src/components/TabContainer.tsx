@@ -1,6 +1,6 @@
-import { ChatBubbleLeftRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import * as Tabs from '@radix-ui/react-tabs';
 import { memo } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { ChannelProvider } from '../contexts/channel';
 import { useGitState } from '../contexts/GitContext';
 import { useSession } from '../contexts/SessionContext';
@@ -40,51 +40,9 @@ const TabContent = memo(function TabContent({
   );
 });
 
-function SplitHalf({
-  channelId,
-  meta,
-  isActive,
-  onClose,
-}: {
-  channelId: string;
-  meta: TabMeta;
-  isActive: boolean;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      data-testid={isActive ? 'split-half-active' : 'split-half-secondary'}
-      className={cn(
-        'flex flex-col h-full border-l-2',
-        isActive ? 'border-accent' : 'border-transparent',
-      )}
-    >
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-border bg-surface text-xs">
-        <span className="font-mono text-text-muted truncate">{meta.title ?? channelId}</span>
-        <button
-          type="button"
-          aria-label="Close split"
-          className="ml-auto text-text-dim hover:text-text"
-          onClick={onClose}
-        >
-          <XMarkIcon className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="flex flex-1 min-h-0 min-w-0">
-        <TabContent
-          channelId={channelId}
-          cwd={meta.cwd}
-          title={meta.title}
-          launchOnMount={meta.launchOnMount}
-        />
-      </div>
-    </div>
-  );
-}
-
 export const TabContainer = memo(function TabContainer({ projectCwd }: { projectCwd: string }) {
-  const { activeTabId, splitTabId, tabs } = useTabState();
-  const { setActiveTab, removeTab, createNewTab, enterSplit, exitSplit } = useTabActions();
+  const { activeTabId, tabs } = useTabState();
+  const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();
   const { listing } = useGitState();
   // Publish this project's active-tab cwd to ActiveChatTabCwdContext when this
@@ -123,55 +81,38 @@ export const TabContainer = memo(function TabContainer({ projectCwd }: { project
   }
 
   return (
-    <div className="flex flex-col flex-1 min-w-0" data-testid="tab-container-root">
+    <Tabs.Root
+      value={activeTabId ?? undefined}
+      onValueChange={setActiveTab}
+      className="flex flex-col flex-1 min-w-0"
+      data-testid="tab-container-root"
+    >
       <TabBar
         tabs={openTabs}
         activeTabId={activeTabId}
         onSelectTab={setActiveTab}
-        onSplitTab={enterSplit}
         onCloseTab={handleCloseTab}
         onNewTab={() => createNewTab()}
       />
-      {splitTabId && activeTabId && tabs[splitTabId] ? (
-        <div className="flex flex-1 overflow-hidden" data-testid="tab-container-split">
-          <PanelGroup direction="horizontal" autoSaveId="cc-office.chat-split">
-            <Panel id="left" defaultSize={50} minSize={25}>
-              <SplitHalf
-                channelId={activeTabId}
-                meta={tabs[activeTabId]}
-                isActive
-                onClose={exitSplit}
-              />
-            </Panel>
-            <PanelResizeHandle className="w-px bg-border hover:bg-accent" />
-            <Panel id="right" defaultSize={50} minSize={25}>
-              <SplitHalf
-                channelId={splitTabId}
-                meta={tabs[splitTabId]}
-                isActive={false}
-                onClose={exitSplit}
-              />
-            </Panel>
-          </PanelGroup>
-        </div>
-      ) : (
-        <div className="flex flex-1 overflow-hidden">
-          {tabEntries.map(([id, meta]) => (
-            <div
-              key={id}
-              data-testid={id === activeTabId ? 'tab-container' : undefined}
-              className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : 'hidden')}
-            >
-              <TabContent
-                channelId={id}
-                cwd={meta.cwd}
-                title={meta.title}
-                launchOnMount={meta.launchOnMount}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+      <div className="flex flex-1 overflow-hidden">
+        {tabEntries.map(([id, meta]) => (
+          <Tabs.Content
+            key={id}
+            value={id}
+            forceMount
+            hidden={id !== activeTabId}
+            data-testid={id === activeTabId ? 'tab-container' : undefined}
+            className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : undefined)}
+          >
+            <TabContent
+              channelId={id}
+              cwd={meta.cwd}
+              title={meta.title}
+              launchOnMount={meta.launchOnMount}
+            />
+          </Tabs.Content>
+        ))}
+      </div>
+    </Tabs.Root>
   );
 });

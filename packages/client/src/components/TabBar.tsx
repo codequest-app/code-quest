@@ -1,3 +1,4 @@
+import * as Tabs from '@radix-ui/react-tabs';
 import { Fragment, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 import { cn } from '../utils/cn';
@@ -34,9 +35,6 @@ interface TabBarProps {
   tabs: TabInfo[];
   activeTabId: string | null;
   onSelectTab: (sessionId: string) => void;
-  /** Called when user shift+clicks (or holds modifier) on a tab — open it
-   *  side-by-side with the active tab. Optional; UI hides cue if not wired. */
-  onSplitTab?: (sessionId: string) => void;
   onCloseTab: (sessionId: string) => void;
   onNewTab?: () => void;
   onOpenHistory?: () => void;
@@ -51,22 +49,25 @@ const statusDot: Record<SessionStatus, string> = {
   cancelling: 'bg-warning animate-pulse',
 };
 
+/** Renders the chat tab strip via Radix `Tabs.List` + `Tabs.Trigger`.
+ *  MUST be rendered inside a `<Tabs.Root>` (provided by TabContainer) —
+ *  the Root carries the controlled `value` ↔ `setActiveTab` wiring and
+ *  scopes the trigger ↔ content collection used by Radix for keyboard
+ *  navigation and `Tabs.Content forceMount` body slots.
+ *
+ *  Triggers use `asChild` to render `<div role="tab">` instead of the
+ *  default `<button>`, so the per-tab close `<button>` can remain nested
+ *  without violating button-in-button. Radix still applies `role`,
+ *  `tabindex` (roving), `aria-selected`, click activation, and Arrow /
+ *  Home / End keyboard nav. */
 export function TabBar({
   tabs,
   activeTabId,
   onSelectTab,
-  onSplitTab,
   onCloseTab,
   onNewTab,
   onOpenHistory,
 }: TabBarProps) {
-  const handleTabClick = (sessionId: string, e: React.MouseEvent | React.KeyboardEvent) => {
-    if (onSplitTab && (e.shiftKey || ('metaKey' in e && e.altKey))) {
-      onSplitTab(sessionId);
-      return;
-    }
-    onSelectTab(sessionId);
-  };
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (tabs.length === 0 && !onNewTab) return null;
@@ -74,117 +75,118 @@ export function TabBar({
   const sortedTabs = [...tabs].sort(compareGroup);
 
   return (
-    <div
-      className="flex items-center gap-1 px-4 py-1 border-b border-border overflow-x-auto"
-      data-testid="tab-bar"
-    >
-      {sortedTabs.map((tab, i) => {
-        const prev = i > 0 ? sortedTabs[i - 1] : null;
-        const showDivider = prev !== null && tabGroupKey(prev) !== tabGroupKey(tab);
-        return (
-          <Fragment key={tab.sessionId}>
-            {showDivider ? (
-              <span data-testid="tab-divider" className="h-5 border-l border-border mx-1" />
-            ) : null}
-            <span
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-2 text-xs cursor-pointer shrink-0',
-                tab.sessionId === activeTabId
-                  ? 'text-text border-b-2 border-border-focus'
-                  : 'text-text-muted hover:text-text hover:bg-white/5',
-              )}
-              onClick={(e) => handleTabClick(tab.sessionId, e)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleTabClick(tab.sessionId, e);
-                }
-              }}
-              role="tab"
-              tabIndex={0}
-              aria-selected={tab.sessionId === activeTabId}
-              title={tab.worktree?.path}
-            >
-              <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
-              <span className="truncate max-w-30">{tab.title || tab.sessionId.slice(0, 8)}</span>
-              {tab.worktree && tab.projectName ? (
-                <span data-testid="tab-scope-tag" className="text-xs text-text-subtle">
-                  {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
-                </span>
-              ) : null}
-              {tab.worktree ? (
-                <span
-                  data-testid="tab-worktree-badge"
-                  className="text-xs text-text-muted/60 px-1 rounded bg-white/5"
-                >
-                  ⎇ {tab.worktree.branch ?? tab.worktree.name}
-                </span>
-              ) : null}
-              <button
-                type="button"
-                className="ml-1 text-text-muted hover:text-text text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirmingId(tab.sessionId);
-                }}
-                aria-label={`Close ${tab.title || tab.sessionId}`}
-              >
-                ✕
-              </button>
-            </span>
-          </Fragment>
-        );
-      })}
-      {onNewTab && (
-        <button
-          type="button"
-          className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0"
-          onClick={onNewTab}
-          aria-label="New tab"
-        >
-          +
-        </button>
-      )}
-      {onOpenHistory && (
-        <button
-          type="button"
-          className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
-          onClick={onOpenHistory}
-          aria-label="Session history"
-          title="Session history"
-        >
-          ☰
-        </button>
-      )}
-      <Dialog
-        open={confirmingId !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirmingId(null);
-        }}
+    <Tabs.List asChild>
+      <div
+        className="flex items-center h-9 border-b border-border overflow-x-auto"
+        data-testid="tab-bar"
       >
-        <DialogContent title="Close Session">
-          <p className="text-sm text-text-muted mb-4">
-            Are you sure you want to close this session? The CLI process will be terminated.
-          </p>
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="ghost" size="md">
-                Cancel
+        {sortedTabs.map((tab, i) => {
+          const prev = i > 0 ? sortedTabs[i - 1] : null;
+          const showDivider = prev !== null && tabGroupKey(prev) !== tabGroupKey(tab);
+          return (
+            <Fragment key={tab.sessionId}>
+              {showDivider ? (
+                <span data-testid="tab-divider" className="h-5 border-l border-border mx-1" />
+              ) : null}
+              <Tabs.Trigger value={tab.sessionId} asChild>
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: Radix Tabs.Trigger
+                    injects role="tab" + keyboard nav via Slot at runtime.
+                    biome-ignore lint/a11y/useKeyWithClickEvents: same — Radix supplies
+                    onMouseDown / Enter / Space activation. */}
+                <div
+                  className={cn(
+                    'flex items-center gap-2 px-3 h-full text-xs cursor-pointer shrink-0',
+                    'border-r border-border border-b-2 border-b-transparent',
+                    tab.sessionId === activeTabId
+                      ? 'text-text-bright bg-bg border-b-accent'
+                      : 'text-text-muted hover:text-text hover:bg-white/5',
+                  )}
+                  onClick={() => onSelectTab(tab.sessionId)}
+                  title={tab.worktree?.path}
+                >
+                  <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[tab.status])} />
+                  <span className="truncate max-w-30">
+                    {tab.title || tab.sessionId.slice(0, 8)}
+                  </span>
+                  {tab.worktree && tab.projectName ? (
+                    <span
+                      data-testid="tab-scope-tag"
+                      className="font-mono text-text-subtle"
+                      style={{ fontSize: '10px' }}
+                    >
+                      {tab.projectName}/{tab.worktree.branch ?? tab.worktree.name}
+                    </span>
+                  ) : null}
+                  {/* Provider pill slot reserved for future multi-CLI feature.
+                      Empty placeholder — see spec/chat-tabs Requirement: Provider pill slot. */}
+                  <span data-provider-slot="" />
+                  <button
+                    type="button"
+                    className="ml-1 text-text-subtle hover:text-danger hover:bg-danger/10 px-0.5 rounded text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmingId(tab.sessionId);
+                    }}
+                    aria-label={`Close ${tab.title || tab.sessionId}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              </Tabs.Trigger>
+            </Fragment>
+          );
+        })}
+        {onNewTab && (
+          <button
+            type="button"
+            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0"
+            onClick={onNewTab}
+            aria-label="New tab"
+          >
+            +
+          </button>
+        )}
+        {onOpenHistory && (
+          <button
+            type="button"
+            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
+            onClick={onOpenHistory}
+            aria-label="Session history"
+            title="Session history"
+          >
+            ☰
+          </button>
+        )}
+        <Dialog
+          open={confirmingId !== null}
+          onOpenChange={(open) => {
+            if (!open) setConfirmingId(null);
+          }}
+        >
+          <DialogContent title="Close Session">
+            <p className="text-sm text-text-muted mb-4">
+              Are you sure you want to close this session? The CLI process will be terminated.
+            </p>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button variant="ghost" size="md">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={() => {
+                  if (confirmingId) onCloseTab(confirmingId);
+                  setConfirmingId(null);
+                }}
+              >
+                Close
               </Button>
-            </DialogClose>
-            <Button
-              variant="danger"
-              size="md"
-              onClick={() => {
-                if (confirmingId) onCloseTab(confirmingId);
-                setConfirmingId(null);
-              }}
-            >
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </Tabs.List>
   );
 }
