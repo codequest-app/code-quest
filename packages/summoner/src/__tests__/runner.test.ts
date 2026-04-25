@@ -41,7 +41,7 @@ describe('ProcessRunner', () => {
 
       runner.spawn();
       provider.latest.emit(s.init('test-sess'));
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       const init = events.find((e) => e.name === 'session:init');
       expect(init).toBeDefined();
@@ -57,7 +57,7 @@ describe('ProcessRunner', () => {
       runner.spawn();
       provider.latest.emit(s.init('test-sess'));
       provider.latest.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       const nonInit = events.filter((e) => e.name !== 'session:init');
       for (const ev of nonInit) {
@@ -78,7 +78,7 @@ describe('ProcessRunner', () => {
       // Emit init + result lines
       handle.emit(s.init('test-sess'));
       handle.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       const types = events.map((e) => e.name);
       expect(types).toContain('session:init');
@@ -95,7 +95,7 @@ describe('ProcessRunner', () => {
 
       handle.emit(s.init('test-sess'));
       handle.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       expect(lines.length).toBeGreaterThan(0);
       for (const line of lines) {
@@ -125,7 +125,7 @@ describe('ProcessRunner', () => {
       provider.latest.emit(s.init('test-sess'));
       provider.latest.emit(s.assistant('hi'));
       provider.latest.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       const types = clientMessages.map((e) => e.name);
       expect(types).toContain('session:init');
@@ -145,7 +145,7 @@ describe('ProcessRunner', () => {
           response: { subtype: 'success', request_id: 'req-1' },
         }),
       );
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       expect(controlResponses.length).toBeGreaterThan(0);
     });
@@ -186,7 +186,7 @@ describe('ProcessRunner', () => {
       runner.on('stdout', (line: string) => stdoutEvents.push(line));
 
       provider.latest.emit(s.init('sess-1'));
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       expect(stdoutEvents.length).toBe(1);
     });
@@ -216,7 +216,7 @@ describe('ProcessRunner', () => {
       runner.spawn();
       provider.latest.emit(s.init('test-sess'));
       provider.latest.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       expect('_cliSessionId' in runner).toBe(false);
       expect('cliSessionId' in runner).toBe(false);
@@ -227,7 +227,7 @@ describe('ProcessRunner', () => {
       runner.spawn();
       provider.latest.emit(s.init('test-sess'));
       provider.latest.emit(s.result());
-      await new Promise<void>((r) => queueMicrotask(() => queueMicrotask(r)));
+      await new Promise<void>((r) => setImmediate(r));
 
       expect('pendingRequests' in runner).toBe(false);
     });

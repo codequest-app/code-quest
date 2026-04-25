@@ -1,21 +1,32 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
 import { MessageList } from '../MessageList';
+
+// Fake only setTimeout/clearTimeout so the 500ms scroll-lock can be
+// advanced instantly. fireEvent is used over userEvent because the
+// latter relies on real-timer microtask scheduling which deadlocks
+// even with the limited toFake list.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 async function renderWithMessages() {
   const { claude } = await renderWithChannel(<MessageList />);
   await emitAssistantTurn(claude, 'Hi');
 }
 
-/** Wait for programmatic scroll lock to expire (500ms timeout in scrollToEnd) */
+/** Advance past the 500ms programmatic-scroll lock in MessageList.scrollToEnd */
 async function waitForScrollUnlock() {
   await act(async () => {
-    await new Promise((r) => setTimeout(r, 600));
+    await vi.advanceTimersByTimeAsync(600);
   });
 }
 
@@ -42,7 +53,7 @@ describe('Auto-scroll behavior', () => {
 
     // Wait for programmatic scroll timeout to expire
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 600));
+      await vi.advanceTimersByTimeAsync(600);
     });
 
     const container = screen.getByTestId('message-list');
@@ -68,7 +79,7 @@ describe('Auto-scroll behavior', () => {
     });
 
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 600));
+      await vi.advanceTimersByTimeAsync(600);
     });
 
     const scrollIntoView = vi.fn();
@@ -93,14 +104,16 @@ describe('Auto-scroll behavior', () => {
 
     // Wait for initial programmatic scroll to settle, then scroll up
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 600));
+      await vi.advanceTimersByTimeAsync(600);
     });
     simulateScrolledUp(container);
 
     const scrollIntoView = vi.fn();
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
 
-    await userEvent.type(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER), 'hi{Enter}');
+    const input = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+    fireEvent.change(input, { target: { value: 'hi' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
 
     // Submitting a message MUST pull the view back to the bottom
     expect(scrollIntoView).toHaveBeenCalled();
@@ -141,14 +154,13 @@ describe('Scroll to bottom button', () => {
   });
 
   it('calls scrollIntoView when button is clicked', async () => {
-    const user = userEvent.setup();
     await renderWithMessages();
     await waitForScrollUnlock();
     const container = screen.getByTestId('message-list');
     act(() => simulateScrolledUp(container));
     const scrollIntoView = vi.fn();
     screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
-    await user.click(screen.getByRole('button', { name: /scroll to bottom/i }));
+    fireEvent.click(screen.getByRole('button', { name: /scroll to bottom/i }));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
   });
 
