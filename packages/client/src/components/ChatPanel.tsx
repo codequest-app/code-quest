@@ -25,7 +25,7 @@ import { HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
-import { SessionDropdown } from './SessionDropdown';
+import { SessionHistoryPopover } from './SessionHistoryPopover';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
@@ -157,7 +157,24 @@ export function ChatPanel({ title }: { title?: string }) {
         <HeaderBar
           title={title}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          onOpenResume={openResumeOverlay}
+          resumeSlot={
+            <SessionHistoryPopover
+              open={showResumeOverlay}
+              onOpenChange={(open) => {
+                if (open) {
+                  openResumeOverlay();
+                } else {
+                  setShowResumeOverlay(false);
+                  resumeOpenSignal.setOpen(false);
+                }
+              }}
+              sessions={resumeSessions.sessions}
+              loading={resumeLoading}
+              onSelect={handleResumeSelect}
+              onRename={renameSession}
+              onDelete={handleDelete}
+            />
+          }
         />
         {worktree && <WorktreeBanner worktree={worktree} />}
         <CommandPalette
@@ -168,19 +185,6 @@ export function ChatPanel({ title }: { title?: string }) {
           rawPanelActive={activeSidePanel === 'raw'}
         />
         <MessageList ref={messageListRef} />
-        {showResumeOverlay && (
-          <SessionDropdown
-            sessions={resumeSessions.sessions}
-            loading={resumeLoading}
-            onSelect={handleResumeSelect}
-            onClose={() => {
-              setShowResumeOverlay(false);
-              resumeOpenSignal.setOpen(false);
-            }}
-            onRename={renameSession}
-            onDelete={handleDelete}
-          />
-        )}
         <SideQuestionDialog
           open={sideQuestion.open}
           question={sideQuestion.question}

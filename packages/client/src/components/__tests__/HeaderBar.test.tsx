@@ -67,21 +67,19 @@ describe('HeaderBar layout', () => {
   });
 });
 
-describe('HeaderBar resume button', () => {
-  it('shows clock/history button', async () => {
-    await renderHeaderBar({ onOpenResume: vi.fn() });
+describe('HeaderBar resumeSlot', () => {
+  it('renders resumeSlot when provided', async () => {
+    await renderHeaderBar({
+      resumeSlot: (
+        <button type="button" title="Session history">
+          history
+        </button>
+      ),
+    });
     expect(screen.getByTitle('Session history')).toBeInTheDocument();
   });
 
-  it('calls onOpenResume when clock button clicked', async () => {
-    const onOpenResume = vi.fn();
-    const user = userEvent.setup();
-    await renderHeaderBar({ onOpenResume });
-    await user.click(screen.getByTitle('Session history'));
-    expect(onOpenResume).toHaveBeenCalledOnce();
-  });
-
-  it('does not show clock button when onOpenResume is not provided', async () => {
+  it('does not render resumeSlot when not provided', async () => {
     await renderHeaderBar();
     expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
   });
