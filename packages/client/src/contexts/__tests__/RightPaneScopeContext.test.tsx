@@ -122,6 +122,30 @@ describe('RightPaneScopeContext', () => {
     expect(result.current.scope).toEqual({ mode: 'follow' });
   });
 
+  it('pinTo pins to an arbitrary cwd', () => {
+    const { result } = renderHook(
+      () => ({
+        scope: useRightPaneScope(),
+        actions: useRightPaneScopeActions(),
+        cwd: useRightPaneCwd(),
+      }),
+      { wrapper: wrapper('/repo-a') },
+    );
+    act(() => result.current.actions.pinTo('/repo-b'));
+    expect(result.current.scope).toEqual({ mode: 'pinned', cwd: '/repo-b' });
+    expect(result.current.cwd).toBe('/repo-b');
+  });
+
+  it('unpin returns to follow mode', () => {
+    const { result } = renderHook(
+      () => ({ scope: useRightPaneScope(), actions: useRightPaneScopeActions() }),
+      { wrapper: wrapper('/repo') },
+    );
+    act(() => result.current.actions.pinTo('/other'));
+    act(() => result.current.actions.unpin());
+    expect(result.current.scope).toEqual({ mode: 'follow' });
+  });
+
   it('clears sessionStorage when returning to follow', () => {
     sessionStorage.clear();
     const { result } = renderHook(

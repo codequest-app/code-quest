@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FsProvider } from '../../contexts/FsContext';
 import { GitProvider } from '../../contexts/GitContext';
 import { OpenspecProvider } from '../../contexts/OpenspecContext';
+import { ProjectStateContext } from '../../contexts/ProjectContext';
 import { RightPaneScopeProvider } from '../../contexts/RightPaneScopeContext';
 import { SocketProvider } from '../../contexts/SocketContext';
 import { createFakeSummoner } from '../../test/fake-summoner';
@@ -18,15 +19,22 @@ function setup(activeCwd = '/repo') {
   summoner.filesystem().addDirectory('/repo', []);
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <SocketProvider socket={summoner.socket}>
-        <GitProvider>
-          <FsProvider>
-            <OpenspecProvider>
-              <RightPaneScopeProvider activeCwd={activeCwd}>{children}</RightPaneScopeProvider>
-            </OpenspecProvider>
-          </FsProvider>
-        </GitProvider>
-      </SocketProvider>
+      <ProjectStateContext.Provider
+        value={{
+          projects: [{ cwd: activeCwd, name: 'repo', pinned: false, lastOpenedAt: '' }],
+          activeProjectCwd: activeCwd,
+        }}
+      >
+        <SocketProvider socket={summoner.socket}>
+          <GitProvider>
+            <FsProvider>
+              <OpenspecProvider>
+                <RightPaneScopeProvider activeCwd={activeCwd}>{children}</RightPaneScopeProvider>
+              </OpenspecProvider>
+            </FsProvider>
+          </GitProvider>
+        </SocketProvider>
+      </ProjectStateContext.Provider>
     );
   }
   return { summoner, Wrapper };

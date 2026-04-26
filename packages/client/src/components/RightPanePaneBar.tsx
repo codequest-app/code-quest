@@ -4,8 +4,8 @@ import {
   useRightPaneScope,
   useRightPaneScopeActions,
 } from '../contexts/RightPaneScopeContext';
-import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
+import { ScopePicker } from './ScopePicker';
 
 export interface RightPanePaneBarProps {
   closeMode: 'collapse' | 'back';
@@ -22,23 +22,7 @@ export function RightPanePaneBar({ closeMode, onCollapse, onBack }: RightPanePan
 
   return (
     <div className="flex items-center gap-1.5 px-2.5 py-2 border-b border-border shrink-0">
-      <span
-        data-testid="pane-bar-scope-label"
-        className={cn(
-          'flex-1 min-w-0 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs',
-          hasCwd ? 'border-border bg-white/[.04] text-text' : 'border-transparent text-text-muted',
-        )}
-      >
-        {hasCwd ? (
-          <>
-            <span className="text-text-muted truncate">{basename(cwd)}</span>
-            <span className="text-text-muted">·</span>
-            <span className="text-accent font-mono whitespace-nowrap">⎇ {basename(cwd)}</span>
-          </>
-        ) : (
-          '— no scope —'
-        )}
-      </span>
+      <ScopePicker disabled={!hasCwd} />
 
       <Switch.Root
         checked={isPinned}

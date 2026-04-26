@@ -57,5 +57,22 @@
 - [x] 5.2 實作 fallback 邏輯
 - [x] 5.3 跑 `pnpm --filter client test` 全綠
 - [x] 5.4 跑 `pnpm exec biome check --write` + `tsc --noEmit`
-- [ ] 5.5 視覺對照 `docs/prototype/redesign-d1.html` 的 pane-bar 互動（需手動驗證）
-- [ ] 5.6 commit 分階段
+- [x] 5.5 視覺對照 `docs/prototype/F.html` 的 pane-bar — 已調整 scope chip + pin 按鈕樣式
+
+## 6. Scope Popover — 直接選目標 worktree pin（對照 prototype `openScopePop`）
+
+- [x] 6.1 Context 擴充：加 `pinTo(cwd)` / `unpin()` actions + 測試
+- [ ] 6.2 寫 `ScopePicker` popover 測試：
+  - 列出所有 project × worktree（project name · ⎇ branch）
+  - 當前 pinned cwd 有 ✓ mark
+  - 底部「⇆ Follow active chat tab」選項
+  - 點 worktree → pinTo 該 cwd + popover 關閉
+  - 點 follow → unpin + popover 關閉
+  - 無 worktree 時顯示 placeholder
+- [ ] 6.3 紅燈確認
+- [ ] 6.4 實作 `ScopePicker.tsx`（radix Popover，參考 TopScopeSwitcher 結構）
+- [ ] 6.5 綠燈
+- [ ] 6.6 整合到 `RightPanePaneBar`：scope label 改為 Popover trigger
+- [ ] 6.7 scope label 顯示真實 branch（從 `useGitState().listing` 查）
+- [ ] 6.8 跑 `pnpm --filter client test` 全綠 + `tsc --noEmit`
+- [ ] 6.9 commit

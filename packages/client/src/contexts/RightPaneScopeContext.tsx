@@ -4,6 +4,8 @@ export type RightPaneScope = { mode: 'follow' } | { mode: 'pinned'; cwd: string 
 
 interface RightPaneScopeActions {
   togglePin: () => void;
+  pinTo: (cwd: string) => void;
+  unpin: () => void;
   resetIfCwdMissing: (knownCwds: ReadonlySet<string>) => void;
 }
 
@@ -58,6 +60,18 @@ export function RightPaneScopeProvider({
     });
   }, [activeCwd]);
 
+  const pinTo = useCallback((cwd: string) => {
+    const next: RightPaneScope = { mode: 'pinned', cwd };
+    writeStorage(next);
+    setScope(next);
+  }, []);
+
+  const unpin = useCallback(() => {
+    const next: RightPaneScope = { mode: 'follow' };
+    writeStorage(next);
+    setScope(next);
+  }, []);
+
   const resetIfCwdMissing = useCallback((knownCwds: ReadonlySet<string>) => {
     setScope((prev) => {
       if (prev.mode !== 'pinned') return prev;
@@ -69,8 +83,8 @@ export function RightPaneScopeProvider({
   }, []);
 
   const actions = useMemo<RightPaneScopeActions>(
-    () => ({ togglePin, resetIfCwdMissing }),
-    [togglePin, resetIfCwdMissing],
+    () => ({ togglePin, pinTo, unpin, resetIfCwdMissing }),
+    [togglePin, pinTo, unpin, resetIfCwdMissing],
   );
 
   const cwd = scope.mode === 'pinned' ? scope.cwd : activeCwd;

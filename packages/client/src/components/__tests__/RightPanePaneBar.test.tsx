@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { GitStateContext } from '../../contexts/GitContext';
+import { ProjectStateContext } from '../../contexts/ProjectContext';
 import { RightPaneScopeProvider } from '../../contexts/RightPaneScopeContext';
 import { RightPanePaneBar } from '../RightPanePaneBar';
 
@@ -9,7 +11,24 @@ afterEach(() => sessionStorage.clear());
 
 function wrapper(activeCwd: string | null) {
   return ({ children }: { children: ReactNode }) => (
-    <RightPaneScopeProvider activeCwd={activeCwd}>{children}</RightPaneScopeProvider>
+    <ProjectStateContext.Provider
+      value={{
+        projects: activeCwd
+          ? [{ cwd: activeCwd, name: 'my-app', pinned: false, lastOpenedAt: '' }]
+          : [],
+        activeProjectCwd: activeCwd,
+      }}
+    >
+      <GitStateContext.Provider
+        value={{
+          listing: activeCwd
+            ? { [activeCwd]: [{ name: 'main', path: activeCwd, branch: 'main' }] }
+            : {},
+        }}
+      >
+        <RightPaneScopeProvider activeCwd={activeCwd}>{children}</RightPaneScopeProvider>
+      </GitStateContext.Provider>
+    </ProjectStateContext.Provider>
   );
 }
 
