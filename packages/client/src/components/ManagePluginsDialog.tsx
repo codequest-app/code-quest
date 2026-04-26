@@ -1,9 +1,11 @@
+import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { usePlugins } from '../contexts/PluginContext';
 import { cn } from '../utils/cn';
 import { InstalledPluginList } from './InstalledPluginList';
 import { MarketplaceSection } from './MarketplaceSection';
+import { tabTrigger } from './ui/_tokens';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 interface ManagePluginsDialogProps {
@@ -63,36 +65,37 @@ export function ManagePluginsDialog({ open, onClose }: ManagePluginsDialogProps)
           </div>
         )}
 
-        <div className="flex border-b border-border gap-1 mb-3">
-          {(
-            [
-              { id: 'plugins' as const, label: 'Plugins', count: installed.length },
-              { id: 'marketplaces' as const, label: 'Marketplaces', count: marketplaces.length },
-            ] as const
-          ).map(({ id, label, count }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              className={cn(
-                'px-3 py-2 text-sm border-b-2 -mb-px transition-colors',
-                activeTab === id
-                  ? 'border-accent text-text font-medium'
-                  : 'border-transparent text-text-muted hover:text-text',
-              )}
-            >
-              {label}
-              {count > 0 && (
-                <span className="ml-1.5 bg-button text-white rounded-lg px-1.5 py-0.5 text-xs">
-                  {count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as 'plugins' | 'marketplaces')}
+        >
+          <Tabs.List className="flex border-b border-border gap-1 mb-3">
+            {(
+              [
+                { id: 'plugins' as const, label: 'Plugins', count: installed.length },
+                { id: 'marketplaces' as const, label: 'Marketplaces', count: marketplaces.length },
+              ] as const
+            ).map(({ id, label, count }) => (
+              <Tabs.Trigger
+                key={id}
+                value={id}
+                className={cn(
+                  tabTrigger,
+                  'px-3 py-2 text-sm -mb-px transition-colors',
+                  'data-[state=active]:font-medium',
+                )}
+              >
+                {label}
+                {count > 0 && (
+                  <span className="ml-1.5 bg-button text-white rounded-lg px-1.5 py-0.5 text-xs">
+                    {count}
+                  </span>
+                )}
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
 
-        <div className="overflow-y-auto flex-1 min-h-0" style={{ height: '400px' }}>
-          {activeTab === 'plugins' && (
+          <Tabs.Content value="plugins" className="overflow-y-auto flex-1 min-h-0 h-100">
             <InstalledPluginList
               installed={installed}
               available={available}
@@ -104,9 +107,9 @@ export function ManagePluginsDialog({ open, onClose }: ManagePluginsDialogProps)
               onInstall={install}
               installing={installing}
             />
-          )}
+          </Tabs.Content>
 
-          {activeTab === 'marketplaces' && (
+          <Tabs.Content value="marketplaces" className="overflow-y-auto flex-1 min-h-0 h-100">
             <MarketplaceSection
               marketplaces={marketplaces}
               newSource={newMarketplaceSource}
@@ -116,8 +119,8 @@ export function ManagePluginsDialog({ open, onClose }: ManagePluginsDialogProps)
               onRefresh={refreshMarketplaces}
               adding={adding}
             />
-          )}
-        </div>
+          </Tabs.Content>
+        </Tabs.Root>
       </DialogContent>
     </Dialog>
   );

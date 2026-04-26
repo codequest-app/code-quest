@@ -14,3 +14,11 @@ export const focusRing =
 
 /** Default control border. */
 export const controlBorder = 'border border-border';
+
+/** Tab trigger active indicator + text color switching.
+ *  Compose with size/layout classes via cn(tabTrigger, ...). */
+export const tabTrigger =
+  'border-b-2 border-transparent text-text-muted hover:text-text data-[state=active]:border-accent data-[state=active]:text-text';
+
+/** Compact tab trigger (text-xs, standard padding). Used by dialog/panel tabs. */
+export const tabTriggerCompact = `${tabTrigger} px-3 py-1.5 text-xs -mb-px`;

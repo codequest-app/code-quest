@@ -1,11 +1,12 @@
+import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { useGitActions } from '../contexts/GitContext';
+import { tabTriggerCompact } from './ui/_tokens';
 import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
 import { CommandPreview } from './worktree-dialog/CommandPreview';
 import { ExistingPane } from './worktree-dialog/ExistingPane';
 import { NewPane } from './worktree-dialog/NewPane';
-import { TabButton } from './worktree-dialog/TabButton';
 import { autoDerivePath, buildWorktreeCommand } from './worktree-dialog-helpers';
 
 type Mode = 'existing' | 'new';
@@ -101,36 +102,38 @@ export function CreateWorktreeDialog({
     <Dialog open={open} onOpenChange={(next) => !next && resetAndClose()}>
       <DialogContent title="New worktree" className="w-120">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div role="tablist" className="flex gap-1 border-b border-border -mx-4 px-4">
-            <TabButton active={mode === 'existing'} onClick={() => setMode('existing')}>
-              Checkout existing
-            </TabButton>
-            <TabButton active={mode === 'new'} onClick={() => setMode('new')}>
-              Create new branch
-            </TabButton>
-          </div>
-
-          {mode === 'existing' ? (
-            <ExistingPane
-              branches={branches}
-              value={form.existingBranch}
-              onBranchChange={(v) => setForm((f) => ({ ...f, existingBranch: v }))}
-              path={form.existingPath}
-              placeholderPath={autoDerivePath(cwd, form.existingBranch)}
-              onPathChange={(v) => setForm((f) => ({ ...f, existingPath: v }))}
-            />
-          ) : (
-            <NewPane
-              branchName={form.newBranch}
-              onBranchNameChange={(v) => setForm((f) => ({ ...f, newBranch: v }))}
-              baseBranch={form.baseBranch}
-              baseOptions={branches.length > 0 ? branches : ['main']}
-              onBaseChange={(v) => setForm((f) => ({ ...f, baseBranch: v }))}
-              path={form.newPath}
-              placeholderPath={autoDerivePath(cwd, form.newBranch)}
-              onPathChange={(v) => setForm((f) => ({ ...f, newPath: v }))}
-            />
-          )}
+          <Tabs.Root value={mode} onValueChange={(v) => setMode(v as Mode)}>
+            <Tabs.List className="flex gap-1 border-b border-border -mx-4 px-4">
+              <Tabs.Trigger value="existing" className={tabTriggerCompact}>
+                Checkout existing
+              </Tabs.Trigger>
+              <Tabs.Trigger value="new" className={tabTriggerCompact}>
+                Create new branch
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content value="existing">
+              <ExistingPane
+                branches={branches}
+                value={form.existingBranch}
+                onBranchChange={(v) => setForm((f) => ({ ...f, existingBranch: v }))}
+                path={form.existingPath}
+                placeholderPath={autoDerivePath(cwd, form.existingBranch)}
+                onPathChange={(v) => setForm((f) => ({ ...f, existingPath: v }))}
+              />
+            </Tabs.Content>
+            <Tabs.Content value="new">
+              <NewPane
+                branchName={form.newBranch}
+                onBranchNameChange={(v) => setForm((f) => ({ ...f, newBranch: v }))}
+                baseBranch={form.baseBranch}
+                baseOptions={branches.length > 0 ? branches : ['main']}
+                onBaseChange={(v) => setForm((f) => ({ ...f, baseBranch: v }))}
+                path={form.newPath}
+                placeholderPath={autoDerivePath(cwd, form.newBranch)}
+                onPathChange={(v) => setForm((f) => ({ ...f, newPath: v }))}
+              />
+            </Tabs.Content>
+          </Tabs.Root>
 
           <CommandPreview command={previewCommand} />
           {error ? <div className="text-xs text-red-500">{error}</div> : null}
