@@ -1,30 +1,42 @@
-# command-menu-structure Specification
+## ADDED Requirements
 
-## Purpose
-TBD - created by archiving change command-menu-refactor. Update Purpose after archive.
-## Requirements
-### Requirement: buildMenuItems is a pure utility function
-buildMenuItems SHALL be extracted to a separate file as a pure function with no React dependencies. It receives params and returns MenuSections.
+### Requirement: matchFirstToken filter ignores empty first token
+`filterMenuItems` SHALL NOT match a `matchFirstToken` item when the filter's first token (before the first space) is empty. An empty string MUST NOT be treated as a universal substring match.
 
-#### Scenario: buildMenuItems is importable without React
-- **WHEN** buildMenuItems is imported in a test file
-- **THEN** it SHALL work without any React context or rendering
+#### Scenario: Leading space filter does not match every matchFirstToken item
+- **WHEN** the compose value is `/ wiki` (slash followed by space then text) producing a slash filter of `" wiki"`
+- **THEN** `filterMenuItems` SHALL return no items that are only visible because their `matchFirstToken` flag treats `""` as a match
+- **AND** `/btw` (which has `matchFirstToken: true` and label `/btw`) SHALL NOT appear in the palette
 
-#### Scenario: buildMenuItems output is stable
-- **WHEN** buildMenuItems is called with the same params
-- **THEN** it SHALL return the same menu structure
+#### Scenario: Regular matchFirstToken usage still works
+- **WHEN** the compose value is `/btw how are you` producing a slash filter of `"btw how are you"`
+- **THEN** `/btw` SHALL appear because its label contains the first token `"btw"`
 
-### Requirement: Section renderers are reusable components
-Menu section and item renderers SHALL be extracted to a parts file. Each section renders a header + list of MenuItems.
+### Requirement: Palette hides when filter contains whitespace
+The command palette SHALL hide as soon as the slash filter contains any whitespace character. Typing a space after `/` signals the user has finished picking and intends to send raw text (e.g. `/test `, `/ wiki`, `/btw hello`).
 
-#### Scenario: MenuSection renders items
-- **WHEN** MenuSection receives a label and items array
-- **THEN** it SHALL render the section header and each item
+#### Scenario: Trailing space hides the palette
+- **WHEN** the compose value is `/test ` (trailing space)
+- **THEN** the palette surface SHALL NOT render
 
-### Requirement: CommandMenu orchestrator is under 250 lines
-After extraction, CommandMenu.tsx SHALL contain only orchestration logic: state management, keyboard navigation, filtering, and composition of parts.
+#### Scenario: Leading space hides the palette
+- **WHEN** the compose value is `/ wiki` (space immediately after slash)
+- **THEN** the palette surface SHALL NOT render
 
-#### Scenario: File size check
-- **WHEN** the refactoring is complete
-- **THEN** CommandMenu.tsx SHALL be under 250 lines
+#### Scenario: Unmatched filter without whitespace keeps palette visible
+- **WHEN** the compose value is `/zzznomatch` (no whitespace, no matches)
+- **THEN** the palette SHALL render and show the "No matching commands" empty state
 
+### Requirement: Enter submits raw slash text when no palette items match
+When `slashOpen` is true but `flatItems` is empty, pressing Enter SHALL submit the compose value via the normal send path (which routes through `findSlashCommand` and falls back to `sendMessage`). The palette MUST NOT consume Enter when it has nothing to select.
+
+#### Scenario: Enter with unmatched slash sends the text
+- **WHEN** the compose value is `/test` (no registered feature matches it)
+- **AND** the user presses Enter
+- **THEN** `sendMessage("/test")` SHALL be called (which forwards to the CLI as a slash command)
+- **AND** the compose value SHALL clear
+
+#### Scenario: Enter with matched palette item still selects the item
+- **WHEN** the compose value is `/btw` (palette shows `/btw` item)
+- **AND** the user presses Enter
+- **THEN** the palette SHALL execute the selected item (unchanged behavior)
