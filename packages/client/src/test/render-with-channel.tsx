@@ -3,6 +3,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { AppInitProvider } from '../contexts/AppInitContext';
+import { CommandPaletteProvider } from '../contexts/CommandPaletteContext';
 import { ChannelProvider } from '../contexts/channel/ChannelContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
 import { PluginProvider } from '../contexts/PluginContext';
@@ -57,16 +58,18 @@ export async function renderWithChannel(
             <PluginProvider>
               <ProjectProvider>
                 <NavigationProvider>
-                  <TabProvider cwd={options.cwd}>
-                    <ChannelProvider
-                      channelId={channelId}
-                      cwd={options.cwd}
-                      launchOnMount={options.launchOnMount ?? false}
-                      onNewChannel={options.onNewChannel}
-                    >
-                      {children}
-                    </ChannelProvider>
-                  </TabProvider>
+                  <CommandPaletteProvider>
+                    <TabProvider cwd={options.cwd}>
+                      <ChannelProvider
+                        channelId={channelId}
+                        cwd={options.cwd}
+                        launchOnMount={options.launchOnMount ?? false}
+                        onNewChannel={options.onNewChannel}
+                      >
+                        {children}
+                      </ChannelProvider>
+                    </TabProvider>
+                  </CommandPaletteProvider>
                 </NavigationProvider>
               </ProjectProvider>
             </PluginProvider>

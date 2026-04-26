@@ -37,4 +37,11 @@ describe('SearchField', () => {
     render(<SearchField value="" onChange={() => {}} inputRef={ref} />);
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });
+
+  it('input uses text-base for proper scaling with font-size axis', () => {
+    render(<SearchField value="" onChange={() => {}} />);
+    const input = screen.getByRole('searchbox');
+    expect(input.className).toMatch(/text-base/);
+    expect(input.className).not.toMatch(/text-sm/);
+  });
 });

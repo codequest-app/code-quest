@@ -21,32 +21,15 @@ function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowPro
       onMouseEnter={() => onActiveChange(feature.id)}
       onClick={() => (onExecute ? onExecute(feature) : feature.execute())}
       disabled={feature.disabled}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        width: '100%',
-        padding: '8px 16px',
-        background: isActive ? 'var(--color-row-active-bg)' : 'transparent',
-        border: 'none',
-        borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
-        cursor: feature.disabled ? 'not-allowed' : 'pointer',
-        textAlign: 'left',
-        transition: 'background 0.1s',
-        opacity: feature.disabled ? 0.5 : 1,
-      }}
+      className={cn(
+        'flex items-center justify-between gap-3 w-full px-4 py-2 border-none text-left transition-[background] duration-100',
+        isActive
+          ? 'bg-row-active-bg border-l-2 border-l-accent'
+          : 'bg-transparent border-l-2 border-l-transparent',
+        feature.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+      )}
     >
-      <span
-        style={{
-          fontSize: '13px',
-          color: 'var(--color-text)',
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <span className="text-sm text-text flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
         {cmd.label}
       </span>
       {cmd.trailing && (
@@ -61,7 +44,15 @@ function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowPro
 
 type GroupState = Extract<NonNullable<Feature['state']>, { kind: 'group' }>;
 
-function GroupRow({ feature, groupState }: { feature: Feature; groupState: GroupState }) {
+function GroupRow({
+  feature,
+  groupState,
+  isActive,
+}: {
+  feature: Feature;
+  groupState: GroupState;
+  isActive: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const agg = deriveGroupAggregate(groupState.items);
 
@@ -75,7 +66,12 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
   };
 
   return (
-    <div data-testid={`group-row-${feature.id}`} data-state={agg} className="px-4 py-0.5">
+    <div
+      data-testid={`group-row-${feature.id}`}
+      data-state={agg}
+      data-active={isActive || undefined}
+      className="px-4 py-0.5"
+    >
       <div className="flex items-center h-8 gap-2">
         <button
           type="button"
@@ -153,7 +149,7 @@ function GroupRow({ feature, groupState }: { feature: Feature; groupState: Group
 export function FeatureRow(props: FeatureRowProps) {
   const state = props.feature.state;
   if (state?.kind === 'group') {
-    return <GroupRow feature={props.feature} groupState={state} />;
+    return <GroupRow feature={props.feature} groupState={state} isActive={props.isActive} />;
   }
   return <FlatRow {...props} />;
 }

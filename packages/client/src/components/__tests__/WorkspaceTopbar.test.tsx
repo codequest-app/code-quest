@@ -81,11 +81,24 @@ describe('WorkspaceTopbar', () => {
     expect(screen.getByTestId('mobile-topbar')).toBeInTheDocument();
   });
 
-  it('order (left → right): leftTrigger, children, rightTrigger, Settings', () => {
+  it('renders Search button when onOpenSearch is provided', async () => {
+    const onOpenSearch = vi.fn();
+    render(
+      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onOpenSearch={onOpenSearch}>
+        <span>content</span>
+      </WorkspaceTopbar>,
+    );
+    const btn = screen.getByRole('button', { name: /search/i });
+    await userEvent.setup().click(btn);
+    expect(onOpenSearch).toHaveBeenCalledOnce();
+  });
+
+  it('order (left → right): leftTrigger, children, rightTrigger, Search, Settings', () => {
     render(
       <WorkspaceTopbar
         mode="desktop"
         onOpenSettings={() => {}}
+        onOpenSearch={() => {}}
         onToggleLeft={() => {}}
         onToggleRight={() => {}}
       >
@@ -96,10 +109,12 @@ describe('WorkspaceTopbar', () => {
     const left = screen.getByRole('button', { name: /toggle sidebar/i });
     const content = screen.getByTestId('slot-content');
     const right = screen.getByRole('button', { name: /toggle right pane/i });
+    const search = screen.getByRole('button', { name: /search/i });
     const settings = screen.getByRole('button', { name: /settings/i });
     const indexOf = (el: Element) => Array.from(root.children).indexOf(el as HTMLElement);
     expect(indexOf(left)).toBeLessThan(indexOf(content));
     expect(indexOf(content)).toBeLessThan(indexOf(right));
-    expect(indexOf(right)).toBeLessThan(indexOf(settings));
+    expect(indexOf(right)).toBeLessThan(indexOf(search));
+    expect(indexOf(search)).toBeLessThan(indexOf(settings));
   });
 });

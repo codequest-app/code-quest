@@ -1,4 +1,5 @@
 import type { Message } from '../../types/ui';
+import { cn } from '../../utils/cn';
 import { messagePreview } from '../../utils/isMessageVisible';
 import { highlight, typeColor, typeLabel } from '../../utils/message-preview';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -7,21 +8,6 @@ import {
   PALETTE_SEARCH_LIMIT,
   paletteMessageResults,
 } from './palette-message-results';
-
-const BADGE: React.CSSProperties = {
-  fontSize: '9px',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  borderRadius: '3px',
-  padding: '2px 5px',
-  flexShrink: 0,
-  marginTop: '1px',
-  whiteSpace: 'nowrap',
-  minWidth: '90px',
-  textAlign: 'center',
-};
 
 export interface PaletteMessageListProps {
   messages: Message[];
@@ -34,6 +20,7 @@ export interface PaletteMessageListProps {
   recentCount?: number;
   searchLimit?: number;
   listRef?: React.RefObject<HTMLDivElement | null>;
+  sourceLabels?: Map<string, string>;
 }
 
 export function PaletteMessageList({
@@ -47,8 +34,13 @@ export function PaletteMessageList({
   recentCount = PALETTE_RECENT_COUNT,
   searchLimit = PALETTE_SEARCH_LIMIT,
   listRef,
+  sourceLabels,
 }: PaletteMessageListProps) {
-  const results = paletteMessageResults(messages, query, { recentCount, searchLimit });
+  const results = paletteMessageResults(messages, query, {
+    recentCount,
+    searchLimit,
+    sourceLabels,
+  });
   if (results.length === 0) return null;
 
   return (
@@ -61,72 +53,55 @@ export function PaletteMessageList({
           const label = typeLabel(msg.type);
           const preview = messagePreview(msg).slice(0, 200);
           const previewParts = highlight(preview, query);
+          const source = sourceLabels?.get(msg.id);
+          const prevSource = idx > 0 ? sourceLabels?.get(results[idx - 1].id) : undefined;
+          const showSourceHeader = source != null && source !== prevSource;
           return (
-            <button
-              key={msg.id}
-              type="button"
-              data-active={isActive || undefined}
-              onClick={() => {
-                onJumpTo(msg.id);
-                onClose();
-              }}
-              onMouseEnter={() => onActiveChange(idx)}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                width: '100%',
-                padding: '10px 16px',
-                background: isActive ? 'var(--color-row-active-bg)' : 'transparent',
-                border: 'none',
-                borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background 0.1s',
-              }}
-            >
-              <span
-                style={{
-                  ...BADGE,
-                  color,
-                  background: `${color}18`,
-                  border: `1px solid ${color}40`,
+            <div key={msg.id}>
+              {showSourceHeader && (
+                <SectionHeader data-testid="source-header" variant="prominent">
+                  {source}
+                </SectionHeader>
+              )}
+              <button
+                type="button"
+                data-active={isActive || undefined}
+                onClick={() => {
+                  onJumpTo(msg.id);
+                  onClose();
                 }}
+                onMouseEnter={() => onActiveChange(idx)}
+                className={cn(
+                  'flex items-start gap-3 w-full px-4 py-2.5 border-none cursor-pointer text-left transition-[background] duration-100',
+                  isActive
+                    ? 'bg-row-active-bg border-l-2 border-l-accent'
+                    : 'bg-transparent border-l-2 border-l-transparent',
+                )}
               >
-                {label}
-              </span>
-              <span
-                style={{
-                  fontSize: '12px',
-                  fontFamily: 'monospace',
-                  color: 'var(--color-text-muted)',
-                  lineHeight: '1.5',
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                }}
-              >
-                {previewParts.map((part, i) => {
-                  const key = part.match ? 'match' : i === 0 ? 'pre' : 'post';
-                  return part.match ? (
-                    <mark
-                      key={key}
-                      style={{
-                        background: 'var(--color-accent-mark-bg)',
-                        color: 'var(--color-accent)',
-                        borderRadius: '2px',
-                        padding: '0 1px',
-                      }}
-                    >
-                      {part.text}
-                    </mark>
-                  ) : (
-                    <span key={key}>{part.text}</span>
-                  );
-                })}
-              </span>
-            </button>
+                <span
+                  className="text-2xs font-mono font-bold tracking-wider uppercase rounded-sm px-1.5 py-0.5 shrink-0 mt-px whitespace-nowrap min-w-26 text-center"
+                  style={{
+                    color,
+                    background: `${color}18`,
+                    border: `1px solid ${color}40`,
+                  }}
+                >
+                  {label}
+                </span>
+                <span className="text-xs font-mono text-text-muted leading-normal overflow-hidden line-clamp-2">
+                  {previewParts.map((part, i) => {
+                    const key = `${i}-${part.match ? 'm' : 't'}`;
+                    return part.match ? (
+                      <mark key={key} className="bg-accent-mark-bg text-accent rounded-sm px-px">
+                        {part.text}
+                      </mark>
+                    ) : (
+                      <span key={key}>{part.text}</span>
+                    );
+                  })}
+                </span>
+              </button>
+            </div>
           );
         })}
       </div>

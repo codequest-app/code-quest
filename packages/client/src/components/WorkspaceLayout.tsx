@@ -1,16 +1,18 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { ActiveChatTabCwdProvider } from '../contexts/ActiveChatTabCwdContext';
+import { CommandPaletteProvider, useCommandPalette } from '../contexts/CommandPaletteContext';
 import { useNavigationState } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
-import { RightPaneScopeProvider } from '../contexts/RightPaneScopeContext';
 import { useSession } from '../contexts/SessionContext';
 import { TabProvider } from '../contexts/TabContext';
 import { useActiveCwd } from '../hooks/useActiveCwd';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
 import { AddProjectDialog } from './AddProjectDialog';
+import { CommandPalette } from './CommandPalette';
 import { DrawerAside } from './DrawerAside';
 import { EmptyState } from './EmptyState';
 import { ProjectTree } from './ProjectTree';
@@ -41,9 +43,28 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
  * source of the breakpoint-state-loss bug because Panels can't be both a
  * docked column and a fixed-positioned drawer.
  */
+const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
+
 export function WorkspaceLayout() {
+  return (
+    <CommandPaletteProvider>
+      <WorkspaceLayoutInner />
+    </CommandPaletteProvider>
+  );
+}
+
+function WorkspaceLayoutInner() {
+  const { openPalette, registerActions } = useCommandPalette();
+  useHotkeys('mod+k', () => openPalette(), NO_FORM);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    registerActions({
+      onAddProject: () => setDialogOpen(true),
+      onOpenSettings: () => setSettingsOpen(true),
+    });
+  }, [registerActions]);
   const { projects, activeProjectCwd } = useProjectState();
   const { sessions } = useSession();
   const { addProject, setActiveProject } = useProjectActions();
@@ -86,6 +107,7 @@ export function WorkspaceLayout() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      <CommandPalette />
       <DocumentTitle sessions={sessions} />
       {projects.length === 0 ? (
         <EmptyState
@@ -100,6 +122,7 @@ export function WorkspaceLayout() {
           <WorkspaceTopbar
             mode={isMobile ? 'mobile' : 'desktop'}
             onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSearch={() => openPalette()}
             onToggleLeft={onToggleLeft}
             onToggleRight={onToggleRight}
             sessions={sessions}
@@ -170,7 +193,7 @@ export function WorkspaceLayout() {
                   dockedWidthClass="lg:w-80"
                   testId="right-pane-drawer"
                 >
-                  <RightPaneWithCwd onClose={() => setRightOpen(false)} isMobile={isMobile} />
+                  <RightPaneWithCwd />
                 </DrawerAside>
               )}
             </div>
@@ -219,17 +242,15 @@ function ProjectsTabContainer({
   );
 }
 
-function RightPaneWithCwd({ onClose, isMobile }: { onClose: () => void; isMobile: boolean }) {
-  const activeCwd = useActiveCwd();
+function RightPaneWithCwd() {
+  const cwd = useActiveCwd();
+  if (!cwd) return null;
   return (
-    <RightPaneScopeProvider activeCwd={activeCwd}>
-      <RightPane
-        closeMode={isMobile ? 'back' : 'collapse'}
-        onClose={onClose}
-        onMention={(path) => {
-          toast(`Mention queued: ${path}`);
-        }}
-      />
-    </RightPaneScopeProvider>
+    <RightPane
+      cwd={cwd}
+      onMention={(path) => {
+        toast(`Mention queued: ${path}`);
+      }}
+    />
   );
 }

@@ -31,6 +31,7 @@ import { createResumeFeature } from '../../features/resume/resume-feature';
 import { createRewindFeature } from '../../features/rewind/rewind-feature';
 import { createUsageFeature } from '../../features/usage/usage-feature';
 import { createFeatureRegistry } from '../../lib/feature-registry';
+import { useMessageRegistryStore } from '../../stores/useMessageRegistryStore';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import {
   buildMessagesFromHistory,
@@ -415,6 +416,21 @@ export function ChannelMessagesProvider({
         }),
     };
   });
+
+  // ── Message Registry: expose messages to workspace-level consumers ──
+  const registerToRegistry = useMessageRegistryStore((s) => s.register);
+  const updateRegistry = useMessageRegistryStore((s) => s.update);
+  const unregisterFromRegistry = useMessageRegistryStore((s) => s.unregister);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: register on mount with initial messages; update effect handles subsequent changes
+  useEffect(() => {
+    registerToRegistry(channelId, { projectCwd: cwd ?? '', messages: channelState.messages });
+    return () => unregisterFromRegistry(channelId);
+  }, [channelId, cwd, registerToRegistry, unregisterFromRegistry]);
+
+  useEffect(() => {
+    updateRegistry(channelId, channelState.messages);
+  }, [channelId, channelState.messages, updateRegistry]);
 
   return (
     <FeatureRegistryContext.Provider value={registry}>

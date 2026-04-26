@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
@@ -154,6 +154,28 @@ describe('MessageVisibilityContext — other group (unknown types)', () => {
     // 'text' is a known type in conversation group — registering should be no-op for other group
     // just verify other-state stays none without any interaction
     expect(screen.getByTestId('other-state').textContent).toBe('none');
+  });
+});
+
+describe('MessageVisibilityContext — external store changes', () => {
+  it('reflects store changes made outside the context (e.g. from Settings)', async () => {
+    await renderWithChannel(<Probe />);
+    // hooks off by default
+    expect(screen.getByTestId('hooks-state').textContent).toBe('none');
+
+    // simulate Settings toggling hooks on by writing directly to store
+    const current = useMessageVisibilityStore.getState().enabledTypes;
+    const base = current ?? [];
+    act(() => {
+      useMessageVisibilityStore
+        .getState()
+        .setEnabledTypes([...base, 'hook_started', 'hook_response', 'hook_diagnostics']);
+    });
+
+    // context should pick up the change
+    expect(screen.getByTestId('hooks-state').textContent).toBe('all');
+    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    expect(enabled).toContain('hook_started');
   });
 });
 

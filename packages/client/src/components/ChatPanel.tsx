@@ -2,6 +2,7 @@ import type { SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
+import { useCommandPalette } from '../contexts/CommandPaletteContext';
 import {
   useChannelComposeActions,
   useChannelConfig,
@@ -18,14 +19,13 @@ import { resumeOpenSignal } from '../features/resume/resume-feature';
 import { cn } from '../utils/cn';
 import { resumeRoute } from '../utils/resume-route';
 import { ChatInputArea } from './ChatInputArea';
-import { CommandPalette } from './CommandPalette';
 import { ContentPreviewDialog } from './ContentPreviewDialog';
 import { ElicitationDialog } from './ElicitationDialog';
 import { HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
-import { SessionHistoryPopover } from './SessionHistoryPopover';
+import { SessionDropdown } from './SessionDropdown';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
@@ -52,11 +52,11 @@ export function ChatPanel({ title }: { title?: string }) {
     cancelElicitation,
   } = useChannelControl();
 
+  const { openPalette, registerJumpTo, unregisterJumpTo } = useCommandPalette();
   const resumeIsOpen = useSyncExternalStore(
     (cb) => resumeOpenSignal.subscribe(cb),
     () => resumeOpenSignal.isOpen,
   );
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
   const [showResumeOverlay, setShowResumeOverlay] = useState(false);
@@ -119,9 +119,15 @@ export function ChatPanel({ title }: { title?: string }) {
     if (resumeIsOpen) openResumeOverlay();
   }, [resumeIsOpen]);
 
+  useEffect(() => {
+    if (!channelId) return;
+    const scrollTo = (messageId: string) => messageListRef.current?.scrollToMessage(messageId);
+    registerJumpTo(channelId, scrollTo);
+    return () => unregisterJumpTo(channelId);
+  }, [channelId, registerJumpTo, unregisterJumpTo]);
+
   useHotkeys('/', () => focusTextarea(), NO_FORM);
-  useHotkeys('mod+k', () => setCommandPaletteOpen(true), NO_FORM);
-  useHotkeys('mod+f', () => setCommandPaletteOpen(true), NO_FORM);
+  useHotkeys('mod+f', () => openPalette({ tab: 'messages' }), NO_FORM);
 
   if (!channelId) {
     return (
@@ -154,37 +160,22 @@ export function ChatPanel({ title }: { title?: string }) {
         />
       )}
       <div ref={chatColumnRef} className="relative flex flex-col flex-1 min-w-0">
-        <HeaderBar
-          title={title}
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          resumeSlot={
-            <SessionHistoryPopover
-              open={showResumeOverlay}
-              onOpenChange={(open) => {
-                if (open) {
-                  openResumeOverlay();
-                } else {
-                  setShowResumeOverlay(false);
-                  resumeOpenSignal.setOpen(false);
-                }
-              }}
-              sessions={resumeSessions.sessions}
-              loading={resumeLoading}
-              onSelect={handleResumeSelect}
-              onRename={renameSession}
-              onDelete={handleDelete}
-            />
-          }
-        />
+        <HeaderBar title={title} onOpenResume={openResumeOverlay} />
         {worktree && <WorktreeBanner worktree={worktree} />}
-        <CommandPalette
-          open={commandPaletteOpen}
-          onClose={() => setCommandPaletteOpen(false)}
-          onJumpTo={(id) => messageListRef.current?.scrollToMessage(id)}
-          onToggleRawPanel={() => setActiveSidePanel((v) => (v === 'raw' ? null : 'raw'))}
-          rawPanelActive={activeSidePanel === 'raw'}
-        />
         <MessageList ref={messageListRef} />
+        {showResumeOverlay && (
+          <SessionDropdown
+            sessions={resumeSessions.sessions}
+            loading={resumeLoading}
+            onSelect={handleResumeSelect}
+            onClose={() => {
+              setShowResumeOverlay(false);
+              resumeOpenSignal.setOpen(false);
+            }}
+            onRename={renameSession}
+            onDelete={handleDelete}
+          />
+        )}
         <SideQuestionDialog
           open={sideQuestion.open}
           question={sideQuestion.question}

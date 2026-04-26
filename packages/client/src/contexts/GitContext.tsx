@@ -88,7 +88,7 @@ interface WorktreeActions {
   refetchGitStatus: (cwd: string) => Promise<void>;
 }
 
-export const GitStateContext = createContext<WorktreeState | null>(null);
+const GitStateContext = createContext<WorktreeState | null>(null);
 const GitActionsContext = createContext<WorktreeActions | null>(null);
 
 export function useGitState(): WorktreeState {

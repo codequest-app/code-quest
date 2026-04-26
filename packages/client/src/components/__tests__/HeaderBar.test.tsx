@@ -35,25 +35,9 @@ describe('HeaderBar (context mode)', () => {
     expect(screen.getByText(`${channelId.slice(0, 8)}…`)).toBeInTheDocument();
   });
 
-  it('shows ⌘K button by default (no props needed)', async () => {
+  it('does not show command palette button (moved to workspace topbar)', async () => {
     await renderHeaderBar();
-    expect(screen.getByTitle('Command Palette (⌘K)')).toBeInTheDocument();
-  });
-});
-
-describe('HeaderBar actions', () => {
-  it('calls onOpenCommandPalette when ⌘K button clicked', async () => {
-    const onOpenCommandPalette = vi.fn();
-    const user = userEvent.setup();
-    await renderHeaderBar({ onOpenCommandPalette });
-    await user.click(screen.getByTitle('Command Palette (⌘K)'));
-    expect(onOpenCommandPalette).toHaveBeenCalledOnce();
-  });
-
-  it('does not show Raw or Search buttons', async () => {
-    await renderHeaderBar();
-    expect(screen.queryByTitle('Raw Events')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Search messages')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Command Palette (⌘K)')).not.toBeInTheDocument();
   });
 });
 
@@ -67,19 +51,21 @@ describe('HeaderBar layout', () => {
   });
 });
 
-describe('HeaderBar resumeSlot', () => {
-  it('renders resumeSlot when provided', async () => {
-    await renderHeaderBar({
-      resumeSlot: (
-        <button type="button" title="Session history">
-          history
-        </button>
-      ),
-    });
+describe('HeaderBar resume button', () => {
+  it('shows clock/history button', async () => {
+    await renderHeaderBar({ onOpenResume: vi.fn() });
     expect(screen.getByTitle('Session history')).toBeInTheDocument();
   });
 
-  it('does not render resumeSlot when not provided', async () => {
+  it('calls onOpenResume when clock button clicked', async () => {
+    const onOpenResume = vi.fn();
+    const user = userEvent.setup();
+    await renderHeaderBar({ onOpenResume });
+    await user.click(screen.getByTitle('Session history'));
+    expect(onOpenResume).toHaveBeenCalledOnce();
+  });
+
+  it('does not show clock button when onOpenResume is not provided', async () => {
     await renderHeaderBar();
     expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
   });

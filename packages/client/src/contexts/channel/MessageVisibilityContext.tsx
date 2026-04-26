@@ -10,8 +10,9 @@ import {
   type ComponentType,
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
-  useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { useMessageVisibilityStore } from '../../stores/useMessageVisibilityStore';
@@ -91,7 +92,7 @@ export const OTHER_GROUP_ICON = QuestionMarkCircleIcon;
 
 const DEFAULT_ON_GROUPS: GroupId[] = ['conversation', 'tools', 'system'];
 
-function defaultEnabledTypes(): Set<string> {
+export function defaultEnabledTypes(): Set<string> {
   const types = new Set<string>();
   for (const g of VISIBILITY_GROUPS) {
     if (DEFAULT_ON_GROUPS.includes(g.id)) {
@@ -115,71 +116,94 @@ const MessageVisibilityContext = createContext<MessageVisibilityContextValue | n
 const ALL_KNOWN_TYPES = new Set(VISIBILITY_GROUPS.flatMap((g) => g.types));
 
 export function MessageVisibilityProvider({ children }: { children: ReactNode }) {
-  const [enabledTypes, setEnabledTypes] = useState<Set<string>>(() => {
-    const stored = useMessageVisibilityStore.getState().enabledTypes;
-    return stored !== null ? new Set(stored) : defaultEnabledTypes();
-  });
+  const storedTypes = useMessageVisibilityStore((s) => s.enabledTypes);
+  const setStoredTypes = useMessageVisibilityStore((s) => s.setEnabledTypes);
+
+  const enabledTypes = useMemo(
+    () => (storedTypes !== null ? new Set(storedTypes) : defaultEnabledTypes()),
+    [storedTypes],
+  );
+
   const [unknownTypes, setUnknownTypes] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    useMessageVisibilityStore.getState().setEnabledTypes([...enabledTypes]);
-  }, [enabledTypes]);
+  const updateStore = useCallback(
+    (updater: (prev: Set<string>) => Set<string>) => {
+      const next = updater(enabledTypes);
+      setStoredTypes([...next]);
+    },
+    [enabledTypes, setStoredTypes],
+  );
 
-  const toggleTypeSet = (types: Iterable<string>) => {
-    setEnabledTypes((prev) => {
-      const next = new Set(prev);
-      const allOn = [...types].every((t) => next.has(t));
-      if (allOn) {
-        for (const t of types) next.delete(t);
-      } else {
-        for (const t of types) next.add(t);
-      }
-      return next;
-    });
-  };
+  const toggleTypeSet = useCallback(
+    (types: Iterable<string>) => {
+      updateStore((prev) => {
+        const next = new Set(prev);
+        const allOn = [...types].every((t) => next.has(t));
+        if (allOn) {
+          for (const t of types) next.delete(t);
+        } else {
+          for (const t of types) next.add(t);
+        }
+        return next;
+      });
+    },
+    [updateStore],
+  );
 
-  const toggleGroup = (id: GroupId) => {
-    if (id === 'other') return toggleTypeSet(unknownTypes);
-    const group = VISIBILITY_GROUPS.find((g) => g.id === id);
-    if (!group) return;
-    toggleTypeSet(group.types);
-  };
+  const toggleGroup = useCallback(
+    (id: GroupId) => {
+      if (id === 'other') return toggleTypeSet(unknownTypes);
+      const group = VISIBILITY_GROUPS.find((g) => g.id === id);
+      if (!group) return;
+      toggleTypeSet(group.types);
+    },
+    [toggleTypeSet, unknownTypes],
+  );
 
-  const toggleType = (type: string) => {
-    setEnabledTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
-  };
+  const toggleType = useCallback(
+    (type: string) => {
+      updateStore((prev) => {
+        const next = new Set(prev);
+        if (next.has(type)) next.delete(type);
+        else next.add(type);
+        return next;
+      });
+    },
+    [updateStore],
+  );
 
-  const groupState = (id: GroupId): GroupState => {
-    const types =
-      id === 'other'
-        ? [...unknownTypes]
-        : (VISIBILITY_GROUPS.find((g) => g.id === id)?.types ?? []);
-    if (types.length === 0) return 'none';
-    const on = types.filter((t) => enabledTypes.has(t)).length;
-    if (on === 0) return 'none';
-    if (on === types.length) return 'all';
-    return 'partial';
-  };
+  const groupState = useCallback(
+    (id: GroupId): GroupState => {
+      const types =
+        id === 'other'
+          ? [...unknownTypes]
+          : (VISIBILITY_GROUPS.find((g) => g.id === id)?.types ?? []);
+      if (types.length === 0) return 'none';
+      const on = types.filter((t) => enabledTypes.has(t)).length;
+      if (on === 0) return 'none';
+      if (on === types.length) return 'all';
+      return 'partial';
+    },
+    [enabledTypes, unknownTypes],
+  );
 
-  const registerUnknownType = (type: string) => {
-    if (ALL_KNOWN_TYPES.has(type)) return;
-    if (unknownTypes.has(type)) return;
-    setUnknownTypes((prev) => {
-      const s = new Set(prev);
-      s.add(type);
-      return s;
-    });
-    setEnabledTypes((prev) => {
-      const s = new Set(prev);
-      s.add(type);
-      return s;
-    });
-  };
+  const registerUnknownType = useCallback(
+    (type: string) => {
+      if (ALL_KNOWN_TYPES.has(type)) return;
+      if (unknownTypes.has(type)) return;
+      setUnknownTypes((prev) => {
+        const s = new Set(prev);
+        s.add(type);
+        return s;
+      });
+      updateStore((prev) => {
+        const s = new Set(prev);
+        s.add(type);
+        return s;
+      });
+    },
+    [unknownTypes, updateStore],
+  );
 
   return (
     <MessageVisibilityContext.Provider

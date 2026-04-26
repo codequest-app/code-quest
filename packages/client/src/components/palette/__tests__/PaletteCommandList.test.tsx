@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Feature } from '../../../lib/feature';
-import { PaletteCommandList } from '../PaletteCommandList';
+import { flatFilteredFeatures, PaletteCommandList } from '../PaletteCommandList';
 
 const feat = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',
@@ -108,6 +108,31 @@ describe('PaletteCommandList', () => {
     });
     const [, second] = screen.getAllByRole('button');
     expect(second).toHaveAttribute('data-active');
+  });
+
+  it('flatFilteredFeatures returns features in render order (grouped by section, sorted by order)', () => {
+    const features = [
+      feat({ id: 'a', label: 'A', section: 'Customize', order: 2 }),
+      feat({ id: 'b', label: 'B', section: 'Filters' }),
+      feat({ id: 'c', label: 'C', section: 'Customize', order: 1 }),
+    ];
+    const result = flatFilteredFeatures(features, '');
+    // Customize first-seen (a), then Filters (b). Within Customize: order 1 (c) before order 2 (a)
+    expect(result.map((f) => f.id)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('flatFilteredFeatures filters by query', () => {
+    const features = [
+      feat({ id: 'a', label: 'Switch theme', section: 'Settings' }),
+      feat({ id: 'b', label: 'Toggle density', section: 'Settings' }),
+    ];
+    const result = flatFilteredFeatures(features, 'theme');
+    expect(result.map((f) => f.id)).toEqual(['a']);
+  });
+
+  it('flatFilteredFeatures returns empty array when nothing matches', () => {
+    const features = [feat({ id: 'a', label: 'A' })];
+    expect(flatFilteredFeatures(features, 'zzz')).toEqual([]);
   });
 
   it('renders trailing from toPaletteCommand adapter (toggle state as ON pill)', () => {

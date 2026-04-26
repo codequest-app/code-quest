@@ -1,6 +1,12 @@
 import type { SessionStateSummary } from '@code-quest/shared';
-import { Bars3Icon, Cog6ToothIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
+import {
+  Bars3Icon,
+  Cog6ToothIcon,
+  MagnifyingGlassIcon,
+  RectangleGroupIcon,
+} from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
+import { cn } from '../utils/cn';
 import { TopbarLiveSessions } from './TopbarLiveSessions';
 import { IconButton } from './ui/IconButton';
 
@@ -15,6 +21,8 @@ interface Props {
   onToggleLeft?: () => void;
   /** Toggle the right pane — desktop: collapse/expand Panel; tablet/mobile: open drawer. */
   onToggleRight?: () => void;
+  /** Open the command palette / search. */
+  onOpenSearch?: () => void;
   /** The rest of the topbar contents (currently the TopScopeSwitcher). */
   children: ReactNode;
   /** Live sessions for the inline pill list. */
@@ -28,18 +36,21 @@ const ROOT_CLASS: Record<Mode, string> = {
   mobile: 'flex items-center gap-2 h-11 px-3 border-b border-border bg-surface shrink-0',
 };
 
-const Brand = () => (
-  <span className="hidden md:inline-flex items-center gap-1.5 px-2 mr-1 text-sm font-semibold text-text">
-    <span className="text-accent text-base leading-none">✦</span>
-    <span className="font-mono text-xs tracking-wide">cc-office</span>
-  </span>
-);
+function Brand() {
+  return (
+    <span className="hidden md:inline-flex items-center gap-1.5 px-2 mr-1 text-sm font-semibold text-text">
+      <span className="text-accent text-base leading-none">✦</span>
+      <span className="font-mono text-xs tracking-wide">cc-office</span>
+    </span>
+  );
+}
 
 export function WorkspaceTopbar({
   mode,
   onOpenSettings,
   onToggleLeft,
   onToggleRight,
+  onOpenSearch,
   children,
   sessions,
   onActivateSession,
@@ -68,16 +79,26 @@ export function WorkspaceTopbar({
           variant="plain"
           aria-label="Toggle right pane"
           onClick={onToggleRight}
-          className={`ml-auto ${ACTION_CLASS}`}
+          className={cn('ml-auto', ACTION_CLASS)}
         >
           <RectangleGroupIcon className="w-5 h-5" />
+        </IconButton>
+      )}
+      {onOpenSearch && (
+        <IconButton
+          variant="plain"
+          aria-label="Search"
+          onClick={onOpenSearch}
+          className={cn(!onToggleRight && 'ml-auto', ACTION_CLASS)}
+        >
+          <MagnifyingGlassIcon className="w-5 h-5" />
         </IconButton>
       )}
       <IconButton
         variant="plain"
         aria-label="Settings"
         onClick={onOpenSettings}
-        className={`${onToggleRight ? '' : 'ml-auto '}${ACTION_CLASS}`}
+        className={cn(!onToggleRight && !onOpenSearch && 'ml-auto', ACTION_CLASS)}
       >
         <Cog6ToothIcon className="w-5 h-5" />
       </IconButton>

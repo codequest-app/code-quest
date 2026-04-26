@@ -34,6 +34,39 @@ describe('paletteMessageResults', () => {
     ]);
   });
 
+  it('per-source recent: takes recentCount from each source when sourceLabels provided', () => {
+    const sourceLabels = new Map([
+      ['1', 'A'],
+      ['2', 'A'],
+      ['3', 'A'],
+      ['4', 'A'],
+      ['5', 'A'],
+      ['6', 'B'],
+      ['7', 'B'],
+      ['8', 'B'],
+      ['9', 'B'],
+      ['10', 'B'],
+    ]);
+    const result = paletteMessageResults(messages, '', { recentCount: 2, sourceLabels });
+    expect(result.map((x) => x.id)).toEqual(['4', '5', '9', '10']);
+  });
+
+  it('per-source recent: single source behaves same as global recent', () => {
+    const sourceLabels = new Map(messages.map((m) => [m.id, 'A']));
+    const result = paletteMessageResults(messages, '', { recentCount: 3, sourceLabels });
+    expect(result.map((x) => x.id)).toEqual(['8', '9', '10']);
+  });
+
+  it('per-source: query search ignores sourceLabels grouping (searches all)', () => {
+    const sourceLabels = new Map([
+      ['1', 'A'],
+      ['2', 'A'],
+      ['5', 'B'],
+    ]);
+    const result = paletteMessageResults(messages, 'msg 5', { sourceLabels });
+    expect(result.map((x) => x.id)).toEqual(['5']);
+  });
+
   it('filters by query case-insensitively and caps at searchLimit', () => {
     expect(paletteMessageResults(messages, 'MSG 5').map((x) => x.id)).toEqual(['5']);
     expect(paletteMessageResults(messages, '  ').map((x) => x.id)).toEqual(

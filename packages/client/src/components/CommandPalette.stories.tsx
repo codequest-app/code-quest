@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import { useEffect } from 'react';
+import { CommandPaletteProvider, useCommandPalette } from '../contexts/CommandPaletteContext';
+import { useMessageRegistryStore } from '../stores/useMessageRegistryStore';
 import { withStoryChannel, withThemePreset } from '../test/story-decorator';
 import type { Message } from '../types/ui';
 import { CommandPalette } from './CommandPalette';
@@ -29,30 +31,71 @@ const messages: Message[] = [
   } as Message,
 ];
 
+function AutoOpen({ tab }: { tab?: string }) {
+  const { openPalette } = useCommandPalette();
+  useEffect(() => {
+    openPalette(tab ? { tab } : undefined);
+  }, [openPalette, tab]);
+  return null;
+}
+
+function SeedRegistry() {
+  useEffect(() => {
+    useMessageRegistryStore.getState().register('story', { projectCwd: '/demo', messages });
+    return () => useMessageRegistryStore.getState().unregister('story');
+  }, []);
+  return null;
+}
+
+function PaletteStory({ tab }: { tab?: string }) {
+  return (
+    <CommandPaletteProvider>
+      <SeedRegistry />
+      <AutoOpen tab={tab} />
+      <CommandPalette />
+    </CommandPaletteProvider>
+  );
+}
+
 const meta = {
   component: CommandPalette,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-  args: { open: true, onClose: fn(), onJumpTo: fn(), onToggleRawPanel: fn() },
   decorators: [withStoryChannel({ messages: { messages }, className: 'h-screen bg-bg text-text' })],
 } satisfies Meta<typeof CommandPalette>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
-export const RawPanelActive: Story = { args: { rawPanelActive: true } };
-export const Closed: Story = { args: { open: false } };
+export const Default: Story = {
+  render: () => <PaletteStory />,
+};
+
+export const MessagesTab: Story = {
+  render: () => <PaletteStory tab="messages" />,
+};
+
+export const Mobile: Story = {
+  parameters: { viewport: { defaultViewport: 'mobile1' } },
+  render: () => <PaletteStory />,
+};
 
 export const DarkComfortable: Story = {
   decorators: [withThemePreset({ theme: 'dark', density: 'comfortable' })],
+  render: () => <PaletteStory />,
 };
+
 export const DarkCompact: Story = {
   decorators: [withThemePreset({ theme: 'dark', density: 'compact' })],
+  render: () => <PaletteStory />,
 };
+
 export const LightComfortable: Story = {
   decorators: [withThemePreset({ theme: 'light', density: 'comfortable' })],
+  render: () => <PaletteStory />,
 };
+
 export const LightCompact: Story = {
   decorators: [withThemePreset({ theme: 'light', density: 'compact' })],
+  render: () => <PaletteStory />,
 };

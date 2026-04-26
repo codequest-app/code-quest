@@ -103,4 +103,48 @@ describe('PaletteMessageList', () => {
     renderList({ messages: [msg('1', 'A')] });
     expect(screen.queryByText(/messages/i)).toBeNull();
   });
+
+  it('inserts section header when source changes between adjacent messages', () => {
+    const sourceLabels = new Map([
+      ['1', 'proj-A / abc12345'],
+      ['2', 'proj-A / abc12345'],
+      ['3', 'proj-B / def67890'],
+    ]);
+    renderList({ messages: [msg('1', 'A'), msg('2', 'B'), msg('3', 'C')], sourceLabels });
+    expect(screen.getByText('proj-A / abc12345')).toBeInTheDocument();
+    expect(screen.getByText('proj-B / def67890')).toBeInTheDocument();
+  });
+
+  it('does not insert section headers when sourceLabels is not provided', () => {
+    renderList({ messages: [msg('1', 'A'), msg('2', 'B')] });
+    expect(screen.queryByTestId('source-header')).toBeNull();
+  });
+
+  it('renders only one section header for consecutive messages from the same source', () => {
+    const sourceLabels = new Map([
+      ['1', 'proj-A / abc12345'],
+      ['2', 'proj-A / abc12345'],
+    ]);
+    renderList({ messages: [msg('1', 'A'), msg('2', 'B')], sourceLabels });
+    const headers = screen.getAllByTestId('source-header');
+    expect(headers).toHaveLength(1);
+    expect(headers[0]).toHaveTextContent('proj-A / abc12345');
+  });
+
+  it('source headers use prominent variant (border-b)', () => {
+    const sourceLabels = new Map([['1', 'proj-A / abc12345']]);
+    renderList({ messages: [msg('1', 'A')], sourceLabels });
+    const header = screen.getByTestId('source-header');
+    expect(header.className).toMatch(/border-b/);
+    expect(header.className).toMatch(/text-text-muted/);
+  });
+
+  it('section headers do not affect button count (keyboard nav unbroken)', () => {
+    const sourceLabels = new Map([
+      ['1', 'proj-A / abc12345'],
+      ['2', 'proj-B / def67890'],
+    ]);
+    renderList({ messages: [msg('1', 'A'), msg('2', 'B')], sourceLabels });
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+  });
 });

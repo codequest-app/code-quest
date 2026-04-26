@@ -1,18 +1,4 @@
-# header-bar Specification
-
-## Purpose
-TBD - created by archiving change command-palette. Update Purpose after archive.
-## Requirements
-### Requirement: Single ⌘K trigger replaces all toolbar buttons
-HeaderBar SHALL expose only `onOpenCommandPalette` — all other action props (onToggleRaw, rawActive, onOpenSpotlight) MUST be removed.
-
-#### Scenario: Only ⌘K button visible
-- **WHEN** HeaderBar renders
-- **THEN** only the ⌘K / search icon button is present; no raw-toggle or filter buttons
-
-#### Scenario: onOpenCommandPalette called on click
-- **WHEN** user clicks the ⌘K button
-- **THEN** onOpenCommandPalette callback is invoked
+## ADDED Requirements
 
 ### Requirement: Topbar exposes a search button that opens the command palette
 
@@ -29,4 +15,3 @@ The workspace topbar (`WorkspaceTopbar`) SHALL render a `⌕` (magnifying glass)
 #### Scenario: Mobile entry point
 - **WHEN** the viewport is `< 768px`
 - **THEN** the search button remains visible in the topbar (mobile users have no keyboard `⌘K` access)
-

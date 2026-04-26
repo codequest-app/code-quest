@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn';
 import { SectionHeader } from '../ui/SectionHeader';
 import { FeatureRow } from './FeatureRow';
 
-export interface PaletteCommandListProps {
+interface PaletteCommandListProps {
   features: Feature[];
   query: string;
   activeId: string | null;
@@ -36,8 +36,12 @@ function groupAndFilter(features: Feature[], query: string) {
   }
   return order.map((label) => ({
     label,
-    features: [...(bucket.get(label) ?? [])].sort(byOrder),
+    features: (bucket.get(label) ?? []).sort(byOrder),
   }));
+}
+
+export function flatFilteredFeatures(features: Feature[], query: string): Feature[] {
+  return groupAndFilter(features, query).flatMap((g) => g.features);
 }
 
 export function PaletteCommandList({
