@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
+import { cn } from '../utils/cn';
 import { SessionHistory } from './SessionHistory';
 
 interface ResumeSessionsDropdownProps {
@@ -61,9 +62,15 @@ export function ResumeSessionsDropdown({ cwd, open, onOpenChange }: ResumeSessio
         <Dialog.Overlay className="fixed inset-0 z-popover bg-black/40" />
         <Dialog.Content
           aria-label="Session list"
-          data-testid="session-dropdown-panel"
+          data-testid="session-history-dialog"
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="fixed z-popover top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-100 max-h-[50vh] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden"
+          className={cn(
+            'fixed z-popover top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+            'w-[calc(100vw-2rem)] max-w-100 lg:max-w-lg',
+            'max-h-[calc(100dvh-4rem)]',
+            'bg-surface border border-border rounded-xl',
+            'flex flex-col shadow-floating overflow-hidden',
+          )}
         >
           <SessionHistory
             sessions={sessions}

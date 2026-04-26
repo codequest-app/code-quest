@@ -4,7 +4,7 @@ import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 import { isThinkingActive } from '../utils/thinking';
 
-const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
+export const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
 
 const THINKING_LABELS: Record<string, string> = {
   default_on: 'Thinking',
@@ -15,8 +15,6 @@ const THINKING_LABELS: Record<string, string> = {
 function thinkingLevelLabel(level: string): string {
   return THINKING_LABELS[level] ?? `Thinking · ${level}`;
 }
-
-export { HDR_BTN };
 
 export interface HeaderBarProps {
   title?: string | null;
