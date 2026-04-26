@@ -10,3 +10,7 @@ import { createJSONStorage, type PersistStorage } from 'zustand/middleware';
 export function localStoragePersist<S>(): PersistStorage<S> | undefined {
   return createJSONStorage<S>(() => window.localStorage);
 }
+
+export function sessionStoragePersist<S>(): PersistStorage<S> | undefined {
+  return createJSONStorage<S>(() => window.sessionStorage);
+}

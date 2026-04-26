@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { ActiveChatTabCwdProvider } from '../contexts/ActiveChatTabCwdContext';
 import { useNavigationState } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
+import { RightPaneScopeProvider } from '../contexts/RightPaneScopeContext';
 import { useSession } from '../contexts/SessionContext';
 import { TabProvider } from '../contexts/TabContext';
 import { useActiveCwd } from '../hooks/useActiveCwd';
@@ -169,7 +170,7 @@ export function WorkspaceLayout() {
                   dockedWidthClass="lg:w-80"
                   testId="right-pane-drawer"
                 >
-                  <RightPaneWithCwd />
+                  <RightPaneWithCwd onClose={() => setRightOpen(false)} isMobile={isMobile} />
                 </DrawerAside>
               )}
             </div>
@@ -218,15 +219,17 @@ function ProjectsTabContainer({
   );
 }
 
-function RightPaneWithCwd() {
-  const cwd = useActiveCwd();
-  if (!cwd) return null;
+function RightPaneWithCwd({ onClose, isMobile }: { onClose: () => void; isMobile: boolean }) {
+  const activeCwd = useActiveCwd();
   return (
-    <RightPane
-      cwd={cwd}
-      onMention={(path) => {
-        toast(`Mention queued: ${path}`);
-      }}
-    />
+    <RightPaneScopeProvider activeCwd={activeCwd}>
+      <RightPane
+        closeMode={isMobile ? 'back' : 'collapse'}
+        onClose={onClose}
+        onMention={(path) => {
+          toast(`Mention queued: ${path}`);
+        }}
+      />
+    </RightPaneScopeProvider>
   );
 }

@@ -11,11 +11,17 @@ vi.stubEnv('VITE_TRANSPORT', 'socketio');
 import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore';
 import { useMessageVisibilityStore } from '../stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useRightPaneScopeStore } from '../stores/useRightPaneScopeStore';
 import { memoryBackend, memoryPersist } from './memory-persist-storage';
 
 // DI: swap each persisted store's storage adapter from localStorage to the
 // in-memory backend. Production stores know nothing about tests.
-for (const store of [useExpandedProjectsStore, useMessageVisibilityStore, usePreferencesStore]) {
+for (const store of [
+  useExpandedProjectsStore,
+  useMessageVisibilityStore,
+  usePreferencesStore,
+  useRightPaneScopeStore,
+]) {
   store.persist.setOptions({ storage: memoryPersist() });
 }
 
@@ -24,6 +30,7 @@ beforeEach(() => {
   useExpandedProjectsStore.setState({ expanded: [] });
   useMessageVisibilityStore.setState({ enabledTypes: null });
   usePreferencesStore.setState({ hiddenItems: ['onboarding-overlay'] });
+  useRightPaneScopeStore.setState({ scope: { mode: 'follow' } });
 });
 
 afterEach(() => {
