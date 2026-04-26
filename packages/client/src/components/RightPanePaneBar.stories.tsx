@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RightPaneScopeProvider } from '../contexts/RightPaneScopeContext';
+import { useRightPaneScopeStore } from '../stores/useRightPaneScopeStore';
 import { RightPanePaneBar } from './RightPanePaneBar';
 
 const meta = {
@@ -31,10 +32,7 @@ export const Follow: Story = {
 export const Pinned: Story = {
   decorators: [
     (Story) => {
-      sessionStorage.setItem(
-        'right-pane-scope',
-        JSON.stringify({ mode: 'pinned', cwd: '/projects/my-app' }),
-      );
+      useRightPaneScopeStore.setState({ scope: { mode: 'pinned', cwd: '/projects/my-app' } });
       return (
         <RightPaneScopeProvider activeCwd="/projects/other">
           <Story />

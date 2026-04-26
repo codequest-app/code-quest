@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRightPaneCwd } from '../contexts/RightPaneScopeContext';
 import { FilesPane } from './FilesPane';
 import { GitPane } from './GitPane';
-import { RightPanePaneBar, type RightPanePaneBarProps } from './RightPanePaneBar';
+import { RightPanePaneBar } from './RightPanePaneBar';
 import { SpecPane } from './SpecPane';
 
 type TabKind = 'files' | 'git' | 'spec';
@@ -21,14 +21,16 @@ const TABS: TabSpec[] = [
   { key: 'spec', label: 'Spec', icon: <ClipboardDocumentListIcon className="w-4 h-4" /> },
 ];
 
-export interface RightPaneProps extends RightPanePaneBarProps {
+export interface RightPaneProps {
+  closeMode: 'collapse' | 'back';
+  onClose?: () => void;
   onMention: (path: string) => void;
 }
 
 const TRIGGER_BASE =
   'flex-1 h-9 inline-flex items-center justify-center gap-1.5 text-xs border-b-2 border-transparent text-text-muted hover:text-text outline-none data-[state=active]:border-accent data-[state=active]:text-text';
 
-export function RightPane({ onMention, ...paneBarProps }: RightPaneProps) {
+export function RightPane({ closeMode, onClose, onMention }: RightPaneProps) {
   const cwd = useRightPaneCwd();
   const [active, setActive] = useState<TabKind>('files');
   const [mounted, setMounted] = useState<ReadonlySet<TabKind>>(() => new Set(['files']));
@@ -45,7 +47,7 @@ export function RightPane({ onMention, ...paneBarProps }: RightPaneProps) {
       onValueChange={handleTabChange}
       className="flex flex-col h-full bg-surface"
     >
-      <RightPanePaneBar {...paneBarProps} />
+      <RightPanePaneBar closeMode={closeMode} onClose={onClose} />
       <Tabs.List className="flex border-b border-border">
         {TABS.map(({ key, label, icon }) => (
           <Tabs.Trigger key={key} value={key} className={TRIGGER_BASE}>

@@ -1,15 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { WorktreeListingEntry } from '../../contexts/GitContext';
 import { GitStateContext } from '../../contexts/GitContext';
 import type { Project } from '../../contexts/ProjectContext';
 import { ProjectStateContext } from '../../contexts/ProjectContext';
 import { RightPaneScopeProvider, useRightPaneScope } from '../../contexts/RightPaneScopeContext';
+import { useRightPaneScopeStore } from '../../stores/useRightPaneScopeStore';
 import { ScopePicker } from '../ScopePicker';
-
-afterEach(() => sessionStorage.clear());
 
 function HookReader() {
   const scope = useRightPaneScope();
@@ -37,7 +36,7 @@ function setup({
   pinnedCwd?: string;
 } = {}) {
   if (pinnedCwd) {
-    sessionStorage.setItem('right-pane-scope', JSON.stringify({ mode: 'pinned', cwd: pinnedCwd }));
+    useRightPaneScopeStore.setState({ scope: { mode: 'pinned', cwd: pinnedCwd } });
   }
 
   function Wrapper({ children }: { children: ReactNode }) {

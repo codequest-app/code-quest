@@ -170,11 +170,7 @@ export function WorkspaceLayout() {
                   dockedWidthClass="lg:w-80"
                   testId="right-pane-drawer"
                 >
-                  <RightPaneWithCwd
-                    onCollapse={() => setRightOpen(false)}
-                    onBack={() => setRightOpen(false)}
-                    isMobile={isMobile}
-                  />
+                  <RightPaneWithCwd onClose={() => setRightOpen(false)} isMobile={isMobile} />
                 </DrawerAside>
               )}
             </div>
@@ -223,22 +219,13 @@ function ProjectsTabContainer({
   );
 }
 
-function RightPaneWithCwd({
-  onCollapse,
-  onBack,
-  isMobile,
-}: {
-  onCollapse: () => void;
-  onBack: () => void;
-  isMobile: boolean;
-}) {
+function RightPaneWithCwd({ onClose, isMobile }: { onClose: () => void; isMobile: boolean }) {
   const activeCwd = useActiveCwd();
   return (
     <RightPaneScopeProvider activeCwd={activeCwd}>
       <RightPane
         closeMode={isMobile ? 'back' : 'collapse'}
-        onCollapse={onCollapse}
-        onBack={onBack}
+        onClose={onClose}
         onMention={(path) => {
           toast(`Mention queued: ${path}`);
         }}

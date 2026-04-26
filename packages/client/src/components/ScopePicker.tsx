@@ -1,12 +1,8 @@
 import * as Popover from '@radix-ui/react-popover';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NOT_A_REPO, useGitState } from '../contexts/GitContext';
 import { useProjectState } from '../contexts/ProjectContext';
-import {
-  useRightPaneCwd,
-  useRightPaneScope,
-  useRightPaneScopeActions,
-} from '../contexts/RightPaneScopeContext';
+import { useRightPaneCwd, useRightPaneScopeActions } from '../contexts/RightPaneScopeContext';
 import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
 
@@ -17,45 +13,43 @@ interface WorktreeOption {
   label: string;
 }
 
-function useScopeLabel(): { projectName: string; branch: string } | null {
-  const cwd = useRightPaneCwd();
+function useWorktreeOptions(): WorktreeOption[] {
   const { projects } = useProjectState();
   const { listing } = useGitState();
 
+  return useMemo(
+    () =>
+      projects.flatMap((project) => {
+        const entry = listing[project.cwd];
+        if (!entry || entry === NOT_A_REPO) return [];
+        return entry.map((wt) => ({
+          projectName: project.name,
+          worktreePath: wt.path,
+          branch: wt.branch ?? wt.name,
+          label: `${project.name} · ⎇ ${wt.branch ?? wt.name}`,
+        }));
+      }),
+    [projects, listing],
+  );
+}
+
+function useScopeLabel(options: WorktreeOption[]): { projectName: string; branch: string } | null {
+  const cwd = useRightPaneCwd();
+
   if (!cwd) return null;
 
-  for (const project of projects) {
-    const entry = listing[project.cwd];
-    if (!entry || entry === NOT_A_REPO) continue;
-    const wt = entry.find((w) => w.path === cwd);
-    if (wt) return { projectName: project.name, branch: wt.branch ?? wt.name };
-  }
+  const match = options.find((o) => o.worktreePath === cwd);
+  if (match) return { projectName: match.projectName, branch: match.branch };
   return { projectName: basename(cwd), branch: '' };
 }
 
 export function ScopePicker({ disabled }: { disabled?: boolean }) {
   const [open, setOpen] = useState(false);
-  const { projects } = useProjectState();
-  const { listing } = useGitState();
-  const scope = useRightPaneScope();
-  const { pinTo, unpin } = useRightPaneScopeActions();
-  const scopeLabel = useScopeLabel();
+  const { scope, pinTo, unpin } = useRightPaneScopeActions();
+  const options = useWorktreeOptions();
+  const scopeLabel = useScopeLabel(options);
 
   const pinnedCwd = scope.mode === 'pinned' ? scope.cwd : null;
-
-  const options: WorktreeOption[] = [];
-  for (const project of projects) {
-    const entry = listing[project.cwd];
-    if (!entry || entry === NOT_A_REPO) continue;
-    for (const wt of entry) {
-      options.push({
-        projectName: project.name,
-        worktreePath: wt.path,
-        branch: wt.branch ?? wt.name,
-        label: `${project.name} · ⎇ ${wt.branch ?? wt.name}`,
-      });
-    }
-  }
 
   function handleSelect(cwd: string) {
     pinTo(cwd);

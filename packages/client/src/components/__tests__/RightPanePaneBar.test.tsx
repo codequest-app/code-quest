@@ -1,13 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GitStateContext } from '../../contexts/GitContext';
 import { ProjectStateContext } from '../../contexts/ProjectContext';
 import { RightPaneScopeProvider } from '../../contexts/RightPaneScopeContext';
 import { RightPanePaneBar } from '../RightPanePaneBar';
-
-afterEach(() => sessionStorage.clear());
 
 function wrapper(activeCwd: string | null) {
   return ({ children }: { children: ReactNode }) => (
@@ -89,28 +87,28 @@ describe('RightPanePaneBar', () => {
   });
 
   describe('close button', () => {
-    it('collapse mode: shows "—" and calls onCollapse', async () => {
+    it('collapse mode: shows "—" and calls onClose', async () => {
       const user = userEvent.setup();
-      const onCollapse = vi.fn();
+      const onClose = vi.fn();
       const Wrapper = wrapper('/repo');
-      render(<RightPanePaneBar closeMode="collapse" onCollapse={onCollapse} />, {
+      render(<RightPanePaneBar closeMode="collapse" onClose={onClose} />, {
         wrapper: Wrapper,
       });
       const btn = screen.getByRole('button', { name: /collapse/i });
       expect(btn).toHaveTextContent('—');
       await user.click(btn);
-      expect(onCollapse).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledOnce();
     });
 
-    it('back mode: shows "✕" and calls onBack', async () => {
+    it('back mode: shows "✕" and calls onClose', async () => {
       const user = userEvent.setup();
-      const onBack = vi.fn();
+      const onClose = vi.fn();
       const Wrapper = wrapper('/repo');
-      render(<RightPanePaneBar closeMode="back" onBack={onBack} />, { wrapper: Wrapper });
+      render(<RightPanePaneBar closeMode="back" onClose={onClose} />, { wrapper: Wrapper });
       const btn = screen.getByRole('button', { name: /close|back/i });
       expect(btn).toHaveTextContent('✕');
       await user.click(btn);
-      expect(onBack).toHaveBeenCalledOnce();
+      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 });

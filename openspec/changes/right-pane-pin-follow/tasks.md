@@ -62,17 +62,11 @@
 ## 6. Scope Popover — 直接選目標 worktree pin（對照 prototype `openScopePop`）
 
 - [x] 6.1 Context 擴充：加 `pinTo(cwd)` / `unpin()` actions + 測試
-- [ ] 6.2 寫 `ScopePicker` popover 測試：
-  - 列出所有 project × worktree（project name · ⎇ branch）
-  - 當前 pinned cwd 有 ✓ mark
-  - 底部「⇆ Follow active chat tab」選項
-  - 點 worktree → pinTo 該 cwd + popover 關閉
-  - 點 follow → unpin + popover 關閉
-  - 無 worktree 時顯示 placeholder
-- [ ] 6.3 紅燈確認
-- [ ] 6.4 實作 `ScopePicker.tsx`（radix Popover，參考 TopScopeSwitcher 結構）
-- [ ] 6.5 綠燈
-- [ ] 6.6 整合到 `RightPanePaneBar`：scope label 改為 Popover trigger
-- [ ] 6.7 scope label 顯示真實 branch（從 `useGitState().listing` 查）
-- [ ] 6.8 跑 `pnpm --filter client test` 全綠 + `tsc --noEmit`
-- [ ] 6.9 commit
+- [x] 6.2 寫 `ScopePicker` popover 測試
+- [x] 6.3 紅燈確認
+- [x] 6.4 實作 `ScopePicker.tsx`（radix Popover，參考 TopScopeSwitcher 結構）
+- [x] 6.5 綠燈
+- [x] 6.6 整合到 `RightPanePaneBar`：scope label 改為 Popover trigger
+- [x] 6.7 scope label 顯示真實 branch（從 `useGitState().listing` 查）
+- [x] 6.8 跑 `pnpm --filter client test` 全綠（1728 tests）+ `tsc --noEmit`
+- [x] 6.9 commit

@@ -1,21 +1,15 @@
 import * as Switch from '@radix-ui/react-switch';
-import {
-  useRightPaneCwd,
-  useRightPaneScope,
-  useRightPaneScopeActions,
-} from '../contexts/RightPaneScopeContext';
+import { useRightPaneCwd, useRightPaneScopeActions } from '../contexts/RightPaneScopeContext';
 import { cn } from '../utils/cn';
 import { ScopePicker } from './ScopePicker';
 
 export interface RightPanePaneBarProps {
   closeMode: 'collapse' | 'back';
-  onCollapse?: () => void;
-  onBack?: () => void;
+  onClose?: () => void;
 }
 
-export function RightPanePaneBar({ closeMode, onCollapse, onBack }: RightPanePaneBarProps) {
-  const scope = useRightPaneScope();
-  const { togglePin } = useRightPaneScopeActions();
+export function RightPanePaneBar({ closeMode, onClose }: RightPanePaneBarProps) {
+  const { scope, togglePin } = useRightPaneScopeActions();
   const cwd = useRightPaneCwd();
   const isPinned = scope.mode === 'pinned';
   const hasCwd = cwd !== null;
@@ -42,7 +36,7 @@ export function RightPanePaneBar({ closeMode, onCollapse, onBack }: RightPanePan
       <button
         type="button"
         aria-label={closeMode === 'collapse' ? 'Collapse right pane' : 'Close right pane'}
-        onClick={closeMode === 'collapse' ? onCollapse : onBack}
+        onClick={onClose}
         className="shrink-0 px-1 text-text-muted hover:text-text text-xs"
       >
         {closeMode === 'collapse' ? '—' : '✕'}
