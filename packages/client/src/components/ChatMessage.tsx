@@ -151,7 +151,7 @@ function AssistantMessage({
       </div>
       {showCopy && (
         <CopyButton
-          data-testid="message-copy"
+          aria-label="message-copy"
           text={message.content}
           className={cn(HOVER_COPY_BASE, 'absolute top-1 right-1 group-hover:opacity-100')}
           title="Copy"

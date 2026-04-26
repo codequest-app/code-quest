@@ -8,7 +8,6 @@ export function SkeletonRows({ count = 3 }: { count?: number }) {
       className="flex flex-col gap-1.5 px-1 py-1"
       aria-busy="true"
       aria-label="Loading"
-      data-testid="skeleton-rows"
     >
       {Array.from({ length: count }).map((_, i) => (
         <div

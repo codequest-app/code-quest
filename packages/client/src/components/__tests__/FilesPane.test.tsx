@@ -49,7 +49,7 @@ describe('FilesPane', () => {
   it('shows skeleton rows before the file tree root resolves', () => {
     const { Wrapper } = setup();
     render(<FilesPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
-    expect(screen.getByTestId('skeleton-rows')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
   it('switching cwd swaps the tree to the new project root', async () => {

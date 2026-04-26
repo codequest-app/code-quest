@@ -23,7 +23,7 @@ describe('SessionDropdown', () => {
   it('renders overlay and dropdown panel', () => {
     render(<SessionDropdown sessions={makeSessions(1)} onSelect={vi.fn()} onClose={vi.fn()} />);
     expect(screen.getByTestId('session-dropdown-overlay')).toBeInTheDocument();
-    expect(screen.getByTestId('session-dropdown-panel')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('closes when overlay is clicked', async () => {

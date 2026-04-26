@@ -12,12 +12,12 @@ const sampleDiff = ['--- a/file.txt', '+++ b/file.txt', '@@ -1,1 +1,1 @@', '-old
 describe('ContentRenderer', () => {
   it('routes to DiffViewer when content is a diff', () => {
     render(<ContentRenderer content={sampleDiff} />);
-    expect(screen.getByTestId('diff-filename')).toHaveTextContent('file.txt');
+    expect(screen.getByRole('region', { name: 'diff-filename' })).toHaveTextContent('file.txt');
   });
 
   it('routes to AnsiContent when content has ANSI codes', () => {
     render(<ContentRenderer content={'\x1b[32mgreen\x1b[0m'} />);
-    expect(screen.getByTestId('ansi-content')).toBeInTheDocument();
+    expect(screen.getByLabelText('ansi-content')).toBeInTheDocument();
   });
 
   it('renders plain text inside <pre> when neither diff nor ANSI', () => {
@@ -31,7 +31,7 @@ describe('ContentRenderer', () => {
     render(
       <ContentRenderer content={sampleDiff} editable onAccept={onAccept} onReject={onReject} />,
     );
-    expect(screen.getByTestId('diff-accept')).toBeInTheDocument();
-    expect(screen.getByTestId('diff-reject')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
   });
 });

@@ -17,7 +17,7 @@ type CommonProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  'data-testid'?: string;
+  'aria-label'?: string;
 };
 
 type InputProps = CommonProps & {

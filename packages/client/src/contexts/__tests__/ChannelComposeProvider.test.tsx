@@ -37,10 +37,18 @@ function ComposeTestUI() {
         }}
         placeholder="compose"
       />
-      <span data-testid="hasText">{String(compose.hasText)}</span>
-      <span data-testid="slashFilter">{compose.slashFilter ?? 'null'}</span>
-      <span data-testid="mentionOpen">{String(compose.mentionOpen)}</span>
-      <span data-testid="hasTextBeforeSlash">{String(compose.hasTextBeforeSlash)}</span>
+      <span role="status" aria-label="hasText">
+        {String(compose.hasText)}
+      </span>
+      <span role="status" aria-label="slashFilter">
+        {compose.slashFilter ?? 'null'}
+      </span>
+      <span role="status" aria-label="mentionOpen">
+        {String(compose.mentionOpen)}
+      </span>
+      <span role="status" aria-label="hasTextBeforeSlash">
+        {String(compose.hasTextBeforeSlash)}
+      </span>
       <button type="button" onClick={compose.submit}>
         Submit
       </button>
@@ -88,14 +96,14 @@ describe('ChannelComposeProvider', () => {
   it('provides initial empty state', async () => {
     await setup();
     expect(screen.getByPlaceholderText('compose')).toHaveValue('');
-    expect(screen.getByTestId('hasText')).toHaveTextContent('false');
-    expect(screen.getByTestId('slashFilter')).toHaveTextContent('null');
+    expect(screen.getByRole('status', { name: 'hasText' })).toHaveTextContent('false');
+    expect(screen.getByRole('status', { name: 'slashFilter' })).toHaveTextContent('null');
   });
 
   it('hasText reflects textarea value', async () => {
     await setup();
     await userEvent.type(screen.getByPlaceholderText('compose'), 'hello');
-    expect(screen.getByTestId('hasText')).toHaveTextContent('true');
+    expect(screen.getByRole('status', { name: 'hasText' })).toHaveTextContent('true');
   });
 
   it('submit clears value after sending', async () => {
@@ -124,18 +132,18 @@ describe('ChannelComposeProvider', () => {
   it('mentionFile sets mentionOpen to true in context', async () => {
     await setup();
     await userEvent.type(screen.getByPlaceholderText('compose'), 'hello ');
-    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('false');
+    expect(screen.getByRole('status', { name: 'mentionOpen' })).toHaveTextContent('false');
     await userEvent.click(screen.getByText('Mention'));
-    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('true');
+    expect(screen.getByRole('status', { name: 'mentionOpen' })).toHaveTextContent('true');
   });
 
   it('closeMention in context sets mentionOpen to false', async () => {
     await setup();
     await userEvent.type(screen.getByPlaceholderText('compose'), 'hello ');
     await userEvent.click(screen.getByText('Mention'));
-    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('true');
+    expect(screen.getByRole('status', { name: 'mentionOpen' })).toHaveTextContent('true');
     await userEvent.click(screen.getByText('CloseMention'));
-    expect(screen.getByTestId('mentionOpen')).toHaveTextContent('false');
+    expect(screen.getByRole('status', { name: 'mentionOpen' })).toHaveTextContent('false');
   });
 
   it('mentionFile inserts @ at cursor position', async () => {
@@ -179,7 +187,7 @@ describe('ChannelComposeProvider', () => {
       function SiblingSpy() {
         useChannelComposeActions();
         renderCount.current += 1;
-        return <span data-testid="sibling" />;
+        return <span />;
       }
 
       await renderWithChannel(

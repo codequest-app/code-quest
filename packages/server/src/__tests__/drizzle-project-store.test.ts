@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projects } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleProjectStore } from '../services/project-store.ts';
@@ -14,9 +14,14 @@ describe('DrizzleProjectStore', () => {
   let store: DrizzleProjectStore;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     db = createDatabase(':memory:');
     migrate(db, { migrationsFolder });
     store = new DrizzleProjectStore(db, projects);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('upsert', () => {
@@ -40,7 +45,7 @@ describe('DrizzleProjectStore', () => {
 
     it('updates lastOpenedAt on duplicate', async () => {
       const a = await store.upsert('/Users/x/foo');
-      await new Promise((r) => setTimeout(r, 10));
+      vi.advanceTimersByTime(10);
       const b = await store.upsert('/Users/x/foo');
       expect(new Date(b.lastOpenedAt).getTime()).toBeGreaterThan(
         new Date(a.lastOpenedAt).getTime(),
@@ -70,10 +75,10 @@ describe('DrizzleProjectStore', () => {
 
     it('orders pinned-first then by lastOpenedAt desc', async () => {
       const a = await store.upsert('/a');
-      await new Promise((r) => setTimeout(r, 5));
-      const b = await store.upsert('/b');
-      await new Promise((r) => setTimeout(r, 5));
-      const c = await store.upsert('/c');
+      vi.advanceTimersByTime(5);
+      await store.upsert('/b');
+      vi.advanceTimersByTime(5);
+      await store.upsert('/c');
       await store.update(a.id, { pinned: true });
       const list = await store.list();
       expect(list.map((p) => p.path)).toEqual(['/a', '/c', '/b']);

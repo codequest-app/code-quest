@@ -45,7 +45,6 @@ export const WorktreeRow = forwardRef<HTMLDivElement, WorktreeRowProps>(function
   const branchBadge = (
     // biome-ignore lint/a11y/useSemanticElements: span avoids nested <button> — HTML disallows button-in-button
     <span
-      data-testid="wt-branch"
       role="button"
       tabIndex={0}
       aria-label={`Switch branch (currently ${label})`}
@@ -117,8 +116,8 @@ export const WorktreeRow = forwardRef<HTMLDivElement, WorktreeRowProps>(function
       )}
       {changes > 0 && (
         <span
-          data-testid="wt-changes-dot"
-          aria-hidden="true"
+          role="status"
+          aria-label={pluralize(changes, 'change')}
           title={pluralize(changes, 'change')}
           className="w-2 h-2 rounded-full bg-warning shrink-0"
         />

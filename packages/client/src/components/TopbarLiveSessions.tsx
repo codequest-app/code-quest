@@ -34,7 +34,7 @@ export function TopbarLiveSessions({
   const overflow = live.length - visible.length;
 
   return (
-    <div data-testid="topbar-live-sessions" className="flex items-center gap-1">
+    <section aria-label="topbar-live-sessions" className="flex items-center gap-1">
       {visible.map((s) => {
         const label = labelFor(s);
         return (
@@ -74,7 +74,7 @@ export function TopbarLiveSessions({
           +{overflow}
         </span>
       )}
-    </div>
+    </section>
   );
 }
 

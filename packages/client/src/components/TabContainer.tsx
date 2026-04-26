@@ -85,7 +85,7 @@ export const TabContainer = memo(function TabContainer({ projectCwd }: { project
       value={activeTabId ?? undefined}
       onValueChange={setActiveTab}
       className="flex flex-col flex-1 min-w-0"
-      data-testid="tab-container-root"
+      aria-label="tab-container-root"
     >
       <TabBar
         tabs={openTabs}
@@ -101,7 +101,7 @@ export const TabContainer = memo(function TabContainer({ projectCwd }: { project
             value={id}
             forceMount
             hidden={id !== activeTabId}
-            data-testid={id === activeTabId ? 'tab-container' : undefined}
+            aria-label={id === activeTabId ? 'tab-container' : undefined}
             className={cn(id === activeTabId ? 'flex flex-1 min-w-0' : undefined)}
           >
             <TabContent

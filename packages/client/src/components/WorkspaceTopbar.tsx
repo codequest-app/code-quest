@@ -56,7 +56,8 @@ export function WorkspaceTopbar({
   onActivateSession,
 }: Props) {
   return (
-    <div data-testid={`${mode}-topbar`} className={ROOT_CLASS[mode]}>
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: <header> has implicit banner role which supports aria-label
+    <header aria-label={`${mode}-topbar`} className={ROOT_CLASS[mode]}>
       <Brand />
       {onToggleLeft && (
         <IconButton
@@ -102,6 +103,6 @@ export function WorkspaceTopbar({
       >
         <Cog6ToothIcon className="w-5 h-5" />
       </IconButton>
-    </div>
+    </header>
   );
 }

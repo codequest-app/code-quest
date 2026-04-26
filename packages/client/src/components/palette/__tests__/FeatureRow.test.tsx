@@ -45,24 +45,24 @@ describe('FeatureRow — flat feature (non-group)', () => {
 describe('FeatureRow — group feature composite row', () => {
   it('renders group-row-<id> wrapper with derived aggregate', () => {
     render(<FeatureRow feature={makeGroupFeature()} isActive={false} onActiveChange={() => {}} />);
-    const row = screen.getByTestId('group-row-tools');
+    const row = screen.getByLabelText('group-row-tools');
     expect(row).toHaveAttribute('data-state', 'partial');
   });
 
   it('clicking group-label expands and reveals per-item rows', async () => {
     const user = userEvent.setup();
     render(<FeatureRow feature={makeGroupFeature()} isActive={false} onActiveChange={() => {}} />);
-    expect(screen.queryByTestId('type-pill-tool_use')).not.toBeInTheDocument();
-    await user.click(screen.getByTestId('group-label'));
-    expect(screen.getByTestId('type-pill-tool_use')).toBeInTheDocument();
+    expect(screen.queryByLabelText('type-pill-tool_use')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'group-label' }));
+    expect(screen.getByLabelText('type-pill-tool_use')).toBeInTheDocument();
   });
 
   it('expanded type pill shows ON/OFF matching item.on', async () => {
     const user = userEvent.setup();
     render(<FeatureRow feature={makeGroupFeature()} isActive={false} onActiveChange={() => {}} />);
-    await user.click(screen.getByTestId('group-label'));
-    expect(screen.getByTestId('type-pill-tool_use').textContent).toBe('ON');
-    expect(screen.getByTestId('type-pill-tool_result').textContent).toBe('OFF');
+    await user.click(screen.getByRole('button', { name: 'group-label' }));
+    expect(screen.getByLabelText('type-pill-tool_use').textContent).toBe('ON');
+    expect(screen.getByLabelText('type-pill-tool_result').textContent).toBe('OFF');
   });
 
   it('clicking a type pill calls that item.toggle()', async () => {
@@ -78,8 +78,8 @@ describe('FeatureRow — group feature composite row', () => {
       },
     });
     render(<FeatureRow feature={feature} isActive={false} onActiveChange={() => {}} />);
-    await user.click(screen.getByTestId('group-label'));
-    await user.click(screen.getByTestId('type-pill-tool_use'));
+    await user.click(screen.getByRole('button', { name: 'group-label' }));
+    await user.click(screen.getByLabelText('type-pill-tool_use'));
     expect(toggleToolUse).toHaveBeenCalledOnce();
   });
 
@@ -100,8 +100,8 @@ describe('FeatureRow — group feature composite row', () => {
       },
     });
     render(<FeatureRow feature={feature} isActive={false} onActiveChange={() => {}} />);
-    await user.click(screen.getByTestId('group-label'));
-    expect(screen.getByTestId('type-sample-tool_use').textContent).toContain('Bash $ ls -la');
+    await user.click(screen.getByRole('button', { name: 'group-label' }));
+    expect(screen.getByLabelText('type-sample-tool_use').textContent).toContain('Bash $ ls -la');
   });
 
   it('group-toggle pill with partial aggregate + onPartial jumps (not toggle all)', async () => {
@@ -120,7 +120,7 @@ describe('FeatureRow — group feature composite row', () => {
       },
     });
     render(<FeatureRow feature={feature} isActive={false} onActiveChange={() => {}} />);
-    await user.click(screen.getByTestId('group-toggle'));
+    await user.click(screen.getByRole('button', { name: 'group-toggle' }));
     expect(onPartial).toHaveBeenCalledOnce();
     expect(toggleA).not.toHaveBeenCalled();
     expect(toggleB).not.toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('FeatureRow — group feature composite row', () => {
       },
     });
     render(<FeatureRow feature={feature} isActive={false} onActiveChange={() => {}} />);
-    await user.click(screen.getByTestId('group-toggle'));
+    await user.click(screen.getByRole('button', { name: 'group-toggle' }));
     expect(toggleA).toHaveBeenCalledOnce();
     expect(toggleB).toHaveBeenCalledOnce();
   });

@@ -70,9 +70,9 @@ describe('SettingsDialog', () => {
   describe('Theme section', () => {
     it('renders theme preference controls by default', () => {
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
-      expect(screen.getByTestId('switch-color-theme-pills')).toBeInTheDocument();
-      expect(screen.getByTestId('font-size-pills')).toBeInTheDocument();
-      expect(screen.getByTestId('density-pills')).toBeInTheDocument();
+      expect(screen.getByLabelText('switch-color-theme-pills')).toBeInTheDocument();
+      expect(screen.getByLabelText('font-size-pills')).toBeInTheDocument();
+      expect(screen.getByLabelText('density-pills')).toBeInTheDocument();
     });
 
     it('color theme pills include Dark, Light, and System', () => {
@@ -118,35 +118,35 @@ describe('SettingsDialog', () => {
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       await user.click(screen.getByRole('tab', { name: 'Display' }));
       for (const group of VISIBILITY_GROUPS) {
-        expect(screen.getByTestId(`group-row-${group.id}`)).toBeInTheDocument();
+        expect(screen.getByLabelText(`group-row-${group.id}`)).toBeInTheDocument();
       }
     });
 
     it('does not show filter groups when Theme tab is active', () => {
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
-      expect(screen.queryByTestId('group-row-conversation')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('group-row-conversation')).not.toBeInTheDocument();
     });
 
     it('conversation group is on by default', async () => {
       const user = userEvent.setup();
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       await user.click(screen.getByRole('tab', { name: 'Display' }));
-      expect(screen.getByTestId('group-row-conversation')).toHaveAttribute('data-state', 'all');
+      expect(screen.getByLabelText('group-row-conversation')).toHaveAttribute('data-state', 'all');
     });
 
     it('hooks group is off by default', async () => {
       const user = userEvent.setup();
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       await user.click(screen.getByRole('tab', { name: 'Display' }));
-      expect(screen.getByTestId('group-row-hooks')).toHaveAttribute('data-state', 'none');
+      expect(screen.getByLabelText('group-row-hooks')).toHaveAttribute('data-state', 'none');
     });
 
     it('toggling a group updates the visibility store', async () => {
       const user = userEvent.setup();
       render(<SettingsDialog open={true} onClose={vi.fn()} />);
       await user.click(screen.getByRole('tab', { name: 'Display' }));
-      const hooksRow = screen.getByTestId('group-row-hooks');
-      const toggle = hooksRow.querySelector('[data-testid="group-toggle"]')!;
+      const hooksRow = screen.getByLabelText('group-row-hooks');
+      const toggle = within(hooksRow).getByLabelText('group-toggle');
       await user.click(toggle);
       const stored = useMessageVisibilityStore.getState().enabledTypes;
       expect(stored).toContain('hook_started');

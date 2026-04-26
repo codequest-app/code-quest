@@ -265,8 +265,12 @@ describe('ProjectTree', () => {
         const { pendingOpenWorktree, selectedWorktreeCwd } = useNavigationState();
         return (
           <>
-            <span data-testid="pending">{JSON.stringify(pendingOpenWorktree)}</span>
-            <span data-testid="selected">{JSON.stringify(selectedWorktreeCwd)}</span>
+            <span role="status" aria-label="pending">
+              {JSON.stringify(pendingOpenWorktree)}
+            </span>
+            <span role="status" aria-label="selected">
+              {JSON.stringify(selectedWorktreeCwd)}
+            </span>
           </>
         );
       }
@@ -287,11 +291,15 @@ describe('ProjectTree', () => {
       await userEvent.setup({ pointerEventsCheck: 0 }).click(wtBtn);
 
       await waitFor(() => {
-        const sel = JSON.parse(screen.getByTestId('selected').textContent ?? '{}');
+        const sel = JSON.parse(
+          screen.getByRole('status', { name: 'selected' }).textContent ?? '{}',
+        );
         expect(sel).toEqual({ '/repo': '/repo/.claude/worktrees/feat-x' });
       });
       // Pure selection — no chat-open intent fired.
-      expect(JSON.parse(screen.getByTestId('pending').textContent ?? 'null')).toBeNull();
+      expect(
+        JSON.parse(screen.getByRole('status', { name: 'pending' }).textContent ?? 'null'),
+      ).toBeNull();
     });
   });
 

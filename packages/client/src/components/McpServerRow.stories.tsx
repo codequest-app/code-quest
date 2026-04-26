@@ -48,7 +48,7 @@ export const WithTools: Story = {
   },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByTitle(/Tools filesystem/i));
-    const toolList = await canvas.findByTestId('tools-filesystem');
+    const toolList = await canvas.findByLabelText('tools-filesystem');
     await expect(toolList).toBeInTheDocument();
     await expect(canvas.getByText('read_file')).toBeInTheDocument();
   },

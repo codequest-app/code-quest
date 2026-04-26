@@ -13,7 +13,7 @@ describe('WorkspaceLayout', () => {
   });
 
   it('shows only EmptyState when no projects exist — no sidebar or tab bar', () => {
-    expect(screen.getByTestId('empty-add-project')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Esc to focus/i)).not.toBeInTheDocument();
   });
 
@@ -35,7 +35,7 @@ describe('WorkspaceLayout', () => {
     });
 
     it('renders TabBar above workspace panels', () => {
-      expect(screen.getByTestId('tab-bar')).toBeInTheDocument();
+      expect(screen.getByRole('tablist', { name: 'tab-bar' })).toBeInTheDocument();
     });
 
     it('does NOT render ActivityBar (removed in favor of always-on sidebar + topbar Settings)', () => {
@@ -98,7 +98,7 @@ describe('WorkspaceLayout', () => {
       const project2 = await result.addProject({ path: '/projects', dirName: 'other-project' });
 
       // Second project created — switch to it in sidebar
-      const sidebar = screen.getByTestId('sidebar-panel');
+      const sidebar = screen.getByRole('complementary', { name: 'sidebar-panel' });
       await user.click(within(sidebar).getByText(/other-project/));
       await project2.launchSession();
 

@@ -145,7 +145,7 @@ describe('PaletteCommandList', () => {
         }),
       ],
     });
-    const pill = screen.getByTestId('fm-toggle');
+    const pill = screen.getByRole('status', { name: 'fm-toggle' });
     expect(pill).toHaveAttribute('data-state', 'all');
     expect(pill.textContent).toBe('ON');
   });

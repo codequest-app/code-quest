@@ -9,8 +9,8 @@ export function WorktreeBanner({ worktree }: WorktreeBannerProps) {
   const { openNewChannel } = useChannelConfig();
 
   return (
-    <div
-      data-testid="worktree-banner"
+    <section
+      aria-label="worktree-banner"
       className="flex items-center justify-between gap-2 px-3 py-1.5 text-xs bg-accent/10 border-b border-accent/20"
     >
       <div className="flex items-center gap-2">
@@ -25,6 +25,6 @@ export function WorktreeBanner({ worktree }: WorktreeBannerProps) {
       >
         Open in new tab
       </button>
-    </div>
+    </section>
   );
 }

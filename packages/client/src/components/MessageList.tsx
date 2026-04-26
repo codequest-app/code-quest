@@ -184,16 +184,16 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
     const virtualItems = virtualizer.getVirtualItems();
 
     return (
-      <div
+      <section
         className="relative flex-1 overflow-hidden"
-        data-testid="message-list"
+        aria-label="message-list"
         onScroll={handleScroll}
       >
-        <div
+        <section
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-          data-testid="message-list-scroll"
+          aria-label="message-list-scroll"
         >
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center select-none gap-3 relative -top-7">
@@ -202,7 +202,7 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
               <span className="text-sm text-text-muted">How can I help you today?</span>
             </div>
           ) : (
-            <div data-testid="message-content-wrapper" className="px-4 pt-5 pb-32">
+            <section aria-label="message-content-wrapper" className="px-4 pt-5 pb-32">
               <div
                 style={{
                   height: totalSize,
@@ -239,22 +239,21 @@ export const MessageList = forwardRef<MessageListHandle, { searchQuery?: string 
                 })}
               </div>
               {isProcessing && <SpinnerVerb statusText={statusText} />}
-              <div ref={scrollRef} data-testid="message-list-bottom" />
-            </div>
+              <section ref={scrollRef} aria-label="message-list-bottom" />
+            </section>
           )}
-        </div>
+        </section>
         {showScrollButton && (
           <button
             type="button"
             aria-label="Scroll to bottom"
-            data-testid="scroll-to-bottom"
             onClick={scrollToBottom}
             className="absolute bottom-4 right-4 z-float w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center shadow-lg cursor-pointer transition-colors"
           >
             ↓
           </button>
         )}
-      </div>
+      </section>
     );
   },
 );

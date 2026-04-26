@@ -30,7 +30,8 @@ export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): R
   if (state.kind === 'toggle') {
     return (
       <span
-        data-testid={opts?.featureId ? `${opts.featureId}-switch` : 'toggle-switch'}
+        role="status"
+        aria-label={opts?.featureId ? `${opts.featureId}-switch` : 'toggle-switch'}
         data-state={state.active ? 'on' : 'off'}
       >
         <ToggleSwitch isOn={state.active} />
@@ -48,7 +49,7 @@ export function renderMenuTrailing(state?: FeatureState, opts?: TrailingOpts): R
   }
   if (state.kind === 'select') {
     return (
-      <span data-testid="select-current" className="font-mono text-xs text-text-muted">
+      <span role="status" aria-label="select-current" className="font-mono text-xs text-text-muted">
         {state.currentValue}
       </span>
     );

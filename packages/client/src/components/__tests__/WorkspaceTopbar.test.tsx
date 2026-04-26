@@ -66,19 +66,19 @@ describe('WorkspaceTopbar', () => {
     expect(screen.queryByRole('button', { name: /toggle right pane/i })).toBeNull();
   });
 
-  it('forwards mode to the root data-testid attribute', () => {
+  it('forwards mode to the root aria-label attribute', () => {
     const { rerender } = render(
       <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
         <span>content</span>
       </WorkspaceTopbar>,
     );
-    expect(screen.getByTestId('desktop-topbar')).toBeInTheDocument();
+    expect(screen.getByLabelText('desktop-topbar')).toBeInTheDocument();
     rerender(
       <WorkspaceTopbar mode="mobile" onOpenSettings={() => {}}>
         <span>content</span>
       </WorkspaceTopbar>,
     );
-    expect(screen.getByTestId('mobile-topbar')).toBeInTheDocument();
+    expect(screen.getByLabelText('mobile-topbar')).toBeInTheDocument();
   });
 
   it('renders Search button when onOpenSearch is provided', async () => {
@@ -102,12 +102,12 @@ describe('WorkspaceTopbar', () => {
         onToggleLeft={() => {}}
         onToggleRight={() => {}}
       >
-        <span data-testid="slot-content">content</span>
+        <span>content</span>
       </WorkspaceTopbar>,
     );
-    const root = screen.getByTestId('desktop-topbar');
+    const root = screen.getByLabelText('desktop-topbar');
     const left = screen.getByRole('button', { name: /toggle sidebar/i });
-    const content = screen.getByTestId('slot-content');
+    const content = screen.getByText('content');
     const right = screen.getByRole('button', { name: /toggle right pane/i });
     const search = screen.getByRole('button', { name: /search/i });
     const settings = screen.getByRole('button', { name: /settings/i });

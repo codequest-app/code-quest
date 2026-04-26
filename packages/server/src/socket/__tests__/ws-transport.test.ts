@@ -1,22 +1,13 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Envelope } from '@code-quest/shared';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { NullAuthenticator } from '../authenticator.ts';
 import type { TransportHandle } from '../transport.ts';
 import type { TypedSocket } from '../types.ts';
 import { WsTransport } from '../ws-transport.ts';
 
-/**
- * Integration tests for WsTransport. Boots a real http.Server + real WsTransport +
- * real `ws` client. Verifies the Transport contract (onConnection, close, auth gate)
- * AND the envelope wire protocol (event / request / response / ping / pong).
- *
- * Per project TDD discipline: the *real* ws stack is exercised here first.
- * A FakeWsTransport (in-memory) for upper-layer unit tests is extracted in
- * a later task once these integration tests are green.
- */
 describe('WsTransport (integration)', () => {
   let httpServer: HttpServer;
   let handle: TransportHandle | undefined;
@@ -67,9 +58,8 @@ describe('WsTransport (integration)', () => {
     handle.onConnection((s) => accepted.push(s));
 
     await openClient();
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(accepted).toHaveLength(1));
 
-    expect(accepted).toHaveLength(1);
     expect(typeof accepted[0]?.id).toBe('string');
     expect(accepted[0]?.id.length).toBeGreaterThan(0);
   });
@@ -84,8 +74,7 @@ describe('WsTransport (integration)', () => {
     });
 
     const ws = await openClient();
-    await new Promise<void>((r) => setTimeout(r, 20));
-    expect(serverSide).toBeDefined();
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
 
     const recvP = nextEnvelope(ws);
     serverSide?.emit('hello', { text: 'hi' });
@@ -106,19 +95,13 @@ describe('WsTransport (integration)', () => {
     });
 
     await openClient();
-    await new Promise<void>((r) => setTimeout(r, 30));
-
-    expect(bFired).toBe(true);
+    await vi.waitFor(() => expect(bFired).toBe(true));
   });
 
   it('request envelope routes through emitter handler and response carries matching id', async () => {
     const transport = new WsTransport({ authenticator: new NullAuthenticator(), path: '/ws' });
     handle = transport.attach(httpServer);
 
-    // Handler returns a raw payload (matches the cc-office convention; many
-    // existing handlers do `cb({ projects })`, `cb(project)`, etc., NOT a
-    // RpcResult-shaped object). Transport must pass it through transparently
-    // — same as socket.io ack semantics.
     handle.onConnection((s) => {
       s.on('list', (...args) => {
         const cb = args[args.length - 1] as (result: unknown) => void;
@@ -127,7 +110,6 @@ describe('WsTransport (integration)', () => {
     });
 
     const ws = await openClient();
-    await new Promise<void>((r) => setTimeout(r, 20));
 
     const reqId = 'req-1';
     const recvP = nextEnvelope(ws);
@@ -162,9 +144,12 @@ describe('WsTransport (integration)', () => {
 
     const ws = await openClient();
     ws.send('not-json');
-    // give server time to (not) close us
-    await new Promise<void>((r) => setTimeout(r, 50));
+    // Prove server processed the bad frame by round-tripping a valid ping/pong
+    const recvP = nextEnvelope(ws);
+    ws.send(JSON.stringify({ kind: 'ping' }));
+    const env = await recvP;
 
+    expect(env).toEqual({ kind: 'pong' });
     expect(ws.readyState).toBe(ws.OPEN);
   });
 
@@ -175,8 +160,12 @@ describe('WsTransport (integration)', () => {
 
     const ws = await openClient();
     ws.send(JSON.stringify({ kind: 'event', seq: -1, event: 'x', data: {} }));
-    await new Promise<void>((r) => setTimeout(r, 50));
+    // Prove server processed the bad frame by round-tripping a valid ping/pong
+    const recvP = nextEnvelope(ws);
+    ws.send(JSON.stringify({ kind: 'ping' }));
+    const env = await recvP;
 
+    expect(env).toEqual({ kind: 'pong' });
     expect(ws.readyState).toBe(ws.OPEN);
   });
 
@@ -192,11 +181,9 @@ describe('WsTransport (integration)', () => {
     });
 
     const ws = await openClient();
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(disconnected).toBe(false));
     ws.close();
-    await new Promise<void>((r) => setTimeout(r, 50));
-
-    expect(disconnected).toBe(true);
+    await vi.waitFor(() => expect(disconnected).toBe(true));
   });
 
   it('rejects upgrade with HTTP 401 when authenticator returns null', async () => {
@@ -228,7 +215,6 @@ describe('WsTransport (integration)', () => {
     await handle.close();
     handle = undefined;
 
-    // http server still listening — port should still resolve
     const addr = httpServer.address() as AddressInfo;
     expect(addr.port).toBeGreaterThan(0);
 
@@ -256,8 +242,7 @@ describe('WsTransport (integration)', () => {
 
     const wsA = await openClient();
     const wsB = await openClient();
-    await new Promise<void>((r) => setTimeout(r, 20));
-    expect(sockets).toHaveLength(2);
+    await vi.waitFor(() => expect(sockets).toHaveLength(2));
 
     const recvA: Envelope[] = [];
     const recvB: Envelope[] = [];
@@ -267,7 +252,10 @@ describe('WsTransport (integration)', () => {
     sockets[0]?.emit('e', { n: 1 });
     sockets[0]?.emit('e', { n: 2 });
     sockets[1]?.emit('e', { n: 1 });
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => {
+      expect(recvA).toHaveLength(2);
+      expect(recvB).toHaveLength(1);
+    });
 
     expect(recvA.map((e) => (e as { seq: number }).seq)).toEqual([1, 2]);
     expect(recvB.map((e) => (e as { seq: number }).seq)).toEqual([1]);

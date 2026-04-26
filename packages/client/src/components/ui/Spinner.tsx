@@ -5,8 +5,8 @@ import { cn } from '../../utils/cn';
 export function Spinner({ className }: { className?: string }) {
   return (
     <span
-      data-testid="spinner"
-      aria-hidden="true"
+      role="status"
+      aria-label="spinner"
       className={cn(
         'inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin',
         className,

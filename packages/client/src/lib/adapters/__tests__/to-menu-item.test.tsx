@@ -52,7 +52,7 @@ describe('toMenuItem', () => {
     const out = toMenuItem(f);
     render(out.menuItem.trailing);
     // menu surface keeps ToggleSwitch; adapter tags it with feature id
-    expect(screen.getByTestId('x-switch')).toHaveAttribute('data-state', 'on');
+    expect(screen.getByRole('status', { name: 'x-switch' })).toHaveAttribute('data-state', 'on');
   });
 
   it('no trailing when no state', () => {

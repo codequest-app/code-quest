@@ -72,8 +72,12 @@ describe('TabProvider', () => {
       const { requestActivateChannel } = useNavigationActions();
       return (
         <>
-          <span data-testid="active">{activeTabId ?? 'null'}</span>
-          <span data-testid="pending">{JSON.stringify(pendingActivateChannel)}</span>
+          <span role="status" aria-label="active">
+            {activeTabId ?? 'null'}
+          </span>
+          <span role="status" aria-label="pending">
+            {JSON.stringify(pendingActivateChannel)}
+          </span>
           <button
             type="button"
             onClick={() => requestActivateChannel(trigger.cwd, trigger.channelId)}
@@ -97,8 +101,8 @@ describe('TabProvider', () => {
       await user.click(screen.getByText('request'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('active')).toHaveTextContent('ch-1');
-        expect(screen.getByTestId('pending')).toHaveTextContent('null');
+        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-1');
+        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
       });
     });
 
@@ -112,15 +116,17 @@ describe('TabProvider', () => {
       await user.click(screen.getByText('request'));
 
       // Pending stays set; no active tab yet
-      expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-late"');
-      expect(screen.getByTestId('active')).toHaveTextContent('null');
+      expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent(
+        '"channelId":"ch-late"',
+      );
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
 
       // Channel appears via sessions prop
       setSessions([{ channelId: 'ch-late', state: 'idle', cwd: '/proj', projectRoot: '/proj' }]);
 
       await waitFor(() => {
-        expect(screen.getByTestId('active')).toHaveTextContent('ch-late');
-        expect(screen.getByTestId('pending')).toHaveTextContent('null');
+        expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-late');
+        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent('null');
       });
     });
 
@@ -144,9 +150,11 @@ describe('TabProvider', () => {
       // Wait for the pending intent to land; active staying put is the
       // negative half of the same observation.
       await vi.waitFor(() => {
-        expect(screen.getByTestId('pending')).toHaveTextContent('"channelId":"ch-target"');
+        expect(screen.getByRole('status', { name: 'pending' })).toHaveTextContent(
+          '"channelId":"ch-target"',
+        );
       });
-      expect(screen.getByTestId('active')).toHaveTextContent('ch-a');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('ch-a');
     });
   });
 
@@ -156,8 +164,12 @@ describe('TabProvider', () => {
       const { addTab, setActiveTab, replaceTab } = useTabActions();
       return (
         <>
-          <span data-testid="tabs">{JSON.stringify(Object.keys(tabs))}</span>
-          <span data-testid="active">{activeTabId ?? 'null'}</span>
+          <span role="status" aria-label="tabs">
+            {JSON.stringify(Object.keys(tabs))}
+          </span>
+          <span role="status" aria-label="active">
+            {activeTabId ?? 'null'}
+          </span>
           <button type="button" onClick={() => addTab('old', '/proj')}>
             seed-old
           </button>
@@ -180,8 +192,10 @@ describe('TabProvider', () => {
       await user.click(screen.getByText('seed-old'));
       await user.click(screen.getByText('replace'));
 
-      expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toEqual(['new']);
-      expect(screen.getByTestId('active')).toHaveTextContent('new');
+      expect(JSON.parse(screen.getByRole('status', { name: 'tabs' }).textContent!)).toEqual([
+        'new',
+      ]);
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('new');
     });
 
     it('is a no-op when oldId is not in tabs', async () => {
@@ -190,8 +204,10 @@ describe('TabProvider', () => {
       await user.click(screen.getByText('seed-old'));
       await user.click(screen.getByText('replace'));
 
-      expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toEqual(['old']);
-      expect(screen.getByTestId('active')).toHaveTextContent('old');
+      expect(JSON.parse(screen.getByRole('status', { name: 'tabs' }).textContent!)).toEqual([
+        'old',
+      ]);
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('old');
     });
   });
 
@@ -201,14 +217,18 @@ describe('TabProvider', () => {
         const { tabs, activeTabId } = useTabState();
         return (
           <>
-            <span data-testid="tabs">{JSON.stringify(tabs)}</span>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
+            <span role="status" aria-label="tabs">
+              {JSON.stringify(tabs)}
+            </span>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
           </>
         );
       }
       renderInTab(<Test />);
-      expect(screen.getByTestId('tabs')).toHaveTextContent('{}');
-      expect(screen.getByTestId('active')).toHaveTextContent('null');
+      expect(screen.getByRole('status', { name: 'tabs' })).toHaveTextContent('{}');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
     });
 
     it('addTab adds a tab', async () => {
@@ -217,7 +237,9 @@ describe('TabProvider', () => {
         const { addTab } = useTabActions();
         return (
           <>
-            <span data-testid="tabs">{JSON.stringify(tabs)}</span>
+            <span role="status" aria-label="tabs">
+              {JSON.stringify(tabs)}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -226,8 +248,12 @@ describe('TabProvider', () => {
       }
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
-      expect(JSON.parse(screen.getByTestId('tabs').textContent!)).toHaveProperty('tab-1');
-      expect(JSON.parse(screen.getByTestId('tabs').textContent!)['tab-1']).toEqual({
+      expect(JSON.parse(screen.getByRole('status', { name: 'tabs' }).textContent!)).toHaveProperty(
+        'tab-1',
+      );
+      expect(
+        JSON.parse(screen.getByRole('status', { name: 'tabs' }).textContent!)['tab-1'],
+      ).toEqual({
         title: undefined,
         tabStatus: 'connecting',
         launchOnMount: false,
@@ -240,7 +266,9 @@ describe('TabProvider', () => {
         const { addTab } = useTabActions();
         return (
           <>
-            <span data-testid="count">{Object.keys(tabs).length}</span>
+            <span role="status" aria-label="count">
+              {Object.keys(tabs).length}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -250,7 +278,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('add'));
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      expect(screen.getByRole('status', { name: 'count' })).toHaveTextContent('1');
     });
 
     it('removeTab removes a tab', async () => {
@@ -259,7 +287,9 @@ describe('TabProvider', () => {
         const { addTab, removeTab } = useTabActions();
         return (
           <>
-            <span data-testid="has">{String('tab-1' in tabs)}</span>
+            <span role="status" aria-label="has">
+              {String('tab-1' in tabs)}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -272,7 +302,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('remove'));
-      expect(screen.getByTestId('has')).toHaveTextContent('false');
+      expect(screen.getByRole('status', { name: 'has' })).toHaveTextContent('false');
     });
 
     it('removeTab switches activeTabId when active tab is removed', async () => {
@@ -281,7 +311,9 @@ describe('TabProvider', () => {
         const { addTab, setActiveTab, removeTab } = useTabActions();
         return (
           <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -301,7 +333,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('setup'));
       await user.click(screen.getByText('remove'));
-      expect(screen.getByTestId('active')).toHaveTextContent('tab-1');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('tab-1');
     });
 
     it('removeTab sets activeTabId to null when last tab removed', async () => {
@@ -310,7 +342,9 @@ describe('TabProvider', () => {
         const { addTab, setActiveTab, removeTab } = useTabActions();
         return (
           <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -329,7 +363,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('setup'));
       await user.click(screen.getByText('remove'));
-      expect(screen.getByTestId('active')).toHaveTextContent('null');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
     });
 
     it('setActiveTab updates activeTabId', async () => {
@@ -338,7 +372,9 @@ describe('TabProvider', () => {
         const { addTab, setActiveTab } = useTabActions();
         return (
           <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -353,7 +389,7 @@ describe('TabProvider', () => {
       }
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('go'));
-      expect(screen.getByTestId('active')).toHaveTextContent('tab-1');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('tab-1');
     });
 
     it('setTabTitle updates tab title', async () => {
@@ -362,7 +398,9 @@ describe('TabProvider', () => {
         const { addTab, setTabTitle } = useTabActions();
         return (
           <>
-            <span data-testid="title">{tabs['tab-1']?.title ?? 'none'}</span>
+            <span role="status" aria-label="title">
+              {tabs['tab-1']?.title ?? 'none'}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -375,7 +413,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('title'));
-      expect(screen.getByTestId('title')).toHaveTextContent('Hello');
+      expect(screen.getByRole('status', { name: 'title' })).toHaveTextContent('Hello');
     });
 
     it('setTabStatus updates tab status', async () => {
@@ -384,7 +422,9 @@ describe('TabProvider', () => {
         const { addTab, setTabStatus } = useTabActions();
         return (
           <>
-            <span data-testid="status">{tabs['tab-1']?.tabStatus ?? 'none'}</span>
+            <span role="status" aria-label="status">
+              {tabs['tab-1']?.tabStatus ?? 'none'}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -397,7 +437,7 @@ describe('TabProvider', () => {
       const { user } = renderInTab(<Test />);
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('processing'));
-      expect(screen.getByTestId('status')).toHaveTextContent('processing');
+      expect(screen.getByRole('status', { name: 'status' })).toHaveTextContent('processing');
     });
 
     it('setTabTitle and setTabStatus work independently', async () => {
@@ -406,7 +446,9 @@ describe('TabProvider', () => {
         const { addTab, setTabTitle, setTabStatus } = useTabActions();
         return (
           <>
-            <span data-testid="tab">{JSON.stringify(tabs['tab-1'] ?? null)}</span>
+            <span role="status" aria-label="tab">
+              {JSON.stringify(tabs['tab-1'] ?? null)}
+            </span>
             <button type="button" onClick={() => addTab('tab-1')}>
               add
             </button>
@@ -423,7 +465,7 @@ describe('TabProvider', () => {
       await user.click(screen.getByText('add'));
       await user.click(screen.getByText('title'));
       await user.click(screen.getByText('disconnected'));
-      expect(JSON.parse(screen.getByTestId('tab').textContent!)).toEqual({
+      expect(JSON.parse(screen.getByRole('status', { name: 'tab' }).textContent!)).toEqual({
         title: 'Hello',
         tabStatus: 'disconnected',
         launchOnMount: false,

@@ -4,7 +4,7 @@ interface SectionHeaderProps {
   children: React.ReactNode;
   className?: string;
   variant?: 'default' | 'prominent';
-  'data-testid'?: string;
+  'aria-label'?: string;
 }
 
 const BASE = 'px-4 pt-2 pb-1 m-0 text-xs font-mono font-bold tracking-widest uppercase';
@@ -18,10 +18,10 @@ export function SectionHeader({
   children,
   className,
   variant = 'default',
-  'data-testid': dataTestid,
+  'aria-label': ariaLabel,
 }: SectionHeaderProps) {
   return (
-    <h3 data-testid={dataTestid} className={cn(BASE, VARIANT_CLASS[variant], className)}>
+    <h3 aria-label={ariaLabel} className={cn(BASE, VARIANT_CLASS[variant], className)}>
       {children}
     </h3>
   );

@@ -86,7 +86,7 @@ vi.mock('react-resizable-panels', async () => {
   const h = React.createElement;
   return {
     PanelGroup: (p: { children?: React.ReactNode; autoSaveId?: string; direction?: string }) =>
-      h('div', { 'data-testid': 'panel-group', 'data-autosave-id': p.autoSaveId }, p.children),
+      h('div', { 'aria-label': 'panel-group', 'data-autosave-id': p.autoSaveId }, p.children),
     Panel: React.forwardRef(
       (
         p: { children?: React.ReactNode; id?: string; [k: string]: unknown },
@@ -105,14 +105,13 @@ vi.mock('react-resizable-panels', async () => {
         return h(
           'div',
           {
-            'data-testid':
-              (p as { 'data-testid'?: string })['data-testid'] ?? `panel-${p.id ?? ''}`,
+            'aria-label': (p as { 'aria-label'?: string })['aria-label'] ?? `panel-${p.id ?? ''}`,
           },
           p.children,
         );
       },
     ),
-    PanelResizeHandle: () => h('div', { 'data-testid': 'resize-handle' }),
+    PanelResizeHandle: () => h('div', { 'aria-label': 'resize-handle' }),
   };
 });
 

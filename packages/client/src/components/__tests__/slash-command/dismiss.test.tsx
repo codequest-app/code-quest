@@ -69,10 +69,10 @@ describe('slash command integration', () => {
       await user.click(screen.getByTitle('Show command menu (/)'));
       await user.click(screen.getByRole('menuitem', { name: 'Mention file from this project...' }));
 
-      await waitFor(() => expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument());
 
       await user.keyboard('{Escape}');
-      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
     });
 
     it('Escape closes mention dropdown opened via Mention file button (from / menu)', async () => {
@@ -83,10 +83,10 @@ describe('slash command integration', () => {
       await user.type(textarea, '/mention');
       await user.keyboard('{Enter}');
 
-      await waitFor(() => expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument());
 
       await user.keyboard('{Escape}');
-      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
     });
 
     it('single Escape closes / menu without leaving menu open', async () => {

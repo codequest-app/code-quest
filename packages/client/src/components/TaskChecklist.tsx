@@ -78,7 +78,7 @@ export function TaskChecklist({ content, onToggle, onError }: TaskChecklistProps
         return (
           <label
             key={line.lineIndex}
-            data-testid={`task-line-${line.lineIndex}`}
+            aria-label={`task-line-${line.lineIndex}`}
             className="flex items-start gap-2 py-0.5 cursor-pointer hover:bg-white/5 rounded"
           >
             <span aria-hidden className="whitespace-pre">

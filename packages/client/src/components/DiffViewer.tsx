@@ -21,12 +21,11 @@ function AcceptRejectButtons({
   onEdit?: () => void;
 }) {
   return (
-    <div className="flex gap-2" data-testid="diff-actions">
+    <div className="flex gap-2">
       <button
         type="button"
         onClick={onAccept}
         className="text-xs text-success hover:text-success/80 font-medium"
-        data-testid="diff-accept"
       >
         ✓ Accept
       </button>
@@ -34,7 +33,6 @@ function AcceptRejectButtons({
         type="button"
         onClick={onReject}
         className="text-xs text-danger hover:text-danger/80 font-medium"
-        data-testid="diff-reject"
       >
         ✗ Reject
       </button>
@@ -43,7 +41,6 @@ function AcceptRejectButtons({
           type="button"
           onClick={onEdit}
           className="text-xs text-accent hover:text-accent/80 font-medium"
-          data-testid="diff-edit"
         >
           ✎ Edit
         </button>
@@ -100,9 +97,9 @@ function DiffFileHeader({
   const insertions = lines ? lines.filter((l) => l.startsWith('+')).length : 0;
   const deletions = lines ? lines.filter((l) => l.startsWith('-')).length : 0;
   return (
-    <div
+    <section
       className="flex items-center justify-between bg-surface-hover px-3 py-1.5 rounded-t-lg border border-border border-b-0"
-      data-testid="diff-filename"
+      aria-label="diff-filename"
     >
       <div className="flex items-center gap-2">
         <span className="text-xs font-mono text-text-muted">{fileName}</span>
@@ -114,7 +111,7 @@ function DiffFileHeader({
         )}
       </div>
       {actions}
-    </div>
+    </section>
   );
 }
 
@@ -148,7 +145,7 @@ export function DiffViewer({
           className="w-full bg-code-block p-3 text-xs font-mono border border-border rounded-b-lg"
           value={editedContent}
           onChange={(e) => setEditedContent(e.target.value)}
-          data-testid="diff-edit-textarea"
+          aria-label="diff-edit-textarea"
           rows={10}
         />
         <div className="flex gap-2 mt-1">
@@ -156,7 +153,6 @@ export function DiffViewer({
             type="button"
             onClick={handleApplyEdit}
             className="text-xs text-success hover:text-success/80 font-medium"
-            data-testid="diff-apply-edit"
           >
             Apply Edit
           </button>
@@ -164,7 +160,6 @@ export function DiffViewer({
             type="button"
             onClick={() => setIsEditing(false)}
             className="text-xs text-text-muted hover:text-text-muted/60 font-medium"
-            data-testid="diff-cancel-edit"
           >
             Cancel
           </button>
@@ -191,7 +186,7 @@ export function DiffViewer({
         />
       ) : (
         editable && (
-          <div className="flex gap-2 mb-1" data-testid="diff-actions">
+          <div className="flex gap-2 mb-1">
             <AcceptRejectButtons
               onAccept={onAccept}
               onReject={onReject}

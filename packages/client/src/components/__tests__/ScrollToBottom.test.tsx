@@ -56,12 +56,12 @@ describe('Auto-scroll behavior', () => {
       await vi.advanceTimersByTimeAsync(600);
     });
 
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
     simulateScrolledUp(container);
 
     // Set spy AFTER initial messages settled, clear any prior calls
     const scrollIntoView = vi.fn();
-    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+    screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // Emit a pending_action (permission request)
     await act(async () => {
@@ -83,7 +83,7 @@ describe('Auto-scroll behavior', () => {
     });
 
     const scrollIntoView = vi.fn();
-    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+    screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // Content grows but no new message → instant scroll
     await act(async () => {
@@ -100,7 +100,7 @@ describe('Auto-scroll behavior', () => {
         <ComposeInput />
       </>,
     );
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
 
     // Wait for initial programmatic scroll to settle, then scroll up
     await act(async () => {
@@ -109,7 +109,7 @@ describe('Auto-scroll behavior', () => {
     simulateScrolledUp(container);
 
     const scrollIntoView = vi.fn();
-    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+    screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
 
     const input = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     fireEvent.change(input, { target: { value: 'hi' } });
@@ -128,7 +128,7 @@ describe('Auto-scroll behavior', () => {
 
     // User is at bottom (default)
     const scrollIntoView = vi.fn();
-    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+    screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
 
     // More streaming content arrives — content grows but messages.length unchanged
     await act(async () => {
@@ -148,7 +148,7 @@ describe('Scroll to bottom button', () => {
   it('shows button when scrolled up', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
     act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
   });
@@ -156,10 +156,10 @@ describe('Scroll to bottom button', () => {
   it('calls scrollIntoView when button is clicked', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
     act(() => simulateScrolledUp(container));
     const scrollIntoView = vi.fn();
-    screen.getByTestId('message-list-bottom').scrollIntoView = scrollIntoView;
+    screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
     fireEvent.click(screen.getByRole('button', { name: /scroll to bottom/i }));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'instant' });
   });
@@ -167,7 +167,7 @@ describe('Scroll to bottom button', () => {
   it('hides button when scrolled back to bottom', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
     act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
     act(() => simulateScrolledToBottom(container));
@@ -177,7 +177,7 @@ describe('Scroll to bottom button', () => {
   it('scroll button has z-float so it appears above the chat input overlay', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByTestId('message-list');
+    const container = screen.getByLabelText('message-list');
     act(() => simulateScrolledUp(container));
     const btn = screen.getByRole('button', { name: /scroll to bottom/i });
     expect(btn.className).toMatch(/\bz-float\b/);

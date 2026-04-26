@@ -117,7 +117,7 @@ describe('PaletteMessageList', () => {
 
   it('does not insert section headers when sourceLabels is not provided', () => {
     renderList({ messages: [msg('1', 'A'), msg('2', 'B')] });
-    expect(screen.queryByTestId('source-header')).toBeNull();
+    expect(screen.queryByRole('heading', { level: 3, name: 'source-header' })).toBeNull();
   });
 
   it('renders only one section header for consecutive messages from the same source', () => {
@@ -126,7 +126,7 @@ describe('PaletteMessageList', () => {
       ['2', 'proj-A / abc12345'],
     ]);
     renderList({ messages: [msg('1', 'A'), msg('2', 'B')], sourceLabels });
-    const headers = screen.getAllByTestId('source-header');
+    const headers = screen.getAllByRole('heading', { level: 3, name: 'source-header' });
     expect(headers).toHaveLength(1);
     expect(headers[0]).toHaveTextContent('proj-A / abc12345');
   });
@@ -134,7 +134,7 @@ describe('PaletteMessageList', () => {
   it('source headers use prominent variant (border-b)', () => {
     const sourceLabels = new Map([['1', 'proj-A / abc12345']]);
     renderList({ messages: [msg('1', 'A')], sourceLabels });
-    const header = screen.getByTestId('source-header');
+    const header = screen.getByRole('heading', { level: 3, name: 'source-header' });
     expect(header.className).toMatch(/border-b/);
     expect(header.className).toMatch(/text-text-muted/);
   });

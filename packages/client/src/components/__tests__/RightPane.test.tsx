@@ -55,7 +55,7 @@ describe('RightPane', () => {
   it('exposes cwd via data-cwd on the body for child consumers', () => {
     const { Wrapper } = setup();
     render(<RightPane cwd="/repo/cc-office" onMention={vi.fn()} />, { wrapper: Wrapper });
-    expect(screen.getByTestId('right-pane-body')).toHaveAttribute('data-cwd', '/repo/cc-office');
+    expect(screen.getByLabelText('right-pane-body')).toHaveAttribute('data-cwd', '/repo/cc-office');
   });
 
   describe('tab strip visual', () => {
@@ -76,9 +76,9 @@ describe('RightPane', () => {
     it('lazy first-mount: unvisited tabs are not in the DOM on initial render', () => {
       const { Wrapper } = setup();
       render(<RightPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
-      expect(screen.getByTestId('files-pane')).toBeInTheDocument();
-      expect(screen.queryByTestId('git-pane')).toBeNull();
-      expect(screen.queryByTestId('spec-pane')).toBeNull();
+      expect(screen.getByLabelText('files-pane')).toBeInTheDocument();
+      expect(screen.queryByLabelText('git-pane')).toBeNull();
+      expect(screen.queryByLabelText('spec-pane')).toBeNull();
     });
 
     it('after visiting Spec then Files, Spec stays mounted with hidden attribute', async () => {
@@ -87,16 +87,16 @@ describe('RightPane', () => {
       render(<RightPane cwd="/repo" onMention={vi.fn()} />, { wrapper: Wrapper });
 
       await user.click(screen.getByRole('tab', { name: /spec/i }));
-      expect(screen.getByTestId('spec-pane')).toBeInTheDocument();
+      expect(screen.getByLabelText('spec-pane')).toBeInTheDocument();
 
       await user.click(screen.getByRole('tab', { name: /files/i }));
       // Spec subtree still in DOM, just hidden.
-      const specPane = screen.getByTestId('spec-pane');
+      const specPane = screen.getByLabelText('spec-pane');
       expect(specPane).toBeInTheDocument();
       // The wrapper around the inactive pane carries `hidden`.
       expect(specPane.closest('[hidden]')).not.toBeNull();
       // Files wrapper is not hidden.
-      const filesPane = screen.getByTestId('files-pane');
+      const filesPane = screen.getByLabelText('files-pane');
       expect(filesPane.closest('[hidden]')).toBeNull();
     });
 

@@ -10,11 +10,12 @@ function ErrorProbe() {
     (m) => m.role === 'system' && m.type === 'error' && m.content !== 'Session not found',
   );
   return (
-    <ul data-testid="errors">
+    <ul aria-label="errors">
       {errs.map((m, i) => (
         <li
           key={m.id}
-          data-testid={`err-${i}`}
+          role="status"
+          aria-label={`err-${i}`}
           data-content={m.content}
           data-detail={m.type === 'error' ? (m.meta?.detail ?? '') : ''}
         />
@@ -39,11 +40,11 @@ describe('error:message handler — kind classification', () => {
       );
     });
 
-    const ede = screen.getByTestId('err-0');
+    const ede = screen.getByRole('status', { name: 'err-0' });
     expect(ede.getAttribute('data-content')).toBe('ede_diagnostic');
     expect(ede.getAttribute('data-detail')).toContain('[ede_diagnostic]');
 
-    const aborted = screen.getByTestId('err-1');
+    const aborted = screen.getByRole('status', { name: 'err-1' });
     expect(aborted.getAttribute('data-content')).toBe('aborted');
     expect(aborted.getAttribute('data-detail')).toContain('Request was aborted');
   });
@@ -55,7 +56,7 @@ describe('error:message handler — kind classification', () => {
       await claude.emit(s.resultError({ errors: ['Max turns exceeded'] }));
     });
 
-    const err = screen.getByTestId('err-0');
+    const err = screen.getByRole('status', { name: 'err-0' });
     expect(err.getAttribute('data-content')).toBe('Max turns exceeded');
     expect(err.getAttribute('data-detail')).toBe('');
   });

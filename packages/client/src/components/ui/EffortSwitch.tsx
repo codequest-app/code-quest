@@ -61,7 +61,6 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
 
   return (
     <div
-      data-testid="effort-switch"
       role="slider"
       tabIndex={0}
       aria-valuenow={idx}
@@ -86,21 +85,24 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
       title="Click a position to set effort level"
     >
       <div
-        data-testid="effort-switch-track"
+        role="presentation"
+        aria-label="effort-switch-track"
         // Visible pill rides at the same h-3.5 as thumb + fill so the
         // three read as a single coherent slim slider; the outer wrapper
         // (h-5) supplies the larger click hit area + focus ring slot.
         className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-3.5 rounded-full bg-surface-hover overflow-hidden"
       >
         <div
-          data-testid="effort-switch-fill"
+          role="presentation"
+          aria-label="effort-switch-fill"
           className="absolute top-0 left-0 h-full rounded-full bg-toggle transition-all duration-150"
           style={{ width: fillWidth }}
         />
         {ticksAfterThumb.map((i) => (
           <div
             key={levels[i]}
-            data-testid="effort-switch-tick"
+            role="presentation"
+            aria-label="effort-switch-tick"
             className={cn(
               'absolute top-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2',
               'bg-text/35',
@@ -109,7 +111,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
           />
         ))}
         <div
-          data-testid="effort-switch-thumb"
+          role="presentation"
+          aria-label="effort-switch-thumb"
           className={cn(
             'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
             'bg-white shadow-sm ring-1 ring-black/20',

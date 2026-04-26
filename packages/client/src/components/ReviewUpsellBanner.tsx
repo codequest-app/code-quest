@@ -13,8 +13,8 @@ export function ReviewUpsellBanner() {
   if (!enabled || isDismissed) return null;
 
   return (
-    <div
-      data-testid="review-upsell-banner"
+    <section
+      aria-label="review-upsell-banner"
       className="bg-accent/10 border border-accent/30 rounded-md px-4 py-3 flex items-center justify-between gap-3"
     >
       <span className="text-sm text-text">Try the new code review feature</span>
@@ -25,6 +25,6 @@ export function ReviewUpsellBanner() {
       >
         Dismiss
       </button>
-    </div>
+    </section>
   );
 }

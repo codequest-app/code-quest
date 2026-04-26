@@ -101,7 +101,7 @@ describe('BranchPopover', () => {
 
     it('list has a bounded max-height and scrolls', () => {
       renderMany(100);
-      const list = screen.getByTestId('branch-list');
+      const list = screen.getByLabelText('branch-list');
       expect(list.className).toMatch(/overflow-y-auto/);
       expect(list.className).toMatch(/max-h-/);
     });

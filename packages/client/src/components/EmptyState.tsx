@@ -10,17 +10,9 @@ interface EmptyStateProps {
   hint?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
-  testId?: string;
 }
 
-export function EmptyState({
-  icon,
-  message,
-  hint,
-  actionLabel,
-  onAction,
-  testId,
-}: EmptyStateProps) {
+export function EmptyState({ icon, message, hint, actionLabel, onAction }: EmptyStateProps) {
   const hasAction = actionLabel !== undefined && onAction !== undefined;
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-4 text-text-muted text-center px-6">
@@ -32,7 +24,6 @@ export function EmptyState({
           type="button"
           className="px-6 py-2 rounded bg-accent text-white text-sm hover:bg-accent/80"
           onClick={onAction}
-          data-testid={testId}
         >
           {actionLabel}
         </button>

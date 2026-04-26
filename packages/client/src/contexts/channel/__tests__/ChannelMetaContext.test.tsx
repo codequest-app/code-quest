@@ -7,8 +7,12 @@ function Display() {
   const meta = useChannelMeta();
   return (
     <>
-      <span data-testid="channel-id">{meta.channelId}</span>
-      <span data-testid="cwd">{meta.cwd ?? 'none'}</span>
+      <span role="status" aria-label="channel-id">
+        {meta.channelId}
+      </span>
+      <span role="status" aria-label="cwd">
+        {meta.cwd ?? 'none'}
+      </span>
     </>
   );
 }
@@ -20,8 +24,8 @@ describe('ChannelMetaContext', () => {
         <Display />
       </ChannelMetaProvider>,
     );
-    expect(screen.getByTestId('channel-id')).toHaveTextContent('ch-1');
-    expect(screen.getByTestId('cwd')).toHaveTextContent('/repo');
+    expect(screen.getByRole('status', { name: 'channel-id' })).toHaveTextContent('ch-1');
+    expect(screen.getByRole('status', { name: 'cwd' })).toHaveTextContent('/repo');
   });
 
   it('cwd is optional (legacy channels without recorded cwd return undefined)', () => {
@@ -30,8 +34,8 @@ describe('ChannelMetaContext', () => {
         <Display />
       </ChannelMetaProvider>,
     );
-    expect(screen.getByTestId('channel-id')).toHaveTextContent('ch-2');
-    expect(screen.getByTestId('cwd')).toHaveTextContent('none');
+    expect(screen.getByRole('status', { name: 'channel-id' })).toHaveTextContent('ch-2');
+    expect(screen.getByRole('status', { name: 'cwd' })).toHaveTextContent('none');
   });
 
   it('throws when useChannelMeta() is called outside a provider', () => {
@@ -50,7 +54,7 @@ describe('ChannelMetaContext', () => {
       skipInit: true,
       launchOnMount: false,
     });
-    expect(screen.getByTestId('channel-id')).toHaveTextContent(channelId);
-    expect(screen.getByTestId('cwd')).toHaveTextContent('/test/cwd');
+    expect(screen.getByRole('status', { name: 'channel-id' })).toHaveTextContent(channelId);
+    expect(screen.getByRole('status', { name: 'cwd' })).toHaveTextContent('/test/cwd');
   });
 });

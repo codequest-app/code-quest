@@ -48,7 +48,8 @@ function ModifiedFileItem({
         className="flex items-center gap-2 w-full text-left py-1 px-1 hover:bg-bg-secondary rounded text-sm font-mono"
       >
         <span
-          data-testid={`status-${file.path}`}
+          role="status"
+          aria-label={`status-${file.path}`}
           className={cn(
             'inline-block w-2 h-2 rounded-full',
             statusColor[file.status] ?? 'bg-text-muted',
@@ -108,7 +109,10 @@ export function ModifiedFilesPanel({
   if (files.length === 0) return null;
 
   return (
-    <div className="border border-border rounded p-2 space-y-1" data-testid="modified-files-panel">
+    <section
+      className="border border-border rounded p-2 space-y-1"
+      aria-label="modified-files-panel"
+    >
       <div className="text-sm font-semibold text-text-muted mb-1">
         {pluralize(files.length, 'file')} modified
       </div>
@@ -123,6 +127,6 @@ export function ModifiedFilesPanel({
           onRewind={onRewind}
         />
       ))}
-    </div>
+    </section>
   );
 }

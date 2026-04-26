@@ -249,8 +249,8 @@ export function CommandPalette() {
         if (e.key === 'Escape') closePalette();
       }}
     >
-      <div
-        data-testid="command-palette-dialog"
+      <section
+        aria-label="command-palette-dialog"
         className={cn(
           'flex flex-col overflow-hidden',
           'w-full max-h-[80vh] rounded-lg',
@@ -343,7 +343,7 @@ export function CommandPalette() {
             ↑↓ navigate · ↵ jump · esc close
           </span>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

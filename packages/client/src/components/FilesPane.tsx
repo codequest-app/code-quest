@@ -67,7 +67,7 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps) {
   }
 
   return (
-    <div className="flex flex-col h-full" data-testid="files-pane">
+    <section className="flex flex-col h-full" aria-label="files-pane">
       <div className="flex-1 min-h-0 overflow-auto">
         {/* `key={cwd}` forces FileTree to remount when the project switches —
             headless-tree's root node caches children per (rootItemId, dataLoader)
@@ -86,6 +86,6 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps) {
           onClose={() => setPreviewPath(null)}
         />
       )}
-    </div>
+    </section>
   );
 }

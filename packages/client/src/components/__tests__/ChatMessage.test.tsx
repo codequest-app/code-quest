@@ -105,10 +105,8 @@ describe('ChatMessage', () => {
       value: { writeText },
       configurable: true,
     });
-    const { container } = render(
-      <ChatMessage message={{ ...base, type: 'text', content: 'Hello **world**' }} />,
-    );
-    const btn = container.querySelector('[data-testid="message-copy"]');
+    render(<ChatMessage message={{ ...base, type: 'text', content: 'Hello **world**' }} />);
+    const btn = screen.queryByLabelText('message-copy');
     expect(btn).not.toBeNull();
     if (btn) await user.click(btn as HTMLElement);
     expect(writeText).toHaveBeenCalled();
@@ -123,32 +121,32 @@ describe('ChatMessage', () => {
       configurable: true,
     });
     const content = 'line one\n\n**bold** line';
-    const { container } = render(<ChatMessage message={{ ...base, type: 'text', content }} />);
-    const btn = container.querySelector('[data-testid="message-copy"]');
+    render(<ChatMessage message={{ ...base, type: 'text', content }} />);
+    const btn = screen.queryByLabelText('message-copy');
     if (btn) await user.click(btn as HTMLElement);
     expect(writeText).toHaveBeenCalledWith(content);
   });
 
   it('user text message does NOT render a separate copy button (available via actions menu)', () => {
-    const { container } = render(
+    render(
       <ChatMessage
         message={{ ...base, role: 'user', type: 'text', content: 'hi', meta: { source: 'typed' } }}
       />,
     );
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('system error message does NOT render a message-level copy button', () => {
-    const { container } = render(
+    render(
       <ChatMessage
         message={{ ...base, role: 'system', type: 'error', content: 'Something broke' }}
       />,
     );
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('tool_use message does NOT render a message-level copy button', () => {
-    const { container } = render(
+    render(
       <ChatMessage
         message={{
           ...base,
@@ -158,14 +156,12 @@ describe('ChatMessage', () => {
         }}
       />,
     );
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('thinking message has no copy button (Copy is not meaningful for thoughts)', () => {
-    const { container } = render(
-      <ChatMessage message={{ ...base, type: 'thinking', content: 'reasoning...' }} />,
-    );
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    render(<ChatMessage message={{ ...base, type: 'thinking', content: 'reasoning...' }} />);
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('empty-body thinking message renders nothing at all', () => {
@@ -174,7 +170,7 @@ describe('ChatMessage', () => {
     );
     // No wrapper, no copy button, nothing.
     expect(container.querySelector('[data-role="assistant"]')).toBeNull();
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('non-empty thinking still renders its block (happy path)', () => {
@@ -184,7 +180,7 @@ describe('ChatMessage', () => {
   });
 
   it('tool_result message does NOT render a message-level copy button', () => {
-    const { container } = render(
+    render(
       <ChatMessage
         message={{
           ...base,
@@ -194,7 +190,7 @@ describe('ChatMessage', () => {
         }}
       />,
     );
-    expect(container.querySelector('[data-testid="message-copy"]')).toBeNull();
+    expect(screen.queryByLabelText('message-copy')).toBeNull();
   });
 
   it('assistant text unaffected by meta.source', () => {
@@ -570,7 +566,7 @@ describe('ChatMessage', () => {
       />,
     );
     await user.click(screen.getByText(/result/i));
-    expect(screen.getByTestId('diff-filename')).toHaveTextContent('src/main.ts');
+    expect(screen.getByLabelText('diff-filename')).toHaveTextContent('src/main.ts');
   });
 
   it('renders diff with line numbers', async () => {
@@ -606,7 +602,7 @@ describe('ChatMessage', () => {
       />,
     );
     await user.click(screen.getByText(/result/i));
-    expect(screen.queryByTestId('diff-filename')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('diff-filename')).not.toBeInTheDocument();
   });
 
   it('renders ANSI colored output in tool_result', async () => {
@@ -623,7 +619,7 @@ describe('ChatMessage', () => {
       />,
     );
     await user.click(screen.getByText(/result/i));
-    const container = screen.getByTestId('ansi-content');
+    const container = screen.getByLabelText('ansi-content');
     expect(container).toBeInTheDocument();
     // Should render green text with color styling, not raw escape codes
     expect(container.textContent).toContain('green text');
@@ -644,7 +640,7 @@ describe('ChatMessage', () => {
       />,
     );
     await user.click(screen.getByText(/result/i));
-    expect(screen.queryByTestId('ansi-content')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('ansi-content')).not.toBeInTheDocument();
     expect(screen.getByText('plain output text')).toBeInTheDocument();
   });
 
@@ -662,14 +658,14 @@ describe('ChatMessage', () => {
       />,
     );
     await user.click(screen.getByText(/result/i));
-    const container = screen.getByTestId('ansi-content');
+    const container = screen.getByLabelText('ansi-content');
     expect(container.textContent).toContain('red');
     expect(container.textContent).toContain('blue');
   });
 
   it('renders loading skeleton for content_block_start', () => {
     render(<ChatMessage message={{ ...base, type: 'content_block_start', content: '' }} />);
-    expect(screen.getByTestId('block-placeholder')).toBeInTheDocument();
+    expect(screen.getByLabelText('block-placeholder')).toBeInTheDocument();
   });
 
   it('renders user messages with user role styling', () => {
@@ -719,7 +715,7 @@ describe('ChatMessage', () => {
 
   it('renders content_block_start without blockType as generic placeholder', () => {
     render(<ChatMessage message={{ ...base, type: 'content_block_start', content: '' }} />);
-    expect(screen.getByTestId('block-placeholder')).toBeInTheDocument();
+    expect(screen.getByLabelText('block-placeholder')).toBeInTheDocument();
     expect(screen.queryByText(/tool_use|text|thinking/)).not.toBeInTheDocument();
   });
 

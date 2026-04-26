@@ -8,8 +8,12 @@ function AuthProbe() {
   const { auth, login, submitOAuthCode } = useSession();
   return (
     <div>
-      <span data-testid="auth-status">{auth.status}</span>
-      <span data-testid="auth-error">{auth.errorMsg ?? ''}</span>
+      <span role="status" aria-label="auth-status">
+        {auth.status}
+      </span>
+      <span role="status" aria-label="auth-error">
+        {auth.errorMsg ?? ''}
+      </span>
       <button type="button" onClick={() => login()}>
         login
       </button>
@@ -31,9 +35,11 @@ describe('SessionContext — auth callbacks (FakeSummoner)', () => {
       await user.click(screen.getByText('login'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
+        expect(screen.getByRole('status', { name: 'auth-status' })).toHaveTextContent('error');
       });
-      expect(screen.getByTestId('auth-error')).toHaveTextContent(/no active session/i);
+      expect(screen.getByRole('status', { name: 'auth-error' })).toHaveTextContent(
+        /no active session/i,
+      );
     });
   });
 
@@ -46,7 +52,7 @@ describe('SessionContext — auth callbacks (FakeSummoner)', () => {
       await user.click(screen.getByText('submit-oauth'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('auth-status')).toHaveTextContent('success');
+        expect(screen.getByRole('status', { name: 'auth-status' })).toHaveTextContent('success');
       });
     });
 
@@ -73,9 +79,9 @@ describe('SessionContext — auth callbacks (FakeSummoner)', () => {
       await user.click(screen.getByText('submit-oauth'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('auth-status')).toHaveTextContent('error');
+        expect(screen.getByRole('status', { name: 'auth-status' })).toHaveTextContent('error');
       });
-      expect(screen.getByTestId('auth-error')).toHaveTextContent('OAuth failed');
+      expect(screen.getByRole('status', { name: 'auth-error' })).toHaveTextContent('OAuth failed');
     });
   });
 });

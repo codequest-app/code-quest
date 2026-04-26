@@ -4,6 +4,7 @@ import { EVENTS } from '@code-quest/shared';
 import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Toaster } from 'sonner';
 import { WorkspaceLayout } from '../components/WorkspaceLayout';
 import { AppInitProvider } from '../contexts/AppInitContext';
 import { FsProvider } from '../contexts/FsContext';
@@ -79,11 +80,11 @@ async function addProject(
   summoner.filesystem().addDirectory(path, [dirName]);
 
   // Detect entry point: EmptyState or sidebar
-  const emptyButton = screen.queryByTestId('empty-add-project');
+  const emptyButton = screen.queryByRole('button', { name: 'Add Project' });
   if (emptyButton) {
     await user.click(emptyButton);
   } else {
-    const sidebar = screen.getByTestId('sidebar-panel');
+    const sidebar = screen.getByRole('complementary', { name: 'sidebar-panel' });
     await user.click(within(sidebar).getByText(/Add/));
   }
 
@@ -119,6 +120,7 @@ export async function renderWithWorkspace(
                   <FsProvider>
                     <OpenspecProvider>
                       <WorkspaceLayout />
+                      <Toaster />
                     </OpenspecProvider>
                   </FsProvider>
                 </GitProvider>

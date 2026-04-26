@@ -10,8 +10,12 @@ describe('reload plugins hot reload', () => {
     const { slashCommands, mcpServers } = useChannelConfig();
     return (
       <div>
-        <div data-testid="slash-commands">{slashCommands.join(',')}</div>
-        <div data-testid="mcp-servers">{mcpServers.map((m) => m.name).join(',')}</div>
+        <div role="status" aria-label="slash-commands">
+          {slashCommands.join(',')}
+        </div>
+        <div role="status" aria-label="mcp-servers">
+          {mcpServers.map((m) => m.name).join(',')}
+        </div>
       </div>
     );
   }
@@ -26,7 +30,7 @@ describe('reload plugins hot reload', () => {
       }),
     });
 
-    expect(screen.getByTestId('slash-commands')).toHaveTextContent('old-skill');
+    expect(screen.getByRole('status', { name: 'slash-commands' })).toHaveTextContent('old-skill');
 
     await act(async () => {
       claude.pushServerEvent('plugin:reloaded', {
@@ -36,7 +40,7 @@ describe('reload plugins hot reload', () => {
       });
     });
 
-    expect(screen.getByTestId('slash-commands')).toHaveTextContent('new-skill');
-    expect(screen.getByTestId('mcp-servers')).toHaveTextContent('new-server');
+    expect(screen.getByRole('status', { name: 'slash-commands' })).toHaveTextContent('new-skill');
+    expect(screen.getByRole('status', { name: 'mcp-servers' })).toHaveTextContent('new-server');
   });
 });

@@ -11,7 +11,7 @@ describe('renderMenuTrailing', () => {
 
   it('renders ToggleSwitch with active state for kind=toggle', () => {
     render(renderMenuTrailing({ kind: 'toggle', active: true }));
-    expect(screen.getByTestId('toggle-switch')).toHaveAttribute('data-state', 'on');
+    expect(screen.getByLabelText('toggle-switch')).toHaveAttribute('data-state', 'on');
   });
 
   it('renders tri-state indicator for kind=group (aggregate derived from items)', () => {
@@ -25,7 +25,7 @@ describe('renderMenuTrailing', () => {
       }),
     );
     // all items on → aggregate 'all'
-    expect(screen.getByTestId('tri-state-indicator')).toHaveAttribute('data-state', 'all');
+    expect(screen.getByLabelText('tri-state-indicator')).toHaveAttribute('data-state', 'all');
   });
 
   it('derives partial aggregate when some items are on', () => {
@@ -38,7 +38,7 @@ describe('renderMenuTrailing', () => {
         ],
       }),
     );
-    expect(screen.getByTestId('tri-state-indicator')).toHaveAttribute('data-state', 'partial');
+    expect(screen.getByLabelText('tri-state-indicator')).toHaveAttribute('data-state', 'partial');
   });
 
   it('group kind onPartial is clickable and stopsPropagation (partial state)', async () => {
@@ -56,14 +56,14 @@ describe('renderMenuTrailing', () => {
         })}
       </button>,
     );
-    await userEvent.click(screen.getByTestId('tri-state-indicator'));
+    await userEvent.click(screen.getByLabelText('tri-state-indicator'));
     expect(onPartial).toHaveBeenCalledOnce();
     expect(rowClick).not.toHaveBeenCalled();
   });
 
   it('renders current value for kind=select', () => {
     render(renderMenuTrailing({ kind: 'select', currentValue: 'gpt-4' }));
-    expect(screen.getByTestId('select-current')).toHaveTextContent('gpt-4');
+    expect(screen.getByRole('status', { name: 'select-current' })).toHaveTextContent('gpt-4');
   });
 
   it('renders pill group for kind=choice with all options visible', async () => {
@@ -97,7 +97,7 @@ describe('renderMenuTrailing', () => {
       }),
     );
     // EffortSwitch renders a slider with notch dots — presence check via testid
-    expect(screen.getByTestId('effort-switch')).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Effort level' })).toBeInTheDocument();
   });
 });
 
@@ -108,14 +108,14 @@ describe('renderPaletteTrailing', () => {
 
   it('renders ON pill (tri-state "all") for kind=toggle with active=true', () => {
     render(renderPaletteTrailing({ kind: 'toggle', active: true }));
-    const pill = screen.getByTestId('tri-state-indicator');
+    const pill = screen.getByLabelText('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'all');
     expect(pill.textContent).toBe('ON');
   });
 
   it('renders OFF pill (tri-state "none") for kind=toggle with active=false', () => {
     render(renderPaletteTrailing({ kind: 'toggle', active: false }));
-    const pill = screen.getByTestId('tri-state-indicator');
+    const pill = screen.getByLabelText('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'none');
     expect(pill.textContent).toBe('OFF');
   });
@@ -130,18 +130,18 @@ describe('renderPaletteTrailing', () => {
         ],
       }),
     );
-    const pill = screen.getByTestId('tri-state-indicator');
+    const pill = screen.getByLabelText('tri-state-indicator');
     expect(pill).toHaveAttribute('data-state', 'partial');
     expect(pill.textContent).toBe('∂');
   });
 
   it('tags pill with per-feature testid when featureId provided', () => {
     render(renderPaletteTrailing({ kind: 'toggle', active: false }, { featureId: 'raw-panel' }));
-    expect(screen.getByTestId('raw-panel-toggle')).toHaveAttribute('data-state', 'none');
+    expect(screen.getByLabelText('raw-panel-toggle')).toHaveAttribute('data-state', 'none');
   });
 
   it('falls back to menu rendering for kind=select (no palette case today)', () => {
     render(renderPaletteTrailing({ kind: 'select', currentValue: 'gpt-4' }));
-    expect(screen.getByTestId('select-current')).toHaveTextContent('gpt-4');
+    expect(screen.getByRole('status', { name: 'select-current' })).toHaveTextContent('gpt-4');
   });
 });

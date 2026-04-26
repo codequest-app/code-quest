@@ -7,7 +7,8 @@ import type { ReactNode } from 'react';
 export function PaneStatusFooter({ children }: { children: ReactNode }) {
   return (
     <div
-      data-testid="pane-status-footer"
+      role="status"
+      aria-label="pane-status-footer"
       className="shrink-0 border-t border-border px-3 py-1.5 text-2xs font-mono text-text-dim flex items-center gap-2"
     >
       {children}

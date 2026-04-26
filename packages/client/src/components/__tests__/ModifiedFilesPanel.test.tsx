@@ -125,9 +125,9 @@ describe('ModifiedFilesPanel', () => {
 
   it('shows status indicator colors', () => {
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={vi.fn()} onRewind={vi.fn()} />);
-    const added = screen.getByTestId('status-src/index.ts');
-    const modified = screen.getByTestId('status-src/utils/helper.ts');
-    const deleted = screen.getByTestId('status-src/legacy.ts');
+    const added = screen.getByLabelText('status-src/index.ts');
+    const modified = screen.getByLabelText('status-src/utils/helper.ts');
+    const deleted = screen.getByLabelText('status-src/legacy.ts');
     expect(added.className).toMatch(/success/);
     expect(modified.className).toMatch(/warning/);
     expect(deleted.className).toMatch(/danger/);

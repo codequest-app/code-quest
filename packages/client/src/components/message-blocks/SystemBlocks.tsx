@@ -207,7 +207,7 @@ export function DocumentContent({ content, meta }: { content: string; meta?: Doc
 
 export function ContentBlockStart({ meta }: { meta?: Record<string, unknown> }) {
   return (
-    <div data-testid="block-placeholder" className="flex items-center gap-2 py-2">
+    <div role="status" aria-label="block-placeholder" className="flex items-center gap-2 py-2">
       <div className="h-4 w-32 bg-text-muted/20 rounded animate-pulse" />
       <div className="h-4 w-20 bg-text-muted/10 rounded animate-pulse" />
       {meta?.blockType != null && (

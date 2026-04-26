@@ -11,8 +11,12 @@ function BannerWithState() {
   const { messages } = useChannelMessages();
   return (
     <div>
-      <span data-testid="pending-count">{pendingControls.length}</span>
-      <span data-testid="last-message">{messages[messages.length - 1]?.content ?? ''}</span>
+      <span role="status" aria-label="pending-count">
+        {pendingControls.length}
+      </span>
+      <span role="status" aria-label="last-message">
+        {messages[messages.length - 1]?.content ?? ''}
+      </span>
       <PendingActionButtons />
     </div>
   );
@@ -55,13 +59,15 @@ describe('PendingActionButtons', () => {
   it('Yes click clears pending control and adds approval message', async () => {
     const user = userEvent.setup();
     await setup(s.controlRequestBash('r1', { command: 'ls' }));
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('1');
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('1');
 
     const yesBtn = screen.getAllByRole('button').find((b) => b.textContent?.match(/①.*Yes/));
     await user.click(yesBtn!);
 
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('last-message')).toHaveTextContent(/Approved.*Bash/);
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('0');
+    expect(screen.getByRole('status', { name: 'last-message' })).toHaveTextContent(
+      /Approved.*Bash/,
+    );
   });
 
   it('No click clears pending control and adds denied message', async () => {
@@ -72,8 +78,8 @@ describe('PendingActionButtons', () => {
     const noButton = screen.getByText(/No$/);
     await user.click(noButton);
 
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('last-message')).toHaveTextContent(/Denied.*Bash/);
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('0');
+    expect(screen.getByRole('status', { name: 'last-message' })).toHaveTextContent(/Denied.*Bash/);
   });
 
   it('shows allow-for-session option when permissionSuggestions present', async () => {
@@ -87,8 +93,8 @@ describe('PendingActionButtons', () => {
     const input = screen.getByPlaceholderText('Tell Claude what to do instead');
     await user.type(input, 'do not delete{Enter}');
 
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('last-message')).toHaveTextContent(/Denied.*Bash/);
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('0');
+    expect(screen.getByRole('status', { name: 'last-message' })).toHaveTextContent(/Denied.*Bash/);
   });
 
   it('shows Esc to cancel', async () => {
@@ -115,12 +121,14 @@ describe('PendingActionButtons', () => {
   it('keyboard: number key 1 triggers Yes', async () => {
     const user = userEvent.setup();
     await setup(s.controlRequestBash('r1', { command: 'ls' }));
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('1');
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('1');
 
     await user.keyboard('1');
 
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
-    expect(screen.getByTestId('last-message')).toHaveTextContent(/Approved.*Bash/);
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('0');
+    expect(screen.getByRole('status', { name: 'last-message' })).toHaveTextContent(
+      /Approved.*Bash/,
+    );
   });
 
   it('keyboard: Escape denies permission', async () => {
@@ -129,7 +137,7 @@ describe('PendingActionButtons', () => {
 
     await user.keyboard('{Escape}');
 
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('0');
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('0');
   });
 
   it('does not show editable command block when input is undefined', async () => {
@@ -148,7 +156,7 @@ describe('PendingActionButtons', () => {
       s.controlRequestBash('r1', { command: 'ls' }),
       s.controlRequest('r2', 'can_use_tool', 'Read', { file_path: '/src/app.ts' }),
     );
-    expect(screen.getByTestId('pending-count')).toHaveTextContent('2');
+    expect(screen.getByRole('status', { name: 'pending-count' })).toHaveTextContent('2');
     expect(screen.getAllByText('Bash').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Read').length).toBeGreaterThan(0);
   });

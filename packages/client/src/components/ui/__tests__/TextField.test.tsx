@@ -36,9 +36,9 @@ describe('TextField', () => {
     expect(el.className).toMatch(/rounded/);
   });
 
-  it('forwards data-testid', () => {
-    render(<TextField value="" onChange={() => {}} data-testid="my-field" />);
-    expect(screen.getByTestId('my-field')).toBeInTheDocument();
+  it('forwards aria-label', () => {
+    render(<TextField value="" onChange={() => {}} aria-label="my-field" />);
+    expect(screen.getByRole('textbox', { name: 'my-field' })).toBeInTheDocument();
   });
 
   it('honors disabled', () => {

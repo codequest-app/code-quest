@@ -59,7 +59,7 @@ export function PaletteMessageList({
           return (
             <div key={msg.id}>
               {showSourceHeader && (
-                <SectionHeader data-testid="source-header" variant="prominent">
+                <SectionHeader aria-label="source-header" variant="prominent">
                   {source}
                 </SectionHeader>
               )}

@@ -116,7 +116,7 @@ describe('ComposeInput', () => {
       await userEvent.type(textarea, '@');
 
       await waitFor(() => {
-        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+        expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument();
       });
     });
 
@@ -126,7 +126,7 @@ describe('ComposeInput', () => {
       await userEvent.type(textarea, '@src/');
 
       await waitFor(() => {
-        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+        expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument();
       });
     });
 
@@ -136,11 +136,11 @@ describe('ComposeInput', () => {
       await userEvent.type(textarea, '@');
 
       await waitFor(() => {
-        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+        expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument();
       });
 
       await userEvent.keyboard('{Escape}');
-      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
     });
 
     it('active file result item uses bg-selected class', async () => {
@@ -175,13 +175,13 @@ describe('ComposeInput', () => {
       await userEvent.type(textarea, '@index');
 
       await waitFor(() => {
-        expect(screen.getByTestId('mention-dropdown')).toBeInTheDocument();
+        expect(screen.getByLabelText('mention-dropdown')).toBeInTheDocument();
       });
 
       const option = screen.getByRole('option');
       await userEvent.click(option);
 
-      expect(screen.queryByTestId('mention-dropdown')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
       expect((textarea as HTMLTextAreaElement).value).toContain('@');
     });
   });

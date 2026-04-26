@@ -56,7 +56,7 @@ async function renderPaletteWithMessages() {
 describe('CommandPalette — layout', () => {
   it('dialog uses fixed height on tablet+ and max-height on mobile', async () => {
     await renderPalette();
-    const dialog = screen.getByTestId('command-palette-dialog');
+    const dialog = screen.getByLabelText('command-palette-dialog');
     expect(dialog.className).toMatch(/max-h-\[80vh\]/);
     expect(dialog.className).toMatch(/md:h-\[70vh\]/);
   });
@@ -76,7 +76,7 @@ describe('CommandPalette — layout', () => {
 
   it('mobile dialog has rounded corners; tablet has responsive width; desktop has fixed width', async () => {
     await renderPalette();
-    const dialog = screen.getByTestId('command-palette-dialog');
+    const dialog = screen.getByLabelText('command-palette-dialog');
     const cls = dialog.className;
     // all sizes: rounded
     expect(cls).toMatch(/rounded-lg/);
@@ -264,14 +264,14 @@ describe('CommandPalette — filter features', () => {
     const user = userEvent.setup();
     await renderPalette();
     await user.click(screen.getByRole('tab', { name: /actions/i }));
-    expect(screen.getByTestId('group-row-conversation')).toBeInTheDocument();
-    expect(screen.getByTestId('group-row-tools')).toBeInTheDocument();
-    expect(screen.getByTestId('group-row-system')).toBeInTheDocument();
+    expect(screen.getByLabelText('group-row-conversation')).toBeInTheDocument();
+    expect(screen.getByLabelText('group-row-tools')).toBeInTheDocument();
+    expect(screen.getByLabelText('group-row-system')).toBeInTheDocument();
   });
 
   it('filter groups appear in All tab too', async () => {
     await renderPalette();
-    expect(screen.getByTestId('group-row-conversation')).toBeInTheDocument();
+    expect(screen.getByLabelText('group-row-conversation')).toBeInTheDocument();
   });
 });
 
@@ -294,7 +294,7 @@ describe('CommandPalette — source labels', () => {
     await renderPalette();
     await userEvent.click(screen.getByRole('tab', { name: /messages/i }));
 
-    const headers = screen.getAllByTestId('source-header');
+    const headers = screen.getAllByLabelText('source-header');
     expect(headers.length).toBeGreaterThanOrEqual(2);
     expect(headers.map((el) => el.textContent)).toEqual(
       expect.arrayContaining([expect.stringContaining('alpha'), expect.stringContaining('beta')]),
@@ -305,7 +305,7 @@ describe('CommandPalette — source labels', () => {
     await renderPaletteWithMessages();
     await userEvent.click(screen.getByRole('tab', { name: /messages/i }));
 
-    expect(screen.queryByTestId('source-header')).toBeNull();
+    expect(screen.queryByLabelText('source-header')).toBeNull();
   });
 });
 

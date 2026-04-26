@@ -7,26 +7,26 @@ describe('SpinnerVerb', () => {
   it('renders a verb with trailing dots', () => {
     render(<SpinnerVerb />);
     // Should display some text containing "..."
-    const el = screen.getByTestId('spinner-verb');
+    const el = screen.getByLabelText('spinner-verb');
     expect(el.textContent).toContain('...');
   });
 
   it('renders statusText when provided instead of random verb', () => {
     render(<SpinnerVerb statusText="Compacting" />);
-    const el = screen.getByTestId('spinner-verb');
+    const el = screen.getByLabelText('spinner-verb');
     expect(el.textContent).toContain('Compacting');
   });
 
   it('renders an animated icon', () => {
     render(<SpinnerVerb />);
-    const icon = screen.getByTestId('spinner-icon');
+    const icon = screen.getByLabelText('spinner-icon');
     expect(icon).toBeInTheDocument();
   });
 
   it('cycles icon on interval', () => {
     vi.useFakeTimers();
     render(<SpinnerVerb />);
-    const icon = screen.getByTestId('spinner-icon');
+    const icon = screen.getByLabelText('spinner-icon');
     // Icons cycle: ["·","✢","*","✶","✻","✽","✽","✻","✶","*","✢","·"]
     // Initial is index 0 = "·"
     expect(icon.textContent).toBe('·');
@@ -48,7 +48,7 @@ describe('SpinnerVerb', () => {
     vi.useFakeTimers();
     // Use a fixed list so we can predict the verb
     render(<SpinnerVerb verbs={['Alpha', 'Beta']} />);
-    const el = screen.getByTestId('spinner-verb');
+    const el = screen.getByLabelText('spinner-verb');
     const initialVerb = el.textContent;
     expect(initialVerb).toContain('...');
 

@@ -9,15 +9,26 @@ import { useChannelConfig } from '../../index';
 
 function ProviderConfigDisplay() {
   const { providerConfig } = useChannelConfig();
-  if (!providerConfig) return <div data-testid="no-provider-config">none</div>;
-  return <div data-testid="provider-brand">{providerConfig.brand.name}</div>;
+  if (!providerConfig)
+    return (
+      <div role="status" aria-label="provider-config">
+        none
+      </div>
+    );
+  return (
+    <div role="status" aria-label="provider-brand">
+      {providerConfig.brand.name}
+    </div>
+  );
 }
 
 describe('ChannelConfigContext', () => {
   it('providerConfig available on mount via app:config', async () => {
     await renderWithChannel(<ProviderConfigDisplay />);
 
-    expect(await screen.findByTestId('provider-brand')).toHaveTextContent('Claude');
+    expect(await screen.findByRole('status', { name: 'provider-brand' })).toHaveTextContent(
+      'Claude',
+    );
   });
 
   it('receives config from session:init on launch', async () => {
@@ -154,17 +165,21 @@ describe('ChannelConfigContext', () => {
   it('updates thinkingLevel when settings:update event arrives', async () => {
     function ThinkingLevelDisplay() {
       const { thinkingLevel } = useChannelConfig();
-      return <div data-testid="thinking-level">{thinkingLevel ?? 'off'}</div>;
+      return (
+        <div role="status" aria-label="thinking-level">
+          {thinkingLevel ?? 'off'}
+        </div>
+      );
     }
 
     const { claude, channelId } = await renderWithChannel(<ThinkingLevelDisplay />);
 
-    expect(screen.getByTestId('thinking-level')).toHaveTextContent('off');
+    expect(screen.getByRole('status', { name: 'thinking-level' })).toHaveTextContent('off');
 
     await act(async () => {
       claude.pushServerEvent('settings:update', { channelId, thinkingLevel: 'default_on' });
     });
 
-    expect(screen.getByTestId('thinking-level')).toHaveTextContent('default_on');
+    expect(screen.getByRole('status', { name: 'thinking-level' })).toHaveTextContent('default_on');
   });
 });

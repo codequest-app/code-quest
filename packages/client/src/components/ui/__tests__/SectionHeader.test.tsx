@@ -15,9 +15,9 @@ describe('SectionHeader', () => {
     expect(el.className).toMatch(/font-mono/);
   });
 
-  it('forwards data-testid prop', () => {
-    render(<SectionHeader data-testid="my-section">Messages</SectionHeader>);
-    expect(screen.getByTestId('my-section')).toBeInTheDocument();
+  it('forwards aria-label prop', () => {
+    render(<SectionHeader aria-label="my-section">Messages</SectionHeader>);
+    expect(screen.getByRole('heading', { name: 'my-section' })).toBeInTheDocument();
   });
 
   it('default variant uses text-text-dim', () => {

@@ -178,14 +178,16 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
     <div className="relative z-raised inline-flex items-center gap-1 h-[1.85em] mt-1 px-4">
       <span
         ref={iconRef}
-        data-testid="spinner-icon"
+        role="status"
+        aria-label="spinner-icon"
         className="text-accent text-[1.5em] inline-block w-[1.5em] text-center font-mono"
       >
         {ICON_CYCLE[0]}
       </span>
       <span
         ref={verbRef}
-        data-testid="spinner-verb"
+        role="status"
+        aria-label="spinner-verb"
         className="text-xs text-text font-medium font-mono whitespace-pre"
       />
     </div>

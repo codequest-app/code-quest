@@ -11,7 +11,7 @@ describe('WorktreeBanner', () => {
         worktree={{ name: 'my-feature', path: '/repo/.claude/worktrees/my-feature' }}
       />,
     );
-    expect(screen.getByTestId('worktree-banner')).toBeInTheDocument();
+    expect(screen.getByLabelText('worktree-banner')).toBeInTheDocument();
     expect(screen.getByText('my-feature')).toBeInTheDocument();
   });
 

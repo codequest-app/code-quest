@@ -78,9 +78,9 @@ describe('CreateWorktreeDialog (2-tab redesign)', () => {
     await user.click(screen.getByRole('tab', { name: /create new branch/i }));
     await user.type(screen.getByLabelText(/new branch name/i), 'feat/x');
     await waitFor(() => {
-      expect(screen.getByTestId('worktree-command-preview').textContent).toContain(
-        'git worktree add -b feat/x',
-      );
+      expect(
+        screen.getByRole('status', { name: 'worktree-command-preview' }).textContent,
+      ).toContain('git worktree add -b feat/x');
     });
   });
 

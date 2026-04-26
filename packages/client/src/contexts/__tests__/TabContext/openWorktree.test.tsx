@@ -13,8 +13,12 @@ function Probe() {
   const cwd = activeTabId ? tabs[activeTabId]?.cwd : null;
   return (
     <>
-      <span data-testid="tab-count">{Object.keys(tabs).length}</span>
-      <span data-testid="active-cwd">{cwd ?? 'null'}</span>
+      <span role="status" aria-label="tab-count">
+        {Object.keys(tabs).length}
+      </span>
+      <span role="status" aria-label="active-cwd">
+        {cwd ?? 'null'}
+      </span>
     </>
   );
 }
@@ -30,11 +34,7 @@ function Trigger({
 }) {
   const { requestOpenWorktree } = useNavigationActions();
   return (
-    <button
-      type="button"
-      onClick={() => requestOpenWorktree(projectCwd, worktreeCwd, forceNew)}
-      data-testid="trigger"
-    >
+    <button type="button" onClick={() => requestOpenWorktree(projectCwd, worktreeCwd, forceNew)}>
       open
     </button>
   );
@@ -63,14 +63,16 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
         <Trigger projectCwd="/repo" worktreeCwd="/repo/.claude/worktrees/feat-x" />
       </Wrapper>,
     );
-    expect(screen.getByTestId('tab-count').textContent).toBe('0');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
 
     await act(async () => {
-      screen.getByTestId('trigger').click();
+      screen.getByRole('button', { name: 'open' }).click();
     });
 
-    expect(screen.getByTestId('tab-count').textContent).toBe('1');
-    expect(screen.getByTestId('active-cwd').textContent).toBe('/repo/.claude/worktrees/feat-x');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('1');
+    expect(screen.getByRole('status', { name: 'active-cwd' }).textContent).toBe(
+      '/repo/.claude/worktrees/feat-x',
+    );
   });
 
   it('forceNew=true: each click creates a new tab', async () => {
@@ -80,17 +82,17 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
         <Trigger projectCwd="/repo" worktreeCwd="/repo/.claude/worktrees/feat-x" forceNew />
       </Wrapper>,
     );
-    expect(screen.getByTestId('tab-count').textContent).toBe('0');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
 
     await act(async () => {
-      screen.getByTestId('trigger').click();
+      screen.getByRole('button', { name: 'open' }).click();
     });
-    expect(screen.getByTestId('tab-count').textContent).toBe('1');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('1');
 
     await act(async () => {
-      screen.getByTestId('trigger').click();
+      screen.getByRole('button', { name: 'open' }).click();
     });
-    expect(screen.getByTestId('tab-count').textContent).toBe('2');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('2');
   });
 
   it('intent with non-matching projectCwd → ignored by this TabProvider', async () => {
@@ -102,9 +104,9 @@ describe('TabProvider: pendingOpenWorktree consumption', () => {
     );
 
     await act(async () => {
-      screen.getByTestId('trigger').click();
+      screen.getByRole('button', { name: 'open' }).click();
     });
 
-    expect(screen.getByTestId('tab-count').textContent).toBe('0');
+    expect(screen.getByRole('status', { name: 'tab-count' }).textContent).toBe('0');
   });
 });

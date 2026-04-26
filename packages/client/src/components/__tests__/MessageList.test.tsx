@@ -55,7 +55,7 @@ async function setupWithMessages(props?: { searchQuery?: string }) {
 describe('scroll button visibility', () => {
   it('hides scroll button when not scrolled up', async () => {
     await setupWithMessages();
-    expect(screen.queryByTestId('scroll-to-bottom')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
   });
 
   it('scroll-to-bottom button is outside the scroll container (not inside overflow-y-auto)', async () => {
@@ -63,8 +63,8 @@ describe('scroll button visibility', () => {
     // Force show the button by simulating scroll state
     // The button should be a sibling of (or ancestor of) the scroll container,
     // not a descendant of it
-    const messageList = screen.getByTestId('message-list');
-    const scrollContainer = screen.getByTestId('message-list-scroll');
+    const messageList = screen.getByLabelText('message-list');
+    const scrollContainer = screen.getByLabelText('message-list-scroll');
     // message-list is the outer positioning parent
     // message-list-scroll is the inner scroll container
     // button should NOT be inside message-list-scroll
@@ -73,7 +73,7 @@ describe('scroll button visibility', () => {
     expect(messageList).toContainElement(scrollContainer);
     // scroll container should NOT contain the button (button is sibling)
     expect(scrollContainer).not.toContainElement(
-      scrollContainer.querySelector('[data-testid="scroll-to-bottom"]'),
+      scrollContainer.querySelector('[aria-label="Scroll to bottom"]'),
     );
   });
 });
@@ -146,7 +146,7 @@ describe('MessageList', () => {
 
   it('renders message-list container with messages', async () => {
     await setupWithMessages();
-    const list = screen.getByTestId('message-list');
+    const list = screen.getByLabelText('message-list');
     expect(list).toBeInTheDocument();
     expect(list.textContent).toContain('Hello');
   });
@@ -316,19 +316,19 @@ describe('MessageList streaming', () => {
     await act(async () => {
       await claude.emit(s.status({ status: 'Compacting' }));
     });
-    const verb = screen.getByTestId('spinner-verb');
+    const verb = screen.getByLabelText('spinner-verb');
     expect(verb.textContent).toContain('Compacting');
   });
 
   it('shows random verb when statusText is null', async () => {
     await setupWithMessages();
     // After result, not processing — no spinner
-    expect(screen.queryByTestId('spinner-verb')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('spinner-verb')).not.toBeInTheDocument();
   });
 
   it('does not show spinner when not processing', async () => {
     await setup();
-    expect(screen.queryByTestId('spinner-verb')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('spinner-verb')).not.toBeInTheDocument();
   });
 
   // ── Streaming pipeline ──
@@ -544,13 +544,13 @@ describe('MessageList visibility filtering', () => {
       await claude.emit(s.result());
     });
     // hooks off by default — hook message count should be 0 in rendered list
-    const listBefore = screen.getByTestId('message-list');
+    const listBefore = screen.getByLabelText('message-list');
     const hookBefore = listBefore.querySelectorAll('[data-type="hook_started"]');
     expect(hookBefore).toHaveLength(0);
 
     // turn hooks on
     await user.click(screen.getByText('toggle-hooks'));
-    const listAfter = screen.getByTestId('message-list');
+    const listAfter = screen.getByLabelText('message-list');
     const hookAfter = listAfter.querySelectorAll('[data-type="hook_started"]');
     expect(hookAfter.length).toBeGreaterThan(0);
   });
@@ -559,13 +559,13 @@ describe('MessageList visibility filtering', () => {
 describe('MessageList — layout', () => {
   it('message content wrapper is present', async () => {
     await setupWithMessages();
-    const wrapper = document.querySelector('[data-testid="message-content-wrapper"]');
+    const wrapper = document.querySelector('[aria-label="message-content-wrapper"]');
     expect(wrapper).not.toBeNull();
   });
 
   it('message content wrapper has pb-32 so last message scrolls above absolute InputArea', async () => {
     await setupWithMessages();
-    const wrapper = document.querySelector('[data-testid="message-content-wrapper"]');
+    const wrapper = document.querySelector('[aria-label="message-content-wrapper"]');
     expect(wrapper?.className).toContain('pb-32');
   });
 });

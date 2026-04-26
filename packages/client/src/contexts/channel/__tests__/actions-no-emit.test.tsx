@@ -8,7 +8,9 @@ function ActionsTestUI() {
   const { isCancelling, ...actions } = useChannelMessages();
   return (
     <div>
-      <span data-testid="cancelling">{String(isCancelling)}</span>
+      <span role="status" aria-label="cancelling">
+        {String(isCancelling)}
+      </span>
       <button type="button" onClick={() => actions.abort()}>
         Abort
       </button>
@@ -22,11 +24,11 @@ function ActionsTestUI() {
 describe('ChannelActions', () => {
   it('abort sets status to cancelling', async () => {
     await renderWithChannel(<ActionsTestUI />);
-    expect(screen.getByTestId('cancelling')).toHaveTextContent('false');
+    expect(screen.getByRole('status', { name: 'cancelling' })).toHaveTextContent('false');
 
     await userEvent.click(screen.getByText('Abort'));
 
-    expect(screen.getByTestId('cancelling')).toHaveTextContent('true');
+    expect(screen.getByRole('status', { name: 'cancelling' })).toHaveTextContent('true');
   });
 
   it('kill does not throw', async () => {

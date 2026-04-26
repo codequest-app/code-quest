@@ -123,7 +123,9 @@ describe('FileTree', () => {
     });
     await user.click(await screen.findByRole('treeitem', { name: 'projects' }));
     await user.click(await screen.findByRole('treeitem', { name: 'app' }));
-    expect(await screen.findByTestId('git-mark-/projects/app/README.md')).toHaveTextContent('M');
+    expect(
+      await screen.findByRole('status', { name: 'git-mark-/projects/app/README.md' }),
+    ).toHaveTextContent('M');
   });
 
   it('rootCwd: roots at given path; root items are its children, not configured roots', async () => {

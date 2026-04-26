@@ -15,9 +15,9 @@ function TestUI() {
       <button type="button" onClick={() => setModel('claude-sonnet-4-6')}>
         switch-model
       </button>
-      <ul data-testid="notifications">
+      <ul aria-label="notifications">
         {systemMsgs.map((m, i) => (
-          <li key={m.id} data-testid={`notif-${i}`}>
+          <li key={m.id} role="status" aria-label={`notif-${i}`}>
             {m.content}
           </li>
         ))}
@@ -35,6 +35,6 @@ describe('setModel — optimistic notification', () => {
       await user.click(screen.getByText('switch-model'));
     });
 
-    expect(screen.getByTestId('notif-0')).toHaveTextContent('claude-sonnet-4-6');
+    expect(screen.getByRole('status', { name: 'notif-0' })).toHaveTextContent('claude-sonnet-4-6');
   });
 });

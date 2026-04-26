@@ -10,9 +10,15 @@ function MessagesProbe() {
   const { messages } = useChannelMessages();
   const userMsgs = messages.filter((m) => m.role === 'user' && m.type === 'text');
   return (
-    <ul data-testid="user-messages">
+    <ul aria-label="user-messages">
       {userMsgs.map((m, i) => (
-        <li key={m.id} data-testid={`umsg-${i}`} data-id={m.id} data-cli-uuid={m.cliUuid ?? ''}>
+        <li
+          key={m.id}
+          role="status"
+          aria-label={`umsg-${i}`}
+          data-id={m.id}
+          data-cli-uuid={m.cliUuid ?? ''}
+        >
           {m.content}
         </li>
       ))}
@@ -29,7 +35,8 @@ describe('message:user handler — meta.source propagation', () => {
         {texts.map((m, i) => (
           <li
             key={m.id}
-            data-testid={`text-${i}`}
+            role="status"
+            aria-label={`text-${i}`}
             data-source={(m.meta as { source?: string } | undefined)?.source ?? ''}
           >
             {m.content}
@@ -53,7 +60,7 @@ describe('message:user handler — meta.source propagation', () => {
         }),
       );
     });
-    const el = screen.getByTestId('text-0');
+    const el = screen.getByRole('status', { name: 'text-0' });
     expect(el.getAttribute('data-source')).toBe('skill');
   });
 
@@ -62,7 +69,7 @@ describe('message:user handler — meta.source propagation', () => {
     await act(async () => {
       await claude.emit(s.user('plain typed text'));
     });
-    const el = screen.getByTestId('text-0');
+    const el = screen.getByRole('status', { name: 'text-0' });
     expect(el.getAttribute('data-source')).toBe('typed');
   });
 });
@@ -79,7 +86,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
 
     await user.click(screen.getByText('TriggerSend'));
 
-    const before = screen.getByTestId('umsg-0');
+    const before = screen.getByRole('status', { name: 'umsg-0' });
     const beforeId = before.getAttribute('data-id');
     expect(before.getAttribute('data-cli-uuid')).toBe('');
 
@@ -87,7 +94,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       await claude.emit(s.user('hello-from-test', { uuid: 'cli-real-uuid-1' }));
     });
 
-    const after = screen.getByTestId('umsg-0');
+    const after = screen.getByRole('status', { name: 'umsg-0' });
     expect(after.getAttribute('data-id')).toBe(beforeId);
     expect(after.getAttribute('data-cli-uuid')).toBe('cli-real-uuid-1');
   });
@@ -99,7 +106,9 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       await claude.emit(s.user('orphan-echo', { uuid: 'cli-real-uuid-2' }));
     });
 
-    const items = screen.getAllByTestId(/^umsg-/);
+    const items = screen
+      .getAllByRole('status')
+      .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
     expect(items[0].getAttribute('data-cli-uuid')).toBe('cli-real-uuid-2');
   });
@@ -114,7 +123,11 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     );
 
     await user.click(screen.getByText('TriggerSend'));
-    expect(screen.getAllByTestId(/^umsg-/)).toHaveLength(1);
+    expect(
+      screen
+        .getAllByRole('status')
+        .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-')),
+    ).toHaveLength(1);
 
     // Simulate streaming-induced message before the user echo arrives.
     await act(async () => {
@@ -126,7 +139,9 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       await claude.emit(s.user('dedup-after-stream', { uuid: 'echo-after-stream' }));
     });
 
-    const items = screen.getAllByTestId(/^umsg-/);
+    const items = screen
+      .getAllByRole('status')
+      .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
     expect(items[0].getAttribute('data-cli-uuid')).toBe('echo-after-stream');
   });
@@ -145,13 +160,15 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
     await act(async () => {
       await claude.emit(s.user('idempotent-test', { uuid: 'same-uuid' }));
     });
-    const idAfterFirst = screen.getByTestId('umsg-0').getAttribute('data-id');
+    const idAfterFirst = screen.getByRole('status', { name: 'umsg-0' }).getAttribute('data-id');
 
     await act(async () => {
       await claude.emit(s.user('idempotent-test', { uuid: 'same-uuid' }));
     });
 
-    const items = screen.getAllByTestId(/^umsg-/);
+    const items = screen
+      .getAllByRole('status')
+      .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
     expect(items[0].getAttribute('data-cli-uuid')).toBe('same-uuid');
     expect(items[0].getAttribute('data-id')).toBe(idAfterFirst);

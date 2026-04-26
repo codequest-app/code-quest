@@ -192,7 +192,7 @@ export function McpServerRow({
         </div>
       )}
       {toolsExpanded && (
-        <div data-testid={`tools-${s.name}`} className="px-6 pb-3">
+        <section aria-label={`tools-${s.name}`} className="px-6 pb-3">
           {tools.length === 0 ? (
             <p className="text-xs text-text-muted">No tools</p>
           ) : (
@@ -207,7 +207,7 @@ export function McpServerRow({
               ))}
             </ul>
           )}
-        </div>
+        </section>
       )}
     </div>
   );

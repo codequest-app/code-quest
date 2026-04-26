@@ -66,8 +66,8 @@ function GroupRow({
   };
 
   return (
-    <div
-      data-testid={`group-row-${feature.id}`}
+    <section
+      aria-label={`group-row-${feature.id}`}
       data-state={agg}
       data-active={isActive || undefined}
       className="px-4 py-0.5"
@@ -75,7 +75,7 @@ function GroupRow({
       <div className="flex items-center h-8 gap-2">
         <button
           type="button"
-          data-testid="group-label"
+          aria-label="group-label"
           onClick={() => setExpanded((v) => !v)}
           className={cn(
             'flex items-center gap-1.5 flex-1 bg-transparent border-0 text-left p-0 text-xs font-mono cursor-pointer',
@@ -86,7 +86,7 @@ function GroupRow({
         </button>
         <button
           type="button"
-          data-testid="group-toggle"
+          aria-label="group-toggle"
           data-state={agg}
           onClick={(e) => {
             e.stopPropagation();
@@ -104,9 +104,9 @@ function GroupRow({
       {expanded && groupState.items.length > 0 && (
         <div className="pb-1.5 pl-5">
           {groupState.items.map((item) => (
-            <div
+            <section
               key={item.value}
-              data-testid={`type-row-${item.value}`}
+              aria-label={`type-row-${item.value}`}
               className="flex items-center gap-2 h-7"
             >
               <span
@@ -118,14 +118,15 @@ function GroupRow({
                 {item.label}
               </span>
               <span
-                data-testid={`type-sample-${item.value}`}
+                role="note"
+                aria-label={`type-sample-${item.value}`}
                 className="text-xs font-mono text-text-muted flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               >
                 {item.preview ?? ''}
               </span>
               <button
                 type="button"
-                data-testid={`type-pill-${item.value}`}
+                aria-label={`type-pill-${item.value}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   item.toggle();
@@ -138,11 +139,11 @@ function GroupRow({
               >
                 {togglePillSymbol(item.on ? 'all' : 'none')}
               </button>
-            </div>
+            </section>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

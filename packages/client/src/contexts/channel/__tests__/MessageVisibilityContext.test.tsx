@@ -14,11 +14,21 @@ function Probe() {
     useMessageVisibility();
   return (
     <div>
-      <div data-testid="enabled-types">{[...enabledTypes].sort().join(',')}</div>
-      <div data-testid="conversation-state">{groupState('conversation')}</div>
-      <div data-testid="hooks-state">{groupState('hooks')}</div>
-      <div data-testid="debug-state">{groupState('debug')}</div>
-      <div data-testid="other-state">{groupState('other')}</div>
+      <div role="status" aria-label="enabled-types">
+        {[...enabledTypes].sort().join(',')}
+      </div>
+      <div role="status" aria-label="conversation-state">
+        {groupState('conversation')}
+      </div>
+      <div role="status" aria-label="hooks-state">
+        {groupState('hooks')}
+      </div>
+      <div role="status" aria-label="debug-state">
+        {groupState('debug')}
+      </div>
+      <div role="status" aria-label="other-state">
+        {groupState('other')}
+      </div>
       <button type="button" onClick={() => toggleGroup('hooks')}>
         toggle-hooks
       </button>
@@ -45,7 +55,7 @@ afterEach(() => {
 describe('MessageVisibilityContext — defaults', () => {
   it('conversation/tools/system groups are on by default', async () => {
     await renderWithChannel(<Probe />);
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     // text is in conversation group → should be enabled
     expect(enabled).toContain('text');
     expect(enabled).toContain('thinking');
@@ -57,22 +67,22 @@ describe('MessageVisibilityContext — defaults', () => {
 
   it('hooks group is off by default', async () => {
     await renderWithChannel(<Probe />);
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).not.toContain('hook_started');
     expect(enabled).not.toContain('hook_response');
-    expect(screen.getByTestId('hooks-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('none');
   });
 
   it('debug group is off by default', async () => {
     await renderWithChannel(<Probe />);
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).not.toContain('raw_event');
-    expect(screen.getByTestId('debug-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'debug-state' }).textContent).toBe('none');
   });
 
   it('conversation groupState is "all" by default', async () => {
     await renderWithChannel(<Probe />);
-    expect(screen.getByTestId('conversation-state').textContent).toBe('all');
+    expect(screen.getByRole('status', { name: 'conversation-state' }).textContent).toBe('all');
   });
 });
 
@@ -81,20 +91,22 @@ describe('MessageVisibilityContext — toggleGroup', () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-hooks'));
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('hook_started');
     expect(enabled).toContain('hook_response');
-    expect(screen.getByTestId('hooks-state').textContent).toBe('all');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('all');
   });
 
   it('toggleGroup("conversation") turns conversation off', async () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-conversation'));
-    const enabled = (screen.getByTestId('enabled-types').textContent ?? '').split(',');
+    const enabled = (screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '').split(
+      ',',
+    );
     expect(enabled).not.toContain('text');
     expect(enabled).not.toContain('thinking');
-    expect(screen.getByTestId('conversation-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'conversation-state' }).textContent).toBe('none');
   });
 
   it('toggleGroup twice restores original state', async () => {
@@ -102,7 +114,7 @@ describe('MessageVisibilityContext — toggleGroup', () => {
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-hooks'));
     await user.click(screen.getByText('toggle-hooks'));
-    expect(screen.getByTestId('hooks-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('none');
   });
 });
 
@@ -111,7 +123,7 @@ describe('MessageVisibilityContext — toggleType', () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-hook_started'));
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('hook_started');
     expect(enabled).not.toContain('hook_response');
   });
@@ -120,23 +132,23 @@ describe('MessageVisibilityContext — toggleType', () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('toggle-hook_started'));
-    expect(screen.getByTestId('hooks-state').textContent).toBe('partial');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('partial');
   });
 });
 
 describe('MessageVisibilityContext — other group (unknown types)', () => {
   it('other group is none by default (no unknown types registered)', async () => {
     await renderWithChannel(<Probe />);
-    expect(screen.getByTestId('other-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'other-state' }).textContent).toBe('none');
   });
 
   it('registering an unknown type adds it to other group (ON by default)', async () => {
     const user = userEvent.setup();
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('register-mystery'));
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('mystery_event');
-    expect(screen.getByTestId('other-state').textContent).toBe('all');
+    expect(screen.getByRole('status', { name: 'other-state' }).textContent).toBe('all');
   });
 
   it('toggleGroup other turns unknown types off', async () => {
@@ -144,16 +156,16 @@ describe('MessageVisibilityContext — other group (unknown types)', () => {
     await renderWithChannel(<Probe />);
     await user.click(screen.getByText('register-mystery'));
     await user.click(screen.getByText('toggle-other'));
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).not.toContain('mystery_event');
-    expect(screen.getByTestId('other-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'other-state' }).textContent).toBe('none');
   });
 
   it('known types are not added to other group', async () => {
     await renderWithChannel(<Probe />);
     // 'text' is a known type in conversation group — registering should be no-op for other group
     // just verify other-state stays none without any interaction
-    expect(screen.getByTestId('other-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'other-state' }).textContent).toBe('none');
   });
 });
 
@@ -161,7 +173,7 @@ describe('MessageVisibilityContext — external store changes', () => {
   it('reflects store changes made outside the context (e.g. from Settings)', async () => {
     await renderWithChannel(<Probe />);
     // hooks off by default
-    expect(screen.getByTestId('hooks-state').textContent).toBe('none');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('none');
 
     // simulate Settings toggling hooks on by writing directly to store
     const current = useMessageVisibilityStore.getState().enabledTypes;
@@ -173,8 +185,8 @@ describe('MessageVisibilityContext — external store changes', () => {
     });
 
     // context should pick up the change
-    expect(screen.getByTestId('hooks-state').textContent).toBe('all');
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('all');
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('hook_started');
   });
 });
@@ -205,9 +217,9 @@ describe('MessageVisibilityContext — persistence', () => {
     );
     useMessageVisibilityStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('hook_started');
-    expect(screen.getByTestId('hooks-state').textContent).toBe('all');
+    expect(screen.getByRole('status', { name: 'hooks-state' }).textContent).toBe('all');
   });
 
   it('ignores invalid persisted data (non-array) and uses defaults', async () => {
@@ -215,7 +227,7 @@ describe('MessageVisibilityContext — persistence', () => {
     useMessageVisibilityStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Should fall back to defaults — hooks off, conversation on
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toContain('text');
     expect(enabled).not.toContain('hook_started');
   });
@@ -225,7 +237,7 @@ describe('MessageVisibilityContext — persistence', () => {
     useMessageVisibilityStore.persist.rehydrate();
     await renderWithChannel(<Probe />);
     // Unrecognized format — store falls back to null → context uses defaults
-    const enabled = screen.getByTestId('enabled-types').textContent ?? '';
+    const enabled = screen.getByRole('status', { name: 'enabled-types' }).textContent ?? '';
     expect(enabled).toBeTruthy();
   });
 });

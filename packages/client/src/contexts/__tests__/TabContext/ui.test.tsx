@@ -53,7 +53,7 @@ describe('TabProvider', () => {
         </SocketProvider>,
       );
       // Add project via dialog
-      await userEvent.click(screen.getByTestId('empty-add-project'));
+      await userEvent.click(screen.getByRole('button', { name: 'Add Project' }));
       await userEvent.click(await screen.findByRole('treeitem', { name: 'projects' }));
       await userEvent.click(await screen.findByRole('treeitem', { name: 'my-app' }));
       await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
@@ -101,8 +101,12 @@ describe('TabProvider', () => {
         const { addTab } = useTabActions();
         return (
           <>
-            <span data-testid="active">{activeTabId ?? 'null'}</span>
-            <span data-testid="count">{Object.keys(tabs).length}</span>
+            <span role="status" aria-label="active">
+              {activeTabId ?? 'null'}
+            </span>
+            <span role="status" aria-label="count">
+              {Object.keys(tabs).length}
+            </span>
             <button type="button" onClick={() => addTab('remote-ch')}>
               add
             </button>
@@ -111,12 +115,12 @@ describe('TabProvider', () => {
       }
       const { user } = renderInTab(<Test />);
 
-      expect(screen.getByTestId('active')).toHaveTextContent('null');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('null');
 
       await user.click(screen.getByText('add'));
 
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
-      expect(screen.getByTestId('active')).toHaveTextContent('remote-ch');
+      expect(screen.getByRole('status', { name: 'count' })).toHaveTextContent('1');
+      expect(screen.getByRole('status', { name: 'active' })).toHaveTextContent('remote-ch');
     });
 
     it('new tab creates exactly one tab, not two', async () => {

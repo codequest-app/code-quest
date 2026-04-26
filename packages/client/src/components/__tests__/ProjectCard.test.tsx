@@ -18,15 +18,23 @@ function ProbeActiveCwdAndPending() {
   const { pendingActivateChannel } = useNavigationState();
   return (
     <>
-      <span data-testid="active-cwd">{activeProjectCwd ?? 'null'}</span>
-      <span data-testid="pending">{JSON.stringify(pendingActivateChannel)}</span>
+      <span role="status" aria-label="active-cwd">
+        {activeProjectCwd ?? 'null'}
+      </span>
+      <span role="status" aria-label="pending">
+        {JSON.stringify(pendingActivateChannel)}
+      </span>
     </>
   );
 }
 
 function ProbeProjectCount() {
   const { projects } = useProjectState();
-  return <span data-testid="project-count">{projects.length}</span>;
+  return (
+    <span role="status" aria-label="project-count">
+      {projects.length}
+    </span>
+  );
 }
 
 describe('ProjectCard', () => {
@@ -158,8 +166,10 @@ describe('ProjectCard', () => {
       await user.click(sessionRow);
 
       await waitFor(() => {
-        expect(screen.getByTestId('active-cwd')).toHaveTextContent('/proj');
-        const pending = JSON.parse(screen.getByTestId('pending').textContent ?? 'null');
+        expect(screen.getByRole('status', { name: 'active-cwd' })).toHaveTextContent('/proj');
+        const pending = JSON.parse(
+          screen.getByRole('status', { name: 'pending' }).textContent ?? 'null',
+        );
         expect(pending).not.toBeNull();
         expect(pending.cwd).toBe('/proj');
         expect(typeof pending.channelId).toBe('string');
@@ -224,7 +234,9 @@ describe('ProjectCard', () => {
       );
 
       // Wait for client to receive initial projects:list
-      await waitFor(() => expect(screen.getByTestId('project-count').textContent).toBe('1'));
+      await waitFor(() =>
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
+      );
 
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       // Open menu via ⋯ button
@@ -242,7 +254,7 @@ describe('ProjectCard', () => {
         // ③ DB row gone
         expect(await projectStore.getByPath('/path/proj')).toBeNull();
         // ④ client state synced
-        expect(screen.getByTestId('project-count').textContent).toBe('0');
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('0');
       });
     });
 
@@ -257,7 +269,9 @@ describe('ProjectCard', () => {
           <ProbeProjectCount />
         </Wrapper>,
       );
-      await waitFor(() => expect(screen.getByTestId('project-count').textContent).toBe('1'));
+      await waitFor(() =>
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
+      );
 
       // Inject session:states from server side so client-side ProjectState.sessions
       // shows an active session for /path/busy (UI gate for "blocked" dialog state).
@@ -298,7 +312,9 @@ describe('ProjectCard', () => {
           <ProbeProjectCount />
         </Wrapper>,
       );
-      await waitFor(() => expect(screen.getByTestId('project-count').textContent).toBe('1'));
+      await waitFor(() =>
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
+      );
 
       const beforeUpdated = claude.events('projects:updated').length;
       const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -322,7 +338,9 @@ describe('ProjectCard', () => {
           <ProbeProjectCount />
         </Wrapper>,
       );
-      await waitFor(() => expect(screen.getByTestId('project-count').textContent).toBe('1'));
+      await waitFor(() =>
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
+      );
 
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /more actions/i }));
@@ -346,7 +364,9 @@ describe('ProjectCard', () => {
           <ProbeProjectCount />
         </Wrapper>,
       );
-      await waitFor(() => expect(screen.getByTestId('project-count').textContent).toBe('1'));
+      await waitFor(() =>
+        expect(screen.getByRole('status', { name: 'project-count' }).textContent).toBe('1'),
+      );
 
       const user = userEvent.setup({ pointerEventsCheck: 0 });
       await user.click(screen.getByRole('button', { name: /more actions/i }));

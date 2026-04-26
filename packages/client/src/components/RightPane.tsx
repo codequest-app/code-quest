@@ -64,7 +64,7 @@ export function RightPane({ cwd, onMention }: RightPaneProps) {
           </Tabs.Trigger>
         ))}
       </Tabs.List>
-      <div data-testid="right-pane-body" className="flex-1 min-h-0 flex flex-col" data-cwd={cwd}>
+      <section aria-label="right-pane-body" className="flex-1 min-h-0 flex flex-col" data-cwd={cwd}>
         <TabContent value="files" active={active === 'files'}>
           {mounted.has('files') && <FilesPane cwd={cwd} onMention={onMention} />}
         </TabContent>
@@ -74,7 +74,7 @@ export function RightPane({ cwd, onMention }: RightPaneProps) {
         <TabContent value="spec" active={active === 'spec'}>
           {mounted.has('spec') && <SpecPane cwd={cwd} />}
         </TabContent>
-      </div>
+      </section>
     </Tabs.Root>
   );
 }

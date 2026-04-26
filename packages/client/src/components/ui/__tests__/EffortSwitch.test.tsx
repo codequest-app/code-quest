@@ -90,28 +90,28 @@ describe('EffortSwitch behavior', () => {
 describe('EffortSwitch visual contract', () => {
   it('thumb is vertically centered in track', () => {
     const { container } = render(<EffortSwitch level="low" levels={LEVELS} />);
-    const thumb = container.querySelector('[data-testid="effort-switch-thumb"]')!;
+    const thumb = container.querySelector('[aria-label="effort-switch-thumb"]')!;
     expect(thumb.className).toMatch(/top-1\/2/);
     expect(thumb.className).toMatch(/-translate-y-1\/2/);
   });
 
   it('thumb has a subtle ring so it stays visible on any mode-accent fill', () => {
     const { container } = render(<EffortSwitch level="low" levels={LEVELS} />);
-    const thumb = container.querySelector('[data-testid="effort-switch-thumb"]')!;
+    const thumb = container.querySelector('[aria-label="effort-switch-thumb"]')!;
     expect(thumb.className).toMatch(/ring-/);
   });
 
   it('renders ticks only for positions after the thumb (count-adaptive)', () => {
     const atLow = render(<EffortSwitch level="low" levels={LEVELS} />);
-    expect(atLow.container.querySelectorAll('[data-testid="effort-switch-tick"]')).toHaveLength(
+    expect(atLow.container.querySelectorAll('[aria-label="effort-switch-tick"]')).toHaveLength(
       LEVELS.length - 1,
     );
 
     const atHigh = render(<EffortSwitch level="high" levels={LEVELS} />);
-    expect(atHigh.container.querySelectorAll('[data-testid="effort-switch-tick"]')).toHaveLength(2);
+    expect(atHigh.container.querySelectorAll('[aria-label="effort-switch-tick"]')).toHaveLength(2);
 
     const atMax = render(<EffortSwitch level="max" levels={LEVELS} />);
-    expect(atMax.container.querySelectorAll('[data-testid="effort-switch-tick"]')).toHaveLength(0);
+    expect(atMax.container.querySelectorAll('[aria-label="effort-switch-tick"]')).toHaveLength(0);
   });
 
   it('visible pill height matches the thumb/fill bar (slim h-3.5, not h-5)', () => {
@@ -120,30 +120,30 @@ describe('EffortSwitch visual contract', () => {
     // canonical visual, with the larger box reserved for the click hit
     // area. Track height collapses to h-3.5 to match thumb + fill.
     const { container } = render(<EffortSwitch level="medium" levels={LEVELS} />);
-    const track = container.querySelector('[data-testid="effort-switch-track"]')! as HTMLElement;
-    const fill = container.querySelector('[data-testid="effort-switch-fill"]')! as HTMLElement;
+    const track = container.querySelector('[aria-label="effort-switch-track"]')! as HTMLElement;
+    const fill = container.querySelector('[aria-label="effort-switch-fill"]')! as HTMLElement;
     expect(track.className).toMatch(/\bh-3\.5\b/);
     expect(fill.className).toMatch(/\b(h-3\.5|h-full)\b/);
   });
 
   it('focus ring owner must not be the same element that clips overflow', () => {
     const { container } = render(<EffortSwitch level="low" levels={LEVELS} />);
-    const focusOwner = container.querySelector('[data-testid="effort-switch"]')!;
+    const focusOwner = container.querySelector('[role="slider"]')!;
     expect(focusOwner.className).toMatch(/focus-visible:ring-/);
     expect(focusOwner.className).not.toMatch(/overflow-hidden/);
-    const clipper = container.querySelector('[data-testid="effort-switch-track"]')!;
+    const clipper = container.querySelector('[aria-label="effort-switch-track"]')!;
     expect(clipper.className).toMatch(/overflow-hidden/);
   });
 
   it('fill uses container% + CSS var for thumb size (density + font-size adaptive)', () => {
     const low = render(<EffortSwitch level="low" levels={LEVELS} />).container.querySelector(
-      '[data-testid="effort-switch-fill"]',
+      '[aria-label="effort-switch-fill"]',
     )! as HTMLElement;
     expect(low.style.width).toMatch(/100%/);
     expect(low.style.width).toMatch(/var\(--spacing\)\s*\*\s*3\.5/);
 
     const max = render(<EffortSwitch level="max" levels={LEVELS} />).container.querySelector(
-      '[data-testid="effort-switch-fill"]',
+      '[aria-label="effort-switch-fill"]',
     )! as HTMLElement;
     expect(max.style.width).toMatch(/100%/);
     expect(max.style.width).not.toMatch(/\b\d+px\b/);
@@ -151,7 +151,7 @@ describe('EffortSwitch visual contract', () => {
 
   it('thumb edges align flush with pill edges (no overhang)', () => {
     const max = render(<EffortSwitch level="max" levels={LEVELS} />).container.querySelector(
-      '[data-testid="effort-switch-thumb"]',
+      '[aria-label="effort-switch-thumb"]',
     )! as HTMLElement;
     // (100% - thumb) * 1 → at max the formula puts thumb's left edge so its
     // right edge sits flush with 100% — never overhangs.

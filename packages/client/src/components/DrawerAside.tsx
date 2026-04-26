@@ -8,7 +8,7 @@ export interface DrawerAsideProps {
   mobileWidthClass: string;
   /** Tailwind class for docked-mode (lg+) column width, e.g. `'lg:w-65'`. */
   dockedWidthClass: string;
-  testId: string;
+  label: string;
   children: ReactNode;
 }
 
@@ -20,13 +20,13 @@ export function DrawerAside({
   open,
   mobileWidthClass,
   dockedWidthClass,
-  testId,
+  label,
   children,
 }: DrawerAsideProps) {
   const isLeft = side === 'left';
   return (
     <aside
-      data-testid={testId}
+      aria-label={label}
       data-open={open || undefined}
       className={cn(
         'fixed inset-y-0 z-modal bg-surface',

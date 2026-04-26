@@ -57,7 +57,7 @@ describe('renderWithWorkspace', () => {
 
     // Tab title shows in UI (from first user message) — scope to chat tab bar
     // since RightPane also renders tabs (Files/Git/Spec).
-    const tabBar = await screen.findByTestId('tab-bar');
+    const tabBar = await screen.findByRole('tablist', { name: 'tab-bar' });
     const { within } = await import('@testing-library/react');
     const tab = await within(tabBar).findByRole('tab', { selected: true });
     expect(tab).toHaveTextContent('fix the login page');

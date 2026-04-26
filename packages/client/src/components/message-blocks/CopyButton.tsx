@@ -15,13 +15,13 @@ export function CopyButton({
   getText,
   className,
   title = 'Copy',
-  'data-testid': dataTestid,
+  'aria-label': ariaLabel,
 }: {
   text?: string;
   getText?: () => string;
   className?: string;
   title?: string;
-  'data-testid'?: string;
+  'aria-label'?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const handleClick = () => {
@@ -35,7 +35,7 @@ export function CopyButton({
       onClick={handleClick}
       className={className}
       title={copied ? 'Copied!' : title}
-      data-testid={dataTestid}
+      aria-label={ariaLabel}
     >
       {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
     </button>

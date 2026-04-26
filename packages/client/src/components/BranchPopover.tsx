@@ -132,7 +132,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
           className="w-full px-2 py-1 text-xs rounded bg-bg/60 border border-border focus:border-accent outline-none"
         />
       </div>
-      <div data-testid="branch-list" className="max-h-80 overflow-y-auto border-t border-border">
+      <section aria-label="branch-list" className="max-h-80 overflow-y-auto border-t border-border">
         {hasMatches ? (
           visible.map((b, i) => {
             const isCurrent = b === current;
@@ -173,7 +173,7 @@ function BranchPopoverBody({ branches, current, onSelect, onCreateBranch }: Body
         ) : (
           <div className="px-3 py-2 text-xs text-text-muted">No match</div>
         )}
-      </div>
+      </section>
       {onCreateBranch && (
         <>
           <div className="my-1 border-t border-border" />

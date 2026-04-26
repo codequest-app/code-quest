@@ -78,7 +78,8 @@ export function TabBar({
     <Tabs.List asChild>
       <div
         className="flex items-center h-9 border-b border-border overflow-x-auto"
-        data-testid="tab-bar"
+        role="tablist"
+        aria-label="tab-bar"
       >
         {sortedTabs.map((tab, i) => {
           const prev = i > 0 ? sortedTabs[i - 1] : null;
@@ -86,7 +87,11 @@ export function TabBar({
           return (
             <Fragment key={tab.sessionId}>
               {showDivider ? (
-                <span data-testid="tab-divider" className="h-5 border-l border-border mx-1" />
+                <span
+                  role="presentation"
+                  aria-label="tab-divider"
+                  className="h-5 border-l border-border mx-1"
+                />
               ) : null}
               <Tabs.Trigger value={tab.sessionId} asChild>
                 {/* biome-ignore lint/a11y/noStaticElementInteractions: Radix Tabs.Trigger
@@ -110,7 +115,8 @@ export function TabBar({
                   </span>
                   {tab.worktree && tab.projectName ? (
                     <span
-                      data-testid="tab-scope-tag"
+                      role="note"
+                      aria-label="tab-scope-tag"
                       className="font-mono text-text-subtle"
                       style={{ fontSize: '10px' }}
                     >

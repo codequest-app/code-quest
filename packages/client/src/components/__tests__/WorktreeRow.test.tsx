@@ -25,14 +25,14 @@ function defaultProps() {
 describe('WorktreeRow', () => {
   it('renders ⎇ glyph + branch label', () => {
     render(<WorktreeRow {...defaultProps()} />);
-    const branch = screen.getByTestId('wt-branch');
+    const branch = screen.getByRole('button', { name: /switch branch/i });
     expect(branch.textContent).toContain('⎇');
     expect(branch.textContent).toContain('worktree-feat-x');
   });
 
   it('branch label is styled as a monospace badge with border + bg', () => {
     render(<WorktreeRow {...defaultProps()} />);
-    const branch = screen.getByTestId('wt-branch');
+    const branch = screen.getByRole('button', { name: /switch branch/i });
     // F.html contract: branch is a distinct badge, not just subtle text.
     expect(branch.className).toMatch(/font-mono/);
     expect(branch.className).toMatch(/border/);
@@ -40,14 +40,16 @@ describe('WorktreeRow', () => {
 
   it('falls back to worktree name when branch missing', () => {
     render(<WorktreeRow {...defaultProps()} worktree={{ name: 'main', path: '/repo' }} />);
-    expect(screen.getByTestId('wt-branch').textContent).toContain('main');
+    expect(screen.getByRole('button', { name: /switch branch/i }).textContent).toContain('main');
   });
 
   it('clicking branch triggers onBranchClick (not onSelect)', async () => {
     const onBranchClick = vi.fn();
     const onSelect = vi.fn();
     render(<WorktreeRow {...defaultProps()} onBranchClick={onBranchClick} onSelect={onSelect} />);
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(screen.getByTestId('wt-branch'));
+    await userEvent
+      .setup({ pointerEventsCheck: 0 })
+      .click(screen.getByRole('button', { name: /switch branch/i }));
     expect(onBranchClick).toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -76,14 +78,14 @@ describe('WorktreeRow', () => {
 
   it('shows orange changes dot when changes > 0', () => {
     render(<WorktreeRow {...defaultProps()} changes={3} />);
-    const dot = screen.getByTestId('wt-changes-dot');
+    const dot = screen.getByLabelText(/change/);
     expect(dot).toBeInTheDocument();
     expect(dot.getAttribute('title')).toMatch(/3 change/);
   });
 
   it('hides changes dot when changes = 0', () => {
     render(<WorktreeRow {...defaultProps()} changes={0} />);
-    expect(screen.queryByTestId('wt-changes-dot')).toBeNull();
+    expect(screen.queryByLabelText(/change/)).toBeNull();
   });
 
   it('active state adds border-accent class', () => {

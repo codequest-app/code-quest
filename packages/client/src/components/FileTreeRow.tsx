@@ -121,7 +121,8 @@ export const FileTreeRow = forwardRef<HTMLDivElement, FileTreeRowProps>(function
       )}
       {isFile && gitMark && (
         <span
-          data-testid={`git-mark-${data.path}`}
+          role="status"
+          aria-label={`git-mark-${data.path}`}
           className={cn(
             'ml-2 font-mono text-xs px-1 rounded bg-white/5',
             GIT_MARK_CLASS[gitMark] ?? 'text-text-muted',

@@ -19,9 +19,9 @@ export function TruncatedContent({ children, maxHeight = 500 }: TruncatedContent
 
   return (
     <div>
-      <div
+      <section
         ref={ref}
-        data-testid="truncated-inner"
+        aria-label="truncated-inner"
         className={cn(!expanded && 'relative overflow-hidden')}
         style={expanded ? undefined : { maxHeight }}
       >
@@ -29,7 +29,7 @@ export function TruncatedContent({ children, maxHeight = 500 }: TruncatedContent
         {!expanded && overflow && (
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-bg pointer-events-none" />
         )}
-      </div>
+      </section>
       {overflow && (
         <button
           type="button"

@@ -89,7 +89,6 @@ export function SessionRow({
       role="option"
       aria-selected={isFocused ?? false}
       tabIndex={0}
-      data-testid="session-row"
       className={cn(
         'flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group',
         isFocused && 'bg-selected',

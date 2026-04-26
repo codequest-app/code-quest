@@ -23,7 +23,7 @@ describe('Create Worktree end-to-end flow (right-click → dialog → new tab)',
 
     // Act: right-click the ProjectCard (in the sidebar — disambiguates from
     // the TopScopeSwitcher trigger which also shows project name).
-    const sidebar = screen.getByTestId('sidebar-panel');
+    const sidebar = screen.getByRole('complementary', { name: 'sidebar-panel' });
     const projectButton = await within(sidebar).findByRole('button', { name: /app/i });
     await user.pointer({ keys: '[MouseRight>]', target: projectButton });
 

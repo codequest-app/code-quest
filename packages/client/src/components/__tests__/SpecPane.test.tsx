@@ -47,7 +47,7 @@ describe('SpecPane', () => {
     const { Wrapper } = setup();
     render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
     // One skeleton block per Section (Active changes + Specs).
-    expect(screen.getAllByTestId('skeleton-rows').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('status', { name: 'Loading' }).length).toBeGreaterThanOrEqual(2);
   });
 
   it('renders per-section empty states when openspec dir absent', async () => {
@@ -71,7 +71,7 @@ describe('SpecPane', () => {
     const { summoner, Wrapper } = setup();
     seedOpenspec(summoner);
     render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-    const footer = await screen.findByTestId('pane-status-footer');
+    const footer = await screen.findByRole('status', { name: 'pane-status-footer' });
     // 1 change + 1 spec from seedOpenspec
     expect(footer.textContent).toContain('1 change');
     expect(footer.textContent).toContain('1 spec');
@@ -80,7 +80,7 @@ describe('SpecPane', () => {
   it('does not render status footer while openspec list is loading', () => {
     const { Wrapper } = setup();
     render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-    expect(screen.queryByTestId('pane-status-footer')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'pane-status-footer' })).toBeNull();
   });
 
   it('clicking a change opens SpecModal showing proposal content', async () => {
@@ -160,7 +160,7 @@ describe('SpecPane', () => {
       const { summoner, Wrapper } = setup();
       seedComplete(summoner);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-      await screen.findByTestId('spec-ready-badge-all-done');
+      await screen.findByLabelText('spec-ready-badge-all-done');
       expect(screen.getByRole('button', { name: /archive all-done/i })).toBeInTheDocument();
     });
 
@@ -248,7 +248,7 @@ describe('SpecPane', () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-      const row = await screen.findByTestId('spec-change-row-add-foo');
+      const row = await screen.findByLabelText('spec-change-row-add-foo');
       expect(row.textContent).toContain('📋');
     });
 
@@ -256,7 +256,7 @@ describe('SpecPane', () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-      const row = await screen.findByTestId('spec-capability-row-auth');
+      const row = await screen.findByLabelText('spec-capability-row-auth');
       expect(row.textContent).toContain('▸');
     });
 
@@ -264,7 +264,7 @@ describe('SpecPane', () => {
       const { summoner, Wrapper } = setup();
       seedOpenspec(summoner);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-      const pill = await screen.findByTestId('spec-task-pill-add-foo');
+      const pill = await screen.findByLabelText('spec-task-pill-add-foo');
       expect(pill.textContent).toBe('1/2');
       expect(pill.className).toMatch(/border/);
       expect(pill.className).toMatch(/font-mono/);
@@ -276,7 +276,7 @@ describe('SpecPane', () => {
         .openspec()
         ?.setChanges([{ name: 'all-done', tasks: { done: 5, total: 5 }, status: 'complete' }]);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
-      const badge = await screen.findByTestId('spec-ready-badge-all-done');
+      const badge = await screen.findByLabelText('spec-ready-badge-all-done');
       expect(badge.textContent?.toLowerCase()).toContain('ready');
       expect(badge.className).toMatch(/success/);
     });
@@ -286,7 +286,7 @@ describe('SpecPane', () => {
       seedOpenspec(summoner);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('add-foo');
-      expect(screen.queryByTestId('spec-ready-badge-add-foo')).toBeNull();
+      expect(screen.queryByLabelText('spec-ready-badge-add-foo')).toBeNull();
     });
 
     it('no Ready badge when tasks is null (no tasks.md)', async () => {
@@ -294,8 +294,8 @@ describe('SpecPane', () => {
       summoner.openspec()?.setChanges([{ name: 'no-tasks', tasks: null, status: 'in-progress' }]);
       render(<SpecPane cwd="/repo" />, { wrapper: Wrapper });
       await screen.findByText('no-tasks');
-      expect(screen.queryByTestId('spec-ready-badge-no-tasks')).toBeNull();
-      expect(screen.queryByTestId('spec-task-pill-no-tasks')).toBeNull();
+      expect(screen.queryByLabelText('spec-ready-badge-no-tasks')).toBeNull();
+      expect(screen.queryByLabelText('spec-task-pill-no-tasks')).toBeNull();
     });
   });
 });

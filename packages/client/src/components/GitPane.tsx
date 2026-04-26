@@ -190,7 +190,7 @@ export function GitPane({ cwd }: GitPaneProps) {
   const behind = status.behind ?? 0;
 
   return (
-    <div className="flex flex-col h-full" data-testid="git-pane">
+    <section className="flex flex-col h-full" aria-label="git-pane">
       <div className="flex-1 min-h-0 overflow-auto">
         <BranchSection
           status={status}
@@ -269,7 +269,7 @@ export function GitPane({ cwd }: GitPaneProps) {
             />
           );
         })()}
-    </div>
+    </section>
   );
 }
 

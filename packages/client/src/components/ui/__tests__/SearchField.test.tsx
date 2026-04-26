@@ -28,8 +28,18 @@ describe('SearchField', () => {
   });
 
   it('supports a trailing slot', () => {
-    render(<SearchField value="" onChange={() => {}} trailing={<span data-testid="x">X</span>} />);
-    expect(screen.getByTestId('x')).toBeInTheDocument();
+    render(
+      <SearchField
+        value=""
+        onChange={() => {}}
+        trailing={
+          <span role="status" aria-label="trailing-slot">
+            X
+          </span>
+        }
+      />,
+    );
+    expect(screen.getByRole('status', { name: 'trailing-slot' })).toBeInTheDocument();
   });
 
   it('forwards ref to the inner input', () => {

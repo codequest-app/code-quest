@@ -125,8 +125,8 @@ export function MentionDropdown({
   activeItemRef,
 }: MentionDropdownProps) {
   return (
-    <div
-      data-testid="mention-dropdown"
+    <section
+      aria-label="mention-dropdown"
       className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-floating overflow-hidden animate-fade-in-fast z-modal"
     >
       <div className="max-h-75 overflow-y-auto py-0.5">
@@ -156,6 +156,6 @@ export function MentionDropdown({
             />
           ))}
       </div>
-    </div>
+    </section>
   );
 }

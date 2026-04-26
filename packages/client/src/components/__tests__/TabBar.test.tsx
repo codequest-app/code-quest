@@ -53,7 +53,7 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.getByTestId('tab-scope-tag')).toHaveTextContent('cc-office/feat-x');
+    expect(screen.getByLabelText('tab-scope-tag')).toHaveTextContent('cc-office/feat-x');
   });
 
   it('no scope-tag when tab has no worktree (non-git)', () => {
@@ -68,7 +68,7 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.queryByTestId('tab-scope-tag')).toBeNull();
+    expect(screen.queryByLabelText('tab-scope-tag')).toBeNull();
   });
 
   // Note: the standalone `tab-worktree-badge` (⎇ branch) was removed in the
@@ -95,7 +95,7 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.getByTestId('tab-scope-tag').textContent).toBe('cc/only-name');
+    expect(screen.getByLabelText('tab-scope-tag').textContent).toBe('cc/only-name');
   });
 
   it('renders a divider between main-tree tabs and worktree tabs', () => {
@@ -118,7 +118,7 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.getAllByTestId('tab-divider')).toHaveLength(1);
+    expect(screen.getAllByLabelText('tab-divider')).toHaveLength(1);
   });
 });
 
@@ -174,12 +174,12 @@ describe('TabBar', () => {
 
   it('returns null when no tabs', () => {
     renderTabBar({ tabs: [], activeTabId: null });
-    expect(screen.queryByTestId('tab-bar')).toBeNull();
+    expect(screen.queryByLabelText('tab-bar')).toBeNull();
   });
 
   it('shows status indicator dots', () => {
     renderTabBar();
-    const dots = screen.getByTestId('tab-bar').querySelectorAll('.rounded-full');
+    const dots = screen.getByLabelText('tab-bar').querySelectorAll('.rounded-full');
     expect(dots).toHaveLength(3);
   });
 

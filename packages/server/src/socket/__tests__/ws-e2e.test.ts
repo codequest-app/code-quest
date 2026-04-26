@@ -1,7 +1,7 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Envelope } from '@code-quest/shared';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { NullAuthenticator } from '../authenticator.ts';
 import { ChannelEmitter } from '../channel-emitter.ts';
@@ -10,15 +10,6 @@ import type { TransportHandle } from '../transport.ts';
 import type { TypedSocket } from '../types.ts';
 import { WsTransport } from '../ws-transport.ts';
 
-/**
- * End-to-end parity drills: real http.Server + real WsTransport + real ws
- * client (the same wire format `WsClient` produces — proven by the client-
- * side WsClient unit tests). No mocks of any layer in between.
- *
- * Validates the full chain in this order:
- *   real ws bytes → WsTransport adapter → ResumableConnectionRegistry →
- *   ChannelEmitter → handler ack callback → response envelope → client.
- */
 describe('WsTransport ↔ real ws client end-to-end', () => {
   let httpServer: HttpServer;
   let transport: WsTransport;
@@ -58,6 +49,13 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
     });
   }
 
+  function waitForClose(ws: WebSocket): Promise<void> {
+    return new Promise((resolve) => {
+      if (ws.readyState === ws.CLOSED) return resolve();
+      ws.once('close', () => resolve());
+    });
+  }
+
   beforeEach(async () => {
     httpServer = createServer((_req, res) => {
       res.statusCode = 404;
@@ -89,8 +87,6 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
   });
 
   it('14.1 request envelope round-trip via emitter handler ack', async () => {
-    // Real cc-office handlers return raw payloads (e.g. cb({ projects }));
-    // ws transport must pass them through verbatim, matching socket.io.
     emitter.on('list', (_ch, _payload, _socket, cb) => {
       cb?.({ projects: [{ id: 'p-1' }] });
     });
@@ -113,8 +109,7 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
     });
     const ws = await openClient();
     sendEnvelope(ws, { kind: 'event', seq: 1, event: 'subscribe', data: {} });
-    await new Promise<void>((r) => setTimeout(r, 30));
-    expect(serverSide).toBeDefined();
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
 
     const recvP = nextEnvelope(ws);
     serverSide?.emit('system:announcement', { msg: 'hi' });
@@ -123,9 +118,17 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
   });
 
   it('14.3 broadcastAll reaches two clients', async () => {
+    const connected: TypedSocket[] = [];
+    emitter.on('join', (_ch, _payload, sock) => {
+      if (sock) connected.push(sock);
+    });
+
     const a = await openClient();
+    sendEnvelope(a, { kind: 'event', seq: 1, event: 'join', data: {} });
     const b = await openClient();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    sendEnvelope(b, { kind: 'event', seq: 1, event: 'join', data: {} });
+    await vi.waitFor(() => expect(connected).toHaveLength(2));
+
     const aRecv = nextEnvelope(a);
     const bRecv = nextEnvelope(b);
 
@@ -144,31 +147,31 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
 
     const ws1 = await openClient(url(sessionKey));
     sendEnvelope(ws1, { kind: 'event', seq: 1, event: 'claim', data: {} });
-    await new Promise<void>((r) => setTimeout(r, 30));
-    expect(serverSide).toBeDefined();
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
 
+    const recv1: Envelope[] = [];
+    collectEnvelopes(ws1, recv1);
     serverSide?.emit('e', { n: 1 });
     serverSide?.emit('e', { n: 2 });
-    await new Promise<void>((r) => setTimeout(r, 20));
-    ws1.terminate();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => expect(recv1).toHaveLength(2));
 
-    // Server emits during the gap; ResumableSocket buffers via inner emit.
+    ws1.terminate();
+    await waitForClose(ws1);
+
     serverSide?.emit('e', { n: 3 });
     serverSide?.emit('e', { n: 4 });
 
-    // Reconnect with same sessionKey; send resume envelope; collect replays.
     const ws2 = await openClient(url(sessionKey));
     const recv: Envelope[] = [];
     collectEnvelopes(ws2, recv);
     sendEnvelope(ws2, { kind: 'resume', lastSeq: 2 });
 
-    await new Promise<void>((r) => setTimeout(r, 100));
-
-    const replayed = recv
-      .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
-      .map((e) => (e.data as { n: number }).n);
-    expect(replayed).toEqual([3, 4]);
+    await vi.waitFor(() => {
+      const replayed = recv
+        .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
+        .map((e) => (e.data as { n: number }).n);
+      expect(replayed).toEqual([3, 4]);
+    });
   });
 
   it('14.4b two consecutive reconnects do not double-replay already-replayed events', async () => {
@@ -178,60 +181,67 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
       serverSide = sock;
     });
 
-    // Connection 1: claim, then 2 events flow live to client.
     const ws1 = await openClient(url(sessionKey));
     sendEnvelope(ws1, { kind: 'event', seq: 1, event: 'claim', data: {} });
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
+
+    const recv1: Envelope[] = [];
+    collectEnvelopes(ws1, recv1);
     serverSide?.emit('e', { n: 1 });
     serverSide?.emit('e', { n: 2 });
-    await new Promise<void>((r) => setTimeout(r, 20));
-    ws1.terminate();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => expect(recv1).toHaveLength(2));
 
-    // Server emits 2 more during the gap; ResumableSocket buffers them.
+    ws1.terminate();
+    await waitForClose(ws1);
+
     serverSide?.emit('e', { n: 3 });
     serverSide?.emit('e', { n: 4 });
 
-    // Reconnect 1: client says lastSeq=2, server should replay 3 + 4.
     const ws2 = await openClient(url(sessionKey));
     const recv2: Envelope[] = [];
     collectEnvelopes(ws2, recv2);
     sendEnvelope(ws2, { kind: 'resume', lastSeq: 2 });
-    await new Promise<void>((r) => setTimeout(r, 80));
+    await vi.waitFor(() => {
+      const events = recv2.filter(
+        (e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event',
+      );
+      expect(events.length).toBeGreaterThanOrEqual(2);
+    });
 
-    // One more live emit while ws2 is open.
     serverSide?.emit('e', { n: 5 });
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => {
+      const events = recv2.filter(
+        (e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event',
+      );
+      expect(events.length).toBeGreaterThanOrEqual(3);
+    });
 
-    // Capture the highest wire seq the client has now seen.
     const seqsConn2 = recv2
       .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
       .map((e) => e.seq);
     const clientLastSeq = Math.max(...seqsConn2);
 
-    // Disconnect again, reconnect, resume(clientLastSeq).
     ws2.terminate();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await waitForClose(ws2);
+
     const ws3 = await openClient(url(sessionKey));
     const recv3: Envelope[] = [];
     collectEnvelopes(ws3, recv3);
     sendEnvelope(ws3, { kind: 'resume', lastSeq: clientLastSeq });
-    await new Promise<void>((r) => setTimeout(r, 80));
+
+    // Prove round-trip works, then assert no events were replayed
+    const pongP = nextEnvelope(ws3);
+    sendEnvelope(ws3, { kind: 'ping' } as Envelope);
+    await pongP;
 
     const replayed3 = recv3
       .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
       .map((e) => (e.data as { n: number }).n);
 
-    // Client is fully caught up after reconnect 1 + live e5; reconnect 2 must
-    // replay nothing. Without the seq-persistence fix, transport seq restarts
-    // at 0 each connection, client's lastSeq (in transport seq space) is
-    // smaller than the resumable's logical seq for buffered events, so server
-    // re-sends e4 / e5 — duplicates the client already saw.
     expect(replayed3).toEqual([]);
   });
 
   it('14.4c gap-emitted refresh notice must not desync seq tracking', async () => {
-    // Buffer size 1 forces eviction so a stale resume() hits the gap branch.
     await handle?.close();
     handle = transport.attach(httpServer);
     registry = new ResumableConnectionRegistry({ resolver: transport, bufferSize: 1 });
@@ -246,23 +256,26 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
       serverSide = sock;
     });
 
-    // Connection 1: claim, emit e1..e3 — buffer (size 1) ends up with {seq:3,e3}.
     const ws1 = await openClient(url(sessionKey));
     sendEnvelope(ws1, { kind: 'event', seq: 1, event: 'claim', data: {} });
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
+
+    const live1: Envelope[] = [];
+    collectEnvelopes(ws1, live1);
     serverSide?.emit('e', { n: 1 });
     serverSide?.emit('e', { n: 2 });
     serverSide?.emit('e', { n: 3 });
-    await new Promise<void>((r) => setTimeout(r, 20));
+    await vi.waitFor(() => expect(live1).toHaveLength(3));
 
-    // Stale resume → triggers the gap branch on the SAME open connection.
-    // Server emits 'state:refresh_required' on the bypass path: adapter seq
-    // advances by 1, resumable.nextSeq stays put. Client's lastSeq is
-    // advanced by the refresh notice's seq.
     const recv1: Envelope[] = [];
     collectEnvelopes(ws1, recv1);
     sendEnvelope(ws1, { kind: 'resume', lastSeq: 0 });
-    await new Promise<void>((r) => setTimeout(r, 60));
+    await vi.waitFor(() => {
+      const events = recv1.filter(
+        (e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event',
+      );
+      expect(events.length).toBeGreaterThan(0);
+    });
 
     const lastSeqClientThinksItHas = Math.max(
       ...recv1
@@ -270,27 +283,22 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
         .map((e) => e.seq),
     );
 
-    // Disconnect, then server emits a fresh event into the buffer.
     ws1.terminate();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await waitForClose(ws1);
     serverSide?.emit('e', { n: 99 });
 
-    // Reconnect, send resume with whatever the client believes its lastSeq is.
     const ws2 = await openClient(url(sessionKey));
     const recv2: Envelope[] = [];
     collectEnvelopes(ws2, recv2);
     sendEnvelope(ws2, { kind: 'resume', lastSeq: lastSeqClientThinksItHas });
-    await new Promise<void>((r) => setTimeout(r, 80));
 
-    const replayed2 = recv2
-      .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
-      .filter((e) => e.event === 'e')
-      .map((e) => (e.data as { n: number }).n);
-
-    // Without the bypass fix: bypass advances adapter past resumable, so the
-    // {n:99} buffer entry has seq ≤ what the client claims as lastSeq, and
-    // gets filtered out — the event is silently dropped.
-    expect(replayed2).toContain(99);
+    await vi.waitFor(() => {
+      const replayed2 = recv2
+        .filter((e): e is Extract<Envelope, { kind: 'event' }> => e.kind === 'event')
+        .filter((e) => e.event === 'e')
+        .map((e) => (e.data as { n: number }).n);
+      expect(replayed2).toContain(99);
+    });
   });
 
   it('14.5 envelopes from a fresh sessionKey post-disconnect are NOT replayed (anonymous reconnect)', async () => {
@@ -301,18 +309,25 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
 
     const ws1 = await openClient();
     sendEnvelope(ws1, { kind: 'event', seq: 1, event: 'claim', data: {} });
-    await new Promise<void>((r) => setTimeout(r, 30));
-    serverSide?.emit('e', { n: 1 });
-    await new Promise<void>((r) => setTimeout(r, 20));
-    ws1.terminate();
-    await new Promise<void>((r) => setTimeout(r, 30));
+    await vi.waitFor(() => expect(serverSide).toBeDefined());
 
-    // Fresh connection without sessionKey gets a fresh ResumableSocket.
+    const recv1: Envelope[] = [];
+    collectEnvelopes(ws1, recv1);
+    serverSide?.emit('e', { n: 1 });
+    await vi.waitFor(() => expect(recv1).toHaveLength(1));
+
+    ws1.terminate();
+    await waitForClose(ws1);
+
     const ws2 = await openClient();
     const recv: Envelope[] = [];
     collectEnvelopes(ws2, recv);
     sendEnvelope(ws2, { kind: 'resume', lastSeq: 0 });
-    await new Promise<void>((r) => setTimeout(r, 80));
+
+    // Prove round-trip works, then assert no events were replayed
+    const pongP = nextEnvelope(ws2);
+    sendEnvelope(ws2, { kind: 'ping' } as Envelope);
+    await pongP;
 
     const events = recv.filter((e) => e.kind === 'event');
     expect(events).toHaveLength(0);

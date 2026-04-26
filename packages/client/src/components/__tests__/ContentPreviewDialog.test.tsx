@@ -37,7 +37,7 @@ describe('ContentPreviewDialog', () => {
       { filePath: 'src/bar.ts', oldContent: 'old bar', newContent: 'new bar' },
     ];
     render(<ContentPreviewDialog content="" diffs={diffs} onClose={vi.fn()} />);
-    const filenames = screen.getAllByTestId('diff-filename');
+    const filenames = screen.getAllByRole('region', { name: 'diff-filename' });
     expect(filenames).toHaveLength(2);
   });
 

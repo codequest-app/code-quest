@@ -27,7 +27,7 @@ export function ChoicePills({ options, currentValue, onSelect, featureId }: Choi
     <RadioGroup.Root
       value={currentValue}
       onValueChange={onSelect}
-      data-testid={featureId ? `${featureId}-pills` : 'choice-pills'}
+      aria-label={featureId ? `${featureId}-pills` : 'choice-pills'}
       className="inline-flex gap-1"
       orientation="horizontal"
     >
@@ -36,7 +36,6 @@ export function ChoicePills({ options, currentValue, onSelect, featureId }: Choi
           key={opt.value}
           value={opt.value}
           aria-label={opt.label}
-          data-testid={featureId ? `${featureId}-pill-${opt.value}` : undefined}
           className={cn(
             'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border cursor-pointer',
             opt.value === currentValue

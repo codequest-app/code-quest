@@ -76,7 +76,7 @@ export function SpecPane({ cwd }: SpecPaneProps) {
   const isLoading = !data;
 
   return (
-    <div className="flex flex-col h-full" data-testid="spec-pane">
+    <section className="flex flex-col h-full" aria-label="spec-pane">
       <div className="flex-1 min-h-0 overflow-auto p-2 text-sm">
         <Section
           title="Active changes"
@@ -105,7 +105,7 @@ export function SpecPane({ cwd }: SpecPaneProps) {
                   >
                     <button
                       type="button"
-                      data-testid={`spec-change-row-${c.name}`}
+                      aria-label={`spec-change-row-${c.name}`}
                       className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
                       onClick={() => setOpen({ kind: 'change', name: c.name })}
                     >
@@ -116,7 +116,8 @@ export function SpecPane({ cwd }: SpecPaneProps) {
                     </button>
                     {ready && (
                       <span
-                        data-testid={`spec-ready-badge-${c.name}`}
+                        role="status"
+                        aria-label={`spec-ready-badge-${c.name}`}
                         className="shrink-0 px-1.5 py-px rounded border border-success/30 bg-success/10 text-success font-mono text-2xs uppercase tracking-wide"
                       >
                         Ready
@@ -134,7 +135,8 @@ export function SpecPane({ cwd }: SpecPaneProps) {
                     )}
                     {c.tasks && (
                       <span
-                        data-testid={`spec-task-pill-${c.name}`}
+                        role="status"
+                        aria-label={`spec-task-pill-${c.name}`}
                         className="shrink-0 px-1.5 py-px rounded border border-border text-text-muted font-mono text-2xs"
                       >
                         {c.tasks.done}/{c.tasks.total}
@@ -157,7 +159,7 @@ export function SpecPane({ cwd }: SpecPaneProps) {
                 <li key={s.capability}>
                   <button
                     type="button"
-                    data-testid={`spec-capability-row-${s.capability}`}
+                    aria-label={`spec-capability-row-${s.capability}`}
                     className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-white/5 rounded"
                     onClick={() => setOpen({ kind: 'spec', name: s.capability })}
                   >
@@ -201,7 +203,7 @@ export function SpecPane({ cwd }: SpecPaneProps) {
         }
         onClose={() => setArchiveTarget(null)}
       />
-    </div>
+    </section>
   );
 }
 

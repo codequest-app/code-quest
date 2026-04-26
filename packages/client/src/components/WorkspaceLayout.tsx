@@ -115,7 +115,6 @@ function WorkspaceLayoutInner() {
           message="No projects yet"
           actionLabel="Add Project"
           onAction={() => setDialogOpen(true)}
-          testId="empty-add-project"
         />
       ) : (
         <>
@@ -144,7 +143,6 @@ function WorkspaceLayoutInner() {
                 <button
                   type="button"
                   aria-label="Dismiss sidebar"
-                  data-testid="sidebar-backdrop"
                   onClick={() => setLeftOpen(false)}
                   className="lg:hidden fixed inset-0 z-overlay bg-black/40"
                 />
@@ -153,7 +151,6 @@ function WorkspaceLayoutInner() {
                 <button
                   type="button"
                   aria-label="Dismiss right pane"
-                  data-testid="right-pane-backdrop"
                   onClick={() => setRightOpen(false)}
                   className="lg:hidden fixed inset-0 z-overlay bg-black/40"
                 />
@@ -164,7 +161,7 @@ function WorkspaceLayoutInner() {
                 open={leftOpen}
                 mobileWidthClass="w-[min(85vw,320px)]"
                 dockedWidthClass="lg:w-65"
-                testId="sidebar-panel"
+                label="sidebar-panel"
               >
                 <ProjectTree
                   projects={projects}
@@ -191,7 +188,7 @@ function WorkspaceLayoutInner() {
                   open={rightOpen}
                   mobileWidthClass="w-[min(85vw,360px)]"
                   dockedWidthClass="lg:w-80"
-                  testId="right-pane-drawer"
+                  label="right-pane-drawer"
                 >
                   <RightPaneWithCwd />
                 </DrawerAside>
@@ -224,9 +221,9 @@ function ProjectsTabContainer({
   return (
     <div className="flex flex-1 min-w-0 h-full">
       {projects.map((project) => (
-        <div
+        <section
           key={project.cwd}
-          data-testid={project.cwd === activeProjectCwd ? 'project-container' : undefined}
+          aria-label={project.cwd === activeProjectCwd ? 'project-container' : undefined}
           className={cn(project.cwd === activeProjectCwd ? 'flex flex-1 min-w-0 h-full' : 'hidden')}
         >
           <TabProvider
@@ -236,7 +233,7 @@ function ProjectsTabContainer({
           >
             <TabContainer projectCwd={project.cwd} />
           </TabProvider>
-        </div>
+        </section>
       ))}
     </div>
   );

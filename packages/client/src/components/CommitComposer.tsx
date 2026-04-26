@@ -40,9 +40,9 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps) {
   }
 
   return (
-    <div
+    <section
       className="mt-3 flex flex-col gap-1 p-2 border border-border rounded bg-bg/40"
-      data-testid="commit-composer"
+      aria-label="commit-composer"
     >
       <input
         ref={subjectRef}
@@ -84,6 +84,6 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps) {
           {count !== undefined && count > 0 ? `Commit ${count}` : 'Commit'}
         </button>
       </div>
-    </div>
+    </section>
   );
 }

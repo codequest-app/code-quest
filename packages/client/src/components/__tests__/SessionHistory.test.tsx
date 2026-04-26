@@ -69,7 +69,7 @@ describe('SessionHistory', () => {
     expect(
       screen.getByText((_content, el) => el?.textContent === 'Fix login bug'),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('session-row')?.textContent).not.toContain('Add dark mode');
+    expect(screen.queryAllByRole('option')[0]?.textContent).not.toContain('Add dark mode');
   });
 
   it('calls onSelect when session clicked', async () => {

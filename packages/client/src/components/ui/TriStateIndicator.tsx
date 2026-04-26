@@ -25,10 +25,11 @@ export function TriStateIndicator({ state, onPartial, featureId }: TriStateIndic
   const clickable = state === 'partial' && !!onPartial;
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: partial-only click; keyboard equivalent provided
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: role is always button|status (dynamic ternary)
     <span
-      data-testid={featureId ? `${featureId}-toggle` : 'tri-state-indicator'}
+      aria-label={featureId ? `${featureId}-toggle` : 'tri-state-indicator'}
       data-state={state}
-      role={clickable ? 'button' : undefined}
+      role={clickable ? 'button' : 'status'}
       tabIndex={clickable ? 0 : undefined}
       onClick={
         clickable

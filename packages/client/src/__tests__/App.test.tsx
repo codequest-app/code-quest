@@ -13,9 +13,9 @@ describe('App', () => {
   it('shows only EmptyState when no projects exist — no sidebar or tab bar', () => {
     render(<App />);
 
-    expect(screen.getByTestId('empty-add-project')).toBeInTheDocument();
-    expect(screen.queryByTestId('tab-bar')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('sidebar-panel')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Project' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist', { name: 'tab-bar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'sidebar-panel' })).not.toBeInTheDocument();
   });
 
   it('syncs preferences axes to <html> data-attrs', () => {

@@ -129,10 +129,8 @@ describe('WorktreeContext', () => {
   it('GitActions does not expose `archive` or `remove` aliases', () => {
     const { Wrapper } = makeEnv();
     const { result } = renderHook(() => useWorktree(), { wrapper: Wrapper });
-    // biome-ignore lint/suspicious/noExplicitAny: probe shape for absence of legacy aliases
-    expect((result.current as any).archive).toBeUndefined();
-    // biome-ignore lint/suspicious/noExplicitAny: probe shape for absence of legacy aliases
-    expect((result.current as any).remove).toBeUndefined();
+    expect('archive' in result.current).toBe(false);
+    expect('remove' in result.current).toBe(false);
   });
 
   describe('broadcast subscriptions (Phase 4)', () => {

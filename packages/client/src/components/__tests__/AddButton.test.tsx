@@ -35,13 +35,13 @@ describe('AddButton', () => {
     render(
       <div>
         <AddButton onAttachFile={vi.fn()} onMentionFile={vi.fn()} />
-        <div data-testid="outside">outside</div>
+        <div>outside</div>
       </div>,
     );
     await user.click(screen.getByTitle('Add'));
     expect(screen.getByText('Add context')).toBeInTheDocument();
 
-    await user.click(screen.getByTestId('outside'));
+    await user.click(screen.getByText('outside'));
     expect(screen.queryByText('Add context')).not.toBeInTheDocument();
   });
 });

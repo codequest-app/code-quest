@@ -77,9 +77,11 @@ export function hasAnsi(content: string): boolean {
 
 export function AnsiContent({ content }: { content: string }) {
   return (
-    <pre data-testid="ansi-content" className={CODE_BLOCK_CLASS}>
-      <Ansi>{content}</Ansi>
-    </pre>
+    <section aria-label="ansi-content">
+      <pre className={CODE_BLOCK_CLASS}>
+        <Ansi>{content}</Ansi>
+      </pre>
+    </section>
   );
 }
 

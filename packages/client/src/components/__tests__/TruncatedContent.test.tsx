@@ -50,7 +50,7 @@ describe('TruncatedContent', () => {
 
   it('applies maxHeight style when not expanded', () => {
     render(<TruncatedContent maxHeight={300}>Content</TruncatedContent>);
-    const inner = screen.getByTestId('truncated-inner');
+    const inner = screen.getByLabelText('truncated-inner');
     expect(inner.style.maxHeight).toBe('300px');
   });
 
@@ -61,7 +61,7 @@ describe('TruncatedContent', () => {
     render(<TruncatedContent maxHeight={300}>Content</TruncatedContent>);
     const btn = screen.getByText('Show more');
     await userEvent.click(btn);
-    const inner = screen.getByTestId('truncated-inner');
+    const inner = screen.getByLabelText('truncated-inner');
     expect(inner.style.maxHeight).toBe('');
   });
 });

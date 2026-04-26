@@ -38,7 +38,7 @@ describe('GitPane', () => {
     const { Wrapper } = setup();
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'spinner' })).toBeInTheDocument();
   });
 
   it('renders status footer with branch and change count when data loaded', async () => {
@@ -50,7 +50,7 @@ describe('GitPane', () => {
       { status: 'A', file: 'b.ts' },
     ]);
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
-    const footer = await screen.findByTestId('pane-status-footer');
+    const footer = await screen.findByRole('status', { name: 'pane-status-footer' });
     expect(footer.textContent).toContain('main');
     expect(footer.textContent).toContain('2');
   });
@@ -58,7 +58,7 @@ describe('GitPane', () => {
   it('does not render status footer while git status is loading', () => {
     const { Wrapper } = setup();
     render(<GitPane cwd="/repo" />, { wrapper: Wrapper });
-    expect(screen.queryByTestId('pane-status-footer')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'pane-status-footer' })).toBeNull();
   });
 
   it('switching cwd shows loading indicator before new data resolves', async () => {
