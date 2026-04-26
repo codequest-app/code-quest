@@ -2,10 +2,12 @@ import { ClipboardDocumentListIcon, DocumentTextIcon } from '@heroicons/react/24
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
 import { useRightPaneCwd } from '../contexts/RightPaneScopeContext';
+import { cn } from '../utils/cn';
 import { FilesPane } from './FilesPane';
 import { GitPane } from './GitPane';
 import { RightPanePaneBar } from './RightPanePaneBar';
 import { SpecPane } from './SpecPane';
+import { tabTrigger } from './ui/_tokens';
 
 type TabKind = 'files' | 'git' | 'spec';
 
@@ -27,8 +29,10 @@ export interface RightPaneProps {
   onMention: (path: string) => void;
 }
 
-const TRIGGER_BASE =
-  'flex-1 h-9 inline-flex items-center justify-center gap-1.5 text-xs border-b-2 border-transparent text-text-muted hover:text-text outline-none data-[state=active]:border-accent data-[state=active]:text-text';
+const TRIGGER_BASE = cn(
+  tabTrigger,
+  'flex-1 h-9 inline-flex items-center justify-center gap-1.5 text-xs outline-none',
+);
 
 export function RightPane({ closeMode, onClose, onMention }: RightPaneProps) {
   const cwd = useRightPaneCwd();

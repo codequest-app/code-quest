@@ -4,7 +4,7 @@ import { focusRing } from './_tokens';
 
 const trackClass = (isOn: boolean) =>
   cn(
-    'relative w-7 h-4 rounded-full transition-colors shrink-0',
+    'flex items-center w-7 h-3.5 rounded-full transition-colors shrink-0',
     isOn ? 'bg-toggle' : 'bg-white/20',
   );
 
@@ -43,7 +43,7 @@ export function ToggleSwitch({ isOn, onClick }: { isOn: boolean; onClick?: () =>
   if (!onClick) {
     return (
       <div className={trackClass(isOn)}>
-        <div className={cn('relative top-0.5', thumbClass(isOn))}>{isOn && <Check />}</div>
+        <div className={thumbClass(isOn)}>{isOn && <Check />}</div>
       </div>
     );
   }
@@ -53,9 +53,7 @@ export function ToggleSwitch({ isOn, onClick }: { isOn: boolean; onClick?: () =>
       onCheckedChange={onClick}
       className={cn(trackClass(isOn), focusRing)}
     >
-      <Switch.Thumb className={cn('relative top-0.5', thumbClass(isOn))}>
-        {isOn && <Check />}
-      </Switch.Thumb>
+      <Switch.Thumb className={thumbClass(isOn)}>{isOn && <Check />}</Switch.Thumb>
     </Switch.Root>
   );
 }

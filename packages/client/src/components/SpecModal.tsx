@@ -1,4 +1,5 @@
 import { EVENTS, type OpenspecArtifactKind, openspecReadResultSchema } from '@code-quest/shared';
+import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useOpenspecActions } from '../contexts/OpenspecContext';
@@ -6,9 +7,9 @@ import { useSocket } from '../contexts/SocketContext';
 import { rpc } from '../socket/rpc';
 import { MarkdownContent } from './MarkdownContent';
 import { TaskChecklist } from './TaskChecklist';
+import { tabTriggerCompact } from './ui/_tokens';
 import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
-import { TabButton } from './worktree-dialog/TabButton';
 
 export interface SpecModalProps {
   cwd: string;
@@ -64,15 +65,19 @@ export function SpecModal({ cwd, kind, name, onClose }: SpecModalProps) {
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent title={`${kind === 'change' ? 'Change' : 'Spec'}: ${name}`} size="lg">
-        <div className="flex flex-col gap-3">
+        <Tabs.Root
+          value={active}
+          onValueChange={(v) => setActive(v as OpenspecArtifactKind)}
+          className="flex flex-col gap-3"
+        >
           {tabs.length > 1 && (
-            <div role="tablist" className="flex gap-1 border-b border-border">
+            <Tabs.List className="flex gap-1 border-b border-border">
               {tabs.map((t) => (
-                <TabButton key={t} active={active === t} onClick={() => setActive(t)}>
+                <Tabs.Trigger key={t} value={t} className={tabTriggerCompact}>
                   {TAB_LABEL[t]}
-                </TabButton>
+                </Tabs.Trigger>
               ))}
-            </div>
+            </Tabs.List>
           )}
           <div className="text-sm bg-bg/40 border border-border rounded p-3 overflow-auto max-h-dialog-body leading-relaxed">
             {state.kind === 'loading' && <span className="text-text-muted text-xs">Loading…</span>}
@@ -99,7 +104,7 @@ export function SpecModal({ cwd, kind, name, onClose }: SpecModalProps) {
               Close
             </Button>
           </div>
-        </div>
+        </Tabs.Root>
       </DialogContent>
     </Dialog>
   );
