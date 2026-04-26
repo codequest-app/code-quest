@@ -1,10 +1,11 @@
 import type { SessionSummary } from '@code-quest/shared';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
-import { SessionDropdown } from './SessionDropdown';
+import { SessionHistory } from './SessionHistory';
 
 interface ResumeSessionsDropdownProps {
   /** When set, list filters to this project's cwd (project surface).
@@ -54,16 +55,25 @@ export function ResumeSessionsDropdown({ cwd, open, onOpenChange }: ResumeSessio
     }
   }
 
-  if (!open) return null;
-
   return (
-    <SessionDropdown
-      sessions={sessions}
-      loading={loading}
-      onSelect={handleSelect}
-      onClose={() => onOpenChange(false)}
-      onRename={renameSession}
-      onDelete={deleteSession}
-    />
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-popover bg-black/40" />
+        <Dialog.Content
+          aria-label="Session list"
+          data-testid="session-dropdown-panel"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="fixed z-popover top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-100 max-h-[50vh] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden"
+        >
+          <SessionHistory
+            sessions={sessions}
+            loading={loading}
+            onSelect={handleSelect}
+            onRename={renameSession}
+            onDelete={deleteSession}
+          />
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

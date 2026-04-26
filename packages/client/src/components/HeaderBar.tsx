@@ -1,4 +1,5 @@
-import { ClockIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import type { ReactNode } from 'react';
 import { useChannelConfig, useChannelId } from '../contexts/channel';
 import { shortModelName } from '../utils/model-utils';
 import { isThinkingActive } from '../utils/thinking';
@@ -15,13 +16,15 @@ function thinkingLevelLabel(level: string): string {
   return THINKING_LABELS[level] ?? `Thinking · ${level}`;
 }
 
+export { HDR_BTN };
+
 export interface HeaderBarProps {
   title?: string | null;
   onOpenCommandPalette?: () => void;
-  onOpenResume?: () => void;
+  resumeSlot?: ReactNode;
 }
 
-export function HeaderBar({ title, onOpenCommandPalette, onOpenResume }: HeaderBarProps) {
+export function HeaderBar({ title, onOpenCommandPalette, resumeSlot }: HeaderBarProps) {
   const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
@@ -47,17 +50,7 @@ export function HeaderBar({ title, onOpenCommandPalette, onOpenResume }: HeaderB
       )}
       {!sessionLabel && <div className="flex-1" />}
 
-      {onOpenResume && (
-        <button
-          type="button"
-          title="Session history"
-          aria-label="Session history"
-          onClick={onOpenResume}
-          className={HDR_BTN}
-        >
-          <ClockIcon className="w-4 h-4" aria-hidden="true" />
-        </button>
-      )}
+      {resumeSlot}
       <button
         type="button"
         title="Command Palette (⌘K)"

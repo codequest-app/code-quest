@@ -1,4 +1,6 @@
 import type { SessionSummary } from '@code-quest/shared';
+import { ClockIcon } from '@heroicons/react/24/outline';
+import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
@@ -21,11 +23,11 @@ import { ChatInputArea } from './ChatInputArea';
 import { CommandPalette } from './CommandPalette';
 import { ContentPreviewDialog } from './ContentPreviewDialog';
 import { ElicitationDialog } from './ElicitationDialog';
-import { HeaderBar } from './HeaderBar';
+import { HDR_BTN, HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
-import { SessionDropdown } from './SessionDropdown';
+import { SessionHistory } from './SessionHistory';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
@@ -157,7 +159,46 @@ export function ChatPanel({ title }: { title?: string }) {
         <HeaderBar
           title={title}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          onOpenResume={openResumeOverlay}
+          resumeSlot={
+            <Popover.Root
+              open={showResumeOverlay}
+              onOpenChange={(open) => {
+                if (open) {
+                  openResumeOverlay();
+                } else {
+                  setShowResumeOverlay(false);
+                  resumeOpenSignal.setOpen(false);
+                }
+              }}
+            >
+              <Popover.Trigger
+                title="Session history"
+                aria-label="Session history"
+                className={HDR_BTN}
+              >
+                <ClockIcon className="w-4 h-4" aria-hidden="true" />
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  role="dialog"
+                  aria-label="Session list"
+                  data-testid="session-dropdown-panel"
+                  align="end"
+                  sideOffset={4}
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  className="z-popover max-w-100 max-h-[50vh] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden"
+                >
+                  <SessionHistory
+                    sessions={resumeSessions.sessions}
+                    loading={resumeLoading}
+                    onSelect={handleResumeSelect}
+                    onRename={renameSession}
+                    onDelete={handleDelete}
+                  />
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+          }
         />
         {worktree && <WorktreeBanner worktree={worktree} />}
         <CommandPalette
@@ -168,19 +209,6 @@ export function ChatPanel({ title }: { title?: string }) {
           rawPanelActive={activeSidePanel === 'raw'}
         />
         <MessageList ref={messageListRef} />
-        {showResumeOverlay && (
-          <SessionDropdown
-            sessions={resumeSessions.sessions}
-            loading={resumeLoading}
-            onSelect={handleResumeSelect}
-            onClose={() => {
-              setShowResumeOverlay(false);
-              resumeOpenSignal.setOpen(false);
-            }}
-            onRename={renameSession}
-            onDelete={handleDelete}
-          />
-        )}
         <SideQuestionDialog
           open={sideQuestion.open}
           question={sideQuestion.question}
