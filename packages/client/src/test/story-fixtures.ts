@@ -249,7 +249,6 @@ export function makeSession(overrides?: Partial<SessionStateSummary>): SessionSt
     title: 'Fix the login bug',
     projectRoot: STORY_PROJECT_ROOT,
     cwd: STORY_PROJECT_ROOT,
-    modelSetting: 'claude-sonnet-4-6',
     ...overrides,
   };
 }

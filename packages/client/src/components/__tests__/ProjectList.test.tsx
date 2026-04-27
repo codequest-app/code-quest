@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Project } from '../../contexts/ProjectContext';
-import { createProjectsEnv } from '../../test/projects-env';
+import { createTestWrapper } from '../../test/create-test-wrapper';
 import { ProjectList } from '../ProjectList';
 
 function makeWrapper() {
-  const env = createProjectsEnv();
-  if (!env.summoner.claude().hasInitSegments) env.summoner.claude().prepareInit();
-  return env.Wrapper;
+  const { summoner, Wrapper } = createTestWrapper();
+  if (!summoner.claude().hasInitSegments) summoner.claude().prepareInit();
+  return Wrapper;
 }
 
 const projects: Project[] = [

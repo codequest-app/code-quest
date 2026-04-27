@@ -82,7 +82,7 @@ export const updateStatePayloadSchema = z.object({
   claudeSettings: z.record(z.string(), z.unknown()).optional(),
   // Per-channel fields
   cwd: z.string().optional(),
-  modelSetting: z.string().optional(),
+  model: z.string().optional(),
   tools: z.array(z.string()).optional(),
   apiKeyStatus: z.string().optional(),
   allowDangerouslySkipPermissions: z.boolean().optional(),
@@ -91,7 +91,7 @@ export const updateStatePayloadSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   // Legacy / both
   defaultCwd: z.string().optional(),
-  initialPermissionMode: z.string().optional(),
+  permissionMode: z.string().optional(),
   thinkingLevel: z.string().optional(),
   thinkingDisplay: thinkingDisplaySchema.optional(),
   mcpServers: z

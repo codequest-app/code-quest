@@ -86,6 +86,15 @@ export function useChannelConfig(): ChannelConfigValue {
   return { ...state, ...actions };
 }
 
+export function buildInitialConfig(
+  opts: Record<string, unknown>,
+): Partial<Pick<ConfigState, 'model' | 'permissionMode'>> {
+  const result: Partial<Pick<ConfigState, 'model' | 'permissionMode'>> = {};
+  if (typeof opts.model === 'string') result.model = opts.model;
+  if (typeof opts.permissionMode === 'string') result.permissionMode = opts.permissionMode;
+  return result;
+}
+
 const INITIAL_CONFIG: ConfigState = {
   model: null,
   availableModels: [],
@@ -162,42 +171,25 @@ export function ChannelConfigProvider({
     return router.register(configHandlers, setConfigState);
   }, [channelId, router]);
 
-  // ── Derive model/permissionMode/effort from SessionContext.sessions ──
-  // Every session:states broadcast reseats `sessions` globally, firing this
-  // effect for every channel's ConfigContext. Bail by value (===) so
-  // unrelated channels don't churn setConfigState.
-  const { sessions } = useSession();
+  // ── Derive effort from SessionContext.sessions ──
+  // effort is broadcast globally via session:states; sync it here.
+  const { sessionsMap } = useSession();
   useEffect(() => {
     if (!channelId) return;
-    const summary = sessions.find((s) => s.channelId === channelId);
+    const summary = sessionsMap.get(channelId);
     if (!summary) return;
     setConfigState((prev) => {
-      const nextModel = summary.modelSetting ?? prev.model;
-      const nextPermissionMode = summary.permissionMode ?? prev.permissionMode;
       const nextEffort = summary.effort ? toEffort(summary.effort) : prev.effort;
-      if (
-        prev.model === nextModel &&
-        prev.permissionMode === nextPermissionMode &&
-        prev.effort === nextEffort
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
-        model: nextModel,
-        permissionMode: nextPermissionMode,
-        effort: nextEffort,
-      };
+      if (prev.effort === nextEffort) return prev;
+      return { ...prev, effort: nextEffort };
     });
-  }, [channelId, sessions]);
+  }, [channelId, sessionsMap]);
 
   // ── Stable actions (created once, read deps from refs) ──
   const setConfigStateRef = useRef(setConfigState);
-  useLayoutEffect(() => {
-    setConfigStateRef.current = setConfigState;
-  });
   const addSystemMessageRef = useRef(addSystemMessage);
   useLayoutEffect(() => {
+    setConfigStateRef.current = setConfigState;
     addSystemMessageRef.current = addSystemMessage;
   });
   const [depsProxy] = useState(() => ({
@@ -222,7 +214,7 @@ export function ChannelConfigProvider({
   // ── State value ──
   const stateValue: ConfigStateValue = {
     ...configState,
-    isFastMode: !!configState.fastModeState && configState.fastModeState !== 'off',
+    isFastMode: configState.fastModeState === 'on',
   };
 
   return (

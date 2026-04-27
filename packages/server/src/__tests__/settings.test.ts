@@ -55,9 +55,7 @@ describe('ChatHandler > settings', () => {
 
       await claude.send('settings:set_permission_mode', { channelId, mode: 'plan' });
 
-      const match = claude
-        .events('settings:update')
-        .find((e) => e.initialPermissionMode === 'plan');
+      const match = claude.events('settings:update').find((e) => e.permissionMode === 'plan');
       expect(match).toBeDefined();
     });
 
@@ -72,6 +70,112 @@ describe('ChatHandler > settings', () => {
 
       const channel = channelManager.get(channelId);
       expect(channel?.sessionConfig.permissionMode).toBe('bypassPermissions');
+    });
+  });
+
+  describe('per-channel isolation', () => {
+    it('set_model on channel A does not emit settings:update to channel B', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summonerA = createFakeSummoner(server);
+      const claudeA = summonerA.claude();
+      const channelA = await claudeA.initialize(s.init('sess-a'));
+
+      const summonerB = createFakeSummoner(server);
+      const claudeB = summonerB.claude();
+      await claudeB.initialize(s.init('sess-b'));
+
+      const beforeB = claudeB.events('settings:update').length;
+
+      await claudeA.send('settings:set_model', { channelId: channelA, model: 'claude-opus-4-6' });
+
+      const afterB = claudeB.events('settings:update').slice(beforeB);
+      expect(afterB.filter((e) => e.model != null)).toHaveLength(0);
+    });
+
+    it('set_permission_mode on channel A does not emit settings:update to channel B', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summonerA = createFakeSummoner(server);
+      const claudeA = summonerA.claude();
+      const channelA = await claudeA.initialize(s.init('sess-a'));
+
+      const summonerB = createFakeSummoner(server);
+      const claudeB = summonerB.claude();
+      await claudeB.initialize(s.init('sess-b'));
+
+      const beforeB = claudeB.events('settings:update').length;
+
+      await claudeA.send('settings:set_permission_mode', { channelId: channelA, mode: 'plan' });
+
+      const afterB = claudeB.events('settings:update').slice(beforeB);
+      expect(afterB.filter((e) => e.permissionMode != null)).toHaveLength(0);
+    });
+
+    it('set_model updates channel.sessionConfig.model', async () => {
+      const { container, claude, channelId } = await setup();
+
+      await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
+
+      const { ChannelManager } = await import('../socket/channel-manager.ts');
+      const channelManager = container.get(TYPES.ChannelManager) as InstanceType<
+        typeof ChannelManager
+      >;
+      const channel = channelManager.get(channelId);
+      expect(channel?.sessionConfig.model).toBe('claude-opus-4-6');
+    });
+
+    it('app:init returns DB default model and permissionMode for new channels', async () => {
+      const { claude, settingsStore } = await setup();
+
+      await settingsStore.set('claude', 'model', 'claude-opus-4-6');
+      await settingsStore.set('claude', 'permissionMode', 'auto');
+
+      const result = await claude.send<{
+        settings: Record<string, unknown>;
+      }>('app:init', {});
+
+      expect(result.settings).toMatchObject({
+        model: 'claude-opus-4-6',
+        permissionMode: 'auto',
+      });
+    });
+
+    it('new channel inherits DB default after another channel sets model', async () => {
+      const container = createTestContainer();
+      const server = createFakeServer(container);
+      const summonerA = createFakeSummoner(server);
+      const claudeA = summonerA.claude();
+      const channelA = await claudeA.initialize(s.init('sess-a'));
+
+      await claudeA.send('settings:set_model', { channelId: channelA, model: 'claude-opus-4-6' });
+
+      const result = await claudeA.send<{
+        settings: Record<string, unknown>;
+      }>('app:init', {});
+
+      expect(result.settings).toMatchObject({ model: 'claude-opus-4-6' });
+    });
+
+    it('session:states broadcast does not carry model or permissionMode', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
+
+      const allSessions = claude.events('session:states').flatMap((e) => e.sessions ?? []);
+      for (const s of allSessions) {
+        expect(s).not.toHaveProperty('model');
+        expect(s).not.toHaveProperty('permissionMode');
+      }
+    });
+
+    it('set_model emits settings:update with model to the same channel', async () => {
+      const { claude, channelId } = await setup();
+
+      await claude.send('settings:set_model', { channelId, model: 'claude-opus-4-6' });
+
+      const match = claude.events('settings:update').find((e) => e.model === 'claude-opus-4-6');
+      expect(match).toBeDefined();
     });
   });
 
@@ -643,6 +747,30 @@ describe('ChatHandler > settings', () => {
       expect(
         claude.received('control_response').some((r) => r.response?.request_id === 'sp-1'),
       ).toBe(true);
+    });
+
+    it('set_model emits scoped settings:update to the channel', async () => {
+      const { claude, channelId } = await setup();
+
+      const before = claude.events('settings:update').length;
+      await claude.emit(s.controlRequest('sm-2', 'set_model', undefined, { model: 'haiku' }));
+
+      const updates = claude.events('settings:update').slice(before);
+      expect(updates.find((e) => e.model === 'haiku' && e.channelId === channelId)).toBeDefined();
+    });
+
+    it('set_permission_mode emits scoped settings:update to the channel', async () => {
+      const { claude, channelId } = await setup();
+
+      const before = claude.events('settings:update').length;
+      await claude.emit(
+        s.controlRequest('sp-2', 'set_permission_mode', undefined, { mode: 'plan' }),
+      );
+
+      const updates = claude.events('settings:update').slice(before);
+      expect(
+        updates.find((e) => e.permissionMode === 'plan' && e.channelId === channelId),
+      ).toBeDefined();
     });
 
     it('get_settings responds with current settings', async () => {

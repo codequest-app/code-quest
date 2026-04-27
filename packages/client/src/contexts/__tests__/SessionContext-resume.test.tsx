@@ -4,13 +4,16 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { TypedSocket } from '../../socket/client';
 import { createFakeSummoner } from '../../test/fake-summoner';
+import { AppInitProvider } from '../AppInitContext';
 import { SessionProvider, useSession } from '../SessionContext';
 import { SocketProvider } from '../SocketContext';
 
 function wrap(socket: TypedSocket) {
   return ({ children }: { children: ReactNode }) => (
     <SocketProvider socket={socket}>
-      <SessionProvider>{children}</SessionProvider>
+      <AppInitProvider>
+        <SessionProvider>{children}</SessionProvider>
+      </AppInitProvider>
     </SocketProvider>
   );
 }

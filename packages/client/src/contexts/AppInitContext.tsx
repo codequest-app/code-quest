@@ -1,6 +1,16 @@
-import { EVENTS, initResponseSchema } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { EVENTS, type InitResponse, initResponseSchema } from '@code-quest/shared';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useSocket } from './SocketContext';
+
+type InitSubscriber = (data: InitResponse) => void;
 
 interface AppInitState {
   /** Feature flags derived from server `app:init` — e.g., whether git
@@ -13,6 +23,7 @@ interface AppInitState {
 
 interface AppInitActions {
   setInitOptions: (opts: Record<string, unknown>) => void;
+  subscribeInit: (cb: InitSubscriber) => () => void;
 }
 
 export const AppInitStateContext = createContext<AppInitState | null>(null);
@@ -40,31 +51,52 @@ export function AppInitProvider({ children }: { children: ReactNode }) {
   const [capabilities, setCapabilities] = useState<{ worktree: boolean }>({ worktree: false });
   const [initOptions, setInitOptions] = useState<Record<string, unknown>>({});
 
+  const subscribersRef = useRef(new Set<InitSubscriber>());
+  const lastInitRef = useRef<InitResponse | null>(null);
+
+  const subscribeInit = useCallback((cb: InitSubscriber) => {
+    subscribersRef.current.add(cb);
+    if (lastInitRef.current) cb(lastInitRef.current);
+    return () => {
+      subscribersRef.current.delete(cb);
+    };
+  }, []);
+
   useEffect(() => {
+    let pending = false;
     const fetchInit = () => {
+      if (pending) return;
+      pending = true;
       socket.emit(EVENTS.app.init, (raw) => {
+        pending = false;
         const parsed = initResponseSchema.safeParse(raw);
         if (!parsed.success) {
           console.warn('[AppInit] invalid init response shape', parsed.error);
           return;
         }
+        lastInitRef.current = parsed.data;
         if (parsed.data.capabilities) setCapabilities(parsed.data.capabilities);
         if (parsed.data.settings && Object.keys(parsed.data.settings).length > 0) {
           setInitOptions(parsed.data.settings);
         }
+        for (const sub of subscribersRef.current) sub(parsed.data);
       });
     };
+    const resetPending = () => {
+      pending = false;
+    };
     socket.on('connect', fetchInit);
-    // Already connected on first mount → no 'connect' event will arrive,
-    // so kick off once synchronously. Subsequent reconnects use the listener.
+    socket.on('disconnect', resetPending);
     if (socket.connected) fetchInit();
     return () => {
       socket.off('connect', fetchInit);
+      socket.off('disconnect', resetPending);
     };
   }, [socket]);
 
   const [actions] = useState<AppInitActions>(() => ({
-    setInitOptions: (opts) => setInitOptions(opts),
+    setInitOptions,
+    subscribeInit,
   }));
 
   return (

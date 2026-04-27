@@ -3,9 +3,10 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { EmptyState } from '../../components/EmptyState';
 import { SpinnerVerb } from '../../components/SpinnerVerb';
 import type { ChannelChangeUpdate } from '../../types/chat';
+import { useAppInitState } from '../AppInitContext';
 import { useSocket } from '../SocketContext';
 import { ChannelComposeProvider } from './ChannelComposeContext';
-import { ChannelConfigProvider } from './ChannelConfigContext';
+import { buildInitialConfig, ChannelConfigProvider } from './ChannelConfigContext';
 import { ChannelControlProvider } from './ChannelControlContext';
 import { ChannelMessagesProvider } from './ChannelMessagesContext';
 import { ChannelMetaProvider } from './ChannelMetaContext';
@@ -41,6 +42,7 @@ export function ChannelProvider({
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();
+  const { initOptions } = useAppInitState();
 
   const [state, setState] = useState<ChannelState>(
     launchOnMount ? { status: 'connecting' } : { status: 'connected' },
@@ -106,7 +108,10 @@ export function ChannelProvider({
           resetStreamingRefsRef={resetStreamingRefsRef}
         >
           <ChannelControlProvider resetStreamingRefs={() => resetStreamingRefsRef.current()}>
-            <ChannelConfigProvider onNewChannel={onNewChannel}>
+            <ChannelConfigProvider
+              initialConfig={buildInitialConfig(initOptions)}
+              onNewChannel={onNewChannel}
+            >
               <MessageVisibilityProvider>
                 <ChannelComposeProvider>{children}</ChannelComposeProvider>
               </MessageVisibilityProvider>

@@ -47,7 +47,7 @@ describe('model switch updates local model info', () => {
 
     // Switch to Model B — app:models sends string-only list
     await act(async () => {
-      claude.pushServerEvent('settings:update', { channelId, modelSetting: MODEL_B });
+      claude.pushServerEvent('settings:update', { channelId, model: MODEL_B });
       claude.pushServerEvent('app:models', { channelId: '', models: [MODEL_A, MODEL_B] });
     });
 
@@ -120,7 +120,7 @@ describe('model switch updates local model info', () => {
     // Close picker by clicking somewhere outside, then switch to Model B
     await user.click(document.body);
     await act(async () => {
-      claude.pushServerEvent('settings:update', { channelId, modelSetting: MODEL_B });
+      claude.pushServerEvent('settings:update', { channelId, model: MODEL_B });
       claude.pushServerEvent('app:models', { channelId: '', models: [MODEL_A, MODEL_B] });
     });
 

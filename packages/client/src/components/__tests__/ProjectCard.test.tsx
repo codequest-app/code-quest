@@ -4,13 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { useNavigationState } from '../../contexts/NavigationContext';
 import { useProjectState } from '../../contexts/ProjectContext';
-import { createProjectsEnv } from '../../test/projects-env';
+import { createTestWrapper } from '../../test/create-test-wrapper';
 import { ProjectCard } from '../ProjectCard';
 
-function setupProjectsEnv() {
-  const env = createProjectsEnv();
-  if (!env.summoner.claude().hasInitSegments) env.summoner.claude().prepareInit();
-  return env;
+function setupTestWrapper() {
+  const wrapper = createTestWrapper();
+  if (!wrapper.summoner.claude().hasInitSegments) wrapper.summoner.claude().prepareInit();
+  return wrapper;
 }
 
 function ProbeActiveCwdAndPending() {
@@ -82,7 +82,7 @@ describe('ProjectCard', () => {
   });
 
   describe('pin star + more-actions trigger (Phase 4)', () => {
-    const setupMin = setupProjectsEnv;
+    const setupMin = setupTestWrapper;
 
     it('shows Unpin button (filled star) when pinned', () => {
       const { Wrapper } = setupMin();
@@ -124,9 +124,9 @@ describe('ProjectCard', () => {
 
   describe('right-click resume flow', () => {
     function setup() {
-      const env = setupProjectsEnv();
-      const sessionStore = env.container.get<SessionStore>(TYPES.SessionStore);
-      return { Wrapper: env.Wrapper, sessionStore };
+      const { container, Wrapper } = setupTestWrapper();
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      return { Wrapper, sessionStore };
     }
 
     it('right-click opens menu, picking a session activates project + sets pending intent', async () => {
@@ -208,16 +208,10 @@ describe('ProjectCard', () => {
 
   describe('rename / remove flow (multi-layer verification)', () => {
     function setupWithProject(path: string) {
-      const env = setupProjectsEnv();
-      const projectStore = env.container.get<ProjectStore>(TYPES.ProjectStore);
-      const sessionStore = env.container.get<SessionStore>(TYPES.SessionStore);
-      return {
-        Wrapper: env.Wrapper,
-        summoner: env.summoner,
-        projectStore,
-        sessionStore,
-        path,
-      };
+      const { container, Wrapper, summoner } = setupTestWrapper();
+      const projectStore = container.get<ProjectStore>(TYPES.ProjectStore);
+      const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
+      return { Wrapper, summoner, projectStore, sessionStore, path };
     }
 
     it('Remove flow: ⋯ → Remove → confirm → ① UI / ② event / ③ DB / ④ state', async () => {

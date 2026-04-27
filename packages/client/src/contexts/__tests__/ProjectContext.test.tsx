@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner, type FakeSummoner } from '../../test/fake-summoner';
+import { AppInitProvider } from '../AppInitContext';
 import {
   deriveProjects,
   type Project,
@@ -16,9 +17,11 @@ function makeWrapper(summoner: FakeSummoner) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <SocketProvider socket={summoner.socket}>
-        <SessionProvider>
-          <ProjectProvider>{children}</ProjectProvider>
-        </SessionProvider>
+        <AppInitProvider>
+          <SessionProvider>
+            <ProjectProvider>{children}</ProjectProvider>
+          </SessionProvider>
+        </AppInitProvider>
       </SocketProvider>
     );
   };

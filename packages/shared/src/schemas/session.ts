@@ -186,8 +186,6 @@ export const sessionStateSummarySchema = z.object({
   channelId: z.string(),
   state: sessionBroadcastStateSchema,
   title: z.string().optional(),
-  modelSetting: z.string().optional(),
-  permissionMode: z.string().optional(),
   effort: effortLevelSchema.optional(),
   cwd: z.string().optional(),
   projectRoot: z.string(),

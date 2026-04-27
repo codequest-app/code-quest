@@ -20,7 +20,6 @@ export function create({
       channelId: id,
       state: ch.isProcessing ? 'busy' : 'idle',
       title: ch.title,
-      modelSetting: ch.sessionConfig?.model,
       cwd: ch.cwd,
       ...(ch.projectRoot ? { projectRoot: ch.projectRoot } : {}),
     }));

@@ -254,8 +254,6 @@ export class ChannelManager {
     }
   }
 
-  /** Broadcast session state + settings to all connected clients.
-   *  Key mapping (e.g. model → modelSetting) matches shared SessionConfigSummary / UpdateStatePayload schemas. */
   broadcastSessionState(channelId: string, state: SessionBroadcastState, title?: string): void {
     const ch = this.channels.get(channelId);
     const ss = ch?.sessionConfig ?? {};
@@ -269,8 +267,6 @@ export class ChannelManager {
             cwd: ch?.cwd,
             projectRoot: ch?.projectRoot ?? undefined,
             title,
-            modelSetting: ss.model,
-            permissionMode: ss.permissionMode,
             effort: ss.effort,
           }),
         },
@@ -279,7 +275,7 @@ export class ChannelManager {
 
     const settings = ch?.toSettingsUpdatePayload();
     if (settings) {
-      this.emitter.broadcastAll(EVENTS.settings.update, { channelId, ...settings });
+      this.emitter.emit(channelId, EVENTS.settings.update, { channelId, ...settings });
     }
   }
 }
