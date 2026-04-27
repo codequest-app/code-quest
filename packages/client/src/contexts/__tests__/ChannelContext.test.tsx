@@ -235,7 +235,7 @@ describe('ChannelContext', () => {
 
       await act(async () => {
         summoner.claude().pushServerEvent('session:states', {
-          sessions: [{ channelId, state: 'busy' }],
+          sessions: [{ channelId, state: 'busy', projectRoot: '/repo' }],
         });
       });
 

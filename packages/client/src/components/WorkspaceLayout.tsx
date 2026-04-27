@@ -66,7 +66,7 @@ function WorkspaceLayoutInner() {
     });
   }, [registerActions]);
   const { projects, activeProjectCwd } = useProjectState();
-  const { sessions } = useSession();
+  const { sessions, sessionsMap } = useSession();
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
   const isMobile = breakpoint === 'mobile';
@@ -126,7 +126,7 @@ function WorkspaceLayoutInner() {
             onToggleRight={onToggleRight}
             sessions={sessions}
             onActivateSession={(channelId) => {
-              const s = sessions.find((x) => x.channelId === channelId);
+              const s = sessionsMap.get(channelId);
               if (s) setActiveProject(s.projectRoot);
             }}
           >

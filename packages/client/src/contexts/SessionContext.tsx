@@ -9,15 +9,23 @@ import type {
 } from '@code-quest/shared';
 import {
   EVENTS,
-  initResponseSchema,
   sessionCreatedPayloadSchema,
   sessionDeadPayloadSchema,
   sessionResumeResponseSchema,
   sessionStatesPayloadSchema,
 } from '@code-quest/shared';
-import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 import { rpc } from '../socket/rpc';
+import { useAppInitActions } from './AppInitContext';
 import { useSocket } from './SocketContext';
 
 interface AuthState {
@@ -58,6 +66,7 @@ interface SessionContextValue {
 
   // ── Live session list (from app:init + broadcasts) ──
   sessions: SessionStateSummary[];
+  sessionsMap: ReadonlyMap<string, SessionStateSummary>;
 
   // ── Auth ──
   auth: AuthState;
@@ -73,7 +82,7 @@ interface SessionContextValue {
   subscribeSessionStates: (cb: (payload: SessionStatesPayload) => void) => () => void;
 }
 
-type SessionStateValue = Pick<SessionContextValue, 'auth' | 'sessions'>;
+type SessionStateValue = Pick<SessionContextValue, 'auth' | 'sessions' | 'sessionsMap'>;
 type SessionActionsValue = Omit<SessionContextValue, keyof SessionStateValue>;
 
 export const SessionStateContext = createContext<SessionStateValue | null>(null);
@@ -104,12 +113,10 @@ function handleDead(raw: unknown): SessionUpdater | null {
   return (prev) => prev.filter((s) => s.channelId !== parsed.data.channelId);
 }
 
-function handleStates(raw: unknown): SessionUpdater | null {
-  const parsed = sessionStatesPayloadSchema.safeParse(raw);
-  if (!parsed.success) return null;
+function applyStates(data: SessionStatesPayload): SessionUpdater {
   return (prev) => {
     let next = [...prev];
-    for (const update of parsed.data.sessions) {
+    for (const update of data.sessions) {
       const idx = next.findIndex((s) => s.channelId === update.channelId);
       if (idx >= 0) {
         next[idx] = { ...next[idx], ...update };
@@ -123,6 +130,7 @@ function handleStates(raw: unknown): SessionUpdater | null {
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
+  const { subscribeInit } = useAppInitActions();
 
   const [auth, setAuth] = useState<AuthState>({ status: 'idle', authUrl: null, errorMsg: null });
   const [sessions, setSessions] = useState<SessionStateSummary[]>([]);
@@ -150,16 +158,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [socket]);
 
-  // app:init + session:* broadcasts — maintain the live session list.
+  // Receive initial sessions from AppInitContext (single app:init source).
   useEffect(() => {
-    const onConnect = () => {
-      socket.emit(EVENTS.app.init, (raw) => {
-        const parsed = initResponseSchema.safeParse(raw);
-        if (!parsed.success) return;
-        setSessions(parsed.data.sessions);
-      });
-    };
+    return subscribeInit((data) => {
+      setSessions(data.sessions);
+    });
+  }, [subscribeInit]);
 
+  // session:* broadcasts — maintain the live session list.
+  useEffect(() => {
     const apply = (handler: (raw: unknown) => SessionUpdater | null) => (raw: unknown) => {
       const updater = handler(raw);
       if (updater) setSessions(updater);
@@ -168,21 +175,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const onDead = apply(handleDead);
     const onStates = (raw: unknown) => {
       const parsed = sessionStatesPayloadSchema.safeParse(raw);
-      if (parsed.success) setSessions(handleStates(raw) ?? ((prev) => prev));
-      // Sync fan-out: listeners see the event at the socket.on tick (before
-      // React batches setSessions), preserving a joinedRef-style gate that
-      // distinguishes pre-join vs post-join events.
-      const payload = parsed.success ? parsed.data : (raw as SessionStatesPayload);
-      for (const listener of sessionStatesListenersRef.current) listener(payload);
+      if (!parsed.success) return;
+      setSessions(applyStates(parsed.data));
+      for (const listener of [...sessionStatesListenersRef.current]) listener(parsed.data);
     };
 
-    socket.on('connect', onConnect);
-    if (socket.connected) onConnect();
     socket.on(EVENTS.session.created, onCreated);
     socket.on(EVENTS.session.dead, onDead);
     socket.on(EVENTS.session.states, onStates);
     return () => {
-      socket.off('connect', onConnect);
       socket.off(EVENTS.session.created, onCreated);
       socket.off(EVENTS.session.dead, onDead);
       socket.off(EVENTS.session.states, onStates);
@@ -258,9 +259,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
   }));
 
+  const sessionsMap = useMemo(() => new Map(sessions.map((s) => [s.channelId, s])), [sessions]);
+
   return (
     <SessionActionsContext.Provider value={actions}>
-      <SessionStateContext.Provider value={{ auth, sessions }}>
+      <SessionStateContext.Provider value={{ auth, sessions, sessionsMap }}>
         {children}
       </SessionStateContext.Provider>
     </SessionActionsContext.Provider>

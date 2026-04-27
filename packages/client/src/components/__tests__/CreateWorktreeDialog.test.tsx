@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { createProjectsEnv } from '../../test/projects-env';
+import { createTestWrapper } from '../../test/create-test-wrapper';
 import { CreateWorktreeDialog } from '../CreateWorktreeDialog';
 
 function makeWrapper() {
-  const env = createProjectsEnv();
-  env.summoner.git()!.setProjectRoot('/repo');
-  return { Wrapper: env.Wrapper };
+  const { summoner, Wrapper } = createTestWrapper();
+  summoner.git()!.setProjectRoot('/repo');
+  return { Wrapper };
 }
 
 describe('CreateWorktreeDialog (2-tab redesign)', () => {

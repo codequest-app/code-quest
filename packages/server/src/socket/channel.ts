@@ -120,10 +120,10 @@ export class Channel {
   toSettingsUpdatePayload(): Record<string, unknown> | undefined {
     const ss = this._sessionConfig;
     const settings = pickDefined({
-      modelSetting: ss.model,
+      model: ss.model,
       defaultCwd: this.cwd,
       worktree: this._worktree ?? undefined,
-      initialPermissionMode: ss.permissionMode,
+      permissionMode: ss.permissionMode,
       thinkingLevel: ss.thinkingLevel,
       mcpServers: ss.mcpServers,
       tools: ss.tools,

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { WorkspaceLayout } from '../../../components/WorkspaceLayout';
 import { createFakeSummoner } from '../../../test/fake-summoner';
 import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { AppInitProvider } from '../../AppInitContext';
 import { FsProvider } from '../../FsContext';
 import { GitProvider } from '../../GitContext';
 import { NavigationProvider } from '../../NavigationContext';
@@ -35,21 +36,23 @@ describe('TabProvider', () => {
       summoner.filesystem().addDirectory('/projects', ['my-app']);
       render(
         <SocketProvider socket={summoner.socket}>
-          <SessionProvider>
-            <PluginProvider>
-              <ProjectProvider>
-                <GitProvider>
-                  <FsProvider>
-                    <OpenspecProvider>
-                      <NavigationProvider>
-                        <WorkspaceLayout />
-                      </NavigationProvider>
-                    </OpenspecProvider>
-                  </FsProvider>
-                </GitProvider>
-              </ProjectProvider>
-            </PluginProvider>
-          </SessionProvider>
+          <AppInitProvider>
+            <SessionProvider>
+              <PluginProvider>
+                <ProjectProvider>
+                  <GitProvider>
+                    <FsProvider>
+                      <OpenspecProvider>
+                        <NavigationProvider>
+                          <WorkspaceLayout />
+                        </NavigationProvider>
+                      </OpenspecProvider>
+                    </FsProvider>
+                  </GitProvider>
+                </ProjectProvider>
+              </PluginProvider>
+            </SessionProvider>
+          </AppInitProvider>
         </SocketProvider>,
       );
       // Add project via dialog

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '../../../test/fake-summoner';
+import { AppInitProvider } from '../../AppInitContext';
 import {
   NavigationProvider,
   useNavigationActions,
@@ -33,22 +34,7 @@ function renderWithProjectAndSessions(
   let sessions = initial.sessions ?? [];
   const tree = (
     <SocketProvider socket={summoner.socket}>
-      <SessionProvider>
-        <ProjectProvider>
-          <NavigationProvider>
-            <TabProvider cwd={initial.cwd} sessions={sessions}>
-              {ui}
-            </TabProvider>
-          </NavigationProvider>
-        </ProjectProvider>
-      </SessionProvider>
-    </SocketProvider>
-  );
-  const { rerender } = render(tree);
-  function setSessions(next: SessionStateSummary[]) {
-    sessions = next;
-    rerender(
-      <SocketProvider socket={summoner.socket}>
+      <AppInitProvider>
         <SessionProvider>
           <ProjectProvider>
             <NavigationProvider>
@@ -58,6 +44,25 @@ function renderWithProjectAndSessions(
             </NavigationProvider>
           </ProjectProvider>
         </SessionProvider>
+      </AppInitProvider>
+    </SocketProvider>
+  );
+  const { rerender } = render(tree);
+  function setSessions(next: SessionStateSummary[]) {
+    sessions = next;
+    rerender(
+      <SocketProvider socket={summoner.socket}>
+        <AppInitProvider>
+          <SessionProvider>
+            <ProjectProvider>
+              <NavigationProvider>
+                <TabProvider cwd={initial.cwd} sessions={sessions}>
+                  {ui}
+                </TabProvider>
+              </NavigationProvider>
+            </ProjectProvider>
+          </SessionProvider>
+        </AppInitProvider>
       </SocketProvider>,
     );
   }

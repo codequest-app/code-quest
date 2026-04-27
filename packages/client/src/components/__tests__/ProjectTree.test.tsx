@@ -2,19 +2,19 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useNavigationState } from '../../contexts/NavigationContext';
+import { createTestWrapper } from '../../test/create-test-wrapper';
 import { readPersistedRaw } from '../../test/memory-persist-storage';
-import { createProjectsEnv } from '../../test/projects-env';
 import { ProjectTree } from '../ProjectTree';
 
-function makeEnv() {
-  const env = createProjectsEnv();
-  if (!env.summoner.claude().hasInitSegments) env.summoner.claude().prepareInit();
-  return env;
+function makeWrapper() {
+  const wrapper = createTestWrapper();
+  if (!wrapper.summoner.claude().hasInitSegments) wrapper.summoner.claude().prepareInit();
+  return wrapper;
 }
 
 describe('ProjectTree', () => {
   it('renders projects in Pinned/Recent groups like ProjectList', () => {
-    const { Wrapper } = makeEnv();
+    const { Wrapper } = makeWrapper();
     render(
       <Wrapper>
         <ProjectTree
@@ -33,7 +33,7 @@ describe('ProjectTree', () => {
   });
 
   it('active project is expanded by default (chevron pointing down)', async () => {
-    const { Wrapper, summoner } = makeEnv();
+    const { Wrapper, summoner } = makeWrapper();
     summoner.git()!.setProjectRoot('/repo');
     render(
       <Wrapper>
@@ -50,7 +50,7 @@ describe('ProjectTree', () => {
   });
 
   it('non-active project is collapsed by default', () => {
-    const { Wrapper } = makeEnv();
+    const { Wrapper } = makeWrapper();
     render(
       <Wrapper>
         <ProjectTree
@@ -65,7 +65,7 @@ describe('ProjectTree', () => {
   });
 
   it('clicking chevron expands and fetches worktrees', async () => {
-    const { Wrapper, summoner } = makeEnv();
+    const { Wrapper, summoner } = makeWrapper();
     summoner.git()!.setProjectRoot('/repo');
     summoner.git()!.addWorktree({
       name: 'feat-x',
@@ -92,7 +92,7 @@ describe('ProjectTree', () => {
   });
 
   it('non-git project: no chevron after fetch (listing === not_a_repo)', async () => {
-    const { Wrapper, summoner } = makeEnv();
+    const { Wrapper, summoner } = makeWrapper();
     summoner.git()!.setProjectRoot(null); // non-git
 
     render(
@@ -113,7 +113,7 @@ describe('ProjectTree', () => {
   });
 
   it('expand state persists via zustand persist', async () => {
-    const { Wrapper } = makeEnv();
+    const { Wrapper } = makeWrapper();
     const { unmount } = render(
       <Wrapper>
         <ProjectTree
@@ -130,7 +130,7 @@ describe('ProjectTree', () => {
 
     unmount();
     // Re-mount — should rehydrate from persisted storage and start expanded
-    const { Wrapper: Wrapper2 } = makeEnv();
+    const { Wrapper: Wrapper2 } = makeWrapper();
     render(
       <Wrapper2>
         <ProjectTree
@@ -146,7 +146,7 @@ describe('ProjectTree', () => {
 
   describe('Initialize as git repo (Phase 8)', () => {
     it('non-git project shows inline [Initialize as git repo] button', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot(null); // non-git
       render(
         <Wrapper>
@@ -164,7 +164,7 @@ describe('ProjectTree', () => {
     });
 
     it('git project does NOT show inline Initialize button', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot('/repo');
       render(
         <Wrapper>
@@ -182,7 +182,7 @@ describe('ProjectTree', () => {
     });
 
     it('non-git project ⋯ menu contains "Initialize as git repo"', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot(null);
       render(
         <Wrapper>
@@ -204,7 +204,7 @@ describe('ProjectTree', () => {
     });
 
     it('git project ⋯ menu does NOT contain Initialize as git repo', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot('/repo');
       render(
         <Wrapper>
@@ -225,7 +225,7 @@ describe('ProjectTree', () => {
     });
 
     it('clicking Initialize triggers worktree:initRepo and broadcast repopulates listing', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot(null);
       render(
         <Wrapper>
@@ -253,7 +253,7 @@ describe('ProjectTree', () => {
 
   describe('WorktreeRow click sets sidebar selection (does not open chat)', () => {
     it('clicking wt-row sets selectedWorktreeCwd; pendingOpenWorktree stays null', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot('/repo');
       summoner.git()!.addWorktree({
         name: 'feat-x',
@@ -305,7 +305,7 @@ describe('ProjectTree', () => {
 
   describe('+ New worktree button (Phase 9)', () => {
     it('git project expanded: shows "+ New worktree…" button', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot('/repo');
       render(
         <Wrapper>
@@ -321,7 +321,7 @@ describe('ProjectTree', () => {
     });
 
     it('non-git project: no "+ New worktree" button (needs git first)', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot(null);
       render(
         <Wrapper>
@@ -338,7 +338,7 @@ describe('ProjectTree', () => {
     });
 
     it('click "+ New worktree" opens CreateWorktreeDialog', async () => {
-      const { Wrapper, summoner } = makeEnv();
+      const { Wrapper, summoner } = makeWrapper();
       summoner.git()!.setProjectRoot('/repo');
       render(
         <Wrapper>
@@ -358,7 +358,7 @@ describe('ProjectTree', () => {
   });
 
   it('renders "+ Add Project" button (same as ProjectList)', () => {
-    const { Wrapper } = makeEnv();
+    const { Wrapper } = makeWrapper();
     const { container } = render(
       <Wrapper>
         <ProjectTree

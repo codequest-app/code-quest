@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { AppInitProvider } from '../../contexts/AppInitContext';
 import { ChannelProvider, useChannelMessages } from '../../contexts/channel';
 import { PluginProvider } from '../../contexts/PluginContext';
 import { SessionProvider } from '../../contexts/SessionContext';
@@ -29,21 +30,23 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
   const result = render(ui, {
     wrapper: ({ children }) => (
       <SocketProvider socket={summoner.socket}>
-        <SessionProvider>
-          <PluginProvider>
-            <TabProvider
-              initialState={{
-                tabs: { [channelId]: { tabStatus: 'idle', launchOnMount: false } },
-                activeTabId: channelId,
-              }}
-            >
-              <ChannelProvider channelId={channelId}>
-                {opts?.planComments && <PlanCommentSetter comments={opts.planComments} />}
-                {children}
-              </ChannelProvider>
-            </TabProvider>
-          </PluginProvider>
-        </SessionProvider>
+        <AppInitProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <TabProvider
+                initialState={{
+                  tabs: { [channelId]: { tabStatus: 'idle', launchOnMount: false } },
+                  activeTabId: channelId,
+                }}
+              >
+                <ChannelProvider channelId={channelId}>
+                  {opts?.planComments && <PlanCommentSetter comments={opts.planComments} />}
+                  {children}
+                </ChannelProvider>
+              </TabProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppInitProvider>
       </SocketProvider>
     ),
   });

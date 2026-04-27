@@ -182,4 +182,26 @@ describe('ChannelConfigContext', () => {
 
     expect(screen.getByRole('status', { name: 'thinking-level' })).toHaveTextContent('default_on');
   });
+
+  it('new channel shows DB default model and permissionMode from initialConfig', async () => {
+    const { createTestContainer, createFakeServer, TYPES } = await import(
+      '@code-quest/server/test'
+    );
+    const container = createTestContainer();
+    const settingsStore = container.get<{
+      set(p: string, k: string, v: unknown): Promise<void>;
+    }>(TYPES.SettingsStore);
+    await settingsStore.set('claude', 'model', 'claude-opus-4-6');
+    await settingsStore.set('claude', 'permissionMode', 'plan');
+
+    const server = createFakeServer(container);
+    const summoner = new (await import('@/test/fake-summoner')).FakeSummoner(server);
+    summoner.claude().prepareInit(s.init('sess-defaults', { permissionMode: 'plan' }));
+
+    const { addProject } = await renderWithWorkspace({ summoner });
+    const project = await addProject();
+    await project.launchSession();
+
+    expect(screen.getByText('Plan mode')).toBeInTheDocument();
+  });
 });

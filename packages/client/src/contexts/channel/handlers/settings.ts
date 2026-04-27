@@ -44,10 +44,10 @@ type CopierMap = {
 };
 
 const SETTINGS_COPIERS: CopierMap = {
-  modelSetting: (u, v) => {
+  model: (u, v) => {
     u.model = v;
   },
-  initialPermissionMode: (u, v) => {
+  permissionMode: (u, v) => {
     u.permissionMode = v;
   },
   tools: (u, v) => {

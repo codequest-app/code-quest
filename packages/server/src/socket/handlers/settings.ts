@@ -68,11 +68,13 @@ export function create({
   const handleSetModel = createSettingHandler({
     schema: settingsSetModelPayloadSchema,
     errorMsg: 'Failed to set model',
-    run: async (ch, { model }) => {
+    run: async (ch, { channelId, model }) => {
       await ch.sendRequest(EVENTS.settings.set_model, { model });
+      ch.updateSessionConfig({ model });
       await settingsStore
         .set(ch.provider, 'model', model)
         .catch((e) => logger.warn({ err: e }, 'Failed to persist model to settings store'));
+      emitter.emit(channelId, EVENTS.settings.update, { channelId, model });
       broadcastModels();
     },
   });
@@ -83,8 +85,12 @@ export function create({
     run: async (ch, { channelId, mode }) => {
       await ch.sendRequest(EVENTS.settings.set_permission_mode, { mode });
       ch.updateSessionConfig({ permissionMode: mode });
-      await settingsStore.set(ch.provider, 'permissionMode', mode);
-      emitter.broadcastAll(EVENTS.settings.update, { channelId, initialPermissionMode: mode });
+      await settingsStore
+        .set(ch.provider, 'permissionMode', mode)
+        .catch((e) =>
+          logger.warn({ err: e }, 'Failed to persist permissionMode to settings store'),
+        );
+      emitter.emit(channelId, EVENTS.settings.update, { channelId, permissionMode: mode });
     },
   });
 
@@ -98,10 +104,12 @@ export function create({
       await settingsStore.set(ch.provider, 'thinkingLevel', thinkingLevel);
       if (thinkingDisplay != null) {
         await settingsStore.set(ch.provider, 'thinkingDisplay', thinkingDisplay);
-        emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel, thinkingDisplay });
-      } else {
-        emitter.broadcastAll(EVENTS.settings.update, { channelId, thinkingLevel });
       }
+      emitter.broadcastAll(EVENTS.settings.update, {
+        channelId,
+        thinkingLevel,
+        ...(thinkingDisplay != null ? { thinkingDisplay } : {}),
+      });
     },
   });
 
