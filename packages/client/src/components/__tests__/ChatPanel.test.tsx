@@ -85,202 +85,205 @@ describe('ChatPanel', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  // ── Control flow pipeline ──
+  describe('control flow pipeline', () => {
+    it('tool_use interrupts streaming — text after tool_result still renders', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(s.textDelta('Before tool'));
+        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
+        await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      });
 
-  it('tool_use interrupts streaming — text after tool_result still renders', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(s.textDelta('Before tool'));
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('req-1', 'can_use_tool', 'Read', {}));
+      const yesButton = await screen.findByText('Yes');
+      await userEvent.click(yesButton);
+
+      await act(async () => {
+        await claude.emit(s.toolResult('toolu_1', 'file content'));
+      });
+      await emitAssistantTurn(claude, 'After tool');
+
+      expect(await screen.findByText(/Before tool/)).toBeInTheDocument();
+      expect(await screen.findByText(/After tool/)).toBeInTheDocument();
     });
 
-    const yesButton = await screen.findByText('Yes');
-    await userEvent.click(yesButton);
+    it('tool_result flows through pipeline (verified via received)', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
+        await claude.emit(s.controlRequest('r1', 'can_use_tool', 'Read', {}));
+      });
 
-    await act(async () => {
-      await claude.emit(s.toolResult('toolu_1', 'file content'));
+      const yesButton = await screen.findByText('Yes');
+      await userEvent.click(yesButton);
+
+      await act(async () => {
+        await claude.emit(s.toolResult('toolu_1', 'file contents'));
+      });
+      await emitAssistantTurn(claude, 'Done');
+
+      expect(await screen.findByText(/Done/)).toBeInTheDocument();
+      expect(claude.received('control_response').length).toBeGreaterThan(0);
     });
-    await emitAssistantTurn(claude, 'After tool');
 
-    expect(await screen.findByText(/Before tool/)).toBeInTheDocument();
-    expect(await screen.findByText(/After tool/)).toBeInTheDocument();
+    it('elicitation control_request renders dialog', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
+      });
+
+      expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
+    });
+
+    it('chat:cancel_request silently removes pending control banner', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
+        await claude.emit(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
+      });
+
+      expect(screen.getByText('Yes')).toBeInTheDocument();
+
+      await act(async () => {
+        await claude.emit(s.controlCancelRequest('r1'));
+        await claude.emit(s.result());
+      });
+
+      // Banner removed, no "Cancelled" text shown
+      expect(screen.queryByText('Yes')).not.toBeInTheDocument();
+      expect(screen.queryAllByText(/Cancelled/i)).toHaveLength(0);
+    });
+
+    it('notification error shows message in UI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(
+          s.controlRequestShowNotification('notif-1', {
+            message: 'Something went wrong',
+            severity: 'error',
+          }),
+        );
+      });
+
+      expect(screen.queryAllByText(/Something went wrong|error/i).length).toBeGreaterThan(0);
+    });
+
+    it('notification warning shows message in UI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(
+          s.controlRequestShowNotification('notif-2', {
+            message: 'Be careful',
+            severity: 'warning',
+          }),
+        );
+      });
+
+      expect(screen.queryAllByText(/Be careful|warning/i).length).toBeGreaterThan(0);
+    });
+
+    it('notification with buttons shows in UI', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await act(async () => {
+        await claude.emit(
+          s.controlRequestShowNotification('notif-3', {
+            message: 'Retry?',
+            severity: 'info',
+            buttons: ['Retry'],
+          }),
+        );
+      });
+
+      expect(screen.queryAllByText(/Retry/i).length).toBeGreaterThan(0);
+    });
+
+    it('open_diff control_request does not crash', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await emitAssistantTurn(claude);
+      await act(async () => {
+        await claude.emit(
+          s.controlRequestOpenDiff('diff-1', {
+            originalFilePath: '/tmp/old.ts',
+            newFilePath: '/tmp/new.ts',
+          }),
+        );
+      });
+
+      expect(screen.getByText('hi')).toBeInTheDocument();
+    });
   });
 
-  it('tool_result flows through pipeline (verified via received)', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Read', input: {} } }));
-      await claude.emit(s.controlRequest('r1', 'can_use_tool', 'Read', {}));
+  describe('message:result pipeline', () => {
+    it('message:result transitions from Stop to Send button (processing → idle)', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      expect(screen.getByTitle('Stop')).toBeInTheDocument();
+
+      await emitAssistantTurn(claude, 'done');
+
+      expect(await screen.findByTitle('Send')).toBeInTheDocument();
     });
 
-    const yesButton = await screen.findByText('Yes');
-    await userEvent.click(yesButton);
+    it('message:result with error shows error message', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
 
-    await act(async () => {
-      await claude.emit(s.toolResult('toolu_1', 'file contents'));
-    });
-    await emitAssistantTurn(claude, 'Done');
+      await act(async () => {
+        await claude.emit(s.resultError({ errors: ['Something failed'] }));
+      });
 
-    expect(await screen.findByText(/Done/)).toBeInTheDocument();
-    expect(claude.received('control_response').length).toBeGreaterThan(0);
-  });
-
-  it('elicitation control_request renders dialog', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(s.controlRequestElicitation('elic-1', { message: 'Please confirm' }));
+      expect((await screen.findAllByText(/Something failed/)).length).toBeGreaterThan(0);
+      expect(await screen.findByTitle('Send')).toBeInTheDocument();
     });
 
-    expect(screen.queryAllByText(/confirm/i).length).toBeGreaterThan(0);
-  });
+    it('streaming text deltas accumulate and result returns to idle', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
 
-  it('chat:cancel_request silently removes pending control banner', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'bash', input: {} } }));
-      await claude.emit(s.controlRequest('r1', 'can_use_tool', 'bash', {}));
+      await act(async () => {
+        await claude.emit(s.textDelta('Hello '));
+        await claude.emit(s.textDelta('World'));
+      });
+      await emitAssistantTurn(claude, 'Hello World');
+
+      expect(await screen.findByTitle('Send')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Yes')).toBeInTheDocument();
+    it('diffRespond with unknown toolId does not crash', async () => {
+      const { claude } = await renderWithChannel(<ChatPanel />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, 'go{Enter}');
+      await emitAssistantTurn(claude);
+      await act(async () => {
+        await claude.emit(
+          s.controlRequestOpenDiff('diff-gone', {
+            originalFilePath: '/tmp/a',
+            newFilePath: '/tmp/b',
+          }),
+        );
+        await claude.emit(s.controlCancelRequest('diff-gone'));
+      });
 
-    await act(async () => {
-      await claude.emit(s.controlCancelRequest('r1'));
-      await claude.emit(s.result());
+      expect(screen.getByText('hi')).toBeInTheDocument();
     });
-
-    // Banner removed, no "Cancelled" text shown
-    expect(screen.queryByText('Yes')).not.toBeInTheDocument();
-    expect(screen.queryAllByText(/Cancelled/i)).toHaveLength(0);
-  });
-
-  it('notification error shows message in UI', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(
-        s.controlRequestShowNotification('notif-1', {
-          message: 'Something went wrong',
-          severity: 'error',
-        }),
-      );
-    });
-
-    expect(screen.queryAllByText(/Something went wrong|error/i).length).toBeGreaterThan(0);
-  });
-
-  it('notification warning shows message in UI', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(
-        s.controlRequestShowNotification('notif-2', { message: 'Be careful', severity: 'warning' }),
-      );
-    });
-
-    expect(screen.queryAllByText(/Be careful|warning/i).length).toBeGreaterThan(0);
-  });
-
-  it('notification with buttons shows in UI', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await act(async () => {
-      await claude.emit(
-        s.controlRequestShowNotification('notif-3', {
-          message: 'Retry?',
-          severity: 'info',
-          buttons: ['Retry'],
-        }),
-      );
-    });
-
-    expect(screen.queryAllByText(/Retry/i).length).toBeGreaterThan(0);
-  });
-
-  it('open_diff control_request does not crash', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await emitAssistantTurn(claude);
-    await act(async () => {
-      await claude.emit(
-        s.controlRequestOpenDiff('diff-1', {
-          originalFilePath: '/tmp/old.ts',
-          newFilePath: '/tmp/new.ts',
-        }),
-      );
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
-  });
-
-  // ── message:result pipeline ──
-
-  it('message:result transitions from Stop to Send button (processing → idle)', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    expect(screen.getByTitle('Stop')).toBeInTheDocument();
-
-    await emitAssistantTurn(claude, 'done');
-
-    expect(await screen.findByTitle('Send')).toBeInTheDocument();
-  });
-
-  it('message:result with error shows error message', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-
-    await act(async () => {
-      await claude.emit(s.resultError({ errors: ['Something failed'] }));
-    });
-
-    expect((await screen.findAllByText(/Something failed/)).length).toBeGreaterThan(0);
-    expect(await screen.findByTitle('Send')).toBeInTheDocument();
-  });
-
-  it('streaming text deltas accumulate and result returns to idle', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-
-    await act(async () => {
-      await claude.emit(s.textDelta('Hello '));
-      await claude.emit(s.textDelta('World'));
-    });
-    await emitAssistantTurn(claude, 'Hello World');
-
-    expect(await screen.findByTitle('Send')).toBeInTheDocument();
-  });
-
-  it('diffRespond with unknown toolId does not crash', async () => {
-    const { claude } = await renderWithChannel(<ChatPanel />);
-    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
-    await userEvent.type(textarea, 'go{Enter}');
-    await emitAssistantTurn(claude);
-    await act(async () => {
-      await claude.emit(
-        s.controlRequestOpenDiff('diff-gone', {
-          originalFilePath: '/tmp/a',
-          newFilePath: '/tmp/b',
-        }),
-      );
-      await claude.emit(s.controlCancelRequest('diff-gone'));
-    });
-
-    expect(screen.getByText('hi')).toBeInTheDocument();
   });
 
   describe('/compact slash command', () => {

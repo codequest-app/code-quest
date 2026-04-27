@@ -2,7 +2,6 @@ import type { SessionSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { toast } from 'sonner';
 import { useCommandPalette } from '../contexts/CommandPaletteContext';
 import {
   useChannelComposeActions,
@@ -13,7 +12,6 @@ import {
 } from '../contexts/channel';
 import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
-import { useSession } from '../contexts/SessionContext';
 import { useTabActions } from '../contexts/TabContext';
 import { btwSignal, useBtwState } from '../features/btw/btw-feature';
 import { resumeOpenSignal } from '../features/resume/resume-feature';
@@ -26,7 +24,7 @@ import { HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
-import { SessionHistory } from './SessionHistory';
+import { SessionHistoryPopover } from './SessionHistoryPopover';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
@@ -39,7 +37,6 @@ export function ChatPanel({ title }: { title?: string }) {
   const sideQuestion = useBtwState();
   const { worktree } = useChannelConfig();
   const { focusTextarea } = useChannelComposeActions();
-  const { listSessions, renameSession, deleteSession, resume } = useSession();
   const { setActiveProject } = useProjectActions();
   const { requestActivateChannel } = useNavigationActions();
   const { activeProjectCwd } = useProjectState();
@@ -60,61 +57,29 @@ export function ChatPanel({ title }: { title?: string }) {
   );
 
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
-  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
-  const [resumeSessions, setResumeSessions] = useState<{
-    sessions: SessionSummary[];
-    total: number;
-  }>({ sessions: [], total: 0 });
-  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
 
   const messageListRef = useRef<MessageListHandle>(null);
   const chatColumnRef = useRef<HTMLDivElement>(null);
 
-  const fetchResumeSessions = () =>
-    listSessions({
-      limit: 50,
-      excludeLive: true,
-      ...(activeProjectCwd ? { cwd: activeProjectCwd } : {}),
-    }).then((res) => {
-      if (res.ok) setResumeSessions(res.data);
-    });
-
   const handleResumeOpenChange = (open: boolean) => {
-    setShowResumeOverlay(open);
+    setResumeOpen(open);
     resumeOpenSignal.setOpen(open);
-    if (open) {
-      setResumeLoading(true);
-      fetchResumeSessions().finally(() => setResumeLoading(false));
-    }
   };
 
-  const handleDelete = async (id: string) => {
-    const result = await deleteSession(id);
-    if (result.ok) void fetchResumeSessions();
-    return result;
-  };
-
-  const handleResumeSelect = async (selectedChannelId: string) => {
-    const picked = resumeSessions.sessions.find((s) => s.channelId === selectedChannelId);
-    if (!picked) return;
-    handleResumeOpenChange(false);
-    try {
-      const { channelId: spawnedId } = await resume(picked.id);
-      const route = resumeRoute({
-        isEmpty: messages.length === 0,
-        currentCwd: activeProjectCwd,
-        currentChannelId: channelId,
-        picked,
-        spawnedChannelId: spawnedId,
-      });
-      if (route.type === 'replace') {
-        replaceTab(route.oldChannelId, route.newChannelId);
-      } else if (route.type === 'activate') {
-        setActiveProject(route.cwd);
-        requestActivateChannel(route.cwd, route.channelId);
-      }
-    } catch (err) {
-      toast.error(`Resume failed: ${err instanceof Error ? err.message : String(err)}`);
+  const handleResumed = (spawnedId: string, picked: SessionSummary) => {
+    const route = resumeRoute({
+      isEmpty: messages.length === 0,
+      currentCwd: activeProjectCwd,
+      currentChannelId: channelId,
+      picked,
+      spawnedChannelId: spawnedId,
+    });
+    if (route.type === 'replace') {
+      replaceTab(route.oldChannelId, route.newChannelId);
+    } else if (route.type === 'activate') {
+      setActiveProject(route.cwd);
+      requestActivateChannel(route.cwd, route.channelId);
     }
   };
 
@@ -164,24 +129,16 @@ export function ChatPanel({ title }: { title?: string }) {
         />
       )}
       <div ref={chatColumnRef} data-chat-column className="relative flex flex-col flex-1 min-w-0">
-        <Popover.Root open={showResumeOverlay} onOpenChange={handleResumeOpenChange}>
+        <Popover.Root open={resumeOpen} onOpenChange={handleResumeOpenChange}>
           <HeaderBar title={title} showResumeButton />
-          {showResumeOverlay && (
-            <Popover.Content
+          {resumeOpen && (
+            <SessionHistoryPopover
+              cwd={activeProjectCwd ?? undefined}
+              onClose={() => handleResumeOpenChange(false)}
+              onResumed={handleResumed}
               side="bottom"
               align="end"
-              sideOffset={8}
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              className="w-[min(400px,calc(100vw-32px))] max-h-[min(500px,50vh)] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden z-popover"
-            >
-              <SessionHistory
-                sessions={resumeSessions.sessions}
-                loading={resumeLoading}
-                onSelect={handleResumeSelect}
-                onRename={renameSession}
-                onDelete={handleDelete}
-              />
-            </Popover.Content>
+            />
           )}
         </Popover.Root>
         {worktree && <WorktreeBanner worktree={worktree} />}

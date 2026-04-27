@@ -1,3 +1,4 @@
+import { isRecord } from '@code-quest/shared';
 import { logger } from '../logger.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import type { Channel } from './channel.ts';
@@ -14,8 +15,8 @@ function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
   if (direction !== 'in') return false;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return false;
-    return (parsed as { type?: unknown }).type === 'user';
+    if (!isRecord(parsed)) return false;
+    return parsed.type === 'user';
   } catch {
     return false;
   }

@@ -135,28 +135,53 @@ describe('EffortSwitch visual contract', () => {
     expect(clipper.className).toMatch(/overflow-hidden/);
   });
 
-  it('fill uses container% + CSS var for thumb size (density + font-size adaptive)', () => {
-    const low = render(<EffortSwitch level="low" levels={LEVELS} />).container.querySelector(
-      '[aria-label="effort-switch-fill"]',
-    )! as HTMLElement;
-    expect(low.style.width).toMatch(/100%/);
-    expect(low.style.width).toMatch(/var\(--spacing\)\s*\*\s*3\.5/);
+  // happy-dom drops complex calc() values set via element.style — intercept
+  // the setter to capture what React writes.
+  function captureStyleWrites(prop: string) {
+    const writes: string[] = [];
+    const desc = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, prop);
+    Object.defineProperty(CSSStyleDeclaration.prototype, prop, {
+      set(v: string) {
+        writes.push(v);
+        desc?.set?.call(this, v);
+      },
+      get() {
+        return desc?.get?.call(this) ?? '';
+      },
+      configurable: true,
+    });
+    return {
+      writes,
+      restore: () => Object.defineProperty(CSSStyleDeclaration.prototype, prop, desc!),
+    };
+  }
 
-    const max = render(<EffortSwitch level="max" levels={LEVELS} />).container.querySelector(
-      '[aria-label="effort-switch-fill"]',
-    )! as HTMLElement;
-    expect(max.style.width).toMatch(/100%/);
-    expect(max.style.width).not.toMatch(/\b\d+px\b/);
+  it('fill uses container% + CSS var for thumb size (density + font-size adaptive)', () => {
+    const { writes, restore } = captureStyleWrites('width');
+
+    render(<EffortSwitch level="low" levels={LEVELS} />);
+    const lowWidth = writes.find((w) => w.includes('100%'));
+    expect(lowWidth).toBeDefined();
+    expect(lowWidth).toMatch(/var\(--spacing\)\s*\*\s*3\.5/);
+
+    writes.length = 0;
+    render(<EffortSwitch level="max" levels={LEVELS} />);
+    const maxWidth = writes.find((w) => w.includes('100%'));
+    expect(maxWidth).toBeDefined();
+    expect(maxWidth).not.toMatch(/\b\d+px\b/);
+
+    restore();
   });
 
   it('thumb edges align flush with pill edges (no overhang)', () => {
-    const max = render(<EffortSwitch level="max" levels={LEVELS} />).container.querySelector(
-      '[aria-label="effort-switch-thumb"]',
-    )! as HTMLElement;
-    // (100% - thumb) * 1 → at max the formula puts thumb's left edge so its
-    // right edge sits flush with 100% — never overhangs.
-    expect(max.style.left).toMatch(/100%/);
-    expect(max.style.left).toMatch(/-/);
-    expect(max.style.left).not.toMatch(/\b\d+px\b/);
+    const { writes, restore } = captureStyleWrites('left');
+
+    render(<EffortSwitch level="max" levels={LEVELS} />);
+    const maxLeft = writes.find((w) => w.includes('100%'));
+    expect(maxLeft).toBeDefined();
+    expect(maxLeft).toMatch(/-/);
+    expect(maxLeft).not.toMatch(/\b\d+px\b/);
+
+    restore();
   });
 });

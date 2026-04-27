@@ -16,7 +16,7 @@ function thinkingLevelLabel(level: string): string {
   return THINKING_LABELS[level] ?? `Thinking · ${level}`;
 }
 
-export interface HeaderBarProps {
+interface HeaderBarProps {
   title?: string | null;
   showResumeButton?: boolean;
 }

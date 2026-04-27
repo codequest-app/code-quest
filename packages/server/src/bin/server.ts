@@ -80,9 +80,9 @@ logger.info(
 );
 
 const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-const rawEventService = container.get<RawEventStore>(TYPES.RawEventService);
+const rawEventStore = container.get<RawEventStore>(TYPES.RawEventService);
 const usageTracker = container.get<UsageTracker>(TYPES.UsageTracker);
-app.use(createSessionsRouter(sessionStore, rawEventService));
+app.use(createSessionsRouter(sessionStore, rawEventStore));
 app.use(createUsageRouter(usageTracker));
 app.use(createProfileRouter(() => ({ authenticated: false })));
 
@@ -119,7 +119,8 @@ const shutdown = () => {
   Promise.all(handles.map((h) => h.close())).finally(() => {
     httpServer.close(() => process.exit(0));
   });
-  setTimeout(() => process.exit(1), 10_000).unref();
+  const SHUTDOWN_TIMEOUT_MS = 10_000;
+  setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS).unref();
 };
 
 process.on('SIGTERM', shutdown);

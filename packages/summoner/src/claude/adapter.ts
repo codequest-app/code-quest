@@ -1,12 +1,6 @@
 import type { ProviderClientConfig } from '@code-quest/shared';
 import type { z } from 'zod';
-import type {
-  AdapterOutput,
-  ClientMessage,
-  ParseResult,
-  ProviderAdapter,
-  ResolvedControlResponse,
-} from '../types.ts';
+import type { AdapterOutput, ClientMessage, ParseResult, ProviderAdapter } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import { claudeClientConfig } from './client-config.ts';
 import type { LaunchOptions } from './launch-options.ts';
@@ -19,13 +13,7 @@ import { transformStream } from './transforms/stream.ts';
 import { transformSystem } from './transforms/system.ts';
 import { transformUser } from './transforms/user.ts';
 
-interface ConvertResult {
-  messages: ClientMessage[];
-
-  controlResponses: ResolvedControlResponse[];
-}
-
-const EMPTY: ConvertResult = { messages: [], controlResponses: [] };
+const EMPTY: AdapterOutput = { messages: [], controlResponses: [] };
 
 interface RequestMapping {
   subtype: string;
@@ -133,8 +121,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
   }
 
   transform(message: ProtocolMessage): AdapterOutput {
-    const { messages, controlResponses } = this.convertMessage(message);
-    return { messages, controlResponses };
+    return this.convertMessage(message);
   }
 
   formatRequest(
@@ -182,7 +169,7 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
 
   // ── Core dispatch ──
 
-  private convertMessage(message: ProtocolMessage): ConvertResult {
+  private convertMessage(message: ProtocolMessage): AdapterOutput {
     if (message.type === 'keep_alive') return EMPTY;
 
     if (message.type === 'control_response') {

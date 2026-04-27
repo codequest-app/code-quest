@@ -7,7 +7,7 @@ const meta = {
   component: SessionHistoryPopover,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
-  args: { open: true, onOpenChange: fn() },
+  args: { onClose: fn(), onResumed: fn() },
   decorators: [withStoryApp({ className: 'h-screen bg-bg text-text' })],
 } satisfies Meta<typeof SessionHistoryPopover>;
 
@@ -16,4 +16,3 @@ type Story = StoryObj<typeof meta>;
 
 export const AllSessions: Story = {};
 export const FilteredByCwd: Story = { args: { cwd: '/Users/demo/cc-office' } };
-export const Closed: Story = { args: { open: false } };

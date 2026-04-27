@@ -37,6 +37,21 @@ const cliListChangesSchema = z.object({ changes: z.array(cliChangeSchema) });
 const cliSpecSchema = z.object({ id: z.string() });
 const cliSpecListSchema = z.array(cliSpecSchema);
 
+type CliChange = z.infer<typeof cliChangeSchema>;
+type CliSpec = z.infer<typeof cliSpecSchema>;
+
+function toChangeSummary(c: CliChange): OpenspecChangeSummary {
+  return {
+    name: c.name,
+    tasks: c.totalTasks > 0 ? { done: c.completedTasks, total: c.totalTasks } : null,
+    status: c.status,
+  };
+}
+
+function toSpecSummary(s: CliSpec): OpenspecSpecSummary {
+  return { capability: s.id };
+}
+
 export class LocalOpenspecService implements OpenspecService {
   /** `process` is required for changeNew + list (they spawn the openspec CLI).
    *  read/toggleTask only touch the filesystem and work without it. */
@@ -60,12 +75,8 @@ export class LocalOpenspecService implements OpenspecService {
       const specsParsed = cliSpecListSchema.safeParse(safeJsonParse(specsRaw.stdout));
       if (!changesParsed.success) return { error: 'parse-changes-failed' };
       if (!specsParsed.success) return { error: 'parse-specs-failed' };
-      const changes: OpenspecChangeSummary[] = changesParsed.data.changes.map((c) => ({
-        name: c.name,
-        tasks: c.totalTasks > 0 ? { done: c.completedTasks, total: c.totalTasks } : null,
-        status: c.status,
-      }));
-      const specs: OpenspecSpecSummary[] = specsParsed.data.map((s) => ({ capability: s.id }));
+      const changes: OpenspecChangeSummary[] = changesParsed.data.changes.map(toChangeSummary);
+      const specs: OpenspecSpecSummary[] = specsParsed.data.map(toSpecSummary);
       return { changes, specs };
     } catch (err) {
       if (isEnoent(err)) return { error: 'openspec-cli-not-found' };
@@ -153,5 +164,6 @@ function safeJsonParse(s: string): unknown {
 }
 
 function isEnoent(err: unknown): boolean {
-  return typeof err === 'object' && err !== null && (err as { code?: string }).code === 'ENOENT';
+  if (typeof err !== 'object' || err === null) return false;
+  return (err as { code?: string }).code === 'ENOENT';
 }

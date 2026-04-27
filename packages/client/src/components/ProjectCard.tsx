@@ -2,6 +2,7 @@ import { FolderIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import * as Popover from '@radix-ui/react-popover';
 import { useContext, useState } from 'react';
+import { NavigationActionsContext } from '../contexts/NavigationContext';
 import { ProjectActionsContext } from '../contexts/ProjectContext';
 import { SessionStateContext } from '../contexts/SessionContext';
 import { basename } from '../utils/basename';
@@ -48,10 +49,17 @@ export function ProjectCard({
   const [renameOpen, setRenameOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
 
-  // Wire actions (only if inside ProjectProvider — parent tests may not wrap).
-  // Non-throwing reads: null outside providers (minimal component tests / Storybook).
   const actions = useContext(ProjectActionsContext);
+  const navActions = useContext(NavigationActionsContext);
   const sessionState = useContext(SessionStateContext);
+
+  const handleResumed = (spawnedId: string, picked: { cwd?: string }) => {
+    const targetCwd = picked.cwd ?? cwd;
+    if (targetCwd) {
+      actions?.setActiveProject(targetCwd);
+      navActions?.requestActivateChannel(targetCwd, spawnedId);
+    }
+  };
 
   const menuCallbacks: ProjectMenuCallbacks = {
     onSelectResume: () => setResumeOpen(true),
@@ -141,7 +149,11 @@ export function ProjectCard({
           </Popover.Anchor>
         </ProjectContextMenu>
         {cwd && resumeOpen && (
-          <SessionHistoryPopover cwd={cwd} open={resumeOpen} onOpenChange={setResumeOpen} />
+          <SessionHistoryPopover
+            cwd={cwd}
+            onClose={() => setResumeOpen(false)}
+            onResumed={handleResumed}
+          />
         )}
       </Popover.Root>
       {cwd && worktreeDialogOpen && (

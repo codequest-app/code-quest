@@ -133,26 +133,8 @@ export function createContainer(options: ContainerOptions): Container {
   };
   const watchService: WatchService = options.watchService ?? new LocalWatchService();
   container.bind<WatchService>(TYPES.WatchService).toConstantValue(watchService);
-  const fsDirtyBroadcaster = new DirtyBroadcaster<string[]>(
-    watchService,
-    matchesFs,
-    (paths) => paths,
-  );
-  const gitDirtyBroadcaster = new DirtyBroadcaster<void>(watchService, matchesGit, () => undefined);
-  const openspecDirtyBroadcaster = new DirtyBroadcaster<void>(
-    watchService,
-    matchesOpenspec,
-    () => undefined,
-  );
-  container
-    .bind<DirtyBroadcaster<string[]>>(TYPES.FsDirtyBroadcaster)
-    .toConstantValue(fsDirtyBroadcaster);
-  container
-    .bind<DirtyBroadcaster<void>>(TYPES.GitDirtyBroadcaster)
-    .toConstantValue(gitDirtyBroadcaster);
-  container
-    .bind<DirtyBroadcaster<void>>(TYPES.OpenspecDirtyBroadcaster)
-    .toConstantValue(openspecDirtyBroadcaster);
+  const { fsDirtyBroadcaster, gitDirtyBroadcaster, openspecDirtyBroadcaster } =
+    bindDirtyBroadcasters(container, watchService);
   const channelManager = new ChannelManager(
     runnerFactory,
     adapter,
@@ -206,6 +188,30 @@ export function createContainer(options: ContainerOptions): Container {
 
 function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
   return stores.length === 1 ? stores[0] : makeComposite(stores);
+}
+
+function bindDirtyBroadcasters(container: Container, watchService: WatchService) {
+  const fsDirtyBroadcaster = new DirtyBroadcaster<string[]>(
+    watchService,
+    matchesFs,
+    (paths) => paths,
+  );
+  const gitDirtyBroadcaster = new DirtyBroadcaster<void>(watchService, matchesGit, () => undefined);
+  const openspecDirtyBroadcaster = new DirtyBroadcaster<void>(
+    watchService,
+    matchesOpenspec,
+    () => undefined,
+  );
+  container
+    .bind<DirtyBroadcaster<string[]>>(TYPES.FsDirtyBroadcaster)
+    .toConstantValue(fsDirtyBroadcaster);
+  container
+    .bind<DirtyBroadcaster<void>>(TYPES.GitDirtyBroadcaster)
+    .toConstantValue(gitDirtyBroadcaster);
+  container
+    .bind<DirtyBroadcaster<void>>(TYPES.OpenspecDirtyBroadcaster)
+    .toConstantValue(openspecDirtyBroadcaster);
+  return { fsDirtyBroadcaster, gitDirtyBroadcaster, openspecDirtyBroadcaster };
 }
 
 function buildStores(

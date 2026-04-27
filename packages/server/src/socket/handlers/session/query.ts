@@ -13,6 +13,8 @@ import type { SocketCallback, TypedSocket } from '../../types.ts';
 import { errMsg } from '../../utils/helpers.ts';
 import { err, ok } from '../../utils/rpc.ts';
 
+const rawJsonSchema = z.record(z.string(), z.unknown());
+
 export function create({
   channelManager,
   sessionStore,
@@ -106,7 +108,6 @@ export function create({
     try {
       const { channelId } = sessionGetPayloadSchema.parse(payload);
       const rawEvents = await sessionHistory.getRawEvents(channelId);
-      const rawJsonSchema = z.record(z.string(), z.unknown());
       const events = rawEvents.map((e) => {
         try {
           const parsed = rawJsonSchema.safeParse(JSON.parse(e.raw));

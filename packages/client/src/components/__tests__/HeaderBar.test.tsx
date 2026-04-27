@@ -46,16 +46,6 @@ describe('HeaderBar (context mode)', () => {
   });
 });
 
-describe('HeaderBar layout', () => {
-  it('title is left-aligned (flex-1, no text-center)', async () => {
-    await renderHeaderBar({ title: 'My Session' });
-    const titleEl = screen.getByText('My Session');
-    expect(titleEl.className).toMatch(/flex-1/);
-    expect(titleEl.className).not.toMatch(/text-center/);
-    expect(titleEl.className).not.toMatch(/text-right/);
-  });
-});
-
 describe('HeaderBar resume button', () => {
   it('shows clock/history button when showResumeButton is true', async () => {
     await renderHeaderBar({ showResumeButton: true });

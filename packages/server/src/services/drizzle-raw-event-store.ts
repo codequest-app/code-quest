@@ -137,41 +137,33 @@ export class DrizzleRawEventStore implements RawEventStore {
 
   async getBySession(sessionId: string): Promise<RawEvent[]> {
     if (!this.deltaTable) return this.getEventsBySession(sessionId);
+    const rows = await this.getUnionBySession(sessionId, this.deltaTable);
+    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+  }
 
-    const eventCols = {
-      sessionId: this.table.sessionId,
-      dir: this.table.dir,
-      raw: this.table.raw,
-      seq: this.table.seq,
-      createdAt: this.table.createdAt,
-    };
-    const deltaCols = {
-      sessionId: this.deltaTable.sessionId,
-      dir: this.deltaTable.dir,
-      raw: this.deltaTable.raw,
-      seq: this.deltaTable.seq,
-      createdAt: this.deltaTable.createdAt,
-    };
+  private getUnionBySession(sessionId: string, deltaTable: typeof this.table) {
+    const selectCols = (table: typeof this.table) => ({
+      sessionId: table.sessionId,
+      dir: table.dir,
+      raw: table.raw,
+      seq: table.seq,
+      createdAt: table.createdAt,
+    });
 
     const builder = this.db.select as unknown as (
-      cols: typeof eventCols,
+      cols: ReturnType<typeof selectCols>,
     ) => UnionableSelectBuilder<RawEventRow>;
 
     const eventsQ = builder
-      .call(this.db, eventCols)
+      .call(this.db, selectCols(this.table))
       .from(this.table)
       .where(eq(this.table.sessionId, sessionId));
-    const deltasQ = (
-      this.db.select as unknown as (cols: typeof deltaCols) => UnionableSelectBuilder<RawEventRow>
-    )
-      .call(this.db, deltaCols)
-      .from(this.deltaTable)
-      .where(eq(this.deltaTable.sessionId, sessionId));
+    const deltasQ = builder
+      .call(this.db, selectCols(deltaTable))
+      .from(deltaTable)
+      .where(eq(deltaTable.sessionId, sessionId));
 
-    const rows = await eventsQ
-      .unionAll(deltasQ)
-      .orderBy(asc(this.table.createdAt), asc(this.table.seq));
-    return z.array(rawEventRowSchema).parse(rows).map(toRawEvent);
+    return eventsQ.unionAll(deltasQ).orderBy(asc(this.table.createdAt), asc(this.table.seq));
   }
 
   private async getEventsBySession(sessionId: string): Promise<RawEvent[]> {

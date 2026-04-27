@@ -1,23 +1,20 @@
-import { isRecord } from '@code-quest/shared';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../utils/cn';
 import { JsonViewer } from './JsonViewer';
 import { RawEventFilterBar } from './RawEventFilterBar';
+import {
+  addVisibleTypes,
+  buildFilterEntries,
+  discoverNewTypes,
+  filterEvents,
+  getEventType,
+} from './raw-event-utils';
 import { SearchBar } from './SearchBar';
 import { PanelHeader } from './ui/PanelHeader';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 const SCROLL_THRESHOLD_PX = 50;
-
-function getEventType(evt: unknown): string | undefined {
-  if (!isRecord(evt)) return undefined;
-  return typeof evt.type === 'string' ? evt.type : undefined;
-}
-
-function isDeltaType(type: string): boolean {
-  return type.toLowerCase().includes('delta');
-}
 
 const RawEventRow = memo(function RawEventRow({ index, event }: { index: number; event: unknown }) {
   const evtType = getEventType(event);
@@ -53,22 +50,9 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
   autoScrollRef.current = autoScroll;
 
   function trackNewTypes(evts: unknown[]) {
-    const toAdd: string[] = [];
-    for (const evt of evts) {
-      const t = getEventType(evt);
-      if (t && !seenTypesRef.current.has(t)) {
-        seenTypesRef.current.add(t);
-        toAdd.push(t);
-      }
-    }
-    if (toAdd.length > 0) {
-      setVisibleTypes((prev) => {
-        const next = new Set(prev);
-        for (const t of toAdd) {
-          if (!isDeltaType(t)) next.add(t);
-        }
-        return next;
-      });
+    const newTypes = discoverNewTypes(evts, seenTypesRef.current);
+    if (newTypes.length > 0) {
+      setVisibleTypes((prev) => addVisibleTypes(prev, newTypes));
     }
   }
 
@@ -112,26 +96,11 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     }
   };
 
-  const filterEntries = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const evt of events) {
-      const t = getEventType(evt);
-      if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [events]);
-
-  const filteredEvents = useMemo(() => {
-    const search = searchText.toLowerCase();
-    return events.filter((evt) => {
-      const t = getEventType(evt);
-      if (t && !visibleTypes.has(t)) return false;
-      if (search && !JSON.stringify(evt).toLowerCase().includes(search)) return false;
-      return true;
-    });
-  }, [events, visibleTypes, searchText]);
+  const filterEntries = useMemo(() => buildFilterEntries(events), [events]);
+  const filteredEvents = useMemo(
+    () => filterEvents(events, visibleTypes, searchText),
+    [events, visibleTypes, searchText],
+  );
 
   const virtualizer = useVirtualizer({
     count: filteredEvents.length,
@@ -140,8 +109,6 @@ export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelPr
     overscan: 10,
   });
 
-  // Re-pin to bottom when new events arrive or virtualizer re-measures; both
-  // trigger via totalSize (count change implies size change).
   const totalSize = virtualizer.getTotalSize();
   // biome-ignore lint/correctness/useExhaustiveDependencies: totalSize is the trigger; scrollToBottom stable
   useEffect(() => {

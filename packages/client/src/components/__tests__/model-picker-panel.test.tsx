@@ -23,13 +23,13 @@ describe('ModelPickerPopover', () => {
     it('highlights the currently selected model with bg-selected', () => {
       renderPanel('claude-sonnet-4-20250514');
       const activeBtn = screen.getByRole('option', { name: /Claude Sonnet 4/ });
-      expect(activeBtn.className).toContain('bg-selected');
+      expect(activeBtn).toHaveAttribute('aria-selected', 'true');
     });
 
     it('does not highlight other models', () => {
       renderPanel('claude-sonnet-4-20250514');
       const opusBtn = screen.getByRole('option', { name: /Claude Opus 4/ });
-      expect(opusBtn.className).not.toContain('bg-selected');
+      expect(opusBtn).toHaveAttribute('aria-selected', 'false');
     });
   });
 

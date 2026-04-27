@@ -174,24 +174,36 @@ export class WsTransport implements Transport {
     const adapter = this.makeAdapter(ws, id);
     this.adapterToWs.set(adapter, ws);
 
+    this.setupHeartbeat(ws, meta);
+    this.setupWsListeners(ws, meta);
+
+    for (const cb of this.listeners) {
+      try {
+        cb(adapter);
+      } catch (err) {
+        logger.warn({ err }, 'onConnection listener threw');
+      }
+    }
+  }
+
+  private setupHeartbeat(ws: WebSocket, meta: SocketMeta): void {
     const pingMs = this.opts.heartbeatIntervalMs ?? 25_000;
     const idleMs = this.opts.idleTimeoutMs ?? 60_000;
     meta.pingTimer = setInterval(() => {
       if (ws.readyState === ws.OPEN) ws.ping();
     }, pingMs);
-    // Check idle at half the timeout (or 5 s, whichever is smaller) so we
-    // detect silence within 1.5× idleMs at the latest.
     const idleCheckMs = Math.max(50, Math.min(idleMs / 2, 5_000));
     meta.idleTimer = setInterval(() => {
       if (Date.now() - meta.lastSeen > idleMs && ws.readyState === ws.OPEN) {
         ws.close(4000, 'idle');
       }
     }, idleCheckMs);
+  }
 
+  private setupWsListeners(ws: WebSocket, meta: SocketMeta): void {
     const touch = () => {
       meta.lastSeen = Date.now();
     };
-
     ws.on('message', (raw) => {
       touch();
       this.handleMessage(ws, raw);
@@ -206,14 +218,6 @@ export class WsTransport implements Transport {
     ws.on('error', (err) => {
       logger.warn({ err }, 'ws socket error');
     });
-
-    for (const cb of this.listeners) {
-      try {
-        cb(adapter);
-      } catch (err) {
-        logger.warn({ err }, 'onConnection listener threw');
-      }
-    }
   }
 
   private makeAdapter(ws: WebSocket, id: string): TypedSocket {

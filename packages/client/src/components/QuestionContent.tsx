@@ -78,6 +78,35 @@ function OptionItem({
   );
 }
 
+function buildAnswers(
+  questions: Question[],
+  selections: Record<string, Set<string>>,
+  otherTexts: Record<string, string>,
+): { answers: Record<string, string>; allAnswered: boolean } {
+  const allAnswered = questions.every((q) => {
+    const sel = selections[q.question];
+    if (!sel || sel.size === 0) return false;
+    if (sel.has('Other') && !(otherTexts[q.question] ?? '').trim()) return false;
+    return true;
+  });
+  const answers = Object.fromEntries(
+    questions.map((q) => {
+      const sel = selections[q.question];
+      if (!sel || sel.size === 0) return [q.question, ''];
+      if (sel.has('Other')) {
+        const other = otherTexts[q.question] ?? '';
+        if (q.multiSelect) {
+          const normal = [...sel].filter((s) => s !== 'Other');
+          return [q.question, [...normal, other].filter(Boolean).join(', ')];
+        }
+        return [q.question, other];
+      }
+      return [q.question, [...sel].join(', ')];
+    }),
+  );
+  return { answers, allAnswered };
+}
+
 export function QuestionContent({
   questions,
   onAnswersChange,
@@ -94,27 +123,7 @@ export function QuestionContent({
     nextSelections: Record<string, Set<string>>,
     nextOtherTexts: Record<string, string>,
   ) {
-    const allAnswered = questions.every((q) => {
-      const sel = nextSelections[q.question];
-      if (!sel || sel.size === 0) return false;
-      if (sel.has('Other') && !(nextOtherTexts[q.question] ?? '').trim()) return false;
-      return true;
-    });
-    const answers = Object.fromEntries(
-      questions.map((q) => {
-        const sel = nextSelections[q.question];
-        if (!sel || sel.size === 0) return [q.question, ''];
-        if (sel.has('Other')) {
-          const other = nextOtherTexts[q.question] ?? '';
-          if (q.multiSelect) {
-            const normal = [...sel].filter((s) => s !== 'Other');
-            return [q.question, [...normal, other].filter(Boolean).join(', ')];
-          }
-          return [q.question, other];
-        }
-        return [q.question, [...sel].join(', ')];
-      }),
-    );
+    const { answers, allAnswered } = buildAnswers(questions, nextSelections, nextOtherTexts);
     onAnswersChange(answers, allAnswered);
   }
 

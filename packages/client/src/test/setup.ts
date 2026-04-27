@@ -42,42 +42,7 @@ vi.mock('socket.io-client', () => ({
   }),
 }));
 
-// jsdom's requestAnimationFrame may not flush reliably — provide a sync-like polyfill
-{
-  let rafId = 0;
-  const pending = new Map<number, FrameRequestCallback>();
-  window.requestAnimationFrame = (cb: FrameRequestCallback) => {
-    const id = ++rafId;
-    pending.set(id, cb);
-    Promise.resolve().then(() => {
-      const fn = pending.get(id);
-      if (fn) {
-        pending.delete(id);
-        fn(performance.now());
-      }
-    });
-    return id;
-  };
-  window.cancelAnimationFrame = (id: number) => {
-    pending.delete(id);
-  };
-}
-
-// jsdom doesn't implement scrollIntoView
-if (typeof Element !== 'undefined') {
-  Element.prototype.scrollIntoView = () => {};
-}
-
-// jsdom doesn't implement ResizeObserver
-if (typeof ResizeObserver === 'undefined') {
-  global.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
-}
-
-// react-resizable-panels requires full DOM measurement APIs unavailable in jsdom.
+// react-resizable-panels requires full DOM measurement APIs unavailable in happy-dom.
 // Mock matches real API (PanelGroup / Panel / PanelResizeHandle); Panel forwards
 // ref to a minimal object so imperative collapse/expand calls in prod code
 // become observable spies rather than real drags.
@@ -115,28 +80,7 @@ vi.mock('react-resizable-panels', async () => {
   };
 });
 
-// jsdom doesn't implement matchMedia — default to desktop (≥1024px)
-if (typeof window.matchMedia === 'undefined') {
-  window.matchMedia = (query: string) =>
-    ({
-      matches: query === '(min-width: 1024px)' || query === '(min-width: 768px)',
-      media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }) as unknown as MediaQueryList;
-}
-
-// jsdom doesn't implement IntersectionObserver
-if (typeof IntersectionObserver === 'undefined') {
-  global.IntersectionObserver = class IntersectionObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof IntersectionObserver;
-}
-
-// jsdom has no layout → TanStack Virtual's getBoundingClientRect returns zeros
+// happy-dom has no layout → TanStack Virtual's getBoundingClientRect returns zeros
 // so the virtualizer renders nothing. Mock useVirtualizer to render all items
 // (matches pre-virtualization DOM, keeps querySelector-based assertions working).
 vi.mock('@tanstack/react-virtual', async () => {

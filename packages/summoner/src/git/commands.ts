@@ -9,6 +9,16 @@ import type { SimpleGit } from 'simple-git';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
 
+const NOTHING_TO_COMMIT = 'nothing-to-commit';
+
+function toChangedFile(f: { index: string; working_dir: string; path: string }) {
+  return { status: `${f.index}${f.working_dir}`.trim(), file: f.path };
+}
+
+function toLogEntry(e: { hash: string; message: string; author_name: string; date: string }) {
+  return { hash: e.hash, message: e.message, author: e.author_name, date: e.date };
+}
+
 export class GitCommands {
   async status(cwd: string): Promise<GitStatusResult> {
     const git = createGit(cwd);
@@ -16,10 +26,7 @@ export class GitCommands {
     return {
       branch: s.current ?? 'unknown',
       isClean: s.isClean(),
-      changedFiles: s.files.map((f) => ({
-        status: `${f.index}${f.working_dir}`.trim(),
-        file: f.path,
-      })),
+      changedFiles: s.files.map(toChangedFile),
       ahead: s.ahead,
       behind: s.behind,
       hasUpstream: s.tracking != null,
@@ -34,14 +41,7 @@ export class GitCommands {
   async log(cwd: string, limit?: number): Promise<GitLogResult> {
     const git = createGit(cwd);
     const result = await git.log({ maxCount: limit ?? 20 });
-    return {
-      entries: result.all.map((e) => ({
-        hash: e.hash,
-        message: e.message,
-        author: e.author_name,
-        date: e.date,
-      })),
-    };
+    return { entries: result.all.map(toLogEntry) };
   }
 
   async diff(cwd: string): Promise<GitDiffResult> {
@@ -61,13 +61,14 @@ export class GitCommands {
     cwd: string,
     message: string,
   ): Promise<{ ok: true; hash: string } | { error: string }> {
-    const status = await createGit(cwd).status();
-    if (status.staged.length === 0) return { error: 'nothing-to-commit' };
-    const result = await rawGit(createGit(cwd), ['commit', '-m', message]);
+    const git = createGit(cwd);
+    const status = await git.status();
+    if (status.staged.length === 0) return { error: NOTHING_TO_COMMIT };
+    const result = await rawGit(git, ['commit', '-m', message]);
     if (result.exitCode !== 0) {
       return { error: result.stdout.trim() || 'git commit failed' };
     }
-    const hash = (await rawGit(createGit(cwd), ['rev-parse', 'HEAD'])).stdout.trim();
+    const hash = (await rawGit(git, ['rev-parse', 'HEAD'])).stdout.trim();
     return { ok: true, hash };
   }
 

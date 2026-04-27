@@ -27,6 +27,8 @@ export interface LocalPluginCliOptions {
   timeoutMs?: number;
 }
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 export class LocalPluginCliService implements PluginCliService {
   private readonly binary: string;
   private readonly subcommand: string;
@@ -35,7 +37,7 @@ export class LocalPluginCliService implements PluginCliService {
   constructor(opts: LocalPluginCliOptions = {}) {
     this.binary = opts.binary ?? 'claude';
     this.subcommand = opts.subcommand ?? 'plugin';
-    this.timeoutMs = opts.timeoutMs ?? 30_000;
+    this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   /** Spawn `binary [subcommand?] ...args`, redirecting stdout to a temp

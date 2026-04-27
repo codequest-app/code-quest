@@ -1,64 +1,65 @@
 import type { SessionSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useNavigationActions } from '../contexts/NavigationContext';
-import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { SessionHistory } from './SessionHistory';
 
 interface SessionHistoryPopoverProps {
-  /** When set, list filters to this project's cwd (project surface).
-   *  When omitted, lists all sessions. */
   cwd?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
+  onResumed: (spawnedId: string, picked: SessionSummary) => void;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  align?: 'start' | 'center' | 'end';
 }
 
-export function SessionHistoryPopover({ cwd, open, onOpenChange }: SessionHistoryPopoverProps) {
+export function SessionHistoryPopover({
+  cwd,
+  onClose,
+  onResumed,
+  side = 'right',
+  align = 'start',
+}: SessionHistoryPopoverProps) {
   const { listSessions, renameSession, deleteSession, resume } = useSession();
-  const { setActiveProject } = useProjectActions();
-  const { requestActivateChannel } = useNavigationActions();
 
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
+  const fetchSessions = useCallback(() => {
     setLoading(true);
-    listSessions({ cwd, limit: 50, excludeLive: true })
+    return listSessions({ cwd, limit: 50, excludeLive: true })
       .then((res) => {
-        if (!cancelled && res.ok) setSessions(res.data.sessions);
+        if (res.ok) setSessions(res.data.sessions);
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, cwd, listSessions]);
+      .finally(() => setLoading(false));
+  }, [cwd, listSessions]);
+
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
   async function handleSelect(selectedChannelId: string) {
     const picked = sessions.find((s) => s.channelId === selectedChannelId);
     if (!picked) return;
-    onOpenChange(false);
+    onClose();
     try {
       const { channelId: spawnedId } = await resume(picked.id);
-      const targetCwd = picked.cwd ?? cwd;
-      if (targetCwd) {
-        setActiveProject(targetCwd);
-        requestActivateChannel(targetCwd, spawnedId);
-      }
+      onResumed(spawnedId, picked);
     } catch (err) {
       toast.error(`Resume failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
+  async function handleDelete(id: string) {
+    const result = await deleteSession(id);
+    if (result.ok) void fetchSessions();
+    return result;
+  }
+
   return (
     <Popover.Content
-      side="right"
-      align="start"
+      side={side}
+      align={align}
       sideOffset={8}
       onOpenAutoFocus={(e) => e.preventDefault()}
       onFocusOutside={(e) => e.preventDefault()}
@@ -69,7 +70,7 @@ export function SessionHistoryPopover({ cwd, open, onOpenChange }: SessionHistor
         loading={loading}
         onSelect={handleSelect}
         onRename={renameSession}
-        onDelete={deleteSession}
+        onDelete={handleDelete}
       />
     </Popover.Content>
   );

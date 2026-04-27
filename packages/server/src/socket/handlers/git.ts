@@ -205,9 +205,9 @@ export function create({
         const { cwd, limit } = gitLogPayloadSchema.parse(payload);
         if (!ensureWithinRoots(cwd, callback)) return;
         callback?.(await gitService.log(cwd, limit));
-      } catch (err) {
-        logger.warn({ err }, 'Failed to get git log');
-        callback?.({ error: errMsg(err, 'Failed to get git log') });
+      } catch (e) {
+        logger.warn({ err: e }, 'Failed to get git log');
+        callback?.({ error: errMsg(e, 'Failed to get git log') });
       }
     },
   );

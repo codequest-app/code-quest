@@ -11,13 +11,12 @@ describe('AttachMenu', () => {
     expect(screen.getByText('Add context')).toBeInTheDocument();
   });
 
-  it('shows icon for each menu item', async () => {
+  it('shows both menu items when both callbacks provided', async () => {
     const user = userEvent.setup();
     render(<AttachMenu onAttachFile={vi.fn()} onMentionFile={vi.fn()} />);
     await user.click(screen.getByTitle('Add'));
-    const svgs = document.querySelectorAll('svg');
-    // +1 for the plus button itself, +2 for menu items
-    expect(svgs.length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByTitle('Attach files from your computer')).toBeInTheDocument();
+    expect(screen.getByTitle('Add files or folders to the conversation')).toBeInTheDocument();
   });
 
   it('closes on Escape', async () => {

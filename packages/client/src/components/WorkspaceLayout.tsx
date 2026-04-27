@@ -53,6 +53,12 @@ export function WorkspaceLayout() {
   );
 }
 
+function formatAddProjectError(error: string, path: string | undefined, cwd: string): string {
+  if (error === 'path_not_found') return `Path not found: ${path ?? cwd}`;
+  if (error === 'path_not_directory') return `Not a directory: ${path ?? cwd}`;
+  return `Could not add project (${error})`;
+}
+
 function WorkspaceLayoutInner() {
   const { openPalette, registerActions } = useCommandPalette();
   useHotkeys('mod+k', () => openPalette(), NO_FORM);
@@ -89,13 +95,7 @@ function WorkspaceLayoutInner() {
   async function handleAddProject(cwd: string) {
     const res = await addProject(cwd);
     if ('error' in res) {
-      const msg =
-        res.error === 'path_not_found'
-          ? `Path not found: ${res.path ?? cwd}`
-          : res.error === 'path_not_directory'
-            ? `Not a directory: ${res.path ?? cwd}`
-            : `Could not add project (${res.error})`;
-      toast.error(msg);
+      toast.error(formatAddProjectError(res.error, res.path, cwd));
       return;
     }
     setDialogOpen(false);

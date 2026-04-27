@@ -33,6 +33,10 @@ const GLOB_IGNORE = [
 
 const BROWSE_IGNORED = new Set(['node_modules', 'dist', 'coverage', '.git']);
 
+function toRootEntry(root: string): DirectoryEntry {
+  return { name: basename(root), path: root };
+}
+
 export class LocalFilesystemService implements FilesystemService {
   /** Per-cwd file-list cache for `listFiles`. Populated on first query,
    *  invalidated by chokidar (when a `WatchService` is injected). When
@@ -46,48 +50,29 @@ export class LocalFilesystemService implements FilesystemService {
   constructor(
     private readonly fsRoots: readonly string[],
     private readonly watch?: WatchService,
+    private readonly fsImpl?: typeof import('node:fs'),
   ) {}
-
-  // ── browseDirectories ──
 
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {
-      return this.fsRoots.map((r) => ({ name: basename(r), path: r }));
+      return this.fsRoots.map(toRootEntry);
     }
-
-    const validated = this.validatePath(path, this.fsRoots);
-    if (!validated) return [];
-
-    try {
-      const entries = await readdir(validated, { withFileTypes: true });
-      return entries
-        .filter((entry) => {
-          if (!entry.isDirectory()) return false;
-          if (entry.name.startsWith('.')) return false;
-          if (BROWSE_IGNORED.has(entry.name)) return false;
-          if (entry.isSymbolicLink()) return false;
-          return true;
-        })
-        .map((entry) => ({ name: entry.name, path: join(validated, entry.name) }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-    } catch {
-      // Directory unreadable (EACCES, ENOENT, etc.) — return empty
-      return [];
-    }
+    const result = await this.readBrowseEntries(path);
+    return result.directories;
   }
-
-  // ── browseEntries ──
 
   async browseEntries(
     path?: string,
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
     if (!path) {
-      return {
-        directories: this.fsRoots.map((r) => ({ name: basename(r), path: r })),
-        files: [],
-      };
+      return { directories: this.fsRoots.map(toRootEntry), files: [] };
     }
+    return this.readBrowseEntries(path);
+  }
 
+  private async readBrowseEntries(
+    path: string,
+  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
     const validated = this.validatePath(path, this.fsRoots);
     if (!validated) return { directories: [], files: [] };
 
@@ -96,8 +81,7 @@ export class LocalFilesystemService implements FilesystemService {
       const directories: DirectoryEntry[] = [];
       const files: DirectoryEntry[] = [];
       for (const entry of entries) {
-        if (entry.name.startsWith('.')) continue;
-        if (entry.isSymbolicLink()) continue;
+        if (entry.name.startsWith('.') || entry.isSymbolicLink()) continue;
         if (entry.isDirectory()) {
           if (BROWSE_IGNORED.has(entry.name)) continue;
           directories.push({ name: entry.name, path: join(validated, entry.name) });
@@ -108,7 +92,8 @@ export class LocalFilesystemService implements FilesystemService {
       directories.sort((a, b) => a.name.localeCompare(b.name));
       files.sort((a, b) => a.name.localeCompare(b.name));
       return { directories, files };
-    } catch {
+    } catch (err) {
+      console.debug('[LocalFilesystemService] readBrowseEntries failed:', errMsg(err));
       return { directories: [], files: [] };
     }
   }
@@ -165,7 +150,8 @@ export class LocalFilesystemService implements FilesystemService {
     try {
       const content = await readFile(validated, 'utf-8');
       return { content };
-    } catch {
+    } catch (err) {
+      console.debug('[LocalFilesystemService] readFileAbsolute failed:', errMsg(err));
       return { error: `File not found: ${absolutePath}` };
     }
   }
@@ -264,7 +250,8 @@ export class LocalFilesystemService implements FilesystemService {
     try {
       const content = await readFile(absolute, 'utf-8');
       return { content };
-    } catch {
+    } catch (err) {
+      console.debug('[LocalFilesystemService] readFile failed:', errMsg(err));
       return { error: `File not found: ${filePath}` };
     }
   }
@@ -292,6 +279,7 @@ export class LocalFilesystemService implements FilesystemService {
       ignore: GLOB_IGNORE,
       nodir: true,
       maxDepth: 10,
+      ...(this.fsImpl ? { fs: this.fsImpl } : {}),
     });
   }
 

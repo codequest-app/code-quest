@@ -27,7 +27,7 @@ export interface MenuSections {
   support: MenuItem[];
 }
 
-export interface BuildMenuItemsParams {
+interface BuildMenuItemsParams {
   slashCommands: string[];
   registry: FeatureRegistry;
   localFeatures?: Feature[];

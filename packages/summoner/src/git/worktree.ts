@@ -10,6 +10,7 @@ import { createGit, rawGit } from './git-runner.ts';
 import type { CreateWorktreeOptions } from './types.ts';
 
 const WORKTREE_PATH_RE = /[/\\]\.claude[/\\]worktrees[/\\]([^/\\]+)$/;
+const WORKTREE_BRANCH_PREFIX = 'worktree-';
 
 /** Throwing wrapper around the shared validator — used at git boundaries
  *  where an invalid name must abort the operation. */
@@ -60,25 +61,37 @@ function parseWorktreeList(stdout: string): WorktreeInfo[] {
 export class GitWorktreeOps {
   constructor(private commands: GitCommands) {}
 
-  async createWorktree(repoRoot: string, opts: CreateWorktreeOptions = {}): Promise<WorktreeInfo> {
-    const { existingBranch, newBranch, baseBranch, name, path } = opts;
-
-    let worktreeName: string;
-    let branch: string;
-    let createBranch: boolean;
+  private resolveWorktreeParams(opts: CreateWorktreeOptions): {
+    worktreeName: string;
+    branch: string;
+    createBranch: boolean;
+  } {
+    const { existingBranch, newBranch, name } = opts;
     if (existingBranch) {
-      worktreeName = name ?? this.branchToSlug(existingBranch);
-      branch = existingBranch;
-      createBranch = false;
-    } else if (newBranch) {
-      worktreeName = name ?? this.branchToSlug(newBranch);
-      branch = newBranch;
-      createBranch = true;
-    } else {
-      worktreeName = name ?? this.generateWorktreeName();
-      branch = `worktree-${worktreeName}`;
-      createBranch = true;
+      return {
+        worktreeName: name ?? this.branchToSlug(existingBranch),
+        branch: existingBranch,
+        createBranch: false,
+      };
     }
+    if (newBranch) {
+      return {
+        worktreeName: name ?? this.branchToSlug(newBranch),
+        branch: newBranch,
+        createBranch: true,
+      };
+    }
+    const worktreeName = name ?? this.generateWorktreeName();
+    return {
+      worktreeName,
+      branch: `${WORKTREE_BRANCH_PREFIX}${worktreeName}`,
+      createBranch: true,
+    };
+  }
+
+  async createWorktree(repoRoot: string, opts: CreateWorktreeOptions = {}): Promise<WorktreeInfo> {
+    const { baseBranch, path } = opts;
+    const { worktreeName, branch, createBranch } = this.resolveWorktreeParams(opts);
     validateWorktreeName(worktreeName);
 
     const worktreePath = path ?? join(repoRoot, '.claude', 'worktrees', worktreeName);
@@ -91,7 +104,7 @@ export class GitWorktreeOps {
       // `branch -D` of an existing branch is destructive — only do it when
       // the branch name was auto-generated (legacy `worktree-<slug>` shortcut),
       // never when the user supplied newBranch explicitly.
-      const isAutoBranch = branch === `worktree-${worktreeName}` && !newBranch;
+      const isAutoBranch = branch === `${WORKTREE_BRANCH_PREFIX}${worktreeName}` && !opts.newBranch;
       await this.addWorktree(repoRoot, worktreePath, branch, baseBranch, isAutoBranch);
     } else {
       await mkdir(join(worktreePath, '..'), { recursive: true });
@@ -115,7 +128,7 @@ export class GitWorktreeOps {
   async deleteWorktree(repoRoot: string, name: string): Promise<void> {
     validateWorktreeName(name);
     const worktreePath = join(repoRoot, '.claude', 'worktrees', name);
-    const branchName = `worktree-${name}`;
+    const branchName = `${WORKTREE_BRANCH_PREFIX}${name}`;
     const git = createGit(repoRoot);
 
     await rawGit(git, ['worktree', 'remove', worktreePath]);

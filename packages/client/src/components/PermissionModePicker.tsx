@@ -45,7 +45,7 @@ function getPermissionModes(brandName: string) {
 const DEFAULT_MODES = getPermissionModes('Claude');
 const DEFAULT_MODE = DEFAULT_MODES[0];
 
-export interface PermissionModePickerProps {
+interface PermissionModePickerProps {
   mode: string;
   effort?: string;
   effortLevels?: string[];
