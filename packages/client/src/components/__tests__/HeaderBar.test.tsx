@@ -1,19 +1,24 @@
 import { segments as s } from '@code-quest/summoner/test';
+import * as Popover from '@radix-ui/react-popover';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { HeaderBar } from '../HeaderBar';
 
 async function renderHeaderBar(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {
-  return renderWithChannel(<HeaderBar {...props} />, {
-    initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
-    extraSegments: [
-      s.controlResponse('init', {
-        models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
-      }),
-    ],
-  });
+  return renderWithChannel(
+    <Popover.Root>
+      <HeaderBar {...props} />
+    </Popover.Root>,
+    {
+      initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
+      extraSegments: [
+        s.controlResponse('init', {
+          models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
+        }),
+      ],
+    },
+  );
 }
 
 describe('HeaderBar (context mode)', () => {
@@ -52,20 +57,12 @@ describe('HeaderBar layout', () => {
 });
 
 describe('HeaderBar resume button', () => {
-  it('shows clock/history button', async () => {
-    await renderHeaderBar({ onOpenResume: vi.fn() });
+  it('shows clock/history button when showResumeButton is true', async () => {
+    await renderHeaderBar({ showResumeButton: true });
     expect(screen.getByTitle('Session history')).toBeInTheDocument();
   });
 
-  it('calls onOpenResume when clock button clicked', async () => {
-    const onOpenResume = vi.fn();
-    const user = userEvent.setup();
-    await renderHeaderBar({ onOpenResume });
-    await user.click(screen.getByTitle('Session history'));
-    expect(onOpenResume).toHaveBeenCalledOnce();
-  });
-
-  it('does not show clock button when onOpenResume is not provided', async () => {
+  it('does not show clock button when showResumeButton is not provided', async () => {
     await renderHeaderBar();
     expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
   });

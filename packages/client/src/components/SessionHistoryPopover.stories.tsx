@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
-import { ResumeSessionsDropdown } from './ResumeSessionsDropdown';
+import { SessionHistoryPopover } from './SessionHistoryPopover';
 
 const meta = {
-  component: ResumeSessionsDropdown,
+  component: SessionHistoryPopover,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
   args: { open: true, onOpenChange: fn() },
   decorators: [withStoryApp({ className: 'h-screen bg-bg text-text' })],
-} satisfies Meta<typeof ResumeSessionsDropdown>;
+} satisfies Meta<typeof SessionHistoryPopover>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

@@ -81,7 +81,7 @@ describe('ChatPanel', () => {
     const user = userEvent.setup();
     await renderWithChannel(<ChatPanel />);
     await user.click(screen.getByTitle('Session history'));
-    // SessionDropdown renders when overlay is open
+    // SessionDialog renders when overlay is open
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 

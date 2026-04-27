@@ -1,4 +1,5 @@
 import type { SessionSummary } from '@code-quest/shared';
+import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
@@ -25,7 +26,7 @@ import { HeaderBar } from './HeaderBar';
 import { MessageList, type MessageListHandle } from './MessageList';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { RawEventPanel } from './RawEventPanel';
-import { SessionDropdown } from './SessionDropdown';
+import { SessionHistory } from './SessionHistory';
 import { SideQuestionDialog } from './SideQuestionDialog';
 import { WorktreeBanner } from './WorktreeBanner';
 
@@ -78,10 +79,13 @@ export function ChatPanel({ title }: { title?: string }) {
       if (res.ok) setResumeSessions(res.data);
     });
 
-  const openResumeOverlay = () => {
-    setShowResumeOverlay(true);
-    setResumeLoading(true);
-    fetchResumeSessions().finally(() => setResumeLoading(false));
+  const handleResumeOpenChange = (open: boolean) => {
+    setShowResumeOverlay(open);
+    resumeOpenSignal.setOpen(open);
+    if (open) {
+      setResumeLoading(true);
+      fetchResumeSessions().finally(() => setResumeLoading(false));
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -93,7 +97,7 @@ export function ChatPanel({ title }: { title?: string }) {
   const handleResumeSelect = async (selectedChannelId: string) => {
     const picked = resumeSessions.sessions.find((s) => s.channelId === selectedChannelId);
     if (!picked) return;
-    setShowResumeOverlay(false);
+    handleResumeOpenChange(false);
     try {
       const { channelId: spawnedId } = await resume(picked.id);
       const route = resumeRoute({
@@ -114,9 +118,9 @@ export function ChatPanel({ title }: { title?: string }) {
     }
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: openResumeOverlay stable via React Compiler
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleResumeOpenChange stable via React Compiler
   useEffect(() => {
-    if (resumeIsOpen) openResumeOverlay();
+    if (resumeIsOpen) handleResumeOpenChange(true);
   }, [resumeIsOpen]);
 
   useEffect(() => {
@@ -160,22 +164,28 @@ export function ChatPanel({ title }: { title?: string }) {
         />
       )}
       <div ref={chatColumnRef} className="relative flex flex-col flex-1 min-w-0">
-        <HeaderBar title={title} onOpenResume={openResumeOverlay} />
+        <Popover.Root open={showResumeOverlay} onOpenChange={handleResumeOpenChange}>
+          <HeaderBar title={title} showResumeButton />
+          {showResumeOverlay && (
+            <Popover.Content
+              side="bottom"
+              align="end"
+              sideOffset={8}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              className="w-[min(400px,calc(100vw-32px))] max-h-[min(500px,50vh)] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden z-popover"
+            >
+              <SessionHistory
+                sessions={resumeSessions.sessions}
+                loading={resumeLoading}
+                onSelect={handleResumeSelect}
+                onRename={renameSession}
+                onDelete={handleDelete}
+              />
+            </Popover.Content>
+          )}
+        </Popover.Root>
         {worktree && <WorktreeBanner worktree={worktree} />}
         <MessageList ref={messageListRef} />
-        {showResumeOverlay && (
-          <SessionDropdown
-            sessions={resumeSessions.sessions}
-            loading={resumeLoading}
-            onSelect={handleResumeSelect}
-            onClose={() => {
-              setShowResumeOverlay(false);
-              resumeOpenSignal.setOpen(false);
-            }}
-            onRename={renameSession}
-            onDelete={handleDelete}
-          />
-        )}
         <SideQuestionDialog
           open={sideQuestion.open}
           question={sideQuestion.question}

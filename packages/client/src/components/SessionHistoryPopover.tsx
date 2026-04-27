@@ -1,12 +1,13 @@
 import type { SessionSummary } from '@code-quest/shared';
+import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigationActions } from '../contexts/NavigationContext';
 import { useProjectActions } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
-import { SessionDropdown } from './SessionDropdown';
+import { SessionHistory } from './SessionHistory';
 
-interface ResumeSessionsDropdownProps {
+interface SessionHistoryPopoverProps {
   /** When set, list filters to this project's cwd (project surface).
    *  When omitted, lists all sessions. */
   cwd?: string;
@@ -14,7 +15,7 @@ interface ResumeSessionsDropdownProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ResumeSessionsDropdown({ cwd, open, onOpenChange }: ResumeSessionsDropdownProps) {
+export function SessionHistoryPopover({ cwd, open, onOpenChange }: SessionHistoryPopoverProps) {
   const { listSessions, renameSession, deleteSession, resume } = useSession();
   const { setActiveProject } = useProjectActions();
   const { requestActivateChannel } = useNavigationActions();
@@ -57,13 +58,21 @@ export function ResumeSessionsDropdown({ cwd, open, onOpenChange }: ResumeSessio
   if (!open) return null;
 
   return (
-    <SessionDropdown
-      sessions={sessions}
-      loading={loading}
-      onSelect={handleSelect}
-      onClose={() => onOpenChange(false)}
-      onRename={renameSession}
-      onDelete={deleteSession}
-    />
+    <Popover.Content
+      side="right"
+      align="start"
+      sideOffset={8}
+      onOpenAutoFocus={(e) => e.preventDefault()}
+      onFocusOutside={(e) => e.preventDefault()}
+      className="w-[min(400px,calc(100vw-32px))] max-h-[min(500px,50vh)] bg-surface border border-border rounded-xl flex flex-col shadow-floating overflow-hidden z-popover"
+    >
+      <SessionHistory
+        sessions={sessions}
+        loading={loading}
+        onSelect={handleSelect}
+        onRename={renameSession}
+        onDelete={deleteSession}
+      />
+    </Popover.Content>
   );
 }
