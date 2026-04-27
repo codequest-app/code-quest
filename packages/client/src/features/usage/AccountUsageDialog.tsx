@@ -5,6 +5,7 @@ import {
   type ProviderClientConfig,
   type UsageQuota,
 } from '@code-quest/shared';
+import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '../../utils/cn';
 import { formatResetTime } from '../../utils/format-reset-time';
 import { DEFAULT_USAGE_TIERS, getTier } from '../../utils/usage-tiers';
@@ -103,137 +104,130 @@ export function AccountUsageDialog({
     subscriptionType === 'team' || subscriptionType === 'enterprise'
       ? 'https://claude.ai/admin-settings/usage'
       : 'https://claude.ai/settings/usage';
-  if (!open) return null;
 
   return (
-    <div
-      role="none"
-      data-testid="dialog-backdrop"
-      className="fixed inset-0 z-popover flex items-center justify-center overflow-y-auto bg-black/50"
-      onClick={onClose}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
-    >
-      <div
-        role="dialog"
-        aria-label="Account & Usage"
-        className="bg-bg border border-border rounded-lg w-100 dialog-viewport overflow-y-auto m-4 p-4 select-text outline-none"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-text">Account & Usage</h2>
-          <button
-            type="button"
-            aria-label="close"
-            onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors text-lg leading-none"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {/* ACCOUNT section */}
-          <div className="space-y-1">
-            <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
-              Account
-            </h4>
-            {model && <AccountRow label="Model" value={model} />}
-            {authMethod && (
-              <AccountRow
-                label="Auth method"
-                value={formatAuthMethod(authMethod, providerConfig?.authMethods)}
-              />
-            )}
-            {email && <AccountRow label="Email" value={email} />}
-            {organization && <AccountRow label="Organization" value={organization} />}
-            {subscriptionType && <AccountRow label="Plan" value={subscriptionType} />}
+    <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-popover bg-black/50" />
+        <Dialog.Content
+          aria-label="Account & Usage"
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-popover bg-bg border border-border rounded-lg w-100 dialog-viewport overflow-y-auto m-4 p-4 select-text outline-none"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <Dialog.Title className="text-base font-semibold text-text">
+              Account & Usage
+            </Dialog.Title>
+            <Dialog.Close
+              aria-label="close"
+              className="text-text-muted hover:text-text transition-colors text-lg leading-none"
+            >
+              ✕
+            </Dialog.Close>
           </div>
 
-          {/* SESSION section */}
-          {stats && (stats.costUsd != null || stats.numTurns != null) && (
+          <div className="space-y-4">
+            {/* ACCOUNT section */}
             <div className="space-y-1">
               <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
-                Session
+                Account
               </h4>
-              {stats.costUsd != null && (
-                <AccountRow label="Cost" value={`$${stats.costUsd.toFixed(2)}`} />
+              {model && <AccountRow label="Model" value={model} />}
+              {authMethod && (
+                <AccountRow
+                  label="Auth method"
+                  value={formatAuthMethod(authMethod, providerConfig?.authMethods)}
+                />
               )}
-              {stats.numTurns != null && (
-                <AccountRow label="Turns" value={String(stats.numTurns)} />
-              )}
-              {stats.modelUsage &&
-                Object.entries(stats.modelUsage).map(([m, u]) => (
-                  <AccountRow
-                    key={m}
-                    label={m.split('-').slice(0, 2).join(' ')}
-                    value={`$${(modelUsageEntrySchema.safeParse(u).data?.costUSD ?? 0).toFixed(2)}`}
-                  />
-                ))}
+              {email && <AccountRow label="Email" value={email} />}
+              {organization && <AccountRow label="Organization" value={organization} />}
+              {subscriptionType && <AccountRow label="Plan" value={subscriptionType} />}
             </div>
-          )}
 
-          {/* CONTEXT section */}
-          {contextUsage?.categories && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
-                Context ({contextUsage.percentage ?? 0}% used)
-              </h4>
-              <div className="text-xs text-text-muted mb-1">
-                {formatTokens(contextUsage.totalTokens ?? 0)} /{' '}
-                {formatTokens(contextUsage.maxTokens ?? 0)} tokens
+            {/* SESSION section */}
+            {stats && (stats.costUsd != null || stats.numTurns != null) && (
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
+                  Session
+                </h4>
+                {stats.costUsd != null && (
+                  <AccountRow label="Cost" value={`$${stats.costUsd.toFixed(2)}`} />
+                )}
+                {stats.numTurns != null && (
+                  <AccountRow label="Turns" value={String(stats.numTurns)} />
+                )}
+                {stats.modelUsage &&
+                  Object.entries(stats.modelUsage).map(([m, u]) => (
+                    <AccountRow
+                      key={m}
+                      label={m.split('-').slice(0, 2).join(' ')}
+                      value={`$${(modelUsageEntrySchema.safeParse(u).data?.costUSD ?? 0).toFixed(2)}`}
+                    />
+                  ))}
               </div>
-              {contextUsage.categories
-                .filter((c) => c.name !== 'Free space')
-                .map((cat) => (
-                  <div key={cat.name} className="flex justify-between text-xs">
-                    <span className="text-text-muted/60">{cat.name}</span>
-                    <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
-                  </div>
-                ))}
-            </div>
-          )}
+            )}
 
-          {/* QUOTA section */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
-              Quota
-            </h4>
-            {authMethod && authMethod !== 'claudeai' && !usage ? (
-              <p className="text-xs text-text-muted italic">
-                Usage tracking is only available for Claude AI subscribers.
-              </p>
-            ) : usage ? (
-              (
-                providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
-                DEFAULT_USAGE_TIERS.map((t) => ({ key: t.key, label: t.label }))
-              ).map(({ key, label }) => {
-                const tier = getTier(usage, key);
-                if (!tier) return null;
-                return (
-                  <UsageBarRow
-                    key={key}
-                    label={label}
-                    utilization={tier.utilization}
-                    resetsAt={tier.resets_at}
-                  />
-                );
-              })
-            ) : (
-              <p className="text-xs text-text-muted">Loading usage data…</p>
+            {/* CONTEXT section */}
+            {contextUsage?.categories && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
+                  Context ({contextUsage.percentage ?? 0}% used)
+                </h4>
+                <div className="text-xs text-text-muted mb-1">
+                  {formatTokens(contextUsage.totalTokens ?? 0)} /{' '}
+                  {formatTokens(contextUsage.maxTokens ?? 0)} tokens
+                </div>
+                {contextUsage.categories
+                  .filter((c) => c.name !== 'Free space')
+                  .map((cat) => (
+                    <div key={cat.name} className="flex justify-between text-xs">
+                      <span className="text-text-muted/60">{cat.name}</span>
+                      <span className="text-text tabular-nums">{formatTokens(cat.tokens)}</span>
+                    </div>
+                  ))}
+              </div>
             )}
-            {authMethod === 'claudeai' && (
-              <button
-                type="button"
-                className="text-xs text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
-                onClick={() => window.open(manageUrl, '_blank')}
-              >
-                Manage usage on claude.ai
-              </button>
-            )}
+
+            {/* QUOTA section */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-text-muted/60 uppercase tracking-wider">
+                Quota
+              </h4>
+              {authMethod && authMethod !== 'claudeai' && !usage ? (
+                <p className="text-xs text-text-muted italic">
+                  Usage tracking is only available for Claude AI subscribers.
+                </p>
+              ) : usage ? (
+                (
+                  providerConfig?.usageTiers?.map((t) => ({ key: t.key, label: t.label })) ??
+                  DEFAULT_USAGE_TIERS.map((t) => ({ key: t.key, label: t.label }))
+                ).map(({ key, label }) => {
+                  const tier = getTier(usage, key);
+                  if (!tier) return null;
+                  return (
+                    <UsageBarRow
+                      key={key}
+                      label={label}
+                      utilization={tier.utilization}
+                      resetsAt={tier.resets_at}
+                    />
+                  );
+                })
+              ) : (
+                <p className="text-xs text-text-muted">Loading usage data…</p>
+              )}
+              {authMethod === 'claudeai' && (
+                <button
+                  type="button"
+                  className="text-xs text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
+                  onClick={() => window.open(manageUrl, '_blank')}
+                >
+                  Manage usage on claude.ai
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
