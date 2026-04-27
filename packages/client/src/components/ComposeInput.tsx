@@ -1,8 +1,8 @@
 import type { FsSearchResult } from '@code-quest/shared';
+import * as Popover from '@radix-ui/react-popover';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
-import { useClickOutside } from '../hooks/useClickOutside';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
@@ -49,22 +49,12 @@ export function ComposeInput() {
   }, [registerFocus]);
 
   const inputHistory = useInputHistory();
-  const mentionContainerRef = useRef<HTMLDivElement>(null);
   const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const scrollActiveIntoView = (el: HTMLDivElement | null) => {
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   };
-
-  useClickOutside(
-    [mentionContainerRef, textareaRef],
-    () => {
-      handleCloseMention();
-      setFileResults([]);
-    },
-    mentionOpen,
-  );
 
   const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
@@ -259,8 +249,16 @@ export function ComposeInput() {
   const hasFileResults = fileResults.length > 0 || searchStatus !== 'idle';
   const showMentionDropdown = mentionOpen && hasFileResults;
 
+  const containerAnchorRef = useRef({
+    getBoundingClientRect: () => {
+      const el = textareaRef.current?.closest<HTMLElement>('.relative');
+      return el?.getBoundingClientRect() ?? new DOMRect();
+    },
+  });
+
   return (
-    <>
+    <Popover.Root open={showMentionDropdown}>
+      <Popover.Anchor virtualRef={containerAnchorRef} />
       {attachedFiles.length > 0 && (
         <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
           {attachedFiles.map((file, index) => (
@@ -304,7 +302,21 @@ export function ComposeInput() {
         </div>
       </div>
       {showMentionDropdown && (
-        <div ref={mentionContainerRef}>
+        <Popover.Content
+          side="top"
+          align="start"
+          sideOffset={8}
+          avoidCollisions={false}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onPointerDownOutside={() => {
+            handleCloseMention();
+            setFileResults([]);
+          }}
+          onFocusOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          style={{ width: 'var(--radix-popper-anchor-width)' }}
+        >
           <MentionDropdown
             mentionQuery={mentionQuery ?? ''}
             filteredSuggestions={[]}
@@ -316,8 +328,8 @@ export function ComposeInput() {
             onHover={setSelectedIndex}
             activeItemRef={scrollActiveIntoView}
           />
-        </div>
+        </Popover.Content>
       )}
-    </>
+    </Popover.Root>
   );
 }
