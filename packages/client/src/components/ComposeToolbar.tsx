@@ -20,7 +20,7 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '../cont
 import { modelOpenSignal } from '../features/model/model-feature';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
-import { AddButton } from './AddButton';
+import { AttachMenu } from './AttachMenu';
 import { ContextPieChart } from './ContextPieChart';
 import { CommandMenu } from './command-menu/CommandMenu';
 import { PermissionModePicker } from './PermissionModePicker';
@@ -223,7 +223,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
             </Popover.Content>
           )}
 
-          <AddButton onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
+          <AttachMenu onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
 
           <CommandMenu
             onToggleMcp={() => setActiveDialog('manageMcp')}

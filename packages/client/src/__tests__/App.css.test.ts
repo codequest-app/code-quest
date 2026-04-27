@@ -8,7 +8,7 @@ const composeToolbarSrc = readSrc('components/ComposeToolbar.tsx');
 const hoverTintConsumers = {
   IconButton: readSrc('components/ui/IconButton.tsx'),
   PermissionModePicker: readSrc('components/PermissionModePicker.tsx'),
-  AddButton: readSrc('components/AddButton.tsx'),
+  AttachMenu: readSrc('components/AttachMenu.tsx'),
   ReviewUpsellBanner: readSrc('components/ReviewUpsellBanner.tsx'),
   MentionDropdown: readSrc('components/MentionDropdown.tsx'),
   ModelPickerPopover: readSrc('components/ModelPickerPopover.tsx'),

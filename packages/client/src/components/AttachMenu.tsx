@@ -1,17 +1,18 @@
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
-import { usePopover } from '../hooks/usePopover';
+import * as Popover from '@radix-ui/react-popover';
+import { useState } from 'react';
 import { AddContextIcon } from './icons/MentionIcons';
 import { IconButton } from './ui/IconButton';
 import { PlusIcon } from './ui/Icons';
 
-export function AddButton({
+export function AttachMenu({
   onAttachFile,
   onMentionFile,
 }: {
   onAttachFile?: () => void;
   onMentionFile?: () => void;
 }) {
-  const { open, setOpen, triggerRef, panelRef } = usePopover<HTMLDivElement, HTMLDivElement>();
+  const [open, setOpen] = useState(false);
 
   if (!onAttachFile && !onMentionFile) return null;
 
@@ -48,14 +49,20 @@ export function AddButton({
     });
 
   return (
-    <div ref={triggerRef} className="relative">
-      <IconButton title="Add" onClick={() => setOpen((v) => !v)} className="shrink-0">
-        <PlusIcon className="w-5 h-5" />
-      </IconButton>
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <IconButton title="Add" className="shrink-0">
+          <PlusIcon className="w-5 h-5" />
+        </IconButton>
+      </Popover.Trigger>
       {open && (
-        <div
-          ref={panelRef}
-          className="absolute bottom-full left-0 mb-1 bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-modal min-w-50"
+        <Popover.Content
+          side="top"
+          align="start"
+          sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onFocusOutside={(e) => e.preventDefault()}
+          className="bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-modal min-w-50"
         >
           {items.map((item) => (
             <button
@@ -71,8 +78,8 @@ export function AddButton({
               {item.label}
             </button>
           ))}
-        </div>
+        </Popover.Content>
       )}
-    </div>
+    </Popover.Root>
   );
 }

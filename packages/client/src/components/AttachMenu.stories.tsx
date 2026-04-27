@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { AddButton } from './AddButton';
+import { AttachMenu } from './AttachMenu';
 
 const meta = {
-  component: AddButton,
+  component: AttachMenu,
   tags: ['autodocs'],
   decorators: [
     (Story) => (
@@ -12,7 +12,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof AddButton>;
+} satisfies Meta<typeof AttachMenu>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

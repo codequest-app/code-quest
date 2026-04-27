@@ -1,6 +1,7 @@
 import { effortLevelSchema } from '@code-quest/shared';
+import * as Popover from '@radix-ui/react-popover';
+import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
-import { usePopover } from '../hooks/usePopover';
 import { cn } from '../utils/cn';
 import { EffortIcon, PERMISSION_MODE_ICONS } from './icons/PermissionModeIcons';
 import { EffortSwitch, effortLabel } from './ui/EffortSwitch';
@@ -73,32 +74,31 @@ export function PermissionModePicker({
   const permissionModes = allModes.filter((m) => m.id !== 'auto' || supportsAutoMode);
   const permissionById = Object.fromEntries(permissionModes.map((m) => [m.id, m]));
 
-  const {
-    open: showModePicker,
-    setOpen: setShowModePicker,
-    triggerRef: modeButtonRef,
-    panelRef: modePickerRef,
-  } = usePopover<HTMLButtonElement, HTMLDivElement>();
-
+  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <button
-        ref={modeButtonRef}
-        type="button"
-        title={(permissionById[mode] ?? DEFAULT_MODE).title}
-        onClick={() => setShowModePicker((v) => !v)}
-        className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
-      >
-        <span className="w-4 h-4 shrink-0">
-          {PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS] ??
-            PERMISSION_MODE_ICONS.normal}
-        </span>
-        <span>{(permissionById[mode] ?? DEFAULT_MODE).label}</span>
-      </button>
-      {showModePicker && (
-        <div
-          ref={modePickerRef}
-          className="absolute bottom-full right-0 mb-1 bg-surface border border-border rounded-lg shadow-lg z-modal min-w-70 py-1"
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          title={(permissionById[mode] ?? DEFAULT_MODE).title}
+          className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
+        >
+          <span className="w-4 h-4 shrink-0">
+            {PERMISSION_MODE_ICONS[mode as keyof typeof PERMISSION_MODE_ICONS] ??
+              PERMISSION_MODE_ICONS.normal}
+          </span>
+          <span>{(permissionById[mode] ?? DEFAULT_MODE).label}</span>
+        </button>
+      </Popover.Trigger>
+      {open && (
+        <Popover.Content
+          side="top"
+          align="end"
+          sideOffset={4}
+          avoidCollisions={false}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onFocusOutside={(e) => e.preventDefault()}
+          className="bg-surface border border-border rounded-lg shadow-lg z-modal w-80 max-w-[calc(100vw-2rem)] py-1"
         >
           <div className="px-3 py-1.5 text-xs text-text-muted flex items-center justify-between">
             <span className="font-semibold">Modes</span>
@@ -113,7 +113,7 @@ export function PermissionModePicker({
               type="button"
               onClick={() => {
                 onSetPermissionMode?.(m.id);
-                setShowModePicker(false);
+                setOpen(false);
               }}
               className={cn(
                 'w-full text-left px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors',
@@ -156,8 +156,8 @@ export function PermissionModePicker({
               </button>
             </>
           )}
-        </div>
+        </Popover.Content>
       )}
-    </div>
+    </Popover.Root>
   );
 }
