@@ -14,6 +14,7 @@ import { createModelFeature } from '../../features/model/model-feature';
 import { createSwitchAccountFeature } from '../../features/switch-account/switch-account-feature';
 import { createThinkingFeature } from '../../features/thinking/thinking-feature';
 import { createViewHelpFeature } from '../../features/view-help/view-help-feature';
+import { useChatColumnAnchorRef } from '../../hooks/useChatColumnAnchorRef';
 import { cn } from '../../utils/cn';
 import { findModel, getEffortLevels } from '../../utils/model-utils';
 import { openUrl } from '../../utils/open-url';
@@ -142,7 +143,6 @@ export function CommandMenu({
   onAttachFile,
   docsUrl,
 }: CommandMenuProps) {
-  // Context
   const {
     model,
     availableModels,
@@ -157,7 +157,6 @@ export function CommandMenu({
   const compose = useChannelCompose();
   const registry = useFeatureRegistry();
 
-  // Compute modelLabel
   const models = availableModels ?? [];
   const currentModel = model ?? null;
   const modelEntry = (currentModel ? findModel(currentModel, models) : undefined) ?? models[0];
@@ -186,7 +185,6 @@ export function CommandMenu({
       : []),
   ];
 
-  // Compose bindings
   const externalOpen = compose.slashFilter != null;
   const externalFilter = compose.slashFilter ?? '';
 
@@ -195,17 +193,12 @@ export function CommandMenu({
   const [filter, setFilter] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const containerAnchorRef = useRef({
-    getBoundingClientRect: () => {
-      const el = anchorRef.current?.closest<HTMLElement>('.relative');
-      return el?.getBoundingClientRect() ?? new DOMRect();
-    },
-  });
+  const containerAnchorRef = useChatColumnAnchorRef(anchorRef);
   const filterRef = useRef<HTMLInputElement>(null);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   // Effective filter text: from textarea (external) or from filter input (button-click)
-  const effectiveFilter = externalOpen ? (externalFilter ?? '') : filter;
+  const effectiveFilter = externalOpen ? externalFilter : filter;
 
   const handleDismiss = () => {
     setButtonOpen(false);
@@ -254,6 +247,39 @@ export function CommandMenu({
     closeRef.current = close;
   });
 
+  const dismissItem = (item: MenuItem) => {
+    const behavior = item.dismissBehavior ?? 'close';
+    if (behavior === 'close') close();
+    else if (behavior === 'closeSilent') closeSilent();
+  };
+
+  const selectItem = (item: MenuItem) => {
+    item.onClick?.();
+    dismissItem(item);
+  };
+
+  function dispatchSelectedItem(
+    item: MenuItem,
+    key: string,
+    opts: {
+      insertSlash: (text: string) => void;
+      executeSlash: (label: string) => void;
+      shouldInsert: boolean;
+      close: () => void;
+    },
+  ) {
+    if (!item.id.startsWith('slash-')) {
+      selectItem(item);
+      return;
+    }
+    if (key === 'Tab' || opts.shouldInsert) {
+      opts.insertSlash(`${item.label} `);
+    } else {
+      opts.executeSlash(item.label);
+      opts.close();
+    }
+  }
+
   function handleNavigateAndSelect(
     key: string,
     items: MenuItem[],
@@ -268,18 +294,7 @@ export function CommandMenu({
       const { newActiveId, shouldSelect } = navigateItems(key, items, prev);
       if (shouldSelect) {
         const item = items.find((i) => i.id === newActiveId);
-        if (item?.id.startsWith('slash-')) {
-          if (key === 'Tab' || opts.shouldInsert) {
-            // insertSlashCommand already sets slashOpen=false; calling close() would
-            // invoke clearSlashToken() again with stale state and wipe the inserted value.
-            opts.insertSlash(`${item.label} `);
-          } else {
-            opts.executeSlash(item.label);
-            opts.close();
-          }
-        } else if (item) {
-          selectItem(item);
-        }
+        if (item) dispatchSelectedItem(item, key, opts);
       }
       return newActiveId;
     });
@@ -304,17 +319,6 @@ export function CommandMenu({
     document.addEventListener('keydown', handleNavKey);
     return () => document.removeEventListener('keydown', handleNavKey);
   }, [externalOpen]);
-
-  const dismissItem = (item: MenuItem) => {
-    const behavior = item.dismissBehavior ?? 'close';
-    if (behavior === 'close') close();
-    else if (behavior === 'closeSilent') closeSilent();
-  };
-
-  const selectItem = (item: MenuItem) => {
-    item.onClick?.();
-    dismissItem(item);
-  };
 
   // Build menu items (pure function, no deps on component state)
   const sections = buildMenuItems({
@@ -366,10 +370,8 @@ export function CommandMenu({
   const handleFilterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      setButtonOpen(false);
-      setFilter('');
+      handleDismiss();
       setActiveId(null);
-      compose.dismissSlash();
       compose.focusTextarea();
       return;
     }
@@ -392,6 +394,7 @@ export function CommandMenu({
         ref={anchorRef}
         title="Show command menu (/)"
         onClick={(e) => {
+          // Prevent onPointerDownOutside from treating this click as an outside dismiss
           e.stopPropagation();
           setButtonOpen((v) => !v);
         }}

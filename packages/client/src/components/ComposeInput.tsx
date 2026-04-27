@@ -3,6 +3,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
+import { useChatColumnAnchorRef } from '../hooks/useChatColumnAnchorRef';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
@@ -249,12 +250,7 @@ export function ComposeInput() {
   const hasFileResults = fileResults.length > 0 || searchStatus !== 'idle';
   const showMentionDropdown = mentionOpen && hasFileResults;
 
-  const containerAnchorRef = useRef({
-    getBoundingClientRect: () => {
-      const el = textareaRef.current?.closest<HTMLElement>('.relative');
-      return el?.getBoundingClientRect() ?? new DOMRect();
-    },
-  });
+  const containerAnchorRef = useChatColumnAnchorRef(textareaRef);
 
   return (
     <Popover.Root open={showMentionDropdown}>

@@ -2,7 +2,7 @@ import { renderMenuTrailing } from '../../lib/adapters/to-menu-item';
 import type { Feature, FeatureSection } from '../../lib/feature';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 
-export type DismissBehavior = 'close' | 'closeSilent' | 'none';
+type DismissBehavior = 'close' | 'closeSilent' | 'none';
 
 export interface MenuItem {
   id: string;
@@ -37,8 +37,13 @@ export interface BuildMenuItemsParams {
 const byOrder = (a: Feature, b: Feature) =>
   (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY);
 
+function resolveDismissBehavior(f: Feature): DismissBehavior {
+  if (f.state?.kind === 'toggle') return 'none';
+  if (f.ui?.closeSilent) return 'closeSilent';
+  return 'close';
+}
+
 function featureToMenuItem(f: Feature): MenuItem {
-  const isToggle = f.state?.kind === 'toggle';
   return {
     id: f.id,
     label: f.label,
@@ -48,7 +53,7 @@ function featureToMenuItem(f: Feature): MenuItem {
     filterOnly: f.ui?.filterOnly,
     matchFirstToken: f.ui?.matchFirstToken,
     trailing: renderMenuTrailing(f.state, { featureId: f.id }),
-    dismissBehavior: isToggle ? 'none' : f.ui?.closeSilent ? 'closeSilent' : 'close',
+    dismissBehavior: resolveDismissBehavior(f),
     onClick: () => f.execute(),
   };
 }
@@ -86,7 +91,7 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       id: `slash-${cmd}`,
       label: `/${cmd}`,
       section: 'Slash Commands',
-      dismissBehavior: 'close' as const,
+      dismissBehavior: 'close',
       onClick: () => compose.executeSlashCommand(`/${cmd}`),
     }));
 

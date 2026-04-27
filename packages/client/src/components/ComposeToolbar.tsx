@@ -6,18 +6,12 @@ import {
   toPermissionMode,
 } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { z } from 'zod';
 import { useAppInit } from '../contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { modelOpenSignal } from '../features/model/model-feature';
+import { useChatColumnAnchorRef } from '../hooks/useChatColumnAnchorRef';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { AttachMenu } from './AttachMenu';
@@ -67,14 +61,39 @@ const ModelPickerPopover = lazy(() =>
   import('./ModelPickerPopover').then((m) => ({ default: m.ModelPickerPopover })),
 );
 
+const rawMcpServerSchema = z.object({
+  name: z.string(),
+  status: z.string(),
+  scope: z.string().optional(),
+});
+
 const mcpStatusSchema = mcpServerInfoSchema.shape.status;
 
-const toMcpServerInfo = (s: { name: string; status: string; scope?: string }): McpServerInfo => ({
+const toMcpServerInfo = (s: z.infer<typeof rawMcpServerSchema>): McpServerInfo => ({
   name: s.name,
   enabled: true,
   status: mcpStatusSchema.safeParse(s.status).data ?? 'disconnected',
   scope: s.scope,
 });
+
+function parseMcpServer(raw: unknown): McpServerInfo | null {
+  const parsed = rawMcpServerSchema.safeParse(raw);
+  return parsed.success ? toMcpServerInfo(parsed.data) : null;
+}
+
+async function fetchEnrichedMcpServers(
+  mcpStatus: () => Promise<{ success: boolean; response?: { mcpServers?: unknown[] } }>,
+): Promise<McpServerInfo[] | null> {
+  try {
+    const result = await mcpStatus();
+    const servers = result.success ? result.response?.mcpServers : undefined;
+    if (!Array.isArray(servers)) return null;
+    return servers.map(parseMcpServer).filter((s): s is McpServerInfo => s !== null);
+  } catch (e) {
+    console.error('MCP refresh failed:', e);
+    return null;
+  }
+}
 
 export interface ComposeToolbarProps {
   onAttachFile?: () => void;
@@ -112,54 +131,28 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
   const { initOptions, setInitOptions } = useAppInit();
   const compose = useChannelCompose();
 
-  // MCP server refresh logic (inlined from ConnectedManageMcpDialog)
-  const mcpStatusRef = useRef(mcpStatus);
-  useLayoutEffect(() => {
-    mcpStatusRef.current = mcpStatus;
-  });
   const baseMcpServers = channelMcpServers.map(toMcpServerInfo);
   const [enrichedMcpServers, setEnrichedMcpServers] = useState<McpServerInfo[] | null>(null);
-  const mcpRefresh = async () => {
-    try {
-      const result = await mcpStatusRef.current();
-      const servers = result.success ? result.response?.mcpServers : undefined;
-      if (Array.isArray(servers)) {
-        setEnrichedMcpServers(servers.map(toMcpServerInfo));
-      } else {
-        setEnrichedMcpServers(null);
-      }
-    } catch (e) {
-      console.error('MCP refresh failed:', e);
-      setEnrichedMcpServers(null);
-    }
-  };
+  const mcpRefresh = () => fetchEnrichedMcpServers(mcpStatus).then(setEnrichedMcpServers);
   const mcpServers = enrichedMcpServers ?? baseMcpServers;
 
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
 
-  // Auto-refresh MCP status when dialog opens
   // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
   useEffect(() => {
     if (activeDialog === 'mcpStatus' && !enrichedMcpServers) {
       mcpRefresh();
     }
-  }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
+  }, [activeDialog, enrichedMcpServers]);
 
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const modelAnchorRef = useRef({
-    getBoundingClientRect: () => {
-      const el = toolbarRef.current?.closest<HTMLElement>('.relative');
-      return el?.getBoundingClientRect() ?? new DOMRect();
-    },
-  });
+  const modelAnchorRef = useChatColumnAnchorRef(toolbarRef);
 
   const isModelPickerOpen = useSyncExternalStore(
     (cb) => modelOpenSignal.subscribe(cb),
     () => modelOpenSignal.isOpen,
   );
-  const handleModelPickerOpenChange = (open: boolean) => modelOpenSignal.setOpen(open);
-
   const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
   const supportsAutoMode = modelEntry?.supportsAutoMode ?? false;
   const effortLevels = getEffortLevels(modelEntry);
@@ -196,7 +189,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
         forkSession={forkSession}
         updateValue={compose.updateValue}
       />
-      <Popover.Root open={isModelPickerOpen} onOpenChange={handleModelPickerOpenChange}>
+      <Popover.Root open={isModelPickerOpen} onOpenChange={modelOpenSignal.setOpen}>
         <Popover.Anchor virtualRef={modelAnchorRef} />
         <div ref={toolbarRef} className="flex items-center gap-0.5 px-2 py-1 text-xs">
           {isModelPickerOpen && (

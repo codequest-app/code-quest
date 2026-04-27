@@ -163,7 +163,7 @@ export function ChatPanel({ title }: { title?: string }) {
           onClose={() => clearPendingDiffReview()}
         />
       )}
-      <div ref={chatColumnRef} className="relative flex flex-col flex-1 min-w-0">
+      <div ref={chatColumnRef} data-chat-column className="relative flex flex-col flex-1 min-w-0">
         <Popover.Root open={showResumeOverlay} onOpenChange={handleResumeOpenChange}>
           <HeaderBar title={title} showResumeButton />
           {showResumeOverlay && (

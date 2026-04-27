@@ -55,8 +55,6 @@ export function SessionHistoryPopover({ cwd, open, onOpenChange }: SessionHistor
     }
   }
 
-  if (!open) return null;
-
   return (
     <Popover.Content
       side="right"
