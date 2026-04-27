@@ -11,16 +11,11 @@ const models = [
   { value: 'claude-haiku-4-5-20251001', displayName: 'Claude Haiku 4.5' },
 ];
 
-function renderPanel(currentModel: string | null = null, onSwitch = vi.fn(), onClose = vi.fn()) {
+function renderPanel(currentModel: string | null = null, onSwitch = vi.fn()) {
   render(
-    <ModelPickerPopover
-      currentModel={currentModel}
-      availableModels={models}
-      onSwitch={onSwitch}
-      onClose={onClose}
-    />,
+    <ModelPickerPopover currentModel={currentModel} availableModels={models} onSwitch={onSwitch} />,
   );
-  return { onSwitch, onClose };
+  return { onSwitch };
 }
 
 describe('ModelPickerPopover', () => {
@@ -79,30 +74,16 @@ describe('ModelPickerPopover', () => {
     });
   });
 
-  describe('Escape closes panel', () => {
-    it('calls onClose when Escape is pressed', async () => {
-      const user = userEvent.setup();
-      const { onClose } = renderPanel('claude-sonnet-4-20250514');
-      const listbox = screen.getByRole('listbox');
-      listbox.focus();
-
-      await user.keyboard('{Escape}');
-
-      expect(onClose).toHaveBeenCalledOnce();
-    });
-  });
-
   describe('Enter selects focused item', () => {
-    it('Enter selects the highlighted model and calls onClose', async () => {
+    it('Enter selects the highlighted model', async () => {
       const user = userEvent.setup();
-      const { onSwitch, onClose } = renderPanel('claude-opus-4-20250514');
+      const { onSwitch } = renderPanel('claude-opus-4-20250514');
       const listbox = screen.getByRole('listbox');
       listbox.focus();
 
       await user.keyboard('{ArrowDown}{Enter}');
 
       expect(onSwitch).toHaveBeenCalledWith('claude-sonnet-4-20250514');
-      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 });

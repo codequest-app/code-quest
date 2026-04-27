@@ -11,7 +11,7 @@ const models = [
 const meta = {
   component: ModelPickerPopover,
   tags: ['autodocs'],
-  args: { availableModels: models, onSwitch: fn(), onClose: fn() },
+  args: { availableModels: models, onSwitch: fn() },
   decorators: [
     (Story) => (
       <div className="max-w-sm bg-bg text-text p-6 relative">

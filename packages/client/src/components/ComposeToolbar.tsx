@@ -5,6 +5,7 @@ import {
   type PermissionMode,
   toPermissionMode,
 } from '@code-quest/shared';
+import * as Popover from '@radix-ui/react-popover';
 import {
   lazy,
   Suspense,
@@ -17,7 +18,6 @@ import {
 import { useAppInit } from '../contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { modelOpenSignal } from '../features/model/model-feature';
-import { useClickOutside } from '../hooks/useClickOutside';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { AddButton } from './AddButton';
@@ -138,8 +138,6 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
 
-  const pickerRef = useRef<HTMLDivElement>(null);
-
   // Auto-refresh MCP status when dialog opens
   // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
   useEffect(() => {
@@ -148,11 +146,19 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
     }
   }, [activeDialog, enrichedMcpServers]); // mcpRefresh stable via React Compiler
 
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const modelAnchorRef = useRef({
+    getBoundingClientRect: () => {
+      const el = toolbarRef.current?.closest<HTMLElement>('.relative');
+      return el?.getBoundingClientRect() ?? new DOMRect();
+    },
+  });
+
   const isModelPickerOpen = useSyncExternalStore(
     (cb) => modelOpenSignal.subscribe(cb),
     () => modelOpenSignal.isOpen,
   );
-  useClickOutside([pickerRef], () => modelOpenSignal.setOpen(false), isModelPickerOpen);
+  const handleModelPickerOpenChange = (open: boolean) => modelOpenSignal.setOpen(open);
 
   const modelEntry = (model ? findModel(model, availableModels) : undefined) ?? availableModels[0];
   const supportsAutoMode = modelEntry?.supportsAutoMode ?? false;
@@ -190,64 +196,77 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
         forkSession={forkSession}
         updateValue={compose.updateValue}
       />
-      <div className="flex items-center gap-0.5 px-2 py-1 text-xs">
-        {isModelPickerOpen && (
-          <Suspense fallback={null}>
-            <div ref={pickerRef}>
-              <ModelPickerPopover
-                currentModel={model ?? null}
-                availableModels={availableModels}
-                onSwitch={setModel}
-                onClose={() => modelOpenSignal.setOpen(false)}
-                defaultModelDescription={providerConfig?.defaultModelDescription}
-              />
-            </div>
-          </Suspense>
-        )}
+      <Popover.Root open={isModelPickerOpen} onOpenChange={handleModelPickerOpenChange}>
+        <Popover.Anchor virtualRef={modelAnchorRef} />
+        <div ref={toolbarRef} className="flex items-center gap-0.5 px-2 py-1 text-xs">
+          {isModelPickerOpen && (
+            <Popover.Content
+              side="top"
+              align="start"
+              sideOffset={4}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              onFocusOutside={(e) => e.preventDefault()}
+              className="z-modal"
+              style={{ width: 'var(--radix-popper-anchor-width)' }}
+            >
+              <Suspense fallback={null}>
+                <ModelPickerPopover
+                  currentModel={model ?? null}
+                  availableModels={availableModels}
+                  onSwitch={(v) => {
+                    setModel(v);
+                    modelOpenSignal.setOpen(false);
+                  }}
+                  defaultModelDescription={providerConfig?.defaultModelDescription}
+                />
+              </Suspense>
+            </Popover.Content>
+          )}
 
-        <AddButton onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
+          <AddButton onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
 
-        <CommandMenu
-          onToggleMcp={() => setActiveDialog('manageMcp')}
-          onMcpStatus={() => setActiveDialog('mcpStatus')}
-          onManagePlugins={() => setActiveDialog('plugins')}
-          onAttachFile={onAttachFile}
-          docsUrl={providerConfig?.brand.docsUrl}
-        />
+          <CommandMenu
+            onToggleMcp={() => setActiveDialog('manageMcp')}
+            onMcpStatus={() => setActiveDialog('mcpStatus')}
+            onManagePlugins={() => setActiveDialog('plugins')}
+            onAttachFile={onAttachFile}
+            docsUrl={providerConfig?.brand.docsUrl}
+          />
 
-        {showContextUsage && (
-          <span className="text-text-muted shrink-0 flex items-center gap-0.5">
-            {isContextCompressed ? (
-              'compact'
-            ) : (
-              <>
-                <ContextPieChart pct={contextPct ?? 0} />
-                <span>{contextPct ?? 0}% used</span>
-              </>
-            )}
-          </span>
-        )}
+          {showContextUsage && (
+            <span className="text-text-muted shrink-0 flex items-center gap-0.5">
+              {isContextCompressed ? (
+                'compact'
+              ) : (
+                <>
+                  <ContextPieChart pct={contextPct ?? 0} />
+                  <span>{contextPct ?? 0}% used</span>
+                </>
+              )}
+            </span>
+          )}
 
-        <div className="flex-1" />
+          <div className="flex-1" />
 
-        <PermissionModePicker
-          mode={permissionMode ?? 'normal'}
-          effort={effort ?? undefined}
-          effortLevels={effortLevels}
-          supportsAutoMode={supportsAutoMode}
-          onSetPermissionMode={setPermissionMode}
-          onSetEffort={setEffort}
-        />
+          <PermissionModePicker
+            mode={permissionMode ?? 'normal'}
+            effort={effort ?? undefined}
+            effortLevels={effortLevels}
+            supportsAutoMode={supportsAutoMode}
+            onSetPermissionMode={setPermissionMode}
+            onSetEffort={setEffort}
+          />
 
-        <SendButton
-          mode={toPermissionMode(permissionMode)}
-          isProcessing={isProcessing}
-          isCancelling={isCancelling}
-          hasText={compose.hasText}
-          onAbort={abort}
-          onSubmit={compose.submit}
-        />
-      </div>
+          <SendButton
+            mode={toPermissionMode(permissionMode)}
+            isProcessing={isProcessing}
+            isCancelling={isCancelling}
+            hasText={compose.hasText}
+            onAbort={abort}
+            onSubmit={compose.submit}
+          />
+        </div>
+      </Popover.Root>
     </>
   );
 }

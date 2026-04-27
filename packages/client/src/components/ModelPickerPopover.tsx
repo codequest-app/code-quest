@@ -15,7 +15,6 @@ interface ModelPickerPopoverProps {
   currentModel: string | null;
   availableModels: ModelInfo[];
   onSwitch: (model: string) => void;
-  onClose: () => void;
   defaultModelDescription?: string;
 }
 
@@ -59,7 +58,6 @@ export function ModelPickerPopover({
   currentModel,
   availableModels,
   onSwitch,
-  onClose,
   defaultModelDescription,
 }: ModelPickerPopoverProps) {
   const defaultModelValue = availableModels[0]?.value ?? null;
@@ -75,24 +73,17 @@ export function ModelPickerPopover({
     (item) => (item.value === '' ? defaultModelValue : item.value) === currentModel,
   );
   const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
 
-  // Auto-focus so keyboard events are received immediately on open
   useEffect(() => {
-    containerRef.current?.focus();
+    listboxRef.current?.focus();
   }, []);
 
   const handleSelect = (value: string) => {
     onSwitch(value === '' ? (defaultModelValue ?? '') : value);
-    onClose();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-      return;
-    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, items.length - 1));
@@ -114,13 +105,10 @@ export function ModelPickerPopover({
 
   return (
     <div
-      ref={containerRef}
+      ref={listboxRef}
       role="listbox"
       tabIndex={0}
-      className={cn(
-        'absolute bottom-full left-0 right-0 mb-1 bg-surface border border-border rounded shadow-lg z-modal overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none',
-        focusRing,
-      )}
+      className="bg-surface border border-border rounded shadow-lg overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
       onKeyDown={handleKeyDown}
     >
       {/* Default (recommended) sentinel — only when server doesn't provide one */}
