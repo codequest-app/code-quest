@@ -22,8 +22,6 @@ function defaultParams(overrides?: Partial<BuildMenuItemsParams>): BuildMenuItem
   return {
     slashCommands: [],
     registry: createFeatureRegistry(),
-    close: vi.fn(),
-    closeSilent: vi.fn(),
     compose: { executeSlashCommand: vi.fn() },
     ...overrides,
   };
@@ -53,16 +51,15 @@ describe('buildMenuItems', () => {
     expect(context.map((i) => i.id)).toContain('attach-file');
   });
 
-  it('clicking attach-file calls onAttachFile + closeSilent', () => {
-    const closeSilent = vi.fn();
+  it('clicking attach-file calls onAttachFile and has closeSilent dismiss', () => {
     const onAttachFile = vi.fn();
     const registry = createFeatureRegistry();
     registry.register(createAttachFileFeature({ onAttachFile }));
-    const { context } = buildMenuItems(defaultParams({ closeSilent, registry }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
     const item = context.find((i) => i.id === 'attach-file');
     item?.onClick?.();
     expect(onAttachFile).toHaveBeenCalled();
-    expect(closeSilent).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('closeSilent');
   });
 
   it('context section includes mention-file from registry MenuItemView', () => {
@@ -73,16 +70,15 @@ describe('buildMenuItems', () => {
     expect(context.map((i) => i.id)).toContain('mention-file');
   });
 
-  it('clicking mention-file calls mentionFile + close', () => {
-    const close = vi.fn();
+  it('clicking mention-file calls mentionFile and has close dismiss', () => {
     const mentionFile = vi.fn();
     const registry = createFeatureRegistry();
     registry.register(createMentionFileFeature({ mentionFile }));
-    const { context } = buildMenuItems(defaultParams({ close, registry }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
     const item = context.find((i) => i.id === 'mention-file');
     item?.onClick?.();
     expect(mentionFile).toHaveBeenCalled();
-    expect(close).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('close');
   });
 
   it('context section includes clear item from registry MenuItemView', () => {
@@ -145,9 +141,7 @@ describe('buildMenuItems', () => {
     ]);
   });
 
-  it('clicking model item with closeSilent calls closeSilent not close', () => {
-    const close = vi.fn();
-    const closeSilent = vi.fn();
+  it('model item with closeSilent has closeSilent dismiss', () => {
     const execute = vi.fn();
     const registry = createFeatureRegistry();
     registry.register({
@@ -158,27 +152,26 @@ describe('buildMenuItems', () => {
       ui: { closeSilent: true },
       execute,
     });
-    const { model } = buildMenuItems(defaultParams({ registry, close, closeSilent }));
-    model.find((i) => i.id === 'model')?.onClick?.();
+    const { model } = buildMenuItems(defaultParams({ registry }));
+    const item = model.find((i) => i.id === 'model');
+    item?.onClick?.();
     expect(execute).toHaveBeenCalled();
-    expect(closeSilent).toHaveBeenCalled();
-    expect(close).not.toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('closeSilent');
   });
 
-  it('clicking clear item calls clearMessages + clearModifiedFiles + close', () => {
-    const close = vi.fn();
+  it('clicking clear item calls clearMessages + clearModifiedFiles and has close dismiss', () => {
     const clearMessages = vi.fn();
     const clearModifiedFiles = vi.fn();
     const registry = createFeatureRegistry();
     registry.register(
       createClearFeature({ clearMessages, clearModifiedFiles, sendMessage: vi.fn() }),
     );
-    const { context } = buildMenuItems(defaultParams({ close, registry }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
     const item = context.find((i) => i.id === 'clear');
     item?.onClick?.();
     expect(clearMessages).toHaveBeenCalled();
     expect(clearModifiedFiles).toHaveBeenCalled();
-    expect(close).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('close');
   });
 
   it('context section includes rewind item from registry MenuItemView', () => {
@@ -230,17 +223,16 @@ describe('buildMenuItems', () => {
     });
 
     it('invokes btw feature with question when clicked', () => {
-      const close = vi.fn();
       const askSideQuestion = vi.fn().mockResolvedValue({ ok: true, data: { answer: '4' } });
       const btwSlashFeature = createBtwFeature({ askSideQuestion });
       const localFeatures = [
         createBtwLocalFeature({ slashFilter: 'btw what is 2+2?', baseFeature: btwSlashFeature }),
       ];
-      const { slash } = buildMenuItems(defaultParams({ close, localFeatures }));
+      const { slash } = buildMenuItems(defaultParams({ localFeatures }));
       const btw = slash.find((i) => i.id === 'btw');
       btw?.onClick?.();
       expect(askSideQuestion).toHaveBeenCalledWith('what is 2+2?');
-      expect(close).toHaveBeenCalled();
+      expect(btw?.dismissBehavior).toBe('close');
     });
 
     it('does not invoke btw feature when question is empty', () => {
@@ -267,15 +259,15 @@ describe('buildMenuItems', () => {
     expect(customize.map((i) => i.id)).toContain('plugins');
   });
 
-  it('clicking mcp-status calls onMcpStatus + closeSilent', () => {
-    const closeSilent = vi.fn();
+  it('clicking mcp-status calls onMcpStatus and has closeSilent dismiss', () => {
     const onMcpStatus = vi.fn();
     const registry = createFeatureRegistry();
     registry.register(createMcpStatusFeature({ onMcpStatus }));
-    const { customize } = buildMenuItems(defaultParams({ closeSilent, registry }));
-    customize.find((i) => i.id === 'mcp-status')?.onClick?.();
+    const { customize } = buildMenuItems(defaultParams({ registry }));
+    const item = customize.find((i) => i.id === 'mcp-status');
+    item?.onClick?.();
     expect(onMcpStatus).toHaveBeenCalled();
-    expect(closeSilent).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('closeSilent');
   });
 
   it('slash section includes registry SlashCommandView with execute', () => {
@@ -291,8 +283,7 @@ describe('buildMenuItems', () => {
     expect(slash.map((i) => i.id)).toContain('reload-plugins');
   });
 
-  it('clicking registry slash feature calls feature.execute + close', () => {
-    const close = vi.fn();
+  it('clicking registry slash feature calls feature.execute and has close dismiss', () => {
     const execute = vi.fn();
     const registry = createFeatureRegistry();
     registry.register({
@@ -302,15 +293,14 @@ describe('buildMenuItems', () => {
       execute,
       slash: { command: '/reload-plugins', invoke: vi.fn() },
     });
-    const { slash } = buildMenuItems(defaultParams({ registry, close }));
+    const { slash } = buildMenuItems(defaultParams({ registry }));
     const item = slash.find((i) => i.id === 'reload-plugins');
     item?.onClick?.();
     expect(execute).toHaveBeenCalled();
-    expect(close).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('close');
   });
 
-  it('clicking registry rewind feature calls feature.execute + close', () => {
-    const close = vi.fn();
+  it('clicking registry rewind feature calls feature.execute and has close dismiss', () => {
     const execute = vi.fn();
     const registry = createFeatureRegistry();
     const feature: Feature = {
@@ -320,11 +310,11 @@ describe('buildMenuItems', () => {
       execute,
     };
     registry.register(feature);
-    const { context } = buildMenuItems(defaultParams({ registry, close }));
+    const { context } = buildMenuItems(defaultParams({ registry }));
     const item = context.find((i) => i.id === 'rewind');
     item?.onClick?.();
     expect(execute).toHaveBeenCalled();
-    expect(close).toHaveBeenCalled();
+    expect(item?.dismissBehavior).toBe('close');
   });
 
   describe('regression: btw + CLI slash commands', () => {

@@ -2,6 +2,8 @@ import { renderMenuTrailing } from '../../lib/adapters/to-menu-item';
 import type { Feature, FeatureSection } from '../../lib/feature';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 
+export type DismissBehavior = 'close' | 'closeSilent' | 'none';
+
 export interface MenuItem {
   id: string;
   label: string;
@@ -12,6 +14,7 @@ export interface MenuItem {
   /** Match only the first word of the filter text (e.g. "/btw <question>" → match on "btw") */
   matchFirstToken?: boolean;
   trailing?: React.ReactNode;
+  dismissBehavior?: DismissBehavior;
   onClick?: () => void;
 }
 
@@ -28,18 +31,13 @@ export interface BuildMenuItemsParams {
   slashCommands: string[];
   registry: FeatureRegistry;
   localFeatures?: Feature[];
-  close: () => void;
-  closeSilent: () => void;
   compose: { executeSlashCommand: (cmd: string) => void };
 }
 
 const byOrder = (a: Feature, b: Feature) =>
   (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY);
 
-function featureToMenuItem(
-  f: Feature,
-  onClose: { close: () => void; closeSilent: () => void },
-): MenuItem {
+function featureToMenuItem(f: Feature): MenuItem {
   const isToggle = f.state?.kind === 'toggle';
   return {
     id: f.id,
@@ -50,39 +48,28 @@ function featureToMenuItem(
     filterOnly: f.ui?.filterOnly,
     matchFirstToken: f.ui?.matchFirstToken,
     trailing: renderMenuTrailing(f.state, { featureId: f.id }),
-    onClick: () => {
-      f.execute();
-      // Toggles stay open so the user can flip several without reopening.
-      if (isToggle) return;
-      if (f.ui?.closeSilent) onClose.closeSilent();
-      else onClose.close();
-    },
+    dismissBehavior: isToggle ? 'none' : f.ui?.closeSilent ? 'closeSilent' : 'close',
+    onClick: () => f.execute(),
   };
 }
 
-function buildSection(
-  features: Feature[],
-  section: FeatureSection,
-  onClose: { close: () => void; closeSilent: () => void },
-): MenuItem[] {
+function buildSection(features: Feature[], section: FeatureSection): MenuItem[] {
   return features
     .filter((f) => f.section === section)
     .sort(byOrder)
-    .map((f) => featureToMenuItem(f, onClose));
+    .map((f) => featureToMenuItem(f));
 }
 
 export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
-  const { slashCommands, registry } = params;
-  const { close, closeSilent, compose } = params;
+  const { slashCommands, registry, compose } = params;
 
   const local = params.localFeatures ?? [];
-  // Local features override registry entries with the same id.
   const featureById = new Map<string, Feature>();
   for (const f of registry.getFeatures()) featureById.set(f.id, f);
   for (const f of local) featureById.set(f.id, f);
   const features = [...featureById.values()];
 
-  const section = (name: FeatureSection) => buildSection(features, name, { close, closeSilent });
+  const section = (name: FeatureSection) => buildSection(features, name);
 
   const context = section('Context');
   const model = section('Model');
@@ -99,10 +86,8 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
       id: `slash-${cmd}`,
       label: `/${cmd}`,
       section: 'Slash Commands',
-      onClick: () => {
-        compose.executeSlashCommand(`/${cmd}`);
-        close();
-      },
+      dismissBehavior: 'close' as const,
+      onClick: () => compose.executeSlashCommand(`/${cmd}`),
     }));
 
   const slash: MenuItem[] = [...section('Slash Commands'), ...cliSlashItems].sort((a, b) =>

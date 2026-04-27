@@ -1,3 +1,4 @@
+import * as Popover from '@radix-ui/react-popover';
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig } from '../../contexts/channel';
 import { useFeatureRegistry } from '../../contexts/channel/FeatureRegistryContext';
@@ -28,11 +29,13 @@ function MenuItemRow({
   isActive,
   activeItemRef,
   onHover,
+  onSelect,
 }: {
   item: MenuItem;
   isActive: boolean;
   activeItemRef: RefObject<HTMLButtonElement | null>;
   onHover: (id: string) => void;
+  onSelect: (item: MenuItem) => void;
 }) {
   return (
     <button
@@ -40,7 +43,7 @@ function MenuItemRow({
       type="button"
       role="menuitem"
       disabled={item.disabled}
-      onClick={item.onClick}
+      onClick={() => onSelect(item)}
       onMouseEnter={() => onHover(item.id)}
       className={cn(
         'text-left px-3 py-1 w-full flex items-center justify-between disabled:text-text-muted disabled:cursor-not-allowed',
@@ -64,6 +67,7 @@ function MenuSection({
   activeId,
   activeItemRef,
   onHover,
+  onSelect,
   isFirst = false,
 }: {
   label: string;
@@ -71,6 +75,7 @@ function MenuSection({
   activeId: string | null;
   activeItemRef: RefObject<HTMLButtonElement | null>;
   onHover: (id: string) => void;
+  onSelect: (item: MenuItem) => void;
   isFirst?: boolean;
 }) {
   if (items.length === 0) return null;
@@ -89,6 +94,7 @@ function MenuSection({
             isActive={item.id === activeId}
             activeItemRef={activeItemRef}
             onHover={onHover}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -188,28 +194,24 @@ export function CommandMenu({
   const [buttonOpen, setButtonOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const containerAnchorRef = useRef({
+    getBoundingClientRect: () => {
+      const el = anchorRef.current?.closest<HTMLElement>('.relative');
+      return el?.getBoundingClientRect() ?? new DOMRect();
+    },
+  });
   const filterRef = useRef<HTMLInputElement>(null);
   const activeItemRef = useRef<HTMLButtonElement>(null);
-
-  // Derived: menu is open if either button-click or externally driven
-  const open = buttonOpen || !!externalOpen;
 
   // Effective filter text: from textarea (external) or from filter input (button-click)
   const effectiveFilter = externalOpen ? (externalFilter ?? '') : filter;
 
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) {
-        setButtonOpen(false);
-        setFilter('');
-        compose.dismissSlash();
-      }
-    };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [open, compose.dismissSlash]);
+  const handleDismiss = () => {
+    setButtonOpen(false);
+    setFilter('');
+    compose.dismissSlash();
+  };
 
   useEffect(() => {
     if (buttonOpen && !externalOpen) {
@@ -276,7 +278,7 @@ export function CommandMenu({
             opts.close();
           }
         } else if (item) {
-          item.onClick?.();
+          selectItem(item);
         }
       }
       return newActiveId;
@@ -303,13 +305,22 @@ export function CommandMenu({
     return () => document.removeEventListener('keydown', handleNavKey);
   }, [externalOpen]);
 
+  const dismissItem = (item: MenuItem) => {
+    const behavior = item.dismissBehavior ?? 'close';
+    if (behavior === 'close') close();
+    else if (behavior === 'closeSilent') closeSilent();
+  };
+
+  const selectItem = (item: MenuItem) => {
+    item.onClick?.();
+    dismissItem(item);
+  };
+
   // Build menu items (pure function, no deps on component state)
   const sections = buildMenuItems({
     slashCommands,
     registry,
     localFeatures,
-    close,
-    closeSilent,
     compose: { executeSlashCommand: compose.executeSlashCommand },
   });
   const layout = computeMenuLayout(sections, effectiveFilter);
@@ -372,16 +383,46 @@ export function CommandMenu({
     });
   };
 
+  const popoverVisible = buttonOpen || paletteExternallyVisible;
+
   return (
-    <div ref={menuRef}>
-      <IconButton title="Show command menu (/)" onClick={() => setButtonOpen((v) => !v)}>
+    <Popover.Root open={popoverVisible}>
+      <Popover.Anchor virtualRef={containerAnchorRef} />
+      <IconButton
+        ref={anchorRef}
+        title="Show command menu (/)"
+        onClick={(e) => {
+          e.stopPropagation();
+          setButtonOpen((v) => !v);
+        }}
+      >
         <SlashCommandIcon className="w-5 h-5" />
       </IconButton>
 
-      {(buttonOpen || paletteExternallyVisible) && (
-        <div
+      {popoverVisible && (
+        <Popover.Content
+          side="top"
+          align="start"
+          sideOffset={8}
+          avoidCollisions={false}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => {
+            if (anchorRef.current?.contains(e.target as Node)) {
+              e.preventDefault();
+              return;
+            }
+            handleDismiss();
+          }}
+          onFocusOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            handleDismiss();
+            compose.focusTextarea();
+          }}
           role="menu"
-          className="absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-lg shadow-lg z-modal text-xs max-h-[50vh] overflow-hidden animate-slide-up"
+          className="bg-surface border border-border rounded-lg shadow-lg z-modal text-xs max-h-[50vh] overflow-hidden animate-slide-up"
+          style={{ width: 'var(--radix-popper-anchor-width)' }}
         >
           <div className={cn(externalOpen ? 'pt-1' : 'p-1')}>
             {!externalOpen && (
@@ -443,13 +484,14 @@ export function CommandMenu({
                     activeId={activeId}
                     activeItemRef={activeItemRef}
                     onHover={setActiveId}
+                    onSelect={selectItem}
                     isFirst={s.isFirst}
                   />
                 ))
             )}
           </div>
-        </div>
+        </Popover.Content>
       )}
-    </div>
+    </Popover.Root>
   );
 }
