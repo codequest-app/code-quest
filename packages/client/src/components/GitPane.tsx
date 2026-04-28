@@ -204,9 +204,12 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
             {hasChanges && (
               <ActionButton
                 onClick={stageAll}
-                label="Stage all"
-                className="text-xs text-accent hover:underline disabled:opacity-50 inline-flex items-center gap-1"
-              />
+                variant="ghost"
+                size="xs"
+                className="text-accent hover:underline inline-flex items-center gap-1"
+              >
+                Stage all
+              </ActionButton>
             )}
           </SectionHeader>
           <ChangedFiles files={status.changedFiles} onPick={openDiff} />
@@ -219,9 +222,15 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
         <section className="px-3 py-2">
           <SectionHeader title="Actions" />
           <div className="flex gap-2 text-xs">
-            <ActionButton onClick={runFetch} label="Fetch" />
-            <ActionButton onClick={runPull} label="Pull" />
-            <ActionButton onClick={push} label="Push" />
+            <ActionButton onClick={runFetch} variant="secondary" size="xs">
+              Fetch
+            </ActionButton>
+            <ActionButton onClick={runPull} variant="secondary" size="xs">
+              Pull
+            </ActionButton>
+            <ActionButton onClick={push} variant="secondary" size="xs">
+              Push
+            </ActionButton>
           </div>
         </section>
       </div>

@@ -9,6 +9,7 @@ import { useChannelMessages } from '../contexts/channel';
 import { pluralize } from '../utils/pluralize';
 import { MarkdownContent } from './MarkdownContent';
 import { PlanCommentPopover } from './PlanCommentPopover';
+import { Button } from './ui/Button';
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 
@@ -63,20 +64,22 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-assistant">📋 Plan Review</span>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="success"
+            size="sm"
+            className="rounded-md font-medium"
             onClick={handleApprove}
-            className="px-3 py-1.5 bg-success text-white rounded-md cursor-pointer text-sm font-medium transition-all hover:opacity-80"
           >
             Approve Plan
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="warning"
+            size="sm"
+            className="rounded-md font-medium"
             onClick={handleReject}
-            className="px-3 py-1.5 bg-warning text-white rounded-md cursor-pointer text-sm font-medium transition-all hover:opacity-80"
           >
             Continue Planning
-          </button>
+          </Button>
         </div>
       </div>
       {plan && (

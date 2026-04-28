@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Button } from './ui/Button';
 
 interface EmptyStateProps {
   /** Optional 32-40px glyph anchored above the message — gives the empty
@@ -26,13 +27,9 @@ export function EmptyState({
       <p className="max-w-xs text-sm">{message}</p>
       {hint && <div className="text-xs text-text-dim">{hint}</div>}
       {hasAction && (
-        <button
-          type="button"
-          className="px-6 py-2 rounded bg-accent text-white text-sm hover:bg-accent/80"
-          onClick={onAction}
-        >
+        <Button variant="primary" size="md" className="px-6 py-2" onClick={onAction}>
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

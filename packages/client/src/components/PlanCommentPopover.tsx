@@ -1,6 +1,8 @@
 import type { PlanCommentData } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState } from 'react';
+import { Button } from './ui/Button';
+import { InlineAction } from './ui/InlineAction';
 
 interface PlanCommentPopoverProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -119,21 +121,18 @@ export function PlanCommentPopover({
                 }}
               />
               <div className="flex justify-end gap-1 mt-1">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-2 py-0.5 text-xs text-text-muted hover:text-text cursor-pointer"
-                >
+                <InlineAction className="px-2 py-0.5" onClick={resetForm}>
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
+                </InlineAction>
+                <Button
+                  variant="primary"
+                  size="xs"
+                  className="px-2 py-0.5"
                   disabled={!commentText.trim()}
-                  className="px-2 py-0.5 text-xs bg-accent text-white rounded cursor-pointer disabled:opacity-30"
+                  onClick={handleSubmit}
                 >
                   Comment
-                </button>
+                </Button>
               </div>
             </>
           )}

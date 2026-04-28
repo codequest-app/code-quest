@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 import { controlBorder, focusRing } from './_tokens';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'warning' | 'info';
 type Size = 'xs' | 'sm' | 'md';
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
@@ -13,7 +13,7 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'typ
 }
 
 const BASE = cn(
-  'rounded cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+  'rounded cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed',
   focusRing,
 );
 
@@ -22,6 +22,9 @@ const VARIANTS: Record<Variant, string> = {
   secondary: cn(controlBorder, 'text-text-muted hover:text-text hover:tint-5'),
   danger: 'bg-danger text-white hover:bg-danger/80',
   ghost: 'text-text-muted hover:text-text hover:tint-5',
+  success: 'bg-success text-white hover:bg-success/80',
+  warning: 'bg-warning text-white hover:bg-warning/80',
+  info: 'bg-button text-white hover:bg-button/80',
 };
 
 const SIZES: Record<Size, string> = {

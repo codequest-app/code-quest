@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
+import { InlineAction } from './ui/InlineAction';
 
 function getSteps(brandName: string) {
   return [
@@ -45,13 +46,7 @@ export function OnboardingOverlay(): React.ReactNode {
           <span className="text-xs text-text-muted">
             Step {step + 1} of {steps.length}
           </span>
-          <button
-            type="button"
-            onClick={dismissOnboarding}
-            className="text-xs text-text-muted hover:text-text cursor-pointer"
-          >
-            Skip
-          </button>
+          <InlineAction onClick={dismissOnboarding}>Skip</InlineAction>
         </div>
         <h3 className="text-lg font-semibold text-text mb-2">{current?.title}</h3>
         <p className="text-sm text-text-muted mb-6">{current?.description}</p>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../utils/cn';
+import { InlineAction } from './ui/InlineAction';
 
 interface TruncatedContentProps {
   children: React.ReactNode;
@@ -34,13 +35,9 @@ export function TruncatedContent({
         )}
       </section>
       {overflow && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-text-muted hover:text-text underline mt-1 cursor-pointer"
-        >
+        <InlineAction className="underline mt-1" onClick={() => setExpanded((v) => !v)}>
           {expanded ? 'Show less' : 'Show more'}
-        </button>
+        </InlineAction>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+import { Button } from './ui/Button';
+
 interface ErrorFallbackProps {
   error: unknown;
   resetErrorBoundary: () => void;
@@ -13,13 +15,14 @@ export function ErrorFallback({
       <span className="text-4xl">⚠</span>
       <h2 className="text-lg font-semibold text-text-bright">Something went wrong</h2>
       <p className="text-sm text-text-muted max-w-md">{message}</p>
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
+        className="rounded-lg font-medium py-2"
         onClick={resetErrorBoundary}
-        className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
       >
         Try again
-      </button>
+      </Button>
     </div>
   );
 }

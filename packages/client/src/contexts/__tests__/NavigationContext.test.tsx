@@ -98,6 +98,13 @@ describe('NavigationContext', () => {
     });
   });
 
+  it('state object keeps stable identity when no state changes', () => {
+    const { result, rerender } = renderHook(() => useNavigationState(), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
   describe('pendingOpenWorktree', () => {
     it('requestOpenWorktree sets intent with forceNew default false', () => {
       const { result } = renderHook(

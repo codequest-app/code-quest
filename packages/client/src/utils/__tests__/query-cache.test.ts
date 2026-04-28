@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createQueryStore } from '../create-query-store';
+import { createQueryCache } from '../query-cache';
 
 function createStore() {
   const fetchFn = vi.fn<(cwd: string) => Promise<string>>();
-  const store = createQueryStore<string>({ fetch: fetchFn, idPrefix: 'test' });
+  const store = createQueryCache<string>({ fetch: fetchFn, idPrefix: 'test' });
   return { store, fetchFn };
 }
 
-describe('createQueryStore', () => {
+describe('createQueryCache', () => {
   it('get returns undefined before any fetch', () => {
     const { store } = createStore();
     expect(store.get('/a')).toBeUndefined();
@@ -88,6 +88,22 @@ describe('createQueryStore', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it('setFetch replaces the fetch function used by subsequent refetches', async () => {
+    const { store, fetchFn } = createStore();
+    fetchFn.mockResolvedValue('v1');
+
+    store.subscribe('/a', vi.fn());
+    await vi.waitFor(() => expect(store.get('/a')).toBe('v1'));
+
+    const newFetch = vi.fn<(cwd: string) => Promise<string>>().mockResolvedValue('v2-new');
+    store.setFetch(newFetch);
+
+    await store.refetch('/a');
+    expect(store.get('/a')).toBe('v2-new');
+    expect(newFetch).toHaveBeenCalledWith('/a');
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
   it('hasSubscribers returns correct state', async () => {
     const { store, fetchFn } = createStore();
     fetchFn.mockResolvedValue('v1');
@@ -99,5 +115,17 @@ describe('createQueryStore', () => {
 
     unsub();
     expect(store.hasSubscribers('/a')).toBe(false);
+  });
+
+  it('subscribe logs error when initial fetch rejects', async () => {
+    const { store, fetchFn } = createStore();
+    const error = new Error('network fail');
+    fetchFn.mockRejectedValue(error);
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    store.subscribe('/a', vi.fn());
+    await vi.waitFor(() => expect(spy).toHaveBeenCalledWith(error));
+
+    spy.mockRestore();
   });
 });

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { Button } from './ui/Button';
+import { InlineAction } from './ui/InlineAction';
 
 export interface CommitComposerProps {
   onCommit: (message: string) => void;
@@ -12,21 +14,20 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const subjectRef = useRef<HTMLInputElement>(null);
-  // Focus on mount + every time the composer re-expands. A `ref` callback
-  // would re-fire on every parent re-render and steal focus mid-typing.
   useEffect(() => {
     if (expanded) subjectRef.current?.focus();
   }, [expanded]);
 
   if (!expanded) {
     return (
-      <button
-        type="button"
-        className="mt-3 w-full px-2 py-1 text-left text-xs text-text-muted border border-dashed border-border rounded hover:text-text hover:border-accent"
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mt-3 w-full text-left border border-dashed border-border hover:border-accent"
         onClick={() => setExpanded(true)}
       >
         + Commit message…
-      </button>
+      </Button>
     );
   }
 
@@ -64,9 +65,8 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
         className="px-2 py-1 rounded border border-border bg-surface text-xs font-mono resize-none"
       />
       <div className="flex justify-end gap-2 mt-1">
-        <button
-          type="button"
-          className="text-xs text-text-muted hover:text-text px-2 py-0.5"
+        <InlineAction
+          className="px-2 py-0.5"
           onClick={() => {
             setExpanded(false);
             setSubject('');
@@ -74,15 +74,16 @@ export function CommitComposer({ onCommit, count }: CommitComposerProps): React.
           }}
         >
           Cancel
-        </button>
-        <button
-          type="button"
+        </InlineAction>
+        <Button
+          variant="primary"
+          size="xs"
           disabled={!subject.trim()}
-          className="text-xs px-3 py-0.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="py-0.5"
           onClick={submit}
         >
           {count !== undefined && count > 0 ? `Commit ${count}` : 'Commit'}
-        </button>
+        </Button>
       </div>
     </section>
   );

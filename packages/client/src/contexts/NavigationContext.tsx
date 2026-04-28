@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useState } from 'react';
+import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
 import { ProjectStateContext } from './ProjectContext';
 
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
@@ -96,10 +96,13 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     },
   }));
 
+  const state = useMemo<NavigationState>(
+    () => ({ pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd }),
+    [pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd],
+  );
+
   return (
-    <NavigationStateContext.Provider
-      value={{ pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd }}
-    >
+    <NavigationStateContext.Provider value={state}>
       <NavigationActionsContext.Provider value={actions}>
         {children}
       </NavigationActionsContext.Provider>

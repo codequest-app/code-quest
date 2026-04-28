@@ -21,7 +21,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { rpc } from '../socket/rpc';
-import { createQueryStore } from '../utils/create-query-store';
+import { createQueryCache } from '../utils/query-cache';
 import { useSocket } from './SocketContext';
 
 interface OpenspecActions {
@@ -80,11 +80,15 @@ const extractOpenspecCwd = (payload: unknown): string | null => {
 export function OpenspecProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [store] = useState(() =>
-    createQueryStore<OpenspecListResult>({
+    createQueryCache<OpenspecListResult>({
       fetch: fetchOpenspecList(socket),
       idPrefix: 'openspec-sub',
     }),
   );
+
+  useEffect(() => {
+    store.setFetch(fetchOpenspecList(socket));
+  }, [socket, store]);
 
   useEffect(() => {
     if (!socket) return;
