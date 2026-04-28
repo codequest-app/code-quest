@@ -8,6 +8,9 @@ import type {
 } from './types.ts';
 import { isRecord } from './utils.ts';
 
+const INHERITED_ENV_KEYS_TO_REMOVE = ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT'] as const;
+const SDK_FILE_CHECKPOINTING_KEY = 'CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING';
+
 /** Synthesize a raw_event fallback for unknown/error parse results so the
  *  adapter only ever sees typed messages. Returns null for skip. The `E as`
  *  casts assume the adapter's E union includes a raw_event variant (e.g.
@@ -63,9 +66,8 @@ export class ProcessRunner<E = unknown, L = unknown> extends EventEmitter {
     if (this.handle) return;
 
     const env = { ...this.parentEnv };
-    delete env.CLAUDECODE;
-    delete env.CLAUDE_CODE_ENTRYPOINT;
-    env.CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING = 'true';
+    for (const key of INHERITED_ENV_KEYS_TO_REMOVE) delete env[key];
+    env[SDK_FILE_CHECKPOINTING_KEY] = 'true';
 
     const handle = this.processProvider?.spawn(this.adapter.command, this.launchArgs, {
       env,
