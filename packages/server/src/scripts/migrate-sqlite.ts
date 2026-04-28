@@ -1,5 +1,4 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { config, resolveSqlitePath } from '../config.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
@@ -13,9 +12,6 @@ if (!config.database.sqliteUrl) {
 
 const path = resolveSqlitePath(config.database.sqliteUrl);
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
-
 const db = createDatabase(path);
-migrate(db, { migrationsFolder });
+migrate(db, { migrationsFolder: sqliteMigrationsFolder });
 console.log('SQLite migration completed');

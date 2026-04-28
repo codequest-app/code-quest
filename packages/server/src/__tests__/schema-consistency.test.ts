@@ -1,8 +1,11 @@
+import {
+  mysqlSchema,
+  RAW_EVENT_COLUMNS,
+  SESSION_COLUMNS,
+  sqliteSchema,
+} from '@code-quest/db-schema';
 import { getTableColumns } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { RAW_EVENT_COLUMNS, SESSION_COLUMNS } from '../db/schema-columns.ts';
-import * as mysqlSchema from '../db/schema-mysql.ts';
-import * as sqliteSchema from '../db/schema-sqlite.ts';
 
 describe('schema consistency', () => {
   it('sessions: sqlite and mysql have same column names', () => {

@@ -1,0 +1,30 @@
+{
+  "name": "@code-quest/db-schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mysql": "./src/schema-mysql.ts",
+    "./sqlite": "./src/schema-sqlite.ts",
+    "./columns": "./src/schema-columns.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1"
+  },
+  "scripts": {
+    "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
+    "db:generate:mysql": "drizzle-kit generate --config=drizzle-mysql.config.ts",
+    "db:generate": "pnpm db:generate:sqlite && pnpm db:generate:mysql",
+    "db:studio:sqlite": "drizzle-kit studio --config=drizzle-sqlite.config.ts",
+    "db:studio:mysql": "drizzle-kit studio --config=drizzle-mysql.config.ts"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.11.5",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-kit": "^0.31.9",
+    "mysql2": "^3.17.4",
+    "typescript": "6.0.3"
+  }
+}

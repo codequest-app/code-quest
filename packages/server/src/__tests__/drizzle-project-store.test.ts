@@ -1,13 +1,9 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { projects } from '@code-quest/db-schema/sqlite';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { projects } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleProjectStore } from '../services/project-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 describe('DrizzleProjectStore', () => {
   let db: ReturnType<typeof createDatabase>;
@@ -16,7 +12,7 @@ describe('DrizzleProjectStore', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     db = createDatabase(':memory:');
-    migrate(db, { migrationsFolder });
+    migrate(db, { migrationsFolder: sqliteMigrationsFolder });
     store = new DrizzleProjectStore(db, projects);
   });
 

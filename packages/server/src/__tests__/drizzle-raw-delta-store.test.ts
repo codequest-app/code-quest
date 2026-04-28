@@ -1,14 +1,10 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { rawDeltas } from '@code-quest/db-schema/sqlite';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { rawDeltas } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawDeltaStore } from '../services/drizzle-raw-delta-store.ts';
 import type { RawDeltaEntry } from '../services/raw-delta-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 function makeEntry(overrides: Partial<RawDeltaEntry> = {}): RawDeltaEntry {
   return {
@@ -27,7 +23,7 @@ describe('DrizzleRawDeltaStore', () => {
 
   beforeEach(() => {
     const db = createDatabase(':memory:');
-    migrate(db, { migrationsFolder });
+    migrate(db, { migrationsFolder: sqliteMigrationsFolder });
     store = new DrizzleRawDeltaStore(db, rawDeltas);
   });
 

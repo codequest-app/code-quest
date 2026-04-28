@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { mysqlSchema, sqliteSchema } from '@code-quest/db-schema';
 import {
   ChildProcessProvider,
   ClaudeAdapter,
@@ -19,8 +20,6 @@ import {
 import { Container } from 'inversify';
 import { config } from './config.ts';
 import type { MysqlDatabase } from './db/mysql-client.ts';
-import * as mysqlSchema from './db/schema-mysql.ts';
-import * as sqliteSchema from './db/schema-sqlite.ts';
 import { createDatabase, type DrizzleDatabase } from './db/sqlite-client.ts';
 import { CompositeProjectStore } from './services/composite-project-store.ts';
 import { CompositeRawDeltaStore } from './services/composite-raw-delta-store.ts';

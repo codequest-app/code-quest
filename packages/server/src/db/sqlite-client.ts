@@ -1,8 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { sqliteSchema as schema } from '@code-quest/db-schema';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from './schema-sqlite.ts';
 
 export type DrizzleDatabase = ReturnType<typeof createDatabase>;
 

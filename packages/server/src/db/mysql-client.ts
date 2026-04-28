@@ -1,7 +1,7 @@
+import { mysqlSchema as schema } from '@code-quest/db-schema';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
-import * as schema from './schema-mysql.ts';
 
 export type MysqlDatabase = MySql2Database<typeof schema>;
 

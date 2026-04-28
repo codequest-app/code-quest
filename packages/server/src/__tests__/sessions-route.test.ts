@@ -1,17 +1,13 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { sessions } from '@code-quest/db-schema/sqlite';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import express from 'express';
 import request from 'supertest';
-import { sessions } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { createSessionsRouter } from '../routes/sessions.ts';
 import { DrizzleSessionStore } from '../services/drizzle-session-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionRecord } from '../services/session-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionRecord {
   return {
@@ -30,7 +26,7 @@ function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionReco
 
 function createInMemoryStore(seed: SessionRecord[] = []) {
   const db = createDatabase(':memory:');
-  migrate(db, { migrationsFolder });
+  migrate(db, { migrationsFolder: sqliteMigrationsFolder });
   const store = new DrizzleSessionStore(db, sessions);
   return { db, store, seed };
 }

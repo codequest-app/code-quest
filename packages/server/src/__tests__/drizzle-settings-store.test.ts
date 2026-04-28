@@ -1,5 +1,5 @@
+import { settings } from '@code-quest/db-schema/sqlite';
 import { describe, expect, it } from 'vitest';
-import { settings } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleSettingsStore } from '../services/drizzle-settings-store.ts';
 

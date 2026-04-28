@@ -1,15 +1,11 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { rawEvents } from '@code-quest/db-schema/sqlite';
 import type { RawEvent } from '@code-quest/summoner';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { CompositeRawEventStore } from '../services/composite-raw-event-store.ts';
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 describe('CompositeRawEventStore', () => {
   let storeA: DrizzleRawEventStore;
@@ -17,11 +13,11 @@ describe('CompositeRawEventStore', () => {
 
   beforeEach(() => {
     const dbA = createDatabase(':memory:');
-    migrate(dbA, { migrationsFolder });
+    migrate(dbA, { migrationsFolder: sqliteMigrationsFolder });
     storeA = new DrizzleRawEventStore(dbA, rawEvents);
 
     const dbB = createDatabase(':memory:');
-    migrate(dbB, { migrationsFolder });
+    migrate(dbB, { migrationsFolder: sqliteMigrationsFolder });
     storeB = new DrizzleRawEventStore(dbB, rawEvents);
   });
 

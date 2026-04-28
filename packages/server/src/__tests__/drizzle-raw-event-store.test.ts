@@ -1,15 +1,11 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { rawDeltas, rawEvents } from '@code-quest/db-schema/sqlite';
 import type { RawEvent } from '@code-quest/summoner';
 import { segments as s } from '@code-quest/summoner/test';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { rawDeltas, rawEvents } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleRawDeltaStore } from '../services/drizzle-raw-delta-store.ts';
 import { DrizzleRawEventStore } from '../services/drizzle-raw-event-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 describe('DrizzleRawEventStore', () => {
   let db: ReturnType<typeof createDatabase>;
@@ -17,7 +13,7 @@ describe('DrizzleRawEventStore', () => {
 
   beforeEach(() => {
     db = createDatabase(':memory:');
-    migrate(db, { migrationsFolder });
+    migrate(db, { migrationsFolder: sqliteMigrationsFolder });
     store = new DrizzleRawEventStore(db, rawEvents);
   });
 
@@ -183,7 +179,7 @@ describe('DrizzleRawEventStore', () => {
   describe('getBySession with delta table — UNION ALL', () => {
     it('merges events + deltas ordered by createdAt/seq', async () => {
       const db = createDatabase(':memory:');
-      migrate(db, { migrationsFolder });
+      migrate(db, { migrationsFolder: sqliteMigrationsFolder });
       const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
       const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
 
@@ -225,7 +221,7 @@ describe('DrizzleRawEventStore', () => {
 
     it('cloneEvents still reads events only (deltas stay put)', async () => {
       const db = createDatabase(':memory:');
-      migrate(db, { migrationsFolder });
+      migrate(db, { migrationsFolder: sqliteMigrationsFolder });
       const unionStore = new DrizzleRawEventStore(db, rawEvents, rawDeltas);
       const deltaStore = new DrizzleRawDeltaStore(db, rawDeltas);
 

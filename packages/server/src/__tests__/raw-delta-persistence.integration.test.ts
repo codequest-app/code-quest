@@ -1,6 +1,6 @@
+import { rawDeltas, rawEvents } from '@code-quest/db-schema/sqlite';
 import { segments as s } from '@code-quest/summoner/test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { rawDeltas, rawEvents } from '../db/schema-sqlite.ts';
 import type { DrizzleDatabase } from '../db/sqlite-client.ts';
 import type { RawEventService } from '../services/raw-event-service.ts';
 import { createFakeServer, createFakeSummoner, createTestContainer } from '../test/index.ts';

@@ -1,6 +1,5 @@
 import 'reflect-metadata';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
 import type {
   DiffFileService,
   FilesystemService,
@@ -25,9 +24,6 @@ import type { SettingsStore } from '../services/settings-store.ts';
 import { TYPES } from '../types.ts';
 import { InMemorySettingsStore } from './in-memory-settings-store.ts';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
-
 interface TestContainerOverrides {
   processProvider?: ProcessProvider;
   filesystemService?: FilesystemService;
@@ -39,7 +35,7 @@ interface TestContainerOverrides {
 
 export function createTestContainer(overrides: TestContainerOverrides = {}): Container {
   const sqliteDatabase = createDatabase(':memory:');
-  migrate(sqliteDatabase, { migrationsFolder });
+  migrate(sqliteDatabase, { migrationsFolder: sqliteMigrationsFolder });
 
   const container = createContainer({
     ...overrides,

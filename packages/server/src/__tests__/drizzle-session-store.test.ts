@@ -1,13 +1,9 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { sqliteMigrationsFolder } from '@code-quest/db-schema';
+import { sessions } from '@code-quest/db-schema/sqlite';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { sessions } from '../db/schema-sqlite.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { DrizzleSessionStore } from '../services/drizzle-session-store.ts';
 import type { SessionRecord } from '../services/session-store.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/sqlite');
 
 function makeRecord(id: string, overrides?: Partial<SessionRecord>): SessionRecord {
   return {
@@ -30,7 +26,7 @@ describe('DrizzleSessionStore', () => {
 
   beforeEach(() => {
     db = createDatabase(':memory:');
-    migrate(db, { migrationsFolder });
+    migrate(db, { migrationsFolder: sqliteMigrationsFolder });
     store = new DrizzleSessionStore(db, sessions);
   });
 

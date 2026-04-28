@@ -1,5 +1,4 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { mysqlMigrationsFolder } from '@code-quest/db-schema';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
@@ -12,12 +11,9 @@ if (!url) {
   process.exit(1);
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(__dirname, '../../drizzle/mysql');
-
 const conn = await mysql.createConnection(url);
 const db = drizzle(conn);
-await migrate(db, { migrationsFolder });
+await migrate(db, { migrationsFolder: mysqlMigrationsFolder });
 await conn.end();
 console.log('MySQL migration completed');
 process.exit(0);
