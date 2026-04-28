@@ -11,11 +11,13 @@ const DEFAULT_MATCHER: MediaQueryMatcher = (query, width) => {
 class FakeMediaQueryList extends EventTarget implements MediaQueryList {
   onchange: MediaQueryList['onchange'] = null;
 
-  constructor(
-    readonly media: string,
-    private readonly getMatches: () => boolean,
-  ) {
+  readonly media: string;
+  private readonly getMatches: () => boolean;
+
+  constructor(media: string, getMatches: () => boolean) {
     super();
+    this.media = media;
+    this.getMatches = getMatches;
   }
 
   get matches(): boolean {

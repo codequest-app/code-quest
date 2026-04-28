@@ -28,10 +28,12 @@ function isUserStdin(raw: string, direction: 'in' | 'out' | 'err'): boolean {
 const PENDING_CAP = 1000;
 
 export class RawRecorder {
-  constructor(
-    private service: RawEventService,
-    private writeDeltas: boolean,
-  ) {}
+  private service: RawEventService;
+  private writeDeltas: boolean;
+  constructor(service: RawEventService, writeDeltas: boolean) {
+    this.service = service;
+    this.writeDeltas = writeDeltas;
+  }
 
   wire(channel: Channel): void {
     const { runner } = channel;

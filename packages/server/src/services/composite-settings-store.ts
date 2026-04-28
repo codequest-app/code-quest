@@ -7,7 +7,9 @@ import type { SettingsStore } from './settings-store.ts';
  * single authoritative read is enough.
  */
 export class CompositeSettingsStore implements SettingsStore {
-  constructor(private stores: SettingsStore[]) {
+  private stores: SettingsStore[];
+  constructor(stores: SettingsStore[]) {
+    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeSettingsStore requires at least one store');
     }

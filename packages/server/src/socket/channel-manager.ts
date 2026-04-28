@@ -50,14 +50,26 @@ export class ChannelManager {
     this._cachedModels = models;
   }
 
+  private runnerFactory: RunnerFactory;
+  private adapter: ProviderAdapter;
+  private rawRecorder: RawRecorder;
+  private emitter: ChannelEmitter;
+  private sessions: SessionLookup;
+  private dirty?: DirtyBroadcasters;
   constructor(
-    private runnerFactory: RunnerFactory,
-    private adapter: ProviderAdapter,
-    private rawRecorder: RawRecorder,
-    private emitter: ChannelEmitter,
-    private sessions: SessionLookup,
-    private dirty?: DirtyBroadcasters,
+    runnerFactory: RunnerFactory,
+    adapter: ProviderAdapter,
+    rawRecorder: RawRecorder,
+    emitter: ChannelEmitter,
+    sessions: SessionLookup,
+    dirty?: DirtyBroadcasters,
   ) {
+    this.runnerFactory = runnerFactory;
+    this.adapter = adapter;
+    this.rawRecorder = rawRecorder;
+    this.emitter = emitter;
+    this.sessions = sessions;
+    this.dirty = dirty;
     this.hooks = {
       onClientMessage: (ch, message) =>
         emitter.dispatchRunnerMessage(ch, message.name, message.payload),

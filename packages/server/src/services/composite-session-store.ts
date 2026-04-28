@@ -7,7 +7,9 @@ import type { SessionRecord, SessionStore } from './session-store.ts';
  * agreement across backends (guaranteed because upsert fans out).
  */
 export class CompositeSessionStore implements SessionStore {
-  constructor(private stores: SessionStore[]) {
+  private stores: SessionStore[];
+  constructor(stores: SessionStore[]) {
+    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeSessionStore requires at least one store');
     }

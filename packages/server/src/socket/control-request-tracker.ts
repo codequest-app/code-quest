@@ -24,8 +24,11 @@ export type ControlRequestSender = (
 export class ControlRequestTracker {
   private readonly meta = new Map<string, RequestMeta>();
   private readonly pending = new Map<string, PendingRequest>();
+  private readonly timeoutMs: number;
 
-  constructor(private readonly timeoutMs: number = DEFAULT_CONTROL_TIMEOUT) {}
+  constructor(timeoutMs: number = DEFAULT_CONTROL_TIMEOUT) {
+    this.timeoutMs = timeoutMs;
+  }
 
   // ── Inbound (CLI→server) ──
 

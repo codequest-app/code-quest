@@ -28,7 +28,10 @@ export interface Authenticator {
  * authenticator when multi-user support lands.
  */
 export class NullAuthenticator implements Authenticator {
-  constructor(private readonly userId: string = 'anon') {}
+  private readonly userId: string;
+  constructor(userId: string = 'anon') {
+    this.userId = userId;
+  }
   async authenticate(_req: IncomingMessage): Promise<AuthContext | null> {
     return { userId: this.userId };
   }

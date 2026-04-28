@@ -6,8 +6,10 @@ import { createUsageRouter } from '../routes/usage.ts';
 import { UsageTracker } from '../services/usage-tracker.ts';
 
 class FakeUsageTracker extends UsageTracker {
-  constructor(private readonly usage: UsageQuota = {}) {
+  private readonly usage: UsageQuota;
+  constructor(usage: UsageQuota = {}) {
     super();
+    this.usage = usage;
   }
   override getUsage(): UsageQuota {
     return this.usage;

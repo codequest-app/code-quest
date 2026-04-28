@@ -2,7 +2,9 @@ import { fanOutWrites } from './composite-fan-out.ts';
 import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
 
 export class CompositeRawDeltaStore implements RawDeltaStore {
-  constructor(private stores: RawDeltaStore[]) {
+  private stores: RawDeltaStore[];
+  constructor(stores: RawDeltaStore[]) {
+    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeRawDeltaStore requires at least one store');
     }

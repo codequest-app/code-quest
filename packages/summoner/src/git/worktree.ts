@@ -59,7 +59,11 @@ function parseWorktreeList(stdout: string): WorktreeInfo[] {
 }
 
 export class GitWorktreeOps {
-  constructor(private commands: GitCommands) {}
+  private commands: GitCommands;
+
+  constructor(commands: GitCommands) {
+    this.commands = commands;
+  }
 
   private resolveWorktreeParams(opts: CreateWorktreeOptions): {
     worktreeName: string;

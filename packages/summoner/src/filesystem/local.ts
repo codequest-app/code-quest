@@ -46,12 +46,15 @@ export class LocalFilesystemService implements FilesystemService {
    *  promise — without this each caller would walk the FS *and* subscribe
    *  its own watcher, leaking duplicates. */
   private listCacheInflight = new Map<string, Promise<ListCacheEntry>>();
+  private readonly fsRoots: readonly string[];
+  private readonly watch?: WatchService;
+  private readonly fsImpl?: typeof import('node:fs');
 
-  constructor(
-    private readonly fsRoots: readonly string[],
-    private readonly watch?: WatchService,
-    private readonly fsImpl?: typeof import('node:fs'),
-  ) {}
+  constructor(fsRoots: readonly string[], watch?: WatchService, fsImpl?: typeof import('node:fs')) {
+    this.fsRoots = fsRoots;
+    this.watch = watch;
+    this.fsImpl = fsImpl;
+  }
 
   async browseDirectories(path?: string): Promise<DirectoryEntry[]> {
     if (!path) {

@@ -75,7 +75,10 @@ export class WsTransport implements Transport {
    */
   private readonly seqBySession = new Map<string, number>();
 
-  constructor(private readonly opts: WsTransportOptions) {}
+  private readonly opts: WsTransportOptions;
+  constructor(opts: WsTransportOptions) {
+    this.opts = opts;
+  }
 
   attach(httpServer: HttpServer): TransportHandle {
     const path = this.opts.path ?? '/ws';

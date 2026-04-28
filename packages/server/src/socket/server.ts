@@ -43,28 +43,63 @@ import type { TransportHandle } from './transport.ts';
 
 @injectable()
 export class SocketServer {
+  private rawEventService: RawEventService;
+  private sessionStore: SessionStore;
+  private projectStore: ProjectStore;
+  private projectAutoUpserter: ProjectAutoUpserter;
+  private usageTracker: UsageTracker;
+  private channelManager: ChannelManager;
+  private sessionHistory: SessionHistory;
+  private emitter: ChannelEmitter;
+  private filesystemService: FilesystemService;
+  private gitService: GitService;
+  private openspecService: OpenspecService;
+  private pluginCli: PluginCliService;
+  private diffFileService: DiffFileService;
+  private settingsStore: SettingsStore;
+  private fsDirtyBroadcaster: DirtyBroadcaster<string[]>;
+  private gitDirtyBroadcaster: DirtyBroadcaster<void>;
+  private openspecDirtyBroadcaster: DirtyBroadcaster<void>;
   constructor(
-    @inject(TYPES.RawEventService) private rawEventService: RawEventService,
-    @inject(TYPES.SessionStore) private sessionStore: SessionStore,
-    @inject(TYPES.ProjectStore) private projectStore: ProjectStore,
-    @inject(TYPES.ProjectAutoUpserter) private projectAutoUpserter: ProjectAutoUpserter,
-    @inject(TYPES.UsageTracker) private usageTracker: UsageTracker,
-    @inject(TYPES.ChannelManager) private channelManager: ChannelManager,
-    @inject(TYPES.SessionHistory) private sessionHistory: SessionHistory,
-    @inject(TYPES.ChannelEventRouter) private emitter: ChannelEmitter,
-    @inject(TYPES.FilesystemService) private filesystemService: FilesystemService,
-    @inject(TYPES.GitService) private gitService: GitService,
-    @inject(TYPES.OpenspecService) private openspecService: OpenspecService,
-    @inject(TYPES.PluginCliService) private pluginCli: PluginCliService,
-    @inject(TYPES.DiffFileService) private diffFileService: DiffFileService,
-    @inject(TYPES.SettingsStore) private settingsStore: SettingsStore,
+    @inject(TYPES.RawEventService) rawEventService: RawEventService,
+    @inject(TYPES.SessionStore) sessionStore: SessionStore,
+    @inject(TYPES.ProjectStore) projectStore: ProjectStore,
+    @inject(TYPES.ProjectAutoUpserter) projectAutoUpserter: ProjectAutoUpserter,
+    @inject(TYPES.UsageTracker) usageTracker: UsageTracker,
+    @inject(TYPES.ChannelManager) channelManager: ChannelManager,
+    @inject(TYPES.SessionHistory) sessionHistory: SessionHistory,
+    @inject(TYPES.ChannelEventRouter) emitter: ChannelEmitter,
+    @inject(TYPES.FilesystemService) filesystemService: FilesystemService,
+    @inject(TYPES.GitService) gitService: GitService,
+    @inject(TYPES.OpenspecService) openspecService: OpenspecService,
+    @inject(TYPES.PluginCliService) pluginCli: PluginCliService,
+    @inject(TYPES.DiffFileService) diffFileService: DiffFileService,
+    @inject(TYPES.SettingsStore) settingsStore: SettingsStore,
     @inject(TYPES.FsDirtyBroadcaster)
-    private fsDirtyBroadcaster: DirtyBroadcaster<string[]>,
+    fsDirtyBroadcaster: DirtyBroadcaster<string[]>,
     @inject(TYPES.GitDirtyBroadcaster)
-    private gitDirtyBroadcaster: DirtyBroadcaster<void>,
+    gitDirtyBroadcaster: DirtyBroadcaster<void>,
     @inject(TYPES.OpenspecDirtyBroadcaster)
-    private openspecDirtyBroadcaster: DirtyBroadcaster<void>,
-  ) {}
+    openspecDirtyBroadcaster: DirtyBroadcaster<void>,
+  ) {
+    this.rawEventService = rawEventService;
+    this.sessionStore = sessionStore;
+    this.projectStore = projectStore;
+    this.projectAutoUpserter = projectAutoUpserter;
+    this.usageTracker = usageTracker;
+    this.channelManager = channelManager;
+    this.sessionHistory = sessionHistory;
+    this.emitter = emitter;
+    this.filesystemService = filesystemService;
+    this.gitService = gitService;
+    this.openspecService = openspecService;
+    this.pluginCli = pluginCli;
+    this.diffFileService = diffFileService;
+    this.settingsStore = settingsStore;
+    this.fsDirtyBroadcaster = fsDirtyBroadcaster;
+    this.gitDirtyBroadcaster = gitDirtyBroadcaster;
+    this.openspecDirtyBroadcaster = openspecDirtyBroadcaster;
+  }
 
   private handlersWired = false;
 

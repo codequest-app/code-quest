@@ -9,7 +9,9 @@ import type { ProjectPatch, ProjectRecord, ProjectStore } from './project-store.
  * `path`, so this is benign.
  */
 export class CompositeProjectStore implements ProjectStore {
-  constructor(private stores: ProjectStore[]) {
+  private stores: ProjectStore[];
+  constructor(stores: ProjectStore[]) {
+    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeProjectStore requires at least one store');
     }

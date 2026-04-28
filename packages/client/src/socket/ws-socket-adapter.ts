@@ -24,8 +24,11 @@ export class WsSocketAdapter {
   private connectErrorListeners = new Set<Listener>();
   /** Listener bag tracked here so off() can find the same fn we registered with WsClient. */
   private listenerOff = new Map<Listener, () => void>();
+  private readonly client: WsClient;
 
-  constructor(private readonly client: WsClient) {}
+  constructor(client: WsClient) {
+    this.client = client;
+  }
 
   connect(): void {
     // Wire lifecycle BEFORE opening the socket so the very first onOpen is

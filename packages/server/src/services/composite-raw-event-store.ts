@@ -4,7 +4,9 @@ import { fanOutWrites } from './composite-fan-out.ts';
 import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
 export class CompositeRawEventStore implements RawEventStore {
-  constructor(private stores: RawEventStore[]) {
+  private stores: RawEventStore[];
+  constructor(stores: RawEventStore[]) {
+    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeRawEventStore requires at least one store');
     }

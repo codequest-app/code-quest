@@ -48,10 +48,12 @@ export interface ProjectStore {
 }
 
 export class DrizzleProjectStore implements ProjectStore {
-  constructor(
-    private db: DrizzleDb,
-    private projects: ProjectsTable,
-  ) {}
+  private db: DrizzleDb;
+  private projects: ProjectsTable;
+  constructor(db: DrizzleDb, projects: ProjectsTable) {
+    this.db = db;
+    this.projects = projects;
+  }
 
   async upsert(path: string): Promise<ProjectRecord> {
     const existing = await this.getByPath(path);

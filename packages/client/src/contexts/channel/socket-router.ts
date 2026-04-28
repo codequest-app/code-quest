@@ -49,11 +49,13 @@ interface EventRegistration {
  */
 export class ChannelSocketRouter {
   private events = new Map<string, EventRegistration>();
+  private adapter: SubscriptionAdapter;
+  private channelId: string;
 
-  constructor(
-    private adapter: SubscriptionAdapter,
-    private channelId: string,
-  ) {}
+  constructor(adapter: SubscriptionAdapter, channelId: string) {
+    this.adapter = adapter;
+    this.channelId = channelId;
+  }
 
   register<S, D = never>(
     handlers: Record<string, (state: S, payload: never) => S>,

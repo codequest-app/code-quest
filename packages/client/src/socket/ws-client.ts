@@ -52,11 +52,10 @@ export class WsClient {
   private lifecycle?: LifecycleListener;
   private currentId = '';
   private readonly opts: Required<WsClientOptions>;
+  private readonly url: string;
 
-  constructor(
-    private readonly url: string,
-    opts: WsClientOptions = {},
-  ) {
+  constructor(url: string, opts: WsClientOptions = {}) {
+    this.url = url;
     this.opts = {
       initialBackoffMs: opts.initialBackoffMs ?? 500,
       maxBackoffMs: opts.maxBackoffMs ?? 10_000,

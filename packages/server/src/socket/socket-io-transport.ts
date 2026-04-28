@@ -22,7 +22,10 @@ export class SocketIoTransport implements Transport {
   private io?: Server;
   private listeners = new Set<(socket: TypedSocket) => void>();
 
-  constructor(private readonly opts: SocketIoTransportOptions) {}
+  private readonly opts: SocketIoTransportOptions;
+  constructor(opts: SocketIoTransportOptions) {
+    this.opts = opts;
+  }
 
   attach(httpServer: HttpServer): TransportHandle {
     const cors = this.opts.cors ?? { origin: '*' };

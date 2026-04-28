@@ -27,10 +27,12 @@ function parseJsonValue(raw: string): unknown {
 }
 
 export class DrizzleSettingsStore implements SettingsStore {
-  constructor(
-    private db: DrizzleDb,
-    private table: SettingsTable,
-  ) {}
+  private db: DrizzleDb;
+  private table: SettingsTable;
+  constructor(db: DrizzleDb, table: SettingsTable) {
+    this.db = db;
+    this.table = table;
+  }
 
   async get(provider: string, key: string): Promise<unknown> {
     const rows = await this.db

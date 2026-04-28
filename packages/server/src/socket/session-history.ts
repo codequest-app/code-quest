@@ -48,12 +48,21 @@ function parseRawEvents(
 }
 
 export class SessionHistory {
+  private rawEventService: RawEventService;
+  private sessionStore: SessionStore;
+  private adapter: ProviderAdapter;
+  private channels: ChannelLookup;
   constructor(
-    private rawEventService: RawEventService,
-    private sessionStore: SessionStore,
-    private adapter: ProviderAdapter,
-    private channels: ChannelLookup,
-  ) {}
+    rawEventService: RawEventService,
+    sessionStore: SessionStore,
+    adapter: ProviderAdapter,
+    channels: ChannelLookup,
+  ) {
+    this.rawEventService = rawEventService;
+    this.sessionStore = sessionStore;
+    this.adapter = adapter;
+    this.channels = channels;
+  }
 
   async resolveSessionId(channelId: string): Promise<string> {
     const channel = this.channels.get(channelId);

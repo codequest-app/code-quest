@@ -19,10 +19,12 @@ export interface ProjectBroadcaster {
  *   project-sync by calling this single entry point.
  */
 export class ProjectAutoUpserter {
-  constructor(
-    private projectStore: ProjectStore,
-    private broadcaster: ProjectBroadcaster,
-  ) {}
+  private projectStore: ProjectStore;
+  private broadcaster: ProjectBroadcaster;
+  constructor(projectStore: ProjectStore, broadcaster: ProjectBroadcaster) {
+    this.projectStore = projectStore;
+    this.broadcaster = broadcaster;
+  }
 
   /**
    * Call after a session row was upserted with `projectRoot`. Idempotent.

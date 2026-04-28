@@ -16,10 +16,12 @@ import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
  * internally — forks carry conversation state, not token-stream debug data.
  */
 export class RawEventService {
-  constructor(
-    private eventStore: RawEventStore,
-    private deltaStore: RawDeltaStore,
-  ) {}
+  private eventStore: RawEventStore;
+  private deltaStore: RawDeltaStore;
+  constructor(eventStore: RawEventStore, deltaStore: RawDeltaStore) {
+    this.eventStore = eventStore;
+    this.deltaStore = deltaStore;
+  }
 
   appendEvent(event: RawEvent, id?: string): Promise<string> {
     return this.eventStore.append(event, id);

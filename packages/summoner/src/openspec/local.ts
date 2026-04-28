@@ -56,10 +56,13 @@ function toSpecSummary(s: CliSpec): OpenspecSpecSummary {
 export class LocalOpenspecService implements OpenspecService {
   /** `process` is required for changeNew + list (they spawn the openspec CLI).
    *  read/toggleTask only touch the filesystem and work without it. */
-  constructor(
-    private readonly fs: FilesystemService,
-    private readonly process?: ProcessProvider,
-  ) {}
+  private readonly fs: FilesystemService;
+  private readonly process?: ProcessProvider;
+
+  constructor(fs: FilesystemService, process?: ProcessProvider) {
+    this.fs = fs;
+    this.process = process;
+  }
 
   async list(cwd: string): Promise<OpenspecListResult> {
     if (!this.process) return { error: 'process-runner-unavailable' };

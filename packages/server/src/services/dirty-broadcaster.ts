@@ -31,11 +31,18 @@ export class DirtyBroadcaster<P> {
   private readonly emitter = new TopicEmitter<string, P>();
   private readonly perCwd = new Map<string, PerCwd>();
 
+  private readonly watchService: WatchService;
+  private readonly matcher: (path: string) => boolean;
+  private readonly transform: (paths: string[]) => P;
   constructor(
-    private readonly watchService: WatchService,
-    private readonly matcher: (path: string) => boolean,
-    private readonly transform: (paths: string[]) => P,
-  ) {}
+    watchService: WatchService,
+    matcher: (path: string) => boolean,
+    transform: (paths: string[]) => P,
+  ) {
+    this.watchService = watchService;
+    this.matcher = matcher;
+    this.transform = transform;
+  }
 
   subscribe(cwd: string, subscriberId: string, cb: (payload: P) => void): Unsubscribe {
     const off = this.emitter.subscribe(cwd, subscriberId, cb);

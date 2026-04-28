@@ -74,11 +74,14 @@ export class DrizzleRawEventStore implements RawEventStore {
    *   emits a SQL `UNION ALL` across raw_events + raw_deltas. Omitted for
    *   single-table scenarios (e.g. isolated unit tests).
    */
-  constructor(
-    private db: DrizzleDb,
-    private table: RawEventsTable,
-    private deltaTable?: RawDeltasTable,
-  ) {}
+  private db: DrizzleDb;
+  private table: RawEventsTable;
+  private deltaTable?: RawDeltasTable;
+  constructor(db: DrizzleDb, table: RawEventsTable, deltaTable?: RawDeltasTable) {
+    this.db = db;
+    this.table = table;
+    this.deltaTable = deltaTable;
+  }
 
   async append(event: RawEvent, id?: string): Promise<string> {
     const rowId = id ?? uuidv7();

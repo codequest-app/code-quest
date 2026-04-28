@@ -20,10 +20,12 @@ interface SessionsTable {
 }
 
 export class DrizzleSessionStore implements SessionStore {
-  constructor(
-    private db: DrizzleDb,
-    private sessions: SessionsTable,
-  ) {}
+  private db: DrizzleDb;
+  private sessions: SessionsTable;
+  constructor(db: DrizzleDb, sessions: SessionsTable) {
+    this.db = db;
+    this.sessions = sessions;
+  }
 
   // Read-then-write; not atomic. Safe because onSessionInit is the only caller
   // and each channel emits session:init once. Switch to onConflictDoUpdate if

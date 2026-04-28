@@ -20,7 +20,10 @@ describe('Transport contract', () => {
     private listeners = new Set<(socket: TypedSocket) => void>();
     private closed = false;
 
-    constructor(private readonly auth: Authenticator) {}
+    private readonly auth: Authenticator;
+    constructor(auth: Authenticator) {
+      this.auth = auth;
+    }
 
     attach(): TransportHandle {
       return {

@@ -26,10 +26,12 @@ interface RawDeltasTable {
 }
 
 export class DrizzleRawDeltaStore implements RawDeltaStore {
-  constructor(
-    private db: DrizzleDb,
-    private table: RawDeltasTable,
-  ) {}
+  private db: DrizzleDb;
+  private table: RawDeltasTable;
+  constructor(db: DrizzleDb, table: RawDeltasTable) {
+    this.db = db;
+    this.table = table;
+  }
 
   async append(event: RawDeltaEntry): Promise<void> {
     await this.db.insert(this.table).values({
