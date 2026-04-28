@@ -136,6 +136,7 @@ export function ManageMcpDialog({
       await fn();
       onRefresh?.();
     } catch (e) {
+      console.error(e);
       setFeedback({ msg: e instanceof Error ? e.message : 'Failed', ok: false });
     } finally {
       setPending(null);

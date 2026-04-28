@@ -124,25 +124,27 @@ export class LocalFilesystemService implements FilesystemService {
     if (cached) return cached;
     const inflight = this.listCacheInflight.get(cwd);
     if (inflight) return inflight;
-    const build = (async () => {
-      const files = await this.getAllFiles(cwd);
-      const dirs = this.extractDirectories(files);
-      const unsubscribe: Unsubscribe = this.watch
-        ? this.watch.subscribe(cwd, () => {
-            const e = this.listCache.get(cwd);
-            if (!e) return;
-            this.listCache.delete(cwd);
-            e.unsubscribe();
-          })
-        : () => {};
-      const entry: ListCacheEntry = { files, dirs, fuse: null, unsubscribe };
-      this.listCache.set(cwd, entry);
-      return entry;
-    })().finally(() => {
+    const build = this.buildListCacheEntry(cwd).finally(() => {
       this.listCacheInflight.delete(cwd);
     });
     this.listCacheInflight.set(cwd, build);
     return build;
+  }
+
+  private async buildListCacheEntry(cwd: string): Promise<ListCacheEntry> {
+    const files = await this.getAllFiles(cwd);
+    const dirs = this.extractDirectories(files);
+    const unsubscribe: Unsubscribe = this.watch
+      ? this.watch.subscribe(cwd, () => {
+          const e = this.listCache.get(cwd);
+          if (!e) return;
+          this.listCache.delete(cwd);
+          e.unsubscribe();
+        })
+      : () => {};
+    const entry: ListCacheEntry = { files, dirs, fuse: null, unsubscribe };
+    this.listCache.set(cwd, entry);
+    return entry;
   }
 
   // ── readFileAbsolute ──

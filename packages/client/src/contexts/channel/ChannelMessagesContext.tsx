@@ -30,7 +30,8 @@ import { createReloadPluginsFeature } from '../../features/reload-plugins/reload
 import { createResumeFeature } from '../../features/resume/resume-feature';
 import { createRewindFeature } from '../../features/rewind/rewind-feature';
 import { createUsageFeature } from '../../features/usage/usage-feature';
-import { createFeatureRegistry } from '../../lib/feature-registry';
+import { createFeatureRegistry, type FeatureRegistry } from '../../lib/feature-registry';
+import type { TypedSocket } from '../../socket/client';
 import { useMessageRegistryStore } from '../../stores/useMessageRegistryStore';
 import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
 import {
@@ -123,6 +124,82 @@ export function useChannelMessagesActions(): MessagesActionsValue {
   if (!actions)
     throw new Error('useChannelMessagesActions must be used within a ChannelMessagesProvider');
   return actions;
+}
+
+function buildMessagesActions(deps: {
+  socket: TypedSocket;
+  channelId: string;
+  cwd?: string;
+  setChannelState: SetChannelState;
+  statusRef: RefObject<string>;
+  messageQueueRef: RefObject<string[]>;
+  registry: FeatureRegistry;
+}): MessagesActionsValue {
+  const { socket, channelId, cwd, setChannelState, statusRef, messageQueueRef, registry } = deps;
+  const sessionActions = createSessionActions({ socket, channelId });
+  const messageActions = createMessageActions({
+    socket,
+    channelId,
+    setChannelState,
+    statusRef,
+    messageQueueRef,
+  });
+  registry.register(createBtwFeature({ askSideQuestion: sessionActions.askSideQuestion }));
+  registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
+  registry.register(
+    createUsageFeature({
+      emitRefreshUsage: () => socket.emit(EVENTS.settings.refresh_usage, { channelId }),
+    }),
+  );
+  registry.register(createRewindFeature());
+  const clearMessages = () => setChannelState((prev) => ({ ...prev, messages: [] }));
+  const clearModifiedFiles = () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} }));
+  registry.register(
+    createClearFeature({
+      clearMessages,
+      clearModifiedFiles,
+      sendMessage: (m) => messageActions.sendMessage(m),
+    }),
+  );
+  registry.register(
+    createNewConversationFeature({ sendMessage: (m) => messageActions.sendMessage(m) }),
+  );
+  registry.register(createResumeFeature());
+  registry.register(createCompactFeature((m) => messageActions.sendMessage(m)));
+  registry.register(
+    createRecapFeature({
+      askSideQuestion: sessionActions.askSideQuestion,
+      appendMessage: messageActions.appendMessage,
+    }),
+  );
+  const sendMessage = (message: string) => {
+    const feature = registry.findSlashCommand(message);
+    if (feature?.slash) {
+      feature.slash.invoke(message);
+      return;
+    }
+    messageActions.sendMessage(message);
+  };
+  return {
+    setChannelState,
+    ...messageActions,
+    sendMessage,
+    ...sessionActions,
+    ...createFileActions({ socket, channelId, cwd }),
+    ...createPlanActions({ setChannelState }),
+    addSystemMessage: (type: string, content: string) =>
+      setChannelState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, systemMessage(type, content)],
+      })),
+    clearMessages,
+    clearModifiedFiles,
+    removeModifiedFile: (path: string) =>
+      setChannelState((prev) => {
+        const { [path]: _, ...rest } = prev.modifiedFiles;
+        return { ...prev, modifiedFiles: rest };
+      }),
+  };
 }
 
 export function ChannelMessagesProvider({
@@ -350,72 +427,17 @@ export function ChannelMessagesProvider({
   });
 
   // ── Stable actions (don't depend on channelState) ──
-  const [actions] = useState<MessagesActionsValue>(() => {
-    const sessionActions = createSessionActions({ socket, channelId });
-    const messageActions = createMessageActions({
+  const [actions] = useState<MessagesActionsValue>(() =>
+    buildMessagesActions({
       socket,
       channelId,
+      cwd,
       setChannelState,
       statusRef,
       messageQueueRef,
-    });
-    registry.register(createBtwFeature({ askSideQuestion: sessionActions.askSideQuestion }));
-    registry.register(createReloadPluginsFeature(() => sessionActions.reloadPlugins()));
-    registry.register(
-      createUsageFeature({
-        emitRefreshUsage: () => socket.emit(EVENTS.settings.refresh_usage, { channelId }),
-      }),
-    );
-    registry.register(createRewindFeature());
-    const clearMessages = () => setChannelState((prev) => ({ ...prev, messages: [] }));
-    const clearModifiedFiles = () => setChannelState((prev) => ({ ...prev, modifiedFiles: {} }));
-    registry.register(
-      createClearFeature({
-        clearMessages,
-        clearModifiedFiles,
-        sendMessage: (msg) => messageActions.sendMessage(msg),
-      }),
-    );
-    registry.register(
-      createNewConversationFeature({ sendMessage: (msg) => messageActions.sendMessage(msg) }),
-    );
-    registry.register(createResumeFeature());
-    registry.register(createCompactFeature((msg) => messageActions.sendMessage(msg)));
-    registry.register(
-      createRecapFeature({
-        askSideQuestion: sessionActions.askSideQuestion,
-        appendMessage: messageActions.appendMessage,
-      }),
-    );
-    const sendMessage = (message: string) => {
-      const feature = registry.findSlashCommand(message);
-      if (feature?.slash) {
-        feature.slash.invoke(message);
-        return;
-      }
-      messageActions.sendMessage(message);
-    };
-    return {
-      setChannelState,
-      ...messageActions,
-      sendMessage,
-      ...sessionActions,
-      ...createFileActions({ socket, channelId, cwd }),
-      ...createPlanActions({ setChannelState }),
-      addSystemMessage: (type: string, content: string) =>
-        setChannelState((prev) => ({
-          ...prev,
-          messages: [...prev.messages, systemMessage(type, content)],
-        })),
-      clearMessages,
-      clearModifiedFiles,
-      removeModifiedFile: (path: string) =>
-        setChannelState((prev) => {
-          const { [path]: _, ...rest } = prev.modifiedFiles;
-          return { ...prev, modifiedFiles: rest };
-        }),
-    };
-  });
+      registry,
+    }),
+  );
 
   // ── Message Registry: expose messages to workspace-level consumers ──
   const registerToRegistry = useMessageRegistryStore((s) => s.register);

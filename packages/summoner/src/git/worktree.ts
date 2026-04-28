@@ -26,25 +26,24 @@ export function detectWorktree(path: string): WorktreeInfo | null {
   return { name: match[1] ?? '', path };
 }
 
+function toWorktreeInfo(entry: { worktreePath?: string; branch?: string }): WorktreeInfo | null {
+  if (!entry.worktreePath) return null;
+  const match = entry.worktreePath.match(WORKTREE_PATH_RE);
+  if (match) {
+    return { name: match[1] ?? '', path: entry.worktreePath, branch: entry.branch };
+  }
+  const fallback = entry.worktreePath.split(/[/\\]/).filter(Boolean).pop() ?? '';
+  const name = entry.branch ?? fallback;
+  return { name, path: entry.worktreePath, branch: entry.branch };
+}
+
 function parseWorktreeList(stdout: string): WorktreeInfo[] {
   const worktrees: WorktreeInfo[] = [];
   let current: { worktreePath?: string; branch?: string } = {};
 
   const flush = () => {
-    if (current.worktreePath) {
-      const match = current.worktreePath.match(WORKTREE_PATH_RE);
-      if (match) {
-        worktrees.push({
-          name: match[1] ?? '',
-          path: current.worktreePath,
-          branch: current.branch,
-        });
-      } else {
-        const fallback = current.worktreePath.split(/[/\\]/).filter(Boolean).pop() ?? '';
-        const name = current.branch ?? fallback;
-        worktrees.push({ name, path: current.worktreePath, branch: current.branch });
-      }
-    }
+    const info = toWorktreeInfo(current);
+    if (info) worktrees.push(info);
     current = {};
   };
 

@@ -306,7 +306,10 @@ export function create({
   }
 
   function onChannelExit(ch: Channel, payload: unknown): void {
-    channelExitPayloadSchema.parse(payload);
+    const parsed = channelExitPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      logger.warn({ err: parsed.error, payload }, 'Invalid channel exit payload');
+    }
     channelManager.broadcastSessionState(ch.channelId, 'exited');
     ch.resetSessionConfig();
     emitter.emit(ch.channelId, EVENTS.session.closed, {
