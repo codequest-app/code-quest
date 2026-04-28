@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ThinkingBlock } from './ThinkingBlock';
 
-const meta = {
+const meta: Meta<typeof ThinkingBlock> = {
   component: ThinkingBlock,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text max-w-xl p-4">
         <Story />
       </div>

@@ -38,8 +38,8 @@ describe('filterTree', () => {
     const parent = node('p', 'text', [child1, child2]);
     const result = filterTree([parent], (m) => m.type !== 'tool_use');
     expect(result).toHaveLength(1);
-    expect(result[0].message.id).toBe('p');
-    expect(result[0].children.map((n) => n.message.id)).toEqual(['c2']);
+    expect(result[0]!.message.id).toBe('p');
+    expect(result[0]!.children.map((n) => n.message.id)).toEqual(['c2']);
   });
 
   it('preserves node identity when nothing changes', () => {
@@ -54,7 +54,7 @@ describe('filterTree', () => {
     const sibling = node('s', 'text');
     const root = node('r', 'text', [mid, sibling]);
     const result = filterTree([root], (m) => m.type !== 'tool_use');
-    expect(result[0].children.map((n) => n.message.id)).toEqual(['m', 's']);
-    expect(result[0].children[0].children).toEqual([]);
+    expect(result[0]!.children.map((n) => n.message.id)).toEqual(['m', 's']);
+    expect(result[0]!.children[0]!.children).toEqual([]);
   });
 });

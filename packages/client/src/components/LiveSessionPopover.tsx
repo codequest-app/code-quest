@@ -24,7 +24,7 @@ export function LiveSessionPopover({
   onOpen,
   onStop,
   onSplit,
-}: LiveSessionPopoverProps) {
+}: LiveSessionPopoverProps): React.JSX.Element {
   const projectLabel = basename(session.projectRoot);
   const cwdLabel =
     session.cwd && session.cwd !== session.projectRoot ? `/${basename(session.cwd)}` : '';

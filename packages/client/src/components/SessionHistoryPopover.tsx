@@ -19,7 +19,7 @@ export function SessionHistoryPopover({
   onResumed,
   side = 'right',
   align = 'start',
-}: SessionHistoryPopoverProps) {
+}: SessionHistoryPopoverProps): React.JSX.Element {
   const { listSessions, renameSession, deleteSession, resume } = useSession();
 
   const [sessions, setSessions] = useState<SessionSummary[]>([]);

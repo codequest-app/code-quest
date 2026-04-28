@@ -5,7 +5,11 @@ interface AlertBannerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-export function AlertBanner({ className, children, ...props }: AlertBannerProps) {
+export function AlertBanner({
+  className,
+  children,
+  ...props
+}: AlertBannerProps): React.JSX.Element {
   return (
     <div className={cn('border-l-2 rounded-r-lg', className)} {...props}>
       {children}

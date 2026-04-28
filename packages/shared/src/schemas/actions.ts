@@ -2,13 +2,32 @@ import { z } from 'zod';
 
 // ── Actions (moved from notification.ts) ──
 
-export const actionOpenUrlPayloadSchema = z.object({
+export const actionOpenUrlPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; url: z.ZodString },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   url: z.string(),
 });
 export type ActionOpenUrlPayload = z.infer<typeof actionOpenUrlPayloadSchema>;
 
-export const actionOpenFilePayloadSchema = z.object({
+export const actionOpenFilePayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    filePath: z.ZodString;
+    location: z.ZodOptional<
+      z.ZodObject<
+        {
+          startLine: z.ZodOptional<z.ZodNumber>;
+          endLine: z.ZodOptional<z.ZodNumber>;
+          searchText: z.ZodOptional<z.ZodString>;
+        },
+        z.core.$strip
+      >
+    >;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   filePath: z.string(),
   location: z

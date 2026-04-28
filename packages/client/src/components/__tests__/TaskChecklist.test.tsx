@@ -13,9 +13,9 @@ describe('TaskChecklist', () => {
     );
     const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
     expect(boxes).toHaveLength(3);
-    expect(boxes[0].checked).toBe(true);
-    expect(boxes[1].checked).toBe(false);
-    expect(boxes[2].checked).toBe(true);
+    expect(boxes[0]!.checked).toBe(true);
+    expect(boxes[1]!.checked).toBe(false);
+    expect(boxes[2]!.checked).toBe(true);
   });
 
   it('non-task lines render as read-only text, no checkbox', () => {
@@ -36,9 +36,9 @@ describe('TaskChecklist', () => {
     const content = ['## Heading', '- [ ] first', '- [ ] second'].join('\n');
     render(<TaskChecklist content={content} onToggle={onToggle} />);
     const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
-    await user.click(boxes[1]);
+    await user.click(boxes[1]!);
     expect(onToggle).toHaveBeenCalledWith(2); // lines: 0=heading, 1=first, 2=second
-    expect(boxes[1].checked).toBe(true);
+    expect(boxes[1]!.checked).toBe(true);
   });
 
   it('reverts optimistic flip + calls onError when RPC returns error', async () => {

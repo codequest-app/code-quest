@@ -199,7 +199,8 @@ export function transformSystem(raw: ProtocolMessage): ClientMessage | null {
   const subtype = typeof raw.subtype === 'string' ? raw.subtype : undefined;
 
   if (subtype && subtype in HANDLERS) {
-    return HANDLERS[subtype](raw);
+    const handler = HANDLERS[subtype as keyof typeof HANDLERS];
+    if (handler) return handler(raw);
   }
 
   // Other system subtypes → raw

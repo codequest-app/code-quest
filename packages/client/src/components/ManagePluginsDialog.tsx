@@ -13,7 +13,10 @@ interface ManagePluginsDialogProps {
   onClose: () => void;
 }
 
-export function ManagePluginsDialog({ open, onClose }: ManagePluginsDialogProps) {
+export function ManagePluginsDialog({
+  open,
+  onClose,
+}: ManagePluginsDialogProps): React.JSX.Element {
   const {
     installed,
     available,

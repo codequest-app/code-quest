@@ -84,7 +84,7 @@ function pushDebugFlags(args: string[], o: LaunchOptions): void {
 export class ClaudeProtocol {
   readonly command = 'claude';
 
-  readonly baseArgs = [
+  readonly baseArgs: string[] = [
     '--output-format',
     'stream-json',
     '--input-format',

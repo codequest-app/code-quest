@@ -117,7 +117,7 @@ export function ManageMcpDialog({
   onAuthenticate,
   onClearAuth,
   onRefresh,
-}: ManageMcpDialogProps) {
+}: ManageMcpDialogProps): React.JSX.Element {
   const { providerConfig } = useChannelConfig();
   const mcpScopes = providerConfig?.mcpScopes;
 

@@ -3,7 +3,13 @@ import { useState } from 'react';
 import { copyToClipboard } from '../../utils/clipboard';
 import { cn } from '../../utils/cn';
 
-export function RotatableChevron({ open, className }: { open?: boolean; className?: string }) {
+export function RotatableChevron({
+  open,
+  className,
+}: {
+  open?: boolean;
+  className?: string;
+}): React.JSX.Element {
   return <span className={cn('transition-transform', open && 'rotate-90', className)}>▶</span>;
 }
 
@@ -22,7 +28,7 @@ export function CollapsibleBlock({
   labelDetail?: string;
   labelRange?: string;
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -50,7 +56,7 @@ export function StatusLine({
   icon: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-}) {
+}): React.JSX.Element {
   return (
     <div className={cn('flex items-center gap-2 text-xs', className)}>
       <span>{icon}</span>
@@ -59,7 +65,10 @@ export function StatusLine({
   );
 }
 
-export function CenterDivider({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function CenterDivider({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return (
     <div className="flex items-center gap-3 py-2 text-text-muted/40 text-xs" {...props}>
       <div className="flex-1 border-t border-text-muted/20" />
@@ -75,7 +84,7 @@ export function hasAnsi(content: string): boolean {
   return ANSI_PATTERN.test(content);
 }
 
-export function AnsiContent({ content }: { content: string }) {
+export function AnsiContent({ content }: { content: string }): React.JSX.Element {
   return (
     <section aria-label="ansi-content">
       <pre className={CODE_BLOCK_CLASS}>
@@ -87,7 +96,13 @@ export function AnsiContent({ content }: { content: string }) {
 
 const FILE_PATH_PATTERN = /(?:^|\s)((?:\/|\.\/|\.\.\/)[^\s:]+(?::\d+)?)/g;
 
-export function OutputContent({ content, isError }: { content: string; isError?: boolean }) {
+export function OutputContent({
+  content,
+  isError,
+}: {
+  content: string;
+  isError?: boolean;
+}): React.JSX.Element {
   return hasAnsi(content) ? (
     <AnsiContent content={content} />
   ) : (
@@ -103,6 +118,7 @@ export function parseFilePathsInContent(text: string): React.ReactNode[] {
 
   for (const match of text.matchAll(FILE_PATH_PATTERN)) {
     const path = match[1];
+    if (!path) continue;
     const start = match.index + (match[0].length - path.length);
     if (start > lastIndex) parts.push(text.slice(lastIndex, start));
     parts.push(

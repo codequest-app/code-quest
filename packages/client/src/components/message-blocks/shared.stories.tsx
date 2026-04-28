@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CollapsibleBlock, RotatableChevron, StatusLine } from './shared';
 
-const Showcase = () => (
+const Showcase = (): React.JSX.Element => (
   <div className="flex flex-col gap-6 bg-bg text-text p-6">
     <section className="flex flex-col gap-2">
       <h3 className="text-xs text-text-muted">RotatableChevron</h3>
@@ -39,7 +39,7 @@ const Showcase = () => (
   </div>
 );
 
-const meta = {
+const meta: Meta<typeof Showcase> = {
   component: Showcase,
   title: 'message-blocks/shared',
   tags: ['autodocs'],

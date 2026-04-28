@@ -45,7 +45,7 @@ describe('AppInitContext', () => {
     subscribeInit!(lateCb);
 
     expect(lateCb).toHaveBeenCalledTimes(1);
-    expect(lateCb.mock.calls[0][0]).toHaveProperty('sessions');
+    expect(lateCb.mock.calls[0]![0]).toHaveProperty('sessions');
   });
 
   it('SessionProvider receives sessions via subscribeInit (no duplicate app:init)', async () => {

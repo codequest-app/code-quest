@@ -2,12 +2,14 @@ import { fanOutWrites } from './composite-fan-out.ts';
 import type { RawDeltaEntry, RawDeltaStore } from './raw-delta-store.ts';
 
 export class CompositeRawDeltaStore implements RawDeltaStore {
+  private readonly primary: RawDeltaStore;
   private stores: RawDeltaStore[];
   constructor(stores: RawDeltaStore[]) {
-    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeRawDeltaStore requires at least one store');
     }
+    this.stores = stores;
+    this.primary = stores[0] as RawDeltaStore;
   }
 
   async append(event: RawDeltaEntry): Promise<void> {
@@ -15,6 +17,6 @@ export class CompositeRawDeltaStore implements RawDeltaStore {
   }
 
   getBySession(sessionId: string): Promise<RawDeltaEntry[]> {
-    return this.stores[0].getBySession(sessionId);
+    return this.primary.getBySession(sessionId);
   }
 }

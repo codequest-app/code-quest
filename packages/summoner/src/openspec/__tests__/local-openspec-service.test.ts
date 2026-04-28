@@ -88,7 +88,7 @@ describe('LocalOpenspecService', () => {
       );
       const result = await reader.list('/repo');
       if ('error' in result) throw new Error('unexpected error');
-      expect(result.changes[0].tasks).toBeNull();
+      expect(result.changes[0]!.tasks).toBeNull();
     });
 
     it('accepts CLI status "no-tasks" (third value beyond in-progress/complete)', async () => {
@@ -233,7 +233,7 @@ describe('LocalOpenspecService', () => {
       const { process, reader } = setup();
       process.enqueueRunOnce({ exitCode: 0, stdout: '', stderr: '' });
       await reader.archive('/repo', 'add-foo', { skipSpecs: true });
-      expect(process.runOnceCalls[0].args).toEqual(['archive', 'add-foo', '-y', '--skip-specs']);
+      expect(process.runOnceCalls[0]!.args).toEqual(['archive', 'add-foo', '-y', '--skip-specs']);
     });
 
     it('returns error on non-zero exit (prefers stderr)', async () => {

@@ -1,7 +1,7 @@
 /** Animated placeholder rows for list-shaped loading states (Spec sections,
  *  FileTree root). Conveys "content of similar shape is loading" without
  *  needing visible text. */
-export function SkeletonRows({ count = 3 }: { count?: number }) {
+export function SkeletonRows({ count = 3 }: { count?: number }): React.JSX.Element {
   return (
     <div
       role="status"

@@ -21,7 +21,7 @@ export function SideQuestionDialog({
   error,
   onClose,
   container,
-}: SideQuestionDialogProps) {
+}: SideQuestionDialogProps): React.JSX.Element {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent

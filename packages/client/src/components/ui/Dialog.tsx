@@ -2,8 +2,8 @@ import * as RadixDialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 
-export const Dialog = RadixDialog.Root;
-export const DialogClose = RadixDialog.Close;
+export const Dialog: typeof RadixDialog.Root = RadixDialog.Root;
+export const DialogClose: typeof RadixDialog.Close = RadixDialog.Close;
 
 type DialogSize = 'md' | 'lg' | 'fullscreen';
 
@@ -37,7 +37,7 @@ export function DialogContent({
   hideTitleDivider = false,
   size = 'md',
   container,
-}: DialogContentProps) {
+}: DialogContentProps): React.JSX.Element {
   // When portaled into a scoped container, position with `absolute` instead
   // of `fixed` so overlay + content are bounded by that container's box.
   const scoped = container != null;

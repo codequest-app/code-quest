@@ -36,7 +36,7 @@ export function dispatchSelectedItem(
     selectItem: (item: MenuItem) => void;
     close: () => void;
   },
-) {
+): void {
   if (!item.id.startsWith('slash-')) {
     opts.selectItem(item);
     return;

@@ -10,7 +10,7 @@ interface CodeBlockProps {
   className?: string;
 }
 
-export function CodeBlock({ code, language, className }: CodeBlockProps) {
+export function CodeBlock({ code, language, className }: CodeBlockProps): React.JSX.Element {
   const effective = useEffectiveColorTheme();
   const style = effective === 'light' ? oneLight : vscDarkPlus;
 

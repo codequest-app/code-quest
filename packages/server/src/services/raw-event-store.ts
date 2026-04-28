@@ -2,7 +2,10 @@ import type { RawEvent } from '@code-quest/summoner';
 import { z } from 'zod';
 import { logger } from '../logger.ts';
 
-export const sessionPreviewSchema = z.object({
+export const sessionPreviewSchema: z.ZodObject<{
+  lastAssistant: z.ZodOptional<z.ZodString>;
+  firstUser: z.ZodOptional<z.ZodString>;
+}> = z.object({
   lastAssistant: z.string().optional(),
   firstUser: z.string().optional(),
 });

@@ -19,11 +19,11 @@ describe('parseUnifiedDiff', () => {
       ' line3',
     ].join('\n');
     const [file] = parseUnifiedDiff(input);
-    expect(file.path).toBe('foo.ts');
-    expect(file.isBinary).toBe(false);
-    expect(file.added).toBe(1);
-    expect(file.removed).toBe(1);
-    const kinds = file.lines.map((l) => l.kind);
+    expect(file!.path).toBe('foo.ts');
+    expect(file!.isBinary).toBe(false);
+    expect(file!.added).toBe(1);
+    expect(file!.removed).toBe(1);
+    const kinds = file!.lines.map((l) => l.kind);
     expect(kinds).toContain('hunk');
     expect(kinds).toContain('add');
     expect(kinds).toContain('del');
@@ -42,8 +42,8 @@ describe('parseUnifiedDiff', () => {
     ].join('\n');
     const files = parseUnifiedDiff(input);
     expect(files.map((f) => f.path)).toEqual(['a.ts', 'b.ts']);
-    expect(files[0].added).toBe(1);
-    expect(files[1].removed).toBe(1);
+    expect(files[0]!.added).toBe(1);
+    expect(files[1]!.removed).toBe(1);
   });
 
   it('detects binary files', () => {
@@ -52,6 +52,6 @@ describe('parseUnifiedDiff', () => {
       'Binary files a/img.png and b/img.png differ',
     ].join('\n');
     const [file] = parseUnifiedDiff(input);
-    expect(file.isBinary).toBe(true);
+    expect(file!.isBinary).toBe(true);
   });
 });

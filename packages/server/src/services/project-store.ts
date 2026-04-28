@@ -14,7 +14,15 @@ interface ProjectsTable {
   createdAt: Column;
 }
 
-export const projectRecordSchema = z.object({
+export const projectRecordSchema: z.ZodObject<{
+  id: z.ZodString;
+  path: z.ZodString;
+  name: z.ZodString;
+  pinned: z.ZodBoolean;
+  color: z.ZodNullable<z.ZodString>;
+  lastOpenedAt: z.ZodString;
+  createdAt: z.ZodString;
+}> = z.object({
   id: z.string(),
   path: z.string(),
   name: z.string(),

@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { ToolPermissionCard } from './ToolPermissionCard';
 
-const meta = {
+const meta: Meta<typeof ToolPermissionCard> = {
   component: ToolPermissionCard,
   tags: ['autodocs'],
   decorators: [withStoryChannel({ className: 'max-w-lg bg-bg text-text p-4' })],

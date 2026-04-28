@@ -37,7 +37,11 @@ export interface FilePreviewModalProps {
   onMention: (path: string) => void;
 }
 
-export function FilePreviewModal({ path, onClose, onMention }: FilePreviewModalProps) {
+export function FilePreviewModal({
+  path,
+  onClose,
+  onMention,
+}: FilePreviewModalProps): React.JSX.Element {
   const language = useMemo(() => languageFor(path), [path]);
   const { socket } = useSocket();
   const [state, setState] = useState<

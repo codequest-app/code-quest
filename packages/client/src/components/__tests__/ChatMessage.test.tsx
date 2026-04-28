@@ -110,7 +110,7 @@ describe('ChatMessage', () => {
     expect(btn).not.toBeNull();
     if (btn) await user.click(btn as HTMLElement);
     expect(writeText).toHaveBeenCalled();
-    expect(String(writeText.mock.calls[0][0])).toContain('Hello');
+    expect(String(writeText.mock.calls[0]![0])).toContain('Hello');
   });
 
   it('assistant copy uses raw message.content (not DOM textContent)', async () => {

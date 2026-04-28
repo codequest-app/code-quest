@@ -3,12 +3,12 @@ import { fn } from 'storybook/test';
 import { withThemePreset } from '../test/story-decorator';
 import { SettingsDialog } from './SettingsDialog';
 
-const meta = {
+const meta: Meta<typeof SettingsDialog> = {
   component: SettingsDialog,
   tags: ['autodocs'],
   args: { onClose: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text min-h-100 flex items-center justify-center">
         <Story />
       </div>

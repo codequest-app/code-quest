@@ -6,7 +6,10 @@ interface TruncatedContentProps {
   maxHeight?: number;
 }
 
-export function TruncatedContent({ children, maxHeight = 500 }: TruncatedContentProps) {
+export function TruncatedContent({
+  children,
+  maxHeight = 500,
+}: TruncatedContentProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
   const [overflow, setOverflow] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

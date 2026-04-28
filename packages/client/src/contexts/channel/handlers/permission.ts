@@ -57,7 +57,11 @@ function onCancelRequest(
   };
 }
 
-export const controlHandlers = {
+export const controlHandlers: {
+  'control:elicitation': typeof onControlElicitation;
+  'control:diff_review': typeof onControlDiffReview;
+  'chat:cancel_request': typeof onCancelRequest;
+} = {
   'control:elicitation': onControlElicitation,
   'control:diff_review': onControlDiffReview,
   'chat:cancel_request': onCancelRequest,
@@ -78,7 +82,9 @@ function onControlMcpEffect(deps: EffectDeps, p: Payload<'control:mcp'>): void {
   });
 }
 
-export const controlHandlerEffects = {
+export const controlHandlerEffects: {
+  'control:mcp': typeof onControlMcpEffect;
+} = {
   'control:mcp': onControlMcpEffect,
 } satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
 
@@ -102,11 +108,22 @@ export function createControlActions({
   setElicitation,
   setDiffReview,
   setChannelState,
-}: ControlActionsDeps) {
+}: ControlActionsDeps): {
+  setPendingControls: (fn: (prev: PendingControl[]) => PendingControl[]) => void;
+  setPendingElicitation: (v: PendingElicitation | null) => void;
+  setPendingDiffReview: (v: PendingDiffReview | null) => void;
+  getPendingControls: () => PendingControl[];
+  respondToControl: (response: ControlPermissionResponse, requestId?: string) => void;
+  diffRespond: (toolId: string, accepted: boolean) => void;
+  stopTask: (taskId: string) => void;
+  clearPendingDiffReview: () => void;
+  respondToElicitation: (requestId: string, answer: string) => void;
+  cancelElicitation: (requestId: string) => void;
+} {
   const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
     channelEmit(socket, channelId, event, payload, ...rest);
 
-  function respondToControl(response: ControlPermissionResponse, requestId?: string) {
+  function respondToControl(response: ControlPermissionResponse, requestId?: string): void {
     const ctrls = controlsRef.current;
     const target = requestId ? ctrls.find((c) => c.requestId === requestId) : ctrls[0];
     if (!target) return;
@@ -123,7 +140,7 @@ export function createControlActions({
     }));
   }
 
-  function diffRespond(toolId: string, accepted: boolean) {
+  function diffRespond(toolId: string, accepted: boolean): void {
     const ctrl = controlsRef.current.find((c) => c.toolUseId === toolId);
     if (!ctrl) return;
     emit(EVENTS.chat.respond, {
@@ -134,11 +151,11 @@ export function createControlActions({
     });
   }
 
-  function stopTask(taskId: string) {
+  function stopTask(taskId: string): void {
     emit(EVENTS.chat.stop_task, { taskId });
   }
 
-  function respondToElicitation(requestId: string, answer: string) {
+  function respondToElicitation(requestId: string, answer: string): void {
     emit(EVENTS.chat.respond, {
       requestId,
       response: { behavior: 'allow', updatedInput: { url: answer, value: answer } },
@@ -146,12 +163,12 @@ export function createControlActions({
     setElicitation(null);
   }
 
-  function cancelElicitation(requestId: string) {
+  function cancelElicitation(requestId: string): void {
     emit(EVENTS.chat.respond, { requestId, response: { behavior: 'deny' } });
     setElicitation(null);
   }
 
-  function clearPendingDiffReview() {
+  function clearPendingDiffReview(): void {
     setDiffReview(null);
   }
 
@@ -159,12 +176,12 @@ export function createControlActions({
     setPendingControls: setControls,
     setPendingElicitation: setElicitation,
     setPendingDiffReview: setDiffReview,
-    getPendingControls: () => controlsRef.current,
-    respondToControl,
-    diffRespond,
-    stopTask,
-    clearPendingDiffReview,
-    respondToElicitation,
-    cancelElicitation,
+    getPendingControls: (): PendingControl[] => controlsRef.current,
+    respondToControl: respondToControl,
+    diffRespond: diffRespond,
+    stopTask: stopTask,
+    clearPendingDiffReview: clearPendingDiffReview,
+    respondToElicitation: respondToElicitation,
+    cancelElicitation: cancelElicitation,
   };
 }

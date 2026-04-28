@@ -2,6 +2,28 @@ import { EventEmitter } from 'node:events';
 
 let _socketSeq = 0;
 
+interface FakeServerSocket {
+  id: string;
+  emit(event: string, ...args: unknown[]): FakeServerSocket;
+  on(event: string, fn: (...args: unknown[]) => unknown): FakeServerSocket;
+  off(event: string, fn: (...args: unknown[]) => void): FakeServerSocket;
+  readonly lastHandlerPromise: Promise<unknown> | null;
+}
+
+export interface FakeSocket {
+  id: string;
+  connected: boolean;
+  serverSocket: FakeServerSocket;
+  connect(): FakeSocket;
+  disconnect(): FakeSocket;
+  on(event: string, fn: (...args: unknown[]) => void): FakeSocket;
+  once(event: string, fn: (...args: unknown[]) => void): FakeSocket;
+  off(event: string, fn: (...args: unknown[]) => void): FakeSocket;
+  emit(event: string, ...args: unknown[]): FakeSocket;
+  // biome-ignore lint/complexity/noBannedTypes: EventEmitter.listeners() returns Function[]
+  listeners(event: string): Function[];
+}
+
 /**
  * Create a dual-emitter fake socket (client ↔ server).
  * Used by vi.mock('socket.io-client') in both client and server test setups.
@@ -9,7 +31,7 @@ let _socketSeq = 0;
  * server → client: async (queueMicrotask) — matches real socket.io network delivery
  * client → server: sync — callback pattern needs immediate response
  */
-export function createFakeSocket() {
+export function createFakeSocket(): FakeSocket {
   const socketId = `fake-socket-${++_socketSeq}`;
   const clientEmitter = new EventEmitter();
   const serverEmitter = new EventEmitter();
@@ -93,4 +115,4 @@ export function createFakeSocket() {
   return socket;
 }
 
-export type FakeSocket = ReturnType<typeof createFakeSocket>;
+// FakeSocket is now exported as an interface above

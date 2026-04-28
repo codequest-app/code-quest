@@ -49,7 +49,7 @@ describe('ChatHandler > connection', () => {
 
     expect(result.providerConfig.defaultModels).toBeDefined();
     expect(result.providerConfig.defaultModels.length).toBeGreaterThan(0);
-    expect(result.providerConfig.defaultModels[0].value).toBe('default');
+    expect(result.providerConfig.defaultModels[0]!.value).toBe('default');
   });
 
   it('session launch caches models and app:config returns them', async () => {

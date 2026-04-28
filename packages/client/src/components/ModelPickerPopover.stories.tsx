@@ -8,12 +8,12 @@ const models = [
   { value: 'claude-haiku-4-5', displayName: 'Haiku 4.5' },
 ];
 
-const meta = {
+const meta: Meta<typeof ModelPickerPopover> = {
   component: ModelPickerPopover,
   tags: ['autodocs'],
   args: { availableModels: models, onSwitch: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-sm bg-bg text-text p-6 relative">
         <Story />
       </div>

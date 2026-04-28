@@ -11,7 +11,7 @@ const feat = (over: Partial<Feature> = {}): Feature => ({
   ...over,
 });
 
-const meta = {
+const meta: Meta<typeof PaletteCommandList> = {
   component: PaletteCommandList,
   tags: ['autodocs'],
   args: {
@@ -20,7 +20,7 @@ const meta = {
     onActiveChange: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text w-160 p-2">
         <Story />
       </div>

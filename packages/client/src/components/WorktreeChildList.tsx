@@ -28,7 +28,7 @@ export function WorktreeChildList({
 }: {
   worktrees: WorktreeInfo[];
   projectCwd: string;
-}) {
+}): React.JSX.Element {
   const { sessions } = useSession();
   const { setActiveProject } = useProjectActions();
   const { requestOpenWorktree, setSelectedWorktree } = useNavigationActions();

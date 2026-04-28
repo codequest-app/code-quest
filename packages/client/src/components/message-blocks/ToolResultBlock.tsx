@@ -20,7 +20,7 @@ export function ToolResultBlock({
   content: string;
   meta?: ToolResultMeta;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
-}) {
+}): React.JSX.Element {
   const label = meta?.name ? `Result: ${meta.name}` : 'Result';
   const isEditTool = meta?.name === 'Edit' || meta?.name === 'Write';
   const toolId = meta?.toolId;

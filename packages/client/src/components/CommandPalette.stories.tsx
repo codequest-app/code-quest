@@ -57,7 +57,7 @@ function PaletteStory({ tab }: { tab?: string }) {
   );
 }
 
-const meta = {
+const meta: Meta<typeof CommandPalette> = {
   component: CommandPalette,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

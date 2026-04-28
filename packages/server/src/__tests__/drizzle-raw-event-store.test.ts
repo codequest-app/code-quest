@@ -36,9 +36,9 @@ describe('DrizzleRawEventStore', () => {
 
     const results = await store.getBySession('sess-1');
     expect(results).toHaveLength(1);
-    expect(results[0].sessionId).toBe('sess-1');
-    expect(results[0].direction).toBe('out');
-    expect(results[0].raw).toBe(event.raw);
+    expect(results[0]!.sessionId).toBe('sess-1');
+    expect(results[0]!.direction).toBe('out');
+    expect(results[0]!.raw).toBe(event.raw);
   });
 
   it('append uses the provided id verbatim when given', async () => {

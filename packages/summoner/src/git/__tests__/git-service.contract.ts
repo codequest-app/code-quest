@@ -11,7 +11,7 @@ export interface ContractSetup {
   makeExistingRepo: () => Promise<string>;
 }
 
-export function gitServiceContract(name: string, setup: () => Promise<ContractSetup>) {
+export function gitServiceContract(name: string, setup: () => Promise<ContractSetup>): void {
   describe(`${name} — GitService contract`, () => {
     describe('initRepo', () => {
       it('non-git path → returns { branch: "main" }, creates .git, has 1 commit', async () => {

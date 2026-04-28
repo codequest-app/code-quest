@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { ProjectDropdownMenu } from './ProjectContextMenu';
 
-const meta = {
+const meta: Meta<typeof ProjectDropdownMenu> = {
   component: ProjectDropdownMenu,
   tags: ['autodocs'],
   args: {

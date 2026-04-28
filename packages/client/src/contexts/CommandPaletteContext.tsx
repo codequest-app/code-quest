@@ -19,7 +19,7 @@ interface CommandPaletteState {
 
 const CommandPaletteContext = createContext<CommandPaletteState | null>(null);
 
-export function CommandPaletteProvider({ children }: { children: ReactNode }) {
+export function CommandPaletteProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState<string | undefined>();
   const jumpToMapRef = useRef(new Map<string, (messageId: string) => void>());

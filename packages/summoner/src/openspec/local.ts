@@ -140,7 +140,7 @@ export class LocalOpenspecService implements OpenspecService {
     if (lineIndex < 0 || lineIndex >= lines.length) {
       return { error: 'line-out-of-range' };
     }
-    const match = lines[lineIndex].match(TASK_LINE_RE);
+    const match = lines[lineIndex]?.match(TASK_LINE_RE);
     if (!match) return { error: 'not-a-task-line' };
     const [, prefix, mark, rest] = match;
     const checked = mark === ' ';

@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ContextPieChart } from './ContextPieChart';
 
-const meta = {
+const meta: Meta<typeof ContextPieChart> = {
   component: ContextPieChart,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text p-6">
         <Story />
       </div>

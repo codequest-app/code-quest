@@ -32,7 +32,16 @@ function getSpeechRecognitionClass(): (new () => SpeechRecognitionInstance) | nu
   return window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null;
 }
 
-export function useSpeechToText() {
+export function useSpeechToText(): {
+  isListening: boolean;
+  interimTranscript: string;
+  finalTranscript: string;
+  resetTranscript: () => void;
+  toggleListening: () => void;
+  start: () => void;
+  stop: () => void;
+  isSupported: boolean;
+} {
   const [isListening, setIsListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const [finalTranscript, setFinalTranscript] = useState('');
@@ -40,12 +49,12 @@ export function useSpeechToText() {
   const SpeechRecognitionClass = getSpeechRecognitionClass();
   const isSupported = SpeechRecognitionClass !== null;
 
-  const resetTranscript = () => {
+  const resetTranscript = (): void => {
     setInterimTranscript('');
     setFinalTranscript('');
   };
 
-  const start = () => {
+  const start = (): void => {
     const SpeechRecognition = SpeechRecognitionClass;
     if (!SpeechRecognition) return;
 
@@ -59,10 +68,13 @@ export function useSpeechToText() {
       let final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
+        if (!result) continue;
+        const alt = result[0];
+        if (!alt) continue;
         if (result.isFinal) {
-          final += result[0].transcript;
+          final += alt.transcript;
         } else {
-          interim += result[0].transcript;
+          interim += alt.transcript;
         }
       }
       setInterimTranscript(interim);
@@ -89,7 +101,7 @@ export function useSpeechToText() {
     setIsListening(true);
   };
 
-  const stop = () => {
+  const stop = (): void => {
     recognitionRef.current?.stop();
   };
 
@@ -100,7 +112,7 @@ export function useSpeechToText() {
     [],
   );
 
-  const toggleListening = () => {
+  const toggleListening = (): void => {
     if (isListening) {
       stop();
     } else {
@@ -109,13 +121,13 @@ export function useSpeechToText() {
   };
 
   return {
-    isListening,
-    interimTranscript,
-    finalTranscript,
-    resetTranscript,
-    toggleListening,
-    start,
-    stop,
-    isSupported,
+    isListening: isListening,
+    interimTranscript: interimTranscript,
+    finalTranscript: finalTranscript,
+    resetTranscript: resetTranscript,
+    toggleListening: toggleListening,
+    start: start,
+    stop: stop,
+    isSupported: isSupported,
   };
 }

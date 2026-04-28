@@ -40,7 +40,9 @@ const TabContent = memo(function TabContent({
   );
 });
 
-export const TabContainer = memo(function TabContainer({ projectCwd }: { projectCwd: string }) {
+export const TabContainer: React.MemoExoticComponent<
+  (props: { projectCwd: string }) => React.JSX.Element
+> = memo(function TabContainer({ projectCwd }: { projectCwd: string }): React.JSX.Element {
   const { activeTabId, tabs } = useTabState();
   const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();

@@ -19,7 +19,7 @@ interface OpenSpec {
   name: string;
 }
 
-export function SpecPane({ cwd }: SpecPaneProps) {
+export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
   const data = useOpenspecList(cwd);
   const { changeNew, archive, refetchOpenspecList } = useOpenspecActions();
   const [open, setOpen] = useState<OpenSpec | null>(null);

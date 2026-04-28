@@ -1,7 +1,7 @@
 import type { Feature } from '../../lib/feature';
-import { createOpenSignal } from '../../lib/open-signal';
+import { createOpenSignal, type OpenSignal } from '../../lib/open-signal';
 
-export const switchAccountSignal = createOpenSignal();
+export const switchAccountSignal: OpenSignal = createOpenSignal();
 
 export function createSwitchAccountFeature(): Feature {
   return {

@@ -20,7 +20,7 @@ const CONTROL_RESPONSE_DEFAULT = {
   colorClass: 'text-text-muted bg-text-muted/10 border-l-text-muted',
 };
 
-export function PendingActionContent({ content }: { content: string }) {
+export function PendingActionContent({ content }: { content: string }): React.ReactNode {
   return (
     <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
       <strong className="text-warning text-sm">⚠ Tool Approval: {content}</strong>
@@ -28,7 +28,7 @@ export function PendingActionContent({ content }: { content: string }) {
   );
 }
 
-export function ControlResponseContent({ content }: { content: string }) {
+export function ControlResponseContent({ content }: { content: string }): React.ReactNode {
   const { icon, colorClass } =
     CONTROL_RESPONSE_STYLES.find((s) => content.startsWith(s.prefix)) ?? CONTROL_RESPONSE_DEFAULT;
   return (
@@ -40,7 +40,7 @@ export function ControlResponseContent({ content }: { content: string }) {
   );
 }
 
-export function ResultContent({ meta }: { meta?: ResultMeta }) {
+export function ResultContent({ meta }: { meta?: ResultMeta }): React.ReactNode {
   const stats = meta?.stats;
   return (
     <CenterDivider data-type="result">
@@ -57,7 +57,7 @@ export function ResultContent({ meta }: { meta?: ResultMeta }) {
   );
 }
 
-export function ErrorContent({ content }: { content: string }) {
+export function ErrorContent({ content }: { content: string }): React.ReactNode {
   return (
     <AlertBanner className="bg-danger-bg border-l-danger px-4 py-3 text-danger" data-type="error">
       {content}
@@ -65,7 +65,7 @@ export function ErrorContent({ content }: { content: string }) {
   );
 }
 
-export function CompactBoundaryContent() {
+export function CompactBoundaryContent(): React.ReactNode {
   return (
     <CenterDivider>
       <span>Context was compressed</span>
@@ -73,7 +73,7 @@ export function CompactBoundaryContent() {
   );
 }
 
-export function InterruptContent() {
+export function InterruptContent(): React.ReactNode {
   return (
     <StatusLine icon="⚠" className="text-warning py-1">
       <span className="italic">Interrupted by user</span>
@@ -81,12 +81,12 @@ export function InterruptContent() {
   );
 }
 
-export function MetaContent({ content }: { content: string }) {
+export function MetaContent({ content }: { content: string }): React.ReactNode {
   if (!content) return null;
   return <div className="text-xs text-text-muted/60 py-1 italic">{content}</div>;
 }
 
-export function SlashCommandResultContent({ content }: { content: string }) {
+export function SlashCommandResultContent({ content }: { content: string }): React.ReactNode {
   if (!content.includes('\n')) {
     const short = content.replace(/^Set model to /, 'Switched to ');
     return (
@@ -103,7 +103,13 @@ export function SlashCommandResultContent({ content }: { content: string }) {
   );
 }
 
-export function RateLimitContent({ content, meta }: { content: string; meta?: RateLimitMeta }) {
+export function RateLimitContent({
+  content,
+  meta,
+}: {
+  content: string;
+  meta?: RateLimitMeta;
+}): React.ReactNode {
   const info = meta?.rateLimitInfo;
   return (
     <AlertBanner className="bg-warning-bg border-l-warning px-4 py-2.5">
@@ -132,7 +138,7 @@ export function TaskStartedContent({
 }: {
   content: string;
   meta?: Record<string, unknown>;
-}) {
+}): React.ReactNode {
   return (
     <StatusLine icon="🚀" className="text-text-muted">
       <span>{content}</span>
@@ -145,7 +151,7 @@ export function TaskStartedContent({
   );
 }
 
-export function StreamlinedTextContent({ content }: { content: string }) {
+export function StreamlinedTextContent({ content }: { content: string }): React.ReactNode {
   return (
     <div className="relative">
       <span className="absolute -top-1 right-0 text-xs text-text-muted/60 font-mono">
@@ -156,7 +162,7 @@ export function StreamlinedTextContent({ content }: { content: string }) {
   );
 }
 
-export function StreamlinedToolSummaryContent({ content }: { content: string }) {
+export function StreamlinedToolSummaryContent({ content }: { content: string }): React.ReactNode {
   return (
     <CollapsibleBlock icon="⚡" label="Tool Summary">
       <pre className={CODE_BLOCK_CLASS}>{content}</pre>
@@ -164,7 +170,7 @@ export function StreamlinedToolSummaryContent({ content }: { content: string }) 
   );
 }
 
-export function ImageContent({ meta }: { meta?: ImageMeta }) {
+export function ImageContent({ meta }: { meta?: ImageMeta }): React.ReactNode {
   const source = meta?.source;
   if (!source?.data || source.type !== 'base64') return null;
   const dataUrl = `data:${source.media_type ?? 'image/png'};base64,${source.data}`;
@@ -179,7 +185,13 @@ export function ImageContent({ meta }: { meta?: ImageMeta }) {
   );
 }
 
-export function DocumentContent({ content, meta }: { content: string; meta?: DocumentMeta }) {
+export function DocumentContent({
+  content,
+  meta,
+}: {
+  content: string;
+  meta?: DocumentMeta;
+}): React.ReactNode {
   const title = meta?.title ?? content ?? 'Document';
   const source = meta?.source;
   const handleClick = () => {
@@ -205,7 +217,7 @@ export function DocumentContent({ content, meta }: { content: string; meta?: Doc
   );
 }
 
-export function ContentBlockStart({ meta }: { meta?: Record<string, unknown> }) {
+export function ContentBlockStart({ meta }: { meta?: Record<string, unknown> }): React.ReactNode {
   return (
     <div role="status" aria-label="block-placeholder" className="flex items-center gap-2 py-2">
       <div className="h-4 w-32 bg-text-muted/20 rounded animate-pulse" />

@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { RemoveProjectConfirmDialog } from './RemoveProjectConfirmDialog';
 
-const meta = {
+const meta: Meta<typeof RemoveProjectConfirmDialog> = {
   component: RemoveProjectConfirmDialog,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

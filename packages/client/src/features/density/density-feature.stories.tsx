@@ -10,7 +10,7 @@ function DensityFeaturePreview({
 }: {
   density: Density;
   setDensity: (v: Density) => void;
-}) {
+}): React.JSX.Element {
   const feature = toMenuItem(createDensityFeature({ density, setDensity }));
   return (
     <button
@@ -24,12 +24,12 @@ function DensityFeaturePreview({
   );
 }
 
-const meta = {
+const meta: Meta<typeof DensityFeaturePreview> = {
   component: DensityFeaturePreview,
   tags: ['autodocs'],
   args: { setDensity: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 min-h-30">
         <Story />
       </div>

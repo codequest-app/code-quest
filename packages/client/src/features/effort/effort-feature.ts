@@ -28,7 +28,8 @@ export function createEffortFeature({
     execute() {
       if (effortLevels.length === 0) return;
       const idx = effort ? effortLevels.indexOf(effort) : -1;
-      onSetEffort(effortLevels[(idx + 1) % effortLevels.length]);
+      const next = effortLevels[(idx + 1) % effortLevels.length];
+      if (next) onSetEffort(next);
     },
   };
 }

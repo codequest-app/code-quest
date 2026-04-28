@@ -16,14 +16,14 @@ import {
   TaskStartedContent,
 } from './SystemBlocks';
 
-const decorator = (Story: React.ComponentType) => (
+const decorator = (Story: React.ComponentType): React.JSX.Element => (
   <div className="bg-bg text-text max-w-xl p-4">
     <Story />
   </div>
 );
 
 // --- PendingActionContent ---
-const pendingMeta = {
+const pendingMeta: Meta<typeof PendingActionContent> = {
   component: PendingActionContent,
   tags: ['autodocs'],
   decorators: [decorator],

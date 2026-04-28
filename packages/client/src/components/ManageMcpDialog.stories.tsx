@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { ManageMcpDialog } from './ManageMcpDialog';
 
-const meta = {
+const meta: Meta<typeof ManageMcpDialog> = {
   component: ManageMcpDialog,
   tags: ['autodocs'],
   decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-100' })],

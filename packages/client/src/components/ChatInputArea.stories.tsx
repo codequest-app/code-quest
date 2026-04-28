@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '../test/story-decorator';
 import { ChatInputArea } from './ChatInputArea';
 
-const meta = {
+const meta: Meta<typeof ChatInputArea> = {
   component: ChatInputArea,
   tags: ['autodocs'],
 } satisfies Meta<typeof ChatInputArea>;

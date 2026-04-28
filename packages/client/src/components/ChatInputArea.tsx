@@ -13,7 +13,7 @@ import { PendingActionButtons } from './PendingActionButtons';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 import { SpeechInputContainer } from './SpeechInputContainer';
 
-export function ChatInputArea() {
+export function ChatInputArea(): React.JSX.Element {
   const { permissionMode } = useChannelConfig();
   const { focusTextarea, addAttachments, insertSlashCommand } = useChannelComposeActions();
   const { modifiedFiles, removeModifiedFile } = useChannelMessages();

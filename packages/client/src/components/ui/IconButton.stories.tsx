@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { IconButton } from './IconButton';
 import { PlusIcon, SearchIcon, TrashIcon, XIcon } from './Icons';
 
-const meta = {
+const meta: Meta<typeof IconButton> = {
   component: IconButton,
   tags: ['autodocs'],
   args: {
@@ -11,7 +11,7 @@ const meta = {
     children: <PlusIcon className="w-5 h-5" />,
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 flex gap-2 items-start">
         <Story />
       </div>

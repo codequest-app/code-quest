@@ -3,7 +3,7 @@ import { expect, fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { ErrorFallback } from './ErrorFallback';
 
-const meta = {
+const meta: Meta<typeof ErrorFallback> = {
   component: ErrorFallback,
   tags: ['autodocs'],
   args: { resetErrorBoundary: fn() },

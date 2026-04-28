@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { AttachMenu } from './AttachMenu';
 
-const meta = {
+const meta: Meta<typeof AttachMenu> = {
   component: AttachMenu,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="relative bg-surface text-text p-6">
         <Story />
       </div>

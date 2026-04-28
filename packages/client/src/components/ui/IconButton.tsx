@@ -21,7 +21,7 @@ export function IconButton({
   children,
   ref,
   ...rest
-}: IconButtonProps) {
+}: IconButtonProps): React.JSX.Element {
   return (
     <button
       ref={ref}

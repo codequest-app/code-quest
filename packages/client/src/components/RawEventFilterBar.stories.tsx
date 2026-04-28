@@ -10,12 +10,12 @@ const entries = [
   { type: 'exit', count: 1 },
 ];
 
-const meta = {
+const meta: Meta<typeof RawEventFilterBar> = {
   component: RawEventFilterBar,
   tags: ['autodocs'],
   args: { entries, onChange: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text">
         <Story />
       </div>

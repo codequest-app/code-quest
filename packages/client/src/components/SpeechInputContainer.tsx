@@ -10,7 +10,10 @@ interface SpeechInputContainerProps {
 /** Isolates the speech-recognition subscription so interim-transcript updates
  *  re-render only this subtree, not the parent chat input area. `onFinal` must
  *  be a stable reference (e.g. from a context actions selector). */
-export function SpeechInputContainer({ onFinal, className }: SpeechInputContainerProps) {
+export function SpeechInputContainer({
+  onFinal,
+  className,
+}: SpeechInputContainerProps): React.JSX.Element {
   const {
     isListening,
     interimTranscript,

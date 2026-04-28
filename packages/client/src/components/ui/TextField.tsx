@@ -38,7 +38,7 @@ type TextareaProps = CommonProps & {
 
 type TextFieldProps = InputProps | TextareaProps;
 
-export function TextField(props: TextFieldProps) {
+export function TextField(props: TextFieldProps): React.JSX.Element {
   const merged = cn(BASE, props.className);
   if (props.as === 'textarea') {
     const { inputRef, onChange, as: _as, className: _className, ...rest } = props;

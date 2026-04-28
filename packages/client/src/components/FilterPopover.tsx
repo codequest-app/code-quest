@@ -14,7 +14,12 @@ interface FilterPopoverProps {
   labels?: Partial<Record<string, string>>;
 }
 
-export function FilterPopover({ entries, selected, onChange, labels = {} }: FilterPopoverProps) {
+export function FilterPopover({
+  entries,
+  selected,
+  onChange,
+  labels = {},
+}: FilterPopoverProps): React.JSX.Element {
   const [search, setSearch] = useState('');
 
   const sorted = [...entries].sort((a, b) => b.count - a.count);

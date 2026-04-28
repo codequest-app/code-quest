@@ -28,7 +28,7 @@ export function TopbarLiveSessions({
   onActivate,
   onStop,
   onSplit,
-}: TopbarLiveSessionsProps) {
+}: TopbarLiveSessionsProps): React.JSX.Element {
   const live = sessions.filter((s) => LIVE_STATES.has(s.state));
   const visible = live.slice(0, MAX_VISIBLE);
   const overflow = live.length - visible.length;

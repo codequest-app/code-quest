@@ -22,7 +22,7 @@ export function DrawerAside({
   dockedWidthClass,
   label,
   children,
-}: DrawerAsideProps) {
+}: DrawerAsideProps): React.JSX.Element {
   const isLeft = side === 'left';
   return (
     <aside

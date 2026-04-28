@@ -133,7 +133,7 @@ const extractGitDirtyCwd = (payload: unknown): string | null => {
   return null;
 };
 
-export function GitProvider({ children }: { children: ReactNode }) {
+export function GitProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [listing, setListing] = useState<Record<string, WorktreeListingEntry>>({});
 

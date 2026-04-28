@@ -16,7 +16,7 @@ export function ArchiveWorktreeConfirmDialog({
   dirty = false,
   onConfirm,
   onClose,
-}: ArchiveWorktreeConfirmDialogProps) {
+}: ArchiveWorktreeConfirmDialogProps): React.JSX.Element {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Archive worktree" size="md">

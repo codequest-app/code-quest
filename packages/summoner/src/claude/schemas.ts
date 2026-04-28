@@ -1,8 +1,36 @@
-import { z } from 'zod';
+import { type core, z } from 'zod';
+
+// ── Reusable shape aliases ──
+
+type Opt<T extends z.ZodType> = z.ZodOptional<T>;
+type Str = z.ZodString;
+type Num = z.ZodNumber;
+type Bool = z.ZodBoolean;
+type Unk = z.ZodUnknown;
+type Loose<S extends core.$ZodLooseShape> = z.ZodObject<S, core.$loose>;
 
 // ── System subtypes ──
 
-export const systemInitSchema = z.looseObject({
+export const systemInitSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'init'>;
+  session_id: Str;
+  cwd: Opt<Str>;
+  model: Opt<Str>;
+  tools: Opt<z.ZodArray<Str>>;
+  mcp_servers: Opt<z.ZodArray<Loose<{ name: Str; status: Str }>>>;
+  permissionMode: Opt<Str>;
+  slash_commands: Opt<z.ZodArray<Str>>;
+  fast_mode_state: Opt<Str>;
+  current_repo: Opt<Loose<{ branch: Str; is_clean: Bool }>>;
+  apiKeySource: Opt<Str>;
+  claude_code_version: Opt<Str>;
+  output_style: Opt<Str>;
+  agents: Opt<z.ZodArray<Str>>;
+  skills: Opt<z.ZodArray<Str>>;
+  plugins: Opt<z.ZodArray<Unk>>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('init'),
   session_id: z.string(),
@@ -23,7 +51,14 @@ export const systemInitSchema = z.looseObject({
   uuid: z.string().optional(),
 });
 
-export const systemStatusSchema = z.looseObject({
+export const systemStatusSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'status'>;
+  status: z.ZodNullable<Str>;
+  permissionMode: Opt<Str>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('status'),
   status: z.string().nullable(),
@@ -32,7 +67,15 @@ export const systemStatusSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemHookStartedSchema = z.looseObject({
+export const systemHookStartedSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'hook_started'>;
+  hook_id: Str;
+  hook_name: Str;
+  hook_event: Str;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('hook_started'),
   hook_id: z.string(),
@@ -42,7 +85,22 @@ export const systemHookStartedSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemHookResponseSchema = z.looseObject({
+export const systemHookResponseSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'hook_response'>;
+  hook_id: Str;
+  hook_name: Str;
+  hook_event: Str;
+  hook_event_name: Opt<Str>;
+  output: Opt<Str>;
+  stdout: Opt<Str>;
+  stderr: Opt<Str>;
+  exit_code: Opt<Num>;
+  outcome: Opt<Str>;
+  additional_context: Opt<Unk>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('hook_response'),
   hook_id: z.string(),
@@ -59,24 +117,43 @@ export const systemHookResponseSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemCompactBoundarySchema = z.looseObject({
+export const systemCompactBoundarySchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'compact_boundary'>;
+  compactMetadata: Opt<Loose<{ preservedSegment: Opt<Bool> }>>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('compact_boundary'),
   compactMetadata: z.looseObject({ preservedSegment: z.boolean().optional() }).optional(),
 });
 
-const systemPostTurnSummarySchema = z.looseObject({
+const systemPostTurnSummarySchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'post_turn_summary'>;
+  summary: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('post_turn_summary'),
   summary: z.string().optional(),
 });
 
-const systemSessionStateChangedSchema = z.looseObject({
+const systemSessionStateChangedSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'session_state_changed'>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('session_state_changed'),
 });
 
-export const systemApiRetrySchema = z.looseObject({
+export const systemApiRetrySchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'api_retry'>;
+  attempt: Num;
+  max_retries: Num;
+  retry_delay_ms: Opt<Num>;
+  error_status: Opt<Num>;
+  error: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('api_retry'),
   attempt: z.number(),
@@ -86,7 +163,16 @@ export const systemApiRetrySchema = z.looseObject({
   error: z.string().optional(),
 });
 
-export const systemTaskStartedSchema = z.looseObject({
+export const systemTaskStartedSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'task_started'>;
+  task_id: Opt<Str>;
+  tool_use_id: Opt<Str>;
+  description: Opt<Str>;
+  task_type: Opt<Str>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('task_started'),
   task_id: z.string().optional(),
@@ -97,7 +183,18 @@ export const systemTaskStartedSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemTaskNotificationSchema = z.looseObject({
+export const systemTaskNotificationSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'task_notification'>;
+  task_id: Str;
+  tool_use_id: Opt<Str>;
+  status: Opt<Str>;
+  output_file: Opt<Str>;
+  summary: Opt<Str>;
+  usage: Opt<z.ZodRecord<Str, Unk>>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('task_notification'),
   task_id: z.string(),
@@ -110,7 +207,17 @@ export const systemTaskNotificationSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemTaskProgressSchema = z.looseObject({
+export const systemTaskProgressSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'task_progress'>;
+  task_id: Str;
+  tool_use_id: Opt<Str>;
+  description: Opt<Str>;
+  usage: Opt<z.ZodRecord<Str, Unk>>;
+  last_tool_name: Opt<Str>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('task_progress'),
   task_id: z.string(),
@@ -122,14 +229,26 @@ export const systemTaskProgressSchema = z.looseObject({
   session_id: z.string().optional(),
 });
 
-export const systemBridgeStateSchema = z.looseObject({
+export const systemBridgeStateSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'bridge_state'>;
+  state: z.ZodEnum<{ ready: 'ready'; disconnected: 'disconnected'; error: 'error' }>;
+  detail: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('bridge_state'),
   state: z.enum(['ready', 'disconnected', 'error']),
   detail: z.string().optional(),
 });
 
-export const systemMirrorErrorSchema = z.looseObject({
+export const systemMirrorErrorSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: z.ZodLiteral<'mirror_error'>;
+  error: Str;
+  key: Opt<Unk>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.literal('mirror_error'),
   error: z.string(),
@@ -139,7 +258,10 @@ export const systemMirrorErrorSchema = z.looseObject({
 });
 
 // Fallback for unknown system subtypes
-const systemFallbackSchema = z.looseObject({
+const systemFallbackSchema: Loose<{
+  type: z.ZodLiteral<'system'>;
+  subtype: Str;
+}> = z.looseObject({
   type: z.literal('system'),
   subtype: z.string(),
 });
@@ -147,7 +269,14 @@ const systemFallbackSchema = z.looseObject({
 // ── Assistant ──
 
 // Shared usage shape — Claude API guarantees these are numbers when present.
-const apiUsageSchema = z
+type ApiUsageShape = {
+  input_tokens: Opt<Num>;
+  output_tokens: Opt<Num>;
+  cache_read_input_tokens: Opt<Num>;
+  cache_creation_input_tokens: Opt<Num>;
+};
+
+const apiUsageSchema: Opt<Loose<ApiUsageShape>> = z
   .looseObject({
     input_tokens: z.number().optional(),
     output_tokens: z.number().optional(),
@@ -156,7 +285,20 @@ const apiUsageSchema = z
   })
   .optional();
 
-export const assistantSchema = z.looseObject({
+export const assistantSchema: Loose<{
+  type: z.ZodLiteral<'assistant'>;
+  message: Loose<{
+    model: Opt<Str>;
+    id: Opt<Str>;
+    role: Opt<Str>;
+    content: Opt<z.ZodArray<z.ZodRecord<Str, Unk>>>;
+    stop_reason: Opt<z.ZodNullable<Str>>;
+    usage: Opt<Loose<ApiUsageShape>>;
+  }>;
+  parent_tool_use_id: Opt<z.ZodNullable<Str>>;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('assistant'),
   message: z.looseObject({
     model: z.string().optional(),
@@ -173,7 +315,18 @@ export const assistantSchema = z.looseObject({
 
 // ── User ──
 
-export const userSchema = z.looseObject({
+export const userSchema: Loose<{
+  type: z.ZodLiteral<'user'>;
+  message: Loose<{
+    role: Opt<Str>;
+    content: Opt<z.ZodUnion<readonly [z.ZodArray<z.ZodRecord<Str, Unk>>, Str]>>;
+  }>;
+  parent_tool_use_id: Opt<z.ZodNullable<Str>>;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+  tool_use_result: Opt<z.ZodUnion<readonly [Str, z.ZodRecord<Str, Unk>]>>;
+  isSynthetic: Opt<Bool>;
+}> = z.looseObject({
   type: z.literal('user'),
   message: z.looseObject({
     role: z.string().optional(),
@@ -189,7 +342,25 @@ export const userSchema = z.looseObject({
 
 // ── Result ──
 
-export const resultSchema = z.looseObject({
+export const resultSchema: Loose<{
+  type: z.ZodLiteral<'result'>;
+  subtype: Str;
+  is_error: Opt<Bool>;
+  duration_ms: Opt<Num>;
+  duration_api_ms: Opt<Num>;
+  num_turns: Opt<Num>;
+  result: Opt<Str>;
+  stop_reason: Opt<z.ZodNullable<Str>>;
+  session_id: Opt<Str>;
+  total_cost_usd: Opt<Num>;
+  usage: Opt<Loose<ApiUsageShape>>;
+  modelUsage: Opt<z.ZodRecord<Str, Unk>>;
+  errors: Opt<z.ZodArray<Str>>;
+  uuid: Opt<Str>;
+  fast_mode_state: Opt<Str>;
+  permission_denials: Opt<z.ZodArray<Unk>>;
+  terminal_reason: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('result'),
   subtype: z.string(),
   is_error: z.boolean().optional(),
@@ -211,7 +382,23 @@ export const resultSchema = z.looseObject({
 
 // ── Control request ──
 
-export const controlRequestSchema = z.looseObject({
+export const controlRequestSchema: Loose<{
+  type: z.ZodLiteral<'control_request'>;
+  request_id: Str;
+  request: Loose<{
+    subtype: Str;
+    tool_name: Opt<Str>;
+    input: Opt<Unk>;
+    permission_suggestions: Opt<z.ZodArray<z.ZodRecord<Str, Unk>>>;
+    decision_reason: Opt<Str>;
+    tool_use_id: Opt<Str>;
+    callback_id: Opt<Str>;
+    blocked_path: Opt<z.ZodNullable<Str>>;
+    agent_id: Opt<Str>;
+    elicitation_id: Opt<Str>;
+    mcp_server_name: Opt<Str>;
+  }>;
+}> = z.looseObject({
   type: z.literal('control_request'),
   request_id: z.string(),
   request: z.looseObject({
@@ -231,7 +418,15 @@ export const controlRequestSchema = z.looseObject({
 
 // ── Control response ──
 
-const controlResponseSchema = z.looseObject({
+const controlResponseSchema: Loose<{
+  type: z.ZodLiteral<'control_response'>;
+  response: Loose<{
+    subtype: Str;
+    request_id: Str;
+    response: Opt<z.ZodRecord<Str, Unk>>;
+    error: Opt<Str>;
+  }>;
+}> = z.looseObject({
   type: z.literal('control_response'),
   response: z.looseObject({
     subtype: z.string(),
@@ -243,14 +438,47 @@ const controlResponseSchema = z.looseObject({
 
 // ── Control cancel request ──
 
-const controlCancelRequestSchema = z.looseObject({
+const controlCancelRequestSchema: Loose<{
+  type: z.ZodLiteral<'control_cancel_request'>;
+  request_id: Str;
+}> = z.looseObject({
   type: z.literal('control_cancel_request'),
   request_id: z.string(),
 });
 
 // ── Stream event ──
 
-export const streamEventSchema = z.looseObject({
+export const streamEventSchema: Loose<{
+  type: z.ZodLiteral<'stream_event'>;
+  event: Loose<{
+    type: Str;
+    index: Opt<Num>;
+    delta: Opt<
+      Loose<{
+        type: Opt<Str>;
+        text: Opt<Str>;
+        thinking: Opt<Str>;
+        partial_json: Opt<Str>;
+        citation: Opt<Unk>;
+        citations: Opt<z.ZodArray<Unk>>;
+        signature: Opt<Str>;
+      }>
+    >;
+    content_block: Opt<
+      Loose<{
+        type: Opt<Str>;
+        id: Opt<Str>;
+        name: Opt<Str>;
+        input: Opt<z.ZodRecord<Str, Unk>>;
+      }>
+    >;
+    message: Opt<z.ZodRecord<Str, Unk>>;
+    usage: Opt<z.ZodRecord<Str, Unk>>;
+  }>;
+  session_id: Opt<Str>;
+  parent_tool_use_id: Opt<z.ZodNullable<Str>>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('stream_event'),
   event: z.looseObject({
     type: z.string(),
@@ -284,7 +512,19 @@ export const streamEventSchema = z.looseObject({
 
 // ── Rate limit event ──
 
-export const rateLimitEventSchema = z.looseObject({
+export const rateLimitEventSchema: Loose<{
+  type: z.ZodLiteral<'rate_limit_event'>;
+  rate_limit_info: Loose<{
+    status: Str;
+    resetsAt: Opt<z.ZodUnion<readonly [Num, Str]>>;
+    rateLimitType: Opt<Str>;
+    utilization: Opt<z.ZodUnion<readonly [Num, z.ZodRecord<Str, Unk>]>>;
+    overageStatus: Opt<Str>;
+    isUsingOverage: Opt<Bool>;
+  }>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('rate_limit_event'),
   rate_limit_info: z.looseObject({
     status: z.string(),
@@ -300,14 +540,24 @@ export const rateLimitEventSchema = z.looseObject({
 
 // ── Streamlined (fast mode) ──
 
-const streamlinedTextSchema = z.looseObject({
+const streamlinedTextSchema: Loose<{
+  type: z.ZodLiteral<'streamlined_text'>;
+  text: Str;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('streamlined_text'),
   text: z.string(),
   session_id: z.string().optional(),
   uuid: z.string().optional(),
 });
 
-const streamlinedToolUseSummarySchema = z.looseObject({
+const streamlinedToolUseSummarySchema: Loose<{
+  type: z.ZodLiteral<'streamlined_tool_use_summary'>;
+  tool_summary: Str;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('streamlined_tool_use_summary'),
   tool_summary: z.string(),
   session_id: z.string().optional(),
@@ -316,21 +566,34 @@ const streamlinedToolUseSummarySchema = z.looseObject({
 
 // ── Experiment gates ──
 
-const experimentGatesSchema = z.looseObject({
+const experimentGatesSchema: Loose<{
+  type: z.ZodLiteral<'experiment_gates'>;
+  gates: z.ZodRecord<Str, z.ZodUnion<readonly [Bool, Str]>>;
+}> = z.looseObject({
   type: z.literal('experiment_gates'),
   gates: z.record(z.string(), z.union([z.boolean(), z.string()])),
 });
 
 // ── Available models ──
 
-const availableModelsSchema = z.looseObject({
+const availableModelsSchema: Loose<{
+  type: z.ZodLiteral<'available_models'>;
+  models: z.ZodArray<Str>;
+}> = z.looseObject({
   type: z.literal('available_models'),
   models: z.array(z.string()),
 });
 
 // ── Tool use (top-level) ──
 
-const toolUseSchema = z.looseObject({
+const toolUseSchema: Loose<{
+  type: z.ZodLiteral<'tool_use'>;
+  id: Str;
+  name: Str;
+  input: z.ZodRecord<Str, Unk>;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('tool_use'),
   id: z.string(),
   name: z.string(),
@@ -341,7 +604,13 @@ const toolUseSchema = z.looseObject({
 
 // ── Notification ──
 
-const notificationSchema = z.looseObject({
+const notificationSchema: Loose<{
+  type: z.ZodLiteral<'notification'>;
+  message: Str;
+  timestamp: Opt<Num>;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('notification'),
   message: z.string(),
   timestamp: z.number().optional(),
@@ -351,7 +620,11 @@ const notificationSchema = z.looseObject({
 
 // ── New session notification ──
 
-const newSessionNotificationSchema = z.looseObject({
+const newSessionNotificationSchema: Loose<{
+  type: z.ZodLiteral<'new_session_notification'>;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('new_session_notification'),
   session_id: z.string().optional(),
   uuid: z.string().optional(),
@@ -359,7 +632,11 @@ const newSessionNotificationSchema = z.looseObject({
 
 // ── Error ──
 
-const errorSchema = z.looseObject({
+const errorSchema: Loose<{
+  type: z.ZodLiteral<'error'>;
+  error: Loose<{ type: Str; message: Str }>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('error'),
   error: z.looseObject({ type: z.string(), message: z.string() }),
   session_id: z.string().optional(),
@@ -367,7 +644,13 @@ const errorSchema = z.looseObject({
 
 // ── Auth URL ──
 
-const authUrlSchema = z.looseObject({
+const authUrlSchema: Loose<{
+  type: z.ZodLiteral<'auth_url'>;
+  url: Str;
+  method: Str;
+  session_id: Opt<Str>;
+  uuid: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('auth_url'),
   url: z.string(),
   method: z.string(),
@@ -377,13 +660,22 @@ const authUrlSchema = z.looseObject({
 
 // ── Keep alive ──
 
-const keepAliveSchema = z.looseObject({
+const keepAliveSchema: Loose<{
+  type: z.ZodLiteral<'keep_alive'>;
+}> = z.looseObject({
   type: z.literal('keep_alive'),
 });
 
 // ── Auth status ──
 
-const authStatusSchema = z.looseObject({
+const authStatusSchema: Loose<{
+  type: z.ZodLiteral<'auth_status'>;
+  isAuthenticating: Bool;
+  output: z.ZodArray<Unk>;
+  account: Opt<z.ZodRecord<Str, Unk>>;
+  uuid: Opt<Str>;
+  session_id: Opt<Str>;
+}> = z.looseObject({
   type: z.literal('auth_status'),
   isAuthenticating: z.boolean(),
   output: z.array(z.unknown()),
@@ -394,7 +686,11 @@ const authStatusSchema = z.looseObject({
 
 // ── Raw event (synthesized by runner for unknown/parse-error lines) ──
 
-export const rawEventSchema = z.looseObject({
+export const rawEventSchema: Loose<{
+  type: z.ZodLiteral<'raw_event'>;
+  rawType: Str;
+  data: z.ZodRecord<Str, Unk>;
+}> = z.looseObject({
   type: z.literal('raw_event'),
   rawType: z.string(),
   data: z.record(z.string(), z.unknown()),
@@ -402,7 +698,12 @@ export const rawEventSchema = z.looseObject({
 
 // ── Speech ──
 
-const speechToTextMessageSchema = z.looseObject({
+const speechToTextMessageSchema: Loose<{
+  type: z.ZodLiteral<'speech_to_text_message'>;
+  channelId: Str;
+  text: Str;
+  done: Bool;
+}> = z.looseObject({
   type: z.literal('speech_to_text_message'),
   channelId: z.string(),
   text: z.string(),
@@ -462,7 +763,7 @@ export function getSchemaForType(type: string, subtype?: string): z.ZodType | un
 }
 
 /** Set of all known CLI event type strings. */
-export const KNOWN_EVENT_TYPES = new Set(['system', ...Object.keys(typeRegistry)]);
+export const KNOWN_EVENT_TYPES: Set<string> = new Set(['system', ...Object.keys(typeRegistry)]);
 
 /** Union type inferred from all CLI event Zod schemas.
  *

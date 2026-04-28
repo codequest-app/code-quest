@@ -34,7 +34,7 @@ describe('ChatHandler > session', () => {
 
       const closedEvents = claude.events('session:closed');
       expect(closedEvents.length).toBeGreaterThan(0);
-      expect(closedEvents[0].channelId).toBe(channelId);
+      expect(closedEvents[0]!.channelId).toBe(channelId);
     });
 
     it('kills a session', async () => {
@@ -65,7 +65,7 @@ describe('ChatHandler > session', () => {
 
       const cancelEvents = claude.events('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
-      expect(cancelEvents[0].targetRequestId).toBe('req-perm');
+      expect(cancelEvents[0]!.targetRequestId).toBe('req-perm');
     });
   });
 

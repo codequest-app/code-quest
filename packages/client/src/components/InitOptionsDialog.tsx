@@ -32,8 +32,12 @@ function buildEnabledHooks(
   const enabled: Record<string, Array<{ matcher: string; hookCallbackIds: string[] }>> = {};
   for (const def of HOOK_DEFS) {
     if (!hooks[def.key]) continue;
-    if (!enabled[def.section]) enabled[def.section] = [];
-    enabled[def.section].push({ matcher: def.key, hookCallbackIds: [def.key] });
+    let section = enabled[def.section];
+    if (!section) {
+      section = [];
+      enabled[def.section] = section;
+    }
+    section.push({ matcher: def.key, hookCallbackIds: [def.key] });
   }
   return enabled;
 }
@@ -55,7 +59,12 @@ function buildInitOptions(state: {
   return opts;
 }
 
-export function InitOptionsDialog({ open, onClose, onSave, initial }: InitOptionsDialogProps) {
+export function InitOptionsDialog({
+  open,
+  onClose,
+  onSave,
+  initial,
+}: InitOptionsDialogProps): React.JSX.Element {
   const [systemPrompt, setSystemPrompt] = useState(initial?.systemPrompt ?? '');
   const [appendSystemPrompt, setAppendSystemPrompt] = useState(initial?.appendSystemPrompt ?? '');
   const [jsonSchema, setJsonSchema] = useState(String(initial?.jsonSchema ?? ''));

@@ -1,4 +1,4 @@
-export function ContextPieChart({ pct }: { pct: number }) {
+export function ContextPieChart({ pct }: { pct: number }): React.JSX.Element {
   const size = 12;
   const r = size / 2;
   const angle = (pct / 100) * 360;

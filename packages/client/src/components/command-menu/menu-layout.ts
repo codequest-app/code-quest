@@ -30,7 +30,7 @@ export function filterMenuItems(items: MenuItem[], filter: string): MenuItem[] {
   return items.filter((i) => {
     if (i.filterOnly && !f) return false;
     if (!f) return true;
-    const matchText = i.matchFirstToken ? f.split(' ')[0] : f;
+    const matchText = i.matchFirstToken ? (f.split(' ')[0] ?? '') : f;
     if (i.matchFirstToken && !matchText) return false;
     return i.label.toLowerCase().includes(matchText);
   });

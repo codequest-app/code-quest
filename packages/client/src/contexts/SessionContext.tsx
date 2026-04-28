@@ -85,7 +85,8 @@ interface SessionContextValue {
 type SessionStateValue = Pick<SessionContextValue, 'auth' | 'sessions' | 'sessionsMap'>;
 type SessionActionsValue = Omit<SessionContextValue, keyof SessionStateValue>;
 
-export const SessionStateContext = createContext<SessionStateValue | null>(null);
+export const SessionStateContext: React.Context<SessionStateValue | null> =
+  createContext<SessionStateValue | null>(null);
 const SessionActionsContext = createContext<SessionActionsValue | null>(null);
 
 export function useSession(): SessionContextValue {
@@ -128,7 +129,7 @@ function applyStates(data: SessionStatesPayload): SessionUpdater {
   };
 }
 
-export function SessionProvider({ children }: { children: ReactNode }) {
+export function SessionProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const { subscribeInit } = useAppInitActions();
 

@@ -25,7 +25,7 @@ export class FakeProcessHandle implements ProcessHandle {
   /** Optional hook — called when pipeline writes to stdin. Use to auto-respond. */
   onSend?: (raw: string, handle: FakeProcessHandle) => void;
 
-  readonly signal = this.controller.signal;
+  readonly signal: AbortSignal = this.controller.signal;
 
   /** Test pushes a raw line (segment string) — appears in lines iterable */
   emit(line: string): void {
@@ -124,7 +124,7 @@ export class FakeProcessProvider implements ProcessProvider {
   }
 
   get latest(): FakeProcessHandle {
-    return this.handles[this.handles.length - 1];
+    return this.handles[this.handles.length - 1]!;
   }
 
   get all(): FakeProcessHandle[] {

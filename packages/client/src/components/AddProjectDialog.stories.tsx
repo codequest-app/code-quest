@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { AddProjectDialog } from './AddProjectDialog';
 
-const meta = {
+const meta: Meta<typeof AddProjectDialog> = {
   component: AddProjectDialog,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

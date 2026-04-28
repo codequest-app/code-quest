@@ -16,7 +16,7 @@ describe('ChatHandler > speech', () => {
 
     const msgs = claude.received('start_speech_to_text');
     expect(msgs.length).toBe(1);
-    expect(msgs[0].channelId).toBe(channelId);
+    expect(msgs[0]!.channelId).toBe(channelId);
   });
 
   it('speech:stop sends stop_speech_to_text to CLI', async () => {
@@ -26,7 +26,7 @@ describe('ChatHandler > speech', () => {
 
     const msgs = claude.received('stop_speech_to_text');
     expect(msgs.length).toBe(1);
-    expect(msgs[0].channelId).toBe(channelId);
+    expect(msgs[0]!.channelId).toBe(channelId);
   });
 
   it('speech_to_text_message from CLI is forwarded as speech:message', async () => {
@@ -36,7 +36,7 @@ describe('ChatHandler > speech', () => {
 
     const speechEvents = claude.events('speech:message');
     expect(speechEvents.length).toBe(1);
-    expect(speechEvents[0].text).toBe('hello world');
-    expect(speechEvents[0].done).toBe(false);
+    expect(speechEvents[0]!.text).toBe('hello world');
+    expect(speechEvents[0]!.done).toBe(false);
   });
 });

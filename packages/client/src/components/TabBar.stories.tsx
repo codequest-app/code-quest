@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
 import { TabBar } from './TabBar';
 
-const meta = {
+const meta: Meta<typeof TabBar> = {
   component: TabBar,
   tags: ['autodocs'],
   args: { onSelectTab: fn(), onCloseTab: fn(), onNewTab: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text">
         <Story />
       </div>

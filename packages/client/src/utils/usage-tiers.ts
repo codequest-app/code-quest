@@ -5,7 +5,15 @@ import {
   usageQuotaTierSchema,
 } from '@code-quest/shared';
 
-export const DEFAULT_USAGE_TIERS = [
+export const DEFAULT_USAGE_TIERS: readonly [
+  { readonly key: 'five_hour'; readonly label: 'Session (5hr)'; readonly shortLabel: '5hr' },
+  { readonly key: 'seven_day'; readonly label: 'Weekly (7 day)'; readonly shortLabel: '7day' },
+  {
+    readonly key: 'seven_day_sonnet';
+    readonly label: 'Weekly Sonnet';
+    readonly shortLabel: 'Sonnet';
+  },
+] = [
   { key: 'five_hour' as const, label: 'Session (5hr)', shortLabel: '5hr' },
   { key: 'seven_day' as const, label: 'Weekly (7 day)', shortLabel: '7day' },
   { key: 'seven_day_sonnet' as const, label: 'Weekly Sonnet', shortLabel: 'Sonnet' },

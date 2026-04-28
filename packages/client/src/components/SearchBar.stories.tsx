@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
 import { SearchBar } from './SearchBar';
 
-const meta = {
+const meta: Meta<typeof SearchBar> = {
   component: SearchBar,
   tags: ['autodocs'],
   args: { setSearchQuery: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text">
         <Story />
       </div>

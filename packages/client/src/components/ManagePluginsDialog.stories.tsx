@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { ManagePluginsDialog } from './ManagePluginsDialog';
 
-const meta = {
+const meta: Meta<typeof ManagePluginsDialog> = {
   component: ManagePluginsDialog,
   tags: ['autodocs'],
   decorators: [withStoryChannel({ className: 'bg-bg text-text min-h-100' })],

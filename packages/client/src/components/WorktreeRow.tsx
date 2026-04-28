@@ -24,7 +24,9 @@ export interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   wrapMoreTrigger?: (child: ReactElement) => ReactNode;
 }
 
-export const WorktreeRow = forwardRef<HTMLDivElement, WorktreeRowProps>(function WorktreeRow(
+export const WorktreeRow: React.ForwardRefExoticComponent<
+  WorktreeRowProps & React.RefAttributes<HTMLDivElement>
+> = forwardRef<HTMLDivElement, WorktreeRowProps>(function WorktreeRow(
   {
     worktree,
     active,

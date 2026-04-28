@@ -265,7 +265,7 @@ const initialComposeState: ComposeState = {
   attachedFiles: [],
 };
 
-export function ChannelComposeProvider({ children }: { children: ReactNode }) {
+export function ChannelComposeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const channelId = useChannelId();
   const { sendMessage } = useChannelMessagesActions();
   const registry = useFeatureRegistry();

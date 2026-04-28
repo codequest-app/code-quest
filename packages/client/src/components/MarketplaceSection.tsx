@@ -19,7 +19,7 @@ export function MarketplaceSection({
   onRemove,
   onRefresh,
   adding,
-}: MarketplaceSectionProps) {
+}: MarketplaceSectionProps): React.JSX.Element {
   return (
     <>
       <div className="flex gap-2 mb-3">

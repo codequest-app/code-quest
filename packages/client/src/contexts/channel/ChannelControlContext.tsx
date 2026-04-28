@@ -62,7 +62,7 @@ export function ChannelControlProvider({
 }: {
   resetStreamingRefs: () => void;
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   const channelId = useChannelId();
   const { socket } = useSocket();
   const { setChannelState } = useChannelMessagesActions();

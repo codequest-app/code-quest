@@ -18,9 +18,9 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].role).toBe('assistant');
-    expect(msgs[0].type).toBe('text');
-    expect(msgs[0].content).toBe('Hello world');
+    expect(msgs[0]!.role).toBe('assistant');
+    expect(msgs[0]!.type).toBe('text');
+    expect(msgs[0]!.content).toBe('Hello world');
   });
 
   it('converts message:assistant thinking block', () => {
@@ -34,8 +34,8 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].type).toBe('thinking');
-    expect(msgs[0].content).toBe('Let me analyze...');
+    expect(msgs[0]!.type).toBe('thinking');
+    expect(msgs[0]!.content).toBe('Let me analyze...');
   });
 
   it('converts message:assistant tool_use block', () => {
@@ -51,9 +51,9 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].type).toBe('tool_use');
-    expect(msgs[0].content).toBe('Read');
-    expect(msgs[0].meta).toMatchObject({ toolId: 'tu-1' });
+    expect(msgs[0]!.type).toBe('tool_use');
+    expect(msgs[0]!.content).toBe('Read');
+    expect(msgs[0]!.meta).toMatchObject({ toolId: 'tu-1' });
   });
 
   it('converts message:user tool_result block', () => {
@@ -69,8 +69,8 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].type).toBe('tool_result');
-    expect(msgs[0].content).toBe('file contents');
+    expect(msgs[0]!.type).toBe('tool_result');
+    expect(msgs[0]!.content).toBe('file contents');
   });
 
   it('converts message:user text block', () => {
@@ -84,8 +84,8 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].role).toBe('user');
-    expect(msgs[0].content).toBe('User message');
+    expect(msgs[0]!.role).toBe('user');
+    expect(msgs[0]!.content).toBe('User message');
   });
 
   it('plumbs uuid from history payload to cliUuid (fix-fork-message-uuid)', () => {
@@ -100,7 +100,7 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].cliUuid).toBe('cli-uuid-from-history');
+    expect(msgs[0]!.cliUuid).toBe('cli-uuid-from-history');
   });
 
   it('converts message:result with stats', () => {
@@ -120,7 +120,7 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].type).toBe('result');
+    expect(msgs[0]!.type).toBe('result');
     const resultMsg = msgs[0] as Extract<Message, { type: 'result' }>;
     expect(resultMsg.meta?.stats).toMatchObject({
       costUsd: 0.05,
@@ -146,9 +146,9 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(3);
-    expect(msgs[0].type).toBe('thinking');
-    expect(msgs[1].type).toBe('text');
-    expect(msgs[2].type).toBe('tool_use');
+    expect(msgs[0]!.type).toBe('thinking');
+    expect(msgs[1]!.type).toBe('text');
+    expect(msgs[2]!.type).toBe('tool_use');
   });
 
   it('preserves parentToolUseId', () => {
@@ -162,7 +162,7 @@ describe('buildMessagesFromHistory', () => {
       },
     ];
     const msgs = buildMessagesFromHistory(events);
-    expect(msgs[0].parentToolUseId).toBe('parent-tu-1');
+    expect(msgs[0]!.parentToolUseId).toBe('parent-tu-1');
   });
 
   it('handles full conversation sequence', () => {
@@ -200,6 +200,6 @@ describe('buildMessagesFromHistory', () => {
     ];
     const msgs = buildMessagesFromHistory(events);
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].content).toBe('kept');
+    expect(msgs[0]!.content).toBe('kept');
   });
 });

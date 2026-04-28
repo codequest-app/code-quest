@@ -48,7 +48,7 @@ describe('segments', () => {
     it('produces assistant with thinking content block', () => {
       const line = parse(segments.thinking('analyzing the problem'));
       expect(line.type).toBe('assistant');
-      const content = (line.message as Record<string, unknown[]>).content[0] as Record<
+      const content = (line.message as Record<string, unknown[]>).content![0] as Record<
         string,
         unknown
       >;

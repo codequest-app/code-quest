@@ -139,7 +139,7 @@ export function ChannelMessagesProvider({
   messageQueueRef: RefObject<string[]>;
   resetStreamingRefsRef: RefObject<() => void>;
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   const channelId = useChannelId();
   const { cwd } = useChannelMeta();
   const { socket } = useSocket();

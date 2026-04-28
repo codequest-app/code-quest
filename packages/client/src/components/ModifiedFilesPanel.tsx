@@ -103,7 +103,7 @@ export function ModifiedFilesPanel({
   fileSnapshots = [],
   onAccept,
   onRewind,
-}: ModifiedFilesPanelProps) {
+}: ModifiedFilesPanelProps): React.ReactNode {
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
 
   if (files.length === 0) return null;

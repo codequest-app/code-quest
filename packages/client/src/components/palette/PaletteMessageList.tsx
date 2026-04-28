@@ -35,7 +35,7 @@ export function PaletteMessageList({
   searchLimit = PALETTE_SEARCH_LIMIT,
   listRef,
   sourceLabels,
-}: PaletteMessageListProps) {
+}: PaletteMessageListProps): React.ReactNode {
   const results = paletteMessageResults(messages, query, {
     recentCount,
     searchLimit,
@@ -54,7 +54,8 @@ export function PaletteMessageList({
           const preview = messagePreview(msg).slice(0, 200);
           const previewParts = highlight(preview, query);
           const source = sourceLabels?.get(msg.id);
-          const prevSource = idx > 0 ? sourceLabels?.get(results[idx - 1].id) : undefined;
+          const prevResult = results[idx - 1];
+          const prevSource = idx > 0 && prevResult ? sourceLabels?.get(prevResult.id) : undefined;
           const showSourceHeader = source != null && source !== prevSource;
           return (
             <div key={msg.id}>

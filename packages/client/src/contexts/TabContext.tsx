@@ -25,7 +25,8 @@ interface TabStateValue {
   activeTabId: string | null;
 }
 
-export const TabStateContext = createContext<TabStateValue | null>(null);
+export const TabStateContext: React.Context<TabStateValue | null> =
+  createContext<TabStateValue | null>(null);
 
 export function useTabState(): TabStateValue {
   const ctx = useContext(TabStateContext);
@@ -76,7 +77,7 @@ export function TabProvider({
    *  args) uses this instead of `cwd`. Lets `+` open a chat in the
    *  currently-browsed worktree without explicit cwd plumbing. */
   selectedCwd?: string;
-}) {
+}): React.JSX.Element {
   const [state, setState] = useState<TabStateValue>(() => ({
     tabs: initialState?.tabs ?? {},
     activeTabId: initialState?.activeTabId ?? null,
@@ -149,8 +150,9 @@ export function TabProvider({
     },
     replaceTab: (oldChannelId, newChannelId) => {
       setState((prev) => {
-        if (!(oldChannelId in prev.tabs)) return prev;
-        const { [oldChannelId]: old, ...rest } = prev.tabs;
+        const old = prev.tabs[oldChannelId];
+        if (!old) return prev;
+        const { [oldChannelId]: _, ...rest } = prev.tabs;
         return {
           ...prev,
           tabs: { ...rest, [newChannelId]: { ...old } },
@@ -174,7 +176,7 @@ export function TabProvider({
     // Server-sourced tabs (resume / fork) inherit DEFAULT_META.launchOnMount=false
     // — the channel already exists on the server; spawning again would duplicate.
     // Only `createNewTab` opts into launchOnMount=true.
-    if (added.length === 1 && removed.length === 1) {
+    if (added.length === 1 && removed.length === 1 && added[0]) {
       actions.replaceActiveTab(added[0].channelId, added[0].cwd);
     } else {
       for (const s of added) {

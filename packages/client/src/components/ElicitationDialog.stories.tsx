@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { ElicitationDialog } from './ElicitationDialog';
 
-const meta = {
+const meta: Meta<typeof ElicitationDialog> = {
   component: ElicitationDialog,
   tags: ['autodocs'],
   args: { onSubmit: fn(), onCancel: fn() },

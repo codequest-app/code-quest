@@ -52,13 +52,17 @@ export interface FileSnapshot {
 
 import { z } from 'zod';
 
-export const initOptionsSchema = z
+export type InitOptions = {
+  systemPrompt?: string;
+  appendSystemPrompt?: string;
+} & Record<string, unknown>;
+
+export const initOptionsSchema: z.ZodType<InitOptions> = z
   .object({
     systemPrompt: z.string().optional(),
     appendSystemPrompt: z.string().optional(),
   })
   .catchall(z.unknown());
-export type InitOptions = z.infer<typeof initOptionsSchema>;
 
 export type ChannelChangeUpdate = {
   title?: string;

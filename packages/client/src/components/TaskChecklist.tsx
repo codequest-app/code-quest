@@ -27,7 +27,12 @@ function parseLines(content: string): Line[] {
     const match = raw.match(TASK_RE);
     if (!match) return { lineIndex, kind: 'raw', text: raw };
     const [, indent, mark, text] = match;
-    return { lineIndex, indent, checked: mark.toLowerCase() === 'x', text };
+    return {
+      lineIndex,
+      indent: indent ?? '',
+      checked: mark?.toLowerCase() === 'x',
+      text: text ?? '',
+    };
   });
 }
 
@@ -35,7 +40,11 @@ function isTaskLine(line: Line): line is TaskLine {
   return !('kind' in line);
 }
 
-export function TaskChecklist({ content, onToggle, onError }: TaskChecklistProps) {
+export function TaskChecklist({
+  content,
+  onToggle,
+  onError,
+}: TaskChecklistProps): React.JSX.Element {
   const [lines, setLines] = useState<Line[]>(() => parseLines(content));
 
   // Keep local state in sync when parent content changes (after refetch).

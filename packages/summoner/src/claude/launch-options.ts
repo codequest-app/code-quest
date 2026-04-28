@@ -1,7 +1,46 @@
 import { z } from 'zod';
 
 /** Claude CLI launch parameters — all fields map to CLI flags. */
-export const launchOptionsSchema = z.object({
+export const launchOptionsSchema: z.ZodObject<{
+  resumeSessionId: z.ZodOptional<z.ZodString>;
+  continueSession: z.ZodOptional<z.ZodBoolean>;
+  forkSession: z.ZodOptional<z.ZodBoolean>;
+  sessionId: z.ZodOptional<z.ZodString>;
+  resumeSessionAt: z.ZodOptional<z.ZodString>;
+  noSessionPersistence: z.ZodOptional<z.ZodBoolean>;
+  model: z.ZodOptional<z.ZodString>;
+  fallbackModel: z.ZodOptional<z.ZodString>;
+  thinking: z.ZodOptional<
+    z.ZodUnion<readonly [z.ZodEnum<{ adaptive: 'adaptive'; disabled: 'disabled' }>, z.ZodNumber]>
+  >;
+  thinkingDisplay: z.ZodOptional<z.ZodEnum<{ summarized: 'summarized'; omitted: 'omitted' }>>;
+  effort: z.ZodOptional<z.ZodEnum<{ high: 'high'; medium: 'medium'; low: 'low'; max: 'max' }>>;
+  maxTurns: z.ZodOptional<z.ZodNumber>;
+  maxBudgetUsd: z.ZodOptional<z.ZodNumber>;
+  agent: z.ZodOptional<z.ZodString>;
+  allowedTools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  disallowedTools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  tools: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  mcpConfig: z.ZodOptional<
+    z.ZodUnion<readonly [z.ZodString, z.ZodRecord<z.ZodString, z.ZodUnknown>]>
+  >;
+  settingSources: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  strictMcpConfig: z.ZodOptional<z.ZodBoolean>;
+  allowDangerouslySkipPermissions: z.ZodOptional<z.ZodBoolean>;
+  permissionMode: z.ZodOptional<z.ZodString>;
+  proactive: z.ZodOptional<z.ZodBoolean>;
+  assistant: z.ZodOptional<z.ZodBoolean>;
+  jsonSchema: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+  betas: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  debug: z.ZodOptional<z.ZodBoolean>;
+  debugFile: z.ZodOptional<z.ZodString>;
+  debugToStderr: z.ZodOptional<z.ZodBoolean>;
+  addDirs: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  pluginDirs: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  taskBudget: z.ZodOptional<z.ZodObject<{ total: z.ZodNumber }>>;
+  channels: z.ZodOptional<z.ZodArray<z.ZodString>>;
+  claudeInChromeMcp: z.ZodOptional<z.ZodBoolean>;
+}> = z.object({
   resumeSessionId: z.string().optional(),
   continueSession: z.boolean().optional(),
   forkSession: z.boolean().optional(),

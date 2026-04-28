@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ContentRenderer } from './ContentRenderer';
 
-const meta = {
+const meta: Meta<typeof ContentRenderer> = {
   component: ContentRenderer,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 w-180">
         <Story />
       </div>

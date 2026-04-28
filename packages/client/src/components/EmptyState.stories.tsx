@@ -3,12 +3,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { EmptyState } from './EmptyState';
 
-const meta = {
+const meta: Meta<typeof EmptyState> = {
   component: EmptyState,
   tags: ['autodocs'],
   args: { onAction: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="flex h-80 bg-bg text-text">
         <Story />
       </div>

@@ -150,7 +150,7 @@ export class FakeClaude {
           const lastSpawn = this.provider.spawnCalls[this.provider.spawnCalls.length - 1];
           const spawnCwd =
             typeof lastSpawn?.options?.cwd === 'string' ? lastSpawn.options.cwd : undefined;
-          let initLine = this._initSegments[0];
+          let initLine = this._initSegments[0]!;
           if (spawnCwd) {
             const initObj = JSON.parse(initLine);
             initObj.cwd = spawnCwd;
@@ -159,11 +159,11 @@ export class FakeClaude {
           h.emit(initLine);
 
           if (this._initSegments[1]) {
-            const respLine = JSON.parse(this._initSegments[1]);
+            const respLine = JSON.parse(this._initSegments[1]!);
             if (respLine.response) respLine.response.request_id = requestId;
             h.emit(JSON.stringify(respLine));
           } else {
-            const initData = JSON.parse(this._initSegments[0]);
+            const initData = JSON.parse(this._initSegments[0]!);
             const slashCmds = Array.isArray(initData.slash_commands)
               ? (initData.slash_commands as string[])
               : undefined;

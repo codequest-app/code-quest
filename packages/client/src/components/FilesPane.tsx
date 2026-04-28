@@ -12,7 +12,7 @@ export interface FilesPaneProps {
   onMention: (path: string) => void;
 }
 
-export function FilesPane({ cwd, onMention }: FilesPaneProps) {
+export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element {
   const [previewPath, setPreviewPath] = useState<string | null>(null);
   const [rootError, setRootError] = useState<string | null>(null);
   const { browse } = useFsActions();

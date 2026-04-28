@@ -295,7 +295,7 @@ describe('ChatHandler > mcp', () => {
       const mcpEvents = claude.events('control:mcp');
       expect(mcpEvents.length).toBeGreaterThan(0);
       // mcp_message should be forwarded to client, not auto-responded
-      expect(mcpEvents[0].requestId).toBe('mcp-pass');
+      expect(mcpEvents[0]!.requestId).toBe('mcp-pass');
     });
   });
 });

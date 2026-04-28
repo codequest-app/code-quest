@@ -31,7 +31,7 @@ import { WorktreeBanner } from './WorktreeBanner';
 const SIDE_PANEL = 'w-72 shrink-0';
 const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
-export function ChatPanel({ title }: { title?: string }) {
+export function ChatPanel({ title }: { title?: string }): React.JSX.Element {
   const channelId = useChannelId();
   const { messages, subscribeRawEvents } = useChannelMessages();
   const sideQuestion = useBtwState();

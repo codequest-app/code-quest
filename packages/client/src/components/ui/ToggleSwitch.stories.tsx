@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { ToggleSwitch } from './ToggleSwitch';
 
-const meta = {
+const meta: Meta<typeof ToggleSwitch> = {
   component: ToggleSwitch,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-4">
         <Story />
       </div>

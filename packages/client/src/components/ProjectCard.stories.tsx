@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { ProjectCard } from './ProjectCard';
 
-const meta = {
+const meta: Meta<typeof ProjectCard> = {
   component: ProjectCard,
   tags: ['autodocs'],
   args: { onSelect: fn() },

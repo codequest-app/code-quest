@@ -6,7 +6,11 @@ interface RawEventFilterBarProps {
   onChange: (next: Set<string>) => void;
 }
 
-export function RawEventFilterBar({ entries, selected, onChange }: RawEventFilterBarProps) {
+export function RawEventFilterBar({
+  entries,
+  selected,
+  onChange,
+}: RawEventFilterBarProps): React.ReactNode {
   const sorted = [...entries].sort((a, b) => b.count - a.count);
   const maxCount = sorted[0]?.count ?? 1;
 

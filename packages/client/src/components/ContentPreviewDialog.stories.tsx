@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
 import { ContentPreviewDialog } from './ContentPreviewDialog';
 
-const meta = {
+const meta: Meta<typeof ContentPreviewDialog> = {
   component: ContentPreviewDialog,
   tags: ['autodocs'],
   args: { onClose: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="h-150 w-80 bg-surface text-text flex">
         <Story />
       </div>

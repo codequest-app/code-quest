@@ -2,7 +2,7 @@ import type { RpcResult, SideQuestionResult } from '@code-quest/shared';
 import type { Feature } from '../../lib/feature';
 import type { msg } from '../../utils/message';
 
-export const RECAP_PROMPT =
+export const RECAP_PROMPT: string =
   'Recap the current session in under 40 words, 1-2 plain sentences, no markdown. ' +
   'Lead with the overall goal and current task, then the one next action. ' +
   'Skip root-cause narrative, fix internals, secondary to-dos, and em-dash tangents.';

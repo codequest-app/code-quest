@@ -60,7 +60,7 @@ describe('ChatHandler > message', () => {
 
     const events = claude.events('message:assistant');
     expect(events.length).toBeGreaterThan(0);
-    expect(events[0].content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
+    expect(events[0]!.content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
   });
 
   it('forwards tool_use and tool_result events through control_request flow', async () => {
@@ -105,7 +105,7 @@ describe('ChatHandler > message', () => {
 
     const textEvents = claude.events('stream:text');
     expect(textEvents.length).toBeGreaterThan(0);
-    expect(textEvents[0].text).toBe('fast mode text');
+    expect(textEvents[0]!.text).toBe('fast mode text');
   });
 
   it('persists raw events to store', async () => {

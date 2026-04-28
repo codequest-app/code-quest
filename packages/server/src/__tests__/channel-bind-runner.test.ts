@@ -20,8 +20,8 @@ describe('Channel.bindRunner', () => {
 
       const events = claude.events('message:assistant');
       expect(events.length).toBeGreaterThan(0);
-      expect(events[0].channelId).toBe(channelId);
-      expect(events[0].content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
+      expect(events[0]!.channelId).toBe(channelId);
+      expect(events[0]!.content[0]).toMatchObject({ type: 'text', text: 'Hello!' });
     });
 
     it('broadcasts permission_request via control:permission named event', async () => {
@@ -33,8 +33,8 @@ describe('Channel.bindRunner', () => {
 
       const events = claude.events('control:permission');
       expect(events.length).toBeGreaterThan(0);
-      expect(events[0].channelId).toBe(channelId);
-      expect(events[0].toolName).toBe('Read');
+      expect(events[0]!.channelId).toBe(channelId);
+      expect(events[0]!.toolName).toBe('Read');
     });
 
     it('updates permissionMode from session:status event', async () => {
@@ -45,7 +45,7 @@ describe('Channel.bindRunner', () => {
 
       const events = claude.events('session:status');
       expect(events.length).toBeGreaterThan(0);
-      expect(events[0].permissionMode).toBe('plan');
+      expect(events[0]!.permissionMode).toBe('plan');
     });
 
     it('invokes onClientMessage hook after broadcasting', async () => {
@@ -105,7 +105,7 @@ describe('Channel.bindRunner', () => {
 
       const closedEvents = claude.events('session:closed');
       expect(closedEvents.length).toBeGreaterThan(0);
-      expect(closedEvents[0].channelId).toBe(channelId);
+      expect(closedEvents[0]!.channelId).toBe(channelId);
     });
 
     it('exited channel is marked as exited', async () => {

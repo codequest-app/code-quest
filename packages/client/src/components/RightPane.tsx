@@ -40,7 +40,7 @@ const TRIGGER_BASE = cn(
  * tab switches: each tab mounts lazily on first activation and stays
  * mounted (CSS-hidden when inactive) afterwards.
  */
-export function RightPane({ cwd, onMention }: RightPaneProps) {
+export function RightPane({ cwd, onMention }: RightPaneProps): React.JSX.Element {
   const [active, setActive] = useState<TabKind>('files');
   const [mounted, setMounted] = useState<ReadonlySet<TabKind>>(() => new Set(['files']));
 

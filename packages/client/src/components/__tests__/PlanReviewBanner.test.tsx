@@ -187,7 +187,7 @@ describe('PlanReviewBanner approve with planComments', () => {
       />,
     );
     await user.click(screen.getByRole('button', { name: /approve plan/i }));
-    const call = onRespond.mock.calls[0][0];
+    const call = onRespond.mock.calls[0]![0];
     expect(call.behavior).toBe('allow');
     expect(call.userFeedback).toBeUndefined();
   });

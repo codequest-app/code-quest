@@ -14,7 +14,7 @@ function removePlaceholder(setState: SetChannelState): void {
   setState((prev) => {
     if (
       prev.messages.length > 0 &&
-      prev.messages[prev.messages.length - 1].type === 'content_block_start'
+      prev.messages[prev.messages.length - 1]?.type === 'content_block_start'
     ) {
       return { ...prev, messages: prev.messages.slice(0, -1) };
     }
@@ -169,8 +169,9 @@ export function wireStreamingHandlers({
       setState((prev) => {
         const ms = [...prev.messages];
         const idx = ms.findIndex((m) => m.id === toolMsgId);
-        if (idx < 0) return prev;
-        ms[idx] = patchMeta(ms[idx], {
+        const target = ms[idx];
+        if (idx < 0 || !target) return prev;
+        ms[idx] = patchMeta(target, {
           fileContent: 'content' in res ? res.content : undefined,
           fileError: 'error' in res ? res.error : undefined,
         });

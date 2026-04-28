@@ -21,7 +21,7 @@ export function MessageActions({
   messageContent,
   onRewind,
   onFork,
-}: MessageActionsProps) {
+}: MessageActionsProps): React.ReactNode {
   const [dialog, setDialog] = useState<'rewind' | 'fork-and-rewind' | null>(null);
   const closeDialog = () => setDialog(null);
 

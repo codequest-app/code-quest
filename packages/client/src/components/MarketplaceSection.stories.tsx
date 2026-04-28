@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { MarketplaceSection } from './MarketplaceSection';
 
-const meta = {
+const meta: Meta<typeof MarketplaceSection> = {
   component: MarketplaceSection,
   tags: ['autodocs'],
   args: {
@@ -14,7 +14,7 @@ const meta = {
     adding: false,
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-lg bg-bg text-text p-4">
         <Story />
       </div>

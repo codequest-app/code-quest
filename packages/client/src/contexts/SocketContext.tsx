@@ -13,6 +13,12 @@ export function useSocket(): SocketContextValue {
   return ctx;
 }
 
-export function SocketProvider({ socket, children }: { socket: TypedSocket; children: ReactNode }) {
+export function SocketProvider({
+  socket,
+  children,
+}: {
+  socket: TypedSocket;
+  children: ReactNode;
+}): React.JSX.Element {
   return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 }

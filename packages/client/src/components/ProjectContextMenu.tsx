@@ -60,7 +60,7 @@ interface DropdownProps extends ProjectMenuCallbacks {
   trigger: ReactNode;
 }
 
-export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps) {
+export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps): React.JSX.Element {
   const items = useItemList(callbacks);
   return (
     <DropdownMenu.Root>
@@ -97,7 +97,11 @@ interface ContextProps extends ProjectMenuCallbacks {
   disabled?: boolean;
 }
 
-export function ProjectContextMenu({ children, disabled, ...callbacks }: ContextProps) {
+export function ProjectContextMenu({
+  children,
+  disabled,
+  ...callbacks
+}: ContextProps): React.JSX.Element {
   const items = useItemList(callbacks);
   if (disabled) return <>{children}</>;
   return (

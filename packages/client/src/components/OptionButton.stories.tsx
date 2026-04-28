@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { OptionButton } from './OptionButton';
 
-const meta = {
+const meta: Meta<typeof OptionButton> = {
   component: OptionButton,
   tags: ['autodocs'],
   args: {
@@ -10,7 +10,7 @@ const meta = {
     onMouseEnter: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-xs bg-surface text-text">
         <Story />
       </div>

@@ -45,7 +45,7 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
  */
 const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
 
-export function WorkspaceLayout() {
+export function WorkspaceLayout(): React.JSX.Element {
   return (
     <CommandPaletteProvider>
       <WorkspaceLayoutInner />

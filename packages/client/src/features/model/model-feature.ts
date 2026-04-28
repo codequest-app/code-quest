@@ -1,7 +1,7 @@
 import type { Feature } from '../../lib/feature';
-import { createOpenSignal } from '../../lib/open-signal';
+import { createOpenSignal, type OpenSignal } from '../../lib/open-signal';
 
-export const modelOpenSignal = createOpenSignal();
+export const modelOpenSignal: OpenSignal = createOpenSignal();
 
 interface ModelFeatureDeps {
   modelLabel: string;

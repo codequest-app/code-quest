@@ -11,7 +11,7 @@ interface MessageActionsMenuProps {
   items: ReadonlyArray<MessageActionItem | false | '' | null | undefined>;
 }
 
-export function MessageActionsMenu({ items }: MessageActionsMenuProps) {
+export function MessageActionsMenu({ items }: MessageActionsMenuProps): React.JSX.Element {
   const visible = items.filter((i): i is MessageActionItem => Boolean(i));
 
   return (

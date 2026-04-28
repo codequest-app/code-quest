@@ -32,7 +32,12 @@ export interface DiffModalProps {
   canDiscard?: boolean;
 }
 
-export function DiffModal({ file, onClose, onDiscard, canDiscard = true }: DiffModalProps) {
+export function DiffModal({
+  file,
+  onClose,
+  onDiscard,
+  canDiscard = true,
+}: DiffModalProps): React.JSX.Element {
   const truncated = file.lines.length > LINE_LIMIT;
   const lines = truncated ? file.lines.slice(0, LINE_LIMIT) : file.lines;
   const [confirming, setConfirming] = useState(false);

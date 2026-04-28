@@ -15,11 +15,11 @@ const baseSession = {
   cwd: '/home/user/project',
 };
 
-const meta = {
+const meta: Meta<typeof SessionRow> = {
   component: SessionRow,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="w-72 bg-surface text-text border border-border">
         <Story />
       </div>

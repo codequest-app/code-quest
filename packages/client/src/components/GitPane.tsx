@@ -44,7 +44,7 @@ function statusFor(s: string): { mark: string; cls: string } {
   return STATUS_LABEL[s] ?? { mark: s.slice(0, 1) || '·', cls: 'text-text-muted' };
 }
 
-export function GitPane({ cwd }: GitPaneProps) {
+export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
   const { socket } = useSocket();
   const { checkout, discardFile, fetch, listBranches, pull, refetchGitStatus } = useGitActions();
   const data = useGitStatus(cwd);

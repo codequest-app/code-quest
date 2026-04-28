@@ -3,7 +3,7 @@ import { expect, within } from 'storybook/test';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { OnboardingOverlay } from './OnboardingOverlay';
 
-const meta = {
+const meta: Meta<typeof OnboardingOverlay> = {
   component: OnboardingOverlay,
   tags: ['autodocs'],
   decorators: [

@@ -12,7 +12,7 @@ const feat = (over: Partial<Feature> = {}): Feature => ({
   ...over,
 });
 
-const meta = {
+const meta: Meta<typeof FeatureRow> = {
   component: FeatureRow,
   tags: ['autodocs'],
   args: {
@@ -21,7 +21,7 @@ const meta = {
     onExecute: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text w-160 p-2">
         <Story />
       </div>

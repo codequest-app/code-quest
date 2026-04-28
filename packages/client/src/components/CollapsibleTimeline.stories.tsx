@@ -28,12 +28,12 @@ function toolNode(id: string, name: string, isError = false): MessageNode {
   };
 }
 
-const meta = {
+const meta: Meta<typeof CollapsibleTimeline> = {
   component: CollapsibleTimeline,
   tags: ['autodocs'],
   args: { onRewind: fn(), onFork: fn(), onStopTask: fn(), onDiffRespond: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text p-6">
         <Story />
       </div>

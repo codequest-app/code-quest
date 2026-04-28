@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
 import { NotificationToast } from './NotificationToast';
 
-const meta = {
+const meta: Meta<typeof NotificationToast> = {
   component: NotificationToast,
   tags: ['autodocs'],
   args: { onButton: fn(), onDismiss: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-md bg-surface text-text p-6">
         <Story />
       </div>

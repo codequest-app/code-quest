@@ -2,7 +2,7 @@ import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
-export function ReviewUpsellBanner() {
+export function ReviewUpsellBanner(): React.ReactNode {
   const { experimentGates } = useChannelConfig();
   const hiddenItems = usePreferencesStore((s) => s.hiddenItems);
   const hideItem = usePreferencesStore((s) => s.hideItem);

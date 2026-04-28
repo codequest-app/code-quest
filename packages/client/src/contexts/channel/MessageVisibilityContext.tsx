@@ -88,7 +88,7 @@ export const VISIBILITY_GROUPS: Group[] = [
   },
 ];
 
-export const OTHER_GROUP_ICON = QuestionMarkCircleIcon;
+export const OTHER_GROUP_ICON: typeof QuestionMarkCircleIcon = QuestionMarkCircleIcon;
 
 const DEFAULT_ON_GROUPS: GroupId[] = ['conversation', 'tools', 'system'];
 
@@ -115,7 +115,11 @@ const MessageVisibilityContext = createContext<MessageVisibilityContextValue | n
 
 const ALL_KNOWN_TYPES = new Set(VISIBILITY_GROUPS.flatMap((g) => g.types));
 
-export function MessageVisibilityProvider({ children }: { children: ReactNode }) {
+export function MessageVisibilityProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
   const storedTypes = useMessageVisibilityStore((s) => s.enabledTypes);
   const setStoredTypes = useMessageVisibilityStore((s) => s.setEnabledTypes);
 

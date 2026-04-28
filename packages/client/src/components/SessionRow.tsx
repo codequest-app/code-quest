@@ -37,7 +37,7 @@ export function SessionRow({
   onRename,
   onDelete,
   searchQuery,
-}: SessionRowProps) {
+}: SessionRowProps): React.JSX.Element {
   const [isRenaming, setIsRenaming] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
 

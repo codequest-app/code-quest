@@ -34,9 +34,9 @@ describe('ChatHandler > control', () => {
 
       const permEvents = claude.events('control:permission');
       expect(permEvents.length).toBeGreaterThan(0);
-      expect(permEvents[0].toolName).toBe('Bash');
-      expect(permEvents[0].requestId).toBe('req-1');
-      expect(permEvents[0].input).toEqual({ command: 'ls' });
+      expect(permEvents[0]!.toolName).toBe('Bash');
+      expect(permEvents[0]!.requestId).toBe('req-1');
+      expect(permEvents[0]!.input).toEqual({ command: 'ls' });
       expect((permEvents[0] as Record<string, unknown>).inputs).toBeUndefined();
     });
 
@@ -95,7 +95,7 @@ describe('ChatHandler > control', () => {
 
       const cancelEvents = claude.events('chat:cancel_request');
       expect(cancelEvents.length).toBeGreaterThan(0);
-      expect(cancelEvents[0].targetRequestId).toBe('req-1');
+      expect(cancelEvents[0]!.targetRequestId).toBe('req-1');
 
       const { ChannelManager } = await import('../socket/channel-manager.ts');
       const mgr = container.get(TYPES.ChannelManager) as InstanceType<typeof ChannelManager>;
@@ -113,8 +113,8 @@ describe('ChatHandler > control', () => {
 
         const permEvents = claude.events('control:permission');
         expect(permEvents.length).toBe(2);
-        expect(permEvents[0].requestId).toBe('req-1');
-        expect(permEvents[1].requestId).toBe('req-2');
+        expect(permEvents[0]!.requestId).toBe('req-1');
+        expect(permEvents[1]!.requestId).toBe('req-2');
       });
 
       it('resumes after all parallel CRs responded', async () => {
@@ -194,7 +194,7 @@ describe('ChatHandler > control', () => {
 
       const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
-      expect(elicitEvents[0].requestId).toBe('elicit-1');
+      expect(elicitEvents[0]!.requestId).toBe('elicit-1');
     });
 
     it('chat:respond forwards elicitation answer to CLI', async () => {
@@ -301,7 +301,7 @@ describe('ChatHandler > control', () => {
 
       const rawEvents = claude.events('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
-      expect(rawEvents[0].rawType).toBe('control_request/open_in_editor');
+      expect(rawEvents[0]!.rawType).toBe('control_request/open_in_editor');
     });
   });
 
@@ -340,7 +340,7 @@ describe('ChatHandler > control', () => {
 
       const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
-      expect(elicitEvents[0].requestId).toBe('elicit-form-opts');
+      expect(elicitEvents[0]!.requestId).toBe('elicit-form-opts');
     });
 
     it('maps mode:"url" → inputType:"url" and forwards url field', async () => {
@@ -357,7 +357,7 @@ describe('ChatHandler > control', () => {
 
       const elicitEvents = claude.events('control:elicitation');
       expect(elicitEvents.length).toBeGreaterThan(0);
-      expect(elicitEvents[0].requestId).toBe('elicit-url-field');
+      expect(elicitEvents[0]!.requestId).toBe('elicit-url-field');
     });
   });
 
@@ -438,7 +438,7 @@ describe('ChatHandler > control', () => {
 
       const rawEvents = claude.events('raw:event');
       expect(rawEvents.length).toBeGreaterThan(0);
-      expect(rawEvents[0].rawType).toBe('control_request/open_in_editor');
+      expect(rawEvents[0]!.rawType).toBe('control_request/open_in_editor');
     });
   });
 

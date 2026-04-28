@@ -4,11 +4,11 @@ import { SessionHistory } from './SessionHistory';
 
 const ok = { ok: true as const, data: {} };
 
-const meta = {
+const meta: Meta<typeof SessionHistory> = {
   component: SessionHistory,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="h-96 w-72 bg-surface text-text">
         <Story />
       </div>

@@ -64,7 +64,10 @@ function onRawEvent(state: ChannelState, p: Payload<'raw:event'>): ChannelState 
   }
 }
 
-export const notificationHandlerOn = {
+export const notificationHandlerOn: {
+  'notification:show': typeof onNotificationShow;
+  'raw:event': typeof onRawEvent;
+} = {
   'notification:show': onNotificationShow,
   'raw:event': onRawEvent,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
@@ -138,7 +141,16 @@ function onDisconnectEffect(): void {
   toast.warning('Disconnected from server');
 }
 
-export const notificationHandlerEffects = {
+export const notificationHandlerEffects: {
+  'notification:toast': typeof onNotificationToast;
+  'notification:auth_url': typeof onNotificationAuthUrl;
+  'action:open_url': typeof onActionOpenUrl;
+  'action:open_file': typeof onActionOpenFile;
+  'notification:show': typeof onNotificationShowEffect;
+  'raw:event': typeof onRawEventEffect;
+  'system:mirror_error': typeof onMirrorError;
+  disconnect: typeof onDisconnectEffect;
+} = {
   'notification:toast': onNotificationToast,
   'notification:auth_url': onNotificationAuthUrl,
   'action:open_url': onActionOpenUrl,

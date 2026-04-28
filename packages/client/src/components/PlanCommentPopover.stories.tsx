@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { fn } from 'storybook/test';
 import { PlanCommentPopover } from './PlanCommentPopover';
 
-const meta = {
+const meta: Meta<typeof PlanCommentPopover> = {
   component: PlanCommentPopover,
   tags: ['autodocs'],
 } satisfies Meta<typeof PlanCommentPopover>;

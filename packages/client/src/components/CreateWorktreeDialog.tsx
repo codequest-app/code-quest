@@ -35,7 +35,7 @@ export function CreateWorktreeDialog({
   open: boolean;
   cwd: string;
   onClose: () => void;
-}) {
+}): React.JSX.Element {
   const { create, listBranches } = useGitActions();
 
   const [mode, setMode] = useState<Mode>('existing');

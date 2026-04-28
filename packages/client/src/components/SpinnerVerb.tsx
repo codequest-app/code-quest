@@ -58,7 +58,7 @@ const DEFAULT_VERBS = [
 ];
 
 function randomFrom<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)] as T;
 }
 
 function padToLength(text: string, len: number): string {
@@ -106,7 +106,7 @@ function runScramble(el: HTMLElement, padded: string): () => void {
     for (let offset = 0; offset <= 3; offset++) {
       const charIdx = index - offset;
       if (charIdx >= 0 && charIdx < padded.length) {
-        current = replaceCharAt(current, charIdx, scrambleChar(padded[charIdx], offset));
+        current = replaceCharAt(current, charIdx, scrambleChar(padded[charIdx] ?? '', offset));
       }
     }
     el.textContent = current;
@@ -126,7 +126,10 @@ interface SpinnerVerbProps {
 }
 
 // All animation writes go to DOM refs directly so React never re-renders on tick.
-export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbProps) {
+export function SpinnerVerb({
+  statusText,
+  verbs = DEFAULT_VERBS,
+}: SpinnerVerbProps): React.JSX.Element {
   const iconRef = useRef<HTMLSpanElement | null>(null);
   const verbRef = useRef<HTMLSpanElement | null>(null);
 
@@ -134,7 +137,7 @@ export function SpinnerVerb({ statusText, verbs = DEFAULT_VERBS }: SpinnerVerbPr
     let i = 0;
     const id = setInterval(() => {
       i = (i + 1) % ICON_CYCLE.length;
-      if (iconRef.current) iconRef.current.textContent = ICON_CYCLE[i];
+      if (iconRef.current) iconRef.current.textContent = ICON_CYCLE[i] ?? null;
     }, ICON_CYCLE_MS);
     return () => clearInterval(id);
   }, []);

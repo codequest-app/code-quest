@@ -75,7 +75,7 @@ describe('PaletteMessageList', () => {
       messages: [msg('1', 'A'), msg('2', 'B'), msg('3', 'C')],
       onActiveChange,
     });
-    await userEvent.hover(screen.getAllByRole('button')[1]);
+    await userEvent.hover(screen.getAllByRole('button')[1]!);
     expect(onActiveChange).toHaveBeenCalledWith(1);
   });
 

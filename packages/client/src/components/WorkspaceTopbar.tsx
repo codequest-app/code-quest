@@ -54,7 +54,7 @@ export function WorkspaceTopbar({
   children,
   sessions,
   onActivateSession,
-}: Props) {
+}: Props): React.JSX.Element {
   return (
     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: <header> has implicit banner role which supports aria-label
     <header aria-label={`${mode}-topbar`} className={ROOT_CLASS[mode]}>

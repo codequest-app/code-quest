@@ -10,7 +10,7 @@ function FontSizeFeaturePreview({
 }: {
   fontSize: FontSize;
   setFontSize: (v: FontSize) => void;
-}) {
+}): React.JSX.Element {
   const feature = toMenuItem(createFontSizeFeature({ fontSize, setFontSize }));
   return (
     <button
@@ -24,12 +24,12 @@ function FontSizeFeaturePreview({
   );
 }
 
-const meta = {
+const meta: Meta<typeof FontSizeFeaturePreview> = {
   component: FontSizeFeaturePreview,
   tags: ['autodocs'],
   args: { setFontSize: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 min-h-30">
         <Story />
       </div>

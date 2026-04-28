@@ -8,7 +8,7 @@ import { WorkspaceLayout } from './components/WorkspaceLayout';
 import { makeSession } from './test/story-fixtures';
 import { withStoryWorkspaceFixtures } from './test/story-workspace-decorator';
 
-function AppShell() {
+function AppShell(): React.JSX.Element {
   return (
     <>
       <Toaster position="top-right" richColors />
@@ -19,7 +19,7 @@ function AppShell() {
   );
 }
 
-const meta = {
+const meta: Meta<typeof AppShell> = {
   title: 'App/Shell',
   component: AppShell,
   tags: ['autodocs'],

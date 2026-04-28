@@ -9,7 +9,10 @@ interface PlanCommentPopoverProps {
 
 const MAX_QUOTE_LENGTH = 50;
 
-export function PlanCommentPopover({ containerRef, onAddComment }: PlanCommentPopoverProps) {
+export function PlanCommentPopover({
+  containerRef,
+  onAddComment,
+}: PlanCommentPopoverProps): React.JSX.Element {
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);

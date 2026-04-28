@@ -12,7 +12,13 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({ icon, message, hint, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  message,
+  hint,
+  actionLabel,
+  onAction,
+}: EmptyStateProps): React.JSX.Element {
   const hasAction = actionLabel !== undefined && onAction !== undefined;
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-4 text-text-muted text-center px-6">

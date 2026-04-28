@@ -32,7 +32,7 @@ type TabId = (typeof TABS)[number]['id'];
 
 const isPaletteTab = (t: TabId): t is PaletteTab => t !== 'messages';
 
-export function CommandPalette() {
+export function CommandPalette(): React.ReactNode {
   const { open, defaultTab, closePalette, jumpTo, paletteActions } = useCommandPalette();
   const channels = useMessageRegistryStore((s) => s.channels);
   const visibilityTypes = useMessageVisibilityStore((s) => s.enabledTypes);

@@ -134,7 +134,13 @@ function DefaultToolBody({
   );
 }
 
-export function ToolUseBlock({ content, meta }: { content: string; meta?: ToolUseMeta }) {
+export function ToolUseBlock({
+  content,
+  meta,
+}: {
+  content: string;
+  meta?: ToolUseMeta;
+}): React.JSX.Element {
   const toolName = content;
   const input = meta?.input ?? {};
   const partialInput = meta?.partialInput;

@@ -239,13 +239,13 @@ describe('ClaudeProtocol.buildArgs', () => {
 
   it('adds --add-dir for each directory', () => {
     const args = protocol.buildArgs({ addDirs: ['/path/a', '/path/b'] });
-    const indices = args.reduce<number[]>(
-      (acc, a, i) => (a === '--add-dir' ? [...acc, i] : acc),
-      [],
-    );
+    const indices: number[] = [];
+    args.forEach((a, i) => {
+      if (a === '--add-dir') indices.push(i);
+    });
     expect(indices).toHaveLength(2);
-    expect(args[indices[0] + 1]).toBe('/path/a');
-    expect(args[indices[1] + 1]).toBe('/path/b');
+    expect(args[indices[0]! + 1]).toBe('/path/a');
+    expect(args[indices[1]! + 1]).toBe('/path/b');
   });
 
   it('adds --plugin-dir for each directory', () => {

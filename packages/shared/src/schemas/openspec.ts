@@ -1,12 +1,26 @@
 import { z } from 'zod';
 
-export const openspecTaskProgressSchema = z.object({
+export const openspecTaskProgressSchema: z.ZodObject<
+  { done: z.ZodNumber; total: z.ZodNumber },
+  z.core.$strip
+> = z.object({
   done: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
 });
 export type OpenspecTaskProgress = z.infer<typeof openspecTaskProgressSchema>;
 
-export const openspecChangeSummarySchema = z.object({
+export const openspecChangeSummarySchema: z.ZodObject<
+  {
+    name: z.ZodString;
+    tasks: z.ZodNullable<z.ZodObject<{ done: z.ZodNumber; total: z.ZodNumber }, z.core.$strip>>;
+    status: z.ZodEnum<{
+      'in-progress': 'in-progress';
+      complete: 'complete';
+      'no-tasks': 'no-tasks';
+    }>;
+  },
+  z.core.$strip
+> = z.object({
   name: z.string(),
   /** null = no tasks declared; otherwise CLI-reported task counts. */
   tasks: openspecTaskProgressSchema.nullable(),
@@ -17,15 +31,44 @@ export const openspecChangeSummarySchema = z.object({
 });
 export type OpenspecChangeSummary = z.infer<typeof openspecChangeSummarySchema>;
 
-export const openspecSpecSummarySchema = z.object({
-  capability: z.string(),
-});
+export const openspecSpecSummarySchema: z.ZodObject<{ capability: z.ZodString }, z.core.$strip> =
+  z.object({
+    capability: z.string(),
+  });
 export type OpenspecSpecSummary = z.infer<typeof openspecSpecSummarySchema>;
 
-export const openspecListPayloadSchema = z.object({ cwd: z.string() });
+export const openspecListPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object(
+  { cwd: z.string() },
+);
 export type OpenspecListPayload = z.infer<typeof openspecListPayloadSchema>;
 
-export const openspecListResultSchema = z.union([
+export const openspecListResultSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        changes: z.ZodArray<
+          z.ZodObject<
+            {
+              name: z.ZodString;
+              tasks: z.ZodNullable<
+                z.ZodObject<{ done: z.ZodNumber; total: z.ZodNumber }, z.core.$strip>
+              >;
+              status: z.ZodEnum<{
+                'in-progress': 'in-progress';
+                complete: 'complete';
+                'no-tasks': 'no-tasks';
+              }>;
+            },
+            z.core.$strip
+          >
+        >;
+        specs: z.ZodArray<z.ZodObject<{ capability: z.ZodString }, z.core.$strip>>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([
   z.object({
     changes: z.array(openspecChangeSummarySchema),
     specs: z.array(openspecSpecSummarySchema),
@@ -34,10 +77,23 @@ export const openspecListResultSchema = z.union([
 ]);
 export type OpenspecListResult = z.infer<typeof openspecListResultSchema>;
 
-export const openspecArtifactKindSchema = z.enum(['proposal', 'design', 'tasks', 'spec']);
+export const openspecArtifactKindSchema: z.ZodEnum<{
+  tasks: 'tasks';
+  proposal: 'proposal';
+  design: 'design';
+  spec: 'spec';
+}> = z.enum(['proposal', 'design', 'tasks', 'spec']);
 export type OpenspecArtifactKind = z.infer<typeof openspecArtifactKindSchema>;
 
-export const openspecReadPayloadSchema = z.object({
+export const openspecReadPayloadSchema: z.ZodObject<
+  {
+    cwd: z.ZodString;
+    kind: z.ZodEnum<{ spec: 'spec'; change: 'change' }>;
+    name: z.ZodString;
+    artifact: z.ZodEnum<{ tasks: 'tasks'; proposal: 'proposal'; design: 'design'; spec: 'spec' }>;
+  },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   kind: z.enum(['change', 'spec']),
   name: z.string(),
@@ -45,34 +101,46 @@ export const openspecReadPayloadSchema = z.object({
 });
 export type OpenspecReadPayload = z.infer<typeof openspecReadPayloadSchema>;
 
-export const openspecReadResultSchema = z.union([
-  z.object({ content: z.string() }),
-  z.object({ error: z.string() }),
-]);
+export const openspecReadResultSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ content: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([z.object({ content: z.string() }), z.object({ error: z.string() })]);
 export type OpenspecReadResult = z.infer<typeof openspecReadResultSchema>;
 
 /** Server → client broadcast: openspec/* file changed in cwd. */
-export const openspecDirtyEventSchema = z.object({ cwd: z.string() });
+export const openspecDirtyEventSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object({
+  cwd: z.string(),
+});
 export type OpenspecDirtyEvent = z.infer<typeof openspecDirtyEventSchema>;
 
 /** Slug accepted by `openspec change new` — lowercase letters, digits, hyphens. */
-export const openspecChangeSlugSchema = z.string().regex(/^[a-z0-9-]+$/, {
+export const openspecChangeSlugSchema: z.ZodString = z.string().regex(/^[a-z0-9-]+$/, {
   message: 'Name must match /^[a-z0-9-]+$/',
 });
 
-export const openspecChangeNewPayloadSchema = z.object({
+export const openspecChangeNewPayloadSchema: z.ZodObject<
+  { cwd: z.ZodString; name: z.ZodString },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   name: openspecChangeSlugSchema,
 });
 export type OpenspecChangeNewPayload = z.infer<typeof openspecChangeNewPayloadSchema>;
 
-export const openspecChangeNewResultSchema = z.union([
-  z.object({ ok: z.literal(true) }),
-  z.object({ error: z.string() }),
-]);
+export const openspecChangeNewResultSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ ok: z.ZodLiteral<true> }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
 export type OpenspecChangeNewResult = z.infer<typeof openspecChangeNewResultSchema>;
 
-export const openspecArchivePayloadSchema = z.object({
+export const openspecArchivePayloadSchema: z.ZodObject<
+  { cwd: z.ZodString; name: z.ZodString; skipSpecs: z.ZodOptional<z.ZodBoolean> },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   name: openspecChangeSlugSchema,
   /** When true, passes `--skip-specs` to skip propagating delta specs into
@@ -82,13 +150,18 @@ export const openspecArchivePayloadSchema = z.object({
 });
 export type OpenspecArchivePayload = z.infer<typeof openspecArchivePayloadSchema>;
 
-export const openspecArchiveResultSchema = z.union([
-  z.object({ ok: z.literal(true) }),
-  z.object({ error: z.string() }),
-]);
+export const openspecArchiveResultSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ ok: z.ZodLiteral<true> }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([z.object({ ok: z.literal(true) }), z.object({ error: z.string() })]);
 export type OpenspecArchiveResult = z.infer<typeof openspecArchiveResultSchema>;
 
-export const openspecToggleTaskPayloadSchema = z.object({
+export const openspecToggleTaskPayloadSchema: z.ZodObject<
+  { cwd: z.ZodString; name: z.ZodString; lineIndex: z.ZodNumber },
+  z.core.$strip
+> = z.object({
   cwd: z.string(),
   name: openspecChangeSlugSchema,
   /** 0-indexed line number within the change's tasks.md */
@@ -96,7 +169,12 @@ export const openspecToggleTaskPayloadSchema = z.object({
 });
 export type OpenspecToggleTaskPayload = z.infer<typeof openspecToggleTaskPayloadSchema>;
 
-export const openspecToggleTaskResultSchema = z.union([
+export const openspecToggleTaskResultSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ ok: z.ZodLiteral<true>; checked: z.ZodBoolean }, z.core.$strip>,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([
   z.object({ ok: z.literal(true), checked: z.boolean() }),
   z.object({ error: z.string() }),
 ]);

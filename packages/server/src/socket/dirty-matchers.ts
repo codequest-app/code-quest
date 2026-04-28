@@ -6,7 +6,7 @@
 /** `.git` meta paths whose changes the UI cares about (HEAD, index,
  *  packed-refs, refs/*). Object/log churn is intentionally excluded —
  *  it changes constantly for reasons the UI doesn't care about. */
-export const GIT_META_RE = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
+export const GIT_META_RE: RegExp = /^\.git\/(HEAD|index|packed-refs|refs\/.*)$/;
 
 /** Paths the file/spec UI should ignore (vendored, build output, logs,
  *  OS metadata). `node_modules`, `dist`, `.next`, etc. */

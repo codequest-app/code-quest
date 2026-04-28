@@ -26,7 +26,7 @@ function getSteps(brandName: string) {
   ];
 }
 
-export function OnboardingOverlay() {
+export function OnboardingOverlay(): React.ReactNode {
   const hiddenItems = usePreferencesStore((s) => s.hiddenItems);
   const hideItem = usePreferencesStore((s) => s.hideItem);
   const isOnboardingDismissed = hiddenItems.includes(DISMISSIBLE_IDS.onboardingOverlay);
@@ -53,8 +53,8 @@ export function OnboardingOverlay() {
             Skip
           </button>
         </div>
-        <h3 className="text-lg font-semibold text-text mb-2">{current.title}</h3>
-        <p className="text-sm text-text-muted mb-6">{current.description}</p>
+        <h3 className="text-lg font-semibold text-text mb-2">{current?.title}</h3>
+        <p className="text-sm text-text-muted mb-6">{current?.description}</p>
         <div className="flex justify-between">
           <Button
             variant="ghost"

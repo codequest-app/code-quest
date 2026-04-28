@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withThemePreset } from '../../test/story-decorator';
 import { AlertBanner } from './AlertBanner';
 
-const meta = {
+const meta: Meta<typeof AlertBanner> = {
   component: AlertBanner,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 w-130">
         <Story />
       </div>

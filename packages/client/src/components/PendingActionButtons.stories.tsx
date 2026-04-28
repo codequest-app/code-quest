@@ -27,7 +27,7 @@ function withPendingControls(pendingControls: PendingControl[]) {
   );
 }
 
-const meta = {
+const meta: Meta<typeof PendingActionButtons> = {
   component: PendingActionButtons,
   tags: ['autodocs'],
 } satisfies Meta<typeof PendingActionButtons>;

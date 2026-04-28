@@ -293,7 +293,8 @@ export class LocalFilesystemService implements FilesystemService {
       // Drop the file name (last segment); accumulate each directory prefix.
       let prefix = '';
       for (let i = 0; i < parts.length - 1; i++) {
-        prefix = prefix ? `${prefix}/${parts[i]}` : parts[i];
+        const segment = parts[i] ?? '';
+        prefix = prefix ? `${prefix}/${segment}` : segment;
         dirs.add(prefix);
       }
     }

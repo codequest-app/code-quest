@@ -124,7 +124,7 @@ describe('ChatHandler > session', () => {
         .events('session:created')
         .filter((e) => e.channelId === 'ch-fork-broadcast');
       expect(events).toHaveLength(1);
-      expect(events[0].cwd).toBe('/tmp/parent-with-cwd');
+      expect(events[0]!.cwd).toBe('/tmp/parent-with-cwd');
     });
   });
 });
@@ -315,7 +315,7 @@ describe('session:fork argv + sessionId + clone (fix-fork-resume-sessionid)', ()
     const sidIdx = args.indexOf('--session-id');
     const newSid = args[sidIdx + 1];
 
-    const cloned = await rawStore.getBySession(newSid);
+    const cloned = await rawStore.getBySession(newSid!);
     const rawValues = cloned.map((r) => r.raw);
     expect(rawValues).toContain('raw-A');
     expect(rawValues).toContain('raw-B');

@@ -9,7 +9,7 @@ import { ChatPanel } from './ChatPanel';
 
 const CLASS = 'h-150 bg-bg text-text';
 
-const meta = {
+const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

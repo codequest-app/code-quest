@@ -51,7 +51,7 @@ export function PaletteCommandList({
   onActiveChange,
   onExecute,
   className,
-}: PaletteCommandListProps) {
+}: PaletteCommandListProps): React.ReactNode {
   const groups = groupAndFilter(features, query);
   if (groups.length === 0) return null;
 

@@ -1,7 +1,7 @@
 import type { Feature } from '../../lib/feature';
-import { createOpenSignal } from '../../lib/open-signal';
+import { createOpenSignal, type OpenSignal } from '../../lib/open-signal';
 
-export const usageOpenSignal = createOpenSignal();
+export const usageOpenSignal: OpenSignal = createOpenSignal();
 
 interface UsageFeatureDeps {
   emitRefreshUsage: () => void;

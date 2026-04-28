@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import type { ProviderClientConfig } from '@code-quest/shared';
 import {
   type ControlResponse,
   EVENTS,
@@ -92,7 +93,7 @@ export class ChannelManager {
     return this.runnerFactory.command;
   }
 
-  get providerClientConfig() {
+  get providerClientConfig(): ProviderClientConfig {
     return this.adapter.clientConfig;
   }
 

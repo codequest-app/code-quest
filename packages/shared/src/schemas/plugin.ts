@@ -2,30 +2,60 @@ import { z } from 'zod';
 
 // ── C2S ──
 
-export const pluginInstallPayloadSchema = z.object({
+export const pluginInstallPayloadSchema: z.ZodObject<
+  {
+    pluginId: z.ZodString;
+    scope: z.ZodOptional<
+      z.ZodEnum<{ user: 'user'; workspace: 'workspace'; project: 'project'; local: 'local' }>
+    >;
+  },
+  z.core.$strip
+> = z.object({
   pluginId: z.string(),
   scope: z.enum(['user', 'workspace', 'project', 'local']).optional(),
 });
 export type PluginInstallPayload = z.infer<typeof pluginInstallPayloadSchema>;
 
-export const pluginTogglePayloadSchema = z.object({ pluginId: z.string(), enabled: z.boolean() });
+export const pluginTogglePayloadSchema: z.ZodObject<
+  { pluginId: z.ZodString; enabled: z.ZodBoolean },
+  z.core.$strip
+> = z.object({ pluginId: z.string(), enabled: z.boolean() });
 export type PluginTogglePayload = z.infer<typeof pluginTogglePayloadSchema>;
 
-export const pluginUninstallPayloadSchema = z.object({ pluginId: z.string() });
+export const pluginUninstallPayloadSchema: z.ZodObject<{ pluginId: z.ZodString }, z.core.$strip> =
+  z.object({ pluginId: z.string() });
 export type PluginUninstallPayload = z.infer<typeof pluginUninstallPayloadSchema>;
 
-export const addMarketplacePayloadSchema = z.object({ source: z.string().min(1) });
+export const addMarketplacePayloadSchema: z.ZodObject<{ source: z.ZodString }, z.core.$strip> =
+  z.object({ source: z.string().min(1) });
 export type AddMarketplacePayload = z.infer<typeof addMarketplacePayloadSchema>;
 
-export const removeMarketplacePayloadSchema = z.object({ marketplaceId: z.string() });
+export const removeMarketplacePayloadSchema: z.ZodObject<
+  { marketplaceId: z.ZodString },
+  z.core.$strip
+> = z.object({ marketplaceId: z.string() });
 export type RemoveMarketplacePayload = z.infer<typeof removeMarketplacePayloadSchema>;
 
-export const refreshMarketplacePayloadSchema = z.object({ marketplaceId: z.string() });
+export const refreshMarketplacePayloadSchema: z.ZodObject<
+  { marketplaceId: z.ZodString },
+  z.core.$strip
+> = z.object({ marketplaceId: z.string() });
 export type RefreshMarketplacePayload = z.infer<typeof refreshMarketplacePayloadSchema>;
 
 // ── Info schemas ──
 
-export const pluginInfoSchema = z.looseObject({
+export const pluginInfoSchema: z.ZodObject<
+  {
+    id: z.ZodString;
+    version: z.ZodOptional<z.ZodString>;
+    scope: z.ZodOptional<z.ZodString>;
+    enabled: z.ZodOptional<z.ZodBoolean>;
+    installPath: z.ZodOptional<z.ZodString>;
+    installedAt: z.ZodOptional<z.ZodString>;
+    lastUpdated: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$loose
+> = z.looseObject({
   id: z.string(),
   version: z.string().optional(),
   scope: z.string().optional(),
@@ -36,7 +66,28 @@ export const pluginInfoSchema = z.looseObject({
 });
 export type PluginInfo = z.infer<typeof pluginInfoSchema>;
 
-export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
+export const marketplaceSourceConfigSchema: z.ZodDiscriminatedUnion<
+  [
+    z.ZodObject<{ source: z.ZodLiteral<'npm'>; package: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ source: z.ZodLiteral<'github'>; repo: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ source: z.ZodLiteral<'git'>; url: z.ZodString }, z.core.$strip>,
+    z.ZodObject<
+      {
+        source: z.ZodLiteral<'git-subdir'>;
+        url: z.ZodString;
+        path: z.ZodString;
+        ref: z.ZodOptional<z.ZodString>;
+        sha: z.ZodOptional<z.ZodString>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ source: z.ZodLiteral<'url'>; url: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ source: z.ZodLiteral<'directory'>; path: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ source: z.ZodLiteral<'file'>; path: z.ZodString }, z.core.$strip>,
+    z.ZodObject<{ source: z.ZodLiteral<'local'>; path: z.ZodString }, z.core.$strip>,
+  ],
+  'source'
+> = z.discriminatedUnion('source', [
   z.object({ source: z.literal('npm'), package: z.string() }),
   z.object({ source: z.literal('github'), repo: z.string() }),
   z.object({ source: z.literal('git'), url: z.string() }),
@@ -54,7 +105,46 @@ export const marketplaceSourceConfigSchema = z.discriminatedUnion('source', [
 ]);
 export type MarketplaceSourceConfig = z.infer<typeof marketplaceSourceConfigSchema>;
 
-export const availablePluginSchema = z.looseObject({
+export const availablePluginSchema: z.ZodObject<
+  {
+    pluginId: z.ZodString;
+    name: z.ZodString;
+    description: z.ZodOptional<z.ZodString>;
+    marketplaceName: z.ZodOptional<z.ZodString>;
+    version: z.ZodOptional<z.ZodString>;
+    source: z.ZodOptional<
+      z.ZodUnion<
+        readonly [
+          z.ZodDiscriminatedUnion<
+            [
+              z.ZodObject<{ source: z.ZodLiteral<'npm'>; package: z.ZodString }, z.core.$strip>,
+              z.ZodObject<{ source: z.ZodLiteral<'github'>; repo: z.ZodString }, z.core.$strip>,
+              z.ZodObject<{ source: z.ZodLiteral<'git'>; url: z.ZodString }, z.core.$strip>,
+              z.ZodObject<
+                {
+                  source: z.ZodLiteral<'git-subdir'>;
+                  url: z.ZodString;
+                  path: z.ZodString;
+                  ref: z.ZodOptional<z.ZodString>;
+                  sha: z.ZodOptional<z.ZodString>;
+                },
+                z.core.$strip
+              >,
+              z.ZodObject<{ source: z.ZodLiteral<'url'>; url: z.ZodString }, z.core.$strip>,
+              z.ZodObject<{ source: z.ZodLiteral<'directory'>; path: z.ZodString }, z.core.$strip>,
+              z.ZodObject<{ source: z.ZodLiteral<'file'>; path: z.ZodString }, z.core.$strip>,
+              z.ZodObject<{ source: z.ZodLiteral<'local'>; path: z.ZodString }, z.core.$strip>,
+            ],
+            'source'
+          >,
+          z.ZodString,
+        ]
+      >
+    >;
+    installCount: z.ZodOptional<z.ZodNumber>;
+  },
+  z.core.$loose
+> = z.looseObject({
   pluginId: z.string(),
   name: z.string(),
   description: z.string().optional(),
@@ -65,7 +155,42 @@ export const availablePluginSchema = z.looseObject({
 });
 export type AvailablePlugin = z.infer<typeof availablePluginSchema>;
 
-export const marketplaceInfoSchema = z.object({
+export const marketplaceInfoSchema: z.ZodObject<
+  {
+    name: z.ZodString;
+    config: z.ZodObject<
+      {
+        source: z.ZodDiscriminatedUnion<
+          [
+            z.ZodObject<{ source: z.ZodLiteral<'npm'>; package: z.ZodString }, z.core.$strip>,
+            z.ZodObject<{ source: z.ZodLiteral<'github'>; repo: z.ZodString }, z.core.$strip>,
+            z.ZodObject<{ source: z.ZodLiteral<'git'>; url: z.ZodString }, z.core.$strip>,
+            z.ZodObject<
+              {
+                source: z.ZodLiteral<'git-subdir'>;
+                url: z.ZodString;
+                path: z.ZodString;
+                ref: z.ZodOptional<z.ZodString>;
+                sha: z.ZodOptional<z.ZodString>;
+              },
+              z.core.$strip
+            >,
+            z.ZodObject<{ source: z.ZodLiteral<'url'>; url: z.ZodString }, z.core.$strip>,
+            z.ZodObject<{ source: z.ZodLiteral<'directory'>; path: z.ZodString }, z.core.$strip>,
+            z.ZodObject<{ source: z.ZodLiteral<'file'>; path: z.ZodString }, z.core.$strip>,
+            z.ZodObject<{ source: z.ZodLiteral<'local'>; path: z.ZodString }, z.core.$strip>,
+          ],
+          'source'
+        >;
+        installLocation: z.ZodString;
+      },
+      z.core.$strip
+    >;
+    pluginCount: z.ZodNumber;
+    installedCount: z.ZodNumber;
+  },
+  z.core.$strip
+> = z.object({
   name: z.string(),
   config: z.object({
     source: marketplaceSourceConfigSchema,
@@ -78,21 +203,42 @@ export type MarketplaceInfo = z.infer<typeof marketplaceInfoSchema>;
 
 // ── Results ──
 
-export const pluginResultSchema = z.object({
+export const pluginResultSchema: z.ZodObject<
+  {
+    success: z.ZodBoolean;
+    needsRestart: z.ZodOptional<z.ZodBoolean>;
+    error: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   success: z.boolean(),
   needsRestart: z.boolean().optional(),
   error: z.string().optional(),
 });
 export type PluginResult = z.infer<typeof pluginResultSchema>;
 
-export const marketplaceResultSchema = z.object({
+export const marketplaceResultSchema: z.ZodObject<
+  { success: z.ZodBoolean; error: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   success: z.boolean(),
   error: z.string().optional(),
 });
 export type MarketplaceResult = z.infer<typeof marketplaceResultSchema>;
 
 /** Raw marketplace entry from CLI `marketplace list --json` */
-export const marketplaceRawItemSchema = z.object({
+export const marketplaceRawItemSchema: z.ZodObject<
+  {
+    name: z.ZodString;
+    source: z.ZodString;
+    repo: z.ZodOptional<z.ZodString>;
+    url: z.ZodOptional<z.ZodString>;
+    path: z.ZodOptional<z.ZodString>;
+    package: z.ZodOptional<z.ZodString>;
+    installLocation: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   name: z.string(),
   source: z.string(),
   repo: z.string().optional(),
@@ -105,10 +251,39 @@ export type MarketplaceRawItem = z.infer<typeof marketplaceRawItemSchema>;
 
 // ── Response schemas ──
 
-export const pluginReloadRequestPayloadSchema = z.object({ channelId: z.string() });
+export const pluginReloadRequestPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString },
+  z.core.$strip
+> = z.object({ channelId: z.string() });
 export type PluginReloadRequestPayload = z.infer<typeof pluginReloadRequestPayloadSchema>;
 
-export const pluginReloadPayloadSchema = z.object({
+export const pluginReloadPayloadSchema: z.ZodObject<
+  {
+    commands: z.ZodOptional<
+      z.ZodArray<
+        z.ZodObject<
+          {
+            name: z.ZodString;
+            description: z.ZodOptional<z.ZodString>;
+            argumentHint: z.ZodOptional<z.ZodString>;
+          },
+          z.core.$strip
+        >
+      >
+    >;
+    agents: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+    plugins: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+    mcpServers: z.ZodOptional<
+      z.ZodArray<
+        z.ZodObject<
+          { name: z.ZodString; status: z.ZodString; scope: z.ZodOptional<z.ZodString> },
+          z.core.$strip
+        >
+      >
+    >;
+  },
+  z.core.$strip
+> = z.object({
   commands: z
     .array(
       z.object({
@@ -126,23 +301,178 @@ export const pluginReloadPayloadSchema = z.object({
 });
 export type PluginReloadPayload = z.infer<typeof pluginReloadPayloadSchema>;
 
-export const pluginReloadResultSchema = z.object({
+export const pluginReloadResultSchema: z.ZodObject<
+  {
+    success: z.ZodBoolean;
+    error: z.ZodOptional<z.ZodString>;
+    data: z.ZodOptional<
+      z.ZodObject<
+        {
+          commands: z.ZodOptional<
+            z.ZodArray<
+              z.ZodObject<
+                {
+                  name: z.ZodString;
+                  description: z.ZodOptional<z.ZodString>;
+                  argumentHint: z.ZodOptional<z.ZodString>;
+                },
+                z.core.$strip
+              >
+            >
+          >;
+          agents: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+          plugins: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+          mcpServers: z.ZodOptional<
+            z.ZodArray<
+              z.ZodObject<
+                { name: z.ZodString; status: z.ZodString; scope: z.ZodOptional<z.ZodString> },
+                z.core.$strip
+              >
+            >
+          >;
+        },
+        z.core.$strip
+      >
+    >;
+  },
+  z.core.$strip
+> = z.object({
   success: z.boolean(),
   error: z.string().optional(),
   data: pluginReloadPayloadSchema.optional(),
 });
 export type PluginReloadResult = z.infer<typeof pluginReloadResultSchema>;
 
-export const listPluginsPayloadSchema = z.object({ includeAvailable: z.boolean().optional() });
+export const listPluginsPayloadSchema: z.ZodObject<
+  { includeAvailable: z.ZodOptional<z.ZodBoolean> },
+  z.core.$strip
+> = z.object({ includeAvailable: z.boolean().optional() });
 export type ListPluginsPayload = z.infer<typeof listPluginsPayloadSchema>;
 
-export const listPluginsResponseSchema = z.looseObject({
+export const listPluginsResponseSchema: z.ZodObject<
+  {
+    installed: z.ZodArray<
+      z.ZodObject<
+        {
+          id: z.ZodString;
+          version: z.ZodOptional<z.ZodString>;
+          scope: z.ZodOptional<z.ZodString>;
+          enabled: z.ZodOptional<z.ZodBoolean>;
+          installPath: z.ZodOptional<z.ZodString>;
+          installedAt: z.ZodOptional<z.ZodString>;
+          lastUpdated: z.ZodOptional<z.ZodString>;
+        },
+        z.core.$loose
+      >
+    >;
+    available: z.ZodArray<
+      z.ZodObject<
+        {
+          pluginId: z.ZodString;
+          name: z.ZodString;
+          description: z.ZodOptional<z.ZodString>;
+          marketplaceName: z.ZodOptional<z.ZodString>;
+          version: z.ZodOptional<z.ZodString>;
+          source: z.ZodOptional<
+            z.ZodUnion<
+              readonly [
+                z.ZodDiscriminatedUnion<
+                  [
+                    z.ZodObject<
+                      { source: z.ZodLiteral<'npm'>; package: z.ZodString },
+                      z.core.$strip
+                    >,
+                    z.ZodObject<
+                      { source: z.ZodLiteral<'github'>; repo: z.ZodString },
+                      z.core.$strip
+                    >,
+                    z.ZodObject<{ source: z.ZodLiteral<'git'>; url: z.ZodString }, z.core.$strip>,
+                    z.ZodObject<
+                      {
+                        source: z.ZodLiteral<'git-subdir'>;
+                        url: z.ZodString;
+                        path: z.ZodString;
+                        ref: z.ZodOptional<z.ZodString>;
+                        sha: z.ZodOptional<z.ZodString>;
+                      },
+                      z.core.$strip
+                    >,
+                    z.ZodObject<{ source: z.ZodLiteral<'url'>; url: z.ZodString }, z.core.$strip>,
+                    z.ZodObject<
+                      { source: z.ZodLiteral<'directory'>; path: z.ZodString },
+                      z.core.$strip
+                    >,
+                    z.ZodObject<{ source: z.ZodLiteral<'file'>; path: z.ZodString }, z.core.$strip>,
+                    z.ZodObject<
+                      { source: z.ZodLiteral<'local'>; path: z.ZodString },
+                      z.core.$strip
+                    >,
+                  ],
+                  'source'
+                >,
+                z.ZodString,
+              ]
+            >
+          >;
+          installCount: z.ZodOptional<z.ZodNumber>;
+        },
+        z.core.$loose
+      >
+    >;
+  },
+  z.core.$loose
+> = z.looseObject({
   installed: z.array(pluginInfoSchema),
   available: z.array(availablePluginSchema),
 });
 export type ListPluginsResponse = z.infer<typeof listPluginsResponseSchema>;
 
-export const listMarketplacesResponseSchema = z.looseObject({
+export const listMarketplacesResponseSchema: z.ZodObject<
+  {
+    marketplaces: z.ZodArray<
+      z.ZodObject<
+        {
+          name: z.ZodString;
+          config: z.ZodObject<
+            {
+              source: z.ZodDiscriminatedUnion<
+                [
+                  z.ZodObject<{ source: z.ZodLiteral<'npm'>; package: z.ZodString }, z.core.$strip>,
+                  z.ZodObject<{ source: z.ZodLiteral<'github'>; repo: z.ZodString }, z.core.$strip>,
+                  z.ZodObject<{ source: z.ZodLiteral<'git'>; url: z.ZodString }, z.core.$strip>,
+                  z.ZodObject<
+                    {
+                      source: z.ZodLiteral<'git-subdir'>;
+                      url: z.ZodString;
+                      path: z.ZodString;
+                      ref: z.ZodOptional<z.ZodString>;
+                      sha: z.ZodOptional<z.ZodString>;
+                    },
+                    z.core.$strip
+                  >,
+                  z.ZodObject<{ source: z.ZodLiteral<'url'>; url: z.ZodString }, z.core.$strip>,
+                  z.ZodObject<
+                    { source: z.ZodLiteral<'directory'>; path: z.ZodString },
+                    z.core.$strip
+                  >,
+                  z.ZodObject<{ source: z.ZodLiteral<'file'>; path: z.ZodString }, z.core.$strip>,
+                  z.ZodObject<{ source: z.ZodLiteral<'local'>; path: z.ZodString }, z.core.$strip>,
+                ],
+                'source'
+              >;
+              installLocation: z.ZodString;
+            },
+            z.core.$strip
+          >;
+          pluginCount: z.ZodNumber;
+          installedCount: z.ZodNumber;
+        },
+        z.core.$strip
+      >
+    >;
+  },
+  z.core.$loose
+> = z.looseObject({
   marketplaces: z.array(marketplaceInfoSchema),
 });
 export type ListMarketplacesResponse = z.infer<typeof listMarketplacesResponseSchema>;

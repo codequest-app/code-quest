@@ -2,13 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { SideQuestionDialog } from './SideQuestionDialog';
 
-const meta = {
+const meta: Meta<typeof SideQuestionDialog> = {
   component: SideQuestionDialog,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
   args: { open: true, onClose: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="relative h-screen bg-bg text-text">
         <Story />
       </div>

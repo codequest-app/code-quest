@@ -637,7 +637,7 @@ describe('ChatHandler > settings', () => {
       const newUpdates = claude.events('settings:usage').slice(countBefore);
       expect(newUpdates.length).toBe(1);
       expect(newUpdates[0]).not.toHaveProperty('sessionId');
-      expect(newUpdates[0].usage).toMatchObject({
+      expect(newUpdates[0]!.usage).toMatchObject({
         five_hour: { utilization: 0 },
       });
     });
@@ -671,7 +671,7 @@ describe('ChatHandler > settings', () => {
       expect(usageUpdates.length).toBe(1);
       // contextUsage in settings:usage payload is z.record(string, unknown);
       // the strict ContextUsageData shape isn't carried through. Cast once.
-      const ctx = usageUpdates[0].contextUsage as {
+      const ctx = usageUpdates[0]!.contextUsage as {
         totalTokens?: number;
         maxTokens?: number;
         percentage?: number;
@@ -685,7 +685,7 @@ describe('ChatHandler > settings', () => {
       expect(ctx.maxTokens).toBe(200000);
       expect(ctx.percentage).toBe(5);
       expect(ctx.categories).toHaveLength(3);
-      expect(ctx.categories[0].name).toBe('System prompt');
+      expect(ctx.categories[0]!.name).toBe('System prompt');
       // Extra fields should be stripped
       expect(ctx.gridRows).toBeUndefined();
       expect(ctx.apiUsage).toBeUndefined();

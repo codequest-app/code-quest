@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { AccountUsageDialog } from './AccountUsageDialog';
 
-const meta = {
+const meta: Meta<typeof AccountUsageDialog> = {
   component: AccountUsageDialog,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text min-h-100">
         <Story />
       </div>

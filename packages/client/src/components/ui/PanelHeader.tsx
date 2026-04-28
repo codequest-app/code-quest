@@ -7,7 +7,7 @@ interface PanelHeaderProps {
   className?: string;
 }
 
-export function PanelHeader({ title, actions, className }: PanelHeaderProps) {
+export function PanelHeader({ title, actions, className }: PanelHeaderProps): React.JSX.Element {
   return (
     <div
       className={cn(

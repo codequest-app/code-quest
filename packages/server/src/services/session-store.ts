@@ -1,6 +1,20 @@
 import { z } from 'zod';
 
-export const sessionRecordSchema = z.looseObject({
+export const sessionRecordSchema: z.ZodObject<{
+  id: z.ZodString;
+  channelId: z.ZodString;
+  provider: z.ZodString;
+  command: z.ZodString;
+  args: z.ZodString;
+  cwd: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+  projectRoot: z.ZodString;
+  mode: z.ZodString;
+  role: z.ZodString;
+  parentId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+  title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+  status: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+  createdAt: z.ZodString;
+}> = z.looseObject({
   id: z.string(),
   channelId: z.string(),
   provider: z.string(),

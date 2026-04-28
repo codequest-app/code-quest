@@ -47,8 +47,8 @@ export function create({
         return {
           ...s,
           isActive: !!(ch && !ch.exited),
-          lastAssistantMessage: previews[i].lastAssistant,
-          firstUserMessage: previews[i].firstUser,
+          lastAssistantMessage: previews[i]?.lastAssistant,
+          firstUserMessage: previews[i]?.firstUser,
         };
       });
       callback?.(ok({ sessions, total: result.total }));

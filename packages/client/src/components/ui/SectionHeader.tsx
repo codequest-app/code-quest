@@ -19,7 +19,7 @@ export function SectionHeader({
   className,
   variant = 'default',
   'aria-label': ariaLabel,
-}: SectionHeaderProps) {
+}: SectionHeaderProps): React.JSX.Element {
   return (
     <h3 aria-label={ariaLabel} className={cn(BASE, VARIANT_CLASS[variant], className)}>
       {children}

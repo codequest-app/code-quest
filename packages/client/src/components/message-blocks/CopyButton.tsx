@@ -22,7 +22,7 @@ export function CopyButton({
   className?: string;
   title?: string;
   'aria-label'?: string;
-}) {
+}): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const handleClick = () => {
     copyToClipboard(getText ? getText() : (text ?? ''));

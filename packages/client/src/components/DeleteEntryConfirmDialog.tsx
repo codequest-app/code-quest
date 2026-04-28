@@ -17,7 +17,7 @@ export function DeleteEntryConfirmDialog({
   descendantCount,
   onConfirm,
   onClose,
-}: DeleteEntryConfirmDialogProps) {
+}: DeleteEntryConfirmDialogProps): React.JSX.Element {
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {

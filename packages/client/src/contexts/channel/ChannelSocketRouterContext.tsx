@@ -5,7 +5,11 @@ import { ChannelSocketRouter, createSocketAdapter } from './socket-router';
 
 const Context = createContext<ChannelSocketRouter | null>(null);
 
-export function ChannelSocketRouterProvider({ children }: { children: ReactNode }) {
+export function ChannelSocketRouterProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
   const { socket } = useSocket();
   const channelId = useChannelId();
 

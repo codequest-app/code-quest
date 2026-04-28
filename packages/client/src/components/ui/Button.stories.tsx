@@ -3,12 +3,12 @@ import { fn } from 'storybook/test';
 import { withThemePreset } from '../../test/story-decorator';
 import { Button } from './Button';
 
-const meta = {
+const meta: Meta<typeof Button> = {
   component: Button,
   tags: ['autodocs'],
   args: { onClick: fn(), children: 'Action' },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 flex gap-2 items-start">
         <Story />
       </div>

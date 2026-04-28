@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { ChoicePills } from './ChoicePills';
 
-const meta = {
+const meta: Meta<typeof ChoicePills> = {
   component: ChoicePills,
   tags: ['autodocs'],
   args: { onSelect: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6">
         <Story />
       </div>

@@ -129,7 +129,7 @@ describe('ChannelManager', () => {
 
       const statesEvents = claude.events('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
-      expect(statesEvents[0].sessions).toBeDefined();
+      expect(statesEvents[0]!.sessions).toBeDefined();
     });
   });
 
@@ -143,7 +143,7 @@ describe('ChannelManager', () => {
 
       const permEvents = claude.events('control:permission');
       expect(permEvents.length).toBeGreaterThan(0);
-      expect(permEvents[0].requestId).toBe('req-1');
+      expect(permEvents[0]!.requestId).toBe('req-1');
     });
   });
 
@@ -166,7 +166,7 @@ describe('ChannelManager', () => {
 
       const statesEvents = claude.events('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
-      const sessions = statesEvents[0].sessions;
+      const sessions = statesEvents[0]!.sessions;
       expect(Array.isArray(sessions)).toBe(true);
     });
 
@@ -177,7 +177,7 @@ describe('ChannelManager', () => {
 
       const statesEvents = claude.events('session:states');
       expect(statesEvents.length).toBeGreaterThan(0);
-      expect(statesEvents[0].sessions[0].cwd).toBe('/test/project');
+      expect(statesEvents[0]!.sessions[0]!.cwd).toBe('/test/project');
     });
   });
 

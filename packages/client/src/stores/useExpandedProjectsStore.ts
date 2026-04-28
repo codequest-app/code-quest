@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { localStoragePersist } from './persistStorage';
 
@@ -12,7 +12,9 @@ interface ExpandedProjectsState {
   setExpanded: (cwd: string, expanded: boolean) => void;
 }
 
-export const useExpandedProjectsStore = create<ExpandedProjectsState>()(
+export const useExpandedProjectsStore: UseBoundStore<
+  Mutate<StoreApi<ExpandedProjectsState>, [['zustand/persist', unknown]]>
+> = create<ExpandedProjectsState>()(
   persist(
     (set, get) => ({
       expanded: [],

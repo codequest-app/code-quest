@@ -97,7 +97,7 @@ describe('PaletteCommandList', () => {
       features: [feat({ id: 'a' }), feat({ id: 'b' })],
       onActiveChange,
     });
-    await userEvent.hover(screen.getAllByRole('button')[1]);
+    await userEvent.hover(screen.getAllByRole('button')[1]!);
     expect(onActiveChange).toHaveBeenCalledWith('b');
   });
 

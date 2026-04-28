@@ -24,7 +24,30 @@ export interface RunnerFactory {
   readonly command: string;
 }
 
-export const TYPES = {
+export const TYPES: {
+  readonly RunnerFactory: symbol;
+  readonly SessionStore: symbol;
+  readonly ProjectStore: symbol;
+  readonly ProjectAutoUpserter: symbol;
+  readonly RawEventService: symbol;
+  readonly SocketServer: symbol;
+  readonly Database: symbol;
+  readonly UsageTracker: symbol;
+  readonly SettingsStore: symbol;
+  readonly ChannelManager: symbol;
+  readonly SessionHistory: symbol;
+  readonly ChannelEventRouter: symbol;
+  readonly FilesystemService: symbol;
+  readonly GitService: symbol;
+  readonly OpenspecService: symbol;
+  readonly PluginCliService: symbol;
+  readonly DiffFileService: symbol;
+  readonly ProcessProvider: symbol;
+  readonly WatchService: symbol;
+  readonly FsDirtyBroadcaster: symbol;
+  readonly GitDirtyBroadcaster: symbol;
+  readonly OpenspecDirtyBroadcaster: symbol;
+} = {
   RunnerFactory: Symbol.for('RunnerFactory'),
   SessionStore: Symbol.for('SessionStore'),
   ProjectStore: Symbol.for('ProjectStore'),

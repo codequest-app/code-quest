@@ -11,7 +11,10 @@ import { z } from 'zod';
  */
 
 /** Single source of truth for the failure shape — inferred below. */
-const rpcErrSchema = z.object({
+const rpcErrSchema: z.ZodObject<
+  { ok: z.ZodLiteral<false>; error: z.ZodString; code: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   ok: z.literal(false),
   error: z.string(),
   code: z.string().optional(),
@@ -29,7 +32,12 @@ export type Ack = RpcResult<Record<string, never>>;
  * Build a zod schema for an RpcResult whose success payload matches the given
  * data schema. Returns a discriminated union on `ok`.
  */
-export function rpcResult<T extends z.ZodTypeAny>(dataSchema: T) {
+export function rpcResult<T extends z.ZodTypeAny>(
+  dataSchema: T,
+): z.ZodDiscriminatedUnion<
+  [z.ZodObject<{ ok: z.ZodLiteral<true>; data: T }, z.core.$strip>, typeof rpcErrSchema],
+  'ok'
+> {
   return z.discriminatedUnion('ok', [
     z.object({ ok: z.literal(true), data: dataSchema }),
     rpcErrSchema,

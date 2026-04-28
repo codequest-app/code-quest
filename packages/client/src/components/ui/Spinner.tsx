@@ -2,7 +2,7 @@ import { cn } from '../../utils/cn';
 
 /** Simple CSS spinner — currentColor border, transparent top for the spin
  *  effect. Inherits text color from parent. */
-export function Spinner({ className }: { className?: string }) {
+export function Spinner({ className }: { className?: string }): React.JSX.Element {
   return (
     <span
       role="status"

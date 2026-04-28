@@ -19,7 +19,7 @@ export function NewEntryDialog({
   parentLabel,
   onSubmit,
   onClose,
-}: NewEntryDialogProps) {
+}: NewEntryDialogProps): React.JSX.Element {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

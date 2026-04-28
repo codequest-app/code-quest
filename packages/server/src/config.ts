@@ -32,7 +32,6 @@ function parseTransport(raw: string | undefined): { ws: boolean; socketio: boole
       return { ws: false, socketio: true };
     case 'both':
       return { ws: true, socketio: true };
-    case 'ws':
     default:
       return { ws: true, socketio: false };
   }
@@ -47,7 +46,25 @@ function parseFsRoots(raw?: string): string[] {
   return roots.length > 0 ? roots : [os.homedir()];
 }
 
-export function loadConfig(env: Env = process.env) {
+export interface AppConfig {
+  readonly port: number;
+  readonly database: {
+    readonly url: string | undefined;
+    readonly sqliteUrl: string | undefined;
+  };
+  readonly rawEvents: {
+    readonly writeDeltas: boolean;
+    readonly readDeltas: boolean;
+  };
+  readonly systemPrompt: string;
+  readonly allowDangerouslySkipPermissions: boolean;
+  readonly thinkingDisplay: ThinkingDisplay;
+  readonly fsRoots: string[];
+  readonly autoMode: boolean;
+  readonly transport: { readonly ws: boolean; readonly socketio: boolean };
+}
+
+export function loadConfig(env: Env = process.env): AppConfig {
   return {
     port: Number(env.APP_PORT ?? 3000),
     database: {
@@ -67,4 +84,4 @@ export function loadConfig(env: Env = process.env) {
   } as const;
 }
 
-export const config = loadConfig();
+export const config: AppConfig = loadConfig();

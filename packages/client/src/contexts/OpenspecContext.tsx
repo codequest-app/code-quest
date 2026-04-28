@@ -75,7 +75,7 @@ const extractOpenspecCwd = (payload: unknown): string | null => {
   return parsed.success ? parsed.data.cwd : null;
 };
 
-export function OpenspecProvider({ children }: { children: ReactNode }) {
+export function OpenspecProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const fetch = useMemo(() => fetchOpenspecList(socket), [socket]);
   const store = useCwdQueryStore<OpenspecListResult>({

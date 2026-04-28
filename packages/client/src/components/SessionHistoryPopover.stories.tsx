@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { SessionHistoryPopover } from './SessionHistoryPopover';
 
-const meta = {
+const meta: Meta<typeof SessionHistoryPopover> = {
   component: SessionHistoryPopover,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

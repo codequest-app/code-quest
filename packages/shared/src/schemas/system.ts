@@ -3,7 +3,20 @@ import { rateLimitInfoSchema, remoteControlStateInfoSchema } from './settings.ts
 
 // ── Model info ──
 
-export const modelInfoSchema = z.object({
+export const modelInfoSchema: z.ZodObject<
+  {
+    value: z.ZodString;
+    label: z.ZodOptional<z.ZodString>;
+    displayName: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodString>;
+    supportsEffort: z.ZodOptional<z.ZodBoolean>;
+    supportedEffortLevels: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    supportsAdaptiveThinking: z.ZodOptional<z.ZodBoolean>;
+    supportsFastMode: z.ZodOptional<z.ZodBoolean>;
+    supportsAutoMode: z.ZodOptional<z.ZodBoolean>;
+  },
+  z.core.$strip
+> = z.object({
   value: z.string(),
   label: z.string().optional(),
   displayName: z.string().optional(),
@@ -18,14 +31,27 @@ export type ModelInfo = z.infer<typeof modelInfoSchema>;
 
 // ── Hook info ──
 
-export const hookStartedInfoSchema = z.object({
+export const hookStartedInfoSchema: z.ZodObject<
+  { hookName: z.ZodString; hookId: z.ZodString; hookEvent: z.ZodString },
+  z.core.$strip
+> = z.object({
   hookName: z.string(),
   hookId: z.string(),
   hookEvent: z.string(),
 });
 export type HookStartedInfo = z.infer<typeof hookStartedInfoSchema>;
 
-export const hookResponseInfoSchema = z.object({
+export const hookResponseInfoSchema: z.ZodObject<
+  {
+    hookName: z.ZodString;
+    hookId: z.ZodString;
+    hookEvent: z.ZodString;
+    hookEventName: z.ZodOptional<z.ZodString>;
+    output: z.ZodOptional<z.ZodString>;
+    additionalContext: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   hookName: z.string(),
   hookId: z.string(),
   hookEvent: z.string(),
@@ -37,26 +63,64 @@ export type HookResponseInfo = z.infer<typeof hookResponseInfoSchema>;
 
 // ── S2C payloads ──
 
-export const systemHookStartedPayloadSchema = z.object({
+export const systemHookStartedPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    hook: z.ZodObject<
+      { hookName: z.ZodString; hookId: z.ZodString; hookEvent: z.ZodString },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   hook: hookStartedInfoSchema,
 });
 export type SystemHookStartedPayload = z.infer<typeof systemHookStartedPayloadSchema>;
 
-export const systemHookResponsePayloadSchema = z.object({
+export const systemHookResponsePayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    hook: z.ZodObject<
+      {
+        hookName: z.ZodString;
+        hookId: z.ZodString;
+        hookEvent: z.ZodString;
+        hookEventName: z.ZodOptional<z.ZodString>;
+        output: z.ZodOptional<z.ZodString>;
+        additionalContext: z.ZodOptional<z.ZodString>;
+      },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   hook: hookResponseInfoSchema,
 });
 export type SystemHookResponsePayload = z.infer<typeof systemHookResponsePayloadSchema>;
 
-export const systemTaskStartedPayloadSchema = z.object({
+export const systemTaskStartedPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; description: z.ZodString; taskType: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   description: z.string(),
   taskType: z.string().optional(),
 });
 export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;
 
-export const systemTaskProgressPayloadSchema = z.object({
+export const systemTaskProgressPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    taskId: z.ZodString;
+    toolUseId: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodString>;
+    lastToolName: z.ZodOptional<z.ZodString>;
+    usage: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   taskId: z.string(),
   toolUseId: z.string().optional(),
@@ -66,7 +130,18 @@ export const systemTaskProgressPayloadSchema = z.object({
 });
 export type SystemTaskProgressPayload = z.infer<typeof systemTaskProgressPayloadSchema>;
 
-export const systemTaskNotificationPayloadSchema = z.object({
+export const systemTaskNotificationPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    taskId: z.ZodString;
+    toolUseId: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodString>;
+    outputFile: z.ZodOptional<z.ZodString>;
+    summary: z.ZodOptional<z.ZodString>;
+    usage: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   taskId: z.string(),
   toolUseId: z.string().optional(),
@@ -77,19 +152,48 @@ export const systemTaskNotificationPayloadSchema = z.object({
 });
 export type SystemTaskNotificationPayload = z.infer<typeof systemTaskNotificationPayloadSchema>;
 
-export const systemCompactBoundaryPayloadSchema = z.object({
+export const systemCompactBoundaryPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; preservedSegment: z.ZodOptional<z.ZodBoolean> },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   preservedSegment: z.boolean().optional(),
 });
 export type SystemCompactBoundaryPayload = z.infer<typeof systemCompactBoundaryPayloadSchema>;
 
-export const systemRateLimitPayloadSchema = z.object({
+export const systemRateLimitPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    info: z.ZodObject<
+      {
+        status: z.ZodString;
+        rateLimitType: z.ZodOptional<z.ZodString>;
+        resetsAt: z.ZodOptional<z.ZodString>;
+        utilization: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+        overageStatus: z.ZodOptional<z.ZodString>;
+        isUsingOverage: z.ZodOptional<z.ZodBoolean>;
+      },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   info: rateLimitInfoSchema,
 });
 export type SystemRateLimitPayload = z.infer<typeof systemRateLimitPayloadSchema>;
 
-export const systemApiRetryPayloadSchema = z.object({
+export const systemApiRetryPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    attempt: z.ZodNumber;
+    maxRetries: z.ZodNumber;
+    retryDelayMs: z.ZodOptional<z.ZodNumber>;
+    errorStatus: z.ZodOptional<z.ZodNumber>;
+    error: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   attempt: z.number(),
   maxRetries: z.number(),
@@ -100,7 +204,22 @@ export const systemApiRetryPayloadSchema = z.object({
 export type SystemApiRetryPayload = z.infer<typeof systemApiRetryPayloadSchema>;
 
 /** system:rate_limit internal payload (runner → server, uses numeric resetsAt) */
-export const rateLimitInternalPayloadSchema = z.looseObject({
+export const rateLimitInternalPayloadSchema: z.ZodObject<
+  {
+    info: z.ZodObject<
+      {
+        status: z.ZodString;
+        rateLimitType: z.ZodOptional<z.ZodString>;
+        resetsAt: z.ZodOptional<z.ZodCoercedNumber<unknown>>;
+        utilization: z.ZodOptional<z.ZodNumber>;
+        overageStatus: z.ZodOptional<z.ZodString>;
+        isUsingOverage: z.ZodOptional<z.ZodBoolean>;
+      },
+      z.core.$loose
+    >;
+  },
+  z.core.$loose
+> = z.looseObject({
   info: z.looseObject({
     status: z.string(),
     rateLimitType: z.string().optional(),
@@ -112,25 +231,46 @@ export const rateLimitInternalPayloadSchema = z.looseObject({
 });
 export type RateLimitInternalPayload = z.infer<typeof rateLimitInternalPayloadSchema>;
 
-export const systemExperimentGatesPayloadSchema = z.object({
+export const systemExperimentGatesPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; gates: z.ZodRecord<z.ZodString, z.ZodBoolean> },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   gates: z.record(z.string(), z.boolean()),
 });
 export type SystemExperimentGatesPayload = z.infer<typeof systemExperimentGatesPayloadSchema>;
 
-export const systemAvailableModelsPayloadSchema = z.object({
+export const systemAvailableModelsPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; models: z.ZodArray<z.ZodUnknown> },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   models: z.array(z.unknown()),
 });
 export type SystemAvailableModelsPayload = z.infer<typeof systemAvailableModelsPayloadSchema>;
 
-export const systemRemoteControlPayloadSchema = z.object({
+export const systemRemoteControlPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    info: z.ZodObject<
+      {
+        state: z.ZodEnum<{ error: 'error'; disconnected: 'disconnected'; ready: 'ready' }>;
+        detail: z.ZodOptional<z.ZodString>;
+      },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   info: remoteControlStateInfoSchema,
 });
 export type SystemRemoteControlPayload = z.infer<typeof systemRemoteControlPayloadSchema>;
 
-export const systemMirrorErrorPayloadSchema = z.object({
+export const systemMirrorErrorPayloadSchema: z.ZodObject<
+  { channelId: z.ZodString; error: z.ZodString; sessionId: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   error: z.string(),
   sessionId: z.string().optional(),
@@ -139,7 +279,14 @@ export type SystemMirrorErrorPayload = z.infer<typeof systemMirrorErrorPayloadSc
 
 // ── Hook C2S (moved from control.ts) ──
 
-export const chatHookCallbackRespondPayloadSchema = z.object({
+export const chatHookCallbackRespondPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    requestId: z.ZodString;
+    response: z.ZodObject<{ continue: z.ZodBoolean }, z.core.$strip>;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   requestId: z.string(),
   response: z.object({ continue: z.boolean() }),
@@ -148,7 +295,16 @@ export type ChatHookCallbackRespondPayload = z.infer<typeof chatHookCallbackResp
 
 // ── Hook S2C (moved from control.ts) ──
 
-export const controlHookCallbackPayloadSchema = z.object({
+export const controlHookCallbackPayloadSchema: z.ZodObject<
+  {
+    channelId: z.ZodString;
+    requestId: z.ZodString;
+    callbackId: z.ZodString;
+    input: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    toolUseId: z.ZodOptional<z.ZodString>;
+  },
+  z.core.$strip
+> = z.object({
   channelId: z.string(),
   requestId: z.string(),
   callbackId: z.string(),

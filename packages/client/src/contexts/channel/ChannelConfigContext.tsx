@@ -122,7 +122,7 @@ export function ChannelConfigProvider({
   initialConfig?: Partial<ConfigState>;
   onNewChannel?: (cwd: string) => void;
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   const channelId = useChannelId();
   const { addSystemMessage } = useChannelMessagesActions();
   const [configState, setConfigState] = useState<ConfigState>(() => ({

@@ -21,7 +21,7 @@ export function ElicitationDialog({
   url,
   onSubmit,
   onCancel,
-}: ElicitationDialogProps) {
+}: ElicitationDialogProps): React.JSX.Element {
   const [value, setValue] = useState('');
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {

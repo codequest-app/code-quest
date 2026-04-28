@@ -39,7 +39,13 @@ const Check = () => (
  *  Space toggles). When omitted renders a display-only pill — used inside
  *  another button (e.g. menu item) where nesting a Radix Switch would create
  *  a button-in-button violation. */
-export function ToggleSwitch({ isOn, onClick }: { isOn: boolean; onClick?: () => void }) {
+export function ToggleSwitch({
+  isOn,
+  onClick,
+}: {
+  isOn: boolean;
+  onClick?: () => void;
+}): React.JSX.Element {
   if (!onClick) {
     return (
       <div className={trackClass(isOn)}>

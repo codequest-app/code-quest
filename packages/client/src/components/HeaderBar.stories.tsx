@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '../test/story-decorator';
 import { HeaderBar } from './HeaderBar';
 
-const meta = {
+const meta: Meta<typeof HeaderBar> = {
   component: HeaderBar,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

@@ -22,7 +22,7 @@ export function SearchField({
   trailing,
   onKeyDown,
   className,
-}: SearchFieldProps) {
+}: SearchFieldProps): React.JSX.Element {
   return (
     <div
       className={cn(

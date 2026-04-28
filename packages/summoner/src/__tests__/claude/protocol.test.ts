@@ -17,7 +17,7 @@ function loadFixtureLines(dir: string): Array<{ file: string; lineNo: number; li
     const content = readFileSync(join(dir, file), 'utf-8');
     const lines = content.split('\n').filter((l) => l.trim());
     for (let i = 0; i < lines.length; i++) {
-      entries.push({ file, lineNo: i + 1, line: lines[i] });
+      entries.push({ file, lineNo: i + 1, line: lines[i]! });
     }
   }
   return entries;

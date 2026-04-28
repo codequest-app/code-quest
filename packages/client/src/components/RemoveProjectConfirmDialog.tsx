@@ -71,7 +71,7 @@ export function RemoveProjectConfirmDialog({
   activeSessionCount: number;
   onConfirm: () => void;
   onClose: () => void;
-}) {
+}): React.JSX.Element {
   const blocked = activeSessionCount > 0;
 
   function handleOpenChange(next: boolean) {

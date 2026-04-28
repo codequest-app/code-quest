@@ -19,7 +19,7 @@ interface SettingsDialogProps {
 const SECTIONS = ['Theme', 'Display'] as const;
 type Section = (typeof SECTIONS)[number];
 
-export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose }: SettingsDialogProps): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<Section>('Theme');
 
   return (

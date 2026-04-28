@@ -115,7 +115,7 @@ describe('InitOptionsDialog', () => {
       const onSave = vi.fn();
       render(<InitOptionsDialog open={true} onClose={vi.fn()} onSave={onSave} />);
       await user.click(screen.getByText('Save'));
-      const call = onSave.mock.calls[0][0];
+      const call = onSave.mock.calls[0]![0];
       expect(call.hooks).toBeUndefined();
     });
   });

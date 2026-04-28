@@ -21,7 +21,7 @@ interface HeaderBarProps {
   showResumeButton?: boolean;
 }
 
-export function HeaderBar({ title, showResumeButton }: HeaderBarProps) {
+export function HeaderBar({ title, showResumeButton }: HeaderBarProps): React.JSX.Element {
   const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 

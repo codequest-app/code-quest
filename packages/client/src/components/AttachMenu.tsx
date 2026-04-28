@@ -11,7 +11,7 @@ export function AttachMenu({
 }: {
   onAttachFile?: () => void;
   onMentionFile?: () => void;
-}) {
+}): React.ReactNode {
   const [open, setOpen] = useState(false);
 
   if (!onAttachFile && !onMentionFile) return null;

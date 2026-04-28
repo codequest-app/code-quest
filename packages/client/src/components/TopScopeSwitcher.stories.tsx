@@ -4,7 +4,7 @@ import type { Project } from '../contexts/ProjectContext';
 import { withStoryApp } from '../test/story-decorator';
 import { TopScopeSwitcher } from './TopScopeSwitcher';
 
-const meta = {
+const meta: Meta<typeof TopScopeSwitcher> = {
   component: TopScopeSwitcher,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },
@@ -31,7 +31,10 @@ export const NoActiveProject: Story = {
 };
 
 export const SingleProject: Story = {
-  args: { projects: [sampleProjects[0]], activeProjectCwd: '/repo/cc-office' },
+  args: {
+    projects: [sampleProjects[0] as (typeof sampleProjects)[0]],
+    activeProjectCwd: '/repo/cc-office',
+  },
 };
 
 export const NoProjects: Story = {

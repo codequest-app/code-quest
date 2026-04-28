@@ -86,7 +86,15 @@ function onErrorMessage(state: ChannelState, p: Payload<'error:message'>): Chann
 
 // ── Handler map ──
 
-export const systemHandlerOn = {
+export const systemHandlerOn: {
+  'system:compact_boundary': typeof onCompactBoundary;
+  'system:hook_started': typeof onHookStarted;
+  'system:hook_response': typeof onHookResponse;
+  'system:task_started': typeof onTaskStarted;
+  'system:api_retry': typeof onApiRetry;
+  'system:rate_limit': typeof onRateLimit;
+  'error:message': typeof onErrorMessage;
+} = {
   'system:compact_boundary': onCompactBoundary,
   'system:hook_started': onHookStarted,
   'system:hook_response': onHookResponse,

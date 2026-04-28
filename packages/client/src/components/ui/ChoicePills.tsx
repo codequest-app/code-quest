@@ -22,7 +22,12 @@ interface ChoicePillsProps {
  * Behavior provided by Radix RadioGroup: role="radio", aria-checked,
  * roving tabindex, ArrowLeft/ArrowRight/ArrowUp/ArrowDown nav, Space/Enter.
  */
-export function ChoicePills({ options, currentValue, onSelect, featureId }: ChoicePillsProps) {
+export function ChoicePills({
+  options,
+  currentValue,
+  onSelect,
+  featureId,
+}: ChoicePillsProps): React.JSX.Element {
   return (
     <RadioGroup.Root
       value={currentValue}

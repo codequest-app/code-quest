@@ -59,7 +59,7 @@ export function ModelPickerPopover({
   availableModels,
   onSwitch,
   defaultModelDescription,
-}: ModelPickerPopoverProps) {
+}: ModelPickerPopoverProps): React.JSX.Element {
   const defaultModelValue = availableModels[0]?.value ?? null;
   const hasDefaultEntry = availableModels.some(
     (m) => m.value === 'default' || m.displayName === 'Default (recommended)',
@@ -96,7 +96,8 @@ export function ModelPickerPopover({
     }
     if (e.key === 'Enter' && activeIndex >= 0) {
       e.preventDefault();
-      handleSelect(items[activeIndex].value);
+      const item = items[activeIndex];
+      if (item) handleSelect(item.value);
       return;
     }
   };

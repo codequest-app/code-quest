@@ -1,4 +1,4 @@
-export function RewindBody({ forked = false }: { forked?: boolean }) {
+export function RewindBody({ forked = false }: { forked?: boolean }): React.JSX.Element {
   return (
     <>
       {forked && <p>A new forked conversation will be created after rewinding.</p>}

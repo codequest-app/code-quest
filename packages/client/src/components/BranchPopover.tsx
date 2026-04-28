@@ -37,7 +37,7 @@ export function BranchPopover({
   defaultOpen,
   open,
   onOpenChange,
-}: Props) {
+}: Props): React.JSX.Element {
   return (
     <Popover.Root defaultOpen={defaultOpen} open={open} onOpenChange={onOpenChange}>
       <Popover.Trigger asChild>{trigger}</Popover.Trigger>

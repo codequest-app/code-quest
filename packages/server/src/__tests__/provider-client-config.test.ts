@@ -51,7 +51,7 @@ describe('providerClientConfigSchema', () => {
       mcpScopes: [{ id: 'project', label: 'Project' }],
     };
     const result = providerClientConfigSchema.parse(config);
-    expect(result.mcpScopes[0].prefix).toBeUndefined();
+    expect(result.mcpScopes[0]!.prefix).toBeUndefined();
   });
 
   it('defaultModels fields are optional except value', () => {
@@ -60,7 +60,7 @@ describe('providerClientConfigSchema', () => {
       defaultModels: [{ value: 'haiku' }],
     };
     const result = providerClientConfigSchema.parse(config);
-    expect(result.defaultModels[0].displayName).toBeUndefined();
-    expect(result.defaultModels[0].supportsEffort).toBeUndefined();
+    expect(result.defaultModels[0]!.displayName).toBeUndefined();
+    expect(result.defaultModels[0]!.supportsEffort).toBeUndefined();
   });
 });

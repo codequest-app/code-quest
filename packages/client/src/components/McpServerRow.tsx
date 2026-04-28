@@ -35,7 +35,7 @@ export function McpServerRow({
   onOAuthCallback,
   onClearAuth,
   showFeedback,
-}: McpServerRowProps) {
+}: McpServerRowProps): React.JSX.Element {
   const [tools, setTools] = useState<McpTool[]>([]);
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [authUrl, setAuthUrl] = useState('');

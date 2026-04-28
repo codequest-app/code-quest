@@ -36,7 +36,9 @@ interface StoryChannelOptions {
 }
 
 /** App-level providers only (Socket, Session, Plugin, Tab). No Channel context. */
-export function withStoryApp(options?: { className?: string }) {
+export function withStoryApp(options?: {
+  className?: string;
+}): (Story: () => React.ReactNode) => React.JSX.Element {
   return (Story: () => React.ReactNode) => {
     const socket = createSocket();
     return (
@@ -66,7 +68,9 @@ export function withStoryApp(options?: { className?: string }) {
 }
 
 /** App + Channel providers with optional initial config/messages state. */
-export function withStoryChannel(options?: StoryChannelOptions) {
+export function withStoryChannel(
+  options?: StoryChannelOptions,
+): (Story: () => React.ReactNode) => React.JSX.Element {
   return (Story: () => React.ReactNode) => {
     const socket = createSocket();
     return (
@@ -105,7 +109,7 @@ export function withThemePreset({
 }: {
   theme?: EffectiveColorTheme;
   density?: Density;
-} = {}) {
+} = {}): (Story: () => React.ReactNode) => React.JSX.Element {
   return (Story: () => React.ReactNode) => (
     <ThemePresetWrapper theme={theme} density={density}>
       <Story />
@@ -142,7 +146,7 @@ function ThemePresetWrapper({
 }
 
 /** Compose‑able decorators for integration‑style stories. Wrap with what you need. */
-export function withProject(Story: () => React.ReactNode) {
+export function withProject(Story: () => React.ReactNode): React.JSX.Element {
   return (
     <ProjectProvider>
       <NavigationProvider>
@@ -152,7 +156,7 @@ export function withProject(Story: () => React.ReactNode) {
   );
 }
 
-export function withWorktree(Story: () => React.ReactNode) {
+export function withWorktree(Story: () => React.ReactNode): React.JSX.Element {
   return (
     <GitProvider>
       <Story />
@@ -160,7 +164,7 @@ export function withWorktree(Story: () => React.ReactNode) {
   );
 }
 
-export function withChannelSocketRouter(Story: () => React.ReactNode) {
+export function withChannelSocketRouter(Story: () => React.ReactNode): React.JSX.Element {
   return (
     <ChannelMetaProvider channelId={STORY_CHANNEL_ID}>
       <ChannelSocketRouterProvider>
@@ -170,7 +174,7 @@ export function withChannelSocketRouter(Story: () => React.ReactNode) {
   );
 }
 
-export function withMessageVisibility(Story: () => React.ReactNode) {
+export function withMessageVisibility(Story: () => React.ReactNode): React.JSX.Element {
   return (
     <MessageVisibilityProvider>
       <Story />

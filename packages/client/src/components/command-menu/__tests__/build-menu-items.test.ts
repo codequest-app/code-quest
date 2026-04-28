@@ -103,9 +103,9 @@ describe('buildMenuItems', () => {
       defaultParams({ slashCommands: ['help', 'review'], localFeatures: [btwLocalFeature] }),
     );
     expect(slash).toHaveLength(3);
-    expect(slash[0].id).toBe('btw');
-    expect(slash[1].label).toBe('/help');
-    expect(slash[2].label).toBe('/review');
+    expect(slash[0]!.id).toBe('btw');
+    expect(slash[1]!.label).toBe('/help');
+    expect(slash[2]!.label).toBe('/review');
   });
 
   it('model section includes fast-mode when supportsFastMode is true', () => {

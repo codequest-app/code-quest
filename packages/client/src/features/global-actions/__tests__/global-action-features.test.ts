@@ -13,10 +13,10 @@ describe('createSwitchProjectFeatures', () => {
       onSelect: vi.fn(),
     });
     expect(features).toHaveLength(2);
-    expect(features[0].id).toBe('switch-project-/a');
-    expect(features[0].label).toBe('A');
-    expect(features[1].id).toBe('switch-project-/b');
-    expect(features[1].label).toBe('B');
+    expect(features[0]!.id).toBe('switch-project-/a');
+    expect(features[0]!.label).toBe('A');
+    expect(features[1]!.id).toBe('switch-project-/b');
+    expect(features[1]!.label).toBe('B');
   });
 
   it('each feature is in Context section with actions tab', () => {
@@ -24,8 +24,8 @@ describe('createSwitchProjectFeatures', () => {
       projects: [{ cwd: '/a', label: 'A' }],
       onSelect: vi.fn(),
     });
-    expect(features[0].section).toBe('Context');
-    expect(features[0].tabs).toEqual(['all', 'actions']);
+    expect(features[0]!.section).toBe('Context');
+    expect(features[0]!.tabs).toEqual(['all', 'actions']);
   });
 
   it('active project has toggle state active=true', () => {
@@ -37,8 +37,8 @@ describe('createSwitchProjectFeatures', () => {
       activeCwd: '/b',
       onSelect: vi.fn(),
     });
-    expect(features[0].state).toEqual({ kind: 'toggle', active: false });
-    expect(features[1].state).toEqual({ kind: 'toggle', active: true });
+    expect(features[0]!.state).toEqual({ kind: 'toggle', active: false });
+    expect(features[1]!.state).toEqual({ kind: 'toggle', active: true });
   });
 
   it('execute calls onSelect with the project cwd', () => {
@@ -50,7 +50,7 @@ describe('createSwitchProjectFeatures', () => {
       ],
       onSelect,
     });
-    features[1].execute();
+    features[1]!.execute();
     expect(onSelect).toHaveBeenCalledWith('/b');
   });
 

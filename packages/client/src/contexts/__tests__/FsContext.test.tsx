@@ -88,7 +88,7 @@ describe('FsContext pub/sub', () => {
     await waitFor(() => {
       expect(cb).toHaveBeenCalled();
     });
-    expect([...cb.mock.calls[0][0]].sort()).toEqual(['src/bar.ts', 'src/foo.ts']);
+    expect([...cb.mock.calls[0]![0]].sort()).toEqual(['src/bar.ts', 'src/foo.ts']);
 
     off();
   });

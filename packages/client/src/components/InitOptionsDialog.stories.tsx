@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
 import { InitOptionsDialog } from './InitOptionsDialog';
 
-const meta = {
+const meta: Meta<typeof InitOptionsDialog> = {
   component: InitOptionsDialog,
   tags: ['autodocs'],
   args: { open: true, onClose: fn(), onSave: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text min-h-100">
         <Story />
       </div>

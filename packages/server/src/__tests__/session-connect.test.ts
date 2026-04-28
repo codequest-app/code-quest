@@ -59,7 +59,7 @@ describe('ChatHandler > session', () => {
       });
 
       const lastSpawn = claude.provider.spawnCalls[claude.provider.spawnCalls.length - 1];
-      expect(lastSpawn.options?.cwd).toBe('/projects/my-app');
+      expect(lastSpawn!.options?.cwd).toBe('/projects/my-app');
     });
 
     it('session:init with worktree cwd sets channel.worktree', async () => {
@@ -162,7 +162,7 @@ describe('ChatHandler > session', () => {
 
       const createdEvents = claude.events('session:created');
       expect(createdEvents.length).toBeGreaterThan(0);
-      expect(createdEvents[0].channelId).toBe(channelId);
+      expect(createdEvents[0]!.channelId).toBe(channelId);
     });
 
     it('creates session with default init when no initOptions', async () => {
@@ -190,9 +190,9 @@ describe('ChatHandler > session', () => {
       const initEvents = claude.events('session:init');
       // Only 1 session:init — from launch handler (Channel.emit suppressed for session:init)
       expect(initEvents.length).toBe(1);
-      expect(initEvents[0].channelId).toBe(channelId);
-      expect(initEvents[0].model).toBe('claude-sonnet-4-6');
-      expect(initEvents[0].slashCommands).toEqual(['commit', 'review']);
+      expect(initEvents[0]!.channelId).toBe(channelId);
+      expect(initEvents[0]!.model).toBe('claude-sonnet-4-6');
+      expect(initEvents[0]!.slashCommands).toEqual(['commit', 'review']);
     });
 
     it('chat:create callback includes slashCommands from initialize response', async () => {
@@ -240,7 +240,7 @@ describe('ChatHandler > session', () => {
 
       const modelEvents = claude.events('app:models');
       expect(modelEvents.length).toBeGreaterThan(0);
-      expect(modelEvents[0].models).toEqual(models);
+      expect(modelEvents[0]!.models).toEqual(models);
     });
 
     it('session:join emits app:models to joining socket when cachedModels available', async () => {
@@ -494,8 +494,8 @@ describe('ChatHandler > session', () => {
 
       const createdEvents = claude.events('session:created');
       expect(createdEvents.length).toBeGreaterThan(0);
-      expect(createdEvents[0].channelId).toBe(channelId);
-      expect(createdEvents[0].cwd).toEqual(expect.any(String));
+      expect(createdEvents[0]!.channelId).toBe(channelId);
+      expect(createdEvents[0]!.cwd).toEqual(expect.any(String));
     });
   });
 

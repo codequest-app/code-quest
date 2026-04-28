@@ -7,7 +7,7 @@ export interface CommitComposerProps {
   count?: number;
 }
 
-export function CommitComposer({ onCommit, count }: CommitComposerProps) {
+export function CommitComposer({ onCommit, count }: CommitComposerProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(true);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');

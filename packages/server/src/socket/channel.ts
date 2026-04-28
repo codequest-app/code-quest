@@ -83,7 +83,7 @@ export class Channel {
     channelId: string,
     provider: string,
     cwd: string,
-    controlTimeout = DEFAULT_CONTROL_TIMEOUT,
+    controlTimeout: number = DEFAULT_CONTROL_TIMEOUT,
   ) {
     this.channelId = channelId;
     this.runner = runner;

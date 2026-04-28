@@ -13,7 +13,7 @@ import { MentionDropdown } from './MentionDropdown';
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
-export function ComposeInput() {
+export function ComposeInput(): React.JSX.Element {
   const { isProcessing, searchFiles } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
@@ -143,7 +143,7 @@ export function ComposeInput() {
       ? configModes.map((m) => m.id)
       : ['normal', 'acceptEdits', 'plan', 'bypassPermissions'];
     const currentIndex = modeIds.indexOf(permissionMode ?? 'normal');
-    setPermissionMode(modeIds[(currentIndex + 1) % modeIds.length]);
+    setPermissionMode(modeIds[(currentIndex + 1) % modeIds.length] ?? 'normal');
     return true;
   }
 

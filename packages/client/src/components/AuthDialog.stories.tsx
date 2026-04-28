@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { AuthDialog } from './AuthDialog';
 
-const meta = {
+const meta: Meta<typeof AuthDialog> = {
   component: AuthDialog,
   tags: ['autodocs'],
   args: {

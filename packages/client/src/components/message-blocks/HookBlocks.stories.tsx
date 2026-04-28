@@ -7,7 +7,7 @@ const decorator = (Story: React.ComponentType) => (
   </div>
 );
 
-const meta = {
+const meta: Meta<typeof HookStartedContent> = {
   component: HookStartedContent,
   tags: ['autodocs'],
   decorators: [decorator],

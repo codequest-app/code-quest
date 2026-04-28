@@ -46,7 +46,7 @@ describe('FilterPopover', () => {
     const user = userEvent.setup();
     renderPopover(new Set(['tool_use']), onChange);
     await user.click(screen.getByLabelText(/text/));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     expect(result.has('tool_use')).toBe(true);
     expect(result.has('text')).toBe(true);
   });
@@ -56,7 +56,7 @@ describe('FilterPopover', () => {
     const user = userEvent.setup();
     renderPopover(allSelected, onChange);
     await user.click(screen.getByLabelText(/tool_use/));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     expect(result.has('tool_use')).toBe(false);
     expect(result.has('text')).toBe(true);
   });
@@ -82,7 +82,7 @@ describe('FilterPopover', () => {
     const user = userEvent.setup();
     renderPopover(new Set(), onChange);
     await user.click(screen.getByRole('button', { name: /select all/i }));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     expect(result.size).toBe(4);
   });
 
@@ -91,7 +91,7 @@ describe('FilterPopover', () => {
     const user = userEvent.setup();
     renderPopover(allSelected, onChange);
     await user.click(screen.getByRole('button', { name: /clear all/i }));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     expect(result.size).toBe(0);
   });
 
@@ -101,7 +101,7 @@ describe('FilterPopover', () => {
     renderPopover(new Set(), onChange);
     await user.type(screen.getByPlaceholderText(/filter/i), 'tool');
     await user.click(screen.getByRole('button', { name: /select all/i }));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     expect(result.has('tool_use')).toBe(true);
     expect(result.has('text')).toBe(false);
   });
@@ -112,7 +112,7 @@ describe('FilterPopover', () => {
     renderPopover(allSelected, onChange);
     await user.type(screen.getByPlaceholderText(/filter/i), 'tool');
     await user.click(screen.getByRole('button', { name: /clear all/i }));
-    const result = onChange.mock.calls[0][0] as Set<string>;
+    const result = onChange.mock.calls[0]![0] as Set<string>;
     // All 4 entries cleared, not just 'tool_use'
     expect(result.size).toBe(0);
   });

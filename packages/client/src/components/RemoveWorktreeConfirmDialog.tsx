@@ -70,7 +70,7 @@ export function RemoveWorktreeConfirmDialog({
   activeSessionCount: number;
   onConfirm: () => void;
   onClose: () => void;
-}) {
+}): React.JSX.Element {
   const blocked = activeSessionCount > 0;
 
   function handleOpenChange(next: boolean) {

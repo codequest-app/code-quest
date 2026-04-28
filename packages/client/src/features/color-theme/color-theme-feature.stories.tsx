@@ -10,7 +10,7 @@ function ColorThemeFeaturePreview({
 }: {
   colorTheme: ColorTheme;
   setColorTheme: (v: ColorTheme) => void;
-}) {
+}): React.JSX.Element {
   const feature = toMenuItem(createColorThemeFeature({ colorTheme, setColorTheme }));
   return (
     <button
@@ -24,12 +24,12 @@ function ColorThemeFeaturePreview({
   );
 }
 
-const meta = {
+const meta: Meta<typeof ColorThemeFeaturePreview> = {
   component: ColorThemeFeaturePreview,
   tags: ['autodocs'],
   args: { setColorTheme: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 min-h-30">
         <Story />
       </div>

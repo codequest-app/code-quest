@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
 import type { FeatureRegistry } from '../../lib/feature-registry';
 
-const FeatureRegistryContext = createContext<FeatureRegistry | null>(null);
+const FeatureRegistryContext: React.Context<FeatureRegistry | null> =
+  createContext<FeatureRegistry | null>(null);
 
 export function useFeatureRegistry(): FeatureRegistry {
   const registry = useContext(FeatureRegistryContext);

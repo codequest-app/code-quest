@@ -113,7 +113,7 @@ export function QuestionContent({
 }: {
   questions: Question[];
   onAnswersChange: (answers: Record<string, string>, allAnswered: boolean) => void;
-}) {
+}): React.ReactNode {
   const [activeTab, setActiveTab] = useState(0);
   const [selections, setSelections] = useState<Record<string, Set<string>>>({});
   const [otherTexts, setOtherTexts] = useState<Record<string, string>>({});

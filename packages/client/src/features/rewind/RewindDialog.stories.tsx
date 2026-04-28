@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../../test/story-decorator';
 import { RewindDialog } from './RewindDialog';
 
-const meta = {
+const meta: Meta<typeof RewindDialog> = {
   component: RewindDialog,
   tags: ['autodocs'],
   decorators: [

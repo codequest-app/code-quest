@@ -43,7 +43,7 @@ export function ProjectCard({
   onSelectInitRepo?: () => void;
   /** When provided and > 0, renders a `{n}wt` meta badge next to the name. */
   worktreeCount?: number;
-}) {
+}): React.JSX.Element {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);

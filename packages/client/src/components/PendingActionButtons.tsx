@@ -4,7 +4,7 @@ import { HookCallbackCard } from './HookCallbackCard';
 import { PlanReviewBanner } from './PlanReviewBanner';
 import { ToolPermissionCard } from './ToolPermissionCard';
 
-export function PendingActionButtons() {
+export function PendingActionButtons(): React.ReactNode {
   const { pendingControls, respondToControl: onRespond } = useChannelControl();
   if (pendingControls.length === 0) return null;
 

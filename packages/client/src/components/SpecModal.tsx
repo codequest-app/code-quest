@@ -26,9 +26,9 @@ const TAB_LABEL: Record<OpenspecArtifactKind, string> = {
   spec: 'Spec',
 };
 
-export function SpecModal({ cwd, kind, name, onClose }: SpecModalProps) {
+export function SpecModal({ cwd, kind, name, onClose }: SpecModalProps): React.JSX.Element {
   const tabs: OpenspecArtifactKind[] = kind === 'change' ? CHANGE_TABS : ['spec'];
-  const [active, setActive] = useState<OpenspecArtifactKind>(tabs[0]);
+  const [active, setActive] = useState<OpenspecArtifactKind>(tabs[0] ?? 'spec');
   const { socket } = useSocket();
   const { toggleTask, refetchOpenspecList } = useOpenspecActions();
   const [state, setState] = useState<

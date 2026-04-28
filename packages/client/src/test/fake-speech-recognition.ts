@@ -14,13 +14,13 @@ export class FakeSpeechRecognition {
     | null = null;
   onerror: ((event: Event) => void) | null = null;
   onend: (() => void) | null = null;
-  start = () => {
+  start = (): void => {
     FakeSpeechRecognition.instances.push(this);
   };
-  stop = () => {
+  stop = (): void => {
     this.onend?.();
   };
-  emit(entries: ResultEntry[]) {
+  emit(entries: ResultEntry[]): void {
     const results = entries.map((e) => ({ isFinal: e.isFinal, 0: { transcript: e.transcript } }));
     const list = Object.assign(results, { length: results.length });
     this.onresult?.({ resultIndex: 0, results: list as never });

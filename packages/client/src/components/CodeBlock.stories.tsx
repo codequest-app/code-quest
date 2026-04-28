@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { CodeBlock } from './CodeBlock';
 
-const meta = {
+const meta: Meta<typeof CodeBlock> = {
   component: CodeBlock,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-2xl bg-bg text-text p-6">
         <Story />
       </div>

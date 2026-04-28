@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withThemePreset } from '../../test/story-decorator';
 import { PanelHeader } from './PanelHeader';
 
-const meta = {
+const meta: Meta<typeof PanelHeader> = {
   component: PanelHeader,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text w-135">
         <Story />
       </div>

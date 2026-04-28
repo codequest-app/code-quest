@@ -10,12 +10,12 @@ const base: Omit<Message, 'type' | 'content' | 'meta'> = {
   timestamp: Date.now(),
 };
 
-const meta = {
+const meta: Meta<typeof ChatMessage> = {
   component: ChatMessage,
   tags: ['autodocs'],
   args: { showAvatar: true },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text p-6 font-sans">
         <Story />
       </div>

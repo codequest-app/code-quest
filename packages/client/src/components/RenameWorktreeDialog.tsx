@@ -16,7 +16,7 @@ export function RenameWorktreeDialog({
   currentBranch,
   onSubmit,
   onClose,
-}: RenameWorktreeDialogProps) {
+}: RenameWorktreeDialogProps): React.JSX.Element {
   const [name, setName] = useState(currentBranch);
   const [error, setError] = useState<string | null>(null);
 

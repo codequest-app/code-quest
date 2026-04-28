@@ -87,7 +87,7 @@ describe('DrizzleProjectStore', () => {
     it('hydrates pinned as boolean', async () => {
       await store.upsert('/p');
       const [first] = await store.list();
-      expect(typeof first.pinned).toBe('boolean');
+      expect(typeof first!.pinned).toBe('boolean');
     });
   });
 

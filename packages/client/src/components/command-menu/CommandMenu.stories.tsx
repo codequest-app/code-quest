@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../../test/story-decorator';
 import { CommandMenu } from './CommandMenu';
 
-const meta = {
+const meta: Meta<typeof CommandMenu> = {
   component: CommandMenu,
   tags: ['autodocs'],
   args: {

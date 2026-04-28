@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
 import { DiffViewer } from './DiffViewer';
 
-const meta = {
+const meta: Meta<typeof DiffViewer> = {
   component: DiffViewer,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text p-6">
         <Story />
       </div>

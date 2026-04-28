@@ -14,7 +14,7 @@ const svgBase = {
   style: { display: 'block' as const },
 };
 
-export function AskBeforeEditsIcon() {
+export function AskBeforeEditsIcon(): React.JSX.Element {
   return (
     <svg {...svgBase}>
       <title>icon</title>
@@ -26,7 +26,7 @@ export function AskBeforeEditsIcon() {
   );
 }
 
-export function EditAutoIcon() {
+export function EditAutoIcon(): React.JSX.Element {
   return (
     <svg {...svgBase}>
       <title>icon</title>
@@ -38,7 +38,7 @@ export function EditAutoIcon() {
   );
 }
 
-export function PlanModeIcon() {
+export function PlanModeIcon(): React.JSX.Element {
   return (
     <svg {...svgBase}>
       <title>icon</title>
@@ -56,7 +56,7 @@ export function PlanModeIcon() {
   );
 }
 
-export function BypassIcon() {
+export function BypassIcon(): React.JSX.Element {
   return (
     <svg {...svgBase}>
       <title>icon</title>
@@ -68,7 +68,7 @@ export function BypassIcon() {
   );
 }
 
-export function AutoModeIcon() {
+export function AutoModeIcon(): React.JSX.Element {
   return (
     <svg {...svgBase} viewBox="4 4 12 12">
       <title>icon</title>
@@ -80,7 +80,7 @@ export function AutoModeIcon() {
   );
 }
 
-export function EffortIcon() {
+export function EffortIcon(): React.JSX.Element {
   return (
     <svg
       width="100%"
@@ -100,7 +100,13 @@ export function EffortIcon() {
   );
 }
 
-export const PERMISSION_MODE_ICONS = {
+export const PERMISSION_MODE_ICONS: {
+  readonly normal: React.JSX.Element;
+  readonly acceptEdits: React.JSX.Element;
+  readonly plan: React.JSX.Element;
+  readonly auto: React.JSX.Element;
+  readonly bypassPermissions: React.JSX.Element;
+} = {
   normal: <AskBeforeEditsIcon />,
   acceptEdits: <EditAutoIcon />,
   plan: <PlanModeIcon />,

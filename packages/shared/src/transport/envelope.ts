@@ -30,7 +30,32 @@ const ResumeEnvelope = z.object({
   lastSeq: z.number().int().nonnegative(),
 });
 
-export const EnvelopeSchema = z.discriminatedUnion('kind', [
+export const EnvelopeSchema: z.ZodDiscriminatedUnion<
+  [
+    z.ZodObject<
+      { kind: z.ZodLiteral<'event'>; seq: z.ZodNumber; event: z.ZodString; data: z.ZodUnknown },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      { kind: z.ZodLiteral<'request'>; id: z.ZodString; event: z.ZodString; data: z.ZodUnknown },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
+        kind: z.ZodLiteral<'response'>;
+        id: z.ZodString;
+        ok: z.ZodBoolean;
+        data: z.ZodOptional<z.ZodUnknown>;
+        error: z.ZodOptional<z.ZodString>;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ kind: z.ZodLiteral<'ping'> }, z.core.$strip>,
+    z.ZodObject<{ kind: z.ZodLiteral<'pong'> }, z.core.$strip>,
+    z.ZodObject<{ kind: z.ZodLiteral<'resume'>; lastSeq: z.ZodNumber }, z.core.$strip>,
+  ],
+  'kind'
+> = z.discriminatedUnion('kind', [
   EventEnvelope,
   RequestEnvelope,
   ResponseEnvelope,

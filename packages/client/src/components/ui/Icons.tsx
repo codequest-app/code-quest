@@ -18,7 +18,7 @@ import { cn } from '../../utils/cn';
 
 /** Slash-command menu icon (rounded square with diagonal slash). Drawn in
  *  heroicons outline style so it sits next to other icons consistently. */
-export function SlashCommandIcon({ className }: { className?: string }) {
+export function SlashCommandIcon({ className }: { className?: string }): React.JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +47,7 @@ export function ActionButton({
   danger?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   return (
     <button
       type="button"

@@ -53,7 +53,7 @@ describe('WorkspaceLayout', () => {
       expect(closeButtons).toHaveLength(2);
 
       // Close second tab
-      await result.user.click(closeButtons[1]);
+      await result.user.click(closeButtons[1]!);
       await result.user.click(screen.getByRole('button', { name: /close/i }));
 
       expect(screen.getAllByLabelText(/^Close /)).toHaveLength(1);

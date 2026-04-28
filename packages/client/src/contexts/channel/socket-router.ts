@@ -107,7 +107,7 @@ export class ChannelSocketRouter {
     return () => this.removeListener(event, wrapped);
   }
 
-  dispose() {
+  dispose(): void {
     for (const [event, entry] of this.events) {
       this.adapter.off(event, entry.bound);
     }

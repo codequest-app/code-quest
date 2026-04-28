@@ -14,7 +14,7 @@ export function MenuItemRow({
   activeItemRef: RefObject<HTMLButtonElement | null>;
   onHover: (id: string) => void;
   onSelect: (item: MenuItem) => void;
-}) {
+}): React.ReactNode {
   return (
     <button
       ref={isActive ? activeItemRef : null}
@@ -55,7 +55,7 @@ export function MenuSection({
   onHover: (id: string) => void;
   onSelect: (item: MenuItem) => void;
   isFirst?: boolean;
-}) {
+}): React.ReactNode {
   if (items.length === 0) return null;
   return (
     <>

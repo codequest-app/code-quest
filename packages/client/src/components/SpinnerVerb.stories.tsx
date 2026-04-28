@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SpinnerVerb } from './SpinnerVerb';
 
-const meta = {
+const meta: Meta<typeof SpinnerVerb> = {
   component: SpinnerVerb,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text max-w-md">
         <Story />
       </div>

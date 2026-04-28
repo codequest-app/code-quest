@@ -6,7 +6,7 @@ interface JsonViewerProps {
   className?: string;
 }
 
-export function JsonViewer({ data, className }: JsonViewerProps) {
+export function JsonViewer({ data, className }: JsonViewerProps): React.JSX.Element {
   if (typeof data !== 'object' || data === null) {
     return <div className={className}>{String(data)}</div>;
   }

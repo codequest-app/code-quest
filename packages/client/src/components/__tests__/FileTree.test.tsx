@@ -111,8 +111,8 @@ describe('FileTree', () => {
     await user.click(await screen.findByRole('treeitem', { name: 'README.md' }));
 
     expect(onActivate).toHaveBeenCalledTimes(1);
-    expect(onActivate.mock.calls[0][0]).toBe('/projects/app/README.md');
-    expect(onActivate.mock.calls[0][1]).toMatchObject({ type: 'click' });
+    expect(onActivate.mock.calls[0]![0]).toBe('/projects/app/README.md');
+    expect(onActivate.mock.calls[0]![1]).toMatchObject({ type: 'click' });
   });
 
   it('renders gitMarks badge next to file names that match the map', async () => {

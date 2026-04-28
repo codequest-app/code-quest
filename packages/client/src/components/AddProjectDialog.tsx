@@ -16,7 +16,7 @@ export function AddProjectDialog({
   /** Absolute cwds already tracked as projects — rendered disabled so the
    *  user can't pick a duplicate. */
   addedProjectCwds?: ReadonlySet<string>;
-}) {
+}): React.JSX.Element {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   function handleAdd() {

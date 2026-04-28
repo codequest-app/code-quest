@@ -2,9 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '../test/story-decorator';
 import { ComposeToolbar } from './ComposeToolbar';
 
-const meta = { component: ComposeToolbar, tags: ['autodocs'] } satisfies Meta<
-  typeof ComposeToolbar
->;
+const meta: Meta<typeof ComposeToolbar> = {
+  component: ComposeToolbar,
+  tags: ['autodocs'],
+} satisfies Meta<typeof ComposeToolbar>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 

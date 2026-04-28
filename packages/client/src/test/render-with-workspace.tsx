@@ -52,7 +52,7 @@ async function launchSession(
     await user.click(emptyButton);
   } else {
     const newTabButtons = await screen.findAllByLabelText('New tab');
-    await user.click(newTabButtons[newTabButtons.length - 1]);
+    await user.click(newTabButtons[newTabButtons.length - 1]!);
   }
 
   await act(async () => {

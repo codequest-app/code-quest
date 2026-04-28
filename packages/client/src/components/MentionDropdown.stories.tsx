@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { MentionDropdown } from './MentionDropdown';
 
-const meta = {
+const meta: Meta<typeof MentionDropdown> = {
   component: MentionDropdown,
   tags: ['autodocs'],
   args: { onSelectMention: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="relative bg-bg text-text min-h-100 pt-80">
         <Story />
       </div>

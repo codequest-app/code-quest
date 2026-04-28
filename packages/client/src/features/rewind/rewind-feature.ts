@@ -1,7 +1,7 @@
 import type { Feature } from '../../lib/feature';
-import { createOpenSignal } from '../../lib/open-signal';
+import { createOpenSignal, type OpenSignal } from '../../lib/open-signal';
 
-export const rewindOpenSignal = createOpenSignal();
+export const rewindOpenSignal: OpenSignal = createOpenSignal();
 
 export function createRewindFeature(): Feature {
   return {

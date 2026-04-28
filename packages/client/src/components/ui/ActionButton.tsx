@@ -13,7 +13,7 @@ export function ActionButton({
   action: AsyncActionState;
   label: string;
   className?: string;
-}) {
+}): React.JSX.Element {
   return (
     <button
       type="button"

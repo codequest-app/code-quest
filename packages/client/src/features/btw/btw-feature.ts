@@ -42,7 +42,7 @@ function createBtwSignal(): BtwSignal {
   };
 }
 
-export const btwSignal = createBtwSignal();
+export const btwSignal: BtwSignal = createBtwSignal();
 
 export interface BtwFeatureDeps {
   askSideQuestion: (question: string) => Promise<RpcResult<{ answer: string }>>;

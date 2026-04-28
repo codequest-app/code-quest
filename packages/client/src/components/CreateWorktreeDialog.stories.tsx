@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 
-const meta = {
+const meta: Meta<typeof CreateWorktreeDialog> = {
   component: CreateWorktreeDialog,
   tags: ['autodocs'],
   args: { onClose: fn() },

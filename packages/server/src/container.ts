@@ -186,7 +186,7 @@ export function createContainer(options: ContainerOptions): Container {
 }
 
 function pickOrComposite<T>(stores: T[], makeComposite: (stores: T[]) => T): T {
-  return stores.length === 1 ? stores[0] : makeComposite(stores);
+  return stores.length === 1 ? (stores[0] as T) : makeComposite(stores);
 }
 
 function bindDirtyBroadcasters(container: Container, watchService: WatchService) {

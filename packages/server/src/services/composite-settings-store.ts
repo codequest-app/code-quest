@@ -7,20 +7,22 @@ import type { SettingsStore } from './settings-store.ts';
  * single authoritative read is enough.
  */
 export class CompositeSettingsStore implements SettingsStore {
+  private readonly primary: SettingsStore;
   private stores: SettingsStore[];
   constructor(stores: SettingsStore[]) {
-    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeSettingsStore requires at least one store');
     }
+    this.stores = stores;
+    this.primary = stores[0] as SettingsStore;
   }
 
   get(provider: string, key: string): Promise<unknown> {
-    return this.stores[0].get(provider, key);
+    return this.primary.get(provider, key);
   }
 
   getMany(provider: string, keys: string[]): Promise<Record<string, unknown>> {
-    return this.stores[0].getMany(provider, keys);
+    return this.primary.getMany(provider, keys);
   }
 
   async set(provider: string, key: string, value: unknown): Promise<void> {

@@ -38,7 +38,7 @@ function pct(idx: number, count: number) {
   return count > 1 ? idx / (count - 1) : 0;
 }
 
-export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
+export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): React.JSX.Element {
   const idx = level ? levels.indexOf(level) : 0;
   const count = levels.length;
   const ratio = pct(idx, count);
@@ -54,7 +54,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
     if (e.detail === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    onSelect(levels[Math.round(x * (count - 1))]);
+    const level = levels[Math.round(x * (count - 1))];
+    if (level) onSelect(level);
   };
 
   const ticksAfterThumb = Array.from({ length: count - idx - 1 }, (_, k) => idx + 1 + k);
@@ -80,7 +81,8 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps) {
         else if (e.key === 'End') next = count - 1;
         else return;
         e.preventDefault();
-        if (next !== idx) onSelect(levels[next]);
+        const level = levels[next];
+        if (next !== idx && level) onSelect(level);
       }}
       title="Click a position to set effort level"
     >

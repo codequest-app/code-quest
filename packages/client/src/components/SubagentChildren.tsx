@@ -14,7 +14,7 @@ export function SubagentChildren({
   onStopTask?: (taskId: string) => void;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
   parentToolId?: string;
-}) {
+}): React.JSX.Element {
   const [expanded, setExpanded] = useState(true);
 
   return (

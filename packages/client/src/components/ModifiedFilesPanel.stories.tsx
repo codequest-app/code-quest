@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
 import { ModifiedFilesPanel } from './ModifiedFilesPanel';
 
-const meta = {
+const meta: Meta<typeof ModifiedFilesPanel> = {
   component: ModifiedFilesPanel,
   tags: ['autodocs'],
   args: { onAccept: fn(), onRewind: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-surface text-text p-6 font-mono">
         <Story />
       </div>

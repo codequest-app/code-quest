@@ -12,7 +12,7 @@ export function RenameProjectDialog({
   currentName: string;
   onRename: (name: string) => void;
   onClose: () => void;
-}) {
+}): React.JSX.Element {
   const [value, setValue] = useState(currentName);
 
   useEffect(() => {

@@ -89,7 +89,7 @@ describe('FakeFilesystemService', () => {
       fs.addFile('/app/utils.ts', '');
       const results = await fs.listFiles('/app', 'index');
       expect(results).toHaveLength(1);
-      expect(results[0].name).toBe('index.ts');
+      expect(results[0]!.name).toBe('index.ts');
     });
 
     it('returns empty for unmatched pattern', async () => {

@@ -43,7 +43,12 @@ function getPermissionModes(brandName: string) {
 }
 
 const DEFAULT_MODES = getPermissionModes('Claude');
-const DEFAULT_MODE = DEFAULT_MODES[0];
+const DEFAULT_MODE = DEFAULT_MODES[0] ?? {
+  id: 'normal',
+  label: 'Normal',
+  title: 'Normal mode',
+  description: 'Normal mode',
+};
 
 interface PermissionModePickerProps {
   mode: string;
@@ -61,7 +66,7 @@ export function PermissionModePicker({
   supportsAutoMode = false,
   onSetPermissionMode,
   onSetEffort,
-}: PermissionModePickerProps) {
+}: PermissionModePickerProps): React.JSX.Element {
   const { providerConfig } = useChannelConfig();
   const brandName = providerConfig?.brand.name ?? 'Claude';
   const configModes = providerConfig?.permissionModes;
@@ -140,7 +145,8 @@ export function PermissionModePicker({
                 className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
                 onClick={() => {
                   const idx = effort ? effortLevels.indexOf(effort) : -1;
-                  onSetEffort?.(effortLevels[(idx + 1) % effortLevels.length]);
+                  const next = effortLevels[(idx + 1) % effortLevels.length];
+                  if (next) onSetEffort?.(next);
                 }}
                 title="Click to cycle effort level"
               >

@@ -59,8 +59,8 @@ describe('SessionHistory', () => {
   it('filters sessions by search text', async () => {
     const user = userEvent.setup();
     const sessions = [
-      { ...makeSessions(1)[0], title: 'Fix login bug' },
-      { ...makeSessions(1)[0], channelId: 's-1', title: 'Add dark mode' },
+      { ...makeSessions(1)[0]!, title: 'Fix login bug' },
+      { ...makeSessions(1)[0]!, channelId: 's-1', title: 'Add dark mode' },
     ];
     render(<SessionHistory sessions={sessions} onSelect={vi.fn()} />);
 
@@ -114,11 +114,11 @@ describe('SessionHistory', () => {
     const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const { rerender } = renderWithSessions(sessions, onDelete);
 
-    await user.click(screen.getAllByTitle('Delete')[0]);
+    await user.click(screen.getAllByTitle('Delete')[0]!);
 
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith('s-0'));
     // Parent re-renders with updated sessions (s-0 removed)
-    rerender([sessions[1]]);
+    rerender([sessions[1]!]);
 
     await waitFor(() => expect(screen.queryByText('Session 0')).not.toBeInTheDocument());
     expect(screen.getByText('Session 1')).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe('SessionHistory', () => {
     const onDelete = vi.fn().mockResolvedValue({ ok: true, data: {} });
     render(<SessionHistory sessions={makeSessions(2)} onSelect={vi.fn()} onDelete={onDelete} />);
 
-    await user.click(screen.getAllByTitle('Delete')[0]);
+    await user.click(screen.getAllByTitle('Delete')[0]!);
 
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith('s-0'));
     // Without parent rerender, session stays visible (no local deletedIds)

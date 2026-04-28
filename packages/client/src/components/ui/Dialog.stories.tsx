@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { Dialog, DialogClose, DialogContent } from './Dialog';
 
-const meta = {
+const meta: Meta<typeof DialogContent> = {
   title: 'ui/Dialog',
   component: DialogContent,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-4">
         <Dialog open>
           <Story />

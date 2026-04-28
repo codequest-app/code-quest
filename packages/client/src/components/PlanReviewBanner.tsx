@@ -17,7 +17,7 @@ interface PlanReviewBannerProps {
   onRespond: (response: ControlPermissionResponse) => void;
 }
 
-export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps) {
+export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps): React.JSX.Element {
   const parsed = planInputSchema.safeParse(pending.input);
   const plan = parsed.data?.plan;
   const allowedPrompts = parsed.data?.allowedPrompts;

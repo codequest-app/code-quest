@@ -6,7 +6,7 @@ import {
   type PreferencesState as PersistedPreferences,
   preferencesStateSchema,
 } from '@code-quest/shared';
-import { create } from 'zustand';
+import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { localStoragePersist } from './persistStorage';
 
@@ -50,7 +50,9 @@ function migrateV2ToV3(persisted: V2Shape): Partial<PersistedPreferences> {
   return { ...rest, hiddenItems: [...hidden] };
 }
 
-export const usePreferencesStore = create<PreferencesState>()(
+export const usePreferencesStore: UseBoundStore<
+  Mutate<StoreApi<PreferencesState>, [['zustand/persist', unknown]]>
+> = create<PreferencesState>()(
   persist(
     (set) => ({
       ...DEFAULTS,

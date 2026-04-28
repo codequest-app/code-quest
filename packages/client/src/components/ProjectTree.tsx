@@ -16,7 +16,7 @@ export function ProjectTree({
   activeProjectCwd: string | null;
   onSelectProject: (cwd: string) => void;
   onAdd: () => void;
-}) {
+}): React.JSX.Element {
   const pinned = projects.filter((p) => p.pinned).sort(byLastOpenedDesc);
   const recent = projects.filter((p) => !p.pinned).sort(byLastOpenedDesc);
   const showPinnedHeader = pinned.length > 0;

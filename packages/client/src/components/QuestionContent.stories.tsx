@@ -26,12 +26,12 @@ const questions: Question[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof QuestionContent> = {
   component: QuestionContent,
   tags: ['autodocs'],
   args: { onAnswersChange: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-md bg-bg text-text p-6">
         <Story />
       </div>
@@ -43,5 +43,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = { args: { questions } };
-export const SingleQuestion: Story = { args: { questions: [questions[0]] } };
-export const MultiSelect: Story = { args: { questions: [questions[1]] } };
+export const SingleQuestion: Story = {
+  args: { questions: [questions[0] as (typeof questions)[0]] },
+};
+export const MultiSelect: Story = { args: { questions: [questions[1] as (typeof questions)[1]] } };

@@ -36,10 +36,10 @@ describe('DrizzleRawDeltaStore', () => {
     const results = await store.getBySession('sess-1');
 
     expect(results).toHaveLength(1);
-    expect(results[0].parentId).toBe('parent-xyz');
-    expect(results[0].raw).toBe('delta-1');
-    expect(results[0].sessionId).toBe('sess-1');
-    expect(results[0].direction).toBe('out');
+    expect(results[0]!.parentId).toBe('parent-xyz');
+    expect(results[0]!.raw).toBe('delta-1');
+    expect(results[0]!.sessionId).toBe('sess-1');
+    expect(results[0]!.direction).toBe('out');
   });
 
   it('preserves parent_id across multiple inserts', async () => {

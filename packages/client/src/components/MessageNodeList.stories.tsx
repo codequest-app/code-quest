@@ -33,12 +33,12 @@ const nodes: MessageNode[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof MessageNodeList> = {
   component: MessageNodeList,
   tags: ['autodocs'],
   args: { prevRole: null, onRewind: fn(), onFork: fn(), onStopTask: fn(), onDiffRespond: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text p-6">
         <Story />
       </div>

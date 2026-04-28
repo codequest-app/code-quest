@@ -4,7 +4,7 @@ import { usePreferencesStore } from '../stores/usePreferencesStore';
 import { withStoryChannel } from '../test/story-decorator';
 import { ReviewUpsellBanner } from './ReviewUpsellBanner';
 
-const meta = {
+const meta: Meta<typeof ReviewUpsellBanner> = {
   component: ReviewUpsellBanner,
   tags: ['autodocs'],
   decorators: [

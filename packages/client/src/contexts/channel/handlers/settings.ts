@@ -177,7 +177,16 @@ function onSettingsUsage(state: ConfigState, p: Payload<'settings:usage'>): Conf
   };
 }
 
-export const configHandlers = {
+export const configHandlers: {
+  'settings:update': typeof onSettingsUpdate;
+  'session:init': typeof onSessionInit;
+  'session:status': typeof onSessionStatus;
+  'app:models': typeof onAvailableModels;
+  'app:experiment_gates': typeof onExperimentGates;
+  'settings:usage': typeof onSettingsUsage;
+  'system:rate_limit': typeof onRateLimitQuota;
+  'plugin:reloaded': typeof onPluginReloaded;
+} = {
   'settings:update': onSettingsUpdate,
   'session:init': onSessionInit,
   'session:status': onSessionStatus,
@@ -199,11 +208,32 @@ interface ConfigActionsDeps {
   addSystemMessage?: (type: string, content: string) => void;
 }
 
-export function createConfigActions(deps: ConfigActionsDeps) {
+export function createConfigActions(deps: ConfigActionsDeps): {
+  setModel: (model: string) => void;
+  setPermissionMode: (mode: string) => void;
+  setThinkingLevel: (thinkingLevel: string) => void;
+  setFastMode: (enabled: boolean) => void;
+  setEffort: (effort: string) => Promise<Ack>;
+  mcpStatus: () => Promise<ControlResponse>;
+  mcpToggle: (serverName: string, enabled: boolean) => Promise<ControlResponse>;
+  mcpReconnect: (serverName: string) => Promise<ControlResponse>;
+  mcpSetServers: (servers: Record<string, unknown>) => Promise<ControlResponse>;
+  mcpMessage: (serverName: string, message: Record<string, unknown>) => Promise<ControlResponse>;
+  mcpListTools: (serverName: string) => Promise<unknown[]>;
+  mcpAuthenticate: (serverName: string) => Promise<RpcResult<{ authUrl?: string }>>;
+  mcpOAuthCallback: (serverName: string, callbackUrl: string) => Promise<Ack>;
+  mcpClearAuth: (serverName: string) => Promise<Ack>;
+  ensureChromeMcpEnabled: () => Promise<ControlResponse>;
+  disableChromeMcp: () => Promise<ControlResponse>;
+  enableJupyterMcp: () => Promise<ControlResponse>;
+  disableJupyterMcp: () => Promise<ControlResponse>;
+  askDebuggerHelp: () => Promise<RpcResult<{ response: { type: 'ask_debugger_help_response' } }>>;
+  requestUsageUpdate: () => void;
+} {
   const emit = (event: string, payload: Record<string, unknown>, ...rest: unknown[]) =>
     channelEmit(deps.socket, deps.channelId, event, payload, ...rest);
 
-  function setModel(model: string) {
+  function setModel(model: string): void {
     deps.addSystemMessage?.('slash_command_result', `Set model to ${model}`);
     deps.setState?.((prev) => ({ ...prev, model }));
     emit(EVENTS.settings.set_model, { model }, (res: { ok: boolean; error?: string }) => {
@@ -211,16 +241,16 @@ export function createConfigActions(deps: ConfigActionsDeps) {
     });
   }
 
-  function setPermissionMode(mode: string) {
+  function setPermissionMode(mode: string): void {
     deps.setState?.((prev) => ({ ...prev, permissionMode: mode }));
     emit(EVENTS.settings.set_permission_mode, { mode });
   }
 
-  function setThinkingLevel(thinkingLevel: string) {
+  function setThinkingLevel(thinkingLevel: string): void {
     emit(EVENTS.settings.set_thinking_level, { thinkingLevel });
   }
 
-  function setFastMode(enabled: boolean) {
+  function setFastMode(enabled: boolean): void {
     emit(EVENTS.settings.set_proactive, { enabled });
   }
 
@@ -315,25 +345,25 @@ export function createConfigActions(deps: ConfigActionsDeps) {
   }
 
   return {
-    setModel,
-    setPermissionMode,
-    setThinkingLevel,
-    setFastMode,
-    setEffort,
-    mcpStatus,
-    mcpToggle,
-    mcpReconnect,
-    mcpSetServers,
-    mcpMessage,
-    mcpListTools,
-    mcpAuthenticate,
-    mcpOAuthCallback,
-    mcpClearAuth,
-    ensureChromeMcpEnabled,
-    disableChromeMcp,
-    enableJupyterMcp,
-    disableJupyterMcp,
-    askDebuggerHelp,
-    requestUsageUpdate,
+    setModel: setModel,
+    setPermissionMode: setPermissionMode,
+    setThinkingLevel: setThinkingLevel,
+    setFastMode: setFastMode,
+    setEffort: setEffort,
+    mcpStatus: mcpStatus,
+    mcpToggle: mcpToggle,
+    mcpReconnect: mcpReconnect,
+    mcpSetServers: mcpSetServers,
+    mcpMessage: mcpMessage,
+    mcpListTools: mcpListTools,
+    mcpAuthenticate: mcpAuthenticate,
+    mcpOAuthCallback: mcpOAuthCallback,
+    mcpClearAuth: mcpClearAuth,
+    ensureChromeMcpEnabled: ensureChromeMcpEnabled,
+    disableChromeMcp: disableChromeMcp,
+    enableJupyterMcp: enableJupyterMcp,
+    disableJupyterMcp: disableJupyterMcp,
+    askDebuggerHelp: askDebuggerHelp,
+    requestUsageUpdate: requestUsageUpdate,
   };
 }

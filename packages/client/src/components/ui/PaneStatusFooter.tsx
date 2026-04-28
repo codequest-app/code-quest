@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
  *  a brief mono summary of the loaded content. Solves the "view has no end"
  *  feeling when content is sparse. Caller composes whatever items it wants
  *  (children); divider styling and base typography are shared. */
-export function PaneStatusFooter({ children }: { children: ReactNode }) {
+export function PaneStatusFooter({ children }: { children: ReactNode }): React.JSX.Element {
   return (
     <div
       role="status"

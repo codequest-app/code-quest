@@ -26,7 +26,8 @@ interface AppInitActions {
   subscribeInit: (cb: InitSubscriber) => () => void;
 }
 
-export const AppInitStateContext = createContext<AppInitState | null>(null);
+export const AppInitStateContext: React.Context<AppInitState | null> =
+  createContext<AppInitState | null>(null);
 const AppInitActionsContext = createContext<AppInitActions | null>(null);
 
 export function useAppInitState(): AppInitState {
@@ -46,7 +47,7 @@ export function useAppInit(): AppInitState & AppInitActions {
   return { ...useAppInitState(), ...useAppInitActions() };
 }
 
-export function AppInitProvider({ children }: { children: ReactNode }) {
+export function AppInitProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [capabilities, setCapabilities] = useState<{ worktree: boolean }>({ worktree: false });
   const [initOptions, setInitOptions] = useState<Record<string, unknown>>({});

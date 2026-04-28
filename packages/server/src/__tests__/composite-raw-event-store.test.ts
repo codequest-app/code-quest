@@ -56,7 +56,7 @@ describe('CompositeRawEventStore', () => {
     await composite.append(event);
     const results = await composite.getBySession('sess-1');
     expect(results).toHaveLength(1);
-    expect(results[0].raw).toBe('data');
+    expect(results[0]!.raw).toBe('data');
   });
 
   it('throws when constructed with empty stores array', () => {
@@ -192,7 +192,7 @@ describe('CompositeRawEventStore', () => {
 
     expect(idsSeenByA[0]).toHaveLength(2);
     expect(idsSeenByA[0]).toEqual(idsSeenByB[0]);
-    for (const id of idsSeenByA[0]) {
+    for (const id of idsSeenByA[0]!) {
       expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-/);
     }
   });

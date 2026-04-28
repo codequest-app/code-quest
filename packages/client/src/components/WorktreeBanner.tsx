@@ -5,7 +5,7 @@ interface WorktreeBannerProps {
   worktree: WorktreeInfo;
 }
 
-export function WorktreeBanner({ worktree }: WorktreeBannerProps) {
+export function WorktreeBanner({ worktree }: WorktreeBannerProps): React.JSX.Element {
   const { openNewChannel } = useChannelConfig();
 
   return (

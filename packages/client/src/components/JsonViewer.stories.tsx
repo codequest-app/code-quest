@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { JsonViewer } from './JsonViewer';
 
-const meta = {
+const meta: Meta<typeof JsonViewer> = {
   component: JsonViewer,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text p-4 max-w-xl">
         <Story />
       </div>

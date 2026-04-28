@@ -28,7 +28,7 @@ export function ProjectRow({
   project: Project;
   active: boolean;
   onSelect: () => void;
-}) {
+}): React.JSX.Element {
   // Subscribe to the `expanded` array so this row re-renders when any row
   // toggles (single source of truth via zustand persist).
   const expanded = useExpandedProjectsStore((s) => s.expanded.includes(project.cwd));

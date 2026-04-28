@@ -23,7 +23,7 @@ export function validateWorktreeName(name: string): void {
 export function detectWorktree(path: string): WorktreeInfo | null {
   const match = WORKTREE_PATH_RE.exec(path);
   if (!match) return null;
-  return { name: match[1], path };
+  return { name: match[1] ?? '', path };
 }
 
 function parseWorktreeList(stdout: string): WorktreeInfo[] {
@@ -34,7 +34,11 @@ function parseWorktreeList(stdout: string): WorktreeInfo[] {
     if (current.worktreePath) {
       const match = current.worktreePath.match(WORKTREE_PATH_RE);
       if (match) {
-        worktrees.push({ name: match[1], path: current.worktreePath, branch: current.branch });
+        worktrees.push({
+          name: match[1] ?? '',
+          path: current.worktreePath,
+          branch: current.branch,
+        });
       } else {
         const fallback = current.worktreePath.split(/[/\\]/).filter(Boolean).pop() ?? '';
         const name = current.branch ?? fallback;

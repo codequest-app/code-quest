@@ -3,7 +3,7 @@ import { expect, fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { PlanReviewBanner } from './PlanReviewBanner';
 
-const meta = {
+const meta: Meta<typeof PlanReviewBanner> = {
   component: PlanReviewBanner,
   tags: ['autodocs'],
   args: { onRespond: fn() },

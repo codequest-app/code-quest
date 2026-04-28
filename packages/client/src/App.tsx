@@ -17,7 +17,7 @@ import { createSocket } from './socket/client';
 import { usePreferencesStore } from './stores/usePreferencesStore';
 import './App.css';
 
-export function App() {
+export function App(): React.JSX.Element {
   const [socket] = useState(() => createSocket());
   const effectiveColorTheme = useEffectiveColorTheme();
   const fontSize = usePreferencesStore((s) => s.fontSize);

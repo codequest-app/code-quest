@@ -110,7 +110,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       .getAllByRole('status')
       .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
-    expect(items[0].getAttribute('data-cli-uuid')).toBe('cli-real-uuid-2');
+    expect(items[0]!.getAttribute('data-cli-uuid')).toBe('cli-real-uuid-2');
   });
 
   it('echo arrives after streamed assistant placeholder: dedup still finds user msg', async () => {
@@ -143,7 +143,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       .getAllByRole('status')
       .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
-    expect(items[0].getAttribute('data-cli-uuid')).toBe('echo-after-stream');
+    expect(items[0]!.getAttribute('data-cli-uuid')).toBe('echo-after-stream');
   });
 
   it('idempotent: re-emitting same uuid does not duplicate or mutate', async () => {
@@ -170,7 +170,7 @@ describe('message:user handler — cliUuid (fix-fork-message-uuid)', () => {
       .getAllByRole('status')
       .filter((el) => el.getAttribute('aria-label')?.startsWith('umsg-'));
     expect(items).toHaveLength(1);
-    expect(items[0].getAttribute('data-cli-uuid')).toBe('same-uuid');
-    expect(items[0].getAttribute('data-id')).toBe(idAfterFirst);
+    expect(items[0]!.getAttribute('data-cli-uuid')).toBe('same-uuid');
+    expect(items[0]!.getAttribute('data-id')).toBe(idAfterFirst);
   });
 });

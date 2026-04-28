@@ -99,7 +99,7 @@ export interface ComposeToolbarProps {
   onAttachFile?: () => void;
 }
 
-export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
+export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps): React.JSX.Element {
   const {
     isProcessing,
     isCancelling,

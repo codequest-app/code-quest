@@ -116,7 +116,7 @@ describe('ChatHandler > terminal', () => {
       });
 
       const lastSpawn = claude.provider.spawnCalls[spawnCountBefore];
-      expect(lastSpawn.options?.cwd).toBe('/tmp');
+      expect(lastSpawn!.options?.cwd).toBe('/tmp');
     });
   });
 });

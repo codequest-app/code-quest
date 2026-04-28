@@ -7,12 +7,14 @@ import type { SessionRecord, SessionStore } from './session-store.ts';
  * agreement across backends (guaranteed because upsert fans out).
  */
 export class CompositeSessionStore implements SessionStore {
+  private readonly primary: SessionStore;
   private stores: SessionStore[];
   constructor(stores: SessionStore[]) {
-    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeSessionStore requires at least one store');
     }
+    this.stores = stores;
+    this.primary = stores[0] as SessionStore;
   }
 
   async list(opts?: {
@@ -22,15 +24,15 @@ export class CompositeSessionStore implements SessionStore {
     hasParentId?: boolean;
     excludeSessionIds?: string[];
   }): Promise<{ sessions: SessionRecord[]; total: number }> {
-    return this.stores[0].list(opts);
+    return this.primary.list(opts);
   }
 
   async getById(id: string): Promise<SessionRecord | null> {
-    return this.stores[0].getById(id);
+    return this.primary.getById(id);
   }
 
   async getByChannelId(channelId: string): Promise<SessionRecord | null> {
-    return this.stores[0].getByChannelId(channelId);
+    return this.primary.getByChannelId(channelId);
   }
 
   async upsert(record: SessionRecord): Promise<void> {

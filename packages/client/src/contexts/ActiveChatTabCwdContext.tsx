@@ -16,8 +16,10 @@ interface ActiveChatTabCwdActions {
   setCwd: (cwd: string | null) => void;
 }
 
-export const ActiveChatTabCwdStateContext = createContext<ActiveChatTabCwdState | null>(null);
-export const ActiveChatTabCwdActionsContext = createContext<ActiveChatTabCwdActions | null>(null);
+export const ActiveChatTabCwdStateContext: React.Context<ActiveChatTabCwdState | null> =
+  createContext<ActiveChatTabCwdState | null>(null);
+export const ActiveChatTabCwdActionsContext: React.Context<ActiveChatTabCwdActions | null> =
+  createContext<ActiveChatTabCwdActions | null>(null);
 
 /** Soft-bound reader. Returns null when used outside a provider so consumers
  *  can fall through gracefully (matches `useActiveCwd`'s aggregate pattern). */
@@ -30,7 +32,7 @@ export function useActiveChatTabCwdActions(): ActiveChatTabCwdActions | null {
   return useContext(ActiveChatTabCwdActionsContext);
 }
 
-export function ActiveChatTabCwdProvider({ children }: { children: ReactNode }) {
+export function ActiveChatTabCwdProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [cwd, setCwd] = useState<string | null>(null);
   // setCwd from useState is identity-stable; empty dep array makes the
   // actions object an effective once-and-done allocation.

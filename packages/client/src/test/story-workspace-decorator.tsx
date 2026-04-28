@@ -27,7 +27,9 @@ type AnySocket = { emit: (event: string, ...args: any[]) => unknown };
  * story needs projects/sessions/worktree state; for channel-only seeding
  * prefer `withStoryChannel` in `./story-decorator`.
  */
-export function withStoryWorkspaceFixtures(fixtures: WorkspaceFixtures = {}) {
+export function withStoryWorkspaceFixtures(
+  fixtures: WorkspaceFixtures = {},
+): (Story: () => React.ReactNode) => React.JSX.Element {
   return (Story: () => React.ReactNode) => {
     const [{ socket, summoner }] = useState(() => {
       const s = createFakeSummoner();

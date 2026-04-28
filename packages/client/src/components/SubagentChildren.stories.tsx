@@ -29,12 +29,12 @@ const nodes: MessageNode[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof SubagentChildren> = {
   component: SubagentChildren,
   tags: ['autodocs'],
   args: { onStopTask: fn(), onDiffRespond: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-bg text-text p-6">
         <Story />
       </div>
@@ -47,4 +47,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = { args: { nodes } };
 export const WithStopButton: Story = { args: { nodes, parentToolId: 'parent_tool_1' } };
-export const SingleChild: Story = { args: { nodes: [nodes[0]] } };
+export const SingleChild: Story = { args: { nodes: [nodes[0] as (typeof nodes)[0]] } };

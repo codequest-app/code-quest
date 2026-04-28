@@ -16,7 +16,7 @@ export function RewindConfirmDialog({
   onConfirm,
   onCancel,
   children,
-}: RewindConfirmDialogProps) {
+}: RewindConfirmDialogProps): React.JSX.Element {
   const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {

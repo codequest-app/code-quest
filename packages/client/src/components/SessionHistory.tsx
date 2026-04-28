@@ -18,7 +18,7 @@ export function SessionHistory({
   onSelect,
   onRename,
   onDelete,
-}: SessionHistoryProps) {
+}: SessionHistoryProps): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [focusIndex, setFocusIndex] = useState(0);
 

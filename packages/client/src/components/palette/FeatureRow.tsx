@@ -147,7 +147,7 @@ function GroupRow({
   );
 }
 
-export function FeatureRow(props: FeatureRowProps) {
+export function FeatureRow(props: FeatureRowProps): React.JSX.Element {
   const state = props.feature.state;
   if (state?.kind === 'group') {
     return <GroupRow feature={props.feature} groupState={state} isActive={props.isActive} />;

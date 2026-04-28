@@ -20,7 +20,7 @@ describe('ModifiedFilesPanel', () => {
   it('expands file to show diff on click', async () => {
     const user = userEvent.setup();
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={vi.fn()} onRewind={vi.fn()} />);
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
     expect(screen.getByText(/old1/)).toBeInTheDocument();
     expect(screen.getByText(/new1/)).toBeInTheDocument();
   });
@@ -28,9 +28,9 @@ describe('ModifiedFilesPanel', () => {
   it('collapses expanded file on second click', async () => {
     const user = userEvent.setup();
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={vi.fn()} onRewind={vi.fn()} />);
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
     expect(screen.getByText(/old1/)).toBeInTheDocument();
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
     expect(screen.queryByText(/old1/)).not.toBeInTheDocument();
   });
 
@@ -38,8 +38,8 @@ describe('ModifiedFilesPanel', () => {
     const user = userEvent.setup();
     const onAccept = vi.fn();
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={onAccept} onRewind={vi.fn()} />);
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
-    await user.click(screen.getAllByRole('button', { name: /accept/i })[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
+    await user.click(screen.getAllByRole('button', { name: /accept/i })[0]!);
     expect(onAccept).toHaveBeenCalledWith('src/utils/helper.ts');
   });
 
@@ -47,8 +47,8 @@ describe('ModifiedFilesPanel', () => {
     const user = userEvent.setup();
     const onRewind = vi.fn();
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={vi.fn()} onRewind={onRewind} />);
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
-    await user.click(screen.getAllByRole('button', { name: /rewind/i })[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
+    await user.click(screen.getAllByRole('button', { name: /rewind/i })[0]!);
     expect(onRewind).toHaveBeenCalledWith('src/utils/helper.ts');
   });
 
@@ -111,7 +111,7 @@ describe('ModifiedFilesPanel', () => {
   it('renders DiffViewer when file has both old and new content', async () => {
     const user = userEvent.setup();
     render(<ModifiedFilesPanel files={sampleFiles} onAccept={vi.fn()} onRewind={vi.fn()} />);
-    await user.click(screen.getAllByText('src/utils/helper.ts')[0]);
+    await user.click(screen.getAllByText('src/utils/helper.ts')[0]!);
     // DiffViewer renders a unified diff with @@ hunk headers
     expect(screen.getByText(/@@/)).toBeInTheDocument();
   });

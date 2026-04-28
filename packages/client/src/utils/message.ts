@@ -53,7 +53,9 @@ export function updateLastMessage(
   setState((prev) => {
     if (prev.messages.length === 0) return prev;
     const msgs = [...prev.messages];
-    msgs[msgs.length - 1] = mapper(msgs[msgs.length - 1]);
+    const last = msgs[msgs.length - 1];
+    if (!last) return prev;
+    msgs[msgs.length - 1] = mapper(last);
     return { ...prev, messages: msgs };
   });
 }

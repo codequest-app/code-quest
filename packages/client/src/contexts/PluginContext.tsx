@@ -41,7 +41,7 @@ export function usePlugins(): PluginContextValue {
   return ctx;
 }
 
-export function PluginProvider({ children }: { children: ReactNode }) {
+export function PluginProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [state, setState] = useState<PluginState>({
     installed: [],

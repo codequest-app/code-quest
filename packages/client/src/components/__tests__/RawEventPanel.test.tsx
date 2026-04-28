@@ -114,7 +114,7 @@ describe('RawEventPanel type filter (inline chips)', () => {
 
     const summaries = screen.getAllByText(/^Event #/);
     expect(summaries).toHaveLength(1);
-    expect(summaries[0].textContent).toContain('tool_use');
+    expect(summaries[0]!.textContent).toContain('tool_use');
   });
 });
 
@@ -129,8 +129,8 @@ describe('RawEventPanel delta default hidden', () => {
 
     const summaries = await screen.findAllByText(/^Event #/);
     expect(summaries).toHaveLength(2);
-    expect(summaries[0].textContent).toContain('assistant');
-    expect(summaries[1].textContent).toContain('result');
+    expect(summaries[0]!.textContent).toContain('assistant');
+    expect(summaries[1]!.textContent).toContain('result');
   });
 
   it('user can check delta type chip to show its events', async () => {
@@ -157,7 +157,7 @@ describe('RawEventPanel delta default hidden', () => {
 
     const summaries = screen.getAllByText(/^Event #/);
     expect(summaries).toHaveLength(1);
-    expect(summaries[0].textContent).toContain('assistant');
+    expect(summaries[0]!.textContent).toContain('assistant');
   });
 });
 

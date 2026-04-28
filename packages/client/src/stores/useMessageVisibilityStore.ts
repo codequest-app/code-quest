@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { localStoragePersist } from './persistStorage';
 
@@ -7,7 +7,9 @@ interface MessageVisibilityState {
   setEnabledTypes: (types: string[]) => void;
 }
 
-export const useMessageVisibilityStore = create<MessageVisibilityState>()(
+export const useMessageVisibilityStore: UseBoundStore<
+  Mutate<StoreApi<MessageVisibilityState>, [['zustand/persist', unknown]]>
+> = create<MessageVisibilityState>()(
   persist(
     (set) => ({
       enabledTypes: null,

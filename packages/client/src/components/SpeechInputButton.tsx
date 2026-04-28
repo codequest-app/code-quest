@@ -16,7 +16,7 @@ export function SpeechInputButton({
   isSupported,
   interimText,
   className,
-}: SpeechInputButtonProps) {
+}: SpeechInputButtonProps): React.ReactNode {
   if (!isSupported) return null;
 
   return (

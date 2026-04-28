@@ -37,7 +37,7 @@ const baseMessages: Message[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof PaletteMessageList> = {
   component: PaletteMessageList,
   tags: ['autodocs'],
   args: {
@@ -47,7 +47,7 @@ const meta = {
     onClose: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text w-160 p-2">
         <Story />
       </div>

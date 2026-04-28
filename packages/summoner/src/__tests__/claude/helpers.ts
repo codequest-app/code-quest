@@ -3,7 +3,7 @@ import { expect } from 'vitest';
 import { ClaudeAdapter } from '../../claude/adapter.ts';
 import type { ProtocolMessage } from '../../claude/schemas.ts';
 
-export const adapter = new ClaudeAdapter();
+export const adapter: ClaudeAdapter = new ClaudeAdapter();
 
 /** Extract the ProtocolMessage from a parseLine result. Generic so callers get
  *  a narrowed type for fallback (`unknown`/`error`) branches without casting. */
@@ -16,11 +16,13 @@ function parseMessage<T = ProtocolMessage>(line: string): T | null {
 }
 
 /** Helper: parseLine + transform → extract single ClientMessage (or null / array) */
-export function toClientMessage(line: string) {
+export function toClientMessage(line: string): ClientMessage | ClientMessage[] | null {
   const event = parseMessage(line);
   if (!event) return null;
   const r = adapter.transform(event);
-  return r.messages.length === 0 ? null : r.messages.length === 1 ? r.messages[0] : r.messages;
+  if (r.messages.length === 0) return null;
+  if (r.messages.length === 1) return r.messages[0] as ClientMessage;
+  return r.messages;
 }
 
 /** Narrow a ClientMessage (or array/null) to a specific variant. Fails test if mismatched. */
@@ -36,7 +38,7 @@ export function expectName<N extends ClientMessage['name']>(
   return msg as Extract<ClientMessage, { name: N }>;
 }
 
-export function transformResult(line: string) {
+export function transformResult(line: string): import('../../types.ts').AdapterOutput {
   const event = parseMessage(line);
   if (!event) return { messages: [], controlResponses: [] };
   return adapter.transform(event);

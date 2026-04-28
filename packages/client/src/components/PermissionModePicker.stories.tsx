@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { PermissionModePicker } from './PermissionModePicker';
 
-const meta = {
+const meta: Meta<typeof PermissionModePicker> = {
   component: PermissionModePicker,
   tags: ['autodocs'],
   args: { onSetPermissionMode: fn(), onSetEffort: fn() },

@@ -67,7 +67,7 @@ export function TabBar({
   onCloseTab,
   onNewTab,
   onOpenHistory,
-}: TabBarProps) {
+}: TabBarProps): React.ReactNode {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (tabs.length === 0 && !onNewTab) return null;
@@ -82,8 +82,8 @@ export function TabBar({
         aria-label="tab-bar"
       >
         {sortedTabs.map((tab, i) => {
-          const prev = i > 0 ? sortedTabs[i - 1] : null;
-          const showDivider = prev !== null && tabGroupKey(prev) !== tabGroupKey(tab);
+          const prev = i > 0 ? sortedTabs[i - 1] : undefined;
+          const showDivider = prev != null && tabGroupKey(prev) !== tabGroupKey(tab);
           return (
             <Fragment key={tab.sessionId}>
               {showDivider ? (

@@ -2,7 +2,13 @@ import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '../
 import { cn } from '../../utils/cn';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './shared';
 
-export function HookStartedContent({ content, meta }: { content: string; meta?: HookStartedMeta }) {
+export function HookStartedContent({
+  content,
+  meta,
+}: {
+  content: string;
+  meta?: HookStartedMeta;
+}): React.JSX.Element {
   return (
     <StatusLine icon="⚙" className="text-text-muted">
       <span>Running hook: {content}</span>
@@ -19,7 +25,7 @@ export function HookResponseContent({
 }: {
   content: string;
   meta?: HookResponseMeta;
-}) {
+}): React.JSX.Element {
   const output = meta?.output;
   if (!output)
     return (
@@ -40,7 +46,7 @@ export function HookDiagnosticsContent({
 }: {
   content: string;
   meta?: HookDiagnosticsMeta;
-}) {
+}): React.JSX.Element {
   const diagnostics = meta?.diagnostics;
   return (
     <details className="border border-warning/30 rounded-lg bg-warning-bg/50">

@@ -1,6 +1,17 @@
 import { z } from 'zod';
 
-export const projectSchema = z.object({
+export const projectSchema: z.ZodObject<
+  {
+    id: z.ZodString;
+    path: z.ZodString;
+    name: z.ZodString;
+    pinned: z.ZodBoolean;
+    color: z.ZodNullable<z.ZodString>;
+    lastOpenedAt: z.ZodString;
+    createdAt: z.ZodString;
+  },
+  z.core.$strip
+> = z.object({
   id: z.string().uuid(),
   path: z.string(),
   name: z.string(),
@@ -11,21 +22,58 @@ export const projectSchema = z.object({
 });
 export type Project = z.infer<typeof projectSchema>;
 
-export const projectsListPayloadSchema = z.object({}).optional();
+export const projectsListPayloadSchema: z.ZodOptional<z.ZodObject<{}, z.core.$strip>> = z
+  .object({})
+  .optional();
 export type ProjectsListPayload = z.infer<typeof projectsListPayloadSchema>;
 
-export const projectsListResponseSchema = z.union([
-  z.object({ projects: z.array(projectSchema) }),
-  z.object({ error: z.string() }),
-]);
+export const projectsListResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        projects: z.ZodArray<
+          z.ZodObject<
+            {
+              id: z.ZodString;
+              path: z.ZodString;
+              name: z.ZodString;
+              pinned: z.ZodBoolean;
+              color: z.ZodNullable<z.ZodString>;
+              lastOpenedAt: z.ZodString;
+              createdAt: z.ZodString;
+            },
+            z.core.$strip
+          >
+        >;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<{ error: z.ZodString }, z.core.$strip>,
+  ]
+> = z.union([z.object({ projects: z.array(projectSchema) }), z.object({ error: z.string() })]);
 export type ProjectsListResponse = z.infer<typeof projectsListResponseSchema>;
 
-export const projectsAddPayloadSchema = z.object({
-  path: z.string().min(1),
-});
+export const projectsAddPayloadSchema: z.ZodObject<{ path: z.ZodString }, z.core.$strip> = z.object(
+  {
+    path: z.string().min(1),
+  },
+);
 export type ProjectsAddPayload = z.infer<typeof projectsAddPayloadSchema>;
 
-export const projectsUpdatePayloadSchema = z.object({
+export const projectsUpdatePayloadSchema: z.ZodObject<
+  {
+    id: z.ZodString;
+    patch: z.ZodObject<
+      {
+        name: z.ZodOptional<z.ZodString>;
+        pinned: z.ZodOptional<z.ZodBoolean>;
+        color: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+      },
+      z.core.$strip
+    >;
+  },
+  z.core.$strip
+> = z.object({
   id: z.string().uuid(),
   patch: z
     .object({
@@ -37,12 +85,27 @@ export const projectsUpdatePayloadSchema = z.object({
 });
 export type ProjectsUpdatePayload = z.infer<typeof projectsUpdatePayloadSchema>;
 
-export const projectsRemovePayloadSchema = z.object({
-  id: z.string().uuid(),
-});
+export const projectsRemovePayloadSchema: z.ZodObject<{ id: z.ZodString }, z.core.$strip> =
+  z.object({
+    id: z.string().uuid(),
+  });
 export type ProjectsRemovePayload = z.infer<typeof projectsRemovePayloadSchema>;
 
-export const projectsErrorSchema = z.object({
+export const projectsErrorSchema: z.ZodObject<
+  {
+    error: z.ZodEnum<{
+      path_not_found: 'path_not_found';
+      path_not_directory: 'path_not_directory';
+      path_outside_roots: 'path_outside_roots';
+      project_not_found: 'project_not_found';
+      project_has_active_sessions: 'project_has_active_sessions';
+      invalid_payload: 'invalid_payload';
+    }>;
+    path: z.ZodOptional<z.ZodString>;
+    activeSessionCount: z.ZodOptional<z.ZodNumber>;
+  },
+  z.core.$strip
+> = z.object({
   error: z.enum([
     'path_not_found',
     'path_not_directory',
@@ -56,19 +119,98 @@ export const projectsErrorSchema = z.object({
 });
 export type ProjectsError = z.infer<typeof projectsErrorSchema>;
 
-export const projectsAddResponseSchema = z.union([projectSchema, projectsErrorSchema]);
+export const projectsAddResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        id: z.ZodString;
+        path: z.ZodString;
+        name: z.ZodString;
+        pinned: z.ZodBoolean;
+        color: z.ZodNullable<z.ZodString>;
+        lastOpenedAt: z.ZodString;
+        createdAt: z.ZodString;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
+        error: z.ZodEnum<{
+          path_not_found: 'path_not_found';
+          path_not_directory: 'path_not_directory';
+          path_outside_roots: 'path_outside_roots';
+          project_not_found: 'project_not_found';
+          project_has_active_sessions: 'project_has_active_sessions';
+          invalid_payload: 'invalid_payload';
+        }>;
+        path: z.ZodOptional<z.ZodString>;
+        activeSessionCount: z.ZodOptional<z.ZodNumber>;
+      },
+      z.core.$strip
+    >,
+  ]
+> = z.union([projectSchema, projectsErrorSchema]);
 export type ProjectsAddResponse = z.infer<typeof projectsAddResponseSchema>;
 
-export const projectsUpdateResponseSchema = z.union([projectSchema, projectsErrorSchema]);
+export const projectsUpdateResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<
+      {
+        id: z.ZodString;
+        path: z.ZodString;
+        name: z.ZodString;
+        pinned: z.ZodBoolean;
+        color: z.ZodNullable<z.ZodString>;
+        lastOpenedAt: z.ZodString;
+        createdAt: z.ZodString;
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
+        error: z.ZodEnum<{
+          path_not_found: 'path_not_found';
+          path_not_directory: 'path_not_directory';
+          path_outside_roots: 'path_outside_roots';
+          project_not_found: 'project_not_found';
+          project_has_active_sessions: 'project_has_active_sessions';
+          invalid_payload: 'invalid_payload';
+        }>;
+        path: z.ZodOptional<z.ZodString>;
+        activeSessionCount: z.ZodOptional<z.ZodNumber>;
+      },
+      z.core.$strip
+    >,
+  ]
+> = z.union([projectSchema, projectsErrorSchema]);
 export type ProjectsUpdateResponse = z.infer<typeof projectsUpdateResponseSchema>;
 
-export const projectsRemoveResponseSchema = z.union([
-  z.object({ ok: z.literal(true) }),
-  projectsErrorSchema,
-]);
+export const projectsRemoveResponseSchema: z.ZodUnion<
+  readonly [
+    z.ZodObject<{ ok: z.ZodLiteral<true> }, z.core.$strip>,
+    z.ZodObject<
+      {
+        error: z.ZodEnum<{
+          path_not_found: 'path_not_found';
+          path_not_directory: 'path_not_directory';
+          path_outside_roots: 'path_outside_roots';
+          project_not_found: 'project_not_found';
+          project_has_active_sessions: 'project_has_active_sessions';
+          invalid_payload: 'invalid_payload';
+        }>;
+        path: z.ZodOptional<z.ZodString>;
+        activeSessionCount: z.ZodOptional<z.ZodNumber>;
+      },
+      z.core.$strip
+    >,
+  ]
+> = z.union([z.object({ ok: z.literal(true) }), projectsErrorSchema]);
 export type ProjectsRemoveResponse = z.infer<typeof projectsRemoveResponseSchema>;
 
-export const projectsRemovedEventSchema = z.object({
+export const projectsRemovedEventSchema: z.ZodObject<
+  { id: z.ZodString; path: z.ZodString },
+  z.core.$strip
+> = z.object({
   id: z.string().uuid(),
   path: z.string(),
 });

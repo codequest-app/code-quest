@@ -3,7 +3,7 @@ import { expect, fn, userEvent } from 'storybook/test';
 import { withStoryChannel } from '../test/story-decorator';
 import { McpServerRow } from './McpServerRow';
 
-const meta = {
+const meta: Meta<typeof McpServerRow> = {
   component: McpServerRow,
   tags: ['autodocs'],
   decorators: [

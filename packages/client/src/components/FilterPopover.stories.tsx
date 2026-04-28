@@ -10,12 +10,12 @@ const entries = [
   { type: 'error', count: 3 },
 ];
 
-const meta = {
+const meta: Meta<typeof FilterPopover> = {
   component: FilterPopover,
   tags: ['autodocs'],
   args: { entries, onChange: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg p-6">
         <Story />
       </div>

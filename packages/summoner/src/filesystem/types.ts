@@ -1,13 +1,20 @@
 import type { FsMutationResult } from '@code-quest/shared';
 import { z } from 'zod';
 
-export const directoryEntrySchema = z.object({
+export const directoryEntrySchema: z.ZodObject<{
+  name: z.ZodString;
+  path: z.ZodString;
+}> = z.object({
   name: z.string(),
   path: z.string(),
 });
 export type DirectoryEntry = z.infer<typeof directoryEntrySchema>;
 
-export const fileResultSchema = z.object({
+export const fileResultSchema: z.ZodObject<{
+  path: z.ZodString;
+  name: z.ZodString;
+  type: z.ZodEnum<{ file: 'file'; directory: 'directory' }>;
+}> = z.object({
   path: z.string(),
   name: z.string(),
   type: z.enum(['file', 'directory']),

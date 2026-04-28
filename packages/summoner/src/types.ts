@@ -11,7 +11,13 @@ export type { ClientMessage, InitializeOptions, ResolvedControlResponse };
 
 // --- Raw entry for recording ---
 
-export const rawEventSchema = z.object({
+export const rawEventSchema: z.ZodObject<{
+  timestamp: z.ZodNumber;
+  sessionId: z.ZodString;
+  direction: z.ZodEnum<{ in: 'in'; out: 'out'; err: 'err' }>;
+  raw: z.ZodString;
+  seq: z.ZodNumber;
+}> = z.object({
   timestamp: z.number(),
   sessionId: z.string(),
   direction: z.enum(['in', 'out', 'err']),

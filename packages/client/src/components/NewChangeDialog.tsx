@@ -10,7 +10,11 @@ export interface NewChangeDialogProps {
   onClose: () => void;
 }
 
-export function NewChangeDialog({ open, onSubmit, onClose }: NewChangeDialogProps) {
+export function NewChangeDialog({
+  open,
+  onSubmit,
+  onClose,
+}: NewChangeDialogProps): React.JSX.Element {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

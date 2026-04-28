@@ -15,7 +15,7 @@ export function ExistingPane({
   path: string;
   placeholderPath: string;
   onPathChange: (v: string) => void;
-}) {
+}): React.JSX.Element {
   return (
     <div className="flex flex-col gap-2">
       <FieldRow label="Branch" htmlFor="wt-existing-branch">

@@ -37,8 +37,10 @@ interface NavigationActions {
   setSelectedWorktree: (projectCwd: string, worktreeCwd: string | null) => void;
 }
 
-export const NavigationStateContext = createContext<NavigationState | null>(null);
-export const NavigationActionsContext = createContext<NavigationActions | null>(null);
+export const NavigationStateContext: React.Context<NavigationState | null> =
+  createContext<NavigationState | null>(null);
+export const NavigationActionsContext: React.Context<NavigationActions | null> =
+  createContext<NavigationActions | null>(null);
 
 export function useNavigationState(): NavigationState {
   const ctx = useContext(NavigationStateContext);
@@ -52,7 +54,7 @@ export function useNavigationActions(): NavigationActions {
   return ctx;
 }
 
-export function NavigationProvider({ children }: { children: ReactNode }) {
+export function NavigationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [pendingActivateChannel, setPendingActivateChannel] =
     useState<PendingActivateChannel | null>(null);
   const [pendingOpenWorktree, setPendingOpenWorktree] = useState<PendingOpenWorktree | null>(null);

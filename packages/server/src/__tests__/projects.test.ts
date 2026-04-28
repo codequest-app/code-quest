@@ -58,7 +58,7 @@ describe('projects socket handler', () => {
       if ('error' in list) throw new Error(list.error);
       const userProjects = withoutSessionProject(list.projects);
       expect(userProjects).toHaveLength(1);
-      expect(userProjects[0].path).toBe('/tmp/cc-office');
+      expect(userProjects[0]!.path).toBe('/tmp/cc-office');
     });
   });
 

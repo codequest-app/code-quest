@@ -40,7 +40,7 @@ export function useFsActions(): FsActions {
   return ctx;
 }
 
-export function FsProvider({ children }: { children: ReactNode }) {
+export function FsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const emitterRef = useRef<TopicEmitter<string, string[]>>(new TopicEmitter());
   const refCounts = useRef<Map<string, number>>(new Map());
@@ -127,7 +127,10 @@ export function FsProvider({ children }: { children: ReactNode }) {
   return <FsActionsContext.Provider value={actions}>{children}</FsActionsContext.Provider>;
 }
 
-export function useFsBrowse() {
+export function useFsBrowse(): {
+  browse: (path?: string) => Promise<FsDirectory[]>;
+  browseEntries: (path?: string) => Promise<FsBrowseEntries>;
+} {
   const { browse: browseEntries } = useFsActions();
 
   async function browse(path?: string): Promise<FsDirectory[]> {
@@ -136,5 +139,5 @@ export function useFsBrowse() {
     return result.directories;
   }
 
-  return { browse, browseEntries };
+  return { browse: browse, browseEntries: browseEntries };
 }

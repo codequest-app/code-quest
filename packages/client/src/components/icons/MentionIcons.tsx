@@ -2,7 +2,7 @@
 export { DocumentIcon as FileIcon, FolderIcon } from '@heroicons/react/24/outline';
 
 /** Custom folder-with-@-mark icon for "Add context from files" action. */
-export function AddContextIcon({ className }: { className?: string }) {
+export function AddContextIcon({ className }: { className?: string }): React.JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

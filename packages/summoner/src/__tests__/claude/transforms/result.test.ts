@@ -85,8 +85,8 @@ describe('transform — result events', () => {
     const result = transformResult(JSON.stringify(base));
     const errorMsgs = result.messages.filter((m) => m.name === 'error:message');
     expect(errorMsgs).toHaveLength(1);
-    expect(errorMsgs[0].payload.kind).toBeUndefined();
-    expect(errorMsgs[0].payload.message).toBe('Max turns exceeded');
+    expect(errorMsgs[0]!.payload.kind).toBeUndefined();
+    expect(errorMsgs[0]!.payload.message).toBe('Max turns exceeded');
   });
 
   it('handles result without is_error/subtype (backward compat)', () => {

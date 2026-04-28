@@ -26,7 +26,7 @@ const baseArgs = {
   updateValue: fn(),
 };
 
-const meta = {
+const meta: Meta<typeof ToolbarDialogs> = {
   component: ToolbarDialogs,
   tags: ['autodocs'],
   args: baseArgs,

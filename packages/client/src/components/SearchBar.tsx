@@ -17,7 +17,7 @@ export function SearchBar({
   onToggleRaw,
   rawActive = false,
   placeholder = 'Search messages...',
-}: SearchBarProps) {
+}: SearchBarProps): React.JSX.Element {
   return (
     <div className="border-b border-border">
       <div className="flex items-center gap-2 px-4 py-2">

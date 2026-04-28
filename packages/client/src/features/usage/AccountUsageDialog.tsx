@@ -104,7 +104,7 @@ export function AccountUsageDialog({
   contextUsage: rawContextUsage,
   stats,
   providerConfig,
-}: AccountUsageDialogProps) {
+}: AccountUsageDialogProps): React.JSX.Element {
   const contextUsage = contextUsageDataSchema.safeParse(rawContextUsage).data;
   const manageUrl =
     subscriptionType === 'team' || subscriptionType === 'enterprise'

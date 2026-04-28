@@ -65,7 +65,7 @@ export function ToolbarDialogs({
   rewindToMessage,
   forkSession,
   updateValue,
-}: ToolbarDialogsProps) {
+}: ToolbarDialogsProps): React.JSX.Element {
   const isUsageOpen = useSyncExternalStore(
     (cb) => usageOpenSignal.subscribe(cb),
     () => usageOpenSignal.isOpen,

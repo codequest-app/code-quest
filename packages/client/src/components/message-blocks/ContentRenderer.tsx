@@ -9,7 +9,12 @@ interface ContentRendererProps {
   onReject?: () => void;
 }
 
-export function ContentRenderer({ content, editable, onAccept, onReject }: ContentRendererProps) {
+export function ContentRenderer({
+  content,
+  editable,
+  onAccept,
+  onReject,
+}: ContentRendererProps): React.JSX.Element {
   if (isDiff(content)) {
     return (
       <DiffViewer content={content} editable={!!editable} onAccept={onAccept} onReject={onReject} />

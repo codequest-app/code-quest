@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { withStoryApp } from '../test/story-decorator';
 import { FileTree } from './FileTree';
 
-const meta = {
+const meta: Meta<typeof FileTree> = {
   component: FileTree,
   tags: ['autodocs'],
   args: { onSelect: fn(), onHighlight: fn() },

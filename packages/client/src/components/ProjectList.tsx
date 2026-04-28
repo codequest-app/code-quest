@@ -16,7 +16,7 @@ export function ProjectList({
   activeProjectCwd: string | null;
   onSelect: (cwd: string) => void;
   onAdd: () => void;
-}) {
+}): React.JSX.Element {
   const pinned = projects.filter((p) => p.pinned).sort(byLastOpenedDesc);
   const recent = projects.filter((p) => !p.pinned).sort(byLastOpenedDesc);
   // Show Pinned header whenever pinned items exist (emphasizes the curated set).

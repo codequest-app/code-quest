@@ -62,7 +62,7 @@ interface RewindDialogProps {
   onConfirm: (item: { messageId: string; promptText: string }) => void;
 }
 
-export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps) {
+export function RewindDialog({ open, onClose, onConfirm }: RewindDialogProps): React.JSX.Element {
   const { messages } = useChannelMessages();
   const items = useMemo(() => getRewindableMessages(messages), [messages]);
   const [focusIndex, setFocusIndex] = useState(0);

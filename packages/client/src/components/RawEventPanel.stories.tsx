@@ -3,12 +3,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { RawEventPanel } from './RawEventPanel';
 
-const meta = {
+const meta: Meta<typeof RawEventPanel> = {
   component: RawEventPanel,
   tags: ['autodocs'],
   args: { onClose: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="w-72 h-100 bg-bg text-text">
         <Story />
       </div>

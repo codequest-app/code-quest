@@ -38,7 +38,7 @@ export function ChannelProvider({
    *  on the server (resume / fork — `cwd` is just identity, not a launch
    *  trigger). Replaces the legacy "cwd-as-sentinel" behaviour. */
   launchOnMount?: boolean;
-}) {
+}): React.JSX.Element {
   const resetStreamingRefsRef = useRef(() => {});
   const messageQueueRef = useRef<string[]>([]);
   const { socket } = useSocket();

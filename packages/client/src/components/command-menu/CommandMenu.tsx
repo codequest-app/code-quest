@@ -29,7 +29,7 @@ export function CommandMenu({
   onManagePlugins,
   onAttachFile,
   docsUrl,
-}: CommandMenuProps) {
+}: CommandMenuProps): React.JSX.Element {
   const {
     model,
     availableModels,

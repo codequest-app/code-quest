@@ -30,8 +30,8 @@ describe('BranchPopover', () => {
   it('lists branches with ✓ on current; current is pinned to top', () => {
     renderPopover({ branches: ['main', 'feat/x', 'fix/y'], current: 'feat/x' });
     const items = screen.getAllByRole('menuitem').filter((i) => i.dataset.kind === 'branch');
-    expect(items[0].textContent).toContain('feat/x');
-    expect(items[0].textContent).toContain('✓');
+    expect(items[0]!.textContent).toContain('feat/x');
+    expect(items[0]!.textContent).toContain('✓');
     expect(items.map((i) => i.textContent?.replace(/[✓\s]/g, ''))).toEqual([
       'feat/x',
       'main',
@@ -89,14 +89,14 @@ describe('BranchPopover', () => {
       await user.type(screen.getByRole('textbox', { name: /filter branches/i }), 'BRANCH-3');
       const items = screen.getAllByRole('menuitem').filter((i) => i.dataset.kind === 'branch');
       expect(items).toHaveLength(1);
-      expect(items[0].textContent).toContain('branch-3');
+      expect(items[0]!.textContent).toContain('branch-3');
     });
 
     it('current branch is pinned at the top even when filter does not move it', () => {
       renderMany(5, { current: 'branch-3' });
       const items = screen.getAllByRole('menuitem').filter((i) => i.dataset.kind === 'branch');
-      expect(items[0].textContent).toContain('branch-3');
-      expect(items[0].textContent).toContain('✓');
+      expect(items[0]!.textContent).toContain('branch-3');
+      expect(items[0]!.textContent).toContain('✓');
     });
 
     it('list has a bounded max-height and scrolls', () => {

@@ -4,7 +4,7 @@ import { EffortSwitch } from './EffortSwitch';
 
 const levels = ['low', 'medium', 'high', 'max'];
 
-const meta = {
+const meta: Meta<typeof EffortSwitch> = {
   component: EffortSwitch,
   tags: ['autodocs'],
   args: {
@@ -12,7 +12,7 @@ const meta = {
     onSelect: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-surface text-text p-6">
         <Story />
       </div>

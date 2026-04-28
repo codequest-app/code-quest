@@ -55,7 +55,7 @@ export function InstalledPluginList({
   onUninstall,
   onInstall,
   installing,
-}: InstalledPluginListProps) {
+}: InstalledPluginListProps): React.JSX.Element {
   const { providerConfig } = useChannelConfig();
   const [selectedForInstall, setSelectedForInstall] = useState<string | null>(null);
 

@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { ToolResultBlock } from './ToolResultBlock';
 
-const meta = {
+const meta: Meta<typeof ToolResultBlock> = {
   component: ToolResultBlock,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text max-w-xl p-4">
         <Story />
       </div>

@@ -24,7 +24,7 @@ describe('feature-registry', () => {
       r.register(mk({ id: 'dup', label: 'A' }));
       r.register(mk({ id: 'dup', label: 'B' }));
       expect(r.getFeatures()).toHaveLength(1);
-      expect(r.getFeatures()[0].label).toBe('B');
+      expect(r.getFeatures()[0]!.label).toBe('B');
     });
   });
 

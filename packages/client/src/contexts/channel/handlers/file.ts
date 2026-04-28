@@ -17,7 +17,11 @@ interface FileActionsDeps {
   cwd?: string;
 }
 
-export function createFileActions({ socket, channelId, cwd }: FileActionsDeps) {
+export function createFileActions({ socket, channelId, cwd }: FileActionsDeps): {
+  searchFiles: (pattern: string) => Promise<FsSearchResponse>;
+  getTerminalContents: () => Promise<TerminalGetContentsResponse>;
+  openClaudeTerminal: () => Promise<RpcResult<{ channelId: string }>>;
+} {
   function searchFiles(pattern: string): Promise<FsSearchResponse> {
     // No cwd → no scope to search in. Return empty rather than crash; the
     // mention picker just shows nothing.
@@ -33,5 +37,9 @@ export function createFileActions({ socket, channelId, cwd }: FileActionsDeps) {
     return rpc(socket, EVENTS.terminal.open_claude, { channelId });
   }
 
-  return { searchFiles, getTerminalContents, openClaudeTerminal };
+  return {
+    searchFiles: searchFiles,
+    getTerminalContents: getTerminalContents,
+    openClaudeTerminal: openClaudeTerminal,
+  };
 }

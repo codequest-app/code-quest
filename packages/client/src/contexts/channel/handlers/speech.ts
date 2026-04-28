@@ -18,6 +18,8 @@ function onSpeechMessage(
   };
 }
 
-export const composeHandlers = {
+export const composeHandlers: {
+  'speech:message': typeof onSpeechMessage;
+} = {
   'speech:message': onSpeechMessage,
 } satisfies Record<string, (state: ComposeState, payload: never) => ComposeState>;

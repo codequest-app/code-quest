@@ -17,7 +17,7 @@ export function ThinkingBlock({
   budgetTokens,
   durationMs,
   isStreaming = false,
-}: ThinkingBlockProps) {
+}: ThinkingBlockProps): React.ReactNode {
   const [open, setOpen] = useState(false);
 
   if (!content.trim()) return null;

@@ -22,7 +22,7 @@ export function showNotificationToast(
   severity: 'info' | 'warning' | 'error',
   buttons: string[],
   onRespond: (response: Record<string, unknown>) => void,
-) {
+): void {
   if (buttons.length > 1) {
     toast.custom(
       (id: string | number) => (
@@ -62,7 +62,7 @@ export function NotificationToast({
   buttons,
   onButton,
   onDismiss,
-}: NotificationToastProps) {
+}: NotificationToastProps): React.ReactNode {
   return (
     <div
       role="alert"

@@ -25,7 +25,7 @@ const projects: Project[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof ProjectList> = {
   component: ProjectList,
   tags: ['autodocs'],
   args: { onSelect: fn(), onAdd: fn() },

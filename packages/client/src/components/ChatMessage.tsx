@@ -52,13 +52,15 @@ interface ChatMessageProps {
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }
 
-export const ChatMessage = memo(function ChatMessage({
+export const ChatMessage: React.MemoExoticComponent<
+  (props: ChatMessageProps) => React.JSX.Element
+> = memo(function ChatMessage({
   message,
   showAvatar = true,
   onRewind,
   onFork,
   onDiffRespond,
-}: ChatMessageProps) {
+}: ChatMessageProps): React.JSX.Element {
   const isUser = message.role === 'user';
 
   if (isUser) {

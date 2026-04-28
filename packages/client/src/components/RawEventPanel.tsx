@@ -37,7 +37,11 @@ interface RawEventPanelProps {
   onClose: () => void;
 }
 
-export function RawEventPanel({ onFetch, onSubscribe, onClose }: RawEventPanelProps) {
+export function RawEventPanel({
+  onFetch,
+  onSubscribe,
+  onClose,
+}: RawEventPanelProps): React.JSX.Element {
   const [events, setEvents] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set());

@@ -60,7 +60,7 @@ describe('DirtyBroadcaster', () => {
     }
     vi.advanceTimersByTime(200);
     expect(cb).toHaveBeenCalledTimes(1);
-    expect(cb.mock.calls[0][0].length).toBe(100);
+    expect(cb.mock.calls[0]![0].length).toBe(100);
   });
 
   it('void payload: transform returns undefined → callback fires without paths leaking', () => {

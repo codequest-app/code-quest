@@ -121,7 +121,7 @@ describe('RewindDialog', () => {
     await screen.findByRole('dialog', { name: /rewind/i });
 
     // Click first item
-    await user.click(screen.getAllByRole('option')[0]);
+    await user.click(screen.getAllByRole('option')[0]!);
 
     // Should show confirmation dialog
     const confirmDialog = await screen.findByRole('dialog', { name: /^Rewind code$/ });
@@ -161,7 +161,7 @@ describe('RewindDialog', () => {
 
     await openRewindDialog(user);
     await screen.findByRole('dialog', { name: /rewind to/i });
-    await user.click(screen.getAllByRole('option')[0]);
+    await user.click(screen.getAllByRole('option')[0]!);
     // Phase 2 title is "Rewind" (not "Fork and rewind" — those are separate actions)
     await screen.findByRole('dialog', { name: /^Rewind code$/ });
 
@@ -179,7 +179,7 @@ describe('RewindDialog', () => {
 
     await openRewindDialog(user);
     await screen.findByRole('dialog', { name: /rewind/i });
-    await user.click(screen.getAllByRole('option')[0]);
+    await user.click(screen.getAllByRole('option')[0]!);
 
     await screen.findByRole('dialog', { name: /^Rewind code$/ });
     await user.click(screen.getByText(/never mind/i));

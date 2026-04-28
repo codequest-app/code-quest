@@ -24,7 +24,10 @@ function onDisconnect(state: ChannelState): ChannelState {
 
 // ── Handler map ──
 
-export const sessionHandlerOn = {
+export const sessionHandlerOn: {
+  'session:status': typeof onSessionStatus;
+  disconnect: typeof onDisconnect;
+} = {
   'session:status': onSessionStatus,
   disconnect: onDisconnect,
 } satisfies Record<string, (state: ChannelState, payload: never) => ChannelState>;
@@ -36,7 +39,14 @@ interface SessionActionsDeps {
   channelId: string;
 }
 
-export function createSessionActions({ socket, channelId }: SessionActionsDeps) {
+export function createSessionActions({ socket, channelId }: SessionActionsDeps): {
+  fetchRawEvents: () => Promise<RawEventsResponse>;
+  subscribeRawEvents: (cb: (evt: unknown) => void) => () => void;
+  forkSession: (messageId: string) => Promise<ForkConversationResponse>;
+  rewindToMessage: (userMessageId: string) => Promise<RpcResult<RewindResult>>;
+  askSideQuestion: (question: string) => Promise<RpcResult<SideQuestionResult>>;
+  reloadPlugins: () => Promise<PluginReloadResult>;
+} {
   function fetchRawEvents(): Promise<RawEventsResponse> {
     return rpc(socket, EVENTS.session.raw_events, { channelId });
   }
@@ -72,11 +82,11 @@ export function createSessionActions({ socket, channelId }: SessionActionsDeps) 
   }
 
   return {
-    fetchRawEvents,
-    subscribeRawEvents,
-    forkSession,
-    rewindToMessage,
-    askSideQuestion,
-    reloadPlugins,
+    fetchRawEvents: fetchRawEvents,
+    subscribeRawEvents: subscribeRawEvents,
+    forkSession: forkSession,
+    rewindToMessage: rewindToMessage,
+    askSideQuestion: askSideQuestion,
+    reloadPlugins: reloadPlugins,
   };
 }

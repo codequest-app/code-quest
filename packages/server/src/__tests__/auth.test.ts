@@ -20,8 +20,8 @@ describe('ChatHandler > auth', () => {
     const authUrls = claude.events('notification:auth_url');
     expect(authUrls).toHaveLength(1);
     expect(authUrls[0]).not.toHaveProperty('sessionId');
-    expect(authUrls[0].url).toBe('https://auth.example.com');
-    expect(authUrls[0].method).toBe('oauth');
+    expect(authUrls[0]!.url).toBe('https://auth.example.com');
+    expect(authUrls[0]!.method).toBe('oauth');
   });
 
   it('auth:status returns unauthenticated by default', async () => {

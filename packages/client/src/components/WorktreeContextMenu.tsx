@@ -55,7 +55,7 @@ export function WorktreeDropdownMenu({
   onOpenChange,
   defaultOpen,
   ...callbacks
-}: DropdownProps) {
+}: DropdownProps): React.JSX.Element {
   const items = buildItems(callbacks);
   return (
     <DropdownMenu.Root open={open} onOpenChange={onOpenChange} defaultOpen={defaultOpen}>
@@ -90,7 +90,7 @@ interface ContextProps extends WorktreeMenuCallbacks {
   children: ReactNode;
 }
 
-export function WorktreeContextMenu({ children, ...callbacks }: ContextProps) {
+export function WorktreeContextMenu({ children, ...callbacks }: ContextProps): React.JSX.Element {
   const items = buildItems(callbacks);
   return (
     <ContextMenu.Root>

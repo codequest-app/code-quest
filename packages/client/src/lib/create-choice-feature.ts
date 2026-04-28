@@ -50,7 +50,8 @@ export function createChoiceFeature<T extends string>({
     ui: { closeSilent: true },
     execute() {
       const idx = values.indexOf(currentValue);
-      onSelect(values[(idx + 1) % values.length]);
+      const next = values[(idx + 1) % values.length];
+      if (next !== undefined) onSelect(next);
     },
   };
 }

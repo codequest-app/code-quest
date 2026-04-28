@@ -12,7 +12,7 @@ export function OptionButton({
   selected?: boolean;
   onClick: () => void;
   onMouseEnter?: () => void;
-}) {
+}): React.JSX.Element {
   return (
     <button
       type="button"

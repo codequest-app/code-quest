@@ -121,7 +121,7 @@ export function DiffViewer({
   onAccept,
   onReject,
   onAcceptEdited,
-}: DiffViewerProps) {
+}: DiffViewerProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const fileName = parseDiffFileName(content);

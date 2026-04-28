@@ -123,7 +123,7 @@ export function MentionDropdown({
   onSelectMention,
   onHover,
   activeItemRef,
-}: MentionDropdownProps) {
+}: MentionDropdownProps): React.JSX.Element {
   return (
     <section
       aria-label="mention-dropdown"

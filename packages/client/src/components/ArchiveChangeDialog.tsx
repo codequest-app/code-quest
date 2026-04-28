@@ -11,7 +11,12 @@ export interface ArchiveChangeDialogProps {
   onClose: () => void;
 }
 
-export function ArchiveChangeDialog({ open, name, onSubmit, onClose }: ArchiveChangeDialogProps) {
+export function ArchiveChangeDialog({
+  open,
+  name,
+  onSubmit,
+  onClose,
+}: ArchiveChangeDialogProps): React.JSX.Element {
   const [skipSpecs, setSkipSpecs] = useState(false);
   const submit = useAsyncAction(() => Promise.resolve(onSubmit({ skipSpecs })));
 

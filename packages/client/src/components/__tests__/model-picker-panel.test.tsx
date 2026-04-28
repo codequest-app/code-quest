@@ -44,7 +44,7 @@ describe('ModelPickerPopover', () => {
 
       // buttons[0] = Default, buttons[1] = Opus, buttons[2] = Sonnet, buttons[3] = Haiku
       const buttons = screen.getAllByRole('option');
-      expect(buttons[0].className).toContain('bg-selected');
+      expect(buttons[0]!.className).toContain('bg-selected');
     });
 
     it('ArrowDown moves to next item', async () => {
@@ -56,8 +56,8 @@ describe('ModelPickerPopover', () => {
       await user.keyboard('{ArrowDown}'); // → index 2 = sonnet
 
       const buttons = screen.getAllByRole('option');
-      expect(buttons[1].className).not.toContain('bg-selected'); // opus
-      expect(buttons[2].className).toContain('bg-selected'); // sonnet
+      expect(buttons[1]!.className).not.toContain('bg-selected'); // opus
+      expect(buttons[2]!.className).toContain('bg-selected'); // sonnet
     });
 
     it('ArrowUp moves to previous item', async () => {
@@ -69,8 +69,8 @@ describe('ModelPickerPopover', () => {
       await user.keyboard('{ArrowUp}'); // → index 1 = opus
 
       const buttons = screen.getAllByRole('option');
-      expect(buttons[1].className).toContain('bg-selected'); // opus
-      expect(buttons[2].className).not.toContain('bg-selected'); // sonnet
+      expect(buttons[1]!.className).toContain('bg-selected'); // opus
+      expect(buttons[2]!.className).not.toContain('bg-selected'); // sonnet
     });
   });
 

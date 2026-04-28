@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { cn } from '../../utils/cn';
 import { CopyButton, HOVER_COPY_BASE } from './CopyButton';
 
-const meta = {
+const meta: Meta<typeof CopyButton> = {
   component: CopyButton,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-6 w-90">
         <Story />
       </div>

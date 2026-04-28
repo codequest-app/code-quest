@@ -25,7 +25,7 @@ const ICONS = [
   { name: 'SlashCommandIcon', Icon: SlashCommandIcon },
 ] as const;
 
-const Gallery = () => (
+const Gallery = (): React.JSX.Element => (
   <div className="flex flex-col gap-6 bg-bg text-text p-6">
     <section>
       <h3 className="text-xs text-text-muted mb-3">Icons (w-6 h-6)</h3>
@@ -67,7 +67,7 @@ const Gallery = () => (
   </div>
 );
 
-const meta = {
+const meta: Meta<typeof Gallery> = {
   component: Gallery,
   title: 'ui/Icons',
   tags: ['autodocs'],

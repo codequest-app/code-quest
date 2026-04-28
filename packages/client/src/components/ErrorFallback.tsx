@@ -3,7 +3,10 @@ interface ErrorFallbackProps {
   resetErrorBoundary: () => void;
 }
 
-export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
+export function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: ErrorFallbackProps): React.JSX.Element {
   const message = error instanceof Error ? error.message : String(error);
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">

@@ -113,7 +113,7 @@ const components: Components = {
   },
 };
 
-export function MarkdownContent({ content }: { content: string }) {
+export function MarkdownContent({ content }: { content: string }): React.JSX.Element {
   return (
     <div className="prose prose-themed prose-sm max-w-none">
       <Markdown remarkPlugins={[remarkGfm]} components={components}>

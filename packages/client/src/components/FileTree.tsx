@@ -41,7 +41,7 @@ export function FileTree({
    *  works for fs CRUD). Used by AddProjectDialog to mark already-added
    *  project roots. */
   disabledPaths?: ReadonlySet<string>;
-}) {
+}): React.JSX.Element {
   const { browseEntries } = useFsBrowse();
   const fsActions = useFsActions();
   const { subscribeFsDirty } = fsActions;

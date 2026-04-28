@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { CitationsPanel } from './CitationsPanel';
 
-const meta = {
+const meta: Meta<typeof CitationsPanel> = {
   component: CitationsPanel,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-3xl bg-surface text-text p-6">
         <Story />
       </div>

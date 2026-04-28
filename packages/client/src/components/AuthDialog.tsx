@@ -9,7 +9,7 @@ interface AuthDialogProps {
   onClose: () => void;
 }
 
-export function AuthDialog({ open, onClose }: AuthDialogProps) {
+export function AuthDialog({ open, onClose }: AuthDialogProps): React.JSX.Element {
   const { auth, login, submitOAuthCode, resetAuth } = useSession();
   const { providerConfig } = useChannelConfig();
   const [code, setCode] = useState('');

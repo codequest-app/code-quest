@@ -10,7 +10,7 @@ interface CitationsPanelProps {
   citations: Citation[];
 }
 
-export function CitationsPanel({ citations }: CitationsPanelProps) {
+export function CitationsPanel({ citations }: CitationsPanelProps): React.ReactNode {
   if (citations.length === 0) return null;
 
   return (

@@ -2,14 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { HookCallbackCard } from './HookCallbackCard';
 
-const meta = {
+const meta: Meta<typeof HookCallbackCard> = {
   component: HookCallbackCard,
   tags: ['autodocs'],
   args: {
     onRespond: fn(),
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-md bg-bg text-text p-4">
         <Story />
       </div>

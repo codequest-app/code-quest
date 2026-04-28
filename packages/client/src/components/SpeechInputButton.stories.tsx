@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { SpeechInputButton } from './SpeechInputButton';
 
-const meta = {
+const meta: Meta<typeof SpeechInputButton> = {
   component: SpeechInputButton,
   tags: ['autodocs'],
   args: { onToggle: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text p-8 flex justify-center">
         <Story />
       </div>

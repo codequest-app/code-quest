@@ -19,7 +19,7 @@ export function ToolPermissionCard({
 }: {
   pending: PendingControl;
   onRespond: (response: ControlPermissionResponse) => void;
-}) {
+}): React.JSX.Element {
   const { providerConfig } = useChannelConfig();
   const [focusedIdx, setFocusedIdx] = useState(0);
   const [denyMessage, setDenyMessage] = useState('');
@@ -89,7 +89,7 @@ export function ToolPermissionCard({
         const num = Number(e.key);
         if (num >= 1 && num <= options.length) {
           e.preventDefault();
-          options[num - 1].action();
+          options[num - 1]?.action();
           return;
         }
         if (e.key === 'ArrowDown') {
@@ -103,7 +103,7 @@ export function ToolPermissionCard({
         if (e.key === 'Enter' && document.activeElement !== inputRef.current) {
           e.preventDefault();
           if (focusedIdx < options.length) {
-            options[focusedIdx].action();
+            options[focusedIdx]?.action();
           }
         }
       }

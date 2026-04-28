@@ -3,12 +3,12 @@ import { fn } from 'storybook/test';
 import { withThemePreset } from '../../test/story-decorator';
 import { SearchField } from './SearchField';
 
-const meta = {
+const meta: Meta<typeof SearchField> = {
   component: SearchField,
   tags: ['autodocs'],
   args: { onChange: fn() },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text w-160">
         <Story />
       </div>

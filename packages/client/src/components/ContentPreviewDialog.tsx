@@ -21,7 +21,7 @@ export function ContentPreviewDialog({
   onClose,
   pendingDiffToolId,
   onDiffRespond,
-}: ContentPreviewDialogProps) {
+}: ContentPreviewDialogProps): React.JSX.Element {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent

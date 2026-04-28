@@ -55,8 +55,10 @@ interface ProjectActions {
   removeProject: (cwd: string) => Promise<ProjectMutationResult>;
 }
 
-export const ProjectStateContext = createContext<ProjectState | null>(null);
-export const ProjectActionsContext = createContext<ProjectActions | null>(null);
+export const ProjectStateContext: React.Context<ProjectState | null> =
+  createContext<ProjectState | null>(null);
+export const ProjectActionsContext: React.Context<ProjectActions | null> =
+  createContext<ProjectActions | null>(null);
 
 export function useProjectState(): ProjectState {
   const ctx = useContext(ProjectStateContext);
@@ -162,7 +164,7 @@ export function deriveProjects(sessions: SessionStateSummary[], prev: Project[])
   return newProjects.length > 0 ? [...prev, ...newProjects] : prev;
 }
 
-export function ProjectProvider({ children }: { children: ReactNode }) {
+export function ProjectProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectCwd, setActiveProjectCwd] = useState<string | null>(null);

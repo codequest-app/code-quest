@@ -22,7 +22,7 @@ export function MessageNodeList({
   onFork,
   onStopTask,
   onDiffRespond,
-}: MessageNodeListProps) {
+}: MessageNodeListProps): React.JSX.Element {
   const groups = groupForTimeline(nodes, prevRole);
 
   return (
@@ -31,7 +31,7 @@ export function MessageNodeList({
         if (group.kind === 'timeline') {
           return (
             <CollapsibleTimeline
-              key={group.nodes[0].message.id}
+              key={group.nodes[0]?.message.id}
               nodes={group.nodes}
               onRewind={onRewind}
               onFork={onFork}

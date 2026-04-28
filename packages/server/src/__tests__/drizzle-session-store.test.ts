@@ -87,8 +87,8 @@ describe('DrizzleSessionStore', () => {
 
       const result = await store.list();
 
-      expect(result.sessions[0].channelId).toBe('new');
-      expect(result.sessions[1].channelId).toBe('old');
+      expect(result.sessions[0]!.channelId).toBe('new');
+      expect(result.sessions[1]!.channelId).toBe('old');
     });
   });
 

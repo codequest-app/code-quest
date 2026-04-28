@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TruncatedContent } from './TruncatedContent';
 
-const meta = {
+const meta: Meta<typeof TruncatedContent> = {
   component: TruncatedContent,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="bg-bg text-text max-w-md p-4">
         <Story />
       </div>

@@ -19,7 +19,7 @@ export function NewPane({
   path: string;
   placeholderPath: string;
   onPathChange: (v: string) => void;
-}) {
+}): React.JSX.Element {
   return (
     <div className="flex flex-col gap-2">
       <FieldRow label="New branch name" htmlFor="wt-new-branch">

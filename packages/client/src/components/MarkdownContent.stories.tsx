@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MarkdownContent } from './MarkdownContent';
 
-const meta = {
+const meta: Meta<typeof MarkdownContent> = {
   component: MarkdownContent,
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType): React.JSX.Element => (
       <div className="max-w-2xl bg-surface text-text p-6 prose prose-invert prose-sm max-w-none">
         <Story />
       </div>

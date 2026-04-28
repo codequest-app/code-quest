@@ -31,7 +31,7 @@ export function TopScopeSwitcher({
   activeProjectCwd: string | null;
   onSelect: (cwd: string) => void;
   onAddProject: () => void;
-}) {
+}): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 

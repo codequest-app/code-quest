@@ -21,7 +21,11 @@ interface TriStateIndicatorProps {
   featureId?: string;
 }
 
-export function TriStateIndicator({ state, onPartial, featureId }: TriStateIndicatorProps) {
+export function TriStateIndicator({
+  state,
+  onPartial,
+  featureId,
+}: TriStateIndicatorProps): React.JSX.Element {
   const clickable = state === 'partial' && !!onPartial;
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: partial-only click; keyboard equivalent provided

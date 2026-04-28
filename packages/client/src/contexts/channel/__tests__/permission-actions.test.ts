@@ -84,7 +84,7 @@ describe('respondToControl', () => {
     const { setControls, actions } = await setup([ctrl1, ctrl2]);
     actions.respondToControl({ behavior: 'allow', updatedInput: {} }, 'req-1');
     expect(setControls).toHaveBeenCalledOnce();
-    const updater = setControls.mock.calls[0][0] as (prev: PendingControl[]) => PendingControl[];
+    const updater = setControls.mock.calls[0]![0] as (prev: PendingControl[]) => PendingControl[];
     const result = updater([ctrl1, ctrl2]);
     expect(result).toEqual([ctrl2]);
   });

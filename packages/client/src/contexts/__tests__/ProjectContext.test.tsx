@@ -189,12 +189,12 @@ describe('ProjectContext (server-backed)', () => {
         await result.current.actions.addProject('/p/a');
       });
       await waitFor(() => expect(result.current.state.projects).toHaveLength(1));
-      expect(result.current.state.projects[0].pinned).toBe(false);
+      expect(result.current.state.projects[0]!.pinned).toBe(false);
 
       await act(async () => {
         await result.current.actions.pinProject('/p/a', true);
       });
-      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(true));
+      await waitFor(() => expect(result.current.state.projects[0]!.pinned).toBe(true));
     });
 
     it('pinProject(false) toggles back to unpinned', async () => {
@@ -207,12 +207,12 @@ describe('ProjectContext (server-backed)', () => {
         await result.current.actions.addProject('/p/a');
         await result.current.actions.pinProject('/p/a', true);
       });
-      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(true));
+      await waitFor(() => expect(result.current.state.projects[0]!.pinned).toBe(true));
 
       await act(async () => {
         await result.current.actions.pinProject('/p/a', false);
       });
-      await waitFor(() => expect(result.current.state.projects[0].pinned).toBe(false));
+      await waitFor(() => expect(result.current.state.projects[0]!.pinned).toBe(false));
     });
 
     it('renameProject updates name in state', async () => {
@@ -228,7 +228,7 @@ describe('ProjectContext (server-backed)', () => {
       await act(async () => {
         await result.current.actions.renameProject('/p/a', 'Renamed');
       });
-      await waitFor(() => expect(result.current.state.projects[0].name).toBe('Renamed'));
+      await waitFor(() => expect(result.current.state.projects[0]!.name).toBe('Renamed'));
     });
 
     it('removeProject removes from state when no active sessions', async () => {
@@ -247,7 +247,7 @@ describe('ProjectContext (server-backed)', () => {
         await result.current.actions.removeProject('/p/a');
       });
       await waitFor(() => expect(result.current.state.projects).toHaveLength(1));
-      expect(result.current.state.projects[0].cwd).toBe('/p/b');
+      expect(result.current.state.projects[0]!.cwd).toBe('/p/b');
     });
 
     it('pinProject returns project_not_found for unknown cwd (client-side check)', async () => {

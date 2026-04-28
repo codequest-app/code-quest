@@ -47,7 +47,7 @@ const conversation: Message[] = [
   },
 ];
 
-const meta = {
+const meta: Meta<typeof MessageList> = {
   component: MessageList,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

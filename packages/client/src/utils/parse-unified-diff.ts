@@ -25,7 +25,7 @@ export function parseUnifiedDiff(input: string): DiffFile[] {
     const fileMatch = FILE_HEADER_RE.exec(raw);
     if (fileMatch) {
       if (current) files.push(current);
-      current = { path: fileMatch[2], isBinary: false, added: 0, removed: 0, lines: [] };
+      current = { path: fileMatch[2] ?? '', isBinary: false, added: 0, removed: 0, lines: [] };
       current.lines.push({ kind: 'header', text: raw });
       continue;
     }

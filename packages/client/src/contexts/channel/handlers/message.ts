@@ -31,6 +31,7 @@ function applyUserContent(
       if (uuid) {
         for (let i = messages.length - 1; i >= 0; i--) {
           const m = messages[i];
+          if (!m) continue;
           if (m.cliUuid === uuid) {
             // Same uuid already attached — idempotent no-op.
             matched = true;
@@ -38,7 +39,11 @@ function applyUserContent(
           }
           if (m.role === 'user' && m.type === 'text' && m.content === block.text && !m.cliUuid) {
             messages = [...messages];
-            messages[i] = { ...m, cliUuid: uuid, meta: { ...m.meta, source: resolvedSource } };
+            messages[i] = {
+              ...m,
+              cliUuid: uuid,
+              meta: { ...m.meta, source: resolvedSource },
+            } as typeof m;
             matched = true;
             break;
           }
@@ -95,7 +100,11 @@ function onStreamToolSummary(state: ChannelState, p: Payload<'stream:tool_summar
 
 // ── Handler map ──
 
-export const messageHandlerOn = {
+export const messageHandlerOn: {
+  'message:user': typeof onMessageUser;
+  'stream:text': typeof onStreamText;
+  'stream:tool_summary': typeof onStreamToolSummary;
+} = {
   'message:user': onMessageUser,
   'stream:text': onStreamText,
   'stream:tool_summary': onStreamToolSummary,
@@ -117,8 +126,13 @@ export function createMessageActions({
   setChannelState,
   statusRef,
   messageQueueRef,
-}: MessageActionsDeps) {
-  function sendMessage(message: string) {
+}: MessageActionsDeps): {
+  sendMessage: (message: string) => void;
+  abort: () => void;
+  kill: () => void;
+  appendMessage: (fields: Parameters<typeof msg>[0]) => void;
+} {
+  function sendMessage(message: string): void {
     if (statusRef.current === 'processing') {
       if (messageQueueRef.current.length < 10) messageQueueRef.current.push(message);
     } else {
@@ -131,18 +145,18 @@ export function createMessageActions({
     }));
   }
 
-  function abort() {
+  function abort(): void {
     channelEmit(socket, channelId, EVENTS.chat.cancel, {});
     setChannelState((prev) => ({ ...prev, status: 'cancelling' as const }));
   }
 
-  function kill() {
+  function kill(): void {
     channelEmit(socket, channelId, EVENTS.session.close, {});
   }
 
-  function appendMessage(fields: Parameters<typeof msg>[0]) {
+  function appendMessage(fields: Parameters<typeof msg>[0]): void {
     setChannelState((s) => addMessage(s, fields));
   }
 
-  return { sendMessage, abort, kill, appendMessage };
+  return { sendMessage: sendMessage, abort: abort, kill: kill, appendMessage: appendMessage };
 }

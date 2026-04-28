@@ -4,12 +4,14 @@ import { fanOutWrites } from './composite-fan-out.ts';
 import type { RawEventStore, SessionPreview } from './raw-event-store.ts';
 
 export class CompositeRawEventStore implements RawEventStore {
+  private readonly primary: RawEventStore;
   private stores: RawEventStore[];
   constructor(stores: RawEventStore[]) {
-    this.stores = stores;
     if (stores.length === 0) {
       throw new Error('CompositeRawEventStore requires at least one store');
     }
+    this.stores = stores;
+    this.primary = stores[0] as RawEventStore;
   }
 
   async append(event: RawEvent, id?: string): Promise<string> {
@@ -19,18 +21,18 @@ export class CompositeRawEventStore implements RawEventStore {
   }
 
   getBySession(sessionId: string): Promise<RawEvent[]> {
-    return this.stores[0].getBySession(sessionId);
+    return this.primary.getBySession(sessionId);
   }
 
   getPreview(sessionId: string): Promise<SessionPreview> {
-    return this.stores[0].getPreview(sessionId);
+    return this.primary.getPreview(sessionId);
   }
 
   async cloneEvents(fromSessionId: string, toSessionId: string): Promise<void> {
     // Generate ids once — all backing stores end up with the same PKs for
     // cloned rows, keeping downstream references (e.g. raw_deltas.parent_id)
     // valid regardless of which backend answers reads.
-    const rows = await this.stores[0].getBySession(fromSessionId);
+    const rows = await this.primary.getBySession(fromSessionId);
     if (rows.length === 0) return;
     const ids = rows.map(() => uuidv7());
     await fanOutWrites(this.stores, 'raw event clone', (s) =>

@@ -142,7 +142,7 @@ export function CollapsibleTimeline({
   onFork,
   onStopTask,
   onDiffRespond,
-}: RunProps & { nodes: MessageNode[] }) {
+}: RunProps & { nodes: MessageNode[] }): React.JSX.Element {
   const runs: TimelineRun[] = splitTimelineRuns(nodes);
   return (
     <div className="animate-fade-in mt-1">
@@ -150,7 +150,7 @@ export function CollapsibleTimeline({
         if (run.kind === 'grouped') {
           return (
             <ExploredGroup
-              key={run.nodes[0].message.id}
+              key={run.nodes[0]?.message.id}
               nodes={run.nodes}
               onRewind={onRewind}
               onFork={onFork}

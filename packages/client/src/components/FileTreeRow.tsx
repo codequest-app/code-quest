@@ -57,7 +57,9 @@ export interface FileTreeRowProps
  *  iteration locals (`item.getProps()` etc.) — that's the headless-tree
  *  contract, not an SRP issue. ContextMenu wrapping happens at the call
  *  site so this component doesn't carry menu props. */
-export const FileTreeRow = forwardRef<HTMLDivElement, FileTreeRowProps>(function FileTreeRow(
+export const FileTreeRow: React.ForwardRefExoticComponent<
+  FileTreeRowProps & React.RefAttributes<HTMLDivElement>
+> = forwardRef<HTMLDivElement, FileTreeRowProps>(function FileTreeRow(
   { item, isHighlighted, isDisabled, gitMark, rename, onClick, onDoubleClick, ...slotProps },
   ref,
 ) {
