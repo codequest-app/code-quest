@@ -1,9 +1,13 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
+import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
+
+const containerRef = createRef<HTMLDivElement>();
+
 import { MessageList } from '../MessageList';
 
 // Fake only setTimeout/clearTimeout so the 500ms scroll-lock can be
@@ -97,7 +101,7 @@ describe('Auto-scroll behavior', () => {
     await renderWithChannel(
       <>
         <MessageList />
-        <ComposeInput />
+        <ComposeInput containerRef={containerRef} />
       </>,
     );
     const container = screen.getByLabelText('message-list');

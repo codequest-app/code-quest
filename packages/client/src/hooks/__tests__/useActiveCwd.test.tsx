@@ -1,18 +1,33 @@
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { ActiveChatTabCwdStateContext } from '../../contexts/ActiveChatTabCwdContext';
+import { NavigationStateContext, useActiveCwd } from '../../contexts/NavigationContext';
 import { ProjectStateContext } from '../../contexts/ProjectContext';
-import { useActiveCwd } from '../useActiveCwd';
+
+function NavigationStub({
+  activeCwd,
+  children,
+}: {
+  activeCwd: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <NavigationStateContext.Provider
+      value={{
+        pendingActivateChannel: null,
+        pendingOpenWorktree: null,
+        selectedWorktreeCwd: {},
+        activeCwd,
+      }}
+    >
+      {children}
+    </NavigationStateContext.Provider>
+  );
+}
 
 function ProjectStub({ cwd, children }: { cwd: string | null; children: ReactNode }) {
   return (
-    <ProjectStateContext.Provider
-      value={{
-        projects: [],
-        activeProjectCwd: cwd,
-      }}
-    >
+    <ProjectStateContext.Provider value={{ projects: [], activeProjectCwd: cwd }}>
       {children}
     </ProjectStateContext.Provider>
   );
@@ -24,32 +39,36 @@ describe('useActiveCwd', () => {
     expect(result.current).toBeNull();
   });
 
-  it('returns activeProjectCwd when project is active but no active tab', () => {
+  it('returns activeProjectCwd when no activeCwd is set', () => {
     function Wrapper({ children }: { children: ReactNode }) {
-      return <ProjectStub cwd="/my/project">{children}</ProjectStub>;
+      return (
+        <NavigationStub activeCwd={null}>
+          <ProjectStub cwd="/my/project">{children}</ProjectStub>
+        </NavigationStub>
+      );
     }
     const { result } = renderHook(() => useActiveCwd(), { wrapper: Wrapper });
     expect(result.current).toBe('/my/project');
   });
 
-  it('prefers ActiveChatTabCwdContext.cwd over activeProjectCwd when set', () => {
+  it('prefers activeCwd over activeProjectCwd when set', () => {
     function Wrapper({ children }: { children: ReactNode }) {
       return (
-        <ActiveChatTabCwdStateContext.Provider value={{ cwd: '/repo/.claude/worktrees/wt' }}>
+        <NavigationStub activeCwd="/repo/.claude/worktrees/wt">
           <ProjectStub cwd="/repo">{children}</ProjectStub>
-        </ActiveChatTabCwdStateContext.Provider>
+        </NavigationStub>
       );
     }
     const { result } = renderHook(() => useActiveCwd(), { wrapper: Wrapper });
     expect(result.current).toBe('/repo/.claude/worktrees/wt');
   });
 
-  it('falls through when ActiveChatTabCwdContext.cwd is null', () => {
+  it('falls through when activeCwd is null', () => {
     function Wrapper({ children }: { children: ReactNode }) {
       return (
-        <ActiveChatTabCwdStateContext.Provider value={{ cwd: null }}>
+        <NavigationStub activeCwd={null}>
           <ProjectStub cwd="/repo">{children}</ProjectStub>
-        </ActiveChatTabCwdStateContext.Provider>
+        </NavigationStub>
       );
     }
     const { result } = renderHook(() => useActiveCwd(), { wrapper: Wrapper });

@@ -1,27 +1,30 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { COMPOSE_PLACEHOLDER } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
 
+const containerRef = createRef<HTMLDivElement>();
+
 describe('ComposeInput', () => {
   it('renders textarea with placeholder', async () => {
-    await renderWithChannel(<ComposeInput />);
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
   });
 
   it('typing updates the textarea value', async () => {
-    await renderWithChannel(<ComposeInput />);
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'hello');
     expect(textarea).toHaveValue('hello');
   });
 
   it('shows processing placeholder when status is processing', async () => {
-    const { claude } = await renderWithChannel(<ComposeInput />);
+    const { claude } = await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     // Send message without result → status becomes processing
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go');
@@ -32,14 +35,14 @@ describe('ComposeInput', () => {
   });
 
   it('Enter submits and clears textarea', async () => {
-    await renderWithChannel(<ComposeInput />);
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'hello{Enter}');
     expect(textarea).toHaveValue('');
   });
 
   it('textarea height resets after submit (CSS grid trick auto-sizes via hidden mirror)', async () => {
-    await renderWithChannel(<ComposeInput />);
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
 
     await userEvent.type(textarea, 'line1\nline2\nline3');
@@ -52,7 +55,7 @@ describe('ComposeInput', () => {
   });
 
   it('renders without error when no attachments', async () => {
-    await renderWithChannel(<ComposeInput />);
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
   });
 
@@ -72,7 +75,7 @@ describe('ComposeInput', () => {
     }
 
     it('pasting an image attaches it and leaves textarea empty', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       const img = new File(['fake-bytes'], 'screenshot.png', { type: 'image/png' });
       pasteClipboard(textarea, [{ kind: 'file', type: 'image/png', file: img }]);
@@ -81,7 +84,7 @@ describe('ComposeInput', () => {
     });
 
     it('pasting multiple images attaches all in order', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       const a = new File(['a'], 'a.png', { type: 'image/png' });
       const b = new File(['b'], 'b.jpg', { type: 'image/jpeg' });
@@ -94,14 +97,14 @@ describe('ComposeInput', () => {
     });
 
     it('pasting plain text does not create an attachment', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       pasteClipboard(textarea, [{ kind: 'string', type: 'text/plain' }]);
       expect(screen.queryByLabelText(/^Remove /)).toBeNull();
     });
 
     it('pasting a non-image file is ignored', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       const pdf = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' });
       pasteClipboard(textarea, [{ kind: 'file', type: 'application/pdf', file: pdf }]);
@@ -111,7 +114,7 @@ describe('ComposeInput', () => {
 
   describe('@ mention', () => {
     it('typing @ opens mention dropdown with file results', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@');
 
@@ -121,7 +124,7 @@ describe('ComposeInput', () => {
     });
 
     it('typing @src/ lists directory contents', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@src/');
 
@@ -131,7 +134,7 @@ describe('ComposeInput', () => {
     });
 
     it('Escape closes mention dropdown', async () => {
-      await renderWithChannel(<ComposeInput />);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@');
 
@@ -148,7 +151,7 @@ describe('ComposeInput', () => {
       const cwd = '/test/project';
       summoner.filesystem().setRoots([cwd]);
       summoner.filesystem().addFile(`${cwd}/index.ts`, '');
-      await renderWithChannel(<ComposeInput />, { summoner, cwd });
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />, { summoner, cwd });
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@index');
@@ -169,7 +172,7 @@ describe('ComposeInput', () => {
       summoner.filesystem().setRoots([cwd]);
       // Seed files at the channel's resolved cwd
       summoner.filesystem().addFile(`${cwd}/index.ts`, '');
-      await renderWithChannel(<ComposeInput />, { summoner, cwd });
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />, { summoner, cwd });
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, '@index');

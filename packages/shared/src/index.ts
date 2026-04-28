@@ -17,6 +17,7 @@ export { type Envelope, EnvelopeSchema } from './transport/envelope.ts';
 
 // Utils
 export { errMsg } from './utils/err-msg.ts';
+export { getOrSet } from './utils/get-or-set.ts';
 export { isRecord } from './utils/is-record.ts';
 
 // Validators

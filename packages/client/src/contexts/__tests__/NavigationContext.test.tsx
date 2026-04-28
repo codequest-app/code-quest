@@ -62,6 +62,42 @@ describe('NavigationContext', () => {
     });
   });
 
+  describe('activeCwd', () => {
+    it('starts as null', () => {
+      const { result } = renderHook(() => useNavigationState(), { wrapper });
+      expect(result.current.activeCwd).toBeNull();
+    });
+
+    it('setActiveCwd updates activeCwd', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.setActiveCwd('/repo/worktree');
+      });
+
+      expect(result.current.state.activeCwd).toBe('/repo/worktree');
+    });
+
+    it('setActiveCwd(null) clears activeCwd', () => {
+      const { result } = renderHook(
+        () => ({ state: useNavigationState(), actions: useNavigationActions() }),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.actions.setActiveCwd('/repo/wt');
+      });
+      act(() => {
+        result.current.actions.setActiveCwd(null);
+      });
+
+      expect(result.current.state.activeCwd).toBeNull();
+    });
+  });
+
   describe('pendingOpenWorktree', () => {
     it('requestOpenWorktree sets intent with forceNew default false', () => {
       const { result } = renderHook(

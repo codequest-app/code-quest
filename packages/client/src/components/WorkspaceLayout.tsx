@@ -2,13 +2,11 @@ import { FolderOpenIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
-import { ActiveChatTabCwdProvider } from '../contexts/ActiveChatTabCwdContext';
 import { CommandPaletteProvider, useCommandPalette } from '../contexts/CommandPaletteContext';
-import { useNavigationState } from '../contexts/NavigationContext';
+import { useActiveCwd, useNavigationState } from '../contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { TabProvider } from '../contexts/TabContext';
-import { useActiveCwd } from '../hooks/useActiveCwd';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../utils/cn';
 import { AddProjectDialog } from './AddProjectDialog';
@@ -137,64 +135,62 @@ function WorkspaceLayoutInner() {
               onAddProject={() => setDialogOpen(true)}
             />
           </WorkspaceTopbar>
-          <ActiveChatTabCwdProvider>
-            <div className="relative flex flex-1 overflow-hidden">
-              {leftOpen && (
-                <button
-                  type="button"
-                  aria-label="Dismiss sidebar"
-                  onClick={() => setLeftOpen(false)}
-                  className="lg:hidden fixed inset-0 z-overlay bg-black/40"
-                />
-              )}
-              {rightOpen && hasCwd && (
-                <button
-                  type="button"
-                  aria-label="Dismiss right pane"
-                  onClick={() => setRightOpen(false)}
-                  className="lg:hidden fixed inset-0 z-overlay bg-black/40"
-                />
-              )}
+          <div className="relative flex flex-1 overflow-hidden">
+            {leftOpen && (
+              <button
+                type="button"
+                aria-label="Dismiss sidebar"
+                onClick={() => setLeftOpen(false)}
+                className="lg:hidden fixed inset-0 z-overlay bg-black/40"
+              />
+            )}
+            {rightOpen && hasCwd && (
+              <button
+                type="button"
+                aria-label="Dismiss right pane"
+                onClick={() => setRightOpen(false)}
+                className="lg:hidden fixed inset-0 z-overlay bg-black/40"
+              />
+            )}
 
+            <DrawerAside
+              side="left"
+              open={leftOpen}
+              mobileWidthClass="w-[min(85vw,320px)]"
+              dockedWidthClass="lg:w-65"
+              label="sidebar-panel"
+            >
+              <ProjectTree
+                projects={projects}
+                activeProjectCwd={activeProjectCwd}
+                onSelectProject={(cwd) => {
+                  setActiveProject(cwd);
+                  if (breakpoint !== 'desktop') setLeftOpen(false);
+                }}
+                onAdd={() => setDialogOpen(true)}
+              />
+            </DrawerAside>
+
+            <main className="flex flex-1 min-w-0 h-full">
+              <ProjectsTabContainer
+                projects={projects}
+                activeProjectCwd={activeProjectCwd}
+                sessions={sessions}
+              />
+            </main>
+
+            {hasCwd && (
               <DrawerAside
-                side="left"
-                open={leftOpen}
-                mobileWidthClass="w-[min(85vw,320px)]"
-                dockedWidthClass="lg:w-65"
-                label="sidebar-panel"
+                side="right"
+                open={rightOpen}
+                mobileWidthClass="w-[min(85vw,360px)]"
+                dockedWidthClass="lg:w-80"
+                label="right-pane-drawer"
               >
-                <ProjectTree
-                  projects={projects}
-                  activeProjectCwd={activeProjectCwd}
-                  onSelectProject={(cwd) => {
-                    setActiveProject(cwd);
-                    if (breakpoint !== 'desktop') setLeftOpen(false);
-                  }}
-                  onAdd={() => setDialogOpen(true)}
-                />
+                <RightPaneWithCwd />
               </DrawerAside>
-
-              <main className="flex flex-1 min-w-0 h-full">
-                <ProjectsTabContainer
-                  projects={projects}
-                  activeProjectCwd={activeProjectCwd}
-                  sessions={sessions}
-                />
-              </main>
-
-              {hasCwd && (
-                <DrawerAside
-                  side="right"
-                  open={rightOpen}
-                  mobileWidthClass="w-[min(85vw,360px)]"
-                  dockedWidthClass="lg:w-80"
-                  label="right-pane-drawer"
-                >
-                  <RightPaneWithCwd />
-                </DrawerAside>
-              )}
-            </div>
-          </ActiveChatTabCwdProvider>
+            )}
+          </div>
         </>
       )}
       <AddProjectDialog

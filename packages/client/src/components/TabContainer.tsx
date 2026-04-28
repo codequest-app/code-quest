@@ -1,11 +1,12 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { ChannelProvider } from '../contexts/channel';
 import { useGitState } from '../contexts/GitContext';
+import { useNavigationActions } from '../contexts/NavigationContext';
+import { useProjectState } from '../contexts/ProjectContext';
 import { useSession } from '../contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '../contexts/TabContext';
-import { useActiveChatTabCwdPublisher } from '../hooks/useActiveChatTabCwdPublisher';
 import { basename } from '../utils/basename';
 import { cn } from '../utils/cn';
 import { findWorktreeByCwd } from '../utils/findWorktreeByCwd';
@@ -47,10 +48,25 @@ export const TabContainer: React.MemoExoticComponent<
   const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();
   const { listing } = useGitState();
-  // Publish this project's active-tab cwd to ActiveChatTabCwdContext when this
-  // project is the globally-active project. Bridges TabProvider boundary
-  // so RightPaneWithCwd (rendered above) follows tab switches.
-  useActiveChatTabCwdPublisher(projectCwd);
+  const { setActiveCwd } = useNavigationActions();
+  const { activeProjectCwd } = useProjectState();
+
+  const isThisActive = projectCwd === activeProjectCwd;
+  const activeTabCwd = activeTabId ? (tabs[activeTabId]?.cwd ?? null) : null;
+
+  useEffect(() => {
+    if (!isThisActive) return;
+    setActiveCwd(activeTabCwd);
+  }, [isThisActive, activeTabCwd, setActiveCwd]);
+
+  // Separate effect: cleanup on active→inactive must not depend on
+  // activeTabCwd, otherwise switching tabs would flap to null then new cwd.
+  useEffect(() => {
+    if (!isThisActive) return;
+    return () => {
+      setActiveCwd(null);
+    };
+  }, [isThisActive, setActiveCwd]);
 
   const handleCloseTab = (id: string) => {
     closeSession(id);

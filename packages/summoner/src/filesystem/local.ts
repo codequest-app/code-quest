@@ -1,6 +1,6 @@
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, isAbsolute, join, normalize, relative, resolve } from 'node:path';
-import { errMsg } from '@code-quest/shared';
+import { errMsg, getOrSet } from '@code-quest/shared';
 import Fuse from 'fuse.js';
 import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
@@ -122,13 +122,7 @@ export class LocalFilesystemService implements FilesystemService {
   private async getOrBuildListCache(cwd: string): Promise<ListCacheEntry> {
     const cached = this.listCache.get(cwd);
     if (cached) return cached;
-    const inflight = this.listCacheInflight.get(cwd);
-    if (inflight) return inflight;
-    const build = this.buildListCacheEntry(cwd).finally(() => {
-      this.listCacheInflight.delete(cwd);
-    });
-    this.listCacheInflight.set(cwd, build);
-    return build;
+    return getOrSet(this.listCacheInflight, cwd, () => this.buildListCacheEntry(cwd));
   }
 
   private async buildListCacheEntry(cwd: string): Promise<ListCacheEntry> {

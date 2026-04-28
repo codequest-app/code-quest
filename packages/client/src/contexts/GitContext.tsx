@@ -16,8 +16,8 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { useCwdQueryStore } from '../hooks/useCwdQueryStore';
 import { rpc } from '../socket/rpc';
+import { createQueryStore } from '../utils/create-query-store';
 import { useSocket } from './SocketContext';
 
 /** Sentinel stored in `listing` when the project is not a git repo. */
@@ -137,14 +137,25 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
   const { socket } = useSocket();
   const [listing, setListing] = useState<Record<string, WorktreeListingEntry>>({});
 
-  const fetch = useMemo(() => fetchGitStatus(socket), [socket]);
-  const statusStore = useCwdQueryStore<GitStatusByCwdResult>({
-    socket,
-    fetch,
-    dirtyEvent: EVENTS.git.dirty,
-    extractCwd: extractGitDirtyCwd,
-    idPrefix: 'git-sub',
-  });
+  const [statusStore] = useState(() =>
+    createQueryStore<GitStatusByCwdResult>({
+      fetch: fetchGitStatus(socket),
+      idPrefix: 'git-sub',
+    }),
+  );
+
+  useEffect(() => {
+    if (!socket) return;
+    const onDirty = (payload: unknown) => {
+      const cwd = extractGitDirtyCwd(payload);
+      if (cwd) void statusStore.refetchIfSubscribed(cwd);
+    };
+    socket.on(EVENTS.git.dirty, onDirty);
+    return () => {
+      socket.off(EVENTS.git.dirty, onDirty);
+    };
+  }, [socket, statusStore]);
+
   const refetchIfSubscribed = statusStore.refetchIfSubscribed;
 
   const actions = useMemo<WorktreeActions>(

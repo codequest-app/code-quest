@@ -13,7 +13,6 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useGitActions, useGitStatus } from '../contexts/GitContext';
 import { useSocket } from '../contexts/SocketContext';
-import { useAsyncAction } from '../hooks/useAsyncAction';
 import { useKeepFsWatcherAlive } from '../hooks/useKeepFsWatcherAlive';
 import { rpc } from '../socket/rpc';
 import { cn } from '../utils/cn';
@@ -62,10 +61,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     }
   }
 
-  // ── Inner async actions (declared before useAsyncAction wraps; function
-  //    declarations are hoisted so order doesn't matter at runtime — but
-  //    they MUST be declared before the early returns to keep hook order
-  //    stable across renders). ──
   async function stageAll() {
     const response = await rpc(socket, EVENTS.git.add, { cwd });
     const parsed = gitAddResultSchema.safeParse(response);
@@ -150,11 +145,6 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     );
   }
 
-  const stageAction = useAsyncAction(stageAll);
-  const fetchAction = useAsyncAction(runFetch);
-  const pullAction = useAsyncAction(runPull);
-  const pushAction = useAsyncAction(push);
-
   // ── Early returns (must follow ALL hook calls above) ──
   if (data && 'notARepo' in data) {
     return (
@@ -212,15 +202,11 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
         <section className="px-3 py-2 border-b border-border text-sm">
           <SectionHeader title={`Changes (${changedCount})`}>
             {hasChanges && (
-              <button
-                type="button"
+              <ActionButton
+                onClick={stageAll}
+                label="Stage all"
                 className="text-xs text-accent hover:underline disabled:opacity-50 inline-flex items-center gap-1"
-                disabled={stageAction.pending}
-                onClick={() => void stageAction.run()}
-              >
-                {stageAction.pending && <Spinner className="w-3 h-3" />}
-                Stage all
-              </button>
+              />
             )}
           </SectionHeader>
           <ChangedFiles files={status.changedFiles} onPick={openDiff} />
@@ -233,9 +219,9 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
         <section className="px-3 py-2">
           <SectionHeader title="Actions" />
           <div className="flex gap-2 text-xs">
-            <ActionButton action={fetchAction} label="Fetch" />
-            <ActionButton action={pullAction} label="Pull" />
-            <ActionButton action={pushAction} label="Push" />
+            <ActionButton onClick={runFetch} label="Fetch" />
+            <ActionButton onClick={runPull} label="Pull" />
+            <ActionButton onClick={push} label="Push" />
           </div>
         </section>
       </div>
