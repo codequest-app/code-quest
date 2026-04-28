@@ -8,6 +8,7 @@ import {
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '../../utils/cn';
 import { formatResetTime } from '../../utils/format-reset-time';
+import { openUrl } from '../../utils/open-url';
 import { DEFAULT_USAGE_TIERS, getTier } from '../../utils/usage-tiers';
 
 interface AccountUsageDialogProps {
@@ -60,7 +61,7 @@ function UsageBarRow({
   resetsAt?: string;
 }) {
   const pct = Math.min(100, Math.floor(utilization * 100));
-  const isHigh = pct >= 80;
+  const isHigh = pct >= HIGH_USAGE_THRESHOLD_PCT;
   const resetText = resetsAt ? formatResetTime(resetsAt) : null;
 
   return (
@@ -80,9 +81,14 @@ function UsageBarRow({
   );
 }
 
+const HIGH_USAGE_THRESHOLD_PCT = 80;
+const MILLION = 1_000_000;
+const THOUSAND = 1_000;
+const FREE_SPACE_CATEGORY = 'Free space';
+
 function formatTokens(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= MILLION) return `${(n / MILLION).toFixed(1)}M`;
+  if (n >= THOUSAND) return `${(n / THOUSAND).toFixed(1)}k`;
   return String(n);
 }
 
@@ -177,7 +183,7 @@ export function AccountUsageDialog({
                   {formatTokens(contextUsage.maxTokens ?? 0)} tokens
                 </div>
                 {contextUsage.categories
-                  .filter((c) => c.name !== 'Free space')
+                  .filter((c) => c.name !== FREE_SPACE_CATEGORY)
                   .map((cat) => (
                     <div key={cat.name} className="flex justify-between text-xs">
                       <span className="text-text-muted/60">{cat.name}</span>
@@ -219,7 +225,7 @@ export function AccountUsageDialog({
                 <button
                   type="button"
                   className="text-xs text-text-muted text-left bg-transparent border-none p-0 mt-1 cursor-pointer hover:underline"
-                  onClick={() => window.open(manageUrl, '_blank')}
+                  onClick={() => openUrl(manageUrl)}
                 >
                   Manage usage on claude.ai
                 </button>

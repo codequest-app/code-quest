@@ -1,5 +1,9 @@
-import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import {
+  type AvailablePlugin,
+  EVENTS,
+  type MarketplaceInfo,
+  type PluginInfo,
+} from '@code-quest/shared';
 import {
   createContext,
   type ReactNode,

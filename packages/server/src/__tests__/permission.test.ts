@@ -361,6 +361,35 @@ describe('ChatHandler > control', () => {
     });
   });
 
+  describe('open_diff error handling', () => {
+    it('auto-denies control request when diffFileService.read throws', async () => {
+      const throwingDiffFileService = {
+        async read(): Promise<string> {
+          throw new Error('disk read failed');
+        },
+      };
+      const container = createTestContainer({
+        diffFileService: throwingDiffFileService,
+      });
+      const server = createFakeServer(container);
+      const summoner = createFakeSummoner(server);
+      const claude = summoner.claude();
+      const channelId = await claude.initialize(s.init('cli-sess'));
+
+      await claude.send('chat:send', { channelId, message: 'go' });
+      await claude.emit(
+        s.controlRequestOpenDiff('diff-err', {
+          originalFilePath: '/tmp/old.ts',
+          newFilePath: '/tmp/new.ts',
+        }),
+      );
+
+      await vi.waitFor(() => {
+        expect(claude.received('control_response').length).toBeGreaterThan(0);
+      });
+    });
+  });
+
   describe('open_diff with file content', () => {
     it('emits diff_review_request with real file content', async () => {
       const dir = join(tmpdir(), `cc-diff-test-${Date.now()}`);

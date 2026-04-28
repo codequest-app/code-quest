@@ -17,6 +17,15 @@ function hasKeyValue(row: unknown): row is { key: string; value: string } {
   return hasValue(row) && 'key' in row && typeof row.key === 'string';
 }
 
+function parseJsonValue(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    logger.debug(err, 'Failed to parse settings value as JSON');
+    return raw;
+  }
+}
+
 export class DrizzleSettingsStore implements SettingsStore {
   constructor(
     private db: DrizzleDb,
@@ -30,12 +39,7 @@ export class DrizzleSettingsStore implements SettingsStore {
       .where(and(eq(this.table.provider, provider), eq(this.table.key, key)));
     const row = rows[0];
     if (!hasValue(row)) return undefined;
-    try {
-      return JSON.parse(row.value);
-    } catch (err) {
-      logger.debug(err, 'Failed to parse settings value as JSON');
-      return row.value;
-    }
+    return parseJsonValue(row.value);
   }
 
   async set(provider: string, key: string, value: unknown): Promise<void> {
@@ -59,12 +63,7 @@ export class DrizzleSettingsStore implements SettingsStore {
       .where(and(eq(this.table.provider, provider), inArray(this.table.key, keys)));
     const result: Record<string, unknown> = {};
     for (const row of rows.filter(hasKeyValue)) {
-      try {
-        result[row.key] = JSON.parse(row.value);
-      } catch (err) {
-        logger.debug(err, 'Failed to parse settings value as JSON in getMany');
-        result[row.key] = row.value;
-      }
+      result[row.key] = parseJsonValue(row.value);
     }
     return result;
   }

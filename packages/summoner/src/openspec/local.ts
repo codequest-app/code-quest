@@ -11,6 +11,7 @@ import type {
 import { z } from 'zod';
 import type { FilesystemService } from '../filesystem/types.ts';
 import type { ProcessProvider } from '../types.ts';
+import { errorCode } from '../utils.ts';
 import type { OpenspecArchiveOptions, OpenspecService } from './types.ts';
 
 const ARTIFACT_FILENAME: Record<OpenspecArtifactKind, string> = {
@@ -79,7 +80,7 @@ export class LocalOpenspecService implements OpenspecService {
       const specs: OpenspecSpecSummary[] = specsParsed.data.map(toSpecSummary);
       return { changes, specs };
     } catch (err) {
-      if (isEnoent(err)) return { error: 'openspec-cli-not-found' };
+      if (errorCode(err) === 'ENOENT') return { error: 'openspec-cli-not-found' };
       throw err;
     }
   }
@@ -161,9 +162,4 @@ function safeJsonParse(s: string): unknown {
   } catch {
     return null;
   }
-}
-
-function isEnoent(err: unknown): boolean {
-  if (typeof err !== 'object' || err === null) return false;
-  return (err as { code?: string }).code === 'ENOENT';
 }

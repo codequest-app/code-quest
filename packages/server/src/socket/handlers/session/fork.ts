@@ -109,17 +109,16 @@ export function create({
         }
       }
 
-      await channelManager.create(parsed.newChannelId, {
+      const { channel: newCh } = await channelManager.create(parsed.newChannelId, {
         cwd,
         launchOptions: { resumeSessionId: parsed.remoteChannelId },
-        onBeforeSpawn: (newCh) => {
-          if (socket) channelManager.addSocketToChannel(newCh, socket);
+        onBeforeSpawn: (ch) => {
+          if (socket) channelManager.addSocketToChannel(ch, socket);
         },
       });
 
       const projectRoot = await resolveProjectRoot(gitService, cwd);
-      const newCh = channelManager.get(parsed.newChannelId);
-      if (newCh) newCh.projectRoot = projectRoot;
+      newCh.projectRoot = projectRoot;
       emitter.broadcastAll(EVENTS.session.created, {
         channelId: parsed.newChannelId,
         cwd,

@@ -1,7 +1,6 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { isValidElement, useRef } from 'react';
-import type { Components } from 'react-markdown';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { copyToClipboard } from '../utils/clipboard';
 import { cn } from '../utils/cn';

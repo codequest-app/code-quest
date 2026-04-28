@@ -1,5 +1,4 @@
-import type { DiffEntry } from '../utils/diff';
-import { generateUnifiedDiff } from '../utils/diff';
+import { type DiffEntry, generateUnifiedDiff } from '../utils/diff';
 import { DiffViewer } from './DiffViewer';
 import { MarkdownContent } from './MarkdownContent';
 import { Button } from './ui/Button';

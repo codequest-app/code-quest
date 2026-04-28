@@ -1,6 +1,13 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { RefObject } from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  type RefObject,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useChannelControl, useChannelMessages, useMessageVisibility } from '../contexts/channel';
 import { filterTree } from '../utils/filter-tree';
 import { isMessageVisible } from '../utils/isMessageVisible';

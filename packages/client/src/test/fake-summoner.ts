@@ -1,6 +1,9 @@
 import { createFakeServer } from '@code-quest/server/test';
-import type { FakeSocket, ServerConnector } from '@code-quest/summoner/test';
-import { FakeSummoner as SummonerFakeSummoner } from '@code-quest/summoner/test';
+import {
+  type FakeSocket,
+  type ServerConnector,
+  FakeSummoner as SummonerFakeSummoner,
+} from '@code-quest/summoner/test';
 import type { TypedSocket } from '../socket/client';
 
 export class FakeSummoner extends SummonerFakeSummoner {

@@ -4,7 +4,6 @@ import {
   controlRequestEventSchema,
   EVENTS,
   isRecord,
-  type ServerToClientEvents,
 } from '@code-quest/shared';
 import type { ProviderAdapter, RawEvent } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
@@ -167,8 +166,7 @@ export class SessionHistory {
     for (const { requestId, message } of pendingRequests) {
       if (respondedRequestIds.has(requestId)) continue;
 
-      const eventName = message.name as keyof ServerToClientEvents;
-      (socket.emit as (event: string, ...args: unknown[]) => void)(eventName, {
+      (socket.emit as (event: string, ...args: unknown[]) => void)(message.name, {
         channelId,
         ...message.payload,
       });

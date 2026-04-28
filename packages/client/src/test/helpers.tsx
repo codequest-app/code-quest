@@ -1,5 +1,4 @@
-import type { FakeClaude } from '@code-quest/summoner/test';
-import { segments as s } from '@code-quest/summoner/test';
+import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { useChannelMessages } from '../contexts/channel';

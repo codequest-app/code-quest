@@ -1,6 +1,5 @@
 import type { RawEvent } from '@code-quest/summoner';
-import type { Column } from 'drizzle-orm';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, type Column, desc, eq } from 'drizzle-orm';
 import { v7 as uuidv7 } from 'uuid';
 import { z } from 'zod';
 import type { DrizzleDb } from './drizzle-types.ts';

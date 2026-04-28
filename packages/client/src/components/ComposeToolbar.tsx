@@ -6,7 +6,7 @@ import {
   toPermissionMode,
 } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
-import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useRef, useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';
 import { useAppInit } from '../contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
@@ -138,13 +138,10 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
 
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const closeDialog = () => setActiveDialog(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mcpRefresh stable via React Compiler
-  useEffect(() => {
-    if (activeDialog === 'mcpStatus' && !enrichedMcpServers) {
-      mcpRefresh();
-    }
-  }, [activeDialog, enrichedMcpServers]);
+  const openMcpStatus = () => {
+    setActiveDialog('mcpStatus');
+    if (!enrichedMcpServers) mcpRefresh();
+  };
 
   const toolbarRef = useRef<HTMLDivElement>(null);
   const modelAnchorRef = useChatColumnAnchorRef(toolbarRef);
@@ -220,7 +217,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps) {
 
           <CommandMenu
             onToggleMcp={() => setActiveDialog('manageMcp')}
-            onMcpStatus={() => setActiveDialog('mcpStatus')}
+            onMcpStatus={openMcpStatus}
             onManagePlugins={() => setActiveDialog('plugins')}
             onAttachFile={onAttachFile}
             docsUrl={providerConfig?.brand.docsUrl}

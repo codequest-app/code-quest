@@ -306,7 +306,7 @@ export function create({
   }
 
   function onChannelExit(ch: Channel, payload: unknown): void {
-    const { code: _code } = channelExitPayloadSchema.parse(payload);
+    channelExitPayloadSchema.parse(payload);
     channelManager.broadcastSessionState(ch.channelId, 'exited');
     ch.resetSessionConfig();
     emitter.emit(ch.channelId, EVENTS.session.closed, {

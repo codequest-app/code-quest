@@ -48,11 +48,12 @@ export class WsSocketAdapter {
       const payload = args.length > 1 ? args[0] : undefined;
       this.client.request(event, payload).then(
         (data) => cb(data),
-        () => {
+        (err) => {
           // Transport-level rejection (disconnect, ok:false envelope, etc.):
           // do NOT invoke cb. Matches socket.io's emitWithAck-without-timeout
           // behavior — callers waiting for an ack just keep waiting, no
           // synthetic error payload is fabricated.
+          console.debug('[WsSocketAdapter] request rejected', event, err);
         },
       );
       return;

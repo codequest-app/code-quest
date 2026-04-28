@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { useSocket } from '../SocketContext';
 import { useChannelId } from './ChannelMetaContext';
 import { ChannelSocketRouter, createSocketAdapter } from './socket-router';
@@ -9,7 +9,7 @@ export function ChannelSocketRouterProvider({ children }: { children: ReactNode 
   const { socket } = useSocket();
   const channelId = useChannelId();
 
-  const router = new ChannelSocketRouter(createSocketAdapter(socket), channelId);
+  const [router] = useState(() => new ChannelSocketRouter(createSocketAdapter(socket), channelId));
 
   useEffect(() => () => router.dispose(), [router]);
 

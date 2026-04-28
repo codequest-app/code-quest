@@ -86,7 +86,9 @@ app.use(createSessionsRouter(sessionStore, rawEventStore));
 app.use(createUsageRouter(usageTracker));
 app.use(createProfileRouter(() => ({ authenticated: false })));
 
-app.get('/health', (_req, res) => {
+const HEALTH_PATH = '/health';
+
+app.get(HEALTH_PATH, (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
@@ -97,7 +99,7 @@ if (existsSync(clientDist)) {
   app.use(express.static(clientDist));
   // SPA fallback
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/health')) return next();
+    if (req.path.startsWith(HEALTH_PATH)) return next();
     res.sendFile(join(clientDist, 'index.html'));
   });
 }

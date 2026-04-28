@@ -91,6 +91,21 @@ function messagesFromAssistantBlock(block: ContentBlock, parentToolUseId?: strin
   }
 }
 
+function extractToolResultContent(rawContent: unknown): {
+  textContent: string;
+  arrayContent: unknown[] | undefined;
+} {
+  if (typeof rawContent === 'string') return { textContent: rawContent, arrayContent: undefined };
+  if (Array.isArray(rawContent)) {
+    const textContent = rawContent
+      .filter((b: Record<string, unknown>) => b.type === 'text')
+      .map((b: Record<string, unknown>) => String(b.text ?? ''))
+      .join('\n');
+    return { textContent, arrayContent: rawContent };
+  }
+  return { textContent: '', arrayContent: undefined };
+}
+
 function messagesFromUserBlock(
   block: ContentBlock,
   parentToolUseId?: string,
@@ -99,18 +114,7 @@ function messagesFromUserBlock(
 ): Message | null {
   switch (block.type) {
     case 'tool_result': {
-      const rawContent = block.content;
-      let textContent = '';
-      let arrayContent: unknown[] | undefined;
-      if (typeof rawContent === 'string') {
-        textContent = rawContent;
-      } else if (Array.isArray(rawContent)) {
-        arrayContent = rawContent;
-        textContent = rawContent
-          .filter((b: Record<string, unknown>) => b.type === 'text')
-          .map((b: Record<string, unknown>) => String(b.text ?? ''))
-          .join('\n');
-      }
+      const { textContent, arrayContent } = extractToolResultContent(block.content);
       return msg({
         role: 'assistant',
         type: 'tool_result',

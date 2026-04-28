@@ -105,7 +105,7 @@ export function create({
     emitter.emit(channelId, EVENTS.chat.cancel_request, { channelId, targetRequestId: requestId });
   }
 
-  function buildMcpResponse(
+  function clearMcpTimeoutAndPassthrough(
     channel: Channel,
     requestId: string,
     response: Record<string, unknown>,
@@ -161,7 +161,7 @@ export function create({
       const parsed = controlRespondPayloadSchema.parse(response);
 
       const subtypeBuilders: Record<string, () => Record<string, unknown>> = {
-        mcp_message: () => buildMcpResponse(channel, requestId, response),
+        mcp_message: () => clearMcpTimeoutAndPassthrough(channel, requestId, response),
         elicitation: () => buildElicitationResponse(parsed),
       };
       const build = (meta?.subtype && subtypeBuilders[meta.subtype]) || null;

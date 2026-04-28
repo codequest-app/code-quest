@@ -1,6 +1,10 @@
 import { resolve } from 'node:path';
-import type { ControlResponse, SessionBroadcastState, WorktreeInfo } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import {
+  type ControlResponse,
+  EVENTS,
+  type SessionBroadcastState,
+  type WorktreeInfo,
+} from '@code-quest/shared';
 import type { LaunchOptions, ProviderAdapter, Unsubscribe } from '@code-quest/summoner';
 import { logger } from '../logger.ts';
 import type { RunnerFactory } from '../types.ts';
@@ -10,6 +14,10 @@ import { type DirtyBroadcasters, subscribeDirtyForSocket } from './dirty-subscri
 import type { RawRecorder } from './raw-recorder.ts';
 import type { TypedSocket } from './types.ts';
 import { pickDefined } from './utils/helpers.ts';
+
+function releaseUnsubs(unsubs: Unsubscribe[]): void {
+  for (const off of unsubs) off();
+}
 
 /** Minimal interface ChannelManager needs from SessionHistory + sessionStore. */
 export interface SessionLookup {
@@ -120,9 +128,8 @@ export class ChannelManager {
       this.socketChannelSubs.set(socket.id, perCh);
     }
     // Replace any prior subs for the same (socket, channel) — defensive.
-    perCh.get(channelId)?.forEach((off) => {
-      off();
-    });
+    const existing = perCh.get(channelId);
+    if (existing) releaseUnsubs(existing);
     perCh.set(channelId, unsubs);
   }
 
@@ -139,7 +146,7 @@ export class ChannelManager {
   private releaseBroadcastersForSocket(socketId: string): void {
     const perCh = this.socketChannelSubs.get(socketId);
     if (!perCh) return;
-    for (const unsubs of perCh.values()) for (const off of unsubs) off();
+    for (const unsubs of perCh.values()) releaseUnsubs(unsubs);
     this.socketChannelSubs.delete(socketId);
   }
 
@@ -200,9 +207,8 @@ export class ChannelManager {
     // Release any per-socket subs that were tied to this channel.
     for (const [socketId, perCh] of this.socketChannelSubs) {
       if (perCh.has(channelId)) {
-        perCh.get(channelId)?.forEach((off) => {
-          off();
-        });
+        const unsubs = perCh.get(channelId);
+        if (unsubs) releaseUnsubs(unsubs);
         perCh.delete(channelId);
         if (perCh.size === 0) this.socketChannelSubs.delete(socketId);
       }

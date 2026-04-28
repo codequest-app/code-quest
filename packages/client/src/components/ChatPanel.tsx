@@ -57,13 +57,11 @@ export function ChatPanel({ title }: { title?: string }) {
   );
 
   const [activeSidePanel, setActiveSidePanel] = useState<'raw' | null>(null);
-  const [resumeOpen, setResumeOpen] = useState(false);
 
   const messageListRef = useRef<MessageListHandle>(null);
   const chatColumnRef = useRef<HTMLDivElement>(null);
 
   const handleResumeOpenChange = (open: boolean) => {
-    setResumeOpen(open);
     resumeOpenSignal.setOpen(open);
   };
 
@@ -82,11 +80,6 @@ export function ChatPanel({ title }: { title?: string }) {
       requestActivateChannel(route.cwd, route.channelId);
     }
   };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleResumeOpenChange stable via React Compiler
-  useEffect(() => {
-    if (resumeIsOpen) handleResumeOpenChange(true);
-  }, [resumeIsOpen]);
 
   useEffect(() => {
     if (!channelId) return;
@@ -129,9 +122,9 @@ export function ChatPanel({ title }: { title?: string }) {
         />
       )}
       <div ref={chatColumnRef} data-chat-column className="relative flex flex-col flex-1 min-w-0">
-        <Popover.Root open={resumeOpen} onOpenChange={handleResumeOpenChange}>
+        <Popover.Root open={resumeIsOpen} onOpenChange={handleResumeOpenChange}>
           <HeaderBar title={title} showResumeButton />
-          {resumeOpen && (
+          {resumeIsOpen && (
             <SessionHistoryPopover
               cwd={activeProjectCwd ?? undefined}
               onClose={() => handleResumeOpenChange(false)}

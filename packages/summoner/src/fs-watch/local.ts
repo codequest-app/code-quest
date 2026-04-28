@@ -1,5 +1,6 @@
 import { relative } from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
+import { errorCode } from '../utils.ts';
 import type { Unsubscribe, WatchCallback, WatchEvent, WatchService } from './types.ts';
 
 const IGNORES = [
@@ -23,10 +24,6 @@ const CHOKIDAR_OPTS = {
   followSymlinks: false,
   awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 },
 };
-
-function errorCode(err: unknown): string | undefined {
-  return typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined;
-}
 
 let inotifyWarned = false;
 

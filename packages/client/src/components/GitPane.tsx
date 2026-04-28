@@ -188,6 +188,10 @@ export function GitPane({ cwd }: GitPaneProps) {
   const changedCount = status.changedFiles.length;
   const ahead = status.ahead ?? 0;
   const behind = status.behind ?? 0;
+  const diffFileStatus = diffFile
+    ? status.changedFiles.find((f) => f.file === diffFile.path)?.status
+    : undefined;
+  const canDiscardDiffFile = diffFileStatus !== undefined && diffFileStatus !== '??';
 
   return (
     <section className="flex flex-col h-full" aria-label="git-pane">
@@ -249,26 +253,21 @@ export function GitPane({ cwd }: GitPaneProps) {
           </>
         )}
       </PaneStatusFooter>
-      {diffFile &&
-        (() => {
-          const fileStatus = status.changedFiles.find((f) => f.file === diffFile.path)?.status;
-          const canDiscard = fileStatus !== undefined && fileStatus !== '??';
-          return (
-            <DiffModal
-              file={diffFile}
-              onClose={() => setDiffFile(null)}
-              canDiscard={canDiscard}
-              onDiscard={async () => {
-                const result = await discardFile(cwd, diffFile.path);
-                if ('error' in result) toast.error(`Discard failed: ${result.error}`);
-                else {
-                  toast.success(`Discarded ${diffFile.path}`);
-                  setDiffFile(null);
-                }
-              }}
-            />
-          );
-        })()}
+      {diffFile && (
+        <DiffModal
+          file={diffFile}
+          onClose={() => setDiffFile(null)}
+          canDiscard={canDiscardDiffFile}
+          onDiscard={async () => {
+            const result = await discardFile(cwd, diffFile.path);
+            if ('error' in result) toast.error(`Discard failed: ${result.error}`);
+            else {
+              toast.success(`Discarded ${diffFile.path}`);
+              setDiffFile(null);
+            }
+          }}
+        />
+      )}
     </section>
   );
 }

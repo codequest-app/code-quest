@@ -1,5 +1,4 @@
-import type { ContentBlock } from '@code-quest/shared';
-import { EVENTS, fsReadResponseSchema, isRecord } from '@code-quest/shared';
+import { type ContentBlock, EVENTS, fsReadResponseSchema, isRecord } from '@code-quest/shared';
 import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';

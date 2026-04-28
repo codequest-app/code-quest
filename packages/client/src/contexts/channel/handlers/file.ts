@@ -1,5 +1,9 @@
-import type { FsSearchResponse, RpcResult, TerminalGetContentsResponse } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import {
+  EVENTS,
+  type FsSearchResponse,
+  type RpcResult,
+  type TerminalGetContentsResponse,
+} from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 

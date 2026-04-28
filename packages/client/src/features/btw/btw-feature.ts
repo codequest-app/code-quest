@@ -18,6 +18,7 @@ interface BtwSignal {
   setState(update: Partial<BtwState>): void;
 }
 
+const BTW_COMMAND = '/btw';
 const CLOSED: BtwState = { open: false, question: '', answer: null, loading: false, error: null };
 
 function createBtwSignal(): BtwSignal {
@@ -49,7 +50,7 @@ export interface BtwFeatureDeps {
 
 export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): Feature {
   function invoke(message: string) {
-    const question = message.trim().slice(4).trim();
+    const question = message.trim().slice(BTW_COMMAND.length).trim();
     if (!question) return;
     btwSignal.setState({ open: true, question, answer: null, loading: true, error: null });
     askSideQuestion(question)
@@ -70,7 +71,7 @@ export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): Feature {
 
   return {
     id: 'btw',
-    label: '/btw',
+    label: BTW_COMMAND,
     section: 'Slash Commands',
     ui: { matchFirstToken: true },
     execute() {
@@ -78,10 +79,10 @@ export function createBtwFeature({ askSideQuestion }: BtwFeatureDeps): Feature {
       // via createBtwLocalFeature (wrapping this base + current slashFilter).
     },
     slash: {
-      command: '/btw',
+      command: BTW_COMMAND,
       match(message) {
         const trimmed = message.trim();
-        return trimmed === '/btw' || trimmed.startsWith('/btw ');
+        return trimmed === BTW_COMMAND || trimmed.startsWith(`${BTW_COMMAND} `);
       },
       invoke,
     },

@@ -282,8 +282,8 @@ export class WsClient {
     for (const fn of set) {
       try {
         fn(data);
-      } catch {
-        /* listener errors must not crash the dispatcher */
+      } catch (err) {
+        console.warn('[WsClient] listener error', event, err);
       }
     }
   }

@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import type { ProcessProvider } from '@code-quest/summoner';
 import {
   ChildProcessProvider,
   ClaudeAdapter,
@@ -13,6 +12,7 @@ import {
   LocalWatchService,
   type OpenspecService,
   type PluginCliService,
+  type ProcessProvider,
   ProcessRunner,
   type WatchService,
 } from '@code-quest/summoner';
@@ -33,8 +33,7 @@ import { DrizzleRawEventStore } from './services/drizzle-raw-event-store.ts';
 import { DrizzleSessionStore } from './services/drizzle-session-store.ts';
 import { DrizzleSettingsStore } from './services/drizzle-settings-store.ts';
 import { ProjectAutoUpserter } from './services/project-auto-upserter.ts';
-import type { ProjectStore } from './services/project-store.ts';
-import { DrizzleProjectStore } from './services/project-store.ts';
+import { DrizzleProjectStore, type ProjectStore } from './services/project-store.ts';
 import type { RawDeltaStore } from './services/raw-delta-store.ts';
 import { RawEventService } from './services/raw-event-service.ts';
 import type { RawEventStore } from './services/raw-event-store.ts';

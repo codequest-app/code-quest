@@ -11,8 +11,11 @@ import {
   sessionInitEventSchema,
   sessionStatusEventSchema,
 } from '@code-quest/shared';
-import type { ProcessRunner, ResolvedControlResponse } from '@code-quest/summoner';
-import { detectWorktree } from '@code-quest/summoner';
+import {
+  detectWorktree,
+  type ProcessRunner,
+  type ResolvedControlResponse,
+} from '@code-quest/summoner';
 import type { z } from 'zod';
 import { logger } from '../logger.ts';
 import { ControlRequestTracker, DEFAULT_CONTROL_TIMEOUT } from './control-request-tracker.ts';
@@ -232,19 +235,7 @@ export class Channel {
   private applySessionInit(payload: unknown): void {
     this.safeApply(sessionInitEventSchema, payload, 'session:init', (init) => {
       if (init.sessionId) this.sessionId = init.sessionId;
-      this.safeApply(
-        sessionInitConfigSchema,
-        init.config ?? {},
-        'session:init config',
-        ({ cwd: initCwd, ...initConfig }) => {
-          if (initCwd) {
-            this.cwd = initCwd;
-            const wt = detectWorktree(initCwd);
-            if (wt) this.worktree = wt;
-          }
-          this.updateSessionConfig(initConfig);
-        },
-      );
+      this.applySessionInitConfig(init.config ?? {});
       this.updateMetaCache(
         pickDefined({
           model: init.model,
@@ -256,6 +247,22 @@ export class Channel {
         }),
       );
     });
+  }
+
+  private applySessionInitConfig(config: unknown): void {
+    this.safeApply(
+      sessionInitConfigSchema,
+      config,
+      'session:init config',
+      ({ cwd: initCwd, ...initConfig }) => {
+        if (initCwd) {
+          this.cwd = initCwd;
+          const wt = detectWorktree(initCwd);
+          if (wt) this.worktree = wt;
+        }
+        this.updateSessionConfig(initConfig);
+      },
+    );
   }
 
   private applySessionStatus(payload: unknown): void {

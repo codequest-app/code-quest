@@ -1,5 +1,4 @@
-import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
-import { EVENTS } from '@code-quest/shared';
+import { type ControlPermissionResponse, EVENTS, type PendingControl } from '@code-quest/shared';
 import {
   createContext,
   type ReactNode,
