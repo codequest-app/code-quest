@@ -49,8 +49,6 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
   // entry in the TopicEmitter.
   const nextIdRef = useRef(0);
 
-  // Central socket.on('files:dirty') → publish to TopicEmitter. One
-  // handler installed for the lifetime of the Provider.
   useEffect(() => {
     if (!socket) return;
     const onDirty = (payload: unknown) => {

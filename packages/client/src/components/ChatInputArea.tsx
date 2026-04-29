@@ -26,6 +26,7 @@ export function ChatInputArea(): React.JSX.Element {
     newContent: entry.newContent ?? undefined,
   }));
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const openFilePicker = () => fileInputRef.current?.click();
 
@@ -45,6 +46,7 @@ export function ChatInputArea(): React.JSX.Element {
       <PendingActionButtons />
       <ReviewUpsellBanner />
       <div
+        ref={containerRef}
         data-mode={toPermissionMode(permissionMode)}
         className={cn(
           'rounded-xl bg-surface border border-border transition-all relative shadow-sm',
@@ -54,12 +56,12 @@ export function ChatInputArea(): React.JSX.Element {
         onClick={focusTextarea}
         role="none"
       >
-        <ComposeInput />
+        <ComposeInput containerRef={containerRef} />
         <SpeechInputContainer
           onFinal={insertSlashCommand}
           className="absolute top-2 right-2 z-10"
         />
-        <ComposeToolbar onAttachFile={openFilePicker} />
+        <ComposeToolbar containerRef={containerRef} onAttachFile={openFilePicker} />
       </div>
       {modifiedFileEntries.length > 0 && (
         <ModifiedFilesPanel files={modifiedFileList} onAccept={removeModifiedFile} />

@@ -16,8 +16,8 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { useCwdQueryStore } from '../hooks/useCwdQueryStore';
 import { rpc } from '../socket/rpc';
+import { createQueryCache } from '../utils/query-cache';
 import { useSocket } from './SocketContext';
 
 /** Sentinel stored in `listing` when the project is not a git repo. */
@@ -137,15 +137,28 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
   const { socket } = useSocket();
   const [listing, setListing] = useState<Record<string, WorktreeListingEntry>>({});
 
-  const fetch = useMemo(() => fetchGitStatus(socket), [socket]);
-  const statusStore = useCwdQueryStore<GitStatusByCwdResult>({
-    socket,
-    fetch,
-    dirtyEvent: EVENTS.git.dirty,
-    extractCwd: extractGitDirtyCwd,
-    idPrefix: 'git-sub',
-  });
-  const refetchIfSubscribed = statusStore.refetchIfSubscribed;
+  const [statusStore] = useState(() =>
+    createQueryCache<GitStatusByCwdResult>({
+      fetch: fetchGitStatus(socket),
+      idPrefix: 'git-sub',
+    }),
+  );
+
+  useEffect(() => {
+    statusStore.setFetch(fetchGitStatus(socket));
+  }, [socket, statusStore]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onDirty = (payload: unknown) => {
+      const cwd = extractGitDirtyCwd(payload);
+      if (cwd) void statusStore.refetchIfSubscribed(cwd);
+    };
+    socket.on(EVENTS.git.dirty, onDirty);
+    return () => {
+      socket.off(EVENTS.git.dirty, onDirty);
+    };
+  }, [socket, statusStore]);
 
   const actions = useMemo<WorktreeActions>(
     () => ({
@@ -211,20 +224,13 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
         });
         return res.ok ? res.data : { error: res.error };
       },
-      async fetch(cwd) {
-        return await rpc(socket, EVENTS.git.fetch, { cwd });
-      },
-      async pull(cwd) {
-        return await rpc(socket, EVENTS.git.pull, { cwd });
-      },
-      async discardFile(cwd, file) {
-        return await rpc(socket, EVENTS.git.discardFile, { cwd, file });
-      },
+      fetch: (cwd) => rpc(socket, EVENTS.git.fetch, { cwd }),
+      pull: (cwd) => rpc(socket, EVENTS.git.pull, { cwd }),
+      discardFile: (cwd, file) => rpc(socket, EVENTS.git.discardFile, { cwd, file }),
     }),
     [socket, statusStore],
   );
 
-  // Worktree broadcasts + git:dirty central handler.
   useEffect(() => {
     if (!socket) return;
     const onAdded = (event: WorktreeAddedEvent) => {
@@ -255,10 +261,7 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
           ),
         };
       });
-      // Branch change invalidates git status for the worktree's cwd.
-      // Skip when nobody's reading — otherwise the cache grows forever
-      // with entries no consumer will ever observe.
-      void refetchIfSubscribed(event.worktreePath);
+      void statusStore.refetchIfSubscribed(event.worktreePath);
     };
 
     socket.on(EVENTS.worktree.added, onAdded);
@@ -269,10 +272,8 @@ export function GitProvider({ children }: { children: ReactNode }): React.JSX.El
       socket.off(EVENTS.worktree.removed, onRemoved);
       socket.off(EVENTS.worktree.branchChanged, onBranchChanged);
     };
-  }, [socket, refetchIfSubscribed]);
+  }, [socket, statusStore]);
 
-  // Memoize so consumers reading via useGitState() don't re-render every
-  // time GitProvider's parent re-renders.
   const state = useMemo<WorktreeState>(() => ({ listing }), [listing]);
   return (
     <GitStateContext.Provider value={state}>

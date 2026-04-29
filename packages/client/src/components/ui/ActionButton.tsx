@@ -1,31 +1,41 @@
-import type { AsyncActionState } from '../../hooks/useAsyncAction';
+import { useCallback, useRef, useState } from 'react';
+import { Button } from './Button';
 import { Spinner } from './Spinner';
 
-/** Standard "user-triggered async" button — pairs with `useAsyncAction`.
- *  Shows an inline spinner + disables the button while the wrapped action
- *  is in flight. Default border/hover styling matches GitPane Actions row;
- *  override via `className` for one-off variants. */
+async function runExclusive(
+  inflightRef: React.RefObject<boolean>,
+  setPending: (v: boolean) => void,
+  fn: () => unknown,
+): Promise<void> {
+  if (inflightRef.current) return;
+  inflightRef.current = true;
+  setPending(true);
+  try {
+    await fn();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    inflightRef.current = false;
+    setPending(false);
+  }
+}
+
 export function ActionButton({
-  action,
-  label,
-  className,
+  onClick,
+  children,
+  ...buttonProps
 }: {
-  action: AsyncActionState;
-  label: string;
-  className?: string;
-}): React.JSX.Element {
+  onClick: () => unknown;
+} & Omit<React.ComponentProps<typeof Button>, 'onClick' | 'disabled'>): React.JSX.Element {
+  const [pending, setPending] = useState(false);
+  const inflightRef = useRef(false);
+
+  const run = useCallback(() => runExclusive(inflightRef, setPending, onClick), [onClick]);
+
   return (
-    <button
-      type="button"
-      disabled={action.pending}
-      onClick={() => void action.run()}
-      className={
-        className ??
-        'px-2 py-0.5 rounded border border-border text-text-muted hover:text-text hover:bg-white/5 disabled:opacity-50 inline-flex items-center gap-1'
-      }
-    >
-      {action.pending && <Spinner className="w-3 h-3" />}
-      {label}
-    </button>
+    <Button disabled={pending} onClick={() => void run()} {...buttonProps}>
+      {pending && <Spinner className="w-3 h-3" />}
+      {children}
+    </Button>
   );
 }

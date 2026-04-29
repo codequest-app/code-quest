@@ -6,6 +6,7 @@ import { cn } from '../utils/cn';
 import { InstalledPluginList } from './InstalledPluginList';
 import { MarketplaceSection } from './MarketplaceSection';
 import { tabTrigger } from './ui/_tokens';
+import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
 
 interface ManagePluginsDialogProps {
@@ -59,12 +60,9 @@ export function ManagePluginsDialog({
         {needsRestart && (
           <div className="flex items-center justify-between bg-warning/15 border border-warning text-text rounded-md px-3 py-2.5 mb-3 text-xs">
             <span>Restart {providerConfig?.brand.name ?? 'Claude'} to apply plugin changes</span>
-            <button
-              type="button"
-              className="ml-3 px-2.5 py-1 rounded bg-button text-white text-xs border-0"
-            >
+            <Button variant="info" size="xs" className="ml-3 px-2.5 py-1" disabled>
               Restart
-            </button>
+            </Button>
           </div>
         )}
 

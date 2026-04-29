@@ -1,5 +1,6 @@
 import type { GitStatusResult } from '@code-quest/shared';
 import { BranchPopover } from './BranchPopover';
+import { InlineAction } from './ui/InlineAction';
 
 export interface BranchSectionProps {
   status: GitStatusResult | null;
@@ -22,13 +23,9 @@ export function BranchSection({
         <h4 className="section-label m-0">Branch</h4>
         <BranchPopover
           trigger={
-            <button
-              type="button"
-              aria-label="Switch branch"
-              className="text-xs text-accent hover:underline"
-            >
+            <InlineAction variant="accent" aria-label="Switch branch" className="hover:underline">
               switch ⌄
-            </button>
+            </InlineAction>
           }
           open={popoverOpen}
           onOpenChange={onPopoverOpenChange}

@@ -59,4 +59,24 @@ describe('Button', () => {
     render(<Button type="submit">X</Button>);
     expect(screen.getByRole('button')).toHaveAttribute('type', 'submit');
   });
+
+  it('variant="success" uses success token', () => {
+    render(<Button variant="success">X</Button>);
+    expect(screen.getByRole('button').className).toMatch(/bg-success/);
+  });
+
+  it('variant="warning" uses warning token', () => {
+    render(<Button variant="warning">X</Button>);
+    expect(screen.getByRole('button').className).toMatch(/bg-warning/);
+  });
+
+  it('variant="info" uses button token', () => {
+    render(<Button variant="info">X</Button>);
+    expect(screen.getByRole('button').className).toMatch(/bg-button/);
+  });
+
+  it('base includes transition-all', () => {
+    render(<Button>X</Button>);
+    expect(screen.getByRole('button').className).toMatch(/transition-all/);
+  });
 });

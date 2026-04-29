@@ -1,8 +1,8 @@
 import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
-
-const ACTION_LINK_BTN = 'text-text-muted hover:text-accent text-xs transition-colors';
+import { Button } from './ui/Button';
+import { InlineAction } from './ui/InlineAction';
 
 const MCP_STATUS_BADGE: Partial<Record<McpServerInfo['status'], string>> & { _default: string } = {
   connected: 'bg-success text-white',
@@ -64,8 +64,7 @@ export function McpServerRow({
         </span>
         <span className="flex-1 text-xs font-mono text-text truncate">{s.name}</span>
         {onListTools && (
-          <button
-            type="button"
+          <InlineAction
             title={`Tools ${s.name}`}
             onClick={async () => {
               if (toolsExpanded) {
@@ -78,10 +77,9 @@ export function McpServerRow({
                 setToolsExpanded(true);
               }
             }}
-            className={ACTION_LINK_BTN}
           >
             Tools
-          </button>
+          </InlineAction>
         )}
         <button
           type="button"
@@ -99,20 +97,17 @@ export function McpServerRow({
         >
           {s.enabled ? 'On' : 'Off'}
         </button>
-        <button
-          type="button"
+        <InlineAction
           title={`Reconnect ${s.name}`}
           onClick={async () => {
             const ok = await runAction('reconnect', () => onReconnect(s.name));
             if (ok !== null) showFeedback(`${s.name} reconnected`, 'success');
           }}
-          className={ACTION_LINK_BTN}
         >
           ↻
-        </button>
+        </InlineAction>
         {onClearAuth && (
-          <button
-            type="button"
+          <InlineAction
             title={`Clear Auth ${s.name}`}
             onClick={async () => {
               const result = await runAction('clear auth for', () => onClearAuth(s.name));
@@ -120,14 +115,12 @@ export function McpServerRow({
               if (result.ok) showFeedback(`${s.name} auth cleared`, 'success');
               else showFeedback(result.error || 'Clear auth failed', 'error');
             }}
-            className={ACTION_LINK_BTN}
           >
             Clear Auth
-          </button>
+          </InlineAction>
         )}
         {onAuthenticate && (
-          <button
-            type="button"
+          <InlineAction
             title={`Auth ${s.name}`}
             onClick={async () => {
               const result = await runAction('authenticate', () => onAuthenticate(s.name));
@@ -141,10 +134,9 @@ export function McpServerRow({
                 showFeedback(result.error || 'Auth failed', 'error');
               }
             }}
-            className={ACTION_LINK_BTN}
           >
             Auth
-          </button>
+          </InlineAction>
         )}
       </div>
       {authUrl && (
@@ -166,8 +158,10 @@ export function McpServerRow({
                 onChange={(e) => setCallbackInput(e.target.value)}
                 className="flex-1 bg-code-block border border-border rounded px-2 py-1 text-xs font-mono text-text"
               />
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="xs"
+                className="px-2 py-1"
                 onClick={async () => {
                   const url = callbackInput.trim();
                   if (!url) return;
@@ -183,10 +177,9 @@ export function McpServerRow({
                     showFeedback(result.error || 'Callback failed', 'error');
                   }
                 }}
-                className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-accent/80"
               >
                 Submit
-              </button>
+              </Button>
             </div>
           )}
         </div>

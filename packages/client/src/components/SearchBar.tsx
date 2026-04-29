@@ -1,5 +1,7 @@
 import type { Ref } from 'react';
 import { cn } from '../utils/cn';
+import { Button } from './ui/Button';
+import { InlineAction } from './ui/InlineAction';
 
 interface SearchBarProps {
   searchQuery: string;
@@ -30,28 +32,21 @@ export function SearchBar({
           className="flex-1 bg-transparent text-sm text-text placeholder:text-text-muted focus:outline-none"
         />
         {searchQuery && (
-          <button
-            type="button"
-            aria-label="Clear search"
-            onClick={() => setSearchQuery('')}
-            className="text-xs text-text-muted hover:text-text cursor-pointer"
-          >
+          <InlineAction aria-label="Clear search" onClick={() => setSearchQuery('')}>
             ✕
-          </button>
+          </InlineAction>
         )}
         {onToggleRaw && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="xs"
             aria-label="Toggle Raw Events"
             data-active={String(rawActive)}
+            className={cn('font-medium px-1.5 py-0.5', rawActive && 'text-accent bg-accent/10')}
             onClick={onToggleRaw}
-            className={cn(
-              'cursor-pointer transition-colors text-xs font-medium px-1.5 py-0.5 rounded',
-              rawActive ? 'text-accent bg-accent/10' : 'text-text-muted hover:text-text',
-            )}
           >
             Raw
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -2,7 +2,6 @@ import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useChannelCompose, useChannelConfig } from '../../contexts/channel';
 import { useFeatureRegistry } from '../../contexts/channel/FeatureRegistryContext';
-import { useChatColumnAnchorRef } from '../../hooks/useChatColumnAnchorRef';
 import { cn } from '../../utils/cn';
 import { findModel, getEffortLevels } from '../../utils/model-utils';
 import { isThinkingActive } from '../../utils/thinking';
@@ -16,6 +15,7 @@ import { dispatchSelectedItem, NAV_KEYS, navigateItems } from './menu-navigation
 import { slashPaletteState } from './slash-palette-state';
 
 export interface CommandMenuProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
   onMcpStatus?: () => void;
   onToggleMcp?: () => void;
   onManagePlugins?: () => void;
@@ -24,6 +24,7 @@ export interface CommandMenuProps {
 }
 
 export function CommandMenu({
+  containerRef,
   onMcpStatus,
   onToggleMcp,
   onManagePlugins,
@@ -79,7 +80,6 @@ export function CommandMenu({
   const [filter, setFilter] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const containerAnchorRef = useChatColumnAnchorRef(anchorRef);
   const filterRef = useRef<HTMLInputElement>(null);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
@@ -242,7 +242,7 @@ export function CommandMenu({
 
   return (
     <Popover.Root open={popoverVisible}>
-      <Popover.Anchor virtualRef={containerAnchorRef} />
+      <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
       <IconButton
         ref={anchorRef}
         title="Show command menu (/)"

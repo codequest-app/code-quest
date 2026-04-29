@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useAsyncAction } from '../hooks/useAsyncAction';
+import { ActionButton } from './ui/ActionButton';
 import { Button } from './ui/Button';
 import { Dialog, DialogContent } from './ui/Dialog';
-import { Spinner } from './ui/Spinner';
 
 export interface ArchiveChangeDialogProps {
   open: boolean;
@@ -18,7 +17,6 @@ export function ArchiveChangeDialog({
   onClose,
 }: ArchiveChangeDialogProps): React.JSX.Element {
   const [skipSpecs, setSkipSpecs] = useState(false);
-  const submit = useAsyncAction(() => Promise.resolve(onSubmit({ skipSpecs })));
 
   function reset() {
     setSkipSpecs(false);
@@ -59,15 +57,9 @@ export function ArchiveChangeDialog({
             <Button variant="secondary" size="sm" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              disabled={submit.pending}
-              onClick={() => void submit.run()}
-            >
-              {submit.pending && <Spinner className="w-3 h-3 mr-1.5" />}
+            <ActionButton onClick={() => onSubmit({ skipSpecs })} variant="danger" size="sm">
               Archive
-            </Button>
+            </ActionButton>
           </div>
         </div>
       </DialogContent>

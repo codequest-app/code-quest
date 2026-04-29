@@ -15,11 +15,13 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from 'react';
-import { useCwdQueryStore } from '../hooks/useCwdQueryStore';
 import { rpc } from '../socket/rpc';
+import { createQueryCache } from '../utils/query-cache';
 import { useSocket } from './SocketContext';
 
 interface OpenspecActions {
@@ -77,14 +79,28 @@ const extractOpenspecCwd = (payload: unknown): string | null => {
 
 export function OpenspecProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { socket } = useSocket();
-  const fetch = useMemo(() => fetchOpenspecList(socket), [socket]);
-  const store = useCwdQueryStore<OpenspecListResult>({
-    socket,
-    fetch,
-    dirtyEvent: EVENTS.openspec.dirty,
-    extractCwd: extractOpenspecCwd,
-    idPrefix: 'openspec-sub',
-  });
+  const [store] = useState(() =>
+    createQueryCache<OpenspecListResult>({
+      fetch: fetchOpenspecList(socket),
+      idPrefix: 'openspec-sub',
+    }),
+  );
+
+  useEffect(() => {
+    store.setFetch(fetchOpenspecList(socket));
+  }, [socket, store]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onDirty = (payload: unknown) => {
+      const cwd = extractOpenspecCwd(payload);
+      if (cwd) void store.refetchIfSubscribed(cwd);
+    };
+    socket.on(EVENTS.openspec.dirty, onDirty);
+    return () => {
+      socket.off(EVENTS.openspec.dirty, onDirty);
+    };
+  }, [socket, store]);
 
   const actions = useMemo<OpenspecActions>(
     () => ({

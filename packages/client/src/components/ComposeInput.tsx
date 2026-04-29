@@ -3,7 +3,6 @@ import * as Popover from '@radix-ui/react-popover';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
-import { useChatColumnAnchorRef } from '../hooks/useChatColumnAnchorRef';
 import { useInputHistory } from '../hooks/useInputHistory';
 import { cn } from '../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../utils/slash-query';
@@ -13,7 +12,11 @@ import { MentionDropdown } from './MentionDropdown';
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
-export function ComposeInput(): React.JSX.Element {
+export function ComposeInput({
+  containerRef,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}): React.JSX.Element {
   const { isProcessing, searchFiles } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
@@ -250,11 +253,9 @@ export function ComposeInput(): React.JSX.Element {
   const hasFileResults = fileResults.length > 0 || searchStatus !== 'idle';
   const showMentionDropdown = mentionOpen && hasFileResults;
 
-  const containerAnchorRef = useChatColumnAnchorRef(textareaRef);
-
   return (
     <Popover.Root open={showMentionDropdown}>
-      <Popover.Anchor virtualRef={containerAnchorRef} />
+      <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
       {attachedFiles.length > 0 && (
         <div className="flex overflow-x-auto gap-1 px-2 pb-1 pt-2">
           {attachedFiles.map((file, index) => (

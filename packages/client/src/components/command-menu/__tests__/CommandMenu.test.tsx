@@ -1,6 +1,7 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generalConfigSignal } from '../../../features/general-config/general-config-feature';
 import { modelOpenSignal } from '../../../features/model/model-feature';
@@ -13,6 +14,8 @@ import { renderWithChannel } from '../../../test/render-with-channel';
 import { ComposeInput } from '../../ComposeInput';
 import { CommandMenu } from '../CommandMenu';
 
+const containerRef = createRef<HTMLDivElement>();
+
 const defaultControlResponse = s.controlResponse('init', {
   models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
 });
@@ -22,7 +25,7 @@ async function renderCommandMenu(
   initOpts?: Parameters<typeof s.init>[1],
   extraSegments?: string[],
 ) {
-  return renderWithChannel(<CommandMenu {...props} />, {
+  return renderWithChannel(<CommandMenu containerRef={containerRef} {...props} />, {
     initSegment: s.init('sess-1', initOpts),
     extraSegments: extraSegments ?? [defaultControlResponse],
   });
@@ -218,7 +221,7 @@ describe('CommandMenu', () => {
     });
 
     it('clicking fast mode item toggles fast mode and server emits settings:update', async () => {
-      const { summoner } = await renderWithChannel(<CommandMenu />, {
+      const { summoner } = await renderWithChannel(<CommandMenu containerRef={containerRef} />, {
         initSegment: s.init('sess-1', { fastModeState: 'off' }),
         extraSegments: [
           s.controlResponse('init', {
@@ -269,8 +272,8 @@ describe('CommandMenu', () => {
     function ComposeAndMenu() {
       return (
         <>
-          <ComposeInput />
-          <CommandMenu />
+          <ComposeInput containerRef={containerRef} />
+          <CommandMenu containerRef={containerRef} />
         </>
       );
     }

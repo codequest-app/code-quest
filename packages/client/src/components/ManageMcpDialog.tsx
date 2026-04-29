@@ -5,6 +5,7 @@ import { cn } from '../utils/cn';
 import { Button } from './ui/Button';
 import { Dialog, DialogClose, DialogContent } from './ui/Dialog';
 import { XIcon } from './ui/Icons';
+import { InlineAction } from './ui/InlineAction';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];
@@ -136,6 +137,7 @@ export function ManageMcpDialog({
       await fn();
       onRefresh?.();
     } catch (e) {
+      console.error(e);
       setFeedback({ msg: e instanceof Error ? e.message : 'Failed', ok: false });
     } finally {
       setPending(null);
@@ -160,16 +162,16 @@ export function ManageMcpDialog({
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-semibold text-text">
             {detail ? (
-              <button
-                type="button"
+              <InlineAction
+                variant="muted"
+                className="flex items-center gap-1"
                 onClick={() => {
                   setSelectedServer(null);
                   setFeedback(null);
                 }}
-                className="flex items-center gap-1 text-text-muted hover:text-text"
               >
                 ← {detail.name}
-              </button>
+              </InlineAction>
             ) : (
               'Manage MCP Servers'
             )}

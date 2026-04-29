@@ -2,6 +2,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 import { extractNewContent, parseDiffFileName, parseHunkStart } from '../utils/diff';
+import { InlineAction } from './ui/InlineAction';
 
 interface DiffViewerProps {
   content: string;
@@ -22,28 +23,16 @@ function AcceptRejectButtons({
 }) {
   return (
     <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={onAccept}
-        className="text-xs text-success hover:text-success/80 font-medium"
-      >
+      <InlineAction variant="success" className="font-medium" onClick={onAccept}>
         ✓ Accept
-      </button>
-      <button
-        type="button"
-        onClick={onReject}
-        className="text-xs text-danger hover:text-danger/80 font-medium"
-      >
+      </InlineAction>
+      <InlineAction variant="danger" className="font-medium" onClick={onReject}>
         ✗ Reject
-      </button>
+      </InlineAction>
       {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="text-xs text-accent hover:text-accent/80 font-medium"
-        >
+        <InlineAction variant="accent" className="font-medium" onClick={onEdit}>
           ✎ Edit
-        </button>
+        </InlineAction>
       )}
     </div>
   );
@@ -149,20 +138,16 @@ export function DiffViewer({
           rows={10}
         />
         <div className="flex gap-2 mt-1">
-          <button
-            type="button"
-            onClick={handleApplyEdit}
-            className="text-xs text-success hover:text-success/80 font-medium"
-          >
+          <InlineAction variant="success" className="font-medium" onClick={handleApplyEdit}>
             Apply Edit
-          </button>
-          <button
-            type="button"
+          </InlineAction>
+          <InlineAction
+            variant="muted"
+            className="font-medium hover:text-text-muted/60"
             onClick={() => setIsEditing(false)}
-            className="text-xs text-text-muted hover:text-text-muted/60 font-medium"
           >
             Cancel
-          </button>
+          </InlineAction>
         </div>
       </div>
     );

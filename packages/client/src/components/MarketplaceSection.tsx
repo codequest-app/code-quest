@@ -1,4 +1,5 @@
 import type { MarketplaceInfo } from '@code-quest/shared';
+import { Button } from './ui/Button';
 import { ActionButton, RefreshIcon, TrashIcon } from './ui/Icons';
 
 export interface MarketplaceSectionProps {
@@ -31,14 +32,15 @@ export function MarketplaceSection({
           placeholder="Marketplace source URL…"
           className="flex-1 border border-border bg-input text-text placeholder:text-text-muted rounded-md px-3 py-2 text-sm outline-none focus:border-accent"
         />
-        <button
-          type="button"
+        <Button
+          variant="info"
+          size="md"
           disabled={!newSource.trim() || adding}
+          className="rounded-md py-2"
           onClick={onAdd}
-          className="px-3 py-2 rounded-md bg-button text-white text-sm border-0 disabled:opacity-40"
         >
           Add
-        </button>
+        </Button>
       </div>
 
       {marketplaces.length === 0 ? (

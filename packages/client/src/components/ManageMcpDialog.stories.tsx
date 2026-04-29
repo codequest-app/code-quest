@@ -24,3 +24,22 @@ export const WithServers: Story = {
   },
 };
 export const Empty: Story = { args: { open: true, onClose: fn(), servers: [] } };
+
+export const ManageableDetail: Story = {
+  name: '← Back button (detail view)',
+  args: {
+    open: true,
+    onClose: fn(),
+    servers: [
+      { name: 'filesystem', enabled: true, status: 'connected', scope: 'project' },
+      { name: 'github', enabled: false, status: 'disconnected', scope: 'user' },
+    ],
+    onReconnect: fn(async () => {}),
+    onToggle: fn(async () => {}),
+  },
+  play: async ({ canvas }) => {
+    const { userEvent } = await import('storybook/test');
+    const row = canvas.getByText('filesystem');
+    await userEvent.click(row);
+  },
+};

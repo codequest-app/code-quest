@@ -7,6 +7,7 @@ import { EmptyState } from './EmptyState';
 import { NewChangeDialog } from './NewChangeDialog';
 import { SpecModal } from './SpecModal';
 import { CommandHint } from './ui/CommandHint';
+import { InlineAction } from './ui/InlineAction';
 import { PaneStatusFooter } from './ui/PaneStatusFooter';
 import { SkeletonRows } from './ui/SkeletonRows';
 
@@ -82,14 +83,14 @@ export function SpecPane({ cwd }: SpecPaneProps): React.JSX.Element {
           title="Active changes"
           scope="worktree"
           action={
-            <button
-              type="button"
+            <InlineAction
+              variant="accent"
               aria-label="New change"
+              className="hover:underline"
               onClick={() => setNewChangeOpen(true)}
-              className="text-xs text-accent hover:underline"
             >
               + new
-            </button>
+            </InlineAction>
           }
         >
           {isLoading ? (

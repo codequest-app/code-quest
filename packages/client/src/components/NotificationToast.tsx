@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { cn } from '../utils/cn';
+import { Button } from './ui/Button';
 
 interface NotificationButton {
   label: string;
@@ -13,8 +14,6 @@ interface NotificationToastProps {
   onButton: (value: string) => void;
   onDismiss: () => void;
 }
-
-const TOAST_BTN = 'px-3 py-1.5 rounded-md cursor-pointer text-sm font-medium transition-all';
 
 /** Show a notification toast with buttons and respond callback */
 export function showNotificationToast(
@@ -78,22 +77,24 @@ export function NotificationToast({
       <div className="text-sm text-text mb-3">{message}</div>
       <div className="flex flex-wrap gap-2">
         {buttons.map((btn) => (
-          <button
+          <Button
             key={btn.value}
-            type="button"
+            variant="primary"
+            size="xs"
+            className="rounded-md text-sm font-medium"
             onClick={() => onButton(btn.value)}
-            className={cn(TOAST_BTN, 'bg-accent text-white hover:bg-accent/80')}
           >
             {btn.label}
-          </button>
+          </Button>
         ))}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
+          className="rounded-md text-sm font-medium bg-white/10 text-text-muted hover:bg-white/20"
           onClick={onDismiss}
-          className={cn(TOAST_BTN, 'bg-white/10 text-text-muted hover:bg-white/20')}
         >
           Dismiss
-        </button>
+        </Button>
       </div>
     </div>
   );

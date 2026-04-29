@@ -4,6 +4,7 @@ import { cn } from '../utils/cn';
 import { generateUnifiedDiff } from '../utils/diff';
 import { pluralize } from '../utils/pluralize';
 import { DiffViewer } from './DiffViewer';
+import { Button } from './ui/Button';
 
 export interface ModifiedFile {
   path: string;
@@ -75,21 +76,23 @@ function ModifiedFileItem({
             </pre>
           )}
           <div className="flex gap-2 mt-1">
-            <button
-              type="button"
+            <Button
+              variant="success"
+              size="xs"
+              className="px-2 py-0.5"
               onClick={() => onAccept(file.path)}
-              className="text-xs px-2 py-0.5 rounded bg-success text-white hover:bg-success/80"
             >
               Accept
-            </button>
+            </Button>
             {onRewind && (
-              <button
-                type="button"
+              <Button
+                variant="warning"
+                size="xs"
+                className="px-2 py-0.5"
                 onClick={() => onRewind(file.path)}
-                className="text-xs px-2 py-0.5 rounded bg-warning text-white hover:bg-warning/80"
               >
                 Rewind
-              </button>
+              </Button>
             )}
           </div>
         </div>

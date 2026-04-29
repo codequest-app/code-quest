@@ -1,0 +1,48 @@
+import { getOrSet, TopicEmitter } from '@code-quest/shared';
+
+export interface QueryCacheConfig<R> {
+  fetch: (key: string) => Promise<R>;
+  idPrefix: string;
+}
+
+export interface QueryCache<R> {
+  get: (key: string) => R | undefined;
+  subscribe: (key: string, onChange: () => void) => () => void;
+  refetch: (key: string) => Promise<void>;
+  refetchIfSubscribed: (key: string) => Promise<void>;
+  hasSubscribers: (key: string) => boolean;
+  setFetch: (fn: (key: string) => Promise<R>) => void;
+}
+
+export function createQueryCache<R>({
+  fetch: fetchFn,
+  idPrefix,
+}: QueryCacheConfig<R>): QueryCache<R> {
+  const emitter = new TopicEmitter<string, void>();
+  const cache = new Map<string, R>();
+  const inflight = new Map<string, Promise<void>>();
+  let nextSubId = 0;
+  let currentFetch = fetchFn;
+
+  const refetch = async (key: string): Promise<void> => {
+    cache.set(key, await currentFetch(key));
+    emitter.publish(key, undefined);
+  };
+
+  return {
+    get: (key) => cache.get(key),
+    subscribe: (key, onChange) => {
+      const off = emitter.subscribe(key, `${idPrefix}-${nextSubId++}`, onChange);
+      if (!cache.has(key)) getOrSet(inflight, key, () => refetch(key)).catch(console.error);
+      return off;
+    },
+    refetch,
+    refetchIfSubscribed: async (key) => {
+      if (emitter.hasSubscribers(key)) await refetch(key);
+    },
+    hasSubscribers: (key) => emitter.hasSubscribers(key),
+    setFetch: (fn) => {
+      currentFetch = fn;
+    },
+  };
+}

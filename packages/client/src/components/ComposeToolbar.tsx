@@ -6,12 +6,11 @@ import {
   toPermissionMode,
 } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
-import { lazy, Suspense, useRef, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';
 import { useAppInit } from '../contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../contexts/channel';
 import { modelOpenSignal } from '../features/model/model-feature';
-import { useChatColumnAnchorRef } from '../hooks/useChatColumnAnchorRef';
 import { cn } from '../utils/cn';
 import { findModel, getEffortLevels } from '../utils/model-utils';
 import { AttachMenu } from './AttachMenu';
@@ -96,10 +95,14 @@ async function fetchEnrichedMcpServers(
 }
 
 export interface ComposeToolbarProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
   onAttachFile?: () => void;
 }
 
-export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps): React.JSX.Element {
+export function ComposeToolbar({
+  containerRef,
+  onAttachFile,
+}: ComposeToolbarProps): React.JSX.Element {
   const {
     isProcessing,
     isCancelling,
@@ -143,9 +146,6 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps): React.JSX
     if (!enrichedMcpServers) mcpRefresh();
   };
 
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const modelAnchorRef = useChatColumnAnchorRef(toolbarRef);
-
   const isModelPickerOpen = useSyncExternalStore(
     (cb) => modelOpenSignal.subscribe(cb),
     () => modelOpenSignal.isOpen,
@@ -187,8 +187,8 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps): React.JSX
         updateValue={compose.updateValue}
       />
       <Popover.Root open={isModelPickerOpen} onOpenChange={modelOpenSignal.setOpen}>
-        <Popover.Anchor virtualRef={modelAnchorRef} />
-        <div ref={toolbarRef} className="flex items-center gap-0.5 px-2 py-1 text-xs">
+        <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
+        <div className="flex items-center gap-0.5 px-2 py-1 text-xs">
           {isModelPickerOpen && (
             <Popover.Content
               side="top"
@@ -216,6 +216,7 @@ export function ComposeToolbar({ onAttachFile }: ComposeToolbarProps): React.JSX
           <AttachMenu onAttachFile={onAttachFile} onMentionFile={compose.mentionFile} />
 
           <CommandMenu
+            containerRef={containerRef}
             onToggleMcp={() => setActiveDialog('manageMcp')}
             onMcpStatus={openMcpStatus}
             onManagePlugins={() => setActiveDialog('plugins')}

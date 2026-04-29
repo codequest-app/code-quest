@@ -1,6 +1,7 @@
 import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useChannelConfig } from '../contexts/channel';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { Button } from './ui/Button';
 
 export function ReviewUpsellBanner(): React.ReactNode {
   const { experimentGates } = useChannelConfig();
@@ -18,13 +19,9 @@ export function ReviewUpsellBanner(): React.ReactNode {
       className="bg-accent/10 border border-accent/30 rounded-md px-4 py-3 flex items-center justify-between gap-3"
     >
       <span className="text-sm text-text">Try the new code review feature</span>
-      <button
-        type="button"
-        onClick={dismiss}
-        className="text-xs text-text-muted hover:text-text px-2 py-1 rounded hover:tint-10"
-      >
+      <Button variant="ghost" size="xs" className="px-2 py-1" onClick={dismiss}>
         Dismiss
-      </button>
+      </Button>
     </section>
   );
 }

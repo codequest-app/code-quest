@@ -70,6 +70,19 @@ export const WithAuth: Story = {
   },
 };
 
+export const AllActions: Story = {
+  name: 'All action buttons',
+  args: {
+    server: { name: 'github', status: 'connected', enabled: true },
+    onListTools: fn(async () => [{ name: 'read_file', description: 'Read a file' }]),
+    onAuthenticate: fn(async () => ({
+      ok: true as const,
+      data: { authUrl: 'https://example.com/auth' },
+    })),
+    onClearAuth: fn(async () => ({ ok: true as const, data: {} })),
+  },
+};
+
 export const ToggleOn: Story = {
   args: {
     server: { name: 'filesystem', status: 'connected', enabled: false },

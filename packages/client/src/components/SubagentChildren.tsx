@@ -3,6 +3,7 @@ import type { MessageNode } from '../utils/message-tree';
 import { pluralize } from '../utils/pluralize';
 import { MessageNodeList } from './MessageNodeList';
 import { RotatableChevron } from './message-blocks/shared';
+import { InlineAction } from './ui/InlineAction';
 
 export function SubagentChildren({
   nodes,
@@ -29,14 +30,13 @@ export function SubagentChildren({
           <span>{pluralize(nodes.length, 'subagent message')}</span>
         </button>
         {onStopTask && parentToolId && (
-          <button
-            type="button"
+          <InlineAction
+            variant="danger"
             title="Stop subagent"
             onClick={() => onStopTask(parentToolId)}
-            className="text-xs text-danger hover:text-danger/80 transition-colors"
           >
             ■
-          </button>
+          </InlineAction>
         )}
       </div>
       {expanded && (

@@ -1,4 +1,5 @@
-import { createContext, type ReactNode, useContext, useState } from 'react';
+import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
+import { ProjectStateContext } from './ProjectContext';
 
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
  *  appears in that provider's tabs. Set by flows that spawn a channel
@@ -20,12 +21,10 @@ interface NavigationState {
   pendingActivateChannel: PendingActivateChannel | null;
   pendingOpenWorktree: PendingOpenWorktree | null;
   /** Sidebar's currently-selected worktree, per project. Drives:
-   *  - useActiveCwd fallback when no chat tab is open in the active project
-   *    (the right pane previews the sidebar selection until the user starts
-   *    chatting in a tab, at which point ActiveChatTabCwdContext takes over)
    *  - TabProvider's createNewTab default cwd
    *  Selecting a worktree DOES NOT auto-open chat — user clicks `+` for that. */
   selectedWorktreeCwd: Record<string, string | null>;
+  activeCwd: string | null;
 }
 
 interface NavigationActions {
@@ -35,6 +34,7 @@ interface NavigationActions {
   clearPendingOpenWorktree: () => void;
   /** Set/clear which worktree the sidebar has highlighted under the given project. */
   setSelectedWorktree: (projectCwd: string, worktreeCwd: string | null) => void;
+  setActiveCwd: (cwd: string | null) => void;
 }
 
 export const NavigationStateContext: React.Context<NavigationState | null> =
@@ -54,6 +54,19 @@ export function useNavigationActions(): NavigationActions {
   return ctx;
 }
 
+export function useActiveCwd(): string | null {
+  const navState = useContext(NavigationStateContext);
+  const projectState = useContext(ProjectStateContext);
+
+  if (navState?.activeCwd) return navState.activeCwd;
+
+  const activeProjectCwd = projectState?.activeProjectCwd ?? null;
+  if (activeProjectCwd && navState?.selectedWorktreeCwd[activeProjectCwd]) {
+    return navState.selectedWorktreeCwd[activeProjectCwd] ?? null;
+  }
+  return activeProjectCwd;
+}
+
 export function NavigationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [pendingActivateChannel, setPendingActivateChannel] =
     useState<PendingActivateChannel | null>(null);
@@ -61,6 +74,7 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
   const [selectedWorktreeCwd, setSelectedWorktreeCwdState] = useState<
     Record<string, string | null>
   >({});
+  const [activeCwd, setActiveCwd] = useState<string | null>(null);
 
   const [actions] = useState<NavigationActions>(() => ({
     requestActivateChannel: (cwd, channelId) => setPendingActivateChannel({ cwd, channelId }),
@@ -68,6 +82,7 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     requestOpenWorktree: (projectCwd, worktreeCwd, forceNew = false) =>
       setPendingOpenWorktree({ projectCwd, worktreeCwd, forceNew }),
     clearPendingOpenWorktree: () => setPendingOpenWorktree(null),
+    setActiveCwd,
     setSelectedWorktree: (projectCwd, worktreeCwd) => {
       setSelectedWorktreeCwdState((prev) => {
         if (worktreeCwd === null) {
@@ -81,10 +96,13 @@ export function NavigationProvider({ children }: { children: ReactNode }): React
     },
   }));
 
+  const state = useMemo<NavigationState>(
+    () => ({ pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd }),
+    [pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd, activeCwd],
+  );
+
   return (
-    <NavigationStateContext.Provider
-      value={{ pendingActivateChannel, pendingOpenWorktree, selectedWorktreeCwd }}
-    >
+    <NavigationStateContext.Provider value={state}>
       <NavigationActionsContext.Provider value={actions}>
         {children}
       </NavigationActionsContext.Provider>

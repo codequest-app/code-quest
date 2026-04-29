@@ -2,7 +2,9 @@ import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/s
 import { useState } from 'react';
 import { useChannelConfig } from '../contexts/channel';
 import { cn } from '../utils/cn';
+import { Button } from './ui/Button';
 import { ActionButton, TrashIcon } from './ui/Icons';
+import { InlineAction } from './ui/InlineAction';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 
 function pluginDisplayName(id: string): string {
@@ -158,14 +160,15 @@ export function InstalledPluginList({
                       </div>
                     </div>
                     {!isSelected && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="info"
+                        size="sm"
                         disabled={isInstalling}
+                        className="shrink-0"
                         onClick={() => setSelectedForInstall(plugin.pluginId)}
-                        className="shrink-0 px-2.5 py-1 rounded bg-button text-white text-sm border-0 disabled:opacity-50"
                       >
                         {isInstalling ? 'Installing…' : 'Install'}
-                      </button>
+                      </Button>
                     )}
                   </div>
 
@@ -208,13 +211,9 @@ export function InstalledPluginList({
                           <div className="text-xs text-text-muted">{desc}</div>
                         </button>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedForInstall(null)}
-                        className="text-xs text-text-muted hover:text-text mt-1"
-                      >
+                      <InlineAction className="mt-1" onClick={() => setSelectedForInstall(null)}>
                         Cancel
-                      </button>
+                      </InlineAction>
                     </div>
                   )}
                 </li>
