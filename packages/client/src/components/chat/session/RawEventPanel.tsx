@@ -1,0 +1,223 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from '../../../utils/cn';
+import { PanelHeader } from '../../ui/PanelHeader';
+import { SearchBar } from '../conversation/SearchBar';
+import { JsonViewer } from '../renderers/JsonViewer';
+import { RawEventFilterBar } from './RawEventFilterBar';
+import {
+  addVisibleTypes,
+  buildFilterEntries,
+  discoverNewTypes,
+  filterEvents,
+  getEventType,
+} from './raw-event-utils';
+
+const ICON_BTN = 'text-text-muted hover:text-text text-sm';
+const SCROLL_THRESHOLD_PX = 50;
+
+const RawEventRow = memo(function RawEventRow({ index, event }: { index: number; event: unknown }) {
+  const evtType = getEventType(event);
+  return (
+    <details className="border-b border-border">
+      <summary className="px-4 py-2 cursor-pointer text-xs text-text-muted hover:text-text">
+        Event #{index + 1}
+        {evtType ? ` — ${evtType}` : ''}
+      </summary>
+      <div className="px-4 py-2 text-xs overflow-x-auto">
+        <JsonViewer data={event} />
+      </div>
+    </details>
+  );
+});
+
+interface RawEventPanelProps {
+  onFetch?: () => Promise<{ events: unknown[] }>;
+  onSubscribe?: (cb: (evt: unknown) => void) => () => void;
+  onClose: () => void;
+}
+
+export function RawEventPanel({
+  onFetch,
+  onSubscribe,
+  onClose,
+}: RawEventPanelProps): React.JSX.Element {
+  const [events, setEvents] = useState<unknown[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(new Set());
+  const [searchText, setSearchText] = useState('');
+  const [autoScroll, setAutoScroll] = useState(true);
+  const seenTypesRef = useRef<Set<string>>(new Set());
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const userScrolledRef = useRef(false);
+  const autoScrollRef = useRef(autoScroll);
+  autoScrollRef.current = autoScroll;
+
+  function trackNewTypes(evts: unknown[]) {
+    const newTypes = discoverNewTypes(evts, seenTypesRef.current);
+    if (newTypes.length > 0) {
+      setVisibleTypes((prev) => addVisibleTypes(prev, newTypes));
+    }
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trackNewTypes stable via React Compiler
+  useEffect(() => {
+    if (!onSubscribe) return;
+    const unsubscribe = onSubscribe((evt) => {
+      trackNewTypes([evt]);
+      setEvents((prev) => [...prev, evt]);
+    });
+    return unsubscribe;
+  }, [onSubscribe]);
+
+  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD_PX;
+    if (!atBottom && !userScrolledRef.current) {
+      userScrolledRef.current = true;
+      setAutoScroll(false);
+    } else if (atBottom) {
+      userScrolledRef.current = false;
+    }
+  }
+
+  function scrollToBottom() {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  const handleRefresh = async () => {
+    if (!onFetch) return;
+    setLoading(true);
+    try {
+      const result = await onFetch();
+      seenTypesRef.current = new Set();
+      setVisibleTypes(new Set());
+      trackNewTypes(result.events);
+      setEvents(result.events);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterEntries = useMemo(() => buildFilterEntries(events), [events]);
+  const filteredEvents = useMemo(
+    () => filterEvents(events, visibleTypes, searchText),
+    [events, visibleTypes, searchText],
+  );
+
+  const virtualizer = useVirtualizer({
+    count: filteredEvents.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 40,
+    overscan: 10,
+  });
+
+  const totalSize = virtualizer.getTotalSize();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: totalSize is the trigger; scrollToBottom stable
+  useEffect(() => {
+    if (autoScrollRef.current) scrollToBottom();
+  }, [totalSize]);
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  return (
+    <div className="flex flex-col h-full bg-surface border-r border-border">
+      <PanelHeader
+        title="Raw Events"
+        actions={
+          <div className="flex gap-2">
+            {onSubscribe && (
+              <button
+                type="button"
+                title="Auto-scroll"
+                onClick={() => {
+                  setAutoScroll(true);
+                  userScrolledRef.current = false;
+                  scrollToBottom();
+                }}
+                className={cn(ICON_BTN, autoScroll && 'text-accent')}
+              >
+                ⤓
+              </button>
+            )}
+            {onFetch && (
+              <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
+                ↻
+              </button>
+            )}
+            {events.length > 0 && (
+              <button
+                type="button"
+                title="Clear"
+                onClick={() => {
+                  setEvents([]);
+                  seenTypesRef.current = new Set();
+                  setVisibleTypes(new Set());
+                }}
+                className={ICON_BTN}
+              >
+                ⌀
+              </button>
+            )}
+            <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
+              ✕
+            </button>
+          </div>
+        }
+      />
+      <SearchBar
+        searchQuery={searchText}
+        setSearchQuery={setSearchText}
+        placeholder="Search events..."
+      />
+      {filterEntries.length > 0 && (
+        <RawEventFilterBar
+          entries={filterEntries}
+          selected={visibleTypes}
+          onChange={setVisibleTypes}
+        />
+      )}
+      <div className="flex-1 min-h-0 relative">
+        {loading && <div className="px-4 py-8 text-center text-text-muted text-sm">Loading...</div>}
+        {!loading && events.length === 0 && (
+          <div className="px-4 py-8 text-center text-text-muted text-sm">
+            {onSubscribe ? 'Waiting for events…' : 'No events. Click ↻ to fetch.'}
+          </div>
+        )}
+        {!loading && filteredEvents.length > 0 && (
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+          >
+            <div
+              style={{
+                height: totalSize,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualItems.map((item) => (
+                <div
+                  key={item.key}
+                  data-index={item.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${item.start}px)`,
+                  }}
+                >
+                  <RawEventRow index={item.index} event={filteredEvents[item.index]} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

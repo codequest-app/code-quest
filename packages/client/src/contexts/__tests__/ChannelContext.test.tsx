@@ -3,7 +3,7 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { MessageList } from '../../components/MessageList';
+import { MessageList } from '../../components/chat/conversation/MessageList';
 import { createFakeSummoner } from '../../test/fake-summoner';
 import { renderWithChannel } from '../../test/render-with-channel';
 import { renderWithWorkspace } from '../../test/render-with-workspace';

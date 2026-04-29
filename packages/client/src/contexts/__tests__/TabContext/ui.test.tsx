@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { WorkspaceLayout } from '../../../components/WorkspaceLayout';
+import { WorkspaceLayout } from '../../../components/workspace/WorkspaceLayout';
 import { createFakeSummoner } from '../../../test/fake-summoner';
 import { renderWithWorkspace } from '../../../test/render-with-workspace';
 import { AppInitProvider } from '../../AppInitContext';

@@ -4,11 +4,11 @@ import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
 import { renderWithChannel } from '../../test/render-with-channel';
-import { ComposeInput } from '../ComposeInput';
+import { ComposeInput } from '../chat/compose/ComposeInput';
 
 const containerRef = createRef<HTMLDivElement>();
 
-import { MessageList } from '../MessageList';
+import { MessageList } from '../chat/conversation/MessageList';
 
 // Fake only setTimeout/clearTimeout so the 500ms scroll-lock can be
 // advanced instantly. fireEvent is used over userEvent because the

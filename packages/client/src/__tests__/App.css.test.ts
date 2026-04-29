@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { readSrc } from '../test/read-src';
 
 const appCss = readSrc('App.css');
-const chatInputAreaSrc = readSrc('components/ChatInputArea.tsx');
-const composeToolbarSrc = readSrc('components/ComposeToolbar.tsx');
+const chatInputAreaSrc = readSrc('components/chat/compose/ChatInputArea.tsx');
+const composeToolbarSrc = readSrc('components/chat/compose/ComposeToolbar.tsx');
 
 const hoverTintConsumers = {
   IconButton: readSrc('components/ui/IconButton.tsx'),
-  PermissionModePicker: readSrc('components/PermissionModePicker.tsx'),
-  AttachMenu: readSrc('components/AttachMenu.tsx'),
-  ReviewUpsellBanner: readSrc('components/ReviewUpsellBanner.tsx'),
-  MentionDropdown: readSrc('components/MentionDropdown.tsx'),
-  ModelPickerPopover: readSrc('components/ModelPickerPopover.tsx'),
+  PermissionModePicker: readSrc('components/chat/compose/PermissionModePicker.tsx'),
+  AttachMenu: readSrc('components/chat/compose/AttachMenu.tsx'),
+  ReviewUpsellBanner: readSrc('components/chat/plan-review/ReviewUpsellBanner.tsx'),
+  MentionDropdown: readSrc('components/chat/compose/MentionDropdown.tsx'),
+  ModelPickerPopover: readSrc('components/settings/ModelPickerPopover.tsx'),
   CommandMenu: readSrc('components/command-menu/CommandMenu.tsx'),
   // EffortSwitch intentionally uses `bg-white` for the slider thumb — a
   // theme-invariant affordance on the colored `bg-toggle` fill. Excluded

@@ -11,7 +11,7 @@ import { switchAccountSignal } from '../../../features/switch-account/switch-acc
 import { usageOpenSignal } from '../../../features/usage/usage-feature';
 import { COMPOSE_PLACEHOLDER } from '../../../test/helpers';
 import { renderWithChannel } from '../../../test/render-with-channel';
-import { ComposeInput } from '../../ComposeInput';
+import { ComposeInput } from '../../chat/compose/ComposeInput';
 import { CommandMenu } from '../CommandMenu';
 
 const containerRef = createRef<HTMLDivElement>();

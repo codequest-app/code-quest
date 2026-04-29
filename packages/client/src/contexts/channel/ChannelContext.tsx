@@ -1,7 +1,7 @@
 import { EVENTS, sessionLaunchResponseSchema } from '@code-quest/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { EmptyState } from '../../components/EmptyState';
-import { SpinnerVerb } from '../../components/SpinnerVerb';
+import { SpinnerVerb } from '../../components/chat/SpinnerVerb';
+import { EmptyState } from '../../components/workspace/EmptyState';
 import type { ChannelChangeUpdate } from '../../types/chat';
 import { useAppInitState } from '../AppInitContext';
 import { useSocket } from '../SocketContext';
