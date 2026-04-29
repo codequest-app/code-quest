@@ -18,3 +18,17 @@ export const Default: Story = {
     onClose: fn(),
   },
 };
+
+export const Closed: Story = {
+  args: {
+    open: false,
+    onClose: fn(),
+  },
+};
+
+export const Open: Story = {
+  args: {
+    open: true,
+    onClose: fn(),
+  },
+};

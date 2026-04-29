@@ -18,3 +18,7 @@ export const Default: Story = {};
 export const HighlightedPath: Story = {
   args: { highlightedPath: '/Users/demo/project' },
 };
+
+export const WithDeepHighlight: Story = {
+  args: { highlightedPath: '/Users/demo/project/src/components/deep/nested' },
+};

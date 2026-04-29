@@ -20,3 +20,10 @@ export const ResumeOnly: Story = {};
 export const WithCreateWorktree: Story = {
   args: { onSelectCreateWorktree: fn() },
 };
+export const WithAllActions: Story = {
+  args: {
+    onSelectCreateWorktree: fn(),
+    onSelectRename: fn(),
+    onSelectRemove: fn(),
+  },
+};

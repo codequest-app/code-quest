@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import { fn, userEvent, within } from 'storybook/test';
 import { withStoryChannel } from '../../test/story-decorator';
 import { ManageMcpDialog } from './ManageMcpDialog';
 
@@ -37,9 +37,8 @@ export const ManageableDetail: Story = {
     onReconnect: fn(async () => {}),
     onToggle: fn(async () => {}),
   },
-  play: async ({ canvas }) => {
-    const { userEvent } = await import('storybook/test');
-    const row = canvas.getByText('filesystem');
-    await userEvent.click(row);
+  play: async () => {
+    const body = within(document.body);
+    await userEvent.click(await body.findByText('filesystem'));
   },
 };

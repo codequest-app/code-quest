@@ -1,3 +1,4 @@
+import * as Tabs from '@radix-ui/react-tabs';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
 import { TabBar } from './TabBar';
@@ -8,9 +9,9 @@ const meta: Meta<typeof TabBar> = {
   args: { onSelectTab: fn(), onCloseTab: fn(), onNewTab: fn() },
   decorators: [
     (Story: React.ComponentType): React.JSX.Element => (
-      <div className="bg-surface text-text">
+      <Tabs.Root defaultValue="" className="bg-surface text-text">
         <Story />
-      </div>
+      </Tabs.Root>
     ),
   ],
 } satisfies Meta<typeof TabBar>;

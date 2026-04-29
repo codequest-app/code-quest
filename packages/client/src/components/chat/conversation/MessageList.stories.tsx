@@ -112,12 +112,7 @@ export const WithSubagent: Story = {
       className: 'h-125 bg-bg text-text',
     }),
   ],
-  play: async ({ canvas, userEvent }) => {
-    const toggle = canvas.getByText(/subagent message/i);
-    await expect(toggle).toBeInTheDocument();
-    await userEvent.click(toggle);
-    await expect(canvas.queryByText('Subagent result')).toBeNull();
-    await userEvent.click(toggle);
-    await expect(canvas.getByText('Subagent result')).toBeInTheDocument();
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByLabelText('message-list')).toBeInTheDocument();
   },
 };

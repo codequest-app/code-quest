@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { ContentPreviewDialog } from './ContentPreviewDialog';
 
 const meta: Meta<typeof ContentPreviewDialog> = {
@@ -48,8 +48,9 @@ export const WithDiffs: Story = {
 
 export const Close: Story = {
   args: { content: '# Hello', title: 'Preview' },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole('button', { name: /close/i }));
+  play: async ({ args, userEvent }) => {
+    const body = within(document.body);
+    await userEvent.click(await body.findByRole('button', { name: /close/i }));
     await expect(args.onClose).toHaveBeenCalledOnce();
   },
 };

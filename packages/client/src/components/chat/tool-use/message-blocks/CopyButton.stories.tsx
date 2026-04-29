@@ -48,3 +48,19 @@ export const MessageHoverReveal: Story = {
   ),
   args: {},
 };
+
+// Always-visible standalone button (no group-hover)
+export const Standalone: Story = {
+  render: (args) => (
+    <div className="flex items-center gap-2 bg-surface rounded p-3">
+      <span className="text-text">Copy this text:</span>
+      <CopyButton
+        {...args}
+        text="Hello, world!"
+        className="p-1 rounded text-text-muted hover:text-text hover:bg-surface-hover cursor-pointer"
+        title="Copy greeting"
+      />
+    </div>
+  ),
+  args: {},
+};
