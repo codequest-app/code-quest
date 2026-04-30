@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ModelPickerPopover } from '../ModelPickerPopover';
 
-// Include a 'default' entry so the sentinel button is suppressed — tests only deal with real models
 const models = [
   { value: 'default', displayName: 'Default (recommended)' },
   { value: 'claude-opus-4-20250514', displayName: 'Claude Opus 4' },
@@ -20,66 +19,88 @@ function renderPanel(currentModel: string | null = null, onSwitch = vi.fn()) {
 
 describe('ModelPickerPopover', () => {
   describe('active model highlighting', () => {
-    it('highlights the currently selected model with bg-selected', () => {
+    it('highlights the currently selected model with aria-selected', () => {
       renderPanel('claude-sonnet-4-20250514');
-      const activeBtn = screen.getByRole('option', { name: /Claude Sonnet 4/ });
-      expect(activeBtn).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('option', { name: /Claude Sonnet 4/ })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
     });
 
-    it('does not highlight other models', () => {
+    it('does not mark other models as selected', () => {
       renderPanel('claude-sonnet-4-20250514');
-      const opusBtn = screen.getByRole('option', { name: /Claude Opus 4/ });
-      expect(opusBtn).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByRole('option', { name: /Claude Opus 4/ })).toHaveAttribute(
+        'aria-selected',
+        'false',
+      );
     });
   });
 
   describe('ArrowDown / ArrowUp navigation', () => {
-    it('ArrowDown moves active highlight to first item when none is selected', async () => {
+    it('ArrowDown focuses first option and applies bg-selected', async () => {
       const user = userEvent.setup();
       renderPanel(null);
-      const listbox = screen.getByRole('listbox');
-      listbox.focus();
+      screen.getByRole('listbox').focus();
 
       await user.keyboard('{ArrowDown}');
 
-      // buttons[0] = Default, buttons[1] = Opus, buttons[2] = Sonnet, buttons[3] = Haiku
       const buttons = screen.getAllByRole('option');
+      expect(document.activeElement).toBe(buttons[0]);
       expect(buttons[0]!.className).toContain('bg-selected');
     });
 
-    it('ArrowDown moves to next item', async () => {
+    it('ArrowDown moves focus and bg-selected to next option', async () => {
       const user = userEvent.setup();
-      renderPanel('claude-opus-4-20250514'); // opus is index 1 in items[]
-      const listbox = screen.getByRole('listbox');
-      listbox.focus();
+      renderPanel('claude-opus-4-20250514');
+      screen.getByRole('listbox').focus();
 
-      await user.keyboard('{ArrowDown}'); // → index 2 = sonnet
+      await user.keyboard('{ArrowDown}');
 
       const buttons = screen.getAllByRole('option');
-      expect(buttons[1]!.className).not.toContain('bg-selected'); // opus
-      expect(buttons[2]!.className).toContain('bg-selected'); // sonnet
+      expect(document.activeElement).toBe(buttons[2]); // sonnet
+      expect(buttons[2]!.className).toContain('bg-selected');
     });
 
-    it('ArrowUp moves to previous item', async () => {
+    it('ArrowUp moves focus and bg-selected to previous option', async () => {
       const user = userEvent.setup();
-      renderPanel('claude-sonnet-4-20250514'); // sonnet is index 2 in items[]
-      const listbox = screen.getByRole('listbox');
-      listbox.focus();
+      renderPanel('claude-sonnet-4-20250514');
+      screen.getByRole('listbox').focus();
 
-      await user.keyboard('{ArrowUp}'); // → index 1 = opus
+      await user.keyboard('{ArrowUp}');
 
       const buttons = screen.getAllByRole('option');
-      expect(buttons[1]!.className).toContain('bg-selected'); // opus
-      expect(buttons[2]!.className).not.toContain('bg-selected'); // sonnet
+      expect(document.activeElement).toBe(buttons[1]); // opus
+      expect(buttons[1]!.className).toContain('bg-selected');
+    });
+
+    it('ArrowDown does not go past last option', async () => {
+      const user = userEvent.setup();
+      renderPanel('claude-haiku-4-5-20251001');
+      screen.getByRole('listbox').focus();
+
+      await user.keyboard('{ArrowDown}{ArrowDown}');
+
+      const buttons = screen.getAllByRole('option');
+      expect(document.activeElement).toBe(buttons[3]);
+    });
+
+    it('ArrowUp does not go before first option', async () => {
+      const user = userEvent.setup();
+      renderPanel('default');
+      screen.getByRole('listbox').focus();
+
+      await user.keyboard('{ArrowUp}{ArrowUp}');
+
+      const buttons = screen.getAllByRole('option');
+      expect(document.activeElement).toBe(buttons[0]);
     });
   });
 
   describe('Enter selects focused item', () => {
-    it('Enter selects the highlighted model', async () => {
+    it('Enter selects the focused option', async () => {
       const user = userEvent.setup();
       const { onSwitch } = renderPanel('claude-opus-4-20250514');
-      const listbox = screen.getByRole('listbox');
-      listbox.focus();
+      screen.getByRole('listbox').focus();
 
       await user.keyboard('{ArrowDown}{Enter}');
 

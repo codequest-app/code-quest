@@ -1,18 +1,17 @@
 import type { ModelInfo } from '@code-quest/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
 import {
   getModelDisplayInfo,
   getModelInfoDisplayName,
   shortModelName,
 } from '../../utils/model-utils';
-import { focusRing } from '../ui/_tokens';
 
-const optionButtonClass = (isActive: boolean) =>
+const optionButtonClass = (isSelected: boolean) =>
   cn(
     'w-full text-left mx-1 px-2 py-1 flex items-center justify-between transition-colors rounded-sm',
-    isActive ? 'bg-selected' : 'hover:tint-10',
-    focusRing,
+    isSelected ? 'bg-selected' : 'hover:tint-10',
+    'focus:bg-selected focus:outline-none',
   );
 
 interface ModelPickerPopoverProps {
@@ -26,13 +25,11 @@ function DefaultModelOption({
   availableModels,
   defaultModelDescription,
   isSelected,
-  isActive,
   onSelect,
 }: {
   availableModels: ModelInfo[];
   defaultModelDescription?: string;
   isSelected: boolean;
-  isActive: boolean;
   onSelect: () => void;
 }) {
   const { displayName, subLabel } = getModelDisplayInfo(
@@ -42,12 +39,12 @@ function DefaultModelOption({
   );
   return (
     <button
-      key="__default__"
       type="button"
       role="option"
+      tabIndex={-1}
       aria-selected={isSelected}
       onClick={onSelect}
-      className={optionButtonClass(isActive)}
+      className={optionButtonClass(isSelected)}
     >
       <div>
         <div className="text-text font-medium">{displayName}</div>
@@ -73,40 +70,45 @@ export function ModelPickerPopover({
   if (!hasDefaultEntry) items.push({ id: '__default__', value: '' });
   for (const m of availableModels) items.push({ id: m.value, value: m.value });
 
-  const initialIndex = items.findIndex(
-    (item) => (item.value === '' ? defaultModelValue : item.value) === currentModel,
-  );
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
   const listboxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    listboxRef.current?.focus();
+    const selected = listboxRef.current?.querySelector<HTMLElement>(
+      '[role="option"][aria-selected="true"]',
+    );
+    (selected ?? listboxRef.current)?.focus();
   }, []);
+
+  const getOptions = () =>
+    Array.from(listboxRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? []);
 
   const handleSelect = (value: string) => {
     onSwitch(value === '' ? (defaultModelValue ?? '') : value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const options = getOptions();
+    const focusedIndex = options.indexOf(document.activeElement as HTMLElement);
+    const selectedIndex = options.findIndex((o) => o.getAttribute('aria-selected') === 'true');
+    const currentIndex = focusedIndex >= 0 ? focusedIndex : selectedIndex;
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, items.length - 1));
+      options[Math.min(currentIndex + 1, options.length - 1)]?.focus();
       return;
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
+      options[Math.max(currentIndex - 1, 0)]?.focus();
       return;
     }
-    if (e.key === 'Enter' && activeIndex >= 0) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      const item = items[activeIndex];
-      if (item) handleSelect(item.value);
+      const focused = document.activeElement as HTMLElement;
+      if (options.includes(focused)) focused.click();
       return;
     }
   };
-
-  const isActive = (index: number) => index === activeIndex;
 
   return (
     <div
@@ -116,18 +118,15 @@ export function ModelPickerPopover({
       className="bg-surface border border-border rounded shadow-lg overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
       onKeyDown={handleKeyDown}
     >
-      {/* Default (recommended) sentinel — only when server doesn't provide one */}
       {!hasDefaultEntry && (
         <DefaultModelOption
           availableModels={availableModels}
           defaultModelDescription={defaultModelDescription}
           isSelected={currentModel === defaultModelValue}
-          isActive={isActive(0)}
           onSelect={() => handleSelect('')}
         />
       )}
-      {availableModels.map((item, i) => {
-        const index = hasDefaultEntry ? i : i + 1;
+      {availableModels.map((item) => {
         const { displayName, subLabel } = getModelInfoDisplayName(
           item,
           item.value,
@@ -139,9 +138,10 @@ export function ModelPickerPopover({
             key={item.value}
             type="button"
             role="option"
+            tabIndex={-1}
             aria-selected={isSelected}
             onClick={() => handleSelect(item.value)}
-            className={optionButtonClass(isActive(index))}
+            className={optionButtonClass(isSelected)}
           >
             <div>
               <div className="text-text font-medium">{displayName}</div>
