@@ -34,7 +34,7 @@ function BashToolBody({
   return (
     <ToolBlock>
       <ToolBlockRow label="IN" copyText={command} divider={resultContent != null}>
-        <pre className="whitespace-pre">{command}</pre>
+        <pre className="whitespace-pre-wrap">{command}</pre>
       </ToolBlockRow>
       {resultContent != null && (
         <ToolBlockRow label="OUT">
@@ -122,7 +122,7 @@ function DefaultToolBody({
     <ToolBlock>
       {inputJson && (
         <ToolBlockRow label="IN" copyText={inputJson} divider={resultContent != null}>
-          <pre className="whitespace-pre">{inputJson}</pre>
+          <pre className="whitespace-pre-wrap">{inputJson}</pre>
         </ToolBlockRow>
       )}
       {resultContent != null && (

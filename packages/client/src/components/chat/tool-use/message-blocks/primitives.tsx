@@ -106,7 +106,7 @@ export function OutputContent({
   return hasAnsi(content) ? (
     <AnsiContent content={content} />
   ) : (
-    <pre className={cn('whitespace-pre', isError && 'text-danger')}>
+    <pre className={cn('whitespace-pre-wrap', isError && 'text-danger')}>
       {parseFilePathsInContent(content)}
     </pre>
   );

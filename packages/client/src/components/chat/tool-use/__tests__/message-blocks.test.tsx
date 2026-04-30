@@ -79,7 +79,7 @@ describe('message-blocks', () => {
       expect(copyBtn.textContent).not.toContain('📋');
     });
 
-    it('Bash content does not wrap (whitespace-pre, not whitespace-pre-wrap)', async () => {
+    it('Bash content wraps long lines (whitespace-pre-wrap)', async () => {
       const user = userEvent.setup();
       const { container } = render(
         renderBody({
@@ -98,7 +98,7 @@ describe('message-blocks', () => {
       await user.click(screen.getByText('Bash'));
       const pres = container.querySelectorAll('pre');
       for (const pre of pres) {
-        expect(pre.className).not.toContain('whitespace-pre-wrap');
+        expect(pre.className).toContain('whitespace-pre-wrap');
       }
     });
 

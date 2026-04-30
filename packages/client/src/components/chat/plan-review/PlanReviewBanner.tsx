@@ -23,6 +23,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
   const plan = parsed.data?.plan;
   const allowedPrompts = parsed.data?.allowedPrompts;
   const [comment, setComment] = useState('');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const lastRequestId = useRef<string | null>(null);
   const planContentRef = useRef<HTMLDivElement>(null);
   const { planComments, addPlanComment, clearPlanComments } = useChannelMessages();
@@ -31,6 +32,7 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
     if (pending.requestId !== lastRequestId.current) {
       lastRequestId.current = pending.requestId;
       if (comment) setComment('');
+      if (feedbackOpen) setFeedbackOpen(false);
     }
   });
 
@@ -45,13 +47,14 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
     });
   };
 
-  const handleReject = () => {
+  const handleSendFeedback = () => {
     const trimmedComment = comment.trim();
     const commentParts = [
       ...(trimmedComment ? [trimmedComment] : []),
       ...planComments.map(formatComment),
     ];
     clearPlanComments();
+    setFeedbackOpen(false);
     onRespond({
       behavior: 'deny',
       message: commentParts.join('\n') || 'User chose to stay in plan mode and continue planning',
@@ -61,53 +64,27 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
 
   return (
     <div className="flex flex-col gap-3 bg-assistant/10 border border-assistant/20 rounded-md px-4 py-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-assistant">📋 Plan Review</span>
-        <div className="flex gap-2">
-          <Button
-            variant="success"
-            size="sm"
-            className="rounded-md font-medium"
-            onClick={handleApprove}
-          >
-            Approve Plan
-          </Button>
-          <Button
-            variant="warning"
-            size="sm"
-            className="rounded-md font-medium"
-            onClick={handleReject}
-          >
-            Continue Planning
-          </Button>
-        </div>
+      <div className="flex items-center">
+        <span className="text-sm font-medium text-assistant">
+          📋 Plan Review
+          {planComments.length > 0 && (
+            <span className="ml-2 text-xs text-accent font-normal">
+              ({pluralize(planComments.length, 'comment')})
+            </span>
+          )}
+        </span>
       </div>
+
       {plan && (
-        <details open>
-          <summary className="cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors">
-            Plan Content
-            {planComments.length > 0 && (
-              <span className="ml-2 text-xs text-accent">
-                ({pluralize(planComments.length, 'comment')})
-              </span>
-            )}
-          </summary>
-          <div
-            ref={planContentRef}
-            className="relative mt-2 bg-input-overlay rounded-lg px-4 py-3 border border-white/10 prose prose-invert prose-sm max-w-none"
-          >
-            <MarkdownContent content={plan} />
-            <PlanCommentPopover containerRef={planContentRef} onAddComment={addPlanComment} />
-          </div>
-        </details>
+        <div
+          ref={planContentRef}
+          className="relative bg-input-overlay rounded-lg px-4 py-3 border border-white/10 prose prose-invert prose-sm max-w-none"
+        >
+          <MarkdownContent content={plan} />
+          <PlanCommentPopover containerRef={planContentRef} onAddComment={addPlanComment} />
+        </div>
       )}
-      <textarea
-        placeholder="Add feedback..."
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={2}
-        className="text-sm bg-input-overlay rounded px-2 py-1 text-text border border-white/10 resize-y"
-      />
+
       {allowedPrompts && allowedPrompts.length > 0 && (
         <div className="text-xs text-text-muted">
           <span className="font-medium">Requested permissions: </span>
@@ -124,6 +101,63 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
           })}
         </div>
       )}
+
+      {feedbackOpen && (
+        <textarea
+          placeholder="Add feedback..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={2}
+          className="text-sm bg-input-overlay rounded px-2 py-1 text-text border border-white/10 resize-y"
+          // biome-ignore lint/a11y/noAutofocus: focus is intentional when expanding inline
+          autoFocus
+        />
+      )}
+
+      <div className="flex justify-end gap-2">
+        {feedbackOpen ? (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-md"
+              onClick={() => {
+                setComment('');
+                setFeedbackOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              className="rounded-md font-medium"
+              onClick={handleSendFeedback}
+            >
+              Send Feedback
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="rounded-md font-medium"
+              onClick={() => setFeedbackOpen(true)}
+            >
+              Continue Planning
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              className="rounded-md font-medium"
+              onClick={handleApprove}
+            >
+              Approve Plan
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

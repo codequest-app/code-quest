@@ -3,6 +3,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppInitProvider } from '../../../../contexts/AppInitContext';
 import { ChannelProvider, useChannelMessages } from '../../../../contexts/channel';
@@ -13,7 +14,6 @@ import { TabProvider } from '../../../../contexts/TabContext';
 import { createFakeSummoner } from '../../../../test/fake-summoner';
 import { PlanReviewBanner } from '../PlanReviewBanner';
 
-/** Helper to add planComments from within the component tree */
 function PlanCommentSetter({ comments }: { comments: PlanCommentData[] }) {
   const { addPlanComment } = useChannelMessages();
   React.useEffect(() => {
@@ -21,8 +21,6 @@ function PlanCommentSetter({ comments }: { comments: PlanCommentData[] }) {
   }, [comments, addPlanComment]);
   return null;
 }
-
-import React from 'react';
 
 async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCommentData[] }) {
   const summoner = createFakeSummoner();
@@ -56,72 +54,29 @@ async function renderInChannel(ui: ReactElement, opts?: { planComments?: PlanCom
   return { summoner, channelId, ...result };
 }
 
-describe('PlanReviewBanner comment input', () => {
-  it('renders a comment textarea', async () => {
+describe('PlanReviewBanner default state', () => {
+  it('shows Approve Plan and Continue Planning buttons', async () => {
     await renderInChannel(
       <PlanReviewBanner
         pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
         onRespond={vi.fn()}
       />,
     );
-    expect(screen.getByPlaceholderText(/add feedback/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /approve plan/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue planning/i })).toBeInTheDocument();
   });
 
-  it('sends comment as deny message on Continue Planning', async () => {
-    const onRespond = vi.fn();
-    const user = userEvent.setup();
+  it('does not show feedback textarea in default state', async () => {
     await renderInChannel(
-      <PlanReviewBanner
-        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
-        onRespond={onRespond}
-      />,
-    );
-    await user.type(screen.getByPlaceholderText(/add feedback/i), 'Please add tests');
-    await user.click(screen.getByRole('button', { name: /continue planning/i }));
-    expect(onRespond).toHaveBeenCalledWith({
-      behavior: 'deny',
-      message: 'Please add tests',
-      interrupt: false,
-    });
-  });
-
-  it('uses default message when comment is empty', async () => {
-    const onRespond = vi.fn();
-    const user = userEvent.setup();
-    await renderInChannel(
-      <PlanReviewBanner
-        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
-        onRespond={onRespond}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: /continue planning/i }));
-    expect(onRespond).toHaveBeenCalledWith({
-      behavior: 'deny',
-      message: 'User chose to stay in plan mode and continue planning',
-      interrupt: false,
-    });
-  });
-
-  it('resets comment when requestId changes', async () => {
-    const user = userEvent.setup();
-    const { rerender } = await renderInChannel(
       <PlanReviewBanner
         pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
         onRespond={vi.fn()}
       />,
     );
-    await user.type(screen.getByPlaceholderText(/add feedback/i), 'some feedback');
-
-    rerender(
-      <PlanReviewBanner
-        pending={{ requestId: 'r2', subtype: 'exit_plan_mode' }}
-        onRespond={vi.fn()}
-      />,
-    );
-    expect(screen.getByPlaceholderText(/add feedback/i)).toHaveValue('');
+    expect(screen.queryByPlaceholderText(/add feedback/i)).not.toBeInTheDocument();
   });
 
-  it('renders plan markdown preview when input.plan is present', async () => {
+  it('renders plan markdown when input.plan is present', async () => {
     await renderInChannel(
       <PlanReviewBanner
         pending={{
@@ -135,8 +90,10 @@ describe('PlanReviewBanner comment input', () => {
     expect(screen.getByText('My Plan')).toBeInTheDocument();
     expect(screen.getByText(/bold/)).toBeInTheDocument();
   });
+});
 
-  it('does not affect Approve Plan behavior', async () => {
+describe('PlanReviewBanner — Approve Plan', () => {
+  it('calls onRespond with allow when Approve Plan is clicked', async () => {
     const onRespond = vi.fn();
     const user = userEvent.setup();
     await renderInChannel(
@@ -145,20 +102,26 @@ describe('PlanReviewBanner comment input', () => {
         onRespond={onRespond}
       />,
     );
-    await user.type(screen.getByPlaceholderText(/add feedback/i), 'some comment');
     await user.click(screen.getByRole('button', { name: /approve plan/i }));
-    expect(onRespond).toHaveBeenCalledWith({
-      behavior: 'allow',
-      updatedInput: {},
-    });
+    expect(onRespond).toHaveBeenCalledWith({ behavior: 'allow', updatedInput: {} });
   });
-});
 
-describe('PlanReviewBanner approve with planComments', () => {
-  it('includes userFeedback in onRespond when planComments exist', async () => {
+  it('does not include userFeedback when no planComments', async () => {
+    const onRespond = vi.fn();
+    const user = userEvent.setup();
+    await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode', input: {} }}
+        onRespond={onRespond}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /approve plan/i }));
+    expect(onRespond.mock.calls[0]![0].userFeedback).toBeUndefined();
+  });
+
+  it('includes userFeedback from planComments', async () => {
     const comments: PlanCommentData[] = [
       { id: '1', selectedText: 'step 1', comment: 'needs more detail', sectionHeading: '' },
-      { id: '2', selectedText: 'step 2', comment: 'looks good', sectionHeading: '' },
     ];
     const onRespond = vi.fn();
     const user = userEvent.setup();
@@ -173,23 +136,8 @@ describe('PlanReviewBanner approve with planComments', () => {
     expect(onRespond).toHaveBeenCalledWith({
       behavior: 'allow',
       updatedInput: { plan: '# Plan' },
-      userFeedback: '[On "step 1"]: needs more detail\n[On "step 2"]: looks good',
+      userFeedback: '[On "step 1"]: needs more detail',
     });
-  });
-
-  it('does NOT include userFeedback when no planComments exist', async () => {
-    const onRespond = vi.fn();
-    const user = userEvent.setup();
-    await renderInChannel(
-      <PlanReviewBanner
-        pending={{ requestId: 'r1', subtype: 'exit_plan_mode', input: {} }}
-        onRespond={onRespond}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: /approve plan/i }));
-    const call = onRespond.mock.calls[0]![0];
-    expect(call.behavior).toBe('allow');
-    expect(call.userFeedback).toBeUndefined();
   });
 
   it('clears planComments after approving', async () => {
@@ -210,5 +158,99 @@ describe('PlanReviewBanner approve with planComments', () => {
     await waitFor(() => {
       expect(screen.queryByText(/comment/i)).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('PlanReviewBanner — Continue Planning expand/collapse', () => {
+  it('shows textarea and Send Feedback + Cancel after clicking Continue Planning', async () => {
+    const user = userEvent.setup();
+    await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
+        onRespond={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /continue planning/i }));
+    expect(screen.getByPlaceholderText(/add feedback/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send feedback/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continue planning/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /approve plan/i })).not.toBeInTheDocument();
+  });
+
+  it('Cancel hides textarea and restores default buttons', async () => {
+    const user = userEvent.setup();
+    await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
+        onRespond={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /continue planning/i }));
+    await user.type(screen.getByPlaceholderText(/add feedback/i), 'some text');
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(screen.queryByPlaceholderText(/add feedback/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /approve plan/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue planning/i })).toBeInTheDocument();
+  });
+
+  it('Send Feedback submits deny with typed message', async () => {
+    const onRespond = vi.fn();
+    const user = userEvent.setup();
+    await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
+        onRespond={onRespond}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /continue planning/i }));
+    await user.type(screen.getByPlaceholderText(/add feedback/i), 'Please add tests');
+    await user.click(screen.getByRole('button', { name: /send feedback/i }));
+    expect(onRespond).toHaveBeenCalledWith({
+      behavior: 'deny',
+      message: 'Please add tests',
+      interrupt: false,
+    });
+  });
+
+  it('Send Feedback with empty textarea uses default message', async () => {
+    const onRespond = vi.fn();
+    const user = userEvent.setup();
+    await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
+        onRespond={onRespond}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /continue planning/i }));
+    await user.click(screen.getByRole('button', { name: /send feedback/i }));
+    expect(onRespond).toHaveBeenCalledWith({
+      behavior: 'deny',
+      message: 'User chose to stay in plan mode and continue planning',
+      interrupt: false,
+    });
+  });
+});
+
+describe('PlanReviewBanner — state reset on new request', () => {
+  it('resets feedbackOpen and comment when requestId changes', async () => {
+    const user = userEvent.setup();
+    const { rerender } = await renderInChannel(
+      <PlanReviewBanner
+        pending={{ requestId: 'r1', subtype: 'exit_plan_mode' }}
+        onRespond={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /continue planning/i }));
+    await user.type(screen.getByPlaceholderText(/add feedback/i), 'some feedback');
+
+    rerender(
+      <PlanReviewBanner
+        pending={{ requestId: 'r2', subtype: 'exit_plan_mode' }}
+        onRespond={vi.fn()}
+      />,
+    );
+    expect(screen.queryByPlaceholderText(/add feedback/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /approve plan/i })).toBeInTheDocument();
   });
 });
