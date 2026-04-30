@@ -5,6 +5,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../../../contexts/channel';
 import { cn } from '../../../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../../../utils/slash-query';
+import { sortEntriesDirsFirst } from '../../../utils/sort-entries';
 import { slashPaletteState } from '../../command-menu/slash-palette-state';
 import { MentionDropdown } from './MentionDropdown';
 
@@ -108,12 +109,7 @@ export function ComposeInput({
     setSearchStatus('loading');
     const result = await searchFiles(query);
     const files = result.ok ? result.data.files : [];
-    setFileResults(
-      [...files].sort((a, b) => {
-        if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
-        return a.path.localeCompare(b.path);
-      }),
-    );
+    setFileResults(sortEntriesDirsFirst(files));
     setSearchStatus('done');
   }, 200);
 

@@ -100,6 +100,31 @@ describe('FileTree', () => {
     expect(await screen.findByRole('treeitem', { name: 'README.md' })).toBeInTheDocument();
   });
 
+  it('directories appear before files, each group sorted alphabetically', async () => {
+    const summoner = createFakeSummoner();
+    summoner.filesystem().setRoots(['/projects']);
+    summoner.filesystem().addDirectory('/projects', ['z-dir', 'a-dir']);
+    summoner.filesystem().addFile('/projects/m-file.ts', '');
+    summoner.filesystem().addFile('/projects/a-file.ts', '');
+    function Wrapper({ children }: { children: ReactNode }) {
+      return <FsProvidersWrapper socket={summoner.socket}>{children}</FsProvidersWrapper>;
+    }
+    render(<FileTree rootCwd="/projects" />, { wrapper: Wrapper });
+
+    const items = await screen.findAllByRole('treeitem');
+    const labels = items.map((i) => i.getAttribute('aria-label') ?? i.textContent ?? '');
+    const aDir = labels.findIndex((l) => l.includes('a-dir'));
+    const zDir = labels.findIndex((l) => l.includes('z-dir'));
+    const aFile = labels.findIndex((l) => l.includes('a-file'));
+    const mFile = labels.findIndex((l) => l.includes('m-file'));
+    // Both directories come before both files
+    expect(Math.max(aDir, zDir)).toBeLessThan(Math.min(aFile, mFile));
+    // Directories sorted alphabetically
+    expect(aDir).toBeLessThan(zDir);
+    // Files sorted alphabetically
+    expect(aFile).toBeLessThan(mFile);
+  });
+
   it('fires onActivate with path and event when file is clicked', async () => {
     const user = userEvent.setup();
     const { Wrapper } = setup();

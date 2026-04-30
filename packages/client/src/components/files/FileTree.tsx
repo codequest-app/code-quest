@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useFsActions, useFsBrowse } from '../../contexts/FsContext';
 import { basename } from '../../utils/basename';
 import { nextDuplicateName } from '../../utils/nextDuplicateName';
+import { sortEntriesDirsFirst } from '../../utils/sort-entries';
 import { SkeletonRows } from '../ui/SkeletonRows';
 import { DeleteEntryConfirmDialog } from './DeleteEntryConfirmDialog';
 import { FileTreeRow } from './FileTreeRow';
@@ -150,12 +151,15 @@ export function FileTree({
         if ('error' in result) return [];
         for (const d of result.directories) kindByPathRef.current.set(d.path, 'directory');
         for (const f of result.files) kindByPathRef.current.set(f.path, 'file');
+        const dirs = sortEntriesDirsFirst(
+          result.directories.map((d) => ({ ...d, kind: 'directory' as const })),
+        );
+        const files = sortEntriesDirsFirst(
+          result.files.map((f) => ({ ...f, kind: 'file' as const })),
+        );
         return [
-          ...result.directories.map((d) => ({
-            id: d.path,
-            data: { ...d, kind: 'directory' as const },
-          })),
-          ...result.files.map((f) => ({ id: f.path, data: { ...f, kind: 'file' as const } })),
+          ...dirs.map((d) => ({ id: d.path, data: d })),
+          ...files.map((f) => ({ id: f.path, data: f })),
         ];
       },
     },
