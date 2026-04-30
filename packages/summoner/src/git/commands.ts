@@ -58,14 +58,11 @@ export class GitCommands {
       return { diff: await git.diff() };
     }
     if (status === '??') {
-      const staged = await rawGit(git, ['show', `:${filePath}`]).catch(() => null);
-      if (staged?.exitCode === 0) return { diff: toPseudoDiff(filePath, staged.stdout) };
       const content = await readFile(resolve(cwd, filePath), 'utf-8').catch(() => '');
       return { diff: toPseudoDiff(filePath, content) };
     }
-    // status is the trimmed `${index}${working_dir}` from toChangedFile.
-    // Single-char 'M'/'D' is ambiguous (could be staged-only or unstaged-only after trim),
-    // so use HEAD diff which covers both. 'A' is always staged-only.
+    // Single-char 'M'/'D' is ambiguous after trim, so HEAD covers both staged and unstaged.
+    // 'A' is always staged-only.
     if (status === 'A') {
       return { diff: await git.diff(['--staged', '--', filePath]) };
     }

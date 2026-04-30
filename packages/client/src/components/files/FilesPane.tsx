@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useFsActions } from '../../contexts/FsContext';
 import { useGitStatus } from '../../contexts/GitContext';
 import { useKeepFsWatcherAlive } from '../../hooks/useKeepFsWatcherAlive';
+import { IconButton } from '../ui/IconButton';
 import { EmptyState } from '../workspace/EmptyState';
 import { FilePreviewModal } from './FilePreviewModal';
 import { FileTree } from './FileTree';
@@ -71,10 +72,9 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
   return (
     <section className="flex flex-col h-full" aria-label="files-pane">
       <div className="flex items-center justify-end px-2 py-1">
-        <button
-          type="button"
+        <IconButton
           onClick={() => setShowHidden((v) => !v)}
-          className="text-text-muted hover:text-text p-0.5 rounded"
+          className="text-text-muted hover:text-text"
           title={showHidden ? 'Hide hidden files' : 'Show hidden files'}
         >
           {showHidden ? (
@@ -82,7 +82,7 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
           ) : (
             <EyeSlashIcon className="w-3.5 h-3.5" />
           )}
-        </button>
+        </IconButton>
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
         {/* `key` includes showHidden so the tree remounts when toggled —
