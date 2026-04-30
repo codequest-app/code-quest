@@ -20,9 +20,9 @@ export const fsFileSchema: z.ZodObject<{ name: z.ZodString; path: z.ZodString },
 export type FsFile = z.infer<typeof fsFileSchema>;
 
 export const fsBrowsePayloadSchema: z.ZodObject<
-  { path: z.ZodOptional<z.ZodString> },
+  { path: z.ZodOptional<z.ZodString>; showHidden: z.ZodDefault<z.ZodBoolean> },
   z.core.$strip
-> = z.object({ path: z.string().optional() });
+> = z.object({ path: z.string().optional(), showHidden: z.boolean().default(false) });
 export type FsBrowsePayload = z.infer<typeof fsBrowsePayloadSchema>;
 
 export const fsBrowseResponseSchema: z.ZodUnion<

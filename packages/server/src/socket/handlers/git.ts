@@ -178,9 +178,9 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { cwd } = gitDiffByCwdPayloadSchema.parse(payload);
+      const { cwd, filePath, status } = gitDiffByCwdPayloadSchema.parse(payload);
       if (!ensureWithinRoots(cwd, callback)) return;
-      callback?.(await gitService.diff(cwd));
+      callback?.(await gitService.diff(cwd, filePath, status));
     } catch (e) {
       callback?.({ error: errMsg(e, 'Diff failed') });
     }

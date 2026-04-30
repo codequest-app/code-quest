@@ -24,7 +24,8 @@ export class LocalGitService implements GitService {
   status = (cwd: string): Promise<GitStatusResult> => this.commands.status(cwd);
   checkout = (cwd: string, branch: string): Promise<void> => this.commands.checkout(cwd, branch);
   log = (cwd: string, limit?: number): Promise<GitLogResult> => this.commands.log(cwd, limit);
-  diff = (cwd: string): Promise<GitDiffResult> => this.commands.diff(cwd);
+  diff = (cwd: string, filePath?: string, status?: string): Promise<GitDiffResult> =>
+    this.commands.diff(cwd, filePath, status);
   add = (cwd: string, paths?: string[]): Promise<{ ok: true } | { error: string }> =>
     this.commands.add(cwd, paths);
   commit = (

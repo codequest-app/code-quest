@@ -41,12 +41,12 @@ export function create({
     callback?: SocketCallback,
   ): Promise<void> {
     try {
-      const { path } = fsBrowsePayloadSchema.parse(payload);
+      const { path, showHidden } = fsBrowsePayloadSchema.parse(payload);
       if (path !== undefined && !fs.isWithinRoots(path)) {
         callback?.({ error: 'Path outside allowed roots' });
         return;
       }
-      const { directories, files } = await fs.browseEntries(path);
+      const { directories, files } = await fs.browseEntries(path, { showHidden });
       callback?.({ directories, files });
     } catch (err) {
       logger.warn({ err }, 'fs:browse failed');

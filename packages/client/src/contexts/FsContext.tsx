@@ -15,7 +15,7 @@ import { useSocket } from './SocketContext';
 export type FsBrowseEntries = { directories: FsDirectory[]; files: FsFile[] } | { error: string };
 
 interface FsActions {
-  browse: (path?: string) => Promise<FsBrowseEntries>;
+  browse: (path?: string, opts?: { showHidden?: boolean }) => Promise<FsBrowseEntries>;
   /** Subscribe to `files:dirty` events for `cwd`. The first subscriber per
    *  cwd emits `fs:watch` to the server (refcounted); the last release
    *  emits `fs:unwatch`. Returned unsubscribe is idempotent.
@@ -64,8 +64,11 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
 
   const actions = useMemo<FsActions>(
     () => ({
-      async browse(path) {
-        const payload = path ? { path } : {};
+      async browse(path, opts) {
+        const payload: { path?: string; showHidden: boolean } = {
+          showHidden: opts?.showHidden ?? false,
+        };
+        if (path) payload.path = path;
         const response = await rpc(socket, EVENTS.fs.browse, payload);
         const parsed = fsBrowseResponseSchema.safeParse(response);
         if (!parsed.success) return { directories: [], files: [] };
@@ -127,7 +130,7 @@ export function FsProvider({ children }: { children: ReactNode }): React.JSX.Ele
 
 export function useFsBrowse(): {
   browse: (path?: string) => Promise<FsDirectory[]>;
-  browseEntries: (path?: string) => Promise<FsBrowseEntries>;
+  browseEntries: (path?: string, opts?: { showHidden?: boolean }) => Promise<FsBrowseEntries>;
 } {
   const { browse: browseEntries } = useFsActions();
 

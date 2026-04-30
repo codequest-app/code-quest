@@ -73,6 +73,36 @@ describe('LocalFilesystemService', () => {
     });
   });
 
+  describe('browseEntries', () => {
+    it('hides dot entries by default', async () => {
+      const result = await service.browseEntries(ROOT);
+      const names = result.directories.map((d) => d.name);
+      expect(names).not.toContain('.hidden');
+      expect(names).not.toContain('.git');
+    });
+
+    it('shows dot entries when showHidden=true, but always excludes .git', async () => {
+      const result = await service.browseEntries(ROOT, { showHidden: true });
+      const names = result.directories.map((d) => d.name);
+      expect(names).toContain('.hidden');
+      expect(names).not.toContain('.git');
+    });
+
+    it('shows hidden files when showHidden=true', async () => {
+      vol.fromJSON({ [join(ROOT, '.env')]: 'SECRET=1' });
+      const result = await service.browseEntries(ROOT, { showHidden: true });
+      const fileNames = result.files.map((f) => f.name);
+      expect(fileNames).toContain('.env');
+    });
+
+    it('hides hidden files by default', async () => {
+      vol.fromJSON({ [join(ROOT, '.env')]: 'SECRET=1' });
+      const result = await service.browseEntries(ROOT);
+      const fileNames = result.files.map((f) => f.name);
+      expect(fileNames).not.toContain('.env');
+    });
+  });
+
   describe('listFiles', () => {
     it('empty pattern returns root entries', async () => {
       const results = await service.listFiles(ROOT, '');

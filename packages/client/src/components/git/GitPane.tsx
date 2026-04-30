@@ -121,8 +121,8 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
     toast.success('Pushed');
   }
 
-  async function openDiff(filePath: string) {
-    const response = await rpc(socket, EVENTS.git.diff, { cwd });
+  async function openDiff(filePath: string, fileStatus: string) {
+    const response = await rpc(socket, EVENTS.git.diff, { cwd, filePath, status: fileStatus });
     const parsed = gitDiffByCwdResultSchema.safeParse(response);
     if (!parsed.success) {
       toast.error('Diff unavailable: invalid response');
@@ -281,7 +281,7 @@ function ChangedFiles({
   onPick,
 }: {
   files: GitFileChange[];
-  onPick: (path: string) => void;
+  onPick: (path: string, status: string) => void;
 }) {
   if (files.length === 0) {
     return <div className="text-text-muted text-xs px-1">No changes</div>;
@@ -295,7 +295,7 @@ function ChangedFiles({
             <button
               type="button"
               className="flex items-center gap-2 w-full text-left px-1 py-0.5 hover:bg-white/5 rounded"
-              onClick={() => onPick(f.file)}
+              onClick={() => onPick(f.file, f.status)}
             >
               <span className={cn('font-mono w-4 text-xs', cls)}>{mark}</span>
               <span className="font-mono text-xs truncate">{f.file}</span>
