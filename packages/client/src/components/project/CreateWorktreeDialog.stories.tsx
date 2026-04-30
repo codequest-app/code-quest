@@ -20,3 +20,7 @@ export const Closed: Story = {
 export const Open: Story = {
   args: { open: true, cwd: '/repo' },
 };
+
+export const LongPath: Story = {
+  args: { open: true, cwd: '/Users/demo/projects/very-long-project-name/nested/deep' },
+};

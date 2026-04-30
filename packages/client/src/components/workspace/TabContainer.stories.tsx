@@ -15,3 +15,11 @@ type Story = StoryObj<typeof meta>;
 export const Empty: Story = {
   args: { projectCwd: '/projects/cc-office' },
 };
+
+export const WithProjectCwd: Story = {
+  args: { projectCwd: '/Users/demo/my-app' },
+};
+
+export const LongProjectPath: Story = {
+  args: { projectCwd: '/Users/demo/workspace/organizations/acme-corp/services/api-gateway' },
+};

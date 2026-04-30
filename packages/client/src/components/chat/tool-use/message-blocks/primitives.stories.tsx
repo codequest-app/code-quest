@@ -1,24 +1,49 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CollapsibleBlock, RotatableChevron, StatusLine } from './primitives';
+import { expect, userEvent } from 'storybook/test';
+import {
+  CenterDivider,
+  CollapsibleBlock,
+  OutputContent,
+  RotatableChevron,
+  StatusLine,
+} from './primitives';
 
-const Showcase = (): React.JSX.Element => (
-  <div className="flex flex-col gap-6 bg-bg text-text p-6">
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs text-text-muted">RotatableChevron</h3>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1">
-          <RotatableChevron />
-          <span className="text-sm">closed</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <RotatableChevron open />
-          <span className="text-sm">open</span>
-        </div>
+const meta: Meta = {
+  title: 'message-blocks/primitives',
+  tags: ['autodocs'],
+  decorators: [
+    (Story: React.ComponentType): React.JSX.Element => (
+      <div className="bg-bg text-text p-6 max-w-lg">
+        <Story />
       </div>
-    </section>
+    ),
+  ],
+};
 
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs text-text-muted">StatusLine</h3>
+export default meta;
+type Story = StoryObj;
+
+export const ChevronClosed: Story = {
+  render: () => (
+    <div className="flex items-center gap-2">
+      <RotatableChevron />
+      <span className="text-sm">Closed</span>
+    </div>
+  ),
+};
+
+export const ChevronOpen: Story = {
+  render: () => (
+    <div className="flex items-center gap-2">
+      <RotatableChevron open />
+      <span className="text-sm">Open</span>
+    </div>
+  ),
+};
+
+export const StatusLineVariants: Story = {
+  render: () => (
+    <div className="flex flex-col gap-2">
       <StatusLine icon="✓">All checks passed</StatusLine>
       <StatusLine icon="⏳" className="text-warning">
         Running...
@@ -26,26 +51,37 @@ const Showcase = (): React.JSX.Element => (
       <StatusLine icon="✗" className="text-danger">
         Build failed
       </StatusLine>
-    </section>
+    </div>
+  ),
+};
 
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs text-text-muted">CollapsibleBlock</h3>
-      <CollapsibleBlock icon="📄" label="example.ts" labelDetail="src/utils" labelRange="1-42">
-        <pre className="bg-code-block p-3 rounded text-xs font-mono">
-          {`function hello() {\n  return 'world';\n}`}
-        </pre>
-      </CollapsibleBlock>
-    </section>
-  </div>
-);
+export const CollapsibleBlockToggle: Story = {
+  render: () => (
+    <CollapsibleBlock icon="📄" label="example.ts" labelDetail="src/utils" labelRange="1-42">
+      <pre className="bg-code-block p-3 rounded text-xs font-mono">
+        {`function hello() {\n  return 'world';\n}`}
+      </pre>
+    </CollapsibleBlock>
+  ),
+  play: async ({ canvas }) => {
+    const toggle = canvas.getByText('example.ts');
+    await userEvent.click(toggle);
+    await expect(canvas.getByText(/hello/)).toBeInTheDocument();
+  },
+};
 
-const meta: Meta<typeof Showcase> = {
-  component: Showcase,
-  title: 'message-blocks/primitives',
-  tags: ['autodocs'],
-} satisfies Meta<typeof Showcase>;
+export const Divider: Story = {
+  render: () => <CenterDivider>Context compacted</CenterDivider>,
+};
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export const OutputWithFilePaths: Story = {
+  render: () => (
+    <OutputContent content="Error in /src/auth/login.ts:42\n  Cannot find module './session'" />
+  ),
+};
 
-export const AllHelpers: Story = {};
+export const OutputError: Story = {
+  render: () => (
+    <OutputContent content="TypeError: Cannot read property 'id' of undefined" isError />
+  ),
+};

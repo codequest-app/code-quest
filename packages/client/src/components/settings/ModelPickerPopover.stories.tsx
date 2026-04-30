@@ -29,3 +29,6 @@ export const Default: Story = {
 export const OpusSelected: Story = {
   args: { currentModel: 'claude-opus-4-6' },
 };
+export const HaikuSelected: Story = {
+  args: { currentModel: 'claude-haiku-4-5' },
+};

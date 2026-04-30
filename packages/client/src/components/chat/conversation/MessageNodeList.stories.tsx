@@ -51,3 +51,32 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = { args: { nodes } };
 export const Empty: Story = { args: { nodes: [] } };
+
+export const WithToolResult: Story = {
+  args: {
+    nodes: [
+      ...nodes,
+      {
+        message: {
+          id: '4',
+          role: 'assistant',
+          timestamp: t + 3,
+          type: 'tool_result',
+          content: 'export function hello() { return "world"; }',
+          meta: { toolId: 'tu1', name: 'Read' },
+        } as Message,
+        children: [],
+      },
+      {
+        message: {
+          id: '5',
+          role: 'assistant',
+          timestamp: t + 4,
+          type: 'text',
+          content: 'Found the function. It looks correct.',
+        } as Message,
+        children: [],
+      },
+    ],
+  },
+};

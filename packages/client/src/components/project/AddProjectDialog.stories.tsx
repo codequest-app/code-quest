@@ -16,3 +16,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Open: Story = { args: { open: true } };
 export const Closed: Story = { args: { open: false } };
+export const WithSelect: Story = { args: { open: true } };

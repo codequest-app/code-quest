@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { HookCallbackCard } from './HookCallbackCard';
 
 const meta: Meta<typeof HookCallbackCard> = {
@@ -28,6 +28,11 @@ export const WithToolName: Story = {
       toolName: 'Bash',
     },
   },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Bash')).toBeInTheDocument();
+    await expect(canvas.getByText('Continue')).toBeInTheDocument();
+    await expect(canvas.getByText('Cancel')).toBeInTheDocument();
+  },
 };
 
 export const WithSubtypeOnly: Story = {
@@ -35,6 +40,17 @@ export const WithSubtypeOnly: Story = {
     pending: {
       requestId: 'req-2',
       subtype: 'pre_tool_use',
+    },
+  },
+};
+
+export const WithCallbackId: Story = {
+  args: {
+    pending: {
+      requestId: 'req-3',
+      subtype: 'hook_callback',
+      callbackId: 'lint-check',
+      toolName: 'Edit',
     },
   },
 };

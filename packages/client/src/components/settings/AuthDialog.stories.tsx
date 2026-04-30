@@ -23,3 +23,7 @@ export const Open: Story = {
 export const Closed: Story = {
   args: { open: false },
 };
+
+export const WithBrowserLogin: Story = {
+  args: { open: true },
+};

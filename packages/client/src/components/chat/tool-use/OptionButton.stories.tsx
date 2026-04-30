@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
+import { expect, fn, userEvent } from 'storybook/test';
 import { OptionButton } from './OptionButton';
 
 const meta: Meta<typeof OptionButton> = {
@@ -27,12 +27,24 @@ export const Selected: Story = {
     label: 'Continue',
     selected: true,
   },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByRole('button'));
+    await expect(args.onClick).toHaveBeenCalled();
+  },
 };
 
 export const Unselected: Story = {
   args: {
     index: 2,
     label: 'Cancel',
+    selected: false,
+  },
+};
+
+export const LongLabel: Story = {
+  args: {
+    index: 3,
+    label: 'Allow this tool for the rest of the session',
     selected: false,
   },
 };

@@ -33,3 +33,15 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const WithDocsUrl: Story = {
+  args: { docsUrl: 'https://docs.example.com' },
+};
+
+export const MinimalActions: Story = {
+  args: {
+    onMcpStatus: undefined,
+    onToggleMcp: undefined,
+    onManagePlugins: undefined,
+  },
+};
