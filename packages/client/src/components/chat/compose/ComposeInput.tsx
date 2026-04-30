@@ -3,11 +3,40 @@ import * as Popover from '@radix-ui/react-popover';
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../../../contexts/channel';
-import { useInputHistory } from '../../../hooks/useInputHistory';
 import { cn } from '../../../utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '../../../utils/slash-query';
 import { slashPaletteState } from '../../command-menu/slash-palette-state';
 import { MentionDropdown } from './MentionDropdown';
+
+type InputHistory = { history: string[]; index: number };
+
+function historyPush(ref: InputHistory, message: string): void {
+  const trimmed = message.trim();
+  if (!trimmed) return;
+  if (ref.history[ref.history.length - 1] === trimmed) return;
+  ref.history.push(trimmed);
+  ref.index = -1;
+}
+
+function historyCycleUp(ref: InputHistory): string | null {
+  if (ref.history.length === 0) return null;
+  if (ref.index === -1) {
+    ref.index = ref.history.length - 1;
+  } else if (ref.index > 0) {
+    ref.index--;
+  }
+  return ref.history[ref.index] ?? null;
+}
+
+function historyCycleDown(ref: InputHistory): string {
+  if (ref.index === -1) return '';
+  if (ref.index < ref.history.length - 1) {
+    ref.index++;
+    return ref.history[ref.index] ?? '';
+  }
+  ref.index = -1;
+  return '';
+}
 
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
@@ -17,7 +46,7 @@ export function ComposeInput({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }): React.JSX.Element {
-  const { isProcessing, searchFiles } = useChannelMessages();
+  const { isProcessing, searchFiles, messages } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
 
@@ -52,7 +81,16 @@ export function ComposeInput({
     });
   }, [registerFocus]);
 
-  const inputHistory = useInputHistory();
+  const historyRef = useRef<InputHistory>({ history: [], index: -1 });
+
+  useEffect(() => {
+    if (historyRef.current.history.length > 0 || messages.length === 0) return;
+    historyRef.current.history = messages
+      .filter((m) => m.role === 'user' && m.type === 'text')
+      .map((m) => m.content.trim())
+      .filter(Boolean);
+  }, [messages]);
+
   const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -204,16 +242,20 @@ export function ComposeInput({
 
   function handleHistoryKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): boolean {
     if (e.key === 'ArrowUp') {
-      const msg = inputHistory.cycleUp();
+      const el = textareaRef.current;
+      const firstNewline = value.indexOf('\n');
+      const cursorOnFirstLine = !el || firstNewline === -1 || el.selectionStart <= firstNewline;
+      if (!cursorOnFirstLine) return false;
+      const msg = historyCycleUp(historyRef.current);
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
       }
       return true;
     }
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' && historyRef.current.index !== -1) {
       e.preventDefault();
-      updateValue(inputHistory.cycleDown());
+      updateValue(historyCycleDown(historyRef.current));
       return true;
     }
     return false;
@@ -224,9 +266,9 @@ export function ComposeInput({
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) return;
-    inputHistory.push(trimmed);
+    historyPush(historyRef.current, trimmed);
     submit();
-    inputHistory.reset();
+    historyRef.current.index = -1;
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>): void {

@@ -112,6 +112,53 @@ describe('ComposeInput', () => {
     });
   });
 
+  describe('input history', () => {
+    it('ArrowUp on single-line input shows previous submitted message', async () => {
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await userEvent.type(textarea, 'hello{Enter}');
+      await userEvent.keyboard('{ArrowUp}');
+
+      expect(textarea).toHaveValue('hello');
+    });
+
+    it('ArrowUp on multiline input when cursor is NOT on first line does not change value', async () => {
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      // Submit a message so history is non-empty
+      await userEvent.type(textarea, 'first{Enter}');
+
+      // Type multiline content using Shift+Enter (inserts newline, does not submit)
+      await userEvent.type(textarea, 'line1');
+      await userEvent.keyboard('{Shift>}{Enter}{/Shift}');
+      await userEvent.type(textarea, 'line2');
+      await userEvent.keyboard('{Shift>}{Enter}{/Shift}');
+      await userEvent.type(textarea, 'line3');
+
+      // cursor is at end of "line3" — not on first line
+      expect(textarea.selectionStart).toBeGreaterThan(textarea.value.indexOf('\n'));
+
+      const valueBefore = textarea.value;
+      await userEvent.keyboard('{ArrowUp}');
+
+      expect(textarea).toHaveValue(valueBefore);
+    });
+
+    it('ArrowDown after ArrowUp returns to empty', async () => {
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await userEvent.type(textarea, 'hello{Enter}');
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('hello');
+
+      await userEvent.keyboard('{ArrowDown}');
+      expect(textarea).toHaveValue('');
+    });
+  });
+
   describe('@ mention', () => {
     it('typing @ opens mention dropdown with file results', async () => {
       await renderWithChannel(<ComposeInput containerRef={containerRef} />);
