@@ -16,6 +16,7 @@ export function TruncatedContent({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (expanded) return;
     const el = ref.current;
     if (!el) return;
     setOverflow(el.scrollHeight > el.clientHeight);

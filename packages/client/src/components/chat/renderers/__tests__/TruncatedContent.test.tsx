@@ -64,4 +64,25 @@ describe('TruncatedContent', () => {
     const inner = screen.getByLabelText('truncated-inner');
     expect(inner.style.maxHeight).toBe('');
   });
+
+  it('keeps Show less visible after expanding (overflow re-measure does not hide button)', async () => {
+    // Bug: after expanding, maxHeight is removed so scrollHeight === clientHeight,
+    // causing the effect to set overflow=false and hide the Show less button.
+    let scrollHeight = 1000;
+    let clientHeight = 300;
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => clientHeight);
+
+    const { rerender } = render(<TruncatedContent>Long content</TruncatedContent>);
+    await userEvent.click(screen.getByText('Show more'));
+
+    // After expanding, heights equalize (no maxHeight constraint)
+    scrollHeight = 1000;
+    clientHeight = 1000;
+
+    // Force a re-render to trigger the effect again with equalized heights
+    rerender(<TruncatedContent>Long content</TruncatedContent>);
+
+    expect(screen.getByText('Show less')).toBeInTheDocument();
+  });
 });
