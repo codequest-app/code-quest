@@ -1,3 +1,4 @@
+import { CheckIcon } from '@heroicons/react/16/solid';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { cn } from '../../utils/cn';
 import { focusRing } from './_tokens';
@@ -31,15 +32,7 @@ export function Checkbox({
       )}
     >
       <RadixCheckbox.Indicator>
-        <svg aria-hidden="true" width="9" height="9" viewBox="0 0 10 10" fill="none">
-          <path
-            d="M2 5L4 7.5L8 2.5"
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <CheckIcon aria-hidden="true" className="w-3 h-3 text-white" />
       </RadixCheckbox.Indicator>
     </RadixCheckbox.Root>
   );
