@@ -1,10 +1,8 @@
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useFsActions } from '../../contexts/FsContext';
 import { useGitStatus } from '../../contexts/GitContext';
 import { useKeepFsWatcherAlive } from '../../hooks/useKeepFsWatcherAlive';
-import { IconButton } from '../ui/IconButton';
 import { EmptyState } from '../workspace/EmptyState';
 import { FilePreviewModal } from './FilePreviewModal';
 import { FileTree } from './FileTree';
@@ -17,7 +15,6 @@ export interface FilesPaneProps {
 export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element {
   const [previewPath, setPreviewPath] = useState<string | null>(null);
   const [rootError, setRootError] = useState<string | null>(null);
-  const [showHidden, setShowHidden] = useState(false);
   const { browse } = useFsActions();
   const gitData = useGitStatus(cwd);
   useKeepFsWatcherAlive(cwd);
@@ -71,27 +68,11 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
 
   return (
     <section className="flex flex-col h-full" aria-label="files-pane">
-      <div className="flex items-center justify-end px-2 py-1">
-        <IconButton
-          onClick={() => setShowHidden((v) => !v)}
-          className="text-text-muted hover:text-text"
-          title={showHidden ? 'Hide hidden files' : 'Show hidden files'}
-        >
-          {showHidden ? (
-            <EyeIcon className="w-3.5 h-3.5" />
-          ) : (
-            <EyeSlashIcon className="w-3.5 h-3.5" />
-          )}
-        </IconButton>
-      </div>
       <div className="flex-1 min-h-0 overflow-auto">
-        {/* `key` includes showHidden so the tree remounts when toggled —
-            headless-tree caches children per dataLoader closure and won't
-            re-fetch when only `showHidden` changes. */}
         <FileTree
-          key={`${cwd}:${String(showHidden)}`}
+          key={cwd}
           rootCwd={cwd}
-          showHidden={showHidden}
+          showHidden
           gitMarks={gitMarks}
           onActivate={handleActivate}
         />
