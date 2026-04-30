@@ -17,8 +17,8 @@
 
 ## 4. FilterPopover — migrate to ui/Checkbox
 
-- [ ] 4.1 Replace hand-rolled checkbox markup in `FilterPopover.tsx` with `ui/Checkbox`
-- [ ] 4.2 Verify FilterPopover tests still pass
+- [x] 4.1 Replace hand-rolled checkbox markup in `FilterPopover.tsx` with `ui/Checkbox`
+- [x] 4.2 Verify FilterPopover tests still pass
 
 ## 5. TaskChecklist — migrate to ui/Checkbox
 

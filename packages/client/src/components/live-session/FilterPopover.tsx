@@ -1,3 +1,4 @@
+import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { useState } from 'react';
 import { cn } from '../../utils/cn';
 import { SearchIcon } from '../ui/Icons';
@@ -104,13 +105,11 @@ export function FilterPopover({
                 style={{ width: `${barWidth}%` }}
               />
 
-              {/* hidden real checkbox for a11y + tests */}
-              <input
+              <RadixCheckbox.Root
                 id={id}
-                type="checkbox"
                 checked={checked}
-                onChange={() => toggle(e.type)}
-                className="absolute opacity-0 w-px h-px pointer-events-auto"
+                onCheckedChange={() => toggle(e.type)}
+                className="sr-only"
               />
 
               <div
