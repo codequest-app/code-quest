@@ -167,6 +167,23 @@ describe('MentionDropdown', () => {
     expect(new Set(ids).size).toBe(2); // all unique
   });
 
+  it('CJK filenames with same extension get unique ids (index-based)', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[
+          { path: '說明.md', name: '說明.md', type: 'file' },
+          { path: '介紹.md', name: '介紹.md', type: 'file' },
+          { path: '文件.md', name: '文件.md', type: 'file' },
+        ]}
+      />,
+    );
+    const options = screen.getAllByRole('option');
+    const ids = options.map((o) => o.id).filter(Boolean);
+    expect(ids).toHaveLength(3);
+    expect(new Set(ids).size).toBe(3); // all unique despite same slug
+  });
+
   it('active option id matches selectedIndex', () => {
     render(
       <MentionDropdown

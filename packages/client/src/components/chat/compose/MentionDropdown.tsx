@@ -27,8 +27,8 @@ function TypeIcon({ type }: { type: string }) {
   }
 }
 
-export function mentionOptionId(path: string): string {
-  return `mention-option-${slugify(path)}`;
+export function mentionOptionId(index: number, path: string): string {
+  return `mention-option-${index}-${slugify(path)}`;
 }
 
 function FileResultItem({
@@ -56,7 +56,7 @@ function FileResultItem({
 
   return (
     <div
-      id={mentionOptionId(file.path)}
+      id={mentionOptionId(index, file.path)}
       ref={itemRef}
       onMouseDown={(e) => {
         e.preventDefault();
@@ -134,7 +134,7 @@ export function MentionDropdown({
 }: MentionDropdownProps): React.JSX.Element {
   const activeId =
     hasFileSearch && selectedIndex >= 0 && fileResults[selectedIndex]
-      ? mentionOptionId(fileResults[selectedIndex].path)
+      ? mentionOptionId(selectedIndex, fileResults[selectedIndex].path)
       : undefined;
 
   return (
