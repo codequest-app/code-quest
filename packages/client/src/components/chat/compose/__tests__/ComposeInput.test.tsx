@@ -234,5 +234,73 @@ describe('ComposeInput', () => {
       expect(screen.queryByLabelText('mention-dropdown')).not.toBeInTheDocument();
       expect((textarea as HTMLTextAreaElement).value).toContain('@');
     });
+
+    it('ArrowUp at first item wraps to last item', async () => {
+      const summoner = createFakeSummoner();
+      const cwd = '/test/project';
+      summoner.filesystem().setRoots([cwd]);
+      summoner.filesystem().addFile(`${cwd}/a.ts`, '');
+      summoner.filesystem().addFile(`${cwd}/b.ts`, '');
+      summoner.filesystem().addFile(`${cwd}/c.ts`, '');
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />, { summoner, cwd });
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3));
+
+      // Go to first item, then ArrowUp should wrap to last
+      await userEvent.keyboard('{ArrowDown}'); // index 0
+      await userEvent.keyboard('{ArrowUp}'); // should wrap to last (index 2)
+
+      const options = screen.getAllByRole('option');
+      expect(options[2]!.className).toContain('bg-selected');
+    });
+
+    it('ArrowDown at last item wraps to first item', async () => {
+      const summoner = createFakeSummoner();
+      const cwd = '/test/project';
+      summoner.filesystem().setRoots([cwd]);
+      summoner.filesystem().addFile(`${cwd}/a.ts`, '');
+      summoner.filesystem().addFile(`${cwd}/b.ts`, '');
+      summoner.filesystem().addFile(`${cwd}/c.ts`, '');
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />, { summoner, cwd });
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3));
+
+      // Go to last item, then ArrowDown should wrap to first
+      await userEvent.keyboard('{ArrowDown}'); // 0
+      await userEvent.keyboard('{ArrowDown}'); // 1
+      await userEvent.keyboard('{ArrowDown}'); // 2 (last)
+      await userEvent.keyboard('{ArrowDown}'); // should wrap to 0
+
+      const options = screen.getAllByRole('option');
+      expect(options[0]!.className).toContain('bg-selected');
+    });
+
+    it('directories appear before files in results', async () => {
+      const summoner = createFakeSummoner();
+      const cwd = '/test/project';
+      summoner.filesystem().setRoots([cwd]);
+      summoner.filesystem().addFile(`${cwd}/z-file.ts`, '');
+      summoner.filesystem().addFile(`${cwd}/m-file.ts`, '');
+      summoner.filesystem().addDirectory(cwd, ['a-dir', 'b-dir']);
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />, { summoner, cwd });
+
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+      await userEvent.type(textarea, '@');
+
+      await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThanOrEqual(4));
+
+      const options = screen.getAllByRole('option');
+      const labels = options.map((o) => o.textContent ?? '');
+
+      const firstFileIndex = labels.findIndex((l) => l.includes('.ts'));
+      const lastDirIndex = labels.map((l) => l.includes('-dir')).lastIndexOf(true);
+      expect(lastDirIndex).toBeLessThan(firstFileIndex);
+    });
   });
 });
