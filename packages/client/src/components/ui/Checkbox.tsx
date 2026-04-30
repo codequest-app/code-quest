@@ -1,6 +1,8 @@
 import { CheckIcon } from '@heroicons/react/16/solid';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
+import { useId } from 'react';
 import { cn } from '../../utils/cn';
+import { slugify } from '../../utils/slugify';
 import { focusRing } from './_tokens';
 
 export function Checkbox({
@@ -16,7 +18,8 @@ export function Checkbox({
   label?: string;
   className?: string;
 }): React.JSX.Element {
-  const id = idProp ?? (label ? `checkbox-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined);
+  const autoId = useId();
+  const id = idProp ?? (label ? `checkbox-${slugify(label)}` : autoId);
 
   const root = (
     <RadixCheckbox.Root

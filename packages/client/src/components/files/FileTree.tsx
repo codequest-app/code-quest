@@ -151,16 +151,11 @@ export function FileTree({
         if ('error' in result) return [];
         for (const d of result.directories) kindByPathRef.current.set(d.path, 'directory');
         for (const f of result.files) kindByPathRef.current.set(f.path, 'file');
-        const dirs = sortEntriesDirsFirst(
-          result.directories.map((d) => ({ ...d, kind: 'directory' as const })),
-        );
-        const files = sortEntriesDirsFirst(
-          result.files.map((f) => ({ ...f, kind: 'file' as const })),
-        );
-        return [
-          ...dirs.map((d) => ({ id: d.path, data: d })),
-          ...files.map((f) => ({ id: f.path, data: f })),
-        ];
+        const entries = sortEntriesDirsFirst([
+          ...result.directories.map((d) => ({ ...d, kind: 'directory' as const })),
+          ...result.files.map((f) => ({ ...f, kind: 'file' as const })),
+        ]);
+        return entries.map((entry) => ({ id: entry.path, data: entry }));
       },
     },
     features: [asyncDataLoaderFeature],

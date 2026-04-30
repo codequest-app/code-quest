@@ -1,5 +1,6 @@
 import type { FsSearchResult } from '@code-quest/shared';
 import { cn } from '../../../utils/cn';
+import { slugify } from '../../../utils/slugify';
 import { FileIcon, FolderIcon } from '../../icons/MentionIcons';
 
 const noop = () => {};
@@ -27,7 +28,7 @@ function TypeIcon({ type }: { type: string }) {
 }
 
 export function mentionOptionId(path: string): string {
-  return `mention-option-${path.replace(/[^a-zA-Z0-9]/g, '-')}`;
+  return `mention-option-${slugify(path)}`;
 }
 
 function FileResultItem({
