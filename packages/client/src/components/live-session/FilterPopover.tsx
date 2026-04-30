@@ -1,6 +1,7 @@
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { useState } from 'react';
 import { cn } from '../../utils/cn';
+import { slugify } from '../../utils/slugify';
 import { SearchIcon } from '../ui/Icons';
 
 export interface FilterEntry {
@@ -88,7 +89,7 @@ export function FilterPopover({
           const labelText = labels[e.type] ?? e.type;
           const checked = selected.has(e.type);
           const barWidth = Math.round((e.count / maxCount) * 100);
-          const id = `fp-${e.type}`;
+          const id = `fp-${slugify(e.type)}`;
 
           return (
             <label
