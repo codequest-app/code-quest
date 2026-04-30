@@ -29,6 +29,12 @@ describe('slugify', () => {
     expect(slugify('')).toBe('');
   });
 
+  it('removes non-ASCII characters (e.g. accented, CJK)', () => {
+    expect(slugify('résumé')).toBe('r-sum');
+    expect(slugify('說明.md')).toBe('md');
+    expect(slugify('über')).toBe('ber');
+  });
+
   describe('separator option', () => {
     it('uses underscore when separator is _', () => {
       expect(slugify('hello world', '_')).toBe('hello_world');

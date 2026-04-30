@@ -9,6 +9,64 @@ export interface FilterEntry {
   count: number;
 }
 
+function FilterCheckboxItem({
+  entry,
+  checked,
+  barWidth,
+  label,
+  onToggle,
+}: {
+  entry: FilterEntry;
+  checked: boolean;
+  barWidth: number;
+  label: string;
+  onToggle: (type: string) => void;
+}) {
+  const id = `fp-${slugify(entry.type)}`;
+  return (
+    <label
+      htmlFor={id}
+      className="flex items-center gap-2 px-3 py-1 cursor-pointer relative transition-colors hover:bg-white/[0.03]"
+    >
+      <div
+        className={cn(
+          'absolute left-0 top-0 bottom-0 pointer-events-none transition-all',
+          checked ? 'bg-accent/[0.06]' : 'bg-white/[0.02]',
+        )}
+        style={{ width: `${barWidth}%` }}
+      />
+      <RadixCheckbox.Root
+        id={id}
+        checked={checked}
+        onCheckedChange={() => onToggle(entry.type)}
+        className="sr-only"
+      />
+      <div
+        className={cn(
+          'w-1 h-1 rounded-full shrink-0 transition-colors z-sticky',
+          checked ? 'bg-accent' : 'bg-white/10',
+        )}
+      />
+      <span
+        className={cn(
+          'flex-1 text-xs font-mono transition-colors z-sticky',
+          checked ? 'text-text' : 'text-text-dim',
+        )}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          'text-xs tabular-nums font-mono transition-colors z-sticky',
+          checked ? 'text-accent/70' : 'text-white/15',
+        )}
+      >
+        {entry.count}
+      </span>
+    </label>
+  );
+}
+
 interface FilterPopoverProps {
   entries: FilterEntry[];
   selected: Set<string>;
@@ -85,61 +143,16 @@ export function FilterPopover({
       </div>
 
       <div className="overflow-y-auto flex-1 py-1">
-        {visible.map((e) => {
-          const labelText = labels[e.type] ?? e.type;
-          const checked = selected.has(e.type);
-          const barWidth = Math.round((e.count / maxCount) * 100);
-          const id = `fp-${slugify(e.type)}`;
-
-          return (
-            <label
-              key={e.type}
-              htmlFor={id}
-              className="flex items-center gap-2 px-3 py-1 cursor-pointer relative transition-colors hover:bg-white/[0.03]"
-            >
-              {/* count bar background */}
-              <div
-                className={cn(
-                  'absolute left-0 top-0 bottom-0 pointer-events-none transition-all',
-                  checked ? 'bg-accent/[0.06]' : 'bg-white/[0.02]',
-                )}
-                style={{ width: `${barWidth}%` }}
-              />
-
-              <RadixCheckbox.Root
-                id={id}
-                checked={checked}
-                onCheckedChange={() => toggle(e.type)}
-                className="sr-only"
-              />
-
-              <div
-                className={cn(
-                  'w-1 h-1 rounded-full shrink-0 transition-colors z-sticky',
-                  checked ? 'bg-accent' : 'bg-white/10',
-                )}
-              />
-
-              <span
-                className={cn(
-                  'flex-1 text-xs font-mono transition-colors z-sticky',
-                  checked ? 'text-text' : 'text-text-dim',
-                )}
-              >
-                {labelText}
-              </span>
-
-              <span
-                className={cn(
-                  'text-xs tabular-nums font-mono transition-colors z-sticky',
-                  checked ? 'text-accent/70' : 'text-white/15',
-                )}
-              >
-                {e.count}
-              </span>
-            </label>
-          );
-        })}
+        {visible.map((e) => (
+          <FilterCheckboxItem
+            key={e.type}
+            entry={e}
+            checked={selected.has(e.type)}
+            barWidth={Math.round((e.count / maxCount) * 100)}
+            label={labels[e.type] ?? e.type}
+            onToggle={toggle}
+          />
+        ))}
         {visible.length === 0 && (
           <div className="p-3 text-center text-xs text-text-dim italic">No matches</div>
         )}

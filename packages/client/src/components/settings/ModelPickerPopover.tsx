@@ -21,22 +21,17 @@ interface ModelPickerPopoverProps {
   defaultModelDescription?: string;
 }
 
-function DefaultModelOption({
-  availableModels,
-  defaultModelDescription,
+function ModelOptionButton({
+  displayName,
+  subLabel,
   isSelected,
   onSelect,
 }: {
-  availableModels: ModelInfo[];
-  defaultModelDescription?: string;
+  displayName: string;
+  subLabel: string;
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { displayName, subLabel } = getModelDisplayInfo(
-    '',
-    availableModels,
-    defaultModelDescription,
-  );
   return (
     <button
       type="button"
@@ -66,9 +61,9 @@ export function ModelPickerPopover({
     (m) => m.value === 'default' || m.displayName === 'Default (recommended)',
   );
 
-  const items: Array<{ id: string; value: string }> = [];
-  if (!hasDefaultEntry) items.push({ id: '__default__', value: '' });
-  for (const m of availableModels) items.push({ id: m.value, value: m.value });
+  const defaultDisplay = !hasDefaultEntry
+    ? getModelDisplayInfo('', availableModels, defaultModelDescription)
+    : null;
 
   const listboxRef = useRef<HTMLDivElement>(null);
 
@@ -118,10 +113,10 @@ export function ModelPickerPopover({
       className="bg-surface border border-border rounded shadow-lg overflow-hidden text-xs animate-fade-in-fast max-h-75 overflow-y-auto pb-2 focus:outline-none"
       onKeyDown={handleKeyDown}
     >
-      {!hasDefaultEntry && (
-        <DefaultModelOption
-          availableModels={availableModels}
-          defaultModelDescription={defaultModelDescription}
+      {defaultDisplay && (
+        <ModelOptionButton
+          displayName={defaultDisplay.displayName}
+          subLabel={defaultDisplay.subLabel}
           isSelected={currentModel === defaultModelValue}
           onSelect={() => handleSelect('')}
         />
@@ -132,23 +127,14 @@ export function ModelPickerPopover({
           item.value,
           availableModels,
         );
-        const isSelected = currentModel === item.value;
         return (
-          <button
+          <ModelOptionButton
             key={item.value}
-            type="button"
-            role="option"
-            tabIndex={-1}
-            aria-selected={isSelected}
-            onClick={() => handleSelect(item.value)}
-            className={optionButtonClass(isSelected)}
-          >
-            <div>
-              <div className="text-text font-medium">{displayName}</div>
-              <div className="text-text-muted text-xs mt-0.5 opacity-70">{subLabel}</div>
-            </div>
-            {isSelected && <span className="text-text-muted shrink-0 ml-3">✓</span>}
-          </button>
+            displayName={displayName}
+            subLabel={subLabel}
+            isSelected={currentModel === item.value}
+            onSelect={() => handleSelect(item.value)}
+          />
         );
       })}
     </div>

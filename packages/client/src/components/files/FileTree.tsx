@@ -12,6 +12,11 @@ import { DeleteEntryConfirmDialog } from './DeleteEntryConfirmDialog';
 import { FileTreeRow } from './FileTreeRow';
 import { NewEntryDialog } from './NewEntryDialog';
 
+const ITEM_CLS =
+  'w-full px-3 py-1 text-left text-sm data-[highlighted]:bg-accent/20 outline-none cursor-pointer';
+const DANGER_CLS =
+  'w-full px-3 py-1 text-left text-sm text-danger data-[highlighted]:bg-danger/10 outline-none cursor-pointer';
+
 interface EntryItem {
   name: string;
   path: string;
@@ -231,10 +236,6 @@ export function FileTree({
             }}
           />
         );
-        const ITEM_CLS =
-          'w-full px-3 py-1 text-left text-sm data-[highlighted]:bg-accent/20 outline-none cursor-pointer';
-        const DANGER_CLS =
-          'w-full px-3 py-1 text-left text-sm text-danger data-[highlighted]:bg-danger/10 outline-none cursor-pointer';
         return (
           <ContextMenu.Root key={item.getId()}>
             <ContextMenu.Trigger asChild>{row}</ContextMenu.Trigger>
