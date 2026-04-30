@@ -28,4 +28,26 @@ describe('slugify', () => {
   it('handles empty string', () => {
     expect(slugify('')).toBe('');
   });
+
+  describe('separator option', () => {
+    it('uses underscore when separator is _', () => {
+      expect(slugify('hello world', '_')).toBe('hello_world');
+    });
+
+    it('replaces non-alphanumeric with underscore', () => {
+      expect(slugify('src/utils/helpers.ts', '_')).toBe('src_utils_helpers_ts');
+    });
+
+    it('collapses consecutive separators into one underscore', () => {
+      expect(slugify('a--b', '_')).toBe('a_b');
+    });
+
+    it('trims leading and trailing underscores', () => {
+      expect(slugify('/both/', '_')).toBe('both');
+    });
+
+    it('defaults to hyphen when no separator given', () => {
+      expect(slugify('hello world')).toBe('hello-world');
+    });
+  });
 });
