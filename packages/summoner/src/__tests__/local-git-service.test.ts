@@ -115,7 +115,7 @@ describe.skipIf(SKIP)('LocalGitService', () => {
     it('returns per-file staged diff (A status)', async () => {
       writeFileSync(join(tmpDir, 'new-file.txt'), 'staged content');
       git('add new-file.txt');
-      const result = await service.diff(tmpDir, 'new-file.txt', 'A ');
+      const result = await service.diff(tmpDir, 'new-file.txt', 'A');
       expect(result.diff).toContain('staged content');
       git('rm --cached new-file.txt');
       rmSync(join(tmpDir, 'new-file.txt'));

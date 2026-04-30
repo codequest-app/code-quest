@@ -212,7 +212,7 @@ export function GitPane({ cwd }: GitPaneProps): React.JSX.Element {
               </ActionButton>
             )}
           </SectionHeader>
-          <ChangedFiles files={status.changedFiles} onPick={(path, s) => void openDiff(path, s)} />
+          <ChangedFiles files={status.changedFiles} onPick={openDiff} />
           {hasChanges && (
             <CommitComposer onCommit={(msg) => void commit(msg)} count={changedCount} />
           )}

@@ -12,6 +12,13 @@ import { createGit, rawGit } from './git-runner.ts';
 
 const NOTHING_TO_COMMIT = 'nothing-to-commit';
 
+function toPseudoDiff(filePath: string, content: string): string {
+  return `+++ b/${filePath}\n${content
+    .split('\n')
+    .map((l) => `+${l}`)
+    .join('\n')}`;
+}
+
 function toChangedFile(f: { index: string; working_dir: string; path: string }) {
   return { status: `${f.index}${f.working_dir}`.trim(), file: f.path };
 }
@@ -51,22 +58,10 @@ export class GitCommands {
       return { diff: await git.diff() };
     }
     if (status === '??') {
-      const result = await rawGit(git, ['show', `:${filePath}`]).catch(() => null);
-      if (result?.exitCode === 0) {
-        return {
-          diff: `+++ b/${filePath}\n${result.stdout
-            .split('\n')
-            .map((l) => `+${l}`)
-            .join('\n')}`,
-        };
-      }
+      const staged = await rawGit(git, ['show', `:${filePath}`]).catch(() => null);
+      if (staged?.exitCode === 0) return { diff: toPseudoDiff(filePath, staged.stdout) };
       const content = await readFile(resolve(cwd, filePath), 'utf-8').catch(() => '');
-      return {
-        diff: `+++ b/${filePath}\n${content
-          .split('\n')
-          .map((l) => `+${l}`)
-          .join('\n')}`,
-      };
+      return { diff: toPseudoDiff(filePath, content) };
     }
     // status is the trimmed `${index}${working_dir}` from toChangedFile.
     // Single-char 'M'/'D' is ambiguous (could be staged-only or unstaged-only after trim),
