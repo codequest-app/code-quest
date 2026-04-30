@@ -151,6 +151,40 @@ describe('MentionDropdown', () => {
     expect(screen.getByText('config.ts')).toBeInTheDocument();
   });
 
+  it('each file option has a unique id', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        fileResults={[
+          { path: 'a.ts', name: 'a.ts', type: 'file' },
+          { path: 'b.ts', name: 'b.ts', type: 'file' },
+        ]}
+      />,
+    );
+    const options = screen.getAllByRole('option');
+    const ids = options.map((o) => o.id).filter(Boolean);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2); // all unique
+  });
+
+  it('active option id matches selectedIndex', () => {
+    render(
+      <MentionDropdown
+        {...baseProps}
+        selectedIndex={1}
+        fileResults={[
+          { path: 'a.ts', name: 'a.ts', type: 'file' },
+          { path: 'b.ts', name: 'b.ts', type: 'file' },
+        ]}
+      />,
+    );
+    const options = screen.getAllByRole('option');
+    expect(options[1]!.id).toBeTruthy();
+    // The listbox should expose the active option id
+    const listbox = screen.getByRole('listbox');
+    expect(listbox.getAttribute('aria-activedescendant')).toBe(options[1]!.id);
+  });
+
   it('hover changes active item', async () => {
     const user = userEvent.setup();
     const onHover = vi.fn();

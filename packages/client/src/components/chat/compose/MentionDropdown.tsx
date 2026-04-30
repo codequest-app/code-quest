@@ -26,6 +26,10 @@ function TypeIcon({ type }: { type: string }) {
   }
 }
 
+export function mentionOptionId(path: string): string {
+  return `mention-option-${path.replace(/[^a-zA-Z0-9]/g, '-')}`;
+}
+
 function FileResultItem({
   file,
   index,
@@ -51,6 +55,7 @@ function FileResultItem({
 
   return (
     <div
+      id={mentionOptionId(file.path)}
       ref={itemRef}
       onMouseDown={(e) => {
         e.preventDefault();
@@ -102,6 +107,7 @@ function DropdownItem({ label, onSelect }: { label: string; onSelect: () => void
 }
 
 export interface MentionDropdownProps {
+  id?: string;
   mentionQuery: string;
   filteredSuggestions: string[];
   fileResults: FsSearchResult[];
@@ -114,6 +120,7 @@ export interface MentionDropdownProps {
 }
 
 export function MentionDropdown({
+  id,
   mentionQuery,
   filteredSuggestions,
   fileResults,
@@ -124,9 +131,18 @@ export function MentionDropdown({
   onHover,
   activeItemRef,
 }: MentionDropdownProps): React.JSX.Element {
+  const activeId =
+    hasFileSearch && selectedIndex >= 0 && fileResults[selectedIndex]
+      ? mentionOptionId(fileResults[selectedIndex].path)
+      : undefined;
+
   return (
-    <section
+    <div
+      id={id}
+      role="listbox"
+      tabIndex={-1}
       aria-label="mention-dropdown"
+      aria-activedescendant={activeId}
       className="bg-surface border border-border rounded-lg shadow-floating overflow-hidden animate-fade-in-fast z-modal"
     >
       <div className="max-h-75 overflow-y-auto py-0.5">
@@ -156,6 +172,6 @@ export function MentionDropdown({
             />
           ))}
       </div>
-    </section>
+    </div>
   );
 }

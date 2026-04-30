@@ -41,6 +41,8 @@ function historyCycleDown(ref: InputHistory): string {
 const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
+const MENTION_LISTBOX_ID = 'mention-dropdown-listbox';
+
 export function ComposeInput({
   containerRef,
 }: {
@@ -105,7 +107,13 @@ export function ComposeInput({
   const debouncedSearch = useDebouncedCallback(async (query: string) => {
     setSearchStatus('loading');
     const result = await searchFiles(query);
-    setFileResults(result.ok ? result.data.files : []);
+    const files = result.ok ? result.data.files : [];
+    setFileResults(
+      [...files].sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+        return a.path.localeCompare(b.path);
+      }),
+    );
     setSearchStatus('done');
   }, 200);
 
@@ -216,9 +224,12 @@ export function ComposeInput({
     }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex((i) =>
-        e.key === 'ArrowDown' ? Math.min(i + 1, fileResults.length - 1) : Math.max(i - 1, -1),
-      );
+      setSelectedIndex((i) => {
+        const len = fileResults.length;
+        if (len === 0) return i;
+        if (e.key === 'ArrowDown') return i >= len - 1 ? 0 : i + 1;
+        return i <= 0 ? len - 1 : i - 1;
+      });
       return true;
     }
     if (e.key === 'Tab' && selectedIndex >= 0) {
@@ -319,7 +330,15 @@ export function ComposeInput({
           ))}
         </div>
       )}
-      <div className="grid max-h-50 overflow-y-auto">
+      <div
+        className="grid max-h-50 overflow-y-auto"
+        role="combobox"
+        tabIndex={-1}
+        aria-haspopup="listbox"
+        aria-expanded={showMentionDropdown}
+        aria-controls={showMentionDropdown ? MENTION_LISTBOX_ID : undefined}
+        aria-autocomplete="list"
+      >
         <textarea
           ref={textareaRef}
           rows={1}
@@ -357,6 +376,7 @@ export function ComposeInput({
           style={{ width: 'var(--radix-popper-anchor-width)' }}
         >
           <MentionDropdown
+            id={MENTION_LISTBOX_ID}
             mentionQuery={mentionQuery ?? ''}
             filteredSuggestions={[]}
             fileResults={fileResults}
