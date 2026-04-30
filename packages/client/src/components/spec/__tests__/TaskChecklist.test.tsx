@@ -11,11 +11,11 @@ describe('TaskChecklist', () => {
     render(
       <TaskChecklist content={content} onToggle={async () => ({ ok: true, checked: true })} />,
     );
-    const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
+    const boxes = screen.getAllByRole('checkbox');
     expect(boxes).toHaveLength(3);
-    expect(boxes[0]!.checked).toBe(true);
-    expect(boxes[1]!.checked).toBe(false);
-    expect(boxes[2]!.checked).toBe(true);
+    expect(boxes[0]).toBeChecked();
+    expect(boxes[1]).not.toBeChecked();
+    expect(boxes[2]).toBeChecked();
   });
 
   it('non-task lines render as read-only text, no checkbox', () => {
@@ -35,10 +35,10 @@ describe('TaskChecklist', () => {
     const onToggle = vi.fn(async () => ({ ok: true as const, checked: true }));
     const content = ['## Heading', '- [ ] first', '- [ ] second'].join('\n');
     render(<TaskChecklist content={content} onToggle={onToggle} />);
-    const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
+    const boxes = screen.getAllByRole('checkbox');
     await user.click(boxes[1]!);
     expect(onToggle).toHaveBeenCalledWith(2); // lines: 0=heading, 1=first, 2=second
-    expect(boxes[1]!.checked).toBe(true);
+    expect(boxes[1]).toBeChecked();
   });
 
   it('reverts optimistic flip + calls onError when RPC returns error', async () => {
@@ -46,9 +46,9 @@ describe('TaskChecklist', () => {
     const onToggle = vi.fn(async () => ({ error: 'write failed' }));
     const onError = vi.fn();
     render(<TaskChecklist content={'- [ ] only\n'} onToggle={onToggle} onError={onError} />);
-    const box = screen.getByRole('checkbox') as HTMLInputElement;
+    const box = screen.getByRole('checkbox');
     await user.click(box);
-    expect(box.checked).toBe(false);
+    expect(box).not.toBeChecked();
     expect(onError).toHaveBeenCalledWith('write failed');
   });
 
@@ -56,10 +56,10 @@ describe('TaskChecklist', () => {
     const { rerender } = render(
       <TaskChecklist content={'- [ ] a\n'} onToggle={async () => ({ ok: true, checked: true })} />,
     );
-    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
     rerender(
       <TaskChecklist content={'- [x] a\n'} onToggle={async () => ({ ok: true, checked: true })} />,
     );
-    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole('checkbox')).toBeChecked();
   });
 });

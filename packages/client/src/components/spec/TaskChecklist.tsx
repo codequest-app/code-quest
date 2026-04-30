@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Checkbox } from '../ui/Checkbox';
 
 interface TaskLine {
   lineIndex: number;
@@ -84,19 +85,21 @@ export function TaskChecklist({
             </div>
           );
         }
+        const checkboxId = `task-line-${line.lineIndex}`;
         return (
           <label
             key={line.lineIndex}
+            htmlFor={checkboxId}
             aria-label={`task-line-${line.lineIndex}`}
             className="flex items-start gap-2 py-0.5 cursor-pointer hover:bg-white/5 rounded"
           >
             <span aria-hidden className="whitespace-pre">
               {line.indent}
             </span>
-            <input
-              type="checkbox"
+            <Checkbox
+              id={checkboxId}
               checked={line.checked}
-              onChange={() => void toggle(line.lineIndex)}
+              onCheckedChange={() => void toggle(line.lineIndex)}
               className="mt-0.5"
             />
             <span className={line.checked ? 'text-text-dim line-through' : 'text-text'}>
