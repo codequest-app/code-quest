@@ -1,5 +1,5 @@
+import * as Collapsible from '@radix-ui/react-collapsible';
 import Ansi from 'ansi-to-react';
-import { useState } from 'react';
 import { copyToClipboard } from '../../../../utils/clipboard';
 import { cn } from '../../../../utils/cn';
 
@@ -21,30 +21,36 @@ export function CollapsibleBlock({
   label,
   labelDetail,
   labelRange,
+  defaultOpen,
   children,
 }: {
   icon: string;
   label: string;
   labelDetail?: string;
   labelRange?: string;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const [open, setOpen] = useState(false);
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors py-1"
-      >
-        <span>{icon}</span>
-        <span className="font-semibold text-text-bright">{label}</span>
-        {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
-        {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
-        <RotatableChevron open={open} className="text-xs opacity-50" />
-      </button>
-      {open && <div className="mt-2 pl-6">{children}</div>}
-    </div>
+    <Collapsible.Root defaultOpen={defaultOpen ?? false}>
+      <Collapsible.Trigger asChild>
+        <button
+          type="button"
+          className="group flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors py-1"
+        >
+          <span>{icon}</span>
+          <span className="font-semibold text-text-bright">{label}</span>
+          {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
+          {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
+          <span className="text-xs opacity-50 transition-transform group-data-[state=open]:rotate-90">
+            ▶
+          </span>
+        </button>
+      </Collapsible.Trigger>
+      <Collapsible.Content>
+        <div className="mt-2 pl-6">{children}</div>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 
