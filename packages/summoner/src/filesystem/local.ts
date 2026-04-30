@@ -60,21 +60,23 @@ export class LocalFilesystemService implements FilesystemService {
     if (!path) {
       return this.fsRoots.map(toRootEntry);
     }
-    const result = await this.readBrowseEntries(path);
+    const result = await this.readBrowseEntries(path, false);
     return result.directories;
   }
 
   async browseEntries(
     path?: string,
+    opts?: { showHidden?: boolean },
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
     if (!path) {
       return { directories: this.fsRoots.map(toRootEntry), files: [] };
     }
-    return this.readBrowseEntries(path);
+    return this.readBrowseEntries(path, opts?.showHidden ?? false);
   }
 
   private async readBrowseEntries(
     path: string,
+    showHidden: boolean,
   ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }> {
     const validated = this.validatePath(path, this.fsRoots);
     if (!validated) return { directories: [], files: [] };
@@ -84,7 +86,8 @@ export class LocalFilesystemService implements FilesystemService {
       const directories: DirectoryEntry[] = [];
       const files: DirectoryEntry[] = [];
       for (const entry of entries) {
-        if (entry.name.startsWith('.') || entry.isSymbolicLink()) continue;
+        if (entry.isSymbolicLink()) continue;
+        if (!showHidden && entry.name.startsWith('.')) continue;
         if (entry.isDirectory()) {
           if (BROWSE_IGNORED.has(entry.name)) continue;
           directories.push({ name: entry.name, path: join(validated, entry.name) });

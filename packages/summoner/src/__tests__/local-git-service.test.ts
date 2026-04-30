@@ -104,6 +104,29 @@ describe.skipIf(SKIP)('LocalGitService', () => {
       expect(result.diff).toContain('modified');
       git('checkout -- file.txt');
     });
+
+    it('returns per-file unstaged diff (M status)', async () => {
+      writeFileSync(join(tmpDir, 'file.txt'), 'unstaged change');
+      const result = await service.diff(tmpDir, 'file.txt', 'M');
+      expect(result.diff).toContain('unstaged change');
+      git('checkout -- file.txt');
+    });
+
+    it('returns per-file staged diff (A status)', async () => {
+      writeFileSync(join(tmpDir, 'new-file.txt'), 'staged content');
+      git('add new-file.txt');
+      const result = await service.diff(tmpDir, 'new-file.txt', 'A ');
+      expect(result.diff).toContain('staged content');
+      git('rm --cached new-file.txt');
+      rmSync(join(tmpDir, 'new-file.txt'));
+    });
+
+    it('returns file content as pseudo-diff for untracked file (?? status)', async () => {
+      writeFileSync(join(tmpDir, 'untracked.txt'), 'brand new file');
+      const result = await service.diff(tmpDir, 'untracked.txt', '??');
+      expect(result.diff).toContain('brand new file');
+      rmSync(join(tmpDir, 'untracked.txt'));
+    });
   });
 
   describe('getRepoRoot', () => {

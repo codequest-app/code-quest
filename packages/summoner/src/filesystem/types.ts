@@ -32,7 +32,10 @@ export type { FsMutationResult };
 export interface FilesystemService {
   browseDirectories(path?: string): Promise<DirectoryEntry[]>;
   /** Returns immediate child directories AND files at the given path. */
-  browseEntries(path?: string): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
+  browseEntries(
+    path?: string,
+    opts?: { showHidden?: boolean },
+  ): Promise<{ directories: DirectoryEntry[]; files: DirectoryEntry[] }>;
   /** Read a file by absolute path; rejects paths outside allowed roots. */
   readFileAbsolute(absolutePath: string): Promise<ReadFileResult>;
   /** Write to a file by absolute path; rejects paths outside allowed roots.

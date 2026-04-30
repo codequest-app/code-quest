@@ -19,6 +19,7 @@ interface EntryItem {
 
 export function FileTree({
   rootCwd,
+  showHidden,
   gitMarks,
   onSelect,
   onActivate,
@@ -30,6 +31,7 @@ export function FileTree({
    *  server-configured allowed roots). Used by FilesPane to scope the tree
    *  to the active project's cwd. */
   rootCwd?: string;
+  showHidden?: boolean;
   /** Map<absolute-path, git-status-mark> — render badge per matching file. */
   gitMarks?: Map<string, string>;
   onSelect?: (path: string) => void;
@@ -143,7 +145,7 @@ export function FileTree({
       }),
       getChildrenWithData: async (itemId) => {
         const path = itemId === 'root' ? rootCwd : itemId;
-        const result = await browseEntries(path);
+        const result = await browseEntries(path, { showHidden });
         if (itemId === 'root') setHasLoadedRoot(true);
         if ('error' in result) return [];
         for (const d of result.directories) kindByPathRef.current.set(d.path, 'directory');

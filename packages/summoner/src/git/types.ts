@@ -36,7 +36,7 @@ export interface GitService {
   status(cwd: string): Promise<GitStatusResult>;
   checkout(cwd: string, branch: string): Promise<void>;
   log(cwd: string, limit?: number): Promise<GitLogResult>;
-  diff(cwd: string): Promise<GitDiffResult>;
+  diff(cwd: string, filePath?: string, status?: string): Promise<GitDiffResult>;
   /** Stage changes (`git add`). Omit `paths` (or pass empty) to stage all
    *  changes (equivalent to `git add -A`). Pass paths to stage only those. */
   add(cwd: string, paths?: string[]): Promise<GitAddResult>;

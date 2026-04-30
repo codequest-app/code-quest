@@ -1,3 +1,4 @@
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useFsActions } from '../../contexts/FsContext';
@@ -15,6 +16,7 @@ export interface FilesPaneProps {
 export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element {
   const [previewPath, setPreviewPath] = useState<string | null>(null);
   const [rootError, setRootError] = useState<string | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
   const { browse } = useFsActions();
   const gitData = useGitStatus(cwd);
   useKeepFsWatcherAlive(cwd);
@@ -68,13 +70,31 @@ export function FilesPane({ cwd, onMention }: FilesPaneProps): React.JSX.Element
 
   return (
     <section className="flex flex-col h-full" aria-label="files-pane">
+      <div className="flex items-center justify-end px-2 py-1">
+        <button
+          type="button"
+          onClick={() => setShowHidden((v) => !v)}
+          className="text-text-muted hover:text-text p-0.5 rounded"
+          title={showHidden ? 'Hide hidden files' : 'Show hidden files'}
+        >
+          {showHidden ? (
+            <EyeIcon className="w-3.5 h-3.5" />
+          ) : (
+            <EyeSlashIcon className="w-3.5 h-3.5" />
+          )}
+        </button>
+      </div>
       <div className="flex-1 min-h-0 overflow-auto">
-        {/* `key={cwd}` forces FileTree to remount when the project switches —
-            headless-tree's root node caches children per (rootItemId, dataLoader)
-            and won't re-fetch when only the closure changes. Cheaper than
-            teaching the lib about rootCwd identity, and the lost expansion
-            state is correct UX (different project, different tree). */}
-        <FileTree key={cwd} rootCwd={cwd} gitMarks={gitMarks} onActivate={handleActivate} />
+        {/* `key` includes showHidden so the tree remounts when toggled —
+            headless-tree caches children per dataLoader closure and won't
+            re-fetch when only `showHidden` changes. */}
+        <FileTree
+          key={`${cwd}:${String(showHidden)}`}
+          rootCwd={cwd}
+          showHidden={showHidden}
+          gitMarks={gitMarks}
+          onActivate={handleActivate}
+        />
       </div>
       {previewPath && (
         <FilePreviewModal

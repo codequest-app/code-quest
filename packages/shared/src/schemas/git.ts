@@ -142,9 +142,10 @@ export const gitStatusByCwdResultSchema: z.ZodUnion<
 ]);
 export type GitStatusByCwdResult = z.infer<typeof gitStatusByCwdResultSchema>;
 
-export const gitDiffByCwdPayloadSchema: z.ZodObject<{ cwd: z.ZodString }, z.core.$strip> = z.object(
-  { cwd: z.string() },
-);
+export const gitDiffByCwdPayloadSchema: z.ZodObject<
+  { cwd: z.ZodString; filePath: z.ZodOptional<z.ZodString>; status: z.ZodOptional<z.ZodString> },
+  z.core.$strip
+> = z.object({ cwd: z.string(), filePath: z.string().optional(), status: z.string().optional() });
 export type GitDiffByCwdPayload = z.infer<typeof gitDiffByCwdPayloadSchema>;
 
 export const gitDiffByCwdResultSchema: z.ZodUnion<

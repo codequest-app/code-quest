@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve, sep } from 'node:path';
 import {
   errMsg,
@@ -44,9 +45,36 @@ export class GitCommands {
     return { entries: result.all.map(toLogEntry) };
   }
 
-  async diff(cwd: string): Promise<GitDiffResult> {
+  async diff(cwd: string, filePath?: string, status?: string): Promise<GitDiffResult> {
     const git = createGit(cwd);
-    return { diff: await git.diff() };
+    if (!filePath) {
+      return { diff: await git.diff() };
+    }
+    if (status === '??') {
+      const result = await rawGit(git, ['show', `:${filePath}`]).catch(() => null);
+      if (result?.exitCode === 0) {
+        return {
+          diff: `+++ b/${filePath}\n${result.stdout
+            .split('\n')
+            .map((l) => `+${l}`)
+            .join('\n')}`,
+        };
+      }
+      const content = await readFile(resolve(cwd, filePath), 'utf-8').catch(() => '');
+      return {
+        diff: `+++ b/${filePath}\n${content
+          .split('\n')
+          .map((l) => `+${l}`)
+          .join('\n')}`,
+      };
+    }
+    // status is the trimmed `${index}${working_dir}` from toChangedFile.
+    // Single-char 'M'/'D' is ambiguous (could be staged-only or unstaged-only after trim),
+    // so use HEAD diff which covers both. 'A' is always staged-only.
+    if (status === 'A') {
+      return { diff: await git.diff(['--staged', '--', filePath]) };
+    }
+    return { diff: await git.diff(['HEAD', '--', filePath]) };
   }
 
   async add(cwd: string, paths?: string[]): Promise<{ ok: true } | { error: string }> {
