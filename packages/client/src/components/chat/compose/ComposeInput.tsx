@@ -1,5 +1,8 @@
 import type { FsSearchResult } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
+
+export type SearchStatus = 'idle' | 'loading' | 'done';
+
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '../../../contexts/channel';
@@ -103,7 +106,7 @@ export function ComposeInput({
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   };
 
-  const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle');
 
   const mentionQuery = mentionOpen ? getMentionQuery(value, cursorPos) : null;
 

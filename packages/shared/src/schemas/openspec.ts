@@ -77,6 +77,12 @@ export const openspecListResultSchema: z.ZodUnion<
 ]);
 export type OpenspecListResult = z.infer<typeof openspecListResultSchema>;
 
+export const openspecKindSchema: z.ZodEnum<{ change: 'change'; spec: 'spec' }> = z.enum([
+  'change',
+  'spec',
+]);
+export type OpenspecKind = z.infer<typeof openspecKindSchema>;
+
 export const openspecArtifactKindSchema: z.ZodEnum<{
   tasks: 'tasks';
   proposal: 'proposal';
@@ -95,7 +101,7 @@ export const openspecReadPayloadSchema: z.ZodObject<
   z.core.$strip
 > = z.object({
   cwd: z.string(),
-  kind: z.enum(['change', 'spec']),
+  kind: openspecKindSchema,
   name: z.string(),
   artifact: openspecArtifactKindSchema,
 });

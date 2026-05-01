@@ -2,6 +2,7 @@ import type {
   OpenspecArchiveResult,
   OpenspecArtifactKind,
   OpenspecChangeNewResult,
+  OpenspecKind,
   OpenspecListResult,
   OpenspecReadResult,
   OpenspecToggleTaskResult,
@@ -16,7 +17,7 @@ export interface OpenspecService {
   list(cwd: string): Promise<OpenspecListResult>;
   read(
     cwd: string,
-    kind: 'change' | 'spec',
+    kind: OpenspecKind,
     name: string,
     artifact: OpenspecArtifactKind,
   ): Promise<OpenspecReadResult>;

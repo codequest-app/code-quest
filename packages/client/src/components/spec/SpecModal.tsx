@@ -1,6 +1,7 @@
 import {
   EVENTS,
   type OpenspecArtifactKind,
+  type OpenspecKind,
   openspecArtifactKindSchema,
   openspecReadResultSchema,
 } from '@code-quest/shared';
@@ -18,7 +19,7 @@ import { TaskChecklist } from './TaskChecklist';
 
 export interface SpecModalProps {
   cwd: string;
-  kind: 'change' | 'spec';
+  kind: OpenspecKind;
   name: string;
   onClose: () => void;
 }

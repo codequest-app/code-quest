@@ -2,6 +2,7 @@ import type { FsSearchResult } from '@code-quest/shared';
 import { cn } from '../../../utils/cn';
 import { slugify } from '../../../utils/slugify';
 import { FileIcon, FolderIcon } from '../../icons/MentionIcons';
+import type { SearchStatus } from './ComposeInput';
 
 const noop = () => {};
 
@@ -112,7 +113,7 @@ export interface MentionDropdownProps {
   mentionQuery: string;
   filteredSuggestions: string[];
   fileResults: FsSearchResult[];
-  searchStatus: 'idle' | 'loading' | 'done';
+  searchStatus: SearchStatus;
   selectedIndex: number;
   hasFileSearch: boolean;
   onSelectMention: (suggestion: string, navigateInto: boolean) => void;

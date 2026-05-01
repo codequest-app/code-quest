@@ -1,4 +1,4 @@
-import type { NotificationSeverity } from '@code-quest/shared';
+import type { ElicitationInputType, NotificationSeverity } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, asString, isRecord } from '../../utils.ts';
@@ -7,7 +7,6 @@ import type { controlRequestSchema } from '../schemas.ts';
 type ControlRequestMessage = z.infer<typeof controlRequestSchema>;
 type RequestContext = { requestId: string; request: ControlRequestMessage['request'] };
 
-type ElicitationInputType = 'url' | 'select' | 'text';
 function inputTypeFromMode(mode: string | undefined): ElicitationInputType {
   switch (mode) {
     case 'url':
