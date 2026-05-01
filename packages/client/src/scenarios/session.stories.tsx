@@ -2,10 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { expectTextbox, withScenario } from '../test/story-decorator';
 import {
-  disconnectedSessionState,
-  longConversationState,
-  processingWithToolState,
-} from './session.fixtures';
+  makeDisconnectedSession,
+  makeLongConversation,
+  makeProcessingWithTool,
+} from '../test/story-fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -19,18 +19,18 @@ type Story = StoryObj<typeof meta>;
 
 export const CompletedSession: Story = {
   args: { title: 'Fix login bug' },
-  decorators: [withScenario(longConversationState)],
+  decorators: [withScenario({ messages: makeLongConversation() })],
   play: expectTextbox,
 };
 
 export const Processing: Story = {
   args: { title: 'Search TODOs' },
-  decorators: [withScenario(processingWithToolState)],
+  decorators: [withScenario({ messages: makeProcessingWithTool(), status: 'processing' })],
   play: expectTextbox,
 };
 
 export const Disconnected: Story = {
   args: { title: 'File listing' },
-  decorators: [withScenario(disconnectedSessionState)],
+  decorators: [withScenario({ messages: makeDisconnectedSession(), status: 'disconnected' })],
   play: expectTextbox,
 };

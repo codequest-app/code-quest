@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { expectTextbox, withScenario } from '../test/story-decorator';
 import {
-  multiToolChainState,
-  streamlinedOutputState,
-  taskStartedState,
-  thinkingBlockState,
-} from './advanced.fixtures';
+  makeMultiToolChainAdvanced,
+  makeStreamlinedOutput,
+  makeTaskStarted,
+  makeThinkingBlock,
+} from '../test/story-fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -20,24 +20,24 @@ type Story = StoryObj<typeof meta>;
 
 export const ThinkingBlock: Story = {
   args: { title: 'Caching strategy' },
-  decorators: [withScenario(thinkingBlockState)],
+  decorators: [withScenario({ messages: makeThinkingBlock() })],
   play: expectTextbox,
 };
 
 export const MultiToolChain: Story = {
   args: { title: 'TODO report' },
-  decorators: [withScenario(multiToolChainState)],
+  decorators: [withScenario({ messages: makeMultiToolChainAdvanced() })],
   play: expectTextbox,
 };
 
 export const StreamlinedOutput: Story = {
   args: { title: 'ESLint setup' },
-  decorators: [withScenario(streamlinedOutputState)],
+  decorators: [withScenario({ messages: makeStreamlinedOutput() })],
   play: expectTextbox,
 };
 
 export const TaskStarted: Story = {
   args: { title: 'Auth refactor' },
-  decorators: [withScenario(taskStartedState)],
+  decorators: [withScenario({ messages: makeTaskStarted() })],
   play: expectTextbox,
 };

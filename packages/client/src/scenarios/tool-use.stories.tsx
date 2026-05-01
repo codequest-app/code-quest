@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { expectTextbox, withScenario } from '../test/story-decorator';
 import {
-  bashExecutionState,
-  editWithDiffState,
-  longConversationState,
-  readAndGrepState,
-} from './tool-use.fixtures';
+  makeBashExecution,
+  makeEditWithDiff,
+  makeLongConversation,
+  makeReadAndGrep,
+} from '../test/story-fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -20,24 +20,24 @@ type Story = StoryObj<typeof meta>;
 
 export const ReadAndGrep: Story = {
   args: { title: 'Find login function' },
-  decorators: [withScenario(readAndGrepState)],
+  decorators: [withScenario({ messages: makeReadAndGrep() })],
   play: expectTextbox,
 };
 
 export const EditWithDiff: Story = {
   args: { title: 'Add null-check' },
-  decorators: [withScenario(editWithDiffState)],
+  decorators: [withScenario({ messages: makeEditWithDiff() })],
   play: expectTextbox,
 };
 
 export const BashExecution: Story = {
   args: { title: 'Run tests' },
-  decorators: [withScenario(bashExecutionState)],
+  decorators: [withScenario({ messages: makeBashExecution() })],
   play: expectTextbox,
 };
 
 export const MultiToolChain: Story = {
   args: { title: 'Fix the login bug' },
-  decorators: [withScenario(longConversationState)],
+  decorators: [withScenario({ messages: makeLongConversation() })],
   play: expectTextbox,
 };

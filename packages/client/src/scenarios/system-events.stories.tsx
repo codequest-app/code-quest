@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { expectTextbox, withScenario } from '../test/story-decorator';
 import {
-  compactBoundaryState,
-  errorRecoveryState,
-  hookExecutionState,
-  interruptState,
-  rateLimitEventState,
-} from './system-events.fixtures';
+  makeCompactBoundary,
+  makeErrorRecovery,
+  makeHookExecution,
+  makeInterrupt,
+  makeRateLimitEvent,
+} from '../test/story-fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -21,30 +21,30 @@ type Story = StoryObj<typeof meta>;
 
 export const ErrorRecovery: Story = {
   args: { title: 'Database migration' },
-  decorators: [withScenario(errorRecoveryState)],
+  decorators: [withScenario({ messages: makeErrorRecovery() })],
   play: expectTextbox,
 };
 
 export const RateLimit: Story = {
   args: { title: 'Test migration' },
-  decorators: [withScenario(rateLimitEventState)],
+  decorators: [withScenario({ messages: makeRateLimitEvent() })],
   play: expectTextbox,
 };
 
 export const CompactBoundary: Story = {
   args: { title: 'Debug auth flow' },
-  decorators: [withScenario(compactBoundaryState)],
+  decorators: [withScenario({ messages: makeCompactBoundary() })],
   play: expectTextbox,
 };
 
 export const Interrupt: Story = {
   args: { title: 'Test analysis' },
-  decorators: [withScenario(interruptState)],
+  decorators: [withScenario({ messages: makeInterrupt() })],
   play: expectTextbox,
 };
 
 export const HookExecution: Story = {
   args: { title: 'Git commit' },
-  decorators: [withScenario(hookExecutionState)],
+  decorators: [withScenario({ messages: makeHookExecution() })],
   play: expectTextbox,
 };
