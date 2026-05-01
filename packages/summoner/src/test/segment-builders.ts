@@ -61,12 +61,6 @@ export interface SegmentTemplates {
   [key: string]: string | undefined;
 }
 
-function fromTemplate(template: string, overrides: Record<string, unknown>): string {
-  const line = JSON.parse(template) as Record<string, unknown>;
-  Object.assign(line, overrides);
-  return JSON.stringify(line);
-}
-
 export type SegmentBuilders = ReturnType<typeof buildSegments>;
 
 export function createSegments(T: SegmentTemplates): {
@@ -278,7 +272,9 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     },
 
     controlCancelRequest(requestId: string): string {
-      return fromTemplate(T.CONTROL_CANCEL_REQUEST, { request_id: requestId });
+      const line = JSON.parse(T.CONTROL_CANCEL_REQUEST) as Record<string, unknown>;
+      Object.assign(line, { request_id: requestId });
+      return JSON.stringify(line);
     },
 
     status(opts: { status?: string | null; permissionMode?: string }): string {

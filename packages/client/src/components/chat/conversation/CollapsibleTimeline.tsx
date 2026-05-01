@@ -116,6 +116,37 @@ function ToolGroup({
   );
 }
 
+function RunItem({
+  run,
+  position,
+  onRewind,
+  onFork,
+  onStopTask,
+  onDiffRespond,
+}: RunProps & { run: TimelineRun; position: RowPosition }): React.JSX.Element {
+  if (run.kind === 'grouped') {
+    return (
+      <ToolGroup
+        nodes={run.nodes}
+        onRewind={onRewind}
+        onFork={onFork}
+        onStopTask={onStopTask}
+        onDiffRespond={onDiffRespond}
+      />
+    );
+  }
+  return (
+    <TimelineRow
+      node={run.node}
+      position={position}
+      onRewind={onRewind}
+      onFork={onFork}
+      onStopTask={onStopTask}
+      onDiffRespond={onDiffRespond}
+    />
+  );
+}
+
 export function CollapsibleTimeline({
   nodes,
   onRewind,
@@ -126,31 +157,17 @@ export function CollapsibleTimeline({
   const runs: TimelineRun[] = splitTimelineRuns(nodes);
   return (
     <div className="animate-fade-in mt-1">
-      {runs.map((run, i) => {
-        if (run.kind === 'grouped') {
-          return (
-            <ToolGroup
-              key={run.nodes[0]?.message.id}
-              nodes={run.nodes}
-              onRewind={onRewind}
-              onFork={onFork}
-              onStopTask={onStopTask}
-              onDiffRespond={onDiffRespond}
-            />
-          );
-        }
-        return (
-          <TimelineRow
-            key={run.node.message.id}
-            node={run.node}
-            position={positionOf(i, runs.length)}
-            onRewind={onRewind}
-            onFork={onFork}
-            onStopTask={onStopTask}
-            onDiffRespond={onDiffRespond}
-          />
-        );
-      })}
+      {runs.map((run, i) => (
+        <RunItem
+          key={run.kind === 'grouped' ? run.nodes[0]?.message.id : run.node.message.id}
+          run={run}
+          position={positionOf(i, runs.length)}
+          onRewind={onRewind}
+          onFork={onFork}
+          onStopTask={onStopTask}
+          onDiffRespond={onDiffRespond}
+        />
+      ))}
     </div>
   );
 }

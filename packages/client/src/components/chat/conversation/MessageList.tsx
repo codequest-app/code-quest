@@ -13,6 +13,7 @@ import {
   useChannelMessages,
   useMessageVisibility,
 } from '../../../contexts/channel';
+import type { ForkFn, RewindFn } from '../../../types/ui';
 import { filterTree } from '../../../utils/filter-tree';
 import { groupForTimeline } from '../../../utils/group-for-timeline';
 import { isMessageVisible } from '../../../utils/isMessageVisible';
@@ -55,6 +56,73 @@ function groupKey(group: ReturnType<typeof groupForTimeline>[number]): string {
   return group.kind === 'timeline'
     ? (group.nodes[0]?.message.id ?? 'timeline')
     : group.node.message.id;
+}
+
+type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
+type VirtualItem = { index: number; start: number };
+type Virtualizer = { measureElement: (el: Element | null) => void };
+
+function VirtualGroupItem({
+  group,
+  item,
+  virtualizer,
+  onRewind,
+  onFork,
+  onStopTask,
+  onDiffRespond,
+}: {
+  group: DisplayGroup;
+  item: VirtualItem;
+  virtualizer: Virtualizer;
+  onRewind?: RewindFn;
+  onFork?: ForkFn;
+  onStopTask?: (taskId: string) => void;
+  onDiffRespond?: (toolId: string, accepted: boolean) => void;
+}): React.JSX.Element {
+  return (
+    <div
+      key={groupKey(group)}
+      data-index={item.index}
+      ref={virtualizer.measureElement}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        transform: `translateY(${item.start}px)`,
+      }}
+    >
+      {group.kind === 'timeline' ? (
+        <CollapsibleTimeline
+          nodes={group.nodes}
+          onRewind={onRewind}
+          onFork={onFork}
+          onStopTask={onStopTask}
+          onDiffRespond={onDiffRespond}
+        />
+      ) : (
+        <div data-message-id={group.node.message.id} className="animate-fade-in py-2">
+          <ChatMessage
+            message={group.node.message}
+            showAvatar={group.node.message.role !== group.prevRole}
+            onRewind={onRewind}
+            onFork={onFork}
+            onDiffRespond={onDiffRespond}
+          />
+          {group.node.children.length > 0 && (
+            <SubagentChildren
+              nodes={group.node.children}
+              onStopTask={onStopTask}
+              onDiffRespond={onDiffRespond}
+              parentToolId={
+                group.node.message.type === 'tool_use' ? group.node.message.meta.toolId : undefined
+              }
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const MessageList: React.ForwardRefExoticComponent<
@@ -244,50 +312,16 @@ export const MessageList: React.ForwardRefExoticComponent<
                 const group = displayGroups[item.index];
                 if (!group) return null;
                 return (
-                  <div
+                  <VirtualGroupItem
                     key={groupKey(group)}
-                    data-index={item.index}
-                    ref={virtualizer.measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${item.start}px)`,
-                    }}
-                  >
-                    {group.kind === 'timeline' ? (
-                      <CollapsibleTimeline
-                        nodes={group.nodes}
-                        onRewind={onRewind}
-                        onFork={onFork}
-                        onStopTask={onStopTask}
-                        onDiffRespond={onDiffRespond}
-                      />
-                    ) : (
-                      <div data-message-id={group.node.message.id} className="animate-fade-in py-2">
-                        <ChatMessage
-                          message={group.node.message}
-                          showAvatar={group.node.message.role !== group.prevRole}
-                          onRewind={onRewind}
-                          onFork={onFork}
-                          onDiffRespond={onDiffRespond}
-                        />
-                        {group.node.children.length > 0 && (
-                          <SubagentChildren
-                            nodes={group.node.children}
-                            onStopTask={onStopTask}
-                            onDiffRespond={onDiffRespond}
-                            parentToolId={
-                              group.node.message.type === 'tool_use'
-                                ? group.node.message.meta.toolId
-                                : undefined
-                            }
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    group={group}
+                    item={item}
+                    virtualizer={virtualizer}
+                    onRewind={onRewind}
+                    onFork={onFork}
+                    onStopTask={onStopTask}
+                    onDiffRespond={onDiffRespond}
+                  />
                 );
               })}
             </div>

@@ -1,3 +1,4 @@
+import type { TokenUsage } from '@code-quest/shared';
 import type { ToolUseMeta } from '../../../../types/ui';
 import { cn } from '../../../../utils/cn';
 import { langFromPath } from '../../../../utils/syntax';
@@ -9,10 +10,8 @@ import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
 
-function totalTokens(usage: Record<string, unknown>): number | null {
-  const input = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
-  const output = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
-  const total = input + output;
+function totalTokens(usage: TokenUsage): number | null {
+  const total = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
   return total > 0 ? total : null;
 }
 
@@ -27,7 +26,7 @@ function TaskStatusBadge({
   lastToolName?: string;
   taskSummary?: string;
   taskType?: string;
-  taskUsage?: Record<string, unknown>;
+  taskUsage?: TokenUsage;
 }): React.JSX.Element | null {
   if (!taskStatus) return null;
 

@@ -98,7 +98,7 @@ function onTaskNotification(
   return patchToolUseMeta(state, p.toolUseId, {
     taskStatus: status,
     taskSummary: p.summary,
-    ...(p.usage ? { taskUsage: p.usage as Record<string, unknown> } : {}),
+    ...(p.usage ? { taskUsage: p.usage } : {}),
   });
 }
 

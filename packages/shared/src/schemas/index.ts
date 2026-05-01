@@ -657,6 +657,7 @@ export type {
   SystemTaskNotificationPayload,
   SystemTaskProgressPayload,
   SystemTaskStartedPayload,
+  TokenUsage,
 } from './system.ts';
 export {
   chatHookCallbackRespondPayloadSchema,
@@ -677,6 +678,7 @@ export {
   systemTaskNotificationPayloadSchema,
   systemTaskProgressPayloadSchema,
   systemTaskStartedPayloadSchema,
+  tokenUsageSchema,
 } from './system.ts';
 export type {
   TerminalGetContentsPayload,
