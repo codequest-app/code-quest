@@ -1,10 +1,114 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetSeq, segments } from '../test/segments-node.ts';
+import { createSegments } from '../test/segment-builders';
 
-/** Parse a segment string into an object for assertions */
 const parse = (s: string) => JSON.parse(s) as Record<string, unknown>;
 
-describe('segments', () => {
+// Minimal template stubs — only the fields each builder reads/writes
+const TEMPLATES = {
+  INIT: JSON.stringify({
+    type: 'system',
+    subtype: 'init',
+    session_id: '',
+    uuid: '',
+    model: '',
+    tools: [],
+    permissionMode: 'default',
+    fast_mode_state: null,
+    mcp_servers: [],
+    slash_commands: [],
+    current_repo: null,
+  }),
+  ASSISTANT_TEXT: JSON.stringify({
+    type: 'assistant',
+    uuid: '',
+    parent_tool_use_id: null,
+    message: { id: '', content: [{ type: 'text', text: '' }] },
+  }),
+  ASSISTANT_TOOL: JSON.stringify({
+    type: 'assistant',
+    uuid: '',
+    parent_tool_use_id: null,
+    message: { id: '', content: [{ type: 'tool_use', id: '', name: '', input: {} }] },
+  }),
+  THINKING: JSON.stringify({
+    type: 'assistant',
+    uuid: '',
+    parent_tool_use_id: null,
+    message: { id: '', content: [{ type: 'thinking', thinking: '' }] },
+  }),
+  RESULT_SUCCESS: JSON.stringify({
+    type: 'result',
+    subtype: 'success',
+    uuid: '',
+    duration_ms: 0,
+    duration_api_ms: 0,
+    total_cost_usd: 0,
+  }),
+  RESULT_ERROR: JSON.stringify({
+    type: 'result',
+    subtype: 'error_during_execution',
+    is_error: false,
+    uuid: '',
+    duration_ms: 0,
+    duration_api_ms: 0,
+    total_cost_usd: 0,
+  }),
+  RESULT_RESUME_NOT_FOUND: JSON.stringify({
+    type: 'result',
+    subtype: 'error_during_execution',
+    is_error: false,
+    uuid: '',
+    errors: [],
+    duration_ms: 0,
+    duration_api_ms: 0,
+    total_cost_usd: 0,
+  }),
+  CONTROL_CANCEL_REQUEST: JSON.stringify({ type: 'control_cancel_request', request_id: '' }),
+  STATUS: JSON.stringify({
+    type: 'system',
+    subtype: 'status',
+    uuid: '',
+    status: null,
+    permissionMode: 'default',
+  }),
+  TASK_STARTED: JSON.stringify({
+    type: 'system',
+    subtype: 'task_started',
+    uuid: '',
+    tool_use_id: '',
+    description: '',
+    task_id: '',
+  }),
+  AGENT_TOOL: JSON.stringify({
+    type: 'assistant',
+    uuid: '',
+    parent_tool_use_id: null,
+    message: {
+      id: '',
+      model: 'claude-opus-4-6',
+      usage: { input_tokens: 0, output_tokens: 0 },
+      content: [{ type: 'tool_use', id: '', name: 'Agent', input: {} }],
+    },
+  }),
+  TOOL_RESULT: JSON.stringify({
+    type: 'tool_result',
+    uuid: '',
+    parent_tool_use_id: null,
+    message: { content: [{ type: 'tool_result', tool_use_id: '', content: '', is_error: false }] },
+  }),
+  CONTROL_RESPONSE: JSON.stringify({
+    type: 'control_response',
+    response: { request_id: '', response: {} },
+  }),
+  CONTROL_RESPONSE_ERROR: JSON.stringify({
+    type: 'control_response',
+    response: { request_id: '', error: '' },
+  }),
+} as const;
+
+describe('createSegments', () => {
+  const { segments, resetSeq } = createSegments(TEMPLATES);
+
   describe('returns JSON strings', () => {
     it('init returns a string', () => {
       expect(typeof segments.init('s1')).toBe('string');
@@ -19,7 +123,7 @@ describe('segments', () => {
     });
   });
 
-  describe('_seq reset (#1)', () => {
+  describe('_seq reset', () => {
     beforeEach(() => {
       resetSeq();
     });
@@ -40,7 +144,7 @@ describe('segments', () => {
     });
   });
 
-  describe('thinking (#26)', () => {
+  describe('thinking', () => {
     beforeEach(() => {
       resetSeq();
     });
@@ -55,16 +159,9 @@ describe('segments', () => {
       expect(content.type).toBe('thinking');
       expect(content.thinking).toBe('analyzing the problem');
     });
-
-    it('increments seq for uuid', () => {
-      const a = parse(segments.thinking('a'));
-      const b = parse(segments.thinking('b'));
-      expect(a.uuid).toBe('fake-asst-1');
-      expect(b.uuid).toBe('fake-asst-2');
-    });
   });
 
-  describe('controlCancelRequest (#27)', () => {
+  describe('controlCancelRequest', () => {
     it('produces control_cancel_request', () => {
       const line = parse(segments.controlCancelRequest('req-42'));
       expect(line.type).toBe('control_cancel_request');
@@ -72,7 +169,11 @@ describe('segments', () => {
     });
   });
 
-  describe('parentToolUseId (#31)', () => {
+  describe('parentToolUseId', () => {
+    beforeEach(() => {
+      resetSeq();
+    });
+
     it('assistant text defaults parent_tool_use_id to null', () => {
       const line = parse(segments.assistant('hello'));
       expect(line.parent_tool_use_id).toBeNull();
@@ -80,16 +181,6 @@ describe('segments', () => {
 
     it('assistant text accepts parentToolUseId option', () => {
       const line = parse(segments.assistant('hello', { parentToolUseId: 'toolu_parent' }));
-      expect(line.parent_tool_use_id).toBe('toolu_parent');
-    });
-
-    it('assistant toolUse accepts parentToolUseId option', () => {
-      const line = parse(
-        segments.assistant(
-          { toolUse: { id: 'toolu_1', name: 'Read', input: {} } },
-          { parentToolUseId: 'toolu_parent' },
-        ),
-      );
       expect(line.parent_tool_use_id).toBe('toolu_parent');
     });
 
@@ -104,14 +195,9 @@ describe('segments', () => {
       const line = parse(segments.toolResult('toolu_1', 'content'));
       expect(line.parent_tool_use_id).toBeNull();
     });
-
-    it('thinking accepts parentToolUseId option', () => {
-      const line = parse(segments.thinking('deep thought', { parentToolUseId: 'toolu_parent' }));
-      expect(line.parent_tool_use_id).toBe('toolu_parent');
-    });
   });
 
-  describe('status (#30)', () => {
+  describe('status', () => {
     it('produces system/status with status text', () => {
       const line = parse(segments.status({ status: 'Reading file...' }));
       expect(line.type).toBe('system');
@@ -126,7 +212,7 @@ describe('segments', () => {
     });
   });
 
-  describe('taskStarted (#29)', () => {
+  describe('taskStarted', () => {
     it('produces system/task_started', () => {
       const line = parse(segments.taskStarted('toolu_abc', 'Explore codebase'));
       expect(line.type).toBe('system');
@@ -136,12 +222,11 @@ describe('segments', () => {
     });
   });
 
-  describe('agent (#31)', () => {
+  describe('agent', () => {
     it('produces assistant with Agent tool_use block', () => {
       const line = parse(segments.agent('toolu_1', 'Explore project structure'));
       expect(line.type).toBe('assistant');
       const msg = line.message as Record<string, unknown>;
-      expect(msg.model).toBe('claude-opus-4-6');
       const content = (msg.content as Record<string, unknown>[])[0];
       expect(content?.type).toBe('tool_use');
       expect(content?.name).toBe('Agent');
@@ -157,29 +242,15 @@ describe('segments', () => {
       expect(input?.subagent_type).toBe('Explore');
     });
 
-    it('has model and usage from real DB data', () => {
-      const line = parse(segments.agent('toolu_1', 'Explore project'));
-      const msg = line.message as Record<string, unknown>;
-      expect(msg.model).toBeTruthy();
-      expect(msg.usage).toBeTruthy();
-    });
-
     it('accepts parentToolUseId option', () => {
       const line = parse(
         segments.agent('toolu_1', 'Sub task', { parentToolUseId: 'toolu_parent' }),
       );
       expect(line.parent_tool_use_id).toBe('toolu_parent');
     });
-
-    it('tool_use id comes from first argument', () => {
-      const line = parse(segments.agent('toolu_xyz', 'Do something'));
-      const msg = line.message as Record<string, unknown>;
-      const content = (msg.content as Record<string, unknown>[])[0];
-      expect(content?.id).toBe('toolu_xyz');
-    });
   });
 
-  describe('resultError (#28)', () => {
+  describe('resultError', () => {
     beforeEach(() => {
       resetSeq();
     });

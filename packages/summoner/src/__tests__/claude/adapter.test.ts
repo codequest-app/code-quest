@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resetSeq, segments as s } from '../../test/segments.ts';
+import { resetSeq, segments as s } from '../../test/segments-node.ts';
 import { adapter, expectName, toClientMessage } from './helpers.ts';
 
 describe('ClaudeAdapter', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { segments as s } from '../../../test/segments.ts';
+import { segments as s } from '../../../test/segments-node.ts';
 import { expectName, toClientMessage } from '../helpers.ts';
 
 describe('transform — system events', () => {
