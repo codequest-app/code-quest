@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SCENARIO_CLASS, withStoryChannel } from '../../test/story-decorator';
-import {
-  makeHeavyToolUseConversation,
-  makeSkillInvocationConversation,
-  makeSubagentDone,
-  makeSubagentRunning,
-} from '../../test/story-fixtures';
+import { SCENARIO_CLASS, withScenario, withStoryChannel } from '../../test/story-decorator';
 import { ChatPanel } from './ChatPanel';
+import {
+  heavyToolUseState,
+  skillInvocationState,
+  subagentDoneState,
+  subagentRunningState,
+} from './ChatPanel.fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -25,41 +25,21 @@ export const WithTitle: Story = {
 };
 
 export const HeavyToolUse: Story = {
-  decorators: [
-    withStoryChannel({
-      className: SCENARIO_CLASS,
-      messages: { messages: makeHeavyToolUseConversation() },
-    }),
-  ],
+  decorators: [withScenario(heavyToolUseState)],
   args: { title: 'Migrate old API' },
 };
 
 export const WithSkillInvocation: Story = {
-  decorators: [
-    withStoryChannel({
-      className: SCENARIO_CLASS,
-      messages: { messages: makeSkillInvocationConversation() },
-    }),
-  ],
+  decorators: [withScenario(skillInvocationState)],
   args: { title: 'Validate Zod schema' },
 };
 
 export const SubagentRunning: Story = {
-  decorators: [
-    withStoryChannel({
-      className: SCENARIO_CLASS,
-      messages: { messages: makeSubagentRunning() },
-    }),
-  ],
+  decorators: [withScenario(subagentRunningState)],
   args: { title: 'Analyse protocol.md' },
 };
 
 export const SubagentDone: Story = {
-  decorators: [
-    withStoryChannel({
-      className: SCENARIO_CLASS,
-      messages: { messages: makeSubagentDone() },
-    }),
-  ],
+  decorators: [withScenario(subagentDoneState)],
   args: { title: 'Analyse protocol.md' },
 };

@@ -7,7 +7,7 @@ import {
   withScenario,
   withStoryChannel,
 } from '../test/story-decorator';
-import { makeSimpleQA } from '../test/story-fixtures';
+import { simpleQAState } from './getting-started.fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -28,6 +28,6 @@ export const EmptySession: Story = {
 
 export const SimpleQA: Story = {
   args: { title: 'Project overview' },
-  decorators: [withScenario({ messages: makeSimpleQA() })],
+  decorators: [withScenario(simpleQAState)],
   play: expectTextbox,
 };

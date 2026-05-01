@@ -2,12 +2,8 @@ import type { PendingControl } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { expectTextbox, SCENARIO_CLASS, withStoryChannel } from '../test/story-decorator';
-import {
-  makePlanReviewFlow,
-  makeToolApprovalFlow,
-  makeToolDenialFlow,
-} from '../test/story-fixtures';
 import type { Message } from '../types/ui';
+import { planReviewFlow, toolApprovalFlow, toolDenialFlow } from './permissions.fixtures';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
@@ -30,18 +26,18 @@ function withPendingChannel(createFlow: () => { messages: Message[]; pending: Pe
 
 export const ToolApproval: Story = {
   args: { title: 'Clean build artifacts' },
-  decorators: [withPendingChannel(makeToolApprovalFlow)],
+  decorators: [withPendingChannel(toolApprovalFlow)],
   play: expectTextbox,
 };
 
 export const ToolDenial: Story = {
   args: { title: 'Delete log files' },
-  decorators: [withPendingChannel(makeToolDenialFlow)],
+  decorators: [withPendingChannel(toolDenialFlow)],
   play: expectTextbox,
 };
 
 export const PlanReview: Story = {
   args: { title: 'Refactor auth module' },
-  decorators: [withPendingChannel(makePlanReviewFlow)],
+  decorators: [withPendingChannel(planReviewFlow)],
   play: expectTextbox,
 };
