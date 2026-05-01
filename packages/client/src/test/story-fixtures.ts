@@ -1042,6 +1042,235 @@ export function makeHookExecution(): Message[] {
   ];
 }
 
+// ── Tool grouping fixtures ──
+
+export function makeHeavyToolUseConversation(): Message[] {
+  return [
+    {
+      id: 'ht1',
+      role: 'user',
+      type: 'text',
+      content: 'Find all usages of the old API and migrate them to the new one',
+      timestamp: offsetToTimestamp(0),
+    },
+    {
+      id: 'ht2',
+      role: 'assistant',
+      type: 'thinking',
+      content:
+        'I need to find all usages of the deprecated API first, then understand the new API shape before making changes.',
+      meta: { budget_tokens: 2048, durationMs: 1800 },
+      timestamp: offsetToTimestamp(1),
+    },
+    {
+      id: 'ht3',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Grep',
+      meta: { toolId: 'ht-t1', input: { pattern: 'oldApi\\(', include: '**/*.ts' } },
+      timestamp: offsetToTimestamp(2),
+    },
+    {
+      id: 'ht4',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'src/auth.ts:12\nsrc/users.ts:45\nsrc/api/index.ts:8',
+      meta: { toolId: 'ht-t1', name: 'Grep' },
+      timestamp: offsetToTimestamp(3),
+    },
+    {
+      id: 'ht5',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Read',
+      meta: { toolId: 'ht-t2', input: { file_path: '/src/auth.ts' } },
+      timestamp: offsetToTimestamp(4),
+    },
+    {
+      id: 'ht6',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'import { oldApi } from "../lib";\n\noldApi({ user, token });',
+      meta: { toolId: 'ht-t2', name: 'Read' },
+      timestamp: offsetToTimestamp(5),
+    },
+    {
+      id: 'ht7',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Read',
+      meta: { toolId: 'ht-t3', input: { file_path: '/src/users.ts' } },
+      timestamp: offsetToTimestamp(6),
+    },
+    {
+      id: 'ht8',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'const result = oldApi({ userId: id });',
+      meta: { toolId: 'ht-t3', name: 'Read' },
+      timestamp: offsetToTimestamp(7),
+    },
+    {
+      id: 'ht9',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Read',
+      meta: { toolId: 'ht-t4', input: { file_path: '/src/api/index.ts' } },
+      timestamp: offsetToTimestamp(8),
+    },
+    {
+      id: 'ht10',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'export const handler = (req) => oldApi(req.params);',
+      meta: { toolId: 'ht-t4', name: 'Read' },
+      timestamp: offsetToTimestamp(9),
+    },
+    {
+      id: 'ht11',
+      role: 'assistant',
+      type: 'thinking',
+      content:
+        'I have read all usages. The new API uses a different signature: newApi({ context, payload }). I need to transform each call accordingly.',
+      meta: { budget_tokens: 2048, durationMs: 2100 },
+      timestamp: offsetToTimestamp(10),
+    },
+    {
+      id: 'ht12',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Edit',
+      meta: { toolId: 'ht-t5', input: { file_path: '/src/auth.ts' } },
+      timestamp: offsetToTimestamp(11),
+    },
+    {
+      id: 'ht13',
+      role: 'assistant',
+      type: 'tool_result',
+      content: '-oldApi({ user, token });\n+newApi({ context: { user }, payload: { token } });',
+      meta: { toolId: 'ht-t5', name: 'Edit' },
+      timestamp: offsetToTimestamp(12),
+    },
+    {
+      id: 'ht14',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Edit',
+      meta: { toolId: 'ht-t6', input: { file_path: '/src/users.ts' } },
+      timestamp: offsetToTimestamp(13),
+    },
+    {
+      id: 'ht15',
+      role: 'assistant',
+      type: 'tool_result',
+      content:
+        '-const result = oldApi({ userId: id });\n+const result = newApi({ context: {}, payload: { userId: id } });',
+      meta: { toolId: 'ht-t6', name: 'Edit' },
+      timestamp: offsetToTimestamp(14),
+    },
+    {
+      id: 'ht16',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Edit',
+      meta: { toolId: 'ht-t7', input: { file_path: '/src/api/index.ts' } },
+      timestamp: offsetToTimestamp(15),
+    },
+    {
+      id: 'ht17',
+      role: 'assistant',
+      type: 'tool_result',
+      content:
+        '-export const handler = (req) => oldApi(req.params);\n+export const handler = (req) => newApi({ context: req, payload: req.params });',
+      meta: { toolId: 'ht-t7', name: 'Edit' },
+      timestamp: offsetToTimestamp(16),
+    },
+    {
+      id: 'ht18',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Bash',
+      meta: { toolId: 'ht-t8', input: { command: 'npx tsc --noEmit' } },
+      timestamp: offsetToTimestamp(17),
+    },
+    {
+      id: 'ht19',
+      role: 'assistant',
+      type: 'tool_result',
+      content: '',
+      meta: { toolId: 'ht-t8', name: 'Bash' },
+      timestamp: offsetToTimestamp(18),
+    },
+    {
+      id: 'ht20',
+      role: 'assistant',
+      type: 'text',
+      content: 'Migrated all 3 usages from `oldApi` to `newApi`. TypeScript is happy — no errors.',
+      timestamp: offsetToTimestamp(19),
+    },
+  ];
+}
+
+export function makeSkillInvocationConversation(): Message[] {
+  return [
+    {
+      id: 'sk1',
+      role: 'user',
+      type: 'text',
+      content: 'Validate this Zod schema and suggest improvements',
+      timestamp: offsetToTimestamp(0),
+    },
+    {
+      id: 'sk2',
+      role: 'assistant',
+      type: 'thinking',
+      content: 'I will use the zod-validation skill to check this.',
+      meta: { budget_tokens: 512, durationMs: 400 },
+      timestamp: offsetToTimestamp(1),
+    },
+    {
+      id: 'sk3',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Read',
+      meta: { toolId: 'sk-t1', input: { file_path: '/src/schemas.ts' } },
+      timestamp: offsetToTimestamp(2),
+    },
+    {
+      id: 'sk4',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'export const userSchema = z.object({ name: z.string(), age: z.number() });',
+      meta: { toolId: 'sk-t1', name: 'Read' },
+      timestamp: offsetToTimestamp(3),
+    },
+    {
+      id: 'sk5',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Skill',
+      meta: { toolId: 'sk-t2', input: { skill: 'zod-validation' } },
+      timestamp: offsetToTimestamp(4),
+    },
+    {
+      id: 'sk6',
+      role: 'assistant',
+      type: 'tool_result',
+      content: 'Schema validated: add .min(0) to age, consider .trim() on name.',
+      meta: { toolId: 'sk-t2', name: 'Skill' },
+      timestamp: offsetToTimestamp(5),
+    },
+    {
+      id: 'sk7',
+      role: 'assistant',
+      type: 'text',
+      content:
+        'The schema looks good. Two suggestions: add `.min(0)` to `age` and `.trim()` to `name`.',
+      timestamp: offsetToTimestamp(6),
+    },
+  ];
+}
+
 // ── Session fixtures ──
 
 export function makeDisconnectedSession(): Message[] {

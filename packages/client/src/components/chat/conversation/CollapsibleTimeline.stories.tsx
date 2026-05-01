@@ -64,3 +64,48 @@ export const WithError: Story = {
     nodes: [toolNode('1', 'Bash'), toolNode('2', 'Read', true), textNode('3', 'Failed')],
   },
 };
+
+function thinkingNode(id: string, content: string): MessageNode {
+  return { message: { ...base, id, type: 'thinking', content, meta: {} } as Message, children: [] };
+}
+
+function skillNode(id: string, skillName: string): MessageNode {
+  return {
+    message: {
+      ...base,
+      id,
+      type: 'tool_use',
+      content: 'Skill',
+      meta: { toolId: `tu_${id}`, input: { skill: skillName }, result: { content: 'done' } },
+    } as Message,
+    children: [],
+  };
+}
+
+export const WithThinkingBreaks: Story = {
+  args: {
+    nodes: [
+      thinkingNode('t1', 'Let me first look at the files…'),
+      toolNode('1', 'Read'),
+      toolNode('2', 'Read'),
+      toolNode('3', 'Grep'),
+      thinkingNode('t2', 'Found the issue, now I will fix it…'),
+      toolNode('4', 'Edit'),
+      toolNode('5', 'Bash'),
+      textNode('6', 'Done! The bug is fixed.'),
+    ],
+  },
+};
+
+export const WithSkillInvocation: Story = {
+  args: {
+    nodes: [
+      thinkingNode('t1', 'I will use the zod-validation skill…'),
+      toolNode('1', 'Read'),
+      skillNode('2', 'superpowers:zod-validation'),
+      thinkingNode('t2', 'Schema looks good, making the changes…'),
+      toolNode('3', 'Edit'),
+      textNode('4', 'Schema updated with validation improvements.'),
+    ],
+  },
+};

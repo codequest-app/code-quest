@@ -3,7 +3,7 @@ import type { MessageNode } from '../../../utils/message-tree';
 import { pluralize } from '../../../utils/pluralize';
 import { InlineAction } from '../../ui/InlineAction';
 import { RotatableChevron } from '../tool-use/message-blocks/primitives';
-import { MessageNodeList } from './MessageNodeList';
+import { CollapsibleTimeline } from './CollapsibleTimeline';
 
 export function SubagentChildren({
   nodes,
@@ -41,7 +41,11 @@ export function SubagentChildren({
       </div>
       {expanded && (
         <div className="border-l-2 border-text-muted/15 pl-4 mt-1">
-          <MessageNodeList nodes={nodes} prevRole={null} onDiffRespond={onDiffRespond} />
+          <CollapsibleTimeline
+            nodes={nodes}
+            onStopTask={onStopTask}
+            onDiffRespond={onDiffRespond}
+          />
         </div>
       )}
     </div>

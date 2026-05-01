@@ -1,5 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SCENARIO_CLASS, withStoryChannel } from '../../test/story-decorator';
+import {
+  makeHeavyToolUseConversation,
+  makeSkillInvocationConversation,
+} from '../../test/story-fixtures';
 import { ChatPanel } from './ChatPanel';
 
 const meta: Meta<typeof ChatPanel> = {
@@ -16,4 +20,24 @@ export const Default: Story = {};
 
 export const WithTitle: Story = {
   args: { title: 'Fix the login bug' },
+};
+
+export const HeavyToolUse: Story = {
+  decorators: [
+    withStoryChannel({
+      className: SCENARIO_CLASS,
+      messages: { messages: makeHeavyToolUseConversation() },
+    }),
+  ],
+  args: { title: 'Migrate old API' },
+};
+
+export const WithSkillInvocation: Story = {
+  decorators: [
+    withStoryChannel({
+      className: SCENARIO_CLASS,
+      messages: { messages: makeSkillInvocationConversation() },
+    }),
+  ],
+  args: { title: 'Validate Zod schema' },
 };
