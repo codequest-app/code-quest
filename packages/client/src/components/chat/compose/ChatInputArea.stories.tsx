@@ -4,12 +4,11 @@ import { ChatInputArea } from './ChatInputArea';
 
 // ChatInputArea is an absolute overlay at the bottom of ChatPanel.
 // Use fullscreen layout and flex-end so it renders in its natural position.
-const CLASS = 'flex flex-col justify-end h-screen bg-bg text-text px-4 pb-4';
+const CLASS = 'flex flex-col justify-end w-2xl h-64 bg-bg text-text px-4 pb-4';
 
 const meta: Meta<typeof ChatInputArea> = {
   component: ChatInputArea,
   tags: ['autodocs'],
-  parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof ChatInputArea>;
 
 export default meta;
