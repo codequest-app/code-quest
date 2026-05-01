@@ -188,14 +188,17 @@ export const MessageList: React.ForwardRefExoticComponent<
   }, [messages]);
 
   const q = searchQuery.toLowerCase();
-  const tree = useMemo(() => {
+  const visibleTree = useMemo(() => {
     const fullTree = buildMessageTree(messages);
-    const visibleTree = filterTree(
+    return filterTree(
       fullTree,
       (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
     );
-    return q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree;
-  }, [messages, enabledTypes, unknownTypes, q]);
+  }, [messages, enabledTypes, unknownTypes]);
+  const tree = useMemo(
+    () => (q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree),
+    [visibleTree, q],
+  );
 
   const displayGroups = useMemo(() => groupForTimeline(tree, null), [tree]);
 

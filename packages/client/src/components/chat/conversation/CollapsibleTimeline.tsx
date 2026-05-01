@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ForkFn, RewindFn } from '../../../types/ui';
 import { cn } from '../../../utils/cn';
 import type { MessageNode } from '../../../utils/message-tree';
@@ -92,10 +92,11 @@ function ToolGroup({
   onDiffRespond,
 }: RunProps & { nodes: MessageNode[] }) {
   const [expanded, setExpanded] = useState(false);
-  const chips = buildGroupChips(nodes);
+  const chips = useMemo(() => buildGroupChips(nodes), [nodes]);
+  const collapsedIds = useMemo(() => nodes.map((n) => n.message.id).join(','), [nodes]);
 
   return (
-    <div data-collapsed-ids={nodes.map((n) => n.message.id).join(',')}>
+    <div data-collapsed-ids={collapsedIds}>
       <ToolGroupSummary chips={chips} expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
       {expanded &&
         nodes.map((node, i) => (
@@ -151,7 +152,7 @@ export function CollapsibleTimeline({
   onStopTask,
   onDiffRespond,
 }: RunProps & { nodes: MessageNode[] }): React.JSX.Element {
-  const runs: TimelineRun[] = splitTimelineRuns(nodes);
+  const runs = useMemo(() => splitTimelineRuns(nodes), [nodes]);
   return (
     <div className="animate-fade-in mt-1">
       {runs.map((run, i) => (

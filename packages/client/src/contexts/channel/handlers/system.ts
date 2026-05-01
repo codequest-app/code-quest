@@ -59,11 +59,17 @@ function patchToolUseMeta(
   toolUseId: string,
   patch: Partial<ToolUseMeta>,
 ): ChannelState {
-  const idx = state.messages.findIndex((m) => m.type === 'tool_use' && m.meta.toolId === toolUseId);
+  const src = state.messages;
+  let idx = src.length - 1;
+  while (idx >= 0) {
+    const m = src[idx];
+    if (m?.type === 'tool_use' && m.meta.toolId === toolUseId) break;
+    idx--;
+  }
   if (idx < 0) return state;
-  const messages = [...state.messages];
-  const target = messages[idx];
+  const target = src[idx];
   if (!target) return state;
+  const messages = [...src];
   messages[idx] = patchMeta(target, patch);
   return { ...state, messages };
 }

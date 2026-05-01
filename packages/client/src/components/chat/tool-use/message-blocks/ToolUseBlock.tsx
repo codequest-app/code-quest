@@ -226,10 +226,9 @@ function TaskBadge({
   input: Record<string, unknown>;
   meta?: ToolUseMeta;
 }): React.JSX.Element | null {
-  const isTaskTool = toolName === 'Task' || toolName === 'Agent';
-  const subagentType =
-    isTaskTool && typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
-  if (!isTaskTool || (!subagentType && !meta?.taskStatus)) return null;
+  if (toolName !== 'Task' && toolName !== 'Agent') return null;
+  const subagentType = typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
+  if (!subagentType && !meta?.taskStatus) return null;
   return (
     <span className="flex items-center gap-1.5">
       {subagentType && (
