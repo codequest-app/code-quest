@@ -1,3 +1,4 @@
+import type { NotificationSeverity } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, asString, isRecord } from '../../utils.ts';
@@ -18,7 +19,6 @@ function inputTypeFromMode(mode: string | undefined): ElicitationInputType {
   }
 }
 
-type NotificationSeverity = 'error' | 'warning' | 'info';
 function normalizeSeverity(raw: string): NotificationSeverity {
   return raw === 'error' || raw === 'warning' ? raw : 'info';
 }
