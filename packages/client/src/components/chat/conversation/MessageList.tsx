@@ -81,7 +81,6 @@ function VirtualGroupItem({
 }): React.JSX.Element {
   return (
     <div
-      key={groupKey(group)}
       data-index={item.index}
       ref={virtualizer.measureElement}
       style={{
