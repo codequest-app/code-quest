@@ -55,3 +55,66 @@ export const ToolRunning: Story = {
     meta: { toolId: 'tu-4', input: { command: 'npm test' } },
   },
 };
+
+export const TaskRunning: Story = {
+  args: {
+    content: 'Task',
+    meta: {
+      toolId: 'tu-5',
+      input: { description: 'Analyse protocol.md' },
+      taskStatus: 'running',
+      taskType: 'subagent',
+      lastToolName: 'Bash',
+    },
+  },
+};
+
+export const TaskRunningNoTool: Story = {
+  args: {
+    content: 'Task',
+    meta: {
+      toolId: 'tu-6',
+      input: { description: 'Analyse protocol.md' },
+      taskStatus: 'running',
+      taskType: 'subagent',
+    },
+  },
+};
+
+export const TaskDone: Story = {
+  args: {
+    content: 'Task',
+    meta: {
+      toolId: 'tu-7',
+      input: { description: 'Analyse protocol.md' },
+      taskStatus: 'completed',
+      taskType: 'subagent',
+      taskSummary: 'Found 3 issues',
+    },
+  },
+};
+
+export const TaskFailed: Story = {
+  args: {
+    content: 'Task',
+    meta: {
+      toolId: 'tu-8',
+      input: { description: 'Analyse protocol.md' },
+      taskStatus: 'failed',
+      taskType: 'subagent',
+    },
+  },
+};
+
+export const LocalAgentRunning: Story = {
+  args: {
+    content: 'Task',
+    meta: {
+      toolId: 'tu-9',
+      input: { description: 'Run local checks' },
+      taskStatus: 'running',
+      taskType: 'local_agent',
+      lastToolName: 'Read',
+    },
+  },
+};

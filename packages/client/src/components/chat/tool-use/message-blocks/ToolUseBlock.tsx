@@ -9,6 +9,36 @@ import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
 
+function TaskStatusBadge({
+  taskStatus,
+  lastToolName,
+  taskSummary,
+  taskType,
+}: {
+  taskStatus?: string;
+  lastToolName?: string;
+  taskSummary?: string;
+  taskType?: string;
+}): React.JSX.Element | null {
+  if (!taskStatus) return null;
+
+  if (taskStatus === 'running') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-accent animate-pulse">
+        <span>●</span>
+        <span>Running{lastToolName ? ` · ${lastToolName}` : ''}</span>
+        {taskType === 'local_agent' && <span className="opacity-60">[local]</span>}
+      </span>
+    );
+  }
+  if (taskStatus === 'failed') {
+    return <span className="text-xs text-danger">✗ Failed</span>;
+  }
+  return (
+    <span className="text-xs text-success">✓ Done{taskSummary ? ` · ${taskSummary}` : ''}</span>
+  );
+}
+
 function PartialInputPlaceholder({ content }: { content: string }) {
   return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60 animate-pulse')}>{content}</pre>;
 }
@@ -149,6 +179,16 @@ export function ToolUseBlock({
   const resultIsError = result?.is_error;
 
   const headerInfo = getToolHeaderInfo(toolName, input);
+  const isTaskTool = toolName === 'Task' || toolName === 'Agent';
+  const taskBadge = isTaskTool ? (
+    <TaskStatusBadge
+      taskStatus={meta?.taskStatus}
+      lastToolName={meta?.lastToolName}
+      taskSummary={meta?.taskSummary}
+      taskType={meta?.taskType}
+    />
+  ) : undefined;
+
   const renderBody = () => {
     switch (toolName) {
       case 'Bash':
@@ -185,6 +225,7 @@ export function ToolUseBlock({
         label={headerInfo.name}
         labelDetail={headerInfo.detail}
         labelRange={headerInfo.range}
+        labelSuffix={taskBadge}
       >
         {resultIsError && resultContent && <ToolErrorBanner message={resultContent} />}
         {renderBody()}

@@ -1299,3 +1299,94 @@ export function makeDisconnectedSession(): Message[] {
     },
   ];
 }
+
+export function makeSubagentRunning(): Message[] {
+  return [
+    {
+      id: 'sar1',
+      role: 'user',
+      type: 'text',
+      content: 'Analyse protocol.md and find issues',
+      timestamp: offsetToTimestamp(0),
+    },
+    {
+      id: 'sar2',
+      role: 'assistant',
+      type: 'thinking',
+      content: 'I will spawn a subagent to analyse the file in detail.',
+      timestamp: offsetToTimestamp(1),
+    },
+    {
+      id: 'sar3',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Task',
+      meta: {
+        toolId: 'sar-task-1',
+        input: { description: 'Analyse protocol.md and find issues' },
+        taskStatus: 'running',
+        taskType: 'subagent',
+        lastToolName: 'Grep',
+      },
+      timestamp: offsetToTimestamp(2),
+    },
+    {
+      id: 'sar4',
+      role: 'assistant',
+      type: 'thinking',
+      content: 'The subagent is searching through the protocol file…',
+      parentToolUseId: 'sar-task-1',
+      timestamp: offsetToTimestamp(3),
+    },
+    {
+      id: 'sar5',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Grep',
+      meta: { toolId: 'sar-grep-1', input: { pattern: 'error', path: 'protocol.md' } },
+      parentToolUseId: 'sar-task-1',
+      timestamp: offsetToTimestamp(4),
+    },
+  ];
+}
+
+export function makeSubagentDone(): Message[] {
+  return [
+    {
+      id: 'sad1',
+      role: 'user',
+      type: 'text',
+      content: 'Analyse protocol.md and find issues',
+      timestamp: offsetToTimestamp(0),
+    },
+    {
+      id: 'sad2',
+      role: 'assistant',
+      type: 'thinking',
+      content: 'I will spawn a subagent to analyse the file in detail.',
+      timestamp: offsetToTimestamp(1),
+    },
+    {
+      id: 'sad3',
+      role: 'assistant',
+      type: 'tool_use',
+      content: 'Task',
+      meta: {
+        toolId: 'sad-task-1',
+        input: { description: 'Analyse protocol.md and find issues' },
+        taskStatus: 'completed',
+        taskType: 'subagent',
+        taskSummary: 'Found 3 issues: missing auth header, stale token check, no rate limiting',
+      },
+      timestamp: offsetToTimestamp(2),
+    },
+    {
+      id: 'sad4',
+      role: 'assistant',
+      type: 'text',
+      content:
+        'The subagent found 3 issues in protocol.md. I recommend fixing the auth header first.',
+      timestamp: offsetToTimestamp(3),
+    },
+  ];
+}

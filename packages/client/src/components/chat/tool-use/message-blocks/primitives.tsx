@@ -21,6 +21,7 @@ export function CollapsibleBlock({
   label,
   labelDetail,
   labelRange,
+  labelSuffix,
   defaultOpen,
   children,
 }: {
@@ -28,6 +29,7 @@ export function CollapsibleBlock({
   label: string;
   labelDetail?: string;
   labelRange?: string;
+  labelSuffix?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }): React.JSX.Element {
@@ -42,6 +44,7 @@ export function CollapsibleBlock({
           <span className="font-semibold text-text-bright">{label}</span>
           {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
           {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
+          {labelSuffix}
           <span className="text-xs opacity-50 transition-transform group-data-[state=open]:rotate-90">
             ▶
           </span>

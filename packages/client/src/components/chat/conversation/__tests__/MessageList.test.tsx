@@ -152,6 +152,7 @@ describe('MessageList', () => {
   });
 
   it('nests child messages under their parent tool_use', async () => {
+    const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
       await claude.emit(s.assistant('Starting'));
@@ -161,8 +162,10 @@ describe('MessageList', () => {
       await claude.emit(s.result());
     });
     expect(screen.getByText('Starting')).toBeInTheDocument();
-    expect(screen.getByText('Sub output')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
+    // Agent tool_use is in a collapsed group — expand it first
+    await user.click(screen.getByText('Agent'));
+    expect(screen.getByText('Sub output')).toBeInTheDocument();
     expect(screen.getByText(/1 subagent message/)).toBeInTheDocument();
   });
 
@@ -179,6 +182,7 @@ describe('MessageList', () => {
   });
 
   it('shows correct count for multiple subagent messages', async () => {
+    const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
@@ -186,15 +190,20 @@ describe('MessageList', () => {
       await claude.emit(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
       await claude.emit(s.result());
     });
+    // Agent tool_use is in a collapsed group — expand it first
+    await user.click(screen.getByText('Agent'));
     expect(screen.getByText(/2 subagent messages/)).toBeInTheDocument();
   });
 
   it('shows stop button in subagent header', async () => {
+    const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
       await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
     });
+    // Expand the collapsed group to see subagent content
+    await user.click(screen.getByText('Agent'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
 
@@ -205,6 +214,7 @@ describe('MessageList', () => {
       await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
       await claude.emit(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
     });
+    await user.click(screen.getByText('Agent'));
     await user.click(screen.getByTitle('Stop subagent'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
@@ -238,7 +248,9 @@ describe('MessageList', () => {
       );
       await claude.emit(arrayToolResult);
     });
+    // First click expands the collapsed group; second click expands the CollapsibleBlock
     await user.click(screen.getByText('Read'));
+    await user.click(screen.getAllByText('Read')[1]!);
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     // SyntaxHighlighter splits tokens — check via container textContent
     expect(document.body.textContent).toContain('import');
@@ -283,7 +295,9 @@ describe('MessageList', () => {
       );
       await claude.emit(s.toolResult('toolu_grep_1', 'match found'));
     });
+    // First click expands the group; second click expands the CollapsibleBlock
     await user.click(screen.getByText('Grep'));
+    await user.click(screen.getAllByText('Grep')[1]!);
     expect(screen.getByText(/match found/)).toBeInTheDocument();
   });
 
@@ -300,9 +314,9 @@ describe('MessageList', () => {
         s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
       );
     });
-    // tool_result is merged into tool_use node by buildMessageTree
-    // Expand tool_use collapsible to see the diff content
+    // Expand group, then expand the CollapsibleBlock to see diff content
     await user.click(screen.getByText('Edit'));
+    await user.click(screen.getAllByText('Edit')[1]!);
     // Diff viewer renders the diff content inside the expanded tool_use
     expect(screen.getByText('-old')).toBeInTheDocument();
     expect(screen.getByText('+new')).toBeInTheDocument();

@@ -86,7 +86,11 @@ function handleHookResponse(raw: SystemHookResponse): ClientMessage {
 function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
   return {
     name: 'system:task_started',
-    payload: { description: raw.description ?? '', taskType: raw.task_type },
+    payload: {
+      description: raw.description ?? '',
+      taskType: raw.task_type,
+      toolUseId: raw.tool_use_id,
+    },
   };
 }
 

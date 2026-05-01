@@ -3,6 +3,8 @@ import { SCENARIO_CLASS, withStoryChannel } from '../../test/story-decorator';
 import {
   makeHeavyToolUseConversation,
   makeSkillInvocationConversation,
+  makeSubagentDone,
+  makeSubagentRunning,
 } from '../../test/story-fixtures';
 import { ChatPanel } from './ChatPanel';
 
@@ -40,4 +42,24 @@ export const WithSkillInvocation: Story = {
     }),
   ],
   args: { title: 'Validate Zod schema' },
+};
+
+export const SubagentRunning: Story = {
+  decorators: [
+    withStoryChannel({
+      className: SCENARIO_CLASS,
+      messages: { messages: makeSubagentRunning() },
+    }),
+  ],
+  args: { title: 'Analyse protocol.md' },
+};
+
+export const SubagentDone: Story = {
+  decorators: [
+    withStoryChannel({
+      className: SCENARIO_CLASS,
+      messages: { messages: makeSubagentDone() },
+    }),
+  ],
+  args: { title: 'Analyse protocol.md' },
 };

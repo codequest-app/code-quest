@@ -101,12 +101,18 @@ export const systemHookResponsePayloadSchema: z.ZodObject<
 export type SystemHookResponsePayload = z.infer<typeof systemHookResponsePayloadSchema>;
 
 export const systemTaskStartedPayloadSchema: z.ZodObject<
-  { channelId: z.ZodString; description: z.ZodString; taskType: z.ZodOptional<z.ZodString> },
+  {
+    channelId: z.ZodString;
+    description: z.ZodString;
+    taskType: z.ZodOptional<z.ZodString>;
+    toolUseId: z.ZodOptional<z.ZodString>;
+  },
   z.core.$strip
 > = z.object({
   channelId: z.string(),
   description: z.string(),
   taskType: z.string().optional(),
+  toolUseId: z.string().optional(),
 });
 export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;
 
