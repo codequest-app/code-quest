@@ -57,8 +57,8 @@ function stringInput(
 }
 
 export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
-  const genericCounts = new Map<string, { count: number; isError: boolean }>();
-  const namedChips: GroupChip[] = [];
+  const chips: GroupChip[] = [];
+  const genericIndex = new Map<string, number>();
 
   for (const node of nodes) {
     if (node.message.type !== 'tool_use') continue;
@@ -70,28 +70,24 @@ export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
       const skillName = stringInput(meta.input, 'skill', 'skill');
       const parts = skillName.split(':');
       const shortName = parts.length > 1 ? (parts[parts.length - 1] ?? skillName) : skillName;
-      namedChips.push({ label: `/${shortName}`, isError });
+      chips.push({ label: `/${shortName}`, isError });
     } else if (toolName === 'Task' || toolName === 'Agent') {
       const description = stringInput(meta.input, 'description', 'Agent');
-      namedChips.push({ label: description, isError });
+      chips.push({ label: description, isError });
     } else {
-      const entry = genericCounts.get(toolName);
-      if (entry) {
-        entry.count += 1;
-        if (isError) entry.isError = true;
+      const idx = genericIndex.get(toolName);
+      if (idx !== undefined) {
+        const chip = chips[idx];
+        if (chip) {
+          chip.count = (chip.count ?? 1) + 1;
+          if (isError) chip.isError = true;
+        }
       } else {
-        genericCounts.set(toolName, { count: 1, isError });
+        genericIndex.set(toolName, chips.length);
+        chips.push({ label: toolName, count: 1, isError });
       }
     }
   }
 
-  const genericChips: GroupChip[] = Array.from(genericCounts.entries()).map(
-    ([name, { count, isError }]) => ({
-      label: name,
-      count,
-      isError,
-    }),
-  );
-
-  return [...genericChips, ...namedChips];
+  return chips;
 }

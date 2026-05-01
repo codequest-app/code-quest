@@ -1,4 +1,4 @@
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual';
 import {
   forwardRef,
   type RefObject,
@@ -59,8 +59,6 @@ function groupKey(group: ReturnType<typeof groupForTimeline>[number]): string {
 }
 
 type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
-type VirtualItem = { index: number; start: number };
-type Virtualizer = { measureElement: (el: Element | null) => void };
 
 function VirtualGroupItem({
   group,
@@ -73,7 +71,7 @@ function VirtualGroupItem({
 }: {
   group: DisplayGroup;
   item: VirtualItem;
-  virtualizer: Virtualizer;
+  virtualizer: Pick<Virtualizer<Element, Element>, 'measureElement'>;
   onRewind?: RewindFn;
   onFork?: ForkFn;
   onStopTask?: (taskId: string) => void;

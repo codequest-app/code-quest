@@ -217,6 +217,35 @@ function ToolBody({
   }
 }
 
+function TaskBadge({
+  toolName,
+  input,
+  meta,
+}: {
+  toolName: string;
+  input: Record<string, unknown>;
+  meta?: ToolUseMeta;
+}): React.JSX.Element | null {
+  const isTaskTool = toolName === 'Task' || toolName === 'Agent';
+  const subagentType =
+    isTaskTool && typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
+  if (!isTaskTool || (!subagentType && !meta?.taskStatus)) return null;
+  return (
+    <span className="flex items-center gap-1.5">
+      {subagentType && (
+        <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
+      )}
+      <TaskStatusBadge
+        taskStatus={meta?.taskStatus}
+        lastToolName={meta?.lastToolName}
+        taskSummary={meta?.taskSummary}
+        taskType={meta?.taskType}
+        taskUsage={meta?.taskUsage}
+      />
+    </span>
+  );
+}
+
 export function ToolUseBlock({
   content,
   meta,
@@ -230,24 +259,6 @@ export function ToolUseBlock({
   const result = meta?.result;
 
   const headerInfo = getToolHeaderInfo(toolName, input);
-  const isTaskTool = toolName === 'Task' || toolName === 'Agent';
-  const subagentType =
-    isTaskTool && typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
-  const taskBadge =
-    isTaskTool && (subagentType || meta?.taskStatus) ? (
-      <span className="flex items-center gap-1.5">
-        {subagentType && (
-          <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
-        )}
-        <TaskStatusBadge
-          taskStatus={meta?.taskStatus}
-          lastToolName={meta?.lastToolName}
-          taskSummary={meta?.taskSummary}
-          taskType={meta?.taskType}
-          taskUsage={meta?.taskUsage}
-        />
-      </span>
-    ) : undefined;
 
   return (
     <div className="group/tool">
@@ -256,7 +267,7 @@ export function ToolUseBlock({
         label={headerInfo.name}
         labelDetail={headerInfo.detail}
         labelRange={headerInfo.range}
-        labelSuffix={taskBadge}
+        labelSuffix={<TaskBadge toolName={toolName} input={input} meta={meta} />}
       >
         {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
         <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />

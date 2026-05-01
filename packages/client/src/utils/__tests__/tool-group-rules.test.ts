@@ -144,4 +144,25 @@ describe('buildGroupChips', () => {
       { label: 'Run analysis', isError: false },
     ]);
   });
+
+  it('insertion order preserved: generic before named before generic', () => {
+    const nodes = [
+      toolNode('Read', 'r1'),
+      toolNode('Skill', 's1', { input: { skill: 'zod-validation' } }),
+      toolNode('Bash', 'b1'),
+    ];
+    expect(buildGroupChips(nodes)).toEqual([
+      { label: 'Read', count: 1, isError: false },
+      { label: '/zod-validation', isError: false },
+      { label: 'Bash', count: 1, isError: false },
+    ]);
+  });
+
+  it('same generic tool aggregated in-place, preserving first occurrence position', () => {
+    const nodes = [toolNode('Read', 'r1'), toolNode('Bash', 'b1'), toolNode('Read', 'r2')];
+    expect(buildGroupChips(nodes)).toEqual([
+      { label: 'Read', count: 2, isError: false },
+      { label: 'Bash', count: 1, isError: false },
+    ]);
+  });
 });
