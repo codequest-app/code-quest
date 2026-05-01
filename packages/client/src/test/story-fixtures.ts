@@ -6,7 +6,7 @@ import { buildChannelState } from './build-channel-state';
 import { STORY_CHANNEL_ID } from './story-decorator';
 
 const STORY_WORKTREE_CHANNEL_ID = 'story-worktree';
-export const STORY_PROJECT_ROOT = '/Users/demo/cc-office';
+const STORY_PROJECT_ROOT = '/Users/demo/cc-office';
 
 export function makeLongConversation(): Partial<ChannelState> {
   return buildChannelState([
