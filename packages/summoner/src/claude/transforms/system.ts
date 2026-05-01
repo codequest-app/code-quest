@@ -88,7 +88,7 @@ function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
     name: 'system:task_started',
     payload: {
       description: raw.description ?? '',
-      taskType: raw.task_type as 'local_agent' | 'subagent' | undefined,
+      taskType: raw.task_type,
       toolUseId: raw.tool_use_id,
     },
   };
