@@ -146,7 +146,20 @@ describe('ComposeInput', () => {
       expect(textarea).toHaveValue(valueBefore);
     });
 
-    it('ArrowDown after ArrowUp returns to empty', async () => {
+    it('ArrowDown after ArrowUp restores the draft input', async () => {
+      await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+      const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
+
+      await userEvent.type(textarea, 'hello{Enter}');
+      await userEvent.type(textarea, 'draft text');
+      await userEvent.keyboard('{ArrowUp}');
+      expect(textarea).toHaveValue('hello');
+
+      await userEvent.keyboard('{ArrowDown}');
+      expect(textarea).toHaveValue('draft text');
+    });
+
+    it('ArrowDown after ArrowUp returns to empty when input was empty', async () => {
       await renderWithChannel(<ComposeInput containerRef={containerRef} />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER) as HTMLTextAreaElement;
 

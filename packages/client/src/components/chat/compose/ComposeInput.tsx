@@ -9,7 +9,7 @@ import { sortEntriesDirsFirst } from '../../../utils/sort-entries';
 import { slashPaletteState } from '../../command-menu/slash-palette-state';
 import { MentionDropdown } from './MentionDropdown';
 
-type InputHistory = { history: string[]; index: number };
+type InputHistory = { history: string[]; index: number; draft: string };
 
 function historyPush(ref: InputHistory, message: string): void {
   const trimmed = message.trim();
@@ -17,11 +17,13 @@ function historyPush(ref: InputHistory, message: string): void {
   if (ref.history[ref.history.length - 1] === trimmed) return;
   ref.history.push(trimmed);
   ref.index = -1;
+  ref.draft = '';
 }
 
-function historyCycleUp(ref: InputHistory): string | null {
+function historyCycleUp(ref: InputHistory, currentValue: string): string | null {
   if (ref.history.length === 0) return null;
   if (ref.index === -1) {
+    ref.draft = currentValue;
     ref.index = ref.history.length - 1;
   } else if (ref.index > 0) {
     ref.index--;
@@ -36,7 +38,7 @@ function historyCycleDown(ref: InputHistory): string {
     return ref.history[ref.index] ?? '';
   }
   ref.index = -1;
-  return '';
+  return ref.draft;
 }
 
 const TEXTAREA_CLASS =
@@ -84,7 +86,7 @@ export function ComposeInput({
     });
   }, [registerFocus]);
 
-  const historyRef = useRef<InputHistory>({ history: [], index: -1 });
+  const historyRef = useRef<InputHistory>({ history: [], index: -1, draft: '' });
 
   useEffect(() => {
     if (historyRef.current.history.length > 0 || messages.length === 0) return;
@@ -253,7 +255,7 @@ export function ComposeInput({
       const firstNewline = value.indexOf('\n');
       const cursorOnFirstLine = !el || firstNewline === -1 || el.selectionStart <= firstNewline;
       if (!cursorOnFirstLine) return false;
-      const msg = historyCycleUp(historyRef.current);
+      const msg = historyCycleUp(historyRef.current, value);
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);
