@@ -418,4 +418,38 @@ describe('message-blocks', () => {
       expect(screen.getByText(/file contents here/)).toBeInTheDocument();
     });
   });
+
+  describe('Task/Agent tool badge', () => {
+    function makeTaskMessage(meta: Record<string, unknown>) {
+      return {
+        id: '1',
+        role: 'assistant' as const,
+        type: 'tool_use' as const,
+        content: 'Task',
+        timestamp: Date.now(),
+        meta: { toolId: 'tu-task', input: {}, ...meta },
+      };
+    }
+
+    it('renders no badge when Task tool has no status and no subagent_type', () => {
+      const { container } = render(renderBody(makeTaskMessage({})));
+      expect(container.querySelector('.font-mono')).not.toBeInTheDocument();
+      expect(container.querySelector('.animate-pulse')).not.toBeInTheDocument();
+    });
+
+    it('renders running badge when taskStatus is running', () => {
+      render(renderBody(makeTaskMessage({ taskStatus: 'running' })));
+      expect(screen.getByText(/Running/)).toBeInTheDocument();
+    });
+
+    it('renders done badge when taskStatus is completed', () => {
+      render(renderBody(makeTaskMessage({ taskStatus: 'completed' })));
+      expect(screen.getByText(/Done/)).toBeInTheDocument();
+    });
+
+    it('renders subagent_type chip when provided even without taskStatus', () => {
+      render(renderBody(makeTaskMessage({ input: { subagent_type: 'general-purpose' } })));
+      expect(screen.getByText('[general-purpose]')).toBeInTheDocument();
+    });
+  });
 });

@@ -22,10 +22,10 @@ function TaskStatusBadge({
   taskType,
   taskUsage,
 }: {
-  taskStatus?: string;
+  taskStatus?: ToolUseMeta['taskStatus'];
   lastToolName?: string;
   taskSummary?: string;
-  taskType?: string;
+  taskType?: ToolUseMeta['taskType'];
   taskUsage?: TokenUsage;
 }): React.JSX.Element | null {
   if (!taskStatus) return null;
@@ -233,20 +233,21 @@ export function ToolUseBlock({
   const isTaskTool = toolName === 'Task' || toolName === 'Agent';
   const subagentType =
     isTaskTool && typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
-  const taskBadge = isTaskTool ? (
-    <span className="flex items-center gap-1.5">
-      {subagentType && (
-        <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
-      )}
-      <TaskStatusBadge
-        taskStatus={meta?.taskStatus}
-        lastToolName={meta?.lastToolName}
-        taskSummary={meta?.taskSummary}
-        taskType={meta?.taskType}
-        taskUsage={meta?.taskUsage}
-      />
-    </span>
-  ) : undefined;
+  const taskBadge =
+    isTaskTool && (subagentType || meta?.taskStatus) ? (
+      <span className="flex items-center gap-1.5">
+        {subagentType && (
+          <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
+        )}
+        <TaskStatusBadge
+          taskStatus={meta?.taskStatus}
+          lastToolName={meta?.lastToolName}
+          taskSummary={meta?.taskSummary}
+          taskType={meta?.taskType}
+          taskUsage={meta?.taskUsage}
+        />
+      </span>
+    ) : undefined;
 
   return (
     <div className="group/tool">

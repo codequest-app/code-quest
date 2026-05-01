@@ -1,3 +1,4 @@
+import type { ToolUseMeta } from '@code-quest/shared';
 import type { ChannelState } from '@/types/chat';
 import { addMessage, msg, patchMeta } from '@/utils/message';
 import type { Payload } from './guard';
@@ -56,7 +57,7 @@ function onHookResponse(state: ChannelState, p: Payload<'system:hook_response'>)
 function patchToolUseMeta(
   state: ChannelState,
   toolUseId: string,
-  patch: Record<string, unknown>,
+  patch: Partial<ToolUseMeta>,
 ): ChannelState {
   const idx = state.messages.findIndex((m) => m.type === 'tool_use' && m.meta.toolId === toolUseId);
   if (idx < 0) return state;
@@ -94,9 +95,9 @@ function onTaskNotification(
   p: Payload<'system:task_notification'>,
 ): ChannelState {
   if (!p.toolUseId) return state;
-  const status = p.status === 'failed' ? 'failed' : 'completed';
+  const taskStatus = p.status === 'failed' ? ('failed' as const) : ('completed' as const);
   return patchToolUseMeta(state, p.toolUseId, {
-    taskStatus: status,
+    taskStatus,
     taskSummary: p.summary,
     ...(p.usage ? { taskUsage: p.usage } : {}),
   });

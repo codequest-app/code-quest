@@ -115,14 +115,14 @@ export const systemTaskStartedPayloadSchema: z.ZodObject<
   {
     channelId: z.ZodString;
     description: z.ZodString;
-    taskType: z.ZodOptional<z.ZodString>;
+    taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
     toolUseId: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
 > = z.object({
   channelId: z.string(),
   description: z.string(),
-  taskType: z.string().optional(),
+  taskType: z.enum(['local_agent', 'subagent']).optional(),
   toolUseId: z.string().optional(),
 });
 export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;

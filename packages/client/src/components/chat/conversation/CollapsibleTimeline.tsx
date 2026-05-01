@@ -97,21 +97,18 @@ function ToolGroup({
   return (
     <div data-collapsed-ids={nodes.map((n) => n.message.id).join(',')}>
       <ToolGroupSummary chips={chips} expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
-      {expanded && (
-        <div>
-          {nodes.map((node, i) => (
-            <TimelineRow
-              key={node.message.id}
-              node={node}
-              position={positionOf(i, nodes.length)}
-              onRewind={onRewind}
-              onFork={onFork}
-              onStopTask={onStopTask}
-              onDiffRespond={onDiffRespond}
-            />
-          ))}
-        </div>
-      )}
+      {expanded &&
+        nodes.map((node, i) => (
+          <TimelineRow
+            key={node.message.id}
+            node={node}
+            position={positionOf(i, nodes.length)}
+            onRewind={onRewind}
+            onFork={onFork}
+            onStopTask={onStopTask}
+            onDiffRespond={onDiffRespond}
+          />
+        ))}
     </div>
   );
 }
