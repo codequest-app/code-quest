@@ -21,7 +21,12 @@ export function splitTimelineRuns(nodes: MessageNode[]): TimelineRun[] {
 
   const flush = () => {
     if (pending.length === 0) return;
-    runs.push({ kind: 'grouped', nodes: pending });
+    if (pending.length === 1) {
+      const node = pending[0];
+      if (node) runs.push({ kind: 'solo', node });
+    } else {
+      runs.push({ kind: 'grouped', nodes: pending });
+    }
     pending = [];
   };
 

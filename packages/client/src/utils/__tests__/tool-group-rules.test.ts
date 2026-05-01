@@ -42,9 +42,9 @@ describe('splitTimelineRuns', () => {
     expect(splitTimelineRuns([])).toEqual([]);
   });
 
-  it('single tool → group of 1', () => {
-    const nodes = [toolNode('Read')];
-    expect(splitTimelineRuns(nodes)).toEqual([{ kind: 'grouped', nodes }]);
+  it('single tool → solo (shown directly, not collapsed)', () => {
+    const node = toolNode('Read');
+    expect(splitTimelineRuns([node])).toEqual([{ kind: 'solo', node }]);
   });
 
   it('two consecutive tools → single group', () => {
@@ -62,25 +62,25 @@ describe('splitTimelineRuns', () => {
     expect(splitTimelineRuns(nodes)).toEqual([{ kind: 'grouped', nodes }]);
   });
 
-  it('thinking between tools → two separate groups, thinking is solo', () => {
+  it('thinking between tools → single before becomes solo, thinking is solo, pair after is grouped', () => {
     const b1 = toolNode('Bash', 'b1');
     const think = thinkingNode();
     const b2 = toolNode('Bash', 'b2');
     const b3 = toolNode('Bash', 'b3');
     expect(splitTimelineRuns([b1, think, b2, b3])).toEqual([
-      { kind: 'grouped', nodes: [b1] },
+      { kind: 'solo', node: b1 },
       { kind: 'solo', node: think },
       { kind: 'grouped', nodes: [b2, b3] },
     ]);
   });
 
-  it('text between tools → two separate groups, text is solo', () => {
+  it('text between tools → single before becomes solo, text is solo, pair after is grouped', () => {
     const b1 = toolNode('Bash', 'b1');
     const t = textNode();
     const b2 = toolNode('Bash', 'b2');
     const b3 = toolNode('Bash', 'b3');
     expect(splitTimelineRuns([b1, t, b2, b3])).toEqual([
-      { kind: 'grouped', nodes: [b1] },
+      { kind: 'solo', node: b1 },
       { kind: 'solo', node: t },
       { kind: 'grouped', nodes: [b2, b3] },
     ]);

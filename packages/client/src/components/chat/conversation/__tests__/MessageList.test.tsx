@@ -270,9 +270,8 @@ describe('MessageList', () => {
       );
       await claude.emit(arrayToolResult);
     });
-    // First click expands the collapsed group; second click expands the CollapsibleBlock
+    // Single tool_use renders directly; click expands the CollapsibleBlock
     await user.click(screen.getByText('Read'));
-    await user.click(screen.getAllByText('Read')[1]!);
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     // SyntaxHighlighter splits tokens — check via container textContent
     expect(document.body.textContent).toContain('import');
@@ -317,9 +316,8 @@ describe('MessageList', () => {
       );
       await claude.emit(s.toolResult('toolu_grep_1', 'match found'));
     });
-    // First click expands the group; second click expands the CollapsibleBlock
+    // Single tool_use renders directly; click expands the CollapsibleBlock
     await user.click(screen.getByText('Grep'));
-    await user.click(screen.getAllByText('Grep')[1]!);
     expect(screen.getByText(/match found/)).toBeInTheDocument();
   });
 
@@ -336,9 +334,8 @@ describe('MessageList', () => {
         s.toolResult('toolu_edit_1', '--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-old\n+new'),
       );
     });
-    // Expand group, then expand the CollapsibleBlock to see diff content
+    // Single tool_use renders directly; click expands the CollapsibleBlock
     await user.click(screen.getByText('Edit'));
-    await user.click(screen.getAllByText('Edit')[1]!);
     // Diff viewer renders the diff content inside the expanded tool_use
     expect(screen.getByText('-old')).toBeInTheDocument();
     expect(screen.getByText('+new')).toBeInTheDocument();
