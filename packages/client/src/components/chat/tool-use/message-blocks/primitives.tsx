@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import Ansi from 'ansi-to-react';
 import { copyToClipboard } from '../../../../utils/clipboard';
@@ -10,7 +11,12 @@ export function RotatableChevron({
   open?: boolean;
   className?: string;
 }): React.JSX.Element {
-  return <span className={cn('transition-transform', open && 'rotate-90', className)}>▶</span>;
+  return (
+    <ChevronRightIcon
+      aria-hidden="true"
+      className={cn('w-3 h-3 transition-transform', open && 'rotate-90', className)}
+    />
+  );
 }
 
 export const CODE_BLOCK_CLASS =
