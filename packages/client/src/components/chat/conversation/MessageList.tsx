@@ -52,12 +52,6 @@ function collectIds(node: MessageNode, topIndex: number, map: Map<string, number
   for (const child of node.children) collectIds(child, topIndex, map);
 }
 
-function groupKey(group: ReturnType<typeof groupForTimeline>[number]): string {
-  return group.kind === 'timeline'
-    ? (group.nodes[0]?.message.id ?? 'timeline')
-    : group.node.message.id;
-}
-
 type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
 
 function VirtualGroupItem({
@@ -313,7 +307,11 @@ export const MessageList: React.ForwardRefExoticComponent<
                 if (!group) return null;
                 return (
                   <VirtualGroupItem
-                    key={groupKey(group)}
+                    key={
+                      group.kind === 'timeline'
+                        ? (group.nodes[0]?.message.id ?? 'timeline')
+                        : group.node.message.id
+                    }
                     group={group}
                     item={item}
                     virtualizer={virtualizer}

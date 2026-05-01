@@ -53,7 +53,7 @@ function stringInput(
   key: string,
   fallback: string,
 ): string {
-  return typeof input?.[key] === 'string' ? (input[key] as string) : fallback;
+  return typeof input?.[key] === 'string' ? String(input[key]) : fallback;
 }
 
 export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
