@@ -408,6 +408,18 @@ describe('MessageList — task lifecycle', () => {
     expect(screen.getByText(/Failed/)).toBeInTheDocument();
   });
 
+  it('ignores task_notification when status is absent (no badge change)', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(s.taskNotification('task-1', { toolUseId: 'toolu_1', status: null }));
+    });
+    // status undefined → should not flip to Done; Running badge should remain
+    expect(screen.getByText(/Running/)).toBeInTheDocument();
+    expect(screen.queryByText(/Done/)).not.toBeInTheDocument();
+  });
+
   it('shows model in subagent children header', async () => {
     const user = userEvent.setup();
     const { claude } = await setup();

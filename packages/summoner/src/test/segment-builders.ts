@@ -315,7 +315,7 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       taskId: string,
       opts?: {
         toolUseId?: string;
-        status?: string;
+        status?: string | null;
         outputFile?: string;
         summary?: string;
         usage?: Record<string, unknown>;
@@ -324,7 +324,10 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
       const line = JSON.parse(T.TASK_NOTIFICATION ?? '{}') as Record<string, unknown>;
       line.task_id = taskId;
       if (opts?.toolUseId) line.tool_use_id = opts.toolUseId;
-      if (opts?.status) line.status = opts.status;
+      if ('status' in (opts ?? {})) {
+        if (opts?.status === null) delete line.status;
+        else line.status = opts?.status;
+      }
       if (opts?.outputFile) line.output_file = opts.outputFile;
       if (opts?.summary) line.summary = opts.summary;
       if (opts?.usage) line.usage = opts.usage;
