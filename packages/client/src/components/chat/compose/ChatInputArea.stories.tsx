@@ -2,13 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '../../../test/story-decorator';
 import { ChatInputArea } from './ChatInputArea';
 
-// ChatInputArea lives at the bottom of ChatPanel as an absolute overlay.
-// Wrap in a representative container so the story matches real usage.
-const CLASS = 'relative flex flex-col justify-end h-80 max-w-2xl bg-bg text-text px-4 pb-4';
+// ChatInputArea is an absolute overlay at the bottom of ChatPanel.
+// Use fullscreen layout and flex-end so it renders in its natural position.
+const CLASS = 'flex flex-col justify-end h-screen bg-bg text-text px-4 pb-4';
 
 const meta: Meta<typeof ChatInputArea> = {
   component: ChatInputArea,
   tags: ['autodocs'],
+  parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof ChatInputArea>;
 
 export default meta;
