@@ -63,34 +63,6 @@ export function makeProcessingWithTool(): Partial<ChannelState> {
   ]);
 }
 
-export function makeConversationWithDiff(): Partial<ChannelState> {
-  return buildChannelState([
-    segments.init('s1'),
-    segments.user('Rename the function'),
-    segments.assistant({
-      toolUse: { id: 'td1', name: 'Edit', input: { file_path: '/src/utils.ts' } },
-    }),
-    segments.toolResult(
-      'td1',
-      '--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -1,6 +1,6 @@\n-export function getName(user) {\n-  return user.firstName + " " + user.lastName;\n+export function getFullName(user) {\n+  return `${user.firstName} ${user.lastName}`;\n }\n \n-export function getNameLength(user) {\n-  return getName(user).length;\n+export function getFullNameLength(user) {\n+  return getFullName(user).length;\n }',
-    ),
-    segments.result(),
-  ]);
-}
-
-export function makePendingPermission(overrides?: Partial<PendingControl>): PendingControl {
-  return {
-    requestId: 'req-1',
-    subtype: 'can_use_tool',
-    toolName: 'Bash',
-    input: {
-      command: 'rm -rf /tmp/build',
-      description: 'Clean build artifacts before rebuilding',
-    },
-    ...overrides,
-  };
-}
-
 export function makeSession(overrides?: Partial<SessionStateSummary>): SessionStateSummary {
   return {
     channelId: STORY_CHANNEL_ID,

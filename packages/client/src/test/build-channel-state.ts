@@ -5,17 +5,6 @@ import { buildMessagesFromHistory } from '@/utils/message';
 
 const adapter = new ClaudeAdapter();
 
-/**
- * Run a sequence of raw segment strings through the real ClaudeAdapter pipeline
- * and produce a ChannelState-compatible partial for Storybook stories.
- *
- * Usage:
- *   withScenario(buildChannelState([
- *     segments.init('s1'),
- *     segments.assistant('Hello'),
- *     segments.result(),
- *   ]))
- */
 export function buildChannelState(segmentLines: string[]): Partial<ChannelState> {
   const clientMessages: ClientMessage[] = [];
 
