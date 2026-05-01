@@ -71,7 +71,7 @@ function VirtualGroupItem({
 }: {
   group: DisplayGroup;
   item: VirtualItem;
-  virtualizer: Pick<Virtualizer<Element, Element>, 'measureElement'>;
+  virtualizer: Pick<Virtualizer<HTMLDivElement, HTMLDivElement>, 'measureElement'>;
   onRewind?: RewindFn;
   onFork?: ForkFn;
   onStopTask?: (taskId: string) => void;

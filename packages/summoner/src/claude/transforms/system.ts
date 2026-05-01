@@ -202,10 +202,8 @@ const HANDLERS: Record<string, SystemHandler> = {
 export function transformSystem(raw: ProtocolMessage): ClientMessage | null {
   const subtype = typeof raw.subtype === 'string' ? raw.subtype : undefined;
 
-  if (subtype && subtype in HANDLERS) {
-    const handler = HANDLERS[subtype];
-    if (handler) return handler(raw);
-  }
+  const handler = subtype && HANDLERS[subtype];
+  if (handler) return handler(raw);
 
   // Other system subtypes → raw
   return {

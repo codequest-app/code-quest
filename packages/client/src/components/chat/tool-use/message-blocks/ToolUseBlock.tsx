@@ -267,7 +267,11 @@ export function ToolUseBlock({
         label={headerInfo.name}
         labelDetail={headerInfo.detail}
         labelRange={headerInfo.range}
-        labelSuffix={<TaskBadge toolName={toolName} input={input} meta={meta} />}
+        labelSuffix={
+          toolName === 'Task' || toolName === 'Agent' ? (
+            <TaskBadge toolName={toolName} input={input} meta={meta} />
+          ) : undefined
+        }
       >
         {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
         <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />
