@@ -83,6 +83,6 @@ const TEMPLATES = {
   CONTROL_CHANNEL_ENABLE: await load(SYNTHETIC, 'control-channel-enable.jsonl'),
 } as const;
 
-const _built = createSegments(TEMPLATES);
-export const segments: SegmentBuilders = _built.segments;
-export const resetSeq: () => void = _built.resetSeq;
+const _s = createSegments(TEMPLATES);
+export const segments: SegmentBuilders = _s.segments;
+export const resetSeq: () => void = _s.resetSeq;

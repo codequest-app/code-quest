@@ -57,7 +57,7 @@ import SYSTEM_MIRROR_ERROR from '../__fixtures__/claude/synthetic/system-mirror-
 import UNKNOWN_EVENT from '../__fixtures__/claude/synthetic/unknown-event.jsonl?raw';
 import { createSegments, type SegmentBuilders } from './segment-builders';
 
-const _built = createSegments({
+const _s = createSegments({
   INIT,
   ASSISTANT_TEXT,
   ASSISTANT_TOOL,
@@ -114,6 +114,5 @@ const _built = createSegments({
   CONTROL_SEED_READ_STATE,
   CONTROL_CHANNEL_ENABLE,
 });
-
-export const segments: SegmentBuilders = _built.segments;
-export const resetSeq: () => void = _built.resetSeq;
+export const segments: SegmentBuilders = _s.segments;
+export const resetSeq: () => void = _s.resetSeq;

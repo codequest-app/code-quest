@@ -90,6 +90,11 @@ const TEMPLATES = {
       content: [{ type: 'tool_use', id: '', name: 'Agent', input: {} }],
     },
   }),
+  USER_TEXT: JSON.stringify({
+    type: 'user',
+    uuid: '',
+    message: { content: [{ type: 'text', text: '' }] },
+  }),
   TOOL_RESULT: JSON.stringify({
     type: 'tool_result',
     uuid: '',
@@ -120,6 +125,20 @@ describe('createSegments', () => {
 
     it('result returns a string', () => {
       expect(typeof segments.result()).toBe('string');
+    });
+  });
+
+  describe('user', () => {
+    it('sets text in message content', () => {
+      const line = parse(segments.user('hello user'));
+      const msg = line.message as Record<string, unknown>;
+      const content = (msg.content as Record<string, unknown>[])[0];
+      expect(content?.text).toBe('hello user');
+    });
+
+    it('accepts custom uuid', () => {
+      const line = parse(segments.user('hi', { uuid: 'my-uuid' }));
+      expect(line.uuid).toBe('my-uuid');
     });
   });
 

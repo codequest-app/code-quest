@@ -73,23 +73,17 @@ export function createSegments(T: SegmentTemplates): {
   segments: SegmentBuilders;
   resetSeq: () => void;
 } {
-  let _seq = 0;
+  const ref = { seq: 0 };
   const resetSeq = (): void => {
-    _seq = 0;
+    ref.seq = 0;
   };
-  const segments = buildSegments(
-    T,
-    () => _seq,
-    (n) => (_seq = n),
-  );
+  const segments = buildSegments(T, ref);
   return { segments, resetSeq };
 }
 
-function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: number) => void) {
-  const next = (): number => {
-    setSeq(getSeq() + 1);
-    return getSeq();
-  };
+function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
+  const next = (): number => ++ref.seq;
+  const getSeq = (): number => ref.seq;
 
   return {
     init(
@@ -123,8 +117,11 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
 
     user(text: string, opts?: { uuid?: string }): string {
       const line = JSON.parse(T.USER_TEXT ?? '{}') as Record<string, unknown>;
-      const msgContent = (line.message as Record<string, unknown[]>).content!;
-      msgContent[0] = { ...(msgContent[0]! as Record<string, unknown>), text };
+      const content = (line.message as Record<string, unknown>).content as Record<
+        string,
+        unknown
+      >[];
+      if (content[0]) content[0].text = text;
       line.uuid = opts?.uuid ?? `fake-user-${next()}`;
       return JSON.stringify(line);
     },
@@ -136,7 +133,8 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
       if (typeof textOrOpts === 'string') {
         const line = JSON.parse(T.ASSISTANT_TEXT) as Record<string, unknown>;
         const msg = line.message as Record<string, unknown>;
-        (msg.content as Record<string, unknown>[])[0]!.text = textOrOpts;
+        const block = (msg.content as Record<string, unknown>[])[0];
+        if (block) block.text = textOrOpts;
         msg.id = `msg_fake_${next()}`;
         line.uuid = `fake-asst-${getSeq()}`;
         if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
@@ -146,10 +144,12 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
       const { id, name, input } = textOrOpts.toolUse;
       const line = JSON.parse(T.ASSISTANT_TOOL) as Record<string, unknown>;
       const msg = line.message as Record<string, unknown>;
-      const content = (msg.content as Record<string, unknown>[])[0]!;
-      content.id = id;
-      content.name = name;
-      content.input = input;
+      const content = (msg.content as Record<string, unknown>[])[0];
+      if (content) {
+        content.id = id;
+        content.name = name;
+        content.input = input;
+      }
       msg.id = `msg_fake_${next()}`;
       line.uuid = `fake-asst-${getSeq()}`;
       if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
@@ -159,7 +159,8 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
     thinking(text: string, opts?: { parentToolUseId?: string }): string {
       const line = JSON.parse(T.THINKING) as Record<string, unknown>;
       const msg = line.message as Record<string, unknown>;
-      (msg.content as Record<string, unknown>[])[0]!.thinking = text;
+      const block = (msg.content as Record<string, unknown>[])[0];
+      if (block) block.thinking = text;
       msg.id = `msg_fake_${next()}`;
       line.uuid = `fake-asst-${getSeq()}`;
       if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
@@ -249,10 +250,12 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
     toolResult(toolUseId: string, content: string, opts?: { parentToolUseId?: string }): string {
       const line = JSON.parse(T.TOOL_RESULT) as Record<string, unknown>;
       const msg = line.message as Record<string, unknown>;
-      const item = (msg.content as Record<string, unknown>[])[0]!;
-      item.tool_use_id = toolUseId;
-      item.content = content;
-      delete item.is_error;
+      const item = (msg.content as Record<string, unknown>[])[0];
+      if (item) {
+        item.tool_use_id = toolUseId;
+        item.content = content;
+        delete item.is_error;
+      }
       line.uuid = `fake-tr-${next()}`;
       if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
       return JSON.stringify(line);
@@ -341,10 +344,8 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
       errors?: string[];
       terminalReason?: string;
     }): string {
-      const line = JSON.parse(opts?.errors ? T.RESULT_RESUME_NOT_FOUND : T.RESULT_ERROR) as Record<
-        string,
-        unknown
-      >;
+      const template = opts?.errors ? T.RESULT_RESUME_NOT_FOUND : T.RESULT_ERROR;
+      const line = JSON.parse(template) as Record<string, unknown>;
       if (opts?.durationMs != null) {
         line.duration_ms = opts.durationMs;
         line.duration_api_ms = opts.durationMs;
@@ -669,14 +670,16 @@ function buildSegments(T: SegmentTemplates, getSeq: () => number, setSeq: (n: nu
     ): string {
       const line = JSON.parse(T.AGENT_TOOL) as Record<string, unknown>;
       const msg = line.message as Record<string, unknown>;
-      const content = (msg.content as Record<string, unknown>[])[0]!;
-      content.id = id;
-      content.input = {
-        description,
-        ...(opts?.subagentType && { subagent_type: opts.subagentType }),
-        ...(opts?.prompt && { prompt: opts.prompt }),
-        ...(opts?.runInBackground !== undefined && { run_in_background: opts.runInBackground }),
-      };
+      const content = (msg.content as Record<string, unknown>[])[0];
+      if (content) {
+        content.id = id;
+        content.input = {
+          description,
+          ...(opts?.subagentType && { subagent_type: opts.subagentType }),
+          ...(opts?.prompt && { prompt: opts.prompt }),
+          ...(opts?.runInBackground !== undefined && { run_in_background: opts.runInBackground }),
+        };
+      }
       msg.id = `msg_fake_${next()}`;
       line.uuid = `fake-agent-${getSeq()}`;
       if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
