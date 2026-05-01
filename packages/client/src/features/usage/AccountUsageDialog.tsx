@@ -31,7 +31,7 @@ function formatResetTime(resetsAt: string): string | null {
   }
 }
 
-import { DEFAULT_USAGE_TIERS, getTier } from '@/utils/usage-tiers';
+import { DEFAULT_USAGE_TIERS, getTier } from '@/utils/model-utils';
 
 interface AccountUsageDialogProps {
   open: boolean;

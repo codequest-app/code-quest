@@ -1,7 +1,7 @@
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
+import { highlight, messagePreview, typeColor, typeLabel } from '@/utils/message-preview';
 import { SectionHeader } from '../ui/SectionHeader';
-import { highlight, messagePreview, typeColor, typeLabel } from './message-preview';
 import {
   PALETTE_RECENT_COUNT,
   PALETTE_SEARCH_LIMIT,

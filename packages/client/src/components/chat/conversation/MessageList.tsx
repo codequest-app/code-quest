@@ -9,63 +9,15 @@ import {
   useState,
 } from 'react';
 import { useChannelControl, useChannelMessages, useMessageVisibility } from '@/contexts/channel';
-import type { ForkFn, Message, RewindFn } from '@/types/ui';
+import type { ForkFn, RewindFn } from '@/types/ui';
 import { isMessageVisible } from '@/utils/isMessageVisible';
-import { buildMessageTree, type MessageNode } from '@/utils/message-tree';
-
-const TIMELINE_TYPES = new Set(['text', 'thinking', 'tool_use', 'streamlined_text']);
-
-type RenderGroup =
-  | { kind: 'timeline'; nodes: MessageNode[]; prevRole: string | null }
-  | { kind: 'single'; node: MessageNode; prevRole: string | null };
-
-function groupForTimeline(nodes: MessageNode[], firstPrevRole: string | null): RenderGroup[] {
-  const groups: RenderGroup[] = [];
-  let assistantGroup: MessageNode[] = [];
-  let groupPrevRole: string | null = firstPrevRole;
-
-  const flushGroup = (nextPrevRole: string | null) => {
-    if (assistantGroup.length > 0) {
-      groups.push({ kind: 'timeline', nodes: assistantGroup, prevRole: groupPrevRole });
-    }
-    assistantGroup = [];
-    groupPrevRole = nextPrevRole;
-  };
-
-  let prevRole = firstPrevRole;
-  for (const node of nodes) {
-    const isAssistantTimeline =
-      node.message.role === 'assistant' && TIMELINE_TYPES.has(node.message.type);
-    if (isAssistantTimeline) {
-      if (assistantGroup.length === 0) groupPrevRole = prevRole;
-      assistantGroup.push(node);
-    } else {
-      flushGroup(prevRole);
-      groups.push({ kind: 'single', node, prevRole });
-    }
-    prevRole = node.message.role;
-  }
-  flushGroup(prevRole);
-  return groups;
-}
-
-function filterTree(nodes: MessageNode[], predicate: (message: Message) => boolean): MessageNode[] {
-  const result: MessageNode[] = [];
-  for (const node of nodes) {
-    if (!predicate(node.message)) continue;
-    if (node.children.length === 0) {
-      result.push(node);
-      continue;
-    }
-    const filteredChildren = filterTree(node.children, predicate);
-    result.push(
-      filteredChildren === node.children ? node : { ...node, children: filteredChildren },
-    );
-  }
-  const allKept = result.length === nodes.length && result.every((n, i) => n === nodes[i]);
-  return allKept ? nodes : result;
-}
-
+import {
+  buildMessageTree,
+  filterTree,
+  groupForTimeline,
+  type MessageNode,
+  type RenderGroup,
+} from '@/utils/message-tree';
 import { SpinnerVerb } from '../SpinnerVerb';
 import { ChatMessage } from './ChatMessage';
 import { CollapsibleTimeline } from './CollapsibleTimeline';
@@ -100,8 +52,6 @@ function collectIds(node: MessageNode, topIndex: number, map: Map<string, number
   for (const child of node.children) collectIds(child, topIndex, map);
 }
 
-type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
-
 function VirtualGroupItem({
   group,
   item,
@@ -111,7 +61,7 @@ function VirtualGroupItem({
   onStopTask,
   onDiffRespond,
 }: {
-  group: DisplayGroup;
+  group: RenderGroup;
   item: VirtualItem;
   virtualizer: Pick<Virtualizer<HTMLDivElement, HTMLDivElement>, 'measureElement'>;
   onRewind?: RewindFn;
