@@ -8,7 +8,11 @@ const meta: Meta<typeof ModifiedFilesPanel> = {
   args: { onAccept: fn(), onRewind: fn() },
   decorators: [
     (Story: React.ComponentType): React.JSX.Element => (
-      <div className="max-w-3xl bg-surface text-text p-6 font-mono">
+      <div className="bg-bg text-text w-2xl p-4 flex flex-col gap-2">
+        {/* Simulated compose box to show spatial context */}
+        <div className="rounded-xl bg-surface border border-border px-3 py-2 text-sm text-text-muted">
+          Type a message...
+        </div>
         <Story />
       </div>
     ),
