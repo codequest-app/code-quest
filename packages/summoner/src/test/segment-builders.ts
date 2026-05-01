@@ -507,7 +507,7 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     },
 
     citationsDelta(citation: Record<string, unknown>, opts?: { index?: number }): string {
-      return buildStreamDelta(T.CITATIONS_DELTA, 'citation', citation, 'citations', 0, opts);
+      return buildStreamDelta(T.CITATIONS_DELTA, 'citation', citation, 'citations', next(), opts);
     },
 
     thinkingDeltaLegacy(thinking: string, opts?: { index?: number }): string {
@@ -516,7 +516,7 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
         'thinking',
         thinking,
         'thinking-legacy',
-        0,
+        next(),
         opts,
       );
     },
