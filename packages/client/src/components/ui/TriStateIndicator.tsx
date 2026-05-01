@@ -1,9 +1,11 @@
 import { cn } from '../../utils/cn';
 
+export type TriState = 'all' | 'partial' | 'none';
+
 export const TOGGLE_PILL_BASE =
   'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border inline-block';
 
-export function togglePillColor(state: 'all' | 'partial' | 'none'): string {
+export function togglePillColor(state: TriState): string {
   return cn(
     state === 'all' && 'bg-accent text-white border-accent',
     state === 'none' && 'text-text-muted border-border',
@@ -11,12 +13,12 @@ export function togglePillColor(state: 'all' | 'partial' | 'none'): string {
   );
 }
 
-export function togglePillSymbol(state: 'all' | 'partial' | 'none'): string {
+export function togglePillSymbol(state: TriState): string {
   return state === 'all' ? 'ON' : state === 'none' ? 'OFF' : '∂';
 }
 
 interface TriStateIndicatorProps {
-  state: 'all' | 'partial' | 'none';
+  state: TriState;
   onPartial?: () => void;
   featureId?: string;
 }

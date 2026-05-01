@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
+import { asString } from '../../utils.ts';
 import type {
   ProtocolMessage,
   systemApiRetrySchema,
@@ -47,7 +48,7 @@ function handleStatus(raw: SystemStatus): ClientMessage {
   return {
     name: 'session:status',
     payload: {
-      status: String(raw.status ?? ''),
+      status: asString(raw.status, ''),
       permissionMode: raw.permissionMode,
     },
   };

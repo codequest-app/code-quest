@@ -18,6 +18,13 @@ export const taskTypeSchema: z.ZodEnum<{
 }> = z.enum(['local_agent', 'subagent']);
 export type TaskType = z.infer<typeof taskTypeSchema>;
 
+export const taskStatusSchema: z.ZodEnum<{
+  running: 'running';
+  completed: 'completed';
+  failed: 'failed';
+}> = z.enum(['running', 'completed', 'failed']);
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
+
 // ── Model info ──
 
 export const modelInfoSchema: z.ZodObject<

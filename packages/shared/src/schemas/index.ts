@@ -95,6 +95,7 @@ export type {
   FsCreatePayload,
   FsDeletePayload,
   FsDirectory,
+  FsEntryType,
   FsFile,
   FsMovePayload,
   FsMutationResult,
@@ -114,6 +115,7 @@ export {
   fsCreatePayloadSchema,
   fsDeletePayloadSchema,
   fsDirectorySchema,
+  fsEntryTypeSchema,
   fsFileSchema,
   fsMovePayloadSchema,
   fsMutationResultSchema,
@@ -661,6 +663,7 @@ export type {
   SystemTaskNotificationPayload,
   SystemTaskProgressPayload,
   SystemTaskStartedPayload,
+  TaskStatus,
   TaskType,
   TokenUsage,
 } from './system.ts';
@@ -683,6 +686,7 @@ export {
   systemTaskNotificationPayloadSchema,
   systemTaskProgressPayloadSchema,
   systemTaskStartedPayloadSchema,
+  taskStatusSchema,
   taskTypeSchema,
   tokenUsageSchema,
 } from './system.ts';

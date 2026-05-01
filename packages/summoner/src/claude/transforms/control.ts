@@ -87,7 +87,7 @@ function handleOpenDiff({ requestId, request }: RequestContext): ClientMessage {
 
 function handleMcpMessage({ requestId, request }: RequestContext): ClientMessage {
   const mcpInput = asRecord(request.input);
-  const serverName = String(mcpInput?.server_name ?? request.tool_name ?? '');
+  const serverName = asString(mcpInput?.server_name ?? request.tool_name, '');
   const mcpMsg = isRecord(mcpInput?.message) ? mcpInput.message : (mcpInput ?? {});
 
   if (mcpMsg.id == null) {
