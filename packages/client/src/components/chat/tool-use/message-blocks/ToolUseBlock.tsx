@@ -152,12 +152,11 @@ function DefaultToolBody({
   resultIsError?: boolean;
   partialInput?: string;
 }) {
-  const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
-
   if (partialInput) {
     return <PartialInputPlaceholder content={partialInput} />;
   }
 
+  const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
   if (!inputJson && resultContent == null) return null;
 
   return (
@@ -217,6 +216,8 @@ function ToolBody({
   }
 }
 
+const AGENT_TOOLS = new Set(['Task', 'Agent']);
+
 function TaskBadge({
   toolName,
   input,
@@ -226,7 +227,7 @@ function TaskBadge({
   input: Record<string, unknown>;
   meta?: ToolUseMeta;
 }): React.JSX.Element | null {
-  if (toolName !== 'Task' && toolName !== 'Agent') return null;
+  if (!AGENT_TOOLS.has(toolName)) return null;
   const subagentType = typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
   if (!subagentType && !meta?.taskStatus) return null;
   return (
@@ -260,24 +261,22 @@ export function ToolUseBlock({
   const headerInfo = getToolHeaderInfo(toolName, input);
 
   return (
-    <div className="group/tool">
-      <CollapsibleBlock
-        icon="⚙"
-        label={headerInfo.name}
-        labelDetail={headerInfo.detail}
-        labelRange={headerInfo.range}
-        labelSuffix={
-          toolName === 'Task' || toolName === 'Agent' ? (
-            <TaskBadge toolName={toolName} input={input} meta={meta} />
-          ) : undefined
-        }
-      >
-        {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
-        <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />
-        {!partialInput && !result && (
-          <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
-        )}
-      </CollapsibleBlock>
-    </div>
+    <CollapsibleBlock
+      icon="⚙"
+      label={headerInfo.name}
+      labelDetail={headerInfo.detail}
+      labelRange={headerInfo.range}
+      labelSuffix={
+        AGENT_TOOLS.has(toolName) ? (
+          <TaskBadge toolName={toolName} input={input} meta={meta} />
+        ) : undefined
+      }
+    >
+      {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
+      <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />
+      {!partialInput && !result && (
+        <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
+      )}
+    </CollapsibleBlock>
   );
 }
