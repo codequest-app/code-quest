@@ -9,16 +9,25 @@ import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
 
+function totalTokens(usage: Record<string, unknown>): number | null {
+  const input = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
+  const output = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
+  const total = input + output;
+  return total > 0 ? total : null;
+}
+
 function TaskStatusBadge({
   taskStatus,
   lastToolName,
   taskSummary,
   taskType,
+  taskUsage,
 }: {
   taskStatus?: string;
   lastToolName?: string;
   taskSummary?: string;
   taskType?: string;
+  taskUsage?: Record<string, unknown>;
 }): React.JSX.Element | null {
   if (!taskStatus) return null;
 
@@ -34,8 +43,12 @@ function TaskStatusBadge({
   if (taskStatus === 'failed') {
     return <span className="text-xs text-danger">✗ Failed</span>;
   }
+  const tokens = taskUsage ? totalTokens(taskUsage) : null;
   return (
-    <span className="text-xs text-success">✓ Done{taskSummary ? ` · ${taskSummary}` : ''}</span>
+    <span className="text-xs text-success">
+      ✓ Done{taskSummary ? ` · ${taskSummary}` : ''}
+      {tokens != null && <span className="opacity-60 ml-1">({tokens.toLocaleString()} tok)</span>}
+    </span>
   );
 }
 
@@ -180,13 +193,21 @@ export function ToolUseBlock({
 
   const headerInfo = getToolHeaderInfo(toolName, input);
   const isTaskTool = toolName === 'Task' || toolName === 'Agent';
+  const subagentType =
+    isTaskTool && typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
   const taskBadge = isTaskTool ? (
-    <TaskStatusBadge
-      taskStatus={meta?.taskStatus}
-      lastToolName={meta?.lastToolName}
-      taskSummary={meta?.taskSummary}
-      taskType={meta?.taskType}
-    />
+    <span className="flex items-center gap-1.5">
+      {subagentType && (
+        <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
+      )}
+      <TaskStatusBadge
+        taskStatus={meta?.taskStatus}
+        lastToolName={meta?.lastToolName}
+        taskSummary={meta?.taskSummary}
+        taskType={meta?.taskType}
+        taskUsage={meta?.taskUsage}
+      />
+    </span>
   ) : undefined;
 
   const renderBody = () => {

@@ -65,6 +65,9 @@ export function MessageNodeList({
                     ? group.node.message.meta.toolId
                     : undefined
                 }
+                model={
+                  group.node.message.type === 'tool_use' ? group.node.message.meta.model : undefined
+                }
               />
             )}
           </div>

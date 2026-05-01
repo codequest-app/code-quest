@@ -10,11 +10,13 @@ export function SubagentChildren({
   onStopTask,
   onDiffRespond,
   parentToolId,
+  model,
 }: {
   nodes: MessageNode[];
   onStopTask?: (taskId: string) => void;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
   parentToolId?: string;
+  model?: string;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(true);
 
@@ -29,6 +31,7 @@ export function SubagentChildren({
           <RotatableChevron open={expanded} />
           <span>{pluralize(nodes.length, 'subagent message')}</span>
         </button>
+        {model && <span className="text-xs text-text-muted/40 font-mono">{model}</span>}
         {onStopTask && parentToolId && (
           <InlineAction
             variant="danger"

@@ -156,15 +156,15 @@ describe('MessageList', () => {
     const { claude } = await setup();
     await act(async () => {
       await claude.emit(s.assistant('Starting'));
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
       await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
       await claude.emit(s.assistant('Done'));
       await claude.emit(s.result());
     });
     expect(screen.getByText('Starting')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
-    // Agent tool_use is in a collapsed group — expand it first
-    await user.click(screen.getByText('Agent'));
+    // Agent tool_use renders directly (solo); CollapsibleBlock header has the description
+    await user.click(screen.getByText('Explore project'));
     expect(screen.getByText('Sub output')).toBeInTheDocument();
     expect(screen.getByText(/1 subagent message/)).toBeInTheDocument();
   });
@@ -207,13 +207,12 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.agent('toolu_1', 'Analyse files'));
       await claude.emit(s.assistant('Child 1', { parentToolUseId: 'toolu_1' }));
       await claude.emit(s.assistant('Child 2', { parentToolUseId: 'toolu_1' }));
       await claude.emit(s.result());
     });
-    // Agent tool_use is in a collapsed group — expand it first
-    await user.click(screen.getByText('Agent'));
+    await user.click(screen.getByText('Analyse files'));
     expect(screen.getByText(/2 subagent messages/)).toBeInTheDocument();
   });
 
@@ -221,11 +220,10 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.agent('toolu_1', 'Analyse files'));
       await claude.emit(s.assistant('Sub output', { parentToolUseId: 'toolu_1' }));
     });
-    // Expand the collapsed group to see subagent content
-    await user.click(screen.getByText('Agent'));
+    await user.click(screen.getByText('Analyse files'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
 
@@ -233,10 +231,10 @@ describe('MessageList', () => {
     const user = userEvent.setup();
     const { claude } = await setup();
     await act(async () => {
-      await claude.emit(s.assistant({ toolUse: { id: 'toolu_1', name: 'Agent', input: {} } }));
+      await claude.emit(s.agent('toolu_1', 'Analyse files'));
       await claude.emit(s.assistant('Child', { parentToolUseId: 'toolu_1' }));
     });
-    await user.click(screen.getByText('Agent'));
+    await user.click(screen.getByText('Analyse files'));
     await user.click(screen.getByTitle('Stop subagent'));
     expect(screen.getByTitle('Stop subagent')).toBeInTheDocument();
   });
@@ -339,6 +337,112 @@ describe('MessageList', () => {
     // Diff viewer renders the diff content inside the expanded tool_use
     expect(screen.getByText('-old')).toBeInTheDocument();
     expect(screen.getByText('+new')).toBeInTheDocument();
+  });
+});
+
+describe('MessageList — task lifecycle', () => {
+  it('shows Running badge when task_started fires', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+    });
+    expect(screen.getByText(/Running/)).toBeInTheDocument();
+  });
+
+  it('does not crash when task_started has no toolUseId match', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('unknown-id', 'Some task'));
+    });
+    // Should not show Running badge (no matching tool_use)
+    expect(screen.queryByText(/Running/)).not.toBeInTheDocument();
+  });
+
+  it('shows Running badge with last tool name on task_progress', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(s.taskProgress('task-1', { toolUseId: 'toolu_1', lastToolName: 'Read' }));
+    });
+    expect(screen.getByText(/Running · Read/)).toBeInTheDocument();
+  });
+
+  it('shows Done badge with summary on task_notification completed', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(
+        s.taskNotification('task-1', {
+          toolUseId: 'toolu_1',
+          status: 'completed',
+          summary: 'Found 3 issues',
+        }),
+      );
+    });
+    expect(screen.getByText(/Done · Found 3 issues/)).toBeInTheDocument();
+  });
+
+  it('shows Done badge without summary when no summary provided', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(
+        s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'completed' }),
+      );
+    });
+    expect(screen.getByText(/✓ Done/)).toBeInTheDocument();
+  });
+
+  it('shows failed status on task_notification failed', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(s.taskNotification('task-1', { toolUseId: 'toolu_1', status: 'failed' }));
+    });
+    expect(screen.getByText(/Failed/)).toBeInTheDocument();
+  });
+
+  it('shows model in subagent children header', async () => {
+    const user = userEvent.setup();
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.assistant('Child output', { parentToolUseId: 'toolu_1' }));
+      await claude.emit(s.result());
+    });
+    await user.click(screen.getByText('Explore project'));
+    expect(screen.getByText('claude-opus-4-6')).toBeInTheDocument();
+  });
+
+  it('shows token count in Done badge when usage provided', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project'));
+      await claude.emit(s.taskStarted('toolu_1', 'Explore project'));
+      await claude.emit(
+        s.taskNotification('task-1', {
+          toolUseId: 'toolu_1',
+          status: 'completed',
+          usage: { input_tokens: 1000, output_tokens: 500 },
+        }),
+      );
+    });
+    expect(screen.getByText(/1,500 tok/)).toBeInTheDocument();
+  });
+
+  it('shows subagent_type badge in task header', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(s.agent('toolu_1', 'Explore project', { subagentType: 'Explore' }));
+      await claude.emit(s.result());
+    });
+    expect(screen.getByText('[Explore]')).toBeInTheDocument();
   });
 });
 

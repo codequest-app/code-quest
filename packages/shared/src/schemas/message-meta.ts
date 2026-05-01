@@ -52,6 +52,8 @@ export const toolUseMetaSchema: z.ZodObject<
     taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
     lastToolName: z.ZodOptional<z.ZodString>;
     taskSummary: z.ZodOptional<z.ZodString>;
+    taskUsage: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    model: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
 > = z.object({
@@ -65,6 +67,8 @@ export const toolUseMetaSchema: z.ZodObject<
   taskType: z.enum(['local_agent', 'subagent']).optional(),
   lastToolName: z.string().optional(),
   taskSummary: z.string().optional(),
+  taskUsage: z.record(z.string(), z.unknown()).optional(),
+  model: z.string().optional(),
 });
 export type ToolUseMeta = z.infer<typeof toolUseMetaSchema>;
 

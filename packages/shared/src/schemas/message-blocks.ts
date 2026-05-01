@@ -24,6 +24,7 @@ export const toolUseBlockSchema: z.ZodObject<
     toolId: z.ZodString;
     toolName: z.ZodString;
     input: z.ZodUnknown;
+    model: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
 > = z.object({
@@ -31,6 +32,7 @@ export const toolUseBlockSchema: z.ZodObject<
   toolId: z.string(),
   toolName: z.string(),
   input: z.unknown(),
+  model: z.string().optional(),
 });
 export type ToolUseBlock = z.infer<typeof toolUseBlockSchema>;
 
@@ -62,6 +64,7 @@ export const contentBlockSchema: z.ZodUnion<
         toolId: z.ZodString;
         toolName: z.ZodString;
         input: z.ZodUnknown;
+        model: z.ZodOptional<z.ZodString>;
       },
       z.core.$strip
     >,

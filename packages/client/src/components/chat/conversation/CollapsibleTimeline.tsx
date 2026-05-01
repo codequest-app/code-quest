@@ -77,6 +77,7 @@ function TimelineRow({
           onStopTask={onStopTask}
           onDiffRespond={onDiffRespond}
           parentToolId={node.message.type === 'tool_use' ? node.message.meta.toolId : undefined}
+          model={node.message.type === 'tool_use' ? node.message.meta.model : undefined}
         />
       )}
     </div>

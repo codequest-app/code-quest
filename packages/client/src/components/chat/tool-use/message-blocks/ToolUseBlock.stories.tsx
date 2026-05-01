@@ -61,10 +61,11 @@ export const TaskRunning: Story = {
     content: 'Task',
     meta: {
       toolId: 'tu-5',
-      input: { description: 'Analyse protocol.md' },
+      input: { description: 'Analyse protocol.md', subagent_type: 'Explore' },
       taskStatus: 'running',
       taskType: 'subagent',
       lastToolName: 'Bash',
+      model: 'claude-opus-4-6',
     },
   },
 };
@@ -86,10 +87,12 @@ export const TaskDone: Story = {
     content: 'Task',
     meta: {
       toolId: 'tu-7',
-      input: { description: 'Analyse protocol.md' },
+      input: { description: 'Analyse protocol.md', subagent_type: 'Explore' },
       taskStatus: 'completed',
       taskType: 'subagent',
       taskSummary: 'Found 3 issues',
+      model: 'claude-opus-4-6',
+      taskUsage: { input_tokens: 18432, output_tokens: 2048 },
     },
   },
 };
