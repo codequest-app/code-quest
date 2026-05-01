@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTabActions, useTabState } from '../../TabContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 
 const idleSession = (channelId: string, cwd = '/') => ({
   channelId,

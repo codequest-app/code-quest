@@ -3,8 +3,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { renderWithChannel } from '../../../../../test/render-with-channel';
-import { ChatInputArea } from '../../ChatInputArea';
+import { ChatInputArea } from '@/components/chat/compose/ChatInputArea';
+import { renderWithChannel } from '@/test/render-with-channel';
 
 async function renderChatInputArea(initOpts?: Parameters<typeof s.init>[1]) {
   return renderWithChannel(<ChatInputArea />, {

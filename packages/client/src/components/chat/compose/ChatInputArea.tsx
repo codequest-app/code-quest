@@ -1,11 +1,7 @@
 import { toPermissionMode } from '@code-quest/shared';
 import { useRef } from 'react';
-import {
-  useChannelComposeActions,
-  useChannelConfig,
-  useChannelMessages,
-} from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
+import { useChannelComposeActions, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
 import { ReviewUpsellBanner } from '../plan-review/ReviewUpsellBanner';
 import { PendingActionButtons } from '../tool-use/PendingActionButtons';
 import { ComposeInput } from './ComposeInput';

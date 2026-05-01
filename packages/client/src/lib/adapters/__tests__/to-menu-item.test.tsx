@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Feature } from '../../feature';
+import type { Feature } from '@/lib/feature';
 import { toMenuItem } from '../to-menu-item';
 
 const base = (override: Partial<Feature> = {}): Feature => ({

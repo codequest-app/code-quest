@@ -1,4 +1,4 @@
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 interface SwitchProjectDeps {
   projects: Array<{ cwd: string; label: string }>;

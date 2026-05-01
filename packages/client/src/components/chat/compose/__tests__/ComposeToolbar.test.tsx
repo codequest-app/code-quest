@@ -2,9 +2,9 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../../test/fake-summoner';
-import { sendUserMessage } from '../../../../test/helpers';
-import { renderWithWorkspace } from '../../../../test/render-with-workspace';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { sendUserMessage } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 async function setup() {
   const summoner = createFakeSummoner();

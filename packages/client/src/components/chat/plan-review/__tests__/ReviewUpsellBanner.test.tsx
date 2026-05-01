@@ -2,8 +2,8 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { usePreferencesStore } from '../../../../stores/usePreferencesStore';
-import { renderWithWorkspace } from '../../../../test/render-with-workspace';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('ReviewUpsellBanner', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { AuthDialog } from '../AuthDialog';
 
 async function renderAuth(opts: { open?: boolean } = {}) {

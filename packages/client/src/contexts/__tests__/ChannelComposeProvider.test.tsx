@@ -2,8 +2,8 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { usageOpenSignal } from '../../features/usage/usage-feature';
-import { renderWithChannel } from '../../test/render-with-channel';
+import { usageOpenSignal } from '@/features/usage/usage-feature';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { useChannelCompose, useChannelComposeActions } from '../channel';
 
 /** Renders a test harness that exposes compose context via UI */

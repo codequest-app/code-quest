@@ -1,4 +1,4 @@
-import type { FilterEntry } from '../../live-session/FilterPopover';
+import type { FilterEntry } from '@/components/live-session/FilterPopover';
 
 interface RawEventFilterBarProps {
   entries: FilterEntry[];

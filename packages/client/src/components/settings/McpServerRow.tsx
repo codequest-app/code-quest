@@ -1,6 +1,6 @@
 import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button';
 import { InlineAction } from '../ui/InlineAction';
 

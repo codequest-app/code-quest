@@ -1,4 +1,4 @@
-import type { ToolResultMeta } from '../../../../types/ui';
+import type { ToolResultMeta } from '@/types/ui';
 import { ContentRenderer } from './ContentRenderer';
 import { CollapsibleBlock } from './primitives';
 

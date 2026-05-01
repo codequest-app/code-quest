@@ -1,5 +1,5 @@
-import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '../../../../types/ui';
-import { cn } from '../../../../utils/cn';
+import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '@/types/ui';
+import { cn } from '@/utils/cn';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives';
 
 export function HookStartedContent({

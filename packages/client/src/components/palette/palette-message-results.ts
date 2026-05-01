@@ -1,5 +1,5 @@
-import type { Message } from '../../types/ui';
-import { messagePreview } from '../../utils/isMessageVisible';
+import type { Message } from '@/types/ui';
+import { messagePreview } from './message-preview';
 
 export const PALETTE_RECENT_COUNT = 8;
 export const PALETTE_SEARCH_LIMIT = 50;

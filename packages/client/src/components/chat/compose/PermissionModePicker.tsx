@@ -1,11 +1,11 @@
 import { effortLevelSchema } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
-import { useChannelConfig } from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
-import { EffortIcon, PERMISSION_MODE_ICONS } from '../../icons/PermissionModeIcons';
-import { EffortSwitch, effortLabel } from '../../ui/EffortSwitch';
-import { CheckMark } from '../../ui/Icons';
+import { EffortIcon, PERMISSION_MODE_ICONS } from '@/components/icons/PermissionModeIcons';
+import { EffortSwitch, effortLabel } from '@/components/ui/EffortSwitch';
+import { CheckMark } from '@/components/ui/Icons';
+import { useChannelConfig } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
 
 function getPermissionModes(brandName: string) {
   return [

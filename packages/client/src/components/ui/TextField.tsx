@@ -1,5 +1,5 @@
 import type { ChangeEvent, Ref } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { controlBorder, focusRing } from './_tokens';
 
 const BASE = cn(

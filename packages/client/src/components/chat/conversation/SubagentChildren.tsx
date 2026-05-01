@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { MessageNode } from '../../../utils/message-tree';
-import { pluralize } from '../../../utils/pluralize';
-import { InlineAction } from '../../ui/InlineAction';
+import { InlineAction } from '@/components/ui/InlineAction';
+import type { MessageNode } from '@/utils/message-tree';
+import { pluralize } from '@/utils/pluralize';
 import { RotatableChevron } from '../tool-use/message-blocks/primitives';
 import { CollapsibleTimeline } from './CollapsibleTimeline';
 

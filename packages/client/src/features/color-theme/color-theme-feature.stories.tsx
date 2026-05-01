@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { toMenuItem } from '../../lib/adapters/to-menu-item';
-import type { ColorTheme } from '../../stores/usePreferencesStore';
+import { toMenuItem } from '@/lib/adapters/to-menu-item';
+import type { ColorTheme } from '@/stores/usePreferencesStore';
 import { createColorThemeFeature } from './color-theme-feature';
 
 function ColorThemeFeaturePreview({

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { memoryBackend, readPersistedRaw } from '../../test/memory-persist-storage';
+import { memoryBackend, readPersistedRaw } from '@/test/memory-persist-storage';
 import { usePreferencesStore } from '../usePreferencesStore';
 
 const STORAGE_KEY = 'code-quest:preferences';

@@ -2,9 +2,9 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { CommandPaletteProvider, useCommandPalette } from '../../../contexts/CommandPaletteContext';
-import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { CommandPalette } from '../CommandPalette';
 
 beforeEach(() => useMessageVisibilityStore.setState({ enabledTypes: null }));

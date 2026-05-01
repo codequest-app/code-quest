@@ -1,4 +1,4 @@
-import { cn } from '../../../../utils/cn';
+import { cn } from '@/utils/cn';
 import { CopyButton } from './CopyButton';
 
 export function ToolBlock({ children }: { children: React.ReactNode }): React.JSX.Element {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MockWebSocket } from '../../test/mock-websocket';
+import { MockWebSocket } from '@/test/mock-websocket';
 import { WsClient } from '../ws-client';
 import { WsSocketAdapter } from '../ws-socket-adapter';
 

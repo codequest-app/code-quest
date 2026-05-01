@@ -3,9 +3,9 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../../test/fake-summoner';
-import { COMPOSE_PLACEHOLDER } from '../../../../test/helpers';
-import { renderWithChannel } from '../../../../test/render-with-channel';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { ComposeInput } from '../ComposeInput';
 
 const containerRef = createRef<HTMLDivElement>();

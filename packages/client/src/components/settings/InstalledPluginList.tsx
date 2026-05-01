@@ -1,7 +1,7 @@
 import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/shared';
 import { useState } from 'react';
-import { useChannelConfig } from '../../contexts/channel';
-import { cn } from '../../utils/cn';
+import { useChannelConfig } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button';
 import { ActionButton, TrashIcon } from '../ui/Icons';
 import { InlineAction } from '../ui/InlineAction';

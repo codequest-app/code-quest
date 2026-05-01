@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { NavigationStateContext, useActiveCwd } from '../../contexts/NavigationContext';
-import { ProjectStateContext } from '../../contexts/ProjectContext';
+import { NavigationStateContext, useActiveCwd } from '@/contexts/NavigationContext';
+import { ProjectStateContext } from '@/contexts/ProjectContext';
 
 function NavigationStub({
   activeCwd,

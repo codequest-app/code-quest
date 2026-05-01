@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { cn } from '../../utils/cn';
-import type { DiffFile } from '../../utils/parse-unified-diff';
+import { cn } from '@/utils/cn';
+import type { DiffFile } from '@/utils/parse-unified-diff';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 

@@ -8,8 +8,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { PendingDiffReview, PendingElicitation } from '../../types/chat';
-import { msg } from '../../utils/message';
+import type { PendingDiffReview, PendingElicitation } from '@/types/chat';
+import { msg } from '@/utils/message';
 import { useSocket } from '../SocketContext';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { useChannelId } from './ChannelMetaContext';

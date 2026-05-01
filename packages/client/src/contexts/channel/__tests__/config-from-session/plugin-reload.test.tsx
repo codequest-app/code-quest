@@ -1,9 +1,9 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { useChannelConfig } from '@/contexts/channel/index';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useChannelConfig } from '../../index';
 
 describe('reload plugins hot reload', () => {
   function ReloadDisplay() {

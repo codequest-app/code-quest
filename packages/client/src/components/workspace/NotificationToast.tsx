@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button';
 
 interface NotificationButton {

@@ -1,21 +1,5 @@
-import { VISIBILITY_GROUPS } from '../contexts/channel/MessageVisibilityContext';
-import type { Message } from '../types/ui';
-
-/** Render a tool_use message's input as a readable preview string. */
-function toolUsePreview(input: unknown): string {
-  if (!input || typeof input !== 'object') return '';
-  return Object.values(input as Record<string, unknown>)
-    .map((v) => (typeof v === 'string' ? v : JSON.stringify(v)))
-    .join(' ');
-}
-
-/** Extract a preview string from any message (tool_use shows input, others show content). */
-export function messagePreview(m: Message): string {
-  if (m.type === 'tool_use' && m.meta?.input) {
-    return toolUsePreview(m.meta.input) || m.content;
-  }
-  return m.content;
-}
+import { VISIBILITY_GROUPS } from '@/contexts/channel/MessageVisibilityContext';
+import type { Message } from '@/types/ui';
 
 /** Subtype keys (format: "type:toolName") that are controlled independently via VISIBILITY_GROUPS */
 const SUBTYPE_OVERRIDES = new Set(

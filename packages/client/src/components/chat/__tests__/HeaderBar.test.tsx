@@ -2,7 +2,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import * as Popover from '@radix-ui/react-popover';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { HeaderBar } from '../HeaderBar';
 
 async function renderHeaderBar(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {

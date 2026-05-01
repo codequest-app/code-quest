@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { withThemePreset } from '../../../test/story-decorator';
-import type { Message } from '../../../types/ui';
+import { withThemePreset } from '@/test/story-decorator';
+import type { Message } from '@/types/ui';
 import { ChatMessage } from './ChatMessage';
 
 const base: Omit<Message, 'type' | 'content' | 'meta'> = {

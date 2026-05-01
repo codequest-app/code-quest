@@ -1,19 +1,19 @@
 import type { EffortLevel } from '@code-quest/shared';
-import { createAttachFileFeature } from '../../features/attach-file/attach-file-feature';
-import { createBtwLocalFeature } from '../../features/btw/btw-feature';
-import { createEffortFeature } from '../../features/effort/effort-feature';
-import { createFastModeFeature } from '../../features/fast-mode/fast-mode-feature';
-import { createGeneralConfigFeature } from '../../features/general-config/general-config-feature';
-import { createManagePluginsFeature } from '../../features/manage-plugins/manage-plugins-feature';
-import { createMcpServersFeature } from '../../features/mcp-servers/mcp-servers-feature';
-import { createMcpStatusFeature } from '../../features/mcp-status/mcp-status-feature';
-import { createModelFeature } from '../../features/model/model-feature';
-import { createSwitchAccountFeature } from '../../features/switch-account/switch-account-feature';
-import { createThinkingFeature } from '../../features/thinking/thinking-feature';
-import { createViewHelpFeature } from '../../features/view-help/view-help-feature';
-import type { Feature } from '../../lib/feature';
-import type { FeatureRegistry } from '../../lib/feature-registry';
-import { openUrl } from '../../utils/open-url';
+import { createAttachFileFeature } from '@/features/attach-file/attach-file-feature';
+import { createBtwLocalFeature } from '@/features/btw/btw-feature';
+import { createEffortFeature } from '@/features/effort/effort-feature';
+import { createFastModeFeature } from '@/features/fast-mode/fast-mode-feature';
+import { createGeneralConfigFeature } from '@/features/general-config/general-config-feature';
+import { createManagePluginsFeature } from '@/features/manage-plugins/manage-plugins-feature';
+import { createMcpServersFeature } from '@/features/mcp-servers/mcp-servers-feature';
+import { createMcpStatusFeature } from '@/features/mcp-status/mcp-status-feature';
+import { createModelFeature } from '@/features/model/model-feature';
+import { createSwitchAccountFeature } from '@/features/switch-account/switch-account-feature';
+import { createThinkingFeature } from '@/features/thinking/thinking-feature';
+import { createViewHelpFeature } from '@/features/view-help/view-help-feature';
+import type { Feature } from '@/lib/feature';
+import type { FeatureRegistry } from '@/lib/feature-registry';
+import { openUrl } from '@/utils/open-url';
 
 interface BuildLocalFeaturesParams {
   modelLabel: string;

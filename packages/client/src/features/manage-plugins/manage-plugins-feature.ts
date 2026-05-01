@@ -1,4 +1,4 @@
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 export function createManagePluginsFeature({
   onManagePlugins,

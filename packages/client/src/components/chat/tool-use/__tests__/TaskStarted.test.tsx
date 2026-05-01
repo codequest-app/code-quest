@@ -1,8 +1,8 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { emitAssistantTurn } from '../../../../test/helpers';
-import { renderWithWorkspace } from '../../../../test/render-with-workspace';
+import { emitAssistantTurn } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('task_started event', () => {
   it('renders task description in DOM', async () => {

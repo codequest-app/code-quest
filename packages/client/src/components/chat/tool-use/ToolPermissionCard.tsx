@@ -1,8 +1,8 @@
 import type { ControlPermissionResponse, PendingControl, Question } from '@code-quest/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useChannelConfig } from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
-import { ChevronDown } from '../../ui/Icons';
+import { ChevronDown } from '@/components/ui/Icons';
+import { useChannelConfig } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
 import { QuestionContent } from './QuestionContent';
 
 const CIRCLED_NUMBERS = ['①', '②', '③', '④', '⑤'];

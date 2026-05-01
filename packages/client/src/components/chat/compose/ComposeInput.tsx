@@ -5,11 +5,11 @@ export type SearchStatus = 'idle' | 'loading' | 'done';
 
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { useChannelCompose, useChannelConfig, useChannelMessages } from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
-import { getMentionQuery, MENTION_REGEX } from '../../../utils/slash-query';
-import { sortEntriesDirsFirst } from '../../../utils/sort-entries';
-import { slashPaletteState } from '../../command-menu/slash-palette-state';
+import { slashPaletteState } from '@/components/command-menu/slash-palette-state';
+import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
+import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
+import { sortEntriesDirsFirst } from '@/utils/sort-entries';
 import { MentionDropdown } from './MentionDropdown';
 
 type InputHistory = { history: string[]; index: number; draft: string };

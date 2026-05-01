@@ -6,9 +6,9 @@ import {
   useGitActions,
   useGitState,
   type WorktreeListingEntry,
-} from '../../contexts/GitContext';
-import type { Project } from '../../contexts/ProjectContext';
-import { useExpandedProjectsStore } from '../../stores/useExpandedProjectsStore';
+} from '@/contexts/GitContext';
+import type { Project } from '@/contexts/ProjectContext';
+import { useExpandedProjectsStore } from '@/stores/useExpandedProjectsStore';
 import { ProjectCard } from './ProjectCard';
 import { WorktreeChildList } from './WorktreeChildList';
 

@@ -11,12 +11,12 @@ import {
 } from '@code-quest/shared';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { useGitActions, useGitStatus } from '../../contexts/GitContext';
-import { useSocket } from '../../contexts/SocketContext';
-import { useKeepFsWatcherAlive } from '../../hooks/useKeepFsWatcherAlive';
-import { rpc } from '../../socket/rpc';
-import { cn } from '../../utils/cn';
-import { type DiffFile, parseUnifiedDiff } from '../../utils/parse-unified-diff';
+import { useGitActions, useGitStatus } from '@/contexts/GitContext';
+import { useSocket } from '@/contexts/SocketContext';
+import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
+import { rpc } from '@/socket/rpc';
+import { cn } from '@/utils/cn';
+import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
 import { BranchSection } from '../project/BranchSection';
 import { ActionButton } from '../ui/ActionButton';
 import { CommandHint } from '../ui/CommandHint';

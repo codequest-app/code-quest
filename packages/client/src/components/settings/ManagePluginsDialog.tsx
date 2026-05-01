@@ -1,8 +1,8 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
-import { useChannelConfig } from '../../contexts/channel';
-import { usePlugins } from '../../contexts/PluginContext';
-import { cn } from '../../utils/cn';
+import { useChannelConfig } from '@/contexts/channel';
+import { usePlugins } from '@/contexts/PluginContext';
+import { cn } from '@/utils/cn';
 import { tabTrigger } from '../ui/_tokens';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';

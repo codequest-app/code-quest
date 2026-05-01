@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withThemePreset } from '../../test/story-decorator';
+import { withThemePreset } from '@/test/story-decorator';
 import { SearchField } from './SearchField';
 
 const meta: Meta<typeof SearchField> = {

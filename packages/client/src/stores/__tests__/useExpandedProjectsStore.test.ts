@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readPersistedRaw } from '../../test/memory-persist-storage';
+import { readPersistedRaw } from '@/test/memory-persist-storage';
 import { useExpandedProjectsStore } from '../useExpandedProjectsStore';
 
 describe('useExpandedProjectsStore', () => {

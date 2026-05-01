@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withStoryChannel } from '../../test/story-decorator';
+import { withStoryChannel } from '@/test/story-decorator';
 import { ManagePluginsDialog } from './ManagePluginsDialog';
 
 const meta: Meta<typeof ManagePluginsDialog> = {

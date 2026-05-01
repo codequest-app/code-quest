@@ -2,8 +2,8 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { isValidElement, useRef } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { copyToClipboard } from '../../../utils/clipboard';
-import { cn } from '../../../utils/cn';
+import { copyToClipboard } from '@/utils/clipboard';
+import { cn } from '@/utils/cn';
 import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton';
 import { CodeBlock } from './CodeBlock';
 

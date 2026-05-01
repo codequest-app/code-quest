@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { InitOptions } from '../../types/chat';
+import type { InitOptions } from '@/types/chat';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 

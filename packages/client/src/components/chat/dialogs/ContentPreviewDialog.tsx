@@ -1,6 +1,6 @@
-import { type DiffEntry, generateUnifiedDiff } from '../../../utils/diff';
-import { Button } from '../../ui/Button';
-import { Dialog, DialogContent } from '../../ui/Dialog';
+import { Button } from '@/components/ui/Button';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { type DiffEntry, generateUnifiedDiff } from '@/utils/diff';
 import { DiffViewer } from '../renderers/DiffViewer';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 

@@ -1,9 +1,9 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
-import { memoryBackend, readPersistedRaw } from '../../../test/memory-persist-storage';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { memoryBackend, readPersistedRaw } from '@/test/memory-persist-storage';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { useMessageVisibility } from '../MessageVisibilityContext';
 
 const LS_KEY = 'code-quest:message-visibility';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { deriveGroupAggregate } from '../../lib/derive-group-aggregate';
-import type { Feature } from '../../lib/feature';
-import { cn } from '../../utils/cn';
+import { deriveGroupAggregate } from '@/lib/derive-group-aggregate';
+import type { Feature } from '@/lib/feature';
+import { cn } from '@/utils/cn';
 import { TOGGLE_PILL_BASE, togglePillColor, togglePillSymbol } from '../ui/TriStateIndicator';
 import { toPaletteCommand } from './to-palette-command';
 

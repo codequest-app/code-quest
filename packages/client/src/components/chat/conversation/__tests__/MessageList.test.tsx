@@ -3,13 +3,10 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
-import {
-  type GroupId,
-  useMessageVisibility,
-} from '../../../../contexts/channel/MessageVisibilityContext';
-import { createFakeSummoner } from '../../../../test/fake-summoner';
-import { emitAssistantTurn, SendButton } from '../../../../test/helpers';
-import { renderWithChannel } from '../../../../test/render-with-channel';
+import { type GroupId, useMessageVisibility } from '@/contexts/channel/MessageVisibilityContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { emitAssistantTurn, SendButton } from '@/test/helpers';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { MessageList, type MessageListHandle } from '../MessageList';
 
 // Helper: toggle a group via the context from inside a rendered component

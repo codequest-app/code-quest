@@ -1,6 +1,6 @@
 import { MicrophoneIcon } from '@heroicons/react/24/outline';
-import { cn } from '../../../utils/cn';
-import { IconButton } from '../../ui/IconButton';
+import { IconButton } from '@/components/ui/IconButton';
+import { cn } from '@/utils/cn';
 
 interface SpeechInputButtonProps {
   isListening: boolean;

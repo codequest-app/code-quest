@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Message } from '../../../types/ui';
+import type { Message } from '@/types/ui';
 import { paletteMessageResults } from '../palette-message-results';
 
 const m = (id: string, content: string): Message => ({

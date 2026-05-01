@@ -1,13 +1,13 @@
 import type { McpServerInfo, ProviderClientConfig } from '@code-quest/shared';
 import { lazy, Suspense, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
-import type { ChannelConfigValue } from '../../../contexts/channel/ChannelConfigContext';
-import type { ChannelMessagesValue } from '../../../contexts/channel/ChannelMessagesContext';
-import { generalConfigSignal } from '../../../features/general-config/general-config-feature';
-import { RewindDialog } from '../../../features/rewind/RewindDialog';
-import { rewindOpenSignal } from '../../../features/rewind/rewind-feature';
-import { switchAccountSignal } from '../../../features/switch-account/switch-account-feature';
-import { usageOpenSignal } from '../../../features/usage/usage-feature';
+import type { ChannelConfigValue } from '@/contexts/channel/ChannelConfigContext';
+import type { ChannelMessagesValue } from '@/contexts/channel/ChannelMessagesContext';
+import { generalConfigSignal } from '@/features/general-config/general-config-feature';
+import { RewindDialog } from '@/features/rewind/RewindDialog';
+import { rewindOpenSignal } from '@/features/rewind/rewind-feature';
+import { switchAccountSignal } from '@/features/switch-account/switch-account-feature';
+import { usageOpenSignal } from '@/features/usage/usage-feature';
 
 const AccountUsageDialog = lazy(() =>
   import('../../../features/usage/AccountUsageDialog').then((m) => ({

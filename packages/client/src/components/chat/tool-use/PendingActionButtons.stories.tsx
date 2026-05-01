@@ -1,8 +1,8 @@
 import type { PendingControl } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
-import { useChannelControl } from '../../../contexts/channel';
-import { withStoryChannel } from '../../../test/story-decorator';
+import { useChannelControl } from '@/contexts/channel';
+import { withStoryChannel } from '@/test/story-decorator';
 import { PendingActionButtons } from './PendingActionButtons';
 
 function SetControls({

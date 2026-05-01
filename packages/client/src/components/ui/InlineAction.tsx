@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 type Variant = 'default' | 'muted' | 'accent' | 'danger' | 'success';
 

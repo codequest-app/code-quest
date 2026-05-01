@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { OnboardingOverlay } from './OnboardingOverlay';
 
 const meta: Meta<typeof OnboardingOverlay> = {

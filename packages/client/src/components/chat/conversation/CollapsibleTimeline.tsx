@@ -1,12 +1,8 @@
 import { useMemo, useState } from 'react';
-import type { ForkFn, RewindFn } from '../../../types/ui';
-import { cn } from '../../../utils/cn';
-import type { MessageNode } from '../../../utils/message-tree';
-import {
-  buildGroupChips,
-  splitTimelineRuns,
-  type TimelineRun,
-} from '../../../utils/tool-group-rules';
+import type { ForkFn, RewindFn } from '@/types/ui';
+import { cn } from '@/utils/cn';
+import type { MessageNode } from '@/utils/message-tree';
+import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/tool-group-rules';
 import { ChatMessage } from './ChatMessage';
 import { SubagentChildren } from './SubagentChildren';
 import { ToolGroupSummary } from './ToolGroupSummary';

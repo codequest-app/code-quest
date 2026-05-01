@@ -1,6 +1,6 @@
-import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '../../../../types/ui';
-import { cn } from '../../../../utils/cn';
-import { MarkdownContent } from '../../renderers/MarkdownContent';
+import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '@/types/ui';
+import { cn } from '@/utils/cn';
 import { AlertBanner } from './AlertBanner';
 import { CenterDivider, CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives';
 

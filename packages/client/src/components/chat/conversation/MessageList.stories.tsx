@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { withStoryChannel } from '../../../test/story-decorator';
-import type { Message } from '../../../types/ui';
+import { withStoryChannel } from '@/test/story-decorator';
+import type { Message } from '@/types/ui';
 import { MessageList } from './MessageList';
 
 const conversation: Message[] = [

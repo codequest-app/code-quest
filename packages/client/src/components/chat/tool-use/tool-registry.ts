@@ -1,4 +1,4 @@
-import { basename } from './basename';
+import { basename } from '@/utils/basename';
 
 type ToolInput = Record<string, unknown>;
 

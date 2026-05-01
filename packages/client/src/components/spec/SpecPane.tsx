@@ -2,7 +2,7 @@ import type { OpenspecKind } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useOpenspecActions, useOpenspecList } from '../../contexts/OpenspecContext';
+import { useOpenspecActions, useOpenspecList } from '@/contexts/OpenspecContext';
 import { CommandHint } from '../ui/CommandHint';
 import { InlineAction } from '../ui/InlineAction';
 import { PaneStatusFooter } from '../ui/PaneStatusFooter';

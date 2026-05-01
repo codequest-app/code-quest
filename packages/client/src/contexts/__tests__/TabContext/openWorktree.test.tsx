@@ -1,13 +1,13 @@
 import { act, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { AppInitProvider } from '../../AppInitContext';
-import { NavigationProvider, useNavigationActions } from '../../NavigationContext';
-import { ProjectProvider } from '../../ProjectContext';
-import { SessionProvider } from '../../SessionContext';
-import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTabState } from '../../TabContext';
+import { AppInitProvider } from '@/contexts/AppInitContext';
+import { NavigationProvider, useNavigationActions } from '@/contexts/NavigationContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
+import { SessionProvider } from '@/contexts/SessionContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { TabProvider, useTabState } from '@/contexts/TabContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 
 function Probe() {
   const { tabs, activeTabId } = useTabState();

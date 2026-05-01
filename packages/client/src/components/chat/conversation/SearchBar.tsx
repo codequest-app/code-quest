@@ -1,7 +1,7 @@
 import type { Ref } from 'react';
-import { cn } from '../../../utils/cn';
-import { Button } from '../../ui/Button';
-import { InlineAction } from '../../ui/InlineAction';
+import { Button } from '@/components/ui/Button';
+import { InlineAction } from '@/components/ui/InlineAction';
+import { cn } from '@/utils/cn';
 
 interface SearchBarProps {
   searchQuery: string;

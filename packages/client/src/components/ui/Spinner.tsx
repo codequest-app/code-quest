@@ -1,4 +1,4 @@
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 /** Simple CSS spinner — currentColor border, transparent top for the spin
  *  effect. Inherits text color from parent. */

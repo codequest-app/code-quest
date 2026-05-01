@@ -1,6 +1,6 @@
 import type { PluginReloadResult } from '@code-quest/shared';
 import { toast } from 'sonner';
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 export function createReloadPluginsFeature(
   reloadPlugins: () => Promise<PluginReloadResult>,

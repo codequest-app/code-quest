@@ -1,8 +1,7 @@
 import { ClockIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
-import { useChannelConfig, useChannelId } from '../../contexts/channel';
-import { shortModelName } from '../../utils/model-utils';
-import { isThinkingActive } from '../../utils/thinking';
+import { useChannelConfig, useChannelId } from '@/contexts/channel';
+import { isThinkingActive, shortModelName } from '@/utils/model-utils';
 
 const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
 

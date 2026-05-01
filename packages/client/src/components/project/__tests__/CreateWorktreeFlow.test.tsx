@@ -2,8 +2,8 @@ import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { FakeGitService } from '@code-quest/summoner/test';
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('Create Worktree end-to-end flow (right-click → dialog → new tab)', () => {
   it('right-click ProjectCard → Create Worktree… → fill name → submit → new tab in same Project', async () => {

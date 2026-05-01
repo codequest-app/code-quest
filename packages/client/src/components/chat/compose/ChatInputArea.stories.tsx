@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { withStoryChannel } from '../../../test/story-decorator';
+import { withStoryChannel } from '@/test/story-decorator';
 import { ChatInputArea } from './ChatInputArea';
 
 // ChatInputArea is an absolute overlay at the bottom of ChatPanel.

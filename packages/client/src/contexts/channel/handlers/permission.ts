@@ -3,8 +3,18 @@ import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
-import { getFeedbackLabel } from '@/utils/feedback-label';
 import { msg } from '@/utils/message';
+
+function getFeedbackLabel(response: ControlPermissionResponse): string {
+  if ('continue' in response) {
+    return response.continue ? 'Approved' : 'Denied';
+  }
+  if (response.behavior === 'allow') {
+    return response.updatedPermissions ? 'Allowed Always' : 'Approved';
+  }
+  return response.interrupt ? 'Denied & Stopped' : 'Denied';
+}
+
 import type { Payload } from './guard';
 import type { EffectDeps } from './notification';
 

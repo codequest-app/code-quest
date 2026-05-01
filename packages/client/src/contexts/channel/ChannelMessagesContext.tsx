@@ -21,26 +21,26 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createBtwFeature } from '../../features/btw/btw-feature';
-import { createClearFeature } from '../../features/clear/clear-feature';
-import { createCompactFeature } from '../../features/compact/compact-feature';
-import { createNewConversationFeature } from '../../features/new-conversation/new-conversation-feature';
-import { createRecapFeature } from '../../features/recap/recap-feature';
-import { createReloadPluginsFeature } from '../../features/reload-plugins/reload-plugins-feature';
-import { createResumeFeature } from '../../features/resume/resume-feature';
-import { createRewindFeature } from '../../features/rewind/rewind-feature';
-import { createUsageFeature } from '../../features/usage/usage-feature';
-import { createFeatureRegistry, type FeatureRegistry } from '../../lib/feature-registry';
-import type { TypedSocket } from '../../socket/client';
-import { useMessageRegistryStore } from '../../stores/useMessageRegistryStore';
-import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '../../types/chat';
+import { createBtwFeature } from '@/features/btw/btw-feature';
+import { createClearFeature } from '@/features/clear/clear-feature';
+import { createCompactFeature } from '@/features/compact/compact-feature';
+import { createNewConversationFeature } from '@/features/new-conversation/new-conversation-feature';
+import { createRecapFeature } from '@/features/recap/recap-feature';
+import { createReloadPluginsFeature } from '@/features/reload-plugins/reload-plugins-feature';
+import { createResumeFeature } from '@/features/resume/resume-feature';
+import { createRewindFeature } from '@/features/rewind/rewind-feature';
+import { createUsageFeature } from '@/features/usage/usage-feature';
+import { createFeatureRegistry, type FeatureRegistry } from '@/lib/feature-registry';
+import type { TypedSocket } from '@/socket/client';
+import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { type ChannelChangeUpdate, type ChannelState, initialChannelState } from '@/types/chat';
 import {
   buildMessagesFromHistory,
   mapSessionStats,
   msg,
   patchMeta,
   systemMessage,
-} from '../../utils/message';
+} from '@/utils/message';
 import { useSession } from '../SessionContext';
 import { useSocket } from '../SocketContext';
 import { useChannelId, useChannelMeta } from './ChannelMetaContext';

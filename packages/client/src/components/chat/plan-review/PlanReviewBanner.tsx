@@ -6,9 +6,9 @@ import type {
 import { planInputSchema } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useChannelMessages } from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
-import { pluralize } from '../../../utils/pluralize';
+import { useChannelMessages } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
+import { pluralize } from '@/utils/pluralize';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 import { PlanCommentPopover } from './PlanCommentPopover';
 

@@ -1,15 +1,45 @@
 import type { TokenUsage } from '@code-quest/shared';
-import type { ToolUseMeta } from '../../../../types/ui';
-import { cn } from '../../../../utils/cn';
-import { langFromPath } from '../../../../utils/syntax';
-import { AGENT_TOOLS } from '../../../../utils/tool-group-rules';
-import { getToolHeaderInfo } from '../../../../utils/tool-registry';
-import { CodeBlock } from '../../renderers/CodeBlock';
-import { MarkdownContent } from '../../renderers/MarkdownContent';
+import { CodeBlock } from '@/components/chat/renderers/CodeBlock';
+import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
+import type { ToolUseMeta } from '@/types/ui';
+import { cn } from '@/utils/cn';
+import { AGENT_TOOLS } from '@/utils/tool-group-rules';
+import { getToolHeaderInfo } from '../tool-registry';
 import { AlertBanner } from './AlertBanner';
 import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
+
+const EXT_TO_LANG: Record<string, string> = {
+  ts: 'typescript',
+  tsx: 'tsx',
+  js: 'javascript',
+  jsx: 'jsx',
+  py: 'python',
+  rb: 'ruby',
+  rs: 'rust',
+  go: 'go',
+  java: 'java',
+  c: 'c',
+  cpp: 'cpp',
+  cs: 'csharp',
+  sh: 'bash',
+  bash: 'bash',
+  json: 'json',
+  yaml: 'yaml',
+  yml: 'yaml',
+  md: 'markdown',
+  css: 'css',
+  html: 'html',
+  toml: 'toml',
+  sql: 'sql',
+  xml: 'xml',
+};
+
+function langFromPath(filePath: string): string | undefined {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+  return EXT_TO_LANG[ext];
+}
 
 function totalTokens(usage: TokenUsage): number | null {
   const total = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);

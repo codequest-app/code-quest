@@ -8,9 +8,9 @@ import {
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useOpenspecActions } from '../../contexts/OpenspecContext';
-import { useSocket } from '../../contexts/SocketContext';
-import { rpc } from '../../socket/rpc';
+import { useOpenspecActions } from '@/contexts/OpenspecContext';
+import { useSocket } from '@/contexts/SocketContext';
+import { rpc } from '@/socket/rpc';
 import { MarkdownContent } from '../chat/renderers/MarkdownContent';
 import { tabTriggerCompact } from '../ui/_tokens';
 import { Button } from '../ui/Button';

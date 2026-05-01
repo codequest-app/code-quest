@@ -2,9 +2,9 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { useChannelMessages } from '@/contexts/channel';
 import { SendButton } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useChannelMessages } from '../../../channel';
 
 function MessagesProbe() {
   const { messages } = useChannelMessages();

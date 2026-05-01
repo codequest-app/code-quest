@@ -4,9 +4,9 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { useFsActions } from '../../../contexts/FsContext';
-import { createFakeSummoner, FakeSummoner } from '../../../test/fake-summoner';
-import { FsProvidersWrapper } from '../../../test/wrap-fs-providers';
+import { useFsActions } from '@/contexts/FsContext';
+import { createFakeSummoner, FakeSummoner } from '@/test/fake-summoner';
+import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
 import { FileTree } from '../FileTree';
 
 function setup() {

@@ -2,8 +2,8 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { emitAssistantTurn, emitUserEcho } from '../../../test/helpers';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { emitAssistantTurn, emitUserEcho } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 import { rewindOpenSignal } from '../rewind-feature';
 
 afterEach(() => {

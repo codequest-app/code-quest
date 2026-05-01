@@ -8,7 +8,7 @@
  *  We trade the Radix-supplied keyboard/click behavior for visual fidelity;
  *  hand-rolled handlers below cover Arrow keys + click-to-position. */
 
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { focusRing } from './_tokens';
 
 const EFFORT_LABELS: Record<string, string> = {

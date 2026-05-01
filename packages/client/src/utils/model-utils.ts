@@ -65,3 +65,7 @@ export function getModelInfoDisplayName(
   }
   return getModelDisplayInfo(fallbackId, models);
 }
+
+export function isThinkingActive(level: string | undefined | null): boolean {
+  return !!level && level !== 'off' && level !== 'disabled';
+}

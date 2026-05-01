@@ -1,5 +1,5 @@
-import { type GroupId, VISIBILITY_GROUPS } from '../../contexts/channel/MessageVisibilityContext';
-import type { Feature } from '../../lib/feature';
+import { type GroupId, VISIBILITY_GROUPS } from '@/contexts/channel/MessageVisibilityContext';
+import type { Feature } from '@/lib/feature';
 
 export interface CreateFilterFeaturesDeps {
   enabledTypes: Set<string>;

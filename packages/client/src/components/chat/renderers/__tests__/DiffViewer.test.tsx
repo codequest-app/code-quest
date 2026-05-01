@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { extractNewContent } from '../../../../utils/diff';
+import { extractNewContent } from '@/utils/diff';
 import { DiffViewer } from '../DiffViewer';
 
 // Pure diff parsing (isDiff / parseDiffFileName / extractNewContent etc.) is

@@ -1,6 +1,6 @@
 import type { RpcResult } from '@code-quest/shared';
 import { useSyncExternalStore } from 'react';
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 type Subscriber = () => void;
 

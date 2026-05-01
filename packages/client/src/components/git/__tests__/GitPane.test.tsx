@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
-import { FsProvider } from '../../../contexts/FsContext';
-import { GitProvider } from '../../../contexts/GitContext';
-import { OpenspecProvider } from '../../../contexts/OpenspecContext';
-import { SocketProvider } from '../../../contexts/SocketContext';
-import { createFakeSummoner } from '../../../test/fake-summoner';
+import { FsProvider } from '@/contexts/FsContext';
+import { GitProvider } from '@/contexts/GitContext';
+import { OpenspecProvider } from '@/contexts/OpenspecContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { GitPane } from '../GitPane';
 
 const SAMPLE_DIFF = ['diff --git a/foo.ts b/foo.ts', '@@ -1,2 +1,2 @@', '-old', '+new'].join('\n');

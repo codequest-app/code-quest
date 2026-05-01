@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { withThemePreset } from '../../test/story-decorator';
+import { withThemePreset } from '@/test/story-decorator';
 import { SectionHeader } from './SectionHeader';
 
 const meta: Meta<typeof SectionHeader> = {

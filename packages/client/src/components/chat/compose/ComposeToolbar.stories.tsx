@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef } from 'react';
-import { withStoryChannel } from '../../../test/story-decorator';
+import { withStoryChannel } from '@/test/story-decorator';
 import { ComposeToolbar } from './ComposeToolbar';
 
 // ComposeToolbar opens CommandMenu upward — position at bottom of screen so it has room to expand.

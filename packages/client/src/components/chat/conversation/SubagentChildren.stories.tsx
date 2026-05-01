@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import type { Message } from '../../../types/ui';
-import type { MessageNode } from '../../../utils/message-tree';
+import type { Message } from '@/types/ui';
+import type { MessageNode } from '@/utils/message-tree';
 import { SubagentChildren } from './SubagentChildren';
 
 const t = Date.now();

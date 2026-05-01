@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { FsProvidersWrapper } from '../../../test/wrap-fs-providers';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
 import { FilePreviewModal } from '../FilePreviewModal';
 
 function setup() {

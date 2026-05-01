@@ -2,21 +2,21 @@ import type { SessionSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useCommandPalette } from '../../contexts/CommandPaletteContext';
+import { useCommandPalette } from '@/contexts/CommandPaletteContext';
 import {
   useChannelComposeActions,
   useChannelConfig,
   useChannelControl,
   useChannelId,
   useChannelMessages,
-} from '../../contexts/channel';
-import { useNavigationActions } from '../../contexts/NavigationContext';
-import { useProjectActions, useProjectState } from '../../contexts/ProjectContext';
-import { useTabActions } from '../../contexts/TabContext';
-import { btwSignal, useBtwState } from '../../features/btw/btw-feature';
-import { resumeOpenSignal } from '../../features/resume/resume-feature';
-import { cn } from '../../utils/cn';
-import { resumeRoute } from '../../utils/resume-route';
+} from '@/contexts/channel';
+import { useNavigationActions } from '@/contexts/NavigationContext';
+import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
+import { useTabActions } from '@/contexts/TabContext';
+import { btwSignal, useBtwState } from '@/features/btw/btw-feature';
+import { resumeOpenSignal } from '@/features/resume/resume-feature';
+import { cn } from '@/utils/cn';
+import { resumeRoute } from '@/utils/resume-route';
 import { ChatInputArea } from './compose/ChatInputArea';
 import { MessageList, type MessageListHandle } from './conversation/MessageList';
 import { ContentPreviewDialog } from './dialogs/ContentPreviewDialog';

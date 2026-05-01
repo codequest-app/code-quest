@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { controlBorder, focusRing } from './_tokens';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'warning' | 'info';

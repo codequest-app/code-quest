@@ -1,6 +1,6 @@
-import { createChoiceFeature } from '../../lib/create-choice-feature';
-import type { Feature } from '../../lib/feature';
-import type { Density } from '../../stores/usePreferencesStore';
+import { createChoiceFeature } from '@/lib/create-choice-feature';
+import type { Feature } from '@/lib/feature';
+import type { Density } from '@/stores/usePreferencesStore';
 
 interface DensityFeatureDeps {
   density: Density;

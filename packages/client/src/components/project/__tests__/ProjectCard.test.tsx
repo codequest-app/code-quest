@@ -2,9 +2,9 @@ import { type ProjectStore, type SessionStore, TYPES } from '@code-quest/server/
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { useNavigationState } from '../../../contexts/NavigationContext';
-import { useProjectState } from '../../../contexts/ProjectContext';
-import { createTestWrapper } from '../../../test/create-test-wrapper';
+import { useNavigationState } from '@/contexts/NavigationContext';
+import { useProjectState } from '@/contexts/ProjectContext';
+import { createTestWrapper } from '@/test/create-test-wrapper';
 import { ProjectCard } from '../ProjectCard';
 
 function setupTestWrapper() {

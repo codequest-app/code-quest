@@ -1,7 +1,7 @@
 import type { SessionStateSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import type { ReactNode } from 'react';
-import { basename } from '../../utils/basename';
+import { basename } from '@/utils/basename';
 
 export interface LiveSessionPopoverProps {
   session: SessionStateSummary;

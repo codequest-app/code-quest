@@ -5,13 +5,13 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppInitProvider } from '../../../../contexts/AppInitContext';
-import { ChannelProvider, useChannelMessages } from '../../../../contexts/channel';
-import { PluginProvider } from '../../../../contexts/PluginContext';
-import { SessionProvider } from '../../../../contexts/SessionContext';
-import { SocketProvider } from '../../../../contexts/SocketContext';
-import { TabProvider } from '../../../../contexts/TabContext';
-import { createFakeSummoner } from '../../../../test/fake-summoner';
+import { AppInitProvider } from '@/contexts/AppInitContext';
+import { ChannelProvider, useChannelMessages } from '@/contexts/channel';
+import { PluginProvider } from '@/contexts/PluginContext';
+import { SessionProvider } from '@/contexts/SessionContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { TabProvider } from '@/contexts/TabContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { PlanReviewBanner } from '../PlanReviewBanner';
 
 function PlanCommentSetter({ comments }: { comments: PlanCommentData[] }) {

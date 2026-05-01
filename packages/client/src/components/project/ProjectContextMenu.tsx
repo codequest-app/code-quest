@@ -1,7 +1,7 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { type ReactNode, useContext } from 'react';
-import { AppInitStateContext } from '../../contexts/AppInitContext';
+import { AppInitStateContext } from '@/contexts/AppInitContext';
 
 export interface ProjectMenuCallbacks {
   onSelectResume: () => void;

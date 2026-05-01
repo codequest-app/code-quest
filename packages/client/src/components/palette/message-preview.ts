@@ -1,4 +1,4 @@
-import type { Message } from '../types/ui';
+import type { Message } from '@/types/ui';
 
 const MESSAGE_TYPE_LABELS: Partial<Record<Message['type'], string>> = {
   streamlined_tool_use_summary: 'tool summary',
@@ -70,4 +70,18 @@ export function highlight(text: string, query: string): HighlightSegment[] {
     { text: text.slice(idx, idx + query.length), match: true },
     { text: text.slice(idx + query.length), match: false },
   ];
+}
+
+function toolUsePreview(input: unknown): string {
+  if (!input || typeof input !== 'object') return '';
+  return Object.values(input as Record<string, unknown>)
+    .map((v) => (typeof v === 'string' ? v : JSON.stringify(v)))
+    .join(' ');
+}
+
+export function messagePreview(m: Message): string {
+  if (m.type === 'tool_use' && m.meta?.input) {
+    return toolUsePreview(m.meta.input) || m.content;
+  }
+  return m.content;
 }

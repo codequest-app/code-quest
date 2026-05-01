@@ -1,9 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  type RenderWithWorkspaceResult,
-  renderWithWorkspace,
-} from '../../../test/render-with-workspace';
+import { type RenderWithWorkspaceResult, renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('WorkspaceLayout', () => {
   let result: RenderWithWorkspaceResult;

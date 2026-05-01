@@ -1,8 +1,8 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import Ansi from 'ansi-to-react';
-import { copyToClipboard } from '../../../../utils/clipboard';
-import { cn } from '../../../../utils/cn';
+import { copyToClipboard } from '@/utils/clipboard';
+import { cn } from '@/utils/cn';
 
 export function RotatableChevron({
   open,
