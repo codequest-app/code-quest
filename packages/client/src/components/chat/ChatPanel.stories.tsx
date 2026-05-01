@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '../../test/story-decorator';
 import { ChatPanel } from './ChatPanel';
 
-const CLASS = 'h-150 bg-bg text-text';
+const CLASS = 'flex flex-col h-screen bg-bg text-text';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,
