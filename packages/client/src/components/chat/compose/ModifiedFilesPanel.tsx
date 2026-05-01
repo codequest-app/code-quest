@@ -5,6 +5,8 @@ import { generateUnifiedDiff } from '../../../utils/diff';
 import { pluralize } from '../../../utils/pluralize';
 import { DiffViewer } from '../renderers/DiffViewer';
 
+const ACTION_BTN = 'text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors';
+
 export interface ModifiedFile {
   path: string;
   status: string;
@@ -78,7 +80,7 @@ function ModifiedFileItem({
             <button
               type="button"
               onClick={() => onAccept(file.path)}
-              className="text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors bg-accent text-white hover:bg-accent/80"
+              className={cn(ACTION_BTN, 'bg-accent text-white hover:bg-accent/80')}
             >
               Accept
             </button>
@@ -86,7 +88,7 @@ function ModifiedFileItem({
               <button
                 type="button"
                 onClick={() => onRewind(file.path)}
-                className="text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors text-text border border-border hover:tint-5"
+                className={cn(ACTION_BTN, 'border border-border hover:tint-5')}
               >
                 Rewind
               </button>

@@ -5,7 +5,7 @@ import type {
 } from '@code-quest/shared';
 import { planInputSchema } from '@code-quest/shared';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useChannelMessages } from '../../../contexts/channel';
 import { cn } from '../../../utils/cn';
 import { pluralize } from '../../../utils/pluralize';
@@ -20,24 +20,19 @@ interface PlanReviewBannerProps {
 }
 
 export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps): React.JSX.Element {
-  const parsed = planInputSchema.safeParse(pending.input);
+  const parsed = useMemo(() => planInputSchema.safeParse(pending.input), [pending.input]);
   const plan = parsed.data?.plan;
   const allowedPrompts = parsed.data?.allowedPrompts;
   const [comment, setComment] = useState('');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const lastRequestId = useRef<string | null>(null);
   const planContentRef = useRef<HTMLDivElement>(null);
   const { planComments, addPlanComment, clearPlanComments } = useChannelMessages();
 
-  // No deps array — intentionally runs after every render to detect requestId changes
-  // across re-renders without stale closure issues.
-  useLayoutEffect(() => {
-    if (pending.requestId !== lastRequestId.current) {
-      lastRequestId.current = pending.requestId;
-      if (comment) setComment('');
-      if (feedbackOpen) setFeedbackOpen(false);
-    }
-  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: requestId is the trigger, not a consumed value
+  useEffect(() => {
+    setComment('');
+    setFeedbackOpen(false);
+  }, [pending.requestId]);
 
   const handleApprove = () => {
     const userFeedback =
