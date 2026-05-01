@@ -68,8 +68,7 @@ const TEMPLATES = {
   BRIDGE_STATE: load(SYNTHETIC, 'bridge-state.jsonl'),
   COMPACT_BOUNDARY: load(SYNTHETIC, 'compact-boundary.jsonl'),
   EXPERIMENT_GATES: load(SYNTHETIC, 'experiment-gates.jsonl'),
-  // TODO: replace with real DB fixture when auth_status is captured
-  AUTH_STATUS: load(SYNTHETIC, 'auth-status.jsonl'),
+  AUTH_STATUS: load(REAL, 'auth-status.jsonl'),
   // TODO: replace with real DB fixture when auth_url is captured from a real CLI session
   AUTH_URL: load(SYNTHETIC, 'auth-url.jsonl'),
   // TODO: replace with real DB fixture when an unknown event type is captured
