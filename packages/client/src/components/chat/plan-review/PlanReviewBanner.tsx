@@ -4,10 +4,11 @@ import type {
   PlanCommentData,
 } from '@code-quest/shared';
 import { planInputSchema } from '@code-quest/shared';
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useChannelMessages } from '../../../contexts/channel';
+import { cn } from '../../../utils/cn';
 import { pluralize } from '../../../utils/pluralize';
-import { Button } from '../../ui/Button';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 import { PlanCommentPopover } from './PlanCommentPopover';
 
@@ -62,101 +63,94 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
     });
   };
 
+  const actions = feedbackOpen
+    ? [
+        {
+          label: 'Cancel',
+          action: () => {
+            setComment('');
+            setFeedbackOpen(false);
+          },
+          primary: false,
+        },
+        { label: 'Send Feedback', action: handleSendFeedback, primary: true },
+      ]
+    : [
+        { label: 'Continue Planning', action: () => setFeedbackOpen(true), primary: false },
+        { label: 'Approve Plan', action: handleApprove, primary: true },
+      ];
+
   return (
-    <div className="flex flex-col gap-3 bg-assistant/10 border border-assistant/20 rounded-md px-4 py-3">
-      <div className="flex items-center">
-        <span className="text-sm font-medium text-assistant">
-          📋 Plan Review
+    <div className="relative bg-surface border border-border rounded-lg overflow-hidden mb-1.5 p-2">
+      <div className="absolute inset-0 bg-bg rounded-lg" />
+
+      <div className="relative z-raised text-text">
+        <div className="flex items-center gap-1.5 mb-2 px-1">
+          <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-text-muted shrink-0" />
+          <span className="text-sm font-bold">Plan Review</span>
           {planComments.length > 0 && (
-            <span className="ml-2 text-xs text-accent font-normal">
+            <span className="text-xs text-accent font-normal ml-1">
               ({pluralize(planComments.length, 'comment')})
             </span>
           )}
-        </span>
+        </div>
+
+        {plan && (
+          <div
+            ref={planContentRef}
+            className="relative bg-input-overlay rounded p-2 border border-border mb-2 prose prose-invert prose-sm max-w-none"
+          >
+            <MarkdownContent content={plan} />
+            <PlanCommentPopover containerRef={planContentRef} onAddComment={addPlanComment} />
+          </div>
+        )}
+
+        {allowedPrompts && allowedPrompts.length > 0 && (
+          <div className="text-xs text-text-muted px-1 mb-2">
+            <span className="font-medium">Requested permissions: </span>
+            {allowedPrompts.map((p) => {
+              const label = String(p.prompt ?? p.tool ?? JSON.stringify(p));
+              return (
+                <span
+                  key={label}
+                  className="inline-block bg-white/5 rounded px-1.5 py-0.5 mr-1 mt-0.5"
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {feedbackOpen && (
+          <textarea
+            placeholder="Add feedback..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={2}
+            className="w-full text-xs bg-input-overlay rounded px-2 py-1.5 text-text border border-border resize-y mb-2"
+            // biome-ignore lint/a11y/noAutofocus: focus is intentional when expanding inline
+            autoFocus
+          />
+        )}
       </div>
 
-      {plan && (
-        <div
-          ref={planContentRef}
-          className="relative bg-input-overlay rounded-lg px-4 py-3 border border-white/10 prose prose-invert prose-sm max-w-none"
-        >
-          <MarkdownContent content={plan} />
-          <PlanCommentPopover containerRef={planContentRef} onAddComment={addPlanComment} />
-        </div>
-      )}
-
-      {allowedPrompts && allowedPrompts.length > 0 && (
-        <div className="text-xs text-text-muted">
-          <span className="font-medium">Requested permissions: </span>
-          {allowedPrompts.map((p) => {
-            const label = String(p.prompt ?? p.tool ?? JSON.stringify(p));
-            return (
-              <span
-                key={label}
-                className="inline-block bg-white/5 rounded px-1.5 py-0.5 mr-1 mt-0.5"
-              >
-                {label}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {feedbackOpen && (
-        <textarea
-          placeholder="Add feedback..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={2}
-          className="text-sm bg-input-overlay rounded px-2 py-1 text-text border border-white/10 resize-y"
-          // biome-ignore lint/a11y/noAutofocus: focus is intentional when expanding inline
-          autoFocus
-        />
-      )}
-
-      <div className="flex justify-end gap-2">
-        {feedbackOpen ? (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-md"
-              onClick={() => {
-                setComment('');
-                setFeedbackOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              className="rounded-md font-medium"
-              onClick={handleSendFeedback}
-            >
-              Send Feedback
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="rounded-md font-medium"
-              onClick={() => setFeedbackOpen(true)}
-            >
-              Continue Planning
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              className="rounded-md font-medium"
-              onClick={handleApprove}
-            >
-              Approve Plan
-            </Button>
-          </>
-        )}
+      <div className="relative z-raised flex flex-col gap-2">
+        {actions.map((opt) => (
+          <button
+            key={opt.label}
+            type="button"
+            onClick={opt.action}
+            className={cn(
+              'w-full text-left text-xs px-2 py-1.5 rounded cursor-pointer font-medium transition-colors',
+              opt.primary
+                ? 'bg-accent text-white font-bold'
+                : 'bg-transparent text-text inset-border',
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );

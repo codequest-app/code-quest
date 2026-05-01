@@ -31,7 +31,7 @@ import type { ChannelState } from '../types/chat';
 
 export const STORY_CHANNEL_ID = 'story';
 
-export const SCENARIO_CLASS = 'flex flex-col h-150 bg-bg text-text';
+export const SCENARIO_CLASS = 'flex flex-col h-screen bg-bg text-text';
 
 interface StoryChannelOptions {
   /** Override ChannelConfigProvider initial config (model, tools, permissionMode, etc.) */
