@@ -1,128 +1,82 @@
-// real fixtures
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-import AGENT_TOOL_RAW from '../__fixtures__/claude/real/assistant-agent.jsonl?raw';
-import ASSISTANT_TEXT_RAW from '../__fixtures__/claude/real/assistant-text.jsonl?raw';
-import ASSISTANT_TOOL_RAW from '../__fixtures__/claude/real/assistant-tool.jsonl?raw';
-import AUTH_STATUS_RAW from '../__fixtures__/claude/real/auth-status.jsonl?raw';
-import CLI_ERROR_RAW from '../__fixtures__/claude/real/cli-error.jsonl?raw';
-import CONTROL_CANCEL_REQUEST_RAW from '../__fixtures__/claude/real/control-cancel-request.jsonl?raw';
-import CONTROL_REQUEST_RAW from '../__fixtures__/claude/real/control-request.jsonl?raw';
-import CONTROL_REQUEST_ASK_USER_QUESTION_RAW from '../__fixtures__/claude/real/control-request-ask-user-question.jsonl?raw';
-import CONTROL_REQUEST_BASH_RAW from '../__fixtures__/claude/real/control-request-bash.jsonl?raw';
-import CONTROL_REQUEST_EXIT_PLAN_MODE_RAW from '../__fixtures__/claude/real/control-request-exit-plan-mode.jsonl?raw';
-import CONTROL_RESPONSE_RAW from '../__fixtures__/claude/real/control-response.jsonl?raw';
-import CONTROL_RESPONSE_ERROR_RAW from '../__fixtures__/claude/real/control-response-error.jsonl?raw';
-import HOOK_RESPONSE_RAW from '../__fixtures__/claude/real/hook-response.jsonl?raw';
-import HOOK_STARTED_RAW from '../__fixtures__/claude/real/hook-started.jsonl?raw';
-import INIT_RAW from '../__fixtures__/claude/real/init.jsonl?raw';
-import RATE_LIMIT_EVENT_RAW from '../__fixtures__/claude/real/rate-limit-event.jsonl?raw';
-import RESULT_ERROR_RAW from '../__fixtures__/claude/real/result-error.jsonl?raw';
-import RESULT_SUCCESS_RAW from '../__fixtures__/claude/real/result-success.jsonl?raw';
-import STATUS_RAW from '../__fixtures__/claude/real/status.jsonl?raw';
-import STREAM_CONTENT_BLOCK_START_RAW from '../__fixtures__/claude/real/stream-content-block-start.jsonl?raw';
-import STREAM_CONTENT_BLOCK_STOP_RAW from '../__fixtures__/claude/real/stream-content-block-stop.jsonl?raw';
-import STREAM_INPUT_JSON_DELTA_RAW from '../__fixtures__/claude/real/stream-input-json-delta.jsonl?raw';
-import STREAM_MESSAGE_DELTA_RAW from '../__fixtures__/claude/real/stream-message-delta.jsonl?raw';
-import STREAM_MESSAGE_START_RAW from '../__fixtures__/claude/real/stream-message-start.jsonl?raw';
-import STREAM_MESSAGE_STOP_RAW from '../__fixtures__/claude/real/stream-message-stop.jsonl?raw';
-import STREAM_SIGNATURE_DELTA_RAW from '../__fixtures__/claude/real/stream-signature-delta.jsonl?raw';
-import STREAM_TEXT_DELTA_RAW from '../__fixtures__/claude/real/stream-text-delta.jsonl?raw';
-import STREAM_THINKING_DELTA_RAW from '../__fixtures__/claude/real/stream-thinking-delta.jsonl?raw';
-import TASK_NOTIFICATION_RAW from '../__fixtures__/claude/real/task-notification.jsonl?raw';
-import TASK_PROGRESS_RAW from '../__fixtures__/claude/real/task-progress.jsonl?raw';
-import TASK_STARTED_RAW from '../__fixtures__/claude/real/task-started.jsonl?raw';
-import THINKING_RAW from '../__fixtures__/claude/real/thinking.jsonl?raw';
-import TOOL_RESULT_RAW from '../__fixtures__/claude/real/tool-result.jsonl?raw';
-import TOOL_USE_RAW from '../__fixtures__/claude/real/tool-use.jsonl?raw';
-import USER_TEXT_RAW from '../__fixtures__/claude/real/user-text.jsonl?raw';
-import AUTH_URL_RAW from '../__fixtures__/claude/synthetic/auth-url.jsonl?raw';
-import BRIDGE_STATE_RAW from '../__fixtures__/claude/synthetic/bridge-state.jsonl?raw';
-import CITATIONS_DELTA_RAW from '../__fixtures__/claude/synthetic/citations-delta.jsonl?raw';
-import COMPACT_BOUNDARY_RAW from '../__fixtures__/claude/synthetic/compact-boundary.jsonl?raw';
-import CONTROL_CHANNEL_ENABLE_RAW from '../__fixtures__/claude/synthetic/control-channel-enable.jsonl?raw';
-import CONTROL_REQUEST_ELICITATION_RAW from '../__fixtures__/claude/synthetic/control-request-elicitation.jsonl?raw';
-import CONTROL_REQUEST_OPEN_DIFF_RAW from '../__fixtures__/claude/synthetic/control-request-open-diff.jsonl?raw';
-import CONTROL_REQUEST_OPEN_IN_EDITOR_RAW from '../__fixtures__/claude/synthetic/control-request-open-in-editor.jsonl?raw';
-import CONTROL_REQUEST_SHOW_NOTIFICATION_RAW from '../__fixtures__/claude/synthetic/control-request-show-notification.jsonl?raw';
-import CONTROL_SEED_READ_STATE_RAW from '../__fixtures__/claude/synthetic/control-seed-read-state.jsonl?raw';
-import EXPERIMENT_GATES_RAW from '../__fixtures__/claude/synthetic/experiment-gates.jsonl?raw';
-import NEW_SESSION_NOTIFICATION_RAW from '../__fixtures__/claude/synthetic/new-session-notification.jsonl?raw';
-import NOTIFICATION_RAW from '../__fixtures__/claude/synthetic/notification.jsonl?raw';
-// synthetic — event types not yet captured from real CLI sessions
-import RESULT_RESUME_NOT_FOUND_RAW from '../__fixtures__/claude/synthetic/result-resume-not-found.jsonl?raw';
-import SPEECH_TO_TEXT_MESSAGE_RAW from '../__fixtures__/claude/synthetic/speech-to-text-message.jsonl?raw';
-import THINKING_DELTA_LEGACY_RAW from '../__fixtures__/claude/synthetic/stream-thinking-delta-legacy.jsonl?raw';
-import STREAMLINED_TEXT_RAW from '../__fixtures__/claude/synthetic/streamlined-text.jsonl?raw';
-import STREAMLINED_TOOL_USE_SUMMARY_RAW from '../__fixtures__/claude/synthetic/streamlined-tool-use-summary.jsonl?raw';
-import SYSTEM_MIRROR_ERROR_RAW from '../__fixtures__/claude/synthetic/system-mirror-error.jsonl?raw';
-import UNKNOWN_EVENT_RAW from '../__fixtures__/claude/synthetic/unknown-event.jsonl?raw';
+// ── CLI fixture templates ──
+// Each template is loaded from __fixtures__/claude/{real,synthetic}/*.jsonl.
+// real/      = verbatim DB exports (code_quest.raw_entries) or real CLI recordings
+// synthetic/ = hand-crafted for event types not yet captured in real sessions
+
+const FIXTURE_DIR = join(import.meta.dirname, '../__fixtures__/claude');
+const REAL = join(FIXTURE_DIR, 'real');
+const SYNTHETIC = join(FIXTURE_DIR, 'synthetic');
+const load = (dir: string, name: string) => readFileSync(join(dir, name), 'utf-8').trim();
 
 const TEMPLATES = {
-  INIT: INIT_RAW.trim(),
-  ASSISTANT_TEXT: ASSISTANT_TEXT_RAW.trim(),
-  ASSISTANT_TOOL: ASSISTANT_TOOL_RAW.trim(),
-  THINKING: THINKING_RAW.trim(),
-  CONTROL_REQUEST: CONTROL_REQUEST_RAW.trim(),
-  CONTROL_REQUEST_BASH: CONTROL_REQUEST_BASH_RAW.trim(),
-  CONTROL_REQUEST_ASK_USER_QUESTION: CONTROL_REQUEST_ASK_USER_QUESTION_RAW.trim(),
-  CONTROL_REQUEST_EXIT_PLAN_MODE: CONTROL_REQUEST_EXIT_PLAN_MODE_RAW.trim(),
-  CONTROL_RESPONSE: CONTROL_RESPONSE_RAW.trim(),
-  CONTROL_RESPONSE_ERROR: CONTROL_RESPONSE_ERROR_RAW.trim(),
-  CONTROL_CANCEL_REQUEST: CONTROL_CANCEL_REQUEST_RAW.trim(),
-  TOOL_RESULT: TOOL_RESULT_RAW.trim(),
-  USER_TEXT: USER_TEXT_RAW.trim(),
-  RESULT_SUCCESS: RESULT_SUCCESS_RAW.trim(),
-  RESULT_ERROR: RESULT_ERROR_RAW.trim(),
-  RESULT_RESUME_NOT_FOUND: RESULT_RESUME_NOT_FOUND_RAW.trim(),
-  STATUS: STATUS_RAW.trim(),
-  TASK_STARTED: TASK_STARTED_RAW.trim(),
-  STREAM_TEXT_DELTA: STREAM_TEXT_DELTA_RAW.trim(),
-  STREAM_INPUT_JSON_DELTA: STREAM_INPUT_JSON_DELTA_RAW.trim(),
-  STREAM_THINKING_DELTA: STREAM_THINKING_DELTA_RAW.trim(),
-  STREAM_SIGNATURE_DELTA: STREAM_SIGNATURE_DELTA_RAW.trim(),
-  STREAM_CONTENT_BLOCK_START: STREAM_CONTENT_BLOCK_START_RAW.trim(),
-  STREAM_CONTENT_BLOCK_STOP: STREAM_CONTENT_BLOCK_STOP_RAW.trim(),
-  STREAM_MESSAGE_START: STREAM_MESSAGE_START_RAW.trim(),
-  STREAM_MESSAGE_DELTA: STREAM_MESSAGE_DELTA_RAW.trim(),
-  STREAM_MESSAGE_STOP: STREAM_MESSAGE_STOP_RAW.trim(),
-  RATE_LIMIT_EVENT: RATE_LIMIT_EVENT_RAW.trim(),
-  HOOK_STARTED: HOOK_STARTED_RAW.trim(),
-  HOOK_RESPONSE: HOOK_RESPONSE_RAW.trim(),
-  TOOL_USE: TOOL_USE_RAW.trim(),
-  AGENT_TOOL: AGENT_TOOL_RAW.trim(),
+  INIT: load(REAL, 'init.jsonl'),
+  ASSISTANT_TEXT: load(REAL, 'assistant-text.jsonl'),
+  ASSISTANT_TOOL: load(REAL, 'assistant-tool.jsonl'),
+  THINKING: load(REAL, 'thinking.jsonl'),
+  CONTROL_REQUEST: load(REAL, 'control-request.jsonl'),
+  CONTROL_REQUEST_BASH: load(REAL, 'control-request-bash.jsonl'),
+  CONTROL_REQUEST_ASK_USER_QUESTION: load(REAL, 'control-request-ask-user-question.jsonl'),
+  CONTROL_REQUEST_EXIT_PLAN_MODE: load(REAL, 'control-request-exit-plan-mode.jsonl'),
+  CONTROL_RESPONSE: load(REAL, 'control-response.jsonl'),
+  CONTROL_RESPONSE_ERROR: load(REAL, 'control-response-error.jsonl'),
+  CONTROL_CANCEL_REQUEST: load(REAL, 'control-cancel-request.jsonl'),
+  TOOL_RESULT: load(REAL, 'tool-result.jsonl'),
+  USER_TEXT: load(REAL, 'user-text.jsonl'),
+  RESULT_SUCCESS: load(REAL, 'result-success.jsonl'),
+  RESULT_ERROR: load(REAL, 'result-error.jsonl'),
+  RESULT_RESUME_NOT_FOUND: load(SYNTHETIC, 'result-resume-not-found.jsonl'),
+  STATUS: load(REAL, 'status.jsonl'),
+  TASK_STARTED: load(REAL, 'task-started.jsonl'),
+  STREAM_TEXT_DELTA: load(REAL, 'stream-text-delta.jsonl'),
+  STREAM_INPUT_JSON_DELTA: load(REAL, 'stream-input-json-delta.jsonl'),
+  STREAM_THINKING_DELTA: load(REAL, 'stream-thinking-delta.jsonl'),
+  STREAM_SIGNATURE_DELTA: load(REAL, 'stream-signature-delta.jsonl'),
+  STREAM_CONTENT_BLOCK_START: load(REAL, 'stream-content-block-start.jsonl'),
+  STREAM_CONTENT_BLOCK_STOP: load(REAL, 'stream-content-block-stop.jsonl'),
+  STREAM_MESSAGE_START: load(REAL, 'stream-message-start.jsonl'),
+  STREAM_MESSAGE_DELTA: load(REAL, 'stream-message-delta.jsonl'),
+  STREAM_MESSAGE_STOP: load(REAL, 'stream-message-stop.jsonl'),
+  RATE_LIMIT_EVENT: load(REAL, 'rate-limit-event.jsonl'),
+  HOOK_STARTED: load(REAL, 'hook-started.jsonl'),
+  HOOK_RESPONSE: load(REAL, 'hook-response.jsonl'),
+  TOOL_USE: load(REAL, 'tool-use.jsonl'),
+  AGENT_TOOL: load(REAL, 'assistant-agent.jsonl'),
   // synthetic — event types not yet captured from real CLI sessions
   // TODO: replace with real DB fixture when captured
-  CONTROL_REQUEST_OPEN_DIFF: CONTROL_REQUEST_OPEN_DIFF_RAW.trim(),
+  CONTROL_REQUEST_OPEN_DIFF: load(SYNTHETIC, 'control-request-open-diff.jsonl'),
   // TODO: replace with real DB fixture when open_in_editor is captured
-  CONTROL_REQUEST_OPEN_IN_EDITOR: CONTROL_REQUEST_OPEN_IN_EDITOR_RAW.trim(),
+  CONTROL_REQUEST_OPEN_IN_EDITOR: load(SYNTHETIC, 'control-request-open-in-editor.jsonl'),
   // TODO: replace with real DB fixture when speech_to_text_message is captured
-  SPEECH_TO_TEXT_MESSAGE: SPEECH_TO_TEXT_MESSAGE_RAW.trim(),
+  SPEECH_TO_TEXT_MESSAGE: load(SYNTHETIC, 'speech-to-text-message.jsonl'),
   // TODO: replace with real DB fixture when notification is captured
-  NOTIFICATION: NOTIFICATION_RAW.trim(),
+  NOTIFICATION: load(SYNTHETIC, 'notification.jsonl'),
   // TODO: replace with real DB fixture when new_session_notification is captured
-  NEW_SESSION_NOTIFICATION: NEW_SESSION_NOTIFICATION_RAW.trim(),
+  NEW_SESSION_NOTIFICATION: load(SYNTHETIC, 'new-session-notification.jsonl'),
   // TODO: replace with real DB fixture when captured
-  CONTROL_REQUEST_ELICITATION: CONTROL_REQUEST_ELICITATION_RAW.trim(),
-  CONTROL_REQUEST_SHOW_NOTIFICATION: CONTROL_REQUEST_SHOW_NOTIFICATION_RAW.trim(),
-  STREAMLINED_TEXT: STREAMLINED_TEXT_RAW.trim(),
-  STREAMLINED_TOOL_USE_SUMMARY: STREAMLINED_TOOL_USE_SUMMARY_RAW.trim(),
-  CITATIONS_DELTA: CITATIONS_DELTA_RAW.trim(),
-  THINKING_DELTA_LEGACY: THINKING_DELTA_LEGACY_RAW.trim(),
-  TASK_NOTIFICATION: TASK_NOTIFICATION_RAW.trim(),
-  TASK_PROGRESS: TASK_PROGRESS_RAW.trim(),
-  CLI_ERROR: CLI_ERROR_RAW.trim(),
-  BRIDGE_STATE: BRIDGE_STATE_RAW.trim(),
-  COMPACT_BOUNDARY: COMPACT_BOUNDARY_RAW.trim(),
-  EXPERIMENT_GATES: EXPERIMENT_GATES_RAW.trim(),
-  AUTH_STATUS: AUTH_STATUS_RAW.trim(),
+  CONTROL_REQUEST_ELICITATION: load(SYNTHETIC, 'control-request-elicitation.jsonl'),
+  CONTROL_REQUEST_SHOW_NOTIFICATION: load(SYNTHETIC, 'control-request-show-notification.jsonl'),
+  STREAMLINED_TEXT: load(SYNTHETIC, 'streamlined-text.jsonl'),
+  STREAMLINED_TOOL_USE_SUMMARY: load(SYNTHETIC, 'streamlined-tool-use-summary.jsonl'),
+  CITATIONS_DELTA: load(SYNTHETIC, 'citations-delta.jsonl'),
+  THINKING_DELTA_LEGACY: load(SYNTHETIC, 'stream-thinking-delta-legacy.jsonl'),
+  TASK_NOTIFICATION: load(REAL, 'task-notification.jsonl'),
+  TASK_PROGRESS: load(REAL, 'task-progress.jsonl'),
+  CLI_ERROR: load(REAL, 'cli-error.jsonl'),
+  BRIDGE_STATE: load(SYNTHETIC, 'bridge-state.jsonl'),
+  COMPACT_BOUNDARY: load(SYNTHETIC, 'compact-boundary.jsonl'),
+  EXPERIMENT_GATES: load(SYNTHETIC, 'experiment-gates.jsonl'),
+  AUTH_STATUS: load(REAL, 'auth-status.jsonl'),
   // TODO: replace with real DB fixture when auth_url is captured from a real CLI session
-  AUTH_URL: AUTH_URL_RAW.trim(),
+  AUTH_URL: load(SYNTHETIC, 'auth-url.jsonl'),
   // TODO: replace with real DB fixture when an unknown event type is captured
-  UNKNOWN_EVENT: UNKNOWN_EVENT_RAW.trim(),
+  UNKNOWN_EVENT: load(SYNTHETIC, 'unknown-event.jsonl'),
   // TODO: replace with real DB fixture when mirror_error is captured
-  SYSTEM_MIRROR_ERROR: SYSTEM_MIRROR_ERROR_RAW.trim(),
-  CONTROL_SEED_READ_STATE: CONTROL_SEED_READ_STATE_RAW.trim(),
-  CONTROL_CHANNEL_ENABLE: CONTROL_CHANNEL_ENABLE_RAW.trim(),
+  SYSTEM_MIRROR_ERROR: load(SYNTHETIC, 'system-mirror-error.jsonl'),
+  CONTROL_SEED_READ_STATE: load(SYNTHETIC, 'control-seed-read-state.jsonl'),
+  CONTROL_CHANNEL_ENABLE: load(SYNTHETIC, 'control-channel-enable.jsonl'),
 } as const;
 
 // ── Segment builders ──
