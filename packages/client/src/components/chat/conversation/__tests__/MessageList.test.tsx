@@ -169,6 +169,28 @@ describe('MessageList', () => {
     expect(screen.getByText(/1 subagent message/)).toBeInTheDocument();
   });
 
+  it('groups consecutive tool_use from separate turns into one chip', async () => {
+    const { claude } = await setup();
+    await act(async () => {
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'tu1', name: 'Bash', input: { command: 'ls' } } }),
+      );
+      await claude.emit(s.toolResult('tu1', 'file1.ts'));
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'tu2', name: 'Bash', input: { command: 'pwd' } } }),
+      );
+      await claude.emit(s.toolResult('tu2', '/src'));
+      await claude.emit(
+        s.assistant({ toolUse: { id: 'tu3', name: 'Bash', input: { command: 'cat' } } }),
+      );
+      await claude.emit(s.toolResult('tu3', 'content'));
+      await claude.emit(s.result());
+    });
+    // should show ONE chip "Bash ×3", not three separate chips
+    expect(screen.getByText('Bash')).toBeInTheDocument();
+    expect(screen.getByText('×3')).toBeInTheDocument();
+  });
+
   it('shows all messages when searchQuery is empty', async () => {
     await setupWithMessages({ searchQuery: '' });
     expect(screen.getByText('Hello')).toBeInTheDocument();

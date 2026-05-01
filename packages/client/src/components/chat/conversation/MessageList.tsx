@@ -14,10 +14,13 @@ import {
   useMessageVisibility,
 } from '../../../contexts/channel';
 import { filterTree } from '../../../utils/filter-tree';
+import { groupForTimeline } from '../../../utils/group-for-timeline';
 import { isMessageVisible } from '../../../utils/isMessageVisible';
 import { buildMessageTree, type MessageNode } from '../../../utils/message-tree';
 import { SpinnerVerb } from '../SpinnerVerb';
-import { MessageNodeList } from './MessageNodeList';
+import { ChatMessage } from './ChatMessage';
+import { CollapsibleTimeline } from './CollapsibleTimeline';
+import { SubagentChildren } from './SubagentChildren';
 
 const SCROLL_THRESHOLD_PX = 50;
 
@@ -46,6 +49,12 @@ function scrollToEnd(
 function collectIds(node: MessageNode, topIndex: number, map: Map<string, number>) {
   map.set(node.message.id, topIndex);
   for (const child of node.children) collectIds(child, topIndex, map);
+}
+
+function groupKey(group: ReturnType<typeof groupForTimeline>[number]): string {
+  return group.kind === 'timeline'
+    ? (group.nodes[0]?.message.id ?? 'timeline')
+    : group.node.message.id;
 }
 
 export const MessageList: React.ForwardRefExoticComponent<
@@ -123,16 +132,22 @@ export const MessageList: React.ForwardRefExoticComponent<
     return q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree;
   }, [messages, enabledTypes, unknownTypes, q]);
 
+  const displayGroups = useMemo(() => groupForTimeline(tree, null), [tree]);
+
   const idToIndex = useMemo(() => {
     const map = new Map<string, number>();
-    tree.forEach((node, i) => {
-      collectIds(node, i, map);
+    displayGroups.forEach((group, i) => {
+      if (group.kind === 'timeline') {
+        for (const node of group.nodes) collectIds(node, i, map);
+      } else {
+        collectIds(group.node, i, map);
+      }
     });
     return map;
-  }, [tree]);
+  }, [displayGroups]);
 
   const virtualizer = useVirtualizer({
-    count: tree.length,
+    count: displayGroups.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 80,
     overscan: 5,
@@ -226,13 +241,11 @@ export const MessageList: React.ForwardRefExoticComponent<
               }}
             >
               {virtualItems.map((item) => {
-                const node = tree[item.index];
-                if (!node) return null;
-                const prevRole =
-                  item.index > 0 ? (tree[item.index - 1]?.message.role ?? null) : null;
+                const group = displayGroups[item.index];
+                if (!group) return null;
                 return (
                   <div
-                    key={node.message.id}
+                    key={groupKey(group)}
                     data-index={item.index}
                     ref={virtualizer.measureElement}
                     style={{
@@ -243,14 +256,37 @@ export const MessageList: React.ForwardRefExoticComponent<
                       transform: `translateY(${item.start}px)`,
                     }}
                   >
-                    <MessageNodeList
-                      nodes={[node]}
-                      prevRole={prevRole}
-                      onRewind={onRewind}
-                      onFork={onFork}
-                      onStopTask={onStopTask}
-                      onDiffRespond={onDiffRespond}
-                    />
+                    {group.kind === 'timeline' ? (
+                      <CollapsibleTimeline
+                        nodes={group.nodes}
+                        onRewind={onRewind}
+                        onFork={onFork}
+                        onStopTask={onStopTask}
+                        onDiffRespond={onDiffRespond}
+                      />
+                    ) : (
+                      <div data-message-id={group.node.message.id} className="animate-fade-in py-2">
+                        <ChatMessage
+                          message={group.node.message}
+                          showAvatar={group.node.message.role !== group.prevRole}
+                          onRewind={onRewind}
+                          onFork={onFork}
+                          onDiffRespond={onDiffRespond}
+                        />
+                        {group.node.children.length > 0 && (
+                          <SubagentChildren
+                            nodes={group.node.children}
+                            onStopTask={onStopTask}
+                            onDiffRespond={onDiffRespond}
+                            parentToolId={
+                              group.node.message.type === 'tool_use'
+                                ? group.node.message.meta.toolId
+                                : undefined
+                            }
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
