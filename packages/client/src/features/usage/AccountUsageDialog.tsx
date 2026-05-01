@@ -7,6 +7,7 @@ import {
 } from '@code-quest/shared';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/utils/cn';
+import { DEFAULT_USAGE_TIERS, getTier } from '@/utils/model-utils';
 import { openUrl } from '@/utils/open-url';
 import {
   HOURS_PER_DAY,
@@ -30,8 +31,6 @@ function formatResetTime(resetsAt: string): string | null {
     return null;
   }
 }
-
-import { DEFAULT_USAGE_TIERS, getTier } from '@/utils/model-utils';
 
 interface AccountUsageDialogProps {
   open: boolean;

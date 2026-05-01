@@ -1,8 +1,6 @@
 import { basename } from '@/utils/basename';
 import type { MessageNode } from '@/utils/message-tree';
 
-// ── Tool identity ──────────────────────────────────────────────────────────
-
 export const AGENT_TOOLS: Set<string> = new Set(['Task', 'Agent']);
 
 const MCP_PREFIX = 'mcp__';
@@ -15,8 +13,6 @@ export function parseMcpToolName(name: string): { server: string; tool: string }
   const parts = name.slice(MCP_PREFIX.length).split('__');
   return { server: parts[0] ?? name, tool: parts.slice(1).join('__') || name };
 }
-
-// ── Tool header info ───────────────────────────────────────────────────────
 
 type ToolInput = Record<string, unknown>;
 
@@ -75,8 +71,6 @@ export function getToolHeaderInfo(toolName: string, input: ToolInput): ToolHeade
       return isMcpTool(toolName) ? mcpHeader(toolName, input) : { name: toolName };
   }
 }
-
-// ── Timeline grouping ──────────────────────────────────────────────────────
 
 export type TimelineRun =
   | { kind: 'grouped'; nodes: MessageNode[] }

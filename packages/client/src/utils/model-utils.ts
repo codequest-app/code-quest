@@ -1,22 +1,26 @@
-import { type EffortLevel, effortLevelSchema, type ModelInfo } from '@code-quest/shared';
+import {
+  type EffortLevel,
+  effortLevelSchema,
+  type ModelInfo,
+  type UsageQuota,
+  type UsageQuotaTier,
+  usageQuotaSchema,
+  usageQuotaTierSchema,
+} from '@code-quest/shared';
 
 interface ModelDisplayInfo {
   displayName: string;
   subLabel: string;
 }
 
-/** Find model by exact value match, then substring match (strips [context] suffix). */
 export function findModel(id: string, models: ModelInfo[]): ModelInfo | undefined {
-  // Exact match
   const exact = models.find((m) => m.value === id);
   if (exact) return exact;
-  // Strip context window suffix like [1m] for matching
   const baseId = id.replace(/\[.*\]$/, '');
   if (baseId !== id) {
     const stripped = models.find((m) => m.value === baseId);
     if (stripped) return stripped;
   }
-  // Substring: id contains value (e.g. "claude-opus-4-6" contains "opus")
   return models.find((m) => m.value.length > 2 && id.includes(m.value));
 }
 
@@ -70,13 +74,6 @@ export function isThinkingActive(level: string | undefined | null): boolean {
   return !!level && level !== 'off' && level !== 'disabled';
 }
 
-import {
-  type UsageQuota,
-  type UsageQuotaTier,
-  usageQuotaSchema,
-  usageQuotaTierSchema,
-} from '@code-quest/shared';
-
 export const DEFAULT_USAGE_TIERS: readonly [
   { readonly key: 'five_hour'; readonly label: 'Session (5hr)'; readonly shortLabel: '5hr' },
   { readonly key: 'seven_day'; readonly label: 'Weekly (7 day)'; readonly shortLabel: '7day' },
@@ -93,7 +90,6 @@ export const DEFAULT_USAGE_TIERS: readonly [
 
 type TierKey = keyof typeof usageQuotaSchema.shape;
 
-/** Type-safe tier lookup — avoids `as Record<string, unknown>` cast. */
 export function getTier(usage: UsageQuota, key: string): UsageQuotaTier | undefined {
   const value = key in usageQuotaSchema.shape ? usage[key as TierKey] : undefined;
   return usageQuotaTierSchema.safeParse(value).data;

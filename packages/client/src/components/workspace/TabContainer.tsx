@@ -10,6 +10,9 @@ import { useSession } from '@/contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
+import { ChatPanel } from '../chat/ChatPanel';
+import { EmptyState } from './EmptyState';
+import { TabBar } from './TabBar';
 
 function findWorktreeByCwd(
   listing: Record<string, WorktreeInfo[] | 'not_a_repo'>,
@@ -23,10 +26,6 @@ function findWorktreeByCwd(
   }
   return null;
 }
-
-import { ChatPanel } from '../chat/ChatPanel';
-import { EmptyState } from './EmptyState';
-import { TabBar } from './TabBar';
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'launchOnMount'> {
   channelId: string;

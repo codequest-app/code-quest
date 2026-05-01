@@ -12,15 +12,11 @@ export function buildMessageTree(messages: Message[]): MessageNode[] {
   for (const message of messages) {
     const node: MessageNode = { message, children: [] };
 
-    // 1. Register tool_use nodes for later lookup
     if (message.type === 'tool_use') {
       toolUseNodes.set(message.meta.toolId, node);
     }
 
-    // 2. Merge tool_result into its parent tool_use (not a separate node)
     if (mergeToolResult(message, toolUseNodes)) continue;
-
-    // 3. Nest subagent children under their parent tool_use
     if (nestChild(node, toolUseNodes)) continue;
 
     roots.push(node);
