@@ -19,18 +19,18 @@ type Story = StoryObj<typeof meta>;
 
 export const CompletedSession: Story = {
   args: { title: 'Fix login bug' },
-  decorators: [withScenario({ messages: makeLongConversation() })],
+  decorators: [withScenario(makeLongConversation())],
   play: expectTextbox,
 };
 
 export const Processing: Story = {
   args: { title: 'Search TODOs' },
-  decorators: [withScenario({ messages: makeProcessingWithTool(), status: 'processing' })],
+  decorators: [withScenario({ ...makeProcessingWithTool(), status: 'processing' })],
   play: expectTextbox,
 };
 
 export const Disconnected: Story = {
   args: { title: 'File listing' },
-  decorators: [withScenario({ messages: makeDisconnectedSession(), status: 'disconnected' })],
+  decorators: [withScenario({ ...makeDisconnectedSession(), status: 'disconnected' })],
   play: expectTextbox,
 };

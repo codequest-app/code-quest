@@ -20,24 +20,24 @@ type Story = StoryObj<typeof meta>;
 
 export const ReadAndGrep: Story = {
   args: { title: 'Find login function' },
-  decorators: [withScenario({ messages: makeReadAndGrep() })],
+  decorators: [withScenario(makeReadAndGrep())],
   play: expectTextbox,
 };
 
 export const EditWithDiff: Story = {
   args: { title: 'Add null-check' },
-  decorators: [withScenario({ messages: makeEditWithDiff() })],
+  decorators: [withScenario(makeEditWithDiff())],
   play: expectTextbox,
 };
 
 export const BashExecution: Story = {
   args: { title: 'Run tests' },
-  decorators: [withScenario({ messages: makeBashExecution() })],
+  decorators: [withScenario(makeBashExecution())],
   play: expectTextbox,
 };
 
 export const MultiToolChain: Story = {
   args: { title: 'Fix the login bug' },
-  decorators: [withScenario({ messages: makeLongConversation() })],
+  decorators: [withScenario(makeLongConversation())],
   play: expectTextbox,
 };

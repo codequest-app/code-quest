@@ -28,7 +28,7 @@ export const HeavyToolUse: Story = {
   decorators: [
     withStoryChannel({
       className: SCENARIO_CLASS,
-      messages: { messages: makeHeavyToolUseConversation() },
+      messages: makeHeavyToolUseConversation(),
     }),
   ],
   args: { title: 'Migrate old API' },
@@ -38,7 +38,7 @@ export const WithSkillInvocation: Story = {
   decorators: [
     withStoryChannel({
       className: SCENARIO_CLASS,
-      messages: { messages: makeSkillInvocationConversation() },
+      messages: makeSkillInvocationConversation(),
     }),
   ],
   args: { title: 'Validate Zod schema' },
@@ -48,7 +48,7 @@ export const SubagentRunning: Story = {
   decorators: [
     withStoryChannel({
       className: SCENARIO_CLASS,
-      messages: { messages: makeSubagentRunning() },
+      messages: makeSubagentRunning(),
     }),
   ],
   args: { title: 'Analyse protocol.md' },
@@ -58,7 +58,7 @@ export const SubagentDone: Story = {
   decorators: [
     withStoryChannel({
       className: SCENARIO_CLASS,
-      messages: { messages: makeSubagentDone() },
+      messages: makeSubagentDone(),
     }),
   ],
   args: { title: 'Analyse protocol.md' },
