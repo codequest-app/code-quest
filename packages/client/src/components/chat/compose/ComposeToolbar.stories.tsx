@@ -4,13 +4,13 @@ import { withStoryChannel } from '../../../test/story-decorator';
 import { ComposeToolbar } from './ComposeToolbar';
 
 // ComposeToolbar opens CommandMenu upward — position at bottom of screen so it has room to expand.
+const CLASS = 'flex flex-col h-screen bg-bg text-text justify-end items-center p-4';
+
 function ComposeToolbarStory(): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   return (
-    <div className="flex flex-col h-screen bg-bg text-text justify-end items-center p-4">
-      <div ref={ref} className="w-2xl rounded-xl bg-surface border border-border">
-        <ComposeToolbar containerRef={ref} onAttachFile={() => {}} />
-      </div>
+    <div ref={ref} className="w-2xl rounded-xl bg-surface border border-border">
+      <ComposeToolbar containerRef={ref} onAttachFile={() => {}} />
     </div>
   );
 }
@@ -24,14 +24,16 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Idle: Story = {
-  decorators: [withStoryChannel({ config: { permissionMode: 'normal' } })],
+  decorators: [withStoryChannel({ config: { permissionMode: 'normal' }, className: CLASS })],
 };
 export const Processing: Story = {
-  decorators: [withStoryChannel({ messages: { status: 'processing' } })],
+  decorators: [withStoryChannel({ messages: { status: 'processing' }, className: CLASS })],
 };
 export const AcceptEdits: Story = {
-  decorators: [withStoryChannel({ config: { permissionMode: 'acceptEdits' } })],
+  decorators: [withStoryChannel({ config: { permissionMode: 'acceptEdits' }, className: CLASS })],
 };
 export const WithUsage: Story = {
-  decorators: [withStoryChannel({ messages: { stats: { inputTokens: 120000 } } })],
+  decorators: [
+    withStoryChannel({ messages: { stats: { inputTokens: 120000 } }, className: CLASS }),
+  ],
 };
