@@ -51,9 +51,10 @@ export function CollapsibleBlock({
           {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
           {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
           {labelSuffix}
-          <span className="text-xs opacity-50 transition-transform group-data-[state=open]:rotate-90">
-            ▶
-          </span>
+          <ChevronRightIcon
+            aria-hidden="true"
+            className="w-3 h-3 opacity-50 transition-transform group-data-[state=open]:rotate-90"
+          />
         </button>
       </Collapsible.Trigger>
       <Collapsible.Content>
