@@ -169,7 +169,7 @@ export const systemTaskStartedSchema: Loose<{
   task_id: Opt<Str>;
   tool_use_id: Opt<Str>;
   description: Opt<Str>;
-  task_type: Opt<Str>;
+  task_type: Opt<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
   uuid: Opt<Str>;
   session_id: Opt<Str>;
 }> = z.looseObject({
@@ -178,7 +178,7 @@ export const systemTaskStartedSchema: Loose<{
   task_id: z.string().optional(),
   tool_use_id: z.string().optional(),
   description: z.string().optional(),
-  task_type: z.string().optional(),
+  task_type: z.enum(['local_agent', 'subagent']).optional(),
   uuid: z.string().optional(),
   session_id: z.string().optional(),
 });

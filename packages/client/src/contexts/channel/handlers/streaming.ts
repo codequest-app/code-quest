@@ -219,7 +219,11 @@ export function wireStreamingHandlers({
       role: 'assistant',
       type: 'tool_use',
       content: block.toolName,
-      meta: { toolId: block.toolId, input: block.input },
+      meta: {
+        toolId: block.toolId,
+        input: block.input,
+        ...(block.model ? { model: block.model } : {}),
+      },
       parentToolUseId,
     });
     setState((prev) => ({ ...prev, messages: [...prev.messages, toolMsg] }));

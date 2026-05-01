@@ -1,4 +1,4 @@
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem, type Virtualizer } from '@tanstack/react-virtual';
 import {
   forwardRef,
   type RefObject,
@@ -13,11 +13,15 @@ import {
   useChannelMessages,
   useMessageVisibility,
 } from '../../../contexts/channel';
+import type { ForkFn, RewindFn } from '../../../types/ui';
 import { filterTree } from '../../../utils/filter-tree';
+import { groupForTimeline } from '../../../utils/group-for-timeline';
 import { isMessageVisible } from '../../../utils/isMessageVisible';
 import { buildMessageTree, type MessageNode } from '../../../utils/message-tree';
 import { SpinnerVerb } from '../SpinnerVerb';
-import { MessageNodeList } from './MessageNodeList';
+import { ChatMessage } from './ChatMessage';
+import { CollapsibleTimeline } from './CollapsibleTimeline';
+import { SubagentChildren } from './SubagentChildren';
 
 const SCROLL_THRESHOLD_PX = 50;
 
@@ -46,6 +50,70 @@ function scrollToEnd(
 function collectIds(node: MessageNode, topIndex: number, map: Map<string, number>) {
   map.set(node.message.id, topIndex);
   for (const child of node.children) collectIds(child, topIndex, map);
+}
+
+type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
+
+function VirtualGroupItem({
+  group,
+  item,
+  virtualizer,
+  onRewind,
+  onFork,
+  onStopTask,
+  onDiffRespond,
+}: {
+  group: DisplayGroup;
+  item: VirtualItem;
+  virtualizer: Pick<Virtualizer<HTMLDivElement, HTMLDivElement>, 'measureElement'>;
+  onRewind?: RewindFn;
+  onFork?: ForkFn;
+  onStopTask?: (taskId: string) => void;
+  onDiffRespond?: (toolId: string, accepted: boolean) => void;
+}): React.JSX.Element {
+  return (
+    <div
+      data-index={item.index}
+      ref={virtualizer.measureElement}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        transform: `translateY(${item.start}px)`,
+      }}
+    >
+      {group.kind === 'timeline' ? (
+        <CollapsibleTimeline
+          nodes={group.nodes}
+          onRewind={onRewind}
+          onFork={onFork}
+          onStopTask={onStopTask}
+          onDiffRespond={onDiffRespond}
+        />
+      ) : (
+        <div data-message-id={group.node.message.id} className="animate-fade-in py-2">
+          <ChatMessage
+            message={group.node.message}
+            showAvatar={group.node.message.role !== group.prevRole}
+            onRewind={onRewind}
+            onFork={onFork}
+            onDiffRespond={onDiffRespond}
+          />
+          {group.node.children.length > 0 && (
+            <SubagentChildren
+              nodes={group.node.children}
+              onStopTask={onStopTask}
+              onDiffRespond={onDiffRespond}
+              parentToolId={
+                group.node.message.type === 'tool_use' ? group.node.message.meta.toolId : undefined
+              }
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const MessageList: React.ForwardRefExoticComponent<
@@ -114,25 +182,34 @@ export const MessageList: React.ForwardRefExoticComponent<
   }, [messages]);
 
   const q = searchQuery.toLowerCase();
-  const tree = useMemo(() => {
+  const visibleTree = useMemo(() => {
     const fullTree = buildMessageTree(messages);
-    const visibleTree = filterTree(
+    return filterTree(
       fullTree,
       (m) => isMessageVisible(m, enabledTypes) || unknownTypes.has(m.type),
     );
-    return q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree;
-  }, [messages, enabledTypes, unknownTypes, q]);
+  }, [messages, enabledTypes, unknownTypes]);
+  const tree = useMemo(
+    () => (q ? filterTree(visibleTree, (m) => m.content.toLowerCase().includes(q)) : visibleTree),
+    [visibleTree, q],
+  );
+
+  const displayGroups = useMemo(() => groupForTimeline(tree, null), [tree]);
 
   const idToIndex = useMemo(() => {
     const map = new Map<string, number>();
-    tree.forEach((node, i) => {
-      collectIds(node, i, map);
+    displayGroups.forEach((group, i) => {
+      if (group.kind === 'timeline') {
+        for (const node of group.nodes) collectIds(node, i, map);
+      } else {
+        collectIds(group.node, i, map);
+      }
     });
     return map;
-  }, [tree]);
+  }, [displayGroups]);
 
   const virtualizer = useVirtualizer({
-    count: tree.length,
+    count: displayGroups.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 80,
     overscan: 5,
@@ -226,32 +303,23 @@ export const MessageList: React.ForwardRefExoticComponent<
               }}
             >
               {virtualItems.map((item) => {
-                const node = tree[item.index];
-                if (!node) return null;
-                const prevRole =
-                  item.index > 0 ? (tree[item.index - 1]?.message.role ?? null) : null;
+                const group = displayGroups[item.index];
+                if (!group) return null;
                 return (
-                  <div
-                    key={node.message.id}
-                    data-index={item.index}
-                    ref={virtualizer.measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${item.start}px)`,
-                    }}
-                  >
-                    <MessageNodeList
-                      nodes={[node]}
-                      prevRole={prevRole}
-                      onRewind={onRewind}
-                      onFork={onFork}
-                      onStopTask={onStopTask}
-                      onDiffRespond={onDiffRespond}
-                    />
-                  </div>
+                  <VirtualGroupItem
+                    key={
+                      group.kind === 'timeline'
+                        ? (group.nodes[0]?.message.id ?? 'timeline')
+                        : group.node.message.id
+                    }
+                    group={group}
+                    item={item}
+                    virtualizer={virtualizer}
+                    onRewind={onRewind}
+                    onFork={onFork}
+                    onStopTask={onStopTask}
+                    onDiffRespond={onDiffRespond}
+                  />
                 );
               })}
             </div>

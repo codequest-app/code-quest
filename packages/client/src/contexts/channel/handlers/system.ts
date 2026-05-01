@@ -1,5 +1,6 @@
+import type { ToolUseMeta } from '@code-quest/shared';
 import type { ChannelState } from '@/types/chat';
-import { addMessage, msg } from '@/utils/message';
+import { addMessage, msg, patchMeta } from '@/utils/message';
 import type { Payload } from './guard';
 
 // ── On handlers ──
@@ -53,12 +54,58 @@ function onHookResponse(state: ChannelState, p: Payload<'system:hook_response'>)
   };
 }
 
+function patchToolUseMeta(
+  state: ChannelState,
+  toolUseId: string,
+  patch: Partial<ToolUseMeta>,
+): ChannelState {
+  const src = state.messages;
+  let idx = src.length - 1;
+  while (idx >= 0) {
+    const m = src[idx];
+    if (m?.type === 'tool_use' && m.meta.toolId === toolUseId) break;
+    idx--;
+  }
+  if (idx < 0) return state;
+  const target = src[idx];
+  if (!target) return state;
+  const messages = [...src];
+  messages[idx] = patchMeta(target, patch);
+  return { ...state, messages };
+}
+
 function onTaskStarted(state: ChannelState, p: Payload<'system:task_started'>): ChannelState {
-  return addMessage(state, {
+  const withMessage = addMessage(state, {
     role: 'system',
     type: 'task_started',
     content: p.description,
     meta: { taskType: p.taskType },
+  });
+  if (!p.toolUseId) return withMessage;
+  return patchToolUseMeta(withMessage, p.toolUseId, {
+    taskStatus: 'running',
+    taskType: p.taskType,
+  });
+}
+
+function onTaskProgress(state: ChannelState, p: Payload<'system:task_progress'>): ChannelState {
+  if (!p.toolUseId) return state;
+  return patchToolUseMeta(state, p.toolUseId, {
+    taskStatus: 'running',
+    lastToolName: p.lastToolName,
+  });
+}
+
+function onTaskNotification(
+  state: ChannelState,
+  p: Payload<'system:task_notification'>,
+): ChannelState {
+  if (!p.toolUseId || !p.status) return state;
+  const taskStatus: ToolUseMeta['taskStatus'] = p.status === 'failed' ? 'failed' : 'completed';
+  return patchToolUseMeta(state, p.toolUseId, {
+    taskStatus,
+    taskSummary: p.summary,
+    ...(p.usage ? { taskUsage: p.usage } : {}),
   });
 }
 
@@ -91,6 +138,8 @@ export const systemHandlerOn: {
   'system:hook_started': typeof onHookStarted;
   'system:hook_response': typeof onHookResponse;
   'system:task_started': typeof onTaskStarted;
+  'system:task_progress': typeof onTaskProgress;
+  'system:task_notification': typeof onTaskNotification;
   'system:api_retry': typeof onApiRetry;
   'system:rate_limit': typeof onRateLimit;
   'error:message': typeof onErrorMessage;
@@ -99,6 +148,8 @@ export const systemHandlerOn: {
   'system:hook_started': onHookStarted,
   'system:hook_response': onHookResponse,
   'system:task_started': onTaskStarted,
+  'system:task_progress': onTaskProgress,
+  'system:task_notification': onTaskNotification,
   'system:api_retry': onApiRetry,
   'system:rate_limit': onRateLimit,
   'error:message': onErrorMessage,

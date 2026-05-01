@@ -6,7 +6,8 @@
   "description": "Summoner — AI provider session abstraction with stream parsing and EventEmitter API",
   "exports": {
     ".": "./src/index.ts",
-    "./test": "./src/test/index.ts"
+    "./test": "./src/test/index.ts",
+    "./test-browser": "./src/test/index-browser.ts"
   },
   "scripts": {
     "test": "vitest run",

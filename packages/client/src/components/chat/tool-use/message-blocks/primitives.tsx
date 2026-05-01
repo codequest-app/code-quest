@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import Ansi from 'ansi-to-react';
 import { copyToClipboard } from '../../../../utils/clipboard';
@@ -10,7 +11,12 @@ export function RotatableChevron({
   open?: boolean;
   className?: string;
 }): React.JSX.Element {
-  return <span className={cn('transition-transform', open && 'rotate-90', className)}>▶</span>;
+  return (
+    <ChevronRightIcon
+      aria-hidden="true"
+      className={cn('w-3 h-3 transition-transform', open && 'rotate-90', className)}
+    />
+  );
 }
 
 export const CODE_BLOCK_CLASS =
@@ -21,6 +27,7 @@ export function CollapsibleBlock({
   label,
   labelDetail,
   labelRange,
+  labelSuffix,
   defaultOpen,
   children,
 }: {
@@ -28,6 +35,7 @@ export function CollapsibleBlock({
   label: string;
   labelDetail?: string;
   labelRange?: string;
+  labelSuffix?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }): React.JSX.Element {
@@ -42,9 +50,11 @@ export function CollapsibleBlock({
           <span className="font-semibold text-text-bright">{label}</span>
           {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
           {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
-          <span className="text-xs opacity-50 transition-transform group-data-[state=open]:rotate-90">
-            ▶
-          </span>
+          {labelSuffix}
+          <ChevronRightIcon
+            aria-hidden="true"
+            className="w-3 h-3 opacity-50 transition-transform group-data-[state=open]:rotate-90"
+          />
         </button>
       </Collapsible.Trigger>
       <Collapsible.Content>

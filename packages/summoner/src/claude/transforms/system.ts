@@ -86,7 +86,11 @@ function handleHookResponse(raw: SystemHookResponse): ClientMessage {
 function handleTaskStarted(raw: SystemTaskStarted): ClientMessage {
   return {
     name: 'system:task_started',
-    payload: { description: raw.description ?? '', taskType: raw.task_type },
+    payload: {
+      description: raw.description ?? '',
+      taskType: raw.task_type,
+      toolUseId: raw.tool_use_id,
+    },
   };
 }
 
@@ -198,10 +202,8 @@ const HANDLERS: Record<string, SystemHandler> = {
 export function transformSystem(raw: ProtocolMessage): ClientMessage | null {
   const subtype = typeof raw.subtype === 'string' ? raw.subtype : undefined;
 
-  if (subtype && subtype in HANDLERS) {
-    const handler = HANDLERS[subtype as keyof typeof HANDLERS];
-    if (handler) return handler(raw);
-  }
+  const handler = subtype && HANDLERS[subtype];
+  if (handler) return handler(raw);
 
   // Other system subtypes → raw
   return {

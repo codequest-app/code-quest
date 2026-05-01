@@ -14,6 +14,51 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses api-retry.jsonl:1 1`]
 }
 `;
 
+exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-agent.jsonl:1 1`] = `
+{
+  "message": {
+    "content": [
+      {
+        "caller": {
+          "type": "direct",
+        },
+        "id": "toolu_test_agent",
+        "input": {
+          "description": "Explore project overview",
+          "prompt": "Explore the project structure and provide an overview.",
+          "subagent_type": "Explore",
+        },
+        "name": "Agent",
+        "type": "tool_use",
+      },
+    ],
+    "context_management": null,
+    "id": "msg_test_agent",
+    "model": "claude-opus-4-6",
+    "role": "assistant",
+    "stop_reason": null,
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 2380,
+        "ephemeral_5m_input_tokens": 0,
+      },
+      "cache_creation_input_tokens": 2380,
+      "cache_read_input_tokens": 13731,
+      "inference_geo": "not_available",
+      "input_tokens": 3,
+      "output_tokens": 2,
+      "service_tier": "standard",
+    },
+  },
+  "parent_tool_use_id": null,
+  "session_id": "test-session-id",
+  "type": "assistant",
+  "uuid": "test-uuid-agent",
+}
+`;
+
 exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-text.jsonl:1 1`] = `
 {
   "message": {
@@ -60,7 +105,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses assistant-tool.jsonl:
         },
         "id": "toolu_01LJ1sbVGgcxBDmZmLXDqEbp",
         "input": {
-          "file_path": "/Users/user/WebstormProjects/cc-office/docs/protocol.md",
+          "file_path": "/Users/user/project/docs/protocol.md",
         },
         "name": "Read",
         "type": "tool_use",
@@ -1809,7 +1854,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-get-context-u
       "mcpTools": [],
       "memoryFiles": [
         {
-          "path": "/Users/user/.claude/projects/-Users-user-WebstormProjects-cc-office/memory/MEMORY.md",
+          "path": "/Users/user/.claude/projects/-Users-user-Projects-cc-office/memory/MEMORY.md",
           "tokens": 587,
           "type": "AutoMem",
         },
@@ -2438,7 +2483,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request.jsonl
   "request": {
     "decision_reason": "Path is outside allowed working directories",
     "input": {
-      "file_path": "/Users/user/WebstormProjects/cc-office/docs/protocol.md",
+      "file_path": "/Users/user/project/docs/protocol.md",
     },
     "permission_suggestions": [
       {
@@ -2446,7 +2491,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request.jsonl
         "destination": "session",
         "rules": [
           {
-            "ruleContent": "//Users/user/WebstormProjects/cc-office/docs/**",
+            "ruleContent": "//Users/user/project/docs/**",
             "toolName": "Read",
           },
         ],
@@ -2506,7 +2551,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-bash.
   "request": {
     "agent_id": "a69185b60bed65ea3",
     "input": {
-      "command": "find /Users/user/WebstormProjects/cc-office/packages/client/src -type f -name '*.ts' -o -name '*.tsx' -o -name '*.vue' | head -80",
+      "command": "find /Users/user/project/packages/client/src -type f -name '*.ts' -o -name '*.tsx' -o -name '*.vue' | head -80",
       "description": "List frontend source files",
     },
     "permission_suggestions": [
@@ -2515,7 +2560,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses control-request-bash.
         "destination": "session",
         "rules": [
           {
-            "ruleContent": "//Users/user/WebstormProjects/cc-office/packages/client/src/**",
+            "ruleContent": "//Users/user/project/packages/client/src/**",
             "toolName": "Read",
           },
         ],
@@ -2719,7 +2764,7 @@ exports[`ClaudeProtocol.parseLine (real fixtures) > parses init.jsonl:1 1`] = `
   ],
   "apiKeySource": "none",
   "claude_code_version": "2.1.63",
-  "cwd": "/Users/user/WebstormProjects/cc-office/packages/server",
+  "cwd": "/Users/user/project/packages/server",
   "fast_mode_state": "off",
   "mcp_servers": [
     {
@@ -4145,26 +4190,5 @@ exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses unknown-event.js
   "session_id": "fake-session-unknown",
   "type": "some_future_type",
   "uuid": "fake-unknown-event-1",
-}
-`;
-
-exports[`ClaudeProtocol.parseLine (synthetic fixtures) > parses user-system-reminder.jsonl:1 1`] = `
-{
-  "isSynthetic": true,
-  "message": {
-    "content": [
-      {
-        "text": "<system-reminder>
-The task tools haven't been used recently. Consider using TaskCreate if relevant.
-</system-reminder>",
-        "type": "text",
-      },
-    ],
-    "role": "user",
-  },
-  "parent_tool_use_id": null,
-  "session_id": "synthetic-reminder",
-  "type": "user",
-  "uuid": "synthetic-reminder-uuid-1",
 }
 `;

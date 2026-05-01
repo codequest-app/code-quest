@@ -1,3 +1,4 @@
+import { CheckIcon } from '@heroicons/react/24/outline';
 import * as Switch from '@radix-ui/react-switch';
 import { cn } from '../../utils/cn';
 import { focusRing } from './_tokens';
@@ -16,23 +17,11 @@ const thumbClass = (isOn: boolean) =>
   );
 
 const Check = () => (
-  <svg
+  <CheckIcon
     aria-hidden="true"
-    width="8"
-    height="8"
-    viewBox="0 0 10 10"
-    fill="none"
-    className="absolute inset-0 m-auto"
-  >
-    <path
-      d="M2 5L4 7L8 3"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="text-toggle"
-    />
-  </svg>
+    className="absolute inset-0 m-auto w-2 h-2 text-toggle"
+    strokeWidth={2.5}
+  />
 );
 
 /** When `onClick` is provided renders a Radix Switch (role="switch", keyboard

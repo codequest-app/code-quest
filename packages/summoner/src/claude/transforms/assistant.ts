@@ -27,6 +27,7 @@ export function transformAssistant(raw: AssistantMessage): ClientMessage | null 
           toolId: String(b.id ?? ''),
           toolName: String(b.name ?? ''),
           input: b.input,
+          ...(message.model ? { model: message.model } : {}),
         });
         break;
     }

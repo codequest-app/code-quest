@@ -8,4 +8,4 @@ export { FakeProcessHandle, FakeProcessProvider } from './fake-process-provider.
 export { createFakeSocket, type FakeSocket } from './fake-socket.ts';
 export { createFakeSummoner, FakeSummoner, type ServerConnector } from './fake-summoner.ts';
 export { FakeWatchService } from './fake-watch-service.ts';
-export { resetSeq, segments } from './segments.ts';
+export { resetSeq, segments } from './segments-node.ts';

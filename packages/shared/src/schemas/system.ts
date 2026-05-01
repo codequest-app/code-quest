@@ -1,6 +1,17 @@
 import { z } from 'zod';
 import { rateLimitInfoSchema, remoteControlStateInfoSchema } from './settings.ts';
 
+// ── Token usage ──
+
+export const tokenUsageSchema: z.ZodObject<
+  { input_tokens: z.ZodOptional<z.ZodNumber>; output_tokens: z.ZodOptional<z.ZodNumber> },
+  z.core.$strip
+> = z.object({
+  input_tokens: z.number().optional(),
+  output_tokens: z.number().optional(),
+});
+export type TokenUsage = z.infer<typeof tokenUsageSchema>;
+
 // ── Model info ──
 
 export const modelInfoSchema: z.ZodObject<
@@ -101,12 +112,18 @@ export const systemHookResponsePayloadSchema: z.ZodObject<
 export type SystemHookResponsePayload = z.infer<typeof systemHookResponsePayloadSchema>;
 
 export const systemTaskStartedPayloadSchema: z.ZodObject<
-  { channelId: z.ZodString; description: z.ZodString; taskType: z.ZodOptional<z.ZodString> },
+  {
+    channelId: z.ZodString;
+    description: z.ZodString;
+    taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
+    toolUseId: z.ZodOptional<z.ZodString>;
+  },
   z.core.$strip
 > = z.object({
   channelId: z.string(),
   description: z.string(),
-  taskType: z.string().optional(),
+  taskType: z.enum(['local_agent', 'subagent']).optional(),
+  toolUseId: z.string().optional(),
 });
 export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;
 
@@ -117,7 +134,7 @@ export const systemTaskProgressPayloadSchema: z.ZodObject<
     toolUseId: z.ZodOptional<z.ZodString>;
     description: z.ZodOptional<z.ZodString>;
     lastToolName: z.ZodOptional<z.ZodString>;
-    usage: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    usage: z.ZodOptional<typeof tokenUsageSchema>;
   },
   z.core.$strip
 > = z.object({
@@ -126,7 +143,7 @@ export const systemTaskProgressPayloadSchema: z.ZodObject<
   toolUseId: z.string().optional(),
   description: z.string().optional(),
   lastToolName: z.string().optional(),
-  usage: z.record(z.string(), z.unknown()).optional(),
+  usage: tokenUsageSchema.optional(),
 });
 export type SystemTaskProgressPayload = z.infer<typeof systemTaskProgressPayloadSchema>;
 
@@ -138,7 +155,7 @@ export const systemTaskNotificationPayloadSchema: z.ZodObject<
     status: z.ZodOptional<z.ZodString>;
     outputFile: z.ZodOptional<z.ZodString>;
     summary: z.ZodOptional<z.ZodString>;
-    usage: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    usage: z.ZodOptional<typeof tokenUsageSchema>;
   },
   z.core.$strip
 > = z.object({
@@ -148,7 +165,7 @@ export const systemTaskNotificationPayloadSchema: z.ZodObject<
   status: z.string().optional(),
   outputFile: z.string().optional(),
   summary: z.string().optional(),
-  usage: z.record(z.string(), z.unknown()).optional(),
+  usage: tokenUsageSchema.optional(),
 });
 export type SystemTaskNotificationPayload = z.infer<typeof systemTaskNotificationPayloadSchema>;
 

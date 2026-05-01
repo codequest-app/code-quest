@@ -7,7 +7,7 @@ import type {
   ReceivedMessageMap,
 } from './fake-process-provider.ts';
 import type { FakeSocket } from './fake-socket.ts';
-import { segments as s } from './segments.ts';
+import { segments as s } from './segments-node.ts';
 
 /** Extract the payload type for a given server-to-client event. */
 type PayloadOf<E extends keyof ServerToClientEvents> = Parameters<ServerToClientEvents[E]>[0];

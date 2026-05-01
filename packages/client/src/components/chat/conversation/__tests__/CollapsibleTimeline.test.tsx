@@ -21,45 +21,47 @@ function textNode(content = 'hi'): MessageNode {
 }
 
 describe('CollapsibleTimeline', () => {
-  it('shows "Explored N" collapsed by default when 2+ consecutive read-only tools', () => {
+  it('groups consecutive tool_use nodes with chip summary', () => {
     const nodes = [
       toolNode({ name: 'Read', result: { content: 'ok' } }),
       toolNode({ name: 'Read', result: { content: 'ok' } }),
     ];
     render(<CollapsibleTimeline nodes={nodes} />);
-    expect(screen.getByText('Explored')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // chip shows tool name with count
+    expect(screen.getByText(/Read/)).toBeInTheDocument();
+    expect(screen.getByText(/×2/)).toBeInTheDocument();
   });
 
-  it('single read-only tool renders solo (no "Explored")', () => {
+  it('single tool_use also forms a group with chip', () => {
     const nodes = [toolNode({ name: 'Read', result: { content: 'ok' } })];
     render(<CollapsibleTimeline nodes={nodes} />);
-    expect(screen.queryByText('Explored')).not.toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
   });
 
-  it('consecutive Bash also collapses (cc-office groups any tool_use)', () => {
+  it('consecutive Bash tools collapse into one group', () => {
     const nodes = [
       toolNode({ name: 'Bash', result: { content: 'ok' } }),
       toolNode({ name: 'Bash', result: { content: 'ok' } }),
       toolNode({ name: 'Bash', result: { content: 'ok' } }),
     ];
     render(<CollapsibleTimeline nodes={nodes} />);
-    expect(screen.getByText('Explored')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('Bash')).toBeInTheDocument();
+    expect(screen.getByText(/×3/)).toBeInTheDocument();
   });
 
-  it('mixed Bash + Write + Read grouped together', () => {
+  it('mixed tools show separate chips in one group', () => {
     const nodes = [
       toolNode({ name: 'Bash', result: { content: 'ok' } }),
       toolNode({ name: 'Write', result: { content: 'ok' } }),
       toolNode({ name: 'Read', result: { content: 'ok' } }),
     ];
     render(<CollapsibleTimeline nodes={nodes} />);
-    expect(screen.getByText('Explored')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('Bash')).toBeInTheDocument();
+    expect(screen.getByText('Write')).toBeInTheDocument();
+    expect(screen.getByText('Read')).toBeInTheDocument();
   });
 
-  it('assistant text between reads splits the group', () => {
+  it('assistant text between reads splits into two groups', () => {
     const nodes = [
       toolNode({ name: 'Read', result: { content: 'a' } }),
       textNode('between'),
@@ -67,8 +69,7 @@ describe('CollapsibleTimeline', () => {
       toolNode({ name: 'Read', result: { content: 'c' } }),
     ];
     render(<CollapsibleTimeline nodes={nodes} />);
-    // The trailing pair is grouped — count shows 2
-    expect(screen.getByText('Explored')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // second group has 2 reads → shows ×2
+    expect(screen.getByText(/×2/)).toBeInTheDocument();
   });
 });

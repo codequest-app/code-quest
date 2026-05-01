@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { chatStatsSchema } from './message-stats.ts';
+import { tokenUsageSchema } from './system.ts';
 
 // ── Shared primitives reused by UI layers ──
 
@@ -46,6 +47,14 @@ export const toolUseMetaSchema: z.ZodObject<
     >;
     fileContent: z.ZodOptional<z.ZodString>;
     fileError: z.ZodOptional<z.ZodString>;
+    taskStatus: z.ZodOptional<
+      z.ZodEnum<{ running: 'running'; completed: 'completed'; failed: 'failed' }>
+    >;
+    taskType: z.ZodOptional<z.ZodEnum<{ local_agent: 'local_agent'; subagent: 'subagent' }>>;
+    lastToolName: z.ZodOptional<z.ZodString>;
+    taskSummary: z.ZodOptional<z.ZodString>;
+    taskUsage: z.ZodOptional<typeof tokenUsageSchema>;
+    model: z.ZodOptional<z.ZodString>;
   },
   z.core.$strip
 > = z.object({
@@ -55,6 +64,12 @@ export const toolUseMetaSchema: z.ZodObject<
   result: toolResultSchema.optional(),
   fileContent: z.string().optional(),
   fileError: z.string().optional(),
+  taskStatus: z.enum(['running', 'completed', 'failed']).optional(),
+  taskType: z.enum(['local_agent', 'subagent']).optional(),
+  lastToolName: z.string().optional(),
+  taskSummary: z.string().optional(),
+  taskUsage: tokenUsageSchema.optional(),
+  model: z.string().optional(),
 });
 export type ToolUseMeta = z.infer<typeof toolUseMetaSchema>;
 

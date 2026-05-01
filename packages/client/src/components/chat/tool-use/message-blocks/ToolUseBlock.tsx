@@ -1,3 +1,4 @@
+import type { TokenUsage } from '@code-quest/shared';
 import type { ToolUseMeta } from '../../../../types/ui';
 import { cn } from '../../../../utils/cn';
 import { langFromPath } from '../../../../utils/syntax';
@@ -8,6 +9,47 @@ import { AlertBanner } from './AlertBanner';
 import { ContentRenderer } from './ContentRenderer';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
 import { ToolBlock, ToolBlockRow } from './ToolBlock';
+
+function totalTokens(usage: TokenUsage): number | null {
+  const total = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
+  return total > 0 ? total : null;
+}
+
+function TaskStatusBadge({
+  taskStatus,
+  lastToolName,
+  taskSummary,
+  taskType,
+  taskUsage,
+}: {
+  taskStatus?: ToolUseMeta['taskStatus'];
+  lastToolName?: string;
+  taskSummary?: string;
+  taskType?: ToolUseMeta['taskType'];
+  taskUsage?: TokenUsage;
+}): React.JSX.Element | null {
+  if (!taskStatus) return null;
+
+  if (taskStatus === 'running') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-accent animate-pulse">
+        <span>●</span>
+        <span>Running{lastToolName ? ` · ${lastToolName}` : ''}</span>
+        {taskType === 'local_agent' && <span className="opacity-60">[local]</span>}
+      </span>
+    );
+  }
+  if (taskStatus === 'failed') {
+    return <span className="text-xs text-danger">✗ Failed</span>;
+  }
+  const tokens = taskUsage ? totalTokens(taskUsage) : null;
+  return (
+    <span className="text-xs text-success">
+      ✓ Done{taskSummary ? ` · ${taskSummary}` : ''}
+      {tokens != null && <span className="opacity-60 ml-1">({tokens.toLocaleString()} tok)</span>}
+    </span>
+  );
+}
 
 function PartialInputPlaceholder({ content }: { content: string }) {
   return <pre className={cn(CODE_BLOCK_CLASS, 'text-text-muted/60 animate-pulse')}>{content}</pre>;
@@ -110,12 +152,11 @@ function DefaultToolBody({
   resultIsError?: boolean;
   partialInput?: string;
 }) {
-  const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
-
   if (partialInput) {
     return <PartialInputPlaceholder content={partialInput} />;
   }
 
+  const inputJson = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : null;
   if (!inputJson && resultContent == null) return null;
 
   return (
@@ -134,6 +175,77 @@ function DefaultToolBody({
   );
 }
 
+function ToolBody({
+  toolName,
+  input,
+  result,
+  partialInput,
+}: {
+  toolName: string;
+  input: Record<string, unknown>;
+  result: ToolUseMeta['result'];
+  partialInput?: string;
+}): React.JSX.Element | null {
+  const resultContent = result?.content;
+  const resultIsError = result?.is_error;
+  switch (toolName) {
+    case 'Bash':
+      return (
+        <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
+      );
+    case 'Read':
+      return <ReadToolBody input={input} resultContent={resultContent} />;
+    case 'Write':
+    case 'Edit':
+    case 'MultiEdit':
+      if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
+      return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
+    case 'Skill':
+      return (
+        <SkillToolBody input={input} resultContent={resultContent} hasResult={result != null} />
+      );
+    default:
+      return (
+        <DefaultToolBody
+          input={input}
+          resultContent={resultContent}
+          resultIsError={resultIsError}
+          partialInput={partialInput}
+        />
+      );
+  }
+}
+
+const AGENT_TOOLS = new Set(['Task', 'Agent']);
+
+function TaskBadge({
+  toolName,
+  input,
+  meta,
+}: {
+  toolName: string;
+  input: Record<string, unknown>;
+  meta?: ToolUseMeta;
+}): React.JSX.Element | null {
+  if (!AGENT_TOOLS.has(toolName)) return null;
+  const subagentType = typeof input.subagent_type === 'string' ? input.subagent_type : undefined;
+  if (!subagentType && !meta?.taskStatus) return null;
+  return (
+    <span className="flex items-center gap-1.5">
+      {subagentType && (
+        <span className="text-xs text-text-muted/60 font-mono">[{subagentType}]</span>
+      )}
+      <TaskStatusBadge
+        taskStatus={meta?.taskStatus}
+        lastToolName={meta?.lastToolName}
+        taskSummary={meta?.taskSummary}
+        taskType={meta?.taskType}
+        taskUsage={meta?.taskUsage}
+      />
+    </span>
+  );
+}
+
 export function ToolUseBlock({
   content,
   meta,
@@ -145,53 +257,26 @@ export function ToolUseBlock({
   const input = meta?.input ?? {};
   const partialInput = meta?.partialInput;
   const result = meta?.result;
-  const resultContent = result?.content;
-  const resultIsError = result?.is_error;
 
   const headerInfo = getToolHeaderInfo(toolName, input);
-  const renderBody = () => {
-    switch (toolName) {
-      case 'Bash':
-        return (
-          <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
-        );
-      case 'Read':
-        return <ReadToolBody input={input} resultContent={resultContent} />;
-      case 'Write':
-      case 'Edit':
-      case 'MultiEdit':
-        if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
-        return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
-      case 'Skill':
-        return (
-          <SkillToolBody input={input} resultContent={resultContent} hasResult={result != null} />
-        );
-      default:
-        return (
-          <DefaultToolBody
-            input={input}
-            resultContent={resultContent}
-            resultIsError={resultIsError}
-            partialInput={partialInput}
-          />
-        );
-    }
-  };
 
   return (
-    <div className="group/tool">
-      <CollapsibleBlock
-        icon="⚙"
-        label={headerInfo.name}
-        labelDetail={headerInfo.detail}
-        labelRange={headerInfo.range}
-      >
-        {resultIsError && resultContent && <ToolErrorBanner message={resultContent} />}
-        {renderBody()}
-        {!partialInput && !result && (
-          <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
-        )}
-      </CollapsibleBlock>
-    </div>
+    <CollapsibleBlock
+      icon="⚙"
+      label={headerInfo.name}
+      labelDetail={headerInfo.detail}
+      labelRange={headerInfo.range}
+      labelSuffix={
+        AGENT_TOOLS.has(toolName) ? (
+          <TaskBadge toolName={toolName} input={input} meta={meta} />
+        ) : undefined
+      }
+    >
+      {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
+      <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />
+      {!partialInput && !result && (
+        <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
+      )}
+    </CollapsibleBlock>
   );
 }
