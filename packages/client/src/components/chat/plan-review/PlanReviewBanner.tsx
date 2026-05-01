@@ -29,6 +29,8 @@ export function PlanReviewBanner({ pending, onRespond }: PlanReviewBannerProps):
   const planContentRef = useRef<HTMLDivElement>(null);
   const { planComments, addPlanComment, clearPlanComments } = useChannelMessages();
 
+  // No deps array — intentionally runs after every render to detect requestId changes
+  // across re-renders without stale closure issues.
   useLayoutEffect(() => {
     if (pending.requestId !== lastRequestId.current) {
       lastRequestId.current = pending.requestId;

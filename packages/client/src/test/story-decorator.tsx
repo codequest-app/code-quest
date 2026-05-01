@@ -136,9 +136,8 @@ function ThemePresetWrapper({
   density?: Density;
   children: React.ReactNode;
 }) {
-  // Use useLayoutEffect so the data-attr is applied before the browser paints,
-  // which matters for Storybook play functions that read computed style right
-  // after render.
+  // play functions read computed style synchronously after render; layout timing
+  // prevents a flicker between wrong and correct theme before assertions run.
   useLayoutEffect(() => {
     const ds = document.documentElement.dataset;
     const prevTheme = ds.theme;
