@@ -95,7 +95,7 @@ function onTaskNotification(
   p: Payload<'system:task_notification'>,
 ): ChannelState {
   if (!p.toolUseId) return state;
-  const taskStatus = p.status === 'failed' ? ('failed' as const) : ('completed' as const);
+  const taskStatus: ToolUseMeta['taskStatus'] = p.status === 'failed' ? 'failed' : 'completed';
   return patchToolUseMeta(state, p.toolUseId, {
     taskStatus,
     taskSummary: p.summary,
