@@ -7,8 +7,8 @@ import { ComposeToolbar } from './ComposeToolbar';
 function ComposeToolbarStory(): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   return (
-    <div className="flex flex-col h-screen bg-bg text-text justify-end p-4">
-      <div ref={ref} className="rounded-xl bg-surface border border-border">
+    <div className="flex flex-col h-screen bg-bg text-text justify-end items-center p-4">
+      <div ref={ref} className="w-2xl rounded-xl bg-surface border border-border">
         <ComposeToolbar containerRef={ref} onAttachFile={() => {}} />
       </div>
     </div>
