@@ -11,6 +11,7 @@ export {
 } from './actions.ts';
 export type {
   AccountInfo,
+  AuthMethod,
   AuthResult,
   AuthStatus,
   LoginPayload,
@@ -18,6 +19,7 @@ export type {
 } from './auth.ts';
 export {
   accountInfoSchema,
+  authMethodSchema,
   authResultSchema,
   authStatusSchema,
   loginPayloadSchema,
@@ -659,6 +661,7 @@ export type {
   SystemTaskNotificationPayload,
   SystemTaskProgressPayload,
   SystemTaskStartedPayload,
+  TaskType,
   TokenUsage,
 } from './system.ts';
 export {
@@ -680,6 +683,7 @@ export {
   systemTaskNotificationPayloadSchema,
   systemTaskProgressPayloadSchema,
   systemTaskStartedPayloadSchema,
+  taskTypeSchema,
   tokenUsageSchema,
 } from './system.ts';
 export type {

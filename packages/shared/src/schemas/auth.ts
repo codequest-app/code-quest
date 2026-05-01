@@ -1,11 +1,17 @@
 import { z } from 'zod';
 
 // ── Auth ──
+export const authMethodSchema: z.ZodEnum<{ api_key: 'api_key'; oauth: 'oauth' }> = z.enum([
+  'api_key',
+  'oauth',
+]);
+export type AuthMethod = z.infer<typeof authMethodSchema>;
+
 export const loginPayloadSchema: z.ZodObject<
   { method: z.ZodEnum<{ api_key: 'api_key'; oauth: 'oauth' }> },
   z.core.$strip
 > = z.object({
-  method: z.enum(['api_key', 'oauth']),
+  method: authMethodSchema,
 });
 export type LoginPayload = z.infer<typeof loginPayloadSchema>;
 
@@ -46,7 +52,7 @@ export const authStatusSchema: z.ZodObject<
 > = z.object({
   authenticated: z.boolean(),
   user: z.object({ name: z.string(), email: z.string().optional() }).optional(),
-  method: z.enum(['api_key', 'oauth']).optional(),
+  method: authMethodSchema.optional(),
 });
 export type AuthStatus = z.infer<typeof authStatusSchema>;
 
