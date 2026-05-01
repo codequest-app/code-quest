@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 // ── Notification schemas ──
 
+export const notificationSeveritySchema: z.ZodEnum<{
+  error: 'error';
+  info: 'info';
+  warning: 'warning';
+}> = z.enum(['info', 'warning', 'error']);
+export type NotificationSeverity = z.infer<typeof notificationSeveritySchema>;
+
 export const notificationButtonSchema: z.ZodObject<
   { label: z.ZodString; value: z.ZodString },
   z.core.$strip
@@ -25,7 +32,7 @@ export const notificationPayloadSchema: z.ZodObject<
 > = z.object({
   id: z.string(),
   message: z.string(),
-  severity: z.enum(['info', 'warning', 'error']).optional(),
+  severity: notificationSeveritySchema.optional(),
   buttons: z.array(notificationButtonSchema).optional(),
   onlyIfNotVisible: z.boolean().optional(),
 });
@@ -54,7 +61,7 @@ export const notificationShowPayloadSchema: z.ZodObject<
 > = z.object({
   channelId: z.string(),
   message: z.string(),
-  severity: z.enum(['info', 'warning', 'error']),
+  severity: notificationSeveritySchema,
   buttons: z.array(z.string()).optional(),
   onlyIfNotVisible: z.boolean().optional(),
 });

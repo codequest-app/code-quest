@@ -21,6 +21,8 @@ export const fileResultSchema: z.ZodObject<{
 });
 export type FileResult = z.infer<typeof fileResultSchema>;
 
+export type FileKind = 'file' | 'directory';
+
 /** Legacy tagless variant — consumers narrow by `'error' in result`. */
 export type ReadFileResult = { content: string } | { error: string };
 
@@ -42,7 +44,7 @@ export interface FilesystemService {
    *  Overwrites existing content. The parent directory must already exist. */
   writeFileAbsolute(absolutePath: string, content: string): Promise<WriteFileResult>;
   /** Create an empty file or directory; rejects existing targets / OOB paths. */
-  create(absolutePath: string, kind: 'file' | 'directory'): Promise<FsMutationResult>;
+  create(absolutePath: string, kind: FileKind): Promise<FsMutationResult>;
   /** Delete a file or recursively a directory. */
   delete(absolutePath: string): Promise<FsMutationResult>;
   /** Rename within or across directories; rejects existing destinations. */
@@ -58,7 +60,7 @@ export interface FilesystemService {
   /** True when path exists AND is a directory; false otherwise (including ENOENT). */
   isDirectory(path: string): Promise<boolean>;
   /** Single-stat alternative to exists+isDirectory. Returns null for missing paths. */
-  statKind(path: string): Promise<'file' | 'directory' | null>;
+  statKind(path: string): Promise<FileKind | null>;
   /** True when path equals OR is contained inside any configured root.
    *  Roots themselves are inclusive (the boundary). */
   isWithinRoots(path: string): boolean;

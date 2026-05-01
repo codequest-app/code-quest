@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextDuplicateName } from '../nextDuplicateName';
+import { nextDuplicateName } from '@/utils/duplicate-name';
 
 describe('nextDuplicateName', () => {
   it('appends " copy" before the extension', () => {
@@ -24,7 +24,6 @@ describe('nextDuplicateName', () => {
   });
 
   it('treats multi-dot extension as single ext (.tar.gz → .gz)', () => {
-    // Conservative: only the trailing extension is preserved.
     expect(nextDuplicateName(['foo.tar.gz'], 'foo.tar.gz')).toBe('foo.tar copy.gz');
   });
 });

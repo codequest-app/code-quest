@@ -1,7 +1,7 @@
 import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
-import { useChannelConfig } from '../../contexts/channel';
-import { cn } from '../../utils/cn';
+import { useChannelConfig } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
 import { XIcon } from '../ui/Icons';

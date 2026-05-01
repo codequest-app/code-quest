@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { cn } from '../../../utils/cn';
-import { InlineAction } from '../../ui/InlineAction';
+import { InlineAction } from '@/components/ui/InlineAction';
+import { cn } from '@/utils/cn';
 
 interface TruncatedContentProps {
   children: React.ReactNode;

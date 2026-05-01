@@ -76,6 +76,13 @@ export const controlPermissionPayloadSchema: z.ZodObject<
 });
 export type ControlPermissionPayload = z.infer<typeof controlPermissionPayloadSchema>;
 
+export const elicitationInputTypeSchema: z.ZodEnum<{
+  text: 'text';
+  url: 'url';
+  select: 'select';
+}> = z.enum(['text', 'url', 'select']);
+export type ElicitationInputType = z.infer<typeof elicitationInputTypeSchema>;
+
 export const controlElicitationPayloadSchema: z.ZodObject<
   {
     channelId: z.ZodString;
@@ -93,7 +100,7 @@ export const controlElicitationPayloadSchema: z.ZodObject<
   channelId: z.string(),
   requestId: z.string(),
   prompt: z.string(),
-  inputType: z.enum(['text', 'url', 'select']),
+  inputType: elicitationInputTypeSchema,
   options: z.array(z.string()).optional(),
   url: z.string().optional(),
   elicitationId: z.string().optional(),

@@ -1,4 +1,4 @@
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 const FALLBACK_DOCS_URL = 'https://docs.anthropic.com/en/docs/claude-code/overview';
 

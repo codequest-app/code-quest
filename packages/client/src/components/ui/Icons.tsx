@@ -14,7 +14,7 @@ export {
   XMarkIcon as XIcon,
 } from '@heroicons/react/24/outline';
 
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 /** Slash-command menu icon (rounded square with diagonal slash). Drawn in
  *  heroicons outline style so it sits next to other icons consistently. */

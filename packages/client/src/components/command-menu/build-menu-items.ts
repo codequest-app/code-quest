@@ -1,6 +1,6 @@
-import { renderMenuTrailing } from '../../lib/adapters/to-menu-item';
-import type { Feature, FeatureSection } from '../../lib/feature';
-import type { FeatureRegistry } from '../../lib/feature-registry';
+import { renderMenuTrailing } from '@/lib/adapters/to-menu-item';
+import type { Feature, FeatureSection } from '@/lib/feature';
+import type { FeatureRegistry } from '@/lib/feature-registry';
 
 type DismissBehavior = 'close' | 'closeSilent' | 'none';
 

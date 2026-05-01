@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { highlight, typeColor, typeLabel } from '../message-preview';
+import { highlight, typeColor, typeLabel } from '@/utils/message-preview';
 
 describe('highlight', () => {
   it('returns single non-match segment for empty query', () => {

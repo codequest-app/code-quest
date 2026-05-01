@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSpeechToText } from '../../../hooks/useSpeechToText';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { SpeechInputButton } from './SpeechInputButton';
 
 interface SpeechInputContainerProps {

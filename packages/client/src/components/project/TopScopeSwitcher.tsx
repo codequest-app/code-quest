@@ -1,9 +1,9 @@
 import { ChevronDownIcon, FolderIcon, PlusIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
-import type { Project } from '../../contexts/ProjectContext';
-import { basename } from '../../utils/basename';
-import { cn } from '../../utils/cn';
+import type { Project } from '@/contexts/ProjectContext';
+import { basename } from '@/utils/basename';
+import { cn } from '@/utils/cn';
 import { focusRing } from '../ui/_tokens';
 
 function displayName(p: Project): string {

@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SCENARIO_CLASS, withStoryChannel } from '../../test/story-decorator';
+import { SCENARIO_CLASS, withStoryChannel } from '@/test/story-decorator';
 import {
   makeHeavyToolUseConversation,
   makeSkillInvocationConversation,
   makeSubagentDone,
   makeSubagentRunning,
-} from '../../test/story-fixtures';
+} from '@/test/story-fixtures';
 import { ChatPanel } from './ChatPanel';
 
 const meta: Meta<typeof ChatPanel> = {

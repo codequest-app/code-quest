@@ -1,18 +1,31 @@
+import type { WorktreeInfo } from '@code-quest/shared';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { memo, useEffect } from 'react';
-import { ChannelProvider } from '../../contexts/channel';
-import { useGitState } from '../../contexts/GitContext';
-import { useNavigationActions } from '../../contexts/NavigationContext';
-import { useProjectState } from '../../contexts/ProjectContext';
-import { useSession } from '../../contexts/SessionContext';
-import { type TabMeta, useTabActions, useTabState } from '../../contexts/TabContext';
-import { basename } from '../../utils/basename';
-import { cn } from '../../utils/cn';
-import { findWorktreeByCwd } from '../../utils/findWorktreeByCwd';
+import { ChannelProvider } from '@/contexts/channel';
+import { useGitState } from '@/contexts/GitContext';
+import { useNavigationActions } from '@/contexts/NavigationContext';
+import { useProjectState } from '@/contexts/ProjectContext';
+import { useSession } from '@/contexts/SessionContext';
+import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
+import { basename } from '@/utils/basename';
+import { cn } from '@/utils/cn';
 import { ChatPanel } from '../chat/ChatPanel';
 import { EmptyState } from './EmptyState';
 import { TabBar } from './TabBar';
+
+function findWorktreeByCwd(
+  listing: Record<string, WorktreeInfo[] | 'not_a_repo'>,
+  cwd: string | undefined,
+): { worktree: WorktreeInfo; projectCwd: string } | null {
+  if (!cwd) return null;
+  for (const [projectCwd, entry] of Object.entries(listing)) {
+    if (!Array.isArray(entry)) continue;
+    const match = entry.find((w) => w.path === cwd);
+    if (match) return { worktree: match, projectCwd };
+  }
+  return null;
+}
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'launchOnMount'> {
   channelId: string;

@@ -1,7 +1,7 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
-import { cn } from '../../utils/cn';
-import { pluralize } from '../../utils/pluralize';
+import { cn } from '@/utils/cn';
+import { pluralize } from '@/utils/pluralize';
 
 export interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   worktree: WorktreeInfo;

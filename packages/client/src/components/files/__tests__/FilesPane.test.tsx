@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { FsProvidersWrapper } from '../../../test/wrap-fs-providers';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
 import { FilesPane } from '../FilesPane';
 
 function setup() {

@@ -2,8 +2,8 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { useChannelControl, useChannelMessages } from '../../../../contexts/channel';
-import { renderWithChannel } from '../../../../test/render-with-channel';
+import { useChannelControl, useChannelMessages } from '@/contexts/channel';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { PendingActionButtons } from '../PendingActionButtons';
 
 function BannerWithState() {

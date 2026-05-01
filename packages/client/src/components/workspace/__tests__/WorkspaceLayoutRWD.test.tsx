@@ -1,7 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setupMatchMedia } from '../../../test/fake-match-media';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { setupMatchMedia } from '@/test/fake-match-media';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 async function setupWithProject(width: number) {
   setupMatchMedia(width);

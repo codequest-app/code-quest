@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { contentBlockSchema } from './message-blocks.ts';
+import { userSourceSchema } from './message-payloads.ts';
 import { sessionStatsSchema } from './message-stats.ts';
 
 // ── History replay (client) ──
@@ -84,7 +85,7 @@ export const historyUserSchema: z.ZodObject<
   content: z.array(contentBlockSchema),
   parentToolUseId: z.string().optional(),
   uuid: z.string().optional(),
-  source: z.enum(['typed', 'skill', 'command', 'reminder']).optional(),
+  source: userSourceSchema.optional(),
 });
 export type HistoryUser = z.infer<typeof historyUserSchema>;
 

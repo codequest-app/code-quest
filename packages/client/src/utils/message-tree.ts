@@ -1,4 +1,4 @@
-import type { Message } from '../types/ui';
+import type { Message } from '@/types/ui';
 
 export interface MessageNode {
   message: Message;
@@ -12,15 +12,11 @@ export function buildMessageTree(messages: Message[]): MessageNode[] {
   for (const message of messages) {
     const node: MessageNode = { message, children: [] };
 
-    // 1. Register tool_use nodes for later lookup
     if (message.type === 'tool_use') {
       toolUseNodes.set(message.meta.toolId, node);
     }
 
-    // 2. Merge tool_result into its parent tool_use (not a separate node)
     if (mergeToolResult(message, toolUseNodes)) continue;
-
-    // 3. Nest subagent children under their parent tool_use
     if (nestChild(node, toolUseNodes)) continue;
 
     roots.push(node);
@@ -51,4 +47,63 @@ function nestChild(node: MessageNode, toolUseNodes: Map<string, MessageNode>): b
   if (!parent) return false;
   parent.children.push(node);
   return true;
+}
+
+const TIMELINE_TYPES = new Set(['text', 'thinking', 'tool_use', 'streamlined_text']);
+
+export type RenderGroup =
+  | { kind: 'timeline'; nodes: MessageNode[]; prevRole: string | null }
+  | { kind: 'single'; node: MessageNode; prevRole: string | null };
+
+export function groupForTimeline(
+  nodes: MessageNode[],
+  firstPrevRole: string | null,
+): RenderGroup[] {
+  const groups: RenderGroup[] = [];
+  let assistantGroup: MessageNode[] = [];
+  let groupPrevRole: string | null = firstPrevRole;
+
+  const flushGroup = (nextPrevRole: string | null) => {
+    if (assistantGroup.length > 0) {
+      groups.push({ kind: 'timeline', nodes: assistantGroup, prevRole: groupPrevRole });
+    }
+    assistantGroup = [];
+    groupPrevRole = nextPrevRole;
+  };
+
+  let prevRole = firstPrevRole;
+  for (const node of nodes) {
+    const isAssistantTimeline =
+      node.message.role === 'assistant' && TIMELINE_TYPES.has(node.message.type);
+    if (isAssistantTimeline) {
+      if (assistantGroup.length === 0) groupPrevRole = prevRole;
+      assistantGroup.push(node);
+    } else {
+      flushGroup(prevRole);
+      groups.push({ kind: 'single', node, prevRole });
+    }
+    prevRole = node.message.role;
+  }
+  flushGroup(prevRole);
+  return groups;
+}
+
+export function filterTree(
+  nodes: MessageNode[],
+  predicate: (message: Message) => boolean,
+): MessageNode[] {
+  const result: MessageNode[] = [];
+  for (const node of nodes) {
+    if (!predicate(node.message)) continue;
+    if (node.children.length === 0) {
+      result.push(node);
+      continue;
+    }
+    const filteredChildren = filterTree(node.children, predicate);
+    result.push(
+      filteredChildren === node.children ? node : { ...node, children: filteredChildren },
+    );
+  }
+  const allKept = result.length === nodes.length && result.every((n, i) => n === nodes[i]);
+  return allKept ? nodes : result;
 }

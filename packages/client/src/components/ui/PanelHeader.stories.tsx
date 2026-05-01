@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { withThemePreset } from '../../test/story-decorator';
+import { withThemePreset } from '@/test/story-decorator';
 import { PanelHeader } from './PanelHeader';
 
 const meta: Meta<typeof PanelHeader> = {

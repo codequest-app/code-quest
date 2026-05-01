@@ -1,9 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { useNavigationState } from '../../../contexts/NavigationContext';
-import { createTestWrapper } from '../../../test/create-test-wrapper';
-import { readPersistedRaw } from '../../../test/memory-persist-storage';
+import { useNavigationState } from '@/contexts/NavigationContext';
+import { createTestWrapper } from '@/test/create-test-wrapper';
+import { readPersistedRaw } from '@/test/memory-persist-storage';
 import { ProjectTree } from '../ProjectTree';
 
 function makeWrapper() {

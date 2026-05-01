@@ -1,6 +1,6 @@
 import { forwardRef, type ReactNode, useEffect, useRef } from 'react';
-import { Dialog, DialogContent } from '../../components/ui/Dialog';
-import { cn } from '../../utils/cn';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { cn } from '@/utils/cn';
 
 interface RewindConfirmDialogProps {
   open: boolean;

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Dialog, DialogContent } from '../../components/ui/Dialog';
-import { Kbd } from '../../components/ui/Kbd';
-import { useChannelMessages } from '../../contexts/channel';
-import type { Message } from '../../types/ui';
-import { cn } from '../../utils/cn';
-import { formatRelativeDate } from '../../utils/format-relative-date';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { Kbd } from '@/components/ui/Kbd';
+import { useChannelMessages } from '@/contexts/channel';
+import type { Message } from '@/types/ui';
+import { cn } from '@/utils/cn';
+import { formatRelativeDate } from '@/utils/format-relative-date';
 import { RewindBody } from './RewindBody';
 import { RewindConfirmDialog } from './RewindConfirmDialog';
 

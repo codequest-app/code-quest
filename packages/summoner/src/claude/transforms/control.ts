@@ -1,3 +1,4 @@
+import type { ElicitationInputType, NotificationSeverity } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage } from '../../types.ts';
 import { asRecord, asString, isRecord } from '../../utils.ts';
@@ -6,7 +7,6 @@ import type { controlRequestSchema } from '../schemas.ts';
 type ControlRequestMessage = z.infer<typeof controlRequestSchema>;
 type RequestContext = { requestId: string; request: ControlRequestMessage['request'] };
 
-type ElicitationInputType = 'url' | 'select' | 'text';
 function inputTypeFromMode(mode: string | undefined): ElicitationInputType {
   switch (mode) {
     case 'url':
@@ -18,7 +18,6 @@ function inputTypeFromMode(mode: string | undefined): ElicitationInputType {
   }
 }
 
-type NotificationSeverity = 'error' | 'warning' | 'info';
 function normalizeSeverity(raw: string): NotificationSeverity {
   return raw === 'error' || raw === 'warning' ? raw : 'info';
 }
@@ -87,7 +86,7 @@ function handleOpenDiff({ requestId, request }: RequestContext): ClientMessage {
 
 function handleMcpMessage({ requestId, request }: RequestContext): ClientMessage {
   const mcpInput = asRecord(request.input);
-  const serverName = String(mcpInput?.server_name ?? request.tool_name ?? '');
+  const serverName = asString(mcpInput?.server_name ?? request.tool_name, '');
   const mcpMsg = isRecord(mcpInput?.message) ? mcpInput.message : (mcpInput ?? {});
 
   if (mcpMsg.id == null) {

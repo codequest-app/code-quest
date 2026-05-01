@@ -1,8 +1,8 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { emitAssistantTurn, sendUserMessage } from '../../test/helpers';
-import { renderWithWorkspace } from '../../test/render-with-workspace';
+import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('SessionProvider (global config only)', () => {
   it('renders UI after connect and launch', async () => {

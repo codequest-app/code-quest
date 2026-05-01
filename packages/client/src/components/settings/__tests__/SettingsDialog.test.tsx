@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VISIBILITY_GROUPS } from '../../../contexts/channel/MessageVisibilityContext';
-import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
-import { usePreferencesStore } from '../../../stores/usePreferencesStore';
+import { VISIBILITY_GROUPS } from '@/contexts/channel/MessageVisibilityContext';
+import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { SettingsDialog } from '../SettingsDialog';
 
 function resetStore() {

@@ -1,6 +1,6 @@
 import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useState } from 'react';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 import { InlineAction } from '../ui/InlineAction';

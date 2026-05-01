@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import type { Project } from '../../contexts/ProjectContext';
-import { withStoryApp } from '../../test/story-decorator';
+import type { Project } from '@/contexts/ProjectContext';
+import { withStoryApp } from '@/test/story-decorator';
 import { TopScopeSwitcher } from './TopScopeSwitcher';
 
 const meta: Meta<typeof TopScopeSwitcher> = {

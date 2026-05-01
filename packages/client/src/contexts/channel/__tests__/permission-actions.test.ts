@@ -2,7 +2,7 @@ import type { PendingControl } from '@code-quest/shared';
 import { segments as s } from '@code-quest/summoner/test';
 import type { RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { createControlActions } from '../handlers/permission';
 
 function makeRef<T>(value: T): RefObject<T> {

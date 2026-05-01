@@ -2,8 +2,8 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../../test/helpers';
-import { renderWithChannel } from '../../../test/render-with-channel';
+import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { ChatPanel } from '../ChatPanel';
 
 describe('ChatPanel', () => {

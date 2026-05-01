@@ -1,4 +1,4 @@
-import { basename } from '../../utils/basename';
+import { basename } from '@/utils/basename';
 
 /** Slugify a branch name into a filesystem-safe directory segment.
  *  `feature/my-thing` → `my-thing`, `bug/fix&stuff` → `fix-stuff`. */

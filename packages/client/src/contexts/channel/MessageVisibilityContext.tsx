@@ -15,7 +15,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useMessageVisibilityStore } from '../../stores/useMessageVisibilityStore';
+import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 
 export type GroupId = 'conversation' | 'tools' | 'system' | 'hooks' | 'debug' | 'other';
 export type GroupState = 'all' | 'partial' | 'none';

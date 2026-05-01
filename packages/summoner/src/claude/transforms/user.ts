@@ -1,6 +1,7 @@
 import type { ContentBlock, UserSource } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
+import { asString } from '../../utils.ts';
 import type { userSchema } from '../schemas.ts';
 import { buildMessagePayload } from './helpers.ts';
 
@@ -23,13 +24,13 @@ export function transformUser(raw: UserMessage): ClientMessage | null {
   for (const b of content) {
     switch (b.type) {
       case 'text':
-        blocks.push({ type: 'text', text: String(b.text ?? '') });
+        blocks.push({ type: 'text', text: asString(b.text, '') });
         break;
       case 'tool_result':
         blocks.push({
           type: 'tool_result',
-          toolUseId: String(b.tool_use_id ?? ''),
-          toolName: typeof b.name === 'string' ? b.name : undefined,
+          toolUseId: asString(b.tool_use_id, ''),
+          toolName: asString(b.name, undefined),
           content: b.content,
           isError: b.is_error === true ? true : undefined,
         });

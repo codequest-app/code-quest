@@ -3,12 +3,19 @@ import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
-import { getFeedbackLabel } from '@/utils/feedback-label';
 import { msg } from '@/utils/message';
 import type { Payload } from './guard';
 import type { EffectDeps } from './notification';
 
-// ── On handlers (pure state) ──
+function getFeedbackLabel(response: ControlPermissionResponse): string {
+  if ('continue' in response) {
+    return response.continue ? 'Approved' : 'Denied';
+  }
+  if (response.behavior === 'allow') {
+    return response.updatedPermissions ? 'Allowed Always' : 'Approved';
+  }
+  return response.interrupt ? 'Denied & Stopped' : 'Denied';
+}
 
 export interface ControlState {
   controls: PendingControl[];
@@ -67,8 +74,6 @@ export const controlHandlers: {
   'chat:cancel_request': onCancelRequest,
 } satisfies Record<string, (state: ControlState, payload: never) => ControlState>;
 
-// ── Effect handlers (side effects, no state change) ──
-
 function onControlMcpEffect(deps: EffectDeps, p: Payload<'control:mcp'>): void {
   const mcpMsg = p.message;
   deps.socket.emit(EVENTS.chat.respond, {
@@ -87,8 +92,6 @@ export const controlHandlerEffects: {
 } = {
   'control:mcp': onControlMcpEffect,
 } satisfies Record<string, (deps: EffectDeps, payload: never) => void>;
-
-// ── Emit actions (send) ──
 
 interface ControlActionsDeps {
   socket: TypedSocket;

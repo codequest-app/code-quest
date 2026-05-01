@@ -1,4 +1,4 @@
-import type { Feature } from '../../lib/feature';
+import type { Feature } from '@/lib/feature';
 
 export function createMcpStatusFeature({ onMcpStatus }: { onMcpStatus?: () => void }): Feature {
   return {

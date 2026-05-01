@@ -1,4 +1,4 @@
-import type { Project } from '../../contexts/ProjectContext';
+import type { Project } from '@/contexts/ProjectContext';
 import { SectionHeader } from '../ui/SectionHeader';
 import { ProjectRow } from './ProjectRow';
 

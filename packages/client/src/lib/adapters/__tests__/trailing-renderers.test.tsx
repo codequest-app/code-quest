@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { renderPaletteTrailing } from '../../../components/palette/to-palette-command';
+import { renderPaletteTrailing } from '@/components/palette/to-palette-command';
 import { renderMenuTrailing } from '../to-menu-item';
 
 describe('renderMenuTrailing', () => {

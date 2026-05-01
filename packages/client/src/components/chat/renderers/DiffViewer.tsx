@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useState } from 'react';
-import { cn } from '../../../utils/cn';
-import { extractNewContent, parseDiffFileName, parseHunkStart } from '../../../utils/diff';
-import { InlineAction } from '../../ui/InlineAction';
+import { InlineAction } from '@/components/ui/InlineAction';
+import { cn } from '@/utils/cn';
+import { extractNewContent, parseDiffFileName, parseHunkStart } from '@/utils/diff';
 
 interface DiffViewerProps {
   content: string;

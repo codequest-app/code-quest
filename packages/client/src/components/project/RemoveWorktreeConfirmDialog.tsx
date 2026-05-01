@@ -1,4 +1,4 @@
-import { pluralize } from '../../utils/pluralize';
+import { pluralize } from '@/utils/pluralize';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 

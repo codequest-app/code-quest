@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSlashQuery } from '../../../../utils/slash-query';
+import { getSlashQuery } from '@/utils/slash-query';
 
 describe('getSlashQuery', () => {
   it('returns null for empty input', () => {

@@ -2,11 +2,11 @@ import { FolderIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import * as Popover from '@radix-ui/react-popover';
 import { useContext, useState } from 'react';
-import { NavigationActionsContext } from '../../contexts/NavigationContext';
-import { ProjectActionsContext } from '../../contexts/ProjectContext';
-import { SessionStateContext } from '../../contexts/SessionContext';
-import { basename } from '../../utils/basename';
-import { cn } from '../../utils/cn';
+import { NavigationActionsContext } from '@/contexts/NavigationContext';
+import { ProjectActionsContext } from '@/contexts/ProjectContext';
+import { SessionStateContext } from '@/contexts/SessionContext';
+import { basename } from '@/utils/basename';
+import { cn } from '@/utils/cn';
 import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';
 import {

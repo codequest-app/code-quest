@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { FeatureRegistry } from '../../lib/feature-registry';
+import type { FeatureRegistry } from '@/lib/feature-registry';
 
 const FeatureRegistryContext: React.Context<FeatureRegistry | null> =
   createContext<FeatureRegistry | null>(null);

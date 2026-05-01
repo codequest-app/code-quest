@@ -1,5 +1,5 @@
-import type { Feature } from '../../lib/feature';
-import { createOpenSignal, type OpenSignal } from '../../lib/open-signal';
+import type { Feature } from '@/lib/feature';
+import { createOpenSignal, type OpenSignal } from '@/lib/open-signal';
 
 export const generalConfigSignal: OpenSignal = createOpenSignal();
 

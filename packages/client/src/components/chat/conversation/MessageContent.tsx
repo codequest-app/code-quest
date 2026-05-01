@@ -1,4 +1,4 @@
-import type { Message } from '../../../types/ui';
+import type { Message } from '@/types/ui';
 import { JsonViewer } from '../renderers/JsonViewer';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 import { CitationsPanel } from '../session/CitationsPanel';

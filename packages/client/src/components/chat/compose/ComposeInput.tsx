@@ -1,15 +1,18 @@
 import type { FsSearchResult } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
+
+export type SearchStatus = 'idle' | 'loading' | 'done';
+
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { useChannelCompose, useChannelConfig, useChannelMessages } from '../../../contexts/channel';
-import { cn } from '../../../utils/cn';
-import { getMentionQuery, MENTION_REGEX } from '../../../utils/slash-query';
-import { sortEntriesDirsFirst } from '../../../utils/sort-entries';
-import { slashPaletteState } from '../../command-menu/slash-palette-state';
+import { slashPaletteState } from '@/components/command-menu/slash-palette-state';
+import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
+import { cn } from '@/utils/cn';
+import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
+import { sortEntriesDirsFirst } from '@/utils/sort-entries';
 import { MentionDropdown } from './MentionDropdown';
 
-type InputHistory = { history: string[]; index: number };
+type InputHistory = { history: string[]; index: number; draft: string };
 
 function historyPush(ref: InputHistory, message: string): void {
   const trimmed = message.trim();
@@ -17,11 +20,13 @@ function historyPush(ref: InputHistory, message: string): void {
   if (ref.history[ref.history.length - 1] === trimmed) return;
   ref.history.push(trimmed);
   ref.index = -1;
+  ref.draft = '';
 }
 
-function historyCycleUp(ref: InputHistory): string | null {
+function historyCycleUp(ref: InputHistory, currentValue: string): string | null {
   if (ref.history.length === 0) return null;
   if (ref.index === -1) {
+    ref.draft = currentValue;
     ref.index = ref.history.length - 1;
   } else if (ref.index > 0) {
     ref.index--;
@@ -36,7 +41,7 @@ function historyCycleDown(ref: InputHistory): string {
     return ref.history[ref.index] ?? '';
   }
   ref.index = -1;
-  return '';
+  return ref.draft;
 }
 
 const TEXTAREA_CLASS =
@@ -84,7 +89,7 @@ export function ComposeInput({
     });
   }, [registerFocus]);
 
-  const historyRef = useRef<InputHistory>({ history: [], index: -1 });
+  const historyRef = useRef<InputHistory>({ history: [], index: -1, draft: '' });
 
   useEffect(() => {
     if (historyRef.current.history.length > 0 || messages.length === 0) return;
@@ -101,7 +106,7 @@ export function ComposeInput({
     el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   };
 
-  const [searchStatus, setSearchStatus] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle');
 
   const mentionQuery = mentionOpen ? getMentionQuery(value, cursorPos) : null;
 
@@ -253,7 +258,7 @@ export function ComposeInput({
       const firstNewline = value.indexOf('\n');
       const cursorOnFirstLine = !el || firstNewline === -1 || el.selectionStart <= firstNewline;
       if (!cursorOnFirstLine) return false;
-      const msg = historyCycleUp(historyRef.current);
+      const msg = historyCycleUp(historyRef.current, value);
       if (msg !== null) {
         e.preventDefault();
         updateValue(msg);

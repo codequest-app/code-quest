@@ -9,9 +9,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createMentionFileFeature } from '../../features/mention-file/mention-file-feature';
-import type { FeatureRegistry } from '../../lib/feature-registry';
-import { getMentionQuery, getSlashQuery } from '../../utils/slash-query';
+import { createMentionFileFeature } from '@/features/mention-file/mention-file-feature';
+import type { FeatureRegistry } from '@/lib/feature-registry';
+import { getMentionQuery, getSlashQuery } from '@/utils/slash-query';
 import { useChannelMessagesActions } from './ChannelMessagesContext';
 import { useChannelId } from './ChannelMetaContext';
 import { useChannelSocketRouter } from './ChannelSocketRouterContext';

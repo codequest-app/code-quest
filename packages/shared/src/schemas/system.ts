@@ -12,6 +12,19 @@ export const tokenUsageSchema: z.ZodObject<
 });
 export type TokenUsage = z.infer<typeof tokenUsageSchema>;
 
+export const taskTypeSchema: z.ZodEnum<{
+  local_agent: 'local_agent';
+  subagent: 'subagent';
+}> = z.enum(['local_agent', 'subagent']);
+export type TaskType = z.infer<typeof taskTypeSchema>;
+
+export const taskStatusSchema: z.ZodEnum<{
+  running: 'running';
+  completed: 'completed';
+  failed: 'failed';
+}> = z.enum(['running', 'completed', 'failed']);
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
+
 // ── Model info ──
 
 export const modelInfoSchema: z.ZodObject<
@@ -122,7 +135,7 @@ export const systemTaskStartedPayloadSchema: z.ZodObject<
 > = z.object({
   channelId: z.string(),
   description: z.string(),
-  taskType: z.enum(['local_agent', 'subagent']).optional(),
+  taskType: taskTypeSchema.optional(),
   toolUseId: z.string().optional(),
 });
 export type SystemTaskStartedPayload = z.infer<typeof systemTaskStartedPayloadSchema>;

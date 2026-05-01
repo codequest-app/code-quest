@@ -2,8 +2,8 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { emitAssistantTurn, sendUserMessage } from '../../../test/helpers';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 import { AccountUsageDialog } from '../AccountUsageDialog';
 import { usageOpenSignal } from '../usage-feature';
 

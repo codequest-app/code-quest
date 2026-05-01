@@ -1,6 +1,7 @@
 import type { ContentBlock } from '@code-quest/shared';
 import type { z } from 'zod';
 import type { ClientMessage } from '../../types.ts';
+import { asString } from '../../utils.ts';
 import type { assistantSchema } from '../schemas.ts';
 import { buildMessagePayload } from './helpers.ts';
 
@@ -16,16 +17,16 @@ export function transformAssistant(raw: AssistantMessage): ClientMessage | null 
   for (const b of content) {
     switch (b.type) {
       case 'text':
-        blocks.push({ type: 'text', text: String(b.text ?? '') });
+        blocks.push({ type: 'text', text: asString(b.text, '') });
         break;
       case 'thinking':
-        blocks.push({ type: 'thinking', thinking: String(b.thinking ?? '') });
+        blocks.push({ type: 'thinking', thinking: asString(b.thinking, '') });
         break;
       case 'tool_use':
         blocks.push({
           type: 'tool_use',
-          toolId: String(b.id ?? ''),
-          toolName: String(b.name ?? ''),
+          toolId: asString(b.id, ''),
+          toolName: asString(b.name, ''),
           input: b.input,
           ...(message.model ? { model: message.model } : {}),
         });

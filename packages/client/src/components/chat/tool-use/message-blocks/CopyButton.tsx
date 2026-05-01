@@ -1,6 +1,6 @@
 import { CheckIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
-import { copyToClipboard } from '../../../../utils/clipboard';
+import { copyToClipboard } from '@/utils/clipboard';
 
 /**
  * Shared styling for copy buttons that live inside a `group` parent and

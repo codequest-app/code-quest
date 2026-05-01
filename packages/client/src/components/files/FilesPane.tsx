@@ -1,8 +1,8 @@
 import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useFsActions } from '../../contexts/FsContext';
-import { useGitStatus } from '../../contexts/GitContext';
-import { useKeepFsWatcherAlive } from '../../hooks/useKeepFsWatcherAlive';
+import { useFsActions } from '@/contexts/FsContext';
+import { useGitStatus } from '@/contexts/GitContext';
+import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
 import { EmptyState } from '../workspace/EmptyState';
 import { FilePreviewModal } from './FilePreviewModal';
 import { FileTree } from './FileTree';

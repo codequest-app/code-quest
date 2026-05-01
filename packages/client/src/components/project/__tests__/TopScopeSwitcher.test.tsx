@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { Project } from '../../../contexts/ProjectContext';
+import type { Project } from '@/contexts/ProjectContext';
 import { TopScopeSwitcher } from '../TopScopeSwitcher';
 
 const projects: Project[] = [

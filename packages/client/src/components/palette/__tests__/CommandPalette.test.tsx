@@ -2,11 +2,11 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CommandPaletteProvider, useCommandPalette } from '../../../contexts/CommandPaletteContext';
-import { useMessageRegistryStore } from '../../../stores/useMessageRegistryStore';
-import { useMessageVisibilityStore } from '../../../stores/useMessageVisibilityStore';
-import { renderWithChannel } from '../../../test/render-with-channel';
-import type { Message } from '../../../types/ui';
+import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
+import { renderWithChannel } from '@/test/render-with-channel';
+import type { Message } from '@/types/ui';
 import { CommandPalette } from '../CommandPalette';
 
 const fakeMessage = (id: string, content: string, type = 'text'): Message =>

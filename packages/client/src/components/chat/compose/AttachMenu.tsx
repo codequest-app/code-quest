@@ -1,9 +1,9 @@
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
-import { AddContextIcon } from '../../icons/MentionIcons';
-import { IconButton } from '../../ui/IconButton';
-import { PlusIcon } from '../../ui/Icons';
+import { AddContextIcon } from '@/components/icons/MentionIcons';
+import { IconButton } from '@/components/ui/IconButton';
+import { PlusIcon } from '@/components/ui/Icons';
 
 export function AttachMenu({
   onAttachFile,

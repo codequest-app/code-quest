@@ -1,11 +1,11 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { useChannelConfig } from '@/contexts/channel/index';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { useChannelConfig } from '../../index';
 
 function ProviderConfigDisplay() {
   const { providerConfig } = useChannelConfig();

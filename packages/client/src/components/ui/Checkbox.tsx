@@ -1,8 +1,8 @@
 import { CheckIcon } from '@heroicons/react/16/solid';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { useId } from 'react';
-import { cn } from '../../utils/cn';
-import { slugify } from '../../utils/slugify';
+import { cn } from '@/utils/cn';
+import { slugify } from '@/utils/slugify';
 import { focusRing } from './_tokens';
 
 export function Checkbox({

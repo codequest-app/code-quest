@@ -1,10 +1,9 @@
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useChannelCompose, useChannelConfig } from '../../contexts/channel';
-import { useFeatureRegistry } from '../../contexts/channel/FeatureRegistryContext';
-import { cn } from '../../utils/cn';
-import { findModel, getEffortLevels } from '../../utils/model-utils';
-import { isThinkingActive } from '../../utils/thinking';
+import { useChannelCompose, useChannelConfig } from '@/contexts/channel';
+import { useFeatureRegistry } from '@/contexts/channel/FeatureRegistryContext';
+import { cn } from '@/utils/cn';
+import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
 import { IconButton } from '../ui/IconButton';
 import { SlashCommandIcon } from '../ui/Icons';
 import { buildLocalFeatures } from './build-local-features';

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { RewindBody } from '../../../features/rewind/RewindBody';
-import { RewindConfirmDialog } from '../../../features/rewind/RewindConfirmDialog';
-import type { ForkFn, RewindFn } from '../../../types/ui';
-import { copyToClipboard } from '../../../utils/clipboard';
+import { RewindBody } from '@/features/rewind/RewindBody';
+import { RewindConfirmDialog } from '@/features/rewind/RewindConfirmDialog';
+import type { ForkFn, RewindFn } from '@/types/ui';
+import { copyToClipboard } from '@/utils/clipboard';
 import { MessageActionsMenu } from './MessageActionsMenu';
 
 interface MessageActionsProps {

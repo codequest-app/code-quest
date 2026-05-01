@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import { filterTree } from '../filter-tree';
-import type { MessageNode } from '../message-tree';
+import type { MessageNode } from '@/utils/message-tree';
+import { filterTree } from '@/utils/message-tree';
 
 function node(id: string, type: Message['type'], children: MessageNode[] = []): MessageNode {
-  // Minimal Message shape — `filterTree` only inspects `type`; `meta` variants
-  // per type are irrelevant to this util's logic.
   const message = { id, role: 'assistant', type, content: id, timestamp: 0 } as Message;
   return { message, children };
 }
@@ -28,7 +26,6 @@ describe('filterTree', () => {
     const child2 = node('c2', 'text');
     const parent = node('p', 'tool_use', [child1, child2]);
     const result = filterTree([parent], (m) => m.type !== 'tool_use');
-    // parent is tool_use → whole subtree dropped
     expect(result).toEqual([]);
   });
 

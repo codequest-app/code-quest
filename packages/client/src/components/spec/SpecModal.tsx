@@ -1,10 +1,16 @@
-import { EVENTS, type OpenspecArtifactKind, openspecReadResultSchema } from '@code-quest/shared';
+import {
+  EVENTS,
+  type OpenspecArtifactKind,
+  type OpenspecKind,
+  openspecArtifactKindSchema,
+  openspecReadResultSchema,
+} from '@code-quest/shared';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useOpenspecActions } from '../../contexts/OpenspecContext';
-import { useSocket } from '../../contexts/SocketContext';
-import { rpc } from '../../socket/rpc';
+import { useOpenspecActions } from '@/contexts/OpenspecContext';
+import { useSocket } from '@/contexts/SocketContext';
+import { rpc } from '@/socket/rpc';
 import { MarkdownContent } from '../chat/renderers/MarkdownContent';
 import { tabTriggerCompact } from '../ui/_tokens';
 import { Button } from '../ui/Button';
@@ -13,12 +19,14 @@ import { TaskChecklist } from './TaskChecklist';
 
 export interface SpecModalProps {
   cwd: string;
-  kind: 'change' | 'spec';
+  kind: OpenspecKind;
   name: string;
   onClose: () => void;
 }
 
-const CHANGE_TABS: OpenspecArtifactKind[] = ['proposal', 'design', 'tasks'];
+const CHANGE_TABS: OpenspecArtifactKind[] = openspecArtifactKindSchema.options.filter(
+  (k) => k !== 'spec',
+);
 const TAB_LABEL: Record<OpenspecArtifactKind, string> = {
   proposal: 'Proposal',
   design: 'Design',

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { Feature } from '../../../lib/feature';
+import type { Feature } from '@/lib/feature';
 import { FeatureRow } from '../FeatureRow';
 
 function makeGroupFeature(overrides: Partial<Feature> = {}): Feature {

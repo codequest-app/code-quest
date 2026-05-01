@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withThemePreset } from '../../test/story-decorator';
-import type { Message } from '../../types/ui';
+import { withThemePreset } from '@/test/story-decorator';
+import type { Message } from '@/types/ui';
 import { PaletteMessageList } from './PaletteMessageList';
 
 const baseMessages: Message[] = [

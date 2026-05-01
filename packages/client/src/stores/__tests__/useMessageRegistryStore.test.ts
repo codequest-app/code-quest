@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Message } from '../../types/ui';
+import type { Message } from '@/types/ui';
 import { useMessageRegistryStore } from '../useMessageRegistryStore';
 
 beforeEach(() => {

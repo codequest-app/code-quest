@@ -3,6 +3,8 @@ import { channelMetaCacheSchema, clientMessageSchema } from './common.ts';
 import { rpcResult } from './rpc.ts';
 import { effortLevelSchema } from './settings.ts';
 
+const SESSION_LIST_LIMIT = 100;
+
 // ── Session summary (moved from common.ts) ──
 
 export const sessionSummarySchema: z.ZodObject<
@@ -329,7 +331,7 @@ export const sessionListPayloadSchema: z.ZodObject<
   },
   z.core.$strip
 > = z.object({
-  limit: z.number().min(1).max(100).optional(),
+  limit: z.number().min(1).max(SESSION_LIST_LIMIT).optional(),
   offset: z.number().min(0).optional(),
   cwd: z.string().optional(),
   hasParentId: z.boolean().optional(),
@@ -363,7 +365,7 @@ export const sessionListRemotePayloadSchema: z.ZodObject<
   { limit: z.ZodOptional<z.ZodNumber>; offset: z.ZodOptional<z.ZodNumber> },
   z.core.$strip
 > = z.object({
-  limit: z.number().min(1).max(100).optional(),
+  limit: z.number().min(1).max(SESSION_LIST_LIMIT).optional(),
   offset: z.number().min(0).optional(),
 });
 export type SessionListRemotePayload = z.infer<typeof sessionListRemotePayloadSchema>;

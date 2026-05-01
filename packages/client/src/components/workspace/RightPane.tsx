@@ -1,7 +1,7 @@
 import { ClipboardDocumentListIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { FilesPane } from '../files/FilesPane';
 import { GitPane } from '../git/GitPane';
 import { SpecPane } from '../spec/SpecPane';

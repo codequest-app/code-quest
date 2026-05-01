@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../test/fake-summoner';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvider, useFsBrowse } from '../FsContext';
 import { SocketProvider } from '../SocketContext';
 

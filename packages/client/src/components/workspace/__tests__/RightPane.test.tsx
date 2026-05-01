@@ -2,11 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { FsProvider } from '../../../contexts/FsContext';
-import { GitProvider } from '../../../contexts/GitContext';
-import { OpenspecProvider } from '../../../contexts/OpenspecContext';
-import { SocketProvider } from '../../../contexts/SocketContext';
-import { createFakeSummoner } from '../../../test/fake-summoner';
+import { FsProvider } from '@/contexts/FsContext';
+import { GitProvider } from '@/contexts/GitContext';
+import { OpenspecProvider } from '@/contexts/OpenspecContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 import { RightPane } from '../RightPane';
 
 function setup() {

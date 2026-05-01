@@ -3,7 +3,7 @@ import { FakeOpenspecService } from '@code-quest/summoner/test';
 import { render, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FakeSummoner } from '../../test/fake-summoner';
+import { FakeSummoner } from '@/test/fake-summoner';
 import { OpenspecProvider, useOpenspecActions, useOpenspecList } from '../OpenspecContext';
 import { SocketProvider } from '../SocketContext';
 

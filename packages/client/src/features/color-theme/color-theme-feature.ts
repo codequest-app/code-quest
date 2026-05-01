@@ -1,6 +1,6 @@
-import { createChoiceFeature } from '../../lib/create-choice-feature';
-import type { Feature } from '../../lib/feature';
-import type { ColorTheme } from '../../stores/usePreferencesStore';
+import { createChoiceFeature } from '@/lib/create-choice-feature';
+import type { Feature } from '@/lib/feature';
+import type { ColorTheme } from '@/stores/usePreferencesStore';
 
 interface ColorThemeFeatureDeps {
   colorTheme: ColorTheme;

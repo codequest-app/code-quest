@@ -11,6 +11,11 @@ import { AlreadyRepoError, NotARepoError } from './errors.ts';
 import { createGit, rawGit } from './git-runner.ts';
 
 const NOTHING_TO_COMMIT = 'nothing-to-commit';
+const RE_NO_UPSTREAM = /no upstream|set-upstream/;
+const RE_REJECTED = /rejected|non-fast-forward/;
+const RE_ALREADY_UP_TO_DATE = /already up.to.date/i;
+const RE_NON_FF = /not possible to fast-forward|non-fast-forward|divergent/;
+const RE_NO_TRACKING = /no tracking information|no upstream/;
 
 function toPseudoDiff(filePath: string, content: string): string {
   return `+++ b/${filePath}\n${content
@@ -96,8 +101,8 @@ export class GitCommands {
     const result = await rawGit(createGit(cwd), ['push']);
     if (result.exitCode === 0) return { ok: true };
     const out = result.stdout.toLowerCase();
-    if (/no upstream|set-upstream/.test(out)) return { error: 'no-upstream' };
-    if (/rejected|non-fast-forward/.test(out)) return { error: 'rejected' };
+    if (RE_NO_UPSTREAM.test(out)) return { error: 'no-upstream' };
+    if (RE_REJECTED.test(out)) return { error: 'rejected' };
     return { error: result.stdout.trim() || 'git push failed' };
   }
 
@@ -116,14 +121,14 @@ export class GitCommands {
   async pull(cwd: string): Promise<{ ok: true; fastForwarded: boolean } | { error: string }> {
     const result = await rawGit(createGit(cwd), ['pull', '--ff-only']);
     if (result.exitCode === 0) {
-      const fastForwarded = !/already up.to.date/i.test(result.stdout);
+      const fastForwarded = !RE_ALREADY_UP_TO_DATE.test(result.stdout);
       return { ok: true, fastForwarded };
     }
     const out = result.stdout.toLowerCase();
-    if (/not possible to fast-forward|non-fast-forward|divergent/.test(out)) {
+    if (RE_NON_FF.test(out)) {
       return { error: 'non-ff' };
     }
-    if (/no tracking information|no upstream/.test(out)) {
+    if (RE_NO_TRACKING.test(out)) {
       return { error: 'no-upstream' };
     }
     return { error: result.stdout.trim() || 'git pull failed' };

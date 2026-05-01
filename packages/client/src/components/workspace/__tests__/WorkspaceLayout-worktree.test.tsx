@@ -3,8 +3,8 @@ import type { CreateWorktreeResponse } from '@code-quest/shared';
 import { FakeGitService } from '@code-quest/summoner/test';
 import { act, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { renderWithWorkspace } from '../../../test/render-with-workspace';
+import { createFakeSummoner } from '@/test/fake-summoner';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 describe('WorkspaceLayout worktree grouping', () => {
   it('git:worktree:add is a pure git op — it does NOT auto-spawn a chat tab', async () => {

@@ -1,6 +1,6 @@
 import { CheckIcon } from '@heroicons/react/24/outline';
 import * as Switch from '@radix-ui/react-switch';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { focusRing } from './_tokens';
 
 const trackClass = (isOn: boolean) =>

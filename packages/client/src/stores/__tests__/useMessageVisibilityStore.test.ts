@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memoryBackend, readPersistedRaw } from '../../test/memory-persist-storage';
+import { memoryBackend, readPersistedRaw } from '@/test/memory-persist-storage';
 import { useMessageVisibilityStore } from '../useMessageVisibilityStore';
 
 const STORAGE_KEY = 'code-quest:message-visibility';

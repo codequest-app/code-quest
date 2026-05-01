@@ -2,8 +2,8 @@ import { segments as s } from '@code-quest/summoner/test';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '../../test/helpers';
-import { renderWithChannel } from '../../test/render-with-channel';
+import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
+import { renderWithChannel } from '@/test/render-with-channel';
 import { ComposeInput } from '../chat/compose/ComposeInput';
 
 const containerRef = createRef<HTMLDivElement>();

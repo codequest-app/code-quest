@@ -6,6 +6,7 @@ import { glob } from 'glob';
 import type { Unsubscribe, WatchService } from '../fs-watch/types.ts';
 import type {
   DirectoryEntry,
+  FileKind,
   FileResult,
   FilesystemService,
   FsMutationResult,
@@ -173,7 +174,7 @@ export class LocalFilesystemService implements FilesystemService {
 
   // ── Mutations ──
 
-  async create(absolutePath: string, kind: 'file' | 'directory'): Promise<FsMutationResult> {
+  async create(absolutePath: string, kind: FileKind): Promise<FsMutationResult> {
     const validated = this.validatePath(absolutePath, this.fsRoots);
     if (!validated) return { error: 'Path outside allowed roots' };
     try {
@@ -409,7 +410,7 @@ export class LocalFilesystemService implements FilesystemService {
     }
   }
 
-  async statKind(path: string): Promise<'file' | 'directory' | null> {
+  async statKind(path: string): Promise<FileKind | null> {
     try {
       const s = await stat(path);
       if (s.isDirectory()) return 'directory';

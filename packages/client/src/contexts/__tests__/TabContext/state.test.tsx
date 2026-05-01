@@ -3,17 +3,17 @@ import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeSummoner } from '../../../test/fake-summoner';
-import { AppInitProvider } from '../../AppInitContext';
+import { AppInitProvider } from '@/contexts/AppInitContext';
 import {
   NavigationProvider,
   useNavigationActions,
   useNavigationState,
-} from '../../NavigationContext';
-import { ProjectProvider } from '../../ProjectContext';
-import { SessionProvider } from '../../SessionContext';
-import { SocketProvider } from '../../SocketContext';
-import { TabProvider, useTabActions, useTabState } from '../../TabContext';
+} from '@/contexts/NavigationContext';
+import { ProjectProvider } from '@/contexts/ProjectContext';
+import { SessionProvider } from '@/contexts/SessionContext';
+import { SocketProvider } from '@/contexts/SocketContext';
+import { TabProvider, useTabActions, useTabState } from '@/contexts/TabContext';
+import { createFakeSummoner } from '@/test/fake-summoner';
 
 function renderInTab(ui: ReactElement) {
   const summoner = createFakeSummoner();

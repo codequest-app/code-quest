@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { cn } from '../../../utils/cn';
-import { ChevronRight } from '../../ui/Icons';
+import { ChevronRight } from '@/components/ui/Icons';
+import { cn } from '@/utils/cn';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 
 interface ThinkingBlockProps {

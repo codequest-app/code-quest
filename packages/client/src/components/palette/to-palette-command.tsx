@@ -1,6 +1,6 @@
-import { renderMenuTrailing } from '../../lib/adapters/to-menu-item';
-import { deriveGroupAggregate } from '../../lib/derive-group-aggregate';
-import type { Feature, FeatureState } from '../../lib/feature';
+import { renderMenuTrailing } from '@/lib/adapters/to-menu-item';
+import { deriveGroupAggregate } from '@/lib/derive-group-aggregate';
+import type { Feature, FeatureState } from '@/lib/feature';
 import { TriStateIndicator } from '../ui/TriStateIndicator';
 
 interface PaletteCommand {

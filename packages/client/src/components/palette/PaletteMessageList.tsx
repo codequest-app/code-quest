@@ -1,7 +1,6 @@
-import type { Message } from '../../types/ui';
-import { cn } from '../../utils/cn';
-import { messagePreview } from '../../utils/isMessageVisible';
-import { highlight, typeColor, typeLabel } from '../../utils/message-preview';
+import type { Message } from '@/types/ui';
+import { cn } from '@/utils/cn';
+import { highlight, messagePreview, typeColor, typeLabel } from '@/utils/message-preview';
 import { SectionHeader } from '../ui/SectionHeader';
 import {
   PALETTE_RECENT_COUNT,

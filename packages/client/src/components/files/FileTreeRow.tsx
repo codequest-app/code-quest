@@ -1,8 +1,8 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Icon } from '@iconify/react';
 import { forwardRef, type HTMLAttributes, type MouseEvent } from 'react';
-import { cn } from '../../utils/cn';
-import { getFileIcon } from '../../utils/getFileIcon';
+import { cn } from '@/utils/cn';
+import { getFileIcon } from '@/utils/getFileIcon';
 
 interface EntryItem {
   name: string;

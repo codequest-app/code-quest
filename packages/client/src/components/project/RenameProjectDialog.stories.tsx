@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withStoryApp } from '../../test/story-decorator';
+import { withStoryApp } from '@/test/story-decorator';
 import { RenameProjectDialog } from './RenameProjectDialog';
 
 const meta: Meta<typeof RenameProjectDialog> = {

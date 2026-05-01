@@ -1,11 +1,7 @@
 import type { ModelInfo } from '@code-quest/shared';
 import { useEffect, useRef } from 'react';
-import { cn } from '../../utils/cn';
-import {
-  getModelDisplayInfo,
-  getModelInfoDisplayName,
-  shortModelName,
-} from '../../utils/model-utils';
+import { cn } from '@/utils/cn';
+import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '@/utils/model-utils';
 
 const optionButtonClass = (isSelected: boolean) =>
   cn(

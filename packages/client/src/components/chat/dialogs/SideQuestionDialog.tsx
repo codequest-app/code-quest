@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '../../ui/Dialog';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { MarkdownContent } from '../renderers/MarkdownContent';
 
 interface SideQuestionDialogProps {

@@ -1,13 +1,3 @@
-/**
- * Compute a non-colliding "duplicate" name in the same directory.
- *   foo.ts                           → foo copy.ts
- *   foo.ts + foo copy.ts             → foo copy 2.ts
- *   foo.ts + foo copy.ts + …copy 2.ts → foo copy 3.ts
- *   Makefile                         → Makefile copy
- *
- * Skips any numeric suffix that's already taken by a sibling — searches
- * from 2 upward until a free name is found.
- */
 export function nextDuplicateName(siblings: readonly string[], original: string): string {
   const set = new Set(siblings);
   const dot = original.lastIndexOf('.');
@@ -21,6 +11,5 @@ export function nextDuplicateName(siblings: readonly string[], original: string)
     const candidate = join(`${base} copy ${n}`);
     if (!set.has(candidate)) return candidate;
   }
-  // Fallback (extremely unlikely): timestamp suffix
   return join(`${base} copy ${Date.now()}`);
 }

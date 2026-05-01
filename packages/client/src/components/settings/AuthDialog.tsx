@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useChannelConfig } from '../../contexts/channel';
-import { useSession } from '../../contexts/SessionContext';
+import { useChannelConfig } from '@/contexts/channel';
+import { useSession } from '@/contexts/SessionContext';
 import { Button } from '../ui/Button';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
 

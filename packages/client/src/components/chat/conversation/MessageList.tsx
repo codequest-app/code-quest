@@ -8,16 +8,16 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useChannelControl, useChannelMessages, useMessageVisibility } from '@/contexts/channel';
+import type { ForkFn, RewindFn } from '@/types/ui';
+import { isMessageVisible } from '@/utils/isMessageVisible';
 import {
-  useChannelControl,
-  useChannelMessages,
-  useMessageVisibility,
-} from '../../../contexts/channel';
-import type { ForkFn, RewindFn } from '../../../types/ui';
-import { filterTree } from '../../../utils/filter-tree';
-import { groupForTimeline } from '../../../utils/group-for-timeline';
-import { isMessageVisible } from '../../../utils/isMessageVisible';
-import { buildMessageTree, type MessageNode } from '../../../utils/message-tree';
+  buildMessageTree,
+  filterTree,
+  groupForTimeline,
+  type MessageNode,
+  type RenderGroup,
+} from '@/utils/message-tree';
 import { SpinnerVerb } from '../SpinnerVerb';
 import { ChatMessage } from './ChatMessage';
 import { CollapsibleTimeline } from './CollapsibleTimeline';
@@ -52,8 +52,6 @@ function collectIds(node: MessageNode, topIndex: number, map: Map<string, number
   for (const child of node.children) collectIds(child, topIndex, map);
 }
 
-type DisplayGroup = ReturnType<typeof groupForTimeline>[number];
-
 function VirtualGroupItem({
   group,
   item,
@@ -63,7 +61,7 @@ function VirtualGroupItem({
   onStopTask,
   onDiffRespond,
 }: {
-  group: DisplayGroup;
+  group: RenderGroup;
   item: VirtualItem;
   virtualizer: Pick<Virtualizer<HTMLDivElement, HTMLDivElement>, 'measureElement'>;
   onRewind?: RewindFn;

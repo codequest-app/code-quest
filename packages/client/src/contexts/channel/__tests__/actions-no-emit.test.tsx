@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { useChannelMessages } from '@/contexts/channel';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useChannelMessages } from '../../channel';
 
 function ActionsTestUI() {
   const { isCancelling, ...actions } = useChannelMessages();

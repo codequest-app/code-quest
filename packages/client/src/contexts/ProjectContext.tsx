@@ -4,12 +4,12 @@ import {
   type ProjectsRemovedEvent,
   type Project as ServerProject,
   type SessionStateSummary,
-  sessionBroadcastStateSchema,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { basename } from '../utils/basename';
 import { useSocket } from './SocketContext';
+import { TERMINAL_STATES } from './session-states';
 
 export interface Project {
   cwd: string;
@@ -71,10 +71,6 @@ export function useProjectActions(): ProjectActions {
   if (!ctx) throw new Error('useProjectActions must be used within a ProjectProvider');
   return ctx;
 }
-
-const TERMINAL_STATES = new Set<string>(
-  sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
-);
 
 type Socket = ReturnType<typeof useSocket>['socket'];
 

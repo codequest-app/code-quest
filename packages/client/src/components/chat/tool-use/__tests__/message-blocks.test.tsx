@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderBody } from '../../conversation/MessageContent';
+import { renderBody } from '@/components/chat/conversation/MessageContent';
 
 describe('message-blocks', () => {
   describe('ToolUseBlock (via renderBody)', () => {

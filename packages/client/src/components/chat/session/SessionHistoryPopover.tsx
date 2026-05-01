@@ -2,7 +2,7 @@ import type { SessionSummary } from '@code-quest/shared';
 import * as Popover from '@radix-ui/react-popover';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useSession } from '../../../contexts/SessionContext';
+import { useSession } from '@/contexts/SessionContext';
 import { SessionHistory } from './SessionHistory';
 
 interface SessionHistoryPopoverProps {

@@ -1,8 +1,8 @@
 import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { cn } from '../../../utils/cn';
-import { formatRelativeDate } from '../../../utils/format-relative-date';
+import { cn } from '@/utils/cn';
+import { formatRelativeDate } from '@/utils/format-relative-date';
 
 interface SessionRowProps {
   session: SessionSummary;

@@ -1,6 +1,6 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 export const Dialog: typeof RadixDialog.Root = RadixDialog.Root;
 export const DialogClose: typeof RadixDialog.Close = RadixDialog.Close;

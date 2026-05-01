@@ -1,5 +1,5 @@
-import { cn } from '../../../utils/cn';
-import type { GroupChip } from '../../../utils/tool-group-rules';
+import { cn } from '@/utils/cn';
+import type { GroupChip } from '@/utils/tool-utils';
 import { RotatableChevron } from '../tool-use/message-blocks/primitives';
 
 interface ToolGroupSummaryProps {

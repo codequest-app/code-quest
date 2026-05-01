@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
-import { useGitActions } from '../../contexts/GitContext';
+import { useGitActions } from '@/contexts/GitContext';
 import { tabTriggerCompact } from '../ui/_tokens';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';

@@ -1,5 +1,5 @@
-import { isDiff } from '../../../../utils/diff';
-import { DiffViewer } from '../../renderers/DiffViewer';
+import { DiffViewer } from '@/components/chat/renderers/DiffViewer';
+import { isDiff } from '@/utils/diff';
 import { AnsiContent, CODE_BLOCK_CLASS, hasAnsi, parseFilePathsInContent } from './primitives';
 
 interface ContentRendererProps {

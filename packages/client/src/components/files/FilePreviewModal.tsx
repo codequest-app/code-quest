@@ -1,7 +1,7 @@
 import { EVENTS, fsReadResponseSchema } from '@code-quest/shared';
 import { useEffect, useMemo, useState } from 'react';
-import { useSocket } from '../../contexts/SocketContext';
-import { rpc } from '../../socket/rpc';
+import { useSocket } from '@/contexts/SocketContext';
+import { rpc } from '@/socket/rpc';
 import { CodeBlock } from '../chat/renderers/CodeBlock';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';

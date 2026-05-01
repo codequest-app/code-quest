@@ -1,10 +1,10 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useGitActions } from '../../contexts/GitContext';
-import { useNavigationActions, useNavigationState } from '../../contexts/NavigationContext';
-import { useProjectActions } from '../../contexts/ProjectContext';
-import { useSession } from '../../contexts/SessionContext';
+import { useGitActions } from '@/contexts/GitContext';
+import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
+import { useProjectActions } from '@/contexts/ProjectContext';
+import { useSession } from '@/contexts/SessionContext';
 import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog';
 import { BranchPopover } from './BranchPopover';
 import { CreateWorktreeDialog } from './CreateWorktreeDialog';

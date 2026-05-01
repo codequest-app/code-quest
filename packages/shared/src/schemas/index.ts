@@ -11,6 +11,7 @@ export {
 } from './actions.ts';
 export type {
   AccountInfo,
+  AuthMethod,
   AuthResult,
   AuthStatus,
   LoginPayload,
@@ -18,6 +19,7 @@ export type {
 } from './auth.ts';
 export {
   accountInfoSchema,
+  authMethodSchema,
   authResultSchema,
   authStatusSchema,
   loginPayloadSchema,
@@ -53,6 +55,7 @@ export type {
   ControlPermissionPayload,
   ControlPermissionResponse,
   ControlRespondPayload,
+  ElicitationInputType,
   PendingControl,
   PermissionPayload,
   RequestIdPayload,
@@ -69,6 +72,7 @@ export {
   controlPermissionPayloadSchema,
   controlPermissionResponseSchema,
   controlRespondPayloadSchema,
+  elicitationInputTypeSchema,
   pendingControlSchema,
   permissionPayloadSchema,
   requestIdPayloadSchema,
@@ -93,6 +97,7 @@ export type {
   FsCreatePayload,
   FsDeletePayload,
   FsDirectory,
+  FsEntryType,
   FsFile,
   FsMovePayload,
   FsMutationResult,
@@ -112,6 +117,7 @@ export {
   fsCreatePayloadSchema,
   fsDeletePayloadSchema,
   fsDirectorySchema,
+  fsEntryTypeSchema,
   fsFileSchema,
   fsMovePayloadSchema,
   fsMutationResultSchema,
@@ -321,6 +327,7 @@ export type {
   NotificationAuthUrlPayload,
   NotificationButton,
   NotificationPayload,
+  NotificationSeverity,
   NotificationShowPayload,
   NotificationToastPayload,
   RawEventPayload,
@@ -330,6 +337,7 @@ export {
   notificationAuthUrlPayloadSchema,
   notificationButtonSchema,
   notificationPayloadSchema,
+  notificationSeveritySchema,
   notificationShowPayloadSchema,
   notificationToastPayloadSchema,
   rawEventPayloadSchema,
@@ -342,6 +350,7 @@ export type {
   OpenspecChangeNewResult,
   OpenspecChangeSummary,
   OpenspecDirtyEvent,
+  OpenspecKind,
   OpenspecListPayload,
   OpenspecListResult,
   OpenspecReadPayload,
@@ -360,6 +369,7 @@ export {
   openspecChangeSlugSchema,
   openspecChangeSummarySchema,
   openspecDirtyEventSchema,
+  openspecKindSchema,
   openspecListPayloadSchema,
   openspecListResultSchema,
   openspecReadPayloadSchema,
@@ -657,6 +667,8 @@ export type {
   SystemTaskNotificationPayload,
   SystemTaskProgressPayload,
   SystemTaskStartedPayload,
+  TaskStatus,
+  TaskType,
   TokenUsage,
 } from './system.ts';
 export {
@@ -678,6 +690,8 @@ export {
   systemTaskNotificationPayloadSchema,
   systemTaskProgressPayloadSchema,
   systemTaskStartedPayloadSchema,
+  taskStatusSchema,
+  taskTypeSchema,
   tokenUsageSchema,
 } from './system.ts';
 export type {

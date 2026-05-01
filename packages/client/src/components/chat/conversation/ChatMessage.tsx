@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, memo, type ReactNode } from 'react';
-import type { ForkFn, Message, RewindFn } from '../../../types/ui';
-import { basename } from '../../../utils/basename';
-import { cn } from '../../../utils/cn';
+import type { ForkFn, Message, RewindFn } from '@/types/ui';
+import { basename } from '@/utils/basename';
+import { cn } from '@/utils/cn';
 import { TruncatedContent } from '../renderers/TruncatedContent';
 import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton';
 import { MessageActions } from './MessageActions';

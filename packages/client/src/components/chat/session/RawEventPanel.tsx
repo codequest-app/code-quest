@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { cn } from '../../../utils/cn';
-import { PanelHeader } from '../../ui/PanelHeader';
+import { PanelHeader } from '@/components/ui/PanelHeader';
+import { cn } from '@/utils/cn';
 import { SearchBar } from '../conversation/SearchBar';
 import { JsonViewer } from '../renderers/JsonViewer';
 import { RawEventFilterBar } from './RawEventFilterBar';

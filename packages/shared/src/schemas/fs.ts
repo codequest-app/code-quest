@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { rpcResult } from './rpc.ts';
 
+export const fsEntryTypeSchema: z.ZodEnum<{ file: 'file'; directory: 'directory' }> = z.enum([
+  'file',
+  'directory',
+]);
+export type FsEntryType = z.infer<typeof fsEntryTypeSchema>;
+
 // ── Browse (was explorer:browse) ──
 
 export const fsDirectorySchema: z.ZodObject<
@@ -85,7 +91,7 @@ export const fsSearchResultSchema: z.ZodObject<
 > = z.object({
   path: z.string(),
   name: z.string(),
-  type: z.enum(['file', 'directory']),
+  type: fsEntryTypeSchema,
 });
 export type FsSearchResult = z.infer<typeof fsSearchResultSchema>;
 
@@ -137,7 +143,7 @@ export const fsCreatePayloadSchema: z.ZodObject<
   z.core.$strip
 > = z.object({
   path: z.string(),
-  kind: z.enum(['file', 'directory']),
+  kind: fsEntryTypeSchema,
 });
 export type FsCreatePayload = z.infer<typeof fsCreatePayloadSchema>;
 

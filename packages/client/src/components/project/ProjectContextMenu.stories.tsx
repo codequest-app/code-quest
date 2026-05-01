@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { withStoryApp } from '../../test/story-decorator';
+import { withStoryApp } from '@/test/story-decorator';
 import { ProjectDropdownMenu } from './ProjectContextMenu';
 
 const meta: Meta<typeof ProjectDropdownMenu> = {

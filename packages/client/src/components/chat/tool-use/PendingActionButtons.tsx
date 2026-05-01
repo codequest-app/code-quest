@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
-import { useChannelControl } from '../../../contexts/channel';
+import { useChannelControl } from '@/contexts/channel';
 import { PlanReviewBanner } from '../plan-review/PlanReviewBanner';
 import { HookCallbackCard } from './HookCallbackCard';
 import { ToolPermissionCard } from './ToolPermissionCard';

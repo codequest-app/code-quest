@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 import { SearchIcon } from './Icons';
 
 interface SearchFieldProps {

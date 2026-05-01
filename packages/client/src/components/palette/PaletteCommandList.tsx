@@ -1,5 +1,5 @@
-import type { Feature } from '../../lib/feature';
-import { cn } from '../../utils/cn';
+import type { Feature } from '@/lib/feature';
+import { cn } from '@/utils/cn';
 import { SectionHeader } from '../ui/SectionHeader';
 import { FeatureRow } from './FeatureRow';
 

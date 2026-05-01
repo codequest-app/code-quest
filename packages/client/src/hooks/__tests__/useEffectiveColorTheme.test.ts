@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { useEffectiveColorTheme } from '../useEffectiveColorTheme';
 
 type MqlStub = MediaQueryList & {

@@ -1,8 +1,8 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { COMPOSE_PLACEHOLDER, emitAssistantTurn, sendUserMessage } from '../../test/helpers';
-import { renderWithWorkspace } from '../../test/render-with-workspace';
+import { COMPOSE_PLACEHOLDER, emitAssistantTurn, sendUserMessage } from '@/test/helpers';
+import { renderWithWorkspace } from '@/test/render-with-workspace';
 
 /** Render workspace + complete one user→assistant turn (common setup for most tests). */
 async function setupWithTurn(userMsg = 'go', assistantReply = 'hi') {

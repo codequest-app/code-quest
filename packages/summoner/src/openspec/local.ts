@@ -3,6 +3,7 @@ import type {
   OpenspecArtifactKind,
   OpenspecChangeNewResult,
   OpenspecChangeSummary,
+  OpenspecKind,
   OpenspecListResult,
   OpenspecReadResult,
   OpenspecSpecSummary,
@@ -90,7 +91,7 @@ export class LocalOpenspecService implements OpenspecService {
 
   async read(
     cwd: string,
-    kind: 'change' | 'spec',
+    kind: OpenspecKind,
     name: string,
     artifact: OpenspecArtifactKind,
   ): Promise<OpenspecReadResult> {

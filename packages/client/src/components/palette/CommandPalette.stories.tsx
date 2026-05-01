@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
-import { CommandPaletteProvider, useCommandPalette } from '../../contexts/CommandPaletteContext';
-import { useMessageRegistryStore } from '../../stores/useMessageRegistryStore';
-import { withStoryChannel, withThemePreset } from '../../test/story-decorator';
-import type { Message } from '../../types/ui';
+import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
+import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
+import { withStoryChannel, withThemePreset } from '@/test/story-decorator';
+import type { Message } from '@/types/ui';
 import { CommandPalette } from './CommandPalette';
 
 const messages: Message[] = [
