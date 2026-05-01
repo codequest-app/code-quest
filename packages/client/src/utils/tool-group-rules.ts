@@ -48,6 +48,14 @@ export function splitTimelineRuns(nodes: MessageNode[]): TimelineRun[] {
  * - Task/Agent → description from meta or fallback "Agent"
  * - Generic tools → "<ToolName> ×N", aggregated by name
  */
+function stringInput(
+  input: Record<string, unknown> | undefined,
+  key: string,
+  fallback: string,
+): string {
+  return typeof input?.[key] === 'string' ? (input[key] as string) : fallback;
+}
+
 export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
   const genericCounts = new Map<string, { count: number; isError: boolean }>();
   const namedChips: GroupChip[] = [];
@@ -59,13 +67,12 @@ export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
     const isError = meta.result?.is_error === true;
 
     if (toolName === 'Skill') {
-      const skillName = typeof meta.input?.skill === 'string' ? meta.input.skill : 'skill';
+      const skillName = stringInput(meta.input, 'skill', 'skill');
       const parts = skillName.split(':');
       const shortName = parts.length > 1 ? (parts[parts.length - 1] ?? skillName) : skillName;
       namedChips.push({ label: `/${shortName}`, isError });
     } else if (toolName === 'Task' || toolName === 'Agent') {
-      const description =
-        typeof meta.input?.description === 'string' ? meta.input.description : 'Agent';
+      const description = stringInput(meta.input, 'description', 'Agent');
       namedChips.push({ label: description, isError });
     } else {
       const entry = genericCounts.get(toolName);

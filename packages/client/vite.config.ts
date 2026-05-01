@@ -20,6 +20,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/ws': {
         target: `http://localhost:${process.env.PORT ?? 3000}`,

@@ -85,126 +85,96 @@ export function makeWorktreeSession(overrides?: Partial<SessionStateSummary>): S
 
 // ── Permission scenario fixtures ──
 
-export function makeToolApprovalFlow(): { messages: Message[]; pending: PendingControl[] } {
+function makePermissionFlow(opts: {
+  idPrefix: string;
+  userContent: string;
+  assistantContent: string;
+  pendingToolName: string;
+  requestId: string;
+  pendingInput: Record<string, unknown>;
+  pendingSubtype: PendingControl['subtype'];
+}): { messages: Message[]; pending: PendingControl[] } {
   return {
     messages: [
       {
-        id: 'ta1',
+        id: `${opts.idPrefix}1`,
         role: 'user',
         type: 'text',
-        content: 'Clean up the build artifacts',
+        content: opts.userContent,
         timestamp: 1_700_000_000_000,
       },
       {
-        id: 'ta2',
+        id: `${opts.idPrefix}2`,
         role: 'assistant',
         type: 'text',
-        content: "I'll remove the build directory to start fresh.",
+        content: opts.assistantContent,
         timestamp: 1_700_001_000_000,
       },
       {
-        id: 'ta3',
+        id: `${opts.idPrefix}3`,
         role: 'assistant',
         type: 'pending_action',
-        content: 'Bash',
-        meta: { requestId: 'req-1', input: { command: 'rm -rf /tmp/build' } },
+        content: opts.pendingToolName,
+        meta: { requestId: opts.requestId, input: opts.pendingInput },
         timestamp: 1_700_002_000_000,
       },
     ],
     pending: [
       {
-        requestId: 'req-1',
-        subtype: 'can_use_tool',
-        toolName: 'Bash',
-        input: {
-          command: 'rm -rf /tmp/build',
-          description: 'Clean build artifacts before rebuilding',
-        },
+        requestId: opts.requestId,
+        subtype: opts.pendingSubtype,
+        toolName: opts.pendingToolName,
+        input: opts.pendingInput,
       },
     ],
   };
+}
+
+export function makeToolApprovalFlow(): { messages: Message[]; pending: PendingControl[] } {
+  return makePermissionFlow({
+    idPrefix: 'ta',
+    userContent: 'Clean up the build artifacts',
+    assistantContent: "I'll remove the build directory to start fresh.",
+    pendingToolName: 'Bash',
+    requestId: 'req-1',
+    pendingInput: {
+      command: 'rm -rf /tmp/build',
+      description: 'Clean build artifacts before rebuilding',
+    },
+    pendingSubtype: 'can_use_tool',
+  });
 }
 
 export function makeToolDenialFlow(): { messages: Message[]; pending: PendingControl[] } {
-  return {
-    messages: [
-      {
-        id: 'td1',
-        role: 'user',
-        type: 'text',
-        content: 'Delete all log files',
-        timestamp: 1_700_000_000_000,
-      },
-      {
-        id: 'td2',
-        role: 'assistant',
-        type: 'text',
-        content: "I'll remove the log files.",
-        timestamp: 1_700_001_000_000,
-      },
-      {
-        id: 'td3',
-        role: 'assistant',
-        type: 'pending_action',
-        content: 'Bash',
-        meta: { requestId: 'req-deny', input: { command: 'rm -rf /var/log/app/*' } },
-        timestamp: 1_700_002_000_000,
-      },
-    ],
-    pending: [
-      {
-        requestId: 'req-deny',
-        subtype: 'can_use_tool',
-        toolName: 'Bash',
-        input: {
-          command: 'rm -rf /var/log/app/*',
-          description: 'Remove all application log files',
-        },
-      },
-    ],
-  };
+  return makePermissionFlow({
+    idPrefix: 'td',
+    userContent: 'Delete all log files',
+    assistantContent: "I'll remove the log files.",
+    pendingToolName: 'Bash',
+    requestId: 'req-deny',
+    pendingInput: {
+      command: 'rm -rf /var/log/app/*',
+      description: 'Remove all application log files',
+    },
+    pendingSubtype: 'can_use_tool',
+  });
 }
 
 export function makePlanReviewFlow(): { messages: Message[]; pending: PendingControl[] } {
-  return {
-    messages: [
-      {
-        id: 'pr1',
-        role: 'user',
-        type: 'text',
-        content: 'Refactor the auth module',
-        timestamp: 1_700_000_000_000,
-      },
-      {
-        id: 'pr2',
-        role: 'assistant',
-        type: 'text',
-        content:
-          "Here's my plan:\n\n" +
-          '1. Extract `validateUser` into its own module\n' +
-          '2. Add proper error types\n' +
-          '3. Update tests\n\n' +
-          'Shall I proceed?',
-        timestamp: 1_700_001_000_000,
-      },
-      {
-        id: 'pr3',
-        role: 'assistant',
-        type: 'pending_action',
-        content: 'ExitPlanMode',
-        meta: { requestId: 'req-plan', input: {} },
-        timestamp: 1_700_002_000_000,
-      },
-    ],
-    pending: [
-      {
-        requestId: 'req-plan',
-        subtype: 'exit_plan_mode',
-        toolName: 'ExitPlanMode',
-        input: {},
-      },
-    ],
-  };
+  return makePermissionFlow({
+    idPrefix: 'pr',
+    userContent: 'Refactor the auth module',
+    assistantContent:
+      "Here's my plan:\n\n" +
+      '1. Extract `validateUser` into its own module\n' +
+      '2. Add proper error types\n' +
+      '3. Update tests\n\n' +
+      'Shall I proceed?',
+    pendingToolName: 'ExitPlanMode',
+    requestId: 'req-plan',
+    pendingInput: {},
+    pendingSubtype: 'exit_plan_mode',
+  });
 }
 
 // ── Scenario fixtures ──

@@ -176,6 +176,47 @@ function DefaultToolBody({
   );
 }
 
+function ToolBody({
+  toolName,
+  input,
+  result,
+  partialInput,
+}: {
+  toolName: string;
+  input: Record<string, unknown>;
+  result: ToolUseMeta['result'];
+  partialInput?: string;
+}): React.JSX.Element | null {
+  const resultContent = result?.content;
+  const resultIsError = result?.is_error;
+  switch (toolName) {
+    case 'Bash':
+      return (
+        <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
+      );
+    case 'Read':
+      return <ReadToolBody input={input} resultContent={resultContent} />;
+    case 'Write':
+    case 'Edit':
+    case 'MultiEdit':
+      if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
+      return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
+    case 'Skill':
+      return (
+        <SkillToolBody input={input} resultContent={resultContent} hasResult={result != null} />
+      );
+    default:
+      return (
+        <DefaultToolBody
+          input={input}
+          resultContent={resultContent}
+          resultIsError={resultIsError}
+          partialInput={partialInput}
+        />
+      );
+  }
+}
+
 export function ToolUseBlock({
   content,
   meta,
@@ -187,8 +228,6 @@ export function ToolUseBlock({
   const input = meta?.input ?? {};
   const partialInput = meta?.partialInput;
   const result = meta?.result;
-  const resultContent = result?.content;
-  const resultIsError = result?.is_error;
 
   const headerInfo = getToolHeaderInfo(toolName, input);
   const isTaskTool = toolName === 'Task' || toolName === 'Agent';
@@ -209,35 +248,6 @@ export function ToolUseBlock({
     </span>
   ) : undefined;
 
-  const renderBody = () => {
-    switch (toolName) {
-      case 'Bash':
-        return (
-          <BashToolBody input={input} resultContent={resultContent} resultIsError={resultIsError} />
-        );
-      case 'Read':
-        return <ReadToolBody input={input} resultContent={resultContent} />;
-      case 'Write':
-      case 'Edit':
-      case 'MultiEdit':
-        if (partialInput) return <PartialInputPlaceholder content={partialInput} />;
-        return <FileToolBody resultContent={resultContent} resultIsError={resultIsError} />;
-      case 'Skill':
-        return (
-          <SkillToolBody input={input} resultContent={resultContent} hasResult={result != null} />
-        );
-      default:
-        return (
-          <DefaultToolBody
-            input={input}
-            resultContent={resultContent}
-            resultIsError={resultIsError}
-            partialInput={partialInput}
-          />
-        );
-    }
-  };
-
   return (
     <div className="group/tool">
       <CollapsibleBlock
@@ -247,8 +257,8 @@ export function ToolUseBlock({
         labelRange={headerInfo.range}
         labelSuffix={taskBadge}
       >
-        {resultIsError && resultContent && <ToolErrorBanner message={resultContent} />}
-        {renderBody()}
+        {result?.is_error && result.content && <ToolErrorBanner message={result.content} />}
+        <ToolBody toolName={toolName} input={input} result={result} partialInput={partialInput} />
         {!partialInput && !result && (
           <div className="text-xs text-text-muted/60 animate-pulse mt-1">Running...</div>
         )}

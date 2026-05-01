@@ -63,6 +63,23 @@ export interface SegmentTemplates {
 
 export type SegmentBuilders = ReturnType<typeof buildSegments>;
 
+function buildStreamDelta(
+  template: string | undefined,
+  deltaKey: string,
+  value: unknown,
+  uuidPrefix: string,
+  seq: number,
+  opts?: { index?: number; parentToolUseId?: string },
+): string {
+  const line = JSON.parse(template ?? '{}') as Record<string, unknown>;
+  const event = line.event as Record<string, unknown>;
+  (event.delta as Record<string, unknown>)[deltaKey] = value;
+  if (opts?.index != null) event.index = opts.index;
+  if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
+  line.uuid = `fake-${uuidPrefix}-delta-${seq}`;
+  return JSON.stringify(line);
+}
+
 export function createSegments(T: SegmentTemplates): {
   segments: SegmentBuilders;
   resetSeq: () => void;
@@ -354,46 +371,43 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     },
 
     textDelta(text: string, opts?: { index?: number; parentToolUseId?: string }): string {
-      const line = JSON.parse(T.STREAM_TEXT_DELTA ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).text = text;
-      if (opts?.index != null) event.index = opts.index;
-      if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
-      line.uuid = `fake-text-delta-${next()}`;
-      return JSON.stringify(line);
+      return buildStreamDelta(T.STREAM_TEXT_DELTA, 'text', text, 'text', next(), opts);
     },
 
     inputJsonDelta(
       partialJson: string,
       opts?: { index?: number; parentToolUseId?: string },
     ): string {
-      const line = JSON.parse(T.STREAM_INPUT_JSON_DELTA ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).partial_json = partialJson;
-      if (opts?.index != null) event.index = opts.index;
-      if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
-      line.uuid = `fake-input-json-delta-${next()}`;
-      return JSON.stringify(line);
+      return buildStreamDelta(
+        T.STREAM_INPUT_JSON_DELTA,
+        'partial_json',
+        partialJson,
+        'input-json',
+        next(),
+        opts,
+      );
     },
 
     thinkingDelta(thinking: string, opts?: { index?: number; parentToolUseId?: string }): string {
-      const line = JSON.parse(T.STREAM_THINKING_DELTA ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).thinking = thinking;
-      if (opts?.index != null) event.index = opts.index;
-      if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
-      line.uuid = `fake-thinking-delta-${next()}`;
-      return JSON.stringify(line);
+      return buildStreamDelta(
+        T.STREAM_THINKING_DELTA,
+        'thinking',
+        thinking,
+        'thinking',
+        next(),
+        opts,
+      );
     },
 
     signatureDelta(signature: string, opts?: { index?: number; parentToolUseId?: string }): string {
-      const line = JSON.parse(T.STREAM_SIGNATURE_DELTA ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).signature = signature;
-      if (opts?.index != null) event.index = opts.index;
-      if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
-      line.uuid = `fake-sig-delta-${next()}`;
-      return JSON.stringify(line);
+      return buildStreamDelta(
+        T.STREAM_SIGNATURE_DELTA,
+        'signature',
+        signature,
+        'sig',
+        next(),
+        opts,
+      );
     },
 
     contentBlockStart(
@@ -493,19 +507,18 @@ function buildSegments(T: SegmentTemplates, ref: { seq: number }) {
     },
 
     citationsDelta(citation: Record<string, unknown>, opts?: { index?: number }): string {
-      const line = JSON.parse(T.CITATIONS_DELTA ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).citation = citation;
-      if (opts?.index != null) event.index = opts.index;
-      return JSON.stringify(line);
+      return buildStreamDelta(T.CITATIONS_DELTA, 'citation', citation, 'citations', 0, opts);
     },
 
     thinkingDeltaLegacy(thinking: string, opts?: { index?: number }): string {
-      const line = JSON.parse(T.THINKING_DELTA_LEGACY ?? '{}') as Record<string, unknown>;
-      const event = line.event as Record<string, unknown>;
-      (event.delta as Record<string, unknown>).thinking = thinking;
-      if (opts?.index != null) event.index = opts.index;
-      return JSON.stringify(line);
+      return buildStreamDelta(
+        T.THINKING_DELTA_LEGACY,
+        'thinking',
+        thinking,
+        'thinking-legacy',
+        0,
+        opts,
+      );
     },
 
     compactBoundary(opts?: { preservedSegment?: boolean }): string {

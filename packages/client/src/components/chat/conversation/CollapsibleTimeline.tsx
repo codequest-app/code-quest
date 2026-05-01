@@ -41,6 +41,13 @@ function dotClass(node: MessageNode): string {
   return 'bg-accent animate-pulse';
 }
 
+const LINE_CLASS: Record<RowPosition, string> = {
+  only: 'hidden',
+  first: 'top-4 bottom-0',
+  last: 'top-0 h-4',
+  middle: 'top-0 bottom-0',
+};
+
 function TimelineRow({
   node,
   position,
@@ -52,14 +59,7 @@ function TimelineRow({
   node: MessageNode;
   position: RowPosition;
 }) {
-  const lineClass =
-    position === 'only'
-      ? 'hidden'
-      : position === 'first'
-        ? 'top-4 bottom-0'
-        : position === 'last'
-          ? 'top-0 h-4'
-          : 'top-0 bottom-0';
+  const lineClass = LINE_CLASS[position];
   return (
     <div data-message-id={node.message.id} className="relative pl-7 py-2">
       <span className={cn('absolute left-2 top-4 w-2 h-2 rounded-full z-sticky', dotClass(node))} />
