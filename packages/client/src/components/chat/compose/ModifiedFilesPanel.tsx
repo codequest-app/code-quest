@@ -3,7 +3,6 @@ import type { FileSnapshot } from '../../../types/chat';
 import { cn } from '../../../utils/cn';
 import { generateUnifiedDiff } from '../../../utils/diff';
 import { pluralize } from '../../../utils/pluralize';
-import { Button } from '../../ui/Button';
 import { DiffViewer } from '../renderers/DiffViewer';
 
 export interface ModifiedFile {
@@ -46,7 +45,7 @@ function ModifiedFileItem({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-2 w-full text-left py-1 px-1 hover:bg-bg-secondary rounded text-sm font-mono"
+        className="flex items-center gap-2 w-full text-left py-1 px-1 hover:bg-surface rounded-lg text-sm font-mono"
       >
         <span
           role="status"
@@ -58,7 +57,7 @@ function ModifiedFileItem({
         />
         {file.path}
         {versionCount > 1 && (
-          <span className="ml-auto text-xs text-text-muted bg-bg-secondary rounded px-1.5 py-0.5">
+          <span className="ml-auto text-xs text-text-muted bg-surface rounded-lg px-1.5 py-0.5">
             {versionCount} versions
           </span>
         )}
@@ -70,29 +69,27 @@ function ModifiedFileItem({
               content={generateUnifiedDiff(file.oldContent, file.newContent, file.path)}
             />
           ) : (
-            <pre className="text-xs bg-bg-secondary rounded p-2 overflow-auto max-h-60">
+            <pre className="text-xs bg-surface rounded-lg p-2 overflow-auto max-h-60">
               {file.oldContent && <div className="text-danger">- {file.oldContent}</div>}
               {file.newContent && <div className="text-success">+ {file.newContent}</div>}
             </pre>
           )}
           <div className="flex gap-2 mt-1">
-            <Button
-              variant="success"
-              size="xs"
-              className="px-2 py-0.5"
+            <button
+              type="button"
               onClick={() => onAccept(file.path)}
+              className="text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors bg-accent text-white hover:bg-accent/80"
             >
               Accept
-            </Button>
+            </button>
             {onRewind && (
-              <Button
-                variant="warning"
-                size="xs"
-                className="px-2 py-0.5"
+              <button
+                type="button"
                 onClick={() => onRewind(file.path)}
+                className="text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors text-text border border-border hover:tint-5"
               >
                 Rewind
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -113,7 +110,7 @@ export function ModifiedFilesPanel({
 
   return (
     <section
-      className="border border-border rounded p-2 space-y-1"
+      className="border border-border rounded-lg p-2 space-y-1"
       aria-label="modified-files-panel"
     >
       <div className="text-sm font-semibold text-text-muted mb-1">
