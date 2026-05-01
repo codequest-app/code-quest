@@ -2,6 +2,7 @@ import type { TokenUsage } from '@code-quest/shared';
 import type { ToolUseMeta } from '../../../../types/ui';
 import { cn } from '../../../../utils/cn';
 import { langFromPath } from '../../../../utils/syntax';
+import { AGENT_TOOLS } from '../../../../utils/tool-group-rules';
 import { getToolHeaderInfo } from '../../../../utils/tool-registry';
 import { CodeBlock } from '../../renderers/CodeBlock';
 import { MarkdownContent } from '../../renderers/MarkdownContent';
@@ -215,8 +216,6 @@ function ToolBody({
       );
   }
 }
-
-const AGENT_TOOLS = new Set(['Task', 'Agent']);
 
 function TaskBadge({
   toolName,

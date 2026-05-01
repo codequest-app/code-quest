@@ -1,5 +1,7 @@
 import type { MessageNode } from './message-tree';
 
+export const AGENT_TOOLS: Set<string> = new Set(['Task', 'Agent']);
+
 export type TimelineRun =
   | { kind: 'grouped'; nodes: MessageNode[] }
   | { kind: 'solo'; node: MessageNode };
@@ -71,7 +73,7 @@ export function buildGroupChips(nodes: MessageNode[]): GroupChip[] {
       const parts = skillName.split(':');
       const shortName = parts.length > 1 ? (parts[parts.length - 1] ?? skillName) : skillName;
       chips.push({ label: `/${shortName}`, isError });
-    } else if (toolName === 'Task' || toolName === 'Agent') {
+    } else if (AGENT_TOOLS.has(toolName)) {
       const description = stringInput(meta.input, 'description', 'Agent');
       chips.push({ label: description, isError });
     } else {

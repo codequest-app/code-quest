@@ -1,10 +1,11 @@
-import { type SessionStateSummary, sessionBroadcastStateSchema } from '@code-quest/shared';
+import type { SessionStateSummary } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { SessionStatus } from '../types/ui';
 // Intentional dependency — NavigationContext mediates sidebar/editor
 // intents (activate channel, open worktree). Soft-bound via direct useContext
 // so TabProvider can be mounted standalone in tests without a NavigationProvider.
 import { NavigationActionsContext, NavigationStateContext } from './NavigationContext';
+import { TERMINAL_STATES } from './session-states';
 
 export interface TabMeta {
   title?: string;
@@ -58,9 +59,6 @@ export function useTabActions(): TabActionsValue {
 // ── Provider ──
 
 const DEFAULT_META: TabMeta = { title: undefined, tabStatus: 'connecting', launchOnMount: false };
-const TERMINAL_STATES = new Set<string>(
-  sessionBroadcastStateSchema.extract(['exited', 'disconnected']).options,
-);
 
 export function TabProvider({
   children,
