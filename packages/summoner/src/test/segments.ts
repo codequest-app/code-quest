@@ -43,6 +43,7 @@ const TEMPLATES = {
   HOOK_STARTED: load(REAL, 'hook-started.jsonl'),
   HOOK_RESPONSE: load(REAL, 'hook-response.jsonl'),
   TOOL_USE: load(REAL, 'tool-use.jsonl'),
+  AGENT_TOOL: load(REAL, 'assistant-agent.jsonl'),
   // synthetic — event types not yet captured from real CLI sessions
   // TODO: replace with real DB fixture when captured
   CONTROL_REQUEST_OPEN_DIFF: load(SYNTHETIC, 'control-request-open-diff.jsonl'),
@@ -630,6 +631,30 @@ export const segments = {
     const line = JSON.parse(TEMPLATES.EXPERIMENT_GATES);
     line.gates = gates;
     line.uuid = `fake-experiment-gates-${++_seq}`;
+    return JSON.stringify(line);
+  },
+
+  agent(
+    id: string,
+    description: string,
+    opts?: {
+      subagentType?: string;
+      prompt?: string;
+      runInBackground?: boolean;
+      parentToolUseId?: string;
+    },
+  ): string {
+    const line = JSON.parse(TEMPLATES.AGENT_TOOL);
+    line.message.content[0].id = id;
+    line.message.content[0].input = {
+      description,
+      ...(opts?.subagentType && { subagent_type: opts.subagentType }),
+      ...(opts?.prompt && { prompt: opts.prompt }),
+      ...(opts?.runInBackground !== undefined && { run_in_background: opts.runInBackground }),
+    };
+    line.message.id = `msg_fake_${++_seq}`;
+    line.uuid = `fake-agent-${_seq}`;
+    if (opts?.parentToolUseId) line.parent_tool_use_id = opts.parentToolUseId;
     return JSON.stringify(line);
   },
 

@@ -136,6 +136,49 @@ describe('segments', () => {
     });
   });
 
+  describe('agent (#31)', () => {
+    it('produces assistant with Agent tool_use block', () => {
+      const line = parse(segments.agent('toolu_1', 'Explore project structure'));
+      expect(line.type).toBe('assistant');
+      const msg = line.message as Record<string, unknown>;
+      expect(msg.model).toBe('claude-opus-4-6');
+      const content = (msg.content as Record<string, unknown>[])[0];
+      expect(content?.type).toBe('tool_use');
+      expect(content?.name).toBe('Agent');
+      const input = content?.input as Record<string, unknown>;
+      expect(input?.description).toBe('Explore project structure');
+    });
+
+    it('includes subagent_type in input when provided', () => {
+      const line = parse(segments.agent('toolu_1', 'Explore project', { subagentType: 'Explore' }));
+      const msg = line.message as Record<string, unknown>;
+      const content = (msg.content as Record<string, unknown>[])[0];
+      const input = content?.input as Record<string, unknown>;
+      expect(input?.subagent_type).toBe('Explore');
+    });
+
+    it('has model and usage from real DB data', () => {
+      const line = parse(segments.agent('toolu_1', 'Explore project'));
+      const msg = line.message as Record<string, unknown>;
+      expect(msg.model).toBeTruthy();
+      expect(msg.usage).toBeTruthy();
+    });
+
+    it('accepts parentToolUseId option', () => {
+      const line = parse(
+        segments.agent('toolu_1', 'Sub task', { parentToolUseId: 'toolu_parent' }),
+      );
+      expect(line.parent_tool_use_id).toBe('toolu_parent');
+    });
+
+    it('tool_use id comes from first argument', () => {
+      const line = parse(segments.agent('toolu_xyz', 'Do something'));
+      const msg = line.message as Record<string, unknown>;
+      const content = (msg.content as Record<string, unknown>[])[0];
+      expect(content?.id).toBe('toolu_xyz');
+    });
+  });
+
   describe('resultError (#28)', () => {
     beforeEach(() => {
       resetSeq();
