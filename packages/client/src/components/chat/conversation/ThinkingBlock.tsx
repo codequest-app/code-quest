@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronRight } from '@/components/ui/Icons';
-import { cn } from '@/utils/cn';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 
 interface ThinkingBlockProps {
@@ -18,8 +17,6 @@ export function ThinkingBlock({
   durationMs,
   isStreaming = false,
 }: ThinkingBlockProps): React.ReactNode {
-  const [open, setOpen] = useState(false);
-
   if (!content.trim()) return null;
 
   const label = isStreaming
@@ -31,20 +28,14 @@ export function ThinkingBlock({
         : 'Thinking';
 
   return (
-    <details
-      className="text-sm"
-      open={open}
-      onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
-    >
-      <summary className="list-none flex items-center gap-2 cursor-pointer select-none text-text-muted py-1 hover:text-text transition-colors">
-        <ChevronRight
-          className={cn('w-4 h-4 shrink-0 transition-transform', open && 'rotate-90')}
-        />
+    <Collapsible.Root className="text-sm">
+      <Collapsible.Trigger className="group flex items-center gap-2 cursor-pointer select-none text-text-muted py-1 hover:text-text transition-colors">
+        <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
         <span>{label}</span>
-      </summary>
-      <div className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
+      </Collapsible.Trigger>
+      <Collapsible.Content className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
         <MarkdownContent content={content} />
-      </div>
-    </details>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }

@@ -1,3 +1,4 @@
+import * as Collapsible from '@radix-ui/react-collapsible';
 import { useEffect, useRef, useState } from 'react';
 import { InlineAction } from '@/components/ui/InlineAction';
 import { cn } from '@/utils/cn';
@@ -11,35 +12,35 @@ export function TruncatedContent({
   children,
   maxHeight = 500,
 }: TruncatedContentProps): React.JSX.Element {
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
   const [overflow, setOverflow] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (expanded) return;
+    if (open) return;
     const el = ref.current;
     if (!el) return;
     setOverflow(el.scrollHeight > el.clientHeight);
   });
 
   return (
-    <div>
+    <Collapsible.Root open={open} onOpenChange={setOpen}>
       <section
         ref={ref}
         aria-label="truncated-inner"
-        className={cn(!expanded && 'relative overflow-hidden')}
-        style={expanded ? undefined : { maxHeight }}
+        className={cn(!open && 'relative overflow-hidden')}
+        style={open ? undefined : { maxHeight }}
       >
         {children}
-        {!expanded && overflow && (
+        {!open && overflow && (
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-bg pointer-events-none" />
         )}
       </section>
       {overflow && (
-        <InlineAction className="underline mt-1" onClick={() => setExpanded((v) => !v)}>
-          {expanded ? 'Show less' : 'Show more'}
-        </InlineAction>
+        <Collapsible.Trigger asChild>
+          <InlineAction className="underline mt-1">{open ? 'Show less' : 'Show more'}</InlineAction>
+        </Collapsible.Trigger>
       )}
-    </div>
+    </Collapsible.Root>
   );
 }
