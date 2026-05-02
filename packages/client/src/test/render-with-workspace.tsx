@@ -5,6 +5,7 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
+import { TooltipProvider } from '../components/ui/Tooltip.tsx';
 import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout.tsx';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
@@ -110,26 +111,28 @@ export async function renderWithWorkspace(
   }
 
   render(
-    <SocketProvider socket={summoner.socket}>
-      <AppInitProvider>
-        <SessionProvider>
-          <PluginProvider>
-            <ProjectProvider>
-              <NavigationProvider>
-                <GitProvider>
-                  <FsProvider>
-                    <OpenspecProvider>
-                      <WorkspaceLayout />
-                      <Toaster />
-                    </OpenspecProvider>
-                  </FsProvider>
-                </GitProvider>
-              </NavigationProvider>
-            </ProjectProvider>
-          </PluginProvider>
-        </SessionProvider>
-      </AppInitProvider>
-    </SocketProvider>,
+    <TooltipProvider>
+      <SocketProvider socket={summoner.socket}>
+        <AppInitProvider>
+          <SessionProvider>
+            <PluginProvider>
+              <ProjectProvider>
+                <NavigationProvider>
+                  <GitProvider>
+                    <FsProvider>
+                      <OpenspecProvider>
+                        <WorkspaceLayout />
+                        <Toaster />
+                      </OpenspecProvider>
+                    </FsProvider>
+                  </GitProvider>
+                </NavigationProvider>
+              </ProjectProvider>
+            </PluginProvider>
+          </SessionProvider>
+        </AppInitProvider>
+      </SocketProvider>
+    </TooltipProvider>,
   );
 
   return {

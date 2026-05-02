@@ -1,6 +1,7 @@
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
+import { TooltipProvider } from '../components/ui/Tooltip.tsx';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
 import { ChannelProvider } from '../contexts/channel/ChannelContext.tsx';
@@ -51,30 +52,32 @@ export async function renderWithChannel(
   // 1. Render first — mount providers, register socket listeners (like production)
   const result = render(ui, {
     wrapper: ({ children }) => (
-      <SocketProvider socket={summoner.socket}>
-        <AppInitProvider>
-          <SessionProvider>
-            <PluginProvider>
-              <ProjectProvider>
-                <NavigationProvider>
-                  <CommandPaletteProvider>
-                    <TabProvider cwd={options.cwd}>
-                      <ChannelProvider
-                        channelId={channelId}
-                        cwd={options.cwd}
-                        launchOnMount={options.launchOnMount ?? false}
-                        onNewChannel={options.onNewChannel}
-                      >
-                        {children}
-                      </ChannelProvider>
-                    </TabProvider>
-                  </CommandPaletteProvider>
-                </NavigationProvider>
-              </ProjectProvider>
-            </PluginProvider>
-          </SessionProvider>
-        </AppInitProvider>
-      </SocketProvider>
+      <TooltipProvider>
+        <SocketProvider socket={summoner.socket}>
+          <AppInitProvider>
+            <SessionProvider>
+              <PluginProvider>
+                <ProjectProvider>
+                  <NavigationProvider>
+                    <CommandPaletteProvider>
+                      <TabProvider cwd={options.cwd}>
+                        <ChannelProvider
+                          channelId={channelId}
+                          cwd={options.cwd}
+                          launchOnMount={options.launchOnMount ?? false}
+                          onNewChannel={options.onNewChannel}
+                        >
+                          {children}
+                        </ChannelProvider>
+                      </TabProvider>
+                    </CommandPaletteProvider>
+                  </NavigationProvider>
+                </ProjectProvider>
+              </PluginProvider>
+            </SessionProvider>
+          </AppInitProvider>
+        </SocketProvider>
+      </TooltipProvider>
     ),
   });
 
