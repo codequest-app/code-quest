@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useChannelConfig, useChannelMessages } from '@/contexts/channel/index';
 import { renderWithChannel } from '@/test/render-with-channel';
 
@@ -29,12 +29,14 @@ function TestUI() {
 describe('setModel — optimistic notification', () => {
   it('immediately adds slash_command_result message when model is switched', async () => {
     const user = userEvent.setup();
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderWithChannel(<TestUI />);
 
     await act(async () => {
       await user.click(screen.getByText('switch-model'));
     });
 
+    errorSpy.mockRestore();
     expect(screen.getByRole('status', { name: 'notif-0' })).toHaveTextContent('claude-sonnet-4-6');
   });
 });
