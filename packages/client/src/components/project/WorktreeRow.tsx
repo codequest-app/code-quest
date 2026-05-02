@@ -1,9 +1,10 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
-export interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
+interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   worktree: WorktreeInfo;
   active: boolean;
   liveSessions: number;
@@ -45,45 +46,47 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
   const label = worktree.branch ?? worktree.name;
 
   const branchBadge = (
-    // biome-ignore lint/a11y/useSemanticElements: span avoids nested <button> — HTML disallows button-in-button
-    <span
-      role="button"
-      tabIndex={0}
-      aria-label={`Switch branch (currently ${label})`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onBranchClick?.();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+    <Tooltip content="Switch branch">
+      {/* biome-ignore lint/a11y/useSemanticElements: span avoids nested <button> — HTML disallows button-in-button */}
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label={`Switch branch (currently ${label})`}
+        onClick={(e) => {
           e.stopPropagation();
           onBranchClick?.();
-        }
-      }}
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-white/[0.04] hover:border-accent hover:bg-white/10 cursor-pointer font-mono text-xs text-text-muted"
-      title="Switch branch"
-    >
-      <span aria-hidden="true" className="text-text-subtle text-xs">
-        ⎇
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            onBranchClick?.();
+          }
+        }}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-white/[0.04] hover:border-accent hover:bg-white/10 cursor-pointer font-mono text-xs text-text-muted"
+      >
+        <span aria-hidden="true" className="text-text-subtle text-xs">
+          ⎇
+        </span>
+        <span>{label}</span>
       </span>
-      <span>{label}</span>
-    </span>
+    </Tooltip>
   );
 
   const moreButton = (
-    <button
-      type="button"
-      aria-label="More actions"
-      title="More"
-      onClick={(e) => {
-        e.stopPropagation();
-        onMoreActions?.();
-      }}
-      className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
-    >
-      ⋯
-    </button>
+    <Tooltip content="More">
+      <button
+        type="button"
+        aria-label="More actions"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMoreActions?.();
+        }}
+        className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+      >
+        ⋯
+      </button>
+    </Tooltip>
   );
 
   return (

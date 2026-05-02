@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { EffortIcon, PERMISSION_MODE_ICONS } from '@/components/icons/PermissionModeIcons';
 import { EffortSwitch, effortLabel } from '@/components/ui/EffortSwitch';
 import { CheckMark } from '@/components/ui/Icons';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
 
@@ -85,7 +86,6 @@ export function PermissionModePicker({
       <Popover.Trigger asChild>
         <button
           type="button"
-          title={(permissionById[mode] ?? DEFAULT_MODE).title}
           className="permission-mode-btn text-xs text-text-bright bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-sm hover:tint-5"
         >
           <span className="w-4 h-4 shrink-0">
@@ -140,26 +140,27 @@ export function PermissionModePicker({
           {onSetEffort && (
             <>
               <div className="border-t border-border/50" />
-              <button
-                type="button"
-                className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
-                onClick={() => {
-                  const idx = effort ? effortLevels.indexOf(effort) : -1;
-                  const next = effortLevels[(idx + 1) % effortLevels.length];
-                  if (next) onSetEffort?.(next);
-                }}
-                title="Click to cycle effort level"
-              >
-                <span className="text-xs text-text-muted flex items-center gap-2">
-                  <span className="w-5 h-5 shrink-0">
-                    <EffortIcon />
+              <Tooltip content="Click to cycle effort level">
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2.5 flex items-center justify-between hover:tint-5 cursor-pointer"
+                  onClick={() => {
+                    const idx = effort ? effortLevels.indexOf(effort) : -1;
+                    const next = effortLevels[(idx + 1) % effortLevels.length];
+                    if (next) onSetEffort?.(next);
+                  }}
+                >
+                  <span className="text-xs text-text-muted flex items-center gap-2">
+                    <span className="w-5 h-5 shrink-0">
+                      <EffortIcon />
+                    </span>
+                    <span>
+                      Effort <span className="opacity-70">({effortLabel(effort)})</span>
+                    </span>
                   </span>
-                  <span>
-                    Effort <span className="opacity-70">({effortLabel(effort)})</span>
-                  </span>
-                </span>
-                <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
-              </button>
+                  <EffortSwitch level={effort} levels={effortLevels} onSelect={onSetEffort} />
+                </button>
+              </Tooltip>
             </>
           )}
         </Popover.Content>

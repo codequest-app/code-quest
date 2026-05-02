@@ -1,6 +1,7 @@
 import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { formatRelativeDate } from '@/utils/format-relative-date';
 
@@ -121,24 +122,26 @@ export function SessionRow({
         {(onRename || onDelete) && (
           <span className="hidden group-hover:flex items-center gap-1">
             {onRename && (
-              <button
-                type="button"
-                title="Rename"
-                onClick={handleRenameStart}
-                className="text-text-muted hover:text-text text-xs p-0.5"
-              >
-                ✏
-              </button>
+              <Tooltip content="Rename">
+                <button
+                  type="button"
+                  onClick={handleRenameStart}
+                  className="text-text-muted hover:text-text text-xs p-0.5"
+                >
+                  ✏
+                </button>
+              </Tooltip>
             )}
             {onDelete && (
-              <button
-                type="button"
-                title="Delete"
-                onClick={handleDelete}
-                className="text-text-muted hover:text-danger text-xs p-0.5"
-              >
-                🗑
-              </button>
+              <Tooltip content="Delete">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="text-text-muted hover:text-danger text-xs p-0.5"
+                >
+                  🗑
+                </button>
+              </Tooltip>
             )}
           </span>
         )}

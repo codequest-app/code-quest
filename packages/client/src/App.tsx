@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
+import { TooltipProvider } from './components/ui/Tooltip.tsx';
 import { ErrorFallback } from './components/workspace/ErrorFallback.tsx';
 import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
 import { AppInitProvider } from './contexts/AppInitContext.tsx';
@@ -31,29 +32,31 @@ export function App(): React.JSX.Element {
   }, [effectiveColorTheme, fontSize, density]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">
-      <Toaster position="top-right" richColors />
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <SocketProvider socket={socket}>
-          <AppInitProvider>
-            <SessionProvider>
-              <PluginProvider>
-                <ProjectProvider>
-                  <NavigationProvider>
-                    <GitProvider>
-                      <FsProvider>
-                        <OpenspecProvider>
-                          <WorkspaceLayout />
-                        </OpenspecProvider>
-                      </FsProvider>
-                    </GitProvider>
-                  </NavigationProvider>
-                </ProjectProvider>
-              </PluginProvider>
-            </SessionProvider>
-          </AppInitProvider>
-        </SocketProvider>
-      </ErrorBoundary>
-    </div>
+    <TooltipProvider delayDuration={400}>
+      <div className="flex flex-col h-screen overflow-hidden bg-bg text-text">
+        <Toaster position="top-right" richColors />
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <SocketProvider socket={socket}>
+            <AppInitProvider>
+              <SessionProvider>
+                <PluginProvider>
+                  <ProjectProvider>
+                    <NavigationProvider>
+                      <GitProvider>
+                        <FsProvider>
+                          <OpenspecProvider>
+                            <WorkspaceLayout />
+                          </OpenspecProvider>
+                        </FsProvider>
+                      </GitProvider>
+                    </NavigationProvider>
+                  </ProjectProvider>
+                </PluginProvider>
+              </SessionProvider>
+            </AppInitProvider>
+          </SocketProvider>
+        </ErrorBoundary>
+      </div>
+    </TooltipProvider>
   );
 }

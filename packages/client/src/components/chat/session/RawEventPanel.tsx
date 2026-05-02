@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelHeader } from '@/components/ui/PanelHeader';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { SearchBar } from '../conversation/SearchBar.tsx';
 import { JsonViewer } from '../renderers/JsonViewer.tsx';
@@ -128,41 +129,47 @@ export function RawEventPanel({
         actions={
           <div className="flex gap-2">
             {onSubscribe && (
-              <button
-                type="button"
-                title="Auto-scroll"
-                onClick={() => {
-                  setAutoScroll(true);
-                  userScrolledRef.current = false;
-                  scrollToBottom();
-                }}
-                className={cn(ICON_BTN, autoScroll && 'text-accent')}
-              >
-                ⤓
-              </button>
+              <Tooltip content="Auto-scroll">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAutoScroll(true);
+                    userScrolledRef.current = false;
+                    scrollToBottom();
+                  }}
+                  className={cn(ICON_BTN, autoScroll && 'text-accent')}
+                >
+                  ⤓
+                </button>
+              </Tooltip>
             )}
             {onFetch && (
-              <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
-                ↻
-              </button>
+              <Tooltip content="Refresh">
+                <button type="button" onClick={handleRefresh} className={ICON_BTN}>
+                  ↻
+                </button>
+              </Tooltip>
             )}
             {events.length > 0 && (
-              <button
-                type="button"
-                title="Clear"
-                onClick={() => {
-                  setEvents([]);
-                  seenTypesRef.current = new Set();
-                  setVisibleTypes(new Set());
-                }}
-                className={ICON_BTN}
-              >
-                ⌀
-              </button>
+              <Tooltip content="Clear">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEvents([]);
+                    seenTypesRef.current = new Set();
+                    setVisibleTypes(new Set());
+                  }}
+                  className={ICON_BTN}
+                >
+                  ⌀
+                </button>
+              </Tooltip>
             )}
-            <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
-              ✕
-            </button>
+            <Tooltip content="Close">
+              <button type="button" onClick={onClose} className={ICON_BTN}>
+                ✕
+              </button>
+            </Tooltip>
           </div>
         }
       />

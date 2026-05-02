@@ -1,5 +1,6 @@
 import { ClockIcon } from '@heroicons/react/24/outline';
 import * as Popover from '@radix-ui/react-popover';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useChannelConfig, useChannelId } from '@/contexts/channel';
 import { isThinkingActive, shortModelName } from '@/utils/model-utils';
 
@@ -47,16 +48,13 @@ export function HeaderBar({ title, showResumeButton }: HeaderBarProps): React.JS
       {!sessionLabel && <div className="flex-1" />}
 
       {showResumeButton && (
-        <Popover.Trigger asChild>
-          <button
-            type="button"
-            title="Session history"
-            aria-label="Session history"
-            className={HDR_BTN}
-          >
-            <ClockIcon className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </Popover.Trigger>
+        <Tooltip content="Session history">
+          <Popover.Trigger asChild>
+            <button type="button" aria-label="Session history" className={HDR_BTN}>
+              <ClockIcon className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </Popover.Trigger>
+        </Tooltip>
       )}
     </header>
   );

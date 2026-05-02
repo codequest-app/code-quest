@@ -4,6 +4,7 @@ import type { SessionStatus } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
+import { Tooltip } from '../ui/Tooltip.tsx';
 
 export interface TabInfo {
   sessionId: string;
@@ -153,15 +154,16 @@ export function TabBar({
           </button>
         )}
         {onOpenHistory && (
-          <button
-            type="button"
-            className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
-            onClick={onOpenHistory}
-            aria-label="Session history"
-            title="Session history"
-          >
-            ☰
-          </button>
+          <Tooltip content="Session history">
+            <button
+              type="button"
+              className="flex items-center justify-center w-6 h-6 rounded text-xs text-text-muted hover:text-text hover:bg-white/5 shrink-0 ml-auto"
+              onClick={onOpenHistory}
+              aria-label="Session history"
+            >
+              ☰
+            </button>
+          </Tooltip>
         )}
         <Dialog
           open={confirmingId !== null}
