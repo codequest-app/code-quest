@@ -1,10 +1,9 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
-interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
+export interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   worktree: WorktreeInfo;
   active: boolean;
   liveSessions: number;
@@ -46,47 +45,36 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
   const label = worktree.branch ?? worktree.name;
 
   const branchBadge = (
-    <Tooltip content="Switch branch">
-      {/* biome-ignore lint/a11y/useSemanticElements: span avoids nested <button> — HTML disallows button-in-button */}
-      <span
-        role="button"
-        tabIndex={0}
-        aria-label={`Switch branch (currently ${label})`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onBranchClick?.();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            onBranchClick?.();
-          }
-        }}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-white/[0.04] hover:border-accent hover:bg-white/10 cursor-pointer font-mono text-xs text-text-muted"
-      >
-        <span aria-hidden="true" className="text-text-subtle text-xs">
-          ⎇
-        </span>
-        <span>{label}</span>
+    <button
+      type="button"
+      aria-label={`Switch branch (currently ${label})`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onBranchClick?.();
+      }}
+      className="relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-white/[0.04] hover:border-accent hover:bg-white/10 cursor-pointer font-mono text-xs text-text-muted"
+      title="Switch branch"
+    >
+      <span aria-hidden="true" className="text-text-subtle text-xs">
+        ⎇
       </span>
-    </Tooltip>
+      <span>{label}</span>
+    </button>
   );
 
   const moreButton = (
-    <Tooltip content="More">
-      <button
-        type="button"
-        aria-label="More actions"
-        onClick={(e) => {
-          e.stopPropagation();
-          onMoreActions?.();
-        }}
-        className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
-      >
-        ⋯
-      </button>
-    </Tooltip>
+    <button
+      type="button"
+      aria-label="More actions"
+      title="More"
+      onClick={(e) => {
+        e.stopPropagation();
+        onMoreActions?.();
+      }}
+      className="relative z-10 shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+    >
+      ⋯
+    </button>
   );
 
   return (
@@ -105,15 +93,16 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
         type="button"
         aria-label={`Open worktree ${label}`}
         onClick={onSelect}
-        className="flex flex-1 items-center gap-1.5 min-w-0 text-left"
-      >
+        className="absolute inset-0"
+      />
+      <span className="relative z-10 flex flex-1 items-center gap-1.5 min-w-0">
         {wrapBranchTrigger ? wrapBranchTrigger(branchBadge) : branchBadge}
-      </button>
+      </span>
       {liveSessions > 0 && (
         <span
           role="status"
           aria-label={pluralize(liveSessions, 'active session')}
-          className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-success/20 text-success"
+          className="relative z-10 shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-success/20 text-success"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
           {liveSessions}
@@ -124,7 +113,7 @@ export const WorktreeRow: React.ForwardRefExoticComponent<
           role="status"
           aria-label={pluralize(changes, 'change')}
           title={pluralize(changes, 'change')}
-          className="w-2 h-2 rounded-full bg-warning shrink-0"
+          className="relative z-10 w-2 h-2 rounded-full bg-warning shrink-0"
         />
       )}
       {wrapMoreTrigger ? wrapMoreTrigger(moreButton) : moreButton}
