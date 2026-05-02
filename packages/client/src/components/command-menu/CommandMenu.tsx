@@ -13,7 +13,7 @@ import { computeMenuLayout } from './menu-layout.ts';
 import { dispatchSelectedItem, NAV_KEYS, navigateItems } from './menu-navigation.ts';
 import { slashPaletteState } from './slash-palette-state.ts';
 
-export interface CommandMenuProps {
+interface CommandMenuProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onMcpStatus?: () => void;
   onToggleMcp?: () => void;
@@ -244,7 +244,7 @@ export function CommandMenu({
       <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
       <IconButton
         ref={anchorRef}
-        title="Show command menu (/)"
+        tooltip="Show command menu (/)"
         onClick={(e) => {
           e.stopPropagation();
           setButtonOpen((v) => !v);

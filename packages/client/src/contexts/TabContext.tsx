@@ -26,8 +26,9 @@ interface TabStateValue {
   activeTabId: string | null;
 }
 
-export const TabStateContext: React.Context<TabStateValue | null> =
-  createContext<TabStateValue | null>(null);
+const TabStateContext: React.Context<TabStateValue | null> = createContext<TabStateValue | null>(
+  null,
+);
 
 export function useTabState(): TabStateValue {
   const ctx = useContext(TabStateContext);

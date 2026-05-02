@@ -10,7 +10,7 @@ import { SessionProvider } from '../contexts/SessionContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { createFakeSocketBrowser } from './fake-socket-browser.ts';
 
-export interface WorkspaceFixtures {
+interface WorkspaceFixtures {
   sessions?: SessionStateSummary[];
   capabilities?: { worktree: boolean };
   settings?: Record<string, unknown>;

@@ -23,7 +23,7 @@ const TABS: TabSpec[] = [
   { key: 'spec', label: 'Spec', icon: <ClipboardDocumentListIcon className="w-4 h-4" /> },
 ];
 
-export interface RightPaneProps {
+interface RightPaneProps {
   cwd: string;
   onMention: (path: string) => void;
 }

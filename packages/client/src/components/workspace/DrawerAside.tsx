@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
-export interface DrawerAsideProps {
+interface DrawerAsideProps {
   side: 'left' | 'right';
   open: boolean;
   /** Tailwind class for mobile slide-in drawer width, e.g. `'w-[min(85vw,320px)]'`. */

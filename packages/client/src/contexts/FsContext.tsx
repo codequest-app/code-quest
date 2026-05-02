@@ -12,7 +12,7 @@ import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef }
 import { rpc } from '../socket/rpc.ts';
 import { useSocket } from './SocketContext.tsx';
 
-export type FsBrowseEntries = { directories: FsDirectory[]; files: FsFile[] } | { error: string };
+type FsBrowseEntries = { directories: FsDirectory[]; files: FsFile[] } | { error: string };
 
 interface FsActions {
   browse: (path?: string, opts?: { showHidden?: boolean }) => Promise<FsBrowseEntries>;

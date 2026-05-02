@@ -3,7 +3,6 @@ import {
   BugAntIcon,
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import {
@@ -18,7 +17,7 @@ import {
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 
 export type GroupId = 'conversation' | 'tools' | 'system' | 'hooks' | 'debug' | 'other';
-export type GroupState = 'all' | 'partial' | 'none';
+type GroupState = 'all' | 'partial' | 'none';
 
 interface Group {
   id: GroupId;
@@ -87,8 +86,6 @@ export const VISIBILITY_GROUPS: Group[] = [
     ],
   },
 ];
-
-export const OTHER_GROUP_ICON: typeof QuestionMarkCircleIcon = QuestionMarkCircleIcon;
 
 const DEFAULT_ON_GROUPS: GroupId[] = ['conversation', 'tools', 'system'];
 

@@ -31,7 +31,7 @@ function languageFor(path: string): string | undefined {
  *  guard against. The "500 KB" UI label is a pragmatic approximation. */
 const PREVIEW_CHAR_LIMIT = 500 * 1024;
 
-export interface FilePreviewModalProps {
+interface FilePreviewModalProps {
   path: string;
   onClose: () => void;
   onMention: (path: string) => void;

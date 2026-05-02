@@ -1,6 +1,6 @@
 import { useMediaQuery } from 'usehooks-ts';
 
-export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
+type Breakpoint = 'mobile' | 'tablet' | 'desktop';
 
 export function useBreakpoint(): Breakpoint {
   const isDesktop = useMediaQuery('(min-width: 1024px)');

@@ -2,7 +2,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { ReactNode } from 'react';
 
-export interface WorktreeMenuCallbacks {
+interface WorktreeMenuCallbacks {
   onOpenHere?: () => void;
   onOpenInNewChat: () => void;
   onCopyPath: () => void;

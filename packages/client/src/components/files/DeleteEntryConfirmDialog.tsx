@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
-export interface DeleteEntryConfirmDialogProps {
+interface DeleteEntryConfirmDialogProps {
   open: boolean;
   name: string;
   /** Set when target is a non-empty directory; shows the descendant warning. */

@@ -28,7 +28,7 @@ function TypeIcon({ type }: { type: string }) {
   }
 }
 
-export function mentionOptionId(index: number, path: string): string {
+function mentionOptionId(index: number, path: string): string {
   return `mention-option-${index}-${slugify(path)}`;
 }
 
@@ -108,7 +108,7 @@ function DropdownItem({ label, onSelect }: { label: string; onSelect: () => void
   );
 }
 
-export interface MentionDropdownProps {
+interface MentionDropdownProps {
   id?: string;
   mentionQuery: string;
   filteredSuggestions: string[];

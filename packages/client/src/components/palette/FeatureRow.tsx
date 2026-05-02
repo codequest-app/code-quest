@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn';
 import { TOGGLE_PILL_BASE, togglePillColor, togglePillSymbol } from '../ui/TriStateIndicator.tsx';
 import { toPaletteCommand } from './to-palette-command.tsx';
 
-export interface FeatureRowProps {
+interface FeatureRowProps {
   feature: Feature;
   isActive: boolean;
   onActiveChange: (id: string | null) => void;

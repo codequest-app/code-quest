@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react';
 
-export interface PaletteActions {
+interface PaletteActions {
   onAddProject?: () => void;
   onOpenSettings?: () => void;
 }

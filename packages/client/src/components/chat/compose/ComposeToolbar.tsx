@@ -94,7 +94,7 @@ async function fetchEnrichedMcpServers(
   }
 }
 
-export interface ComposeToolbarProps {
+interface ComposeToolbarProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onAttachFile?: () => void;
 }

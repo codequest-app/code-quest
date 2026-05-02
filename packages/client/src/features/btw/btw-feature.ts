@@ -4,7 +4,7 @@ import type { Feature } from '@/lib/feature';
 
 type Subscriber = () => void;
 
-export interface BtwState {
+interface BtwState {
   open: boolean;
   question: string;
   answer: string | null;
@@ -44,7 +44,7 @@ function createBtwSignal(): BtwSignal {
 
 export const btwSignal: BtwSignal = createBtwSignal();
 
-export interface BtwFeatureDeps {
+interface BtwFeatureDeps {
   askSideQuestion: (question: string) => Promise<RpcResult<{ answer: string }>>;
 }
 

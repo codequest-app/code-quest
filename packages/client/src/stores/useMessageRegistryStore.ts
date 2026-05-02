@@ -6,7 +6,7 @@ interface ChannelEntry {
   messages: Message[];
 }
 
-export interface RegistryMessage {
+interface RegistryMessage {
   channelId: string;
   projectCwd: string;
   message: Message;

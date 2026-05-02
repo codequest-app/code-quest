@@ -35,7 +35,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
-export interface InstalledPluginListProps {
+interface InstalledPluginListProps {
   installed: PluginInfo[];
   available: AvailablePlugin[];
   marketplaces: MarketplaceInfo[];

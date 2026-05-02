@@ -7,7 +7,7 @@ export const RECAP_PROMPT: string =
   'Lead with the overall goal and current task, then the one next action. ' +
   'Skip root-cause narrative, fix internals, secondary to-dos, and em-dash tangents.';
 
-export interface RecapFeatureDeps {
+interface RecapFeatureDeps {
   askSideQuestion: (question: string) => Promise<RpcResult<SideQuestionResult>>;
   appendMessage: (fields: Parameters<typeof msg>[0]) => void;
 }

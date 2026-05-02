@@ -16,7 +16,7 @@ const DOT_CLASS: Record<string, string> = {
   disconnected: 'bg-danger',
 };
 
-export interface TopbarLiveSessionsProps {
+interface TopbarLiveSessionsProps {
   sessions: SessionStateSummary[];
   onActivate: (channelId: string) => void;
   onStop?: (channelId: string) => void;

@@ -2,7 +2,7 @@ import type { MarketplaceInfo } from '@code-quest/shared';
 import { Button } from '../ui/Button.tsx';
 import { ActionButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';
 
-export interface MarketplaceSectionProps {
+interface MarketplaceSectionProps {
   marketplaces: MarketplaceInfo[];
   newSource: string;
   onNewSourceChange: (source: string) => void;

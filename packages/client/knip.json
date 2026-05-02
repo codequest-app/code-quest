@@ -1,0 +1,15 @@
+{
+  "entry": ["src/**/*.stories.tsx", "src/**/__tests__/**/*.{ts,tsx}", "src/test/**/*.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignoreDependencies": [
+    "@iconify-json/material-icon-theme",
+    "@radix-ui/react-visually-hidden",
+    "@xterm/addon-fit",
+    "@xterm/xterm",
+    "react-intersection-observer",
+    "react-resizable-panels",
+    "tailwindcss",
+    "@tailwindcss/typography"
+  ],
+  "ignoreBinaries": ["biome", "concurrently", "http-server", "wait-on"]
+}

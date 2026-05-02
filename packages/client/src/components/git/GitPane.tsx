@@ -26,7 +26,7 @@ import { EmptyState } from '../workspace/EmptyState.tsx';
 import { CommitComposer } from './CommitComposer.tsx';
 import { DiffModal } from './DiffModal.tsx';
 
-export interface GitPaneProps {
+interface GitPaneProps {
   cwd: string;
 }
 

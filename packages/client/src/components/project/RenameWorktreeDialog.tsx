@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 const VALID_NAME = /^[\w./-]+$/;
 
-export interface RenameWorktreeDialogProps {
+interface RenameWorktreeDialogProps {
   open: boolean;
   currentBranch: string;
   onSubmit: (newName: string) => void;

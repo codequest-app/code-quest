@@ -33,3 +33,5 @@ pre-push:
       run: pnpm --filter server exec vitest run
     test-client:
       run: pnpm --filter client exec vitest run
+    knip:
+      run: pnpm --filter client exec knip --no-progress

@@ -68,7 +68,7 @@ export function BypassIcon(): React.JSX.Element {
   );
 }
 
-export function AutoModeIcon(): React.JSX.Element {
+function AutoModeIcon(): React.JSX.Element {
   return (
     <svg {...svgBase} viewBox="4 4 12 12">
       <title>icon</title>

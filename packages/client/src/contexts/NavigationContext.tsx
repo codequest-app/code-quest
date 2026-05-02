@@ -4,14 +4,14 @@ import { ProjectStateContext } from './ProjectContext.tsx';
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
  *  appears in that provider's tabs. Set by flows that spawn a channel
  *  outside any TabProvider (sidebar, resume flow, dialogs). */
-export interface PendingActivateChannel {
+interface PendingActivateChannel {
   cwd: string;
   channelId: string;
 }
 
 /** Intent: tell a TabProvider scoped to `projectCwd` to open (or switch to)
  *  a tab whose cwd is `worktreeCwd`. `forceNew` bypasses switch-to-existing. */
-export interface PendingOpenWorktree {
+interface PendingOpenWorktree {
   projectCwd: string;
   worktreeCwd: string;
   forceNew: boolean;

@@ -1,6 +1,6 @@
 import { type Envelope, EnvelopeSchema } from '@code-quest/shared';
 
-export interface WsClientOptions {
+interface WsClientOptions {
   /** First reconnect delay in ms (doubles on each successive failure). Default 500. */
   initialBackoffMs?: number;
   /** Cap for backoff. Default 10_000. */
@@ -13,7 +13,7 @@ export interface WsClientOptions {
 
 type EventListener = (data: unknown) => void;
 
-export interface LifecycleListener {
+interface LifecycleListener {
   onOpen(id: string): void;
   onClose(): void;
 }

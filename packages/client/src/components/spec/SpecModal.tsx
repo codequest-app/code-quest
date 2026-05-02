@@ -17,7 +17,7 @@ import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 import { TaskChecklist } from './TaskChecklist.tsx';
 
-export interface SpecModalProps {
+interface SpecModalProps {
   cwd: string;
   kind: OpenspecKind;
   name: string;

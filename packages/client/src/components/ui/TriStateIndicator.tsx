@@ -1,6 +1,6 @@
 import { cn } from '@/utils/cn';
 
-export type TriState = 'all' | 'partial' | 'none';
+type TriState = 'all' | 'partial' | 'none';
 
 export const TOGGLE_PILL_BASE =
   'text-xs font-mono font-bold rounded-sm px-1.5 py-0.5 border inline-block';

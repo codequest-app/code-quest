@@ -12,7 +12,7 @@ import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
 import { NewChangeDialog } from './NewChangeDialog.tsx';
 import { SpecModal } from './SpecModal.tsx';
 
-export interface SpecPaneProps {
+interface SpecPaneProps {
   cwd: string;
 }
 

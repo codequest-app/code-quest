@@ -29,7 +29,7 @@ const ManagePluginsDialog = lazy(() =>
 
 export type ActiveDialog = 'modelPicker' | 'manageMcp' | 'mcpStatus' | 'plugins' | null;
 
-export interface ToolbarDialogsProps {
+interface ToolbarDialogsProps {
   activeDialog: ActiveDialog;
   closeDialog: () => void;
   mcpServers: McpServerInfo[];

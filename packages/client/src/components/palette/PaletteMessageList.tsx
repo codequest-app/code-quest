@@ -8,7 +8,7 @@ import {
   paletteMessageResults,
 } from './palette-message-results.ts';
 
-export interface PaletteMessageListProps {
+interface PaletteMessageListProps {
   messages: Message[];
   query: string;
   activeIdx: number;

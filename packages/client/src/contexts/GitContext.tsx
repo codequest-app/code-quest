@@ -28,11 +28,11 @@ interface WorktreeState {
   listing: Record<string, WorktreeListingEntry>;
 }
 
-export type CreateWorktreeResult = { worktreePath: string; name: string; branch?: string };
-export type ListResult = WorktreeInfo[] | { error: 'not_a_repo' | string };
-export type InitRepoResult = { ok: true; branch: string } | { ok: false; error: string };
+type CreateWorktreeResult = { worktreePath: string; name: string; branch?: string };
+type ListResult = WorktreeInfo[] | { error: 'not_a_repo' | string };
+type InitRepoResult = { ok: true; branch: string } | { ok: false; error: string };
 
-export interface CreateWorktreeArgs {
+interface CreateWorktreeArgs {
   cwd: string;
   name?: string;
   existingBranch?: string;
@@ -41,10 +41,10 @@ export interface CreateWorktreeArgs {
   path?: string;
 }
 
-export type CheckoutResult = { ok: true; branch: string } | { ok: false; error: string };
+type CheckoutResult = { ok: true; branch: string } | { ok: false; error: string };
 
-export type GitFetchResult = { ok: true } | { error: string };
-export type GitPullResult = { ok: true; fastForwarded: boolean } | { error: string };
+type GitFetchResult = { ok: true } | { error: string };
+type GitPullResult = { ok: true; fastForwarded: boolean } | { error: string };
 
 interface WorktreeActions {
   create: (

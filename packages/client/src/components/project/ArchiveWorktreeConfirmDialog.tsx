@@ -1,7 +1,7 @@
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
-export interface ArchiveWorktreeConfirmDialogProps {
+interface ArchiveWorktreeConfirmDialogProps {
   open: boolean;
   branch: string;
   /** Set when a previous archive attempt failed with `error: 'dirty'`. */

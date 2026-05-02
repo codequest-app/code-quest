@@ -16,7 +16,7 @@ export function parseMcpToolName(name: string): { server: string; tool: string }
 
 type ToolInput = Record<string, unknown>;
 
-export interface ToolHeaderInfo {
+interface ToolHeaderInfo {
   name: string;
   detail?: string;
   range?: string;

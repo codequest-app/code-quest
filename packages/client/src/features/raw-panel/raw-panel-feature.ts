@@ -1,6 +1,6 @@
 import type { Feature } from '@/lib/feature';
 
-export interface RawPanelFeatureDeps {
+interface RawPanelFeatureDeps {
   active: boolean;
   onToggle: () => void;
 }

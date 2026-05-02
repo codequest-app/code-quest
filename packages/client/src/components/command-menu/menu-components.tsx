@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import { cn } from '@/utils/cn';
 import type { MenuItem } from './build-menu-items.ts';
 
-export function MenuItemRow({
+function MenuItemRow({
   item,
   isActive,
   activeItemRef,

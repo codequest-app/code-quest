@@ -11,7 +11,7 @@ import type { TypedSocket } from '../socket/client.ts';
 
 type Listener = (...args: unknown[]) => void;
 
-export interface FakeSocketBrowser extends TypedSocket {
+interface FakeSocketBrowser extends TypedSocket {
   /** Register a server-side handler that receives client `emit()` calls. */
   onServer(event: string, fn: Listener): void;
 }

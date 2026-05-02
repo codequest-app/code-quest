@@ -10,7 +10,7 @@ import type {
   UserSource,
 } from '@code-quest/shared';
 
-export type { ResultMeta, RewindResult, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
+export type { ResultMeta, ToolResultMeta, ToolUseMeta } from '@code-quest/shared';
 
 export type SessionStatus =
   | 'disconnected'
@@ -77,7 +77,7 @@ export interface RateLimitMeta {
 
 /** UI-layer message base — after adapter projection. id/timestamp are
  *  UI-assigned; attachments are UI concepts (file mentions). */
-export interface MessageBase {
+interface MessageBase {
   id: string;
   /** JSONL-canonical uuid assigned by CLI/server. Absent until CLI echoes the message. */
   cliUuid?: string;

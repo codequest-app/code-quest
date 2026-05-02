@@ -1,6 +1,6 @@
 import type { Feature } from '@/lib/feature';
 
-export interface ClearFeatureDeps {
+interface ClearFeatureDeps {
   clearMessages: () => void;
   clearModifiedFiles: () => void;
   sendMessage: (msg: string) => void;

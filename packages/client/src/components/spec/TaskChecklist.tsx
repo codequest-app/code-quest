@@ -14,7 +14,7 @@ const TASK_RE = /^(\s*)-\s+\[( |x|X)\]\s*(.*)$/;
 /** Non-task lines: section headings, plain text, blank lines. Rendered as read-only. */
 type Line = TaskLine | { lineIndex: number; kind: 'raw'; text: string };
 
-export interface TaskChecklistProps {
+interface TaskChecklistProps {
   content: string;
   /** Called when the user clicks a checkbox; should run the `toggleTask` RPC
    *  and return `{ ok, checked }` or `{ error }`. */

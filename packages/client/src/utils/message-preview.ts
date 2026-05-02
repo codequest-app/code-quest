@@ -53,7 +53,7 @@ export function typeLabel(type: string): string {
   return MESSAGE_TYPE_LABELS[type as Message['type']] ?? type;
 }
 
-export interface HighlightSegment {
+interface HighlightSegment {
   text: string;
   match: boolean;
 }

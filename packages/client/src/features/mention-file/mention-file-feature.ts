@@ -1,6 +1,6 @@
 import type { Feature } from '@/lib/feature';
 
-export interface MentionFileFeatureDeps {
+interface MentionFileFeatureDeps {
   mentionFile: () => void;
 }
 

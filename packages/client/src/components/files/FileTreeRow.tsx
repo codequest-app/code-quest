@@ -19,7 +19,7 @@ const GIT_MARK_CLASS: Record<string, string> = {
   U: 'text-success/70',
 };
 
-export interface RowRenameState {
+interface RowRenameState {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -40,7 +40,7 @@ interface RowItem {
 
 /** Extends `HTMLAttributes` so Radix `ContextMenu.Trigger asChild` can
  *  forward its props (notably `onContextMenu`) onto the row's `<div>`. */
-export interface FileTreeRowProps
+interface FileTreeRowProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick' | 'onDoubleClick'> {
   item: RowItem;
   isHighlighted: boolean;

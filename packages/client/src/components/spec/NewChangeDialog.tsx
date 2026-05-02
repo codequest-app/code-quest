@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 const VALID_SLUG = /^[a-z0-9-]+$/;
 
-export interface NewChangeDialogProps {
+interface NewChangeDialogProps {
   open: boolean;
   onSubmit: (name: string) => void | Promise<void>;
   onClose: () => void;

@@ -1,7 +1,8 @@
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Tooltip } from '@/components/ui/Tooltip';
 
-export interface MessageActionItem {
+interface MessageActionItem {
   label: string;
   onSelect: () => void;
   disabled?: boolean;
@@ -16,15 +17,16 @@ export function MessageActionsMenu({ items }: MessageActionsMenuProps): React.JS
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          title="Message actions"
-          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-muted hover:text-text hover:bg-white/5 transition-opacity cursor-pointer"
-        >
-          <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
-        </button>
-      </DropdownMenu.Trigger>
+      <Tooltip content="Message actions">
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-muted hover:text-text hover:bg-white/5 transition-opacity cursor-pointer"
+          >
+            <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
+          </button>
+        </DropdownMenu.Trigger>
+      </Tooltip>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="end"

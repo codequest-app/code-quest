@@ -33,7 +33,7 @@ class FakeMediaQueryList extends EventTarget implements MediaQueryList {
   }
 }
 
-export interface FakeMatchMedia {
+interface FakeMatchMedia {
   /** Update the simulated viewport width and fire `change` on matching queries. */
   triggerChange(newWidth: number): void;
 }

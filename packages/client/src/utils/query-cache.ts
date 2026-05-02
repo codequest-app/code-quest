@@ -1,11 +1,11 @@
 import { getOrSet, TopicEmitter } from '@code-quest/shared';
 
-export interface QueryCacheConfig<R> {
+interface QueryCacheConfig<R> {
   fetch: (key: string) => Promise<R>;
   idPrefix: string;
 }
 
-export interface QueryCache<R> {
+interface QueryCache<R> {
   get: (key: string) => R | undefined;
   subscribe: (key: string, onChange: () => void) => () => void;
   refetch: (key: string) => Promise<void>;

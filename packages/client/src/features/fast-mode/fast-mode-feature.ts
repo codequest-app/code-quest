@@ -1,6 +1,6 @@
 import type { Feature } from '@/lib/feature';
 
-export interface FastModeFeatureDeps {
+interface FastModeFeatureDeps {
   fastModeState: 'on' | 'off' | null;
   setFastMode: (enabled: boolean) => void;
 }

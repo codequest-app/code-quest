@@ -10,7 +10,7 @@ import { SessionProvider } from '../contexts/SessionContext.tsx';
 import { SocketProvider } from '../contexts/SocketContext.tsx';
 import { FakeSummoner } from './fake-summoner.ts';
 
-export interface TestWrapper {
+interface TestWrapper {
   summoner: FakeSummoner;
   container: ReturnType<typeof createTestContainer>;
   Wrapper: (props: { children: ReactNode }) => ReactNode;

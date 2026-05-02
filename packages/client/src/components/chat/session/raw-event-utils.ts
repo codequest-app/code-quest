@@ -5,7 +5,7 @@ export function getEventType(evt: unknown): string | undefined {
   return typeof evt.type === 'string' ? evt.type : undefined;
 }
 
-export function isDeltaType(type: string): boolean {
+function isDeltaType(type: string): boolean {
   return type.toLowerCase().includes('delta');
 }
 
@@ -29,7 +29,7 @@ export function addVisibleTypes(current: Set<string>, newTypes: string[]): Set<s
   return next;
 }
 
-export interface FilterEntry {
+interface FilterEntry {
   type: string;
   count: number;
 }

@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 const VALID_NAME = /^[\w.\-+]+$/;
 
-export interface NewEntryDialogProps {
+interface NewEntryDialogProps {
   open: boolean;
   kind: 'file' | 'directory';
   /** Directory the new entry will be created inside (for the title text). */

@@ -1,5 +1,5 @@
 /** Transport selector — pick which socket implementation `createSocket()` returns. */
-export type ClientTransport = 'ws' | 'socketio';
+type ClientTransport = 'ws' | 'socketio';
 
 function parseTransport(raw: string | undefined): ClientTransport {
   return raw === 'socketio' ? 'socketio' : 'ws';

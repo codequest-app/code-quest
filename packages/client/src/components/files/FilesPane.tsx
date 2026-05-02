@@ -7,7 +7,7 @@ import { EmptyState } from '../workspace/EmptyState.tsx';
 import { FilePreviewModal } from './FilePreviewModal.tsx';
 import { FileTree } from './FileTree.tsx';
 
-export interface FilesPaneProps {
+interface FilesPaneProps {
   cwd: string;
   onMention: (path: string) => void;
 }

@@ -5,7 +5,7 @@ import type { MenuItem, MenuSections } from './build-menu-items.ts';
  * sections and current filter string. No component state involved — CommandMenu
  * just destructures and renders.
  */
-export interface MenuLayout extends MenuSections {
+interface MenuLayout extends MenuSections {
   /** True when filter is empty OR at least one model item matched. When false,
    *  the model section (header + rows) is suppressed entirely to avoid a
    *  lingering empty header under a non-empty search. */

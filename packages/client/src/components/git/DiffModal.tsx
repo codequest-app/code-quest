@@ -21,7 +21,7 @@ const KIND_CLASS = {
   context: 'text-text',
 } as const;
 
-export interface DiffModalProps {
+interface DiffModalProps {
   file: DiffFile;
   onClose: () => void;
   /** If provided, a Discard button appears. Clicked once → "Confirm?"

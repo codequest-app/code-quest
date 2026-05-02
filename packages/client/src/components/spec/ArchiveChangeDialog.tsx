@@ -3,7 +3,7 @@ import { ActionButton } from '../ui/ActionButton.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
-export interface ArchiveChangeDialogProps {
+interface ArchiveChangeDialogProps {
   open: boolean;
   name: string;
   onSubmit: (opts: { skipSpecs: boolean }) => void | Promise<void>;
