@@ -1,6 +1,5 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import type { ReactNode } from 'react';
-import { TooltipProvider } from '../components/ui/Tooltip.tsx';
 import { AppInitProvider } from '../contexts/AppInitContext.tsx';
 import { FsProvider } from '../contexts/FsContext.tsx';
 import { GitProvider } from '../contexts/GitContext.tsx';
@@ -24,23 +23,21 @@ export function createTestWrapper(opts?: { summoner?: FakeSummoner }): TestWrapp
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <TooltipProvider>
-        <SocketProvider socket={summoner.socket}>
-          <AppInitProvider>
-            <SessionProvider>
-              <ProjectProvider>
-                <NavigationProvider>
-                  <GitProvider>
-                    <FsProvider>
-                      <OpenspecProvider>{children}</OpenspecProvider>
-                    </FsProvider>
-                  </GitProvider>
-                </NavigationProvider>
-              </ProjectProvider>
-            </SessionProvider>
-          </AppInitProvider>
-        </SocketProvider>
-      </TooltipProvider>
+      <SocketProvider socket={summoner.socket}>
+        <AppInitProvider>
+          <SessionProvider>
+            <ProjectProvider>
+              <NavigationProvider>
+                <GitProvider>
+                  <FsProvider>
+                    <OpenspecProvider>{children}</OpenspecProvider>
+                  </FsProvider>
+                </GitProvider>
+              </NavigationProvider>
+            </ProjectProvider>
+          </SessionProvider>
+        </AppInitProvider>
+      </SocketProvider>
     );
   }
 
