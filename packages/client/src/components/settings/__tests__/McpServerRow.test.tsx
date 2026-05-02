@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { McpServerRow } from '../McpServerRow';
+import { McpServerRow } from '../McpServerRow.tsx';
 
 const server = { name: 'my-mcp', enabled: true, status: 'connected' as const };
 const noop = vi.fn();

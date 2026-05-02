@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFontSizeFeature } from '../font-size-feature';
+import { createFontSizeFeature } from '../font-size-feature.ts';
 
 describe('createFontSizeFeature', () => {
   it('has correct id/section/label', () => {

@@ -7,7 +7,7 @@ import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { renderWithChannel } from '@/test/render-with-channel';
 import type { Message } from '@/types/ui';
-import { CommandPalette } from '../CommandPalette';
+import { CommandPalette } from '../CommandPalette.tsx';
 
 const fakeMessage = (id: string, content: string, type = 'text'): Message =>
   ({

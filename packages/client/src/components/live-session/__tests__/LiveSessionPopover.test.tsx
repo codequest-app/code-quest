@@ -2,7 +2,7 @@ import type { SessionStateSummary } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { LiveSessionPopover, type LiveSessionPopoverProps } from '../LiveSessionPopover';
+import { LiveSessionPopover, type LiveSessionPopoverProps } from '../LiveSessionPopover.tsx';
 
 function makeSession(overrides: Partial<SessionStateSummary> = {}): SessionStateSummary {
   return {

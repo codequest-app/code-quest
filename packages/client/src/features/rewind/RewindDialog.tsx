@@ -5,8 +5,8 @@ import { useChannelMessages } from '@/contexts/channel';
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { formatRelativeDate } from '@/utils/format-relative-date';
-import { RewindBody } from './RewindBody';
-import { RewindConfirmDialog } from './RewindConfirmDialog';
+import { RewindBody } from './RewindBody.tsx';
+import { RewindConfirmDialog } from './RewindConfirmDialog.tsx';
 
 interface RewindItem {
   message: Message;

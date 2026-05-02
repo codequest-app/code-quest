@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import { isMessageVisible } from '../isMessageVisible';
+import { isMessageVisible } from '../isMessageVisible.ts';
 
 function msg(overrides: Partial<Message>): Message {
   return {

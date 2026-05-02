@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { MarkdownContent } from '../renderers/MarkdownContent';
+import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 
 interface SideQuestionDialogProps {
   open: boolean;

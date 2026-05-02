@@ -15,10 +15,10 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/conte
 import { modelOpenSignal } from '@/features/model/model-feature';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels } from '@/utils/model-utils';
-import { type ActiveDialog, ToolbarDialogs } from '../dialogs/ToolbarDialogs';
-import { AttachMenu } from './AttachMenu';
-import { ContextPieChart } from './ContextPieChart';
-import { PermissionModePicker } from './PermissionModePicker';
+import { type ActiveDialog, ToolbarDialogs } from '../dialogs/ToolbarDialogs.tsx';
+import { AttachMenu } from './AttachMenu.tsx';
+import { ContextPieChart } from './ContextPieChart.tsx';
+import { PermissionModePicker } from './PermissionModePicker.tsx';
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 

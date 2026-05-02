@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { ChatPanel } from '../ChatPanel';
+import { ChatPanel } from '../ChatPanel.tsx';
 
 describe('ChatPanel', () => {
   it('renders input and message list', async () => {

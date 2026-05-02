@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MarkdownContent } from '../MarkdownContent';
+import { MarkdownContent } from '../MarkdownContent.tsx';
 
 describe('MarkdownContent', () => {
   it('renders content inside a prose wrapper div', () => {

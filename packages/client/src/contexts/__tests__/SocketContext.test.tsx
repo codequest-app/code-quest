@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { SocketProvider, useSocket } from '../SocketContext';
+import { SocketProvider, useSocket } from '../SocketContext.tsx';
 
 function wrapper(socket = createFakeSummoner().socket) {
   return ({ children }: { children: ReactNode }) => (

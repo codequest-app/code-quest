@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectState } from '@/contexts/ProjectContext';
 import { createTestWrapper } from '@/test/create-test-wrapper';
-import { ProjectCard } from '../ProjectCard';
+import { ProjectCard } from '../ProjectCard.tsx';
 
 function setupTestWrapper() {
   const wrapper = createTestWrapper();

@@ -2,7 +2,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useEffectiveColorTheme } from '@/hooks/useEffectiveColorTheme';
 import { cn } from '@/utils/cn';
-import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton';
+import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
 
 interface CodeBlockProps {
   code: string;

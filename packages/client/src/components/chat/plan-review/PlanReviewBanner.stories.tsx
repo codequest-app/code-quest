@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { PlanReviewBanner } from './PlanReviewBanner';
+import { PlanReviewBanner } from './PlanReviewBanner.tsx';
 
 const PLAN_CONTENT =
   '# Plan: Add User Authentication\n\n## Context\nThe app needs login/logout functionality.\n\n## Steps\n1. Add login form component\n2. Implement JWT token handling\n3. Add protected route wrapper\n\n## Files\n| File | Change |\n|------|--------|\n| `src/Login.tsx` | New login form |\n| `src/auth.ts` | JWT utilities |';

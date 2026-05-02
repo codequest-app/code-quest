@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
-import { SearchBar } from './SearchBar';
+import { SearchBar } from './SearchBar.tsx';
 
 const meta: Meta<typeof SearchBar> = {
   component: SearchBar,

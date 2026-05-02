@@ -1,6 +1,6 @@
 import type { EffectiveColorTheme } from '@code-quest/shared';
 import { useSyncExternalStore } from 'react';
-import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 

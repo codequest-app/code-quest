@@ -5,7 +5,7 @@ import {
   isDiff,
   parseDiffFileName,
   parseHunkStart,
-} from '../diff';
+} from '../diff.ts';
 
 const sampleDiff = [
   '--- a/file.txt',

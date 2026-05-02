@@ -1,14 +1,14 @@
 import { EVENTS, type SessionStateSummary } from '@code-quest/shared';
-import { AppInitProvider } from '../contexts/AppInitContext';
-import { FsProvider } from '../contexts/FsContext';
-import { GitProvider } from '../contexts/GitContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { OpenspecProvider } from '../contexts/OpenspecContext';
-import { PluginProvider } from '../contexts/PluginContext';
-import { ProjectProvider } from '../contexts/ProjectContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { createFakeSocketBrowser } from './fake-socket-browser';
+import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { FsProvider } from '../contexts/FsContext.tsx';
+import { GitProvider } from '../contexts/GitContext.tsx';
+import { NavigationProvider } from '../contexts/NavigationContext.tsx';
+import { OpenspecProvider } from '../contexts/OpenspecContext.tsx';
+import { PluginProvider } from '../contexts/PluginContext.tsx';
+import { ProjectProvider } from '../contexts/ProjectContext.tsx';
+import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
+import { createFakeSocketBrowser } from './fake-socket-browser.ts';
 
 export interface WorkspaceFixtures {
   sessions?: SessionStateSummary[];

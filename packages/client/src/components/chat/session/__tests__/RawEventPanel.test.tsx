@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RawEventPanel } from '../RawEventPanel';
+import { RawEventPanel } from '../RawEventPanel.tsx';
 
 const mockEvents = [
   { type: 'assistant', content: 'hello' },

@@ -2,7 +2,7 @@ import type { SessionSummary } from '@code-quest/shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SessionHistory } from '../SessionHistory';
+import { SessionHistory } from '../SessionHistory.tsx';
 
 // Helper: render with mutable sessions prop
 function renderWithSessions(initialSessions: SessionSummary[], onDelete: ReturnType<typeof vi.fn>) {

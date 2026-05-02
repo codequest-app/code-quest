@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RenameProjectDialog } from '../RenameProjectDialog';
+import { RenameProjectDialog } from '../RenameProjectDialog.tsx';
 
 describe('RenameProjectDialog', () => {
   it('pre-fills input with current name', () => {

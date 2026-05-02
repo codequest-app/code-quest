@@ -7,15 +7,15 @@ import { MessageList } from '@/components/chat/conversation/MessageList';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { AppInitProvider } from '../AppInitContext';
-import { useChannelId, useChannelMessages } from '../channel';
-import { ChannelProvider } from '../channel/ChannelContext';
-import { NavigationProvider } from '../NavigationContext';
-import { PluginProvider } from '../PluginContext';
-import { ProjectProvider } from '../ProjectContext';
-import { SessionProvider } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
-import { TabProvider } from '../TabContext';
+import { AppInitProvider } from '../AppInitContext.tsx';
+import { ChannelProvider } from '../channel/ChannelContext.tsx';
+import { useChannelId, useChannelMessages } from '../channel/index.ts';
+import { NavigationProvider } from '../NavigationContext.tsx';
+import { PluginProvider } from '../PluginContext.tsx';
+import { ProjectProvider } from '../ProjectContext.tsx';
+import { SessionProvider } from '../SessionContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
+import { TabProvider } from '../TabContext.tsx';
 
 /** Test harness that exposes useChannelMessages values to the DOM */
 function ChannelTestHarness() {

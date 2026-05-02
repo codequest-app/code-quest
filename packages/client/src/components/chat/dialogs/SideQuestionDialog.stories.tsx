@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { SideQuestionDialog } from './SideQuestionDialog';
+import { SideQuestionDialog } from './SideQuestionDialog.tsx';
 
 const meta: Meta<typeof SideQuestionDialog> = {
   component: SideQuestionDialog,

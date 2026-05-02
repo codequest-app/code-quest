@@ -2,12 +2,12 @@ import { toPermissionMode } from '@code-quest/shared';
 import { useRef } from 'react';
 import { useChannelComposeActions, useChannelConfig, useChannelMessages } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
-import { ReviewUpsellBanner } from '../plan-review/ReviewUpsellBanner';
-import { PendingActionButtons } from '../tool-use/PendingActionButtons';
-import { ComposeInput } from './ComposeInput';
-import { ComposeToolbar } from './ComposeToolbar';
-import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel';
-import { SpeechInputContainer } from './SpeechInputContainer';
+import { ReviewUpsellBanner } from '../plan-review/ReviewUpsellBanner.tsx';
+import { PendingActionButtons } from '../tool-use/PendingActionButtons.tsx';
+import { ComposeInput } from './ComposeInput.tsx';
+import { ComposeToolbar } from './ComposeToolbar.tsx';
+import { type ModifiedFile, ModifiedFilesPanel } from './ModifiedFilesPanel.tsx';
+import { SpeechInputContainer } from './SpeechInputContainer.tsx';
 
 export function ChatInputArea(): React.JSX.Element {
   const { permissionMode } = useChannelConfig();

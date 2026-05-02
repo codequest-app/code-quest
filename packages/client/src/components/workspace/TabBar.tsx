@@ -2,8 +2,8 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { Fragment, useState } from 'react';
 import type { SessionStatus } from '@/types/ui';
 import { cn } from '@/utils/cn';
-import { Button } from '../ui/Button';
-import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 
 export interface TabInfo {
   sessionId: string;

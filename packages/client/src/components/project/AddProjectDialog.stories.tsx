@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryApp } from '@/test/story-decorator';
-import { AddProjectDialog } from './AddProjectDialog';
+import { AddProjectDialog } from './AddProjectDialog.tsx';
 
 const meta: Meta<typeof AddProjectDialog> = {
   component: AddProjectDialog,

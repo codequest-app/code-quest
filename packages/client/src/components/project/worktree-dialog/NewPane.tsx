@@ -1,4 +1,4 @@
-import { FIELD_CONTROL_CLASS, FieldRow } from './FieldRow';
+import { FIELD_CONTROL_CLASS, FieldRow } from './FieldRow.tsx';
 
 /** "Create new branch" tab: new branch name + base branch + path override. */
 export function NewPane({

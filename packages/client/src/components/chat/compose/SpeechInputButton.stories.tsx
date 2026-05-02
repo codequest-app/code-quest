@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { SpeechInputButton } from './SpeechInputButton';
+import { SpeechInputButton } from './SpeechInputButton.tsx';
 
 const meta: Meta<typeof SpeechInputButton> = {
   component: SpeechInputButton,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createMcpServersFeature } from '../mcp-servers-feature';
+import { createMcpServersFeature } from '../mcp-servers-feature.ts';
 
 describe('createMcpServersFeature', () => {
   it('has id mcp-servers with label in Customize section', () => {

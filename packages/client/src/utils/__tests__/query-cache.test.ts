@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createQueryCache } from '../query-cache';
+import { createQueryCache } from '../query-cache.ts';
 
 function createStore() {
   const fetchFn = vi.fn<(cwd: string) => Promise<string>>();

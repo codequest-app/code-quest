@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronDown } from '@/components/ui/Icons';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
-import { QuestionContent } from './QuestionContent';
+import { QuestionContent } from './QuestionContent.tsx';
 
 const CIRCLED_NUMBERS = ['①', '②', '③', '④', '⑤'];
 

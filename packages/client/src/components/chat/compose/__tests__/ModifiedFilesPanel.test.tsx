@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ModifiedFilesPanel } from '../ModifiedFilesPanel';
+import { ModifiedFilesPanel } from '../ModifiedFilesPanel.tsx';
 
 const sampleFiles = [
   { path: 'src/utils/helper.ts', status: 'modified', oldContent: 'old1', newContent: 'new1' },

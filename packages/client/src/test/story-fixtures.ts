@@ -1,9 +1,9 @@
 import type { PendingControl, SessionStateSummary } from '@code-quest/shared';
 import { segments } from '@code-quest/summoner/test-browser';
-import type { ChannelState } from '../types/chat';
-import type { Message } from '../types/ui';
-import { buildChannelState } from './build-channel-state';
-import { STORY_CHANNEL_ID } from './story-decorator';
+import type { ChannelState } from '../types/chat.ts';
+import type { Message } from '../types/ui.ts';
+import { buildChannelState } from './build-channel-state.ts';
+import { STORY_CHANNEL_ID } from './story-decorator.tsx';
 
 const STORY_WORKTREE_CHANNEL_ID = 'story-worktree';
 const STORY_PROJECT_ROOT = '/Users/demo/cc-office';

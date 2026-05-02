@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createColorThemeFeature } from '../color-theme-feature';
+import { createColorThemeFeature } from '../color-theme-feature.ts';
 
 describe('createColorThemeFeature', () => {
   it('has correct id/section/label/order', () => {

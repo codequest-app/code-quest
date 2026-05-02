@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import type { Project } from '@/contexts/ProjectContext';
 import { withStoryApp } from '@/test/story-decorator';
-import { ProjectList } from './ProjectList';
+import { ProjectList } from './ProjectList.tsx';
 
 const projects: Project[] = [
   {

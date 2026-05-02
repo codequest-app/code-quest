@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { msg } from '@/utils/message';
 import type { MessageNode } from '@/utils/message-tree';
-import { CollapsibleTimeline } from '../CollapsibleTimeline';
+import { CollapsibleTimeline } from '../CollapsibleTimeline.tsx';
 
 function toolNode(
   opts: { name?: string; result?: { content: string; is_error?: boolean } } = {},

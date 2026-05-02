@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
-import { DiffViewer } from './DiffViewer';
+import { DiffViewer } from './DiffViewer.tsx';
 
 const meta: Meta<typeof DiffViewer> = {
   component: DiffViewer,

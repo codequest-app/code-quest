@@ -1,14 +1,14 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import type { ReactNode } from 'react';
-import { AppInitProvider } from '../contexts/AppInitContext';
-import { FsProvider } from '../contexts/FsContext';
-import { GitProvider } from '../contexts/GitContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { OpenspecProvider } from '../contexts/OpenspecContext';
-import { ProjectProvider } from '../contexts/ProjectContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { FakeSummoner } from './fake-summoner';
+import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { FsProvider } from '../contexts/FsContext.tsx';
+import { GitProvider } from '../contexts/GitContext.tsx';
+import { NavigationProvider } from '../contexts/NavigationContext.tsx';
+import { OpenspecProvider } from '../contexts/OpenspecContext.tsx';
+import { ProjectProvider } from '../contexts/ProjectContext.tsx';
+import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
+import { FakeSummoner } from './fake-summoner.ts';
 
 export interface TestWrapper {
   summoner: FakeSummoner;

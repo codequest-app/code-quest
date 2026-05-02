@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryApp } from '@/test/story-decorator';
-import { ProjectCard } from './ProjectCard';
+import { ProjectCard } from './ProjectCard.tsx';
 
 const meta: Meta<typeof ProjectCard> = {
   component: ProjectCard,

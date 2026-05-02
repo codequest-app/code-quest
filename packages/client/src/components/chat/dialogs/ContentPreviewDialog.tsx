@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { type DiffEntry, generateUnifiedDiff } from '@/utils/diff';
-import { DiffViewer } from '../renderers/DiffViewer';
-import { MarkdownContent } from '../renderers/MarkdownContent';
+import { DiffViewer } from '../renderers/DiffViewer.tsx';
+import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 
 interface ContentPreviewDialogProps {
   content: string;

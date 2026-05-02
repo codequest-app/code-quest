@@ -6,7 +6,7 @@ import {
   OutputContent,
   RotatableChevron,
   StatusLine,
-} from './primitives';
+} from './primitives.tsx';
 
 const meta: Meta = {
   title: 'message-blocks/primitives',

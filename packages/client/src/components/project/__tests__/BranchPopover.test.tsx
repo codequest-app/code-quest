@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { BranchPopover } from '../BranchPopover';
+import { BranchPopover } from '../BranchPopover.tsx';
 
 function renderPopover(props: {
   branches: string[];

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ToggleSwitch } from './ToggleSwitch';
+import { ToggleSwitch } from './ToggleSwitch.tsx';
 
 const meta: Meta<typeof ToggleSwitch> = {
   component: ToggleSwitch,

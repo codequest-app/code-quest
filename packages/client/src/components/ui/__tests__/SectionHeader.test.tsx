@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { SectionHeader } from '../SectionHeader';
+import { SectionHeader } from '../SectionHeader.tsx';
 
 describe('SectionHeader', () => {
   it('renders children as the heading text', () => {

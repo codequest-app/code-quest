@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { InlineAction } from '../InlineAction';
+import { InlineAction } from '../InlineAction.tsx';
 
 describe('InlineAction', () => {
   it('renders children as button content', () => {

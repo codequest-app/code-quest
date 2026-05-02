@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { MessageActions } from './MessageActions';
+import { MessageActions } from './MessageActions.tsx';
 
 const meta: Meta<typeof MessageActions> = {
   component: MessageActions,

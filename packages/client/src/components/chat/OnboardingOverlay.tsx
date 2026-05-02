@@ -1,9 +1,9 @@
 import { DISMISSIBLE_IDS } from '@code-quest/shared';
 import { useState } from 'react';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
-import { InlineAction } from '../ui/InlineAction';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
 
 function getSteps(brandName: string) {
   return [

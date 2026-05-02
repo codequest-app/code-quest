@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VISIBILITY_GROUPS } from '@/contexts/channel/MessageVisibilityContext';
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
-import { SettingsDialog } from '../SettingsDialog';
+import { SettingsDialog } from '../SettingsDialog.tsx';
 
 function resetStore() {
   usePreferencesStore.setState({

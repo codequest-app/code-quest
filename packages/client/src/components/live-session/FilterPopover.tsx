@@ -2,7 +2,7 @@ import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
 import { slugify } from '@/utils/slugify';
-import { SearchIcon } from '../ui/Icons';
+import { SearchIcon } from '../ui/Icons.tsx';
 
 export interface FilterEntry {
   type: string;

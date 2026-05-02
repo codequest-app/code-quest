@@ -1,7 +1,7 @@
 import type { ToolUseMeta } from '@code-quest/shared';
 import type { ChannelState } from '@/types/chat';
 import { addMessage, msg, patchMeta } from '@/utils/message';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 // ── On handlers ──
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Project } from '@/contexts/ProjectContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { focusRing } from '../ui/_tokens';
+import { focusRing } from '../ui/_tokens.ts';
 
 function displayName(p: Project): string {
   if (p.name.includes('/')) return basename(p.name);

@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { cn } from '@/utils/cn';
-import { focusRing } from './_tokens';
+import { focusRing } from './_tokens.ts';
 
 interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   type?: 'button' | 'submit' | 'reset';

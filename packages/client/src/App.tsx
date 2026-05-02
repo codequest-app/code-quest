@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
-import { ErrorFallback } from './components/workspace/ErrorFallback';
-import { WorkspaceLayout } from './components/workspace/WorkspaceLayout';
-import { AppInitProvider } from './contexts/AppInitContext';
-import { FsProvider } from './contexts/FsContext';
-import { GitProvider } from './contexts/GitContext';
-import { NavigationProvider } from './contexts/NavigationContext';
-import { OpenspecProvider } from './contexts/OpenspecContext';
-import { PluginProvider } from './contexts/PluginContext';
-import { ProjectProvider } from './contexts/ProjectContext';
-import { SessionProvider } from './contexts/SessionContext';
-import { SocketProvider } from './contexts/SocketContext';
-import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme';
-import { createSocket } from './socket/client';
-import { usePreferencesStore } from './stores/usePreferencesStore';
+import { ErrorFallback } from './components/workspace/ErrorFallback.tsx';
+import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
+import { AppInitProvider } from './contexts/AppInitContext.tsx';
+import { FsProvider } from './contexts/FsContext.tsx';
+import { GitProvider } from './contexts/GitContext.tsx';
+import { NavigationProvider } from './contexts/NavigationContext.tsx';
+import { OpenspecProvider } from './contexts/OpenspecContext.tsx';
+import { PluginProvider } from './contexts/PluginContext.tsx';
+import { ProjectProvider } from './contexts/ProjectContext.tsx';
+import { SessionProvider } from './contexts/SessionContext.tsx';
+import { SocketProvider } from './contexts/SocketContext.tsx';
+import { useEffectiveColorTheme } from './hooks/useEffectiveColorTheme.ts';
+import { createSocket } from './socket/client.ts';
+import { usePreferencesStore } from './stores/usePreferencesStore.ts';
 import './App.css';
 
 export function App(): React.JSX.Element {

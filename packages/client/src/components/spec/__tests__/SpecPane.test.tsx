@@ -5,7 +5,7 @@ import { Toaster } from 'sonner';
 import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
-import { SpecPane } from '../SpecPane';
+import { SpecPane } from '../SpecPane.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();

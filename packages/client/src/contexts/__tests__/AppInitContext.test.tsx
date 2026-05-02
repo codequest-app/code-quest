@@ -2,9 +2,9 @@ import { act, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { AppInitProvider, useAppInitActions, useAppInitState } from '../AppInitContext';
-import { SessionProvider, useSession } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
+import { AppInitProvider, useAppInitActions, useAppInitState } from '../AppInitContext.tsx';
+import { SessionProvider, useSession } from '../SessionContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
 
 async function renderInAppInit(ui: ReactNode, summoner?: ReturnType<typeof createFakeSummoner>) {
   const s = summoner ?? createFakeSummoner();

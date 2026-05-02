@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/ui';
-import { ChatMessage } from '../ChatMessage';
+import { ChatMessage } from '../ChatMessage.tsx';
 
 const base: Omit<Message, 'type' | 'content' | 'meta'> = {
   id: '1',

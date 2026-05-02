@@ -1,6 +1,6 @@
 import ClipboardJS from 'clipboard';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { copyToClipboard } from '../clipboard';
+import { copyToClipboard } from '../clipboard.ts';
 
 describe('copyToClipboard', () => {
   beforeEach(() => {

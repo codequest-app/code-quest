@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SpinnerVerb } from './SpinnerVerb';
+import { SpinnerVerb } from './SpinnerVerb.tsx';
 
 const meta: Meta<typeof SpinnerVerb> = {
   component: SpinnerVerb,

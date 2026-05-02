@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createClearFeature } from '../clear-feature';
+import { createClearFeature } from '../clear-feature.ts';
 
 function makeDeps() {
   return {

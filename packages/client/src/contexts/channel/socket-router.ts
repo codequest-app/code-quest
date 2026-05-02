@@ -1,6 +1,6 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
-import { matchesChannel, type Payload } from './handlers/guard';
+import { matchesChannel, type Payload } from './handlers/guard.ts';
 
 interface RegisterOptions<D> {
   beforeUpdate?: (event: string, payload: { channelId: string }) => void;

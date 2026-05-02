@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createMentionFileFeature } from '../mention-file-feature';
+import { createMentionFileFeature } from '../mention-file-feature.ts';
 
 describe('createMentionFileFeature', () => {
   it('has id mention-file', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Feature } from '../feature';
-import { createFeatureRegistry } from '../feature-registry';
+import type { Feature } from '../feature.ts';
+import { createFeatureRegistry } from '../feature-registry.ts';
 
 const mk = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoDerivePath, branchToSlug, buildWorktreeCommand } from '../worktree-dialog-helpers';
+import { autoDerivePath, branchToSlug, buildWorktreeCommand } from '../worktree-dialog-helpers.ts';
 
 describe('branchToSlug', () => {
   it('takes last segment of a path-style branch', () => {

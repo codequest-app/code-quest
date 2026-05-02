@@ -6,7 +6,7 @@ import {
   makeSubagentDone,
   makeSubagentRunning,
 } from '@/test/story-fixtures';
-import { ChatPanel } from './ChatPanel';
+import { ChatPanel } from './ChatPanel.tsx';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,

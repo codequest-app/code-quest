@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createTestWrapper } from '@/test/create-test-wrapper';
-import { CreateWorktreeDialog } from '../CreateWorktreeDialog';
+import { CreateWorktreeDialog } from '../CreateWorktreeDialog.tsx';
 
 function makeWrapper() {
   const { summoner, Wrapper } = createTestWrapper();

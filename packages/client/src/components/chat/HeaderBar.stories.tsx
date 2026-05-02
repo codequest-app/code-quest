@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '@/test/story-decorator';
-import { HeaderBar } from './HeaderBar';
+import { HeaderBar } from './HeaderBar.tsx';
 
 const meta: Meta<typeof HeaderBar> = {
   component: HeaderBar,

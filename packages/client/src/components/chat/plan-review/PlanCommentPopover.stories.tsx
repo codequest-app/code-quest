@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef } from 'react';
 import { fn } from 'storybook/test';
-import { PlanCommentPopover } from './PlanCommentPopover';
+import { PlanCommentPopover } from './PlanCommentPopover.tsx';
 
 const meta: Meta<typeof PlanCommentPopover> = {
   component: PlanCommentPopover,

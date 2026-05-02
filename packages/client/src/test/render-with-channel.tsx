@@ -1,16 +1,16 @@
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { act, type RenderResult, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { AppInitProvider } from '../contexts/AppInitContext';
-import { CommandPaletteProvider } from '../contexts/CommandPaletteContext';
-import { ChannelProvider } from '../contexts/channel/ChannelContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { PluginProvider } from '../contexts/PluginContext';
-import { ProjectProvider } from '../contexts/ProjectContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
+import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
+import { ChannelProvider } from '../contexts/channel/ChannelContext.tsx';
+import { NavigationProvider } from '../contexts/NavigationContext.tsx';
+import { PluginProvider } from '../contexts/PluginContext.tsx';
+import { ProjectProvider } from '../contexts/ProjectContext.tsx';
+import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
+import { TabProvider } from '../contexts/TabContext.tsx';
+import { createFakeSummoner, type FakeSummoner } from './fake-summoner.ts';
 
 interface RenderWithChannelOptions {
   channelId?: string;

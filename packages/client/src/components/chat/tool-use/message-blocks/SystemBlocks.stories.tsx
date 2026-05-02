@@ -14,7 +14,7 @@ import {
   StreamlinedTextContent,
   StreamlinedToolSummaryContent,
   TaskStartedContent,
-} from './SystemBlocks';
+} from './SystemBlocks.tsx';
 
 const decorator = (Story: React.ComponentType): React.JSX.Element => (
   <div className="bg-bg text-text max-w-xl p-4">

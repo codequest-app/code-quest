@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import { buildMessagesFromHistory } from '../message';
+import { buildMessagesFromHistory } from '../message.ts';
 
 describe('buildMessagesFromHistory', () => {
   it('returns empty array for empty events', () => {

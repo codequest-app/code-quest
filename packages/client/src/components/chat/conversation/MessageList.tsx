@@ -18,10 +18,10 @@ import {
   type MessageNode,
   type RenderGroup,
 } from '@/utils/message-tree';
-import { SpinnerVerb } from '../SpinnerVerb';
-import { ChatMessage } from './ChatMessage';
-import { CollapsibleTimeline } from './CollapsibleTimeline';
-import { SubagentChildren } from './SubagentChildren';
+import { SpinnerVerb } from '../SpinnerVerb.tsx';
+import { ChatMessage } from './ChatMessage.tsx';
+import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
+import { SubagentChildren } from './SubagentChildren.tsx';
 
 const SCROLL_THRESHOLD_PX = 50;
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Checkbox } from '../ui/Checkbox';
+import { Checkbox } from '../ui/Checkbox.tsx';
 
 interface TaskLine {
   lineIndex: number;

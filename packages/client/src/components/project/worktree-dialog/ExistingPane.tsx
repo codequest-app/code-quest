@@ -1,4 +1,4 @@
-import { FIELD_CONTROL_CLASS, FieldRow } from './FieldRow';
+import { FIELD_CONTROL_CLASS, FieldRow } from './FieldRow.tsx';
 
 /** "Checkout existing" tab: branch dropdown + path override. */
 export function ExistingPane({

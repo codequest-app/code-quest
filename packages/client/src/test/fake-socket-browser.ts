@@ -7,7 +7,7 @@
  *   socket.on(event)    → registers client-side listener (receives server pushes)
  */
 
-import type { TypedSocket } from '../socket/client';
+import type { TypedSocket } from '../socket/client.ts';
 
 type Listener = (...args: unknown[]) => void;
 

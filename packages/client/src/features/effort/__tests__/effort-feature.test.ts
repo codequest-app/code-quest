@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEffortFeature } from '../effort-feature';
+import { createEffortFeature } from '../effort-feature.ts';
 
 describe('createEffortFeature', () => {
   it('returns a Feature with id effort-level and section Model', () => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/Button.tsx';
 
 interface EmptyStateProps {
   /** Optional 32-40px glyph anchored above the message — gives the empty

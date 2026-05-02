@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
-import { ProjectStateContext } from './ProjectContext';
+import { ProjectStateContext } from './ProjectContext.tsx';
 
 /** Intent: tell a TabProvider scoped to `cwd` to activate `channelId` once it
  *  appears in that provider's tabs. Set by flows that spawn a channel

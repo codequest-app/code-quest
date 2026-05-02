@@ -3,7 +3,7 @@ import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { useId } from 'react';
 import { cn } from '@/utils/cn';
 import { slugify } from '@/utils/slugify';
-import { focusRing } from './_tokens';
+import { focusRing } from './_tokens.ts';
 
 export function Checkbox({
   id: idProp,

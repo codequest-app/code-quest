@@ -1,6 +1,6 @@
 import { pluralize } from '@/utils/pluralize';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 function BlockedContent({
   projectName,

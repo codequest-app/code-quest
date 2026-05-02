@@ -1,4 +1,4 @@
-import type { WsClient } from './ws-client';
+import type { WsClient } from './ws-client.ts';
 
 type Listener = (...args: unknown[]) => void;
 

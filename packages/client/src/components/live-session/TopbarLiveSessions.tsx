@@ -2,7 +2,7 @@ import type { SessionStateSummary } from '@code-quest/shared';
 import { toast } from 'sonner';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { LiveSessionPopover } from './LiveSessionPopover';
+import { LiveSessionPopover } from './LiveSessionPopover.tsx';
 
 const MAX_VISIBLE = 5;
 

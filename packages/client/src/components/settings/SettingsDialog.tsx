@@ -7,9 +7,9 @@ import { createFontSizeFeature } from '@/features/font-size/font-size-feature';
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { cn } from '@/utils/cn';
-import { FeatureRow } from '../palette/FeatureRow';
-import { Button } from '../ui/Button';
-import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
+import { FeatureRow } from '../palette/FeatureRow.tsx';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 
 interface SettingsDialogProps {
   open: boolean;

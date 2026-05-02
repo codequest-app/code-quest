@@ -4,8 +4,8 @@ import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode, useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeSummoner } from '@/test/fake-summoner';
-import { GitProvider, useGitActions, useGitState, useGitStatus } from '../GitContext';
-import { SocketProvider } from '../SocketContext';
+import { GitProvider, useGitActions, useGitState, useGitStatus } from '../GitContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
 
 function useWorktree() {
   return { ...useGitState(), ...useGitActions() };

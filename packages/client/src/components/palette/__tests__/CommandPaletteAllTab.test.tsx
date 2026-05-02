@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { CommandPalette } from '../CommandPalette';
+import { CommandPalette } from '../CommandPalette.tsx';
 
 beforeEach(() => useMessageVisibilityStore.setState({ enabledTypes: null }));
 afterEach(() => useMessageVisibilityStore.setState({ enabledTypes: null }));

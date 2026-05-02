@@ -1,7 +1,7 @@
 import type { Feature } from '@/lib/feature';
 import { cn } from '@/utils/cn';
-import { SectionHeader } from '../ui/SectionHeader';
-import { FeatureRow } from './FeatureRow';
+import { SectionHeader } from '../ui/SectionHeader.tsx';
+import { FeatureRow } from './FeatureRow.tsx';
 
 interface PaletteCommandListProps {
   features: Feature[];

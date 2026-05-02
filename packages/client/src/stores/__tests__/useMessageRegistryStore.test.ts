@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import { useMessageRegistryStore } from '../useMessageRegistryStore';
+import { useMessageRegistryStore } from '../useMessageRegistryStore.ts';
 
 beforeEach(() => {
   useMessageRegistryStore.setState({ channels: new Map() });

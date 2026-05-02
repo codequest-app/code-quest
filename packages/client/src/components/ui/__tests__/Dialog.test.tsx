@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Dialog, DialogClose, DialogContent } from '../Dialog';
+import { Dialog, DialogClose, DialogContent } from '../Dialog.tsx';
 
 describe('Dialog', () => {
   it('renders content when open', () => {

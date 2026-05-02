@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { ThinkingBlock } from '../ThinkingBlock';
+import { ThinkingBlock } from '../ThinkingBlock.tsx';
 
 describe('ThinkingBlock', () => {
   it('renders collapsed by default with "Thinking" label', () => {

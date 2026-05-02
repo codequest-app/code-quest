@@ -1,6 +1,6 @@
 import type { Project } from '@/contexts/ProjectContext';
-import { SectionHeader } from '../ui/SectionHeader';
-import { ProjectRow } from './ProjectRow';
+import { SectionHeader } from '../ui/SectionHeader.tsx';
+import { ProjectRow } from './ProjectRow.tsx';
 
 function byLastOpenedDesc(a: Project, b: Project): number {
   return a.lastOpenedAt < b.lastOpenedAt ? 1 : -1;

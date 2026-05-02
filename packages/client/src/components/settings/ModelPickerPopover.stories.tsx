@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ModelPickerPopover } from './ModelPickerPopover';
+import { ModelPickerPopover } from './ModelPickerPopover.tsx';
 
 const models = [
   { value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' },

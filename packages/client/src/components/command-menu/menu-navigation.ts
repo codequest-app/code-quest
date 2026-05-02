@@ -1,4 +1,4 @@
-import type { MenuItem } from './build-menu-items';
+import type { MenuItem } from './build-menu-items.ts';
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 

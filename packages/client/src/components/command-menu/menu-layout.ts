@@ -1,4 +1,4 @@
-import type { MenuItem, MenuSections } from './build-menu-items';
+import type { MenuItem, MenuSections } from './build-menu-items.ts';
 
 /**
  * Filtered + laid-out view of the menu, derived purely from the given

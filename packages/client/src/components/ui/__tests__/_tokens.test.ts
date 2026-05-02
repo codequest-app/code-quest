@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlBorder, focusRing, tabTrigger, tabTriggerCompact } from '../_tokens';
+import { controlBorder, focusRing, tabTrigger, tabTriggerCompact } from '../_tokens.ts';
 
 describe('ui/_tokens', () => {
   it('focusRing is a non-empty string with focus-visible:ring-', () => {

@@ -1,7 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { NavigationProvider, useNavigationActions, useNavigationState } from '../NavigationContext';
+import {
+  NavigationProvider,
+  useNavigationActions,
+  useNavigationState,
+} from '../NavigationContext.tsx';
 
 function wrapper({ children }: { children: ReactNode }) {
   return <NavigationProvider>{children}</NavigationProvider>;

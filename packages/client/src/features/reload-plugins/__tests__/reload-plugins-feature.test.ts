@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createReloadPluginsFeature } from '../reload-plugins-feature';
+import { createReloadPluginsFeature } from '../reload-plugins-feature.ts';
 
 describe('createReloadPluginsFeature', () => {
   let reloadPlugins: ReturnType<typeof vi.fn>;

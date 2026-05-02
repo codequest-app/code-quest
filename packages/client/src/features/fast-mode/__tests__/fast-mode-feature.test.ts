@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFastModeFeature } from '../fast-mode-feature';
+import { createFastModeFeature } from '../fast-mode-feature.ts';
 
 describe('createFastModeFeature', () => {
   it('returns a Feature with id fast-mode in Model section', () => {

@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import type { TypedSocket } from '@/socket/client';
 import type { ChannelState } from '@/types/chat';
 import { msg, patchMeta, updateLastMessage } from '@/utils/message';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 type Message = ChannelState['messages'][number];

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
-import { PaletteMessageList } from './PaletteMessageList';
+import { PaletteMessageList } from './PaletteMessageList.tsx';
 
 const baseMessages: Message[] = [
   { id: '1', role: 'user', timestamp: 1000, type: 'text', content: 'Fix the login bug' },

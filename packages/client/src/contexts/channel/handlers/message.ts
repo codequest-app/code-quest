@@ -4,7 +4,7 @@ import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
 import { addMessage, msg } from '@/utils/message';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 type TextChunk = { type?: string; text?: string };
 function isTextChunk(b: unknown): b is TextChunk {

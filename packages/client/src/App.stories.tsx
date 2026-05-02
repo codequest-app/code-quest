@@ -3,10 +3,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Toaster } from 'sonner';
-import { ErrorFallback } from './components/workspace/ErrorFallback';
-import { WorkspaceLayout } from './components/workspace/WorkspaceLayout';
-import { makeSession } from './test/story-fixtures';
-import { withStoryWorkspaceFixtures } from './test/story-workspace-decorator';
+import { ErrorFallback } from './components/workspace/ErrorFallback.tsx';
+import { WorkspaceLayout } from './components/workspace/WorkspaceLayout.tsx';
+import { makeSession } from './test/story-fixtures.ts';
+import { withStoryWorkspaceFixtures } from './test/story-workspace-decorator.tsx';
 
 function AppShell(): React.JSX.Element {
   return (

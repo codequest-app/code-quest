@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ToolBlock, ToolBlockRow } from '../message-blocks/ToolBlock';
+import { ToolBlock, ToolBlockRow } from '../message-blocks/ToolBlock.tsx';
 
 describe('ToolBlock', () => {
   it('renders children inside a bordered container', () => {

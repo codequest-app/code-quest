@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { FilterPopover } from './FilterPopover';
+import { FilterPopover } from './FilterPopover.tsx';
 
 const entries = [
   { type: 'text', count: 42 },

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RemoveWorktreeConfirmDialog } from '../RemoveWorktreeConfirmDialog';
+import { RemoveWorktreeConfirmDialog } from '../RemoveWorktreeConfirmDialog.tsx';
 
 describe('RemoveWorktreeConfirmDialog', () => {
   it('allowed state (no active sessions): Remove button → onConfirm + close', async () => {

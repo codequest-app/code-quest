@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ContentRenderer } from '../ContentRenderer';
+import { ContentRenderer } from '../ContentRenderer.tsx';
 
 // Uses real DiffViewer + AnsiContent (principle 2: prefer no double for
 // internal modules). Real components expose the testids asserted below.

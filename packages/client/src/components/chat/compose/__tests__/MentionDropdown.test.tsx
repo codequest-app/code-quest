@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { MentionDropdown } from '../MentionDropdown';
+import { MentionDropdown } from '../MentionDropdown.tsx';
 
 function createBaseProps() {
   return {

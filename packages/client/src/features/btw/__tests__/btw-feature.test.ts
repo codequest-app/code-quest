@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { btwSignal, createBtwFeature, createBtwLocalFeature } from '../btw-feature';
+import { btwSignal, createBtwFeature, createBtwLocalFeature } from '../btw-feature.ts';
 
 const CLOSED = { open: false, question: '', answer: null, loading: false, error: null };
 

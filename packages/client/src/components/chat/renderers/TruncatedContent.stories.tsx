@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { TruncatedContent } from './TruncatedContent';
+import { TruncatedContent } from './TruncatedContent.tsx';
 
 const meta: Meta<typeof TruncatedContent> = {
   component: TruncatedContent,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '../ui/Button';
-import { InlineAction } from '../ui/InlineAction';
+import { Button } from '../ui/Button.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
 
 export interface CommitComposerProps {
   onCommit: (message: string) => void;

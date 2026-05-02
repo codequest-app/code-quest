@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRawPanelFeature } from '../raw-panel-feature';
+import { createRawPanelFeature } from '../raw-panel-feature.ts';
 
 describe('createRawPanelFeature', () => {
   it('has id raw-panel in Panels section with label Raw Event Panel', () => {

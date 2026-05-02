@@ -4,7 +4,7 @@ import {
   type ServerConnector,
   FakeSummoner as SummonerFakeSummoner,
 } from '@code-quest/summoner/test';
-import type { TypedSocket } from '../socket/client';
+import type { TypedSocket } from '../socket/client.ts';
 
 export class FakeSummoner extends SummonerFakeSummoner {
   override get socket(): FakeSocket & TypedSocket {

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/ui';
-import { PaletteMessageList } from '../PaletteMessageList';
+import { PaletteMessageList } from '../PaletteMessageList.tsx';
 
 const msg = (id: string, content: string): Message => ({
   id,

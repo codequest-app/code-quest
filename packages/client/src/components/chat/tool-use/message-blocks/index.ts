@@ -1,4 +1,4 @@
-export { HookDiagnosticsContent, HookResponseContent, HookStartedContent } from './HookBlocks';
+export { HookDiagnosticsContent, HookResponseContent, HookStartedContent } from './HookBlocks.tsx';
 export {
   CompactBoundaryContent,
   ContentBlockStart,
@@ -15,6 +15,6 @@ export {
   StreamlinedTextContent,
   StreamlinedToolSummaryContent,
   TaskStartedContent,
-} from './SystemBlocks';
-export { ToolResultBlock } from './ToolResultBlock';
-export { ToolUseBlock } from './ToolUseBlock';
+} from './SystemBlocks.tsx';
+export { ToolResultBlock } from './ToolResultBlock.tsx';
+export { ToolUseBlock } from './ToolUseBlock.tsx';

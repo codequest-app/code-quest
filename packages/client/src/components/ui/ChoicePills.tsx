@@ -1,6 +1,6 @@
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { cn } from '@/utils/cn';
-import { focusRing } from './_tokens';
+import { focusRing } from './_tokens.ts';
 
 interface ChoiceOption {
   value: string;

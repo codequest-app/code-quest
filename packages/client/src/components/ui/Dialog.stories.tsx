@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { Dialog, DialogClose, DialogContent } from './Dialog';
+import { Dialog, DialogClose, DialogContent } from './Dialog.tsx';
 
 const meta: Meta<typeof DialogContent> = {
   title: 'ui/Dialog',

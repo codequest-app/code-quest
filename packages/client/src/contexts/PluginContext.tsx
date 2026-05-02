@@ -12,8 +12,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import { rpc } from '../socket/rpc';
-import { useSocket } from './SocketContext';
+import { rpc } from '../socket/rpc.ts';
+import { useSocket } from './SocketContext.tsx';
 
 interface PluginState {
   installed: PluginInfo[];

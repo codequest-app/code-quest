@@ -11,11 +11,11 @@ import { toast } from 'sonner';
 import { useOpenspecActions } from '@/contexts/OpenspecContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';
-import { MarkdownContent } from '../chat/renderers/MarkdownContent';
-import { tabTriggerCompact } from '../ui/_tokens';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
-import { TaskChecklist } from './TaskChecklist';
+import { MarkdownContent } from '../chat/renderers/MarkdownContent.tsx';
+import { tabTriggerCompact } from '../ui/_tokens.ts';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { TaskChecklist } from './TaskChecklist.tsx';
 
 export interface SpecModalProps {
   cwd: string;

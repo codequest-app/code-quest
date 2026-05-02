@@ -3,14 +3,14 @@ import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useOpenspecActions, useOpenspecList } from '@/contexts/OpenspecContext';
-import { CommandHint } from '../ui/CommandHint';
-import { InlineAction } from '../ui/InlineAction';
-import { PaneStatusFooter } from '../ui/PaneStatusFooter';
-import { SkeletonRows } from '../ui/SkeletonRows';
-import { EmptyState } from '../workspace/EmptyState';
-import { ArchiveChangeDialog } from './ArchiveChangeDialog';
-import { NewChangeDialog } from './NewChangeDialog';
-import { SpecModal } from './SpecModal';
+import { CommandHint } from '../ui/CommandHint.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
+import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
+import { SkeletonRows } from '../ui/SkeletonRows.tsx';
+import { EmptyState } from '../workspace/EmptyState.tsx';
+import { ArchiveChangeDialog } from './ArchiveChangeDialog.tsx';
+import { NewChangeDialog } from './NewChangeDialog.tsx';
+import { SpecModal } from './SpecModal.tsx';
 
 export interface SpecPaneProps {
   cwd: string;

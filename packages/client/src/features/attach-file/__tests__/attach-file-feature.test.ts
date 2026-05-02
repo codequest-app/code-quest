@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAttachFileFeature } from '../attach-file-feature';
+import { createAttachFileFeature } from '../attach-file-feature.ts';
 
 describe('createAttachFileFeature', () => {
   it('has id attach-file', () => {

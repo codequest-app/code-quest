@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight } from '@/components/ui/Icons';
 import { cn } from '@/utils/cn';
-import { MarkdownContent } from '../renderers/MarkdownContent';
+import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
 
 interface ThinkingBlockProps {
   content: string;

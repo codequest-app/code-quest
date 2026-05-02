@@ -1,6 +1,6 @@
 import type { ServerToClientEvents } from '@code-quest/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChannelSocketRouter, type SubscriptionAdapter } from '../socket-router';
+import { ChannelSocketRouter, type SubscriptionAdapter } from '../socket-router.ts';
 
 type Payload = { channelId: string } & Record<string, unknown>;
 type Listener = (payload: Payload) => void;

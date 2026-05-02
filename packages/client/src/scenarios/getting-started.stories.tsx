@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { ChatPanel } from '../components/chat/ChatPanel';
+import { ChatPanel } from '../components/chat/ChatPanel.tsx';
 import {
   expectTextbox,
   SCENARIO_CLASS,
   withScenario,
   withStoryChannel,
-} from '../test/story-decorator';
-import { makeSimpleQA } from '../test/story-fixtures';
+} from '../test/story-decorator.tsx';
+import { makeSimpleQA } from '../test/story-fixtures.ts';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,

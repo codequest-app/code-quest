@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { InlineAction } from '@/components/ui/InlineAction';
 import type { MessageNode } from '@/utils/message-tree';
 import { pluralize } from '@/utils/pluralize';
-import { RotatableChevron } from '../tool-use/message-blocks/primitives';
-import { CollapsibleTimeline } from './CollapsibleTimeline';
+import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
+import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
 
 export function SubagentChildren({
   nodes,

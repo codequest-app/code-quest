@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockWebSocket } from '@/test/mock-websocket';
-import { WsClient } from '../ws-client';
-import { WsSocketAdapter } from '../ws-socket-adapter';
+import { WsClient } from '../ws-client.ts';
+import { WsSocketAdapter } from '../ws-socket-adapter.ts';
 
 /**
  * The adapter exposes a socket.io-Socket-shaped API on top of WsClient so

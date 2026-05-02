@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { useMessageVisibilityStore } from '@/stores/useMessageVisibilityStore';
 import { memoryBackend, readPersistedRaw } from '@/test/memory-persist-storage';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useMessageVisibility } from '../MessageVisibilityContext';
+import { useMessageVisibility } from '../MessageVisibilityContext.tsx';
 
 const LS_KEY = 'code-quest:message-visibility';
 

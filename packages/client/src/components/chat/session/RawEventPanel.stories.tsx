@@ -1,7 +1,7 @@
 import { EVENTS } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { RawEventPanel } from './RawEventPanel';
+import { RawEventPanel } from './RawEventPanel.tsx';
 
 const meta: Meta<typeof RawEventPanel> = {
   component: RawEventPanel,

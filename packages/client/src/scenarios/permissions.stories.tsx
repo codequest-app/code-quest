@@ -1,13 +1,13 @@
 import type { PendingControl } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChatPanel } from '../components/chat/ChatPanel';
-import { expectTextbox, SCENARIO_CLASS, withStoryChannel } from '../test/story-decorator';
+import { ChatPanel } from '../components/chat/ChatPanel.tsx';
+import { expectTextbox, SCENARIO_CLASS, withStoryChannel } from '../test/story-decorator.tsx';
 import {
   makePlanReviewFlow,
   makeToolApprovalFlow,
   makeToolDenialFlow,
-} from '../test/story-fixtures';
-import type { Message } from '../types/ui';
+} from '../test/story-fixtures.ts';
+import type { Message } from '../types/ui.ts';
 
 const meta: Meta<typeof ChatPanel> = {
   component: ChatPanel,

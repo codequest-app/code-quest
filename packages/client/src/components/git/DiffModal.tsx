@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/utils/cn';
 import type { DiffFile } from '@/utils/parse-unified-diff';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 /** Diffs over this length get truncated to the same number of head lines —
  *  syntax-highlighting + DOM cost grows linearly past this and modal scroll

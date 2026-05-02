@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { InitOptionsDialog } from '../InitOptionsDialog';
+import { InitOptionsDialog } from '../InitOptionsDialog.tsx';
 
 describe('InitOptionsDialog', () => {
   it('renders two textareas when open', () => {

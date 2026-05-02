@@ -1,4 +1,4 @@
-import type { Feature, FeatureSection, PaletteTab } from './feature';
+import type { Feature, FeatureSection, PaletteTab } from './feature.ts';
 
 interface ChoiceOption<T extends string> {
   value: T;

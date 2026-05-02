@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/Button.tsx';
 
 interface NotificationButton {
   label: string;

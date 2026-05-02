@@ -1,12 +1,12 @@
 import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { highlight, messagePreview, typeColor, typeLabel } from '@/utils/message-preview';
-import { SectionHeader } from '../ui/SectionHeader';
+import { SectionHeader } from '../ui/SectionHeader.tsx';
 import {
   PALETTE_RECENT_COUNT,
   PALETTE_SEARCH_LIMIT,
   paletteMessageResults,
-} from './palette-message-results';
+} from './palette-message-results.ts';
 
 export interface PaletteMessageListProps {
   messages: Message[];

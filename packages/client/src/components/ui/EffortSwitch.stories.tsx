@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { EffortSwitch } from './EffortSwitch';
+import { EffortSwitch } from './EffortSwitch.tsx';
 
 const levels = ['low', 'medium', 'high', 'max'];
 

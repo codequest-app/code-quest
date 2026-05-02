@@ -1,5 +1,5 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
-import type { Message } from '../types/ui';
+import type { Message } from '../types/ui.ts';
 
 interface ChannelEntry {
   projectCwd: string;

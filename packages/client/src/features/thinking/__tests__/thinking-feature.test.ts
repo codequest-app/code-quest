@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createThinkingFeature } from '../thinking-feature';
+import { createThinkingFeature } from '../thinking-feature.ts';
 
 describe('createThinkingFeature', () => {
   it('returns a Feature with id toggle-thinking and section Model', () => {

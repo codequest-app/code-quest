@@ -4,8 +4,8 @@ import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { emitAssistantTurn, sendUserMessage } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { AccountUsageDialog } from '../AccountUsageDialog';
-import { usageOpenSignal } from '../usage-feature';
+import { AccountUsageDialog } from '../AccountUsageDialog.tsx';
+import { usageOpenSignal } from '../usage-feature.ts';
 
 afterEach(() => {
   usageOpenSignal.setOpen(false);

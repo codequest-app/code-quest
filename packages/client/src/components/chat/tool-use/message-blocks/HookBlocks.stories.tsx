@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { HookDiagnosticsContent, HookResponseContent, HookStartedContent } from './HookBlocks';
+import { HookDiagnosticsContent, HookResponseContent, HookStartedContent } from './HookBlocks.tsx';
 
 const decorator = (Story: React.ComponentType) => (
   <div className="bg-bg text-text max-w-xl p-4">

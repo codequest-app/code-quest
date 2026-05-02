@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import type { Feature } from '@/lib/feature';
-import { PaletteCommandList } from './PaletteCommandList';
+import { PaletteCommandList } from './PaletteCommandList.tsx';
 
 const feat = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',

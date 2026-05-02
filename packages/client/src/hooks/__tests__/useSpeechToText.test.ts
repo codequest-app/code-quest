@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSpeechToText } from '../useSpeechToText';
+import { useSpeechToText } from '../useSpeechToText.ts';
 
 interface SpeechResult {
   results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;

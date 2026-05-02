@@ -4,9 +4,9 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { TypedSocket } from '@/socket/client';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { AppInitProvider } from '../AppInitContext';
-import { SessionProvider, useSession } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
+import { AppInitProvider } from '../AppInitContext.tsx';
+import { SessionProvider, useSession } from '../SessionContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
 
 function wrap(socket: TypedSocket) {
   return ({ children }: { children: ReactNode }) => (

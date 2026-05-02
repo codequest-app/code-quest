@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SideQuestionDialog } from '../SideQuestionDialog';
+import { SideQuestionDialog } from '../SideQuestionDialog.tsx';
 
 function renderDialog(props: Partial<Parameters<typeof SideQuestionDialog>[0]> = {}) {
   const defaults = {

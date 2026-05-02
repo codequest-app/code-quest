@@ -3,7 +3,7 @@ import { segments as s } from '@code-quest/summoner/test';
 import type { RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { createControlActions } from '../handlers/permission';
+import { createControlActions } from '../handlers/permission.ts';
 
 function makeRef<T>(value: T): RefObject<T> {
   return { current: value };

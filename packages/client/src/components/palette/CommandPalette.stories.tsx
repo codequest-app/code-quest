@@ -4,7 +4,7 @@ import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPal
 import { useMessageRegistryStore } from '@/stores/useMessageRegistryStore';
 import { withStoryChannel, withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
-import { CommandPalette } from './CommandPalette';
+import { CommandPalette } from './CommandPalette.tsx';
 
 const messages: Message[] = [
   {

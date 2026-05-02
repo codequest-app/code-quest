@@ -2,7 +2,7 @@ import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useState } from 'react';
 import { focusRing } from '@/components/ui/_tokens';
 import { cn } from '@/utils/cn';
-import { SessionRow } from './SessionRow';
+import { SessionRow } from './SessionRow.tsx';
 
 interface SessionHistoryProps {
   sessions: SessionSummary[];

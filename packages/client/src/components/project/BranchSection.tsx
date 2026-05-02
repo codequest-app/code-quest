@@ -1,6 +1,6 @@
 import type { GitStatusResult } from '@code-quest/shared';
-import { InlineAction } from '../ui/InlineAction';
-import { BranchPopover } from './BranchPopover';
+import { InlineAction } from '../ui/InlineAction.tsx';
+import { BranchPopover } from './BranchPopover.tsx';
 
 export interface BranchSectionProps {
   status: GitStatusResult | null;

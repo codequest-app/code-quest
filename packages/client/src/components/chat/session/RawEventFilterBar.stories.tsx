@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { RawEventFilterBar } from './RawEventFilterBar';
+import { RawEventFilterBar } from './RawEventFilterBar.tsx';
 
 const entries = [
   { type: 'stream', count: 120 },

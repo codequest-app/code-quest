@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { AttachMenu } from './AttachMenu';
+import { AttachMenu } from './AttachMenu.tsx';
 
 const meta: Meta<typeof AttachMenu> = {
   component: AttachMenu,

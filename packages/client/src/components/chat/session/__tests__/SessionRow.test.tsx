@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { describe, expect, it, vi } from 'vitest';
-import { SessionRow } from '../SessionRow';
+import { SessionRow } from '../SessionRow.tsx';
 
 const baseSession: SessionSummary = {
   id: 's1',

@@ -5,8 +5,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FakeSummoner } from '@/test/fake-summoner';
-import { FsProvider, useFsActions } from '../FsContext';
-import { SocketProvider } from '../SocketContext';
+import { FsProvider, useFsActions } from '../FsContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
 
 function makeEnv() {
   const container = createTestContainer();

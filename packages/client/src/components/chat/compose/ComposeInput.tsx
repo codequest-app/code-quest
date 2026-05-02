@@ -10,7 +10,7 @@ import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/conte
 import { cn } from '@/utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
-import { MentionDropdown } from './MentionDropdown';
+import { MentionDropdown } from './MentionDropdown.tsx';
 
 type InputHistory = { history: string[]; index: number; draft: string };
 

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
-import { OnboardingOverlay } from '../OnboardingOverlay';
+import { OnboardingOverlay } from '../OnboardingOverlay.tsx';
 
 describe('OnboardingOverlay', () => {
   beforeEach(() => {

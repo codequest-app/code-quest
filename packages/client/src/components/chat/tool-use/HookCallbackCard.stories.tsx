@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn } from 'storybook/test';
-import { HookCallbackCard } from './HookCallbackCard';
+import { HookCallbackCard } from './HookCallbackCard.tsx';
 
 const meta: Meta<typeof HookCallbackCard> = {
   component: HookCallbackCard,

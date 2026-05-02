@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { SessionHistory } from './SessionHistory';
+import { SessionHistory } from './SessionHistory.tsx';
 
 const ok = { ok: true as const, data: {} };
 

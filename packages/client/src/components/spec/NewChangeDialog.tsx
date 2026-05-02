@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 const VALID_SLUG = /^[a-z0-9-]+$/;
 

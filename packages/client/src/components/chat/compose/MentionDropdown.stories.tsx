@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { MentionDropdown } from './MentionDropdown';
+import { MentionDropdown } from './MentionDropdown.tsx';
 
 const meta: Meta<typeof MentionDropdown> = {
   component: MentionDropdown,

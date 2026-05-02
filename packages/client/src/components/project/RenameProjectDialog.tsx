@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 export function RenameProjectDialog({
   open,

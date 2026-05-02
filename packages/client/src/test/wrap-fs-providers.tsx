@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
-import { FsProvider } from '../contexts/FsContext';
-import { GitProvider } from '../contexts/GitContext';
-import { OpenspecProvider } from '../contexts/OpenspecContext';
-import { SocketProvider } from '../contexts/SocketContext';
+import { FsProvider } from '../contexts/FsContext.tsx';
+import { GitProvider } from '../contexts/GitContext.tsx';
+import { OpenspecProvider } from '../contexts/OpenspecContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
 
 /** Standard provider stack used by FilesPane / FileTree / SpecPane / GitPane
  *  tests: Socket → Git → Fs → Openspec. Replaces ~10 lines of duplicated

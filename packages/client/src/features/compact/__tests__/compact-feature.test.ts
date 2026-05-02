@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createCompactFeature } from '../compact-feature';
+import { createCompactFeature } from '../compact-feature.ts';
 
 describe('createCompactFeature', () => {
   it('is a slash command with id compact and command /compact', () => {
