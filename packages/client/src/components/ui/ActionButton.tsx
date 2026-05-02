@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { Button } from './Button';
-import { Spinner } from './Spinner';
+import { Button } from './Button.tsx';
+import { Spinner } from './Spinner.tsx';
 
 async function runExclusive(
   inflightRef: React.RefObject<boolean>,

@@ -1,6 +1,6 @@
 import type { ToolResultMeta } from '@/types/ui';
-import { ContentRenderer } from './ContentRenderer';
-import { CollapsibleBlock } from './primitives';
+import { ContentRenderer } from './ContentRenderer.tsx';
+import { CollapsibleBlock } from './primitives.tsx';
 
 function extractTextFromArray(arr: unknown): string | null {
   if (!Array.isArray(arr)) return null;

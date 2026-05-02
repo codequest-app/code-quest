@@ -12,7 +12,7 @@ import { switchAccountSignal } from '@/features/switch-account/switch-account-fe
 import { usageOpenSignal } from '@/features/usage/usage-feature';
 import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { CommandMenu } from '../CommandMenu';
+import { CommandMenu } from '../CommandMenu.tsx';
 
 const containerRef = createRef<HTMLDivElement>();
 

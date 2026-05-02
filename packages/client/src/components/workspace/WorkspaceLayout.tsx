@@ -9,16 +9,16 @@ import { useSession } from '@/contexts/SessionContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cn } from '@/utils/cn';
-import { CommandPalette } from '../palette/CommandPalette';
-import { AddProjectDialog } from '../project/AddProjectDialog';
-import { ProjectTree } from '../project/ProjectTree';
-import { TopScopeSwitcher } from '../project/TopScopeSwitcher';
-import { SettingsDialog } from '../settings/SettingsDialog';
-import { DrawerAside } from './DrawerAside';
-import { EmptyState } from './EmptyState';
-import { RightPane } from './RightPane';
-import { TabContainer } from './TabContainer';
-import { WorkspaceTopbar } from './WorkspaceTopbar';
+import { CommandPalette } from '../palette/CommandPalette.tsx';
+import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
+import { ProjectTree } from '../project/ProjectTree.tsx';
+import { TopScopeSwitcher } from '../project/TopScopeSwitcher.tsx';
+import { SettingsDialog } from '../settings/SettingsDialog.tsx';
+import { DrawerAside } from './DrawerAside.tsx';
+import { EmptyState } from './EmptyState.tsx';
+import { RightPane } from './RightPane.tsx';
+import { TabContainer } from './TabContainer.tsx';
+import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
 
 function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
   const isBusy = sessions.some((s) => s.state === 'busy');

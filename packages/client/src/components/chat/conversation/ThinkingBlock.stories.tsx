@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ThinkingBlock } from './ThinkingBlock';
+import { ThinkingBlock } from './ThinkingBlock.tsx';
 
 const meta: Meta<typeof ThinkingBlock> = {
   component: ThinkingBlock,

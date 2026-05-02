@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import { useChannelConfig } from '@/contexts/channel';
 import { usePlugins } from '@/contexts/PluginContext';
 import { cn } from '@/utils/cn';
-import { tabTrigger } from '../ui/_tokens';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
-import { InstalledPluginList } from './InstalledPluginList';
-import { MarketplaceSection } from './MarketplaceSection';
+import { tabTrigger } from '../ui/_tokens.ts';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { InstalledPluginList } from './InstalledPluginList.tsx';
+import { MarketplaceSection } from './MarketplaceSection.tsx';
 
 interface ManagePluginsDialogProps {
   open: boolean;

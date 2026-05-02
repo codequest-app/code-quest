@@ -2,7 +2,7 @@ import type { SessionStateSummary } from '@code-quest/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { TopbarLiveSessions } from '../TopbarLiveSessions';
+import { TopbarLiveSessions } from '../TopbarLiveSessions.tsx';
 
 function s(overrides: Partial<SessionStateSummary> = {}): SessionStateSummary {
   return {

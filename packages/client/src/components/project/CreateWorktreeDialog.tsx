@@ -1,13 +1,13 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { useEffect, useState } from 'react';
 import { useGitActions } from '@/contexts/GitContext';
-import { tabTriggerCompact } from '../ui/_tokens';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
-import { CommandPreview } from './worktree-dialog/CommandPreview';
-import { ExistingPane } from './worktree-dialog/ExistingPane';
-import { NewPane } from './worktree-dialog/NewPane';
-import { autoDerivePath, buildWorktreeCommand } from './worktree-dialog-helpers';
+import { tabTriggerCompact } from '../ui/_tokens.ts';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
+import { CommandPreview } from './worktree-dialog/CommandPreview.tsx';
+import { ExistingPane } from './worktree-dialog/ExistingPane.tsx';
+import { NewPane } from './worktree-dialog/NewPane.tsx';
+import { autoDerivePath, buildWorktreeCommand } from './worktree-dialog-helpers.ts';
 
 type Mode = 'existing' | 'new';
 

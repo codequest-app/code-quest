@@ -3,15 +3,15 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { SpinnerVerb } from '@/components/chat/SpinnerVerb';
 import { EmptyState } from '@/components/workspace/EmptyState';
 import type { ChannelChangeUpdate } from '@/types/chat';
-import { useAppInitState } from '../AppInitContext';
-import { useSocket } from '../SocketContext';
-import { ChannelComposeProvider } from './ChannelComposeContext';
-import { buildInitialConfig, ChannelConfigProvider } from './ChannelConfigContext';
-import { ChannelControlProvider } from './ChannelControlContext';
-import { ChannelMessagesProvider } from './ChannelMessagesContext';
-import { ChannelMetaProvider } from './ChannelMetaContext';
-import { ChannelSocketRouterProvider } from './ChannelSocketRouterContext';
-import { MessageVisibilityProvider } from './MessageVisibilityContext';
+import { useAppInitState } from '../AppInitContext.tsx';
+import { useSocket } from '../SocketContext.tsx';
+import { ChannelComposeProvider } from './ChannelComposeContext.tsx';
+import { buildInitialConfig, ChannelConfigProvider } from './ChannelConfigContext.tsx';
+import { ChannelControlProvider } from './ChannelControlContext.tsx';
+import { ChannelMessagesProvider } from './ChannelMessagesContext.tsx';
+import { ChannelMetaProvider } from './ChannelMetaContext.tsx';
+import { ChannelSocketRouterProvider } from './ChannelSocketRouterContext.tsx';
+import { MessageVisibilityProvider } from './MessageVisibilityContext.tsx';
 
 // ── ChannelProvider (orchestrator) ──
 

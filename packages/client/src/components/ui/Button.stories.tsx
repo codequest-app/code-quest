@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withThemePreset } from '@/test/story-decorator';
-import { Button } from './Button';
+import { Button } from './Button.tsx';
 
 const meta: Meta<typeof Button> = {
   component: Button,

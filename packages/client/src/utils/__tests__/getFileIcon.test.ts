@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getFileIcon } from '../getFileIcon';
+import { getFileIcon } from '../getFileIcon.ts';
 
 describe('getFileIcon', () => {
   describe('extension match', () => {

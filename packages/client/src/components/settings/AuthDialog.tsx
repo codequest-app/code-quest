@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useChannelConfig } from '@/contexts/channel';
 import { useSession } from '@/contexts/SessionContext';
-import { Button } from '../ui/Button';
-import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
 
 interface AuthDialogProps {
   open: boolean;

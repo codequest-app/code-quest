@@ -10,7 +10,7 @@ import { EVENTS, isRecord } from '@code-quest/shared';
 import type { TypedSocket } from '@/socket/client';
 import { rpc } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 // ── On handlers ──
 

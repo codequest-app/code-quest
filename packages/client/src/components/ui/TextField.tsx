@@ -1,6 +1,6 @@
 import type { ChangeEvent, Ref } from 'react';
 import { cn } from '@/utils/cn';
-import { controlBorder, focusRing } from './_tokens';
+import { controlBorder, focusRing } from './_tokens.ts';
 
 const BASE = cn(
   'bg-input-overlay rounded px-2 py-1 text-text placeholder:text-text-muted text-sm',

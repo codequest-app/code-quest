@@ -1,8 +1,8 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
 import { useChannelControl } from '@/contexts/channel';
-import { PlanReviewBanner } from '../plan-review/PlanReviewBanner';
-import { HookCallbackCard } from './HookCallbackCard';
-import { ToolPermissionCard } from './ToolPermissionCard';
+import { PlanReviewBanner } from '../plan-review/PlanReviewBanner.tsx';
+import { HookCallbackCard } from './HookCallbackCard.tsx';
+import { ToolPermissionCard } from './ToolPermissionCard.tsx';
 
 export function PendingActionButtons(): React.ReactNode {
   const { pendingControls, respondToControl: onRespond } = useChannelControl();

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { ToolPermissionCard } from './ToolPermissionCard';
+import { ToolPermissionCard } from './ToolPermissionCard.tsx';
 
 const meta: Meta<typeof ToolPermissionCard> = {
   component: ToolPermissionCard,

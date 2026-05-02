@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef } from 'react';
 import { withStoryChannel } from '@/test/story-decorator';
-import { ComposeToolbar } from './ComposeToolbar';
+import { ComposeToolbar } from './ComposeToolbar.tsx';
 
 // ComposeToolbar opens CommandMenu upward — position at bottom of screen so it has room to expand.
 const CLASS = 'flex flex-col h-screen bg-bg text-text justify-end items-center p-4';

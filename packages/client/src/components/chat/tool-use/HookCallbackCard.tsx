@@ -1,5 +1,5 @@
 import type { ControlPermissionResponse, PendingControl } from '@code-quest/shared';
-import { OptionButton } from './OptionButton';
+import { OptionButton } from './OptionButton.tsx';
 
 export function HookCallbackCard({
   pending,

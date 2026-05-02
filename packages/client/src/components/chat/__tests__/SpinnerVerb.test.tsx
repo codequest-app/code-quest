@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { SpinnerVerb } from '../SpinnerVerb';
+import { SpinnerVerb } from '../SpinnerVerb.tsx';
 
 describe('SpinnerVerb', () => {
   it('renders a verb with trailing dots', () => {

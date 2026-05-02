@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatRelativeDate } from '../format-relative-date';
+import { formatRelativeDate } from '../format-relative-date.ts';
 
 describe('formatRelativeDate', () => {
   const now = new Date('2026-03-31T12:00:00Z');

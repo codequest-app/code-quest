@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseUnifiedDiff } from '../parse-unified-diff';
+import { parseUnifiedDiff } from '../parse-unified-diff.ts';
 
 describe('parseUnifiedDiff', () => {
   it('returns empty array for empty input', () => {

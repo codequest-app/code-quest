@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import type { Feature } from '@/lib/feature';
 import { withThemePreset } from '@/test/story-decorator';
-import { FeatureRow } from './FeatureRow';
+import { FeatureRow } from './FeatureRow.tsx';
 
 const feat = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',

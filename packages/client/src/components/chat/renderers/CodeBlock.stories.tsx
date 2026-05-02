@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { CodeBlock } from './CodeBlock';
+import { CodeBlock } from './CodeBlock.tsx';
 
 const meta: Meta<typeof CodeBlock> = {
   component: CodeBlock,

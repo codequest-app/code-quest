@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { AccountUsageDialog } from './AccountUsageDialog';
+import { AccountUsageDialog } from './AccountUsageDialog.tsx';
 
 const meta: Meta<typeof AccountUsageDialog> = {
   component: AccountUsageDialog,

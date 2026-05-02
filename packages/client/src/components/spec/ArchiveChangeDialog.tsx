@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ActionButton } from '../ui/ActionButton';
-import { Button } from '../ui/Button';
-import { Dialog, DialogContent } from '../ui/Dialog';
+import { ActionButton } from '../ui/ActionButton.tsx';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
 export interface ArchiveChangeDialogProps {
   open: boolean;

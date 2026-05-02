@@ -8,10 +8,10 @@ import { basename } from '@/utils/basename';
 import { nextDuplicateName } from '@/utils/duplicate-name';
 import { sortEntriesDirsFirst } from '@/utils/sort-entries';
 
-import { SkeletonRows } from '../ui/SkeletonRows';
-import { DeleteEntryConfirmDialog } from './DeleteEntryConfirmDialog';
-import { FileTreeRow } from './FileTreeRow';
-import { NewEntryDialog } from './NewEntryDialog';
+import { SkeletonRows } from '../ui/SkeletonRows.tsx';
+import { DeleteEntryConfirmDialog } from './DeleteEntryConfirmDialog.tsx';
+import { FileTreeRow } from './FileTreeRow.tsx';
+import { NewEntryDialog } from './NewEntryDialog.tsx';
 
 const ITEM_CLS =
   'w-full px-3 py-1 text-left text-sm data-[highlighted]:bg-accent/20 outline-none cursor-pointer';

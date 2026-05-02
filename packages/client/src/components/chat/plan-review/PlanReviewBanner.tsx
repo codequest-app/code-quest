@@ -9,8 +9,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useChannelMessages } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
-import { MarkdownContent } from '../renderers/MarkdownContent';
-import { PlanCommentPopover } from './PlanCommentPopover';
+import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
+import { PlanCommentPopover } from './PlanCommentPopover.tsx';
 
 const formatComment = (c: PlanCommentData) => `[On "${c.selectedText}"]: ${c.comment}`;
 

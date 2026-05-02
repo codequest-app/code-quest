@@ -20,9 +20,9 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { rpc } from '../socket/rpc';
-import { createQueryCache } from '../utils/query-cache';
-import { useSocket } from './SocketContext';
+import { rpc } from '../socket/rpc.ts';
+import { createQueryCache } from '../utils/query-cache.ts';
+import { useSocket } from './SocketContext.tsx';
 
 interface OpenspecActions {
   /** Synchronous snapshot — `undefined` if not yet fetched. */

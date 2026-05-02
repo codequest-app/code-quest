@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRewindFeature, rewindOpenSignal } from '../rewind-feature';
+import { createRewindFeature, rewindOpenSignal } from '../rewind-feature.ts';
 
 describe('createRewindFeature', () => {
   it('has id rewind with label in Context section', () => {

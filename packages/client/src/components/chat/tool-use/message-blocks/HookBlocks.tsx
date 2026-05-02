@@ -1,6 +1,6 @@
 import type { HookDiagnosticsMeta, HookResponseMeta, HookStartedMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
-import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives';
+import { CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives.tsx';
 
 export function HookStartedContent({
   content,

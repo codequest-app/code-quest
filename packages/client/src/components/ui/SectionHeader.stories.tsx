@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withThemePreset } from '@/test/story-decorator';
-import { SectionHeader } from './SectionHeader';
+import { SectionHeader } from './SectionHeader.tsx';
 
 const meta: Meta<typeof SectionHeader> = {
   component: SectionHeader,

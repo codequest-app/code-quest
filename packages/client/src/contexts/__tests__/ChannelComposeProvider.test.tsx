@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { usageOpenSignal } from '@/features/usage/usage-feature';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { useChannelCompose, useChannelComposeActions } from '../channel';
+import { useChannelCompose, useChannelComposeActions } from '../channel/index.ts';
 
 /** Renders a test harness that exposes compose context via UI */
 function ComposeTestUI() {

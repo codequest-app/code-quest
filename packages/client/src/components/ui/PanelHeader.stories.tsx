@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withThemePreset } from '@/test/story-decorator';
-import { PanelHeader } from './PanelHeader';
+import { PanelHeader } from './PanelHeader.tsx';
 
 const meta: Meta<typeof PanelHeader> = {
   component: PanelHeader,

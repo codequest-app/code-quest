@@ -1,6 +1,6 @@
 import type { ModelInfo } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
-import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../model-utils';
+import { getModelDisplayInfo, getModelInfoDisplayName, shortModelName } from '../model-utils.ts';
 
 const models: ModelInfo[] = [
   {

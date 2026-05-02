@@ -1,7 +1,7 @@
 import { type FakeClaude, segments as s } from '@code-quest/summoner/test';
 import { act, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
-import { useChannelMessages } from '../contexts/channel';
+import { useChannelMessages } from '../contexts/channel/index.ts';
 
 /** Placeholder regex for the compose textarea — use this instead of hardcoded strings. */
 export const COMPOSE_PLACEHOLDER: RegExp = /Esc to focus/i;

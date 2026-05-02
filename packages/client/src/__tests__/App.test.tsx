@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { App } from '../App';
-import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { App } from '../App.tsx';
+import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
 
 describe('App', () => {
   it('renders WorkspaceLayout without hitting ErrorBoundary — all providers are present', () => {

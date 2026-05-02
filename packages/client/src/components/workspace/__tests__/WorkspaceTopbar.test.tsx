@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { WorkspaceTopbar } from '../WorkspaceTopbar';
+import { WorkspaceTopbar } from '../WorkspaceTopbar.tsx';
 
 describe('WorkspaceTopbar', () => {
   it('renders the Settings button with aria-label="Settings"', () => {

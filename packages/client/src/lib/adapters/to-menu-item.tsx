@@ -2,8 +2,8 @@ import { ChoicePills } from '@/components/ui/ChoicePills';
 import { EffortSwitch } from '@/components/ui/EffortSwitch';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { TriStateIndicator } from '@/components/ui/TriStateIndicator';
-import { deriveGroupAggregate } from '../derive-group-aggregate';
-import type { Feature, FeatureState } from '../feature';
+import { deriveGroupAggregate } from '../derive-group-aggregate.ts';
+import type { Feature, FeatureState } from '../feature.ts';
 
 interface MenuItemView {
   id: string;

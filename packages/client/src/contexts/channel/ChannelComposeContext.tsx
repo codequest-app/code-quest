@@ -12,11 +12,11 @@ import {
 import { createMentionFileFeature } from '@/features/mention-file/mention-file-feature';
 import type { FeatureRegistry } from '@/lib/feature-registry';
 import { getMentionQuery, getSlashQuery } from '@/utils/slash-query';
-import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { useChannelId } from './ChannelMetaContext';
-import { useChannelSocketRouter } from './ChannelSocketRouterContext';
-import { useFeatureRegistry } from './FeatureRegistryContext';
-import { composeHandlers } from './handlers/speech';
+import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelId } from './ChannelMetaContext.tsx';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
+import { useFeatureRegistry } from './FeatureRegistryContext.tsx';
+import { composeHandlers } from './handlers/speech.ts';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

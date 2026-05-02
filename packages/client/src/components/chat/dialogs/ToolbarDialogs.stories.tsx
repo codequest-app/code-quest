@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { ToolbarDialogs } from './ToolbarDialogs';
+import { ToolbarDialogs } from './ToolbarDialogs.tsx';
 
 const baseArgs = {
   activeDialog: null,

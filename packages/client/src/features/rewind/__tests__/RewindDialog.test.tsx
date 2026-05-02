@@ -4,7 +4,7 @@ import type userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { emitAssistantTurn, emitUserEcho } from '@/test/helpers';
 import { renderWithWorkspace } from '@/test/render-with-workspace';
-import { rewindOpenSignal } from '../rewind-feature';
+import { rewindOpenSignal } from '../rewind-feature.ts';
 
 afterEach(() => {
   rewindOpenSignal.setOpen(false);

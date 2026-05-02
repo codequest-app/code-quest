@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useSocket } from './SocketContext';
+import { useSocket } from './SocketContext.tsx';
 
 type InitSubscriber = (data: InitResponse) => void;
 

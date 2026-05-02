@@ -1,4 +1,5 @@
 import type { GitService } from '@code-quest/summoner';
+import { logger } from '../../logger.ts';
 
 /**
  * Resolve a session's projectRoot from its cwd.
@@ -8,6 +9,9 @@ import type { GitService } from '@code-quest/summoner';
  * caller always gets a non-null string (matches the required schema).
  */
 export async function resolveProjectRoot(gitService: GitService, cwd: string): Promise<string> {
-  const root = await gitService.getProjectRoot(cwd).catch(() => null);
+  const root = await gitService.getProjectRoot(cwd).catch((err) => {
+    logger.debug({ err, cwd }, 'getProjectRoot failed, falling back to cwd');
+    return null;
+  });
   return root ?? cwd;
 }

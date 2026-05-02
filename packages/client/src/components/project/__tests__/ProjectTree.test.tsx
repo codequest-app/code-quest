@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { useNavigationState } from '@/contexts/NavigationContext';
 import { createTestWrapper } from '@/test/create-test-wrapper';
 import { readPersistedRaw } from '@/test/memory-persist-storage';
-import { ProjectTree } from '../ProjectTree';
+import { ProjectTree } from '../ProjectTree.tsx';
 
 function makeWrapper() {
   const wrapper = createTestWrapper();

@@ -1,8 +1,8 @@
 import type { Ack, McpServerInfo, McpTool, RpcResult } from '@code-quest/shared';
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
-import { Button } from '../ui/Button';
-import { InlineAction } from '../ui/InlineAction';
+import { Button } from '../ui/Button.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
 
 const MCP_STATUS_BADGE: Partial<Record<McpServerInfo['status'], string>> & { _default: string } = {
   connected: 'bg-success text-white',

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createManagePluginsFeature } from '../manage-plugins-feature';
+import { createManagePluginsFeature } from '../manage-plugins-feature.ts';
 
 describe('createManagePluginsFeature', () => {
   it('has id plugins and label Manage plugins in Customize section', () => {

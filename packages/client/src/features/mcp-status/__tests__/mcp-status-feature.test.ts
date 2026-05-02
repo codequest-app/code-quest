@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createMcpStatusFeature } from '../mcp-status-feature';
+import { createMcpStatusFeature } from '../mcp-status-feature.ts';
 
 describe('createMcpStatusFeature', () => {
   it('has id mcp-status', () => {

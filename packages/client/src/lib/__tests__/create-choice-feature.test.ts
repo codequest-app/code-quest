@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createChoiceFeature } from '../create-choice-feature';
+import { createChoiceFeature } from '../create-choice-feature.ts';
 
 describe('createChoiceFeature', () => {
   it('returns a Feature with the declared identity fields', () => {

@@ -17,11 +17,11 @@ import type { Message } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { isMessageVisible } from '@/utils/isMessageVisible';
 import { messagePreview } from '@/utils/message-preview';
-import { SearchField } from '../ui/SearchField';
-import { flatFilteredFeatures, PaletteCommandList } from './PaletteCommandList';
-import { PaletteEmpty } from './PaletteEmpty';
-import { PaletteMessageList } from './PaletteMessageList';
-import { paletteMessageResults } from './palette-message-results';
+import { SearchField } from '../ui/SearchField.tsx';
+import { flatFilteredFeatures, PaletteCommandList } from './PaletteCommandList.tsx';
+import { PaletteEmpty } from './PaletteEmpty.tsx';
+import { PaletteMessageList } from './PaletteMessageList.tsx';
+import { paletteMessageResults } from './palette-message-results.ts';
 
 const TABS = [
   { id: 'all', label: 'All' },

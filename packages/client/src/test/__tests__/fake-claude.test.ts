@@ -1,6 +1,6 @@
 import { segments as s } from '@code-quest/summoner/test';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../fake-summoner';
+import { createFakeSummoner } from '../fake-summoner.ts';
 
 describe('FakeSummoner', () => {
   it('emit sends segment through pipeline, events() records it', async () => {

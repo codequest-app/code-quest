@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
-import { ContentPreviewDialog } from './ContentPreviewDialog';
+import { ContentPreviewDialog } from './ContentPreviewDialog.tsx';
 
 const meta: Meta<typeof ContentPreviewDialog> = {
   component: ContentPreviewDialog,

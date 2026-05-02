@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { RewindDialog } from './RewindDialog';
+import { RewindDialog } from './RewindDialog.tsx';
 
 const meta: Meta<typeof RewindDialog> = {
   component: RewindDialog,

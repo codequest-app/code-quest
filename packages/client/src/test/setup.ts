@@ -2,16 +2,19 @@ import '@testing-library/jest-dom/vitest';
 import { createFakeSocket } from '@code-quest/summoner/test';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import failOnConsole from 'vitest-fail-on-console';
+
+failOnConsole();
 
 // Tests run on the socket.io transport path so the existing
 // vi.mock('socket.io-client') below stays the single source of fake sockets.
 // Production ships with VITE_TRANSPORT=ws (the project default) elsewhere.
 vi.stubEnv('VITE_TRANSPORT', 'socketio');
 
-import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore';
-import { useMessageVisibilityStore } from '../stores/useMessageVisibilityStore';
-import { usePreferencesStore } from '../stores/usePreferencesStore';
-import { memoryBackend, memoryPersist } from './memory-persist-storage';
+import { useExpandedProjectsStore } from '../stores/useExpandedProjectsStore.ts';
+import { useMessageVisibilityStore } from '../stores/useMessageVisibilityStore.ts';
+import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
+import { memoryBackend, memoryPersist } from './memory-persist-storage.ts';
 
 // DI: swap each persisted store's storage adapter from localStorage to the
 // in-memory backend. Production stores know nothing about tests.

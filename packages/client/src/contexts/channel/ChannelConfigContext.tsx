@@ -20,12 +20,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useSession } from '../SessionContext';
-import { useSocket } from '../SocketContext';
-import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { useChannelId } from './ChannelMetaContext';
-import { useChannelSocketRouter } from './ChannelSocketRouterContext';
-import { configHandlers, createConfigActions, parseModels, toEffort } from './handlers/settings';
+import { useSession } from '../SessionContext.tsx';
+import { useSocket } from '../SocketContext.tsx';
+import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelId } from './ChannelMetaContext.tsx';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
+import { configHandlers, createConfigActions, parseModels, toEffort } from './handlers/settings.ts';
 
 export interface ConfigState {
   model: string | null;

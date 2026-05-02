@@ -2,10 +2,10 @@ import { ClipboardDocumentListIcon, DocumentTextIcon } from '@heroicons/react/24
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
-import { FilesPane } from '../files/FilesPane';
-import { GitPane } from '../git/GitPane';
-import { SpecPane } from '../spec/SpecPane';
-import { tabTrigger } from '../ui/_tokens';
+import { FilesPane } from '../files/FilesPane.tsx';
+import { GitPane } from '../git/GitPane.tsx';
+import { SpecPane } from '../spec/SpecPane.tsx';
+import { tabTrigger } from '../ui/_tokens.ts';
 
 type TabKind = 'files' | 'git' | 'spec';
 

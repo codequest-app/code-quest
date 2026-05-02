@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryApp } from '@/test/story-decorator';
-import { TabContainer } from './TabContainer';
+import { TabContainer } from './TabContainer.tsx';
 
 const meta: Meta<typeof TabContainer> = {
   component: TabContainer,

@@ -3,7 +3,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useSession } from '@/contexts/SessionContext';
-import { SessionHistory } from './SessionHistory';
+import { SessionHistory } from './SessionHistory.tsx';
 
 interface SessionHistoryPopoverProps {
   cwd?: string;

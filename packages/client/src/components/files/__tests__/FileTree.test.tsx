@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useFsActions } from '@/contexts/FsContext';
 import { createFakeSummoner, FakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
-import { FileTree } from '../FileTree';
+import { FileTree } from '../FileTree.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();

@@ -7,27 +7,30 @@ import { DISMISSIBLE_IDS, type EffectiveColorTheme, type PendingControl } from '
 import type { StoryObj } from '@storybook/react-vite';
 import { useLayoutEffect, useRef } from 'react';
 import { expect } from 'storybook/test';
-import { AppInitProvider } from '../contexts/AppInitContext';
-import { CommandPaletteProvider } from '../contexts/CommandPaletteContext';
-import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext';
-import { ChannelConfigProvider, type ConfigState } from '../contexts/channel/ChannelConfigContext';
-import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext';
-import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext';
-import { ChannelMetaProvider } from '../contexts/channel/ChannelMetaContext';
-import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext';
-import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext';
-import { FsProvider } from '../contexts/FsContext';
-import { GitProvider } from '../contexts/GitContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { PluginProvider } from '../contexts/PluginContext';
-import { ProjectProvider } from '../contexts/ProjectContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { TabProvider } from '../contexts/TabContext';
-import { createSocket } from '../socket/client';
-import type { Density } from '../stores/usePreferencesStore';
-import { usePreferencesStore } from '../stores/usePreferencesStore';
-import type { ChannelState } from '../types/chat';
+import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { CommandPaletteProvider } from '../contexts/CommandPaletteContext.tsx';
+import { ChannelComposeProvider } from '../contexts/channel/ChannelComposeContext.tsx';
+import {
+  ChannelConfigProvider,
+  type ConfigState,
+} from '../contexts/channel/ChannelConfigContext.tsx';
+import { ChannelControlProvider } from '../contexts/channel/ChannelControlContext.tsx';
+import { ChannelMessagesProvider } from '../contexts/channel/ChannelMessagesContext.tsx';
+import { ChannelMetaProvider } from '../contexts/channel/ChannelMetaContext.tsx';
+import { ChannelSocketRouterProvider } from '../contexts/channel/ChannelSocketRouterContext.tsx';
+import { MessageVisibilityProvider } from '../contexts/channel/MessageVisibilityContext.tsx';
+import { FsProvider } from '../contexts/FsContext.tsx';
+import { GitProvider } from '../contexts/GitContext.tsx';
+import { NavigationProvider } from '../contexts/NavigationContext.tsx';
+import { PluginProvider } from '../contexts/PluginContext.tsx';
+import { ProjectProvider } from '../contexts/ProjectContext.tsx';
+import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
+import { TabProvider } from '../contexts/TabContext.tsx';
+import { createSocket } from '../socket/client.ts';
+import type { Density } from '../stores/usePreferencesStore.ts';
+import { usePreferencesStore } from '../stores/usePreferencesStore.ts';
+import type { ChannelState } from '../types/chat.ts';
 
 export const STORY_CHANNEL_ID = 'story';
 

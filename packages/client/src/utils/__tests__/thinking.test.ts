@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isThinkingActive } from '../model-utils';
+import { isThinkingActive } from '../model-utils.ts';
 
 describe('isThinkingActive', () => {
   it('false for nullish levels', () => {

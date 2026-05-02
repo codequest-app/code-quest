@@ -2,7 +2,7 @@ import * as Popover from '@radix-ui/react-popover';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryApp } from '@/test/story-decorator';
-import { SessionHistoryPopover } from './SessionHistoryPopover';
+import { SessionHistoryPopover } from './SessionHistoryPopover.tsx';
 
 const meta: Meta<typeof SessionHistoryPopover> = {
   component: SessionHistoryPopover,

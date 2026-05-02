@@ -4,10 +4,10 @@ import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import type { ToolUseMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { AGENT_TOOLS, getToolHeaderInfo } from '@/utils/tool-utils';
-import { AlertBanner } from './AlertBanner';
-import { ContentRenderer } from './ContentRenderer';
-import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives';
-import { ToolBlock, ToolBlockRow } from './ToolBlock';
+import { AlertBanner } from './AlertBanner.tsx';
+import { ContentRenderer } from './ContentRenderer.tsx';
+import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives.tsx';
+import { ToolBlock, ToolBlockRow } from './ToolBlock.tsx';
 
 const EXT_TO_LANG: Record<string, string> = {
   ts: 'typescript',

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createResumeFeature, resumeOpenSignal } from '../resume-feature';
+import { createResumeFeature, resumeOpenSignal } from '../resume-feature.ts';
 
 afterEach(() => {
   resumeOpenSignal.setOpen(false);

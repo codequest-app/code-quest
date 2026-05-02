@@ -1,8 +1,8 @@
-export { useChannelCompose, useChannelComposeActions } from './ChannelComposeContext';
-export { useChannelConfig } from './ChannelConfigContext';
-export { ChannelProvider } from './ChannelContext';
-export { useChannelControl } from './ChannelControlContext';
-export { useChannelMessages } from './ChannelMessagesContext';
-export { useChannelId } from './ChannelMetaContext';
-export type { GroupId, GroupState } from './MessageVisibilityContext';
-export { useMessageVisibility, VISIBILITY_GROUPS } from './MessageVisibilityContext';
+export { useChannelCompose, useChannelComposeActions } from './ChannelComposeContext.tsx';
+export { useChannelConfig } from './ChannelConfigContext.tsx';
+export { ChannelProvider } from './ChannelContext.tsx';
+export { useChannelControl } from './ChannelControlContext.tsx';
+export { useChannelMessages } from './ChannelMessagesContext.tsx';
+export { useChannelId } from './ChannelMetaContext.tsx';
+export type { GroupId, GroupState } from './MessageVisibilityContext.tsx';
+export { useMessageVisibility, VISIBILITY_GROUPS } from './MessageVisibilityContext.tsx';

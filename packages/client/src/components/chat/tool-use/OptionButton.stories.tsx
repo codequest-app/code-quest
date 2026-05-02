@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent } from 'storybook/test';
-import { OptionButton } from './OptionButton';
+import { OptionButton } from './OptionButton.tsx';
 
 const meta: Meta<typeof OptionButton> = {
   component: OptionButton,

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MarkdownContent } from './MarkdownContent';
+import { MarkdownContent } from './MarkdownContent.tsx';
 
 const meta: Meta<typeof MarkdownContent> = {
   component: MarkdownContent,

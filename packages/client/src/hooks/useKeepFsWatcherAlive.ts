@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useFsActions } from '../contexts/FsContext';
+import { useFsActions } from '../contexts/FsContext.tsx';
 
 /** Keep the server-side chokidar watcher for `cwd` alive while this component
  *  is mounted, by holding a no-op subscription. Pane that doesn't itself

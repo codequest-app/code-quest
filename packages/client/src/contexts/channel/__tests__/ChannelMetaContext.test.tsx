@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { ChannelMetaProvider, useChannelMeta } from '../ChannelMetaContext';
+import { ChannelMetaProvider, useChannelMeta } from '../ChannelMetaContext.tsx';
 
 function Display() {
   const meta = useChannelMeta();

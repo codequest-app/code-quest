@@ -5,7 +5,7 @@ import {
   MINUTES_PER_HOUR,
   MS_PER_SECOND,
   SECONDS_PER_MINUTE,
-} from './time-constants';
+} from './time-constants.ts';
 
 export function formatRelativeDate(date: Date | string, now: Date = new Date()): string {
   const d = typeof date === 'string' ? new Date(date) : date;

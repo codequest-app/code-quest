@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { WorktreeBanner } from './WorktreeBanner';
+import { WorktreeBanner } from './WorktreeBanner.tsx';
 
 const meta: Meta<typeof WorktreeBanner> = {
   component: WorktreeBanner,

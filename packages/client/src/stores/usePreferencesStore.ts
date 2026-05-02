@@ -8,7 +8,7 @@ import {
 } from '@code-quest/shared';
 import { create, type Mutate, type StoreApi, type UseBoundStore } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { localStoragePersist } from './persistStorage';
+import { localStoragePersist } from './persistStorage.ts';
 
 export type { ColorTheme, Density, FontSize };
 

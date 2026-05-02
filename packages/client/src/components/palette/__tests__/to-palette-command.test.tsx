@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Feature } from '@/lib/feature';
-import { toPaletteCommand } from '../to-palette-command';
+import { toPaletteCommand } from '../to-palette-command.tsx';
 
 const base = (over: Partial<Feature> = {}): Feature => ({
   id: 'x',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInitialConfig } from '../ChannelConfigContext';
+import { buildInitialConfig } from '../ChannelConfigContext.tsx';
 
 describe('buildInitialConfig', () => {
   it('picks model and permissionMode when both are strings', () => {

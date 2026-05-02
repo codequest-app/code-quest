@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { withThemePreset } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
-import { ChatMessage } from './ChatMessage';
+import { ChatMessage } from './ChatMessage.tsx';
 
 const base: Omit<Message, 'type' | 'content' | 'meta'> = {
   id: '1',

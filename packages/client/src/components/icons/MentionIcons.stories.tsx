@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { AddContextIcon, FileIcon, FolderIcon } from './MentionIcons';
+import { AddContextIcon, FileIcon, FolderIcon } from './MentionIcons.tsx';
 
 const Gallery = (): React.JSX.Element => (
   <div className="flex flex-col gap-4 bg-bg text-text p-6">

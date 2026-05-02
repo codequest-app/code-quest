@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { usePreferencesStore } from '@/stores/usePreferencesStore';
 import { withStoryChannel } from '@/test/story-decorator';
-import { ReviewUpsellBanner } from './ReviewUpsellBanner';
+import { ReviewUpsellBanner } from './ReviewUpsellBanner.tsx';
 
 const meta: Meta<typeof ReviewUpsellBanner> = {
   component: ReviewUpsellBanner,

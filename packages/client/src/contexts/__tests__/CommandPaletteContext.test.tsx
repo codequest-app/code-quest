@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { CommandPaletteProvider, useCommandPalette } from '../CommandPaletteContext';
+import { CommandPaletteProvider, useCommandPalette } from '../CommandPaletteContext.tsx';
 
 function wrapper({ children }: { children: ReactNode }) {
   return <CommandPaletteProvider>{children}</CommandPaletteProvider>;

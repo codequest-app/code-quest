@@ -1,5 +1,5 @@
 import type { ClientToServerEvents } from '@code-quest/shared';
-import type { TypedSocket } from './client';
+import type { TypedSocket } from './client.ts';
 
 /** Typed socket.emit requires known event literals; dynamic event names need this helper. */
 function emitDynamic(socket: TypedSocket, ...args: unknown[]): void {

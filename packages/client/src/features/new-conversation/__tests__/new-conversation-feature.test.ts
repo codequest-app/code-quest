@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createNewConversationFeature } from '../new-conversation-feature';
+import { createNewConversationFeature } from '../new-conversation-feature.ts';
 
 describe('createNewConversationFeature', () => {
   it('has id new-conversation', () => {

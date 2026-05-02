@@ -9,8 +9,8 @@ import {
 } from '@/contexts/GitContext';
 import type { Project } from '@/contexts/ProjectContext';
 import { useExpandedProjectsStore } from '@/stores/useExpandedProjectsStore';
-import { ProjectCard } from './ProjectCard';
-import { WorktreeChildList } from './WorktreeChildList';
+import { ProjectCard } from './ProjectCard.tsx';
+import { WorktreeChildList } from './WorktreeChildList.tsx';
 
 function isGit(entry: WorktreeListingEntry | undefined): entry is WorktreeInfo[] {
   return Array.isArray(entry);

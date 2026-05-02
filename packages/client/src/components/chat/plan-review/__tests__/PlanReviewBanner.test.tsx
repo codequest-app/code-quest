@@ -12,7 +12,7 @@ import { SessionProvider } from '@/contexts/SessionContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { PlanReviewBanner } from '../PlanReviewBanner';
+import { PlanReviewBanner } from '../PlanReviewBanner.tsx';
 
 function PlanCommentSetter({ comments }: { comments: PlanCommentData[] }) {
   const { addPlanComment } = useChannelMessages();

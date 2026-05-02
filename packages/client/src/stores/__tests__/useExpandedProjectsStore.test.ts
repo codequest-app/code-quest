@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readPersistedRaw } from '@/test/memory-persist-storage';
-import { useExpandedProjectsStore } from '../useExpandedProjectsStore';
+import { useExpandedProjectsStore } from '../useExpandedProjectsStore.ts';
 
 describe('useExpandedProjectsStore', () => {
   it('starts empty — no project is expanded', () => {

@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import type { TypedSocket } from '@/socket/client';
 import { channelEmit, rpc } from '@/socket/rpc';
 import { findModel } from '@/utils/model-utils';
-import type { ConfigState } from '../ChannelConfigContext';
-import type { Payload } from './guard';
+import type { ConfigState } from '../ChannelConfigContext.tsx';
+import type { Payload } from './guard.ts';
 
 function toEffort(value: string | undefined): ConfigState['effort'] {
   return effortLevelSchema.safeParse(value).data ?? null;

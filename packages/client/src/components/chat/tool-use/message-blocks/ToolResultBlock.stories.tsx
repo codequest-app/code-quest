@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ToolResultBlock } from './ToolResultBlock';
+import { ToolResultBlock } from './ToolResultBlock.tsx';
 
 const meta: Meta<typeof ToolResultBlock> = {
   component: ToolResultBlock,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createViewHelpFeature } from '../view-help-feature';
+import { createViewHelpFeature } from '../view-help-feature.ts';
 
 describe('createViewHelpFeature', () => {
   it('has id view-help', () => {

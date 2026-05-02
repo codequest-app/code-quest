@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
-import { InitOptionsDialog } from './InitOptionsDialog';
+import { InitOptionsDialog } from './InitOptionsDialog.tsx';
 
 const meta: Meta<typeof InitOptionsDialog> = {
   component: InitOptionsDialog,

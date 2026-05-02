@@ -7,9 +7,9 @@ import {
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { basename } from '../utils/basename';
-import { useSocket } from './SocketContext';
-import { TERMINAL_STATES } from './session-states';
+import { basename } from '../utils/basename.ts';
+import { useSocket } from './SocketContext.tsx';
+import { TERMINAL_STATES } from './session-states.ts';
 
 export interface Project {
   cwd: string;

@@ -1,9 +1,9 @@
 import { createFakeServer, createTestContainer } from '@code-quest/server/test';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createFakeSummoner } from '../fake-summoner';
-import { emitAssistantTurn, sendUserMessage } from '../helpers';
-import { renderWithWorkspace } from '../render-with-workspace';
+import { createFakeSummoner } from '../fake-summoner.ts';
+import { emitAssistantTurn, sendUserMessage } from '../helpers.tsx';
+import { renderWithWorkspace } from '../render-with-workspace.tsx';
 
 describe('renderWithWorkspace', () => {
   it('renders WorkspaceLayout with a new tab', async () => {

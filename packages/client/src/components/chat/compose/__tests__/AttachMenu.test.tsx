@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { AttachMenu } from '../AttachMenu';
+import { AttachMenu } from '../AttachMenu.tsx';
 
 describe('AttachMenu', () => {
   it('shows "Add context" label instead of "Files & Folders"', async () => {

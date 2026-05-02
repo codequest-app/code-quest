@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RenameWorktreeDialog } from '../RenameWorktreeDialog';
+import { RenameWorktreeDialog } from '../RenameWorktreeDialog.tsx';
 
 describe('RenameWorktreeDialog', () => {
   it('pre-fills input with current branch name', () => {

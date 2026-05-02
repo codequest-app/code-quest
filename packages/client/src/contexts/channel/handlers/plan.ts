@@ -1,6 +1,6 @@
 import type { PlanCommentData } from '@code-quest/shared';
 import type { ChannelState } from '@/types/chat';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 // ── On handlers ──
 

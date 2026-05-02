@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { PanelHeader } from '../PanelHeader';
+import { PanelHeader } from '../PanelHeader.tsx';
 
 describe('PanelHeader', () => {
   it('renders the title', () => {

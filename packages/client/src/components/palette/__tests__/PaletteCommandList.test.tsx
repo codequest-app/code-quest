@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Feature } from '@/lib/feature';
-import { flatFilteredFeatures, PaletteCommandList } from '../PaletteCommandList';
+import { flatFilteredFeatures, PaletteCommandList } from '../PaletteCommandList.tsx';
 
 const feat = (over: Partial<Feature> = {}): Feature => ({
   id: 'f',

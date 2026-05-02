@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { InstalledPluginList } from './InstalledPluginList';
+import { InstalledPluginList } from './InstalledPluginList.tsx';
 
 const meta: Meta<typeof InstalledPluginList> = {
   component: InstalledPluginList,

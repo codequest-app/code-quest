@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { withStoryChannel } from '@/test/story-decorator';
-import { ChatInputArea } from './ChatInputArea';
+import { ChatInputArea } from './ChatInputArea.tsx';
 
 // ChatInputArea is an absolute overlay at the bottom of ChatPanel.
 // Use fullscreen layout and flex-end so it renders in its natural position.

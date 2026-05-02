@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { MenuItem } from '../build-menu-items';
-import { computeMenuLayout, filterMenuItems } from '../menu-layout';
+import type { MenuItem } from '../build-menu-items.ts';
+import { computeMenuLayout, filterMenuItems } from '../menu-layout.ts';
 
 function item(overrides: Partial<MenuItem>): MenuItem {
   return {

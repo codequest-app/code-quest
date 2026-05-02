@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRecapFeature, RECAP_PROMPT } from '../recap-feature';
+import { createRecapFeature, RECAP_PROMPT } from '../recap-feature.ts';
 
 function setup(overrides?: {
   askSideQuestion?: ReturnType<typeof vi.fn>;

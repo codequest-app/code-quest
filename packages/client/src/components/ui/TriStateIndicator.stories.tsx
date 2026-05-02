@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { TriStateIndicator } from './TriStateIndicator';
+import { TriStateIndicator } from './TriStateIndicator.tsx';
 
 const meta: Meta<typeof TriStateIndicator> = {
   component: TriStateIndicator,

@@ -138,6 +138,7 @@ export function AccountUsageDialog({
         <Dialog.Overlay className="fixed inset-0 z-popover bg-black/50" />
         <Dialog.Content
           aria-label="Account & Usage"
+          aria-describedby={undefined}
           className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-popover bg-bg border border-border rounded-lg w-100 dialog-viewport overflow-y-auto m-4 p-4 select-text outline-none"
         >
           <div className="flex items-center justify-between mb-2">

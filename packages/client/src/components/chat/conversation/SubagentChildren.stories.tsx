@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import type { Message } from '@/types/ui';
 import type { MessageNode } from '@/utils/message-tree';
-import { SubagentChildren } from './SubagentChildren';
+import { SubagentChildren } from './SubagentChildren.tsx';
 
 const t = Date.now();
 const nodes: MessageNode[] = [

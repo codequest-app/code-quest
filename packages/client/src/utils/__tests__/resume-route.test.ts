@@ -1,6 +1,6 @@
 import type { SessionSummary } from '@code-quest/shared';
 import { describe, expect, it } from 'vitest';
-import { resumeRoute } from '../resume-route';
+import { resumeRoute } from '../resume-route.ts';
 
 function picked(overrides: Partial<SessionSummary>): SessionSummary {
   return {

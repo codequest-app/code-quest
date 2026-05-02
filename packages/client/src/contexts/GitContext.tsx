@@ -16,9 +16,9 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { rpc } from '../socket/rpc';
-import { createQueryCache } from '../utils/query-cache';
-import { useSocket } from './SocketContext';
+import { rpc } from '../socket/rpc.ts';
+import { createQueryCache } from '../utils/query-cache.ts';
+import { useSocket } from './SocketContext.tsx';
 
 /** Sentinel stored in `listing` when the project is not a git repo. */
 export const NOT_A_REPO = 'not_a_repo' as const;

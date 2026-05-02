@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAddProjectFeature } from '../add-project-feature';
-import { createOpenSettingsFeature } from '../open-settings-feature';
-import { createSwitchProjectFeatures } from '../switch-project-feature';
+import { createAddProjectFeature } from '../add-project-feature.ts';
+import { createOpenSettingsFeature } from '../open-settings-feature.ts';
+import { createSwitchProjectFeatures } from '../switch-project-feature.ts';
 
 describe('createSwitchProjectFeatures', () => {
   it('returns one feature per project', () => {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { AlertBanner } from '../AlertBanner';
+import { AlertBanner } from '../AlertBanner.tsx';
 
 describe('AlertBanner', () => {
   it('renders children', () => {

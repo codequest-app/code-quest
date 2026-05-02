@@ -3,7 +3,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { HeaderBar } from '../HeaderBar';
+import { HeaderBar } from '../HeaderBar.tsx';
 
 async function renderHeaderBar(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {
   return renderWithChannel(

@@ -11,7 +11,7 @@ import {
   SlashCommandIcon,
   TrashIcon,
   XIcon,
-} from './Icons';
+} from './Icons.tsx';
 
 const ICONS = [
   { name: 'SearchIcon', Icon: SearchIcon },

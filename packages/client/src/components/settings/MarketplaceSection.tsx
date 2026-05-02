@@ -1,6 +1,6 @@
 import type { MarketplaceInfo } from '@code-quest/shared';
-import { Button } from '../ui/Button';
-import { ActionButton, RefreshIcon, TrashIcon } from '../ui/Icons';
+import { Button } from '../ui/Button.tsx';
+import { ActionButton, RefreshIcon, TrashIcon } from '../ui/Icons.tsx';
 
 export interface MarketplaceSectionProps {
   marketplaces: MarketplaceInfo[];

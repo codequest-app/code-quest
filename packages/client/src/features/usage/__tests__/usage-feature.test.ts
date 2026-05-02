@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createUsageFeature, usageOpenSignal } from '../usage-feature';
+import { createUsageFeature, usageOpenSignal } from '../usage-feature.ts';
 
 describe('createUsageFeature', () => {
   it('has id usage, /usage slash binding, and Account menu fields', () => {

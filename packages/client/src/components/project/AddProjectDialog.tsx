@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { FileTree } from '../files/FileTree';
-import { Button } from '../ui/Button';
-import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
-import { XIcon } from '../ui/Icons';
+import { FileTree } from '../files/FileTree.tsx';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
+import { XIcon } from '../ui/Icons.tsx';
 
 export function AddProjectDialog({
   open,

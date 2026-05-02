@@ -3,9 +3,9 @@ import type { ForkFn, RewindFn } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import type { MessageNode } from '@/utils/message-tree';
 import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/tool-utils';
-import { ChatMessage } from './ChatMessage';
-import { SubagentChildren } from './SubagentChildren';
-import { ToolGroupSummary } from './ToolGroupSummary';
+import { ChatMessage } from './ChatMessage.tsx';
+import { SubagentChildren } from './SubagentChildren.tsx';
+import { ToolGroupSummary } from './ToolGroupSummary.tsx';
 
 interface RunProps {
   onRewind?: RewindFn;

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createModelFeature, modelOpenSignal } from '../model-feature';
+import { createModelFeature, modelOpenSignal } from '../model-feature.ts';
 
 afterEach(() => {
   modelOpenSignal.setOpen(false);

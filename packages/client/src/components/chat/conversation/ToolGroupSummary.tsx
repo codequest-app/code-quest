@@ -1,6 +1,6 @@
 import { cn } from '@/utils/cn';
 import type { GroupChip } from '@/utils/tool-utils';
-import { RotatableChevron } from '../tool-use/message-blocks/primitives';
+import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
 
 interface ToolGroupSummaryProps {
   chips: GroupChip[];

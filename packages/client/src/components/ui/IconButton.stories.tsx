@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { IconButton } from './IconButton';
-import { PlusIcon, SearchIcon, TrashIcon, XIcon } from './Icons';
+import { IconButton } from './IconButton.tsx';
+import { PlusIcon, SearchIcon, TrashIcon, XIcon } from './Icons.tsx';
 
 const meta: Meta<typeof IconButton> = {
   component: IconButton,

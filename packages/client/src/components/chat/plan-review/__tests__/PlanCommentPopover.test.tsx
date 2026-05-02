@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { PlanCommentPopover } from '../PlanCommentPopover';
+import { PlanCommentPopover } from '../PlanCommentPopover.tsx';
 
 function Wrapper({ onAddComment }: { onAddComment: ReturnType<typeof vi.fn> }) {
   const ref = useRef<HTMLDivElement>(null);

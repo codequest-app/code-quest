@@ -4,8 +4,8 @@ import type { TypedSocket } from '@/socket/client';
 import { channelEmit } from '@/socket/rpc';
 import type { ChannelState, PendingDiffReview, PendingElicitation } from '@/types/chat';
 import { msg } from '@/utils/message';
-import type { Payload } from './guard';
-import type { EffectDeps } from './notification';
+import type { Payload } from './guard.ts';
+import type { EffectDeps } from './notification.ts';
 
 function getFeedbackLabel(response: ControlPermissionResponse): string {
   if ('continue' in response) {

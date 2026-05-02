@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
-import { FilesPane } from '../FilesPane';
+import { FilesPane } from '../FilesPane.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();

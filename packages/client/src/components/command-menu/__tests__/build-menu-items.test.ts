@@ -12,7 +12,7 @@ import { createModelFeature } from '@/features/model/model-feature';
 import { createThinkingFeature } from '@/features/thinking/thinking-feature';
 import type { Feature } from '@/lib/feature';
 import { createFeatureRegistry } from '@/lib/feature-registry';
-import { buildMenuItems } from '../build-menu-items';
+import { buildMenuItems } from '../build-menu-items.ts';
 
 type BuildMenuItemsParams = Parameters<typeof buildMenuItems>[0];
 

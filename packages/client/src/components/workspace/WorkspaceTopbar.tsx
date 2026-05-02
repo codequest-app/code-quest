@@ -7,8 +7,8 @@ import {
 } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
-import { TopbarLiveSessions } from '../live-session/TopbarLiveSessions';
-import { IconButton } from '../ui/IconButton';
+import { TopbarLiveSessions } from '../live-session/TopbarLiveSessions.tsx';
+import { IconButton } from '../ui/IconButton.tsx';
 
 const ACTION_CLASS = 'w-8 h-8 text-text-muted hover:text-text hover:bg-white/5';
 

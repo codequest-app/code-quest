@@ -1,6 +1,6 @@
 import { DiffViewer } from '@/components/chat/renderers/DiffViewer';
 import { isDiff } from '@/utils/diff';
-import { AnsiContent, CODE_BLOCK_CLASS, hasAnsi, parseFilePathsInContent } from './primitives';
+import { AnsiContent, CODE_BLOCK_CLASS, hasAnsi, parseFilePathsInContent } from './primitives.tsx';
 
 interface ContentRendererProps {
   content: string;

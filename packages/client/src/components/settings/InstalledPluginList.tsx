@@ -2,10 +2,10 @@ import type { AvailablePlugin, MarketplaceInfo, PluginInfo } from '@code-quest/s
 import { useState } from 'react';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
-import { Button } from '../ui/Button';
-import { ActionButton, TrashIcon } from '../ui/Icons';
-import { InlineAction } from '../ui/InlineAction';
-import { ToggleSwitch } from '../ui/ToggleSwitch';
+import { Button } from '../ui/Button.tsx';
+import { ActionButton, TrashIcon } from '../ui/Icons.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
+import { ToggleSwitch } from '../ui/ToggleSwitch.tsx';
 
 function pluginDisplayName(id: string): string {
   return id.split('@')[0] ?? id;

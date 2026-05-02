@@ -1,7 +1,7 @@
 import type { Question } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { QuestionContent } from './QuestionContent';
+import { QuestionContent } from './QuestionContent.tsx';
 
 const questions: Question[] = [
   {

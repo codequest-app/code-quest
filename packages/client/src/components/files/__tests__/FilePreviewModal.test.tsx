@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { FsProvidersWrapper } from '@/test/wrap-fs-providers';
-import { FilePreviewModal } from '../FilePreviewModal';
+import { FilePreviewModal } from '../FilePreviewModal.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();

@@ -2,16 +2,16 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelHeader } from '@/components/ui/PanelHeader';
 import { cn } from '@/utils/cn';
-import { SearchBar } from '../conversation/SearchBar';
-import { JsonViewer } from '../renderers/JsonViewer';
-import { RawEventFilterBar } from './RawEventFilterBar';
+import { SearchBar } from '../conversation/SearchBar.tsx';
+import { JsonViewer } from '../renderers/JsonViewer.tsx';
+import { RawEventFilterBar } from './RawEventFilterBar.tsx';
 import {
   addVisibleTypes,
   buildFilterEntries,
   discoverNewTypes,
   filterEvents,
   getEventType,
-} from './raw-event-utils';
+} from './raw-event-utils.ts';
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 const SCROLL_THRESHOLD_PX = 50;

@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Project } from '@/contexts/ProjectContext';
-import { TopScopeSwitcher } from '../TopScopeSwitcher';
+import { TopScopeSwitcher } from '../TopScopeSwitcher.tsx';
 
 const projects: Project[] = [
   { cwd: '/proj/a', name: 'alpha', pinned: true, lastOpenedAt: '2025-01-03T00:00:00Z' },

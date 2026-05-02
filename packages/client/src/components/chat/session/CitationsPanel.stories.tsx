@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { CitationsPanel } from './CitationsPanel';
+import { CitationsPanel } from './CitationsPanel.tsx';
 
 const meta: Meta<typeof CitationsPanel> = {
   component: CitationsPanel,

@@ -7,7 +7,7 @@ import {
   parseMcpToolName,
   splitTimelineRuns,
 } from '@/utils/tool-utils';
-import type { MessageNode } from '../message-tree';
+import type { MessageNode } from '../message-tree.ts';
 
 describe('tool-registry', () => {
   describe('getToolHeaderInfo', () => {

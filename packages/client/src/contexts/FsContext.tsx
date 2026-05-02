@@ -9,8 +9,8 @@ import {
   TopicEmitter,
 } from '@code-quest/shared';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef } from 'react';
-import { rpc } from '../socket/rpc';
-import { useSocket } from './SocketContext';
+import { rpc } from '../socket/rpc.ts';
+import { useSocket } from './SocketContext.tsx';
 
 export type FsBrowseEntries = { directories: FsDirectory[]; files: FsFile[] } | { error: string };
 

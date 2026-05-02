@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { PermissionModePicker } from './PermissionModePicker';
+import { PermissionModePicker } from './PermissionModePicker.tsx';
 
 const meta: Meta<typeof PermissionModePicker> = {
   component: PermissionModePicker,

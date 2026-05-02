@@ -4,14 +4,14 @@ import { useChannelCompose, useChannelConfig } from '@/contexts/channel';
 import { useFeatureRegistry } from '@/contexts/channel/FeatureRegistryContext';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
-import { IconButton } from '../ui/IconButton';
-import { SlashCommandIcon } from '../ui/Icons';
-import { buildLocalFeatures } from './build-local-features';
-import { buildMenuItems, type MenuItem } from './build-menu-items';
-import { MenuSection } from './menu-components';
-import { computeMenuLayout } from './menu-layout';
-import { dispatchSelectedItem, NAV_KEYS, navigateItems } from './menu-navigation';
-import { slashPaletteState } from './slash-palette-state';
+import { IconButton } from '../ui/IconButton.tsx';
+import { SlashCommandIcon } from '../ui/Icons.tsx';
+import { buildLocalFeatures } from './build-local-features.ts';
+import { buildMenuItems, type MenuItem } from './build-menu-items.ts';
+import { MenuSection } from './menu-components.tsx';
+import { computeMenuLayout } from './menu-layout.ts';
+import { dispatchSelectedItem, NAV_KEYS, navigateItems } from './menu-navigation.ts';
+import { slashPaletteState } from './slash-palette-state.ts';
 
 export interface CommandMenuProps {
   containerRef: React.RefObject<HTMLDivElement | null>;

@@ -8,7 +8,7 @@ import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { GitPane } from '../GitPane';
+import { GitPane } from '../GitPane.tsx';
 
 const SAMPLE_DIFF = ['diff --git a/foo.ts b/foo.ts', '@@ -1,2 +1,2 @@', '-old', '+new'].join('\n');
 

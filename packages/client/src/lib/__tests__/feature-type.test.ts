@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Feature, FeatureState } from '../feature';
+import type { Feature, FeatureState } from '../feature.ts';
 
 describe('Feature type', () => {
   it('accepts a plain action feature', () => {

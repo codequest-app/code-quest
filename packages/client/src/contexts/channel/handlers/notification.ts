@@ -6,7 +6,7 @@ import { channelEmit } from '@/socket/rpc';
 import type { ChannelState } from '@/types/chat';
 import { msg } from '@/utils/message';
 import { openUrl } from '@/utils/open-url';
-import type { Payload } from './guard';
+import type { Payload } from './guard.ts';
 
 // ── On handlers (state part) ──
 

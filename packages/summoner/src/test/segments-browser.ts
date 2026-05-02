@@ -55,7 +55,7 @@ import STREAMLINED_TEXT from '../__fixtures__/claude/synthetic/streamlined-text.
 import STREAMLINED_TOOL_USE_SUMMARY from '../__fixtures__/claude/synthetic/streamlined-tool-use-summary.jsonl?raw';
 import SYSTEM_MIRROR_ERROR from '../__fixtures__/claude/synthetic/system-mirror-error.jsonl?raw';
 import UNKNOWN_EVENT from '../__fixtures__/claude/synthetic/unknown-event.jsonl?raw';
-import { createSegments, type SegmentBuilders } from './segment-builders';
+import { createSegments, type SegmentBuilders } from './segment-builders.ts';
 
 const _s = createSegments({
   INIT,

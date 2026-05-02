@@ -41,23 +41,23 @@ import {
   patchMeta,
   systemMessage,
 } from '@/utils/message';
-import { useSession } from '../SessionContext';
-import { useSocket } from '../SocketContext';
-import { useChannelId, useChannelMeta } from './ChannelMetaContext';
-import { useChannelSocketRouter } from './ChannelSocketRouterContext';
-import { FeatureRegistryContext } from './FeatureRegistryContext';
-import { createFileActions } from './handlers/file';
-import type { Payload } from './handlers/guard';
-import { createMessageActions, messageHandlerOn } from './handlers/message';
+import { useSession } from '../SessionContext.tsx';
+import { useSocket } from '../SocketContext.tsx';
+import { useChannelId, useChannelMeta } from './ChannelMetaContext.tsx';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
+import { FeatureRegistryContext } from './FeatureRegistryContext.tsx';
+import { createFileActions } from './handlers/file.ts';
+import type { Payload } from './handlers/guard.ts';
+import { createMessageActions, messageHandlerOn } from './handlers/message.ts';
 import {
   type EffectDeps,
   notificationHandlerEffects,
   notificationHandlerOn,
-} from './handlers/notification';
-import { createPlanActions, planHandlerOn } from './handlers/plan';
-import { createSessionActions, sessionHandlerOn } from './handlers/session';
-import { wireStreamingHandlers } from './handlers/streaming';
-import { systemHandlerOn } from './handlers/system';
+} from './handlers/notification.ts';
+import { createPlanActions, planHandlerOn } from './handlers/plan.ts';
+import { createSessionActions, sessionHandlerOn } from './handlers/session.ts';
+import { wireStreamingHandlers } from './handlers/streaming.ts';
+import { systemHandlerOn } from './handlers/system.ts';
 
 type SetChannelState = (fn: (prev: ChannelState) => ChannelState) => void;
 

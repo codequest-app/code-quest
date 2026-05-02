@@ -7,7 +7,7 @@ import { type GroupId, useMessageVisibility } from '@/contexts/channel/MessageVi
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { MessageList, type MessageListHandle } from '../MessageList';
+import { MessageList, type MessageListHandle } from '../MessageList.tsx';
 
 // Helper: toggle a group via the context from inside a rendered component
 function ToggleGroup({ group }: { group: GroupId }) {

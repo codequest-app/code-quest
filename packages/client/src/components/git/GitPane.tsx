@@ -17,14 +17,14 @@ import { useKeepFsWatcherAlive } from '@/hooks/useKeepFsWatcherAlive';
 import { rpc } from '@/socket/rpc';
 import { cn } from '@/utils/cn';
 import { type DiffFile, parseUnifiedDiff } from '@/utils/parse-unified-diff';
-import { BranchSection } from '../project/BranchSection';
-import { ActionButton } from '../ui/ActionButton';
-import { CommandHint } from '../ui/CommandHint';
-import { PaneStatusFooter } from '../ui/PaneStatusFooter';
-import { Spinner } from '../ui/Spinner';
-import { EmptyState } from '../workspace/EmptyState';
-import { CommitComposer } from './CommitComposer';
-import { DiffModal } from './DiffModal';
+import { BranchSection } from '../project/BranchSection.tsx';
+import { ActionButton } from '../ui/ActionButton.tsx';
+import { CommandHint } from '../ui/CommandHint.tsx';
+import { PaneStatusFooter } from '../ui/PaneStatusFooter.tsx';
+import { Spinner } from '../ui/Spinner.tsx';
+import { EmptyState } from '../workspace/EmptyState.tsx';
+import { CommitComposer } from './CommitComposer.tsx';
+import { DiffModal } from './DiffModal.tsx';
 
 export interface GitPaneProps {
   cwd: string;

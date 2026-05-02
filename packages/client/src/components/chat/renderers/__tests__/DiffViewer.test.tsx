@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { extractNewContent } from '@/utils/diff';
-import { DiffViewer } from '../DiffViewer';
+import { DiffViewer } from '../DiffViewer.tsx';
 
 // Pure diff parsing (isDiff / parseDiffFileName / extractNewContent etc.) is
 // covered in src/utils/__tests__/diff.test.ts. This file covers DiffViewer UI.

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
 import type { Message } from '@/types/ui';
-import { MessageList } from './MessageList';
+import { MessageList } from './MessageList.tsx';
 
 const conversation: Message[] = [
   { id: '1', role: 'user', type: 'text', content: 'How do I list files?', timestamp: 1 },

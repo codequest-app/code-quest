@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { cn } from '@/utils/cn';
-import { CopyButton, HOVER_COPY_BASE } from './CopyButton';
+import { CopyButton, HOVER_COPY_BASE } from './CopyButton.tsx';
 
 const meta: Meta<typeof CopyButton> = {
   component: CopyButton,

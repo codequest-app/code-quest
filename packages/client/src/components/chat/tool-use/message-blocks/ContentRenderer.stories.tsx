@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ContentRenderer } from './ContentRenderer';
+import { ContentRenderer } from './ContentRenderer.tsx';
 
 const meta: Meta<typeof ContentRenderer> = {
   component: ContentRenderer,

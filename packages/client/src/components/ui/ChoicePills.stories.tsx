@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ChoicePills } from './ChoicePills';
+import { ChoicePills } from './ChoicePills.tsx';
 
 const meta: Meta<typeof ChoicePills> = {
   component: ChoicePills,

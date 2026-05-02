@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { CollapsibleBlock } from '../message-blocks/primitives';
+import { CollapsibleBlock } from '../message-blocks/primitives.tsx';
 
 describe('CollapsibleBlock', () => {
   it('hides children by default', () => {

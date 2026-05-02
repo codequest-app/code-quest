@@ -5,13 +5,13 @@ import { useGitActions } from '@/contexts/GitContext';
 import { useNavigationActions, useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
-import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog';
-import { BranchPopover } from './BranchPopover';
-import { CreateWorktreeDialog } from './CreateWorktreeDialog';
-import { RemoveWorktreeConfirmDialog } from './RemoveWorktreeConfirmDialog';
-import { RenameWorktreeDialog } from './RenameWorktreeDialog';
-import { WorktreeContextMenu, WorktreeDropdownMenu } from './WorktreeContextMenu';
-import { WorktreeRow } from './WorktreeRow';
+import { ArchiveWorktreeConfirmDialog } from './ArchiveWorktreeConfirmDialog.tsx';
+import { BranchPopover } from './BranchPopover.tsx';
+import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
+import { RemoveWorktreeConfirmDialog } from './RemoveWorktreeConfirmDialog.tsx';
+import { RenameWorktreeDialog } from './RenameWorktreeDialog.tsx';
+import { WorktreeContextMenu, WorktreeDropdownMenu } from './WorktreeContextMenu.tsx';
+import { WorktreeRow } from './WorktreeRow.tsx';
 
 /** Dialogs (not menus/popovers) are still centrally owned since only one is
  *  visible at a time. Menus/popovers are now per-row Radix state. */

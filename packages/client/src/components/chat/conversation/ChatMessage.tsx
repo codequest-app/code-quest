@@ -2,10 +2,10 @@ import { Component, type ErrorInfo, memo, type ReactNode } from 'react';
 import type { ForkFn, Message, RewindFn } from '@/types/ui';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { TruncatedContent } from '../renderers/TruncatedContent';
-import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton';
-import { MessageActions } from './MessageActions';
-import { renderBody } from './MessageContent';
+import { TruncatedContent } from '../renderers/TruncatedContent.tsx';
+import { CopyButton, HOVER_COPY_BASE } from '../tool-use/message-blocks/CopyButton.tsx';
+import { MessageActions } from './MessageActions.tsx';
+import { renderBody } from './MessageContent.tsx';
 
 class ContentErrorBoundary extends Component<
   { children: ReactNode },

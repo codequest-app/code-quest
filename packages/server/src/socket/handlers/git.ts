@@ -31,7 +31,10 @@ export function create({
   filesystemService,
 }: Pick<HandlerContext, 'emitter' | 'gitService' | 'filesystemService'>): void {
   const resolveProjectRoot = (cwd: string): Promise<string | null> =>
-    gitService.getProjectRoot(cwd).catch(() => null);
+    gitService.getProjectRoot(cwd).catch((err) => {
+      logger.debug({ err, cwd }, 'getProjectRoot failed, falling back to null');
+      return null;
+    });
 
   function broadcastDirty(cwd: string): void {
     emitter.broadcastAll(EVENTS.git.dirty, { cwd });

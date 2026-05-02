@@ -1,4 +1,4 @@
-import type { Feature } from './feature';
+import type { Feature } from './feature.ts';
 
 export interface FeatureRegistry {
   register(feature: Feature): void;

@@ -5,17 +5,17 @@ import type { FakeClaude } from '@code-quest/summoner/test';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
-import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout';
-import { AppInitProvider } from '../contexts/AppInitContext';
-import { FsProvider } from '../contexts/FsContext';
-import { GitProvider } from '../contexts/GitContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { OpenspecProvider } from '../contexts/OpenspecContext';
-import { PluginProvider } from '../contexts/PluginContext';
-import { ProjectProvider } from '../contexts/ProjectContext';
-import { SessionProvider } from '../contexts/SessionContext';
-import { SocketProvider } from '../contexts/SocketContext';
-import { createFakeSummoner, type FakeSummoner } from './fake-summoner';
+import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout.tsx';
+import { AppInitProvider } from '../contexts/AppInitContext.tsx';
+import { FsProvider } from '../contexts/FsContext.tsx';
+import { GitProvider } from '../contexts/GitContext.tsx';
+import { NavigationProvider } from '../contexts/NavigationContext.tsx';
+import { OpenspecProvider } from '../contexts/OpenspecContext.tsx';
+import { PluginProvider } from '../contexts/PluginContext.tsx';
+import { ProjectProvider } from '../contexts/ProjectContext.tsx';
+import { SessionProvider } from '../contexts/SessionContext.tsx';
+import { SocketProvider } from '../contexts/SocketContext.tsx';
+import { createFakeSummoner, type FakeSummoner } from './fake-summoner.ts';
 
 interface RenderWithWorkspaceOptions {
   summoner?: FakeSummoner;

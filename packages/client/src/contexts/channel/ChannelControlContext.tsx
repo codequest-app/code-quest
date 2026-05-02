@@ -10,18 +10,18 @@ import {
 } from 'react';
 import type { PendingDiffReview, PendingElicitation } from '@/types/chat';
 import { msg } from '@/utils/message';
-import { useSocket } from '../SocketContext';
-import { useChannelMessagesActions } from './ChannelMessagesContext';
-import { useChannelId } from './ChannelMetaContext';
-import { useChannelSocketRouter } from './ChannelSocketRouterContext';
-import type { Payload } from './handlers/guard';
-import type { EffectDeps } from './handlers/notification';
+import { useSocket } from '../SocketContext.tsx';
+import { useChannelMessagesActions } from './ChannelMessagesContext.tsx';
+import { useChannelId } from './ChannelMetaContext.tsx';
+import { useChannelSocketRouter } from './ChannelSocketRouterContext.tsx';
+import type { Payload } from './handlers/guard.ts';
+import type { EffectDeps } from './handlers/notification.ts';
 import {
   type ControlState,
   controlHandlerEffects,
   controlHandlers,
   createControlActions,
-} from './handlers/permission';
+} from './handlers/permission.ts';
 
 interface ChannelControlValue {
   pendingControls: PendingControl[];

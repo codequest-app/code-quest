@@ -24,9 +24,9 @@ import {
   useState,
 } from 'react';
 import { toast } from 'sonner';
-import { rpc } from '../socket/rpc';
-import { useAppInitActions } from './AppInitContext';
-import { useSocket } from './SocketContext';
+import { rpc } from '../socket/rpc.ts';
+import { useAppInitActions } from './AppInitContext.tsx';
+import { useSocket } from './SocketContext.tsx';
 
 interface AuthState {
   status: 'idle' | 'waiting' | 'code' | 'success' | 'error';

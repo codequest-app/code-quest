@@ -3,7 +3,7 @@ import type { FileSnapshot } from '@/types/chat';
 import { cn } from '@/utils/cn';
 import { generateUnifiedDiff } from '@/utils/diff';
 import { pluralize } from '@/utils/pluralize';
-import { DiffViewer } from '../renderers/DiffViewer';
+import { DiffViewer } from '../renderers/DiffViewer.tsx';
 
 const ACTION_BTN = 'text-xs px-2 py-1 rounded-lg cursor-pointer font-medium transition-colors';
 

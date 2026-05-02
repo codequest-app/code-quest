@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ToolBlock, ToolBlockRow } from './ToolBlock';
+import { ToolBlock, ToolBlockRow } from './ToolBlock.tsx';
 
 const meta: Meta<typeof ToolBlock> = {
   component: ToolBlock,

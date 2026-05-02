@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent } from 'storybook/test';
 import { withStoryChannel } from '@/test/story-decorator';
-import { McpServerRow } from './McpServerRow';
+import { McpServerRow } from './McpServerRow.tsx';
 
 const meta: Meta<typeof McpServerRow> = {
   component: McpServerRow,

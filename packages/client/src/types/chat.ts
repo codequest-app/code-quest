@@ -4,7 +4,7 @@ import type {
   ControlElicitationPayload,
   PlanCommentData,
 } from '@code-quest/shared';
-import type { Message, SessionStatus } from './ui';
+import type { Message, SessionStatus } from './ui.ts';
 
 interface TerminalSession {
   id: string;

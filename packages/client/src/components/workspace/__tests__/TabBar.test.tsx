@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { TabBar, type TabInfo } from '../TabBar';
+import { TabBar, type TabInfo } from '../TabBar.tsx';
 
 const tabs: TabInfo[] = [
   { sessionId: 'sess-1', title: 'Chat 1', status: 'idle' },

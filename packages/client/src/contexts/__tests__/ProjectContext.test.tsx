@@ -1,17 +1,17 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner, type FakeSummoner } from '@/test/fake-summoner';
-import { AppInitProvider } from '../AppInitContext';
+import { AppInitProvider } from '../AppInitContext.tsx';
 import {
   deriveProjects,
   type Project,
   ProjectProvider,
   useProjectActions,
   useProjectState,
-} from '../ProjectContext';
-import { SessionProvider } from '../SessionContext';
-import { SocketProvider } from '../SocketContext';
+} from '../ProjectContext.tsx';
+import { SessionProvider } from '../SessionContext.tsx';
+import { SocketProvider } from '../SocketContext.tsx';
 
 function makeWrapper(summoner: FakeSummoner) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -97,12 +97,18 @@ describe('ProjectContext (server-backed)', () => {
     const { result } = renderHook(() => useProjectActions(), {
       wrapper: makeWrapper(summoner),
     });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     let res: Project | { error: string; path?: string } | undefined;
     await act(async () => {
       res = await result.current.addProject('/does/not/exist');
     });
 
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[ProjectContext] projects:add failed:',
+      expect.objectContaining({ error: 'path_not_found' }),
+    );
+    warnSpy.mockRestore();
     expect(res).toEqual(
       expect.objectContaining({ error: 'path_not_found', path: '/does/not/exist' }),
     );
@@ -255,6 +261,7 @@ describe('ProjectContext (server-backed)', () => {
       const { result } = renderHook(() => useProjectActions(), {
         wrapper: makeWrapper(summoner),
       });
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       let res:
         | { cwd: string; name: string; pinned: boolean; lastOpenedAt: string }
@@ -263,6 +270,12 @@ describe('ProjectContext (server-backed)', () => {
       await act(async () => {
         res = await result.current.pinProject('/unknown', true);
       });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[ProjectContext] pinProject/renameProject failed:',
+        expect.objectContaining({ error: 'project_not_found' }),
+      );
+      warnSpy.mockRestore();
       expect(res).toEqual({ error: 'project_not_found' });
     });
 

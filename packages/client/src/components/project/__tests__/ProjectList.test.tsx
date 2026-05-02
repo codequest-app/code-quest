@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Project } from '@/contexts/ProjectContext';
 import { createTestWrapper } from '@/test/create-test-wrapper';
-import { ProjectList } from '../ProjectList';
+import { ProjectList } from '../ProjectList.tsx';
 
 function makeWrapper() {
   const { summoner, Wrapper } = createTestWrapper();

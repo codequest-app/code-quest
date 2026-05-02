@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ArchiveWorktreeConfirmDialog } from '../ArchiveWorktreeConfirmDialog';
+import { ArchiveWorktreeConfirmDialog } from '../ArchiveWorktreeConfirmDialog.tsx';
 
 describe('ArchiveWorktreeConfirmDialog', () => {
   it('confirm fires onConfirm with force=false by default', async () => {

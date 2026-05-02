@@ -9,7 +9,7 @@
  *  hand-rolled handlers below cover Arrow keys + click-to-position. */
 
 import { cn } from '@/utils/cn';
-import { focusRing } from './_tokens';
+import { focusRing } from './_tokens.ts';
 
 const EFFORT_LABELS: Record<string, string> = {
   low: 'Low',

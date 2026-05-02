@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
-import { controlBorder, focusRing } from './_tokens';
+import { controlBorder, focusRing } from './_tokens.ts';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'warning' | 'info';
 type Size = 'xs' | 'sm' | 'md';

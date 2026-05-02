@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
-import { ElicitationDialog } from './ElicitationDialog';
+import { ElicitationDialog } from './ElicitationDialog.tsx';
 
 const meta: Meta<typeof ElicitationDialog> = {
   component: ElicitationDialog,

@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext } from 'react';
-import type { TypedSocket } from '../socket/client';
+import type { TypedSocket } from '../socket/client.ts';
 
 interface SocketContextValue {
   socket: TypedSocket;

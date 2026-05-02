@@ -2,10 +2,10 @@ import type { Ack, McpServerInfo, ProviderClientConfig, RpcResult } from '@code-
 import { useState } from 'react';
 import { useChannelConfig } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
-import { Button } from '../ui/Button';
-import { Dialog, DialogClose, DialogContent } from '../ui/Dialog';
-import { XIcon } from '../ui/Icons';
-import { InlineAction } from '../ui/InlineAction';
+import { Button } from '../ui/Button.tsx';
+import { Dialog, DialogClose, DialogContent } from '../ui/Dialog.tsx';
+import { XIcon } from '../ui/Icons.tsx';
+import { InlineAction } from '../ui/InlineAction.tsx';
 
 // ── mo0: scope group ordering (po0) ─────────────────────────────────────────
 const SCOPE_ORDER = ['project', 'local', 'user', 'claudeai', 'managed', 'enterprise'];

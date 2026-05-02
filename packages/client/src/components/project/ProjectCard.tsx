@@ -7,15 +7,15 @@ import { ProjectActionsContext } from '@/contexts/ProjectContext';
 import { SessionStateContext } from '@/contexts/SessionContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover';
-import { CreateWorktreeDialog } from './CreateWorktreeDialog';
+import { SessionHistoryPopover } from '../chat/session/SessionHistoryPopover.tsx';
+import { CreateWorktreeDialog } from './CreateWorktreeDialog.tsx';
 import {
   ProjectContextMenu,
   ProjectDropdownMenu,
   type ProjectMenuCallbacks,
-} from './ProjectContextMenu';
-import { RemoveProjectConfirmDialog } from './RemoveProjectConfirmDialog';
-import { RenameProjectDialog } from './RenameProjectDialog';
+} from './ProjectContextMenu.tsx';
+import { RemoveProjectConfirmDialog } from './RemoveProjectConfirmDialog.tsx';
+import { RenameProjectDialog } from './RenameProjectDialog.tsx';
 
 /** Display name preferring basename when name still looks like a full path
  *  (legacy data backfilled before basename extraction was applied). */

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { TruncatedContent } from '../TruncatedContent';
+import { TruncatedContent } from '../TruncatedContent.tsx';
 
 // Helper to simulate overflow by mocking scrollHeight
 function simulateOverflow(el: HTMLElement) {

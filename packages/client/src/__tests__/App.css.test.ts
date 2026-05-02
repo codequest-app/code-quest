@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readSrc } from '../test/read-src';
+import { readSrc } from '../test/read-src.ts';
 
 const appCss = readSrc('App.css');
 const chatInputAreaSrc = readSrc('components/chat/compose/ChatInputArea.tsx');

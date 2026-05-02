@@ -4,7 +4,7 @@ import { RewindBody } from '@/features/rewind/RewindBody';
 import { RewindConfirmDialog } from '@/features/rewind/RewindConfirmDialog';
 import type { ForkFn, RewindFn } from '@/types/ui';
 import { copyToClipboard } from '@/utils/clipboard';
-import { MessageActionsMenu } from './MessageActionsMenu';
+import { MessageActionsMenu } from './MessageActionsMenu.tsx';
 
 interface MessageActionsProps {
   /** CLI/JSONL uuid; required for fork & rewind RPCs that go through the CLI. */

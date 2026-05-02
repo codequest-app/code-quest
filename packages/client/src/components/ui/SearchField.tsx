@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { cn } from '@/utils/cn';
-import { SearchIcon } from './Icons';
+import { SearchIcon } from './Icons.tsx';
 
 interface SearchFieldProps {
   value: string;

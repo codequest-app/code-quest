@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { withStoryApp } from '@/test/story-decorator';
-import { FileTree } from './FileTree';
+import { FileTree } from './FileTree.tsx';
 
 const meta: Meta<typeof FileTree> = {
   component: FileTree,

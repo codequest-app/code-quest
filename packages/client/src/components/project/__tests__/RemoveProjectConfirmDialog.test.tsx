@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RemoveProjectConfirmDialog } from '../RemoveProjectConfirmDialog';
+import { RemoveProjectConfirmDialog } from '../RemoveProjectConfirmDialog.tsx';
 
 describe('RemoveProjectConfirmDialog', () => {
   describe('State A — no active sessions', () => {

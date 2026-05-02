@@ -2,7 +2,7 @@ import type { FsSearchResult } from '@code-quest/shared';
 import { FileIcon, FolderIcon } from '@/components/icons/MentionIcons';
 import { cn } from '@/utils/cn';
 import { slugify } from '@/utils/slugify';
-import type { SearchStatus } from './ComposeInput';
+import type { SearchStatus } from './ComposeInput.tsx';
 
 const noop = () => {};
 

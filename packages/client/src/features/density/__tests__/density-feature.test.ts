@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDensityFeature } from '../density-feature';
+import { createDensityFeature } from '../density-feature.ts';
 
 describe('createDensityFeature', () => {
   it('has correct id/section/label/order', () => {

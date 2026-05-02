@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppInitStateContext } from '@/contexts/AppInitContext';
-import { ProjectDropdownMenu } from '../ProjectContextMenu';
+import { ProjectDropdownMenu } from '../ProjectContextMenu.tsx';
 
 /** Provide a minimal AppInitState with worktree capability enabled. */
 function WithWorktreeCapability({ children }: { children: ReactNode }) {

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { useChannelControl } from '@/contexts/channel';
 import { withStoryChannel } from '@/test/story-decorator';
-import { PendingActionButtons } from './PendingActionButtons';
+import { PendingActionButtons } from './PendingActionButtons.tsx';
 
 function SetControls({
   controls,

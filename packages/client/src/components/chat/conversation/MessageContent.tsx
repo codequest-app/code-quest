@@ -1,7 +1,7 @@
 import type { Message } from '@/types/ui';
-import { JsonViewer } from '../renderers/JsonViewer';
-import { MarkdownContent } from '../renderers/MarkdownContent';
-import { CitationsPanel } from '../session/CitationsPanel';
+import { JsonViewer } from '../renderers/JsonViewer.tsx';
+import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
+import { CitationsPanel } from '../session/CitationsPanel.tsx';
 import {
   CompactBoundaryContent,
   ContentBlockStart,
@@ -23,9 +23,9 @@ import {
   TaskStartedContent,
   ToolResultBlock,
   ToolUseBlock,
-} from '../tool-use/message-blocks';
-import { CollapsibleBlock } from '../tool-use/message-blocks/primitives';
-import { ThinkingBlock } from './ThinkingBlock';
+} from '../tool-use/message-blocks/index.ts';
+import { CollapsibleBlock } from '../tool-use/message-blocks/primitives.tsx';
+import { ThinkingBlock } from './ThinkingBlock.tsx';
 
 const JSON_VIEWER_CLASS =
   'bg-code-block p-3 rounded-lg overflow-x-auto text-xs border border-border';

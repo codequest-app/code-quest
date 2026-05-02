@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { makeSession, makeWorktreeSession } from '@/test/story-fixtures';
 import { withStoryWorkspaceFixtures } from '@/test/story-workspace-decorator';
-import { WorkspaceLayout } from './WorkspaceLayout';
+import { WorkspaceLayout } from './WorkspaceLayout.tsx';
 
 const meta: Meta<typeof WorkspaceLayout> = {
   component: WorkspaceLayout,

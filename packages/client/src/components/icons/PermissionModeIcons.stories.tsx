@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CheckMark } from '../ui/Icons';
+import { CheckMark } from '../ui/Icons.tsx';
 import {
   AskBeforeEditsIcon,
   BypassIcon,
   EditAutoIcon,
   EffortIcon,
   PlanModeIcon,
-} from './PermissionModeIcons';
+} from './PermissionModeIcons.tsx';
 
 const Row = ({ children, label }: { children: React.ReactNode; label: string }) => (
   <div className="flex items-center gap-3">

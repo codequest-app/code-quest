@@ -7,7 +7,7 @@ import { GitProvider } from '@/contexts/GitContext';
 import { OpenspecProvider } from '@/contexts/OpenspecContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
-import { AddProjectDialog } from '../AddProjectDialog';
+import { AddProjectDialog } from '../AddProjectDialog.tsx';
 
 function setup() {
   const summoner = createFakeSummoner();

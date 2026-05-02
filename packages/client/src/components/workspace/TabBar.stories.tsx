@@ -1,7 +1,7 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
-import { TabBar } from './TabBar';
+import { TabBar } from './TabBar.tsx';
 
 const meta: Meta<typeof TabBar> = {
   component: TabBar,

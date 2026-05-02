@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
 import { describe, expect, it, vi } from 'vitest';
-import { ErrorFallback } from '../ErrorFallback';
+import { ErrorFallback } from '../ErrorFallback.tsx';
 
 describe('ErrorFallback', () => {
   it('renders error message', () => {

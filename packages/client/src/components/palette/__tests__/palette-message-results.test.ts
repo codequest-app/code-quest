@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '@/types/ui';
-import { paletteMessageResults } from '../palette-message-results';
+import { paletteMessageResults } from '../palette-message-results.ts';
 
 const m = (id: string, content: string): Message => ({
   id,

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { ComposeInput } from '../ComposeInput';
+import { ComposeInput } from '../ComposeInput.tsx';
 
 const containerRef = createRef<HTMLDivElement>();
 

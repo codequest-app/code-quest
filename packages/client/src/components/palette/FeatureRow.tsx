@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { deriveGroupAggregate } from '@/lib/derive-group-aggregate';
 import type { Feature } from '@/lib/feature';
 import { cn } from '@/utils/cn';
-import { TOGGLE_PILL_BASE, togglePillColor, togglePillSymbol } from '../ui/TriStateIndicator';
-import { toPaletteCommand } from './to-palette-command';
+import { TOGGLE_PILL_BASE, togglePillColor, togglePillSymbol } from '../ui/TriStateIndicator.tsx';
+import { toPaletteCommand } from './to-palette-command.tsx';
 
 export interface FeatureRowProps {
   feature: Feature;
@@ -15,30 +15,36 @@ export interface FeatureRowProps {
 function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowProps) {
   const cmd = toPaletteCommand(feature);
   return (
-    <button
-      type="button"
-      data-active={isActive || undefined}
+    // biome-ignore lint/a11y/noStaticElementInteractions: onMouseEnter is hover-tracking only; keyboard interaction is provided by the inner <button>
+    <div
       onMouseEnter={() => onActiveChange(feature.id)}
-      onClick={() => (onExecute ? onExecute(feature) : feature.execute())}
-      disabled={feature.disabled}
       className={cn(
-        'flex items-center justify-between gap-3 w-full px-4 py-2 border-none text-left transition-[background] duration-100',
+        'flex items-center justify-between gap-3 w-full px-4 py-2 transition-[background] duration-100',
         isActive
           ? 'bg-row-active-bg border-l-2 border-l-accent'
           : 'bg-transparent border-l-2 border-l-transparent',
-        feature.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
       )}
     >
-      <span className="text-sm text-text flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+      <button
+        type="button"
+        data-active={isActive || undefined}
+        onClick={() => (onExecute ? onExecute(feature) : feature.execute())}
+        disabled={feature.disabled}
+        className={cn(
+          'flex-1 bg-transparent border-none text-left p-0',
+          'text-sm text-text overflow-hidden text-ellipsis whitespace-nowrap',
+          feature.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+        )}
+      >
         {cmd.label}
-      </span>
+      </button>
       {cmd.trailing && (
         // biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops propagation
         <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           {cmd.trailing}
         </span>
       )}
-    </button>
+    </div>
   );
 }
 

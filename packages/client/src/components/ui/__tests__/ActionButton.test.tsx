@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ActionButton } from '../ActionButton';
+import { ActionButton } from '../ActionButton.tsx';
 
 describe('ActionButton', () => {
   it('renders children as button content', () => {

@@ -10,9 +10,9 @@ import { useSession } from '@/contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { ChatPanel } from '../chat/ChatPanel';
-import { EmptyState } from './EmptyState';
-import { TabBar } from './TabBar';
+import { ChatPanel } from '../chat/ChatPanel.tsx';
+import { EmptyState } from './EmptyState.tsx';
+import { TabBar } from './TabBar.tsx';
 
 function findWorktreeByCwd(
   listing: Record<string, WorktreeInfo[] | 'not_a_repo'>,

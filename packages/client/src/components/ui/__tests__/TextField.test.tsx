@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { TextField } from '../TextField';
+import { TextField } from '../TextField.tsx';
 
 describe('TextField', () => {
   it('renders an input by default', () => {
