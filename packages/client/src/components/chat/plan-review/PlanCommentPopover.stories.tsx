@@ -28,3 +28,26 @@ export const Interactive: Story = {
   args: { containerRef: { current: null }, onAddComment: fn() },
   render: () => <PlanCommentDemo />,
 };
+
+function PlanCommentMultiParagraph() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <div className="bg-surface text-text p-6 relative max-w-lg" ref={containerRef}>
+      <p className="text-sm leading-relaxed select-text mb-3">
+        First paragraph: The system will read all files in the repository and index them.
+      </p>
+      <p className="text-sm leading-relaxed select-text mb-3">
+        Second paragraph: Then it will run static analysis to detect potential issues.
+      </p>
+      <p className="text-sm leading-relaxed select-text">
+        Third paragraph: Finally it will generate a summary report with recommendations.
+      </p>
+      <PlanCommentPopover containerRef={containerRef} onAddComment={fn()} />
+    </div>
+  );
+}
+
+export const MultiParagraph: Story = {
+  args: { containerRef: { current: null }, onAddComment: fn() },
+  render: () => <PlanCommentMultiParagraph />,
+};

@@ -1,5 +1,5 @@
 import type { ClientMessage } from '@code-quest/shared';
-import { ClaudeAdapter } from '@code-quest/summoner';
+import { ClaudeAdapter } from '@code-quest/summoner/browser';
 import type { ChannelState } from '@/types/chat';
 import { buildMessagesFromHistory } from '@/utils/message';
 
