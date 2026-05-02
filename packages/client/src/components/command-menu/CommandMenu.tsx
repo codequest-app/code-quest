@@ -244,7 +244,8 @@ export function CommandMenu({
       <Popover.Anchor virtualRef={containerRef as React.RefObject<Element>} />
       <IconButton
         ref={anchorRef}
-        tooltip="Show command menu (/)"
+        title="Show command menu (/)"
+        aria-label="Show command menu (/)"
         onClick={(e) => {
           e.stopPropagation();
           setButtonOpen((v) => !v);

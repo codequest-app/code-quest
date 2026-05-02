@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { AddContextIcon } from '@/components/icons/MentionIcons';
 import { IconButton } from '@/components/ui/IconButton';
 import { PlusIcon } from '@/components/ui/Icons';
-import { Tooltip } from '@/components/ui/Tooltip';
 
 export function AttachMenu({
   onAttachFile,
@@ -52,7 +51,7 @@ export function AttachMenu({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <IconButton tooltip="Add" className="shrink-0">
+        <IconButton title="Add" className="shrink-0">
           <PlusIcon className="w-5 h-5" />
         </IconButton>
       </Popover.Trigger>
@@ -66,18 +65,18 @@ export function AttachMenu({
           className="bg-surface border border-border rounded-lg shadow-lg overflow-hidden z-modal min-w-50"
         >
           {items.map((item) => (
-            <Tooltip key={item.id} content={item.title}>
-              <button
-                type="button"
-                onClick={item.onClick}
-                className="w-full text-left px-3 py-2 text-xs text-text hover:tint-5 flex items-center gap-2"
-              >
-                <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
-                  {item.icon}
-                </span>
-                {item.label}
-              </button>
-            </Tooltip>
+            <button
+              key={item.id}
+              type="button"
+              title={item.title}
+              onClick={item.onClick}
+              className="w-full text-left px-3 py-2 text-xs text-text hover:tint-5 flex items-center gap-2"
+            >
+              <span className="w-4 h-4 flex items-center justify-center text-text-muted opacity-70">
+                {item.icon}
+              </span>
+              {item.label}
+            </button>
           ))}
         </Popover.Content>
       )}

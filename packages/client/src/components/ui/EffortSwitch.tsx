@@ -10,7 +10,6 @@
 
 import { cn } from '@/utils/cn';
 import { focusRing } from './_tokens.ts';
-import { Tooltip } from './Tooltip.tsx';
 
 const EFFORT_LABELS: Record<string, string> = {
   low: 'Low',
@@ -62,69 +61,68 @@ export function EffortSwitch({ level, levels, onSelect }: EffortSwitchProps): Re
   const ticksAfterThumb = Array.from({ length: count - idx - 1 }, (_, k) => idx + 1 + k);
 
   return (
-    <Tooltip content="Click a position to set effort level">
+    <div
+      role="slider"
+      tabIndex={0}
+      aria-valuenow={idx}
+      aria-valuemin={0}
+      aria-valuemax={count - 1}
+      aria-label="Effort level"
+      aria-disabled={!onSelect || undefined}
+      className={cn('relative w-19 h-5 rounded-full shrink-0 cursor-pointer', focusRing)}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (!onSelect) return;
+        let next = idx;
+        if (e.key === 'ArrowRight') next = Math.min(count - 1, idx + 1);
+        else if (e.key === 'ArrowLeft') next = Math.max(0, idx - 1);
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = count - 1;
+        else return;
+        e.preventDefault();
+        const level = levels[next];
+        if (next !== idx && level) onSelect(level);
+      }}
+      title="Click a position to set effort level"
+    >
       <div
-        role="slider"
-        tabIndex={0}
-        aria-valuenow={idx}
-        aria-valuemin={0}
-        aria-valuemax={count - 1}
-        aria-label="Effort level"
-        aria-disabled={!onSelect || undefined}
-        className={cn('relative w-19 h-5 rounded-full shrink-0 cursor-pointer', focusRing)}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (!onSelect) return;
-          let next = idx;
-          if (e.key === 'ArrowRight') next = Math.min(count - 1, idx + 1);
-          else if (e.key === 'ArrowLeft') next = Math.max(0, idx - 1);
-          else if (e.key === 'Home') next = 0;
-          else if (e.key === 'End') next = count - 1;
-          else return;
-          e.preventDefault();
-          const level = levels[next];
-          if (next !== idx && level) onSelect(level);
-        }}
+        role="presentation"
+        aria-label="effort-switch-track"
+        // Visible pill rides at the same h-3.5 as thumb + fill so the
+        // three read as a single coherent slim slider; the outer wrapper
+        // (h-5) supplies the larger click hit area + focus ring slot.
+        className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-3.5 rounded-full bg-surface-hover overflow-hidden"
       >
         <div
           role="presentation"
-          aria-label="effort-switch-track"
-          // Visible pill rides at the same h-3.5 as thumb + fill so the
-          // three read as a single coherent slim slider; the outer wrapper
-          // (h-5) supplies the larger click hit area + focus ring slot.
-          className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-3.5 rounded-full bg-surface-hover overflow-hidden"
-        >
+          aria-label="effort-switch-fill"
+          className="absolute top-0 left-0 h-full rounded-full bg-toggle transition-all duration-150"
+          style={{ width: fillWidth }}
+        />
+        {ticksAfterThumb.map((i) => (
           <div
+            key={levels[i]}
             role="presentation"
-            aria-label="effort-switch-fill"
-            className="absolute top-0 left-0 h-full rounded-full bg-toggle transition-all duration-150"
-            style={{ width: fillWidth }}
-          />
-          {ticksAfterThumb.map((i) => (
-            <div
-              key={levels[i]}
-              role="presentation"
-              aria-label="effort-switch-tick"
-              className={cn(
-                'absolute top-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2',
-                'bg-text/35',
-              )}
-              style={{ left: notchLeft(i) }}
-            />
-          ))}
-          <div
-            role="presentation"
-            aria-label="effort-switch-thumb"
+            aria-label="effort-switch-tick"
             className={cn(
-              'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
-              'bg-white shadow-sm ring-1 ring-black/20',
-              'transition-all duration-150',
+              'absolute top-1/2 w-1 h-1 rounded-full -translate-x-1/2 -translate-y-1/2',
+              'bg-text/35',
             )}
-            style={{ left: thumbLeft }}
+            style={{ left: notchLeft(i) }}
           />
-        </div>
+        ))}
+        <div
+          role="presentation"
+          aria-label="effort-switch-thumb"
+          className={cn(
+            'absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full',
+            'bg-white shadow-sm ring-1 ring-black/20',
+            'transition-all duration-150',
+          )}
+          style={{ left: thumbLeft }}
+        />
       </div>
-    </Tooltip>
+    </div>
   );
 }

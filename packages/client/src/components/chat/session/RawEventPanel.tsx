@@ -1,7 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelHeader } from '@/components/ui/PanelHeader';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { SearchBar } from '../conversation/SearchBar.tsx';
 import { JsonViewer } from '../renderers/JsonViewer.tsx';
@@ -16,6 +15,7 @@ import {
 
 const ICON_BTN = 'text-text-muted hover:text-text text-sm';
 const SCROLL_THRESHOLD_PX = 50;
+const MAX_EVENTS = 5000;
 
 const RawEventRow = memo(function RawEventRow({ index, event }: { index: number; event: unknown }) {
   const evtType = getEventType(event);
@@ -54,24 +54,27 @@ export function RawEventPanel({
   const autoScrollRef = useRef(autoScroll);
   autoScrollRef.current = autoScroll;
 
-  function trackNewTypes(evts: unknown[]) {
-    const newTypes = discoverNewTypes(evts, seenTypesRef.current);
+  const trackNewType = useCallback((evt: unknown) => {
+    const newTypes = discoverNewTypes([evt], seenTypesRef.current);
     if (newTypes.length > 0) {
       setVisibleTypes((prev) => addVisibleTypes(prev, newTypes));
     }
-  }
+  }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: trackNewTypes stable via React Compiler
   useEffect(() => {
     if (!onSubscribe) return;
     const unsubscribe = onSubscribe((evt) => {
-      trackNewTypes([evt]);
-      setEvents((prev) => [...prev, evt]);
+      trackNewType(evt);
+      setEvents((prev) =>
+        prev.length >= MAX_EVENTS
+          ? [...prev.slice(prev.length - MAX_EVENTS + 1), evt]
+          : [...prev, evt],
+      );
     });
     return unsubscribe;
-  }, [onSubscribe]);
+  }, [onSubscribe, trackNewType]);
 
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD_PX;
     if (!atBottom && !userScrolledRef.current) {
@@ -80,12 +83,12 @@ export function RawEventPanel({
     } else if (atBottom) {
       userScrolledRef.current = false;
     }
-  }
+  }, []);
 
-  function scrollToBottom() {
+  const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }
+  }, []);
 
   const handleRefresh = async () => {
     if (!onFetch) return;
@@ -94,7 +97,8 @@ export function RawEventPanel({
       const result = await onFetch();
       seenTypesRef.current = new Set();
       setVisibleTypes(new Set());
-      trackNewTypes(result.events);
+      const newTypes = discoverNewTypes(result.events, seenTypesRef.current);
+      if (newTypes.length > 0) setVisibleTypes(addVisibleTypes(new Set(), newTypes));
       setEvents(result.events);
     } finally {
       setLoading(false);
@@ -129,47 +133,41 @@ export function RawEventPanel({
         actions={
           <div className="flex gap-2">
             {onSubscribe && (
-              <Tooltip content="Auto-scroll">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAutoScroll(true);
-                    userScrolledRef.current = false;
-                    scrollToBottom();
-                  }}
-                  className={cn(ICON_BTN, autoScroll && 'text-accent')}
-                >
-                  ⤓
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                title="Auto-scroll"
+                onClick={() => {
+                  setAutoScroll(true);
+                  userScrolledRef.current = false;
+                  scrollToBottom();
+                }}
+                className={cn(ICON_BTN, autoScroll && 'text-accent')}
+              >
+                ⤓
+              </button>
             )}
             {onFetch && (
-              <Tooltip content="Refresh">
-                <button type="button" onClick={handleRefresh} className={ICON_BTN}>
-                  ↻
-                </button>
-              </Tooltip>
+              <button type="button" title="Refresh" onClick={handleRefresh} className={ICON_BTN}>
+                ↻
+              </button>
             )}
             {events.length > 0 && (
-              <Tooltip content="Clear">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEvents([]);
-                    seenTypesRef.current = new Set();
-                    setVisibleTypes(new Set());
-                  }}
-                  className={ICON_BTN}
-                >
-                  ⌀
-                </button>
-              </Tooltip>
-            )}
-            <Tooltip content="Close">
-              <button type="button" onClick={onClose} className={ICON_BTN}>
-                ✕
+              <button
+                type="button"
+                title="Clear"
+                onClick={() => {
+                  setEvents([]);
+                  seenTypesRef.current = new Set();
+                  setVisibleTypes(new Set());
+                }}
+                className={ICON_BTN}
+              >
+                ⌀
               </button>
-            </Tooltip>
+            )}
+            <button type="button" title="Close" onClick={onClose} className={ICON_BTN}>
+              ✕
+            </button>
           </div>
         }
       />

@@ -7,33 +7,30 @@ describe('ThinkingBlock', () => {
   it('renders collapsed by default with "Thinking" label', () => {
     render(<ThinkingBlock content="I need to analyze this code..." />);
     expect(screen.getByText('Thinking')).toBeInTheDocument();
-    // Content is in DOM but hidden via CSS (hidden class)
-    expect(screen.getByText('I need to analyze this code...')).not.toBeVisible();
+    // Radix Collapsible removes content from DOM when closed
+    expect(screen.queryByText('I need to analyze this code...')).toBeNull();
   });
 
-  it('uses <details> element collapsed by default', () => {
+  it('uses Radix Collapsible root collapsed by default', () => {
     const { container } = render(<ThinkingBlock content="thinking..." />);
-    const details = container.querySelector('details');
-    expect(details).toBeInTheDocument();
-    expect(details).not.toHaveAttribute('open');
+    const root = container.querySelector('[data-state="closed"]');
+    expect(root).toBeInTheDocument();
   });
 
-  it('uses <summary> element containing "Thinking"', () => {
-    const { container } = render(<ThinkingBlock content="thinking..." />);
-    const summary = container.querySelector('summary');
-    expect(summary).toBeInTheDocument();
-    expect(summary?.textContent).toContain('Thinking');
+  it('trigger contains "Thinking"', () => {
+    render(<ThinkingBlock content="thinking..." />);
+    expect(screen.getByText('Thinking')).toBeInTheDocument();
   });
 
-  it('has a chevron SVG inside summary', () => {
+  it('has a chevron SVG inside trigger', () => {
     const { container } = render(<ThinkingBlock content="thinking..." />);
-    const summary = container.querySelector('summary');
-    expect(summary?.querySelector('svg')).toBeInTheDocument();
+    const trigger = container.querySelector('button');
+    expect(trigger?.querySelector('svg')).toBeInTheDocument();
   });
 
   it('chevron SVG has explicit size class (else heroicons stretch to fill flex parent)', () => {
     const { container } = render(<ThinkingBlock content="thinking..." />);
-    const svg = container.querySelector('summary svg');
+    const svg = container.querySelector('button svg');
     const classes = svg?.getAttribute('class') ?? '';
     expect(classes).toMatch(/\bw-\d/);
     expect(classes).toMatch(/\bh-\d/);
@@ -41,18 +38,18 @@ describe('ThinkingBlock', () => {
 
   it('expands on click to show thinking content', async () => {
     const { container } = render(<ThinkingBlock content="I need to analyze this code..." />);
-    const summary = container.querySelector('summary')!;
-    await userEvent.click(summary);
-    expect(screen.getByText('I need to analyze this code...')).toBeInTheDocument();
+    const trigger = container.querySelector('button')!;
+    await userEvent.click(trigger);
+    expect(screen.getByText('I need to analyze this code...')).toBeVisible();
   });
 
   it('collapses on second click', async () => {
     const { container } = render(<ThinkingBlock content="I need to analyze this code..." />);
-    const summary = container.querySelector('summary')!;
-    await userEvent.click(summary);
-    expect(screen.getByText('I need to analyze this code...')).toBeInTheDocument();
-    await userEvent.click(summary);
-    // Content remains in DOM but hidden via CSS
-    expect(screen.getByText('I need to analyze this code...')).not.toBeVisible();
+    const trigger = container.querySelector('button')!;
+    await userEvent.click(trigger);
+    expect(screen.getByText('I need to analyze this code...')).toBeVisible();
+    await userEvent.click(trigger);
+    // Radix Collapsible removes content from DOM when closed
+    expect(screen.queryByText('I need to analyze this code...')).toBeNull();
   });
 });

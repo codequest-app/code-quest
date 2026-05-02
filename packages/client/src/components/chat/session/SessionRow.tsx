@@ -1,7 +1,6 @@
 import type { Ack, SessionSummary } from '@code-quest/shared';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { cn } from '@/utils/cn';
 import { formatRelativeDate } from '@/utils/format-relative-date';
 
@@ -58,7 +57,7 @@ export function SessionRow({
     if (!isRenaming || !renameInputRef.current) return;
     const newTitle = renameInputRef.current.value.trim();
     setIsRenaming(false);
-    if (newTitle && newTitle !== title && onRename) {
+    if (newTitle && newTitle !== displayTitle && onRename) {
       const result = await onRename(s.channelId, newTitle);
       if (!result.ok) {
         toast.error(`Rename failed: ${result.error ?? 'Failed to rename'}`);
@@ -83,7 +82,7 @@ export function SessionRow({
     onDelete?.(s.channelId);
   };
 
-  const title = s.title || s.firstUserMessage || 'Untitled';
+  const displayTitle = s.title || s.firstUserMessage || 'Untitled';
 
   return (
     <div
@@ -106,7 +105,7 @@ export function SessionRow({
         <input
           ref={renameInputRef}
           type="text"
-          defaultValue={title}
+          defaultValue={displayTitle}
           className="flex-1 text-sm text-text truncate outline-none border-b border-accent bg-transparent min-w-0"
           onKeyDown={handleKeyDown}
           onBlur={finishRename}
@@ -114,7 +113,7 @@ export function SessionRow({
         />
       ) : (
         <span className="flex-1 text-sm text-text truncate">
-          <HighlightText text={title} query={searchQuery} />
+          <HighlightText text={displayTitle} query={searchQuery} />
         </span>
       )}
       <span className="flex items-center gap-1 shrink-0 ml-2">
@@ -122,26 +121,24 @@ export function SessionRow({
         {(onRename || onDelete) && (
           <span className="hidden group-hover:flex items-center gap-1">
             {onRename && (
-              <Tooltip content="Rename">
-                <button
-                  type="button"
-                  onClick={handleRenameStart}
-                  className="text-text-muted hover:text-text text-xs p-0.5"
-                >
-                  ✏
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                title="Rename"
+                onClick={handleRenameStart}
+                className="text-text-muted hover:text-text text-xs p-0.5"
+              >
+                ✏
+              </button>
             )}
             {onDelete && (
-              <Tooltip content="Delete">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="text-text-muted hover:text-danger text-xs p-0.5"
-                >
-                  🗑
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                title="Delete"
+                onClick={handleDelete}
+                className="text-text-muted hover:text-danger text-xs p-0.5"
+              >
+                🗑
+              </button>
             )}
           </span>
         )}

@@ -498,6 +498,9 @@ describe('MessageList streaming', () => {
       await claude.emit(s.thinkingDelta(' think about this'));
     });
 
+    // ThinkingBlock collapses by default — expand to verify content
+    const trigger = await screen.findByRole('button', { name: /thinking/i });
+    await userEvent.click(trigger);
     expect(await screen.findByText(/Let me think about this/)).toBeInTheDocument();
   });
 
@@ -550,6 +553,9 @@ describe('MessageList streaming', () => {
     });
     await emitAssistantTurn(claude, 'ok');
 
+    // Expand ThinkingBlock — Radix Collapsible removes content from DOM when closed
+    const trigger = screen.getByRole('button', { name: /thought for/i });
+    await userEvent.click(trigger);
     const thinkElements = screen.queryAllByText(/Let me think\.\.\./);
     expect(thinkElements).toHaveLength(1);
   });

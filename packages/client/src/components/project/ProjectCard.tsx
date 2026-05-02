@@ -2,7 +2,6 @@ import { FolderIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import * as Popover from '@radix-ui/react-popover';
 import { useContext, useState } from 'react';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { NavigationActionsContext } from '@/contexts/NavigationContext';
 import { ProjectActionsContext } from '@/contexts/ProjectContext';
 import { SessionStateContext } from '@/contexts/SessionContext';
@@ -94,58 +93,53 @@ export function ProjectCard({
                 active ? 'bg-accent/10' : 'hover:bg-white/5',
               )}
             >
-              <Tooltip content={cwd ?? label}>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex items-center gap-1.5 px-2 py-1.5 text-xs w-full min-w-0 text-left',
-                    active ? 'text-text' : 'text-text-muted group-hover:text-text',
-                    actions && cwd ? 'pr-12' : '',
-                  )}
-                  onClick={onSelect}
-                >
-                  <FolderIcon className="w-4 h-4 shrink-0" />
-                  <span className="truncate flex-1 font-medium">{label}</span>
-                  {worktreeCount && worktreeCount > 0 ? (
-                    <span className="shrink-0 font-mono text-xs text-text-subtle">
-                      {worktreeCount}wt
-                    </span>
-                  ) : null}
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 px-2 py-1.5 text-xs w-full min-w-0 text-left',
+                  active ? 'text-text' : 'text-text-muted group-hover:text-text',
+                  actions && cwd ? 'pr-12' : '',
+                )}
+                title={cwd ?? label}
+                onClick={onSelect}
+              >
+                <FolderIcon className="w-4 h-4 shrink-0" />
+                <span className="truncate flex-1 font-medium">{label}</span>
+                {worktreeCount && worktreeCount > 0 ? (
+                  <span className="shrink-0 font-mono text-xs text-text-subtle">
+                    {worktreeCount}wt
+                  </span>
+                ) : null}
+              </button>
               {actions && cwd ? (
                 <div className="absolute top-1/2 -translate-y-1/2 right-1 flex items-center gap-0.5">
-                  <Tooltip content={pinned ? 'Unpin' : 'Pin'}>
-                    <button
-                      type="button"
-                      aria-label={pinned ? 'Unpin' : 'Pin'}
-                      onClick={handleTogglePin}
-                      className={cn(
-                        'shrink-0 p-0.5 rounded hover:text-text',
-                        pinned
-                          ? 'text-accent'
-                          : 'text-text-muted opacity-0 group-hover:opacity-100',
-                      )}
-                    >
-                      {pinned ? (
-                        <StarSolid className="w-3.5 h-3.5" />
-                      ) : (
-                        <StarOutline className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </Tooltip>
+                  <button
+                    type="button"
+                    aria-label={pinned ? 'Unpin' : 'Pin'}
+                    title={pinned ? 'Unpin' : 'Pin'}
+                    onClick={handleTogglePin}
+                    className={cn(
+                      'shrink-0 p-0.5 rounded hover:text-text',
+                      pinned ? 'text-accent' : 'text-text-muted opacity-0 group-hover:opacity-100',
+                    )}
+                  >
+                    {pinned ? (
+                      <StarSolid className="w-3.5 h-3.5" />
+                    ) : (
+                      <StarOutline className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                   <ProjectDropdownMenu
                     trigger={
-                      <Tooltip content="More">
-                        <button
-                          type="button"
-                          aria-label="More actions"
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
-                        >
-                          ⋯
-                        </button>
-                      </Tooltip>
+                      <button
+                        type="button"
+                        aria-label="More actions"
+                        title="More"
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 px-1 text-text-muted hover:text-text opacity-0 group-hover:opacity-100"
+                      >
+                        ⋯
+                      </button>
                     }
                     {...menuCallbacks}
                   />

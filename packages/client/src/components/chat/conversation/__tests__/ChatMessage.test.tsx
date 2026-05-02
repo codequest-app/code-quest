@@ -231,7 +231,8 @@ describe('ChatMessage', () => {
     const { container } = render(
       <ChatMessage message={{ ...base, type: 'thinking', content: 'This is **bold** thinking' }} />,
     );
-    // ThinkingBlock renders MarkdownContent in DOM (CSS-hidden when collapsed)
+    // Expand ThinkingBlock — Radix Collapsible removes content from DOM when closed
+    await userEvent.click(container.querySelector('button')!);
     expect(container.querySelector('strong')).toBeInTheDocument();
     expect(container.querySelector('strong')?.textContent).toBe('bold');
   });
