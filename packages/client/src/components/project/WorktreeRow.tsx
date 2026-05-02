@@ -3,7 +3,7 @@ import { forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } fr
 import { cn } from '@/utils/cn';
 import { pluralize } from '@/utils/pluralize';
 
-export interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
+interface WorktreeRowProps extends HTMLAttributes<HTMLDivElement> {
   worktree: WorktreeInfo;
   active: boolean;
   liveSessions: number;
