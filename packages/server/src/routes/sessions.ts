@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 
@@ -27,6 +28,7 @@ export function createSessionsRouter(
         res.json(result);
       }
     } catch (err) {
+      logger.error({ err }, 'Failed to list sessions');
       res
         .status(500)
         .json({ error: err instanceof Error ? err.message : 'Failed to list sessions' });
@@ -42,6 +44,7 @@ export function createSessionsRouter(
       }
       res.json(session);
     } catch (err) {
+      logger.error({ err }, 'Failed to get session');
       res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to get session' });
     }
   });
@@ -58,6 +61,7 @@ export function createSessionsRouter(
       const paged = events.slice(offset, offset + limit);
       res.json({ events: paged, total: events.length });
     } catch (err) {
+      logger.error({ err }, 'Failed to get events');
       res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to get events' });
     }
   });

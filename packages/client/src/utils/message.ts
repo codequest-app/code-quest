@@ -7,8 +7,8 @@ import {
   historyUserSchema,
   type SessionStats,
 } from '@code-quest/shared';
-import type { ChannelState } from '../types/chat';
-import type { Message } from '../types/ui';
+import type { ChannelState } from '../types/chat.ts';
+import type { Message } from '../types/ui.ts';
 
 /** Map server session stats shape to client ChatStats. */
 export function mapSessionStats(s: SessionStats): ChatStats {
@@ -34,7 +34,7 @@ export const msg = <T extends Message['type']>(
 /** Escape hatch for runtime-supplied `type` strings not in the Message union
  *  (e.g., forward-compat CLI events). UI has a fallback renderer. */
 export function systemMessage(type: string, content: string): Message {
-  return msg({ role: 'system', type: type as never, content });
+  return msg({ role: 'system', type: type as Message['type'], content });
 }
 
 /** Append a message to channel state. */

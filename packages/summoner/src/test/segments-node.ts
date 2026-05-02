@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createSegments, type SegmentBuilders } from './segment-builders';
+import { createSegments, type SegmentBuilders } from './segment-builders.ts';
 
 // ── CLI fixture templates ──
 // Each template is loaded from __fixtures__/claude/{real,synthetic}/*.jsonl.

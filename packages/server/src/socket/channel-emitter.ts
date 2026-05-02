@@ -3,10 +3,6 @@ import { logger } from '../logger.ts';
 import type { Channel } from './channel.ts';
 import type { SocketCallback, TypedSocket } from './types.ts';
 
-// socket.io's typed `on(event, ...)` requires `event` to be a known literal
-// from ClientToServerEvents; dynamic registration needs this untyped view.
-type DynamicSocketOn = { on: (event: string, fn: (...args: unknown[]) => void) => void };
-
 /** Unified handler signature for all events (runner + client). */
 type EmitterHandler = (
   ch: Channel | null,
@@ -175,7 +171,7 @@ export class ChannelEmitter {
     // Wire client socket events for emitter.on subscribers only.
     // NOTE: handlers must be registered (emitter.on) before connections are accepted.
     for (const event of this.eventMap.keys()) {
-      (socket as unknown as DynamicSocketOn).on(event, (...args: unknown[]) => {
+      socket.on(event, (...args: unknown[]) => {
         const lastArg = args[args.length - 1];
         const hasCb = typeof lastArg === 'function';
         const cb: SocketCallback | undefined = hasCb ? (lastArg as SocketCallback) : undefined;
