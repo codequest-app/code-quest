@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { type DiffEntry, generateUnifiedDiff } from '@/utils/diff';
 import { DiffViewer } from '../renderers/DiffViewer.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
@@ -48,11 +47,9 @@ export function ContentPreviewDialog({
               </Button>
             </div>
           )}
-          <Tooltip content="Close">
-            <Button variant="ghost" aria-label="Close" onClick={onClose}>
-              ✕
-            </Button>
-          </Tooltip>
+          <Button variant="ghost" aria-label="Close" title="Close" onClick={onClose}>
+            ✕
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { InlineAction } from '@/components/ui/InlineAction';
-import { Tooltip } from '@/components/ui/Tooltip';
 import type { MessageNode } from '@/utils/message-tree';
 import { pluralize } from '@/utils/pluralize';
 import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
@@ -34,11 +33,13 @@ export function SubagentChildren({
         </button>
         {model && <span className="text-xs text-text-muted/40 font-mono">{model}</span>}
         {onStopTask && parentToolId && (
-          <Tooltip content="Stop subagent">
-            <InlineAction variant="danger" onClick={() => onStopTask(parentToolId)}>
-              ■
-            </InlineAction>
-          </Tooltip>
+          <InlineAction
+            variant="danger"
+            title="Stop subagent"
+            onClick={() => onStopTask(parentToolId)}
+          >
+            ■
+          </InlineAction>
         )}
       </div>
       {expanded && (
