@@ -5,7 +5,7 @@ export type SearchStatus = 'idle' | 'loading' | 'done';
 
 import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { slashPaletteState } from '@/components/command-menu/slash-palette-state';
+import { slashPaletteState } from '@/components/chat/compose/command-menu/slash-palette-state';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';
 import { cn } from '@/utils/cn';
 import { getMentionQuery, MENTION_REGEX } from '@/utils/slash-query';
@@ -48,6 +48,11 @@ const TEXTAREA_CLASS =
   'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
 
 const MENTION_LISTBOX_ID = 'mention-dropdown-listbox';
+const MENTION_DEBOUNCE_MS = 200;
+
+function scrollActiveIntoView(el: HTMLDivElement | null) {
+  el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+}
 
 export function ComposeInput({
   containerRef,
@@ -102,10 +107,6 @@ export function ComposeInput({
   const [fileResults, setFileResults] = useState<FsSearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const scrollActiveIntoView = (el: HTMLDivElement | null) => {
-    el?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
-  };
-
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle');
 
   const mentionQuery = mentionOpen ? getMentionQuery(value, cursorPos) : null;
@@ -116,7 +117,7 @@ export function ComposeInput({
     const files = result.ok ? result.data.files : [];
     setFileResults(sortEntriesDirsFirst(files));
     setSearchStatus('done');
-  }, 200);
+  }, MENTION_DEBOUNCE_MS);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: debouncedSearch is stable (useDebouncedCallback)
   useEffect(() => {

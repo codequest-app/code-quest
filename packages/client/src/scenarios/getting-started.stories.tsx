@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect } from 'storybook/test';
-import { ChatPanel } from '../components/chat/ChatPanel.tsx';
+import { ChatSession } from '../components/chat/ChatSession.tsx';
 import {
   expectTextbox,
   SCENARIO_CLASS,
@@ -9,8 +9,8 @@ import {
 } from '../test/story-decorator.tsx';
 import { makeSimpleQA } from '../test/story-fixtures.ts';
 
-const meta: Meta<typeof ChatPanel> = {
-  component: ChatPanel,
+const meta: Meta<typeof ChatSession> = {
+  component: ChatSession,
   title: 'Scenarios/Getting Started',
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

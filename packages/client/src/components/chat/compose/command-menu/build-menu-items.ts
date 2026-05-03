@@ -69,9 +69,9 @@ export function buildMenuItems(params: BuildMenuItemsParams): MenuSections {
   const { slashCommands, registry, compose } = params;
 
   const local = params.localFeatures ?? [];
-  const featureById = new Map<string, Feature>();
-  for (const f of registry.getFeatures()) featureById.set(f.id, f);
-  for (const f of local) featureById.set(f.id, f);
+  const featureById = new Map<string, Feature>(
+    [...registry.getFeatures(), ...local].map((f) => [f.id, f]),
+  );
   const features = [...featureById.values()];
 
   const section = (name: FeatureSection) => buildSection(features, name);

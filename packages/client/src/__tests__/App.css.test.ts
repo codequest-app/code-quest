@@ -12,7 +12,7 @@ const hoverTintConsumers = {
   ReviewUpsellBanner: readSrc('components/chat/plan-review/ReviewUpsellBanner.tsx'),
   MentionDropdown: readSrc('components/chat/compose/MentionDropdown.tsx'),
   ModelPickerPopover: readSrc('components/settings/ModelPickerPopover.tsx'),
-  CommandMenu: readSrc('components/command-menu/CommandMenu.tsx'),
+  CommandMenu: readSrc('components/chat/compose/command-menu/CommandMenu.tsx'),
   // EffortSwitch intentionally uses `bg-white` for the slider thumb — a
   // theme-invariant affordance on the colored `bg-toggle` fill. Excluded
   // from the hover-tint consumer list for that reason.

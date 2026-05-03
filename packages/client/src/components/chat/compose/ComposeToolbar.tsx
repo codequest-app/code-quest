@@ -8,7 +8,7 @@ import {
 import * as Popover from '@radix-ui/react-popover';
 import { lazy, Suspense, useState, useSyncExternalStore } from 'react';
 import { z } from 'zod';
-import { CommandMenu } from '@/components/command-menu/CommandMenu';
+import { CommandMenu } from '@/components/chat/compose/command-menu/CommandMenu';
 import { IconButton } from '@/components/ui/IconButton';
 import { useAppInit } from '@/contexts/AppInitContext';
 import { useChannelCompose, useChannelConfig, useChannelMessages } from '@/contexts/channel';

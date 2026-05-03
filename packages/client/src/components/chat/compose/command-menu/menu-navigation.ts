@@ -2,7 +2,9 @@ import type { MenuItem } from './build-menu-items.ts';
 
 const NAV_KEYS = ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'] as const;
 
-export { NAV_KEYS };
+export function isNavKey(key: string): boolean {
+  return NAV_KEYS.includes(key as (typeof NAV_KEYS)[number]);
+}
 
 export function navigateItems(
   key: string,
@@ -15,13 +17,13 @@ export function navigateItems(
   if (key === 'ArrowDown' || key === 'ArrowUp') {
     if (items.length === 0) return { newActiveId: activeId, shouldSelect: false };
     const idx = items.findIndex((i) => i.id === activeId);
-    let next: number;
+    let nextIndex: number;
     if (key === 'ArrowDown') {
-      next = idx < items.length - 1 ? idx + 1 : 0;
+      nextIndex = idx < items.length - 1 ? idx + 1 : 0;
     } else {
-      next = idx > 0 ? idx - 1 : items.length - 1;
+      nextIndex = idx > 0 ? idx - 1 : items.length - 1;
     }
-    return { newActiveId: items[next]?.id ?? null, shouldSelect: false };
+    return { newActiveId: items[nextIndex]?.id ?? null, shouldSelect: false };
   }
   return { newActiveId: activeId, shouldSelect: false };
 }

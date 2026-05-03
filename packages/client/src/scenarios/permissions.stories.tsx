@@ -1,6 +1,6 @@
 import type { PendingControl } from '@code-quest/shared';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChatPanel } from '../components/chat/ChatPanel.tsx';
+import { ChatSession } from '../components/chat/ChatSession.tsx';
 import { expectTextbox, SCENARIO_CLASS, withStoryChannel } from '../test/story-decorator.tsx';
 import {
   makePlanReviewFlow,
@@ -9,8 +9,8 @@ import {
 } from '../test/story-fixtures.ts';
 import type { Message } from '../types/ui.ts';
 
-const meta: Meta<typeof ChatPanel> = {
-  component: ChatPanel,
+const meta: Meta<typeof ChatSession> = {
+  component: ChatSession,
   title: 'Scenarios/Permissions',
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

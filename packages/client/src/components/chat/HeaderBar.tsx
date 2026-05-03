@@ -1,9 +1,5 @@
-import { ClockIcon } from '@heroicons/react/24/outline';
-import * as Popover from '@radix-ui/react-popover';
 import { useChannelConfig, useChannelId } from '@/contexts/channel';
 import { isThinkingActive, shortModelName } from '@/utils/model-utils';
-
-const HDR_BTN = 'text-text-muted hover:text-text text-xs transition-colors cursor-pointer';
 
 const THINKING_LABELS: Record<string, string> = {
   default_on: 'Thinking',
@@ -17,10 +13,10 @@ function thinkingLevelLabel(level: string): string {
 
 interface HeaderBarProps {
   title?: string | null;
-  showResumeButton?: boolean;
+  children?: React.ReactNode;
 }
 
-export function HeaderBar({ title, showResumeButton }: HeaderBarProps): React.JSX.Element {
+export function HeaderBar({ title, children }: HeaderBarProps): React.JSX.Element {
   const channelId = useChannelId();
   const { model, thinkingLevel, availableModels } = useChannelConfig();
 
@@ -45,19 +41,7 @@ export function HeaderBar({ title, showResumeButton }: HeaderBarProps): React.JS
         <span className="text-text-muted/60 text-xs truncate flex-1 min-w-0">{sessionLabel}</span>
       )}
       {!sessionLabel && <div className="flex-1" />}
-
-      {showResumeButton && (
-        <Popover.Trigger asChild>
-          <button
-            type="button"
-            title="Session history"
-            aria-label="Session history"
-            className={HDR_BTN}
-          >
-            <ClockIcon className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </Popover.Trigger>
-      )}
+      {children}
     </header>
   );
 }
