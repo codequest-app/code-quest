@@ -1,9 +1,9 @@
 import { FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { toast } from 'sonner';
 import { CommandPaletteProvider, useCommandPalette } from '@/contexts/CommandPaletteContext';
-import { useActiveCwd, useNavigationState } from '@/contexts/NavigationContext';
+import { useNavigationState } from '@/contexts/NavigationContext';
 import { useProjectActions, useProjectState } from '@/contexts/ProjectContext';
 import { useSession } from '@/contexts/SessionContext';
 import { TabProvider } from '@/contexts/TabContext';
@@ -17,7 +17,6 @@ import { TopScopeSwitcher } from '../project/TopScopeSwitcher.tsx';
 import { SettingsDialog } from '../settings/SettingsDialog.tsx';
 import { DrawerAside } from './DrawerAside.tsx';
 import { EmptyState } from './EmptyState.tsx';
-import { RightPane } from './RightPane.tsx';
 import { TabContainer } from './TabContainer.tsx';
 import { WorkspaceTopbar } from './WorkspaceTopbar.tsx';
 
@@ -73,34 +72,30 @@ function WorkspaceLayoutInner() {
   const { addProject, setActiveProject } = useProjectActions();
   const breakpoint = useBreakpoint();
   const isMobile = breakpoint === 'mobile';
+  const [leftOpen, setLeftOpen] = useState(true);
 
-  // One toggle per pane, semantics differ by breakpoint:
-  //   lg+:  open=true → docked column visible; open=false → collapsed (width 0)
-  //   <lg:  open=true → drawer slid in;        open=false → drawer slid out
-  // The two semantics flip meaning on resize, so we re-sync to the
-  // breakpoint default whenever it changes — otherwise a desktop-open
-  // sidebar becomes a content-blocking mobile drawer the instant the
-  // window narrows.
-  const [leftOpen, setLeftOpen] = useState(() => breakpoint === 'desktop');
-  const [rightOpen, setRightOpen] = useState(() => breakpoint === 'desktop');
-  useEffect(() => {
-    const isDesktop = breakpoint === 'desktop';
-    setLeftOpen(isDesktop);
-    setRightOpen(isDesktop);
-  }, [breakpoint]);
+  const handleAddProject = useCallback(
+    async (cwd: string) => {
+      const res = await addProject(cwd);
+      if ('error' in res) {
+        toast.error(formatAddProjectError(res.error, res.path, cwd));
+        return;
+      }
+      setDialogOpen(false);
+    },
+    [addProject],
+  );
 
-  async function handleAddProject(cwd: string) {
-    const res = await addProject(cwd);
-    if ('error' in res) {
-      toast.error(formatAddProjectError(res.error, res.path, cwd));
-      return;
-    }
-    setDialogOpen(false);
-  }
+  const handleActivateSession = useCallback(
+    (channelId: string) => {
+      const s = sessionsMap.get(channelId);
+      if (s) setActiveProject(s.projectRoot);
+    },
+    [sessionsMap, setActiveProject],
+  );
 
-  const hasCwd = activeProjectCwd !== null;
-  const onToggleLeft = () => setLeftOpen((v) => !v);
-  const onToggleRight = !hasCwd ? undefined : () => setRightOpen((v) => !v);
+  const onToggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
+  const addedProjectCwds = useMemo(() => new Set(projects.map((p) => p.cwd)), [projects]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -120,12 +115,8 @@ function WorkspaceLayoutInner() {
             onOpenSettings={() => setSettingsOpen(true)}
             onOpenSearch={() => openPalette()}
             onToggleLeft={onToggleLeft}
-            onToggleRight={onToggleRight}
             sessions={sessions}
-            onActivateSession={(channelId) => {
-              const s = sessionsMap.get(channelId);
-              if (s) setActiveProject(s.projectRoot);
-            }}
+            onActivateSession={handleActivateSession}
           >
             <TopScopeSwitcher
               projects={projects}
@@ -143,15 +134,6 @@ function WorkspaceLayoutInner() {
                 className="lg:hidden fixed inset-0 z-overlay bg-black/40"
               />
             )}
-            {rightOpen && hasCwd && (
-              <button
-                type="button"
-                aria-label="Dismiss right pane"
-                onClick={() => setRightOpen(false)}
-                className="lg:hidden fixed inset-0 z-overlay bg-black/40"
-              />
-            )}
-
             <DrawerAside
               side="left"
               open={leftOpen}
@@ -177,18 +159,6 @@ function WorkspaceLayoutInner() {
                 sessions={sessions}
               />
             </main>
-
-            {hasCwd && (
-              <DrawerAside
-                side="right"
-                open={rightOpen}
-                mobileWidthClass="w-[min(85vw,360px)]"
-                dockedWidthClass="lg:w-80"
-                label="right-pane-drawer"
-              >
-                <RightPaneWithCwd />
-              </DrawerAside>
-            )}
           </div>
         </>
       )}
@@ -196,7 +166,7 @@ function WorkspaceLayoutInner() {
         open={dialogOpen}
         onSelect={handleAddProject}
         onClose={() => setDialogOpen(false)}
-        addedProjectCwds={new Set(projects.map((p) => p.cwd))}
+        addedProjectCwds={addedProjectCwds}
       />
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
@@ -231,18 +201,5 @@ function ProjectsTabContainer({
         </section>
       ))}
     </div>
-  );
-}
-
-function RightPaneWithCwd() {
-  const cwd = useActiveCwd();
-  if (!cwd) return null;
-  return (
-    <RightPane
-      cwd={cwd}
-      onMention={(path) => {
-        toast(`Mention queued: ${path}`);
-      }}
-    />
   );
 }

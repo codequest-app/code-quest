@@ -1,7 +1,8 @@
 import type { WorktreeInfo } from '@code-quest/shared';
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import * as Tabs from '@radix-ui/react-tabs';
-import { memo, useEffect } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ChannelProvider } from '@/contexts/channel';
 import { useGitState } from '@/contexts/GitContext';
 import { useNavigationActions } from '@/contexts/NavigationContext';
@@ -10,8 +11,9 @@ import { useSession } from '@/contexts/SessionContext';
 import { type TabMeta, useTabActions, useTabState } from '@/contexts/TabContext';
 import { basename } from '@/utils/basename';
 import { cn } from '@/utils/cn';
-import { ChatSession } from '../chat/ChatSession.tsx';
+import { ChatView } from '../chat/ChatView.tsx';
 import { EmptyState } from './EmptyState.tsx';
+import { RightPane } from './RightPane.tsx';
 import { TabBar } from './TabBar.tsx';
 
 export function findWorktreeByCwd(
@@ -29,6 +31,8 @@ export function findWorktreeByCwd(
 
 interface TabContentProps extends Pick<TabMeta, 'cwd' | 'title' | 'launchOnMount'> {
   channelId: string;
+  rightOpen: boolean;
+  onToggleRight: () => void;
 }
 
 const TabContent = memo(function TabContent({
@@ -36,6 +40,8 @@ const TabContent = memo(function TabContent({
   cwd,
   title,
   launchOnMount,
+  rightOpen,
+  onToggleRight,
 }: TabContentProps) {
   const { setTabTitle, setTabStatus, createNewTab } = useTabActions();
   return (
@@ -49,20 +55,30 @@ const TabContent = memo(function TabContent({
       }}
       onNewChannel={(newCwd) => createNewTab({ cwd: newCwd })}
     >
-      <ChatSession title={title} />
+      <ChatView
+        title={title}
+        onToggleRight={cwd ? onToggleRight : undefined}
+        rightPane={
+          cwd && rightOpen ? (
+            <RightPane cwd={cwd} onMention={(path) => toast(`Mention queued: ${path}`)} />
+          ) : null
+        }
+      />
     </ChannelProvider>
   );
 });
 
-export const TabContainer: React.MemoExoticComponent<
-  (props: { projectCwd: string }) => React.JSX.Element
-> = memo(function TabContainer({ projectCwd }: { projectCwd: string }): React.JSX.Element {
+export const TabContainer: React.FC<{ projectCwd: string }> = memo(function TabContainer({
+  projectCwd,
+}) {
   const { activeTabId, tabs } = useTabState();
   const { setActiveTab, removeTab, createNewTab } = useTabActions();
   const { closeSession } = useSession();
   const { listing } = useGitState();
   const { setActiveCwd } = useNavigationActions();
   const { activeProjectCwd } = useProjectState();
+  const [rightOpen, setRightOpen] = useState(true);
+  const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
 
   const isThisActive = projectCwd === activeProjectCwd;
   const activeTabCwd = activeTabId ? (tabs[activeTabId]?.cwd ?? null) : null;
@@ -140,6 +156,8 @@ export const TabContainer: React.MemoExoticComponent<
               cwd={meta.cwd}
               title={meta.title}
               launchOnMount={meta.launchOnMount}
+              rightOpen={rightOpen}
+              onToggleRight={toggleRight}
             />
           </Tabs.Content>
         ))}

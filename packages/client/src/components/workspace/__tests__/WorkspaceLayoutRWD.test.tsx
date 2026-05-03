@@ -14,11 +14,8 @@ async function setupWithProject(width: number) {
 function sidebar() {
   return screen.getByRole('complementary', { name: 'sidebar-panel' });
 }
-function rightPane() {
-  return screen.getByRole('complementary', { name: 'right-pane-drawer' });
-}
-function queryRightPane() {
-  return screen.queryByRole('complementary', { name: 'right-pane-drawer' });
+function rightPaneBody() {
+  return screen.queryByLabelText('right-pane-body');
 }
 
 afterEach(() => vi.restoreAllMocks());
@@ -30,22 +27,24 @@ describe('WorkspaceLayout — Desktop (≥1024px)', () => {
     expect(screen.queryByTitle('Projects')).toBeNull();
   });
 
-  it('renders sidebar + right pane as docked columns by default', async () => {
+  it('renders sidebar as docked column by default', async () => {
     await setupWithProject(1440);
     expect(sidebar()).toBeInTheDocument();
     expect(sidebar()).toHaveAttribute('data-open');
-    expect(rightPane()).toBeInTheDocument();
-    expect(rightPane()).toHaveAttribute('data-open');
   });
 
-  it('renders the RightPane body inside the right pane element', async () => {
+  it('renders the RightPane body visible by default on desktop', async () => {
     await setupWithProject(1440);
-    expect(screen.getByLabelText('right-pane-body')).toBeInTheDocument();
+    expect(rightPaneBody()).toBeInTheDocument();
   });
 
-  it('shows Toggle sidebar + Toggle right pane in the topbar', async () => {
+  it('shows Toggle sidebar in the topbar', async () => {
     await setupWithProject(1440);
     expect(screen.getByRole('button', { name: /toggle sidebar/i })).toBeInTheDocument();
+  });
+
+  it('shows Toggle right pane button in the chat header', async () => {
+    await setupWithProject(1440);
     expect(screen.getByRole('button', { name: /toggle right pane/i })).toBeInTheDocument();
   });
 
@@ -62,40 +61,31 @@ describe('WorkspaceLayout — Tablet (768–1023px)', () => {
     expect(screen.queryByRole('complementary', { name: 'activity-bar' })).toBeNull();
   });
 
-  it('sidebar element exists in DOM but starts closed (no data-open)', async () => {
+  it('sidebar element exists in DOM and starts open', async () => {
     await setupWithProject(800);
     expect(sidebar()).toBeInTheDocument();
-    expect(sidebar()).not.toHaveAttribute('data-open');
-  });
-
-  it('right pane element exists in DOM but starts closed', async () => {
-    await setupWithProject(800);
-    expect(rightPane()).toBeInTheDocument();
-    expect(rightPane()).not.toHaveAttribute('data-open');
-  });
-
-  it('Toggle sidebar opens the sidebar drawer', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
     expect(sidebar()).toHaveAttribute('data-open');
   });
 
-  it('Toggle right pane opens the right pane drawer', async () => {
-    const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPane()).toHaveAttribute('data-open');
+  it('right pane starts visible on tablet', async () => {
+    await setupWithProject(800);
+    expect(rightPaneBody()).toBeInTheDocument();
   });
 
-  it('clicking right backdrop closes the right drawer', async () => {
+  it('Toggle sidebar closes the sidebar drawer', async () => {
+    const { user } = await setupWithProject(800);
+    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
+    expect(sidebar()).not.toHaveAttribute('data-open');
+  });
+
+  it('Toggle right pane hides the right pane', async () => {
     const { user } = await setupWithProject(800);
     await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    await user.click(screen.getByRole('button', { name: /dismiss right pane/i }));
-    expect(rightPane()).not.toHaveAttribute('data-open');
+    expect(rightPaneBody()).not.toBeInTheDocument();
   });
 
   it('clicking backdrop closes the sidebar drawer', async () => {
     const { user } = await setupWithProject(800);
-    await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
     await user.click(screen.getByRole('button', { name: /dismiss sidebar/i }));
     expect(sidebar()).not.toHaveAttribute('data-open');
   });
@@ -113,22 +103,22 @@ describe('WorkspaceLayout — Mobile (<768px)', () => {
     expect(screen.queryByRole('complementary', { name: 'activity-bar' })).toBeNull();
   });
 
-  it('both panes start closed but elements exist', async () => {
+  it('sidebar starts open and right pane starts visible', async () => {
     await setupWithProject(375);
-    expect(sidebar()).not.toHaveAttribute('data-open');
-    expect(rightPane()).not.toHaveAttribute('data-open');
+    expect(sidebar()).toHaveAttribute('data-open');
+    expect(rightPaneBody()).toBeInTheDocument();
   });
 
-  it('Toggle sidebar opens drawer on mobile', async () => {
+  it('Toggle sidebar closes drawer on mobile', async () => {
     const { user } = await setupWithProject(375);
     await user.click(screen.getByRole('button', { name: /toggle sidebar/i }));
-    expect(sidebar()).toHaveAttribute('data-open');
+    expect(sidebar()).not.toHaveAttribute('data-open');
   });
 
-  it('Toggle right pane opens right drawer on mobile', async () => {
+  it('Toggle right pane hides right pane on mobile', async () => {
     const { user } = await setupWithProject(375);
     await user.click(screen.getByRole('button', { name: /toggle right pane/i }));
-    expect(rightPane()).toHaveAttribute('data-open');
+    expect(rightPaneBody()).not.toBeInTheDocument();
   });
 
   it('shows Settings button in mobile topbar; click opens dialog', async () => {
@@ -165,20 +155,20 @@ describe('WorkspaceLayout — state preservation across breakpoints', () => {
     expect(elAfter).toBe(elBefore);
   });
 
-  it('crossing desktop→mobile auto-collapses both drawers (state syncs to breakpoint)', async () => {
+  it('crossing desktop→mobile does NOT auto-collapse sidebar or hide right pane', async () => {
     const fakeMM = setupMatchMedia(1440);
     const result = await renderWithWorkspace();
     const project = await result.addProject();
     await project.launchSession();
     expect(sidebar()).toHaveAttribute('data-open');
-    expect(rightPane()).toHaveAttribute('data-open');
+    expect(rightPaneBody()).toBeInTheDocument();
 
     act(() => {
       fakeMM.triggerChange(375);
     });
 
-    expect(sidebar()).not.toHaveAttribute('data-open');
-    expect(queryRightPane()).not.toHaveAttribute('data-open');
+    expect(sidebar()).toHaveAttribute('data-open');
+    expect(rightPaneBody()).toBeInTheDocument();
   });
 
   it('sidebar element is always present in the DOM (visibility CSS-driven)', async () => {

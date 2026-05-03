@@ -8,8 +8,16 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useChannelControl, useChannelMessages, useMessageVisibility } from '@/contexts/channel';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { useCommandPalette } from '@/contexts/CommandPaletteContext';
+import {
+  useChannelControl,
+  useChannelId,
+  useChannelMessages,
+  useMessageVisibility,
+} from '@/contexts/channel';
 import type { ForkFn, RewindFn } from '@/types/ui';
+import { NO_FORM } from '@/utils/hotkey-options';
 import { isMessageVisible } from '@/utils/isMessageVisible';
 import {
   buildMessageTree,
@@ -24,8 +32,10 @@ import { CollapsibleTimeline } from './CollapsibleTimeline.tsx';
 import { SubagentChildren } from './SubagentChildren.tsx';
 
 const SCROLL_THRESHOLD_PX = 50;
+const SMOOTH_SCROLL_RESET_MS = 500;
+const ESTIMATED_ITEM_HEIGHT_PX = 80;
 
-export interface MessageListHandle {
+interface MessageListHandle {
   scrollToMessage: (id: string) => void;
 }
 
@@ -43,8 +53,27 @@ function scrollToEnd(
   } else {
     setTimeout(() => {
       programmaticScrollRef.current = false;
-    }, 500);
+    }, SMOOTH_SCROLL_RESET_MS);
   }
+}
+
+function spotlightElement(el: Element) {
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const bubble = (el.querySelector('[data-type]') ?? el) as HTMLElement;
+  bubble.classList.remove('spotlight-highlight');
+  void bubble.offsetHeight;
+  bubble.classList.add('spotlight-highlight');
+  bubble.addEventListener('animationend', () => bubble.classList.remove('spotlight-highlight'), {
+    once: true,
+  });
+}
+
+function expandCollapsedIfNeeded(container: Element, id: string): boolean {
+  const collapsed = container.querySelector(`[data-collapsed-ids*="${id}"]`);
+  if (!collapsed) return false;
+  const expandBtn = collapsed.querySelector('button') as HTMLButtonElement | null;
+  expandBtn?.click();
+  return true;
 }
 
 function collectIds(node: MessageNode, topIndex: number, map: Map<string, number>) {
@@ -120,6 +149,7 @@ export const MessageList: React.ForwardRefExoticComponent<
   { searchQuery = '' },
   ref,
 ) {
+  const channelId = useChannelId();
   const {
     messages,
     isProcessing,
@@ -129,12 +159,23 @@ export const MessageList: React.ForwardRefExoticComponent<
   } = useChannelMessages();
   const { stopTask: onStopTask, diffRespond: onDiffRespond } = useChannelControl();
   const { enabledTypes, registerUnknownType, unknownTypes } = useMessageVisibility();
+  const { registerJumpTo, unregisterJumpTo, openPalette } = useCommandPalette();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAtBottomRef = useRef(true);
   const programmaticScrollRef = useRef(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const registeredCountRef = useRef(0);
+  const selfRef = useRef<MessageListHandle | null>(null);
+
+  useEffect(() => {
+    if (!channelId) return;
+    const scrollTo = (messageId: string) => selfRef.current?.scrollToMessage(messageId);
+    registerJumpTo(channelId, scrollTo);
+    return () => unregisterJumpTo(channelId);
+  }, [channelId, registerJumpTo, unregisterJumpTo]);
+
+  useHotkeys('mod+f', () => openPalette({ tab: 'messages' }), NO_FORM, [openPalette]);
 
   const handleScroll = (e?: React.UIEvent<HTMLElement>) => {
     if (programmaticScrollRef.current) return;
@@ -209,7 +250,7 @@ export const MessageList: React.ForwardRefExoticComponent<
   const virtualizer = useVirtualizer({
     count: displayGroups.length,
     getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 80,
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT_PX,
     overscan: 5,
   });
 
@@ -229,56 +270,37 @@ export const MessageList: React.ForwardRefExoticComponent<
     setShowScrollButton(!atBottom);
   }, [totalSize]);
 
-  useImperativeHandle(ref, () => ({
-    scrollToMessage(id: string) {
-      const container = scrollContainerRef.current;
-      if (!container) return;
+  const scrollToMessage = (id: string) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-      const collapsed = container.querySelector(`[data-collapsed-ids*="${id}"]`);
-      if (collapsed) {
-        const expandBtn = collapsed.querySelector('button') as HTMLButtonElement | null;
-        expandBtn?.click();
-        requestAnimationFrame(() => this.scrollToMessage(id));
-        return;
-      }
+    if (expandCollapsedIfNeeded(container, id)) {
+      requestAnimationFrame(() => scrollToMessage(id));
+      return;
+    }
 
-      const scrollAndSpotlight = (el: Element) => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const bubble = (el.querySelector('[data-type]') ?? el) as HTMLElement;
-        bubble.classList.remove('spotlight-highlight');
-        void bubble.offsetHeight;
-        bubble.classList.add('spotlight-highlight');
-        bubble.addEventListener(
-          'animationend',
-          () => bubble.classList.remove('spotlight-highlight'),
-          { once: true },
-        );
-      };
+    const el = container.querySelector(`[data-message-id="${id}"]`);
+    if (el) {
+      spotlightElement(el);
+      return;
+    }
 
-      const el = container.querySelector(`[data-message-id="${id}"]`);
-      if (el) {
-        scrollAndSpotlight(el);
-        return;
-      }
+    const index = idToIndex.get(id);
+    if (index === undefined) return;
+    virtualizer.scrollToIndex(index, { align: 'center' });
+    requestAnimationFrame(() => {
+      const later = container.querySelector(`[data-message-id="${id}"]`);
+      if (later) spotlightElement(later);
+    });
+  };
 
-      const index = idToIndex.get(id);
-      if (index === undefined) return;
-      virtualizer.scrollToIndex(index, { align: 'center' });
-      requestAnimationFrame(() => {
-        const later = container.querySelector(`[data-message-id="${id}"]`);
-        if (later) scrollAndSpotlight(later);
-      });
-    },
-  }));
+  selfRef.current = { scrollToMessage };
+  useImperativeHandle(ref, () => ({ scrollToMessage }));
 
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <section
-      className="relative flex-1 overflow-hidden"
-      aria-label="message-list"
-      onScroll={handleScroll}
-    >
+    <section className="relative flex-1 overflow-hidden" aria-label="message-list">
       <section
         ref={scrollContainerRef}
         onScroll={handleScroll}

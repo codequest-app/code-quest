@@ -1,10 +1,5 @@
 import type { SessionStateSummary } from '@code-quest/shared';
-import {
-  Bars3Icon,
-  Cog6ToothIcon,
-  MagnifyingGlassIcon,
-  RectangleGroupIcon,
-} from '@heroicons/react/24/outline';
+import { Bars3Icon, Cog6ToothIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 import { TopbarLiveSessions } from '../live-session/TopbarLiveSessions.tsx';
@@ -19,8 +14,6 @@ interface Props {
   onOpenSettings: () => void;
   /** Toggle the left sidebar — desktop: collapse/expand Panel; tablet/mobile: open drawer. */
   onToggleLeft?: () => void;
-  /** Toggle the right pane — desktop: collapse/expand Panel; tablet/mobile: open drawer. */
-  onToggleRight?: () => void;
   /** Open the command palette / search. */
   onOpenSearch?: () => void;
   /** The rest of the topbar contents (currently the TopScopeSwitcher). */
@@ -49,7 +42,6 @@ export function WorkspaceTopbar({
   mode,
   onOpenSettings,
   onToggleLeft,
-  onToggleRight,
   onOpenSearch,
   children,
   sessions,
@@ -75,22 +67,12 @@ export function WorkspaceTopbar({
           <TopbarLiveSessions sessions={sessions} onActivate={onActivateSession} />
         </div>
       )}
-      {onToggleRight && (
-        <IconButton
-          variant="plain"
-          aria-label="Toggle right pane"
-          onClick={onToggleRight}
-          className={cn('ml-auto', ACTION_CLASS)}
-        >
-          <RectangleGroupIcon className="w-5 h-5" />
-        </IconButton>
-      )}
       {onOpenSearch && (
         <IconButton
           variant="plain"
           aria-label="Search"
           onClick={onOpenSearch}
-          className={cn(!onToggleRight && 'ml-auto', ACTION_CLASS)}
+          className={cn('ml-auto', ACTION_CLASS)}
         >
           <MagnifyingGlassIcon className="w-5 h-5" />
         </IconButton>
@@ -99,7 +81,7 @@ export function WorkspaceTopbar({
         variant="plain"
         aria-label="Settings"
         onClick={onOpenSettings}
-        className={cn(!onToggleRight && !onOpenSearch && 'ml-auto', ACTION_CLASS)}
+        className={cn(!onOpenSearch && 'ml-auto', ACTION_CLASS)}
       >
         <Cog6ToothIcon className="w-5 h-5" />
       </IconButton>

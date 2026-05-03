@@ -6,14 +6,14 @@ import {
   makeSubagentDone,
   makeSubagentRunning,
 } from '@/test/story-fixtures';
-import { ChatSession } from './ChatSession.tsx';
+import { ChatView } from './ChatView.tsx';
 
-const meta: Meta<typeof ChatSession> = {
-  component: ChatSession,
+const meta: Meta<typeof ChatView> = {
+  component: ChatView,
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
   decorators: [withStoryChannel({ className: SCENARIO_CLASS })],
-} satisfies Meta<typeof ChatSession>;
+} satisfies Meta<typeof ChatView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

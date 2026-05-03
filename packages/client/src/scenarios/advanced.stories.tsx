@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ChatSession } from '../components/chat/ChatSession.tsx';
+import { ChatView } from '../components/chat/ChatView.tsx';
 import { expectTextbox, withScenario } from '../test/story-decorator.tsx';
 import {
   makeMultiToolChainAdvanced,
@@ -8,8 +8,8 @@ import {
   makeThinkingBlock,
 } from '../test/story-fixtures.ts';
 
-const meta: Meta<typeof ChatSession> = {
-  component: ChatSession,
+const meta: Meta<typeof ChatView> = {
+  component: ChatView,
   title: 'Scenarios/Advanced',
   tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },

@@ -36,17 +36,33 @@ async function waitForScrollUnlock() {
 
 /** Simulate scrolling up (not at bottom) */
 function simulateScrolledUp(container: HTMLElement) {
-  Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
-  Object.defineProperty(container, 'scrollTop', { value: 0, configurable: true });
-  Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+  Object.defineProperty(container, 'scrollHeight', {
+    value: 1000,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(container, 'scrollTop', { value: 0, configurable: true, writable: true });
+  Object.defineProperty(container, 'clientHeight', {
+    value: 400,
+    configurable: true,
+    writable: true,
+  });
   fireEvent.scroll(container);
 }
 
 /** Simulate scrolled to bottom */
 function simulateScrolledToBottom(container: HTMLElement) {
-  Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
-  Object.defineProperty(container, 'scrollTop', { value: 600, configurable: true });
-  Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+  Object.defineProperty(container, 'scrollHeight', {
+    value: 1000,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(container, 'scrollTop', { value: 600, configurable: true, writable: true });
+  Object.defineProperty(container, 'clientHeight', {
+    value: 400,
+    configurable: true,
+    writable: true,
+  });
   fireEvent.scroll(container);
 }
 
@@ -60,7 +76,7 @@ describe('Auto-scroll behavior', () => {
       await vi.advanceTimersByTimeAsync(600);
     });
 
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
     simulateScrolledUp(container);
 
     // Set spy AFTER initial messages settled, clear any prior calls
@@ -104,7 +120,7 @@ describe('Auto-scroll behavior', () => {
         <ComposeInput containerRef={containerRef} />
       </>,
     );
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
 
     // Wait for initial programmatic scroll to settle, then scroll up
     await act(async () => {
@@ -152,7 +168,7 @@ describe('Scroll to bottom button', () => {
   it('shows button when scrolled up', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
     act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
   });
@@ -160,7 +176,7 @@ describe('Scroll to bottom button', () => {
   it('calls scrollIntoView when button is clicked', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
     act(() => simulateScrolledUp(container));
     const scrollIntoView = vi.fn();
     screen.getByLabelText('message-list-bottom').scrollIntoView = scrollIntoView;
@@ -171,7 +187,7 @@ describe('Scroll to bottom button', () => {
   it('hides button when scrolled back to bottom', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
     act(() => simulateScrolledUp(container));
     expect(screen.getByRole('button', { name: /scroll to bottom/i })).toBeInTheDocument();
     act(() => simulateScrolledToBottom(container));
@@ -181,7 +197,7 @@ describe('Scroll to bottom button', () => {
   it('scroll button has z-float so it appears above the chat input overlay', async () => {
     await renderWithMessages();
     await waitForScrollUnlock();
-    const container = screen.getByLabelText('message-list');
+    const container = screen.getByLabelText('message-list-scroll');
     act(() => simulateScrolledUp(container));
     const btn = screen.getByRole('button', { name: /scroll to bottom/i });
     expect(btn.className).toMatch(/\bz-float\b/);

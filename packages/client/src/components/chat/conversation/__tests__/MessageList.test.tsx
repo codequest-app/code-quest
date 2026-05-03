@@ -3,11 +3,12 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
+import { useCommandPalette } from '@/contexts/CommandPaletteContext';
 import { type GroupId, useMessageVisibility } from '@/contexts/channel/MessageVisibilityContext';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { emitAssistantTurn, SendButton } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { MessageList, type MessageListHandle } from '../MessageList.tsx';
+import { MessageList } from '../MessageList.tsx';
 
 // Helper: toggle a group via the context from inside a rendered component
 function ToggleGroup({ group }: { group: GroupId }) {
@@ -582,7 +583,7 @@ describe('MessageList scrollToMessage highlight', () => {
     const claude = summoner.claude();
     const channelId = crypto.randomUUID();
     await claude.initialize({ launch: { channelId } }, s.init('cli-session'));
-    const ref = createRef<MessageListHandle>();
+    const ref = createRef<React.ComponentRef<typeof MessageList>>();
     const ctx = await renderWithChannel(<MessageList ref={ref} />, {
       summoner,
       channelId,
@@ -705,6 +706,35 @@ describe('MessageList visibility filtering', () => {
     const listAfter = screen.getByLabelText('message-list');
     const hookAfter = listAfter.querySelectorAll('[data-type="hook_started"]');
     expect(hookAfter.length).toBeGreaterThan(0);
+  });
+});
+
+describe('MessageList — registerJumpTo', () => {
+  it('jumpTo highlights the target message via spotlight-highlight', async () => {
+    let capturedJumpTo: ((channelId: string, messageId: string) => void) | undefined;
+
+    function PaletteCapture() {
+      capturedJumpTo = useCommandPalette().jumpTo;
+      return null;
+    }
+
+    const { claude, channelId } = await renderWithChannel(
+      <>
+        <MessageList />
+        <PaletteCapture />
+      </>,
+    );
+    await emitAssistantTurn(claude, 'jump target');
+    const msgEl = await screen.findByText('jump target');
+    const wrapper = msgEl.closest('[data-message-id]') as HTMLElement;
+    const messageId = wrapper?.getAttribute('data-message-id') ?? 'x';
+
+    act(() => {
+      capturedJumpTo?.(channelId, messageId);
+    });
+
+    const bubble = (wrapper.querySelector('[data-type]') ?? wrapper) as HTMLElement;
+    expect(bubble.classList.contains('spotlight-highlight')).toBe(true);
   });
 });
 

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { btwSignal } from '@/features/btw/btw-feature';
 import { COMPOSE_PLACEHOLDER, emitAssistantTurn } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
-import { ChatSession } from '../ChatSession.tsx';
+import { ChatView } from '../ChatView.tsx';
 
 afterEach(() => {
   btwSignal.setState({ open: false, question: '', answer: null, loading: false, error: null });
@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe('ChatSession overlay placement', () => {
   it('SideQuestionDialog is not inside the message list area', async () => {
-    const { container } = await renderWithChannel(<ChatSession />);
+    const { container } = await renderWithChannel(<ChatView />);
     act(() => {
       btwSignal.setState({
         open: true,
@@ -31,7 +31,7 @@ describe('ChatSession overlay placement', () => {
 
   it('SessionHistoryPopover dialog is not inside the message content area', async () => {
     const user = userEvent.setup();
-    const { container } = await renderWithChannel(<ChatSession />);
+    const { container } = await renderWithChannel(<ChatView />);
     await user.click(screen.getByTitle('Session history'));
     const dialog = await screen.findByRole('dialog');
     const messageSection = container.querySelector('section[aria-label="message-content-wrapper"]');
@@ -41,14 +41,14 @@ describe('ChatSession overlay placement', () => {
 
 describe('ChatSession', () => {
   it('renders input and message list', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeInTheDocument();
     expect(screen.getByTitle('Send')).toBeInTheDocument();
   });
 
   it('sends message — message appears in UI', async () => {
     const user = userEvent.setup();
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await user.type(textarea, 'test message');
     await user.click(screen.getByTitle('Send'));
@@ -57,7 +57,7 @@ describe('ChatSession', () => {
   });
 
   it('displays messages from pipeline', async () => {
-    const { claude } = await renderWithChannel(<ChatSession />);
+    const { claude } = await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'Hello{Enter}');
     await emitAssistantTurn(claude, 'Hi back');
@@ -66,7 +66,7 @@ describe('ChatSession', () => {
   });
 
   it('shows control request banner when pending', async () => {
-    const { claude } = await renderWithChannel(<ChatSession />);
+    const { claude } = await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     await act(async () => {
@@ -79,47 +79,47 @@ describe('ChatSession', () => {
   });
 
   it('renders HeaderBar with model info', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
   it('keeps input enabled when processing', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     expect(screen.getByPlaceholderText(COMPOSE_PLACEHOLDER)).toBeEnabled();
   });
 
   it('shows Stop button when processing', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
     await userEvent.type(textarea, 'go{Enter}');
     expect(screen.getByTitle('Stop')).toBeInTheDocument();
   });
 
   it('shows session title in HeaderBar when title is set', async () => {
-    await renderWithChannel(<ChatSession title="Fix the login bug" />);
+    await renderWithChannel(<ChatView title="Fix the login bug" />);
     expect(screen.getByText('Fix the login bug')).toBeInTheDocument();
   });
 
   it('does not render TabBar', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
   it('shows Session history button in HeaderBar', async () => {
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     expect(screen.getByTitle('Session history')).toBeInTheDocument();
   });
 
   it('clicking Session history button opens resume overlay', async () => {
     const user = userEvent.setup();
-    await renderWithChannel(<ChatSession />);
+    await renderWithChannel(<ChatView />);
     await user.click(screen.getByTitle('Session history'));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   describe('control flow pipeline', () => {
     it('tool_use interrupts streaming — text after tool_result still renders', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -141,7 +141,7 @@ describe('ChatSession', () => {
     });
 
     it('tool_result flows through pipeline (verified via received)', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -162,7 +162,7 @@ describe('ChatSession', () => {
     });
 
     it('elicitation control_request renders dialog', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -173,7 +173,7 @@ describe('ChatSession', () => {
     });
 
     it('chat:cancel_request silently removes pending control banner', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -193,7 +193,7 @@ describe('ChatSession', () => {
     });
 
     it('notification error shows message in UI', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -209,7 +209,7 @@ describe('ChatSession', () => {
     });
 
     it('notification warning shows message in UI', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -225,7 +225,7 @@ describe('ChatSession', () => {
     });
 
     it('notification with buttons shows in UI', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await act(async () => {
@@ -242,7 +242,7 @@ describe('ChatSession', () => {
     });
 
     it('open_diff control_request does not crash', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
@@ -261,7 +261,7 @@ describe('ChatSession', () => {
 
   describe('message:result pipeline', () => {
     it('message:result transitions from Stop to Send button (processing → idle)', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       expect(screen.getByTitle('Stop')).toBeInTheDocument();
@@ -272,7 +272,7 @@ describe('ChatSession', () => {
     });
 
     it('message:result with error shows error message', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
 
@@ -285,7 +285,7 @@ describe('ChatSession', () => {
     });
 
     it('streaming text deltas accumulate and result returns to idle', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
 
@@ -299,7 +299,7 @@ describe('ChatSession', () => {
     });
 
     it('diffRespond with unknown toolId does not crash', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await userEvent.type(textarea, 'go{Enter}');
       await emitAssistantTurn(claude);
@@ -320,7 +320,7 @@ describe('ChatSession', () => {
   describe('/compact slash command', () => {
     it('sends /compact to CLI', async () => {
       const user = userEvent.setup();
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await user.type(textarea, '/compact');
@@ -334,7 +334,7 @@ describe('ChatSession', () => {
 
     it('sends /compact with argument to CLI', async () => {
       const user = userEvent.setup();
-      const { claude } = await renderWithChannel(<ChatSession />);
+      const { claude } = await renderWithChannel(<ChatView />);
 
       const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
       await user.type(textarea, '/compact 50');
@@ -349,7 +349,7 @@ describe('ChatSession', () => {
 
   describe('/reload-plugins slash command', () => {
     it('selecting /reload-plugins from slash menu does not send chat message to CLI', async () => {
-      const { claude } = await renderWithChannel(<ChatSession />, {
+      const { claude } = await renderWithChannel(<ChatView />, {
         initSegment: s.init('sess', { slashCommands: ['reload-plugins'] }),
       });
 

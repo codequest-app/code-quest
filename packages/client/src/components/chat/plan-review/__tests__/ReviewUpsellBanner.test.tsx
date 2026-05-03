@@ -49,12 +49,8 @@ describe('ReviewUpsellBanner', () => {
     });
     expect(screen.getByText('Try the new code review feature')).toBeInTheDocument();
 
-    const dismissBtn =
-      screen.queryByRole('button', { name: /dismiss/i }) ??
-      screen.queryByTitle(/dismiss/i) ??
-      screen.queryByText(/dismiss/i);
-    expect(dismissBtn).toBeTruthy();
-    await user.click(dismissBtn!);
+    const dismissBtn = screen.getByText('Dismiss', { selector: 'button' });
+    await user.click(dismissBtn);
     expect(screen.queryByText('Try the new code review feature')).not.toBeInTheDocument();
   });
 });

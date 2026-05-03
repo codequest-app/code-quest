@@ -36,18 +36,6 @@ describe('WorkspaceTopbar', () => {
     expect(onToggleLeft).toHaveBeenCalled();
   });
 
-  it('renders a right trigger (aria-label="Toggle right pane") when onToggleRight is provided', async () => {
-    const onToggleRight = vi.fn();
-    render(
-      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}} onToggleRight={onToggleRight}>
-        <span>content</span>
-      </WorkspaceTopbar>,
-    );
-    const btn = screen.getByRole('button', { name: /toggle right pane/i });
-    await userEvent.setup().click(btn);
-    expect(onToggleRight).toHaveBeenCalled();
-  });
-
   it('omits left trigger when onToggleLeft not provided', () => {
     render(
       <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
@@ -55,15 +43,6 @@ describe('WorkspaceTopbar', () => {
       </WorkspaceTopbar>,
     );
     expect(screen.queryByRole('button', { name: /toggle sidebar/i })).toBeNull();
-  });
-
-  it('omits right trigger when onToggleRight not provided', () => {
-    render(
-      <WorkspaceTopbar mode="desktop" onOpenSettings={() => {}}>
-        <span>content</span>
-      </WorkspaceTopbar>,
-    );
-    expect(screen.queryByRole('button', { name: /toggle right pane/i })).toBeNull();
   });
 
   it('forwards mode to the root aria-label attribute', () => {
@@ -93,14 +72,13 @@ describe('WorkspaceTopbar', () => {
     expect(onOpenSearch).toHaveBeenCalledOnce();
   });
 
-  it('order (left → right): leftTrigger, children, rightTrigger, Search, Settings', () => {
+  it('order (left → right): leftTrigger, children, Search, Settings', () => {
     render(
       <WorkspaceTopbar
         mode="desktop"
         onOpenSettings={() => {}}
         onOpenSearch={() => {}}
         onToggleLeft={() => {}}
-        onToggleRight={() => {}}
       >
         <span>content</span>
       </WorkspaceTopbar>,
@@ -108,13 +86,11 @@ describe('WorkspaceTopbar', () => {
     const root = screen.getByLabelText('desktop-topbar');
     const left = screen.getByRole('button', { name: /toggle sidebar/i });
     const content = screen.getByText('content');
-    const right = screen.getByRole('button', { name: /toggle right pane/i });
     const search = screen.getByRole('button', { name: /search/i });
     const settings = screen.getByRole('button', { name: /settings/i });
     const indexOf = (el: Element) => Array.from(root.children).indexOf(el as HTMLElement);
     expect(indexOf(left)).toBeLessThan(indexOf(content));
-    expect(indexOf(content)).toBeLessThan(indexOf(right));
-    expect(indexOf(right)).toBeLessThan(indexOf(search));
+    expect(indexOf(content)).toBeLessThan(indexOf(search));
     expect(indexOf(search)).toBeLessThan(indexOf(settings));
   });
 });
