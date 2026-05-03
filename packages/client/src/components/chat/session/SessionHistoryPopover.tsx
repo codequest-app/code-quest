@@ -27,7 +27,7 @@ export function SessionHistoryPopover({
 
   const fetchSessions = useCallback(() => {
     setLoading(true);
-    return listSessions({ cwd, limit: 50, excludeLive: true })
+    return listSessions({ cwd, limit: 50 })
       .then((res) => {
         if (res.ok) setSessions(res.data.sessions);
       })

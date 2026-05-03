@@ -80,6 +80,7 @@ export function SessionHistory({
             key={s.channelId}
             session={s}
             isFocused={i === focusIndex}
+            isActive={s.isActive}
             onSelect={onSelect}
             onMouseEnter={() => setFocusIndex(i)}
             onRename={onRename}
