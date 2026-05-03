@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,5 +83,67 @@ describe('FilePreviewModal', () => {
       wrapper: Wrapper,
     });
     expect(await screen.findByText(/file not found/i)).toBeInTheDocument();
+  });
+
+  describe('markdown preview toggle', () => {
+    it('renders .md file as markdown by default', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/README.md', '# Hello World');
+      render(<FilePreviewModal path="/repo/README.md" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      const heading = await screen.findByRole('heading', { name: /hello world/i });
+      expect(heading).toBeInTheDocument();
+    });
+
+    it('shows Preview and Raw toggle buttons for .md files', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/README.md', '# Hello');
+      render(<FilePreviewModal path="/repo/README.md" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByRole('heading', { name: /hello/i });
+      expect(screen.getByRole('button', { name: /preview/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /raw/i })).toBeInTheDocument();
+    });
+
+    it('switches to raw source when Raw button is clicked', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/README.md', '# Hello World');
+      render(<FilePreviewModal path="/repo/README.md" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByRole('heading', { name: /hello world/i });
+      await user.click(screen.getByRole('button', { name: /raw/i }));
+      expect(screen.queryByRole('heading', { name: /hello world/i })).not.toBeInTheDocument();
+      // raw mode shows source text (may be split across tokens by syntax highlighter)
+      expect(document.body.textContent).toContain('# Hello World');
+    });
+
+    it('switches back to markdown when Preview button is clicked after Raw', async () => {
+      const user = userEvent.setup();
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/README.md', '# Hello World');
+      render(<FilePreviewModal path="/repo/README.md" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      await screen.findByRole('heading', { name: /hello world/i });
+      await user.click(screen.getByRole('button', { name: /raw/i }));
+      await user.click(screen.getByRole('button', { name: /preview/i }));
+      expect(screen.getByRole('heading', { name: /hello world/i })).toBeInTheDocument();
+    });
+
+    it('does not show toggle buttons for non-.md files', async () => {
+      const { summoner, Wrapper } = setup();
+      summoner.filesystem().addFile('/repo/index.ts', 'export {}');
+      render(<FilePreviewModal path="/repo/index.ts" onClose={vi.fn()} onMention={vi.fn()} />, {
+        wrapper: Wrapper,
+      });
+      // wait for file to load (syntax highlighter may split text across tokens)
+      await waitFor(() => expect(document.body.textContent).toContain('export'));
+      expect(screen.queryByRole('button', { name: /preview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /raw/i })).not.toBeInTheDocument();
+    });
   });
 });

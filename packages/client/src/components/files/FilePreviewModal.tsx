@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { rpc } from '@/socket/rpc';
 import { CodeBlock } from '../chat/renderers/CodeBlock.tsx';
+import { MarkdownContent } from '../chat/renderers/MarkdownContent.tsx';
 import { Button } from '../ui/Button.tsx';
 import { Dialog, DialogContent } from '../ui/Dialog.tsx';
 
@@ -26,6 +27,10 @@ function languageFor(path: string): string | undefined {
   return ext ? EXT_TO_LANG[ext] : undefined;
 }
 
+function isMarkdown(path: string): boolean {
+  return path.split('.').pop()?.toLowerCase() === 'md';
+}
+
 /** UTF-16 code units, not bytes — `string.length`. Files this big take
  *  hundreds of ms to syntax-highlight, which is what we actually want to
  *  guard against. The "500 KB" UI label is a pragmatic approximation. */
@@ -43,6 +48,7 @@ export function FilePreviewModal({
   onMention,
 }: FilePreviewModalProps): React.JSX.Element {
   const language = useMemo(() => languageFor(path), [path]);
+  const md = useMemo(() => isMarkdown(path), [path]);
   const { socket } = useSocket();
   const [state, setState] = useState<
     | { kind: 'loading' }
@@ -50,6 +56,7 @@ export function FilePreviewModal({
     | { kind: 'too-large' }
     | { kind: 'error'; message: string }
   >({ kind: 'loading' });
+  const [viewMode, setViewMode] = useState<'preview' | 'raw'>('preview');
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +89,25 @@ export function FilePreviewModal({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent title={path} size="lg">
         <div className="flex flex-col gap-3">
-          <PreviewBody state={state} language={language} />
+          {md && state.kind === 'ready' && (
+            <div className="flex gap-1 self-end">
+              <Button
+                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('preview')}
+              >
+                Preview
+              </Button>
+              <Button
+                variant={viewMode === 'raw' ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('raw')}
+              >
+                Raw
+              </Button>
+            </div>
+          )}
+          <PreviewBody state={state} language={language} md={md} viewMode={viewMode} />
           <div className="flex gap-2 pt-2 border-t border-border">
             <Button variant="primary" size="sm" onClick={() => onMention(path)}>
               Mention
@@ -109,6 +134,8 @@ export function FilePreviewModal({
 function PreviewBody({
   state,
   language,
+  md,
+  viewMode,
 }: {
   state:
     | { kind: 'loading' }
@@ -116,6 +143,8 @@ function PreviewBody({
     | { kind: 'too-large' }
     | { kind: 'error'; message: string };
   language?: string;
+  md: boolean;
+  viewMode: 'preview' | 'raw';
 }) {
   if (state.kind === 'loading') {
     return <div className="text-sm text-text-muted">Loading…</div>;
@@ -125,6 +154,13 @@ function PreviewBody({
   }
   if (state.kind === 'error') {
     return <div className="text-sm text-warn">{state.message}</div>;
+  }
+  if (md && viewMode === 'preview') {
+    return (
+      <div className="overflow-auto max-h-dialog-body">
+        <MarkdownContent content={state.content} />
+      </div>
+    );
   }
   if (language) {
     return (
