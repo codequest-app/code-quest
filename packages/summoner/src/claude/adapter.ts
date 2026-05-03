@@ -1,107 +1,21 @@
 import type { ProviderClientConfig } from '@code-quest/shared';
-import type { z } from 'zod';
 import type { AdapterOutput, ClientMessage, ParseResult, ProviderAdapter } from '../types.ts';
 import { isRecord } from '../utils.ts';
 import { claudeClientConfig } from './client-config.ts';
 import type { LaunchOptions } from './launch-options.ts';
 import { ClaudeProtocol } from './protocol.ts';
-import type { ProtocolMessage, rateLimitEventSchema } from './schemas.ts';
+import { requestMappings } from './request-mappings.ts';
+import type { ProtocolMessage } from './schemas.ts';
 import { transformAssistant } from './transforms/assistant.ts';
+import { transformAuthStatus } from './transforms/auth.ts';
 import { transformControlRequest } from './transforms/control.ts';
+import { transformRateLimit } from './transforms/notification.ts';
 import { transformResult } from './transforms/result.ts';
 import { transformStream } from './transforms/stream.ts';
 import { transformSystem } from './transforms/system.ts';
 import { transformUser } from './transforms/user.ts';
 
 const EMPTY: AdapterOutput = { messages: [], controlResponses: [] };
-
-interface RequestMapping {
-  subtype: string;
-  mapPayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
-  mapResponse?: (response: Record<string, unknown>) => Record<string, unknown>;
-}
-
-const serverNamePayload = (p: Record<string, unknown>) => {
-  const { serverName, ...rest } = p;
-  return { server_name: serverName, ...rest };
-};
-
-const REQUEST_MAPPINGS: Record<string, RequestMapping> = {
-  // settings
-  'settings:set_model': { subtype: 'set_model' },
-  'settings:set_permission_mode': { subtype: 'set_permission_mode' },
-  'settings:set_thinking_level': { subtype: 'set_max_thinking_tokens' },
-  'settings:set_proactive': { subtype: 'set_proactive' },
-  'settings:remote_control': { subtype: 'remote_control' },
-  'settings:apply': { subtype: 'apply_flag_settings' },
-  'settings:get_context_usage': { subtype: 'get_context_usage' },
-  // message
-  'message:interrupt': { subtype: 'interrupt' },
-  'message:stop_task': { subtype: 'stop_task' },
-  'message:cancel_async': { subtype: 'cancel_async_message' },
-  'message:rewind': { subtype: 'rewind_files' },
-  'message:side_question': { subtype: 'side_question' },
-  // session
-  'session:generate_title': { subtype: 'generate_session_title' },
-  'session:initialize': { subtype: 'initialize' },
-  // mcp
-  'mcp:reconnect': { subtype: 'mcp_reconnect', mapPayload: serverNamePayload },
-  'mcp:toggle': { subtype: 'mcp_toggle', mapPayload: serverNamePayload },
-  'mcp:servers': { subtype: 'mcp_status' },
-  'mcp:set_servers': { subtype: 'mcp_set_servers' },
-  'mcp:message': { subtype: 'mcp_message', mapPayload: serverNamePayload },
-  'mcp:authenticate': { subtype: 'mcp_authenticate', mapPayload: serverNamePayload },
-  'mcp:clear_auth': { subtype: 'mcp_clear_auth', mapPayload: serverNamePayload },
-  // transcript
-  'transcript:seed_read_state': { subtype: 'seed_read_state' },
-  // mcp channel
-  'mcp:channel_enable': { subtype: 'channel_enable', mapPayload: serverNamePayload },
-  // plugin
-  'plugin:reload': { subtype: 'reload_plugins', mapResponse: (r) => ({ data: r }) },
-  // ultrareview
-  'ultrareview:launch': { subtype: 'ultrareview_launch' },
-  // claude-specific auth
-  'auth:authenticate': { subtype: 'claude_authenticate' },
-  'auth:oauth_callback': { subtype: 'claude_oauth_callback' },
-  'auth:oauth_wait': { subtype: 'claude_oauth_wait_for_completion' },
-  'mcp:oauth_callback': {
-    subtype: 'mcp_oauth_callback_url',
-    mapPayload: (p) => {
-      const { serverName, callbackUrl, ...rest } = p;
-      return { server_name: serverName, callback_url: callbackUrl, ...rest };
-    },
-  },
-};
-
-type RateLimitEvent = z.infer<typeof rateLimitEventSchema>;
-
-function convertRateLimitMessage(message: RateLimitEvent): ClientMessage {
-  const rli = message.rate_limit_info;
-  return {
-    name: 'system:rate_limit',
-    payload: {
-      info: {
-        status: rli.status ?? '',
-        rateLimitType: rli.rateLimitType,
-        resetsAt: rli.resetsAt != null ? String(rli.resetsAt) : undefined,
-        utilization: typeof rli.utilization === 'number' ? rli.utilization : undefined,
-        overageStatus: rli.overageStatus,
-        isUsingOverage: rli.isUsingOverage,
-      },
-    },
-  };
-}
-
-function convertAuthStatusMessage(message: ProtocolMessage): ClientMessage {
-  return {
-    name: 'notification:auth_status',
-    payload: {
-      status: message.isAuthenticating ? 'authenticating' : 'authenticated',
-      output: Array.isArray(message.output) ? message.output.join('\n') : undefined,
-      account: isRecord(message.account) ? message.account : undefined,
-    },
-  };
-}
 
 export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOptions> {
   private readonly protocol = new ClaudeProtocol();
@@ -128,14 +42,14 @@ export class ClaudeAdapter implements ProviderAdapter<ProtocolMessage, LaunchOpt
     event: string,
     payload: Record<string, unknown>,
   ): { subtype: string; input: Record<string, unknown> } {
-    const mapping = REQUEST_MAPPINGS[event];
+    const mapping = requestMappings[event];
     if (!mapping) throw new Error(`Unknown request event: ${event}`);
     const input = mapping.mapPayload ? mapping.mapPayload(payload) : payload;
     return { subtype: mapping.subtype, input };
   }
 
   mapResponse(event: string, response: Record<string, unknown>): Record<string, unknown> {
-    const mapping = REQUEST_MAPPINGS[event];
+    const mapping = requestMappings[event];
     return mapping?.mapResponse ? mapping.mapResponse(response) : {};
   }
 
@@ -235,7 +149,7 @@ const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = Object.from
   handler('user', transformUser),
   handler('result', transformResult),
   handler('stream_event', transformStream),
-  handler('rate_limit_event', convertRateLimitMessage),
+  handler('rate_limit_event', transformRateLimit),
   handler('speech_to_text_message', (msg) => ({
     name: 'speech:message',
     payload: { text: msg.text, done: msg.done },
@@ -267,7 +181,7 @@ const OTHER_MESSAGE_TRANSFORMERS: Record<string, OtherTransformer> = Object.from
     name: 'notification:toast',
     payload: { message: msg.message },
   })),
-  handler('auth_status', convertAuthStatusMessage),
+  handler('auth_status', transformAuthStatus),
   handler('auth_url', (msg) => ({
     name: 'notification:auth_url',
     payload: { url: msg.url, method: msg.method ?? 'oauth' },
