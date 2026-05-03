@@ -11,12 +11,6 @@ import { createContainer, type StoreConfig } from '../container.ts';
 import { createMysqlDatabase } from '../db/mysql-client.ts';
 import { createDatabase } from '../db/sqlite-client.ts';
 import { logger } from '../logger.ts';
-import { createProfileRouter } from '../routes/profile.ts';
-import { createSessionsRouter } from '../routes/sessions.ts';
-import { createUsageRouter } from '../routes/usage.ts';
-import type { RawEventStore } from '../services/raw-event-store.ts';
-import type { SessionStore } from '../services/session-store.ts';
-import type { UsageTracker } from '../services/usage-tracker.ts';
 import { NullAuthenticator } from '../socket/authenticator.ts';
 import type { SocketServer } from '../socket/server.ts';
 import { SocketIoTransport } from '../socket/socket-io-transport.ts';
@@ -78,13 +72,6 @@ logger.info(
   { ws: config.transport.ws, socketio: config.transport.socketio },
   'Transports attached',
 );
-
-const sessionStore = container.get<SessionStore>(TYPES.SessionStore);
-const rawEventStore = container.get<RawEventStore>(TYPES.RawEventService);
-const usageTracker = container.get<UsageTracker>(TYPES.UsageTracker);
-app.use(createSessionsRouter(sessionStore, rawEventStore));
-app.use(createUsageRouter(usageTracker));
-app.use(createProfileRouter(() => ({ authenticated: false })));
 
 const HEALTH_PATH = '/health';
 
