@@ -4,6 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { CollapsibleBlock } from '../message-blocks/primitives.tsx';
 
 describe('CollapsibleBlock', () => {
+  it('accepts a ReactNode icon (SVG element)', () => {
+    const { container } = render(
+      <CollapsibleBlock icon={<svg data-testid="custom-icon" />} label="Test">
+        <span>content</span>
+      </CollapsibleBlock>,
+    );
+    expect(container.querySelector('[data-testid="custom-icon"]')).toBeInTheDocument();
+  });
+
   it('hides children by default', () => {
     render(
       <CollapsibleBlock icon="📄" label="Test">

@@ -33,6 +33,16 @@ afterEach(() => {
   cleanup();
 });
 
+import '../lib/icons.ts';
+
+vi.mock('@iconify/react', async () => {
+  const React = await import('react');
+  return {
+    Icon: ({ icon }: { icon: string }) => React.createElement('svg', { 'data-icon': icon }),
+    addCollection: () => {},
+  };
+});
+
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => {
     const socket = createFakeSocket();

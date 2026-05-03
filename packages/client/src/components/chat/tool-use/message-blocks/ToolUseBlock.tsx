@@ -1,13 +1,38 @@
 import type { TokenUsage } from '@code-quest/shared';
+import {
+  CommandLineIcon,
+  CpuChipIcon,
+  DocumentMagnifyingGlassIcon,
+  DocumentPlusIcon,
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  ServerIcon,
+  WrenchIcon,
+} from '@heroicons/react/24/outline';
 import { CodeBlock } from '@/components/chat/renderers/CodeBlock';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import type { ToolUseMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
-import { AGENT_TOOLS, getToolHeaderInfo } from '@/utils/tool-utils';
+import { AGENT_TOOLS, getToolHeaderInfo, isMcpTool } from '@/utils/tool-utils';
 import { AlertBanner } from './AlertBanner.tsx';
 import { ContentRenderer } from './ContentRenderer.tsx';
 import { CODE_BLOCK_CLASS, CollapsibleBlock, OutputContent } from './primitives.tsx';
 import { ToolBlock, ToolBlockRow } from './ToolBlock.tsx';
+
+const TOOL_ICON_CLASS = 'w-4 h-4 shrink-0';
+
+function getToolIcon(toolName: string): React.ReactNode {
+  if (toolName === 'Bash') return <CommandLineIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Read') return <DocumentMagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Write') return <DocumentPlusIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Edit' || toolName === 'MultiEdit')
+    return <PencilSquareIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'WebSearch') return <MagnifyingGlassIcon className={TOOL_ICON_CLASS} />;
+  if (toolName === 'Agent' || toolName === 'Task')
+    return <CpuChipIcon className={TOOL_ICON_CLASS} />;
+  if (isMcpTool(toolName)) return <ServerIcon className={TOOL_ICON_CLASS} />;
+  return <WrenchIcon className={TOOL_ICON_CLASS} />;
+}
 
 const EXT_TO_LANG: Record<string, string> = {
   ts: 'typescript',
@@ -290,7 +315,7 @@ export function ToolUseBlock({
 
   return (
     <CollapsibleBlock
-      icon="⚙"
+      icon={getToolIcon(toolName)}
       label={headerInfo.name}
       labelDetail={headerInfo.detail}
       labelRange={headerInfo.range}

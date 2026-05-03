@@ -1,3 +1,4 @@
+import { CheckIcon } from '@heroicons/react/24/solid';
 import type { ToolResultMeta } from '@/types/ui';
 import { ContentRenderer } from './ContentRenderer.tsx';
 import { CollapsibleBlock } from './primitives.tsx';
@@ -32,7 +33,7 @@ export function ToolResultBlock({
     isEditTool && onDiffRespond && toolId ? () => onDiffRespond(toolId, false) : undefined;
 
   return (
-    <CollapsibleBlock icon="✓" label={label}>
+    <CollapsibleBlock icon={<CheckIcon className="w-4 h-4 shrink-0" />} label={label}>
       <ContentRenderer
         content={displayContent}
         editable={!!acceptHandler}

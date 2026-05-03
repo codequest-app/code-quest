@@ -137,16 +137,14 @@ function AssistantMessage({
 
   const showCopy = message.role !== 'system' && !NO_COPY_TYPES.has(message.type);
   return (
-    <div
-      className="group leading-relaxed text-sm py-1 relative"
-      data-role={message.role}
-      data-type={message.type}
-    >
+    <div className="group text-sm relative" data-role={message.role} data-type={message.type}>
       <div className="min-w-0" data-type={message.type === 'text' ? 'text' : undefined}>
         {message.type === 'text' ? (
-          <TruncatedContent maxHeight={600}>
-            <ContentErrorBoundary>{body}</ContentErrorBoundary>
-          </TruncatedContent>
+          <div className="leading-relaxed">
+            <TruncatedContent maxHeight={600}>
+              <ContentErrorBoundary>{body}</ContentErrorBoundary>
+            </TruncatedContent>
+          </div>
         ) : (
           body
         )}

@@ -29,6 +29,11 @@ export default defineConfig({
         statements: 80,
       },
     },
+    onUnhandledError(error) {
+      // happy-dom aborts in-flight fetch requests during environment teardown.
+      // This is a known happy-dom behaviour, not a test or application bug.
+      if (error instanceof DOMException && error.name === 'AbortError') return 'skip';
+    },
     passWithNoTests: false,
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],

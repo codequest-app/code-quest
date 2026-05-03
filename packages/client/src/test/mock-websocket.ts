@@ -83,6 +83,12 @@ export class MockWebSocket {
     this.fire('close', ev);
   }
 
+  deliverRaw(data: string): void {
+    const ev = { data } as MessageEvent;
+    this.onmessage?.(ev);
+    this.fire('message', ev);
+  }
+
   deliverEnvelope(env: Envelope): void {
     const ev = { data: JSON.stringify(env) } as MessageEvent;
     this.onmessage?.(ev);
