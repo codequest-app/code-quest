@@ -29,9 +29,9 @@ export function create({
   ): Promise<void> {
     try {
       const parsed = sessionListPayloadSchema.parse(payload);
-      const excludeSessionIds = parsed.excludeLive
-        ? channelManager.getAliveSessionIds()
-        : undefined;
+      const rawAliveIds = channelManager.getAliveSessionIds();
+      const aliveSessionIds = new Set(rawAliveIds);
+      const excludeSessionIds = parsed.excludeLive ? rawAliveIds : undefined;
       const result = await sessionStore.list({
         limit: parsed.limit,
         offset: parsed.offset,
@@ -43,10 +43,9 @@ export function create({
         result.sessions.map((s) => sessionHistory.getPreview(s.id)),
       );
       const sessions = result.sessions.map((s, i) => {
-        const ch = channelManager.get(s.channelId);
         return {
           ...s,
-          isActive: !!(ch && !ch.exited),
+          isActive: aliveSessionIds.has(s.id),
           lastAssistantMessage: previews[i]?.lastAssistant,
           firstUserMessage: previews[i]?.firstUser,
         };

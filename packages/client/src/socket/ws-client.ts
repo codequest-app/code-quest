@@ -175,6 +175,7 @@ export class WsClient {
     try {
       parsed = JSON.parse(typeof ev.data === 'string' ? ev.data : String(ev.data));
     } catch {
+      console.warn('[WsClient] received non-JSON message', ev.data);
       return;
     }
     const result = EnvelopeSchema.safeParse(parsed);

@@ -1,24 +1,22 @@
 import { segments as s } from '@code-quest/summoner/test';
-import * as Popover from '@radix-ui/react-popover';
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { HeaderBar } from '../HeaderBar.tsx';
+import { ResumeButton } from '../ResumeButton.tsx';
+
+const INIT = {
+  initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
+  extraSegments: [
+    s.controlResponse('init', {
+      models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
+    }),
+  ],
+};
 
 async function renderHeaderBar(props: Partial<React.ComponentProps<typeof HeaderBar>> = {}) {
-  return renderWithChannel(
-    <Popover.Root>
-      <HeaderBar {...props} />
-    </Popover.Root>,
-    {
-      initSegment: s.init('sess-1', { model: 'claude-sonnet-4-6' }),
-      extraSegments: [
-        s.controlResponse('init', {
-          models: [{ value: 'claude-sonnet-4-6', displayName: 'Sonnet 4.6' }],
-        }),
-      ],
-    },
-  );
+  return renderWithChannel(<HeaderBar {...props} />, INIT);
 }
 
 describe('HeaderBar (context mode)', () => {
@@ -44,16 +42,28 @@ describe('HeaderBar (context mode)', () => {
     await renderHeaderBar();
     expect(screen.queryByTitle('Command Palette (⌘K)')).not.toBeInTheDocument();
   });
+
+  it('renders children as actions slot', async () => {
+    await renderWithChannel(
+      <HeaderBar title="Test">
+        <button type="button">Custom Action</button>
+      </HeaderBar>,
+      INIT,
+    );
+    expect(screen.getByText('Custom Action')).toBeInTheDocument();
+  });
 });
 
-describe('HeaderBar resume button', () => {
-  it('shows clock/history button when showResumeButton is true', async () => {
-    await renderHeaderBar({ showResumeButton: true });
+describe('ResumeButton', () => {
+  it('shows clock/history button', async () => {
+    await renderWithChannel(<ResumeButton onResumed={vi.fn()} />, INIT);
     expect(screen.getByTitle('Session history')).toBeInTheDocument();
   });
 
-  it('does not show clock button when showResumeButton is not provided', async () => {
-    await renderHeaderBar();
-    expect(screen.queryByTitle('Session history')).not.toBeInTheDocument();
+  it('clicking opens session history popover', async () => {
+    const user = userEvent.setup();
+    await renderWithChannel(<ResumeButton onResumed={vi.fn()} />, INIT);
+    await user.click(screen.getByTitle('Session history'));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 });

@@ -117,14 +117,17 @@ describe('createQueryCache', () => {
     expect(store.hasSubscribers('/a')).toBe(false);
   });
 
-  it('subscribe logs error when initial fetch rejects', async () => {
+  it('subscribe logs error with key context when initial fetch rejects', async () => {
     const { store, fetchFn } = createStore();
     const error = new Error('network fail');
     fetchFn.mockRejectedValue(error);
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     store.subscribe('/a', vi.fn());
-    await vi.waitFor(() => expect(spy).toHaveBeenCalledWith(error));
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    const args = spy.mock.calls[0]!;
+    expect(args).toContain('/a');
+    expect(args).toContain(error);
 
     spy.mockRestore();
   });

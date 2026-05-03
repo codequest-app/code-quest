@@ -1,16 +1,16 @@
 import * as Popover from '@radix-ui/react-popover';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { IconButton } from '@/components/ui/IconButton.tsx';
+import { SlashCommandIcon } from '@/components/ui/Icons.tsx';
 import { useChannelCompose, useChannelConfig } from '@/contexts/channel';
 import { useFeatureRegistry } from '@/contexts/channel/FeatureRegistryContext';
 import { cn } from '@/utils/cn';
 import { findModel, getEffortLevels, isThinkingActive } from '@/utils/model-utils';
-import { IconButton } from '../ui/IconButton.tsx';
-import { SlashCommandIcon } from '../ui/Icons.tsx';
 import { buildLocalFeatures } from './build-local-features.ts';
 import { buildMenuItems, type MenuItem } from './build-menu-items.ts';
 import { MenuSection } from './menu-components.tsx';
 import { computeMenuLayout } from './menu-layout.ts';
-import { dispatchSelectedItem, NAV_KEYS, navigateItems } from './menu-navigation.ts';
+import { dispatchSelectedItem, isNavKey, navigateItems } from './menu-navigation.ts';
 import { slashPaletteState } from './slash-palette-state.ts';
 
 interface CommandMenuProps {
@@ -92,7 +92,7 @@ export function CommandMenu({
 
   useEffect(() => {
     if (buttonOpen && !externalOpen) {
-      setTimeout(() => filterRef.current?.focus(), 0);
+      queueMicrotask(() => filterRef.current?.focus());
     }
   }, [buttonOpen, externalOpen]);
 
@@ -163,7 +163,7 @@ export function CommandMenu({
     if (!externalOpen) return;
     const handleNavKey = (e: KeyboardEvent) => {
       const items = flatItemsRef.current;
-      if (!(NAV_KEYS as readonly string[]).includes(e.key)) return;
+      if (!isNavKey(e.key)) return;
       if (items.length === 0) return;
       e.preventDefault();
       handleNavigateAndSelect(e.key, items, {
@@ -227,7 +227,7 @@ export function CommandMenu({
       compose.focusTextarea();
       return;
     }
-    if (!(NAV_KEYS as readonly string[]).includes(e.key)) return;
+    if (!isNavKey(e.key)) return;
     e.preventDefault();
     handleNavigateAndSelect(e.key, flatItems, {
       insertSlash: (t) => compose.insertSlashCommand(t),

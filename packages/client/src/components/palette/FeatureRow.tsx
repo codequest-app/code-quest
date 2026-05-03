@@ -8,7 +8,7 @@ import { toPaletteCommand } from './to-palette-command.tsx';
 interface FeatureRowProps {
   feature: Feature;
   isActive: boolean;
-  onActiveChange: (id: string | null) => void;
+  onActiveChange?: (id: string | null) => void;
   onExecute?: (feature: Feature) => void;
 }
 
@@ -17,7 +17,7 @@ function FlatRow({ feature, isActive, onActiveChange, onExecute }: FeatureRowPro
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: onMouseEnter is hover-tracking only; keyboard interaction is provided by the inner <button>
     <div
-      onMouseEnter={() => onActiveChange(feature.id)}
+      onMouseEnter={() => onActiveChange?.(feature.id)}
       className={cn(
         'flex items-center justify-between gap-3 w-full px-4 py-2 transition-[background] duration-100',
         isActive

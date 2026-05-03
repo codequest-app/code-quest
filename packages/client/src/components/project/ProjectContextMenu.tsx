@@ -2,6 +2,11 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { type ReactNode, useContext } from 'react';
 import { AppInitStateContext } from '@/contexts/AppInitContext';
+import {
+  DANGER_MENU_ITEM_CLASS,
+  MENU_CONTENT_CLASS,
+  MENU_ITEM_CLASS,
+} from './context-menu-styles.ts';
 
 export interface ProjectMenuCallbacks {
   onSelectResume: () => void;
@@ -10,13 +15,6 @@ export interface ProjectMenuCallbacks {
   onSelectRemove?: () => void;
   onSelectInitRepo?: () => void;
 }
-
-const ITEM_CLASS =
-  'w-full text-left px-3 py-1.5 text-sm text-text hover:bg-white/5 data-[highlighted]:bg-white/5 outline-none cursor-pointer';
-const DANGER_ITEM_CLASS =
-  'w-full text-left px-3 py-1.5 text-sm text-danger hover:bg-danger/10 data-[highlighted]:bg-danger/10 outline-none cursor-pointer';
-const CONTENT_CLASS =
-  'z-modal min-w-45 rounded border border-border bg-surface shadow-floating py-1';
 
 function useItemList(callbacks: ProjectMenuCallbacks) {
   const capabilities = useContext(AppInitStateContext)?.capabilities ?? { worktree: false };
@@ -70,7 +68,7 @@ export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps): R
           align="end"
           sideOffset={4}
           collisionPadding={8}
-          className={CONTENT_CLASS}
+          className={MENU_CONTENT_CLASS}
         >
           {items.map((item) => (
             <div key={item.key}>
@@ -79,7 +77,7 @@ export function ProjectDropdownMenu({ trigger, ...callbacks }: DropdownProps): R
               )}
               <DropdownMenu.Item
                 onSelect={item.onSelect}
-                className={item.danger ? DANGER_ITEM_CLASS : ITEM_CLASS}
+                className={item.danger ? DANGER_MENU_ITEM_CLASS : MENU_ITEM_CLASS}
               >
                 {item.label}
               </DropdownMenu.Item>
@@ -108,7 +106,7 @@ export function ProjectContextMenu({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className={CONTENT_CLASS}>
+        <ContextMenu.Content className={MENU_CONTENT_CLASS}>
           {items.map((item) => (
             <div key={item.key}>
               {item.separatorBefore && (
@@ -116,7 +114,7 @@ export function ProjectContextMenu({
               )}
               <ContextMenu.Item
                 onSelect={item.onSelect}
-                className={item.danger ? DANGER_ITEM_CLASS : ITEM_CLASS}
+                className={item.danger ? DANGER_MENU_ITEM_CLASS : MENU_ITEM_CLASS}
               >
                 {item.label}
               </ContextMenu.Item>

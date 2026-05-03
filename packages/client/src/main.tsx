@@ -1,3 +1,4 @@
+import './lib/icons.ts';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';

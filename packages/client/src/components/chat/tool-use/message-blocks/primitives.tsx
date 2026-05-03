@@ -14,7 +14,7 @@ export function RotatableChevron({
   return (
     <ChevronRightIcon
       aria-hidden="true"
-      className={cn('w-3 h-3 transition-transform', open && 'rotate-90', className)}
+      className={cn('w-4 h-4 transition-transform', open && 'rotate-90', className)}
     />
   );
 }
@@ -31,7 +31,7 @@ export function CollapsibleBlock({
   defaultOpen,
   children,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   labelDetail?: string;
   labelRange?: string;
@@ -44,16 +44,16 @@ export function CollapsibleBlock({
       <Collapsible.Trigger asChild>
         <button
           type="button"
-          className="group flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors py-1"
+          className="group flex items-center gap-2 cursor-pointer select-none text-sm text-text-muted hover:text-text transition-colors"
         >
-          <span>{icon}</span>
+          <span className="inline-flex items-center">{icon}</span>
           <span className="font-semibold text-text-bright">{label}</span>
           {labelDetail && <span className="opacity-70 truncate max-w-75">{labelDetail}</span>}
           {labelRange && <span className="opacity-50 text-xs">{labelRange}</span>}
           {labelSuffix}
           <ChevronRightIcon
             aria-hidden="true"
-            className="w-3 h-3 opacity-50 transition-transform group-data-[state=open]:rotate-90"
+            className="w-4 h-4 opacity-50 transition-transform group-data-[state=open]:rotate-90"
           />
         </button>
       </Collapsible.Trigger>
@@ -75,7 +75,7 @@ export function StatusLine({
 }): React.JSX.Element {
   return (
     <div className={cn('flex items-center gap-2 text-xs', className)}>
-      <span>{icon}</span>
+      <span className="inline-flex items-center">{icon}</span>
       {children}
     </div>
   );

@@ -33,7 +33,10 @@ export function createQueryCache<R>({
     get: (key) => cache.get(key),
     subscribe: (key, onChange) => {
       const off = emitter.subscribe(key, `${idPrefix}-${nextSubId++}`, onChange);
-      if (!cache.has(key)) getOrSet(inflight, key, () => refetch(key)).catch(console.error);
+      if (!cache.has(key))
+        getOrSet(inflight, key, () => refetch(key)).catch((e) =>
+          console.error('[query-cache] refetch failed:', key, e),
+        );
       return off;
     },
     refetch,

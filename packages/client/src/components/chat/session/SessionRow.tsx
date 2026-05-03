@@ -7,6 +7,7 @@ import { formatRelativeDate } from '@/utils/format-relative-date';
 interface SessionRowProps {
   session: SessionSummary;
   isFocused?: boolean;
+  isActive?: boolean;
   onSelect: (id: string) => void;
   onMouseEnter?: () => void;
   onRename?: (id: string, title: string) => Promise<Ack>;
@@ -32,6 +33,7 @@ function HighlightText({ text, query }: { text: string; query?: string }) {
 export function SessionRow({
   session: s,
   isFocused,
+  isActive,
   onSelect,
   onMouseEnter,
   onRename,
@@ -90,14 +92,13 @@ export function SessionRow({
       aria-selected={isFocused ?? false}
       tabIndex={0}
       className={cn(
-        'flex items-center w-full text-left px-3 py-2 hover:bg-white/5 cursor-pointer group',
-        isFocused && 'bg-selected',
+        'flex items-center w-full text-left px-3 py-2 group',
+        isActive ? 'bg-selected cursor-default' : 'hover:bg-white/5 cursor-pointer',
+        !isActive && isFocused && 'bg-white/5',
       )}
-      onClick={isRenaming ? undefined : () => onSelect(s.channelId)}
+      onClick={isRenaming || isActive ? undefined : () => onSelect(s.channelId)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          if (!isRenaming) onSelect(s.channelId);
-        }
+        if ((e.key === 'Enter' || e.key === ' ') && !isRenaming && !isActive) onSelect(s.channelId);
       }}
       onMouseEnter={onMouseEnter}
     >

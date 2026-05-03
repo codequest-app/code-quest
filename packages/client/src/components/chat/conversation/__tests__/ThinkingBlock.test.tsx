@@ -36,11 +36,60 @@ describe('ThinkingBlock', () => {
     expect(classes).toMatch(/\bh-\d/);
   });
 
+  it('chevron is w-4 h-4 to match tool group chevron size', () => {
+    const { container } = render(<ThinkingBlock content="thinking..." />);
+    const svg = container.querySelector('button svg');
+    const classes = svg?.getAttribute('class') ?? '';
+    expect(classes).toContain('w-4');
+    expect(classes).toContain('h-4');
+  });
+
+  it('trigger has no py-1 padding (TimelineItem manages vertical spacing)', () => {
+    const { container } = render(<ThinkingBlock content="thinking..." />);
+    const trigger = container.querySelector('button');
+    expect(trigger?.className).not.toContain('py-1');
+  });
+
+  it('trigger has hover text color transition (no full-width background)', () => {
+    const { container } = render(<ThinkingBlock content="thinking..." />);
+    const trigger = container.querySelector('button');
+    expect(trigger?.className).toContain('hover:text-text');
+    expect(trigger?.className).not.toContain('hover:bg-white/5');
+    expect(trigger?.className).not.toContain('w-full');
+  });
+
+  it('chevron is next to the label text, not pushed to far right', () => {
+    const { container } = render(<ThinkingBlock content="thinking..." />);
+    const svg = container.querySelector('button svg');
+    const classes = svg?.getAttribute('class') ?? '';
+    expect(classes).not.toContain('ml-auto');
+  });
+
   it('expands on click to show thinking content', async () => {
     const { container } = render(<ThinkingBlock content="I need to analyze this code..." />);
     const trigger = container.querySelector('button')!;
     await userEvent.click(trigger);
     expect(screen.getByText('I need to analyze this code...')).toBeVisible();
+  });
+
+  it('shows "Thinking..." when isStreaming is true', () => {
+    render(<ThinkingBlock content="..." isStreaming={true} />);
+    expect(screen.getByText('Thinking...')).toBeInTheDocument();
+  });
+
+  it('shows "Thought for Ns" when durationMs is provided', () => {
+    render(<ThinkingBlock content="..." durationMs={5000} />);
+    expect(screen.getByText('Thought for 5s')).toBeInTheDocument();
+  });
+
+  it('shows token count when budgetTokens is provided and durationMs is absent', () => {
+    render(<ThinkingBlock content="..." budgetTokens={1000} />);
+    expect(screen.getByText('Thinking (1,000 tokens)')).toBeInTheDocument();
+  });
+
+  it('isStreaming takes priority over durationMs', () => {
+    render(<ThinkingBlock content="..." isStreaming={true} durationMs={5000} />);
+    expect(screen.getByText('Thinking...')).toBeInTheDocument();
   });
 
   it('collapses on second click', async () => {

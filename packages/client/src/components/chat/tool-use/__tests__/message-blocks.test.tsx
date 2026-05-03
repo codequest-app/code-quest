@@ -5,6 +5,39 @@ import { renderBody } from '@/components/chat/conversation/MessageContent';
 
 describe('message-blocks', () => {
   describe('ToolUseBlock (via renderBody)', () => {
+    it('Bash renders with a heroicon SVG (not emoji)', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Bash',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { command: 'ls' } },
+        }),
+      );
+      const button = container.querySelector('button')!;
+      expect(button.querySelector('svg')).toBeInTheDocument();
+      // emoji ⚙ would render as text, not as svg
+      expect(button.textContent).not.toContain('⚙');
+    });
+
+    it('Read renders with a heroicon SVG', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_use',
+          content: 'Read',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', input: { file_path: '/src/index.ts' } },
+        }),
+      );
+      const button = container.querySelector('button')!;
+      expect(button.querySelector('svg')).toBeInTheDocument();
+      expect(button.textContent).not.toContain('⚙');
+    });
+
     it('renders tool_use with tool name', () => {
       render(
         renderBody({
@@ -237,6 +270,22 @@ describe('message-blocks', () => {
       );
       expect(screen.getByText('Result: Read')).toBeInTheDocument();
     });
+
+    it('ToolResultBlock uses heroicon SVG (not ✓ emoji)', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'tool_result',
+          content: 'file contents here',
+          timestamp: Date.now(),
+          meta: { toolId: 'tu-1', name: 'Read' },
+        }),
+      );
+      const button = container.querySelector('button')!;
+      expect(button.querySelector('svg')).toBeInTheDocument();
+      expect(button.textContent).not.toContain('✓');
+    });
   });
 
   describe('SystemBlocks (via renderBody)', () => {
@@ -276,6 +325,21 @@ describe('message-blocks', () => {
       expect(screen.getByText('1 turns')).toBeInTheDocument();
     });
 
+    it('streamlined_tool_use_summary uses heroicon SVG (not ⚡ emoji)', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'assistant',
+          type: 'streamlined_tool_use_summary',
+          content: 'some summary',
+          timestamp: Date.now(),
+        }),
+      );
+      const button = container.querySelector('button')!;
+      expect(button.querySelector('svg')).toBeInTheDocument();
+      expect(button.textContent).not.toContain('⚡');
+    });
+
     it('renders compact boundary', () => {
       render(
         renderBody({
@@ -301,6 +365,33 @@ describe('message-blocks', () => {
       );
       expect(screen.getByText(/Approved: Bash/)).toBeInTheDocument();
     });
+
+    it('SlashCommandResultContent replaces "Set model to " prefix with "Switched to "', () => {
+      render(
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'slash_command_result',
+          content: 'Set model to claude-opus-4',
+          timestamp: Date.now(),
+        }),
+      );
+      expect(screen.getByText('Switched to claude-opus-4')).toBeInTheDocument();
+      expect(screen.queryByText(/Set model to/)).not.toBeInTheDocument();
+    });
+
+    it('SlashCommandResultContent renders other single-line content unchanged', () => {
+      render(
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'slash_command_result',
+          content: 'Done',
+          timestamp: Date.now(),
+        }),
+      );
+      expect(screen.getByText('Done')).toBeInTheDocument();
+    });
   });
 
   describe('HookBlocks (via renderBody)', () => {
@@ -315,6 +406,34 @@ describe('message-blocks', () => {
         }),
       );
       expect(screen.getByText(/Running hook: pre-commit/)).toBeInTheDocument();
+    });
+
+    it('hook_started uses heroicon SVG (not ⚙ emoji)', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'hook_started',
+          content: 'pre-commit',
+          timestamp: Date.now(),
+        }),
+      );
+      expect(container.querySelector('svg')).toBeInTheDocument();
+      expect(container.textContent).not.toContain('⚙');
+    });
+
+    it('hook_response uses heroicon SVG (not 🔗 emoji)', () => {
+      const { container } = render(
+        renderBody({
+          id: '1',
+          role: 'system',
+          type: 'hook_response',
+          content: 'pre-commit',
+          timestamp: Date.now(),
+        }),
+      );
+      expect(container.querySelector('svg')).toBeInTheDocument();
+      expect(container.textContent).not.toContain('🔗');
     });
   });
 

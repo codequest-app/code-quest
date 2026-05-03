@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import type { ForkFn, RewindFn } from '@/types/ui';
-import { cn } from '@/utils/cn';
 import type { MessageNode } from '@/utils/message-tree';
 import { buildGroupChips, splitTimelineRuns, type TimelineRun } from '@/utils/tool-utils';
 import { ChatMessage } from './ChatMessage.tsx';
 import { SubagentChildren } from './SubagentChildren.tsx';
+import { type RowPosition, TimelineItem } from './TimelineItem.tsx';
 import { ToolGroupSummary } from './ToolGroupSummary.tsx';
 
 interface RunProps {
@@ -13,8 +13,6 @@ interface RunProps {
   onStopTask?: (taskId: string) => void;
   onDiffRespond?: (toolId: string, accepted: boolean) => void;
 }
-
-type RowPosition = 'first' | 'last' | 'middle' | 'only';
 
 function positionOf(index: number, total: number): RowPosition {
   if (total === 1) return 'only';
@@ -37,13 +35,6 @@ function dotClass(node: MessageNode): string {
   return 'bg-accent animate-pulse';
 }
 
-const LINE_CLASS: Record<RowPosition, string> = {
-  only: 'hidden',
-  first: 'top-4 bottom-0',
-  last: 'top-0 h-4',
-  middle: 'top-0 bottom-0',
-};
-
 function TimelineRow({
   node,
   position,
@@ -55,11 +46,8 @@ function TimelineRow({
   node: MessageNode;
   position: RowPosition;
 }) {
-  const lineClass = LINE_CLASS[position];
   return (
-    <div data-message-id={node.message.id} className="relative pl-7 py-2">
-      <span className={cn('absolute left-2 top-4 w-2 h-2 rounded-full z-sticky', dotClass(node))} />
-      <span className={cn('absolute left-3 w-px bg-border', lineClass)} />
+    <TimelineItem position={position} dotClass={dotClass(node)} data-message-id={node.message.id}>
       <ChatMessage
         message={node.message}
         showAvatar={false}
@@ -76,36 +64,51 @@ function TimelineRow({
           model={node.message.type === 'tool_use' ? node.message.meta.model : undefined}
         />
       )}
-    </div>
+    </TimelineItem>
   );
 }
 
 function ToolGroup({
   nodes,
+  position,
   onRewind,
   onFork,
   onStopTask,
   onDiffRespond,
-}: RunProps & { nodes: MessageNode[] }) {
+}: RunProps & { nodes: MessageNode[]; position: RowPosition }) {
   const [expanded, setExpanded] = useState(false);
   const chips = useMemo(() => buildGroupChips(nodes), [nodes]);
   const collapsedIds = useMemo(() => nodes.map((n) => n.message.id).join(','), [nodes]);
 
   return (
     <div data-collapsed-ids={collapsedIds}>
-      <ToolGroupSummary chips={chips} expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
+      <TimelineItem
+        position={expanded ? 'first' : position}
+        dotClass="bg-text-muted/40"
+        showDot={!expanded}
+        py="py-1.5"
+      >
+        <ToolGroupSummary
+          chips={chips}
+          expanded={expanded}
+          onToggle={() => setExpanded((v) => !v)}
+        />
+      </TimelineItem>
       {expanded &&
-        nodes.map((node, i) => (
-          <TimelineRow
-            key={node.message.id}
-            node={node}
-            position={positionOf(i, nodes.length)}
-            onRewind={onRewind}
-            onFork={onFork}
-            onStopTask={onStopTask}
-            onDiffRespond={onDiffRespond}
-          />
-        ))}
+        nodes.map((node, i) => {
+          const rowPosition = i === nodes.length - 1 ? position : positionOf(i, nodes.length);
+          return (
+            <TimelineRow
+              key={node.message.id}
+              node={node}
+              position={rowPosition}
+              onRewind={onRewind}
+              onFork={onFork}
+              onStopTask={onStopTask}
+              onDiffRespond={onDiffRespond}
+            />
+          );
+        })}
     </div>
   );
 }
@@ -122,6 +125,7 @@ function RunItem({
     return (
       <ToolGroup
         nodes={run.nodes}
+        position={position}
         onRewind={onRewind}
         onFork={onFork}
         onStopTask={onStopTask}

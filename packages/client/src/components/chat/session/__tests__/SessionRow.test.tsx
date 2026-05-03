@@ -109,6 +109,28 @@ describe('SessionRow', () => {
     toastErrorSpy.mockRestore();
   });
 
+  it('isFocused uses hover bg, not bg-selected', () => {
+    render(<SessionRow session={baseSession} onSelect={noop} isFocused />);
+    const row = screen.getByRole('option');
+    expect(row.className).not.toContain('bg-selected');
+    expect(row.className).toContain('bg-white/5');
+  });
+
+  it('isActive uses bg-selected', () => {
+    render(<SessionRow session={baseSession} onSelect={noop} isActive />);
+    const row = screen.getByRole('option');
+    expect(row.className).toContain('bg-selected');
+  });
+
+  it('does not call onSelect when isActive', async () => {
+    const onSelect = vi.fn();
+    render(
+      <SessionRow session={{ ...baseSession, title: 'Active' }} onSelect={onSelect} isActive />,
+    );
+    await userEvent.click(screen.getByText('Active'));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('shows date alongside action buttons (not replaced)', () => {
     render(
       <SessionRow session={baseSession} onSelect={noop} onRename={vi.fn()} onDelete={vi.fn()} />,

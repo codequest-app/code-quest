@@ -223,6 +223,21 @@ describe('WsClient', () => {
     });
   });
 
+  describe('invalid messages', () => {
+    it('logs a warning when a non-JSON message is received', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const c = makeClient();
+      c.connect();
+      const ws = MockWebSocket.last()!;
+      ws.acceptOpen();
+
+      ws.deliverRaw('not-valid-json');
+
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+  });
+
   describe('ping', () => {
     it('client sends a ping envelope after heartbeat interval of idle', () => {
       vi.useFakeTimers();

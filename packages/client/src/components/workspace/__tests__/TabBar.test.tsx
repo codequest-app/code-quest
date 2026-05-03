@@ -98,7 +98,7 @@ describe('TabBar worktree grouping', () => {
     expect(screen.getByLabelText('tab-scope-tag').textContent).toBe('cc/only-name');
   });
 
-  it('renders a divider between main-tree tabs and worktree tabs', () => {
+  it('no divider span between main-tree and worktree tabs — scope tag differentiates groups', () => {
     render(
       withRoot(
         'main',
@@ -109,7 +109,8 @@ describe('TabBar worktree grouping', () => {
               sessionId: 'wt',
               title: 'feat',
               status: 'idle',
-              worktree: { name: 'feat', path: '/repo/.claude/worktrees/feat' },
+              projectName: 'cc',
+              worktree: { name: 'feat', path: '/repo/.claude/worktrees/feat', branch: 'feat' },
             },
           ]}
           activeTabId="main"
@@ -118,7 +119,68 @@ describe('TabBar worktree grouping', () => {
         />,
       ),
     );
-    expect(screen.getAllByLabelText('tab-divider')).toHaveLength(1);
+    expect(screen.queryByLabelText('tab-divider')).toBeNull();
+    const wtTab = screen.getByRole('tab', { name: /feat/i });
+    expect(wtTab.className).not.toContain('ml-4');
+    expect(wtTab.className).not.toContain('border-l');
+  });
+
+  it('main-tree tab sorted before worktree tab', () => {
+    render(
+      withRoot(
+        'wt',
+        <TabBar
+          tabs={[
+            {
+              sessionId: 'wt',
+              title: 'feat',
+              status: 'idle',
+              projectName: 'judgments',
+              worktree: {
+                name: 'test',
+                path: '/judgments/.claude/worktrees/test',
+                branch: 'feature/test',
+              },
+            },
+            { sessionId: 'main', title: 'main', status: 'idle' },
+          ]}
+          activeTabId="wt"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
+    );
+    const allTabs = screen.getAllByRole('tab');
+    expect(allTabs[0]).toHaveTextContent('main');
+    expect(allTabs[1]).toHaveTextContent('feat');
+  });
+
+  it('main-tree tab shows no scope tag even when worktree listing includes the main worktree entry', () => {
+    render(
+      withRoot(
+        'main',
+        <TabBar
+          tabs={[
+            { sessionId: 'main', title: 'main', status: 'idle' },
+            {
+              sessionId: 'wt',
+              title: 'feat',
+              status: 'idle',
+              projectName: 'judgments',
+              worktree: {
+                name: 'test',
+                path: '/judgments/.claude/worktrees/test',
+                branch: 'feature/test',
+              },
+            },
+          ]}
+          activeTabId="main"
+          onSelectTab={vi.fn()}
+          onCloseTab={vi.fn()}
+        />,
+      ),
+    );
+    expect(screen.getAllByRole('note', { name: 'tab-scope-tag' })).toHaveLength(1);
   });
 });
 

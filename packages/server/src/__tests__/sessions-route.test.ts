@@ -82,6 +82,34 @@ describe('GET /api/sessions', () => {
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('db down');
   });
+
+  it('clamps limit to 1 minimum when negative', async () => {
+    const seed = Array.from({ length: 3 }, (_, i) => makeRecord(`s${i}`));
+    const app = await setupApp(seed);
+
+    const res = await request(app).get('/api/sessions?limit=-5');
+    expect(res.status).toBe(200);
+    expect(res.body.sessions).toHaveLength(1);
+  });
+
+  it('clamps limit to 100 maximum', async () => {
+    const seed = Array.from({ length: 5 }, (_, i) => makeRecord(`s${i}`));
+    const app = await setupApp(seed);
+
+    const res = await request(app).get('/api/sessions?limit=999');
+    expect(res.status).toBe(200);
+    expect(res.body.sessions).toHaveLength(5);
+  });
+
+  it('defaults limit to 20 when not provided', async () => {
+    const { store } = createInMemoryStore();
+    const listSpy = vi.spyOn(store, 'list').mockResolvedValue({ sessions: [], total: 0 });
+    const app = express();
+    app.use(createSessionsRouter(store));
+
+    await request(app).get('/api/sessions');
+    expect(listSpy).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
+  });
 });
 
 describe('GET /api/sessions/:id', () => {
@@ -134,6 +162,30 @@ describe('GET /api/sessions/:id/events', () => {
 
     const res = await request(app).get('/api/sessions/s1/events');
     expect(res.status).toBe(501);
+  });
+
+  it('clamps events limit to 1000 maximum', async () => {
+    const events = Array.from({ length: 5 }, (_, i) => ({ seq: i }));
+    const eventStore = createStubEventStore({
+      getBySession: vi.fn().mockResolvedValue(events),
+    });
+    const app = await setupApp([], eventStore);
+
+    const res = await request(app).get('/api/sessions/s1/events?limit=9999');
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(5);
+  });
+
+  it('defaults events limit to 100 when not provided', async () => {
+    const events = Array.from({ length: 5 }, (_, i) => ({ seq: i }));
+    const eventStore = createStubEventStore({
+      getBySession: vi.fn().mockResolvedValue(events),
+    });
+    const app = await setupApp([], eventStore);
+
+    const res = await request(app).get('/api/sessions/s1/events');
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(5);
   });
 
   it('returns 500 on event store error', async () => {

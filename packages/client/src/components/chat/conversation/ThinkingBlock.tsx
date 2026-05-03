@@ -1,6 +1,6 @@
 import * as Collapsible from '@radix-ui/react-collapsible';
-import { ChevronRight } from '@/components/ui/Icons';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
+import { RotatableChevron } from '../tool-use/message-blocks/primitives.tsx';
 
 interface ThinkingBlockProps {
   content: string;
@@ -11,6 +11,17 @@ interface ThinkingBlockProps {
   isStreaming?: boolean;
 }
 
+function thinkingLabel(
+  isStreaming: boolean,
+  durationMs?: number | null,
+  budgetTokens?: number,
+): string {
+  if (isStreaming) return 'Thinking...';
+  if (durationMs != null) return `Thought for ${Math.round(durationMs / 1000)}s`;
+  if (budgetTokens != null) return `Thinking (${budgetTokens.toLocaleString()} tokens)`;
+  return 'Thinking';
+}
+
 export function ThinkingBlock({
   content,
   budgetTokens,
@@ -19,19 +30,13 @@ export function ThinkingBlock({
 }: ThinkingBlockProps): React.ReactNode {
   if (!content.trim()) return null;
 
-  const label = isStreaming
-    ? 'Thinking...'
-    : durationMs != null
-      ? `Thought for ${Math.round(durationMs / 1000)}s`
-      : budgetTokens != null
-        ? `Thinking (${budgetTokens.toLocaleString()} tokens)`
-        : 'Thinking';
+  const label = thinkingLabel(isStreaming, durationMs, budgetTokens);
 
   return (
     <Collapsible.Root className="text-sm">
-      <Collapsible.Trigger className="group flex items-center gap-2 cursor-pointer select-none text-text-muted py-1 hover:text-text transition-colors">
-        <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
+      <Collapsible.Trigger className="group flex items-center gap-2 cursor-pointer select-none text-text-muted hover:text-text transition-colors">
         <span>{label}</span>
+        <RotatableChevron className="opacity-40 shrink-0 group-data-[state=open]:rotate-90 group-data-[state=open]:opacity-50" />
       </Collapsible.Trigger>
       <Collapsible.Content className="mt-2 pl-3 border-l-2 border-border/50 text-sm text-text-muted/60">
         <MarkdownContent content={content} />

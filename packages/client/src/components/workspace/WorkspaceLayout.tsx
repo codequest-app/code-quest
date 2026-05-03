@@ -9,6 +9,7 @@ import { useSession } from '@/contexts/SessionContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cn } from '@/utils/cn';
+import { NO_FORM } from '@/utils/hotkey-options';
 import { CommandPalette } from '../palette/CommandPalette.tsx';
 import { AddProjectDialog } from '../project/AddProjectDialog.tsx';
 import { ProjectTree } from '../project/ProjectTree.tsx';
@@ -41,8 +42,6 @@ function DocumentTitle({ sessions }: { sessions: Array<{ state: string }> }) {
  * source of the breakpoint-state-loss bug because Panels can't be both a
  * docked column and a fixed-positioned drawer.
  */
-const NO_FORM = { enableOnFormTags: false, preventDefault: true } as const;
-
 export function WorkspaceLayout(): React.JSX.Element {
   return (
     <CommandPaletteProvider>

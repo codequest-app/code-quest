@@ -1,8 +1,12 @@
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { BoltIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
 import { MarkdownContent } from '@/components/chat/renderers/MarkdownContent';
 import type { DocumentMeta, ImageMeta, RateLimitMeta, ResultMeta } from '@/types/ui';
 import { cn } from '@/utils/cn';
 import { AlertBanner } from './AlertBanner.tsx';
 import { CenterDivider, CODE_BLOCK_CLASS, CollapsibleBlock, StatusLine } from './primitives.tsx';
+
+const SET_MODEL_PREFIX = /^Set model to /;
 
 const CONTROL_RESPONSE_STYLES = [
   {
@@ -75,7 +79,10 @@ export function CompactBoundaryContent(): React.ReactNode {
 
 export function InterruptContent(): React.ReactNode {
   return (
-    <StatusLine icon="⚠" className="text-warning py-1">
+    <StatusLine
+      icon={<ExclamationTriangleIcon className="w-4 h-4 shrink-0" />}
+      className="text-warning"
+    >
       <span className="italic">Interrupted by user</span>
     </StatusLine>
   );
@@ -83,12 +90,12 @@ export function InterruptContent(): React.ReactNode {
 
 export function MetaContent({ content }: { content: string }): React.ReactNode {
   if (!content) return null;
-  return <div className="text-xs text-text-muted/60 py-1 italic">{content}</div>;
+  return <div className="text-xs text-text-muted/60 italic">{content}</div>;
 }
 
 export function SlashCommandResultContent({ content }: { content: string }): React.ReactNode {
   if (!content.includes('\n')) {
-    const short = content.replace(/^Set model to /, 'Switched to ');
+    const short = content.replace(SET_MODEL_PREFIX, 'Switched to ');
     return (
       <div className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-surface-hover rounded-full px-2.5 py-1">
         <span>✓</span>
@@ -140,7 +147,10 @@ export function TaskStartedContent({
   meta?: Record<string, unknown>;
 }): React.ReactNode {
   return (
-    <StatusLine icon="🚀" className="text-text-muted">
+    <StatusLine
+      icon={<RocketLaunchIcon className="w-4 h-4 shrink-0" />}
+      className="text-text-muted"
+    >
       <span>{content}</span>
       {meta?.taskType != null && (
         <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-xs font-mono">
@@ -164,7 +174,7 @@ export function StreamlinedTextContent({ content }: { content: string }): React.
 
 export function StreamlinedToolSummaryContent({ content }: { content: string }): React.ReactNode {
   return (
-    <CollapsibleBlock icon="⚡" label="Tool Summary">
+    <CollapsibleBlock icon={<BoltIcon className="w-4 h-4 shrink-0" />} label="Tool Summary">
       <pre className={CODE_BLOCK_CLASS}>{content}</pre>
     </CollapsibleBlock>
   );

@@ -333,6 +333,19 @@ describe('WsTransport ↔ real ws client end-to-end', () => {
     expect(events).toHaveLength(0);
   });
 
+  it('14.6.1 malformed resume payload does not crash server (ping still responds)', async () => {
+    const ws = await openClient(url('sess-malformed'));
+
+    // Send a resume with a non-numeric lastSeq
+    ws.send(JSON.stringify({ kind: 'resume', lastSeq: 'not-a-number' }));
+
+    // Server must remain alive: ping/pong still works
+    const pongP = nextEnvelope(ws);
+    sendEnvelope(ws, { kind: 'ping' } as Envelope);
+    const pong = await pongP;
+    expect(pong.kind).toBe('pong');
+  });
+
   it('14.6 authenticator denial closes the upgrade with HTTP 401', async () => {
     await handle?.close();
     handle = undefined;

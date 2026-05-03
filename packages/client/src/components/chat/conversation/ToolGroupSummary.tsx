@@ -17,13 +17,8 @@ export function ToolGroupSummary({
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-1.5 pl-7 py-1.5 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors w-full text-left"
+      className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text cursor-pointer select-none transition-colors w-full text-left"
     >
-      {expanded ? (
-        <RotatableChevron open className="opacity-50 shrink-0" />
-      ) : (
-        <span className="w-2 h-2 rounded-full bg-text-muted/40 shrink-0" />
-      )}
       <span className="flex items-center gap-1 flex-wrap">
         {chips.map((chip) => (
           <span
@@ -40,7 +35,7 @@ export function ToolGroupSummary({
           </span>
         ))}
       </span>
-      {!expanded && <RotatableChevron className="opacity-40 shrink-0 ml-auto" />}
+      <RotatableChevron open={expanded} className="opacity-40 shrink-0" />
     </button>
   );
 }

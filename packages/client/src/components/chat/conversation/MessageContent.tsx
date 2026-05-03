@@ -1,3 +1,4 @@
+import { ArchiveBoxIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import type { Message } from '@/types/ui';
 import { JsonViewer } from '../renderers/JsonViewer.tsx';
 import { MarkdownContent } from '../renderers/MarkdownContent.tsx';
@@ -35,7 +36,7 @@ function CollapsibleDataContent({
   content,
   meta,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   content: string;
   meta?: Record<string, unknown>;
 }) {
@@ -48,7 +49,10 @@ function CollapsibleDataContent({
 
 function UnhandledContent({ content, meta }: { content: string; meta?: Record<string, unknown> }) {
   return (
-    <CollapsibleBlock icon="❓" label={content}>
+    <CollapsibleBlock
+      icon={<QuestionMarkCircleIcon className="w-4 h-4 shrink-0" />}
+      label={content}
+    >
       {meta?.event != null && <JsonViewer data={meta.event} className={JSON_VIEWER_CLASS} />}
     </CollapsibleBlock>
   );
@@ -99,7 +103,7 @@ export function renderBody(
         <ToolResultBlock content={content} meta={message.meta} onDiffRespond={onDiffRespond} />
       );
     case 'redacted_thinking':
-      return <div className="text-xs text-text-muted italic py-1">Thinking (redacted)</div>;
+      return <div className="text-xs text-text-muted italic">Thinking (redacted)</div>;
     case 'result':
       return <ResultContent meta={message.meta} />;
     case 'error':
@@ -125,9 +129,21 @@ export function renderBody(
     case 'hook_diagnostics':
       return <HookDiagnosticsContent content={content} meta={message.meta} />;
     case 'unknown_delta':
-      return <CollapsibleDataContent icon="❔" content={content} meta={message.meta} />;
+      return (
+        <CollapsibleDataContent
+          icon={<QuestionMarkCircleIcon className="w-4 h-4 shrink-0" />}
+          content={content}
+          meta={message.meta}
+        />
+      );
     case 'raw_event':
-      return <CollapsibleDataContent icon="📦" content={content} meta={message.meta} />;
+      return (
+        <CollapsibleDataContent
+          icon={<ArchiveBoxIcon className="w-4 h-4 shrink-0" />}
+          content={content}
+          meta={message.meta}
+        />
+      );
     case 'unhandled':
       return <UnhandledContent content={content} meta={message.meta} />;
     case 'image':

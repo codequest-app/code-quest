@@ -8,6 +8,10 @@ import {
 } from '@code-quest/shared';
 import type { SimpleGit } from 'simple-git';
 import { AlreadyRepoError, NotARepoError } from './errors.ts';
+
+const GIT_STATUS_UNTRACKED = '??';
+const GIT_STATUS_STAGED_NEW = 'A';
+
 import { createGit, rawGit } from './git-runner.ts';
 
 const NOTHING_TO_COMMIT = 'nothing-to-commit';
@@ -62,13 +66,13 @@ export class GitCommands {
     if (!filePath) {
       return { diff: await git.diff() };
     }
-    if (status === '??') {
+    if (status === GIT_STATUS_UNTRACKED) {
       const content = await readFile(resolve(cwd, filePath), 'utf-8').catch(() => '');
       return { diff: toPseudoDiff(filePath, content) };
     }
     // Single-char 'M'/'D' is ambiguous after trim, so HEAD covers both staged and unstaged.
     // 'A' is always staged-only.
-    if (status === 'A') {
+    if (status === GIT_STATUS_STAGED_NEW) {
       return { diff: await git.diff(['--staged', '--', filePath]) };
     }
     return { diff: await git.diff(['HEAD', '--', filePath]) };
