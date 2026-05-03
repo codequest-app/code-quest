@@ -2,13 +2,38 @@ import { segments as s } from '@code-quest/summoner/test';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeSummoner } from '@/test/fake-summoner';
 import { COMPOSE_PLACEHOLDER } from '@/test/helpers';
 import { renderWithChannel } from '@/test/render-with-channel';
 import { ComposeInput } from '../ComposeInput.tsx';
 
 const containerRef = createRef<HTMLDivElement>();
+
+describe('ComposeInput mic padding', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('has pr-10 on textarea when SpeechRecognition is supported', async () => {
+    vi.stubGlobal('SpeechRecognition', class {});
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+    expect(textarea.className).toContain('pr-10');
+    expect(textarea.className).not.toContain('pr-3.5');
+  });
+
+  it('has pr-3.5 on textarea when SpeechRecognition is not supported', async () => {
+    // vi.stubGlobal sets to undefined but keeps the key; delete removes it from `in` checks
+    delete (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition;
+    delete (window as Window & { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    await renderWithChannel(<ComposeInput containerRef={containerRef} />);
+    const textarea = screen.getByPlaceholderText(COMPOSE_PLACEHOLDER);
+    expect(textarea.className).toContain('pr-3.5');
+    expect(textarea.className).not.toContain('pr-10');
+  });
+});
 
 describe('ComposeInput', () => {
   it('renders textarea with placeholder', async () => {
