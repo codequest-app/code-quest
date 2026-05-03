@@ -289,14 +289,14 @@ export class LocalFilesystemService implements FilesystemService {
   private extractDirectories(files: string[]): string[] {
     const dirs = new Set<string>();
     for (const f of files) {
-      const parts = f.split('/');
       // Drop the file name (last segment); accumulate each directory prefix.
-      let prefix = '';
-      for (let i = 0; i < parts.length - 1; i++) {
-        const segment = parts[i] ?? '';
-        prefix = prefix ? `${prefix}/${segment}` : segment;
-        dirs.add(prefix);
-      }
+      f.split('/')
+        .slice(0, -1)
+        .reduce((prefix, segment) => {
+          const dir = prefix ? `${prefix}/${segment}` : segment;
+          dirs.add(dir);
+          return dir;
+        }, '');
     }
     return [...dirs].map((d) => `${d}/`);
   }

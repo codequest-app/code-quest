@@ -1,7 +1,10 @@
+import { z } from 'zod';
 import { logger } from '../logger.ts';
 import { ResumableSocket } from './resumable-socket.ts';
 import type { TypedSocket } from './types.ts';
 import { RESUME_EVENT } from './ws-transport.ts';
+
+const ResumePayloadSchema = z.object({ lastSeq: z.number().optional() }).optional();
 
 /**
  * Anything that can hand back the long-lived session identifier for a
@@ -69,7 +72,7 @@ export class ResumableConnectionRegistry {
     }
 
     socket.on(RESUME_EVENT, (...args) => {
-      const payload = args[0] as { lastSeq?: number } | undefined;
+      const payload = ResumePayloadSchema.parse(args[0]);
       const lastSeq = payload?.lastSeq ?? 0;
       const result = resumable.resume(lastSeq);
       if (result.kind === 'gap') {

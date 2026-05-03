@@ -3,6 +3,15 @@ import { logger } from '../logger.ts';
 import type { RawEventStore } from '../services/raw-event-store.ts';
 import type { SessionStore } from '../services/session-store.ts';
 
+const DEFAULT_SESSIONS_LIMIT = 20;
+const MAX_SESSIONS_LIMIT = 100;
+const DEFAULT_EVENTS_LIMIT = 100;
+const MAX_EVENTS_LIMIT = 1000;
+
+function clampPaginationParam(value: unknown, defaultVal: number, max: number): number {
+  return Math.min(Math.max(Number(value) || defaultVal, 1), max);
+}
+
 export function createSessionsRouter(
   sessionStore: SessionStore,
   rawEventService?: RawEventStore,
@@ -11,7 +20,11 @@ export function createSessionsRouter(
 
   router.get('/api/sessions', async (req, res) => {
     try {
-      const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+      const limit = clampPaginationParam(
+        req.query.limit,
+        DEFAULT_SESSIONS_LIMIT,
+        MAX_SESSIONS_LIMIT,
+      );
       const offset = Math.max(Number(req.query.offset) || 0, 0);
       const result = await sessionStore.list({ limit, offset });
 
@@ -56,7 +69,7 @@ export function createSessionsRouter(
         return;
       }
       const events = await rawEventService.getBySession(req.params.id);
-      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
+      const limit = clampPaginationParam(req.query.limit, DEFAULT_EVENTS_LIMIT, MAX_EVENTS_LIMIT);
       const offset = Math.max(Number(req.query.offset) || 0, 0);
       const paged = events.slice(offset, offset + limit);
       res.json({ events: paged, total: events.length });
