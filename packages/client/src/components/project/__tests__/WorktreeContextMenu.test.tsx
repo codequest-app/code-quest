@@ -83,6 +83,20 @@ describe('WorktreeContextMenu (Dropdown variant)', () => {
     expect(onCopyPath).toHaveBeenCalled();
   });
 
+  it('Delete item has danger colour (bg-danger/10 on highlight)', async () => {
+    render(
+      <WorktreeDropdownMenu
+        trigger={TRIGGER}
+        onOpenInNewChat={() => {}}
+        onCopyPath={() => {}}
+        onDelete={() => {}}
+      />,
+    );
+    await open();
+    const deleteItem = await screen.findByRole('menuitem', { name: /delete/i });
+    expect(deleteItem.className).toContain('bg-danger/10');
+  });
+
   it('Delete triggers onDelete', async () => {
     const onDelete = vi.fn();
     render(
