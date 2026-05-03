@@ -90,7 +90,7 @@ function ThemeSection() {
   return (
     <div className="flex flex-col">
       {features.map((feature) => (
-        <FeatureRow key={feature.id} feature={feature} isActive={false} onActiveChange={() => {}} />
+        <FeatureRow key={feature.id} feature={feature} isActive={false} />
       ))}
     </div>
   );
@@ -126,7 +126,7 @@ function DisplaySection() {
   return (
     <div className="flex flex-col">
       {features.map((feature) => (
-        <FeatureRow key={feature.id} feature={feature} isActive={false} onActiveChange={() => {}} />
+        <FeatureRow key={feature.id} feature={feature} isActive={false} />
       ))}
     </div>
   );
