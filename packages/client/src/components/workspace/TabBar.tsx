@@ -16,15 +16,9 @@ export interface TabInfo {
   projectName?: string;
 }
 
-/** Group key: null for main-tree tabs, worktree name for worktree tabs.
- *  Main-tree sorts first because null < any string via the compare below. */
-function tabGroupKey(tab: TabInfo): string | null {
-  return tab.worktree?.name ?? null;
-}
-
 function compareGroup(a: TabInfo, b: TabInfo): number {
-  const ka = tabGroupKey(a);
-  const kb = tabGroupKey(b);
+  const ka = a.worktree?.name ?? null;
+  const kb = b.worktree?.name ?? null;
   if (ka === kb) return 0;
   if (ka === null) return -1;
   if (kb === null) return 1;
@@ -81,18 +75,9 @@ export function TabBar({
         role="tablist"
         aria-label="tab-bar"
       >
-        {sortedTabs.map((tab, i) => {
-          const prev = i > 0 ? sortedTabs[i - 1] : undefined;
-          const showDivider = prev != null && tabGroupKey(prev) !== tabGroupKey(tab);
+        {sortedTabs.map((tab) => {
           return (
             <Fragment key={tab.sessionId}>
-              {showDivider ? (
-                <span
-                  role="presentation"
-                  aria-label="tab-divider"
-                  className="h-5 border-l border-border mx-1"
-                />
-              ) : null}
               <Tabs.Trigger value={tab.sessionId} asChild>
                 {/* biome-ignore lint/a11y/noStaticElementInteractions: Radix Tabs.Trigger
                     injects role="tab" + keyboard nav via Slot at runtime.
