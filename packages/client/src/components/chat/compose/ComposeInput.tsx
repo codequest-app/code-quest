@@ -44,8 +44,15 @@ function historyCycleDown(ref: InputHistory): string {
   return ref.draft;
 }
 
-const TEXTAREA_CLASS =
-  'w-full bg-transparent text-text px-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
+const TEXTAREA_BASE_CLASS =
+  'w-full bg-transparent text-text pl-3.5 py-2.5 resize-none focus:outline-none disabled:opacity-50 placeholder:text-text-muted overflow-hidden [grid-area:1/1]';
+
+function isSpeechSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+  );
+}
 
 const MENTION_LISTBOX_ID = 'mention-dropdown-listbox';
 const MENTION_DEBOUNCE_MS = 200;
@@ -59,6 +66,8 @@ export function ComposeInput({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }): React.JSX.Element {
+  const hasMicButton = isSpeechSupported();
+  const textareaClass = cn(TEXTAREA_BASE_CLASS, hasMicButton ? 'pr-10' : 'pr-3.5');
   const { isProcessing, searchFiles, messages } = useChannelMessages();
   const { providerConfig, permissionMode, setPermissionMode } = useChannelConfig();
   const compose = useChannelCompose();
@@ -355,9 +364,9 @@ export function ComposeInput({
               ? 'Queue another message…'
               : (providerConfig?.brand.placeholder ?? '⌘ Esc to focus or unfocus Claude')
           }
-          className={TEXTAREA_CLASS}
+          className={textareaClass}
         />
-        <div className={cn(TEXTAREA_CLASS, 'invisible whitespace-pre-wrap')} aria-hidden="true">
+        <div className={cn(textareaClass, 'invisible whitespace-pre-wrap')} aria-hidden="true">
           {`${value}\n`}
         </div>
       </div>
